@@ -9,6 +9,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 {
     public static class MenuItems
     {
+        [MenuItem("Window/AI Connector (Unity-MCP)")]
+        public static void ShowWindow() => MainWindowEditor.ShowWindow();
+
         [MenuItem("Tools/AI Connector (Unity-MCP)/Build & Start", priority = 1000)]
         public static void BuildAndStart() => McpPluginUnity.BuildAndStart();
 
