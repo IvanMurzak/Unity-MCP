@@ -1,3 +1,4 @@
+#if !UNITY_5_3_OR_NEWER
 using ModelContextProtocol.Protocol.Types;
 using ModelContextProtocol.Server;
 using System.ComponentModel;
@@ -21,3 +22,4 @@ It also triggers scripts recompilation if any changes in '.cs' files.")]
         }
     }
 }
+#endif

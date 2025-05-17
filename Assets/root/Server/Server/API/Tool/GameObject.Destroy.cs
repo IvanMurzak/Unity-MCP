@@ -1,3 +1,4 @@
+#if !UNITY_5_3_OR_NEWER
 using com.IvanMurzak.Unity.MCP.Common.Data.Unity;
 using ModelContextProtocol.Protocol.Types;
 using ModelContextProtocol.Server;
@@ -27,3 +28,4 @@ Use 'instanceID' whenever possible, because it finds the exact GameObject, when 
         }
     }
 }
+#endif

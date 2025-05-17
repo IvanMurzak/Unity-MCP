@@ -1,3 +1,4 @@
+#if !UNITY_5_3_OR_NEWER
 using System;
 using System.Collections.Generic;
 using System.Text.Json;
@@ -111,3 +112,4 @@ namespace com.IvanMurzak.Unity.MCP.Server
         }
     }
 }
+#endif

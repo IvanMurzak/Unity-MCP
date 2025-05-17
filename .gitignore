@@ -55,14 +55,8 @@ sysinfo.txt
 *.apk
 *.unitypackage
 
-# MCP Server sln file
-Assets/root/Server/com.IvanMurzak.Unity.MCP.Server.sln
-Assets/root/Server/com.IvanMurzak.Unity.MCP.Server.sln.meta
-
-
 # Unity Editor layouts
 UserSettings/Layouts/*
 
 # Unity Render cache
 kernelsCache/*
-

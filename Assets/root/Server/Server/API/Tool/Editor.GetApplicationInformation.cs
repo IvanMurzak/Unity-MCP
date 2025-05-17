@@ -1,3 +1,4 @@
+#if !UNITY_5_3_OR_NEWER
 using ModelContextProtocol.Protocol.Types;
 using ModelContextProtocol.Server;
 using System.ComponentModel;
@@ -28,3 +29,4 @@ EditorApplication.timeSinceStartup - The time since the editor was started. (Rea
         }
     }
 }
+#endif

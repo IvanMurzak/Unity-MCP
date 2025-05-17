@@ -1,3 +1,4 @@
+#if !UNITY_5_3_OR_NEWER
 using com.IvanMurzak.Unity.MCP.Common.Data.Unity;
 using ModelContextProtocol.Protocol.Types;
 using ModelContextProtocol.Server;
@@ -28,9 +29,10 @@ Check the result of this command to see what was changed. The ignored fields and
         {
             return ToolRouter.Call("GameObject_Modify", arguments =>
             {
-                arguments[nameof(gameObjectDiffs)] = gameObjectDiffs ?? [];
+                arguments[nameof(gameObjectDiffs)] = gameObjectDiffs ?? new();
                 arguments[nameof(gameObjectRefs)] = gameObjectRefs ?? new();
             });
         }
     }
 }
+#endif

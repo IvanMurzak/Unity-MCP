@@ -1,16 +1,16 @@
-﻿#if !UNITY_ENV
+﻿#if !UNITY_5_3_OR_NEWER
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using com.IvanMurzak.Unity.MCP.Common;
 using NLog.Extensions.Logging;
-using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 using NLog;
 using System;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http.Connections;
 using com.IvanMurzak.Unity.MCP.Common.Reflection;
+using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace com.IvanMurzak.Unity.MCP.Server
 {

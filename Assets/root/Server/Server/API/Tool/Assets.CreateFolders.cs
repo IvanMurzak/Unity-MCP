@@ -1,3 +1,4 @@
+#if !UNITY_5_3_OR_NEWER
 using ModelContextProtocol.Protocol.Types;
 using ModelContextProtocol.Server;
 using System.ComponentModel;
@@ -27,3 +28,4 @@ Use it to organize scripts and assets in the project. Does AssetDatabase.Refresh
         }
     }
 }
+#endif

@@ -1,3 +1,4 @@
+#if !UNITY_5_3_OR_NEWER
 using R3;
 
 namespace com.IvanMurzak.Unity.MCP.Server
@@ -11,3 +12,4 @@ namespace com.IvanMurzak.Unity.MCP.Server
         }
     }
 }
+#endif

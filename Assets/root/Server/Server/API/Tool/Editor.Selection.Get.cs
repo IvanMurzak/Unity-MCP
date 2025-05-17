@@ -1,3 +1,4 @@
+#if !UNITY_5_3_OR_NEWER
 using ModelContextProtocol.Protocol.Types;
 using ModelContextProtocol.Server;
 using System.ComponentModel;
@@ -28,3 +29,4 @@ Selection.activeTransform - Returns the active transform. (The one shown in the 
         }
     }
 }
+#endif

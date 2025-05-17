@@ -11,7 +11,7 @@
         "MCP",
         "Unity MCP"
     ],
-    "version": "0.8.0",
+    "version": "0.8.1",
     "unity": "2022.3",
     "description": "Bridge between LLM and Unity. It expose Unity API to LLM and allows LLM to control Unity. It is based on Model Context Protocol (MCP) and uses SignalR for communication.",
     "dependencies": {

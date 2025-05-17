@@ -1,3 +1,4 @@
+#if !UNITY_5_3_OR_NEWER
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -15,7 +16,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
     {
         const int maxRetries = 10; // Maximum number of retries
         const int retryDelayMs = 1000; // Delay between retries in milliseconds
-        
+
         // Thread-safe collection to store connected clients, grouped by hub type
         static readonly ConcurrentDictionary<Type, ConcurrentDictionary<string, bool>> ConnectedClients = new();
         static readonly ConcurrentDictionary<Type, string> LastSuccessfulClients = new();
@@ -61,7 +62,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
             var clients = ConnectedClients.GetOrAdd(type, _ => new());
             if (clients.TryAdd(connectionId, true))
             {
-                logger?.LogInformation($"Client '{connectionId}' connected to {type.Name}. Total connected clients: {clients.Count}"); 
+                logger?.LogInformation($"Client '{connectionId}' connected to {type.Name}. Total connected clients: {clients.Count}");
             }
             else
             {
@@ -174,3 +175,4 @@ namespace com.IvanMurzak.Unity.MCP.Server
         }
     }
 }
+#endif

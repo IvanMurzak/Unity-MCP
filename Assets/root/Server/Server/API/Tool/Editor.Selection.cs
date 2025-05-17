@@ -1,3 +1,4 @@
+#if !UNITY_5_3_OR_NEWER
 using ModelContextProtocol.Protocol.Types;
 using ModelContextProtocol.Server;
 using System.ComponentModel;
@@ -10,3 +11,4 @@ namespace com.IvanMurzak.Unity.MCP.Server.API
     {
     }
 }
+#endif

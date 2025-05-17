@@ -10,8 +10,6 @@ bin/
 obj/
 bin~/
 obj~/
-[Bb]uild/
-[Ll]ogs/
 
 ## OS-generated files
 .DS_Store
@@ -36,12 +34,8 @@ packages/
 *.dll
 *.exe
 
-# Optional: lock file
-#
-
 # Whitelist .csproj files
 !*.csproj
 
-# Meta data should only be ignored when the corresponding asset is also ignored
-/**.meta
-
+*.sln
+*.sln.meta

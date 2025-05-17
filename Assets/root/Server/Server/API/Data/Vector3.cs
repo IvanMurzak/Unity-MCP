@@ -1,3 +1,4 @@
+#if !UNITY_5_3_OR_NEWER
 namespace com.IvanMurzak.Unity.MCP.Server.API.Data
 {
     [System.Serializable]
@@ -33,3 +34,4 @@ namespace com.IvanMurzak.Unity.MCP.Server.API.Data
         }
     }
 }
+#endif

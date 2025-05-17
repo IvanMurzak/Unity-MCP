@@ -1,3 +1,4 @@
+#if !UNITY_5_3_OR_NEWER
 using ModelContextProtocol.Protocol.Types;
 using ModelContextProtocol.Server;
 using System.ComponentModel;
@@ -34,3 +35,4 @@ Selection.activeInstanceID -  The 'instanceID' of the actual object selection. I
         }
     }
 }
+#endif

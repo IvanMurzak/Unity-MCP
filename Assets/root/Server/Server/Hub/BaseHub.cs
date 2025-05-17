@@ -1,4 +1,5 @@
 #pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+#if !UNITY_5_3_OR_NEWER
 using System;
 using System.Collections.Concurrent;
 using System.Linq;
@@ -65,3 +66,4 @@ namespace com.IvanMurzak.Unity.MCP.Server
         }
     }
 }
+#endif

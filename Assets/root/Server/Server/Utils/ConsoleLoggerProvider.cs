@@ -1,3 +1,4 @@
+#if !UNITY_5_3_OR_NEWER
 using System;
 using com.IvanMurzak.Unity.MCP.Common;
 using Microsoft.Extensions.Logging;
@@ -34,3 +35,4 @@ namespace com.IvanMurzak.Unity.MCP
         ILogger ILoggerProvider.CreateLogger(string categoryName) => new ConsoleLogger(categoryName);
     }
 }
+#endif

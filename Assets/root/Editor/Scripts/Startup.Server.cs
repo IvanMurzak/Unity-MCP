@@ -74,10 +74,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         public static async Task BuildServer(bool force = true)
         {
-            var message = "<b><color=yellow>Server Build</color></b>";
+            var message = $"<b><color=yellow>Server Build</color></b>";
             Debug.Log($"{Consts.Log.Tag} {message} <color=orange>⊂(◉‿◉)つ</color>");
             Debug.Log($"{Consts.Log.Tag} Current Server version: <color=#8CFFD1>{ServerExecutableVersion}</color>. New Server version: <color=#8CFFD1>{ServerSourceVersion}</color>");
 
+            await InstallDotNetIfNeeded();
             CopyServerSources();
             DeleteSlnFiles();
 
@@ -86,7 +87,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             (string output, string error) = await ProcessUtils.Run(new ProcessStartInfo
             {
                 FileName = "dotnet",
-                Arguments = "build -c Release",
+                Arguments = $"build -c Release {ServerProjectName}.csproj",
                 WorkingDirectory = ServerExecutableRootPath,
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
@@ -106,9 +107,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             if (isError)
             {
-                Debug.LogError($"{Consts.Log.Tag} <color=red>Build failed</color>. Check the output for details:\n{output}");
                 if (force)
                 {
+                    Debug.LogWarning($"{Consts.Log.Tag} <color=red>Build failed</color>. Check the output for details:\n{output}\n{error}\n");
                     if (ErrorUtils.ExtractProcessId(output, out var processId))
                     {
                         Debug.Log($"{Consts.Log.Tag} Detected another process which locks the file. Killing the process with ID: {processId}");
@@ -130,6 +131,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     {
                         await BuildServer(force: false);
                     }
+                }
+                else
+                {
+                    Debug.LogError($"{Consts.Log.Tag} <color=red>Build failed</color>. Check the output for details:\n{output}\n{error}\n");
                 }
             }
             else

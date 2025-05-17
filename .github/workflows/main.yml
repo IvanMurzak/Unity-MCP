@@ -22,21 +22,22 @@ on:
 
 jobs:
   test:
-    name: ${{ inputs.unityVersion }} ${{ inputs.testMode }}
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    name: ${{ inputs.unityVersion }} ${{ inputs.testMode }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
         with:
           lfs: false
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '9.0.x'
       - uses: actions/cache@v4
         with:
           path: |
             ${{ inputs.projectPath }}/Library
             ~/.cache/unity3d
-          key: Library-${{ inputs.unityVersion }}-${{ inputs.testMode }}
+          key: Library-${{ inputs.unityVersion }}-${{ inputs.testMode }}-${{ matrix.os }}
       - uses: game-ci/unity-test-runner@v4
         id: tests
         env:

@@ -1,3 +1,4 @@
+#if !UNITY_5_3_OR_NEWER
 using com.IvanMurzak.Unity.MCP.Common.Data.Unity;
 using com.IvanMurzak.Unity.MCP.Server.API.Data;
 using ModelContextProtocol.Protocol.Types;
@@ -55,3 +56,4 @@ if needed - provide proper 'position', 'rotation' and 'scale' to reduce amount o
         }
     }
 }
+#endif

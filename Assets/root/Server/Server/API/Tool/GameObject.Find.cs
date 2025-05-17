@@ -1,3 +1,4 @@
+#if !UNITY_5_3_OR_NEWER
 using com.IvanMurzak.Unity.MCP.Common.Data.Unity;
 using ModelContextProtocol.Protocol.Types;
 using ModelContextProtocol.Server;
@@ -36,3 +37,4 @@ Also, it returns Components preview just for the target GameObject.")]
         }
     }
 }
+#endif

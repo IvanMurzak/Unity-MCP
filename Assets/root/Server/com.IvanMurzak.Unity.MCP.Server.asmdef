@@ -4,15 +4,15 @@
     "references": [
         "com.IvanMurzak.Unity.MCP.Common"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [
-        "UNITY_ENV"
-    ],
+    "defineConstraints": [],
     "versionDefines": [],
     "noEngineReferences": true
 }

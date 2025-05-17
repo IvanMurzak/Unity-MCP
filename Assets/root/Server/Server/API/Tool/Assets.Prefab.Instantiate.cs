@@ -1,3 +1,4 @@
+#if !UNITY_5_3_OR_NEWER
 using com.IvanMurzak.Unity.MCP.Server.API.Data;
 using ModelContextProtocol.Protocol.Types;
 using ModelContextProtocol.Server;
@@ -49,3 +50,4 @@ namespace com.IvanMurzak.Unity.MCP.Server.API
         }
     }
 }
+#endif
