@@ -50,7 +50,7 @@
 }
 
 .section-desc {
-    color: rgb(85, 85, 85);
+    color: rgb(135, 135, 135);
     margin-bottom: 8px;
     white-space: normal;
     white-space: normal;
@@ -124,9 +124,9 @@
     padding-right: 0px;
 }
 .ContentItem .unity-label {
-    width: 80px; /* Set your desired width */
+    width: 85px; /* Set your desired width */
     min-width: 65px;
-    max-width: 100px;
+    max-width: 85px;
     overflow: hidden;
     text-overflow: ellipsis;
     padding-left: -10px;
@@ -135,7 +135,7 @@
     width: 80px;
 }
 .ContentItem .unity-integer-field__input {
-    width: 10px;
+    width: 65px;
 }
 
 .Divider {

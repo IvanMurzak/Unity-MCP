@@ -122,27 +122,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
                 foreach (var kv in mcpServers)
                 {
-                    var isPortMatched = kv.Value?["args"]?.AsArray()
-                        ?.Any(arg => arg?.GetValue<string>() == McpPluginUnity.Port.ToString()) ?? false;
-
                     var command = kv.Value?["command"]?.GetValue<string>();
-                    if (!string.IsNullOrEmpty(command))
-                    {
-                        // Normalize both paths for comparison
-                        try
-                        {
-                            var normalizedCommand = Path.GetFullPath(command.Replace('/', Path.DirectorySeparatorChar));
-                            var normalizedTarget = Path.GetFullPath(Startup.ServerExecutableFile.Replace('/', Path.DirectorySeparatorChar));
-                            if (string.Equals(normalizedCommand, normalizedTarget, StringComparison.OrdinalIgnoreCase))
-                                return isPortMatched;
-                        }
-                        catch
-                        {
-                            // If normalization fails, fallback to string comparison
-                            if (string.Equals(command, Startup.ServerExecutableFile, StringComparison.OrdinalIgnoreCase))
-                                return isPortMatched;
-                        }
-                    }
+                    if (string.IsNullOrEmpty(command) || !IsCommandMatch(command))
+                        continue;
+
+                    var args = kv.Value?["args"]?.AsArray();
+                    return DoArgumentsMatch(args);
                 }
 
                 return false;
@@ -154,6 +139,57 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 return false;
             }
         }
+
+        bool IsCommandMatch(string command)
+        {
+            // Normalize both paths for comparison
+            try
+            {
+                var normalizedCommand = Path.GetFullPath(command.Replace('/', Path.DirectorySeparatorChar));
+                var normalizedTarget = Path.GetFullPath(Startup.ServerExecutableFile.Replace('/', Path.DirectorySeparatorChar));
+                return string.Equals(normalizedCommand, normalizedTarget, StringComparison.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                // If normalization fails, fallback to string comparison
+                return string.Equals(command, Startup.ServerExecutableFile, StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        bool DoArgumentsMatch(JsonArray args)
+        {
+            if (args == null)
+                return false;
+
+            var targetPort = McpPluginUnity.Port.ToString();
+            var targetTimeout = McpPluginUnity.TimeoutMs.ToString();
+            
+            var foundPort = false;
+            var foundTimeout = false;
+
+            // Check for both positional and named argument formats
+            for (int i = 0; i < args.Count; i++)
+            {
+                var arg = args[i]?.GetValue<string>();
+                if (string.IsNullOrEmpty(arg)) 
+                    continue;
+
+                // Check positional format
+                if (i == 0 && arg == targetPort)
+                    foundPort = true;
+                else if (i == 1 && arg == targetTimeout)
+                    foundTimeout = true;
+                
+                // Check named format
+                else if (arg.StartsWith("--port=") && arg.Substring(7) == targetPort)
+                    foundPort = true;
+                else if (arg.StartsWith("--timeout=") && arg.Substring(10) == targetTimeout)
+                    foundTimeout = true;
+            }
+
+            return foundPort && foundTimeout;
+        }
+
         bool ConfigureMcpClient(string configPath, string bodyName = "mcpServers")
         {
             if (string.IsNullOrEmpty(configPath))
@@ -164,7 +200,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 if (!File.Exists(configPath))
                 {
                     // Create the file if it doesn't exist
-                    File.WriteAllText(configPath, Startup.RawJsonConfiguration(McpPluginUnity.Port, bodyName));
+                    File.WriteAllText(configPath, Startup.RawJsonConfiguration(McpPluginUnity.Port, bodyName, McpPluginUnity.TimeoutMs));
                     return true;
                 }
 
@@ -176,7 +212,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     throw new Exception("Config file is not a valid JSON object.");
 
                 // Parse the injected config as JsonObject
-                var injectObj = JsonNode.Parse(Startup.RawJsonConfiguration(McpPluginUnity.Port, bodyName))?.AsObject();
+                var injectObj = JsonNode.Parse(Startup.RawJsonConfiguration(McpPluginUnity.Port, bodyName, McpPluginUnity.TimeoutMs))?.AsObject();
                 if (injectObj == null)
                     throw new Exception("Injected config is not a valid JSON object.");
 

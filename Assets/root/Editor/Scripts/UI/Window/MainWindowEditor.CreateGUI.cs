@@ -46,6 +46,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 McpPluginUnity.BuildAndStart();
             });
 
+            var inputTimeoutMs = root.Query<IntegerField>("inputTimeoutMs").First();
+            inputTimeoutMs.value = McpPluginUnity.TimeoutMs;
+            inputTimeoutMs.tooltip = "Timeout for MCP tool execution in milliseconds.\n\nMost tools only need a few seconds, but running test suites can take much longer.\n\nSet this higher than your longest test execution time.\n\nImportant: Also update the --timeout= argument in your MCP client configuration to match this value so your MCP client doesn't timeout before the tool completes.";
+            inputTimeoutMs.RegisterCallback<FocusOutEvent>(evt =>
+            {
+                var newValue = Mathf.Max(1000, inputTimeoutMs.value);
+                if (newValue == McpPluginUnity.TimeoutMs)
+                    return;
+
+                if (newValue != inputTimeoutMs.value)
+                    inputTimeoutMs.SetValueWithoutNotify(newValue);
+
+                McpPluginUnity.TimeoutMs = newValue;
+
+                // Update the raw JSON configuration display
+                var rawJsonField = root.Query<TextField>("rawJsonConfiguration").First();
+                rawJsonField.value = Startup.RawJsonConfiguration(McpPluginUnity.Port, "mcpServers", McpPluginUnity.TimeoutMs);
+
+                SaveChanges($"[AI Connector] Timeout Changed: {newValue} ms");
+                McpPluginUnity.BuildAndStart();
+            });
+
             // Connection status
             // -----------------------------------------------------------------
 
@@ -214,7 +236,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             // -----------------------------------------------------------------
 
             var rawJsonField = root.Query<TextField>("rawJsonConfiguration").First();
-            rawJsonField.value = Startup.RawJsonConfiguration(McpPluginUnity.Port);
+            rawJsonField.value = Startup.RawJsonConfiguration(McpPluginUnity.Port, "mcpServers", McpPluginUnity.TimeoutMs);
 
             // Rebuild MCP Server
             // -----------------------------------------------------------------

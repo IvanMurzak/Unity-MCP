@@ -7,6 +7,7 @@
                     <ui:Label text="AI Connector (MCP)" name="labelSettings" class="Header" />
                     <ui:VisualElement name="divider" class="Divider" />
                     <ui:EnumField label="Log Level" name="dropdownLogLevel" type="com.IvanMurzak.Unity.MCP.Utils.LogLevel, com.IvanMurzak.Unity.MCP.Runtime" value="Warning" class="ContentItem" style="align-self: flex-start;" />
+                    <ui:IntegerField label="Timeout (ms)" name="inputTimeoutMs" value="10000" class="ContentItem" style="align-self: flex-start;" />
                 </ui:VisualElement>
                 <ui:VisualElement name="imgLogoPivot" class="AnimatedSelectable" style="flex-grow: 0; height: 90px; width: 90px; right: 0; margin-left: 15px; flex-shrink: 0; margin-right: -8px; margin-top: 10px; flex-direction: row;">
                     <ui:VisualElement name="imgLogo" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); background-image: url(&quot;project://database/Assets/root/Editor/Gizmos/logo_512.png?fileID=2800000&amp;guid=bbb0f64bd8f15164781e01168cd6fa4f&amp;type=3#logo_512&quot;); -unity-background-scale-mode: stretch-to-fill; align-self: stretch;" />

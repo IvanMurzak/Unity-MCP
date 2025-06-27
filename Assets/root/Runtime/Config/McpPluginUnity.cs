@@ -72,6 +72,16 @@ namespace com.IvanMurzak.Unity.MCP
                 NotifyChanged(Instance.data);
             }
         }
+        public static int TimeoutMs
+        {
+            get => Instance.data?.timeoutMs ?? Consts.Hub.DefaultTimeoutMs;
+            set
+            {
+                Instance.data ??= new Data();
+                Instance.data.timeoutMs = value;
+                NotifyChanged(Instance.data);
+            }
+        }
         public static ReadOnlyReactiveProperty<HubConnectionState> ConnectionState
             => McpPlugin.Instance.ConnectionState;
 

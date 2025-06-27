@@ -75,9 +75,14 @@ namespace com.IvanMurzak.Unity.MCP.Server
                 }).Build(new Reflector());
 
                 // builder.WebHost.UseUrls(Consts.Hub.DefaultEndpoint);
+                var dataArguments = new DataArguments(args);
+                
+                // Set the runtime configurable timeout
+                ConnectionConfig.TimeoutMs = dataArguments.TimeoutMs;
+                
                 builder.WebHost.UseKestrel(options =>
                 {
-                    options.ListenLocalhost(GetPort(args));
+                    options.ListenLocalhost(dataArguments.Port);
                 });
 
                 var app = builder.Build();
@@ -118,17 +123,6 @@ namespace com.IvanMurzak.Unity.MCP.Server
             {
                 LogManager.Shutdown();
             }
-        }
-        static int GetPort(string[] args)
-        {
-            if (args.Length > 0 && int.TryParse(args[0], out var parsedPort))
-                return parsedPort;
-
-            var envPort = Environment.GetEnvironmentVariable(Consts.Env.Port);
-            if (envPort != null && int.TryParse(envPort, out var parsedEnvPort))
-                return parsedEnvPort;
-
-            return Consts.Hub.DefaultPort;
         }
     }
 }
