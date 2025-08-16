@@ -43,9 +43,9 @@ namespace com.IvanMurzak.Unity.MCP.Utils
             {
                 case LogLevelMicrosoft.Critical:
                 case LogLevelMicrosoft.Error:
-                    UnityEngine.Debug.LogError(message);
                     if (exception != null)
                         UnityEngine.Debug.LogException(exception);
+                    UnityEngine.Debug.LogError(message);
                     break;
 
                 case LogLevelMicrosoft.Warning:

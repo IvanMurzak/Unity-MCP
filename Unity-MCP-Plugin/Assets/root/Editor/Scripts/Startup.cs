@@ -12,14 +12,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         static Startup()
         {
-            McpPluginUnity.BuildAndStart();
+            McpPluginUnity.BuildAndStart(openConnection: !IsCi());
             Server.DownloadServerBinaryIfNeeded();
 
             if (Application.dataPath.Contains(" "))
                 Debug.LogError("The project path contains spaces, which may cause issues during usage of Unity-MCP. Please consider the move the project to a folder without spaces.");
         }
 
-        static bool IsCi()
+        /// <summary>
+        /// Checks if the current environment is a CI environment.
+        /// </summary>
+        public static bool IsCi()
         {
             var ci = Environment.GetEnvironmentVariable("CI");
             var gha = Environment.GetEnvironmentVariable("GITHUB_ACTIONS");

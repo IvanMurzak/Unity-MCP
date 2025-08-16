@@ -12,11 +12,13 @@ namespace com.IvanMurzak.Unity.MCP.Common
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly Reflector _reflector;
+        private readonly ILogger _logger;
 
-        public HubEndpointConnectionBuilder(IServiceProvider serviceProvider, Reflector reflector)
+        public HubEndpointConnectionBuilder(IServiceProvider serviceProvider, Reflector reflector, ILogger<HubConnection> logger)
         {
             _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
             _reflector = reflector ?? throw new ArgumentNullException(nameof(reflector));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public Task<HubConnection> CreateConnectionAsync(string endpoint)
@@ -39,6 +41,9 @@ namespace com.IvanMurzak.Unity.MCP.Common
                 })
                 .ConfigureLogging(logging =>
                 {
+                    logging.ClearProviders();
+                    logging.AddProvider(new ForwardLoggerProvider(_logger,
+                        additionalErrorMessage: "To stop seeing the error, please <b>Stop</b> the connection to MCP server in <b>AI Connector</b> window."));
                     logging.SetMinimumLevel(LogLevel.Trace);
                 })
                 .Build();
