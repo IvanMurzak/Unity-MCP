@@ -116,7 +116,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             }
 
             //if (!McpPlugin.HasInstance)
-            McpPluginUnity.BuildAndStart(McpPluginUnity.KeepConnected && !Startup.IsCi());
+            McpPluginUnity.BuildAndStart();
 
             var requestId = TestCallRequestID.Value;
             TestCallRequestID.Value = string.Empty;

@@ -33,8 +33,12 @@ namespace com.IvanMurzak.Unity.MCP
         static volatile object buildAndStartMutex = new();
         static volatile bool isInitializationStarted = false;
 
-        public static async void BuildAndStart(bool openConnection = true)
+        public static async void BuildAndStart(bool openConnectionIfNeeded = true)
         {
+            // Disable automatic connection in CI environments
+            if (EnvironmentUtils.IsCi())
+                openConnectionIfNeeded = false;
+
             lock (buildAndStartMutex)
             {
                 if (isInitializationStarted)
@@ -43,7 +47,7 @@ namespace com.IvanMurzak.Unity.MCP
             }
             try
             {
-                await BuildAndStartInternal(openConnection);
+                await BuildAndStartInternal(openConnectionIfNeeded);
             }
             catch (Exception ex)
             {
@@ -59,7 +63,7 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
-        static async Task BuildAndStartInternal(bool openConnection)
+        static async Task BuildAndStartInternal(bool openConnectionIfNeeded)
         {
             MainThreadInstaller.Init();
             await McpPlugin.StaticDisposeAsync();
@@ -100,7 +104,7 @@ namespace com.IvanMurzak.Unity.MCP
                 .WithResourcesFromAssembly(AppDomain.CurrentDomain.GetAssemblies())
                 .Build(CreateDefaultReflector());
 
-            if (!openConnection)
+            if (!openConnectionIfNeeded)
                 return;
 
             if (McpPluginUnity.KeepConnected)
