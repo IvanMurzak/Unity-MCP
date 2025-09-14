@@ -27,12 +27,12 @@ The script automatically updates version numbers in:
 
 | File | Location | Description |
 |------|----------|-------------|
-| `README.md` | Line 104 | Download installer URL |
-| `Unity-MCP-Server/server.json` | Lines 11, 17 | Server version (2 occurrences) |
-| `AssetStore-Installer/.../Installer.cs` | Line 19 | C# version constant |
-| `Unity-MCP-Plugin/.../package.json` | Line 14 | Unity package version |
-| `Unity-MCP-Plugin/.../README.md` | Line 104 | Plugin download URL |
-| `Unity-MCP-Plugin/.../McpPluginUnity.Startup.cs` | Line 31 | Plugin C# version constant |
+| `README.md` | Download URL section | Download installer URL |
+| `Unity-MCP-Server/server.json` | Version field (2 occurrences) | Server version (2 occurrences) |
+| `AssetStore-Installer/.../Installer.cs` | Version constant | C# version constant |
+| `Unity-MCP-Plugin/.../package.json` | Version field | Unity package version |
+| `Unity-MCP-Plugin/.../README.md` | Download URL section | Plugin download URL |
+| `Unity-MCP-Plugin/.../McpPluginUnity.Startup.cs` | Version constant | Plugin C# version constant |
 
 ### 🔍 Preview Mode
 Use `-WhatIf` to see exactly what changes will be made without applying them:
