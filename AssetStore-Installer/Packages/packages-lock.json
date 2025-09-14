@@ -7,6 +7,7 @@
       "dependencies": {
         "com.unity.test-framework": "1.1.33",
         "com.unity.modules.uielements": "1.0.0",
+        "extensions.unity.playerprefsex": "2.0.2",
         "org.nuget.microsoft.bcl.memory": "9.0.7",
         "org.nuget.microsoft.aspnetcore.signalr.client": "9.0.7",
         "org.nuget.microsoft.aspnetcore.signalr.protocols.json": "9.0.7",
@@ -88,6 +89,13 @@
         "com.unity.sysroot.linux-x86_64": "2.0.9"
       },
       "url": "https://packages.unity.com"
+    },
+    "extensions.unity.playerprefsex": {
+      "version": "2.0.2",
+      "depth": 1,
+      "source": "registry",
+      "dependencies": {},
+      "url": "https://package.openupm.com"
     },
     "org.nuget.microsoft.aspnetcore.connections.abstractions": {
       "version": "9.0.7",
