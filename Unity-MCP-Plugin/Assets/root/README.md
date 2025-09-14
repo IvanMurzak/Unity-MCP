@@ -101,7 +101,7 @@ Choose `MCP Client` you prefer, don't need to install all of them. This is will 
 
 ## Step 1: Install `Unity Plugin`
 
-- **[⬇️ Download Installer](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.17.1/AI-Game-Dev-Installer.unitypackage)**
+- **[⬇️ Download Installer](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.17.2/AI-Game-Dev-Installer.unitypackage)**
 - **📂 Import installer into Unity project**
   > - You may use double click on the file - Unity will open it
   > - OR: You may open Unity Editor first, then click on `Assets/Import Package/Custom Package`, then choose the file
@@ -211,8 +211,6 @@ Some `MCP Clients` allow to chose different LLM models. Take an eye on it, some 
   ```
 
 > Make sure `Agent` mode is turned on in MCP client
-
-> **📌 Play Mode Reconnection**: The plugin automatically reconnects after exiting Play mode if `Keep Connected` is enabled in the AI Connector window. This ensures seamless AI interaction when switching between Edit and Play modes during development.
 
 ---
 
