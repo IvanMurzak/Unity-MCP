@@ -5,7 +5,7 @@
 
 .DESCRIPTION
     Updates version numbers across all project files automatically to prevent human errors.
-    Supports preview mode, rollback functionality, and automatic git commits.
+    Supports preview mode for safe testing.
 
 .PARAMETER NewVersion
     The new version number in semver format (e.g., "0.18.0")
@@ -13,33 +13,22 @@
 .PARAMETER WhatIf
     Preview changes without applying them
 
-.PARAMETER Rollback
-    Rollback the last version bump using git
-
 .EXAMPLE
     .\bump-version.ps1 -NewVersion "0.18.0"
 
 .EXAMPLE
     .\bump-version.ps1 -NewVersion "0.18.0" -WhatIf
-
-.EXAMPLE
-    .\bump-version.ps1 -Rollback
 #>
 
 param(
-    [Parameter(ParameterSetName = "Bump")]
+    [Parameter(Mandatory = $true)]
     [string]$NewVersion,
 
-    [Parameter(ParameterSetName = "Bump")]
-    [switch]$WhatIf,
-
-    [Parameter(ParameterSetName = "Rollback")]
-    [switch]$Rollback
+    [switch]$WhatIf
 )
 
 # Script configuration
 $ErrorActionPreference = "Stop"
-$script:BackupTag = "version-bump-backup"
 
 # Version file locations (relative to script root)
 $VersionFiles = @(
@@ -113,56 +102,6 @@ function Get-CurrentVersion {
     throw "Could not extract current version from package.json"
 }
 
-function Invoke-Rollback {
-    Write-ColorText "🔄 Rolling back last version bump..." "Cyan"
-
-    # Check if backup tag exists
-    $hasBackup = & git tag -l $script:BackupTag 2>$null
-    if (-not $hasBackup) {
-        Write-ColorText "❌ No backup found. Cannot rollback." "Red"
-        exit 1
-    }
-
-    try {
-        # Reset to backup tag
-        & git reset --hard $script:BackupTag 2>$null
-        if ($LASTEXITCODE -ne 0) {
-            throw "Git reset failed"
-        }
-
-        # Remove backup tag
-        & git tag -d $script:BackupTag 2>$null
-
-        Write-ColorText "✅ Successfully rolled back to previous version." "Green"
-    }
-    catch {
-        Write-ColorText "❌ Rollback failed: $($_.Exception.Message)" "Red"
-        exit 1
-    }
-}
-
-function Test-GitRepository {
-    # Check if we're in a git repository
-    & git rev-parse --git-dir 2>$null | Out-Null
-    if ($LASTEXITCODE -ne 0) {
-        Write-ColorText "❌ Not in a git repository" "Red"
-        return $false
-    }
-
-    # Check for uncommitted changes
-    $status = & git status --porcelain 2>$null
-    if ($status) {
-        Write-ColorText "⚠️  Warning: You have uncommitted changes" "Yellow"
-        Write-ColorText "Uncommitted files:" "Yellow"
-        $status | ForEach-Object { Write-ColorText "  $_" "Gray" }
-
-        $response = Read-Host "Continue anyway? (y/N)"
-        return $response -match "^[Yy]"
-    }
-
-    return $true
-}
-
 function Update-VersionFiles {
     param([string]$OldVersion, [string]$NewVersion, [bool]$PreviewOnly = $false)
 
@@ -233,56 +172,10 @@ function Update-VersionFiles {
     return $changes
 }
 
-function New-GitCommit {
-    param([string]$OldVersion, [string]$NewVersion, [array]$Changes)
-
-    try {
-        # Create backup tag before making changes
-        & git tag $script:BackupTag 2>$null
-
-        # Stage all modified files
-        foreach ($change in $Changes) {
-            $fullPath = Join-Path $PSScriptRoot $change.Path
-            & git add $fullPath
-            if ($LASTEXITCODE -ne 0) {
-                throw "Failed to stage $($change.Path)"
-            }
-        }
-
-        # Create commit
-        $commitMessage = "chore: Bump version from $OldVersion to $NewVersion"
-        & git commit -m $commitMessage 2>$null
-        if ($LASTEXITCODE -ne 0) {
-            throw "Failed to create commit"
-        }
-
-        Write-ColorText "✅ Created git commit: $commitMessage" "Green"
-
-        # Remove backup tag on success
-        & git tag -d $script:BackupTag 2>$null
-    }
-    catch {
-        Write-ColorText "❌ Git commit failed: $($_.Exception.Message)" "Red"
-        Write-ColorText "Use -Rollback to undo changes" "Yellow"
-        throw
-    }
-}
-
 # Main execution
 try {
     Write-ColorText "🚀 Unity-MCP Version Bump Script" "Cyan"
     Write-ColorText "=================================" "Cyan"
-
-    if ($Rollback) {
-        Invoke-Rollback
-        exit 0
-    }
-
-    if ([string]::IsNullOrWhiteSpace($NewVersion)) {
-        Write-ColorText "❌ NewVersion parameter is required" "Red"
-        Write-ColorText "Usage: .\bump-version.ps1 -NewVersion '0.18.0'" "Yellow"
-        exit 1
-    }
 
     # Validate semantic version format
     if (-not (Test-SemanticVersion $NewVersion)) {
@@ -301,11 +194,6 @@ try {
         exit 0
     }
 
-    # Git repository checks (skip for preview)
-    if (-not $WhatIf -and -not (Test-GitRepository)) {
-        exit 1
-    }
-
     Write-ColorText "`n🔍 Scanning for version references..." "Cyan"
 
     # Update version files
@@ -317,14 +205,11 @@ try {
     }
 
     if ($changes -and $changes.Count -gt 0) {
-        Write-ColorText "`n📝 Creating git commit..." "Cyan"
-        New-GitCommit -OldVersion $currentVersion -NewVersion $NewVersion -Changes $changes
-
         Write-ColorText "`n🎉 Version bump completed successfully!" "Green"
         Write-ColorText "   Updated $($changes.Count) files" "White"
         Write-ColorText "   Total replacements: $(($changes | Measure-Object -Property Matches -Sum).Sum)" "White"
         Write-ColorText "   Version: $currentVersion → $NewVersion" "White"
-        Write-ColorText "`n💡 Use '-Rollback' if you need to undo these changes" "Cyan"
+        Write-ColorText "`n💡 Remember to commit these changes to git" "Cyan"
     }
 }
 catch {

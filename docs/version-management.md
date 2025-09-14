@@ -14,16 +14,11 @@ The `bump-version.ps1` script automates version updates across all project files
 
 # Apply the version bump
 .\bump-version.ps1 -NewVersion "0.18.0"
-
-# Rollback if needed
-.\bump-version.ps1 -Rollback
 ```
 
 ## Prerequisites
 
 - **PowerShell Core** (works on Windows, macOS, Linux)
-- **Git repository** (for automatic commits and rollback)
-- **Clean working directory** (no uncommitted changes recommended)
 
 ## Script Features
 
@@ -74,24 +69,16 @@ The script validates semantic version format (major.minor.patch):
 .\bump-version.ps1 -NewVersion "1.0.0.1"    # Too many components
 ```
 
-### 🔄 Git Integration
-The script automatically:
-- Creates a backup tag before changes
-- Stages modified files
-- Creates a commit with format: `chore: Bump version from X.X.X to Y.Y.Y`
-- Removes backup tag on success
-
-### ↩️ Rollback Functionality
-If something goes wrong, you can rollback:
+### 📝 Manual Git Integration
+After running the script successfully, you'll need to manually commit the changes:
 
 ```powershell
-.\bump-version.ps1 -Rollback
-```
+# Stage the modified files
+git add .
 
-This will:
-- Reset to the state before the last version bump
-- Remove the backup tag
-- Restore all files to their previous state
+# Create a commit
+git commit -m "chore: Bump version from 0.17.1 to 0.18.0"
+```
 
 ## Detailed Usage
 
@@ -99,22 +86,13 @@ This will:
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `-NewVersion` | String | New semantic version (e.g., "0.18.0") |
+| `-NewVersion` | String | New semantic version (e.g., "0.18.0") - Required |
 | `-WhatIf` | Switch | Preview changes without applying |
-| `-Rollback` | Switch | Undo the last version bump |
 
-### Parameter Sets
+### Usage Syntax
 
-The script uses PowerShell parameter sets to prevent invalid combinations:
-
-**Bump Parameter Set:**
 ```powershell
 .\bump-version.ps1 -NewVersion "0.18.0" [-WhatIf]
-```
-
-**Rollback Parameter Set:**
-```powershell
-.\bump-version.ps1 -Rollback
 ```
 
 ## Examples
@@ -140,15 +118,12 @@ The script uses PowerShell parameter sets to prevent invalid combinations:
 📝 Plugin README download URL: 1 occurrence(s)
 📝 Plugin C# version constant: 1 occurrence(s)
 
-📝 Creating git commit...
-✅ Created git commit: chore: Bump version from 0.17.1 to 0.18.0
-
 🎉 Version bump completed successfully!
    Updated 6 files
    Total replacements: 7
    Version: 0.17.1 → 0.18.0
 
-💡 Use '-Rollback' if you need to undo these changes
+💡 Remember to commit these changes to git
 ```
 
 ### Preview Changes
@@ -176,37 +151,15 @@ The script uses PowerShell parameter sets to prevent invalid combinations:
 
 ## Safety Features
 
-### Git Repository Checks
-The script performs several safety checks:
-
-1. **Repository Detection**: Ensures you're in a git repository
-2. **Uncommitted Changes**: Warns about uncommitted changes and asks for confirmation
-3. **Backup Creation**: Creates a backup tag before making changes
-
 ### Error Handling
 - **Invalid Version Format**: Validates semantic versioning
 - **Missing Files**: Warns if expected files aren't found
 - **No Matches**: Alerts if version patterns aren't found
-- **Git Failures**: Provides rollback instructions on git errors
-
-### Rollback Protection
-- Creates backup tag before any changes
-- Allows complete rollback to previous state
-- Cleans up backup tags on successful completion
+- **Preview Mode**: Always test with `-WhatIf` before applying changes
 
 ## Troubleshooting
 
 ### Common Issues
-
-#### "Not in a git repository"
-**Problem:** Script requires git repository for safety features.
-**Solution:** Ensure you're running the script from within the Unity-MCP git repository.
-
-#### "You have uncommitted changes"
-**Problem:** Git working directory has uncommitted changes.
-**Solutions:**
-- Commit or stash changes before running
-- Answer 'y' to continue anyway (not recommended)
 
 #### "No version references found to update"
 **Problem:** Script couldn't find version patterns in expected files.
@@ -232,39 +185,21 @@ pwsh -ExecutionPolicy Bypass -File "bump-version.ps1" -NewVersion "0.18.0"
 
 ### Emergency Recovery
 
-#### If Version Bump Fails
-1. **Use Rollback:**
-   ```powershell
-   .\bump-version.ps1 -Rollback
-   ```
-
-2. **Manual Git Reset (if rollback fails):**
-   ```powershell
-   git reset --hard HEAD~1  # Reset to previous commit
-   ```
-
-3. **Restore from Backup Tag:**
-   ```powershell
-   git reset --hard version-bump-backup
-   git tag -d version-bump-backup
-   ```
-
-#### If Script Gets Interrupted
-If the script is interrupted mid-execution:
-
-1. Check git status:
+#### If Version Bump Applies Wrong Changes
+1. **Check git status to see what changed:**
    ```powershell
    git status
+   git diff
    ```
 
-2. If backup tag exists, rollback:
-   ```powershell
-   .\bump-version.ps1 -Rollback
-   ```
-
-3. If no backup tag, manually revert changes:
+2. **Revert changes manually:**
    ```powershell
    git checkout -- .  # Revert all changes
+   ```
+
+3. **Or revert specific files:**
+   ```powershell
+   git checkout -- "path/to/specific/file"
    ```
 
 ## Integration with Development Workflow
@@ -273,8 +208,9 @@ If the script is interrupted mid-execution:
 1. **Complete your changes** and commit them
 2. **Preview the version bump**: `.\bump-version.ps1 -NewVersion "X.Y.Z" -WhatIf`
 3. **Apply the version bump**: `.\bump-version.ps1 -NewVersion "X.Y.Z"`
-4. **Create release** using the new version tag
-5. **Push changes**: `git push && git push --tags`
+4. **Commit the version changes**: `git add . && git commit -m "chore: Bump version to X.Y.Z"`
+5. **Create release** using the new version tag
+6. **Push changes**: `git push && git push --tags`
 
 ### Continuous Integration
 For CI/CD pipelines, you can use the script programmatically:
@@ -294,9 +230,10 @@ if ($LASTEXITCODE -ne 0) {
 1. **Always preview first** with `-WhatIf` before applying changes
 2. **Clean working directory** - commit or stash changes before version bump
 3. **Follow semantic versioning** - increment major/minor/patch appropriately
-4. **Keep backups** - the script creates them automatically, but manual backups never hurt
+4. **Manual git backups** - create a branch or tag before major version changes
 5. **Test after bump** - verify the project still builds and works correctly
 6. **Document changes** - update CHANGELOG.md manually after version bump
+7. **Commit immediately** - commit version changes right after running the script
 
 ## Script Maintenance
 
