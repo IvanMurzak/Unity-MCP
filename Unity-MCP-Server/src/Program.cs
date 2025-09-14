@@ -37,12 +37,12 @@ namespace com.IvanMurzak.Unity.MCP.Server
             // In STDIO mode, redirect console logs to stderr to avoid polluting stdout with non-JSON content
             if (dataArguments.ClientTransport == Consts.MCP.Server.TransportMethod.stdio)
             {
-                var consoleTarget = NLog.LogManager.Configuration?.FindTargetByName("console") as NLog.Targets.ColoredConsoleTarget;
+                var consoleTarget = LogManager.Configuration?.FindTargetByName("console") as NLog.Targets.ColoredConsoleTarget;
                 if (consoleTarget != null)
                 {
                     consoleTarget.StdErr = true;
                 }
-                NLog.LogManager.ReconfigExistingLoggers();
+                LogManager.ReconfigExistingLoggers();
             }
 
             var logger = LogManager.GetCurrentClassLogger();
