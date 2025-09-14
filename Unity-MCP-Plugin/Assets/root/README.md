@@ -212,6 +212,8 @@ Some `MCP Clients` allow to chose different LLM models. Take an eye on it, some 
 
 > Make sure `Agent` mode is turned on in MCP client
 
+> **📌 Play Mode Reconnection**: The plugin automatically reconnects after exiting Play mode if `Keep Connected` is enabled in the AI Connector window. This ensures seamless AI interaction when switching between Edit and Play modes during development.
+
 ---
 
 # How it works
