@@ -11,12 +11,12 @@
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using ModelContextProtocol.Protocol;
-using ModelContextProtocol.Server;
-using NLog;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.Unity.MCP.Common;
 using com.IvanMurzak.Unity.MCP.Common.Model;
+using ModelContextProtocol.Protocol;
+using ModelContextProtocol.Server;
+using NLog;
 
 namespace com.IvanMurzak.Unity.MCP.Server
 {

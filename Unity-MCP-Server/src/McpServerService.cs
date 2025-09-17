@@ -28,6 +28,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
         readonly IMcpServer _mcpServer;
         readonly IMcpRunner _mcpRunner;
         readonly IToolRunner _toolRunner;
+        readonly IPromptRunner _promptRunner;
         readonly IResourceRunner _resourceRunner;
         readonly EventAppToolsChange _eventAppToolsChange;
         readonly CompositeDisposable _disposables = new();
@@ -35,6 +36,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
         public IMcpServer McpServer => _mcpServer;
         public IMcpRunner McpRunner => _mcpRunner;
         public IToolRunner ToolRunner => _toolRunner;
+        public IPromptRunner PromptRunner => _promptRunner;
         public IResourceRunner ResourceRunner => _resourceRunner;
 
         public static McpServerService? Instance { get; private set; }
@@ -44,6 +46,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
             IMcpServer mcpServer,
             IMcpRunner mcpRunner,
             IToolRunner toolRunner,
+            IPromptRunner promptRunner,
             IResourceRunner resourceRunner,
             EventAppToolsChange eventAppToolsChange)
         {
@@ -52,6 +55,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
             _mcpServer = mcpServer ?? throw new ArgumentNullException(nameof(mcpServer));
             _mcpRunner = mcpRunner ?? throw new ArgumentNullException(nameof(mcpRunner));
             _toolRunner = toolRunner ?? throw new ArgumentNullException(nameof(toolRunner));
+            _promptRunner = promptRunner ?? throw new ArgumentNullException(nameof(promptRunner));
             _resourceRunner = resourceRunner ?? throw new ArgumentNullException(nameof(resourceRunner));
             _eventAppToolsChange = eventAppToolsChange ?? throw new ArgumentNullException(nameof(eventAppToolsChange));
 

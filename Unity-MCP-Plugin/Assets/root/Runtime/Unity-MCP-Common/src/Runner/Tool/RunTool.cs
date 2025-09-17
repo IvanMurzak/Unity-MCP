@@ -7,6 +7,7 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
 using System;
 using System.Collections.Generic;
@@ -163,7 +164,11 @@ namespace com.IvanMurzak.Unity.MCP.Common
 
                 // Invoke the method (static or instance)
                 var result = await InvokeDict(finalParameters, cancellationToken);
-                return result as ResponseCallTool ?? ResponseCallTool.Success(result?.ToString());
+
+                if (result is ResponseCallTool response)
+                    return response.SetRequestID(requestId);
+
+                return ResponseCallTool.Success(result?.ToString()).SetRequestID(requestId);
             }
             catch (ArgumentException ex)
             {

@@ -27,6 +27,9 @@ namespace com.IvanMurzak.Unity.MCP.Common
         readonly List<ToolMethodData> _toolMethods = new();
         readonly Dictionary<string, IRunTool> _toolRunners = new();
 
+        readonly List<PromptMethodData> _promptMethods = new();
+        readonly Dictionary<string, IRunPrompt> _promptRunners = new();
+
         readonly List<ResourceMethodData> _resourceMethods = new();
         readonly Dictionary<string, IRunResource> _resourceRunners = new();
 
@@ -167,6 +170,10 @@ namespace com.IvanMurzak.Unity.MCP.Common
             _services.AddSingleton(new ToolRunnerCollection(reflector, _loggerProvider?.CreateLogger(nameof(ToolRunnerCollection)))
                 .Add(_toolMethods)
                 .Add(_toolRunners));
+
+            _services.AddSingleton(new PromptRunnerCollection(reflector, _loggerProvider?.CreateLogger(nameof(PromptRunnerCollection)))
+                .Add(_promptMethods)
+                .Add(_promptRunners));
 
             _services.AddSingleton(new ResourceRunnerCollection(reflector, _loggerProvider?.CreateLogger(nameof(ResourceRunnerCollection)))
                 .Add(_resourceMethods)

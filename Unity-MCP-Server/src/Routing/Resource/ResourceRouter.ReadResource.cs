@@ -19,7 +19,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
 {
     public static partial class ResourceRouter
     {
-        public static async ValueTask<ReadResourceResult> ReadResource(
+        public static async ValueTask<ReadResourceResult> Read(
             RequestContext<ReadResourceRequestParams> request,
             CancellationToken cancellationToken
         )

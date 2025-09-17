@@ -7,9 +7,12 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
+#nullable enable
+
 namespace com.IvanMurzak.Unity.MCP.Common.Model
 {
-    public class ResponseCallToolContent
+    public class ContentBlock
     {
         /// <summary>
         /// The type of content. This determines the structure of the content object. Can be "image", "audio", "text", "resource".
@@ -36,6 +39,6 @@ namespace com.IvanMurzak.Unity.MCP.Common.Model
         /// </summary>
         public ResponseResourceContent? Resource { get; set; }
 
-        public ResponseCallToolContent() { }
+        public ContentBlock() { }
     }
 }

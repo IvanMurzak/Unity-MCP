@@ -28,16 +28,18 @@ namespace com.IvanMurzak.Unity.MCP.Common
         protected readonly ILogger<McpRunner> _logger;
         protected readonly Reflector _reflector;
         readonly ToolRunnerCollection _tools;
+        readonly PromptRunnerCollection _prompts;
         readonly ResourceRunnerCollection _resources;
 
         public Reflector Reflector => _reflector;
 
-        public McpRunner(ILogger<McpRunner> logger, Reflector reflector, ToolRunnerCollection tools, ResourceRunnerCollection resources)
+        public McpRunner(ILogger<McpRunner> logger, Reflector reflector, ToolRunnerCollection tools, PromptRunnerCollection prompts, ResourceRunnerCollection resources)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _logger.LogTrace("Ctor");
             _reflector = reflector ?? throw new ArgumentNullException(nameof(reflector));
             _tools = tools ?? throw new ArgumentNullException(nameof(tools));
+            _prompts = prompts ?? throw new ArgumentNullException(nameof(prompts));
             _resources = resources ?? throw new ArgumentNullException(nameof(resources));
 
             if (_logger.IsEnabled(LogLevel.Trace))
@@ -169,6 +171,27 @@ namespace com.IvanMurzak.Unity.MCP.Common
                 .ToArray()
                 .Pack(data.RequestID)
                 .TaskFromResult();
+
+        public async Task<IResponseData<ResponseGetPrompt>> RunGetPrompt(IRequestGetPrompt request, CancellationToken cancellationToken = default)
+        {
+            if (!_prompts.TryGetValue(request.Name, out var runner))
+            {
+                return ResponseData<ResponseGetPrompt>
+                    .Error(request.RequestID, $"Prompt with Name '{request.Name}' not found.")
+                    .Log(_logger);
+            }
+
+            var result = await runner.Run(request.RequestID, request.Arguments, cancellationToken);
+
+            result.Log(_logger);
+
+            return result.Pack(request.RequestID);
+        }
+
+        public Task<IResponseData<ResponseListPrompts>> RunListPrompts(IRequestListPrompts request, CancellationToken cancellationToken = default)
+        {
+            throw new NotImplementedException();
+        }
 
         IRunResource? FindResourceContentRunner(string uri, IDictionary<string, IRunResource> resources, out string? uriTemplate)
         {

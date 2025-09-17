@@ -11,17 +11,17 @@
 using System;
 using System.Text.Json;
 using System.Threading.Tasks;
+using com.IvanMurzak.ReflectorNet;
+using com.IvanMurzak.Unity.MCP.Common;
+using com.IvanMurzak.Unity.MCP.Common.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Connections;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using NLog.Extensions.Logging;
 using NLog;
-using com.IvanMurzak.ReflectorNet;
-using com.IvanMurzak.Unity.MCP.Common;
-using com.IvanMurzak.Unity.MCP.Common.Json;
+using NLog.Extensions.Logging;
 
 namespace com.IvanMurzak.Unity.MCP.Server
 {
@@ -48,7 +48,6 @@ namespace com.IvanMurzak.Unity.MCP.Server
             var logger = LogManager.GetCurrentClassLogger();
             try
             {
-
                 // TODO: remove usage of static ConnectionConfig, replace it with instance with DI injection.
                 // Set the runtime configurable timeout
                 ConnectionConfig.TimeoutMs = dataArguments.PluginTimeoutMs;
@@ -95,77 +94,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
                     configure.WithServerFeatures(dataArguments);
                 }).Build(reflector);
 
-                // Setup MCP Server ---------------------------------------------------------------
-
-                var mcpBuilder = builder.Services
-                    .AddMcpServer(options =>
-                    {
-                        options.Capabilities ??= new();
-                        options.Capabilities.Tools ??= new();
-                        options.Capabilities.Tools.ListChanged = true;
-                    })
-                    .WithToolsFromAssembly()
-                    .WithCallToolHandler(ToolRouter.Call)
-                    .WithListToolsHandler(ToolRouter.ListAll);
-
-                if (dataArguments.ClientTransport == Consts.MCP.Server.TransportMethod.stdio)
-                {
-                    // Configure STDIO transport
-                    mcpBuilder = mcpBuilder.WithStdioServerTransport();
-                }
-                else if (dataArguments.ClientTransport == Consts.MCP.Server.TransportMethod.http)
-                {
-                    // Configure HTTP transport
-                    mcpBuilder = mcpBuilder.WithHttpTransport(options =>
-                    {
-                        logger.Debug($"Http transport configuration.");
-
-                        options.Stateless = false;
-                        options.PerSessionExecutionContext = true;
-                        options.RunSessionHandler = async (context, server, cancellationToken) =>
-                        {
-                            var connectionGuid = Guid.NewGuid();
-                            try
-                            {
-                                // This is where you can run logic before a session starts
-                                // For example, you can log the session start or initialize resources
-                                logger.Debug($"----------\nRunning session handler for HTTP transport. Connection guid: {connectionGuid}");
-
-                                var service = new McpServerService(
-                                    server.Services!.GetRequiredService<ILogger<McpServerService>>(),
-                                    server,
-                                    server.Services!.GetRequiredService<IMcpRunner>(),
-                                    server.Services!.GetRequiredService<IToolRunner>(),
-                                    server.Services!.GetRequiredService<IResourceRunner>(),
-                                    server.Services!.GetRequiredService<EventAppToolsChange>()
-                                );
-
-                                try
-                                {
-                                    await service.StartAsync(cancellationToken);
-                                    await server.RunAsync(cancellationToken);
-                                }
-                                finally
-                                {
-                                    await service.StopAsync(cancellationToken);
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                logger.Error(ex, $"Error occurred while processing HTTP transport session. Connection guid: {connectionGuid}.");
-                            }
-                            finally
-                            {
-                                logger.Debug($"Session handler for HTTP transport completed. Connection guid: {connectionGuid}\n----------");
-                            }
-                        };
-                    });
-                }
-                else
-                {
-                    throw new ArgumentException($"Unsupported transport method: {dataArguments.ClientTransport}. " +
-                        $"Supported methods are: {Consts.MCP.Server.TransportMethod.stdio}, {Consts.MCP.Server.TransportMethod.http}");
-                }
+                builder.Services.WithMcpServer(dataArguments, logger);
 
                 // builder.WebHost.UseUrls(Consts.Hub.DefaultEndpoint);
 

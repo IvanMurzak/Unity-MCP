@@ -7,6 +7,7 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
 using System;
 using System.Threading;
@@ -48,6 +49,12 @@ namespace com.IvanMurzak.Unity.MCP.Common
     public interface IToolDelayedResult
     {
         Task SetDelayedToolResult(IRequestCallTool request, IResponseData<ResponseCallTool> response, CancellationToken cancellationToken = default);
+    }
+
+    public interface IPromptRunner
+    {
+        Task<IResponseData<ResponseGetPrompt>> RunGetPrompt(IRequestGetPrompt request, CancellationToken cancellationToken = default);
+        Task<IResponseData<ResponseListPrompts>> RunListPrompts(IRequestListPrompts request, CancellationToken cancellationToken = default);
     }
 
     public interface IResourceRunner

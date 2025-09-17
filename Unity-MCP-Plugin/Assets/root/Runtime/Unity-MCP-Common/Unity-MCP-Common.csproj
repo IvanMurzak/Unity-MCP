@@ -10,7 +10,7 @@
 
     <!-- NuGet Package Information -->
     <PackageId>com.IvanMurzak.Unity.MCP.Common</PackageId>
-    <Version>1.4.0</Version>
+    <Version>1.5.0</Version>
     <Authors>Ivan Murzak</Authors>
     <Copyright>Copyright © Ivan Murzak 2025</Copyright>
     <Description>Shared code between Unity-MCP-Plugin and Unity-MCP-Server projects.</Description>
