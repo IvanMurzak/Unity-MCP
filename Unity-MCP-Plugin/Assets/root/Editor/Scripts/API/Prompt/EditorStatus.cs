@@ -23,11 +23,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Name = "EditorStatus_Get",
             Description = "Get Editor status"
         )]
-        public string Get(string uri, string path)
+        public string Get()
         {
-            if (string.IsNullOrEmpty(path))
-                throw new System.Exception("[Error] Path to the GameObject is empty.");
-
             return MainThread.Instance.Run(() =>
             {
                 return $"Application.isPlaying={Application.isPlaying}";
