@@ -47,6 +47,9 @@ Automatically refreshes the AssetDatabase and handles domain reload scenarios.")
             if (requestId == null || string.IsNullOrWhiteSpace(requestId))
                 return ResponseCallTool.Error(Error.InvalidRequestID());
 
+            if (packageIds == null || packageIds.Length == 0)
+                return ResponseCallTool.Success("[Info] No packages specified for removal.").SetRequestID(requestId);
+
             return await MainThread.Instance.RunAsync(async () =>
             {
                 if (McpPluginUnity.IsLogActive(LogLevel.Info))
