@@ -13,12 +13,13 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Common;
 using com.IvanMurzak.Unity.MCP.Common.Model;
 using com.IvanMurzak.Unity.MCP.Utils;
-using SimpleJSON;
 using UnityEditor;
 using UnityEngine;
 
@@ -63,12 +64,12 @@ Automatically refreshes the AssetDatabase and handles domain reload scenarios.")
 
                     // Read and parse manifest.json
                     var jsonText = File.ReadAllText(manifestPath);
-                    var manifestJson = JSONObject.Parse(jsonText);
+                    var manifestJson = JsonNode.Parse(jsonText)?.AsObject();
                     
                     if (manifestJson == null)
                         return ResponseCallTool.Error(Error.ManifestParseError(manifestPath)).SetRequestID(requestId);
 
-                    var dependencies = manifestJson["dependencies"];
+                    var dependencies = manifestJson["dependencies"]?.AsObject();
                     if (dependencies == null)
                     {
                         // No dependencies section - all packages are "not found"
@@ -80,7 +81,7 @@ Automatically refreshes the AssetDatabase and handles domain reload scenarios.")
                         // Process each package ID
                         foreach (var packageId in packageIds)
                         {
-                            if (dependencies[packageId] != null)
+                            if (dependencies.ContainsKey(packageId))
                             {
                                 // Package found - remove it
                                 dependencies.Remove(packageId);
@@ -101,8 +102,14 @@ Automatically refreshes the AssetDatabase and handles domain reload scenarios.")
                     // If at least one package was removed, save the manifest and refresh
                     if (packagesRemoved)
                     {
-                        // Save the modified manifest
-                        File.WriteAllText(manifestPath, manifestJson.ToString(2).Replace("\" : ", "\": "));
+                        // Save the modified manifest with proper formatting
+                        var options = new JsonSerializerOptions 
+                        { 
+                            WriteIndented = true,
+                            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping
+                        };
+                        var formattedJson = JsonSerializer.Serialize(manifestJson, options);
+                        File.WriteAllText(manifestPath, formattedJson);
                         
                         if (McpPluginUnity.IsLogActive(LogLevel.Info))
                             Debug.Log("[Package_Remove] Manifest.json updated, refreshing AssetDatabase...");
