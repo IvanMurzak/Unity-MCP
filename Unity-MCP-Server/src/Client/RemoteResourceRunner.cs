@@ -12,6 +12,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.Unity.MCP.Common;
+using com.IvanMurzak.Unity.MCP.Common.SignalR;
 using com.IvanMurzak.ReflectorNet.Model;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
@@ -41,7 +42,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
             return ClientUtils.InvokeAsync<IRequestResourceContent, ResponseResourceContent[], RemoteApp>(
                 logger: _logger,
                 hubContext: _remoteAppContext,
-                methodName: Consts.RPC.Client.RunResourceContent,
+                methodName: SignalRMethodNames.Client.RunResourceContent,
                 request: requestData,
                 cancellationToken: cancellationToken);
         }
@@ -51,7 +52,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
             return ClientUtils.InvokeAsync<IRequestListResources, ResponseListResource[], RemoteApp>(
                 logger: _logger,
                 hubContext: _remoteAppContext,
-                methodName: Consts.RPC.Client.RunListResources,
+                methodName: SignalRMethodNames.Client.RunListResources,
                 request: requestData,
                 cancellationToken: cancellationToken);
         }
@@ -61,7 +62,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
             return ClientUtils.InvokeAsync<IRequestListResourceTemplates, ResponseResourceTemplate[], RemoteApp>(
                 logger: _logger,
                 hubContext: _remoteAppContext,
-                methodName: Consts.RPC.Client.RunListResourceTemplates,
+                methodName: SignalRMethodNames.Client.RunListResourceTemplates,
                 request: requestData,
                 cancellationToken: cancellationToken);
         }

@@ -12,6 +12,7 @@ using System;
 using System.Threading.Tasks;
 using com.IvanMurzak.Unity.MCP.Common;
 using com.IvanMurzak.Unity.MCP.Common.Model;
+using com.IvanMurzak.Unity.MCP.Common.SignalR;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 
@@ -93,6 +94,18 @@ namespace com.IvanMurzak.Unity.MCP.Server
             }
 
             return Task.FromResult(response);
+        }
+
+        public Task<IResponseData> OnDomainReloadStarted()
+        {
+            _logger.LogTrace("OnDomainReloadStarted. {0}", _guid);
+            return ResponseData.Success(string.Empty, string.Empty).TaskFromResult<IResponseData>();
+        }
+
+        public Task<IResponseData> OnDomainReloadCompleted()
+        {
+            _logger.LogTrace("OnDomainReloadCompleted. {0}", _guid);
+            return ResponseData.Success(string.Empty, string.Empty).TaskFromResult<IResponseData>();
         }
 
         private static bool IsApiVersionCompatible(string pluginApiVersion, string serverApiVersion)

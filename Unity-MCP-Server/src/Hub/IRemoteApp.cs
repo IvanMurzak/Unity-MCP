@@ -11,15 +11,13 @@
 using System;
 using System.Threading.Tasks;
 using com.IvanMurzak.Unity.MCP.Common.Model;
+using com.IvanMurzak.Unity.MCP.Common.SignalR;
 
 namespace com.IvanMurzak.Unity.MCP.Server
 {
-    public interface IRemoteApp : IToolResponseReceiver, IResourceResponseReceiver, IDisposable
+    public interface IRemoteApp : IMcpHubServer, IToolResponseReceiver, IResourceResponseReceiver
     {
-        Task<IResponseData> OnListToolsUpdated(string data);
-        Task<IResponseData> OnListResourcesUpdated(string data);
-        Task<IResponseData> OnToolRequestCompleted(ToolRequestCompletedData data);
-        Task<VersionHandshakeResponse> OnVersionHandshake(VersionHandshakeRequest request);
+        // IRemoteApp can extend IMcpHubServer with additional functionality if needed
     }
 
     public interface IToolResponseReceiver

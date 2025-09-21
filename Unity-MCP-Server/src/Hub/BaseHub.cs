@@ -14,6 +14,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.Unity.MCP.Common;
+using com.IvanMurzak.Unity.MCP.Common.SignalR;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using R3;
@@ -57,7 +58,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
                 {
                     _logger.LogInformation("{0} Client '{1}' removed from connected clients for {2}.", _guid, connectionId, GetType().GetTypeShortName());
                     var client = Clients.Client(connectionId);
-                    client.SendAsync(Consts.RPC.Client.ForceDisconnect);
+                    client.SendAsync(SignalRMethodNames.Client.ForceDisconnect);
                 }
                 else
                 {

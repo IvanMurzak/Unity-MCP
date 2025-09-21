@@ -12,6 +12,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.Unity.MCP.Common;
+using com.IvanMurzak.Unity.MCP.Common.SignalR;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using R3;
@@ -46,7 +47,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
                     var responseData = await ClientUtils.InvokeAsync<IRequestCallTool, ResponseCallTool, RemoteApp>(
                         logger: _logger,
                         hubContext: _remoteAppContext,
-                        methodName: Consts.RPC.Client.RunCallTool,
+                        methodName: SignalRMethodNames.Client.RunCallTool,
                         request: request,
                         cancellationToken: linkedCts.Token);
 
@@ -63,7 +64,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
             => ClientUtils.InvokeAsync<IRequestListTool, ResponseListTool[], RemoteApp>(
                 logger: _logger,
                 hubContext: _remoteAppContext,
-                methodName: Consts.RPC.Client.RunListTool,
+                methodName: SignalRMethodNames.Client.RunListTool,
                 request: request,
                 cancellationToken: CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken).Token)
                 .ContinueWith(task =>

@@ -13,6 +13,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.Unity.MCP.Common.Json;
 using com.IvanMurzak.Unity.MCP.Common.Model;
+using com.IvanMurzak.Unity.MCP.Common.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
 using R3;
@@ -66,43 +67,43 @@ namespace com.IvanMurzak.Unity.MCP.Common
 
             _logger.LogTrace("{class} Subscribing to server events.", nameof(RpcRouter));
 
-            hubConnection.On(Consts.RPC.Client.ForceDisconnect, async () =>
+            hubConnection.On(SignalRMethodNames.Client.ForceDisconnect, async () =>
             {
-                _logger.LogDebug("{class}.{method}", nameof(RpcRouter), Consts.RPC.Client.ForceDisconnect);
+                _logger.LogDebug("{class}.{method}", nameof(RpcRouter), SignalRMethodNames.Client.ForceDisconnect);
                 await _connectionManager.Disconnect();
             });
 
-            hubConnection.On<RequestCallTool, IResponseData<ResponseCallTool>>(Consts.RPC.Client.RunCallTool, async data =>
+            hubConnection.On<RequestCallTool, IResponseData<ResponseCallTool>>(SignalRMethodNames.Client.RunCallTool, async data =>
                 {
-                    _logger.LogDebug("{class}.{method}", nameof(RpcRouter), Consts.RPC.Client.RunCallTool);
+                    _logger.LogDebug("{class}.{method}", nameof(RpcRouter), SignalRMethodNames.Client.RunCallTool);
                     return await _mcpRunner.RunCallTool(data);
                 })
                 .AddTo(_serverEventsDisposables);
 
-            hubConnection.On<RequestListTool, IResponseData<ResponseListTool[]>>(Consts.RPC.Client.RunListTool, async data =>
+            hubConnection.On<RequestListTool, IResponseData<ResponseListTool[]>>(SignalRMethodNames.Client.RunListTool, async data =>
                 {
-                    _logger.LogDebug("{class}.{method}", nameof(RpcRouter), Consts.RPC.Client.RunListTool);
+                    _logger.LogDebug("{class}.{method}", nameof(RpcRouter), SignalRMethodNames.Client.RunListTool);
                     return await _mcpRunner.RunListTool(data);
                 })
                 .AddTo(_serverEventsDisposables);
 
-            hubConnection.On<RequestResourceContent, IResponseData<ResponseResourceContent[]>>(Consts.RPC.Client.RunResourceContent, async data =>
+            hubConnection.On<RequestResourceContent, IResponseData<ResponseResourceContent[]>>(SignalRMethodNames.Client.RunResourceContent, async data =>
                 {
-                    _logger.LogDebug("{class}.{method}", nameof(RpcRouter), Consts.RPC.Client.RunResourceContent);
+                    _logger.LogDebug("{class}.{method}", nameof(RpcRouter), SignalRMethodNames.Client.RunResourceContent);
                     return await _mcpRunner.RunResourceContent(data);
                 })
                 .AddTo(_serverEventsDisposables);
 
-            hubConnection.On<RequestListResources, IResponseData<ResponseListResource[]>>(Consts.RPC.Client.RunListResources, async data =>
+            hubConnection.On<RequestListResources, IResponseData<ResponseListResource[]>>(SignalRMethodNames.Client.RunListResources, async data =>
                 {
-                    _logger.LogDebug("{class}.{method}", nameof(RpcRouter), Consts.RPC.Client.RunListResources);
+                    _logger.LogDebug("{class}.{method}", nameof(RpcRouter), SignalRMethodNames.Client.RunListResources);
                     return await _mcpRunner.RunListResources(data);
                 })
                 .AddTo(_serverEventsDisposables);
 
-            hubConnection.On<RequestListResourceTemplates, IResponseData<ResponseResourceTemplate[]>>(Consts.RPC.Client.RunListResourceTemplates, async data =>
+            hubConnection.On<RequestListResourceTemplates, IResponseData<ResponseResourceTemplate[]>>(SignalRMethodNames.Client.RunListResourceTemplates, async data =>
                 {
-                    _logger.LogDebug("{class}.{method}", nameof(RpcRouter), Consts.RPC.Client.RunListResourceTemplates);
+                    _logger.LogDebug("{class}.{method}", nameof(RpcRouter), SignalRMethodNames.Client.RunListResourceTemplates);
                     return await _mcpRunner.RunResourceTemplates(data);
                 })
                 .AddTo(_serverEventsDisposables);
@@ -111,13 +112,13 @@ namespace com.IvanMurzak.Unity.MCP.Common
         public Task<ResponseData> NotifyAboutUpdatedTools(CancellationToken cancellationToken = default)
         {
             _logger.LogTrace("{class} Notify server about updated tools.", nameof(RpcRouter));
-            return _connectionManager.InvokeAsync<string, ResponseData>(Consts.RPC.Server.OnListToolsUpdated, string.Empty, cancellationToken);
+            return _connectionManager.InvokeAsync<string, ResponseData>(SignalRMethodNames.Server.OnListToolsUpdated, string.Empty, cancellationToken);
         }
 
         public Task<ResponseData> NotifyAboutUpdatedResources(CancellationToken cancellationToken = default)
         {
             _logger.LogTrace("{class} Notify server about updated resources.", nameof(RpcRouter));
-            return _connectionManager.InvokeAsync<string, ResponseData>(Consts.RPC.Server.OnListResourcesUpdated, string.Empty, cancellationToken);
+            return _connectionManager.InvokeAsync<string, ResponseData>(SignalRMethodNames.Server.OnListResourcesUpdated, string.Empty, cancellationToken);
         }
 
         public Task<ResponseData> NotifyToolRequestCompleted(ResponseCallTool response, CancellationToken cancellationToken = default)
@@ -135,7 +136,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
                 RequestId = response.RequestID,
                 Result = response
             };
-            return _connectionManager.InvokeAsync<ToolRequestCompletedData, ResponseData>(Consts.RPC.Server.OnToolRequestCompleted, data, cancellationToken);
+            return _connectionManager.InvokeAsync<ToolRequestCompletedData, ResponseData>(SignalRMethodNames.Server.OnToolRequestCompleted, data, cancellationToken);
         }
 
         public async Task<VersionHandshakeResponse?> PerformVersionHandshake(CancellationToken cancellationToken = default)
@@ -153,7 +154,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
             try
             {
                 var response = await _connectionManager.InvokeAsync<VersionHandshakeRequest, VersionHandshakeResponse>(
-                    Consts.RPC.Server.OnVersionHandshake, request, cancellationToken);
+                    SignalRMethodNames.Server.OnVersionHandshake, request, cancellationToken);
 
                 if (response == null)
                 {
