@@ -137,7 +137,9 @@ namespace com.IvanMurzak.Unity.MCP.Installer
                 }
             }
 
-            // --- Package Dependency
+            // --- Package Dependency (Version-aware installation)
+            // Only update version if installer version is higher than current version
+            // This prevents downgrades when users manually update to newer versions
             var dependencies = manifestJson[Dependencies];
             if (dependencies == null)
             {

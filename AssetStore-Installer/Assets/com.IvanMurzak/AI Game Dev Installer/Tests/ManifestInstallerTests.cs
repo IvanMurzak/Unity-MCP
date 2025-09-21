@@ -48,6 +48,14 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
             {
                 Debug.Log($"Found JSON file: {file}");
 
+                // Skip version-specific test files - they are handled by VersionComparisonTests
+                var fileName = Path.GetFileName(file);
+                if (fileName.StartsWith("version_"))
+                {
+                    Debug.Log($"Skipping version-specific test file: {fileName} (handled by VersionComparisonTests)");
+                    continue;
+                }
+
                 // Copy the file
                 var fileCopy = Path.Combine(FilesCopyRoot, Path.GetFileName(file));
                 File.Copy(file, fileCopy, overwrite: true);
