@@ -38,6 +38,37 @@ namespace com.IvanMurzak.Unity.MCP.Installer
             "org.nuget.r3"               // R3 package NuGet package
         };
 
+        /// <summary>
+        /// Determines if the version should be updated. Only update if installer version is higher than current version.
+        /// </summary>
+        /// <param name="currentVersion">Current package version string</param>
+        /// <param name="installerVersion">Installer version string</param>
+        /// <returns>True if version should be updated (installer version is higher), false otherwise</returns>
+        private static bool ShouldUpdateVersion(string currentVersion, string installerVersion)
+        {
+            if (string.IsNullOrEmpty(currentVersion))
+                return true; // No current version, should install
+
+            if (string.IsNullOrEmpty(installerVersion))
+                return false; // No installer version, don't change
+
+            try
+            {
+                // Try to parse as System.Version (semantic versioning)
+                var current = new System.Version(currentVersion);
+                var installer = new System.Version(installerVersion);
+                
+                // Only update if installer version is higher than current version
+                return installer > current;
+            }
+            catch (System.Exception)
+            {
+                // If version parsing fails, fall back to string comparison
+                // This ensures we don't break if version format is unexpected
+                return string.Compare(installerVersion, currentVersion, System.StringComparison.OrdinalIgnoreCase) > 0;
+            }
+        }
+
         public static void AddScopedRegistryIfNeeded(string manifestPath, int indent = 2)
         {
             if (!File.Exists(manifestPath))
@@ -113,7 +144,10 @@ namespace com.IvanMurzak.Unity.MCP.Installer
                 manifestJson[Dependencies] = dependencies = new JSONObject();
                 modified = true;
             }
-            if (dependencies[PackageId] != Version)
+            
+            // Only update version if installer version is higher than current version
+            var currentVersion = dependencies[PackageId];
+            if (currentVersion == null || ShouldUpdateVersion(currentVersion, Version))
             {
                 dependencies[PackageId] = Version;
                 modified = true;
