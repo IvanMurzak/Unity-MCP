@@ -8,7 +8,6 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 using System.IO;
-using System.Reflection;
 using NUnit.Framework;
 using UnityEngine;
 using SimpleJSON;
@@ -35,40 +34,45 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
                 File.Delete(TestManifestPath);
         }
 
-        /// <summary>
-        /// Uses reflection to access the private ShouldUpdateVersion method for testing
-        /// </summary>
-        private bool ShouldUpdateVersion(string currentVersion, string installerVersion)
-        {
-            var method = typeof(Installer).GetMethod("ShouldUpdateVersion", 
-                BindingFlags.NonPublic | BindingFlags.Static);
-            Assert.IsNotNull(method, "ShouldUpdateVersion method not found");
-            return (bool)method.Invoke(null, new object[] { currentVersion, installerVersion });
-        }
+
 
         [Test]
         public void ShouldUpdateVersion_InstallerHigher_ReturnsTrue()
         {
-            // Arrange
-            var currentVersion = "0.17.1";
-            var installerVersion = "0.17.2";
-
-            // Act
-            var result = ShouldUpdateVersion(currentVersion, installerVersion);
-
             // Assert
-            Assert.IsTrue(result, "Should update when installer version is higher");
+            Assert.IsTrue(
+                condition: Installer.ShouldUpdateVersion(
+                    currentVersion: "0.17.1",
+                    installerVersion: "0.17.2"
+                ),
+                message: "Should update when installer version is higher"
+            );
+
+            Assert.IsTrue(
+                condition: Installer.ShouldUpdateVersion(
+                    currentVersion: "0.9.0",
+                    installerVersion: "0.17.0"
+                ),
+                message: "Should update when installer version is higher"
+            );
+
+            Assert.IsTrue(
+                condition: Installer.ShouldUpdateVersion(
+                    currentVersion: "0.17.1",
+                    installerVersion: "1.0.0"
+                ),
+                message: "Should update when installer version is higher"
+            );
         }
 
         [Test]
         public void ShouldUpdateVersion_InstallerLower_ReturnsFalse()
         {
-            // Arrange
-            var currentVersion = "0.18.0";
-            var installerVersion = "0.17.2";
-
             // Act
-            var result = ShouldUpdateVersion(currentVersion, installerVersion);
+            var result = Installer.ShouldUpdateVersion(
+                currentVersion: "0.18.0",
+                installerVersion: "0.17.2"
+            );
 
             // Assert
             Assert.IsFalse(result, "Should not downgrade when installer version is lower");
@@ -77,12 +81,11 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
         [Test]
         public void ShouldUpdateVersion_SameVersion_ReturnsFalse()
         {
-            // Arrange
-            var currentVersion = "0.17.2";
-            var installerVersion = "0.17.2";
-
             // Act
-            var result = ShouldUpdateVersion(currentVersion, installerVersion);
+            var result = Installer.ShouldUpdateVersion(
+                currentVersion: "0.17.2",
+                installerVersion: "0.17.2"
+            );
 
             // Assert
             Assert.IsFalse(result, "Should not update when versions are the same");
@@ -96,7 +99,7 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
             var installerVersion = "0.17.2";
 
             // Act
-            var result = ShouldUpdateVersion(currentVersion, installerVersion);
+            var result = Installer.ShouldUpdateVersion(currentVersion, installerVersion);
 
             // Assert
             Assert.IsTrue(result, "Should install when no current version exists");
@@ -110,7 +113,7 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
             var installerVersion = "0.17.2";
 
             // Act
-            var result = ShouldUpdateVersion(currentVersion, installerVersion);
+            var result = Installer.ShouldUpdateVersion(currentVersion, installerVersion);
 
             // Assert
             Assert.IsTrue(result, "Should install when current version is null");
@@ -120,11 +123,11 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
         public void ShouldUpdateVersion_MajorVersionDifference_WorksCorrectly()
         {
             // Test major version upgrade
-            Assert.IsTrue(ShouldUpdateVersion("0.17.2", "1.0.0"), 
+            Assert.IsTrue(Installer.ShouldUpdateVersion("0.17.2", "1.0.0"),
                 "Should upgrade from 0.17.2 to 1.0.0");
-            
+
             // Test major version downgrade prevention
-            Assert.IsFalse(ShouldUpdateVersion("1.0.0", "0.17.2"), 
+            Assert.IsFalse(Installer.ShouldUpdateVersion("1.0.0", "0.17.2"),
                 "Should not downgrade from 1.0.0 to 0.17.2");
         }
 
@@ -150,8 +153,8 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
             var updatedContent = File.ReadAllText(TestManifestPath);
             var updatedManifest = JSONObject.Parse(updatedContent);
             var actualVersion = updatedManifest["dependencies"][PackageId];
-            
-            Assert.AreEqual(higherVersion, actualVersion.ToString().Trim('"'), 
+
+            Assert.AreEqual(higherVersion, actualVersion.ToString().Trim('"'),
                 "Version should not be downgraded from higher version");
         }
 
@@ -177,8 +180,8 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
             var updatedContent = File.ReadAllText(TestManifestPath);
             var updatedManifest = JSONObject.Parse(updatedContent);
             var actualVersion = updatedManifest["dependencies"][PackageId];
-            
-            Assert.AreEqual(Installer.Version, actualVersion.ToString().Trim('"'), 
+
+            Assert.AreEqual(Installer.Version, actualVersion.ToString().Trim('"'),
                 "Version should be upgraded to installer version");
         }
 
@@ -200,8 +203,8 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
             var updatedContent = File.ReadAllText(TestManifestPath);
             var updatedManifest = JSONObject.Parse(updatedContent);
             var actualVersion = updatedManifest["dependencies"][PackageId];
-            
-            Assert.AreEqual(Installer.Version, actualVersion.ToString().Trim('"'), 
+
+            Assert.AreEqual(Installer.Version, actualVersion.ToString().Trim('"'),
                 "New package should be installed with installer version");
         }
     }

@@ -12,7 +12,9 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 using SimpleJSON;
+using System.Runtime.CompilerServices;
 
+[assembly: InternalsVisibleTo("com.IvanMurzak.Unity.MCP.Installer.Tests")]
 namespace com.IvanMurzak.Unity.MCP.Installer
 {
     public static partial class Installer
@@ -44,7 +46,8 @@ namespace com.IvanMurzak.Unity.MCP.Installer
         /// <param name="currentVersion">Current package version string</param>
         /// <param name="installerVersion">Installer version string</param>
         /// <returns>True if version should be updated (installer version is higher), false otherwise</returns>
-        private static bool ShouldUpdateVersion(string currentVersion, string installerVersion)
+
+        internal static bool ShouldUpdateVersion(string currentVersion, string installerVersion)
         {
             if (string.IsNullOrEmpty(currentVersion))
                 return true; // No current version, should install
@@ -57,7 +60,7 @@ namespace com.IvanMurzak.Unity.MCP.Installer
                 // Try to parse as System.Version (semantic versioning)
                 var current = new System.Version(currentVersion);
                 var installer = new System.Version(installerVersion);
-                
+
                 // Only update if installer version is higher than current version
                 return installer > current;
             }
@@ -146,7 +149,7 @@ namespace com.IvanMurzak.Unity.MCP.Installer
                 manifestJson[Dependencies] = dependencies = new JSONObject();
                 modified = true;
             }
-            
+
             // Only update version if installer version is higher than current version
             var currentVersion = dependencies[PackageId];
             if (currentVersion == null || ShouldUpdateVersion(currentVersion, Version))
