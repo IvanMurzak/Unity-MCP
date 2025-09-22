@@ -194,7 +194,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
 
                 return ResponseGetPrompt.Success(
                     result.ToString(),
-                    role: Role.Assistant,
+                    role: Method.GetCustomAttribute<McpPluginPromptAttribute>()?.Role ?? Role.User,
                     description: description).SetRequestID(requestId);
             }
             catch (ArgumentException ex)

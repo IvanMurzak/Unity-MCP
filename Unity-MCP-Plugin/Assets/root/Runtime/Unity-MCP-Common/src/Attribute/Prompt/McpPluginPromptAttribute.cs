@@ -10,6 +10,7 @@
 
 #nullable enable
 using System;
+using com.IvanMurzak.Unity.MCP.Common.Model;
 
 namespace com.IvanMurzak.Unity.MCP.Common
 {
@@ -17,7 +18,10 @@ namespace com.IvanMurzak.Unity.MCP.Common
     public sealed class McpPluginPromptAttribute : Attribute
     {
         public string Name { get; set; } = string.Empty;
-        public string? Title { get; set; }
+        public Role Role { get; set; } = Role.User;
+
+        // Not used for now
+        // public string? Title { get; set; }
 
         public McpPluginPromptAttribute() { }
     }

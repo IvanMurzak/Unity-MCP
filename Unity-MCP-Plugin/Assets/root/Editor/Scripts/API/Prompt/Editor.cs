@@ -12,21 +12,29 @@
 using System.ComponentModel;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Common;
+using com.IvanMurzak.Unity.MCP.Common.Model;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     [McpPluginPromptType]
-    public partial class Resource_GameObject
+    public partial class Prompt_Editor
     {
-        [McpPluginPrompt(Name = "get-editor-status")]
+        [McpPluginPrompt(Name = "get-editor-status", Role = Role.Assistant)]
         [Description("Get current editor status.")]
-        public string Get()
+        public string GetStatus()
         {
             return MainThread.Instance.Run(() =>
             {
                 return $"Application.isPlaying={Application.isPlaying}";
             });
+        }
+
+        [McpPluginPrompt(Name = "set-editor-play-mode", Role = Role.User)]
+        [Description("Set Editor Play Mode.")]
+        public string SetPlayMode(bool isPlaying)
+        {
+            return $"Set Unity Editor Play Mode to '{isPlaying}'";
         }
     }
 }
