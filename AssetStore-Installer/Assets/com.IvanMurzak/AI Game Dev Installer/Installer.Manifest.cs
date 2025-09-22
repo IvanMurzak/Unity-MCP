@@ -66,6 +66,7 @@ namespace com.IvanMurzak.Unity.MCP.Installer
             }
             catch (System.Exception)
             {
+                Debug.LogWarning($"Failed to parse versions '{currentVersion}' or '{installerVersion}' as System.Version.");
                 // If version parsing fails, fall back to string comparison
                 // This ensures we don't break if version format is unexpected
                 return string.Compare(installerVersion, currentVersion, System.StringComparison.OrdinalIgnoreCase) > 0;

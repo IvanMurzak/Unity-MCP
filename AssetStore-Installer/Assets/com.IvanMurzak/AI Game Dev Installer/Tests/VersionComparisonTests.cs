@@ -9,7 +9,6 @@
 */
 using System.IO;
 using NUnit.Framework;
-using UnityEngine;
 using SimpleJSON;
 
 namespace com.IvanMurzak.Unity.MCP.Installer.Tests
