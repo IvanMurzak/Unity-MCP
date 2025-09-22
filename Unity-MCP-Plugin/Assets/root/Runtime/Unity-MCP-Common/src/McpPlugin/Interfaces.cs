@@ -46,11 +46,6 @@ namespace com.IvanMurzak.Unity.MCP.Common
         Task<IResponseData<ResponseListTool[]>> RunListTool(IRequestListTool request, CancellationToken cancellationToken = default);
     }
 
-    public interface IToolDelayedResult
-    {
-        Task SetDelayedToolResult(IRequestCallTool request, IResponseData<ResponseCallTool> response, CancellationToken cancellationToken = default);
-    }
-
     public interface IPromptRunner
     {
         Task<IResponseData<ResponseGetPrompt>> RunGetPrompt(IRequestGetPrompt request, CancellationToken cancellationToken = default);

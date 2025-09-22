@@ -29,8 +29,8 @@ namespace com.IvanMurzak.Unity.MCP.Common
     /// </summary>
     public partial class RunPrompt : MethodWrapper, IRunPrompt
     {
-        public string? PromptName { get; protected set; }
-        public string? PromptDescription { get; protected set; }
+        public string Name { get; protected set; }
+        public string? Title { get; protected set; }
         public MethodInfo? Method { get; private set; }
 
         protected string? RequestID { get; set; }
@@ -39,37 +39,49 @@ namespace com.IvanMurzak.Unity.MCP.Common
         /// Initializes the Command with the target method information.
         /// </summary>
         /// <param name="type">The type containing the static method.</param>
-        public static RunPrompt CreateFromStaticMethod(Reflector reflector, ILogger? logger, MethodInfo methodInfo, string? name = null, string? description = null)
-            => new RunPrompt(reflector, logger, methodInfo) { PromptName = name, PromptDescription = description };
+        public static RunPrompt CreateFromStaticMethod(Reflector reflector, string name, ILogger? logger, MethodInfo methodInfo, string? title = null)
+            => new RunPrompt(reflector, name, logger, methodInfo)
+            {
+                Title = title,
+            };
 
         /// <summary>
         /// Initializes the Command with the target instance method information.
         /// </summary>
         /// <param name="targetInstance">The instance of the object containing the method.</param>
         /// <param name="methodInfo">The MethodInfo of the instance method to execute.</param>
-        public static RunPrompt CreateFromInstanceMethod(Reflector reflector, ILogger? logger, object targetInstance, MethodInfo methodInfo, string? name = null, string? description = null)
-            => new RunPrompt(reflector, logger, targetInstance, methodInfo) { PromptName = name, PromptDescription = description };
+        public static RunPrompt CreateFromInstanceMethod(Reflector reflector, ILogger? logger, string name, object targetInstance, MethodInfo methodInfo, string? title = null)
+            => new RunPrompt(reflector, name, logger, targetInstance, methodInfo)
+            {
+                Title = title,
+            };
 
         /// <summary>
         /// Initializes the Command with the target instance method information.
         /// </summary>
         /// <param name="targetInstance">The instance of the object containing the method.</param>
         /// <param name="methodInfo">The MethodInfo of the instance method to execute.</param>
-        public static RunPrompt CreateFromClassMethod(Reflector reflector, ILogger? logger, Type classType, MethodInfo methodInfo, string? name = null, string? description = null)
-            => new RunPrompt(reflector, logger, classType, methodInfo) { PromptName = name, PromptDescription = description };
+        public static RunPrompt CreateFromClassMethod(Reflector reflector, string name, ILogger? logger, Type classType, MethodInfo methodInfo, string? title = null)
+            => new RunPrompt(reflector, name, logger, classType, methodInfo)
+            {
+                Title = title,
+            };
 
-        public RunPrompt(Reflector reflector, ILogger? logger, MethodInfo methodInfo) : base(reflector, logger, methodInfo)
+        public RunPrompt(Reflector reflector, string name, ILogger? logger, MethodInfo methodInfo) : base(reflector, logger, methodInfo)
         {
+            Name = name;
             Method = methodInfo;
         }
 
-        public RunPrompt(Reflector reflector, ILogger? logger, object targetInstance, MethodInfo methodInfo) : base(reflector, logger, targetInstance, methodInfo)
+        public RunPrompt(Reflector reflector, string name, ILogger? logger, object targetInstance, MethodInfo methodInfo) : base(reflector, logger, targetInstance, methodInfo)
         {
+            Name = name;
             Method = methodInfo;
         }
 
-        public RunPrompt(Reflector reflector, ILogger? logger, Type classType, MethodInfo methodInfo) : base(reflector, logger, classType, methodInfo)
+        public RunPrompt(Reflector reflector, string name, ILogger? logger, Type classType, MethodInfo methodInfo) : base(reflector, logger, classType, methodInfo)
         {
+            Name = name;
             Method = methodInfo;
         }
 
@@ -134,19 +146,19 @@ namespace com.IvanMurzak.Unity.MCP.Common
             }
             catch (ArgumentException ex)
             {
-                var errorMessage = $"Parameter validation failed for tool '{PromptName ?? this.Method?.Name}': {ex.Message}";
+                var errorMessage = $"Parameter validation failed for tool '{Name ?? this.Method?.Name}': {ex.Message}";
                 _logger?.LogError(ex, errorMessage);
                 return ResponseGetPrompt.Error(errorMessage).SetRequestID(requestId);
             }
             catch (TargetParameterCountException ex)
             {
-                var errorMessage = $"Parameter count mismatch for tool '{PromptName ?? this.Method?.Name}'. Expected {this.Method?.GetParameters().Length} parameters, but received {parameters?.Length}";
+                var errorMessage = $"Parameter count mismatch for tool '{Name ?? this.Method?.Name}'. Expected {this.Method?.GetParameters().Length} parameters, but received {parameters?.Length}";
                 _logger?.LogError(ex, errorMessage);
                 return ResponseGetPrompt.Error(errorMessage).SetRequestID(requestId);
             }
             catch (Exception ex)
             {
-                var errorMessage = $"Tool execution failed for '{PromptName ?? this.Method?.Name}': {(ex.InnerException ?? ex).Message}";
+                var errorMessage = $"Tool execution failed for '{Name ?? this.Method?.Name}': {(ex.InnerException ?? ex).Message}";
                 _logger?.LogError(ex, $"{errorMessage}\n{ex.StackTrace}");
                 return ResponseGetPrompt.Error(errorMessage).SetRequestID(requestId);
             }
@@ -187,19 +199,19 @@ namespace com.IvanMurzak.Unity.MCP.Common
             }
             catch (ArgumentException ex)
             {
-                var errorMessage = $"Parameter validation failed for tool '{PromptName ?? this.Method?.Name}': {ex.Message}";
+                var errorMessage = $"Parameter validation failed for tool '{Name ?? this.Method?.Name}': {ex.Message}";
                 _logger?.LogError(ex, errorMessage);
                 return ResponseGetPrompt.Error(errorMessage);
             }
             catch (JsonException ex)
             {
-                var errorMessage = $"JSON parameter parsing failed for tool '{PromptName ?? this.Method?.Name}': {ex.Message}";
+                var errorMessage = $"JSON parameter parsing failed for tool '{Name ?? this.Method?.Name}': {ex.Message}";
                 _logger?.LogError(ex, errorMessage);
                 return ResponseGetPrompt.Error(errorMessage);
             }
             catch (Exception ex)
             {
-                var errorMessage = $"Tool execution failed for '{PromptName ?? this.Method?.Name}': {(ex.InnerException ?? ex).Message}";
+                var errorMessage = $"Tool execution failed for '{Name ?? this.Method?.Name}': {(ex.InnerException ?? ex).Message}";
                 _logger?.LogError(ex, $"{errorMessage}\n{ex.StackTrace}");
                 return ResponseGetPrompt.Error(errorMessage);
             }
@@ -215,14 +227,14 @@ namespace com.IvanMurzak.Unity.MCP.Common
         {
             if (string.IsNullOrWhiteSpace(requestId))
             {
-                var errorMessage = $"Request ID cannot be null or empty for tool '{PromptName ?? this.Method?.Name}'";
+                var errorMessage = $"Request ID cannot be null or empty for tool '{Name ?? this.Method?.Name}'";
                 _logger?.LogError(errorMessage);
                 return ResponseGetPrompt.Error(errorMessage);
             }
 
             if (this.Method == null)
             {
-                var errorMessage = $"Method information is not available for tool '{PromptName}'";
+                var errorMessage = $"Method information is not available for tool '{Name}'";
                 _logger?.LogError(errorMessage);
                 return ResponseGetPrompt.Error(errorMessage);
             }
@@ -230,7 +242,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
             // Validate method is accessible
             if (!this.Method.IsPublic && !this.Method.IsFamily)
             {
-                var errorMessage = $"Method '{this.Method.Name}' in tool '{PromptName}' is not accessible (must be public or protected)";
+                var errorMessage = $"Method '{this.Method.Name}' in tool '{Name}' is not accessible (must be public or protected)";
                 _logger?.LogError(errorMessage);
                 return ResponseGetPrompt.Error(errorMessage);
             }

@@ -20,7 +20,8 @@ namespace com.IvanMurzak.Unity.MCP.Common
 {
     public interface IRunPrompt
     {
-        string? PromptName { get; }
+        string Name { get; }
+        string? Title { get; }
         string? Description { get; }
         JsonNode? InputSchema { get; }
 

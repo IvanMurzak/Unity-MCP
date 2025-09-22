@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System.ComponentModel;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Common;
 using UnityEngine;
@@ -18,11 +19,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     [McpPluginPromptType]
     public partial class Resource_GameObject
     {
-        [McpPluginPrompt
-        (
-            Name = "EditorStatus_Get",
-            Description = "Get Editor status"
-        )]
+        [McpPluginPrompt(Name = "get-editor-status")]
+        [Description("Get current editor status.")]
         public string Get()
         {
             return MainThread.Instance.Run(() =>

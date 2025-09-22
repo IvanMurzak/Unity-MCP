@@ -16,6 +16,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.ReflectorNet;
+using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Common.Model;
 using Microsoft.Extensions.Logging;
 
@@ -202,10 +203,10 @@ namespace com.IvanMurzak.Unity.MCP.Common
                     Prompts = _prompts.Values
                         .Select(p => new ResponsePrompt()
                         {
-                            Name = p.PromptName,
-                            Title = p.PromptName,
-                            Description = p.Description
-                            // Arguments = p.InputSchema p.InputSchema.ToJsonElement() ?? EmptyInputSchema, // TODO: Implement "Arguments" !!!
+                            Name = p.Name,
+                            Title = p.Title,
+                            Description = p.Description,
+                            Arguments = p.InputSchema.ToResponsePromptArguments()
                         })
                         .ToList()
                 };
