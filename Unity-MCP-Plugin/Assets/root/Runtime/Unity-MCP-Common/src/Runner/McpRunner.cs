@@ -53,7 +53,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
             {
                 _logger.LogTrace("Registered resources [{0}]:", resources.Count);
                 foreach (var kvp in resources)
-                    _logger.LogTrace("Resource: {0}", kvp.Key);
+                    _logger.LogTrace("Resource: {Name}. Route: {Route}", kvp.Key, kvp.Value.Route);
             }
         }
 
@@ -154,6 +154,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
 
         public async Task<IResponseData<ResponseListResource[]>> RunListResources(IRequestListResources data, CancellationToken cancellationToken = default)
         {
+            _logger.LogDebug("Listing resources. [{Count}]", _resources.Count);
             var tasks = _resources.Values
                 .Select(resource => resource.RunListContext.Run());
 
@@ -166,11 +167,14 @@ namespace com.IvanMurzak.Unity.MCP.Common
         }
 
         public Task<IResponseData<ResponseResourceTemplate[]>> RunResourceTemplates(IRequestListResourceTemplates data, CancellationToken cancellationToken = default)
-            => _resources.Values
+        {
+            _logger.LogDebug("Listing resource templates. [{Count}]", _resources.Count);
+            return _resources.Values
                 .Select(resource => new ResponseResourceTemplate(resource.Route, resource.Name, resource.Description, resource.MimeType))
                 .ToArray()
                 .Pack(data.RequestID)
                 .TaskFromResult();
+        }
 
         public async Task<IResponseData<ResponseGetPrompt>> RunGetPrompt(IRequestGetPrompt request, CancellationToken cancellationToken = default)
         {
@@ -225,9 +229,9 @@ namespace com.IvanMurzak.Unity.MCP.Common
         {
             foreach (var route in resources)
             {
-                if (IsMatch(route.Key, uri))
+                if (IsMatch(route.Value.Route, uri))
                 {
-                    uriTemplate = route.Key;
+                    uriTemplate = route.Value.Route;
                     return route.Value;
                 }
             }
