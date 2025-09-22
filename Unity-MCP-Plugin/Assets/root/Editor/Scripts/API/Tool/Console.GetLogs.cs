@@ -54,28 +54,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         filterType = parsedType;
                     }
 
-                    // Get all log entries as array to avoid concurrent modification
-                    var allLogs = LogUtils.GetAllLogs().AsEnumerable();
-
-                    // Apply time filter if specified
+                    // Get log entries efficiently using the new method
+                    DateTime? cutoffTime = null;
                     if (lastMinutes > 0)
                     {
-                        var cutoffTime = DateTime.Now.AddMinutes(-lastMinutes);
-                        allLogs = allLogs
-                            .Where(log => log.timestamp >= cutoffTime);
+                        cutoffTime = DateTime.Now.AddMinutes(-lastMinutes);
                     }
 
-                    // Apply log type filter
-                    if (filterType.HasValue)
-                    {
-                        allLogs = allLogs
-                            .Where(log => log.logType == filterType.Value);
-                    }
-
-                    // Take the most recent entries (up to maxEntries)
-                    var filteredLogs = allLogs
-                        .TakeLast(maxEntries)
-                        .ToArray();
+                    // Use the efficient method that handles filtering and limiting
+                    var filteredLogs = LogUtils.GetLastLogs(maxEntries, filterType, cutoffTime);
 
                     if (filteredLogs.Length == 0)
                         return "[Success] No log entries found matching the specified criteria.";
