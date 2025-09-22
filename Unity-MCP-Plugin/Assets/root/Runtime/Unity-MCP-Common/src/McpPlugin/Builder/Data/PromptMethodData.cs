@@ -17,9 +17,9 @@ namespace com.IvanMurzak.Unity.MCP.Common
         public string Name => Attribute.Name;
         public Type ClassType { get; set; }
         public MethodInfo MethodInfo { get; set; }
-        public McpPluginToolAttribute Attribute { get; set; }
+        public McpPluginPromptAttribute Attribute { get; set; }
 
-        public PromptMethodData(Type classType, MethodInfo methodInfo, McpPluginToolAttribute attribute)
+        public PromptMethodData(Type classType, MethodInfo methodInfo, McpPluginPromptAttribute attribute)
         {
             ClassType = classType;
             MethodInfo = methodInfo;

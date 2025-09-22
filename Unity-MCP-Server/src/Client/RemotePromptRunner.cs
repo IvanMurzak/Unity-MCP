@@ -86,14 +86,37 @@ namespace com.IvanMurzak.Unity.MCP.Server
             cts.Dispose();
         }
 
-        public Task<IResponseData<ResponseGetPrompt>> RunGetPrompt(IRequestGetPrompt request, CancellationToken cancellationToken = default)
+        public async Task<IResponseData<ResponseGetPrompt>> RunGetPrompt(IRequestGetPrompt request, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken);
+
+            var responseData = await ClientUtils.InvokeAsync<IRequestGetPrompt, ResponseGetPrompt, RemoteApp>(
+                logger: _logger,
+                hubContext: _remoteAppContext,
+                methodName: Consts.RPC.Client.RunGetPrompt,
+                request: request,
+                cancellationToken: linkedCts.Token);
+
+            if (responseData.Value != null)
+                return responseData.Value.Pack(request.RequestID);
+
+            return ResponseGetPrompt.Error("Response data is null").Pack(request.RequestID);
         }
 
         public Task<IResponseData<ResponseListPrompts>> RunListPrompts(IRequestListPrompts request, CancellationToken cancellationToken = default)
-        {
-            throw new NotImplementedException();
-        }
+            => ClientUtils.InvokeAsync<IRequestListPrompts, ResponseListPrompts, RemoteApp>(
+                logger: _logger,
+                hubContext: _remoteAppContext,
+                methodName: Consts.RPC.Client.RunListPrompts,
+                request: request,
+                cancellationToken: CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken).Token)
+                .ContinueWith(task =>
+            {
+                var response = task.Result;
+                if (response.Status == ResponseStatus.Error)
+                    return ResponseData<ResponseListPrompts>.Error(request.RequestID, response.Message ?? "Got an error during listing tools");
+
+                return response;
+            }, cancellationToken: CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken).Token);
     }
 }

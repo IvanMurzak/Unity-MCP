@@ -86,6 +86,41 @@ namespace com.IvanMurzak.Unity.MCP.Common
             return this;
         }
 
+        public IMcpPluginBuilder WithPrompt(string name, Type classType, MethodInfo methodInfo)
+        {
+            if (isBuilt)
+                throw new InvalidOperationException("The builder has already been built.");
+
+            var attribute = methodInfo.GetCustomAttribute<McpPluginPromptAttribute>();
+            if (attribute == null)
+            {
+                _logger?.LogWarning($"Method {classType.FullName}{methodInfo.Name} does not have a '{nameof(McpPluginPromptAttribute)}'.");
+                return this;
+            }
+
+            if (string.IsNullOrEmpty(attribute.Name))
+                throw new ArgumentException($"Prompt name cannot be null or empty. Type: {classType.Name}, Method: {methodInfo.Name}");
+
+            _promptMethods.Add(new PromptMethodData
+            (
+                classType: classType,
+                methodInfo: methodInfo,
+                attribute: attribute
+            ));
+            return this;
+        }
+        public IMcpPluginBuilder AddPrompt(string name, IRunPrompt runner)
+        {
+            if (isBuilt)
+                throw new InvalidOperationException("The builder has already been built.");
+
+            if (_promptRunners.ContainsKey(name))
+                throw new ArgumentException($"Prompt with name '{name}' already exists.");
+
+            _promptRunners.Add(name, runner);
+            return this;
+        }
+
         public IMcpPluginBuilder WithResource(Type classType, MethodInfo getContentMethod)
         {
             if (isBuilt)

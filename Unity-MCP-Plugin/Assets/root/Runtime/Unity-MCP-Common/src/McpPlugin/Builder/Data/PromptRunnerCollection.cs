@@ -33,8 +33,8 @@ namespace com.IvanMurzak.Unity.MCP.Common
             foreach (var method in methods.Where(resource => !string.IsNullOrEmpty(resource.Attribute?.Name)))
             {
                 this[method.Attribute.Name!] = method.MethodInfo.IsStatic
-                    ? RunPrompt.CreateFromStaticMethod(reflector, _logger, method.MethodInfo, method.Attribute.Title) as IRunPrompt
-                    : RunPrompt.CreateFromClassMethod(reflector, _logger, method.ClassType, method.MethodInfo, method.Attribute.Title);
+                    ? RunPrompt.CreateFromStaticMethod(reflector, _logger, method.MethodInfo, method.Attribute.Name, method.Attribute.Description) as IRunPrompt
+                    : RunPrompt.CreateFromClassMethod(reflector, _logger, method.ClassType, method.MethodInfo, method.Attribute.Name, method.Attribute.Description) as IRunPrompt;
             }
             return this;
         }

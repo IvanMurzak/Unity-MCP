@@ -28,8 +28,8 @@ namespace com.IvanMurzak.Unity.MCP.Common.Model
             return response;
         }
 
-        public static IResponseData<ResponseListPrompts[]> Pack(this ResponseListPrompts[] response, string requestId, string? message = null)
-            => ResponseData<ResponseListPrompts[]>.Success(requestId, message ?? "List Prompt execution completed.")
+        public static IResponseData<ResponseListPrompts> Pack(this ResponseListPrompts response, string requestId, string? message = null)
+            => ResponseData<ResponseListPrompts>.Success(requestId, message ?? "List Prompt execution completed.")
                 .SetData(response);
     }
 }

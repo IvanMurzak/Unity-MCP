@@ -190,7 +190,35 @@ namespace com.IvanMurzak.Unity.MCP.Common
 
         public Task<IResponseData<ResponseListPrompts>> RunListPrompts(IRequestListPrompts request, CancellationToken cancellationToken = default)
         {
-            throw new NotImplementedException();
+            try
+            {
+                _logger.LogDebug("Listing prompts. [{Count}]", _prompts.Count);
+                var result = new ResponseListPrompts()
+                {
+                    Prompts = _prompts.Values
+                        .Select(p => new ResponsePrompt()
+                        {
+                            Name = p.PromptName,
+                            Title = p.PromptName,
+                            Description = p.Description
+                            // Arguments = p.InputSchema p.InputSchema.ToJsonElement() ?? EmptyInputSchema, // TODO: Implement "Arguments" !!!
+                        })
+                        .ToList()
+                };
+                _logger.LogDebug("{0} Prompts listed.", result.Prompts.Count);
+
+                return result
+                    .Log(_logger)
+                    .Pack(request.RequestID)
+                    .TaskFromResult();
+            }
+            catch (Exception ex)
+            {
+                // Handle or log the exception as needed
+                return ResponseData<ResponseListPrompts>.Error(request.RequestID, $"Failed to list tools. Exception: {ex}")
+                    .Log(_logger, "RunListTool", ex)
+                    .TaskFromResult();
+            }
         }
 
         IRunResource? FindResourceContentRunner(string uri, IDictionary<string, IRunResource> resources, out string? uriTemplate)

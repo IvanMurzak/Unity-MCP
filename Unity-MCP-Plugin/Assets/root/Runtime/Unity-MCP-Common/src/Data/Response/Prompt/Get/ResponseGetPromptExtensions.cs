@@ -16,6 +16,7 @@ namespace com.IvanMurzak.Unity.MCP.Common.Model
 {
     public static class ResponseGetPromptExtensions
     {
+
         public static ResponseGetPrompt Log(this ResponseGetPrompt target, ILogger logger, Exception? ex = null)
         {
             if (target.Status == ResponseStatus.Error)
