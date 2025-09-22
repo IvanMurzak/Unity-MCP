@@ -7,6 +7,8 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
+#nullable enable
 namespace com.IvanMurzak.Unity.MCP.Common.Model
 {
     public class ResponseResourceContent : IResponseResourceContent
