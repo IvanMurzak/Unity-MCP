@@ -33,8 +33,6 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
                 File.Delete(TestManifestPath);
         }
 
-
-
         [Test]
         public void ShouldUpdateVersion_InstallerHigher_ReturnsTrue()
         {
@@ -93,12 +91,11 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
         [Test]
         public void ShouldUpdateVersion_NoCurrentVersion_ReturnsTrue()
         {
-            // Arrange
-            var currentVersion = "";
-            var installerVersion = "0.17.2";
-
             // Act
-            var result = Installer.ShouldUpdateVersion(currentVersion, installerVersion);
+            var result = Installer.ShouldUpdateVersion(
+                currentVersion: "",
+                installerVersion: "0.17.2"
+            );
 
             // Assert
             Assert.IsTrue(result, "Should install when no current version exists");
@@ -107,12 +104,11 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
         [Test]
         public void ShouldUpdateVersion_NullCurrentVersion_ReturnsTrue()
         {
-            // Arrange
-            string currentVersion = null;
-            var installerVersion = "0.17.2";
-
             // Act
-            var result = Installer.ShouldUpdateVersion(currentVersion, installerVersion);
+            var result = Installer.ShouldUpdateVersion(
+                currentVersion: null,
+                installerVersion: "0.17.2"
+            );
 
             // Assert
             Assert.IsTrue(result, "Should install when current version is null");
@@ -122,12 +118,22 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
         public void ShouldUpdateVersion_MajorVersionDifference_WorksCorrectly()
         {
             // Test major version upgrade
-            Assert.IsTrue(Installer.ShouldUpdateVersion("0.17.2", "1.0.0"),
-                "Should upgrade from 0.17.2 to 1.0.0");
+            Assert.IsTrue(
+                condition: Installer.ShouldUpdateVersion(
+                    currentVersion: "0.17.2",
+                    installerVersion: "1.0.0"
+                ),
+                message: "Should upgrade from 0.17.2 to 1.0.0"
+            );
 
             // Test major version downgrade prevention
-            Assert.IsFalse(Installer.ShouldUpdateVersion("1.0.0", "0.17.2"),
-                "Should not downgrade from 1.0.0 to 0.17.2");
+            Assert.IsFalse(
+                condition: Installer.ShouldUpdateVersion(
+                    currentVersion: "1.0.0",
+                    installerVersion: "0.17.2"
+                ),
+                message: "Should not downgrade from 1.0.0 to 0.17.2"
+            );
         }
 
         [Test]
@@ -137,11 +143,11 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
             var higherVersion = "0.18.0";
             var manifest = new JSONObject
             {
-                ["dependencies"] = new JSONObject
+                [Installer.Dependencies] = new JSONObject
                 {
                     [PackageId] = higherVersion
                 },
-                ["scopedRegistries"] = new JSONArray()
+                [Installer.ScopedRegistries] = new JSONArray()
             };
             File.WriteAllText(TestManifestPath, manifest.ToString(2));
 
@@ -151,7 +157,7 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
             // Assert - Version should remain unchanged
             var updatedContent = File.ReadAllText(TestManifestPath);
             var updatedManifest = JSONObject.Parse(updatedContent);
-            var actualVersion = updatedManifest["dependencies"][PackageId];
+            var actualVersion = updatedManifest[Installer.Dependencies][PackageId];
 
             Assert.AreEqual(higherVersion, actualVersion.ToString().Trim('"'),
                 "Version should not be downgraded from higher version");
@@ -164,11 +170,11 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
             var lowerVersion = "0.16.0";
             var manifest = new JSONObject
             {
-                ["dependencies"] = new JSONObject
+                [Installer.Dependencies] = new JSONObject
                 {
                     [PackageId] = lowerVersion
                 },
-                ["scopedRegistries"] = new JSONArray()
+                [Installer.ScopedRegistries] = new JSONArray()
             };
             File.WriteAllText(TestManifestPath, manifest.ToString(2));
 
@@ -178,7 +184,7 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
             // Assert - Version should be upgraded to installer version
             var updatedContent = File.ReadAllText(TestManifestPath);
             var updatedManifest = JSONObject.Parse(updatedContent);
-            var actualVersion = updatedManifest["dependencies"][PackageId];
+            var actualVersion = updatedManifest[Installer.Dependencies][PackageId];
 
             Assert.AreEqual(Installer.Version, actualVersion.ToString().Trim('"'),
                 "Version should be upgraded to installer version");
@@ -190,8 +196,8 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
             // Arrange - Create manifest without the package
             var manifest = new JSONObject
             {
-                ["dependencies"] = new JSONObject(),
-                ["scopedRegistries"] = new JSONArray()
+                [Installer.Dependencies] = new JSONObject(),
+                [Installer.ScopedRegistries] = new JSONArray()
             };
             File.WriteAllText(TestManifestPath, manifest.ToString(2));
 
@@ -201,7 +207,7 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
             // Assert - Package should be added with installer version
             var updatedContent = File.ReadAllText(TestManifestPath);
             var updatedManifest = JSONObject.Parse(updatedContent);
-            var actualVersion = updatedManifest["dependencies"][PackageId];
+            var actualVersion = updatedManifest[Installer.Dependencies][PackageId];
 
             Assert.AreEqual(Installer.Version, actualVersion.ToString().Trim('"'),
                 "New package should be installed with installer version");
