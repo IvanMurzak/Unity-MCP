@@ -17,7 +17,7 @@ AI helper which does wide range of tasks in Unity Editor and even in a running g
 
 💬 **Join our community:** [Discord Server](https://discord.gg/cfbdMZX99G) - Ask questions, showcase your work, and connect with other developers!
 
-![AI work](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/level-building.gif 'Level building')
+![AI work](https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/level-building.gif 'Level building')
 
 </div>
 
@@ -26,16 +26,16 @@ AI helper which does wide range of tasks in Unity Editor and even in a running g
 
   <table>
     <tr>
-      <td><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/flying-orbs.gif" alt="Animation" title="Animation" /></td>
-      <td><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/golden-sphere.gif" alt="Animation" title="Animation" /></td>
+      <td><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/flying-orbs.gif" alt="Animation" title="Animation" /></td>
+      <td><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/golden-sphere.gif" alt="Animation" title="Animation" /></td>
     </tr>
     <tr>
-      <td><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/runner.gif" alt="Runner Game" title="Runner Game" /></td>
-      <td><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/procedural-terrain.gif" alt="Procedural Terrain" title="Procedural Terrain" /></td>
+      <td><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/runner.gif" alt="Runner Game" title="Runner Game" /></td>
+      <td><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/procedural-terrain.gif" alt="Procedural Terrain" title="Procedural Terrain" /></td>
     </tr>
     <tr>
-      <td><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/create-material.gif" alt="Material creating" title="Material creating" /></td>
-      <td><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/playing-maze.gif" alt="Maze Game" title="Maze Game" /></td>
+      <td><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/create-material.gif" alt="Material creating" title="Material creating" /></td>
+      <td><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/playing-maze.gif" alt="Maze Game" title="Maze Game" /></td>
     </tr>
   </table>
 
@@ -127,7 +127,7 @@ openupm add com.ivanmurzak.unity.mcp
 - Open `Window/AI Connector (Unity-MCP)`
 - Click `Configure` at your MCP client
 
-![Unity_AI](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/ai-connector-window.gif)
+![Unity_AI](https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/ai-connector-window.gif)
 
 > If MCP client is not in the list, use the raw JSON below in the window, to inject it into your MCP client. Read instructions for your MCP client how to do that.
 

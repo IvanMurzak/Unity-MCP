@@ -33,39 +33,39 @@ $ErrorActionPreference = "Stop"
 # Version file locations (relative to script root)
 $VersionFiles = @(
     @{
-        Path = "README.md"
-        Pattern = "https://github\.com/IvanMurzak/Unity-MCP/releases/download/[\d\.]+/AI-Game-Dev-Installer\.unitypackage"
-        Replace = "https://github.com/IvanMurzak/Unity-MCP/releases/download/{VERSION}/AI-Game-Dev-Installer.unitypackage"
+        Path        = "README.md"
+        Pattern     = "https://github\.com/IvanMurzak/Unity-MCP/releases/download/[\d\.]+/AI-Game-Dev-Installer\.unitypackage"
+        Replace     = "https://github.com/IvanMurzak/Unity-MCP/releases/download/{VERSION}/AI-Game-Dev-Installer.unitypackage"
         Description = "Root README download URL"
     },
     @{
-        Path = "Unity-MCP-Server/server.json"
-        Pattern = '"version":\s*"[\d\.]+"'
-        Replace = '"version": "{VERSION}"'
+        Path        = "Unity-MCP-Server/server.json"
+        Pattern     = '"version":\s*"[\d\.]+"'
+        Replace     = '"version": "{VERSION}"'
         Description = "Server JSON version (2 occurrences)"
     },
     @{
-        Path = "AssetStore-Installer/Assets/com.IvanMurzak/AI Game Dev Installer/Installer.cs"
-        Pattern = 'public const string Version = "[\d\.]+";'
-        Replace = 'public const string Version = "{VERSION}";'
+        Path        = "Installer/Assets/com.IvanMurzak/AI Game Dev Installer/Installer.cs"
+        Pattern     = 'public const string Version = "[\d\.]+";'
+        Replace     = 'public const string Version = "{VERSION}";'
         Description = "Installer C# version constant"
     },
     @{
-        Path = "Unity-MCP-Plugin/Assets/root/package.json"
-        Pattern = '"version":\s*"[\d\.]+"'
-        Replace = '"version": "{VERSION}"'
+        Path        = "Unity-MCP-Plugin/Assets/root/package.json"
+        Pattern     = '"version":\s*"[\d\.]+"'
+        Replace     = '"version": "{VERSION}"'
         Description = "Unity package version"
     },
     @{
-        Path = "Unity-MCP-Plugin/Assets/root/README.md"
-        Pattern = "https://github\.com/IvanMurzak/Unity-MCP/releases/download/[\d\.]+/AI-Game-Dev-Installer\.unitypackage"
-        Replace = "https://github.com/IvanMurzak/Unity-MCP/releases/download/{VERSION}/AI-Game-Dev-Installer.unitypackage"
+        Path        = "Unity-MCP-Plugin/Assets/root/README.md"
+        Pattern     = "https://github\.com/IvanMurzak/Unity-MCP/releases/download/[\d\.]+/AI-Game-Dev-Installer\.unitypackage"
+        Replace     = "https://github.com/IvanMurzak/Unity-MCP/releases/download/{VERSION}/AI-Game-Dev-Installer.unitypackage"
         Description = "Plugin README download URL"
     },
     @{
-        Path = "Unity-MCP-Plugin/Assets/root/Runtime/Config/McpPluginUnity.Startup.cs"
-        Pattern = 'public const string Version = "[\d\.]+";'
-        Replace = 'public const string Version = "{VERSION}";'
+        Path        = "Unity-MCP-Plugin/Assets/root/Runtime/Config/McpPluginUnity.Startup.cs"
+        Pattern     = 'public const string Version = "[\d\.]+";'
+        Replace     = 'public const string Version = "{VERSION}";'
         Description = "Plugin C# version constant"
     }
 )
@@ -130,10 +130,10 @@ function Update-VersionFiles {
             $matches = [regex]::Matches($originalContent, $file.Pattern)
 
             $changes += @{
-                Path = $file.Path
-                Description = $file.Description
-                Matches = $matches.Count
-                Content = $newContent
+                Path            = $file.Path
+                Description     = $file.Description
+                Matches         = $matches.Count
+                Content         = $newContent
                 OriginalContent = $originalContent
             }
 
