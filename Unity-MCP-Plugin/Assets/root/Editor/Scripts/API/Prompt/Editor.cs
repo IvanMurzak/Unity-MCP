@@ -36,5 +36,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         {
             return $"Set Unity Editor Play Mode to '{isPlaying}'";
         }
+
+        [McpPluginPrompt(Name = "make-number", Role = Role.User)]
+        [Description("Make a number.")]
+        public string MakeNumber(int abc)
+        {
+            return $"Made number: {abc}";
+        }
     }
 }
