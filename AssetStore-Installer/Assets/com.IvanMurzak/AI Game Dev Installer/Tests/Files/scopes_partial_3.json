@@ -14,7 +14,7 @@
     "org.nuget.microsoft.extensions.logging.abstractions": "9.0.7",
     "org.nuget.r3": "1.3.0",
     "org.nuget.system.text.json": "9.0.7",
-    "com.ivanmurzak.unity.mcp": "UNITY_MCP_VERSION"
+    "PACKAGE_ID": "PACKAGE_VERSION"
   },
   "scopedRegistries": [
     {

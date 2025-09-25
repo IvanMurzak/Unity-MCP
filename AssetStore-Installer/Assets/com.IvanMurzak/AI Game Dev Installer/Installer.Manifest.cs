@@ -11,8 +11,7 @@
 using System.IO;
 using System.Linq;
 using UnityEngine;
-using SimpleJSON;
-using System.Runtime.CompilerServices;
+using com.IvanMurzak.Unity.MCP.Installer.SimpleJSON;
 
 [assembly: InternalsVisibleTo("com.IvanMurzak.Unity.MCP.Installer.Tests")]
 namespace com.IvanMurzak.Unity.MCP.Installer

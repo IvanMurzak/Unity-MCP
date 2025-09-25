@@ -15,11 +15,11 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
 {
     public class ManifestInstallerTests
     {
-        const string UnityMcpVersionTag = "UNITY_MCP_VERSION";
+        const string PackageIdTag = "PACKAGE_ID";
+        const string PackageVersionTag = "PACKAGE_VERSION";
         const string FilesRoot = "Assets/com.IvanMurzak/AI Game Dev Installer/Tests/Files";
         const string FilesCopyRoot = "Temp/com.IvanMurzak/AI Game Dev Installer/Tests/Files";
         static string CorrectManifestPath => $"{FilesRoot}/Correct/correct_manifest.json";
-
 
         [SetUp]
         public void SetUp()
@@ -42,7 +42,9 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
         public void All()
         {
             var files = Directory.GetFiles(FilesRoot, "*.json", SearchOption.TopDirectoryOnly);
-            var correctManifest = File.ReadAllText(CorrectManifestPath).Replace(UnityMcpVersionTag, Installer.Version);
+            var correctManifest = File.ReadAllText(CorrectManifestPath)
+                .Replace(PackageVersionTag, Installer.Version)
+                .Replace(PackageIdTag, Installer.PackageId);
 
             foreach (var file in files)
             {
@@ -53,7 +55,9 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
                 File.Copy(file, fileCopy, overwrite: true);
 
                 // Arrange
-                File.WriteAllText(fileCopy, File.ReadAllText(fileCopy).Replace(UnityMcpVersionTag, Installer.Version));
+                File.WriteAllText(fileCopy, File.ReadAllText(fileCopy)
+                    .Replace(PackageVersionTag, Installer.Version)
+                    .Replace(PackageIdTag, Installer.PackageId));
 
                 // Act
                 Installer.AddScopedRegistryIfNeeded(fileCopy);

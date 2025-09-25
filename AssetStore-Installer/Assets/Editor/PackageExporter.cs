@@ -2,23 +2,26 @@ using UnityEngine;
 using UnityEditor;
 using System.IO;
 
-public static class PackageExporter
+namespace com.IvanMurzak.Unity.MCP.Installer
 {
-    public static void ExportPackage()
+    public static class PackageExporter
     {
-        var packagePath = "Assets/com.IvanMurzak/AI Game Dev Installer";
-        var outputPath = "build/AI-Game-Dev-Installer.unitypackage";
-
-        // Ensure build directory exists
-        var buildDir = Path.GetDirectoryName(outputPath);
-        if (!Directory.Exists(buildDir))
+        public static void ExportPackage()
         {
-            Directory.CreateDirectory(buildDir);
+            var packagePath = "Assets/com.IvanMurzak/AI Game Dev Installer";
+            var outputPath = "build/AI-Game-Dev-Installer.unitypackage";
+
+            // Ensure build directory exists
+            var buildDir = Path.GetDirectoryName(outputPath);
+            if (!Directory.Exists(buildDir))
+            {
+                Directory.CreateDirectory(buildDir);
+            }
+
+            // Export the package
+            AssetDatabase.ExportPackage(packagePath, outputPath, ExportPackageOptions.Recurse);
+
+            Debug.Log($"Package exported to: {outputPath}");
         }
-
-        // Export the package
-        AssetDatabase.ExportPackage(packagePath, outputPath, ExportPackageOptions.Recurse);
-
-        Debug.Log($"Package exported to: {outputPath}");
     }
 }

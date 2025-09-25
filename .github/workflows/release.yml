@@ -87,7 +87,7 @@ jobs:
           customImage: 'unityci/editor:ubuntu-2022.3.61f1-base-3'
           buildName: AI-Game-Dev-Installer
           buildsPath: build
-          buildMethod: PackageExporter.ExportPackage
+          buildMethod: com.IvanMurzak.Unity.MCP.Installer.PackageExporter.ExportPackage
           customParameters: -CI true -GITHUB_ACTIONS true
 
       - name: Upload Unity Package as artifact
