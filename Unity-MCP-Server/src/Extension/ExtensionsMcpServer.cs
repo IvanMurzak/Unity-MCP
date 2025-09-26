@@ -24,42 +24,26 @@ namespace com.IvanMurzak.Unity.MCP.Server
             var mcpBuilder = services
                 .AddMcpServer(options =>
                 {
+                    // Setup MCP tools
                     options.Capabilities ??= new();
                     options.Capabilities.Tools ??= new();
                     options.Capabilities.Tools.ListChanged = true;
                     options.Capabilities.Tools.CallToolHandler = ToolRouter.Call;
                     options.Capabilities.Tools.ListToolsHandler = ToolRouter.ListAll;
 
-                    options.Capabilities.Resources ??= new();
-                    options.Capabilities.Resources.ListChanged = true;
-                    options.Capabilities.Resources.ReadResourceHandler = ResourceRouter.Read;
-                    options.Capabilities.Resources.ListResourcesHandler = ResourceRouter.List;
-                    options.Capabilities.Resources.ListResourceTemplatesHandler = ResourceRouter.ListTemplates;
+                    // Setup MCP resources
+                    // options.Capabilities.Resources ??= new();
+                    // options.Capabilities.Resources.ListChanged = true;
+                    // options.Capabilities.Resources.ReadResourceHandler = ResourceRouter.Read;
+                    // options.Capabilities.Resources.ListResourcesHandler = ResourceRouter.List;
+                    // options.Capabilities.Resources.ListResourceTemplatesHandler = ResourceRouter.ListTemplates;
 
+                    // Setup MCP prompts
                     options.Capabilities.Prompts ??= new();
                     options.Capabilities.Prompts.ListChanged = true;
                     options.Capabilities.Prompts.GetPromptHandler = PromptRouter.Get;
                     options.Capabilities.Prompts.ListPromptsHandler = PromptRouter.List;
                 });
-
-            // // Setup MCP tools
-            // mcpBuilder = mcpBuilder
-            //     .WithToolsFromAssembly()
-            //     .WithCallToolHandler(ToolRouter.Call)
-            //     .WithListToolsHandler(ToolRouter.ListAll);
-
-            // // Setup MCP resources
-            // mcpBuilder = mcpBuilder
-            //     .WithResourcesFromAssembly()
-            //     .WithReadResourceHandler(ResourceRouter.Read)
-            //     .WithListResourcesHandler(ResourceRouter.List)
-            //     .WithListResourceTemplatesHandler(ResourceRouter.ListTemplates);
-
-            // // Setup MCP prompts
-            // mcpBuilder = mcpBuilder
-            //     .WithPromptsFromAssembly()
-            //     .WithGetPromptHandler(PromptRouter.Get)
-            //     .WithListPromptsHandler(PromptRouter.List);
 
             if (dataArguments.ClientTransport == Consts.MCP.Server.TransportMethod.stdio)
             {
