@@ -66,11 +66,16 @@ namespace com.IvanMurzak.Unity.MCP.Server
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            _logger.LogTrace("{0} StartAsync.", GetType().GetTypeShortName());
+            _logger.LogTrace("{type} {method}.", GetType().GetTypeShortName(), nameof(StartAsync));
             _disposables.Clear();
 
             _eventAppToolsChange
-                .Subscribe(data => OnListToolUpdated(data, cancellationToken))
+                .Subscribe(data =>
+                {
+                    OnListToolUpdated(data, cancellationToken);
+                    // OnListResourcesUpdated(data, cancellationToken);
+                    OnListPromptsUpdated(data, cancellationToken);
+                })
                 .AddTo(_disposables);
 
             return Task.CompletedTask;
@@ -78,7 +83,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            _logger.LogTrace("{0} StopAsync.", GetType().GetTypeShortName());
+            _logger.LogTrace("{type} {method}.", GetType().GetTypeShortName(), nameof(StopAsync));
             _disposables.Clear();
             if (Instance == this)
                 Instance = null;
@@ -87,14 +92,50 @@ namespace com.IvanMurzak.Unity.MCP.Server
 
         async void OnListToolUpdated(EventAppToolsChange.EventData eventData, CancellationToken cancellationToken)
         {
-            _logger.LogTrace("{0} OnListToolUpdated", GetType().GetTypeShortName());
+            _logger.LogTrace("{type} {method}", GetType().GetTypeShortName(), nameof(OnListToolUpdated));
             try
             {
                 await McpServer.SendNotificationAsync(NotificationMethods.ToolListChangedNotification, cancellationToken);
             }
             catch (Exception ex)
             {
-                _logger.LogError("{0} Error updating tools: {Message}", GetType().GetTypeShortName(), ex.Message);
+                _logger.LogError("{type} Error updating tools: {Message}", GetType().GetTypeShortName(), ex.Message);
+            }
+        }
+        async void OnResourceUpdated(EventAppToolsChange.EventData eventData, CancellationToken cancellationToken)
+        {
+            _logger.LogTrace("{type} {method}", GetType().GetTypeShortName(), nameof(OnResourceUpdated));
+            try
+            {
+                await McpServer.SendNotificationAsync(NotificationMethods.ResourceUpdatedNotification, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("{type} Error updating resource: {Message}", GetType().GetTypeShortName(), ex.Message);
+            }
+        }
+        async void OnListResourcesUpdated(EventAppToolsChange.EventData eventData, CancellationToken cancellationToken)
+        {
+            _logger.LogTrace("{type} {method}", GetType().GetTypeShortName(), nameof(OnListResourcesUpdated));
+            try
+            {
+                await McpServer.SendNotificationAsync(NotificationMethods.ResourceListChangedNotification, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("{type} Error updating resource list: {Message}", GetType().GetTypeShortName(), ex.Message);
+            }
+        }
+        async void OnListPromptsUpdated(EventAppToolsChange.EventData eventData, CancellationToken cancellationToken)
+        {
+            _logger.LogTrace("{type} {method}", GetType().GetTypeShortName(), nameof(OnListPromptsUpdated));
+            try
+            {
+                await McpServer.SendNotificationAsync(NotificationMethods.PromptListChangedNotification, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("{type} Error updating prompts: {Message}", GetType().GetTypeShortName(), ex.Message);
             }
         }
     }
