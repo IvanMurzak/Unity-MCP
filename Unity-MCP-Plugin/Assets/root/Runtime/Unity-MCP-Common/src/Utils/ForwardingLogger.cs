@@ -42,13 +42,17 @@ namespace com.IvanMurzak.Unity.MCP.Common
                 _additionalErrorMessage = additionalErrorMessage;
             }
 
-            IDisposable? ILogger.BeginScope<TState>(TState state) => _logger.BeginScope(state);
-            bool ILogger.IsEnabled(LogLevel logLevel) => _logger.IsEnabled(logLevel);
+            public IDisposable? BeginScope<TState>(TState state) where TState : notnull => _logger.BeginScope(state);
+            public bool IsEnabled(LogLevel logLevel) => _logger.IsEnabled(logLevel);
 
             void ILogger.Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
             {
+                if (!IsEnabled(logLevel)) return;
+
                 // var message = $"[{_categoryName}] {formatter(state, exception)}";
+
                 var message = $"{formatter(state, exception)}";
+
                 _logger.Log(logLevel, eventId, (object)message, exception, (s, e) => s?.ToString() ?? string.Empty);
 
                 if (logLevel >= LogLevel.Error)

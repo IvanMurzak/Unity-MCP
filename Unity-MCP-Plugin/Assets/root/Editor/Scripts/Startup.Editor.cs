@@ -86,6 +86,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                                 Debug.Log($"{DebugName} Initiating delayed reconnection after Play mode exit");
                             McpPluginUnity.BuildAndStart();
                         };
+
+                        // No delay, immediate reconnection for the case if Unity Editor in background
+                        // (has no focus)
                         if (McpPluginUnity.IsLogActive(LogLevel.Trace))
                             Debug.Log($"{DebugName} Initiating reconnection after Play mode exit");
                         McpPluginUnity.BuildAndStart();
