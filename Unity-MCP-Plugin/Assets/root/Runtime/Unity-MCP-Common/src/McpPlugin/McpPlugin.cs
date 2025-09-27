@@ -53,9 +53,6 @@ namespace com.IvanMurzak.Unity.MCP.Common
                         nameof(IRpcRouter.NotifyAboutUpdatedTools),
                         state);
 
-                    // Small delay to ensure connection is fully established
-                    // await Task.Delay(TimeSpan.FromSeconds(0.5), cancellationToken);
-
                     // Perform version handshake first
                     var handshakeResponse = await _rpcRouter.PerformVersionHandshake(cancellationToken);
                     if (handshakeResponse != null && !handshakeResponse.Compatible)
@@ -133,20 +130,17 @@ namespace com.IvanMurzak.Unity.MCP.Common
             try
             {
                 if (_rpcRouter != null)
-                {
                     await _rpcRouter.Disconnect();
-                }
             }
             catch (Exception ex)
             {
                 _logger.LogError("Error during async disposal: {0}\n{1}", ex.Message, ex.StackTrace);
             }
+
             try
             {
                 if (_rpcRouter != null)
-                {
                     await _rpcRouter.DisposeAsync();
-                }
             }
             catch (Exception ex)
             {
