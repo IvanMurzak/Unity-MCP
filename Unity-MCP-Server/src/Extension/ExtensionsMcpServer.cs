@@ -32,11 +32,11 @@ namespace com.IvanMurzak.Unity.MCP.Server
                     options.Capabilities.Tools.ListToolsHandler = ToolRouter.ListAll;
 
                     // Setup MCP resources
-                    // options.Capabilities.Resources ??= new();
-                    // options.Capabilities.Resources.ListChanged = true;
-                    // options.Capabilities.Resources.ReadResourceHandler = ResourceRouter.Read;
-                    // options.Capabilities.Resources.ListResourcesHandler = ResourceRouter.List;
-                    // options.Capabilities.Resources.ListResourceTemplatesHandler = ResourceRouter.ListTemplates;
+                    options.Capabilities.Resources ??= new();
+                    options.Capabilities.Resources.ListChanged = true;
+                    options.Capabilities.Resources.ReadResourceHandler = ResourceRouter.Read;
+                    options.Capabilities.Resources.ListResourcesHandler = ResourceRouter.List;
+                    options.Capabilities.Resources.ListResourceTemplatesHandler = ResourceRouter.ListTemplates;
 
                     // Setup MCP prompts
                     options.Capabilities.Prompts ??= new();
