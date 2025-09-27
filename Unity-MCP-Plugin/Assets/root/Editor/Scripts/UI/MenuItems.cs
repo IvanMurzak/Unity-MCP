@@ -10,6 +10,7 @@
 
 #nullable enable
 #if UNITY_EDITOR
+using System.Threading.Tasks;
 using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
@@ -18,6 +19,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
     {
         [MenuItem("Window/AI Game Developer (Unity-MCP) %&a", priority = 1006)]
         public static void ShowWindow() => MainWindowEditor.ShowWindow();
+
+        [MenuItem("Tools/AI Game Developer/Download Server Binaries", priority = 1000)]
+        public static Task DownloadServer() => Startup.Server.DownloadAndUnpackBinary();
+
+        [MenuItem("Tools/AI Game Developer/Delete Server Binaries", priority = 1001)]
+        public static void DeleteServer() => Startup.Server.DeleteBinaryFolderIfExists();
     }
 }
 #endif

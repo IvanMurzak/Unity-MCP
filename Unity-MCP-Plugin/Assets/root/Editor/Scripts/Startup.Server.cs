@@ -138,6 +138,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 return existingVersion == McpPluginUnity.Version;
             }
 
+            public static void DeleteBinaryFolderIfExists()
+            {
+                if (Directory.Exists(ExecutableFolderRootPath))
+                {
+                    Directory.Delete(ExecutableFolderRootPath, recursive: true);
+                    Debug.Log($"Deleted existing MCP server folder: <color=orange>{ExecutableFolderRootPath}</color>");
+                }
+            }
+
             public static Task<bool> DownloadServerBinaryIfNeeded()
             {
                 if (EnvironmentUtils.IsCi())
@@ -160,8 +169,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 try
                 {
                     // Clear existed server folder
-                    if (Directory.Exists(ExecutableFolderPath))
-                        Directory.Delete(ExecutableFolderPath, true);
+                    DeleteBinaryFolderIfExists();
 
                     // Create folder if needed
                     if (!Directory.Exists(ExecutableFolderPath))
@@ -187,13 +195,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         return false;
                     }
 
+                    Debug.Log($"Downloaded and unpacked Unity-MCP-Server binary to: <color=green>{ExecutableFullPath}</color>");
+
                     // Set executable permission on macOS and Linux
                     if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                     {
+                        Debug.Log($"Setting executable permission for: <color=green>{ExecutableFullPath}</color>");
                         UnixUtils.Set0755(ExecutableFullPath);
                     }
 
                     File.WriteAllText(VersionFullPath, McpPluginUnity.Version);
+
+                    Debug.Log($"MCP server version file created at: <color=green><b>COMPLETED</b></color>");
 
                     return IsBinaryExists() && IsVersionMatches();
                 }
