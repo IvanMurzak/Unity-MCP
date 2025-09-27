@@ -6,7 +6,7 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>9.0</LangVersion>
-    <OutputPath>../../../../Temp/bin/$(Configuration)</OutputPath>
+    <OutputPath>../../../../Temp/bin~/$(Configuration)</OutputPath>
 
     <!-- NuGet Package Information -->
     <PackageId>com.IvanMurzak.Unity.MCP.Common</PackageId>
