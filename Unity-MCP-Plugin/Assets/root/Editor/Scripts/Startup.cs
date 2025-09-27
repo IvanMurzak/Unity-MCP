@@ -35,16 +35,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             API.Tool_TestRunner.Init();
         }
 
-        static async void Disconnect()
-        {
-            var instance = McpPlugin.Instance;
-            if (instance == null)
-            {
-                await McpPlugin.StaticDisposeAsync();
-                return; // ignore
-            }
-
-            await (instance.RpcRouter?.Disconnect() ?? Task.CompletedTask);
-        }
+        static void Disconnect() => McpPluginUnity.Disconnect();
     }
 }

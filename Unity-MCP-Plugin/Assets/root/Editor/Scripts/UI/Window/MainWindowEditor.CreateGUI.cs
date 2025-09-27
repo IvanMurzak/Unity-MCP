@@ -223,7 +223,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     McpPluginUnity.Save();
                     if (McpPlugin.HasInstance)
                     {
-                        McpPlugin.Instance.Disconnect();
+                        McpPluginUnity.Disconnect();
                     }
                 }
                 else if (btnConnectOrDisconnect.text.Equals(ServerButtonText_Stop, StringComparison.OrdinalIgnoreCase))
@@ -232,7 +232,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     McpPluginUnity.Save();
                     if (McpPlugin.HasInstance)
                     {
-                        McpPlugin.Instance.Disconnect();
+                        McpPluginUnity.Disconnect();
                     }
                 }
                 else

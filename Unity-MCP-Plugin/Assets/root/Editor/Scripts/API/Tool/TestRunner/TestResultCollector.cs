@@ -115,7 +115,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
                 Debug.Log($"[{nameof(TestResultCollector)}] Final duration: {duration:mm\\:ss\\.fff}. Completed: {_results.Count}/{_summary.TotalTests}");
             }
 
-            //if (!McpPlugin.HasInstance)
             McpPluginUnity.BuildAndStart();
 
             var requestId = TestCallRequestID.Value;

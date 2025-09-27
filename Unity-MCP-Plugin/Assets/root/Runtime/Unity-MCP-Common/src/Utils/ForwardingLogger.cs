@@ -7,6 +7,8 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
+#nullable enable
 using System;
 using Microsoft.Extensions.Logging;
 
@@ -45,7 +47,8 @@ namespace com.IvanMurzak.Unity.MCP.Common
 
             void ILogger.Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
             {
-                var message = $"[{_categoryName}] {formatter(state, exception)}";
+                // var message = $"[{_categoryName}] {formatter(state, exception)}";
+                var message = $"{formatter(state, exception)}";
                 _logger.Log(logLevel, eventId, (object)message, exception, (s, e) => s?.ToString() ?? string.Empty);
 
                 if (logLevel >= LogLevel.Error)

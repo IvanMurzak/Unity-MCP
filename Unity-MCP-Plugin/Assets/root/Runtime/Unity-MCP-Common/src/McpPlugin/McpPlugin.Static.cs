@@ -70,6 +70,14 @@ namespace com.IvanMurzak.Unity.MCP.Common
             });
 
         public static Task StaticDisposeAsync()
-            => _instance.CurrentValue?.DisposeAsync() ?? Task.CompletedTask;
+        {
+            var instance = _instance.CurrentValue;
+            if (instance == null)
+                return Task.CompletedTask;
+
+            _instance.Value = null;
+
+            return instance.DisposeAsync();
+        }
     }
 }

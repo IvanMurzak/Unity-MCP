@@ -7,6 +7,7 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
 using System;
 using System.Threading;
@@ -39,19 +40,21 @@ namespace com.IvanMurzak.Unity.MCP.Common
 
             McpRunner = mcpRunner ?? throw new ArgumentNullException(nameof(mcpRunner));
 
+            var cancellationToken = _disposables.ToCancellationToken();
+
             _rpcRouter = rpcRouter;
             _rpcRouter?.ConnectionState
                 .Where(state => state == HubConnectionState.Connected)
+                .Where(state => !cancellationToken.IsCancellationRequested)
                 .Subscribe(async state =>
                 {
-                    _logger.LogDebug("{0}.{1}, connection state: {2}",
+                    _logger.LogDebug("{class}.{method}, connection state: {2}",
                         nameof(McpPlugin),
                         nameof(IRpcRouter.NotifyAboutUpdatedTools),
                         state);
 
-                    var cancellationToken = _disposables.ToCancellationToken();
-                    if (cancellationToken.IsCancellationRequested)
-                        return;
+                    // Small delay to ensure connection is fully established
+                    // await Task.Delay(TimeSpan.FromSeconds(0.5), cancellationToken);
 
                     // Perform version handshake first
                     var handshakeResponse = await _rpcRouter.PerformVersionHandshake(cancellationToken);
@@ -65,11 +68,12 @@ namespace com.IvanMurzak.Unity.MCP.Common
                         return;
 
                     await _rpcRouter.NotifyAboutUpdatedTools(cancellationToken);
-                }).AddTo(_disposables);
+                })
+                .AddTo(_disposables);
 
             if (HasInstance)
             {
-                _logger.LogError("Connector already created. Use Singleton instance.");
+                _logger.LogError($"{nameof(McpPlugin)} already created. Use Singleton instance.");
                 return;
             }
 
@@ -83,10 +87,20 @@ namespace com.IvanMurzak.Unity.MCP.Common
         }
 
         public Task<bool> Connect(CancellationToken cancellationToken = default)
-            => _rpcRouter?.Connect(cancellationToken) ?? Task.FromResult(false);
+        {
+            _logger.LogDebug("{class}.{method} called.", nameof(McpPlugin), nameof(Connect));
+            if (_rpcRouter == null)
+                return Task.FromResult(false);
+            return _rpcRouter.Connect(cancellationToken);
+        }
 
         public Task Disconnect(CancellationToken cancellationToken = default)
-            => _rpcRouter?.Disconnect(cancellationToken) ?? Task.FromResult(false);
+        {
+            _logger.LogDebug("{class}.{method} called.", nameof(McpPlugin), nameof(Disconnect));
+            if (_rpcRouter == null)
+                return Task.CompletedTask;
+            return _rpcRouter.Disconnect(cancellationToken);
+        }
 
         private void LogVersionMismatchError(VersionHandshakeResponse handshakeResponse)
         {
@@ -98,6 +112,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
 
         public void Dispose()
         {
+            _logger.LogInformation("{class}.{method} called.", nameof(McpPlugin), nameof(Dispose));
 #pragma warning disable CS4014
             DisposeAsync();
             // DisposeAsync().Wait();
@@ -107,6 +122,8 @@ namespace com.IvanMurzak.Unity.MCP.Common
 
         public async Task DisposeAsync()
         {
+            _logger.LogInformation("{class}.{method} called.", nameof(McpPlugin), nameof(DisposeAsync));
+
             _disposables.Dispose();
 
             var localInstance = _instance.CurrentValue;
@@ -118,6 +135,16 @@ namespace com.IvanMurzak.Unity.MCP.Common
                 if (_rpcRouter != null)
                 {
                     await _rpcRouter.Disconnect();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Error during async disposal: {0}\n{1}", ex.Message, ex.StackTrace);
+            }
+            try
+            {
+                if (_rpcRouter != null)
+                {
                     await _rpcRouter.DisposeAsync();
                 }
             }

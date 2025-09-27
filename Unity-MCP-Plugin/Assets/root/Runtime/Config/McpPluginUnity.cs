@@ -32,7 +32,10 @@ namespace com.IvanMurzak.Unity.MCP
             get
             {
                 Init();
-                return instance;
+                lock (instanceMutex)
+                {
+                    return instance;
+                }
             }
         }
 
@@ -45,7 +48,8 @@ namespace com.IvanMurzak.Unity.MCP
                     instance = GetOrCreateInstance(out var wasCreated);
                     if (instance == null)
                     {
-                        Debug.LogWarning("[McpPluginUnity] ConnectionConfig instance is null");
+                        Debug.LogWarningFormat("{tag} {class}.{method}: ConnectionConfig instance is null",
+                            Consts.Log.Tag, nameof(McpPluginUnity), nameof(Init));
                         return;
                     }
                     else if (wasCreated)
@@ -125,7 +129,8 @@ namespace com.IvanMurzak.Unity.MCP
             if (McpPlugin.Instance?.RpcRouter == null)
             {
                 if (IsLogActive(LogLevel.Warning))
-                    Debug.LogWarning("[McpPluginUnity] NotifyToolRequestCompleted: RpcRouter is null");
+                    Debug.LogWarningFormat("{tag} {class}.{method}: RpcRouter is null",
+                        Consts.Log.Tag, nameof(McpPluginUnity), nameof(NotifyToolRequestCompleted));
                 return;
             }
 
@@ -167,6 +172,40 @@ namespace com.IvanMurzak.Unity.MCP
                 return;
 
             onChanged -= action;
+        }
+
+        public static async void Disconnect()
+        {
+            if (IsLogActive(LogLevel.Trace))
+                Debug.LogFormat("{tag} {class}.{method}() called.",
+                    Consts.Log.Tag, nameof(McpPluginUnity), nameof(Disconnect));
+
+            initializedMutex.WaitOne();
+            try
+            {
+                var instance = McpPlugin.Instance;
+                if (instance == null)
+                {
+                    isInitialized = false;
+                    if (IsLogActive(LogLevel.Debug))
+                        Debug.LogFormat("{tag} {class}.{method}() isInitialized set <false>.",
+                            Consts.Log.Tag, nameof(McpPluginUnity), nameof(Disconnect));
+
+                    await McpPlugin.StaticDisposeAsync();
+                    return; // ignore
+                }
+
+                await instance.Disconnect();
+
+                // await (instance.RpcRouter?.Disconnect() ?? Task.CompletedTask);
+            }
+            finally
+            {
+                if (IsLogActive(LogLevel.Trace))
+                    Debug.LogFormat("{tag} {class}.{method}() completed.",
+                        Consts.Log.Tag, nameof(McpPluginUnity), nameof(Disconnect));
+                initializedMutex.ReleaseMutex();
+            }
         }
 
         static void NotifyChanged(Data data)
