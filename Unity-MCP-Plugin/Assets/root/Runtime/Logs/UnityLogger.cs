@@ -7,6 +7,8 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
+#nullable enable
 using System;
 using com.IvanMurzak.Unity.MCP.Common;
 using Microsoft.Extensions.Logging;
@@ -26,12 +28,26 @@ namespace com.IvanMurzak.Unity.MCP.Utils
                 : categoryName;
         }
 
-        public IDisposable BeginScope<TState>(TState state) => null!;
+        public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null!;
 
-        public bool IsEnabled(LogLevelMicrosoft logLevel) => true;
-
-        public void Log<TState>(LogLevelMicrosoft logLevel, EventId eventId, TState state, Exception exception, Func<TState, Exception, string> formatter)
+        public bool IsEnabled(LogLevelMicrosoft logLevel)
         {
+            return McpPluginUnity.IsLogActive(logLevel switch
+            {
+                LogLevelMicrosoft.Critical => LogLevel.Exception,
+                LogLevelMicrosoft.Error => LogLevel.Error,
+                LogLevelMicrosoft.Warning => LogLevel.Warning,
+                LogLevelMicrosoft.Information => LogLevel.Info,
+                LogLevelMicrosoft.Debug => LogLevel.Debug,
+                LogLevelMicrosoft.Trace => LogLevel.Trace,
+                _ => LogLevel.None
+            });
+        }
+
+        public void Log<TState>(LogLevelMicrosoft logLevel, EventId eventId, TState state, Exception? exception, Func<TState, Exception?, string> formatter)
+        {
+            if (!IsEnabled(logLevel)) return;
+
             if (formatter == null) throw new ArgumentNullException(nameof(formatter));
             if (state == null) throw new ArgumentNullException(nameof(state));
 
@@ -66,10 +82,5 @@ namespace com.IvanMurzak.Unity.MCP.Utils
                     break;
             }
         }
-    }
-    public class UnityLoggerProvider : ILoggerProvider
-    {
-        public void Dispose() { /* No resources to dispose of */ }
-        ILogger ILoggerProvider.CreateLogger(string categoryName) => new UnityLogger(categoryName);
     }
 }

@@ -7,6 +7,7 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
 using System;
 using System.Threading;
@@ -15,15 +16,22 @@ using com.IvanMurzak.Unity.MCP.Common;
 using com.IvanMurzak.Unity.MCP.Common.Model;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.Logging;
 using R3;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP
 {
+    using ILogger = Microsoft.Extensions.Logging.ILogger;
+    using LogLevel = com.IvanMurzak.Unity.MCP.Utils.LogLevel;
+    using MicrosoftLogLevel = Microsoft.Extensions.Logging.LogLevel;
+
     public partial class McpPluginUnity
     {
         Data data = new Data();
         static event Action<Data>? onChanged;
+
+        static readonly ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger<McpPluginUnity>();
 
         static volatile object instanceMutex = new();
         static McpPluginUnity instance = null!;
@@ -48,7 +56,7 @@ namespace com.IvanMurzak.Unity.MCP
                     instance = GetOrCreateInstance(out var wasCreated);
                     if (instance == null)
                     {
-                        Debug.LogWarningFormat("{tag} {class}.{method}: ConnectionConfig instance is null",
+                        _logger.Log(MicrosoftLogLevel.Warning, "{tag} {class}.{method}: ConnectionConfig instance is null",
                             Consts.Log.Tag, nameof(McpPluginUnity), nameof(Init));
                         return;
                     }
@@ -128,9 +136,9 @@ namespace com.IvanMurzak.Unity.MCP
 
             if (McpPlugin.Instance?.RpcRouter == null)
             {
-                if (IsLogActive(LogLevel.Warning))
-                    Debug.LogWarningFormat("{tag} {class}.{method}: RpcRouter is null",
-                        Consts.Log.Tag, nameof(McpPluginUnity), nameof(NotifyToolRequestCompleted));
+                _logger.Log(MicrosoftLogLevel.Warning, "{tag} {class}.{method}: RpcRouter is null",
+                    Consts.Log.Tag, nameof(McpPluginUnity), nameof(NotifyToolRequestCompleted));
+
                 return;
             }
 
@@ -176,9 +184,8 @@ namespace com.IvanMurzak.Unity.MCP
 
         public static async void Disconnect()
         {
-            if (IsLogActive(LogLevel.Trace))
-                Debug.LogFormat("{tag} {class}.{method}() called.",
-                    Consts.Log.Tag, nameof(McpPluginUnity), nameof(Disconnect));
+            _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() called.",
+                Consts.Log.Tag, nameof(McpPluginUnity), nameof(Disconnect));
 
             initializedMutex.WaitOne();
             try
@@ -201,9 +208,8 @@ namespace com.IvanMurzak.Unity.MCP
             }
             finally
             {
-                if (IsLogActive(LogLevel.Trace))
-                    Debug.LogFormat("{tag} {class}.{method}() completed.",
-                        Consts.Log.Tag, nameof(McpPluginUnity), nameof(Disconnect));
+                _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() completed.",
+                    Consts.Log.Tag, nameof(McpPluginUnity), nameof(Disconnect));
                 initializedMutex.ReleaseMutex();
             }
         }
