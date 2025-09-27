@@ -187,6 +187,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         return false;
                     }
 
+                    // Set executable permission on macOS and Linux
+                    if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    {
+                        // Set executable permission on macOS and Linux
+                        UnixUtils.Set0755(ExecutableFullPath);
+                    }
+
                     File.WriteAllText(VersionFullPath, McpPluginUnity.Version);
 
                     return IsBinaryExists() && IsVersionMatches();
