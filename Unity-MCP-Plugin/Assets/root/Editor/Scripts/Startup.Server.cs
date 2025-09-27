@@ -190,7 +190,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     // Set executable permission on macOS and Linux
                     if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                     {
-                        // Set executable permission on macOS and Linux
                         UnixUtils.Set0755(ExecutableFullPath);
                     }
 
