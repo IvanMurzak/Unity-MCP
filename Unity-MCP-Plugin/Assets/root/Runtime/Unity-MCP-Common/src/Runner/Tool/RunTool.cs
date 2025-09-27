@@ -164,7 +164,6 @@ namespace com.IvanMurzak.Unity.MCP.Common
 
                 // Invoke the method (static or instance)
                 var result = await InvokeDict(finalParameters, cancellationToken);
-
                 if (result is ResponseCallTool response)
                     return response.SetRequestID(requestId);
 
@@ -174,19 +173,19 @@ namespace com.IvanMurzak.Unity.MCP.Common
             {
                 var errorMessage = $"Parameter validation failed for tool '{Title ?? this.Method?.Name}': {ex.Message}";
                 _logger?.LogError(ex, errorMessage);
-                return ResponseCallTool.Error(errorMessage);
+                return ResponseCallTool.Error(errorMessage).SetRequestID(requestId);
             }
             catch (JsonException ex)
             {
                 var errorMessage = $"JSON parameter parsing failed for tool '{Title ?? this.Method?.Name}': {ex.Message}";
                 _logger?.LogError(ex, errorMessage);
-                return ResponseCallTool.Error(errorMessage);
+                return ResponseCallTool.Error(errorMessage).SetRequestID(requestId);
             }
             catch (Exception ex)
             {
                 var errorMessage = $"Tool execution failed for '{Title ?? this.Method?.Name}': {(ex.InnerException ?? ex).Message}";
                 _logger?.LogError(ex, $"{errorMessage}\n{ex.StackTrace}");
-                return ResponseCallTool.Error(errorMessage);
+                return ResponseCallTool.Error(errorMessage).SetRequestID(requestId);
             }
         }
 
@@ -210,7 +209,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
             {
                 var errorMessage = $"Method information is not available for tool '{Title}'";
                 _logger?.LogError(errorMessage);
-                return ResponseCallTool.Error(errorMessage);
+                return ResponseCallTool.Error(errorMessage).SetRequestID(requestId);
             }
 
             // Validate method is accessible
@@ -218,7 +217,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
             {
                 var errorMessage = $"Method '{this.Method.Name}' in tool '{Title}' is not accessible (must be public or protected)";
                 _logger?.LogError(errorMessage);
-                return ResponseCallTool.Error(errorMessage);
+                return ResponseCallTool.Error(errorMessage).SetRequestID(requestId);
             }
 
             return null; // Validation passed

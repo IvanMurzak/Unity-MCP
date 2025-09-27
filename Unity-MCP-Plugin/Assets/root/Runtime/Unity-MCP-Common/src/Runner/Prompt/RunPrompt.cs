@@ -146,19 +146,19 @@ namespace com.IvanMurzak.Unity.MCP.Common
             }
             catch (ArgumentException ex)
             {
-                var errorMessage = $"Parameter validation failed for tool '{Name ?? this.Method?.Name}': {ex.Message}";
+                var errorMessage = $"Parameter validation failed for tool '{Name ?? Method?.Name}': {ex.Message}";
                 _logger?.LogError(ex, errorMessage);
                 return ResponseGetPrompt.Error(errorMessage).SetRequestID(requestId);
             }
             catch (TargetParameterCountException ex)
             {
-                var errorMessage = $"Parameter count mismatch for tool '{Name ?? this.Method?.Name}'. Expected {this.Method?.GetParameters().Length} parameters, but received {parameters?.Length}";
+                var errorMessage = $"Parameter count mismatch for tool '{Name ?? Method?.Name}'. Expected {Method?.GetParameters().Length} parameters, but received {parameters?.Length}";
                 _logger?.LogError(ex, errorMessage);
                 return ResponseGetPrompt.Error(errorMessage).SetRequestID(requestId);
             }
             catch (Exception ex)
             {
-                var errorMessage = $"Tool execution failed for '{Name ?? this.Method?.Name}': {(ex.InnerException ?? ex).Message}";
+                var errorMessage = $"Tool execution failed for '{Name ?? Method?.Name}': {(ex.InnerException ?? ex).Message}";
                 _logger?.LogError(ex, $"{errorMessage}\n{ex.StackTrace}");
                 return ResponseGetPrompt.Error(errorMessage).SetRequestID(requestId);
             }
@@ -193,27 +193,28 @@ namespace com.IvanMurzak.Unity.MCP.Common
                     return response.SetRequestID(requestId);
 
                 return ResponseGetPrompt.Success(
-                    result.ToString(),
-                    role: Method.GetCustomAttribute<McpPluginPromptAttribute>()?.Role ?? Role.User,
-                    description: description).SetRequestID(requestId);
+                        result.ToString(),
+                        role: Method.GetCustomAttribute<McpPluginPromptAttribute>()?.Role ?? Role.User,
+                        description: description)
+                    .SetRequestID(requestId);
             }
             catch (ArgumentException ex)
             {
-                var errorMessage = $"Parameter validation failed for tool '{Name ?? this.Method?.Name}': {ex.Message}";
+                var errorMessage = $"Parameter validation failed for tool '{Name ?? Method?.Name}': {ex.Message}";
                 _logger?.LogError(ex, errorMessage);
-                return ResponseGetPrompt.Error(errorMessage);
+                return ResponseGetPrompt.Error(errorMessage).SetRequestID(requestId);
             }
             catch (JsonException ex)
             {
-                var errorMessage = $"JSON parameter parsing failed for tool '{Name ?? this.Method?.Name}': {ex.Message}";
+                var errorMessage = $"JSON parameter parsing failed for tool '{Name ?? Method?.Name}': {ex.Message}";
                 _logger?.LogError(ex, errorMessage);
-                return ResponseGetPrompt.Error(errorMessage);
+                return ResponseGetPrompt.Error(errorMessage).SetRequestID(requestId);
             }
             catch (Exception ex)
             {
-                var errorMessage = $"Tool execution failed for '{Name ?? this.Method?.Name}': {(ex.InnerException ?? ex).Message}";
+                var errorMessage = $"Tool execution failed for '{Name ?? Method?.Name}': {(ex.InnerException ?? ex).Message}";
                 _logger?.LogError(ex, $"{errorMessage}\n{ex.StackTrace}");
-                return ResponseGetPrompt.Error(errorMessage);
+                return ResponseGetPrompt.Error(errorMessage).SetRequestID(requestId);
             }
         }
 
@@ -227,24 +228,24 @@ namespace com.IvanMurzak.Unity.MCP.Common
         {
             if (string.IsNullOrWhiteSpace(requestId))
             {
-                var errorMessage = $"Request ID cannot be null or empty for tool '{Name ?? this.Method?.Name}'";
+                var errorMessage = $"Request ID cannot be null or empty for tool '{Name ?? Method?.Name}'";
                 _logger?.LogError(errorMessage);
                 return ResponseGetPrompt.Error(errorMessage);
             }
 
-            if (this.Method == null)
+            if (Method == null)
             {
                 var errorMessage = $"Method information is not available for tool '{Name}'";
                 _logger?.LogError(errorMessage);
-                return ResponseGetPrompt.Error(errorMessage);
+                return ResponseGetPrompt.Error(errorMessage).SetRequestID(requestId);
             }
 
             // Validate method is accessible
-            if (!this.Method.IsPublic && !this.Method.IsFamily)
+            if (!Method.IsPublic && !Method.IsFamily)
             {
-                var errorMessage = $"Method '{this.Method.Name}' in tool '{Name}' is not accessible (must be public or protected)";
+                var errorMessage = $"Method '{Method.Name}' in tool '{Name}' is not accessible (must be public or protected)";
                 _logger?.LogError(errorMessage);
-                return ResponseGetPrompt.Error(errorMessage);
+                return ResponseGetPrompt.Error(errorMessage).SetRequestID(requestId);
             }
 
             return null; // Validation passed

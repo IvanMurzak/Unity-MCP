@@ -39,8 +39,6 @@ namespace com.IvanMurzak.Unity.MCP.Common
             {
                 public const string OnListToolsUpdated = "OnListToolsUpdated";
                 public const string OnListResourcesUpdated = "OnListResourcesUpdated";
-                public const string OnDomainReloadStarted = "OnDomainReloadStarted";
-                public const string OnDomainReloadCompleted = "OnDomainReloadCompleted";
                 public const string OnToolRequestCompleted = "OnToolRequestCompleted";
                 public const string OnVersionHandshake = "OnVersionHandshake";
             }
