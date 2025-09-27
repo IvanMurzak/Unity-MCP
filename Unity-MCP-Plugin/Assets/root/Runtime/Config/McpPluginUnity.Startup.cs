@@ -96,7 +96,7 @@ namespace com.IvanMurzak.Unity.MCP
                 _logger.Log(MicrosoftLogLevel.Error, "{tag} {class} Error during MCP plugin initialization: {exception}",
                     Consts.Log.Tag, nameof(McpPluginUnity), ex);
 
-                McpPlugin.StaticDisposeAsync().GetAwaiter();
+                await McpPlugin.StaticDisposeAsync();
             }
             finally
             {
