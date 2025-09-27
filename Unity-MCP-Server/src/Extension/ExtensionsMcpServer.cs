@@ -12,7 +12,6 @@ using System;
 using com.IvanMurzak.Unity.MCP.Common;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using ModelContextProtocol.Server;
 using NLog;
 
 namespace com.IvanMurzak.Unity.MCP.Server
