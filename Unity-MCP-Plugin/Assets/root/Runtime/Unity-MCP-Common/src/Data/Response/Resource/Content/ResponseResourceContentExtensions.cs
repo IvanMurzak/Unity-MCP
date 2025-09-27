@@ -26,7 +26,6 @@ namespace com.IvanMurzak.Unity.MCP.Common.Model
             return target;
         }
 
-
         public static IResponseData<ResponseResourceContent[]> Pack(this ResponseResourceContent[] target, string requestId, string? message = null)
             => ResponseData<ResponseResourceContent[]>.Success(requestId, message ?? "List Tool execution completed.")
                 .SetData(target);

@@ -7,14 +7,16 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
+#nullable enable
 using System.Linq;
+using com.IvanMurzak.ReflectorNet;
+using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Common;
 using com.IvanMurzak.Unity.MCP.Common.Model;
 using com.IvanMurzak.Unity.MCP.Utils;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-using com.IvanMurzak.ReflectorNet.Utils;
-using com.IvanMurzak.ReflectorNet;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -35,13 +37,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         {
             if (string.IsNullOrEmpty(path))
                 throw new System.Exception("[Error] Path to the GameObject is empty.");
-
-            // if (path == Consts.AllRecursive)
-            // {
-            // }
-            // if (path == Consts.All)
-            // {
-            // }
 
             return MainThread.Instance.Run(() =>
             {

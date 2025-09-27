@@ -26,6 +26,8 @@ namespace com.IvanMurzak.Unity.MCP.Common
             {
                 public const string RunCallTool = "/mcp/run-call-tool";
                 public const string RunListTool = "/mcp/run-list-tool";
+                public const string RunGetPrompt = "/mcp/run-get-prompt";
+                public const string RunListPrompts = "/mcp/run-list-prompts";
                 public const string RunResourceContent = "/mcp/run-resource-content";
                 public const string RunListResources = "/mcp/run-list-resources";
                 public const string RunListResourceTemplates = "/mcp/run-list-resource-templates";
@@ -37,8 +39,6 @@ namespace com.IvanMurzak.Unity.MCP.Common
             {
                 public const string OnListToolsUpdated = "OnListToolsUpdated";
                 public const string OnListResourcesUpdated = "OnListResourcesUpdated";
-                public const string OnDomainReloadStarted = "OnDomainReloadStarted";
-                public const string OnDomainReloadCompleted = "OnDomainReloadCompleted";
                 public const string OnToolRequestCompleted = "OnToolRequestCompleted";
                 public const string OnVersionHandshake = "OnVersionHandshake";
             }

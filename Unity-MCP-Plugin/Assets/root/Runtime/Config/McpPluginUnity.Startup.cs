@@ -75,6 +75,7 @@ namespace com.IvanMurzak.Unity.MCP
                 UnityVersion = Application.unityVersion
             };
             var loggerProvider = new UnityLoggerProvider();
+            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
             var mcpPlugin = new McpPluginBuilder(version, loggerProvider)
                 .AddMcpPlugin()
                 .WithConfig(config =>
@@ -99,9 +100,9 @@ namespace com.IvanMurzak.Unity.MCP
                         _ => LogLevelMicrosoft.Warning
                     });
                 })
-                .WithToolsFromAssembly(AppDomain.CurrentDomain.GetAssemblies())
-                .WithPromptsFromAssembly(AppDomain.CurrentDomain.GetAssemblies())
-                .WithResourcesFromAssembly(AppDomain.CurrentDomain.GetAssemblies())
+                .WithToolsFromAssembly(assemblies)
+                .WithPromptsFromAssembly(assemblies)
+                .WithResourcesFromAssembly(assemblies)
                 .Build(CreateDefaultReflector());
 
             if (!openConnectionIfNeeded)

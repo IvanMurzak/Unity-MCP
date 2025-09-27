@@ -11,7 +11,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.Unity.MCP.Common.Model;
 using ModelContextProtocol.Protocol;
 
@@ -25,7 +24,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
                 throw new ArgumentNullException(nameof(target));
 
             target.IsError = true;
-            target.Content ??= new List<ContentBlock>(1);
+            target.Content ??= new List<ModelContextProtocol.Protocol.ContentBlock>(1);
 
             var content = new TextContentBlock()
             {
@@ -68,12 +67,6 @@ namespace com.IvanMurzak.Unity.MCP.Server
             Content = response.Content
                 .Select(x => x.ToTextContent())
                 .ToList()
-        };
-
-        public static ContentBlock ToTextContent(this ResponseCallToolContent response) => new TextContentBlock()
-        {
-            Type = response.Type,
-            Text = response.Text ?? string.Empty
         };
     }
 }

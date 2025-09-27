@@ -16,6 +16,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.ReflectorNet;
+using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Common.Model;
 using Microsoft.Extensions.Logging;
 
@@ -28,16 +29,18 @@ namespace com.IvanMurzak.Unity.MCP.Common
         protected readonly ILogger<McpRunner> _logger;
         protected readonly Reflector _reflector;
         readonly ToolRunnerCollection _tools;
+        readonly PromptRunnerCollection _prompts;
         readonly ResourceRunnerCollection _resources;
 
         public Reflector Reflector => _reflector;
 
-        public McpRunner(ILogger<McpRunner> logger, Reflector reflector, ToolRunnerCollection tools, ResourceRunnerCollection resources)
+        public McpRunner(ILogger<McpRunner> logger, Reflector reflector, ToolRunnerCollection tools, PromptRunnerCollection prompts, ResourceRunnerCollection resources)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _logger.LogTrace("Ctor");
             _reflector = reflector ?? throw new ArgumentNullException(nameof(reflector));
             _tools = tools ?? throw new ArgumentNullException(nameof(tools));
+            _prompts = prompts ?? throw new ArgumentNullException(nameof(prompts));
             _resources = resources ?? throw new ArgumentNullException(nameof(resources));
 
             if (_logger.IsEnabled(LogLevel.Trace))
@@ -51,7 +54,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
             {
                 _logger.LogTrace("Registered resources [{0}]:", resources.Count);
                 foreach (var kvp in resources)
-                    _logger.LogTrace("Resource: {0}", kvp.Key);
+                    _logger.LogTrace("Resource: {Name}. Route: {Route}", kvp.Key, kvp.Value.Route);
             }
         }
 
@@ -152,6 +155,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
 
         public async Task<IResponseData<ResponseListResource[]>> RunListResources(IRequestListResources data, CancellationToken cancellationToken = default)
         {
+            _logger.LogDebug("Listing resources. [{Count}]", _resources.Count);
             var tasks = _resources.Values
                 .Select(resource => resource.RunListContext.Run());
 
@@ -164,19 +168,71 @@ namespace com.IvanMurzak.Unity.MCP.Common
         }
 
         public Task<IResponseData<ResponseResourceTemplate[]>> RunResourceTemplates(IRequestListResourceTemplates data, CancellationToken cancellationToken = default)
-            => _resources.Values
+        {
+            _logger.LogDebug("Listing resource templates. [{Count}]", _resources.Count);
+            return _resources.Values
                 .Select(resource => new ResponseResourceTemplate(resource.Route, resource.Name, resource.Description, resource.MimeType))
                 .ToArray()
                 .Pack(data.RequestID)
                 .TaskFromResult();
+        }
+
+        public async Task<IResponseData<ResponseGetPrompt>> RunGetPrompt(IRequestGetPrompt request, CancellationToken cancellationToken = default)
+        {
+            if (!_prompts.TryGetValue(request.Name, out var runner))
+            {
+                return ResponseData<ResponseGetPrompt>
+                    .Error(request.RequestID, $"Prompt with Name '{request.Name}' not found.")
+                    .Log(_logger);
+            }
+
+            var result = await runner.Run(request.RequestID, request.Arguments, cancellationToken);
+
+            result.Log(_logger);
+
+            return result.Pack(request.RequestID);
+        }
+
+        public Task<IResponseData<ResponseListPrompts>> RunListPrompts(IRequestListPrompts request, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                _logger.LogDebug("Listing prompts. [{Count}]", _prompts.Count);
+                var result = new ResponseListPrompts()
+                {
+                    Prompts = _prompts.Values
+                        .Select(p => new ResponsePrompt()
+                        {
+                            Name = p.Name,
+                            Title = p.Title,
+                            Description = p.Description,
+                            Arguments = p.InputSchema.ToResponsePromptArguments()
+                        })
+                        .ToList()
+                };
+                _logger.LogDebug("{0} Prompts listed.", result.Prompts.Count);
+
+                return result
+                    .Log(_logger)
+                    .Pack(request.RequestID)
+                    .TaskFromResult();
+            }
+            catch (Exception ex)
+            {
+                // Handle or log the exception as needed
+                return ResponseData<ResponseListPrompts>.Error(request.RequestID, $"Failed to list tools. Exception: {ex}")
+                    .Log(_logger, "RunListTool", ex)
+                    .TaskFromResult();
+            }
+        }
 
         IRunResource? FindResourceContentRunner(string uri, IDictionary<string, IRunResource> resources, out string? uriTemplate)
         {
             foreach (var route in resources)
             {
-                if (IsMatch(route.Key, uri))
+                if (IsMatch(route.Value.Route, uri))
                 {
-                    uriTemplate = route.Key;
+                    uriTemplate = route.Value.Route;
                     return route.Value;
                 }
             }

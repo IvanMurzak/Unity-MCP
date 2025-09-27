@@ -72,6 +72,8 @@ namespace com.IvanMurzak.Unity.MCP.Common
                 await _connectionManager.Disconnect();
             });
 
+            // Tool events -------------------------------------------------------------
+
             hubConnection.On<RequestCallTool, IResponseData<ResponseCallTool>>(Consts.RPC.Client.RunCallTool, async data =>
                 {
                     _logger.LogDebug("{class}.{method}", nameof(RpcRouter), Consts.RPC.Client.RunCallTool);
@@ -85,6 +87,24 @@ namespace com.IvanMurzak.Unity.MCP.Common
                     return await _mcpRunner.RunListTool(data);
                 })
                 .AddTo(_serverEventsDisposables);
+
+            // Prompt events -----------------------------------------------------------
+
+            hubConnection.On<RequestGetPrompt, IResponseData<ResponseGetPrompt>>(Consts.RPC.Client.RunGetPrompt, async data =>
+                {
+                    _logger.LogDebug("{class}.{method}", nameof(RpcRouter), Consts.RPC.Client.RunGetPrompt);
+                    return await _mcpRunner.RunGetPrompt(data);
+                })
+                .AddTo(_serverEventsDisposables);
+
+            hubConnection.On<RequestListPrompts, IResponseData<ResponseListPrompts>>(Consts.RPC.Client.RunListPrompts, async data =>
+                {
+                    _logger.LogDebug("{class}.{method}", nameof(RpcRouter), Consts.RPC.Client.RunListPrompts);
+                    return await _mcpRunner.RunListPrompts(data);
+                })
+                .AddTo(_serverEventsDisposables);
+
+            // Resource events ---------------------------------------------------------
 
             hubConnection.On<RequestResourceContent, IResponseData<ResponseResourceContent[]>>(Consts.RPC.Client.RunResourceContent, async data =>
                 {
