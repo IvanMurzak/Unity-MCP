@@ -18,14 +18,14 @@ namespace com.IvanMurzak.Unity.MCP.Common.Model
     {
         public string RequestID { get; set; } = string.Empty;
         public virtual ResponseStatus Status { get; set; } = ResponseStatus.Error;
-        public virtual List<ResponseCallToolContent> Content { get; set; } = new List<ResponseCallToolContent>();
+        public virtual List<ContentBlock> Content { get; set; } = new List<ContentBlock>();
 
         public ResponseCallTool() { }
-        public ResponseCallTool(ResponseStatus status, List<ResponseCallToolContent> content) : this(string.Empty, status, content)
+        public ResponseCallTool(ResponseStatus status, List<ContentBlock> content) : this(string.Empty, status, content)
         {
             // none
         }
-        public ResponseCallTool(string requestId, ResponseStatus status, List<ResponseCallToolContent> content)
+        public ResponseCallTool(string requestId, ResponseStatus status, List<ContentBlock> content)
         {
             RequestID = requestId;
             Status = status;
@@ -46,9 +46,9 @@ namespace com.IvanMurzak.Unity.MCP.Common.Model
             => Error($"[Error] {exception?.Message}\n{exception?.StackTrace}");
 
         public static ResponseCallTool Error(string? message = null)
-            => new ResponseCallTool(status: ResponseStatus.Error, new List<ResponseCallToolContent>
+            => new ResponseCallTool(status: ResponseStatus.Error, new List<ContentBlock>
             {
-                new ResponseCallToolContent()
+                new ContentBlock()
                 {
                     Type = "text",
                     Text = message,
@@ -57,9 +57,9 @@ namespace com.IvanMurzak.Unity.MCP.Common.Model
             });
 
         public static ResponseCallTool Success(string? message = null)
-            => new ResponseCallTool(status: ResponseStatus.Success, new List<ResponseCallToolContent>
+            => new ResponseCallTool(status: ResponseStatus.Success, new List<ContentBlock>
             {
-                new ResponseCallToolContent()
+                new ContentBlock()
                 {
                     Type = "text",
                     Text = message,
@@ -68,9 +68,9 @@ namespace com.IvanMurzak.Unity.MCP.Common.Model
             });
 
         public static ResponseCallTool Processing(string? message = null)
-            => new ResponseCallTool(status: ResponseStatus.Processing, new List<ResponseCallToolContent>
+            => new ResponseCallTool(status: ResponseStatus.Processing, new List<ContentBlock>
             {
-                new ResponseCallToolContent()
+                new ContentBlock()
                 {
                     Type = "text",
                     Text = message,

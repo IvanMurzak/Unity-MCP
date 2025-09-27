@@ -20,7 +20,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
 {
     public static partial class ResourceRouter
     {
-        public static async ValueTask<ListResourcesResult> ListResources(RequestContext<ListResourcesRequestParams> request, CancellationToken cancellationToken)
+        public static async ValueTask<ListResourcesResult> List(RequestContext<ListResourcesRequestParams> request, CancellationToken cancellationToken)
         {
             var mcpServerService = McpServerService.Instance;
             if (mcpServerService == null)

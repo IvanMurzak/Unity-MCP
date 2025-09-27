@@ -31,9 +31,11 @@ namespace com.IvanMurzak.Unity.MCP.Server
             _requestTrackingService = requestTrackingService ?? throw new ArgumentNullException(nameof(requestTrackingService));
         }
 
-        public Task<IResponseData> OnListToolsUpdated(string data)
+        Task<IResponseData> IRemoteApp.OnListToolsUpdated(string data)
         {
-            _logger.LogTrace("OnListToolsUpdated. {0}. Data: {1}", _guid, data);
+            _logger.LogTrace("{method}. {guid}. Data: {data}",
+                nameof(IRemoteApp.OnListToolsUpdated), _guid, data);
+
             _eventAppToolsChange.OnNext(new EventAppToolsChange.EventData
             {
                 ConnectionId = Context.ConnectionId,
@@ -42,15 +44,18 @@ namespace com.IvanMurzak.Unity.MCP.Server
             return ResponseData.Success(data, string.Empty).TaskFromResult<IResponseData>();
         }
 
-        public Task<IResponseData> OnListResourcesUpdated(string data)
+        Task<IResponseData> IRemoteApp.OnListResourcesUpdated(string data)
         {
-            _logger.LogTrace("OnListResourcesUpdated. {0}. Data: {1}", _guid, data);
+            _logger.LogTrace("{method}. {guid}. Data: {data}",
+                nameof(IRemoteApp.OnListResourcesUpdated), _guid, data);
+
             return ResponseData.Success(data, string.Empty).TaskFromResult<IResponseData>();
         }
 
-        public Task<IResponseData> OnToolRequestCompleted(ToolRequestCompletedData data)
+        Task<IResponseData> IRemoteApp.OnToolRequestCompleted(ToolRequestCompletedData data)
         {
-            _logger.LogTrace("OnToolRequestCompleted. {0}. RequestId: {1}", _guid, data.RequestId);
+            _logger.LogTrace("{method}. {guid}. RequestId: {requestId}",
+                nameof(IRemoteApp.OnToolRequestCompleted), _guid, data.RequestId);
 
             try
             {
@@ -58,15 +63,16 @@ namespace com.IvanMurzak.Unity.MCP.Server
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deserializing tool response for RequestId: {RequestId}", data.RequestId);
+                _logger.LogError(ex, "Error deserializing tool response for RequestId: {requestId}", data.RequestId);
             }
 
             return ResponseData.Success(string.Empty, string.Empty).TaskFromResult<IResponseData>();
         }
 
-        public Task<VersionHandshakeResponse> OnVersionHandshake(VersionHandshakeRequest request)
+        Task<VersionHandshakeResponse> IRemoteApp.OnVersionHandshake(VersionHandshakeRequest request)
         {
-            _logger.LogTrace("OnVersionHandshake. {0}. PluginVersion: {1}, ApiVersion: {2}, UnityVersion: {3}", _guid, request.PluginVersion, request.ApiVersion, request.UnityVersion);
+            _logger.LogTrace("{method}. {guid}. PluginVersion: {pluginVersion}, ApiVersion: {apiVersion}, UnityVersion: {unityVersion}",
+                nameof(IRemoteApp.OnVersionHandshake), _guid, request.PluginVersion, request.ApiVersion, request.UnityVersion);
 
             var serverApiVersion = _version.Api;
             var compatible = IsApiVersionCompatible(request.ApiVersion, serverApiVersion);
@@ -83,12 +89,12 @@ namespace com.IvanMurzak.Unity.MCP.Server
 
             if (!compatible)
             {
-                _logger.LogError("API version mismatch detected. Plugin: {PluginApiVersion}, Server: {ServerApiVersion}",
+                _logger.LogError("API version mismatch detected. Plugin: {pluginApiVersion}, Server: {serverApiVersion}",
                     request.ApiVersion, serverApiVersion);
             }
             else
             {
-                _logger.LogInformation("Version handshake successful. Plugin: {PluginVersion}, API: {ApiVersion}, Unity Version: {UnityVersion}",
+                _logger.LogInformation("Version handshake successful. Plugin: {pluginVersion}, API: {apiVersion}, Unity Version: {unityVersion}",
                     request.PluginVersion, request.ApiVersion, request.UnityVersion);
             }
 

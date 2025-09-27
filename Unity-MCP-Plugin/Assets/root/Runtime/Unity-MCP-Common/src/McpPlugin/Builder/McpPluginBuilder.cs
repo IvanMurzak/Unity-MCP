@@ -27,6 +27,9 @@ namespace com.IvanMurzak.Unity.MCP.Common
         readonly List<ToolMethodData> _toolMethods = new();
         readonly Dictionary<string, IRunTool> _toolRunners = new();
 
+        readonly List<PromptMethodData> _promptMethods = new();
+        readonly Dictionary<string, IRunPrompt> _promptRunners = new();
+
         readonly List<ResourceMethodData> _resourceMethods = new();
         readonly Dictionary<string, IRunResource> _resourceRunners = new();
 
@@ -80,6 +83,41 @@ namespace com.IvanMurzak.Unity.MCP.Common
                 throw new ArgumentException($"Tool with name '{name}' already exists.");
 
             _toolRunners.Add(name, runner);
+            return this;
+        }
+
+        public IMcpPluginBuilder WithPrompt(string name, Type classType, MethodInfo methodInfo)
+        {
+            if (isBuilt)
+                throw new InvalidOperationException("The builder has already been built.");
+
+            var attribute = methodInfo.GetCustomAttribute<McpPluginPromptAttribute>();
+            if (attribute == null)
+            {
+                _logger?.LogWarning($"Method {classType.FullName}{methodInfo.Name} does not have a '{nameof(McpPluginPromptAttribute)}'.");
+                return this;
+            }
+
+            if (string.IsNullOrEmpty(attribute.Name))
+                throw new ArgumentException($"Prompt name cannot be null or empty. Type: {classType.Name}, Method: {methodInfo.Name}");
+
+            _promptMethods.Add(new PromptMethodData
+            (
+                classType: classType,
+                methodInfo: methodInfo,
+                attribute: attribute
+            ));
+            return this;
+        }
+        public IMcpPluginBuilder AddPrompt(string name, IRunPrompt runner)
+        {
+            if (isBuilt)
+                throw new InvalidOperationException("The builder has already been built.");
+
+            if (_promptRunners.ContainsKey(name))
+                throw new ArgumentException($"Prompt with name '{name}' already exists.");
+
+            _promptRunners.Add(name, runner);
             return this;
         }
 
@@ -167,6 +205,10 @@ namespace com.IvanMurzak.Unity.MCP.Common
             _services.AddSingleton(new ToolRunnerCollection(reflector, _loggerProvider?.CreateLogger(nameof(ToolRunnerCollection)))
                 .Add(_toolMethods)
                 .Add(_toolRunners));
+
+            _services.AddSingleton(new PromptRunnerCollection(reflector, _loggerProvider?.CreateLogger(nameof(PromptRunnerCollection)))
+                .Add(_promptMethods)
+                .Add(_promptRunners));
 
             _services.AddSingleton(new ResourceRunnerCollection(reflector, _loggerProvider?.CreateLogger(nameof(ResourceRunnerCollection)))
                 .Add(_resourceMethods)

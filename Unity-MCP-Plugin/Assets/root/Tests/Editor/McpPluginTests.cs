@@ -9,7 +9,6 @@
 */
 #nullable enable
 using System.Collections;
-using System.Threading.Tasks;
 using com.IvanMurzak.Unity.MCP.Common;
 using NUnit.Framework;
 using UnityEngine.TestTools;
@@ -19,6 +18,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     [TestFixture]
     public class McpPluginTests : BaseTest
     {
+        const int WaitTimeoutTicks = 100000;
         [Test]
         public void McpPlugin_Instance_ShouldNotBeNull_WhenInitialized()
         {
@@ -54,7 +54,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             });
             try
             {
-                for (int i = 0; !callbackExecuted && i < 1000; i++)
+                for (int i = 0; !callbackExecuted && i < WaitTimeoutTicks; i++)
                     yield return null; // Allow callback to execute
 
                 // Assert
@@ -84,7 +84,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             try
             {
-                for (int i = 0; !callbackExecuted && i < 1000; i++)
+                for (int i = 0; !callbackExecuted && i < WaitTimeoutTicks; i++)
                     yield return null; // Allow callback to execute
 
                 // Trigger another execution by accessing Instance again

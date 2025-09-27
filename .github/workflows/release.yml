@@ -45,7 +45,7 @@ jobs:
       - name: Cache Unity Library
         uses: actions/cache@v4
         with:
-          path: ./AssetStore-Installer/Library
+          path: ./Installer/Library
           key: Library-Unity-Installer
 
       - name: Test Unity Installer (EditMode)
@@ -55,7 +55,7 @@ jobs:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
-          projectPath: ./AssetStore-Installer
+          projectPath: ./Installer
           unityVersion: 2022.3.61f1
           customImage: 'unityci/editor:ubuntu-2022.3.61f1-base-3'
           testMode: editmode
@@ -67,8 +67,8 @@ jobs:
       - name: Clean Unity artifacts and reset git state
         run: |
           # Force remove Unity generated files with restricted permissions
-          sudo rm -rf ./AssetStore-Installer/Logs/ || true
-          sudo rm -rf ./AssetStore-Installer/Temp/ || true
+          sudo rm -rf ./Installer/Logs/ || true
+          sudo rm -rf ./Installer/Temp/ || true
           sudo rm -rf ./artifacts-installer-editmode/ || true
 
           # Reset only tracked files to their committed state
@@ -82,19 +82,19 @@ jobs:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
-          projectPath: ./AssetStore-Installer
+          projectPath: ./Installer
           unityVersion: 2022.3.61f1
           customImage: 'unityci/editor:ubuntu-2022.3.61f1-base-3'
           buildName: AI-Game-Dev-Installer
           buildsPath: build
-          buildMethod: PackageExporter.ExportPackage
+          buildMethod: com.IvanMurzak.Unity.MCP.Installer.PackageExporter.ExportPackage
           customParameters: -CI true -GITHUB_ACTIONS true
 
       - name: Upload Unity Package as artifact
         uses: actions/upload-artifact@v4
         with:
           name: unity-installer-package
-          path: ./AssetStore-Installer/build/AI-Game-Dev-Installer.unitypackage
+          path: ./Installer/build/AI-Game-Dev-Installer.unitypackage
 
   build-and-zip-mcp-server:
     runs-on: macos-latest

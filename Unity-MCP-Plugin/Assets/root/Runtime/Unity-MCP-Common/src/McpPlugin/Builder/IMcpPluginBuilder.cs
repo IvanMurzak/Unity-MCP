@@ -7,6 +7,8 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
+#nullable enable
 using System;
 using System.Reflection;
 using com.IvanMurzak.ReflectorNet;
@@ -20,8 +22,13 @@ namespace com.IvanMurzak.Unity.MCP.Common
         IServiceCollection Services { get; }
         IMcpPluginBuilder WithTool(string name, Type classType, MethodInfo methodInfo);
         IMcpPluginBuilder AddTool(string name, IRunTool runner);
+
+        IMcpPluginBuilder WithPrompt(string name, Type classType, MethodInfo methodInfo);
+        IMcpPluginBuilder AddPrompt(string name, IRunPrompt runner);
+
         IMcpPluginBuilder WithResource(Type classType, MethodInfo getContentMethod);
         IMcpPluginBuilder AddResource(IRunResource resourceParams);
+
         IMcpPluginBuilder AddLogging(Action<ILoggingBuilder> loggingBuilder);
         IMcpPluginBuilder WithConfig(Action<ConnectionConfig> config);
         IMcpPlugin Build(Reflector reflector);
