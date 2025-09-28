@@ -234,6 +234,7 @@ jobs:
     outputs:
       version: ${{ needs.check-version-tag.outputs.version }}
       success: ${{ steps.rel_desc.outputs.success }}
+      release_notes: ${{ steps.rel_desc.outputs.release_body }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -359,6 +360,50 @@ jobs:
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  publish_discord:
+    runs-on: ubuntu-latest
+    needs: release-unity-plugin
+    if: needs.release-unity-plugin.outputs.success == 'true'
+    steps:
+      - name: Send Release Notes to Discord
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: |
+          # Get the release notes from the previous job
+          release_notes='${{ needs.release-unity-plugin.outputs.release_notes }}'
+          version='${{ needs.release-unity-plugin.outputs.version }}'
+
+          # Create the release URL
+          release_url="https://github.com/${{ github.repository }}/releases/tag/${version}"
+
+          # Append the release link to the notes
+          full_message="${release_notes}
+
+          ---
+          📦 **[View Full Release](${release_url})**"
+
+          # Discord has a 2000 character limit, so we'll truncate if needed
+          if [ ${#full_message} -gt 1900 ]; then
+            # Truncate but keep the link at the end
+            max_notes_length=$((1900 - 50))  # Reserve space for the link
+            truncated_notes="${release_notes:0:${max_notes_length}}..."
+            full_message="${truncated_notes}
+
+          📦 **[View Full Release](${release_url})**"
+          fi
+
+          # Create JSON payload for Discord webhook
+          json_payload=$(jq -n \
+            --arg content "$full_message" \
+            '{content: $content}')
+
+          # Send to Discord webhook
+          curl -X POST "$DISCORD_WEBHOOK" \
+            -H "Content-Type: application/json" \
+            -d "$json_payload"
+
+          echo "Release notes sent to Discord for version $version"
 
   # Cleanup job to remove build artifacts after publishing
   cleanup-artifacts:
