@@ -9,32 +9,28 @@
 */
 
 #nullable enable
-using System.Threading.Tasks;
-using com.IvanMurzak.Unity.MCP.Common;
-using UnityEditor;
-using UnityEngine;
+using Microsoft.Extensions.Logging;
 
-namespace com.IvanMurzak.Unity.MCP.Editor
+namespace com.IvanMurzak.Unity.MCP.Utils
 {
-    [InitializeOnLoad]
-    public static partial class Startup
+    public static class UnityLoggerFactory
     {
-        static string DebugName => $"<b>[AI-Editor]</b>";
+        private static ILoggerFactory? _loggerFactory;
 
-        static Startup()
+        public static ILoggerFactory LoggerFactory
         {
-            McpPluginUnity.BuildAndStart();
-            Server.DownloadServerBinaryIfNeeded();
-
-            if (Application.dataPath.Contains(" "))
-                Debug.LogError("The project path contains spaces, which may cause issues during usage of Unity-MCP. Please consider the move the project to a folder without spaces.");
-
-            SubscribeOnEditorEvents();
-
-            // Initialize sub-systems
-            API.Tool_TestRunner.Init();
+            get
+            {
+                if (_loggerFactory == null)
+                {
+                    _loggerFactory = Microsoft.Extensions.Logging.LoggerFactory.Create(builder =>
+                    {
+                        builder.ClearProviders();
+                        builder.AddProvider(new UnityLoggerProvider());
+                    });
+                }
+                return _loggerFactory;
+            }
         }
-
-        static void Disconnect() => McpPluginUnity.Disconnect();
     }
 }

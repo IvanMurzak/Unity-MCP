@@ -164,7 +164,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
             if (!await CreateHubConnectionIfNeeded(cancellationToken))
                 return false;
 
-            await Task.Delay(50, cancellationToken);
+            await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
 
             return await StartConnectionLoop(cancellationToken);
         }
@@ -206,7 +206,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
 
         public async Task DisposeAsync()
         {
-            _logger.LogTrace("{0} DisposeAsync.", _guid);
+            _logger.LogDebug("{0} DisposeAsync.", _guid);
 
             if (!_continueToReconnect.IsDisposed)
                 _continueToReconnect.Value = false;

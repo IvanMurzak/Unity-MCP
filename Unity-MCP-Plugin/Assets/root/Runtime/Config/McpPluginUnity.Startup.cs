@@ -8,6 +8,7 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Convertor;
@@ -24,49 +25,104 @@ namespace com.IvanMurzak.Unity.MCP
 {
     using Consts = Common.Consts;
     using LogLevel = Utils.LogLevel;
-    using LogLevelMicrosoft = Microsoft.Extensions.Logging.LogLevel;
+    using MicrosoftLogLevel = Microsoft.Extensions.Logging.LogLevel;
 
     public partial class McpPluginUnity
     {
         public const string Version = "0.17.2";
 
-        static volatile object buildAndStartMutex = new();
-        static volatile bool isInitializationStarted = false;
+        static volatile object initializingMutex = new();
+        static volatile Mutex initializedMutex = new();
+        static volatile bool isInitializing = false;
+        static volatile bool isInitialized = false;
 
         public static async void BuildAndStart(bool openConnectionIfNeeded = true)
         {
+            _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() called.",
+                Consts.Log.Tag, nameof(McpPluginUnity), nameof(BuildAndStart));
+
             // Disable automatic connection in CI environments
             if (EnvironmentUtils.IsCi())
                 openConnectionIfNeeded = false;
 
-            lock (buildAndStartMutex)
+            lock (initializingMutex)
             {
-                if (isInitializationStarted)
+                if (isInitializing)
+                {
+                    _logger.Log(MicrosoftLogLevel.Debug, "{tag} {class} is already in progress. Skipping this call.",
+                        Consts.Log.Tag, nameof(McpPluginUnity));
+                    _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() completed.",
+                        Consts.Log.Tag, nameof(McpPluginUnity), nameof(BuildAndStart));
                     return;
-                isInitializationStarted = true;
+                }
+                isInitializing = true;
             }
+
+            initializedMutex.WaitOne();
             try
             {
+                if (isInitialized)
+                {
+                    _logger.Log(MicrosoftLogLevel.Debug, "{tag} {class} is already initialized. Skipping this call.",
+                        Consts.Log.Tag, nameof(McpPluginUnity));
+
+                    if (openConnectionIfNeeded && KeepConnected)
+                    {
+                        if (!McpPlugin.HasInstance)
+                        {
+                            _logger.Log(MicrosoftLogLevel.Error, "{tag} {class} instance is null while isInitialized is true.",
+                                Consts.Log.Tag, nameof(McpPluginUnity));
+
+                            return;
+                        }
+                        await McpPlugin.Instance.Connect();
+                    }
+                    return;
+                }
+
                 await BuildAndStartInternal(openConnectionIfNeeded);
+
+                isInitialized = true;
+                _logger.Log(MicrosoftLogLevel.Debug, "{tag} {class} isInitialized set <true>.",
+                    Consts.Log.Tag, nameof(McpPluginUnity));
             }
             catch (Exception ex)
             {
+                isInitialized = false;
+                _logger.Log(MicrosoftLogLevel.Debug, "{tag} {class} isInitialized set <false>.",
+                    Consts.Log.Tag, nameof(McpPluginUnity));
+
                 Debug.LogException(ex);
-                Debug.LogError($"{Consts.Log.Tag} Error during MCP plugin initialization: {ex}");
+                _logger.Log(MicrosoftLogLevel.Error, "{tag} {class} Error during MCP plugin initialization: {exception}",
+                    Consts.Log.Tag, nameof(McpPluginUnity), ex);
+
+                await McpPlugin.StaticDisposeAsync();
             }
             finally
             {
-                lock (buildAndStartMutex)
+                _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() completed.",
+                    Consts.Log.Tag, nameof(McpPluginUnity), nameof(BuildAndStart));
+                initializedMutex.ReleaseMutex();
+                lock (initializingMutex)
                 {
-                    isInitializationStarted = false;
+                    isInitializing = false;
                 }
             }
         }
 
         static async Task BuildAndStartInternal(bool openConnectionIfNeeded)
         {
+            _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() called.",
+                Consts.Log.Tag, nameof(McpPluginUnity), nameof(BuildAndStartInternal));
+
+            if (McpPlugin.HasInstance)
+            {
+                _logger.Log(MicrosoftLogLevel.Error, "{tag} {class} instance already exists.",
+                    Consts.Log.Tag, nameof(McpPluginUnity));
+                return;
+            }
+
             MainThreadInstaller.Init();
-            await McpPlugin.StaticDisposeAsync();
 
             var version = new Common.Version
             {
@@ -80,24 +136,24 @@ namespace com.IvanMurzak.Unity.MCP
                 .AddMcpPlugin()
                 .WithConfig(config =>
                 {
-                    if (McpPluginUnity.LogLevel.IsActive(LogLevel.Info))
-                        Debug.Log($"{Consts.Log.Tag} MCP server address: {McpPluginUnity.Host}");
+                    _logger.Log(MicrosoftLogLevel.Information, "{tag} MCP server address: {host}",
+                        Consts.Log.Tag, Host);
 
-                    config.Endpoint = McpPluginUnity.Host;
+                    config.Endpoint = Host;
                 })
                 .AddLogging(loggingBuilder =>
                 {
                     loggingBuilder.ClearProviders(); // 👈 Clears the default providers
                     loggingBuilder.AddProvider(loggerProvider);
-                    loggingBuilder.SetMinimumLevel(McpPluginUnity.LogLevel switch
+                    loggingBuilder.SetMinimumLevel(LogLevel switch
                     {
-                        LogLevel.Trace => LogLevelMicrosoft.Trace,
-                        LogLevel.Debug => LogLevelMicrosoft.Debug,
-                        LogLevel.Info => LogLevelMicrosoft.Information,
-                        LogLevel.Warning => LogLevelMicrosoft.Warning,
-                        LogLevel.Error => LogLevelMicrosoft.Error,
-                        LogLevel.Exception => LogLevelMicrosoft.Critical,
-                        _ => LogLevelMicrosoft.Warning
+                        LogLevel.Trace => MicrosoftLogLevel.Trace,
+                        LogLevel.Debug => MicrosoftLogLevel.Debug,
+                        LogLevel.Info => MicrosoftLogLevel.Information,
+                        LogLevel.Warning => MicrosoftLogLevel.Warning,
+                        LogLevel.Error => MicrosoftLogLevel.Error,
+                        LogLevel.Exception => MicrosoftLogLevel.Critical,
+                        _ => MicrosoftLogLevel.Warning
                     });
                 })
                 .WithToolsFromAssembly(assemblies)
@@ -108,15 +164,15 @@ namespace com.IvanMurzak.Unity.MCP
             if (!openConnectionIfNeeded)
                 return;
 
-            if (McpPluginUnity.KeepConnected)
+            if (KeepConnected)
             {
-                if (McpPluginUnity.LogLevel.IsActive(LogLevel.Info))
-                {
-                    var message = "<b><color=yellow>Connecting</color></b>";
-                    Debug.Log($"{Consts.Log.Tag} {message} <color=orange>ಠ‿ಠ</color>");
-                }
+                var message = "<b><color=yellow>Connecting</color></b>";
+                _logger.Log(MicrosoftLogLevel.Information, "{tag} {message} <color=orange>ಠ‿ಠ</color>",
+                    Consts.Log.Tag, message);
                 await mcpPlugin.Connect();
             }
+            _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() completed.",
+                Consts.Log.Tag, nameof(McpPluginUnity), nameof(BuildAndStartInternal));
         }
 
         static Reflector CreateDefaultReflector()

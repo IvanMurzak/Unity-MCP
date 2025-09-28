@@ -71,6 +71,7 @@
         "aspnetcore",
         "Cdecl",
         "codeanalysis",
+        "Dbug",
         "dependencyinjection",
         "errno",
         "HDRP",
@@ -83,6 +84,7 @@
         "rwxr",
         "Scriptable",
         "signalr",
+        "Trce",
         "uielements",
         "unitypackage"
     ],

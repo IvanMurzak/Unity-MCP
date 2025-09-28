@@ -31,7 +31,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
             _requestTrackingService = requestTrackingService ?? throw new ArgumentNullException(nameof(requestTrackingService));
         }
 
-        Task<IResponseData> IRemoteApp.OnListToolsUpdated(string data)
+        public Task<IResponseData> OnListToolsUpdated(string data)
         {
             _logger.LogTrace("{method}. {guid}. Data: {data}",
                 nameof(IRemoteApp.OnListToolsUpdated), _guid, data);
@@ -44,7 +44,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
             return ResponseData.Success(data, string.Empty).TaskFromResult<IResponseData>();
         }
 
-        Task<IResponseData> IRemoteApp.OnListResourcesUpdated(string data)
+        public Task<IResponseData> OnListResourcesUpdated(string data)
         {
             _logger.LogTrace("{method}. {guid}. Data: {data}",
                 nameof(IRemoteApp.OnListResourcesUpdated), _guid, data);
@@ -52,7 +52,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
             return ResponseData.Success(data, string.Empty).TaskFromResult<IResponseData>();
         }
 
-        Task<IResponseData> IRemoteApp.OnToolRequestCompleted(ToolRequestCompletedData data)
+        public Task<IResponseData> OnToolRequestCompleted(ToolRequestCompletedData data)
         {
             _logger.LogTrace("{method}. {guid}. RequestId: {requestId}",
                 nameof(IRemoteApp.OnToolRequestCompleted), _guid, data.RequestId);
@@ -69,36 +69,50 @@ namespace com.IvanMurzak.Unity.MCP.Server
             return ResponseData.Success(string.Empty, string.Empty).TaskFromResult<IResponseData>();
         }
 
-        Task<VersionHandshakeResponse> IRemoteApp.OnVersionHandshake(VersionHandshakeRequest request)
+        public Task<VersionHandshakeResponse> OnVersionHandshake(VersionHandshakeRequest request)
         {
-            _logger.LogTrace("{method}. {guid}. PluginVersion: {pluginVersion}, ApiVersion: {apiVersion}, UnityVersion: {unityVersion}",
-                nameof(IRemoteApp.OnVersionHandshake), _guid, request.PluginVersion, request.ApiVersion, request.UnityVersion);
-
-            var serverApiVersion = _version.Api;
-            var compatible = IsApiVersionCompatible(request.ApiVersion, serverApiVersion);
-
-            var response = new VersionHandshakeResponse
+            try
             {
-                ApiVersion = serverApiVersion,
-                ServerVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Unknown",
-                Compatible = compatible,
-                Message = compatible
-                    ? "API version is compatible."
-                    : $"API version mismatch. Plugin: {request.ApiVersion}, Server: {serverApiVersion}. Please update to compatible versions."
-            };
+                _logger.LogTrace("{method}. {guid}. PluginVersion: {pluginVersion}, ApiVersion: {apiVersion}, UnityVersion: {unityVersion}",
+                    nameof(IRemoteApp.OnVersionHandshake), _guid, request.PluginVersion, request.ApiVersion, request.UnityVersion);
 
-            if (!compatible)
-            {
-                _logger.LogError("API version mismatch detected. Plugin: {pluginApiVersion}, Server: {serverApiVersion}",
-                    request.ApiVersion, serverApiVersion);
+                var serverApiVersion = _version.Api;
+                var isApiVersionCompatible = IsApiVersionCompatible(request.ApiVersion, serverApiVersion);
+
+                var response = new VersionHandshakeResponse
+                {
+                    ApiVersion = serverApiVersion,
+                    ServerVersion = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "Unknown",
+                    Compatible = isApiVersionCompatible,
+                    Message = isApiVersionCompatible
+                        ? "API version is compatible."
+                        : $"API version mismatch. Plugin: {request.ApiVersion}, Server: {serverApiVersion}. Please update to compatible versions."
+                };
+
+                if (!isApiVersionCompatible)
+                {
+                    _logger.LogError("API version mismatch detected. Plugin: {pluginApiVersion}, Server: {serverApiVersion}",
+                        request.ApiVersion, serverApiVersion);
+                }
+                else
+                {
+                    _logger.LogInformation("Version handshake successful. Plugin: {pluginVersion}, API: {apiVersion}, Unity Version: {unityVersion}",
+                        request.PluginVersion, request.ApiVersion, request.UnityVersion);
+                }
+
+                return Task.FromResult(response);
             }
-            else
+            catch (Exception ex)
             {
-                _logger.LogInformation("Version handshake successful. Plugin: {pluginVersion}, API: {apiVersion}, Unity Version: {unityVersion}",
-                    request.PluginVersion, request.ApiVersion, request.UnityVersion);
+                _logger.LogError(ex, "Error during version handshake.");
+                return Task.FromResult(new VersionHandshakeResponse
+                {
+                    ApiVersion = "Unknown",
+                    ServerVersion = "Unknown",
+                    Compatible = false,
+                    Message = $"Error during version handshake: {ex.Message}"
+                });
             }
-
-            return Task.FromResult(response);
         }
 
         private static bool IsApiVersionCompatible(string pluginApiVersion, string serverApiVersion)

@@ -37,7 +37,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
             var connectionConfig = _serviceProvider.GetRequiredService<IOptions<ConnectionConfig>>().Value;
             var hubConnection = new HubConnectionBuilder()
                 .WithUrl(connectionConfig.Endpoint + endpoint)
-                .WithAutomaticReconnect(new FixedRetryPolicy(TimeSpan.FromSeconds(1)))
+                .WithAutomaticReconnect(new FixedRetryPolicy(TimeSpan.FromSeconds(5)))
                 .WithKeepAliveInterval(TimeSpan.FromSeconds(30))
                 .WithServerTimeout(TimeSpan.FromMinutes(5))
                 .AddJsonProtocol(options => RpcJsonConfiguration.ConfigureJsonSerializer(_reflector, options))

@@ -30,25 +30,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         }
         static void OnApplicationUnloading()
         {
-            if (McpPluginUnity.IsLogActive(LogLevel.Trace))
+            if (McpPluginUnity.IsLogActive(LogLevel.Debug))
                 Debug.Log($"{DebugName} OnApplicationUnloading triggered");
             Disconnect();
         }
         static void OnApplicationQuitting()
         {
-            if (McpPluginUnity.IsLogActive(LogLevel.Trace))
+            if (McpPluginUnity.IsLogActive(LogLevel.Debug))
                 Debug.Log($"{DebugName} OnApplicationQuitting triggered");
             Disconnect();
         }
         static void OnBeforeAssemblyReload()
         {
-            if (McpPluginUnity.IsLogActive(LogLevel.Trace))
+            if (McpPluginUnity.IsLogActive(LogLevel.Debug))
                 Debug.Log($"{DebugName} OnBeforeAssemblyReload triggered");
             Disconnect();
         }
         static void OnAfterAssemblyReload()
         {
-            if (McpPluginUnity.IsLogActive(LogLevel.Trace))
+            if (McpPluginUnity.IsLogActive(LogLevel.Debug))
                 Debug.Log($"{DebugName} OnAfterReload triggered - BuildAndStart with openConnection: {!EnvironmentUtils.IsCi()}");
             McpPluginUnity.BuildAndStart(openConnectionIfNeeded: !EnvironmentUtils.IsCi());
         }
@@ -56,7 +56,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         static void OnPlayModeStateChanged(PlayModeStateChange state)
         {
             // Log Play mode state changes for debugging
-            if (McpPluginUnity.IsLogActive(LogLevel.Trace))
+            if (McpPluginUnity.IsLogActive(LogLevel.Debug))
                 Debug.Log($"{DebugName} Play mode state changed: {state}");
 
             switch (state)
@@ -83,9 +83,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         EditorApplication.delayCall += () =>
                         {
                             if (McpPluginUnity.IsLogActive(LogLevel.Trace))
-                                Debug.Log($"{DebugName} Initiating reconnection after Play mode exit");
+                                Debug.Log($"{DebugName} Initiating delayed reconnection after Play mode exit");
                             McpPluginUnity.BuildAndStart();
                         };
+
+                        // No delay, immediate reconnection for the case if Unity Editor in background
+                        // (has no focus)
+                        if (McpPluginUnity.IsLogActive(LogLevel.Trace))
+                            Debug.Log($"{DebugName} Initiating reconnection after Play mode exit");
+                        McpPluginUnity.BuildAndStart();
                     }
                     break;
 
