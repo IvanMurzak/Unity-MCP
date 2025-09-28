@@ -1,6 +1,6 @@
 <Project>
   <PropertyGroup>
-    <BaseIntermediateOutputPath>../../../../Temp/obj/</BaseIntermediateOutputPath>
-    <RestoreOutputPath>../../../../Temp/obj/</RestoreOutputPath>
+    <BaseIntermediateOutputPath>./Temp~/obj/</BaseIntermediateOutputPath>
+    <RestoreOutputPath>./Temp~/obj/</RestoreOutputPath>
   </PropertyGroup>
 </Project>
