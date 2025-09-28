@@ -368,35 +368,56 @@ jobs:
     steps:
       - name: Send Release Notes to Discord
         env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_RELEASE_NOTES_WEBHOOK }}
         run: |
           # Get the release notes from the previous job
           release_notes='${{ needs.release-unity-plugin.outputs.release_notes }}'
           version='${{ needs.release-unity-plugin.outputs.version }}'
 
+          # Convert usernames to GitHub profile links
+          # Convert "by @username" to "by [@username](https://github.com/username)"
+          release_notes_with_links=$(echo "$release_notes" | sed -E 's/by @([A-Za-z0-9_-]+)/by [@\1](https:\/\/github.com\/\1)/g')
+
+          # Remove horizontal separators (---) and clean up extra blank lines
+          # 1. Remove lines containing only --- and whitespace
+          # 2. Remove lines that contain only whitespace
+          # 3. Compress multiple consecutive empty lines into one
+          release_notes_cleaned=$(echo "$release_notes_with_links" | \
+            sed '/^[[:space:]]*---[[:space:]]*$/d' | \
+            sed 's/^[[:space:]]*$//' | \
+            sed '/^$/N;/^\n$/d')
+
           # Create the release URL
           release_url="https://github.com/${{ github.repository }}/releases/tag/${version}"
 
           # Append the release link to the notes
-          full_message="${release_notes}
-
-          ---
-          📦 **[View Full Release](${release_url})**"
+          full_message="${release_notes_cleaned}"$'\n\n'"📦 **[View Full Release](${release_url})**"
 
           # Discord has a 2000 character limit, so we'll truncate if needed
           if [ ${#full_message} -gt 1900 ]; then
-            # Truncate but keep the link at the end
-            max_notes_length=$((1900 - 50))  # Reserve space for the link
-            truncated_notes="${release_notes:0:${max_notes_length}}..."
-            full_message="${truncated_notes}
+            # Remove lines from the end until it fits, keeping the link
+            link_text=$'\n\n'"📦 **[View Full Release](${release_url})**"
+            max_length=$((1900 - ${#link_text}))
 
-          📦 **[View Full Release](${release_url})**"
+            # Split into lines and rebuild until we exceed the limit
+            truncated_notes=""
+            while IFS= read -r line; do
+              test_notes="${truncated_notes}${line}"$'\n'
+              if [ ${#test_notes} -gt $max_length ]; then
+                break
+              fi
+              truncated_notes="$test_notes"
+            done <<< "$release_notes_cleaned"
+
+            # Add ellipsis on its own line if we truncated
+            full_message="${truncated_notes}"$'\n'"...${link_text}"
           fi
 
           # Create JSON payload for Discord webhook
+          # flags: 4 suppresses embeds/link previews
           json_payload=$(jq -n \
             --arg content "$full_message" \
-            '{content: $content}')
+            '{content: $content, flags: 4}')
 
           # Send to Discord webhook
           curl -X POST "$DISCORD_WEBHOOK" \
