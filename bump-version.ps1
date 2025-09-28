@@ -45,6 +45,12 @@ $VersionFiles = @(
         Description = "Server JSON version (2 occurrences)"
     },
     @{
+        Path        = "Unity-MCP-Server/com.IvanMurzak.Unity.MCP.Server.csproj"
+        Pattern     = '<Version>[\d\.]+</Version>'
+        Replace     = '<Version>{VERSION}</Version>'
+        Description = "Server csproj XML version"
+    },
+    @{
         Path        = "Installer/Assets/com.IvanMurzak/AI Game Dev Installer/Installer.cs"
         Pattern     = 'public const string Version = "[\d\.]+";'
         Replace     = 'public const string Version = "{VERSION}";'

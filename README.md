@@ -4,7 +4,6 @@
 [![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
 [![MCP](https://badge.mcpx.dev?type=server 'MCP Server')](https://modelcontextprotocol.io/introduction)
 [![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg 'Tests Passed')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)
-[![Unity Asset Store](https://img.shields.io/badge/Asset%20Store-View-blue?logo=unity&labelColor=333A41 'Asset Store')](https://u3d.as/3wsw)
 [![Unity Editor](https://img.shields.io/badge/Editor-X?style=flat&logo=unity&labelColor=333A41&color=49BC5C 'Unity Editor supported')](https://unity.com/releases/editor/archive)
 [![Unity Runtime](https://img.shields.io/badge/Runtime-X?style=flat&logo=unity&labelColor=333A41&color=49BC5C 'Unity Runtime supported')](https://unity.com/releases/editor/archive)
 [![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&labelColor=333A41 'OpenUPM package')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)</br>
@@ -101,23 +100,21 @@ Choose `MCP Client` you prefer, don't need to install all of them. This is will 
 
 ## Step 1: Install `Unity Plugin`
 
-- **[⬇️ Download Installer](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.17.2/AI-Game-Dev-Installer.unitypackage)**
+### Option 1 - Installer
+
+- **[⬇️ Download Installer](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.18.0/AI-Game-Dev-Installer.unitypackage)**
 - **📂 Import installer into Unity project**
   > - You may use double click on the file - Unity will open it
   > - OR: You may open Unity Editor first, then click on `Assets/Import Package/Custom Package`, then choose the file
 
-<details>
-  <summary><b>Alternative: Install <code>Unity Plugin</code> via OpenUPM</b></summary>
+### Option 2 - OpenUPM-CLI
 
-- [Install OpenUPM-CLI](https://github.com/openupm/openupm-cli#installation)
-- Open command line in Unity project folder
-- Run the command
+- [⬇️ Install OpenUPM-CLI](https://github.com/openupm/openupm-cli#installation)
+- 📟 Open command line in Unity project folder
 
 ```bash
 openupm add com.ivanmurzak.unity.mcp
 ```
-
-</details>
 
 ## Step 2: Configure `MCP Client`
 

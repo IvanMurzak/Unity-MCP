@@ -4,7 +4,6 @@
 [![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
 [![MCP](https://badge.mcpx.dev?type=server 'MCP Server')](https://modelcontextprotocol.io/introduction)
 [![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg 'Tests Passed')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)
-[![Unity Asset Store](https://img.shields.io/badge/Asset%20Store-View-blue?logo=unity&labelColor=333A41 'Asset Store')](https://u3d.as/3wsw)
 [![Unity Editor](https://img.shields.io/badge/Editor-X?style=flat&logo=unity&labelColor=333A41&color=49BC5C 'Unity Editor supported')](https://unity.com/releases/editor/archive)
 [![Unity Runtime](https://img.shields.io/badge/Runtime-X?style=flat&logo=unity&labelColor=333A41&color=49BC5C 'Unity Runtime supported')](https://unity.com/releases/editor/archive)
 [![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&labelColor=333A41 'OpenUPM package')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)</br>
@@ -17,7 +16,7 @@ AI helper which does wide range of tasks in Unity Editor and even in a running g
 
 💬 **Join our community:** [Discord Server](https://discord.gg/cfbdMZX99G) - Ask questions, showcase your work, and connect with other developers!
 
-![AI work](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/level-building.gif 'Level building')
+![AI work](https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/level-building.gif 'Level building')
 
 </div>
 
@@ -26,16 +25,16 @@ AI helper which does wide range of tasks in Unity Editor and even in a running g
 
   <table>
     <tr>
-      <td><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/flying-orbs.gif" alt="Animation" title="Animation" /></td>
-      <td><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/golden-sphere.gif" alt="Animation" title="Animation" /></td>
+      <td><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/flying-orbs.gif" alt="Animation" title="Animation" /></td>
+      <td><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/golden-sphere.gif" alt="Animation" title="Animation" /></td>
     </tr>
     <tr>
-      <td><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/runner.gif" alt="Runner Game" title="Runner Game" /></td>
-      <td><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/procedural-terrain.gif" alt="Procedural Terrain" title="Procedural Terrain" /></td>
+      <td><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/runner.gif" alt="Runner Game" title="Runner Game" /></td>
+      <td><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/procedural-terrain.gif" alt="Procedural Terrain" title="Procedural Terrain" /></td>
     </tr>
     <tr>
-      <td><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/create-material.gif" alt="Material creating" title="Material creating" /></td>
-      <td><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/playing-maze.gif" alt="Maze Game" title="Maze Game" /></td>
+      <td><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/create-material.gif" alt="Material creating" title="Material creating" /></td>
+      <td><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/playing-maze.gif" alt="Maze Game" title="Maze Game" /></td>
     </tr>
   </table>
 
@@ -101,23 +100,21 @@ Choose `MCP Client` you prefer, don't need to install all of them. This is will 
 
 ## Step 1: Install `Unity Plugin`
 
-- **[⬇️ Download Installer](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.17.2/AI-Game-Dev-Installer.unitypackage)**
+### Option 1 - Installer
+
+- **[⬇️ Download Installer](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.18.0/AI-Game-Dev-Installer.unitypackage)**
 - **📂 Import installer into Unity project**
   > - You may use double click on the file - Unity will open it
   > - OR: You may open Unity Editor first, then click on `Assets/Import Package/Custom Package`, then choose the file
 
-<details>
-  <summary><b>Alternative: Install <code>Unity Plugin</code> via OpenUPM</b></summary>
+### Option 2 - OpenUPM-CLI
 
-- [Install OpenUPM-CLI](https://github.com/openupm/openupm-cli#installation)
-- Open command line in Unity project folder
-- Run the command
+- [⬇️ Install OpenUPM-CLI](https://github.com/openupm/openupm-cli#installation)
+- 📟 Open command line in Unity project folder
 
 ```bash
 openupm add com.ivanmurzak.unity.mcp
 ```
-
-</details>
 
 ## Step 2: Configure `MCP Client`
 
@@ -127,7 +124,7 @@ openupm add com.ivanmurzak.unity.mcp
 - Open `Window/AI Connector (Unity-MCP)`
 - Click `Configure` at your MCP client
 
-![Unity_AI](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/ai-connector-window.gif)
+![Unity_AI](https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/ai-connector-window.gif)
 
 > If MCP client is not in the list, use the raw JSON below in the window, to inject it into your MCP client. Read instructions for your MCP client how to do that.
 
