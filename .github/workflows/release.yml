@@ -394,10 +394,10 @@ jobs:
           full_message="${release_notes_cleaned}"$'\n\n'"📦 **[View Full Release](${release_url})**"
 
           # Discord has a 2000 character limit, so we'll truncate if needed
-          if [ ${#full_message} -gt 1900 ]; then
+          if [ ${#full_message} -gt 2000 ]; then
             # Remove lines from the end until it fits, keeping the link
             link_text=$'\n\n'"📦 **[View Full Release](${release_url})**"
-            max_length=$((1900 - ${#link_text}))
+            max_length=$((2000 - ${#link_text}))
 
             # Split into lines and rebuild until we exceed the limit
             truncated_notes=""
