@@ -250,12 +250,12 @@ jobs:
           version=${{ needs.check-version-tag.outputs.version }}
           prev_tag=${{ needs.check-version-tag.outputs.prev_tag }}
           repo_url="https://github.com/${GITHUB_REPOSITORY}"
-          today=$(date +'%B %e, %Y')
+          today=$(date +'%B %e, %Y')
 
           echo "repo_url: $repo_url"
           echo "today: $today"
 
-          echo "# Unity-MCP Version $version" > release.md
+          echo "# AI Game Developer (Unity-MCP) $version" > release.md
           echo "**Released:** *$today*" >> release.md
 
           echo "" >> release.md
@@ -269,16 +269,17 @@ jobs:
             echo "" >> release.md
             echo "---" >> release.md
             echo "" >> release.md
+
+            echo "## Commit Summary (Newest → Oldest)" >> release.md
+            for sha in $(git log --pretty=format:'%H' $prev_tag..HEAD); do
+              username=$(gh api repos/${GITHUB_REPOSITORY}/commits/$sha --jq '.author.login // .commit.author.name')
+              message=$(git log -1 --pretty=format:'%s' $sha)
+              short_sha=$(git log -1 --pretty=format:'%h' $sha)
+              echo "- [\`$short_sha\`]($repo_url/commit/$sha) — $message by @$username" >> release.md
+            done
           fi
 
-          echo "## Commit Summary (Newest → Oldest)" >> release.md
-          for sha in $(git log --pretty=format:'%H' $prev_tag..HEAD); do
-            username=$(gh api repos/${GITHUB_REPOSITORY}/commits/$sha --jq '.author.login // .commit.author.name')
-            message=$(git log -1 --pretty=format:'%s' $sha)
-            short_sha=$(git log -1 --pretty=format:'%h' $sha)
-            echo "- [\`$short_sha\`]($repo_url/commit/$sha) — $message by @$username" >> release.md
-          done
-          printf "release_body<<ENDOFRELEASEBODY\n%s\nENDOFRELEASEBODY\n" "$(cat release.md)" >> $GITHUB_ENV
+          printf "release_body<<ENDOFRELEASEBODY\n%s\nENDOFRELEASEBODY\n" "$(cat release.md)" >> $GITHUB_OUTPUT
           echo "success=true" >> $GITHUB_OUTPUT
 
       - name: Create Tag and Release
@@ -286,7 +287,7 @@ jobs:
         with:
           tag_name: ${{ needs.check-version-tag.outputs.version }}
           name: ${{ needs.check-version-tag.outputs.version }}
-          body: ${{ env.release_body }}
+          body: ${{ steps.rel_desc.outputs.release_body }}
           draft: false
           prerelease: false
         env:
