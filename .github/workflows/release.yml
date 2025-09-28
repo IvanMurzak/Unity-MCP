@@ -414,7 +414,8 @@ jobs:
           fi
 
           # Create JSON payload for Discord webhook
-          # flags: 4 suppresses embeds/link previews
+          # flags: 4 sets the SUPPRESS_EMBEDS flag to suppress embeds/link previews.
+          # See: https://discord.com/developers/docs/resources/channel#create-message
           json_payload=$(jq -n \
             --arg content "$full_message" \
             '{content: $content, flags: 4}')
