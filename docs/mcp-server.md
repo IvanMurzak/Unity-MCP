@@ -129,11 +129,13 @@ Download binary from the [GitHub releases page](https://github.com/IvanMurzak/Un
 
 MCP client config:
 
+> Replace `<project>` with your Unity project path.
+
 ```json
 {
   "mcpServers": {
     "Unity-MCP": {
-      "command": "C:/Projects/Unity/Unity-MCP/Unity-MCP-Plugin/Library/mcp-server/win-x64/unity-mcp-server.exe",
+      "command": "<project>/Library/mcp-server/win-x64/unity-mcp-server.exe",
       "args": [
         "--client-transport=stdio"
       ]
@@ -152,11 +154,13 @@ Launch server with STDIO transport type for local usage on the same machine with
 
 MCP client config:
 
+> Replace `<project>` with your Unity project path.
+
 ```json
 {
   "mcpServers": {
     "Unity-MCP": {
-      "command": "C:/Projects/Unity/Unity-MCP/Unity-MCP-Plugin/Library/mcp-server/win-x64/unity-mcp-server.exe",
+      "command": "<project>/Library/mcp-server/win-x64/unity-mcp-server.exe",
       "args": [
         "--port=8080",
         "--plugin-timeout=10000",
@@ -177,11 +181,13 @@ Launch server with HTTP transport type for local OR remote usage using HTTP(S) u
 
 MCP client config:
 
+> Replace `<project>` with your Unity project path.
+
 ```json
 {
   "mcpServers": {
     "Unity-MCP": {
-      "command": "C:/Projects/Unity/Unity-MCP/Unity-MCP-Plugin/Library/mcp-server/win-x64/unity-mcp-server.exe",
+      "command": "<project>/Library/mcp-server/win-x64/unity-mcp-server.exe",
       "args": [
         "--port=8080",
         "--plugin-timeout=10000",

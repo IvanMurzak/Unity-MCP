@@ -16,17 +16,17 @@
 
 </div>
 
-`Unity MCP` is the best game developer helper powered by AI. It works as a bridge between `MCP Client` and `Unity`. Type a message in chat, and get the work done using any advanced LLM model by your choice. Have an issue to fix? Ask AI to fix it. [Watch demo videos](https://www.youtube.com/watch?v=kQUOCQ-c0-M&list=PLyueiUu0xU70uzNoOaanGQD2hiyJmqHtK).
+`Unity MCP` is an AI-powered game development assistant that serves as a bridge between `MCP Client` and `Unity`. Simply type a message in chat and get work done using any advanced LLM model of your choice. Have an issue to fix? Ask the AI to fix it. [Watch demo videos](https://www.youtube.com/watch?v=kQUOCQ-c0-M&list=PLyueiUu0xU70uzNoOaanGQD2hiyJmqHtK).
 
 ## Features
 
-- ✔️ Chat with AI like with a human
-- ✔️ Ask AI to **write code** and **run tests**
-- ✔️ Ask AI to **get logs** and to **fix an error**
-- ✔️ Use **the best agents** from Anthropic, OpenAI, Microsoft or anyone else, no limits.
-- ✔️ Works locally (stdio) and remotely (http) by configuration
-- ✔️ Wide range of default [MCP Tools](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)
-- ✔️ Create [custom `MCP Tool` in your project code](#custom-mcp-tool)
+- ✔️ **Natural conversation** - Chat with AI like you would with a human
+- ✔️ **Code assistance** - Ask AI to write code and run tests
+- ✔️ **Debug support** - Ask AI to get logs and fix errors
+- ✔️ **Multiple LLM providers** - Use agents from Anthropic, OpenAI, Microsoft, or any other provider with no limits
+- ✔️ **Flexible deployment** - Works locally (stdio) and remotely (http) by configuration
+- ✔️ **Rich toolset** - Wide range of default [MCP Tools](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)
+- ✔️ **Extensible** - Create [custom MCP Tools in your project code](#add-custom-mcp-tool)
 
 ### Stability status
 
@@ -47,11 +47,24 @@
     - [Automatic configuration](#automatic-configuration)
     - [Manual configuration](#manual-configuration)
 - [Use AI](#use-ai)
-  - [Features for LLM](#features-for-llm)
-- [Add custom `MCP Tool`](#add-custom-mcp-tool)
-- [Add custom runtime (in-game) `MCP Tool`](#add-custom-runtime-in-game-mcp-tool)
+  - [Advanced Features for LLM](#advanced-features-for-llm)
+    - [Core Capabilities](#core-capabilities)
+    - [Reflection-Powered Features](#reflection-powered-features)
+- [Customize MCP](#customize-mcp)
+  - [Add custom `MCP Tool`](#add-custom-mcp-tool)
+  - [Add custom runtime (in-game) `MCP Tool`](#add-custom-runtime-in-game-mcp-tool)
+  - [Add custom `MCP Prompt`](#add-custom-mcp-prompt)
+- [Advanced `Unity MCP Server` setup](#advanced-unity-mcp-server-setup)
 - [How it works](#how-it-works)
-- [Advanced MCP server setup](#advanced-mcp-server-setup)
+  - [What is `MCP`](#what-is-mcp)
+  - [What is `MCP Client`](#what-is-mcp-client)
+  - [What is `MCP Server`](#what-is-mcp-server)
+  - [What is `MCP Tool`](#what-is-mcp-tool)
+    - [When to use `MCP Tool`](#when-to-use-mcp-tool)
+  - [What is `MCP Resource`](#what-is-mcp-resource)
+    - [When to use `MCP Resource`](#when-to-use-mcp-resource)
+  - [What is `MCP Prompt`](#what-is-mcp-prompt)
+    - [When to use `MCP Prompt`](#when-to-use-mcp-prompt)
 - [Contribution 💙💛](#contribution-)
 
 # Installation
@@ -73,13 +86,13 @@
 
 - **[⬇️ Download Installer](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.18.0/AI-Game-Dev-Installer.unitypackage)**
 - **📂 Import installer into Unity project**
-  > - You may use double click on the file - Unity will open it
-  > - OR: You may open Unity Editor first, then click on `Assets/Import Package/Custom Package`, then choose the file
+  > - You can double-click on the file - Unity will open it automatically
+  > - OR: Open Unity Editor first, then click on `Assets/Import Package/Custom Package`, and choose the file
 
 ### Option 2 - OpenUPM-CLI
 
 - [⬇️ Install OpenUPM-CLI](https://github.com/openupm/openupm-cli#installation)
-- 📟 Open command line in Unity project folder
+- 📟 Open the command line in your Unity project folder
 
 ```bash
 openupm add com.ivanmurzak.unity.mcp
@@ -87,7 +100,7 @@ openupm add com.ivanmurzak.unity.mcp
 
 ## Step 2: Install `MCP Client`
 
-Choose a single `MCP Client` you prefer, don't need to install all of them. This is will be your main chat window to talk with LLM.
+Choose a single `MCP Client` you prefer - you don't need to install all of them. This will be your main chat window to communicate with the LLM.
 
 - [Claude Code](https://github.com/anthropics/claude-code) (highly recommended)
 - [Claude Desktop](https://claude.ai/download)
@@ -96,7 +109,7 @@ Choose a single `MCP Client` you prefer, don't need to install all of them. This
 - [Windsurf](https://windsurf.com)
 - Any other supported
 
-> MCP protocol is quite universal, that is why you may any MCP client you prefer, it will work as smooth as anyone else. The only important thing, that the MCP client has to support dynamic MCP Tool update.
+> The MCP protocol is quite universal, which is why you may use any MCP client you prefer - it will work as smoothly as any other. The only important requirement is that the MCP client must support dynamic MCP Tool updates.
 
 ## Step 3: Configure `MCP Client`
 
@@ -108,14 +121,14 @@ Choose a single `MCP Client` you prefer, don't need to install all of them. This
 
 ![Unity_AI](https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/ai-connector-window.gif)
 
-> If MCP client is not in the list, use the raw JSON below in the window, to inject it into your MCP client. Read instructions for your MCP client how to do that.
+> If your MCP client is not in the list, use the raw JSON shown in the window to inject it into your MCP client. Read the instructions for your specific MCP client on how to do this.
 
 ### Manual configuration
 
-If Automatic configuration doesn't work for you for any reason. Use JSON from `AI Game Developer (Unity-MCP)` window to configure any `MCP Client` on your own.
+If automatic configuration doesn't work for you for any reason, use the JSON from the `AI Game Developer (Unity-MCP)` window to configure any `MCP Client` manually.
 
 <details>
-  <summary>Add Unity MCP to <b><code>Claude Code</code></b> for <b>Windows</b></summary>
+  <summary>Configure <b><code>Claude Code</code></b> for <b>Windows</b></summary>
 
   Replace `unityProjectPath` with your real project path
 
@@ -126,7 +139,7 @@ If Automatic configuration doesn't work for you for any reason. Use JSON from `A
 </details>
 
 <details>
-  <summary>Add Unity MCP to <b><code>Claude Code</code></b> for <b>MacOS Apple-Silicon</b></summary>
+  <summary>Configure <b><code>Claude Code</code></b> for <b>MacOS Apple-Silicon</b></summary>
 
   Replace `unityProjectPath` with your real project path
 
@@ -137,7 +150,7 @@ If Automatic configuration doesn't work for you for any reason. Use JSON from `A
 </details>
 
 <details>
-  <summary>Add Unity MCP to <b><code>Claude Code</code></b> for <b>MacOS Apple-Intel</b></summary>
+  <summary>Configure <b><code>Claude Code</code></b> for <b>MacOS Apple-Intel</b></summary>
 
   Replace `unityProjectPath` with your real project path
 
@@ -148,7 +161,7 @@ If Automatic configuration doesn't work for you for any reason. Use JSON from `A
 </details>
 
 <details>
-  <summary>Add Unity MCP to <b><code>Claude Code</code></b> for <b>Linux x64</b></summary>
+  <summary>Configure <b><code>Claude Code</code></b> for <b>Linux x64</b></summary>
 
   Replace `unityProjectPath` with your real project path
 
@@ -159,7 +172,7 @@ If Automatic configuration doesn't work for you for any reason. Use JSON from `A
 </details>
 
 <details>
-  <summary>Add Unity MCP to <b><code>Claude Code</code></b> for <b>Linux arm64</b></summary>
+  <summary>Configure <b><code>Claude Code</code></b> for <b>Linux arm64</b></summary>
 
   Replace `unityProjectPath` with your real project path
 
@@ -173,55 +186,64 @@ If Automatic configuration doesn't work for you for any reason. Use JSON from `A
 
 # Use AI
 
-Talk with AI (LLM) in your `MCP Client`. Ask it to do anything you want. As better you describe your task / idea - as better it will do the job.
+Communicate with the AI (LLM) in your `MCP Client`. Ask it to do anything you want. The better you describe your task or idea, the better it will perform the job.
 
-Some `MCP Clients` allow to chose different LLM models. Take an eye on it, some model may work much better.
+Some `MCP Clients` allow you to choose different LLM models. Pay attention to this feature, as some models may work much better than others.
 
-  ```text
-  Explain my scene hierarchy
-  ```
+**Example commands:**
 
-  ```text
-  Create 3 cubes in a circle with radius 2
-  ```
+```text
+Explain my scene hierarchy
+```
 
-  ```text
-  Create metallic golden material and attach it to a sphere gameObject
-  ```
+```text
+Create 3 cubes in a circle with radius 2
+```
 
-> Make sure `Agent` mode is turned on in MCP client
+```text
+Create metallic golden material and attach it to a sphere gameObject
+```
 
-## Features for LLM
+> Make sure `Agent` mode is turned on in your MCP client
 
-It provides advanced tools for LLM to let it work faster, better, avoiding doing mistakes or correcting itself if any mistake. Everything for achieving the final goal that user needs.
+## Advanced Features for LLM
 
-- ✔️ Agent ready tools, find anything you need in 1-2 steps
-- ✔️ Instant C# code compilation & execution using `Roslyn`, iterate faster
-- ✔️ Assets access (read / write), C# scripts access (read / write)
-- ✔️ Well described positive and negative feedback for proper understanding of an issue
-- ✔️ Provide references to existed objects for the instant C# code using `Reflection`
-- ✔️ Get full access to entire project data in a readable shape using `Reflection`
-- ✔️ Populate & Modify any granular piece of data in the project using `Reflection`
-- ✔️ Find any `method` in the entire codebase, including compiled DLL files using `Reflection`
-- ✔️ Call any `method` in the entire codebase using `Reflection`
-- ✔️ Provide any property into `method` call, even if it is a reference to existed object in memory using `Reflection` and advanced reflection convertors
-- ✔️ Unity API instantly available for usage, even if Unity changes something you will get fresh API using `Reflection`.
-- ✔️ Get access to human readable description of any `class`, `method`, `field`, `property` by reading it's `Description` attribute.
+Unity MCP provides advanced tools that enable the LLM to work faster and more effectively, avoiding mistakes and self-correcting when errors occur. Everything is designed to achieve your goals efficiently.
+
+### Core Capabilities
+
+- ✔️ **Agent-ready tools** - Find anything you need in 1-2 steps
+- ✔️ **Instant compilation** - C# code compilation & execution using `Roslyn` for faster iteration
+- ✔️ **Full asset access** - Read/write access to assets and C# scripts
+- ✔️ **Intelligent feedback** - Well-described positive and negative feedback for proper issue understanding
+
+### Reflection-Powered Features
+
+- ✔️ **Object references** - Provide references to existing objects for instant C# code
+- ✔️ **Project data access** - Get full access to entire project data in a readable format
+- ✔️ **Granular modifications** - Populate & modify any piece of data in the project
+- ✔️ **Method discovery** - Find any method in the entire codebase, including compiled DLL files
+- ✔️ **Method execution** - Call any method in the entire codebase
+- ✔️ **Advanced parameters** - Provide any property for method calls, even references to existing objects in memory
+- ✔️ **Live Unity API** - Unity API instantly available - even when Unity changes, you get the fresh API
+- ✔️ **Self-documenting** - Access human-readable descriptions of any `class`, `method`, `field`, or `property` via `Description` attributes
 
 ---
 
-# Add custom `MCP Tool`
+# Customize MCP
 
-**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** is designed to support custom `MCP Tool` development by project owner. MCP server takes data from Unity plugin and exposes it to a Client. So anyone in the MCP communication chain would receive the information about a new `MCP Tool`. Which LLM may decide to call at some point.
+**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** supports custom `MCP Tool`, `MCP Resource`, and `MCP Prompt` development by project owners. The MCP server takes data from the `Unity MCP Plugin` and exposes it to a client. Anyone in the MCP communication chain will receive information about new MCP features, which the LLM may decide to use at some point.
 
-To add a custom `MCP Tool` you need:
+## Add custom `MCP Tool`
 
-1. To have a class with attribute `McpPluginToolType`.
-2. To have a method in the class with attribute `McpPluginTool`.
-3. *optional:* Add `Description` attribute to each method argument to let LLM to understand it.
-4. *optional:* Use `string? optional = null` properties with `?` and default value to mark them as `optional` for LLM.
+To add a custom `MCP Tool`, you need:
 
-> Take a look that the line `MainThread.Instance.Run(() =>` it allows to run the code in Main thread which is needed to interact with Unity API. If you don't need it and running the tool in background thread is fine for the tool, don't use Main thread for efficiency purpose.
+1. A class with the `McpPluginToolType` attribute
+2. A method in the class with the `McpPluginTool` attribute
+3. *Optional:* Add a `Description` attribute to each method argument to help the LLM understand it
+4. *Optional:* Use `string? optional = null` properties with `?` and default values to mark them as `optional` for the LLM
+
+> Note that the line `MainThread.Instance.Run(() =>` allows you to run code on the main thread, which is required for interacting with Unity's API. If you don't need this and running the tool in a background thread is acceptable, avoid using the main thread for efficiency purposes.
 
 ```csharp
 [McpPluginToolType]
@@ -251,33 +273,141 @@ public class Tool_GameObject
 }
 ```
 
-# Add custom runtime (in-game) `MCP Tool`
+## Add custom runtime (in-game) `MCP Tool`
 
 > ⚠️ Not yet supported. The work is in progress
+
+## Add custom `MCP Prompt`
+
+`MCP Prompt` allows you to inject custom prompts into the conversation with the LLM. It supports two sender roles: User and Assistant. This is a quick way to instruct the LLM to perform specific tasks. You can generate prompts using custom data, providing lists or any other relevant information.
+
+```csharp
+[McpPluginPromptType]
+public static class Prompt_ScriptingCode
+{
+    [McpPluginPrompt(Name = "add-event-system", Role = Role.User)]
+    [Description("Implement UnityEvent-based communication system between GameObjects.")]
+    public string AddEventSystem()
+    {
+        return "Create event system using UnityEvents, UnityActions, or custom event delegates for decoupled communication between game systems and components.";
+    }
+}
+```
+
+---
+
+# Advanced `Unity MCP Server` setup
+
+**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** server supports many different launch options and Docker deployment. Both transport protocols are supported: `http` and `stdio`. [Read more...](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md)
 
 ---
 
 # How it works
 
-**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** is a bridge between LLM and Unity. It exposes and explains to LLM Unity's tools. LLM understands the interface and utilizes the tools in the way a user asks.
+**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** serves as a bridge between LLMs and Unity. It exposes and explains Unity's tools to the LLM, which then understands the interface and utilizes the tools according to user requests.
 
-Connect **[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** to LLM client such as [Claude](https://claude.ai/download) or [Cursor](https://www.cursor.com/) using integrated `AI Connector` window. Custom clients are supported as well.
+Connect **[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** to LLM clients such as [Claude](https://claude.ai/download) or [Cursor](https://www.cursor.com/) using the integrated `AI Connector` window. Custom clients are also supported.
 
-The project is designed to let developers to add custom tools soon. After that the next goal is to enable the same features in player's build. For not it works only in Unity Editor.
+The system is highly extensible - you can define custom `MCP Tools`, `MCP Resource` or `MCP Prompt` directly in your Unity project codebase, exposing new capabilities to AI or automation clients. This makes Unity MCP a flexible foundation for building advanced workflows, rapid prototyping, and integrating AI-driven features into your development process.
 
-The system is extensible: you can define custom `MCP Tool`s directly in your Unity project codebase, exposing new capabilities to the AI or automation clients. This makes Unity-MCP a flexible foundation for building advanced workflows, rapid prototyping, or integrating AI-driven features into your development process.
+## What is `MCP`
 
----
+MCP - Model Context Protocol. In a few words, that is `USB Type-C` for AI, specifically for LLM (Large Language Model). It teaches LLM how to use external features. Such as Unity Engine in this case, or even your custom C# method in your code. [Official documentation](https://modelcontextprotocol.io/).
 
-# Advanced MCP server setup
+## What is `MCP Client`
 
-**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** server supports many different launch options and docker docker deployment. Both transport protocol are supported `http` and `stdio`. [Read more...](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md)
+It is an application with a chat window. It may have smart agents to operate better, it may have embedded advanced MCP Tools. In general well done MCP Client is 50% of the AI success of executing a task. That is why it is very important to choose the best one for usage.
+
+## What is `MCP Server`
+
+It is a bridge between `MCP Client` and "something else", in this particular case it is Unity Engine. This project includes `MCP Server`.
+
+## What is `MCP Tool`
+
+`MCP Tool` is a function or method that the LLM can call to interact with Unity. These tools act as the bridge between natural language requests and actual Unity operations. When you ask the AI to "create a cube" or "change material color," it uses MCP Tools to execute these actions.
+
+**Key characteristics:**
+
+- **Executable functions** that perform specific operations
+- **Typed parameters** with descriptions to help the LLM understand what data to provide
+- **Return values** that give feedback about the operation's success or failure
+- **Thread-aware** - can run on main thread for Unity API calls or background thread for heavy processing
+
+### When to use `MCP Tool`
+
+- **Automate repetitive tasks** - Create tools for common operations you do frequently
+- **Complex operations** - Bundle multiple Unity API calls into a single, easy-to-use tool
+- **Project-specific workflows** - Build tools that understand your project's specific structure and conventions
+- **Error-prone tasks** - Create tools that include validation and error handling
+- **Custom game logic** - Expose your game's systems to AI for dynamic content creation
+
+**Examples:**
+
+- Creating and configuring GameObjects with specific components
+- Batch processing assets (textures, materials, prefabs)
+- Setting up lighting and post-processing effects
+- Generating level geometry or placing objects procedurally
+- Configuring physics settings or collision layers
+
+## What is `MCP Resource`
+
+`MCP Resource` provides read-only access to data within your Unity project. Unlike MCP Tools that perform actions, Resources allow the LLM to inspect and understand your project's current state, assets, and configuration. Think of them as "sensors" that give the AI context about your project.
+
+**Key characteristics:**
+
+- **Read-only access** to project data and Unity objects
+- **Structured information** presented in a format the LLM can understand
+- **Real-time data** that reflects the current state of your project
+- **Contextual awareness** helping the AI make informed decisions
+
+### When to use `MCP Resource`
+
+- **Project analysis** - Let AI understand your project structure, assets, and organization
+- **Debugging assistance** - Provide current state information for troubleshooting
+- **Intelligent suggestions** - Give AI context to make better recommendations
+- **Documentation generation** - Automatically create documentation based on project state
+- **Asset management** - Help AI understand what assets are available and their properties
+
+**Examples:**
+
+- Exposing scene hierarchy and GameObject properties
+- Listing available materials, textures, and their settings
+- Showing script dependencies and component relationships
+- Displaying current lighting setup and render pipeline configuration
+- Providing information about audio sources, animations, and particle systems
+
+## What is `MCP Prompt`
+
+`MCP Prompt` allows you to inject pre-defined prompts into the conversation with the LLM. These are smart templates that can provide context, instructions, or knowledge to guide the AI's behavior. Prompts can be static text or dynamically generated based on your project's current state.
+
+**Key characteristics:**
+
+- **Contextual guidance** that influences how the AI responds
+- **Role-based** - can simulate different personas (User requests or Assistant knowledge)
+- **Dynamic content** - can include real-time project data
+- **Reusable templates** for common scenarios and workflows
+
+### When to use `MCP Prompt`
+
+- **Provide domain knowledge** - Share best practices and coding standards specific to your project
+- **Set coding conventions** - Establish naming conventions, architecture patterns, and code style
+- **Give context about project structure** - Explain how your project is organized and why
+- **Share workflow instructions** - Provide step-by-step procedures for common tasks
+- **Inject specialized knowledge** - Add information about specific Unity features, third-party assets, or custom systems
+
+**Examples:**
+
+- "Always use PascalCase for public methods and camelCase for private fields"
+- "This project uses a custom event system located in Scripts/Events/"
+- "When creating UI elements, always add them to the Canvas in Scene/UI/MainCanvas"
+- "Performance is critical - prefer object pooling for frequently instantiated objects"
+- "This project follows SOLID principles - explain any architecture decisions"
 
 ---
 
 # Contribution 💙💛
 
-Contribution is highly appreciated. Brings your ideas and lets make the game development as simple as never before! Do you have an idea of a new `MCP Tool`, feature or did you spot a bug and know how to fix it.
+Contributions are highly appreciated. Bring your ideas and let's make game development simpler than ever before! Do you have an idea for a new `MCP Tool` or feature, or did you spot a bug and know how to fix it?
 
 1. 👉 [Fork the project](https://github.com/IvanMurzak/Unity-MCP/fork)
 2. Clone the fork and open the `./Unity-MCP-Plugin` folder in Unity
