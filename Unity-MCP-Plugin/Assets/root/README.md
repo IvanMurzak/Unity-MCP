@@ -54,7 +54,13 @@
   - [Add custom `MCP Tool`](#add-custom-mcp-tool)
   - [Add custom runtime (in-game) `MCP Tool`](#add-custom-runtime-in-game-mcp-tool)
   - [Add custom `MCP Prompt`](#add-custom-mcp-prompt)
-- [Advanced `Unity MCP Server` setup](#advanced-unity-mcp-server-setup)
+- [Unity `MCP Server` setup](#unity-mcp-server-setup)
+  - [Variables](#variables)
+  - [Docker 📦](#docker-)
+    - [`HTTP` Transport](#http-transport)
+    - [`STDIO` Transport](#stdio-transport)
+    - [Custom `port`](#custom-port)
+  - [Binary executable](#binary-executable)
 - [How it works](#how-it-works)
   - [What is `MCP`](#what-is-mcp)
   - [What is `MCP Client`](#what-is-mcp-client)
@@ -296,9 +302,134 @@ public static class Prompt_ScriptingCode
 
 ---
 
-# Advanced `Unity MCP Server` setup
+# Unity `MCP Server` setup
 
-**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** server supports many different launch options and Docker deployment. Both transport protocols are supported: `http` and `stdio`. [Read more...](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md)
+**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** Server supports many different launch options and Docker deployment. Both transport protocols are supported: `http` and `stdio`. If you need to customize or deploy Unity MCP Server to a cloud, this section is for you. [Read more...](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md)
+
+## Variables
+
+Doesn't matter what launch option you choose, all of them support custom configuration using both Environment Variables and Command Line Arguments. It would work with default values, if you just need to launch it, don't waste your time for the variables. Just make sure Unity Plugin also has default values, especially the `--port`, they should be equal.
+
+| Environment Variable        | Command Line Args     | Description                                                                 |
+|-----------------------------|-----------------------|-----------------------------------------------------------------------------|
+| `UNITY_MCP_PORT`            | `--port`              | **Client** -> **Server** <- **Plugin** connection port (default: 8080)      |
+| `UNITY_MCP_PLUGIN_TIMEOUT`  | `--plugin-timeout`    | **Plugin** -> **Server** connection timeout (ms) (default: 10000)           |
+| `UNITY_MCP_CLIENT_TRANSPORT`| `--client-transport`  | **Client** -> **Server** transport type: `stdio` or `http` (default: `http`) |
+
+> Command line args support also the option with a single `-` prefix (`-port`) and an option without prefix at all (`port`).
+
+## Docker 📦
+
+[![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
+
+Make sure Docker is installed. And please make sure Docker Desktop is launched if you are at Windows operation system.
+
+### `HTTP` Transport
+
+```bash
+docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server
+```
+
+<details>
+  <summary><code>MCP Client</code> config:</summary>
+
+```json
+{
+  "mcpServers": {
+    "Unity-MCP": {
+      "url": "http://localhost:8080"
+    }
+  }
+}
+```
+
+> Replace `url` with your real endpoint if it is hosted in cloud
+
+</details>
+
+### `STDIO` Transport
+
+For using this variant, `MCP Client` should launch the `MCP Server` in the docker. It is achievable through the modified `MCP Client` configuration.
+
+```bash
+docker run -t -e UNITY_MCP_CLIENT_TRANSPORT=stdio -p 8080:8080 ivanmurzakdev/unity-mcp-server
+```
+
+<details>
+  <summary><code>MCP Client</code> config:</summary>
+
+```json
+{
+  "mcpServers": {
+    "Unity-MCP": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-t",
+        "-e",
+        "UNITY_MCP_CLIENT_TRANSPORT=stdio",
+        "-p",
+        "8080:8080",
+        "ivanmurzakdev/unity-mcp-server"
+      ]
+    }
+  }
+}
+```
+
+</details>
+
+### Custom `port`
+
+```bash
+docker run -e UNITY_MCP_PORT=123 -p 123:123 ivanmurzakdev/unity-mcp-server
+```
+
+<details>
+  <summary><code>MCP Client</code> config:</summary>
+
+```json
+{
+  "mcpServers": {
+    "Unity-MCP": {
+      "url": "http://localhost:123"
+    }
+  }
+}
+```
+
+> Replace `url` with your real endpoint if it is hosted in cloud
+</details>
+
+## Binary executable
+
+You may launch Unity `MCP Server` directly from a binary file. You would need to have a binary compiled specifically for your CPU architecture. Check [GitHub Release Page](https://github.com/IvanMurzak/Unity-MCP/releases), it contains pre-compiled binaries for all CPU architectures.
+
+```bash
+./unity-mcp-server --port 8080 --plugin-timeout 10000 --client-transport stdio
+```
+
+<details>
+  <summary><code>MCP Client</code> config:</summary>
+
+> Replace `<project>` with your Unity project path.
+
+```json
+{
+  "mcpServers": {
+    "Unity-MCP": {
+      "command": "<project>/Library/mcp-server/win-x64/unity-mcp-server.exe",
+      "args": [
+        "--port=8080",
+        "--plugin-timeout=10000",
+        "--client-transport=stdio"
+      ]
+    }
+  }
+}
+```
+
+</details>
 
 ---
 
