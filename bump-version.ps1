@@ -36,7 +36,25 @@ $VersionFiles = @(
         Path        = "README.md"
         Pattern     = "https://github\.com/IvanMurzak/Unity-MCP/releases/download/[\d\.]+/AI-Game-Dev-Installer\.unitypackage"
         Replace     = "https://github.com/IvanMurzak/Unity-MCP/releases/download/{VERSION}/AI-Game-Dev-Installer.unitypackage"
-        Description = "Root README download URL"
+        Description = "English README download URL"
+    },
+    @{
+        Path        = "docs/README.zh-CN.md"
+        Pattern     = "https://github\.com/IvanMurzak/Unity-MCP/releases/download/[\d\.]+/AI-Game-Dev-Installer\.unitypackage"
+        Replace     = "https://github.com/IvanMurzak/Unity-MCP/releases/download/{VERSION}/AI-Game-Dev-Installer.unitypackage"
+        Description = "Chinese README download URL"
+    },
+    @{
+        Path        = "docs/README.ja.md"
+        Pattern     = "https://github\.com/IvanMurzak/Unity-MCP/releases/download/[\d\.]+/AI-Game-Dev-Installer\.unitypackage"
+        Replace     = "https://github.com/IvanMurzak/Unity-MCP/releases/download/{VERSION}/AI-Game-Dev-Installer.unitypackage"
+        Description = "Japanese README download URL"
+    },
+    @{
+        Path        = "docs/README.es.md"
+        Pattern     = "https://github\.com/IvanMurzak/Unity-MCP/releases/download/[\d\.]+/AI-Game-Dev-Installer\.unitypackage"
+        Replace     = "https://github.com/IvanMurzak/Unity-MCP/releases/download/{VERSION}/AI-Game-Dev-Installer.unitypackage"
+        Description = "Spanish README download URL"
     },
     @{
         Path        = "Unity-MCP-Server/server.json"

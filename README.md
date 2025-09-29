@@ -14,6 +14,8 @@
 
   <img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/level-building.gif" alt="AI work" title="Level building" width="100%">
 
+  <b>[中文](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.zh-CN.md) | [日本語](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.ja.md) | [Español](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.es.md)</b>
+
 </div>
 
 `Unity MCP` is an AI-powered game development assistant that serves as a bridge between `MCP Client` and `Unity`. Simply type a message in chat and get work done using any advanced LLM model of your choice. Have an issue to fix? Ask the AI to fix it. **[Watch demo videos](https://www.youtube.com/watch?v=kQUOCQ-c0-M&list=PLyueiUu0xU70uzNoOaanGQD2hiyJmqHtK)**.
