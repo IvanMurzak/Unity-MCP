@@ -46,10 +46,10 @@ jobs:
       - name: Deploy MCP Server NuGet package
         run: |
           cd Unity-MCP-Server
-          # Find the generated .nupkg file (there should be only one)
-          nupkg_file=$(find ./nupkg -name "*.nupkg" | head -1)
-          if [ -z "$nupkg_file" ]; then
-            echo "Error: No .nupkg file found in ./nupkg"
+          # Construct the expected .nupkg filename using the version
+          nupkg_file="./nupkg/com.IvanMurzak.Unity.MCP.Server.${{ steps.version.outputs.version }}.nupkg"
+          if [ ! -f "$nupkg_file" ]; then
+            echo "Error: Expected .nupkg file not found: $nupkg_file"
             exit 1
           fi
           echo "Deploying NuGet package: $nupkg_file (version: ${{ steps.version.outputs.version }})"
