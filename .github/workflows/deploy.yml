@@ -1,0 +1,93 @@
+name: deploy
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  deploy-mcp-server-to-nuget:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          version=${{ github.event.release.tag_name }}
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "Extracted version: $version"
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
+
+      - name: Restore dependencies
+        run: |
+          cd Unity-MCP-Server
+          dotnet restore
+
+      - name: Build
+        run: |
+          cd Unity-MCP-Server
+          dotnet build --no-restore --configuration Release
+
+      - name: Test
+        run: |
+          cd Unity-MCP-Server
+          dotnet test --no-build --verbosity normal --configuration Release
+
+      - name: Pack NuGet package
+        run: |
+          cd Unity-MCP-Server
+          dotnet pack com.IvanMurzak.Unity.MCP.Server.csproj --no-build --configuration Release --output ./nupkg
+
+      - name: Deploy MCP Server NuGet package
+        run: |
+          cd Unity-MCP-Server
+          # Find the generated .nupkg file (there should be only one)
+          nupkg_file=$(find ./nupkg -name "*.nupkg" | head -1)
+          if [ -z "$nupkg_file" ]; then
+            echo "Error: No .nupkg file found in ./nupkg"
+            exit 1
+          fi
+          echo "Deploying NuGet package: $nupkg_file (version: ${{ steps.version.outputs.version }})"
+          dotnet nuget push "$nupkg_file" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+
+  deploy-docker-image:
+    runs-on: ubuntu-latest
+    needs: deploy-mcp-server-to-nuget
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          version=${{ github.event.release.tag_name }}
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "Extracted version: $version"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./Unity-MCP-Server
+          push: true
+          tags: |
+            ivanmurzakdev/unity-mcp-server:${{ steps.version.outputs.version }}
+            ivanmurzakdev/unity-mcp-server:latest
+          platforms: linux/amd64,linux/arm64
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

@@ -297,6 +297,7 @@ jobs:
   publish-unity-installer:
     runs-on: ubuntu-latest
     needs: release-unity-plugin
+    if: needs.release-unity-plugin.outputs.success == 'true'
     steps:
       - name: Download Unity Package artifact
         uses: actions/download-artifact@v4
@@ -315,6 +316,7 @@ jobs:
   publish-mcp-server:
     runs-on: macos-latest
     needs: release-unity-plugin
+    if: needs.release-unity-plugin.outputs.success == 'true'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -332,34 +334,6 @@ jobs:
           tag_name: ${{ needs.release-unity-plugin.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  publish-docker-image:
-    runs-on: ubuntu-latest
-    needs: release-unity-plugin
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./Unity-MCP-Server
-          push: true
-          tags: |
-            ivanmurzakdev/unity-mcp-server:${{ needs.release-unity-plugin.outputs.version }}
-            ivanmurzakdev/unity-mcp-server:latest
-          platforms: linux/amd64,linux/arm64
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
 
   publish_discord:
     runs-on: ubuntu-latest
@@ -430,7 +404,7 @@ jobs:
   # Cleanup job to remove build artifacts after publishing
   cleanup-artifacts:
     runs-on: ubuntu-latest
-    needs: [publish-mcp-server, publish-unity-installer, publish-docker-image]
+    needs: [publish-mcp-server, publish-unity-installer]
     if: always()
     steps:
       - name: Delete MCP Server artifacts
