@@ -16,7 +16,9 @@
 
 </div>
 
-`Unity MCP` is an AI-powered game development assistant that serves as a bridge between `MCP Client` and `Unity`. Simply type a message in chat and get work done using any advanced LLM model of your choice. Have an issue to fix? Ask the AI to fix it. [Watch demo videos](https://www.youtube.com/watch?v=kQUOCQ-c0-M&list=PLyueiUu0xU70uzNoOaanGQD2hiyJmqHtK).
+`Unity MCP` is an AI-powered game development assistant that serves as a bridge between `MCP Client` and `Unity`. Simply type a message in chat and get work done using any advanced LLM model of your choice. Have an issue to fix? Ask the AI to fix it. **[Watch demo videos](https://www.youtube.com/watch?v=kQUOCQ-c0-M&list=PLyueiUu0xU70uzNoOaanGQD2hiyJmqHtK)**.
+
+> **[💬 Join our Discord Server](https://discord.gg/cfbdMZX99G)** - Ask questions, showcase your work, and connect with other developers!
 
 ## Features
 
