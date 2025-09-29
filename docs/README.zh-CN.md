@@ -14,11 +14,9 @@
 
   <img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/level-building.gif" alt="AI work" title="Level building" width="100%">
 
+  <b>[English](https://github.com/IvanMurzak/Unity-MCP/blob/main/README.md) | [日本語](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.ja.md) | [Español](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.es.md)</b>
+
 </div>
-
-📖 [English](https://github.com/IvanMurzak/Unity-MCP/blob/main/README.md) | [日本語](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.ja.md) | [Español](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.es.md)
-
----
 
 `Unity MCP` 是一个由AI驱动的游戏开发助手，充当 `MCP 客户端` 与 `Unity` 之间的桥梁。只需在聊天中输入消息，即可使用您选择的任何高级LLM模型完成工作。遇到需要修复的问题？让AI来解决。**[观看演示视频](https://www.youtube.com/watch?v=kQUOCQ-c0-M&list=PLyueiUu0xU70uzNoOaanGQD2hiyJmqHtK)**。
 
@@ -45,11 +43,11 @@
 ## 目录
 
 - [安装](#安装)
-  - [步骤1：安装 `Unity MCP 插件`](#步骤1安装unity-mcp-插件)
+  - [步骤1：安装 `Unity MCP 插件`](#步骤1安装-unity-mcp-插件)
     - [选项1 - 安装程序](#选项1---安装程序)
     - [选项2 - OpenUPM-CLI](#选项2---openupm-cli)
-  - [步骤2：安装 `MCP 客户端`](#步骤2安装mcp-客户端)
-  - [步骤3：配置 `MCP 客户端`](#步骤3配置mcp-客户端)
+  - [步骤2：安装 `MCP 客户端`](#步骤2安装-mcp-客户端)
+  - [步骤3：配置 `MCP 客户端`](#步骤3配置-mcp-客户端)
     - [自动配置](#自动配置)
     - [手动配置](#手动配置)
 - [使用AI](#使用ai)
@@ -57,26 +55,26 @@
     - [核心功能](#核心功能)
     - [反射功能](#反射功能)
 - [自定义MCP](#自定义mcp)
-  - [添加自定义 `MCP 工具`](#添加自定义mcp工具)
-  - [添加自定义运行时（游戏内） `MCP 工具`](#添加自定义运行时游戏内mcp工具)
-  - [添加自定义 `MCP 提示`](#添加自定义mcp提示)
-- [Unity `MCP 服务器` 设置](#unity-mcp-服务器设置)
+  - [添加自定义 `MCP 工具`](#添加自定义-mcp-工具)
+  - [添加自定义运行时（游戏内） `MCP 工具`](#添加自定义运行时游戏内-mcp-工具)
+  - [添加自定义 `MCP 提示`](#添加自定义-mcp-提示)
+- [Unity `MCP 服务器` 设置](#unity-mcp-服务器-设置)
   - [变量](#变量)
   - [Docker 📦](#docker-)
     - [`HTTP` 传输](#http-传输)
     - [`STDIO` 传输](#stdio-传输)
-    - [自定义 `端口`](#自定义端口)
+    - [自定义 `端口`](#自定义-端口)
   - [二进制可执行文件](#二进制可执行文件)
 - [工作原理](#工作原理)
-  - [什么是 `MCP`](#什么是mcp)
-  - [什么是 `MCP 客户端`](#什么是mcp客户端)
-  - [什么是 `MCP 服务器`](#什么是mcp服务器)
-  - [什么是 `MCP 工具`](#什么是mcp工具)
-    - [何时使用 `MCP 工具`](#何时使用mcp工具)
-  - [什么是 `MCP 资源`](#什么是mcp资源)
-    - [何时使用 `MCP 资源`](#何时使用mcp资源)
-  - [什么是 `MCP 提示`](#什么是mcp提示)
-    - [何时使用 `MCP 提示`](#何时使用mcp提示)
+  - [什么是 `MCP`](#什么是-mcp)
+  - [什么是 `MCP 客户端`](#什么是-mcp-客户端)
+  - [什么是 `MCP 服务器`](#什么是-mcp-服务器)
+  - [什么是 `MCP 工具`](#什么是-mcp-工具)
+    - [何时使用 `MCP 工具`](#何时使用-mcp-工具)
+  - [什么是 `MCP 资源`](#什么是-mcp-资源)
+    - [何时使用 `MCP 资源`](#何时使用-mcp-资源)
+  - [什么是 `MCP 提示`](#什么是-mcp-提示)
+    - [何时使用 `MCP 提示`](#何时使用-mcp-提示)
 - [贡献 💙💛](#贡献-)
 
 # 安装

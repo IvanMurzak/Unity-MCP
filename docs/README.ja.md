@@ -14,11 +14,9 @@
 
   <img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/level-building.gif" alt="AI work" title="Level building" width="100%">
 
+  <b>[English](https://github.com/IvanMurzak/Unity-MCP/blob/main/README.md) | [中文](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.zh-CN.md) | [Español](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.es.md)</b>
+
 </div>
-
-📖 [English](https://github.com/IvanMurzak/Unity-MCP/blob/main/README.md) | [中文](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.zh-CN.md) | [Español](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.es.md)
-
----
 
 `Unity MCP` は `MCP クライアント` と `Unity` の橋渡しとして機能するAI駆動のゲーム開発アシスタントです。チャットにメッセージを入力するだけで、お好みの高度なLLMモデルを使用して作業を完了できます。修正が必要な問題がありますか？AIに修正してもらいましょう。**[デモ動画をご覧ください](https://www.youtube.com/watch?v=kQUOCQ-c0-M&list=PLyueiUu0xU70uzNoOaanGQD2hiyJmqHtK)**。
 
@@ -60,7 +58,7 @@
   - [カスタム`MCPツール`の追加](#カスタムmcpツールの追加)
   - [カスタムランタイム（ゲーム内）`MCPツール`の追加](#カスタムランタイムゲーム内mcpツールの追加)
   - [カスタム`MCPプロンプト`の追加](#カスタムmcpプロンプトの追加)
-- [Unity `MCPサーバー` セットアップ](#unity-mcpサーバーセットアップ)
+- [Unity `MCPサーバー` セットアップ](#unity-mcpサーバー-セットアップ)
   - [変数](#変数)
   - [Docker 📦](#docker-)
     - [`HTTP` トランスポート](#http-トランスポート)
