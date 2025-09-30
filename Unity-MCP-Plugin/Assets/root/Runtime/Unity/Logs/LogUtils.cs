@@ -11,6 +11,8 @@
 #nullable enable
 using System.Collections.Concurrent;
 using com.IvanMurzak.ReflectorNet.Utils;
+using Unity.Collections.LowLevel.Unsafe;
+using UnityEditor;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP
@@ -18,11 +20,9 @@ namespace com.IvanMurzak.Unity.MCP
     public static class LogUtils
     {
         public const int MaxLogEntries = 5000; // Default max entries to keep in memory
-
-        static readonly ConcurrentQueue<LogEntry> _logEntries = new();
+        static ConcurrentQueue<LogEntry> _logEntries;
         static readonly object _lockObject = new();
         static bool _isSubscribed = false;
-
         public static int LogEntries
         {
             get
@@ -34,6 +34,7 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
+
         public static void ClearLogs()
         {
             lock (_lockObject)
@@ -41,6 +42,7 @@ namespace com.IvanMurzak.Unity.MCP
                 _logEntries.Clear();
             }
         }
+
         public static LogEntry[] GetAllLogs()
         {
             lock (_lockObject)
@@ -63,8 +65,13 @@ namespace com.IvanMurzak.Unity.MCP
                     if (!_isSubscribed)
                     {
                         Application.logMessageReceived += OnLogMessageReceived;
+<<<<<<< HEAD
                         Application.logMessageReceivedThreaded += OnLogMessageReceived;
+=======
+                        EditorApplication.update += LogCache.HandleLogCache;
+>>>>>>> 74f9e0e9 (add new console log cache to persist log data)
                         _isSubscribed = true;
+                        _logEntries = LogCache.GetCachedLogEntries();
                     }
                 }
             });
