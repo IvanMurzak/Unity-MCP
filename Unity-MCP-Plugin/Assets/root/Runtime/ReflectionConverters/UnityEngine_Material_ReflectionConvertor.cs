@@ -123,10 +123,10 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             if (material == null)
             {
                 if (logger?.IsEnabled(LogLevel.Error) == true)
-                    logger.LogError($"{padding}[Error] Object is not a Material. Convertor: {GetType().GetTypeShortName()}");
+                    logger.LogError($"{padding}[Error] Object is not a Material. The type is {obj.GetType().GetTypeShortName()}. Convertor: {GetType().GetTypeShortName()}");
 
                 if (stringBuilder != null)
-                    stringBuilder.AppendLine($"{padding}[Error] Object is not a Material. Convertor: {GetType().GetTypeShortName()}");
+                    stringBuilder.AppendLine($"{padding}[Error] Object is not a Material. The type is {obj.GetType().GetTypeShortName()}. Convertor: {GetType().GetTypeShortName()}");
 
                 return SerializedMember.FromValue(reflector, type, value: null, name: name);
             }
