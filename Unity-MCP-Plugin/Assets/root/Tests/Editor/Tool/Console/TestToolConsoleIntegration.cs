@@ -12,6 +12,7 @@ using System.Collections;
 using System.Linq;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
 
@@ -232,6 +233,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNotNull(description, "Description should not be null");
             Assert.IsTrue(description.EndsWith($"Max: {LogUtils.MaxLogEntries}"),
                 $"{parameterName} parameter description should end with 'Max: {LogUtils.MaxLogEntries}'. Actual description: '{description}'");
+        }
+
+        [UnityTest]
+        public IEnumerator GetLogs_Validate_ConsoleLogRetention()
+        {
+            // Wait for log collection system to process (EditMode tests can only yield null)
+            for (int i = 0; i < 30000; i++)
+            {
+                yield return null;
+            }
+            // This test verifies that logs are being stored and read from the log cache properly.
+            int testCount = 15;
+            int startCount = LogUtils.LogEntries;
+            Assert.AreEqual(startCount, LogCache.GetCachedLogEntries().Count(), "Log entries and Log Cache count should match at the start of this test.");
+            for (int i = 0; i < testCount; i++)
+            {
+                Debug.Log($"Test Log {i + 1}");
+            }
+            // Wait for log collection system to process (EditMode tests can only yield null)
+            for (int i = 0; i < 30000; i++)
+            {
+                yield return null;
+            }
+            Assert.AreEqual(startCount + testCount, LogUtils.LogEntries, "LogUtils should have new logs in memory.");
+            Assert.IsTrue(LogUtils.LogEntries == LogCache.GetCachedLogEntries().Count(), "Log entries and Log Cache count should match.");
         }
     }
 }
