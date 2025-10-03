@@ -7,7 +7,8 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+
+#nullable enable
 using System;
 using UnityEngine;
 
@@ -31,7 +32,15 @@ namespace com.IvanMurzak.Unity.MCP
             this.logTypeString = logType.ToString();
         }
 
-        public override string ToString() => $"[{timestamp:yyyy-MM-dd HH:mm:ss.fff}] [{logTypeString}] {message}";
+        public override string ToString() => ToString(includeStackTrace: false);
+
+        public string ToString(bool includeStackTrace)
+        {
+            if (includeStackTrace && !string.IsNullOrEmpty(stackTrace))
+                return $"{timestamp:yyyy-MM-dd HH:mm:ss.fff} [{logTypeString}] {message}\nStack Trace:\n{stackTrace}";
+            else
+                return $"{timestamp:yyyy-MM-dd HH:mm:ss.fff} [{logTypeString}] {message}";
+        }
     }
 }
 

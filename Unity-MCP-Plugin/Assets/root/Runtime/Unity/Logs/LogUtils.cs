@@ -7,7 +7,8 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+
+#nullable enable
 using System.Collections.Concurrent;
 using com.IvanMurzak.ReflectorNet.Utils;
 using UnityEngine;
@@ -47,13 +48,17 @@ namespace com.IvanMurzak.Unity.MCP
                 return _logEntries.ToArray();
             }
         }
+        public static void Init()
+        {
+            // Just to trigger static constructor
+        }
 
         static LogUtils()
         {
             EnsureSubscribed();
         }
 
-        static void EnsureSubscribed()
+        public static void EnsureSubscribed()
         {
             MainThread.Instance.RunAsync(() =>
             {
@@ -62,6 +67,7 @@ namespace com.IvanMurzak.Unity.MCP
                     if (!_isSubscribed)
                     {
                         Application.logMessageReceived += OnLogMessageReceived;
+                        Application.logMessageReceivedThreaded += OnLogMessageReceived;
                         _isSubscribed = true;
                     }
                 }
@@ -70,14 +76,25 @@ namespace com.IvanMurzak.Unity.MCP
 
         static void OnLogMessageReceived(string message, string stackTrace, LogType type)
         {
-            var logEntry = new LogEntry(message, stackTrace, type);
-            lock (_lockObject)
+            try
             {
-                _logEntries.Enqueue(logEntry);
+                var logEntry = new LogEntry(message, stackTrace, type);
+                lock (_lockObject)
+                {
+                    _logEntries.Enqueue(logEntry);
 
-                // Keep only the latest entries to prevent memory overflow
-                while (_logEntries.Count > MaxLogEntries)
-                    _logEntries.TryDequeue(out _);
+                    // Keep only the latest entries to prevent memory overflow
+                    while (_logEntries.Count > MaxLogEntries)
+                    {
+                        var success = _logEntries.TryDequeue(out _);
+                        if (!success)
+                            break; // Should not happen, but just in case
+                    }
+                }
+            }
+            catch
+            {
+                // Ignore logging errors to prevent recursive issues
             }
         }
     }
