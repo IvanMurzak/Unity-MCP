@@ -25,7 +25,8 @@ namespace com.IvanMurzak.Unity.MCP
     {
         static string _cacheFilePath = $"{Path.GetDirectoryName(Application.dataPath)}/Temp/mcp-server";
         static string _cacheFileName = "editor-logs.txt";
-        static SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
+        static string _cacheFile = $"{Path.Combine(_cacheFilePath, _cacheFileName)}";
+        static volatile Mutex _fileAccessMutex = new();
         public static void HandleLogCache()
         {
             if (LogUtils.LogEntries > 0)
@@ -39,7 +40,7 @@ namespace com.IvanMurzak.Unity.MCP
         {
             var entries = GetCachedLogEntries();
             Directory.CreateDirectory(_cacheFilePath);
-            using (FileStream stream = File.Create(Path.Combine(_cacheFilePath, _cacheFileName)))
+            using (FileStream stream = File.Create(_cacheFile))
             {
                 var formatter = new BinaryFormatter();
                 formatter.Serialize(stream, entries);
@@ -48,7 +49,8 @@ namespace com.IvanMurzak.Unity.MCP
 
         public static void CacheLogEntries(LogEntry[] entries)
         {
-            using (FileStream stream = File.Create(_cacheFilePath))
+            Directory.CreateDirectory(_cacheFilePath);
+            using (FileStream stream = File.Create(_cacheFile))
             {
                 var formatter = new BinaryFormatter();
                 formatter.Serialize(stream, entries);
@@ -57,11 +59,11 @@ namespace com.IvanMurzak.Unity.MCP
 
         public static ConcurrentQueue<LogEntry> GetCachedLogEntries()
         {
-            if (!File.Exists(_cacheFilePath))
+            if (!File.Exists(_cacheFile))
             {
                 return new();
             }
-            using (FileStream stream = File.OpenRead(_cacheFilePath))
+            using (FileStream stream = File.OpenRead(_cacheFile))
             {
                 var formatter = new BinaryFormatter();
                 LogEntry[] entries = formatter.Deserialize(stream) as LogEntry[];
