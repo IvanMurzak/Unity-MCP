@@ -48,10 +48,6 @@ namespace com.IvanMurzak.Unity.MCP
                 return _logEntries.ToArray();
             }
         }
-        public static void Init()
-        {
-            // Just to trigger static constructor
-        }
 
         static LogUtils()
         {

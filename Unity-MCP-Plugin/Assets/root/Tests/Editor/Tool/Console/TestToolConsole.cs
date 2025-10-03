@@ -145,16 +145,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsTrue(result.Contains("[Warning]"), "Should contain warning logs");
             Assert.IsFalse(result.Contains("[Log]") && !result.Contains("[Warning]"), "Should not contain non-warning logs in the log entries");
         }
-        // [Test]
-        // public void GetLogs_WithInvalidLogTypeFilter_ReturnsError()
-        // {
-        //     // Act
-        //     var result = _tool.GetLogs(logTypeFilter: "InvalidType");
-
-        //     // Assert
-        //     ErrorValidation(result);
-        //     Assert.IsTrue(result.Contains("Invalid logType filter"), $"Should contain invalid log type error.");
-        // }
 
         [UnityTest]
         public IEnumerator GetLogs_ErrorLogTypeFilter_HandlesCorrectly()
