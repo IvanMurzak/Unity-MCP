@@ -23,10 +23,26 @@ namespace com.IvanMurzak.Unity.MCP
 {
     public static class LogCache
     {
-        static string _cacheFilePath = $"{Path.GetDirectoryName(Application.dataPath)}/Temp/mcp-server";
+        static string _cacheFilePath =
+#if UNITY_EDITOR
+            $"{Path.GetDirectoryName(Application.dataPath)}/Temp/mcp-server";
+#else
+            $"{Application.persistentDataPath}/Temp/mcp-server";
+#endif
+
         static string _cacheFileName = "editor-logs.txt";
         static string _cacheFile = $"{Path.Combine(_cacheFilePath, _cacheFileName)}";
-        static volatile Mutex _fileAccessMutex = new();
+        static readonly object _fileLock = new();
+        [System.Serializable]
+        class LogWrapper
+        {
+            public LogEntry[] entries;
+        }
+
+        public static void Initialize()
+        {
+        }
+
         public static void HandleLogCache()
         {
             if (LogUtils.LogEntries > 0)
@@ -36,38 +52,30 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
-        public static void CacheLogEntry(LogEntry entry)
-        {
-            var entries = GetCachedLogEntries();
-            Directory.CreateDirectory(_cacheFilePath);
-            using (FileStream stream = File.Create(_cacheFile))
-            {
-                var formatter = new BinaryFormatter();
-                formatter.Serialize(stream, entries);
-            }
-        }
-
         public static void CacheLogEntries(LogEntry[] entries)
         {
-            Directory.CreateDirectory(_cacheFilePath);
-            using (FileStream stream = File.Create(_cacheFile))
+            lock (_fileLock)
             {
-                var formatter = new BinaryFormatter();
-                formatter.Serialize(stream, entries);
+                string data = JsonUtility.ToJson(new LogWrapper { entries = entries });
+                Directory.CreateDirectory(_cacheFilePath);
+                // Atomic File Write
+                File.WriteAllText(_cacheFile + ".tmp", data);
+                if (File.Exists(_cacheFile))
+                    File.Delete(_cacheFile);
+                File.Move(_cacheFile + ".tmp", _cacheFile);
             }
         }
-
         public static ConcurrentQueue<LogEntry> GetCachedLogEntries()
         {
-            if (!File.Exists(_cacheFile))
+            lock (_fileLock)
             {
-                return new();
-            }
-            using (FileStream stream = File.OpenRead(_cacheFile))
-            {
-                var formatter = new BinaryFormatter();
-                LogEntry[] entries = formatter.Deserialize(stream) as LogEntry[];
-                return new ConcurrentQueue<LogEntry>(entries);
+                if (!File.Exists(_cacheFile))
+                {
+                    return new();
+                }
+                string json = File.ReadAllText(_cacheFile);
+                LogWrapper wrapper = JsonUtility.FromJson<LogWrapper>(json);
+                return new ConcurrentQueue<LogEntry>(wrapper.entries);
             }
         }
     }
