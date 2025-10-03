@@ -7,13 +7,9 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
-
-#nullable enable
-using System;
+#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
 using System.Collections.Concurrent;
 using com.IvanMurzak.ReflectorNet.Utils;
-using R3;
-using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP
@@ -67,17 +63,9 @@ namespace com.IvanMurzak.Unity.MCP
                     {
                         Application.logMessageReceived += OnLogMessageReceived;
                         Application.logMessageReceivedThreaded += OnLogMessageReceived;
-                        var subscription = Observable.Timer(
-                            TimeSpan.FromSeconds(1),
-                            TimeSpan.FromSeconds(1)
-                        )
-                        .Subscribe(x =>
-                        {
-                            LogCache.HandleLogCache();
-                        });
-                        // LogCache.Initialize();
-                        _isSubscribed = true;
+                        LogCache.Initialize();
                         _logEntries = LogCache.GetCachedLogEntries();
+                        _isSubscribed = true;
                     }
                 }
             });

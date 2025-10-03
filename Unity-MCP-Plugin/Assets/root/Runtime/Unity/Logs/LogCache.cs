@@ -8,6 +8,7 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 #pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+using System;
 using System.Collections;
 using System.Collections.Concurrent;
 using System.IO;
@@ -17,6 +18,7 @@ using System.Threading.Tasks;
 using com.IvanMurzak.ReflectorNet.Utils;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
+using R3;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP
@@ -33,6 +35,7 @@ namespace com.IvanMurzak.Unity.MCP
         static string _cacheFileName = "editor-logs.txt";
         static string _cacheFile = $"{Path.Combine(_cacheFilePath, _cacheFileName)}";
         static readonly object _fileLock = new();
+        static bool _initialized = false;
         [System.Serializable]
         class LogWrapper
         {
@@ -41,6 +44,16 @@ namespace com.IvanMurzak.Unity.MCP
 
         public static void Initialize()
         {
+            if (_initialized) return;
+            var subscription = Observable.Timer(
+                TimeSpan.FromSeconds(1),
+                TimeSpan.FromSeconds(1)
+            )
+            .Subscribe(x =>
+            {
+                Task.Run(() => LogCache.HandleLogCache());
+            });
+            _initialized = true;
         }
 
         public static void HandleLogCache()
