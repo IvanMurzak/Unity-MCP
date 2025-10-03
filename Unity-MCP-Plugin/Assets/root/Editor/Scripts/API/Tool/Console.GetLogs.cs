@@ -45,6 +45,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     // Validate parameters
                     if (maxEntries < 1 || maxEntries > LogUtils.MaxLogEntries)
                         return Error.InvalidMaxEntries(maxEntries);
+<<<<<<< HEAD
+=======
+                    // Parse log type filter
+                    LogType? filterType = null;
+                    if (logTypeFilter != "All")
+                    {
+                        if (!Enum.TryParse<LogType>(logTypeFilter, true, out var parsedType))
+                            return Error.InvalidLogTypeFilter(logTypeFilter);
+                        filterType = parsedType;
+                    }
+>>>>>>> a0d3f74a (update log cache with R3 timer to remove unityeditor dependency and update editor-logs.txt filepath)
 
                     // Get all log entries as array to avoid concurrent modification
                     var allLogs = LogUtils.GetAllLogs().AsEnumerable();
