@@ -34,105 +34,119 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
         }
 
         [Test]
-        public void ShouldUpdateVersion_InstallerHigher_ReturnsTrue()
+        public void ShouldUpdateVersion_PatchVersionHigher_ReturnsTrue()
         {
-            // Assert
+            // Act & Assert
             Assert.IsTrue(
                 condition: Installer.ShouldUpdateVersion(
-                    currentVersion: "0.17.1",
-                    installerVersion: "0.17.2"
+                    currentVersion: "1.5.1",
+                    installerVersion: "1.5.2"
                 ),
-                message: "Should update when installer version is higher"
-            );
-
-            Assert.IsTrue(
-                condition: Installer.ShouldUpdateVersion(
-                    currentVersion: "0.9.0",
-                    installerVersion: "0.17.0"
-                ),
-                message: "Should update when installer version is higher"
-            );
-
-            Assert.IsTrue(
-                condition: Installer.ShouldUpdateVersion(
-                    currentVersion: "0.17.1",
-                    installerVersion: "1.0.0"
-                ),
-                message: "Should update when installer version is higher"
+                message: "Should update when patch version is higher"
             );
         }
 
         [Test]
-        public void ShouldUpdateVersion_InstallerLower_ReturnsFalse()
+        public void ShouldUpdateVersion_PatchVersionLower_ReturnsFalse()
         {
-            // Act
-            var result = Installer.ShouldUpdateVersion(
-                currentVersion: "0.18.0",
-                installerVersion: "0.17.2"
+            // Act & Assert
+            Assert.IsFalse(
+                condition: Installer.ShouldUpdateVersion(
+                    currentVersion: "1.5.2",
+                    installerVersion: "1.5.1"
+                ),
+                message: "Should not downgrade when patch version is lower"
             );
+        }
 
-            // Assert
-            Assert.IsFalse(result, "Should not downgrade when installer version is lower");
+        [Test]
+        public void ShouldUpdateVersion_MinorVersionHigher_ReturnsTrue()
+        {
+            // Act & Assert
+            Assert.IsTrue(
+                condition: Installer.ShouldUpdateVersion(
+                    currentVersion: "1.5.0",
+                    installerVersion: "1.6.0"
+                ),
+                message: "Should update when minor version is higher"
+            );
+        }
+
+        [Test]
+        public void ShouldUpdateVersion_MinorVersionLower_ReturnsFalse()
+        {
+            // Act & Assert
+            Assert.IsFalse(
+                condition: Installer.ShouldUpdateVersion(
+                    currentVersion: "1.6.0",
+                    installerVersion: "1.5.0"
+                ),
+                message: "Should not downgrade when minor version is lower"
+            );
+        }
+
+        [Test]
+        public void ShouldUpdateVersion_MajorVersionHigher_ReturnsTrue()
+        {
+            // Act & Assert
+            Assert.IsTrue(
+                condition: Installer.ShouldUpdateVersion(
+                    currentVersion: "1.5.0",
+                    installerVersion: "2.0.0"
+                ),
+                message: "Should update when major version is higher"
+            );
+        }
+
+        [Test]
+        public void ShouldUpdateVersion_MajorVersionLower_ReturnsFalse()
+        {
+            // Act & Assert
+            Assert.IsFalse(
+                condition: Installer.ShouldUpdateVersion(
+                    currentVersion: "2.0.0",
+                    installerVersion: "1.5.0"
+                ),
+                message: "Should not downgrade when major version is lower"
+            );
         }
 
         [Test]
         public void ShouldUpdateVersion_SameVersion_ReturnsFalse()
         {
-            // Act
-            var result = Installer.ShouldUpdateVersion(
-                currentVersion: "0.17.2",
-                installerVersion: "0.17.2"
+            // Act & Assert
+            Assert.IsFalse(
+                condition: Installer.ShouldUpdateVersion(
+                    currentVersion: "1.5.2",
+                    installerVersion: "1.5.2"
+                ),
+                message: "Should not update when versions are the same"
             );
-
-            // Assert
-            Assert.IsFalse(result, "Should not update when versions are the same");
         }
 
         [Test]
-        public void ShouldUpdateVersion_NoCurrentVersion_ReturnsTrue()
+        public void ShouldUpdateVersion_EmptyCurrentVersion_ReturnsTrue()
         {
-            // Act
-            var result = Installer.ShouldUpdateVersion(
-                currentVersion: "",
-                installerVersion: "0.17.2"
+            // Act & Assert
+            Assert.IsTrue(
+                condition: Installer.ShouldUpdateVersion(
+                    currentVersion: "",
+                    installerVersion: "1.5.2"
+                ),
+                message: "Should install when no current version exists"
             );
-
-            // Assert
-            Assert.IsTrue(result, "Should install when no current version exists");
         }
 
         [Test]
         public void ShouldUpdateVersion_NullCurrentVersion_ReturnsTrue()
         {
-            // Act
-            var result = Installer.ShouldUpdateVersion(
-                currentVersion: null,
-                installerVersion: "0.17.2"
-            );
-
-            // Assert
-            Assert.IsTrue(result, "Should install when current version is null");
-        }
-
-        [Test]
-        public void ShouldUpdateVersion_MajorVersionDifference_WorksCorrectly()
-        {
-            // Test major version upgrade
+            // Act & Assert
             Assert.IsTrue(
                 condition: Installer.ShouldUpdateVersion(
-                    currentVersion: "0.17.2",
-                    installerVersion: "1.0.0"
+                    currentVersion: null,
+                    installerVersion: "1.5.2"
                 ),
-                message: "Should upgrade from 0.17.2 to 1.0.0"
-            );
-
-            // Test major version downgrade prevention
-            Assert.IsFalse(
-                condition: Installer.ShouldUpdateVersion(
-                    currentVersion: "1.0.0",
-                    installerVersion: "0.17.2"
-                ),
-                message: "Should not downgrade from 1.0.0 to 0.17.2"
+                message: "Should install when current version is null"
             );
         }
 
@@ -140,7 +154,9 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
         public void AddScopedRegistryIfNeeded_PreventVersionDowngrade_Integration()
         {
             // Arrange - Create manifest with higher version
-            var higherVersion = "0.18.0";
+            var versionParts = Installer.Version.Split('.');
+            var majorVersion = int.Parse(versionParts[0]);
+            var higherVersion = $"{majorVersion + 10}.0.0";
             var manifest = new JSONObject
             {
                 [Installer.Dependencies] = new JSONObject
@@ -166,8 +182,8 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
         [Test]
         public void AddScopedRegistryIfNeeded_AllowVersionUpgrade_Integration()
         {
-            // Arrange - Create manifest with lower version
-            var lowerVersion = "0.16.0";
+            // Arrange - Create manifest with lower version (0.0.1 is always lower)
+            var lowerVersion = "0.0.1";
             var manifest = new JSONObject
             {
                 [Installer.Dependencies] = new JSONObject
