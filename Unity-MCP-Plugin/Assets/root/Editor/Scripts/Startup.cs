@@ -9,8 +9,6 @@
 */
 
 #nullable enable
-using System.Threading.Tasks;
-using com.IvanMurzak.Unity.MCP.Common;
 using UnityEditor;
 using UnityEngine;
 
@@ -32,7 +30,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             SubscribeOnEditorEvents();
 
             // Initialize sub-systems
-            API.Tool_TestRunner.Init();
+            LogUtils.EnsureSubscribed(); // log collector
+            API.Tool_TestRunner.Init(); // test runner
         }
 
         static void Disconnect() => McpPluginUnity.Disconnect();

@@ -25,6 +25,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
     {
         static int counter = 0;
 
+        readonly object _logsMutex = new();
         readonly List<TestResultData> _results = new();
         readonly TestSummaryData _summary = new();
         readonly List<TestLogEntry> _logs = new();
@@ -34,7 +35,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
 
         public List<TestResultData> GetResults() => _results;
         public TestSummaryData GetSummary() => _summary;
-        public List<TestLogEntry> GetLogs() => _logs;
+        public List<TestLogEntry> GetLogs()
+        {
+            lock (_logsMutex)
+            {
+                return _logs.ToList();
+            }
+        }
         public TestMode GetTestMode() => _testMode;
 
         public string TestModeAsString => _testMode switch
@@ -72,7 +79,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             startTime = DateTime.Now;
             var testCount = CountTests(testsToRun);
 
-            _logs.Clear();
+            lock (_logsMutex)
+            {
+                _logs.Clear();
+            }
             _results.Clear();
             _summary.Clear();
             _summary.TotalTests = testCount;
@@ -80,6 +90,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             // Subscribe on log messages
             Application.logMessageReceived -= OnLogMessageReceived;
             Application.logMessageReceived += OnLogMessageReceived;
+
+            Application.logMessageReceivedThreaded -= OnLogMessageReceived;
+            Application.logMessageReceivedThreaded += OnLogMessageReceived;
 
             if (McpPluginUnity.IsLogActive(LogLevel.Info))
                 Debug.Log($"[{nameof(TestResultCollector)}] Run {TestModeAsString} started: {testCount} tests.");
@@ -92,6 +105,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
 
             // Unsubscribe from log messages
             Application.logMessageReceived -= OnLogMessageReceived;
+            Application.logMessageReceivedThreaded -= OnLogMessageReceived;
 
             var duration = DateTime.Now - startTime;
             _summary.Duration = DateTime.Now - startTime;
@@ -193,7 +207,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
 
         void OnLogMessageReceived(string condition, string stackTrace, LogType type)
         {
-            _logs.Add(new TestLogEntry(type, condition, stackTrace));
+            var entry = new TestLogEntry(type, condition, stackTrace);
+            lock (_logsMutex)
+            {
+                _logs.Add(entry);
+            }
         }
 
         string FormatTestResults(bool includeMessage, bool includeMessageStacktrace, bool includeLogs, bool includeLogsStacktrace)
