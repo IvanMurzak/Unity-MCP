@@ -75,6 +75,7 @@ namespace com.IvanMurzak.Unity.MCP
                         {
                             LogCache.HandleLogCache();
                         });
+                        // LogCache.Initialize();
                         _isSubscribed = true;
                         _logEntries = LogCache.GetCachedLogEntries();
                     }
@@ -86,15 +87,10 @@ namespace com.IvanMurzak.Unity.MCP
         {
             try
             {
-<<<<<<< HEAD
                 var logEntry = new LogEntry(message, stackTrace, type);
                 lock (_lockObject)
                 {
                     _logEntries.Enqueue(logEntry);
-=======
-                // LogCache.CacheLogEntry(logEntry);
-                _logEntries.Enqueue(logEntry);
->>>>>>> a0d3f74a (update log cache with R3 timer to remove unityeditor dependency and update editor-logs.txt filepath)
 
                     // Keep only the latest entries to prevent memory overflow
                     while (_logEntries.Count > MaxLogEntries)
