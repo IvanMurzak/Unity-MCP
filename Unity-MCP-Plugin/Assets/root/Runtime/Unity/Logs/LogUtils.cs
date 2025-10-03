@@ -9,10 +9,11 @@
 */
 
 #nullable enable
+using System;
 using System.Collections.Concurrent;
 using com.IvanMurzak.ReflectorNet.Utils;
+using R3;
 using Unity.Collections.LowLevel.Unsafe;
-using UnityEditor;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP
@@ -20,7 +21,7 @@ namespace com.IvanMurzak.Unity.MCP
     public static class LogUtils
     {
         public const int MaxLogEntries = 5000; // Default max entries to keep in memory
-        static ConcurrentQueue<LogEntry> _logEntries;
+        static ConcurrentQueue<LogEntry> _logEntries = new();
         static readonly object _lockObject = new();
         static bool _isSubscribed = false;
         public static int LogEntries
@@ -65,11 +66,15 @@ namespace com.IvanMurzak.Unity.MCP
                     if (!_isSubscribed)
                     {
                         Application.logMessageReceived += OnLogMessageReceived;
-<<<<<<< HEAD
                         Application.logMessageReceivedThreaded += OnLogMessageReceived;
-=======
-                        EditorApplication.update += LogCache.HandleLogCache;
->>>>>>> 74f9e0e9 (add new console log cache to persist log data)
+                        var subscription = Observable.Timer(
+                            TimeSpan.FromSeconds(1),
+                            TimeSpan.FromSeconds(1)
+                        )
+                        .Subscribe(x =>
+                        {
+                            LogCache.HandleLogCache();
+                        });
                         _isSubscribed = true;
                         _logEntries = LogCache.GetCachedLogEntries();
                     }
@@ -81,10 +86,15 @@ namespace com.IvanMurzak.Unity.MCP
         {
             try
             {
+<<<<<<< HEAD
                 var logEntry = new LogEntry(message, stackTrace, type);
                 lock (_lockObject)
                 {
                     _logEntries.Enqueue(logEntry);
+=======
+                // LogCache.CacheLogEntry(logEntry);
+                _logEntries.Enqueue(logEntry);
+>>>>>>> a0d3f74a (update log cache with R3 timer to remove unityeditor dependency and update editor-logs.txt filepath)
 
                     // Keep only the latest entries to prevent memory overflow
                     while (_logEntries.Count > MaxLogEntries)

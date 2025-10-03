@@ -12,34 +12,39 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.ReflectorNet.Utils;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Diagnostics;
-using UnityEditor;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP
 {
     public static class LogCache
     {
-        static string _cacheFilePath = $"{Application.dataPath}/Temp~/mcp-server/editor-logs.txt";
-        static double _lastSnapshot = 0f;
-        static double _snapshotInterval = 2f;
-
+        static string _cacheFilePath = $"{Path.GetDirectoryName(Application.dataPath)}/Temp/mcp-server";
+        static string _cacheFileName = "editor-logs.txt";
+        static SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
         public static void HandleLogCache()
         {
-            if (_lastSnapshot + _snapshotInterval < EditorApplication.timeSinceStartup)
+            if (LogUtils.LogEntries > 0)
             {
-                if (LogUtils.LogEntries > 0)
-                {
-                    var logs = LogUtils.GetAllLogs();
-                    CacheLogEntries(logs);
-                }
-                _lastSnapshot = EditorApplication.timeSinceStartup;
+                var logs = LogUtils.GetAllLogs();
+                CacheLogEntries(logs);
             }
         }
 
+        public static void CacheLogEntry(LogEntry entry)
+        {
+            var entries = GetCachedLogEntries();
+            Directory.CreateDirectory(_cacheFilePath);
+            using (FileStream stream = File.Create(Path.Combine(_cacheFilePath, _cacheFileName)))
+            {
+                var formatter = new BinaryFormatter();
+                formatter.Serialize(stream, entries);
+            }
+        }
 
         public static void CacheLogEntries(LogEntry[] entries)
         {
