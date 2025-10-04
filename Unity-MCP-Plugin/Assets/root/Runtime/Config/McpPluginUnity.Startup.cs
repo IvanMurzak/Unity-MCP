@@ -55,6 +55,7 @@ namespace com.IvanMurzak.Unity.MCP
                         Consts.Log.Tag, nameof(McpPluginUnity), nameof(BuildAndStart));
                     return;
                 }
+                // Initialization started
                 isInitializing = true;
             }
 

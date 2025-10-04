@@ -29,7 +29,7 @@ namespace com.IvanMurzak.Unity.MCP
     public partial class McpPluginUnity
     {
         Data data = new Data();
-        static event Action<Data>? onChanged;
+        static Subject<Data> onConfigChanged = new Subject<Data>();
 
         static readonly ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger<McpPluginUnity>();
 
@@ -166,20 +166,15 @@ namespace com.IvanMurzak.Unity.MCP
                 NotifyChanged(data);
         }
 
-        public static void SubscribeOnChanged(Action<Data> action)
+        public static IDisposable SubscribeOnChanged(Action<Data> action, bool invokeImmediately = true)
         {
             if (action == null)
-                return;
+                throw new ArgumentNullException(nameof(action));
 
-            onChanged += action;
-            Safe.Run(action, Instance.data, logLevel: Instance.data?.LogLevel ?? LogLevel.Trace);
-        }
-        public static void UnsubscribeOnChanged(Action<Data> action)
-        {
-            if (action == null)
-                return;
-
-            onChanged -= action;
+            var subscription = onConfigChanged.Subscribe(action);
+            if (invokeImmediately)
+                Safe.Run(action, Instance.data, logLevel: Instance.data?.LogLevel ?? LogLevel.Trace);
+            return subscription;
         }
 
         public static async void Disconnect()
@@ -214,7 +209,9 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
-        static void NotifyChanged(Data data)
-            => Safe.Run(onChanged, data, logLevel: data?.LogLevel ?? LogLevel.Trace);
+        static void NotifyChanged(Data data) => Safe.Run(
+            action: (x) => onConfigChanged.OnNext(x),
+            value: data,
+            logLevel: data?.LogLevel ?? LogLevel.Trace);
     }
 }
