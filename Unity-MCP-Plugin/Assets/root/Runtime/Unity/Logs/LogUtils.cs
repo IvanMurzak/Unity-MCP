@@ -61,7 +61,6 @@ namespace com.IvanMurzak.Unity.MCP
                 {
                     if (!_isSubscribed)
                     {
-                        Application.logMessageReceived += OnLogMessageReceived;
                         Application.logMessageReceivedThreaded += OnLogMessageReceived;
                         LogCache.Initialize();
                         _logEntries = LogCache.GetCachedLogEntries();
