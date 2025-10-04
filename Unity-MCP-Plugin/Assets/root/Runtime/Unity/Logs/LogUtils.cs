@@ -7,8 +7,7 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
-
-#nullable enable
+#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
 using System.Collections.Concurrent;
 using com.IvanMurzak.ReflectorNet.Utils;
 using UnityEngine;
@@ -18,11 +17,9 @@ namespace com.IvanMurzak.Unity.MCP
     public static class LogUtils
     {
         public const int MaxLogEntries = 5000; // Default max entries to keep in memory
-
-        static readonly ConcurrentQueue<LogEntry> _logEntries = new();
+        static ConcurrentQueue<LogEntry> _logEntries = new();
         static readonly object _lockObject = new();
         static bool _isSubscribed = false;
-
         public static int LogEntries
         {
             get
@@ -34,6 +31,7 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
+
         public static void ClearLogs()
         {
             lock (_lockObject)
@@ -41,6 +39,7 @@ namespace com.IvanMurzak.Unity.MCP
                 _logEntries.Clear();
             }
         }
+
         public static LogEntry[] GetAllLogs()
         {
             lock (_lockObject)
@@ -62,8 +61,9 @@ namespace com.IvanMurzak.Unity.MCP
                 {
                     if (!_isSubscribed)
                     {
-                        Application.logMessageReceived += OnLogMessageReceived;
                         Application.logMessageReceivedThreaded += OnLogMessageReceived;
+                        LogCache.Initialize();
+                        _logEntries = LogCache.GetCachedLogEntries();
                         _isSubscribed = true;
                     }
                 }
