@@ -2,7 +2,22 @@ name: deploy
 
 on:
   release:
-    types: [published]
+    types: [released]
+
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Deploy to NuGet and Docker Hub version (e.g., 1.0.0).'
+        required: true
+        type: string
+
+  workflow_call:
+    inputs:
+      version: { required: true, type: string }
+    secrets:
+      NUGET_API_KEY:    { required: true }
+      DOCKER_USERNAME:  { required: true }
+      DOCKER_PASSWORD:  { required: true }
 
 jobs:
   deploy-mcp-server-to-nuget:
@@ -14,7 +29,7 @@ jobs:
       - name: Extract version from tag
         id: version
         run: |
-          version=${{ github.event.release.tag_name }}
+          version=${{ inputs.version || github.event.release.tag_name }}
           echo "version=$version" >> $GITHUB_OUTPUT
           echo "Extracted version: $version"
 
@@ -57,7 +72,6 @@ jobs:
 
   deploy-docker-image:
     runs-on: ubuntu-latest
-    needs: deploy-mcp-server-to-nuget
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -65,7 +79,7 @@ jobs:
       - name: Extract version from tag
         id: version
         run: |
-          version=${{ github.event.release.tag_name }}
+          version=${{ inputs.version || github.event.release.tag_name }}
           echo "version=$version" >> $GITHUB_OUTPUT
           echo "Extracted version: $version"
 
