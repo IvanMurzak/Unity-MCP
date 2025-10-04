@@ -8,8 +8,8 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 #pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
-using System.Linq;
 using System.Collections;
+using System.Linq;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using NUnit.Framework;
 using UnityEngine;
@@ -57,8 +57,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             // Act - Retrieve logs
             var allLogsResult = _tool.GetLogs(maxEntries: 1000);
-            var logOnlyResult = _tool.GetLogs(maxEntries: 1000, logTypeFilter: "Log");
-            var warningOnlyResult = _tool.GetLogs(maxEntries: 1000, logTypeFilter: "Warning");
+            var logOnlyResult = _tool.GetLogs(maxEntries: 1000, logTypeFilter: LogType.Log);
+            var warningOnlyResult = _tool.GetLogs(maxEntries: 1000, logTypeFilter: LogType.Warning);
 
             // Assert - Check that our unique logs are captured
             Assert.IsNotNull(allLogsResult, "All logs result should not be null");

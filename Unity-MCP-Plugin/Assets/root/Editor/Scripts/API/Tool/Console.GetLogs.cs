@@ -7,6 +7,7 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
 using System;
 using System.ComponentModel;
@@ -29,8 +30,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         (
             [Description("Maximum number of log entries to return. Default: 100, Max: 5000")]
             int maxEntries = 100,
-            [Description("Filter by log type. Options: 'All', 'Error', 'Assert', 'Warning', 'Log', 'Exception'. Default: 'All'")]
-            string logTypeFilter = "All",
+            [Description("Filter by log type. 'null' means All.")]
+            LogType? logTypeFilter = null,
             [Description("Include stack traces in the output. Default: false")]
             bool includeStackTrace = false,
             [Description("Return logs from the last N minutes. If 0, returns all available logs. Default: 0")]
@@ -45,15 +46,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     if (maxEntries < 1 || maxEntries > LogUtils.MaxLogEntries)
                         return Error.InvalidMaxEntries(maxEntries);
 
-                    // Parse log type filter
-                    LogType? filterType = null;
-                    if (logTypeFilter != "All")
-                    {
-                        if (!Enum.TryParse<LogType>(logTypeFilter, true, out var parsedType))
-                            return Error.InvalidLogTypeFilter(logTypeFilter);
-                        filterType = parsedType;
-                    }
-
                     // Get all log entries as array to avoid concurrent modification
                     var allLogs = LogUtils.GetAllLogs().AsEnumerable();
 
@@ -66,10 +58,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     }
 
                     // Apply log type filter
-                    if (filterType.HasValue)
+                    if (logTypeFilter.HasValue)
                     {
                         allLogs = allLogs
-                            .Where(log => log.logType == filterType.Value);
+                            .Where(log => log.logType == logTypeFilter.Value);
                     }
 
                     // Take the most recent entries (up to maxEntries)
@@ -81,20 +73,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         return "[Success] No log entries found matching the specified criteria.";
 
                     // Format output
-                    var logLines = filteredLogs.Select(log =>
-                    {
-                        var line = $"[{log.timestamp:yyyy-MM-dd HH:mm:ss.fff}] [{log.logTypeString}] {log.message}";
-                        if (includeStackTrace && !string.IsNullOrEmpty(log.stackTrace))
-                            line += $"\nStack Trace:\n{log.stackTrace}";
-
-                        return line;
-                    });
-
+                    var logLines = filteredLogs.Select(log => log.ToString(includeStackTrace));
                     var result = string.Join("\n", logLines);
                     var summary = $"[Success] Retrieved {filteredLogs.Length} log entries";
 
-                    if (filterType.HasValue)
-                        summary += $" (filtered by {filterType.Value})";
+                    if (logTypeFilter.HasValue)
+                        summary += $" (filtered by {logTypeFilter.Value})";
 
                     if (lastMinutes > 0)
                         summary += $" (from last {lastMinutes} minutes)";

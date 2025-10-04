@@ -401,10 +401,18 @@ jobs:
 
           echo "Release notes sent to Discord for version $version"
 
+  deploy:
+    needs: release-unity-plugin
+    if: needs.release-unity-plugin.outputs.success == 'true'
+    uses: ./.github/workflows/deploy.yml
+    with:
+      version: ${{ needs.release-unity-plugin.outputs.version }}
+    secrets: inherit
+
   # Cleanup job to remove build artifacts after publishing
   cleanup-artifacts:
     runs-on: ubuntu-latest
-    needs: [publish-mcp-server, publish-unity-installer]
+    needs: [publish-mcp-server, publish-unity-installer, deploy]
     if: always()
     steps:
       - name: Delete MCP Server artifacts
