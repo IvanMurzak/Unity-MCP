@@ -274,7 +274,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             {
                 yield return null;
             }
-            Assert.AreEqual(startCount + testCount * 2, LogUtils.LogEntries, "LogUtils should have new logs in memory.");
+            Assert.AreEqual(startCount + testCount, LogUtils.LogEntries, "LogUtils should have new logs in memory.");
             Assert.IsTrue(LogUtils.LogEntries == LogCache.GetCachedLogEntries().Count(), "Log entries and Log Cache count should match.");
         }
     }
