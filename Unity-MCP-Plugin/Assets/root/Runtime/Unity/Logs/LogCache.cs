@@ -36,11 +36,6 @@ namespace com.IvanMurzak.Unity.MCP
         static string _cacheFile = $"{Path.Combine(_cacheFilePath, _cacheFileName)}";
         static readonly object _fileLock = new();
         static bool _initialized = false;
-        [System.Serializable]
-        class LogWrapper
-        {
-            public LogEntry[] entries;
-        }
 
         public static void Initialize()
         {
