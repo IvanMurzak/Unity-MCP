@@ -55,7 +55,7 @@ namespace com.IvanMurzak.Unity.MCP
 
         public static void EnsureSubscribed()
         {
-            MainThread.Instance.RunAsync(() =>
+            MainThread.Instance.RunAsync(async () =>
             {
                 lock (_lockObject)
                 {
@@ -63,10 +63,10 @@ namespace com.IvanMurzak.Unity.MCP
                     {
                         Application.logMessageReceivedThreaded += OnLogMessageReceived;
                         LogCache.Initialize();
-                        _logEntries = LogCache.GetCachedLogEntries();
                         _isSubscribed = true;
                     }
                 }
+                _logEntries = await LogCache.GetCachedLogEntriesAsync();
             });
         }
 

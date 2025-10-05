@@ -34,7 +34,7 @@ namespace com.IvanMurzak.Unity.MCP
 
         static string _cacheFileName = "editor-logs.txt";
         static string _cacheFile = $"{Path.Combine(_cacheFilePath, _cacheFileName)}";
-        static readonly object _fileLock = new();
+        static readonly SemaphoreSlim _fileLock = new(1, 1);
         static bool _initialized = false;
 
         public static void Initialize()
@@ -51,39 +51,52 @@ namespace com.IvanMurzak.Unity.MCP
             _initialized = true;
         }
 
-        public static void HandleLogCache()
+        public static async void HandleLogCache()
         {
             if (LogUtils.LogEntries > 0)
             {
                 var logs = LogUtils.GetAllLogs();
-                CacheLogEntries(logs);
+                await CacheLogEntriesAsync(logs);
             }
         }
 
-        public static void CacheLogEntries(LogEntry[] entries)
+        public static async Task CacheLogEntriesAsync(LogEntry[] entries)
         {
-            lock (_fileLock)
+            await _fileLock.WaitAsync();
+            try
             {
                 string data = JsonUtility.ToJson(new LogWrapper { entries = entries });
                 Directory.CreateDirectory(_cacheFilePath);
                 // Atomic File Write
-                File.WriteAllText(_cacheFile + ".tmp", data);
+                await File.WriteAllTextAsync(_cacheFile + ".tmp", data);
                 if (File.Exists(_cacheFile))
                     File.Delete(_cacheFile);
                 File.Move(_cacheFile + ".tmp", _cacheFile);
             }
+            finally
+            {
+                _fileLock.Release();
+            }
         }
-        public static ConcurrentQueue<LogEntry> GetCachedLogEntries()
+        public static async Task<ConcurrentQueue<LogEntry>> GetCachedLogEntriesAsync()
         {
-            lock (_fileLock)
+            await _fileLock.WaitAsync();
+            try
             {
                 if (!File.Exists(_cacheFile))
                 {
-                    return new();
+                    return new ConcurrentQueue<LogEntry>();
                 }
-                string json = File.ReadAllText(_cacheFile);
-                LogWrapper wrapper = JsonUtility.FromJson<LogWrapper>(json);
-                return new ConcurrentQueue<LogEntry>(wrapper.entries);
+                string json = await File.ReadAllTextAsync(_cacheFile);
+                return await Task.Run(() =>
+                {
+                    LogWrapper wrapper = JsonUtility.FromJson<LogWrapper>(json);
+                    return new ConcurrentQueue<LogEntry>(wrapper.entries);
+                });
+            }
+            finally
+            {
+                _fileLock.Release();
             }
         }
     }
