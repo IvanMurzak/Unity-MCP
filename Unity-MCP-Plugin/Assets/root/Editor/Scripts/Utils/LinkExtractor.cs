@@ -27,11 +27,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
     public class LinkExtractor : IPreprocessBuildWithReport, IPostprocessBuildWithReport
     {
         const string FileName = "link.xml";
+        const string MergedFolderName = "packages-merged-link";
 
-        string folderName = System.Guid.NewGuid().ToString("N");
-
-        string LinkFilePath => Path.Combine(TemporaryFolder, FileName);
-        string TemporaryFolder => Path.Combine(Application.dataPath, folderName);
+        string MergedFolder => Path.Combine(Application.dataPath, MergedFolderName);
+        string MergedLinkFilePath => Path.Combine(MergedFolder, FileName);
 
         public int callbackOrder => 0;
 
@@ -104,28 +103,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 }
             }
 
-            EnsureTemporaryFolderExists();
-            mergedXml.Save(LinkFilePath);
+            if (!Directory.Exists(MergedFolder))
+                Directory.CreateDirectory(MergedFolder);
 
-            Debug.Log($"[LinkExtractor] Merged {xmlDocuments.Length} link.xml files to {LinkFilePath}");
-        }
+            mergedXml.Save(MergedLinkFilePath);
 
-        void EnsureTemporaryFolderExists()
-        {
-            if (!Directory.Exists(TemporaryFolder))
-                Directory.CreateDirectory(TemporaryFolder);
+            Debug.Log($"[LinkExtractor] Merged {xmlDocuments.Length} link.xml files to {MergedLinkFilePath}");
         }
 
         void CleanupTemporaryFiles()
         {
-            if (File.Exists(LinkFilePath))
-                File.Delete(LinkFilePath);
+            if (Directory.Exists(MergedFolder))
+                Directory.Delete(MergedFolder, recursive: true);
 
-            if (Directory.Exists(TemporaryFolder))
-                Directory.Delete(TemporaryFolder, recursive: true);
-
-            if (File.Exists(TemporaryFolder + ".meta"))
-                File.Delete(TemporaryFolder + ".meta");
+            var metaFilePath = MergedFolder + ".meta";
+            if (File.Exists(metaFilePath))
+                File.Delete(metaFilePath);
 
             UnityEditor.AssetDatabase.Refresh();
         }
