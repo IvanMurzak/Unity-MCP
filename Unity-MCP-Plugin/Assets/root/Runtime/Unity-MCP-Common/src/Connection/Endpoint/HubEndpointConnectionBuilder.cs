@@ -7,9 +7,12 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
+#nullable enable
 using System;
 using System.Threading.Tasks;
 using com.IvanMurzak.ReflectorNet;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -34,23 +37,37 @@ namespace com.IvanMurzak.Unity.MCP.Common
         {
             _logger.LogInformation($"Creating HubConnection to {endpoint}");
 
-            var connectionConfig = _serviceProvider.GetRequiredService<IOptions<ConnectionConfig>>().Value;
-            var hubConnection = new HubConnectionBuilder()
-                .WithUrl(connectionConfig.Endpoint + endpoint)
-                .WithAutomaticReconnect(new FixedRetryPolicy(TimeSpan.FromSeconds(5)))
-                .WithKeepAliveInterval(TimeSpan.FromSeconds(30))
-                .WithServerTimeout(TimeSpan.FromMinutes(5))
-                .AddJsonProtocol(options => RpcJsonConfiguration.ConfigureJsonSerializer(_reflector, options))
-                .ConfigureLogging(logging =>
-                {
-                    logging.ClearProviders();
-                    logging.AddProvider(new ForwardLoggerProvider(_logger,
-                        additionalErrorMessage: "To stop seeing the error, please <b>Stop</b> the connection to MCP server in <b>AI Game Developer</b> window."));
-                    logging.SetMinimumLevel(LogLevel.Trace);
-                })
-                .Build();
+            try
+            {
+                var connectionConfig = _serviceProvider.GetRequiredService<IOptions<ConnectionConfig>>().Value;
 
-            return Task.FromResult(hubConnection);
+                var hubConnectionBuilder = new HubConnectionBuilder()
+                    .WithUrl(connectionConfig.Endpoint + endpoint)
+                    .WithAutomaticReconnect(new FixedRetryPolicy(TimeSpan.FromSeconds(10)))
+                    .WithKeepAliveInterval(TimeSpan.FromSeconds(30))
+                    .WithServerTimeout(TimeSpan.FromMinutes(5))
+                    .AddJsonProtocol(options => RpcJsonConfiguration.ConfigureJsonSerializer(_reflector, options))
+                    .ConfigureLogging(logging =>
+                    {
+                        logging.ClearProviders();
+                        logging.AddProvider(new ForwardLoggerProvider(_logger,
+                            additionalErrorMessage: "To stop seeing the error, please <b>Stop</b> the connection to MCP server in <b>AI Game Developer</b> window."));
+                        logging.SetMinimumLevel(LogLevel.Trace);
+                    });
+
+                var hubConnection = hubConnectionBuilder.Build();
+
+                return Task.FromResult(hubConnection);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Failed to create HubConnection. Exception: {ex.Message}");
+                if (ex.InnerException != null)
+                    _logger.LogError($"Inner Exception: {ex.InnerException.Message}");
+                if (ex is TypeInitializationException tie && tie.InnerException != null)
+                    _logger.LogError($"TypeInitializer Inner Exception: {tie.InnerException}");
+                throw;
+            }
         }
     }
 }

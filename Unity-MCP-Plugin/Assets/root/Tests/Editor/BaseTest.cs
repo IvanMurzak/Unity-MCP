@@ -11,8 +11,8 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text.Json;
 using com.IvanMurzak.ReflectorNet;
-using com.IvanMurzak.Unity.MCP.Common.Model;
 using com.IvanMurzak.Unity.MCP.Common;
+using com.IvanMurzak.Unity.MCP.Common.Model;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -27,7 +27,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             Debug.Log($"[{GetType().GetTypeShortName()}] SetUp");
 
-            McpPluginUnity.Init();
+            McpPluginUnity.InitSingletonIfNeeded();
 
             yield return null;
         }

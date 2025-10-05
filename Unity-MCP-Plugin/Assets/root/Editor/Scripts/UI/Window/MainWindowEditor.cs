@@ -50,11 +50,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         private void OnEnable()
         {
-            McpPluginUnity.SubscribeOnChanged(OnChanged);
+            _disposables.Add(McpPluginUnity.SubscribeOnChanged(OnChanged));
         }
         private void OnDisable()
         {
-            McpPluginUnity.UnsubscribeOnChanged(OnChanged);
             _disposables.Clear();
         }
     }
