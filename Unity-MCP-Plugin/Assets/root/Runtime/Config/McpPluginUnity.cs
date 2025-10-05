@@ -198,7 +198,7 @@ namespace com.IvanMurzak.Unity.MCP
             finally
             {
                 _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() completed.",
-                    Consts.Log.Tag, nameof(McpPluginUnity), nameof(Disconnect));
+                    Consts.Log.Tag, nameof(McpPluginUnity), nameof(Connect));
                 initializedMutex.ReleaseMutex();
             }
         }
