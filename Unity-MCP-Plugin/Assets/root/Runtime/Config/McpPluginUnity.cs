@@ -29,8 +29,8 @@ namespace com.IvanMurzak.Unity.MCP
     public partial class McpPluginUnity
     {
         Data data = new Data();
-        static Subject<Data> onConfigChanged = new Subject<Data>();
 
+        static readonly Subject<Data> onConfigChanged = new Subject<Data>();
         static readonly ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger<McpPluginUnity>();
 
         static volatile object instanceMutex = new();
@@ -39,7 +39,7 @@ namespace com.IvanMurzak.Unity.MCP
         {
             get
             {
-                Init();
+                InitSingletonIfNeeded();
                 lock (instanceMutex)
                 {
                     return instance;
@@ -47,7 +47,7 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
-        public static void Init()
+        public static void InitSingletonIfNeeded()
         {
             lock (instanceMutex)
             {
@@ -57,7 +57,7 @@ namespace com.IvanMurzak.Unity.MCP
                     if (instance == null)
                     {
                         _logger.Log(MicrosoftLogLevel.Warning, "{tag} {class}.{method}: ConnectionConfig instance is null",
-                            Consts.Log.Tag, nameof(McpPluginUnity), nameof(Init));
+                            Consts.Log.Tag, nameof(McpPluginUnity), nameof(InitSingletonIfNeeded));
                         return;
                     }
                     else if (wasCreated)
@@ -177,6 +177,32 @@ namespace com.IvanMurzak.Unity.MCP
             return subscription;
         }
 
+        public static async Task<bool> Connect(bool initIfNeeded = true)
+        {
+            _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() called.",
+                Consts.Log.Tag, nameof(McpPluginUnity), nameof(Connect));
+
+            initializedMutex.WaitOne();
+            try
+            {
+                var instance = McpPlugin.Instance;
+                if (instance == null)
+                {
+                    isInitialized = false;
+                    _logger.LogError("{tag} {class}.{method}() isInitialized set <false>.",
+                        Consts.Log.Tag, nameof(McpPluginUnity), nameof(Connect));
+                    return false; // ignore
+                }
+                return await instance.Connect();
+            }
+            finally
+            {
+                _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() completed.",
+                    Consts.Log.Tag, nameof(McpPluginUnity), nameof(Disconnect));
+                initializedMutex.ReleaseMutex();
+            }
+        }
+
         public static async void Disconnect()
         {
             _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() called.",
@@ -189,9 +215,8 @@ namespace com.IvanMurzak.Unity.MCP
                 if (instance == null)
                 {
                     isInitialized = false;
-                    if (IsLogActive(LogLevel.Debug))
-                        Debug.LogFormat("{tag} {class}.{method}() isInitialized set <false>.",
-                            Consts.Log.Tag, nameof(McpPluginUnity), nameof(Disconnect));
+                    _logger.LogDebug("{tag} {class}.{method}() isInitialized set <false>.",
+                        Consts.Log.Tag, nameof(McpPluginUnity), nameof(Disconnect));
 
                     await McpPlugin.StaticDisposeAsync();
                     return; // ignore
