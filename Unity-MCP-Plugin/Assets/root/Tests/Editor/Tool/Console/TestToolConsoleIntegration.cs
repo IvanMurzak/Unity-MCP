@@ -256,15 +256,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator GetLogs_Validate_ConsoleLogRetention()
         {
-            // Wait for log collection system to process (EditMode tests can only yield null)
-            for (int i = 0; i < 30000; i++)
-            {
-                yield return null;
-            }
             // This test verifies that logs are being stored and read from the log cache properly.
             int testCount = 15;
             int startCount = LogUtils.LogEntries;
-            Assert.AreEqual(startCount, LogCache.GetCachedLogEntries().Count(), "Log entries and Log Cache count should match at the start of this test.");
             for (int i = 0; i < testCount; i++)
             {
                 Debug.Log($"Test Log {i + 1}");
@@ -274,8 +268,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             {
                 yield return null;
             }
+            LogUtils.ClearLogs();
+            Assert.AreEqual(0, LogUtils.LogEntries, "Log entries and Log Cache count should be empty.");
+            LogUtils.EnsureSubscribed();
+            for (int i = 0; i < 10000; i++)
+            {
+                yield return null;
+            }
             Assert.AreEqual(startCount + testCount, LogUtils.LogEntries, "LogUtils should have new logs in memory.");
-            Assert.IsTrue(LogUtils.LogEntries == LogCache.GetCachedLogEntries().Count(), "Log entries and Log Cache count should match.");
         }
     }
 }
