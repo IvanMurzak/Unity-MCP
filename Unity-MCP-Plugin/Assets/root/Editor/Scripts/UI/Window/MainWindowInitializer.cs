@@ -34,7 +34,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 return;
 
             // Perform initialization
-            McpPluginUnity.InitSingletonIfNeeded();
+            UnityMcpPlugin.InitSingletonIfNeeded();
             MainWindowEditor.ShowWindow();
 
             isInitialized.Value = true;

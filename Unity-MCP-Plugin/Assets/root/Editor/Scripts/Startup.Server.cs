@@ -117,7 +117,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             }
 
             public static string ExecutableZipUrl
-                => $"https://github.com/IvanMurzak/Unity-MCP/releases/download/{McpPluginUnity.Version}/{ExecutableName.ToLowerInvariant()}-{PlatformName}.zip";
+                => $"https://github.com/IvanMurzak/Unity-MCP/releases/download/{UnityMcpPlugin.Version}/{ExecutableName.ToLowerInvariant()}-{PlatformName}.zip";
 
             // ------------------------------------------------------------------------------------------------------------------------------------
 
@@ -135,7 +135,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     return false;
 
                 var existingVersion = File.ReadAllText(VersionFullPath);
-                return existingVersion == McpPluginUnity.Version;
+                return existingVersion == UnityMcpPlugin.Version;
             }
 
             public static void DeleteBinaryFolderIfExists()
@@ -175,7 +175,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     if (!Directory.Exists(ExecutableFolderPath))
                         Directory.CreateDirectory(ExecutableFolderPath);
 
-                    var archiveFilePath = Path.GetFullPath($"{Application.temporaryCachePath}/{ExecutableName.ToLowerInvariant()}-{PlatformName}-{McpPluginUnity.Version}.zip");
+                    var archiveFilePath = Path.GetFullPath($"{Application.temporaryCachePath}/{ExecutableName.ToLowerInvariant()}-{PlatformName}-{UnityMcpPlugin.Version}.zip");
                     Debug.Log($"Temporary archive file path: <color=yellow>{archiveFilePath}</color>");
 
                     // Download the zip file from the GitHub release notes
@@ -204,7 +204,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         UnixUtils.Set0755(ExecutableFullPath);
                     }
 
-                    File.WriteAllText(VersionFullPath, McpPluginUnity.Version);
+                    File.WriteAllText(VersionFullPath, UnityMcpPlugin.Version);
 
                     Debug.Log($"MCP server version file created at: <color=green><b>COMPLETED</b></color>");
 

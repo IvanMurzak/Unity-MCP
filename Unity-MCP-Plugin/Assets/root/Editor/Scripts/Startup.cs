@@ -21,7 +21,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         static Startup()
         {
-            McpPluginUnity.BuildAndStart();
+            UnityMcpPlugin.BuildAndStart();
             Server.DownloadServerBinaryIfNeeded();
 
             if (Application.dataPath.Contains(" "))
@@ -34,6 +34,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             API.Tool_TestRunner.Init(); // test runner
         }
 
-        static void Disconnect() => McpPluginUnity.Disconnect();
+        static void Disconnect() => UnityMcpPlugin.Disconnect();
     }
 }

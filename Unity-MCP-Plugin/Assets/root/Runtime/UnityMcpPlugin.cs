@@ -18,7 +18,6 @@ using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
 using R3;
-using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP
 {
@@ -26,16 +25,16 @@ namespace com.IvanMurzak.Unity.MCP
     using LogLevel = com.IvanMurzak.Unity.MCP.Utils.LogLevel;
     using MicrosoftLogLevel = Microsoft.Extensions.Logging.LogLevel;
 
-    public partial class McpPluginUnity
+    public partial class UnityMcpPlugin
     {
         Data data = new Data();
 
         static readonly Subject<Data> onConfigChanged = new Subject<Data>();
-        static readonly ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger<McpPluginUnity>();
+        static readonly ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger<UnityMcpPlugin>();
 
         static volatile object instanceMutex = new();
-        static McpPluginUnity instance = null!;
-        static McpPluginUnity Instance
+        static UnityMcpPlugin instance = null!;
+        static UnityMcpPlugin Instance
         {
             get
             {
@@ -57,7 +56,7 @@ namespace com.IvanMurzak.Unity.MCP
                     if (instance == null)
                     {
                         _logger.Log(MicrosoftLogLevel.Warning, "{tag} {class}.{method}: ConnectionConfig instance is null",
-                            Consts.Log.Tag, nameof(McpPluginUnity), nameof(InitSingletonIfNeeded));
+                            Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(InitSingletonIfNeeded));
                         return;
                     }
                     else if (wasCreated)
@@ -137,7 +136,7 @@ namespace com.IvanMurzak.Unity.MCP
             if (McpPlugin.Instance?.RpcRouter == null)
             {
                 _logger.Log(MicrosoftLogLevel.Warning, "{tag} {class}.{method}: RpcRouter is null",
-                    Consts.Log.Tag, nameof(McpPluginUnity), nameof(NotifyToolRequestCompleted));
+                    Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(NotifyToolRequestCompleted));
 
                 return;
             }
@@ -180,7 +179,7 @@ namespace com.IvanMurzak.Unity.MCP
         public static async Task<bool> Connect(bool initIfNeeded = true)
         {
             _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() called.",
-                Consts.Log.Tag, nameof(McpPluginUnity), nameof(Connect));
+                Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(Connect));
 
             initializedMutex.WaitOne();
             try
@@ -190,7 +189,7 @@ namespace com.IvanMurzak.Unity.MCP
                 {
                     isInitialized = false;
                     _logger.LogError("{tag} {class}.{method}() isInitialized set <false>.",
-                        Consts.Log.Tag, nameof(McpPluginUnity), nameof(Connect));
+                        Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(Connect));
                     return false; // ignore
                 }
                 return await instance.Connect();
@@ -198,7 +197,7 @@ namespace com.IvanMurzak.Unity.MCP
             finally
             {
                 _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() completed.",
-                    Consts.Log.Tag, nameof(McpPluginUnity), nameof(Connect));
+                    Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(Connect));
                 initializedMutex.ReleaseMutex();
             }
         }
@@ -206,7 +205,7 @@ namespace com.IvanMurzak.Unity.MCP
         public static async void Disconnect()
         {
             _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() called.",
-                Consts.Log.Tag, nameof(McpPluginUnity), nameof(Disconnect));
+                Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(Disconnect));
 
             initializedMutex.WaitOne();
             try
@@ -216,7 +215,7 @@ namespace com.IvanMurzak.Unity.MCP
                 {
                     isInitialized = false;
                     _logger.LogDebug("{tag} {class}.{method}() isInitialized set <false>.",
-                        Consts.Log.Tag, nameof(McpPluginUnity), nameof(Disconnect));
+                        Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(Disconnect));
 
                     await McpPlugin.StaticDisposeAsync();
                     return; // ignore
@@ -229,7 +228,7 @@ namespace com.IvanMurzak.Unity.MCP
             finally
             {
                 _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() completed.",
-                    Consts.Log.Tag, nameof(McpPluginUnity), nameof(Disconnect));
+                    Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(Disconnect));
                 initializedMutex.ReleaseMutex();
             }
         }

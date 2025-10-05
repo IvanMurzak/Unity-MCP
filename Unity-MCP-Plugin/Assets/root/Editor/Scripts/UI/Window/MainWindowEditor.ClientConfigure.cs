@@ -202,8 +202,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             if (args == null)
                 return false;
 
-            var targetPort = McpPluginUnity.Port.ToString();
-            var targetTimeout = McpPluginUnity.TimeoutMs.ToString();
+            var targetPort = UnityMcpPlugin.Port.ToString();
+            var targetTimeout = UnityMcpPlugin.TimeoutMs.ToString();
 
             var foundPort = false;
             var foundTimeout = false;
@@ -284,7 +284,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     // Create the file if it doesn't exist
                     File.WriteAllText(
                         path: configPath,
-                        contents: Startup.Server.RawJsonConfiguration(McpPluginUnity.Port, bodyPath, McpPluginUnity.TimeoutMs).ToString());
+                        contents: Startup.Server.RawJsonConfiguration(UnityMcpPlugin.Port, bodyPath, UnityMcpPlugin.TimeoutMs).ToString());
                     return true;
                 }
 
@@ -302,7 +302,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 {
                     File.WriteAllText(
                         path: configPath,
-                        contents: Startup.Server.RawJsonConfiguration(McpPluginUnity.Port, bodyPath, McpPluginUnity.TimeoutMs).ToString());
+                        contents: Startup.Server.RawJsonConfiguration(UnityMcpPlugin.Port, bodyPath, UnityMcpPlugin.TimeoutMs).ToString());
                     return true;
                 }
 
@@ -310,7 +310,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 var pathSegments = Consts.MCP.Server.BodyPathSegments(bodyPath);
 
                 // Generate the configuration to inject
-                var injectObj = Startup.Server.RawJsonConfiguration(McpPluginUnity.Port, pathSegments.Last(), McpPluginUnity.TimeoutMs);
+                var injectObj = Startup.Server.RawJsonConfiguration(UnityMcpPlugin.Port, pathSegments.Last(), UnityMcpPlugin.TimeoutMs);
                 if (injectObj == null)
                     throw new Exception("Injected config is not a valid JSON object.");
 

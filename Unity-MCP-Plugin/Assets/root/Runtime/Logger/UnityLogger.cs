@@ -32,7 +32,7 @@ namespace com.IvanMurzak.Unity.MCP.Utils
 
         public bool IsEnabled(LogLevelMicrosoft logLevel)
         {
-            return McpPluginUnity.IsLogActive(logLevel switch
+            return UnityMcpPlugin.IsLogActive(logLevel switch
             {
                 LogLevelMicrosoft.Critical => LogLevel.Exception,
                 LogLevelMicrosoft.Error => LogLevel.Error,

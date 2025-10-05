@@ -87,7 +87,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 "Version not found in package.json");
 
             // Compare versions
-            var pluginVersion = McpPluginUnity.Version;
+            var pluginVersion = UnityMcpPlugin.Version;
             Assert.AreEqual(packageJson.version, pluginVersion,
                 $"Version mismatch: package.json has '{packageJson.version}' but Startup.Version is '{pluginVersion}'. Package.json path: {packageJsonPath}");
 
