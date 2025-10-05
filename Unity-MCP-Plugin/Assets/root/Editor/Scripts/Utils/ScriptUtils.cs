@@ -167,7 +167,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 }
 
                 // Send notification and mark for cleanup
-                _ = McpPluginUnity.NotifyToolRequestCompleted(response);
+                _ = UnityMcpPlugin.NotifyToolRequestCompleted(response);
                 processedKeys.Add(key);
             }
 

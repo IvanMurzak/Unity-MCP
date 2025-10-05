@@ -43,7 +43,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         }
         public static TestRunnerApi CreateInstance()
         {
-            // if (McpPluginUnity.IsLogActive(MCP.Utils.LogLevel.Trace))
+            // if (UnityMcpPlugin.IsLogActive(MCP.Utils.LogLevel.Trace))
             //     Debug.Log($"[{nameof(TestRunnerApi)}] Ctor.");
 
             _resultCollector ??= new TestResultCollector();

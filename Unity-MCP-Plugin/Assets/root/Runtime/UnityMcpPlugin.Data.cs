@@ -14,7 +14,7 @@ using com.IvanMurzak.Unity.MCP.Utils;
 
 namespace com.IvanMurzak.Unity.MCP
 {
-    public partial class McpPluginUnity
+    public partial class UnityMcpPlugin
     {
         public class Data
         {

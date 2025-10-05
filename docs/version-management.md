@@ -32,7 +32,7 @@ The script automatically updates version numbers in:
 | `Installer/.../Installer.cs`                     | Version constant              | C# version constant            |
 | `Unity-MCP-Plugin/.../package.json`              | Version field                 | Unity package version          |
 | `Unity-MCP-Plugin/.../README.md`                 | Download URL section          | Plugin download URL            |
-| `Unity-MCP-Plugin/.../McpPluginUnity.Startup.cs` | Version constant              | Plugin C# version constant     |
+| `Unity-MCP-Plugin/.../UnityMcpPlugin.Startup.cs` | Version constant              | Plugin C# version constant     |
 
 ### 🔍 Preview Mode
 Use `-WhatIf` to see exactly what changes will be made without applying them:

@@ -48,52 +48,52 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             // -----------------------------------------------------------------
 
             var dropdownLogLevel = root.Query<EnumField>("dropdownLogLevel").First();
-            dropdownLogLevel.value = McpPluginUnity.LogLevel;
+            dropdownLogLevel.value = UnityMcpPlugin.LogLevel;
             dropdownLogLevel.tooltip = "The minimum level of messages to log. Debug includes all messages, while Critical includes only the most severe.";
             dropdownLogLevel.RegisterValueChangedCallback(evt =>
             {
-                McpPluginUnity.LogLevel = evt.newValue as LogLevel? ?? LogLevel.Warning;
+                UnityMcpPlugin.LogLevel = evt.newValue as LogLevel? ?? LogLevel.Warning;
                 SaveChanges($"[AI Game Developer] LogLevel Changed: {evt.newValue}");
-                McpPluginUnity.BuildAndStart();
+                UnityMcpPlugin.BuildAndStart();
             });
 
             var inputTimeoutMs = root.Query<IntegerField>("inputTimeoutMs").First();
-            inputTimeoutMs.value = McpPluginUnity.TimeoutMs;
+            inputTimeoutMs.value = UnityMcpPlugin.TimeoutMs;
             inputTimeoutMs.tooltip = $"Timeout for MCP tool execution in milliseconds.\n\nMost tools only need a few seconds.\n\nSet this higher than your longest test execution time.\n\nImportant: Also update the '{Consts.MCP.Server.Args.PluginTimeout}' argument in your MCP client configuration to match this value so your MCP client doesn't timeout before the tool completes.";
             inputTimeoutMs.RegisterCallback<FocusOutEvent>(evt =>
             {
                 var newValue = Mathf.Max(1000, inputTimeoutMs.value);
-                if (newValue == McpPluginUnity.TimeoutMs)
+                if (newValue == UnityMcpPlugin.TimeoutMs)
                     return;
 
                 if (newValue != inputTimeoutMs.value)
                     inputTimeoutMs.SetValueWithoutNotify(newValue);
 
-                McpPluginUnity.TimeoutMs = newValue;
+                UnityMcpPlugin.TimeoutMs = newValue;
 
                 // Update the raw JSON configuration display
                 var rawJsonField = root.Query<TextField>("rawJsonConfiguration").First();
-                rawJsonField.value = Startup.Server.RawJsonConfiguration(McpPluginUnity.Port, "mcpServers", McpPluginUnity.TimeoutMs).ToString();
+                rawJsonField.value = Startup.Server.RawJsonConfiguration(UnityMcpPlugin.Port, "mcpServers", UnityMcpPlugin.TimeoutMs).ToString();
 
                 SaveChanges($"[AI Game Developer] Timeout Changed: {newValue} ms");
-                McpPluginUnity.BuildAndStart();
+                UnityMcpPlugin.BuildAndStart();
             });
 
             var currentVersion = root.Query<TextField>("currentVersion").First();
-            currentVersion.value = McpPluginUnity.Version;
+            currentVersion.value = UnityMcpPlugin.Version;
 
             // Connection status
             // -----------------------------------------------------------------
 
             var inputFieldHost = root.Query<TextField>("InputServerURL").First();
-            inputFieldHost.value = McpPluginUnity.Host;
+            inputFieldHost.value = UnityMcpPlugin.Host;
             inputFieldHost.RegisterCallback<FocusOutEvent>(evt =>
             {
                 var newValue = inputFieldHost.value;
-                if (McpPluginUnity.Host == newValue)
+                if (UnityMcpPlugin.Host == newValue)
                     return;
 
-                McpPluginUnity.Host = newValue;
+                UnityMcpPlugin.Host = newValue;
                 SaveChanges($"[{nameof(MainWindowEditor)}] Host Changed: {newValue}");
                 Invalidate();
             });
@@ -109,7 +109,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             McpPlugin.DoAlways(plugin =>
             {
                 Observable.CombineLatest(
-                    McpPluginUnity.ConnectionState,
+                    UnityMcpPlugin.ConnectionState,
                     plugin.KeepConnected,
                     (connectionState, keepConnected) => (connectionState, keepConnected)
                 )
@@ -158,7 +158,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         HubConnectionState.Connecting => keepConnected
                             ? "Connecting..."
                             : "Disconnected",
-                        _ => McpPluginUnity.IsConnected.CurrentValue.ToString() ?? "Unknown"
+                        _ => UnityMcpPlugin.IsConnected.CurrentValue.ToString() ?? "Unknown"
                     };
 
                     btnConnectOrDisconnect.text = connectionState switch
@@ -175,7 +175,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         HubConnectionState.Connecting => keepConnected
                             ? ServerButtonText_Stop
                             : ServerButtonText_Connect,
-                        _ => McpPluginUnity.IsConnected.CurrentValue.ToString() ?? "Unknown"
+                        _ => UnityMcpPlugin.IsConnected.CurrentValue.ToString() ?? "Unknown"
                     };
 
                     connectionStatusCircle.RemoveFromClassList(USS_IndicatorClass_Connected);
@@ -206,33 +206,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 if (btnConnectOrDisconnect.text.Equals(ServerButtonText_Connect, StringComparison.OrdinalIgnoreCase))
                 {
-                    McpPluginUnity.KeepConnected = true;
-                    McpPluginUnity.Save();
+                    UnityMcpPlugin.KeepConnected = true;
+                    UnityMcpPlugin.Save();
                     if (McpPlugin.HasInstance)
                     {
                         McpPlugin.Instance.Connect();
                     }
                     else
                     {
-                        McpPluginUnity.BuildAndStart();
+                        UnityMcpPlugin.BuildAndStart();
                     }
                 }
                 else if (btnConnectOrDisconnect.text.Equals(ServerButtonText_Disconnect, StringComparison.OrdinalIgnoreCase))
                 {
-                    McpPluginUnity.KeepConnected = false;
-                    McpPluginUnity.Save();
+                    UnityMcpPlugin.KeepConnected = false;
+                    UnityMcpPlugin.Save();
                     if (McpPlugin.HasInstance)
                     {
-                        McpPluginUnity.Disconnect();
+                        UnityMcpPlugin.Disconnect();
                     }
                 }
                 else if (btnConnectOrDisconnect.text.Equals(ServerButtonText_Stop, StringComparison.OrdinalIgnoreCase))
                 {
-                    McpPluginUnity.KeepConnected = false;
-                    McpPluginUnity.Save();
+                    UnityMcpPlugin.KeepConnected = false;
+                    UnityMcpPlugin.Save();
                     if (McpPlugin.HasInstance)
                     {
-                        McpPluginUnity.Disconnect();
+                        UnityMcpPlugin.Disconnect();
                     }
                 }
                 else
@@ -254,7 +254,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             // -----------------------------------------------------------------
 
             var rawJsonField = root.Query<TextField>("rawJsonConfiguration").First();
-            rawJsonField.value = Startup.Server.RawJsonConfiguration(McpPluginUnity.Port, "mcpServers", McpPluginUnity.TimeoutMs).ToString();
+            rawJsonField.value = Startup.Server.RawJsonConfiguration(UnityMcpPlugin.Port, "mcpServers", UnityMcpPlugin.TimeoutMs).ToString();
         }
     }
 }

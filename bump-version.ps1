@@ -87,7 +87,7 @@ $VersionFiles = @(
         Description = "Plugin README download URL"
     },
     @{
-        Path        = "Unity-MCP-Plugin/Assets/root/Runtime/Config/McpPluginUnity.Startup.cs"
+        Path        = "Unity-MCP-Plugin/Assets/root/Runtime/UnityMcpPlugin.Startup.cs"
         Pattern     = 'public const string Version = "[\d\.]+";'
         Replace     = 'public const string Version = "{VERSION}";'
         Description = "Plugin C# version constant"

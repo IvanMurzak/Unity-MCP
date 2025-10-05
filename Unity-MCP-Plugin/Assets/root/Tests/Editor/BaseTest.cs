@@ -27,7 +27,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             Debug.Log($"[{GetType().GetTypeShortName()}] SetUp");
 
-            McpPluginUnity.InitSingletonIfNeeded();
+            UnityMcpPlugin.InitSingletonIfNeeded();
 
             yield return null;
         }
