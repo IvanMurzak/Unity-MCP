@@ -6,8 +6,8 @@ obj/
 ~obj/
 ~bin.meta
 ~obj.meta
-Temp~/
-Temp~.meta
+[Tt]emp~/
+[Tt]emp~.meta
 
 
 # User-specific files
