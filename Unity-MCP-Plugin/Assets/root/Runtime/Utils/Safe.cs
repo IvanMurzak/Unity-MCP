@@ -28,7 +28,7 @@ namespace com.IvanMurzak.Unity.MCP.Utils
             }
             catch (Exception e)
             {
-                if (logLevel?.IsActive(LogLevel.Error) == true)
+                if (logLevel?.IsActive(LogLevel.Error) ?? true)
                     _logger.LogError(eventId: default, message: e.Message, exception: e);
                 return false;
             }
@@ -42,7 +42,7 @@ namespace com.IvanMurzak.Unity.MCP.Utils
             }
             catch (Exception e)
             {
-                if (logLevel?.IsActive(LogLevel.Error) == true)
+                if (logLevel?.IsActive(LogLevel.Error) ?? true)
                     _logger.LogError(eventId: default, message: e.Message, exception: e);
                 return false;
             }
@@ -56,7 +56,7 @@ namespace com.IvanMurzak.Unity.MCP.Utils
             }
             catch (Exception e)
             {
-                if (logLevel?.IsActive(LogLevel.Error) == true)
+                if (logLevel?.IsActive(LogLevel.Error) ?? true)
                     _logger.LogError(eventId: default, message: e.Message, exception: e);
                 return false;
             }
@@ -69,7 +69,7 @@ namespace com.IvanMurzak.Unity.MCP.Utils
             }
             catch (Exception e)
             {
-                if (logLevel?.IsActive(LogLevel.Error) == true)
+                if (logLevel?.IsActive(LogLevel.Error) ?? true)
                     _logger.LogError(eventId: default, message: e.Message, exception: e);
                 return default;
             }
@@ -83,7 +83,7 @@ namespace com.IvanMurzak.Unity.MCP.Utils
             }
             catch (Exception e)
             {
-                if (logLevel?.IsActive(LogLevel.Error) == true)
+                if (logLevel?.IsActive(LogLevel.Error) ?? true)
                     _logger.LogError(eventId: default, message: e.Message, exception: e);
                 return false;
             }
@@ -97,7 +97,7 @@ namespace com.IvanMurzak.Unity.MCP.Utils
             }
             catch (Exception e)
             {
-                if (logLevel?.IsActive(LogLevel.Error) == true)
+                if (logLevel?.IsActive(LogLevel.Error) ?? true)
                     _logger.LogError(eventId: default, message: e.Message, exception: e);
                 return false;
             }
@@ -117,7 +117,7 @@ namespace com.IvanMurzak.Unity.MCP.Utils
             }
             catch (Exception e)
             {
-                if (logLevel?.IsActive(LogLevel.Error) == true)
+                if (logLevel?.IsActive(LogLevel.Error) ?? true)
                     _logger.LogError(eventId: default, message: e.Message, exception: e);
                 return false;
             }
