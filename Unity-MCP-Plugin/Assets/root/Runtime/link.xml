@@ -4,9 +4,6 @@
   <assembly fullname="com.IvanMurzak.Unity.MCP.Runtime" preserve="all"/>
   <assembly fullname="com.IvanMurzak.Unity.MCP.Tests" preserve="all"/>
 
-  <!-- Keep ReflectorNet -->
-  <assembly fullname="ReflectorNet" preserve="all"/>
-
   <!-- Keep SignalR assemblies -->
   <assembly fullname="Microsoft.AspNetCore.SignalR.Client" preserve="all"/>
   <assembly fullname="Microsoft.AspNetCore.SignalR.Client.Core" preserve="all"/>
@@ -30,64 +27,4 @@
   <assembly fullname="Microsoft.Extensions.Features" preserve="all"/>
   <assembly fullname="Microsoft.Bcl.AsyncInterfaces" preserve="all"/>
 
-  <!-- Keep System assemblies for SignalR -->
-  <assembly fullname="System.IO.Pipelines" preserve="all"/>
-  <assembly fullname="System.Threading.Channels" preserve="all"/>
-  <assembly fullname="System.Runtime.CompilerServices.Unsafe" preserve="all"/>
-  <assembly fullname="System.Threading.Tasks.Extensions" preserve="all"/>
-  <assembly fullname="System.Buffers" preserve="all"/>
-  <assembly fullname="System.Memory" preserve="all"/>
-  <assembly fullname="System.Numerics.Vectors" preserve="all"/>
-  <assembly fullname="System.Text.Json" preserve="all"/>
-  <assembly fullname="System.Text.Encodings.Web" preserve="all"/>
-  <assembly fullname="System.Diagnostics.DiagnosticSource" preserve="all"/>
-  <assembly fullname="System.Net.ServerSentEvents" preserve="all"/>
-  <assembly fullname="System.Reflection.Metadata" preserve="all"/>
-  <assembly fullname="System.Collections.Immutable" preserve="all"/>
-  <assembly fullname="System.Linq.Expressions" preserve="all"/>
-  <assembly fullname="System.Linq" preserve="all"/>
-  <assembly fullname="System.Core" preserve="all"/>
-
-  <!-- System.Diagnostics -->
-  <assembly fullname="System">
-    <namespace fullname="System.Diagnostics" preserve="all"/>
-  </assembly>
-
-  <!-- Preserve the System.Data.Common assembly (used by EF Core) -->
-  <assembly fullname="System.Data.Common">
-    <type fullname="*" preserve="all" />
-  </assembly>
-
-  <!-- Preserve the System.Runtime assembly -->
-  <assembly fullname="System.Runtime">
-    <type fullname="*" preserve="all" />
-  </assembly>
-
-  <assembly fullname="System">
-    <type fullname="System.ComponentModel.TypeConverter" preserve="all"/>
-    <type fullname="System.ComponentModel.ArrayConverter" preserve="all"/>
-    <type fullname="System.ComponentModel.BaseNumberConverter" preserve="all"/>
-    <type fullname="System.ComponentModel.BooleanConverter" preserve="all"/>
-    <type fullname="System.ComponentModel.ByteConverter" preserve="all"/>
-    <type fullname="System.ComponentModel.CharConverter" preserve="all"/>
-    <type fullname="System.ComponentModel.CollectionConverter" preserve="all"/>
-    <type fullname="System.ComponentModel.ComponentConverter" preserve="all"/>
-    <type fullname="System.ComponentModel.CultureInfoConverter" preserve="all"/>
-    <type fullname="System.ComponentModel.DateTimeConverter" preserve="all"/>
-    <type fullname="System.ComponentModel.DecimalConverter" preserve="all"/>
-    <type fullname="System.ComponentModel.DoubleConverter" preserve="all"/>
-    <type fullname="System.ComponentModel.EnumConverter" preserve="all"/>
-    <type fullname="System.ComponentModel.ExpandableObjectConverter" preserve="all"/>
-    <type fullname="System.ComponentModel.Int16Converter" preserve="all"/>
-    <type fullname="System.ComponentModel.Int32Converter" preserve="all"/>
-    <type fullname="System.ComponentModel.Int64Converter" preserve="all"/>
-    <type fullname="System.ComponentModel.NullableConverter" preserve="all"/>
-    <type fullname="System.ComponentModel.SByteConverter" preserve="all"/>
-    <type fullname="System.ComponentModel.SingleConverter" preserve="all"/>
-    <type fullname="System.ComponentModel.StringConverter" preserve="all"/>
-    <type fullname="System.ComponentModel.TimeSpanConverter" preserve="all"/>
-    <type fullname="System.ComponentModel.UInt16Converter" preserve="all"/>
-    <type fullname="System.ComponentModel.UInt32Converter" preserve="all"/>
-    <type fullname="System.ComponentModel.UInt64Converter" preserve="all"/>
-  </assembly>
 </linker>
