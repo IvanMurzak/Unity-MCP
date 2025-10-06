@@ -16,6 +16,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
+          fetch-depth: 0
           fetch-tags: true
 
       - name: Get version from package.json
@@ -256,7 +257,7 @@ jobs:
           echo "repo_url: $repo_url"
           echo "today: $today"
 
-          echo "# AI Game Developer (Unity-MCP) $version" > release.md
+          echo "# AI Game Developer (Unity MCP) $version" > release.md
           echo "**Released:** *$today*" >> release.md
 
           echo "" >> release.md
