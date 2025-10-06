@@ -56,8 +56,10 @@
     - [Reflection-Powered Features](#reflection-powered-features)
 - [Customize MCP](#customize-mcp)
   - [Add custom `MCP Tool`](#add-custom-mcp-tool)
-  - [Add custom runtime (in-game) `MCP Tool`](#add-custom-runtime-in-game-mcp-tool)
   - [Add custom `MCP Prompt`](#add-custom-mcp-prompt)
+- [Runtime usage (in-game)](#runtime-usage-in-game)
+  - [Sample: AI powered Chess game bot](#sample-ai-powered-chess-game-bot)
+  - [Why runtime usage is needed?](#why-runtime-usage-is-needed)
 - [Unity `MCP Server` setup](#unity-mcp-server-setup)
   - [Variables](#variables)
   - [Docker 📦](#docker-)
@@ -283,10 +285,6 @@ public class Tool_GameObject
 }
 ```
 
-## Add custom runtime (in-game) `MCP Tool`
-
-> ⚠️ Not yet supported. The work is in progress
-
 ## Add custom `MCP Prompt`
 
 `MCP Prompt` allows you to inject custom prompts into the conversation with the LLM. It supports two sender roles: User and Assistant. This is a quick way to instruct the LLM to perform specific tasks. You can generate prompts using custom data, providing lists or any other relevant information.
@@ -303,6 +301,45 @@ public static class Prompt_ScriptingCode
     }
 }
 ```
+
+---
+
+# Runtime usage (in-game)
+
+Use **[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** in your game/app. Use Tools, Resources or Prompts. By default there are no tools, you would need to implement your custom.
+
+```csharp
+UnityMcpPlugin.Connect(); // Start active connection with retry to Unity-MCP-Server
+UnityMcpPlugin.Disconnect(); // Stop active connection and close existed connection
+```
+
+## Sample: AI powered Chess game bot
+
+There is a classic Chess game. Lets outsource to LLM the bot logic. Bot should do the turn using game rules.
+
+```csharp
+[McpPluginToolType]
+public static class ChessGameAI
+{
+    [McpPluginTool("chess-do-turn", Title = "Do the turn")]
+    [Description("Do the turn in the chess game. Returns true if the turn was accepted, false otherwise.")]
+    public static Task<bool> DoTurn(int figureId, Vector2Int position)
+    {
+        return MainThread.Instance.RunAsync(() => ChessGameController.Instance.DoTurn(figureId, position));
+    }
+
+    [McpPluginTool("chess-get-board", Title = "Get the board")]
+    [Description("Get the current state of the chess board.")]
+    public static Task<BoardData> GetBoard()
+    {
+        return MainThread.Instance.RunAsync(() => ChessGameController.Instance.GetBoardData());
+    }
+}
+```
+
+## Why runtime usage is needed?
+
+There are many use cases, lets imagine you are working on a Chess game with bot. You may outsource the bot decision making to LLM by writing few lines of code.
 
 ---
 
