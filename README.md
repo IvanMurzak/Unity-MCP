@@ -309,6 +309,7 @@ public static class Prompt_ScriptingCode
 Use **[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** in your game/app. Use Tools, Resources or Prompts. By default there are no tools, you would need to implement your custom.
 
 ```csharp
+UnityMcpPlugin.BuildAndStart(); // Build and start Unity-MCP-Plugin, it is required
 UnityMcpPlugin.Connect(); // Start active connection with retry to Unity-MCP-Server
 UnityMcpPlugin.Disconnect(); // Stop active connection and close existed connection
 ```

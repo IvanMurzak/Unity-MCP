@@ -56,8 +56,10 @@
     - [Características de reflexión](#características-de-reflexión)
 - [Personalizar MCP](#personalizar-mcp)
   - [Agregar `Herramienta MCP` personalizada](#agregar-herramienta-mcp-personalizada)
-  - [Agregar `Herramienta MCP` personalizada de tiempo de ejecución (en juego)](#agregar-herramienta-mcp-personalizada-de-tiempo-de-ejecución-en-juego)
   - [Agregar `Prompt MCP` personalizado](#agregar-prompt-mcp-personalizado)
+- [Uso en tiempo de ejecución (en juego)](#uso-en-tiempo-de-ejecución-en-juego)
+  - [Ejemplo: Bot de ajedrez impulsado por IA](#ejemplo-bot-de-ajedrez-impulsado-por-ia)
+  - [¿Por qué se necesita el uso en tiempo de ejecución?](#por-qué-se-necesita-el-uso-en-tiempo-de-ejecución)
 - [Configuración del `Servidor MCP` Unity](#configuración-del-servidor-mcp-unity)
   - [Variables](#variables)
   - [Docker 📦](#docker-)
@@ -283,10 +285,6 @@ public class Tool_GameObject
 }
 ```
 
-## Agregar `Herramienta MCP` personalizada de tiempo de ejecución (en juego)
-
-> ⚠️ Aún no soportado. El trabajo está en progreso
-
 ## Agregar `Prompt MCP` personalizado
 
 `Prompt MCP` te permite inyectar prompts predefinidos en la conversación con el LLM. Estos son plantillas inteligentes que pueden proporcionar contexto, instrucciones o conocimiento para guiar el comportamiento de la IA. Los prompts pueden ser texto estático o generados dinámicamente basados en el estado actual de tu proyecto.
@@ -303,6 +301,46 @@ public static class Prompt_ScriptingCode
     }
 }
 ```
+
+---
+
+# Uso en tiempo de ejecución (en juego)
+
+Usa **[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** en tu juego/aplicación. Usa Herramientas, Recursos o Prompts. Por defecto no hay herramientas, necesitarías implementar las tuyas personalizadas.
+
+```csharp
+UnityMcpPlugin.BuildAndStart(); // Compilar e iniciar Unity-MCP-Plugin, es requerido
+UnityMcpPlugin.Connect(); // Iniciar conexión activa con reintentos a Unity-MCP-Server
+UnityMcpPlugin.Disconnect(); // Detener conexión activa y cerrar conexión existente
+```
+
+## Ejemplo: Bot de ajedrez impulsado por IA
+
+Hay un juego de ajedrez clásico. Delegemos la lógica del bot al LLM. El bot debe hacer el turno usando las reglas del juego.
+
+```csharp
+[McpPluginToolType]
+public static class ChessGameAI
+{
+    [McpPluginTool("chess-do-turn", Title = "Do the turn")]
+    [Description("Do the turn in the chess game. Returns true if the turn was accepted, false otherwise.")]
+    public static Task<bool> DoTurn(int figureId, Vector2Int position)
+    {
+        return MainThread.Instance.RunAsync(() => ChessGameController.Instance.DoTurn(figureId, position));
+    }
+
+    [McpPluginTool("chess-get-board", Title = "Get the board")]
+    [Description("Get the current state of the chess board.")]
+    public static Task<BoardData> GetBoard()
+    {
+        return MainThread.Instance.RunAsync(() => ChessGameController.Instance.GetBoardData());
+    }
+}
+```
+
+## ¿Por qué se necesita el uso en tiempo de ejecución?
+
+Hay muchos casos de uso, imaginemos que estás trabajando en un juego de ajedrez con bot. Puedes delegar la toma de decisiones del bot al LLM escribiendo unas pocas líneas de código.
 
 ---
 

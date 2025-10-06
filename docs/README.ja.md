@@ -56,8 +56,10 @@
     - [リフレクション機能](#リフレクション機能)
 - [MCPのカスタマイズ](#mcpのカスタマイズ)
   - [カスタム`MCPツール`の追加](#カスタムmcpツールの追加)
-  - [カスタムランタイム（ゲーム内）`MCPツール`の追加](#カスタムランタイムゲーム内mcpツールの追加)
   - [カスタム`MCPプロンプト`の追加](#カスタムmcpプロンプトの追加)
+- [ランタイムでの使用（ゲーム内）](#ランタイムでの使用ゲーム内)
+  - [サンプル：AI駆動のチェスゲームボット](#サンプルai駆動のチェスゲームボット)
+  - [ランタイムでの使用が必要な理由](#ランタイムでの使用が必要な理由)
 - [Unity `MCPサーバー` セットアップ](#unity-mcpサーバー-セットアップ)
   - [変数](#変数)
   - [Docker 📦](#docker-)
@@ -283,10 +285,6 @@ public class Tool_GameObject
 }
 ```
 
-## カスタムランタイム（ゲーム内）`MCPツール`の追加
-
-> ⚠️ まだサポートされていません。作業が進行中です
-
 ## カスタム`MCPプロンプト`の追加
 
 `MCPプロンプト`により、LLMとの会話に事前定義されたプロンプトを注入できます。これらは、AIの動作を導くコンテキスト、指示、または知識を提供できるスマートテンプレートです。プロンプトは静的テキストか、プロジェクトの現在の状態に基づいて動的に生成できます。
@@ -303,6 +301,46 @@ public static class Prompt_ScriptingCode
     }
 }
 ```
+
+---
+
+# ランタイムでの使用（ゲーム内）
+
+**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)**をゲーム/アプリで使用します。ツール、リソース、プロンプトを使用できます。デフォルトではツールがないため、カスタムツールを実装する必要があります。
+
+```csharp
+UnityMcpPlugin.BuildAndStart(); // Unity-MCP-Pluginをビルドして起動、これは必須です
+UnityMcpPlugin.Connect(); // Unity-MCP-Serverへのリトライ付きアクティブ接続を開始
+UnityMcpPlugin.Disconnect(); // アクティブな接続を停止し、既存の接続を閉じる
+```
+
+## サンプル：AI駆動のチェスゲームボット
+
+クラシックなチェスゲームがあります。ボットのロジックをLLMに任せましょう。ボットはゲームルールを使用してターンを実行する必要があります。
+
+```csharp
+[McpPluginToolType]
+public static class ChessGameAI
+{
+    [McpPluginTool("chess-do-turn", Title = "Do the turn")]
+    [Description("Do the turn in the chess game. Returns true if the turn was accepted, false otherwise.")]
+    public static Task<bool> DoTurn(int figureId, Vector2Int position)
+    {
+        return MainThread.Instance.RunAsync(() => ChessGameController.Instance.DoTurn(figureId, position));
+    }
+
+    [McpPluginTool("chess-get-board", Title = "Get the board")]
+    [Description("Get the current state of the chess board.")]
+    public static Task<BoardData> GetBoard()
+    {
+        return MainThread.Instance.RunAsync(() => ChessGameController.Instance.GetBoardData());
+    }
+}
+```
+
+## ランタイムでの使用が必要な理由
+
+ユースケースは多数あります。例えば、ボット付きのチェスゲームに取り組んでいるとします。数行のコードを書くだけで、ボットの意思決定をLLMに委託できます。
 
 ---
 

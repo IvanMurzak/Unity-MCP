@@ -56,8 +56,10 @@
     - [反射功能](#反射功能)
 - [自定义MCP](#自定义mcp)
   - [添加自定义 `MCP 工具`](#添加自定义-mcp-工具)
-  - [添加自定义运行时（游戏内） `MCP 工具`](#添加自定义运行时游戏内-mcp-工具)
   - [添加自定义 `MCP 提示`](#添加自定义-mcp-提示)
+- [运行时使用（游戏内）](#运行时使用游戏内)
+  - [示例：AI驱动的国际象棋游戏机器人](#示例ai驱动的国际象棋游戏机器人)
+  - [为什么需要运行时使用](#为什么需要运行时使用)
 - [Unity `MCP 服务器` 设置](#unity-mcp-服务器-设置)
   - [变量](#变量)
   - [Docker 📦](#docker-)
@@ -283,10 +285,6 @@ public class Tool_GameObject
 }
 ```
 
-## 添加自定义运行时（游戏内） `MCP 工具`
-
-> ⚠️ 尚未支持。工作正在进行中
-
 ## 添加自定义 `MCP 提示`
 
 `MCP 提示` 允许您将预定义的提示注入到与LLM的对话中。这些是智能模板，可以提供上下文、指令或知识来指导AI的行为。提示可以是静态文本或基于项目当前状态动态生成。
@@ -303,6 +301,46 @@ public static class Prompt_ScriptingCode
     }
 }
 ```
+
+---
+
+# 运行时使用（游戏内）
+
+在您的游戏/应用中使用 **[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)**。使用工具、资源或提示。默认情况下没有工具，您需要实现自定义工具。
+
+```csharp
+UnityMcpPlugin.BuildAndStart(); // 构建并启动Unity-MCP-Plugin，这是必需的
+UnityMcpPlugin.Connect(); // 启动与Unity-MCP-Server的主动连接并重试
+UnityMcpPlugin.Disconnect(); // 停止主动连接并关闭现有连接
+```
+
+## 示例：AI驱动的国际象棋游戏机器人
+
+有一个经典的国际象棋游戏。让我们将机器人逻辑外包给LLM。机器人应该使用游戏规则执行回合。
+
+```csharp
+[McpPluginToolType]
+public static class ChessGameAI
+{
+    [McpPluginTool("chess-do-turn", Title = "Do the turn")]
+    [Description("Do the turn in the chess game. Returns true if the turn was accepted, false otherwise.")]
+    public static Task<bool> DoTurn(int figureId, Vector2Int position)
+    {
+        return MainThread.Instance.RunAsync(() => ChessGameController.Instance.DoTurn(figureId, position));
+    }
+
+    [McpPluginTool("chess-get-board", Title = "Get the board")]
+    [Description("Get the current state of the chess board.")]
+    public static Task<BoardData> GetBoard()
+    {
+        return MainThread.Instance.RunAsync(() => ChessGameController.Instance.GetBoardData());
+    }
+}
+```
+
+## 为什么需要运行时使用
+
+有很多用例，假设您正在开发一个带有机器人的国际象棋游戏。您可以通过编写几行代码将机器人的决策外包给LLM。
 
 ---
 
