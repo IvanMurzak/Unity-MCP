@@ -51,6 +51,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnInt));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var expectedValue = TestReturnTypeMethods.ReturnInt();
 
             // Act
             var task = runTool.Run("test-request-id", CancellationToken.None);
@@ -62,8 +63,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Assert
             Assert.IsNotNull(result, "Result should not be null");
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
-            Assert.AreEqual("42", result.GetMessage(), "Should return int as string");
+            Assert.AreEqual(expectedValue.ToString(), result.GetMessage(), "Should return int as string");
             Assert.IsNull(result.StructuredContent, "Primitive types should not have structured content");
+
+            // Verify the int value can be parsed back to the original value
+            var parsedValue = int.Parse(result.GetMessage());
+            Assert.AreEqual(expectedValue, parsedValue, "Parsed int should match original value");
         }
 
         [UnityTest]
@@ -72,6 +77,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnString));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var expectedValue = TestReturnTypeMethods.ReturnString();
 
             // Act
             var task = runTool.Run("test-request-id", CancellationToken.None);
@@ -83,8 +89,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Assert
             Assert.IsNotNull(result, "Result should not be null");
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
-            Assert.AreEqual("Hello World", result.GetMessage(), "Should return string value");
+            Assert.AreEqual(expectedValue, result.GetMessage(), "Should return string value");
             Assert.IsNull(result.StructuredContent, "String is primitive and should not have structured content");
+
+            // Verify the string value matches exactly (no corruption)
+            Assert.AreEqual(expectedValue, result.GetMessage(), "String should match original value exactly");
         }
 
         [UnityTest]
@@ -93,6 +102,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnFloat));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var expectedValue = TestReturnTypeMethods.ReturnFloat();
 
             // Act
             var task = runTool.Run("test-request-id", CancellationToken.None);
@@ -104,8 +114,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Assert
             Assert.IsNotNull(result, "Result should not be null");
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
-            Assert.AreEqual("3.14", result.GetMessage(), "Should return float as string");
+            Assert.AreEqual(expectedValue.ToString(), result.GetMessage(), "Should return float as string");
             Assert.IsNull(result.StructuredContent, "Primitive types should not have structured content");
+
+            // Verify the float value can be parsed back to the original value
+            var parsedValue = float.Parse(result.GetMessage());
+            Assert.AreEqual(expectedValue, parsedValue, 0.001f, "Parsed float should match original value");
         }
 
         [UnityTest]
@@ -114,6 +128,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnBool));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var expectedValue = TestReturnTypeMethods.ReturnBool();
 
             // Act
             var task = runTool.Run("test-request-id", CancellationToken.None);
@@ -125,8 +140,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Assert
             Assert.IsNotNull(result, "Result should not be null");
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
-            Assert.AreEqual("True", result.GetMessage(), "Should return bool as string");
+            Assert.AreEqual(expectedValue.ToString(), result.GetMessage(), "Should return bool as string");
             Assert.IsNull(result.StructuredContent, "Primitive types should not have structured content");
+
+            // Verify the bool value can be parsed back to the original value
+            var parsedValue = bool.Parse(result.GetMessage());
+            Assert.AreEqual(expectedValue, parsedValue, "Parsed bool should match original value");
         }
 
         [UnityTest]
@@ -146,8 +165,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             // Assert
             Assert.IsNotNull(result, "Result should not be null");
-            Assert.AreEqual(expectedEnumValue, result.Status, "Should return success status");
-            Assert.AreEqual("Success", result.GetMessage(), "Should return enum as string");
+            Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
+            Assert.AreEqual(expectedEnumValue.ToString(), result.GetMessage(), "Should return enum as string");
             Assert.IsNull(result.StructuredContent, "Enum is primitive and should not have structured content");
 
             // Verify the enum value can be parsed back to the original value
@@ -181,6 +200,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnMicrosoftLogLevel));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var expectedValue = TestReturnTypeMethods.ReturnMicrosoftLogLevel();
 
             // Act
             var task = runTool.Run("test-request-id", CancellationToken.None);
@@ -192,12 +212,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Assert
             Assert.IsNotNull(result, "Result should not be null");
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
-            Assert.AreEqual("Information", result.GetMessage(), "Should return Microsoft.Extensions.Logging.LogLevel as string");
+            Assert.AreEqual(expectedValue.ToString(), result.GetMessage(), "Should return Microsoft.Extensions.Logging.LogLevel as string");
             Assert.IsNull(result.StructuredContent, "Enum is primitive and should not have structured content");
 
             // Verify the enum value can be parsed back to the original value
-            var parsedValue = System.Enum.Parse(typeof(Microsoft.Extensions.Logging.LogLevel), result.GetMessage());
-            Assert.AreEqual(Microsoft.Extensions.Logging.LogLevel.Information, parsedValue, "Parsed enum should match original value");
+            var parsedValue = Enum.Parse(typeof(Microsoft.Extensions.Logging.LogLevel), result.GetMessage());
+            Assert.AreEqual(expectedValue, parsedValue, "Parsed enum should match original value");
         }
 
         #endregion
@@ -210,6 +230,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnCustomClass));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var expectedValue = TestReturnTypeMethods.ReturnCustomClass();
 
             // Act
             var task = runTool.Run("test-request-id", CancellationToken.None);
@@ -231,13 +252,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             Assert.IsNotNull(nameNode, "Should have name/Name property");
             Assert.IsNotNull(ageNode, "Should have age/Age property");
-            Assert.AreEqual("John Doe", nameNode.GetValue<string>(), "Name should match");
-            Assert.AreEqual(30, ageNode.GetValue<int>(), "Age should match");
+            Assert.AreEqual(expectedValue.Name, nameNode.GetValue<string>(), "Name should match");
+            Assert.AreEqual(expectedValue.Age, ageNode.GetValue<int>(), "Age should match");
 
             // Message should contain JSON representation
             var message = result.GetMessage();
             Assert.IsNotNull(message, "Message should not be null");
-            Assert.IsTrue(message.Contains("John Doe"), "Message should contain serialized data");
+            Assert.IsTrue(message.Contains(expectedValue.Name), "Message should contain serialized data");
         }
 
         [UnityTest]
@@ -246,6 +267,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnNestedClass));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var expectedValue = TestReturnTypeMethods.ReturnNestedClass();
 
             // Act
             var task = runTool.Run("test-request-id", CancellationToken.None);
@@ -265,10 +287,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             Assert.IsNotNull(companyNameNode, "Should have companyName/CompanyName property");
             Assert.IsNotNull(employeeNode, "Should have employee/Employee property");
+            Assert.AreEqual(expectedValue.CompanyName, companyNameNode.GetValue<string>(), "Company name should match");
 
             var nameNode = employeeNode["name"] ?? employeeNode["Name"];
             Assert.IsNotNull(nameNode, "Employee should have name/Name property");
-            Assert.AreEqual("Jane Smith", nameNode.GetValue<string>(), "Employee name should match");
+            Assert.AreEqual(expectedValue.Employee.Name, nameNode.GetValue<string>(), "Employee name should match");
         }
 
         [UnityTest]
@@ -277,6 +300,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnList));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var expectedValue = TestReturnTypeMethods.ReturnList();
 
             // Act
             var task = runTool.Run("test-request-id", CancellationToken.None);
@@ -291,10 +315,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNotNull(result.StructuredContent, "List should have structured content");
 
             var structuredContent = result.StructuredContent.AsArray();
-            Assert.AreEqual(3, structuredContent.Count, "List should have 3 items");
-            Assert.AreEqual(1, structuredContent[0].GetValue<int>(), "First item should be 1");
-            Assert.AreEqual(2, structuredContent[1].GetValue<int>(), "Second item should be 2");
-            Assert.AreEqual(3, structuredContent[2].GetValue<int>(), "Third item should be 3");
+            Assert.AreEqual(expectedValue.Count, structuredContent.Count, $"List should have {expectedValue.Count} items");
+            for (int i = 0; i < expectedValue.Count; i++)
+            {
+                Assert.AreEqual(expectedValue[i], structuredContent[i].GetValue<int>(), $"Item at index {i} should match");
+            }
         }
 
         [UnityTest]
@@ -303,6 +328,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnDictionary));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var expectedValue = TestReturnTypeMethods.ReturnDictionary();
 
             // Act
             var task = runTool.Run("test-request-id", CancellationToken.None);
@@ -317,10 +343,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNotNull(result.StructuredContent, "Dictionary should have structured content");
 
             var structuredContent = result.StructuredContent;
-            Assert.IsNotNull(structuredContent["key1"], "Should have key1");
-            Assert.IsNotNull(structuredContent["key2"], "Should have key2");
-            Assert.AreEqual("value1", structuredContent["key1"].GetValue<string>(), "key1 value should match");
-            Assert.AreEqual("value2", structuredContent["key2"].GetValue<string>(), "key2 value should match");
+            foreach (var kvp in expectedValue)
+            {
+                Assert.IsNotNull(structuredContent[kvp.Key], $"Should have {kvp.Key}");
+                Assert.AreEqual(kvp.Value, structuredContent[kvp.Key].GetValue<string>(), $"{kvp.Key} value should match");
+            }
         }
 
         [UnityTest]
@@ -329,6 +356,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnArray));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var expectedValue = TestReturnTypeMethods.ReturnArray();
 
             // Act
             var task = runTool.Run("test-request-id", CancellationToken.None);
@@ -343,9 +371,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNotNull(result.StructuredContent, "Array should have structured content");
 
             var structuredContent = result.StructuredContent.AsArray();
-            Assert.AreEqual(4, structuredContent.Count, "Array should have 4 items");
-            Assert.AreEqual(10, structuredContent[0].GetValue<int>(), "First item should be 10");
-            Assert.AreEqual(40, structuredContent[3].GetValue<int>(), "Last item should be 40");
+            Assert.AreEqual(expectedValue.Length, structuredContent.Count, $"Array should have {expectedValue.Length} items");
+            for (int i = 0; i < expectedValue.Length; i++)
+            {
+                Assert.AreEqual(expectedValue[i], structuredContent[i].GetValue<int>(), $"Item at index {i} should match expected value");
+            }
         }
 
         #endregion
@@ -358,6 +388,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnVector3));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var expectedValue = TestReturnTypeMethods.ReturnVector3();
 
             // Act
             var task = runTool.Run("test-request-id", CancellationToken.None);
@@ -375,9 +406,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNotNull(structuredContent["x"], "Should have x property");
             Assert.IsNotNull(structuredContent["y"], "Should have y property");
             Assert.IsNotNull(structuredContent["z"], "Should have z property");
-            Assert.AreEqual(1.0f, structuredContent["x"].GetValue<float>(), 0.001f, "X should match");
-            Assert.AreEqual(2.0f, structuredContent["y"].GetValue<float>(), 0.001f, "Y should match");
-            Assert.AreEqual(3.0f, structuredContent["z"].GetValue<float>(), 0.001f, "Z should match");
+            Assert.AreEqual(expectedValue.x, structuredContent["x"].GetValue<float>(), 0.001f, "X should match");
+            Assert.AreEqual(expectedValue.y, structuredContent["y"].GetValue<float>(), 0.001f, "Y should match");
+            Assert.AreEqual(expectedValue.z, structuredContent["z"].GetValue<float>(), 0.001f, "Z should match");
+
+            // Verify the Vector3 can be reconstructed from structured content
+            var reconstructedVector = new Vector3(
+                structuredContent["x"].GetValue<float>(),
+                structuredContent["y"].GetValue<float>(),
+                structuredContent["z"].GetValue<float>()
+            );
+            Assert.AreEqual(expectedValue, reconstructedVector, "Reconstructed Vector3 should match original");
         }
 
         [UnityTest]
@@ -386,6 +425,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnColor));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var expectedValue = TestReturnTypeMethods.ReturnColor();
 
             // Act
             var task = runTool.Run("test-request-id", CancellationToken.None);
@@ -404,6 +444,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNotNull(structuredContent["g"], "Should have g property");
             Assert.IsNotNull(structuredContent["b"], "Should have b property");
             Assert.IsNotNull(structuredContent["a"], "Should have a property");
+
+            // Verify the Color can be reconstructed from structured content
+            var reconstructedColor = new Color(
+                structuredContent["r"].GetValue<float>(),
+                structuredContent["g"].GetValue<float>(),
+                structuredContent["b"].GetValue<float>(),
+                structuredContent["a"].GetValue<float>()
+            );
+            Assert.AreEqual(expectedValue, reconstructedColor, "Reconstructed Color should match original");
         }
 
         [UnityTest]
@@ -412,6 +461,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnQuaternion));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var expectedValue = TestReturnTypeMethods.ReturnQuaternion();
 
             // Act
             var task = runTool.Run("test-request-id", CancellationToken.None);
@@ -430,6 +480,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNotNull(structuredContent["y"], "Should have y property");
             Assert.IsNotNull(structuredContent["z"], "Should have z property");
             Assert.IsNotNull(structuredContent["w"], "Should have w property");
+
+            // Verify the Quaternion can be reconstructed from structured content
+            var reconstructedQuaternion = new Quaternion(
+                structuredContent["x"].GetValue<float>(),
+                structuredContent["y"].GetValue<float>(),
+                structuredContent["z"].GetValue<float>(),
+                structuredContent["w"].GetValue<float>()
+            );
+            Assert.AreEqual(expectedValue, reconstructedQuaternion, "Reconstructed Quaternion should match original");
         }
 
         #endregion
@@ -466,6 +525,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnListOfCustomObjects));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var expectedValue = TestReturnTypeMethods.ReturnListOfCustomObjects();
 
             // Act
             var task = runTool.Run("test-request-id", CancellationToken.None);
@@ -480,17 +540,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNotNull(result.StructuredContent, "List of custom objects should have structured content");
 
             var structuredContent = result.StructuredContent.AsArray();
-            Assert.AreEqual(2, structuredContent.Count, "List should have 2 items");
+            Assert.AreEqual(expectedValue.Count, structuredContent.Count, $"List should have {expectedValue.Count} items");
 
-            var firstNameNode = structuredContent[0]["name"] ?? structuredContent[0]["Name"];
-            var firstAgeNode = structuredContent[0]["age"] ?? structuredContent[0]["Age"];
-            Assert.AreEqual("Alice", firstNameNode.GetValue<string>(), "First person name should match");
-            Assert.AreEqual(25, firstAgeNode.GetValue<int>(), "First person age should match");
-
-            var secondNameNode = structuredContent[1]["name"] ?? structuredContent[1]["Name"];
-            var secondAgeNode = structuredContent[1]["age"] ?? structuredContent[1]["Age"];
-            Assert.AreEqual("Bob", secondNameNode.GetValue<string>(), "Second person name should match");
-            Assert.AreEqual(35, secondAgeNode.GetValue<int>(), "Second person age should match");
+            for (int i = 0; i < expectedValue.Count; i++)
+            {
+                var nameNode = structuredContent[i]["name"] ?? structuredContent[i]["Name"];
+                var ageNode = structuredContent[i]["age"] ?? structuredContent[i]["Age"];
+                Assert.AreEqual(expectedValue[i].Name, nameNode.GetValue<string>(), $"Item {i} name should match");
+                Assert.AreEqual(expectedValue[i].Age, ageNode.GetValue<int>(), $"Item {i} age should match");
+            }
         }
 
         [UnityTest]
@@ -499,6 +557,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnDictionaryWithComplexValues));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var expectedValue = TestReturnTypeMethods.ReturnDictionaryWithComplexValues();
 
             // Act
             var task = runTool.Run("test-request-id", CancellationToken.None);
@@ -513,12 +572,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNotNull(result.StructuredContent, "Dictionary with complex values should have structured content");
 
             var structuredContent = result.StructuredContent;
-            Assert.IsNotNull(structuredContent["person1"], "Should have person1 key");
+            foreach (var kvp in expectedValue)
+            {
+                Assert.IsNotNull(structuredContent[kvp.Key], $"Should have {kvp.Key} key");
 
-            var nameNode = structuredContent["person1"]["name"] ?? structuredContent["person1"]["Name"];
-            var ageNode = structuredContent["person1"]["age"] ?? structuredContent["person1"]["Age"];
-            Assert.AreEqual("Charlie", nameNode.GetValue<string>(), "person1 name should match");
-            Assert.AreEqual(40, ageNode.GetValue<int>(), "person1 age should match");
+                var nameNode = structuredContent[kvp.Key]["name"] ?? structuredContent[kvp.Key]["Name"];
+                var ageNode = structuredContent[kvp.Key]["age"] ?? structuredContent[kvp.Key]["Age"];
+                Assert.AreEqual(kvp.Value.Name, nameNode.GetValue<string>(), $"{kvp.Key} name should match");
+                Assert.AreEqual(kvp.Value.Age, ageNode.GetValue<int>(), $"{kvp.Key} age should match");
+            }
         }
 
         #endregion
