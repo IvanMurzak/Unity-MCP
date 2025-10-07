@@ -7,10 +7,12 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Nodes;
 
 namespace com.IvanMurzak.Unity.MCP.Common.Model
 {
@@ -19,17 +21,31 @@ namespace com.IvanMurzak.Unity.MCP.Common.Model
         public string RequestID { get; set; } = string.Empty;
         public virtual ResponseStatus Status { get; set; } = ResponseStatus.Error;
         public virtual List<ContentBlock> Content { get; set; } = new List<ContentBlock>();
+        public virtual string? StructuredContent { get; set; } = null;
 
         public ResponseCallTool() { }
-        public ResponseCallTool(ResponseStatus status, List<ContentBlock> content) : this(string.Empty, status, content)
+        public ResponseCallTool(ResponseStatus status, List<ContentBlock> content) : this(
+            requestId: string.Empty,
+            structuredContent: null,
+            status: status,
+            content: content)
         {
             // none
         }
-        public ResponseCallTool(string requestId, ResponseStatus status, List<ContentBlock> content)
+        public ResponseCallTool(string structuredContent, ResponseStatus status, List<ContentBlock> content) : this(
+            requestId: string.Empty,
+            structuredContent: structuredContent,
+            status: status,
+            content: content)
+        {
+            // none
+        }
+        public ResponseCallTool(string requestId, string? structuredContent, ResponseStatus status, List<ContentBlock> content)
         {
             RequestID = requestId;
             Status = status;
             Content = content;
+            StructuredContent = structuredContent;
         }
 
         public ResponseCallTool SetRequestID(string requestId)
@@ -66,6 +82,20 @@ namespace com.IvanMurzak.Unity.MCP.Common.Model
                     MimeType = Consts.MimeType.TextPlain
                 }
             });
+
+        public static ResponseCallTool SuccessStructured(string structuredContent)
+            => new ResponseCallTool(
+                structuredContent: structuredContent,
+                status: ResponseStatus.Success,
+                new List<ContentBlock>
+                {
+                    new ContentBlock()
+                    {
+                        Type = "text",
+                        Text = structuredContent, // needed for MCP backward compatibility: https://modelcontextprotocol.io/specification/2025-06-18/server/tools#structured-content
+                        MimeType = Consts.MimeType.TextJson
+                    }
+                });
 
         public static ResponseCallTool Processing(string? message = null)
             => new ResponseCallTool(status: ResponseStatus.Processing, new List<ContentBlock>

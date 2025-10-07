@@ -23,6 +23,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
         string? Title { get; }
         string? Description { get; }
         JsonNode? InputSchema { get; }
+        JsonNode? OutputSchema { get; }
 
         /// <summary>
         /// Executes the target method with named parameters.

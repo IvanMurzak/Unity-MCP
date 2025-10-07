@@ -72,6 +72,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
             _eventAppToolsChange
                 .Subscribe(data =>
                 {
+                    _logger.LogTrace("{type} EventAppToolsChange. ConnectionId: {connectionId}", GetType().GetTypeShortName(), data.ConnectionId);
                     OnListToolUpdated(data, cancellationToken);
                     // OnListResourcesUpdated(data, cancellationToken);
                     OnListPromptsUpdated(data, cancellationToken);
