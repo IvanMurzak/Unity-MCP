@@ -10,8 +10,10 @@
 
 #nullable enable
 #if UNITY_EDITOR
+using System.IO;
 using System.Threading.Tasks;
 using UnityEditor;
+using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
 {
@@ -25,6 +27,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         [MenuItem("Tools/AI Game Developer/Delete Server Binaries", priority = 1001)]
         public static void DeleteServer() => Startup.Server.DeleteBinaryFolderIfExists();
+
+        [MenuItem("Tools/AI Game Developer/Open Server Logs", priority = 1002)]
+        public static void OpenServerLogs() => OpenFile(Startup.Server.ExecutableFolderPath + "/logs/server-log.txt");
+
+        [MenuItem("Tools/AI Game Developer/Open Server Log errors", priority = 1003)]
+        public static void OpenServerLogErrors() => OpenFile(Startup.Server.ExecutableFolderPath + "/logs/server-log-error.txt");
+
+        static void OpenFile(string path)
+        {
+            if (!File.Exists(path))
+            {
+                Debug.LogWarning($"File not found: {path}");
+                return;
+            }
+            Application.OpenURL(path);
+        }
     }
 }
 #endif

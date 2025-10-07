@@ -7,10 +7,12 @@
     <Nullable>enable</Nullable>
     <LangVersion>9.0</LangVersion>
     <OutputPath>./Temp~/bin/$(Configuration)</OutputPath>
+    <BaseIntermediateOutputPath>./Temp~/obj/</BaseIntermediateOutputPath>
+    <IntermediateOutputPath>./Temp~/obj/$(Configuration)/</IntermediateOutputPath>
 
     <!-- NuGet Package Information -->
     <PackageId>com.IvanMurzak.Unity.MCP.Common</PackageId>
-    <Version>1.7.0</Version>
+    <Version>1.8.0</Version>
     <Authors>Ivan Murzak</Authors>
     <Copyright>Copyright © Ivan Murzak 2025</Copyright>
     <Description>Shared code between Unity-MCP-Plugin and Unity-MCP-Server projects.</Description>
@@ -28,11 +30,25 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="com.IvanMurzak.ReflectorNet" Version="2.0.0" />
+    <PackageReference Include="com.IvanMurzak.ReflectorNet" Version="2.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.7" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.7" />
     <PackageReference Include="ModelContextProtocol" Version="0.3.0-preview.4" />
     <PackageReference Include="R3" Version="1.3.0" />
+  </ItemGroup>
+
+  <!-- <ItemGroup>
+    <Reference Include="./../Plugins/com.IvanMurzak.ReflectorNet/ReflectorNet.dll">
+      <HintPath>./../Plugins/com.IvanMurzak.ReflectorNet/ReflectorNet.dll</HintPath>
+      <Private>true</Private>
+    </Reference>
+  </ItemGroup> -->
+
+  <!-- Exclude temp build artifacts from compilation -->
+  <ItemGroup>
+    <Compile Remove="**/Temp~/**" />
+    <EmbeddedResource Remove="**/Temp~/**" />
+    <None Remove="**/Temp~/**" />
   </ItemGroup>
 
 </Project>

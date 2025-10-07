@@ -7,6 +7,8 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
+#nullable enable
 using System.Text.Json;
 
 namespace com.IvanMurzak.Unity.MCP.Common.Model
@@ -17,5 +19,6 @@ namespace com.IvanMurzak.Unity.MCP.Common.Model
         string? Title { get; set; }
         string? Description { get; set; }
         JsonElement InputSchema { get; set; }
+        JsonElement? OutputSchema { get; set; }
     }
 }

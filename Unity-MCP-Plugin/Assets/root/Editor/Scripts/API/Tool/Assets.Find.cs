@@ -82,6 +82,7 @@ Searching is case insensitive.")]
                 }
                 var assetPath = AssetDatabase.GUIDToAssetPath(assetGuids[i]);
                 var assetObject = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(assetPath);
+                if (assetObject == null) continue;
                 var instanceID = assetObject.GetInstanceID();
                 stringBuilder.AppendLine($"{instanceID,-10} | {assetGuids[i],-36} | {assetPath}");
             }

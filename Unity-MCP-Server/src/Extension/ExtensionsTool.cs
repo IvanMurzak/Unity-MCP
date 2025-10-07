@@ -11,6 +11,8 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using com.IvanMurzak.Unity.MCP.Common.Model;
 using ModelContextProtocol.Protocol;
 
@@ -18,6 +20,8 @@ namespace com.IvanMurzak.Unity.MCP.Server
 {
     public static class ExtensionsTool
     {
+        static readonly NLog.Logger _logger = NLog.LogManager.GetCurrentClassLogger();
+
         public static CallToolResult SetError(this CallToolResult target, string message)
         {
             if (target == null)
@@ -50,23 +54,33 @@ namespace com.IvanMurzak.Unity.MCP.Server
             return target;
         }
 
-        public static Tool ToTool(this IResponseListTool response) => new Tool()
+        public static Tool ToTool(this IResponseListTool response)
         {
-            Name = response.Name,
-            Description = response.Description,
-            InputSchema = response.InputSchema,
-            Annotations = new()
+            if (_logger.IsTraceEnabled)
             {
-                Title = response.Title
-            },
-        };
+                _logger.Trace("Converting IResponseListTool to Tool: {Name}", response.Name);
+                _logger.Trace(JsonSerializer.Serialize(response));
+            }
+            return new Tool()
+            {
+                Name = response.Name,
+                Description = response.Description,
+                InputSchema = response.InputSchema,
+                OutputSchema = response.OutputSchema,
+                Annotations = new()
+                {
+                    Title = response.Title
+                },
+            };
+        }
 
         public static CallToolResult ToCallToolResult(this IResponseCallTool response) => new CallToolResult()
         {
             IsError = response.Status == ResponseStatus.Error,
             Content = response.Content
                 .Select(x => x.ToTextContent())
-                .ToList()
+                .ToList(),
+            StructuredContent = response.StructuredContent
         };
     }
 }

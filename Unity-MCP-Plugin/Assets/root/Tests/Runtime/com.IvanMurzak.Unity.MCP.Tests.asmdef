@@ -4,6 +4,7 @@
     "references": [
         "UnityEngine.TestRunner",
         "com.IvanMurzak.Unity.MCP.Runtime",
+        "com.IvanMurzak.Unity.MCP.TestFiles",
         "com.IvanMurzak.Unity.MCP.Common"
     ],
     "includePlatforms": [],
@@ -12,7 +13,12 @@
     "overrideReferences": true,
     "precompiledReferences": [
         "nunit.framework.dll",
-        "System.Text.Json.dll"
+        "System.Text.Json.dll",
+        "Microsoft.Extensions.Logging.Abstractions.dll",
+        "Microsoft.AspNetCore.SignalR.Client.dll",
+        "Microsoft.AspNetCore.SignalR.Client.Core.dll",
+        "ReflectorNet.dll",
+        "R3.dll"
     ],
     "autoReferenced": false,
     "defineConstraints": [

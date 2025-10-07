@@ -35,9 +35,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <!-- <ProjectReference Include="./../Unity-MCP-Plugin/Assets/root/Runtime/Unity-MCP-Common/Unity-MCP-Common.csproj" /> -->
-    <PackageReference Include="com.IvanMurzak.ReflectorNet" Version="2.0.0" />
-    <PackageReference Include="com.IvanMurzak.Unity.MCP.Common" Version="1.7.0" />
+    <!-- <ProjectReference Include="./../Unity-MCP-Plugin/Assets/root/Unity-MCP-Common/Unity-MCP-Common.csproj" /> -->
+    <PackageReference Include="com.IvanMurzak.ReflectorNet" Version="2.1.0" />
+    <PackageReference Include="com.IvanMurzak.Unity.MCP.Common" Version="1.8.0" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.8" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.8" />
     <PackageReference Include="ModelContextProtocol" Version="0.3.0-preview.4" />
@@ -47,8 +47,8 @@
   </ItemGroup>
 
   <!-- <ItemGroup>
-    <Reference Include="dll/ReflectorNet">
-      <HintPath>dll/ReflectorNet.dll</HintPath>
+    <Reference Include="./../Unity-MCP-Plugin/Assets/root/Plugins/com.IvanMurzak.ReflectorNet/ReflectorNet.dll">
+      <HintPath>./../Unity-MCP-Plugin/Assets/root/Plugins/com.IvanMurzak.ReflectorNet/ReflectorNet.dll</HintPath>
       <Private>true</Private>
     </Reference>
   </ItemGroup> -->

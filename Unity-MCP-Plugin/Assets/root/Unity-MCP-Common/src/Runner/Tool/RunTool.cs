@@ -17,6 +17,7 @@ using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.ReflectorNet;
+using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Common.Model;
 using Microsoft.Extensions.Logging;
 
@@ -38,7 +39,10 @@ namespace com.IvanMurzak.Unity.MCP.Common
         /// </summary>
         /// <param name="type">The type containing the static method.</param>
         public static RunTool CreateFromStaticMethod(Reflector reflector, ILogger? logger, MethodInfo methodInfo, string? title = null)
-            => new RunTool(reflector, logger, methodInfo) { Title = title };
+            => new RunTool(reflector, logger, methodInfo)
+            {
+                Title = title
+            };
 
         /// <summary>
         /// Initializes the Command with the target instance method information.
@@ -46,7 +50,10 @@ namespace com.IvanMurzak.Unity.MCP.Common
         /// <param name="targetInstance">The instance of the object containing the method.</param>
         /// <param name="methodInfo">The MethodInfo of the instance method to execute.</param>
         public static RunTool CreateFromInstanceMethod(Reflector reflector, ILogger? logger, object targetInstance, MethodInfo methodInfo, string? title = null)
-            => new RunTool(reflector, logger, targetInstance, methodInfo) { Title = title };
+            => new RunTool(reflector, logger, targetInstance, methodInfo)
+            {
+                Title = title
+            };
 
         /// <summary>
         /// Initializes the Command with the target instance method information.
@@ -54,7 +61,10 @@ namespace com.IvanMurzak.Unity.MCP.Common
         /// <param name="targetInstance">The instance of the object containing the method.</param>
         /// <param name="methodInfo">The MethodInfo of the instance method to execute.</param>
         public static RunTool CreateFromClassMethod(Reflector reflector, ILogger? logger, Type classType, MethodInfo methodInfo, string? title = null)
-            => new RunTool(reflector, logger, classType, methodInfo) { Title = title };
+            => new RunTool(reflector, logger, classType, methodInfo)
+            {
+                Title = title
+            };
 
         public RunTool(Reflector reflector, ILogger? logger, MethodInfo methodInfo) : base(reflector, logger, methodInfo)
         {
@@ -99,6 +109,27 @@ namespace com.IvanMurzak.Unity.MCP.Common
             return base.GetDefaultParameterValue(reflector, methodParameter);
         }
 
+        protected ResponseCallTool ProcessInvokeResult(string requestId, object? result)
+        {
+            if (result is ResponseCallTool response)
+                return response.SetRequestID(requestId);
+
+            if (result == null)
+                return ResponseCallTool.Success(null).SetRequestID(requestId);
+
+            var type = result.GetType();
+            if (TypeUtils.IsPrimitive(type))
+                return ResponseCallTool.Success(result.ToString()).SetRequestID(requestId);
+
+            var node = System.Text.Json.JsonSerializer.SerializeToNode(result, _reflector.JsonSerializer.JsonSerializerOptions);
+            var json = node?.ToJsonString(_reflector.JsonSerializer.JsonSerializerOptions);
+
+            return ResponseCallTool.SuccessStructured(
+                structuredContent: node,
+                message: json ?? "[Success] null" // needed for MCP backward compatibility: https://modelcontextprotocol.io/specification/2025-06-18/server/tools#structured-content
+            ).SetRequestID(requestId);
+        }
+
         /// <summary>
         /// Executes the target static method with the provided arguments.
         /// </summary>
@@ -117,11 +148,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
             {
                 // Invoke the method (static or instance)
                 var result = await Invoke(cancellationToken, parameters);
-
-                if (result is ResponseCallTool response)
-                    return response.SetRequestID(requestId);
-
-                return ResponseCallTool.Success(result?.ToString()).SetRequestID(requestId);
+                return ProcessInvokeResult(requestId, result);
             }
             catch (ArgumentException ex)
             {
@@ -164,10 +191,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
 
                 // Invoke the method (static or instance)
                 var result = await InvokeDict(finalParameters, cancellationToken);
-                if (result is ResponseCallTool response)
-                    return response.SetRequestID(requestId);
-
-                return ResponseCallTool.Success(result?.ToString()).SetRequestID(requestId);
+                return ProcessInvokeResult(requestId, result);
             }
             catch (ArgumentException ex)
             {

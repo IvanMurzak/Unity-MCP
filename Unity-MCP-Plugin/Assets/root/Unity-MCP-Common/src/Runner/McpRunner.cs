@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -107,12 +108,29 @@ namespace com.IvanMurzak.Unity.MCP.Common
             {
                 _logger.LogDebug("Listing tools.");
                 var result = _tools
-                    .Select(kvp => new ResponseListTool()
+                    .Select(kvp =>
                     {
-                        Name = kvp.Key,
-                        Title = kvp.Value.Title,
-                        Description = kvp.Value.Description,
-                        InputSchema = kvp.Value.InputSchema.ToJsonElement() ?? EmptyInputSchema,
+                        var response = new ResponseListTool()
+                        {
+                            Name = kvp.Key,
+                            Title = kvp.Value.Title,
+                            Description = kvp.Value.Description,
+                            InputSchema = kvp.Value.InputSchema.ToJsonElement() ?? EmptyInputSchema
+                        };
+                        if (kvp.Value.OutputSchema == null)
+                            return response;
+
+                        if (kvp.Value.OutputSchema is not JsonNode jn)
+                            return response;
+
+                        if (jn.GetValueKind() != JsonValueKind.Object)
+                            return response;
+
+                        if (jn[JsonSchema.Type]?.GetValue<string>() != JsonSchema.Object)
+                            return response;
+
+                        response.OutputSchema = jn.ToJsonElement();
+                        return response;
                     })
                     .ToArray();
                 _logger.LogDebug("{0} Tools listed.", result.Length);
