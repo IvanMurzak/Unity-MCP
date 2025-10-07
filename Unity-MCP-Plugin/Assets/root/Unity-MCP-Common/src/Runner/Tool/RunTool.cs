@@ -109,6 +109,27 @@ namespace com.IvanMurzak.Unity.MCP.Common
             return base.GetDefaultParameterValue(reflector, methodParameter);
         }
 
+        protected ResponseCallTool ProcessInvokeResult(string requestId, object? result)
+        {
+            if (result is ResponseCallTool response)
+                return response.SetRequestID(requestId);
+
+            if (result == null)
+                return ResponseCallTool.Success(null).SetRequestID(requestId);
+
+            var type = result.GetType();
+            if (TypeUtils.IsPrimitive(type))
+                return ResponseCallTool.Success(result.ToString()).SetRequestID(requestId);
+
+            var node = System.Text.Json.JsonSerializer.SerializeToNode(result, _reflector.JsonSerializer.JsonSerializerOptions);
+            var json = node?.ToJsonString(_reflector.JsonSerializer.JsonSerializerOptions);
+
+            return ResponseCallTool.SuccessStructured(
+                structuredContent: node,
+                message: json ?? "[Success] null" // needed for MCP backward compatibility: https://modelcontextprotocol.io/specification/2025-06-18/server/tools#structured-content
+            ).SetRequestID(requestId);
+        }
+
         /// <summary>
         /// Executes the target static method with the provided arguments.
         /// </summary>
@@ -127,24 +148,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
             {
                 // Invoke the method (static or instance)
                 var result = await Invoke(cancellationToken, parameters);
-
-                if (result is ResponseCallTool response)
-                    return response.SetRequestID(requestId);
-
-                if (result == null)
-                    return ResponseCallTool.Success(null).SetRequestID(requestId);
-
-                var type = result.GetType();
-                if (TypeUtils.IsPrimitive(type))
-                    return ResponseCallTool.Success(result.ToString()).SetRequestID(requestId);
-
-                var node = System.Text.Json.JsonSerializer.SerializeToNode(result, _reflector.JsonSerializer.JsonSerializerOptions);
-                var json = node?.ToJsonString(_reflector.JsonSerializer.JsonSerializerOptions);
-
-                return ResponseCallTool.SuccessStructured(
-                    structuredContent: node,
-                    message: json ?? "[Success] null" // needed for MCP backward compatibility: https://modelcontextprotocol.io/specification/2025-06-18/server/tools#structured-content
-                ).SetRequestID(requestId);
+                return ProcessInvokeResult(requestId, result);
             }
             catch (ArgumentException ex)
             {
@@ -187,24 +191,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
 
                 // Invoke the method (static or instance)
                 var result = await InvokeDict(finalParameters, cancellationToken);
-
-                if (result is ResponseCallTool response)
-                    return response.SetRequestID(requestId);
-
-                if (result == null)
-                    return ResponseCallTool.Success(null).SetRequestID(requestId);
-
-                var type = result.GetType();
-                if (TypeUtils.IsPrimitive(type))
-                    return ResponseCallTool.Success(result.ToString()).SetRequestID(requestId);
-
-                var node = System.Text.Json.JsonSerializer.SerializeToNode(result, _reflector.JsonSerializer.JsonSerializerOptions);
-                var json = node?.ToJsonString(_reflector.JsonSerializer.JsonSerializerOptions);
-
-                return ResponseCallTool.SuccessStructured(
-                    structuredContent: node,
-                    message: json ?? "[Success] null" // needed for MCP backward compatibility: https://modelcontextprotocol.io/specification/2025-06-18/server/tools#structured-content
-                ).SetRequestID(requestId);
+                return ProcessInvokeResult(requestId, result);
             }
             catch (ArgumentException ex)
             {
