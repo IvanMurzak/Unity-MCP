@@ -385,7 +385,7 @@ docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server
 }
 ```
 
-> Replace `url` with your real endpoint if it is hosted in cloud
+> Replace `url` with your real endpoint if it is hosted in cloud.
 
 </details>
 
