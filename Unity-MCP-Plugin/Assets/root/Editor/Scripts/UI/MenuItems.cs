@@ -31,7 +31,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         [MenuItem("Tools/AI Game Developer/Open Server Logs", priority = 1002)]
         public static void OpenServerLogs() => OpenFile(Startup.Server.ExecutableFolderPath + "/logs/server-log.txt");
 
-        [MenuItem("Tools/AI Game Developer/Open Server Log errors", priority = 1002)]
+        [MenuItem("Tools/AI Game Developer/Open Server Log errors", priority = 1003)]
         public static void OpenServerLogErrors() => OpenFile(Startup.Server.ExecutableFolderPath + "/logs/server-log-error.txt");
 
         static void OpenFile(string path)
