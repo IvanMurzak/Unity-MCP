@@ -80,9 +80,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
             Content = response.Content
                 .Select(x => x.ToTextContent())
                 .ToList(),
-            StructuredContent = string.IsNullOrEmpty(response.StructuredContent)
-                ? null
-                : JsonNode.Parse(response.StructuredContent)
+            StructuredContent = response.StructuredContent
         };
     }
 }

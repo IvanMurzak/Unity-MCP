@@ -138,9 +138,13 @@ namespace com.IvanMurzak.Unity.MCP.Common
                 if (TypeUtils.IsPrimitive(type))
                     return ResponseCallTool.Success(result.ToString()).SetRequestID(requestId);
 
-                var json = _reflector.JsonSerializer.Serialize(result);
+                var node = System.Text.Json.JsonSerializer.SerializeToNode(result, _reflector.JsonSerializer.JsonSerializerOptions);
+                var json = node?.ToJsonString(_reflector.JsonSerializer.JsonSerializerOptions);
 
-                return ResponseCallTool.SuccessStructured(structuredContent: json).SetRequestID(requestId);
+                return ResponseCallTool.SuccessStructured(
+                    structuredContent: node,
+                    message: json ?? "[Success] null" // needed for MCP backward compatibility: https://modelcontextprotocol.io/specification/2025-06-18/server/tools#structured-content
+                ).SetRequestID(requestId);
             }
             catch (ArgumentException ex)
             {
@@ -194,9 +198,13 @@ namespace com.IvanMurzak.Unity.MCP.Common
                 if (TypeUtils.IsPrimitive(type))
                     return ResponseCallTool.Success(result.ToString()).SetRequestID(requestId);
 
-                var json = _reflector.JsonSerializer.Serialize(result);
+                var node = System.Text.Json.JsonSerializer.SerializeToNode(result, _reflector.JsonSerializer.JsonSerializerOptions);
+                var json = node?.ToJsonString(_reflector.JsonSerializer.JsonSerializerOptions);
 
-                return ResponseCallTool.SuccessStructured(structuredContent: json).SetRequestID(requestId);
+                return ResponseCallTool.SuccessStructured(
+                    structuredContent: node,
+                    message: json ?? "[Success] null" // needed for MCP backward compatibility: https://modelcontextprotocol.io/specification/2025-06-18/server/tools#structured-content
+                ).SetRequestID(requestId);
             }
             catch (ArgumentException ex)
             {

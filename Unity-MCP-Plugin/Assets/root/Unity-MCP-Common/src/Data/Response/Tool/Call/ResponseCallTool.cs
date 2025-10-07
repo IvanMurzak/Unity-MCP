@@ -12,7 +12,9 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Text.Json.Nodes;
+using com.IvanMurzak.ReflectorNet;
 
 namespace com.IvanMurzak.Unity.MCP.Common.Model
 {
@@ -21,7 +23,7 @@ namespace com.IvanMurzak.Unity.MCP.Common.Model
         public string RequestID { get; set; } = string.Empty;
         public virtual ResponseStatus Status { get; set; } = ResponseStatus.Error;
         public virtual List<ContentBlock> Content { get; set; } = new List<ContentBlock>();
-        public virtual string? StructuredContent { get; set; } = null;
+        public virtual JsonNode? StructuredContent { get; set; } = null;
 
         public ResponseCallTool() { }
         public ResponseCallTool(ResponseStatus status, List<ContentBlock> content) : this(
@@ -32,7 +34,7 @@ namespace com.IvanMurzak.Unity.MCP.Common.Model
         {
             // none
         }
-        public ResponseCallTool(string structuredContent, ResponseStatus status, List<ContentBlock> content) : this(
+        public ResponseCallTool(JsonNode? structuredContent, ResponseStatus status, List<ContentBlock> content) : this(
             requestId: string.Empty,
             structuredContent: structuredContent,
             status: status,
@@ -40,7 +42,7 @@ namespace com.IvanMurzak.Unity.MCP.Common.Model
         {
             // none
         }
-        public ResponseCallTool(string requestId, string? structuredContent, ResponseStatus status, List<ContentBlock> content)
+        public ResponseCallTool(string requestId, JsonNode? structuredContent, ResponseStatus status, List<ContentBlock> content)
         {
             RequestID = requestId;
             Status = status;
@@ -83,7 +85,7 @@ namespace com.IvanMurzak.Unity.MCP.Common.Model
                 }
             });
 
-        public static ResponseCallTool SuccessStructured(string structuredContent)
+        public static ResponseCallTool SuccessStructured(JsonNode? structuredContent, string? message)
             => new ResponseCallTool(
                 structuredContent: structuredContent,
                 status: ResponseStatus.Success,
@@ -92,7 +94,7 @@ namespace com.IvanMurzak.Unity.MCP.Common.Model
                     new ContentBlock()
                     {
                         Type = "text",
-                        Text = structuredContent, // needed for MCP backward compatibility: https://modelcontextprotocol.io/specification/2025-06-18/server/tools#structured-content
+                        Text = message, // needed for MCP backward compatibility: https://modelcontextprotocol.io/specification/2025-06-18/server/tools#structured-content
                         MimeType = Consts.MimeType.TextJson
                     }
                 });
