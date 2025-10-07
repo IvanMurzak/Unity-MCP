@@ -593,6 +593,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnCustomClass));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var expectedValue = TestReturnTypeMethods.ReturnCustomClass();
 
             // Act
             var task = runTool.Run("test-request-id", CancellationToken.None);
@@ -608,13 +609,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var jsonString = result.StructuredContent.ToJsonString();
             Assert.IsNotNull(jsonString, "Should serialize to JSON string");
             Assert.IsTrue(jsonString.Contains("name") || jsonString.Contains("Name"), "JSON should contain name/Name property");
-            Assert.IsTrue(jsonString.Contains("John Doe"), "JSON should contain the name value");
+            Assert.IsTrue(jsonString.Contains(expectedValue.Name), $"JSON should contain the name value: {expectedValue.Name}");
 
             // Verify it can be deserialized back
             var deserializedNode = JsonNode.Parse(jsonString);
             Assert.IsNotNull(deserializedNode, "Should deserialize back to JsonNode");
             var deserializedNameNode = deserializedNode["name"] ?? deserializedNode["Name"];
-            Assert.AreEqual("John Doe", deserializedNameNode.GetValue<string>(), "Deserialized value should match");
+            Assert.AreEqual(expectedValue.Name, deserializedNameNode.GetValue<string>(), "Deserialized value should match");
         }
 
         #endregion
