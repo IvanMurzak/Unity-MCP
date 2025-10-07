@@ -64,32 +64,36 @@ namespace com.IvanMurzak.Unity.MCP.Common.Model
             => Error($"[Error] {exception?.Message}\n{exception?.StackTrace}");
 
         public static ResponseCallTool Error(string? message = null)
-            => new ResponseCallTool(status: ResponseStatus.Error, new List<ContentBlock>
-            {
-                new ContentBlock()
+            => new ResponseCallTool(
+                status: ResponseStatus.Error,
+                content: new List<ContentBlock>
                 {
-                    Type = "text",
-                    Text = message,
-                    MimeType = Consts.MimeType.TextPlain
-                }
-            });
+                    new ContentBlock()
+                    {
+                        Type = "text",
+                        Text = message,
+                        MimeType = Consts.MimeType.TextPlain
+                    }
+                });
 
         public static ResponseCallTool Success(string? message = null)
-            => new ResponseCallTool(status: ResponseStatus.Success, new List<ContentBlock>
-            {
-                new ContentBlock()
+            => new ResponseCallTool(
+                status: ResponseStatus.Success,
+                content: new List<ContentBlock>
                 {
-                    Type = "text",
-                    Text = message,
-                    MimeType = Consts.MimeType.TextPlain
-                }
-            });
+                    new ContentBlock()
+                    {
+                        Type = "text",
+                        Text = message,
+                        MimeType = Consts.MimeType.TextPlain
+                    }
+                });
 
         public static ResponseCallTool SuccessStructured(JsonNode? structuredContent, string? message)
             => new ResponseCallTool(
                 structuredContent: structuredContent,
                 status: ResponseStatus.Success,
-                new List<ContentBlock>
+                content: new List<ContentBlock>
                 {
                     new ContentBlock()
                     {
@@ -100,14 +104,16 @@ namespace com.IvanMurzak.Unity.MCP.Common.Model
                 });
 
         public static ResponseCallTool Processing(string? message = null)
-            => new ResponseCallTool(status: ResponseStatus.Processing, new List<ContentBlock>
-            {
-                new ContentBlock()
+            => new ResponseCallTool(
+                status: ResponseStatus.Processing,
+                content: new List<ContentBlock>
                 {
-                    Type = "text",
-                    Text = message,
-                    MimeType = Consts.MimeType.TextPlain
-                }
-            });
+                    new ContentBlock()
+                    {
+                        Type = "text",
+                        Text = message,
+                        MimeType = Consts.MimeType.TextPlain
+                    }
+                });
     }
 }
