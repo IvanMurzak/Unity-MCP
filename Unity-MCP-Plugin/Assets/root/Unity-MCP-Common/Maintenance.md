@@ -14,7 +14,7 @@ dotnet pack -c Release
 Get it from the location
 
 ```txt
-\Unity-MCP-Plugin\Temp\bin\Release\com.IvanMurzak.Unity.MCP.Common.1.0.5.nupkg
+\Unity-MCP-Common\Temp~\bin\Release\com.IvanMurzak.Unity.MCP.Common.1.0.5.nupkg
 ```
 
 ## Variables
