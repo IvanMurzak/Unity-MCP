@@ -7,7 +7,9 @@
       "mcp__Unity-MCP__GameObject_Modify",
       "mcp__Unity-MCP__TestRunner_Run",
       "mcp__Unity-MCP__Console_GetLogs",
-      "mcp__Unity-MCP__Script_Execute"
+      "mcp__Unity-MCP__Script_Execute",
+      "Bash(gh pr:*)",
+      "Bash(powershell:*)"
     ],
     "deny": [],
     "ask": []
