@@ -135,6 +135,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnEnum));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var expectedEnumValue = TestReturnTypeMethods.ReturnEnum();
 
             // Act
             var task = runTool.Run("test-request-id", CancellationToken.None);
@@ -145,9 +146,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             // Assert
             Assert.IsNotNull(result, "Result should not be null");
-            Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
+            Assert.AreEqual(expectedEnumValue, result.Status, "Should return success status");
             Assert.AreEqual("Success", result.GetMessage(), "Should return enum as string");
             Assert.IsNull(result.StructuredContent, "Enum is primitive and should not have structured content");
+
+            // Verify the enum value can be parsed back to the original value
+            var parsedValue = Enum.Parse(typeof(ResponseStatus), result.GetMessage());
+            Assert.AreEqual(expectedEnumValue, parsedValue, "Parsed enum should match original value");
         }
 
         [UnityTest]
@@ -189,6 +194,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
             Assert.AreEqual("Information", result.GetMessage(), "Should return Microsoft.Extensions.Logging.LogLevel as string");
             Assert.IsNull(result.StructuredContent, "Enum is primitive and should not have structured content");
+
+            // Verify the enum value can be parsed back to the original value
+            var parsedValue = System.Enum.Parse(typeof(Microsoft.Extensions.Logging.LogLevel), result.GetMessage());
+            Assert.AreEqual(Microsoft.Extensions.Logging.LogLevel.Information, parsedValue, "Parsed enum should match original value");
         }
 
         #endregion
