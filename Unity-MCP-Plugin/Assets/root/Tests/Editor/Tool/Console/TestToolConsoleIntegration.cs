@@ -270,7 +270,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             }
             LogUtils.ClearLogs();
             Assert.AreEqual(0, LogUtils.LogEntries, "Log entries and Log Cache count should be empty.");
-            LogUtils.EnsureSubscribed();
+            LogUtils.LoadFromFile();
             for (int i = 0; i < 10000; i++)
             {
                 yield return null;

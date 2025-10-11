@@ -7,8 +7,11 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+#nullable enable
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
+using System.Threading;
+using System.Threading.Tasks;
 using com.IvanMurzak.ReflectorNet.Utils;
 using UnityEngine;
 
@@ -40,6 +43,16 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
+        public static void SaveToFile()
+        {
+            Task.Run(async () => await LogCache.CacheLogEntriesAsync(_logEntries.ToArray()));
+        }
+
+        public static void LoadFromFile()
+        {
+            Task.Run(async () => _logEntries = await LogCache.GetCachedLogEntriesAsync());
+        }
+
         public static LogEntry[] GetAllLogs()
         {
             lock (_lockObject)
@@ -55,7 +68,7 @@ namespace com.IvanMurzak.Unity.MCP
 
         public static void EnsureSubscribed()
         {
-            MainThread.Instance.RunAsync(async () =>
+            MainThread.Instance.RunAsync(() =>
             {
                 lock (_lockObject)
                 {
@@ -66,7 +79,6 @@ namespace com.IvanMurzak.Unity.MCP
                         _isSubscribed = true;
                     }
                 }
-                _logEntries = await LogCache.GetCachedLogEntriesAsync();
             });
         }
 
