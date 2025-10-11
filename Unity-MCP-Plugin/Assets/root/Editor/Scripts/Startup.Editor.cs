@@ -33,24 +33,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             if (UnityMcpPlugin.IsLogEnabled(LogLevel.Debug))
                 Debug.Log($"{DebugName} OnApplicationUnloading triggered");
             Disconnect();
+            LogUtils.SaveToFile();
         }
         static void OnApplicationQuitting()
         {
             if (UnityMcpPlugin.IsLogEnabled(LogLevel.Debug))
                 Debug.Log($"{DebugName} OnApplicationQuitting triggered");
             Disconnect();
+            LogUtils.SaveToFile();
         }
         static void OnBeforeAssemblyReload()
         {
             if (UnityMcpPlugin.IsLogEnabled(LogLevel.Debug))
                 Debug.Log($"{DebugName} OnBeforeAssemblyReload triggered");
             Disconnect();
+            LogUtils.SaveToFile();
         }
         static void OnAfterAssemblyReload()
         {
             if (UnityMcpPlugin.IsLogEnabled(LogLevel.Debug))
                 Debug.Log($"{DebugName} OnAfterReload triggered - BuildAndStart with openConnection: {!EnvironmentUtils.IsCi()}");
             UnityMcpPlugin.BuildAndStart(openConnectionIfNeeded: !EnvironmentUtils.IsCi());
+            LogUtils.LoadFromFile();
         }
 
         static void OnPlayModeStateChanged(PlayModeStateChange state)
