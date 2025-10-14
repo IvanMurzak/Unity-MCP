@@ -14,69 +14,77 @@
 
 </div>
 
-**Contribute**
-Any contribution to the project is highly appreciated. Please follow this document to see out goals, vision and project structure. All of that should help to let you participate in the new technological era of game development
+**Vision**
+
+We believe that AI will be (if not already) an important part of the game development. There are amazing AI interfaces such as `Claude`, `Copilot`, `Cursor` and many others. They provide amazing agents and features and the most important - they keep improving it. These projects have huge budgets and probably will be the best AI platforms for professionals. We connect game development with these tools, this project works in a pair with them, not against them. We will grow with them. That is why this project won't implement internal isolated chat window. We want to build simple and elegant solution which became a foundation for AI systems in game development with Unity Engine ecosystem.
 
 **Project goals**
 
-- To deliver high quality AI game development solution for free to everyone
-- To maintain and support cutting edge AI technologies in Unity Engine and beyond the engine itself
-- To provide a highly customizable platform for other developer to let them customize AI features for their needs
-- To
+- Deliver high quality AI game development solution for **free** to everyone
+- Provide a highly customizable platform for game developers for customizing AI features for their needs
+- Allow to utilize the best AI instruments for game development, all in one place
+- Maintain and support cutting edge AI technologies for game development especially in Unity Engine and beyond the engine
 
-**Vision**
-We believe that AI will be an important part of the game development. There are many companies trying to charge for using AI. They
+**Contribute**
 
+Any contribution to the project is highly appreciated. Please follow this document to see out goals, vision and project structure. All of that should help to let you participate in the new technological era of game development
 
 **This document**
-This document is explaining the internal project structure and design, code style, and main principals. Please use it if you are a contributor or if you like to understand the project in depth.
+
+This document explains the internal project structure, design, code style, and main principals. Please use it if you are a contributor or if you like to understand the project in depth.
 
 > **[💬 Join our Discord Server](https://discord.gg/cfbdMZX99G)** - Ask questions, showcase your work, and connect with other developers!
 
 ## Content
 
 - [Project structure](#project-structure)
-  - [Add custom `MCP Prompt`](#add-custom-mcp-prompt)
-- [Runtime usage (in-game)](#runtime-usage-in-game)
-  - [Sample: AI powered Chess game bot](#sample-ai-powered-chess-game-bot)
+  - [🔹Unity-MCP-Server](#unity-mcp-server)
+  - [🔸Unity-MCP-Plugin](#unity-mcp-plugin)
+    - [Add `MCP Tool`](#add-mcp-tool)
+    - [Add `MCP Prompt`](#add-mcp-prompt)
+  - [🔺Unity-MCP-Common](#unity-mcp-common)
+  - [◾Installer (Unity)](#installer-unity)
 
 # Project structure
 
-`AI Game Developer` contains multiple different project and work as collaboration of multiple system working together. Here is the main structure of the project:
-
 ```mermaid
 graph LR
-
-  A(MCP-Client)
-  B(Unity-MCP-Server)
-  C(Unity-MCP-Plugin)
+  A(◽MCP-Client)
+  B(🔹Unity-MCP-Server)
+  C(🔸Unity-MCP-Plugin)
+  D(🎮Unity)
 
   %% Relationships
   A <--> B
   B <--> C
-
+  C <--> D
 ```
 
-`Unity-MCP-Server` and `Unity-MCP-Plugin` are written with C# and they both use SignalR to communicate.
+◽**MCP Client** - Any AI interface such as: *Claude*, *Copilot*, *Cursor* or any other, it is not part of these project, but it is an important element of the architecture.
 
-```mermaid
-graph TD
+🔹**Unity-MCP-Server** - `MCP Server` that connects to `MCP Client` and operates with it. In the same `Unity-MCP-Server` communicates with `Unity-MCP-Plugin` over SignalR. May run locally or in a cloud with HTTP transport. Tech stack: `C#`, `ASP.NET Core`, `SignalR`
 
-  A(Unity-MCP-Server)
-  B(Unity-MCP-Plugin)
-  C(Unity-MCP-Common)
+🔸**Unity-MCP-Plugin** - `Unity Plugin` which is integrated into a Unity project, has access to Unity's API. Communicates with `Unity-MCP-Server` and executes commands from the server. Tech stack: `C#`, `Unity`, `SignalR`
 
-  %% Relationships
-  A --> C
-  B --> C
+🎮**Unity** - Unity Engine, game engine.
 
-```
+---
 
-- `Unity-MCP-Server`
-- `Unity-MCP-Plugin`
-- `Unity-MCP-Common`
-- `Installer`
+## 🔹Unity-MCP-Server
 
+Implements [csharp-sdk](https://github.com/modelcontextprotocol/csharp-sdk) for [model context protocol](https://github.com/modelcontextprotocol). Communicates with `Unity-MCP-Plugin` over SignalR. Notifies `MCP Client` about *Tools*, *Resources*, *Prompts* updates
+
+> Project location: `Unity-MCP-Server`
+
+---
+
+## 🔸Unity-MCP-Plugin
+
+Integrates into Unity environment. Uses `Unity-MCP-Common` for searching for MCP *Tool*, *Resource* and *Prompt* in the local codebase using reflection. Communicates with `Unity-MCP-Server` for sending updates about MCP *Tool*, *Resource* and *Prompt*. Takes commands from `Unity-MCP-Server` and executes it.
+
+> Project location: `Unity-MCP-Plugin`
+
+### Add `MCP Tool`
 
 ```csharp
 [McpPluginToolType]
@@ -106,7 +114,7 @@ public class Tool_GameObject
 }
 ```
 
-## Add custom `MCP Prompt`
+### Add `MCP Prompt`
 
 `MCP Prompt` allows you to inject custom prompts into the conversation with the LLM. It supports two sender roles: User and Assistant. This is a quick way to instruct the LLM to perform specific tasks. You can generate prompts using custom data, providing lists or any other relevant information.
 
@@ -125,37 +133,42 @@ public static class Prompt_ScriptingCode
 
 ---
 
-# Runtime usage (in-game)
+## 🔺Unity-MCP-Common
 
-Use **[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** in your game/app. Use Tools, Resources or Prompts. By default there are no tools, you would need to implement your custom.
+```mermaid
+graph TD
+  A(🔹Unity-MCP-Server)
+  B(🔸Unity-MCP-Plugin)
+  C(🔺Unity-MCP-Common)
 
-```csharp
-UnityMcpPlugin.BuildAndStart(); // Build and start Unity-MCP-Plugin, it is required
-UnityMcpPlugin.Connect(); // Start active connection with retry to Unity-MCP-Server
-UnityMcpPlugin.Disconnect(); // Stop active connection and close existed connection
+  %% Relationships
+  A --> C
+  B --> C
 ```
 
-## Sample: AI powered Chess game bot
+**Unity-MCP-Common** - shared code base between `Unity-MCP-Server` and `Unity-MCP-Plugin`. It is needed to simplify the data model and API sharing between projects. It is an independent dotnet library project.
 
-There is a classic Chess game. Lets outsource to LLM the bot logic. Bot should do the turn using game rules.
+> Project location: `Unity-MCP-Plugin/Assets/root/Runtime/Unity-MCP-Common`
 
-```csharp
-[McpPluginToolType]
-public static class ChessGameAI
-{
-    [McpPluginTool("chess-do-turn", Title = "Do the turn")]
-    [Description("Do the turn in the chess game. Returns true if the turn was accepted, false otherwise.")]
-    public static Task<bool> DoTurn(int figureId, Vector2Int position)
-    {
-        return MainThread.Instance.RunAsync(() => ChessGameController.Instance.DoTurn(figureId, position));
-    }
+---
 
-    [McpPluginTool("chess-get-board", Title = "Get the board")]
-    [Description("Get the current state of the chess board.")]
-    public static Task<BoardData> GetBoard()
-    {
-        return MainThread.Instance.RunAsync(() => ChessGameController.Instance.GetBoardData());
-    }
-}
+## ◾Installer (Unity)
+
+```mermaid
+graph LR
+  A(◾Installer)
+  subgraph Installation
+    B(🎮Unity)
+    C(🔸Unity-MCP-Plugin)
+  end
+
+  %% Relationships
+  A --> B
+  B -.- C
 ```
 
+**Installer** installs `Unity-MCP-Plugin` and dependencies as an NPM packages into a Unity project.
+
+> Project location: `Installer`
+
+---
