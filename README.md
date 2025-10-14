@@ -1,7 +1,7 @@
 <div align="center" width="100%">
   <h1>✨ AI Game Developer — <i>Unity MCP</i></h1>
 
-[![MCP](https://badge.mcpx.dev?type=server 'MCP Server')](https://modelcontextprotocol.io/introduction)
+[![MCP](https://badge.mcpx.dev 'MCP Server')](https://modelcontextprotocol.io/introduction)
 [![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&labelColor=333A41 'OpenUPM package')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
 [![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
 [![Unity Editor](https://img.shields.io/badge/Editor-X?style=flat&logo=unity&labelColor=333A41&color=49BC5C 'Unity Editor supported')](https://unity.com/releases/editor/archive)
@@ -582,7 +582,8 @@ It is a bridge between `MCP Client` and "something else", in this particular cas
 
 Contributions are highly appreciated. Bring your ideas and let's make game development simpler than ever before! Do you have an idea for a new `MCP Tool` or feature, or did you spot a bug and know how to fix it?
 
-1. 👉 [Fork the project](https://github.com/IvanMurzak/Unity-MCP/fork)
-2. Clone the fork and open the `./Unity-MCP-Plugin` folder in Unity
-3. Implement new things in the project, commit, push it to GitHub
-4. Create Pull Request targeting original [Unity-MCP](https://github.com/IvanMurzak/Unity-MCP) repository, `main` branch.
+1. 👉 [Read Development documentation](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.md)
+2. 👉 [Fork the project](https://github.com/IvanMurzak/Unity-MCP/fork)
+3. Clone the fork and open the `./Unity-MCP-Plugin` folder in Unity
+4. Implement new things in the project, commit, push it to GitHub
+5. Create Pull Request targeting original [Unity-MCP](https://github.com/IvanMurzak/Unity-MCP/compare) repository, `main` branch.

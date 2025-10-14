@@ -1,7 +1,7 @@
 <div align="center" width="100%">
   <h1>✨ Desarrollador de Juegos IA — <i>Unity MCP</i></h1>
 
-[![MCP](https://badge.mcpx.dev?type=server 'MCP Server')](https://modelcontextprotocol.io/introduction)
+[![MCP](https://badge.mcpx.dev 'MCP Server')](https://modelcontextprotocol.io/introduction)
 [![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&labelColor=333A41 'OpenUPM package')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
 [![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
 [![Unity Editor](https://img.shields.io/badge/Editor-X?style=flat&logo=unity&labelColor=333A41&color=49BC5C 'Unity Editor supported')](https://unity.com/releases/editor/archive)
@@ -582,7 +582,8 @@ Un `Prompt MCP` te permite inyectar prompts predefinidos en la conversación con
 
 Las contribuciones son muy apreciadas. ¡Trae tus ideas y hagamos el desarrollo de juegos más simple que nunca! ¿Tienes una idea para una nueva `Herramienta MCP` o característica, o encontraste un bug y sabes cómo arreglarlo?
 
-1. 👉 [Haz fork del proyecto](https://github.com/IvanMurzak/Unity-MCP/fork)
-2. Clona el fork y abre la carpeta `./Unity-MCP-Plugin` en Unity
-3. Implementa nuevas cosas en el proyecto, commit, empújalo a GitHub
-4. Crea Pull Request dirigido al repositorio original [Unity-MCP](https://github.com/IvanMurzak/Unity-MCP), rama `main`.
+1. 👉 [Lee la documentación de desarrollo](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.es.md)
+2. 👉 [Haz fork del proyecto](https://github.com/IvanMurzak/Unity-MCP/fork)
+3. Clona el fork y abre la carpeta `./Unity-MCP-Plugin` en Unity
+4. Implementa nuevas cosas en el proyecto, commit, empújalo a GitHub
+5. Crea Pull Request dirigido al repositorio original [Unity-MCP](https://github.com/IvanMurzak/Unity-MCP/compare), rama `main`.
