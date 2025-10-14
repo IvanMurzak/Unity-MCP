@@ -304,6 +304,170 @@ graph LR
 
 # Code style
 
+This project follows consistent C# coding patterns. Below is a comprehensive example demonstrating the key conventions:
+
+```csharp
+/*
+┌──────────────────────────────────────────────────────────────────┐
+│  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
+│  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
+│  Copyright (c) 2025 Ivan Murzak                                  │
+│  Licensed under the Apache License, Version 2.0.                 │
+│  See the LICENSE file in the project root for more information.  │
+└──────────────────────────────────────────────────────────────────┘
+*/
+
+// Enable nullable reference types for better null safety
+#nullable enable
+
+// Conditional compilation for platform-specific code
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
+
+using System;
+using System.ComponentModel;
+using System.Threading.Tasks;
+using com.IvanMurzak.Unity.MCP.Common;
+using com.IvanMurzak.Unity.MCP.Utils;
+using UnityEngine;
+
+namespace com.IvanMurzak.Unity.MCP.Editor.API
+{
+    // Use [McpPluginToolType] for tool classes - enables MCP discovery via reflection
+    [McpPluginToolType]
+    // Partial classes allow splitting implementation across multiple files
+    // Pattern: One file per operation (e.g., GameObject.Create.cs, GameObject.Destroy.cs)
+    public partial class Tool_GameObject
+    {
+        // Nested Error class centralizes error messages for maintainability
+        public static class Error
+        {
+            // Static methods for consistent error formatting
+            public static string GameObjectNameIsEmpty()
+                => "[Error] GameObject name is empty. Please provide a valid name.";
+
+            public static string NotFoundGameObjectAtPath(string path)
+                => $"[Error] GameObject '{path}' not found.";
+        }
+
+        // MCP Tool declaration with attribute-based metadata
+        [McpPluginTool(
+            "GameObject_Create",                    // Unique tool identifier
+            Title = "Create a new GameObject"       // Human-readable title
+        )]
+        // Description attribute guides AI on when/how to use this tool
+        [Description(@"Create a new GameObject in the scene.
+Provide position, rotation, and scale to minimize subsequent operations.")]
+        public string Create
+        (
+            // Parameter descriptions help AI understand expected inputs
+            [Description("Name of the new GameObject.")]
+            string name,
+
+            [Description("Parent GameObject reference. If not provided, created at scene root.")]
+            GameObjectRef? parentGameObjectRef = null,  // Nullable with default value
+
+            [Description("Transform position of the GameObject.")]
+            Vector3? position = null,                    // Unity struct, nullable
+
+            [Description("Transform rotation in Euler angles (degrees).")]
+            Vector3? rotation = null,
+
+            [Description("Transform scale of the GameObject.")]
+            Vector3? scale = null
+        )
+        // Lambda expression syntax for immediate main thread execution
+        => MainThread.Instance.Run(() =>           // All Unity API calls MUST run on main thread
+        {
+            // Validate input parameters early
+            if (string.IsNullOrEmpty(name))
+                return Error.GameObjectNameIsEmpty();
+
+            // Null-coalescing assignment for default values
+            position ??= Vector3.zero;
+            rotation ??= Vector3.zero;
+            scale ??= Vector3.one;
+
+            // Create GameObject using Unity API
+            var go = new GameObject(name);
+
+            // Set parent if provided
+            if (parentGameObjectRef?.IsValid ?? false)
+            {
+                var parentGo = parentGameObjectRef.FindGameObject(out var error);
+                if (error != null)
+                    return $"[Error] {error}";
+
+                go.transform.SetParent(parentGo.transform, worldPositionStays: false);
+            }
+
+            // Apply transform values
+            go.transform.localPosition = position.Value;
+            go.transform.localRotation = Quaternion.Euler(rotation.Value);
+            go.transform.localScale = scale.Value;
+
+            // Mark as modified for Unity Editor
+            EditorUtility.SetDirty(go);
+
+            // Return success message with structured data
+            // Use string interpolation for readable formatting
+            return $"[Success] Created GameObject.\ninstanceID: {go.GetInstanceID()}, path: {go.GetPath()}";
+        });
+
+        // Async method example with proper error handling
+        public static async Task<string> AsyncOperation(string parameter)
+        {
+            try
+            {
+                // Background work can happen here
+                await Task.Delay(100);
+
+                // Switch to main thread for Unity API calls
+                return await MainThread.Instance.RunAsync(() =>
+                {
+                    // Unity API calls here
+                    return "[Success] Async operation completed.";
+                });
+            }
+            catch (Exception ex)
+            {
+                // Log exceptions with structured logging
+                Debug.LogException(ex);
+                return $"[Error] Operation failed: {ex.Message}";
+            }
+        }
+    }
+
+    // Separate partial class file for prompts
+    [McpPluginPromptType]
+    public static partial class Prompt_SceneManagement
+    {
+        // MCP Prompt with role definition (User or Assistant)
+        [McpPluginPrompt(Name = "setup-basic-scene", Role = Role.User)]
+        [Description("Setup a basic scene with camera, lighting, and environment.")]
+        public static string SetupBasicScene()
+        {
+            // Return prompt text for AI to process
+            return "Create a basic Unity scene with Main Camera, Directional Light, and basic environment setup.";
+        }
+    }
+}
+```
+
+**Key Conventions:**
+
+1. **File Headers**: Include copyright notice in box comment format
+2. **Nullable Context**: Use `#nullable enable` for null safety
+3. **Attributes**: Leverage `[McpPluginTool]`, `[McpPluginPrompt]`, `[McpPluginResource]` for MCP discovery
+4. **Partial Classes**: Split functionality across files (e.g., `Tool_GameObject.Create.cs`)
+5. **Main Thread Execution**: Wrap Unity API calls with `MainThread.Instance.Run()`
+6. **Error Handling**: Centralize error messages in nested `Error` classes
+7. **Return Format**: Use `[Success]` or `[Error]` prefixes in return strings
+8. **Descriptions**: Annotate all public APIs with `[Description]` for AI guidance
+9. **Naming**: Use PascalCase for public members, camelCase for private/local
+10. **Null Safety**: Use nullable types (`?`) and null-coalescing operators (`??`, `??=`)
+
 ---
 
 # CI/CD
