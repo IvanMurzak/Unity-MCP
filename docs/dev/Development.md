@@ -52,6 +52,15 @@ This document explains the internal project structure, design, code style, and m
   - [◾Installer (Unity)](#installer-unity)
 - [Code style](#code-style)
 - [CI/CD](#cicd)
+  - [Workflows Overview](#workflows-overview)
+    - [🚀 release.yml](#-releaseyml)
+    - [🧪 test\_pull\_request.yml](#-test_pull_requestyml)
+    - [🔧 test\_unity\_plugin.yml](#-test_unity_pluginyml)
+    - [📦 deploy.yml](#-deployyml)
+    - [🎯 deploy\_server\_executables.yml](#-deploy_server_executablesyml)
+  - [Technology Stack](#technology-stack)
+  - [Security Considerations](#security-considerations)
+  - [Deployment Targets](#deployment-targets)
 
 # Contribute
 
@@ -214,4 +223,112 @@ graph LR
 ---
 
 # CI/CD
+
+The project implements a comprehensive CI/CD pipeline using GitHub Actions with multiple workflows orchestrating the build, test, and deployment processes.
+
+## Workflows Overview
+
+> Location: `.github/workflows`
+
+### 🚀 [release.yml](.github/workflows/release.yml)
+
+**Trigger:** Push to `main` branch
+**Purpose:** Main release workflow that orchestrates the entire release process
+
+**Process:**
+
+1. **Version Check** - Extracts version from [package.json](Unity-MCP-Plugin/Assets/root/package.json) and checks if release tag already exists
+2. **Build Unity Installer** - Tests and exports Unity package installer (`AI-Game-Dev-Installer.unitypackage`)
+3. **Build MCP Server** - Compiles cross-platform executables (Windows, macOS, Linux) using [build-all.sh](Unity-MCP-Server/build-all.sh)
+4. **Unity Plugin Testing** - Runs comprehensive tests across:
+   - 3 Unity versions: `2022.3.61f1`, `2023.2.20f1`, `6000.2.3f1`
+   - 3 test modes: `editmode`, `playmode`, `standalone`
+   - 2 operating systems: `windows-latest`, `ubuntu-latest`
+   - Total: **18 test matrix combinations**
+5. **Release Creation** - Generates release notes from commits and creates GitHub release with tag
+6. **Publishing** - Uploads Unity installer package and MCP Server executables to the release
+7. **Discord Notification** - Sends formatted release notes to Discord channel
+8. **Deploy** - Triggers deployment workflow for NuGet and Docker
+9. **Cleanup** - Removes build artifacts after successful publishing
+
+### 🧪 [test_pull_request.yml](.github/workflows/test_pull_request.yml)
+
+**Trigger:** Pull requests to `main` or `dev` branches
+**Purpose:** Validates PR changes before merging
+
+**Process:**
+
+1. Builds MCP Server executables for all platforms
+2. Runs the same 18 Unity test matrix combinations as the release workflow
+3. All tests must pass before PR can be merged
+
+### 🔧 [test_unity_plugin.yml](.github/workflows/test_unity_plugin.yml)
+
+**Type:** Reusable workflow
+**Purpose:** Parameterized Unity testing workflow used by both release and PR workflows
+
+**Features:**
+
+- Accepts parameters: `projectPath`, `unityVersion`, `testMode`
+- Runs on matrix of operating systems (Windows, Ubuntu)
+- Uses Game CI Unity Test Runner with custom Docker images
+- Implements security checks for PR contributors (requires `ci-ok` label for untrusted PRs)
+- Aborts if workflow files are modified in PRs
+- Caches Unity Library for faster subsequent runs
+- Uploads test artifacts for debugging
+
+### 📦 [deploy.yml](.github/workflows/deploy.yml)
+
+**Trigger:** Called by release workflow OR manual dispatch OR on release published
+**Purpose:** Deploys MCP Server to NuGet and Docker Hub
+
+**Jobs:**
+
+**1. Deploy to NuGet:**
+
+- Builds and tests the MCP Server
+- Packs NuGet package
+- Publishes to [nuget.org](https://www.nuget.org/packages/com.IvanMurzak.Unity.MCP.Server)
+
+**2. Deploy Docker Image:**
+
+- Builds multi-platform Docker image (linux/amd64, linux/arm64)
+- Pushes to [Docker Hub](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
+- Tags with version number and `latest`
+- Uses GitHub Actions cache for build optimization
+
+### 🎯 [deploy_server_executables.yml](.github/workflows/deploy_server_executables.yml)
+
+**Trigger:** GitHub release published
+**Purpose:** Builds and uploads cross-platform server executables to release
+
+**Process:**
+
+- Runs on macOS for cross-compilation support
+- Builds executables for Windows, macOS, Linux using [build-all.sh](Unity-MCP-Server/build-all.sh)
+- Creates ZIP archives for each platform
+- Uploads to the GitHub release
+
+## Technology Stack
+
+- **CI Platform:** GitHub Actions
+- **Unity Testing:** [Game CI](https://game.ci/) with Unity Test Runner
+- **Containerization:** Docker with multi-platform builds
+- **Package Management:** NuGet, OpenUPM, Docker Hub
+- **Build Tools:** .NET 9.0, bash scripts
+- **Artifact Storage:** GitHub Actions artifacts (temporary), GitHub Releases (permanent)
+
+## Security Considerations
+
+- Unity license, email, and password stored as GitHub secrets
+- NuGet API key and Docker credentials secured
+- PR workflow includes safety checks for workflow file modifications
+- Untrusted PR contributions require maintainer approval via `ci-ok` label
+
+## Deployment Targets
+
+1. **GitHub Releases** - Unity installer package and MCP Server executables
+2. **NuGet** - MCP Server package for .NET developers
+3. **Docker Hub** - Containerized MCP Server for cloud deployments
+4. **OpenUPM** - Unity plugin package (automatically synced from GitHub releases)
 
