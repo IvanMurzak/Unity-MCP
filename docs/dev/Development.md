@@ -12,6 +12,8 @@
 [![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&labelColor=333A41)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
+  <b>[中文](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.zh-CN.md) | [日本語](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.ja.md) | [Español](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.es.md)</b>
+
 </div>
 
 **Vision**
@@ -579,4 +581,3 @@ The project implements a comprehensive CI/CD pipeline using GitHub Actions with 
 2. **NuGet** - MCP Server package for .NET developers
 3. **Docker Hub** - Containerized MCP Server for cloud deployments
 4. **OpenUPM** - Unity plugin package (automatically synced from GitHub releases)
-

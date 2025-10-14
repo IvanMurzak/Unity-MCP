@@ -582,7 +582,8 @@ Un `Prompt MCP` te permite inyectar prompts predefinidos en la conversación con
 
 Las contribuciones son muy apreciadas. ¡Trae tus ideas y hagamos el desarrollo de juegos más simple que nunca! ¿Tienes una idea para una nueva `Herramienta MCP` o característica, o encontraste un bug y sabes cómo arreglarlo?
 
-1. 👉 [Haz fork del proyecto](https://github.com/IvanMurzak/Unity-MCP/fork)
-2. Clona el fork y abre la carpeta `./Unity-MCP-Plugin` en Unity
-3. Implementa nuevas cosas en el proyecto, commit, empújalo a GitHub
-4. Crea Pull Request dirigido al repositorio original [Unity-MCP](https://github.com/IvanMurzak/Unity-MCP), rama `main`.
+1. 👉 [Lee la documentación de desarrollo](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.es.md)
+2. 👉 [Haz fork del proyecto](https://github.com/IvanMurzak/Unity-MCP/fork)
+3. Clona el fork y abre la carpeta `./Unity-MCP-Plugin` en Unity
+4. Implementa nuevas cosas en el proyecto, commit, empújalo a GitHub
+5. Crea Pull Request dirigido al repositorio original [Unity-MCP](https://github.com/IvanMurzak/Unity-MCP/compare), rama `main`.

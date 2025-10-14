@@ -582,7 +582,8 @@ MCP - 模型上下文协议。简而言之，这是AI的 `USB Type-C`，专门�
 
 非常欢迎贡献。带来您的想法，让我们让游戏开发比以往任何时候都更简单！您有新的 `MCP 工具` 或功能的想法，或者发现了错误并知道如何修复它吗？
 
-1. 👉 [Fork项目](https://github.com/IvanMurzak/Unity-MCP/fork)
-2. 克隆fork并在Unity中打开 `./Unity-MCP-Plugin` 文件夹
-3. 在项目中实现新功能，提交，推送到GitHub
-4. 创建针对原始[Unity-MCP](https://github.com/IvanMurzak/Unity-MCP)仓库 `main` 分支的Pull Request。
+1. 👉 [阅读开发文档](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.zh-CN.md)
+2. 👉 [Fork项目](https://github.com/IvanMurzak/Unity-MCP/fork)
+3. 克隆fork并在Unity中打开 `./Unity-MCP-Plugin` 文件夹
+4. 在项目中实现新功能，提交，推送到GitHub
+5. 创建针对原始[Unity-MCP](https://github.com/IvanMurzak/Unity-MCP/compare)仓库 `main` 分支的Pull Request。

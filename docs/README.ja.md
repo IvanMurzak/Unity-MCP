@@ -582,7 +582,8 @@ MCP - Model Context Protocol。簡潔に言うと、これはAI、特にLLM（La
 
 貢献を高く評価しています。あなたのアイデアを持参して、ゲーム開発をこれまで以上にシンプルにしましょう！新しい`MCPツール`や機能のアイデアがあるか、バグを発見して修正方法を知っていますか？
 
-1. 👉 [プロジェクトをフォーク](https://github.com/IvanMurzak/Unity-MCP/fork)
-2. フォークをクローンし、Unityで`./Unity-MCP-Plugin`フォルダーを開く
-3. プロジェクトで新しい機能を実装し、コミット、GitHubにプッシュ
-4. 元の[Unity-MCP](https://github.com/IvanMurzak/Unity-MCP)リポジトリの`main`ブランチをターゲットとするプルリクエストを作成。
+1. 👉 [開発ドキュメントを読む](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.ja.md)
+2. 👉 [プロジェクトをフォーク](https://github.com/IvanMurzak/Unity-MCP/fork)
+3. フォークをクローンし、Unityで`./Unity-MCP-Plugin`フォルダーを開く
+4. プロジェクトで新しい機能を実装し、コミット、GitHubにプッシュ
+5. 元の[Unity-MCP](https://github.com/IvanMurzak/Unity-MCP/compare)リポジトリの`main`ブランチをターゲットとするプルリクエストを作成。
