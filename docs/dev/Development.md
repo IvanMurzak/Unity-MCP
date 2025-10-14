@@ -1,5 +1,5 @@
 <div align="center" width="100%">
-  <h1>🛠️ Contribute to AI Game Developer</h1>
+  <h1>🛠️ Development ─ AI Game Developer</h1>
 
 [![MCP](https://badge.mcpx.dev 'MCP Server')](https://modelcontextprotocol.io/introduction)
 [![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&labelColor=333A41 'OpenUPM package')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
