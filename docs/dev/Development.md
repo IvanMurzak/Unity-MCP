@@ -154,168 +154,62 @@ Integrates into Unity environment. Uses `Unity-MCP-Common` for searching for MCP
 
 ### Editor
 
-The Editor component of `Unity-MCP-Plugin` provides the Unity Editor integration that enables AI-driven game development capabilities. It runs in Unity's Edit mode and handles all communication with the `Unity-MCP-Server`.
+The Editor component provides Unity Editor integration, implementing MCP capabilities (Tools, Prompts, Resources) and managing the `Unity-MCP-Server` lifecycle.
 
 > Location `Unity-MCP-Plugin/Assets/root/Editor`
 
 **Main Responsibilities:**
 
-1. **Plugin Initialization & Lifecycle** ([Startup.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Startup.cs), [Startup.Editor.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Startup.Editor.cs))
-   - Auto-starts on Unity Editor load via `[InitializeOnLoad]` attribute
-   - Initializes the plugin by calling `UnityMcpPlugin.BuildAndStart()`
-   - Manages connection lifecycle across Editor events (assembly reload, play mode changes, domain reload)
-   - Subscribes to Unity Editor lifecycle events (application unloading, quitting, assembly reload, play mode state changes)
-   - Automatically reconnects to MCP Server after exiting Play mode or assembly reload
-   - Initializes subsystems: log collector and test runner
+1. **Plugin Lifecycle Management** ([Startup.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Startup.cs))
+   - Auto-initializes on Unity Editor load via `[InitializeOnLoad]`
+   - Manages connection persistence across Editor lifecycle events (assembly reload, play mode transitions)
+   - Automatic reconnection after domain reload or Play mode exit
 
 2. **MCP Server Binary Management** ([Startup.Server.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Startup.Server.cs))
-   - Automatically downloads `Unity-MCP-Server` executable from GitHub releases
-   - Detects operating system (Windows, macOS, Linux) and CPU architecture (x86, x64, ARM, ARM64)
-   - Manages server binary version compatibility with plugin version
-   - Stores server executables in `../Library/mcp-server/{platform}/` directory
-   - Sets executable permissions on Unix-based systems (macOS, Linux)
-   - Provides configuration generation for MCP clients (JSON format with executable paths and port settings)
-   - Handles server binary cleanup and re-download when version mismatch detected
+   - Downloads and manages `Unity-MCP-Server` executable from GitHub releases
+   - Cross-platform binary selection (Windows/macOS/Linux, x86/x64/ARM/ARM64)
+   - Version compatibility enforcement between server and plugin
+   - Configuration generation for MCP clients (JSON with executable paths and connection settings)
 
-3. **MCP Tools Implementation** ([Scripts/API/Tool/](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/))
-   - Implements MCP Tools categorized by functionality:
-   - **GameObject Operations**: Create, destroy, find, modify, duplicate, set parent, add/remove components ([GameObject.*.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/GameObject.cs))
-   - **Scene Management**: Load, unload, create, save scenes, get hierarchy ([Scene.*.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/Scene.cs))
-   - **Asset Operations**: Find, read, create, modify, delete, copy, move, refresh assets ([Assets.*.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/Assets.cs))
-   - **Prefab Operations**: Create, instantiate, open, close, save prefabs ([Assets.Prefab.*.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/Assets.Prefab.cs))
-   - **Material & Shader Operations**: Create materials, list shaders ([Assets.Material.*.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/Assets.Material.cs))
-   - **Script Management**: Read, create, update, delete, execute C# scripts ([Script.*.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/Script.cs))
-   - **Component Operations**: Get all components, modify component properties ([Component.*.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/Component.cs))
-   - **Editor Control**: Get/set editor state, manage selection ([Editor.*.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/Editor.cs))
-   - **Test Runner**: Execute EditMode and PlayMode tests with filtering ([TestRunner.*.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/TestRunner.cs))
-   - **Console Integration**: Retrieve Unity Console logs ([Console.*.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/Console.cs))
-   - **Reflection API**: Find and call methods dynamically ([Reflection.*.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/Reflection.cs))
-   - All tools use `[McpPluginTool]` attribute and return string responses
-   - Tools execute on Unity's main thread via `MainThread.Instance.Run()`
+3. **MCP API Implementation** ([Scripts/API/](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/))
+   - **Tools** (50+): GameObject, Scene, Assets, Prefabs, Scripts, Components, Editor Control, Test Runner, Console, Reflection
+   - **Prompts**: Pre-built templates for common Unity development tasks
+   - **Resources**: URI-based access to Unity Editor data with JSON serialization
+   - All operations execute on Unity's main thread for thread safety
+   - Attribute-based discovery using `[McpPluginTool]`, `[McpPluginPrompt]`, `[McpPluginResource]`
 
-4. **MCP Prompts Implementation** ([Scripts/API/Prompt/](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Prompt/))
-   - Provides pre-built prompt templates for common Unity tasks
-   - Categories: Scene Management, GameObject/Component, Scripting/Code, Asset Management, Animation/Timeline, Debugging/Testing
-   - Examples: "setup-basic-scene", "organize-scene-hierarchy", "add-event-system", "implement-singleton-pattern"
-   - Prompts use `[McpPluginPrompt]` attribute with User or Assistant role
-
-5. **MCP Resources Implementation** ([Scripts/API/Resource/](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Resource/))
-   - Exposes Unity Editor data as MCP Resources with URI-based access
-   - Provides dynamic resource listing via URI schemes (e.g., `gameObject://currentScene/{path}`)
-   - Serializes GameObject hierarchy with components and property values to JSON
-   - Uses reflection to extract component data for AI context
-
-6. **Editor UI** ([Scripts/UI/](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/))
-   - Main configuration window accessible via `Window > AI Game Developer (Unity-MCP)` menu ([MenuItems.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/MenuItems.cs))
-   - Provides connection management interface ([MainWindowEditor.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/Window/MainWindowEditor.cs))
-   - Menu items for server binary management (download, delete) and log file access
-   - Window content generation and client configuration UI ([MainWindowEditor.CreateGUI.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/Window/MainWindowEditor.CreateGUI.cs))
-   - Handles user interaction for connecting/disconnecting from MCP Server
-
-7. **Utility Systems** ([Scripts/Utils/](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Utils/))
-   - Unix permission management for executable files ([UnixUtils.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Utils/UnixUtils.cs))
-   - Script template utilities for C# code generation ([ScriptUtils.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Utils/ScriptUtils.cs))
-   - Link extraction from documentation ([LinkExtractor.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Utils/LinkExtractor.cs))
-
-**Architecture Pattern:**
-
-- Tools are organized as partial classes (e.g., `Tool_GameObject`, `Tool_Scene`, `Tool_Assets`)
-- Each tool operation is implemented in a separate file (e.g., `GameObject.Create.cs`, `Scene.Load.cs`)
-- Error handling is centralized in nested `Error` classes within each tool type
-- All Editor operations run on Unity's main thread for thread safety
-- Uses attributes from Unity-MCP-Common for MCP feature discovery via reflection
+4. **Editor UI** ([Scripts/UI/](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/))
+   - Configuration window for connection management (`Window > AI Game Developer`)
+   - Server binary management and log access via Unity menu items
 
 ### Runtime
 
-The Runtime component provides the core infrastructure and shared utilities that work in both Unity Editor and Runtime modes. It establishes the connection to Unity-MCP-Server, manages serialization, and provides thread-safe utilities.
+The Runtime component provides core infrastructure shared between Editor and Runtime modes, handling SignalR communication, serialization, and thread-safe Unity API access.
 
 > Location `Unity-MCP-Plugin/Assets/root/Runtime`
 
 **Main Responsibilities:**
 
-1. **Plugin Core & Lifecycle Management** ([UnityMcpPlugin.cs](../Unity-MCP-Plugin/Assets/root/Runtime/UnityMcpPlugin.cs), [UnityMcpPlugin.Startup.cs](../Unity-MCP-Plugin/Assets/root/Runtime/UnityMcpPlugin.Startup.cs))
-   - Singleton pattern implementation with thread-safe initialization
-   - Main entry point via `BuildAndStart()` method
-   - Manages plugin version (`0.20.0`) and API version compatibility
-   - Configuration management: host, port, timeout, connection state
-   - Creates and configures `McpPlugin` instance from Unity-MCP-Common
-   - Discovers MCP Tools, Prompts, and Resources from all loaded assemblies using reflection
-   - Establishes SignalR connection to Unity-MCP-Server
-   - Provides reactive properties for connection state monitoring via R3 library
-   - Handles connection/disconnection lifecycle with mutex-based synchronization
+1. **Plugin Core & SignalR Connection** ([UnityMcpPlugin.cs](../Unity-MCP-Plugin/Assets/root/Runtime/UnityMcpPlugin.cs))
+   - Thread-safe singleton managing plugin lifecycle via `BuildAndStart()`
+   - Discovers MCP Tools/Prompts/Resources from assemblies using reflection
+   - Establishes SignalR connection to Unity-MCP-Server with reactive state monitoring (R3 library)
+   - Configuration management: host, port, timeout, version compatibility
 
-2. **Main Thread Dispatcher** ([MainThreadDispatcher.cs](../Unity-MCP-Plugin/Assets/root/Runtime/Utils/MainThreadDispatcher.cs), [MainThread.Editor.cs](../Unity-MCP-Plugin/Assets/root/Runtime/Utils/MainThread.Editor.cs))
-   - Provides thread-safe execution of Unity API calls from background threads
-   - Implements `MainThread.Instance` singleton for executing actions/functions on Unity's main thread
-   - Queues actions from any thread and processes them in Unity's Update loop
-   - Editor-specific implementation using `EditorApplication.update` callbacks
-   - Identifies main thread via `Thread.ManagedThreadId` comparison
-   - Supports both `Task`-based and `Func<T>`-based async execution patterns
-   - Essential for MCP operations triggered by SignalR callbacks from background threads
+2. **Main Thread Dispatcher** ([MainThreadDispatcher.cs](../Unity-MCP-Plugin/Assets/root/Runtime/Utils/MainThreadDispatcher.cs))
+   - Marshals Unity API calls from SignalR background threads to Unity's main thread
+   - Queue-based execution in Unity's Update loop
+   - Critical for thread-safe MCP operation execution
 
-3. **Reflection Converters** ([ReflectionConverters/](../Unity-MCP-Plugin/Assets/root/Runtime/ReflectionConverters/))
-   - Custom serialization/deserialization for Unity types to/from JSON
-   - **Unity Object Types**: GameObject, Component, Transform, Material, Sprite, Renderer, MeshFilter ([UnityEngine_*_ReflectionConvertor.cs](../Unity-MCP-Plugin/Assets/root/Runtime/ReflectionConverters/))
-   - **Struct Types**: Vector2/3/4, Vector2Int/3Int, Quaternion, Color, Color32, Bounds, BoundsInt, Rect, RectInt, Matrix4x4 ([Struct/](../Unity-MCP-Plugin/Assets/root/Runtime/ReflectionConverters/Struct/))
-   - Converts Unity objects to reference format (`GameObjectRef`, `ComponentRef`, `ObjectRef`) with instanceID
-   - Serializes GameObject with all attached components recursively
-   - Handles component lookup by instanceID, index, or type name
-   - Implements `UnityGenericReflectionConvertor<T>` base class for Unity-specific serialization
-   - Integrates with ReflectorNet library for object introspection
+3. **Unity Type Serialization** ([ReflectionConverters/](../Unity-MCP-Plugin/Assets/root/Runtime/ReflectionConverters/), [JsonConverters/](../Unity-MCP-Plugin/Assets/root/Runtime/JsonConverters/))
+   - Custom JSON serialization for Unity types (GameObject, Component, Transform, Vector3, Quaternion, etc.)
+   - Converts Unity objects to reference format (`GameObjectRef`, `ComponentRef`) with instanceID tracking
+   - Integrates with ReflectorNet for object introspection and component serialization
+   - Provides JSON schemas for MCP protocol type definitions
 
-4. **JSON Converters** ([JsonConverters/](../Unity-MCP-Plugin/Assets/root/Runtime/JsonConverters/))
-   - System.Text.Json converters for Unity-specific types
-   - Converts Unity structs to/from JSON with proper schema definitions
-   - Types covered: Vector2/3/4, Vector2Int/3Int, Quaternion, Color, Color32, Bounds, BoundsInt, Rect, RectInt, Matrix4x4
-   - Implements `IJsonSchemaConverter` for generating JSON schemas
-   - Example: Vector3 serialized as `{"x": 1.0, "y": 2.0, "z": 3.0}`
-   - Used by Reflector's JsonSerializer for type-safe serialization
-
-5. **Unity Utilities** ([Utils/](../Unity-MCP-Plugin/Assets/root/Runtime/Utils/))
-   - **GameObjectUtils**: Find GameObjects by path/name/instanceID, hierarchy traversal, bounds calculation, transform manipulation ([GameObjectUtils.cs](../Unity-MCP-Plugin/Assets/root/Runtime/Utils/GameObjectUtils.cs))
-   - **SceneUtils**: Scene loading/unloading, scene metadata extraction ([SceneUtils.cs](../Unity-MCP-Plugin/Assets/root/Runtime/Utils/SceneUtils.cs))
-   - **ShaderUtils**: Shader discovery and management ([ShaderUtils.cs](../Unity-MCP-Plugin/Assets/root/Runtime/Utils/ShaderUtils.cs))
-   - **EnvironmentUtils**: CI environment detection ([EnvironmentUtils.cs](../Unity-MCP-Plugin/Assets/root/Runtime/Utils/EnvironmentUtils.cs))
-   - **Safe**: Safe execution wrapper with error handling ([Safe.cs](../Unity-MCP-Plugin/Assets/root/Runtime/Utils/Safe.cs))
-   - **WeakAction**: Weak reference action wrapper for event handling ([WeakAction.cs](../Unity-MCP-Plugin/Assets/root/Runtime/Utils/WeakAction.cs))
-
-6. **Data Models** ([Data/](../Unity-MCP-Plugin/Assets/root/Runtime/Data/))
-   - **GameObjectMetadata**: Hierarchical GameObject representation with instanceID, path, active state, tag, children ([GameObjectMetadata.cs](../Unity-MCP-Plugin/Assets/root/Runtime/Data/GameObjectMetadata.cs))
-   - **SceneMetadata**: Scene information including name, loaded status, root GameObjects ([SceneMetadata.cs](../Unity-MCP-Plugin/Assets/root/Runtime/Data/SceneMetadata.cs))
-   - Provides `Print()` methods for formatted text output with configurable line limits
-   - Used by MCP Resources and Tools for returning structured scene/hierarchy data
-
-7. **Logging Integration** ([Logger/](../Unity-MCP-Plugin/Assets/root/Runtime/Logger/))
-   - Bridges Microsoft.Extensions.Logging with Unity's Debug.Log system
-   - **UnityLogger**: Custom ILogger implementation that outputs to Unity Console ([UnityLogger.cs](../Unity-MCP-Plugin/Assets/root/Runtime/Logger/UnityLogger.cs))
-   - **UnityLoggerProvider**: Factory for creating UnityLogger instances ([UnityLoggerProvider.cs](../Unity-MCP-Plugin/Assets/root/Runtime/Logger/UnityLoggerProvider.cs))
-   - Color-coded log levels: Trace, Debug, Info, Warning, Error, Critical
-   - Log filtering based on configured log level
-   - Formatted output with tags: `[AI-Editor]`, `[trce]`, `[info]`, `[fail]`, etc.
-
-8. **Console Log Collection** ([Unity/Logs/](../Unity-MCP-Plugin/Assets/root/Runtime/Unity/Logs/))
-   - **LogUtils**: Collects Unity Console logs for AI context ([LogUtils.cs](../Unity-MCP-Plugin/Assets/root/Runtime/Unity/Logs/LogUtils.cs))
-   - **LogEntry**: Structured log entry with timestamp, type, message, stackTrace ([LogEntry.cs](../Unity-MCP-Plugin/Assets/root/Runtime/Unity/Logs/LogEntry.cs))
-   - Subscribes to `Application.logMessageReceived` events
-   - Provides log history for MCP Tools to retrieve recent errors/warnings
-   - Configurable max entries limit
-
-9. **Extension Methods** ([Extensions/](../Unity-MCP-Plugin/Assets/root/Runtime/Extensions/))
-   - Helper extension methods for working with Unity-MCP data types
-   - **GameObjectRef extensions**: Find GameObject from reference ([ExtensionsRuntimeGameObjectRef.cs](../Unity-MCP-Plugin/Assets/root/Runtime/Extensions/ExtensionsRuntimeGameObjectRef.cs))
-   - **ComponentRef extensions**: Find Component from reference ([ExtensionsComponentRef.cs](../Unity-MCP-Plugin/Assets/root/Runtime/Extensions/ExtensionsComponentRef.cs))
-   - **SerializedMember extensions**: Extract instanceID and type information ([ExtensionsSerializedMember.cs](../Unity-MCP-Plugin/Assets/root/Runtime/Extensions/ExtensionsSerializedMember.cs))
-   - Simplifies reference resolution and type conversion
-
-**Architecture Pattern:**
-
-- Shared between Editor and Runtime via conditional compilation (`#if UNITY_EDITOR`)
-- Uses partial classes to separate concerns across multiple files
-- Thread-safe singleton pattern with mutex synchronization
-- Reactive programming using R3 library for state changes
-- Dependency injection for logging via Microsoft.Extensions.Logging
-- Custom reflection/serialization system integrated with ReflectorNet
-- All Unity API calls marshaled to main thread via MainThreadDispatcher
+4. **Logging & Diagnostics** ([Logger/](../Unity-MCP-Plugin/Assets/root/Runtime/Logger/), [Unity/Logs/](../Unity-MCP-Plugin/Assets/root/Runtime/Unity/Logs/))
+   - Bridges Microsoft.Extensions.Logging to Unity Console with color-coded levels
+   - Collects Unity Console logs for AI context retrieval via MCP Tools
 
 ### MCP features
 
