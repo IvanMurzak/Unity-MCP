@@ -97,9 +97,42 @@ graph LR
 
 ## 🔹Unity-MCP-Server
 
-Implements [csharp-sdk](https://github.com/modelcontextprotocol/csharp-sdk) for [model context protocol](https://github.com/modelcontextprotocol). Communicates with `Unity-MCP-Plugin` over SignalR. Notifies `MCP Client` about *Tools*, *Resources*, *Prompts* updates
+A C# ASP.NET Core application that acts as a bridge between MCP clients (AI interfaces like Claude, Cursor) and Unity Editor instances. The server implements the [Model Context Protocol](https://github.com/modelcontextprotocol) using the [csharp-sdk](https://github.com/modelcontextprotocol/csharp-sdk).
 
 > Project location: `Unity-MCP-Server`
+
+**Main Responsibilities:**
+
+1. **MCP Protocol Implementation** ([ExtensionsMcpServer.cs](Unity-MCP-Server/src/Extension/ExtensionsMcpServer.cs))
+   - Implements MCP server with support for Tools, Prompts, and Resources
+   - Supports both STDIO and HTTP transport methods
+   - Handles MCP client requests: `CallTool`, `GetPrompt`, `ReadResource`, and their list operations
+   - Sends notifications to MCP clients when capabilities change (tool/prompt list updates)
+
+2. **SignalR Hub Communication** ([RemoteApp.cs](Unity-MCP-Server/src/Hub/RemoteApp.cs), [BaseHub.cs](Unity-MCP-Server/src/Hub/BaseHub.cs))
+   - Manages real-time bidirectional communication with Unity-MCP-Plugin via SignalR
+   - Handles version handshake to ensure API compatibility between server and plugin
+   - Tracks client connections and manages disconnections
+   - Routes tool/prompt/resource update notifications from Unity to MCP clients
+
+3. **Request Routing & Execution** ([ToolRouter.Call.cs](Unity-MCP-Server/src/Routing/Tool/ToolRouter.Call.cs), [PromptRouter.Get.cs](Unity-MCP-Server/src/Routing/Prompt/PromptRouter.Get.cs), [ResourceRouter.ReadResource.cs](Unity-MCP-Server/src/Routing/Resource/ResourceRouter.ReadResource.cs))
+   - Routes MCP client requests to the appropriate Unity-MCP-Plugin instance
+   - Handles Tool calls, Prompt requests, and Resource reads
+   - Performs error handling and validation
+   - Converts between MCP protocol formats and internal data models
+
+4. **Remote Execution Service** ([RemoteToolRunner.cs](Unity-MCP-Server/src/Client/RemoteToolRunner.cs), [RemotePromptRunner.cs](Unity-MCP-Server/src/Client/RemotePromptRunner.cs), [RemoteResourceRunner.cs](Unity-MCP-Server/src/Client/RemoteResourceRunner.cs))
+   - Invokes remote procedures on Unity-MCP-Plugin through SignalR
+   - Tracks asynchronous requests and manages timeouts
+   - Implements request/response patterns with cancellation support
+   - Handles request completion callbacks from Unity instances
+
+5. **Server Lifecycle Management** ([Program.cs](Unity-MCP-Server/src/Program.cs), [McpServerService.cs](Unity-MCP-Server/src/McpServerService.cs))
+   - Configures and starts ASP.NET Core web server with Kestrel
+   - Initializes MCP server, SignalR hub, and dependency injection
+   - Manages logging with NLog (redirects logs to stderr in STDIO mode)
+   - Handles graceful shutdown and resource cleanup
+   - Subscribes to Unity tool/prompt list change events
 
 ### Docker Image
 
