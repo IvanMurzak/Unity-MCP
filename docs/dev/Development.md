@@ -37,15 +37,31 @@ This document explains the internal project structure, design, code style, and m
 
 ## Content
 
-- [Project structure](#project-structure)
+- [Contribute](#contribute)
+- [Projects structure](#projects-structure)
   - [🔹Unity-MCP-Server](#unity-mcp-server)
+    - [Docker Image](#docker-image)
   - [🔸Unity-MCP-Plugin](#unity-mcp-plugin)
-    - [Add `MCP Tool`](#add-mcp-tool)
-    - [Add `MCP Prompt`](#add-mcp-prompt)
+    - [UPM Package](#upm-package)
+    - [Editor](#editor)
+    - [Runtime](#runtime)
+    - [MCP features](#mcp-features)
+      - [Add `MCP Tool`](#add-mcp-tool)
+      - [Add `MCP Prompt`](#add-mcp-prompt)
   - [🔺Unity-MCP-Common](#unity-mcp-common)
   - [◾Installer (Unity)](#installer-unity)
+- [Code style](#code-style)
+- [CI/CD](#cicd)
 
-# Project structure
+# Contribute
+
+Lets build the bright game development future together, contribute to the project. Use this document to understand the project structure and how exactly it works.
+
+1. [Fork the project](https://github.com/IvanMurzak/Unity-MCP/fork)
+2. Make your improvements, follow code style
+3. [Create Pull Request](https://github.com/IvanMurzak/Unity-MCP/compare)
+
+# Projects structure
 
 ```mermaid
 graph LR
@@ -76,6 +92,10 @@ Implements [csharp-sdk](https://github.com/modelcontextprotocol/csharp-sdk) for 
 
 > Project location: `Unity-MCP-Server`
 
+### Docker Image
+
+`Unity-MCP-Server` is deployable into a docker image. It contains `Dockerfile` and `.dockerignore` files in the folder of the project.
+
 ---
 
 ## 🔸Unity-MCP-Plugin
@@ -84,7 +104,23 @@ Integrates into Unity environment. Uses `Unity-MCP-Common` for searching for MCP
 
 > Project location: `Unity-MCP-Plugin`
 
-### Add `MCP Tool`
+### UPM Package
+
+`Unity-MCP-Plugin` is a UPM package, the root folder of the package is located at . It contains `package.json`. Which is used for uploading the package directly from GitHub release to [OpenUPM](https://openupm.com/).
+
+> Location `Unity-MCP-Plugin/Assets/root`
+
+### Editor
+
+> Location `Unity-MCP-Plugin/Assets/root/Editor`
+
+### Runtime
+
+> Location `Unity-MCP-Plugin/Assets/root/Runtime`
+
+### MCP features
+
+#### Add `MCP Tool`
 
 ```csharp
 [McpPluginToolType]
@@ -114,7 +150,7 @@ public class Tool_GameObject
 }
 ```
 
-### Add `MCP Prompt`
+#### Add `MCP Prompt`
 
 `MCP Prompt` allows you to inject custom prompts into the conversation with the LLM. It supports two sender roles: User and Assistant. This is a quick way to instruct the LLM to perform specific tasks. You can generate prompts using custom data, providing lists or any other relevant information.
 
@@ -148,7 +184,7 @@ graph TD
 
 **Unity-MCP-Common** - shared code base between `Unity-MCP-Server` and `Unity-MCP-Plugin`. It is needed to simplify the data model and API sharing between projects. It is an independent dotnet library project.
 
-> Project location: `Unity-MCP-Plugin/Assets/root/Runtime/Unity-MCP-Common`
+> Project location: `Unity-MCP-Plugin/Assets/root/Unity-MCP-Common`
 
 ---
 
@@ -172,3 +208,10 @@ graph LR
 > Project location: `Installer`
 
 ---
+
+# Code style
+
+---
+
+# CI/CD
+
