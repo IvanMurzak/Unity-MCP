@@ -6,9 +6,9 @@
     <ImplicitUsings>disable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <LangVersion>9.0</LangVersion>
-    <OutputPath>./Temp~/bin/$(Configuration)</OutputPath>
-    <BaseIntermediateOutputPath>./Temp~/obj/</BaseIntermediateOutputPath>
-    <IntermediateOutputPath>./Temp~/obj/$(Configuration)/</IntermediateOutputPath>
+    <OutputPath>./bin~/$(Configuration)</OutputPath>
+    <BaseIntermediateOutputPath>./obj~/</BaseIntermediateOutputPath>
+    <IntermediateOutputPath>./obj~/$(Configuration)/</IntermediateOutputPath>
 
     <!-- NuGet Package Information -->
     <PackageId>com.IvanMurzak.Unity.MCP.Common</PackageId>
@@ -25,8 +25,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="./README.md" Pack="true" PackagePath="/" />
-    <None Include="./LICENSE" Pack="true" PackagePath="/" />
+    <None Include="./../README.md" Pack="true" PackagePath="/" />
+    <None Include="./../LICENSE" Pack="true" PackagePath="/" />
   </ItemGroup>
 
   <ItemGroup>
@@ -38,20 +38,25 @@
   </ItemGroup>
 
   <!-- <ItemGroup>
-    <Reference Include="./../Plugins/com.IvanMurzak.ReflectorNet/ReflectorNet.dll">
-      <HintPath>./../Plugins/com.IvanMurzak.ReflectorNet/ReflectorNet.dll</HintPath>
+    <Reference Include="./../../Plugins/com.IvanMurzak.ReflectorNet/ReflectorNet.dll">
+      <HintPath>./../../Plugins/com.IvanMurzak.ReflectorNet/ReflectorNet.dll</HintPath>
       <Private>true</Private>
     </Reference>
   </ItemGroup> -->
 
   <!-- Exclude temp build artifacts and tests from compilation -->
   <ItemGroup>
-    <Compile Remove="**/Temp~/**" />
-    <EmbeddedResource Remove="**/Temp~/**" />
-    <None Remove="**/Temp~/**" />
-    <Compile Remove="Tests/**" />
-    <EmbeddedResource Remove="Tests/**" />
-    <None Remove="Tests/**" />
+    <Compile Remove="**/bin~/**" />
+    <EmbeddedResource Remove="**/bin~/**" />
+    <None Remove="**/bin~/**" />
+
+    <Compile Remove="**/obj~/**" />
+    <EmbeddedResource Remove="**/obj~/**" />
+    <None Remove="**/obj~/**" />
+
+    <Compile Remove="**/Unity-MCP-Common.Tests~/**" />
+    <EmbeddedResource Remove="**/Unity-MCP-Common.Tests~/**" />
+    <None Remove="**/Unity-MCP-Common.Tests~/**" />
   </ItemGroup>
 
 </Project>
