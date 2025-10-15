@@ -1,9 +1,13 @@
 # .gitignore for a typical .NET library project
 # Build results
-**bin/
-**obj/
-**[Tt]emp~/
-**[Tt]emp~.meta
+bin/
+obj/
+~bin/
+~obj/
+~bin.meta
+~obj.meta
+[Tt]emp~/
+[Tt]emp~.meta
 
 
 # User-specific files
@@ -49,7 +53,6 @@ _ReSharper*/
 [Mm]emoryCaptures/
 
 # Unity-MCP-Common.csproj
-!Unity-MCP-Common/Unity-MCP-Common.csproj
-!Unity-MCP-Common.Tests~/Unity-MCP-Common.Tests~.csproj
+!Unity-MCP-Common.csproj
 
 Unity-MCP-Common.sln*

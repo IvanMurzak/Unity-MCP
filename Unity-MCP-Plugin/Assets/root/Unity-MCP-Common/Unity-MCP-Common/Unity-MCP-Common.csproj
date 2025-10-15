@@ -44,11 +44,14 @@
     </Reference>
   </ItemGroup> -->
 
-  <!-- Exclude temp build artifacts from compilation -->
+  <!-- Exclude temp build artifacts and tests from compilation -->
   <ItemGroup>
     <Compile Remove="**/Temp~/**" />
     <EmbeddedResource Remove="**/Temp~/**" />
     <None Remove="**/Temp~/**" />
+    <Compile Remove="Tests/**" />
+    <EmbeddedResource Remove="Tests/**" />
+    <None Remove="Tests/**" />
   </ItemGroup>
 
 </Project>
