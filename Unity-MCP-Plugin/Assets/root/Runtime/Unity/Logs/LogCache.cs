@@ -31,7 +31,7 @@ namespace com.IvanMurzak.Unity.MCP
 
         static string _cacheFileName = "editor-logs.txt";
         static string _cacheFile = $"{Path.Combine(_cacheFilePath, _cacheFileName)}";
-        static readonly SemaphoreSlim _fileLock = new(1, 1);
+        static volatile Mutex _fileLock = new();
         static bool _initialized = false;
 
         public static void Initialize()
@@ -61,7 +61,7 @@ namespace com.IvanMurzak.Unity.MCP
 
         public static async Task CacheLogEntriesAsync(LogEntry[] entries)
         {
-            await _fileLock.WaitAsync();
+            _fileLock.WaitOne();
             try
             {
                 string data = JsonUtility.ToJson(new LogWrapper { entries = entries });
@@ -74,12 +74,12 @@ namespace com.IvanMurzak.Unity.MCP
             }
             finally
             {
-                _fileLock.Release();
+                _fileLock.ReleaseMutex();
             }
         }
         public static async Task<ConcurrentQueue<LogEntry>> GetCachedLogEntriesAsync()
         {
-            await _fileLock.WaitAsync();
+            _fileLock.WaitOne();
             try
             {
                 if (!File.Exists(_cacheFile))
@@ -95,7 +95,7 @@ namespace com.IvanMurzak.Unity.MCP
             }
             finally
             {
-                _fileLock.Release();
+                _fileLock.ReleaseMutex();
             }
         }
     }
