@@ -56,7 +56,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
                 if (string.IsNullOrEmpty(attribute.Name))
                     throw new ArgumentException($"Prompt name cannot be null or empty. Type: {classType.Name}, Method: {method.Name}");
 
-                builder.WithPrompt(name: attribute.Name, classType: classType, methodInfo: method);
+                builder.WithPrompt(name: attribute.Name, classType: classType, method: method);
             }
             return builder;
         }

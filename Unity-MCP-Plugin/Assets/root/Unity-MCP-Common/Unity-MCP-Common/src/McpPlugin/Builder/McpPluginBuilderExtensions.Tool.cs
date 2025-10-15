@@ -53,7 +53,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
                 if (string.IsNullOrEmpty(attribute.Name))
                     throw new ArgumentException($"Tool name cannot be null or empty. Type: {classType.Name}, Method: {method.Name}");
 
-                builder.WithTool(name: attribute.Name, classType: classType, methodInfo: method);
+                builder.WithTool(attribute, classType: classType, method: method);
             }
             return builder;
         }

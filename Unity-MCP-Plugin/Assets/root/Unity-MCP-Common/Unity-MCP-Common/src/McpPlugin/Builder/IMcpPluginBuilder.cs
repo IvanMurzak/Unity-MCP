@@ -20,10 +20,12 @@ namespace com.IvanMurzak.Unity.MCP.Common
     public interface IMcpPluginBuilder
     {
         IServiceCollection Services { get; }
-        IMcpPluginBuilder WithTool(string name, Type classType, MethodInfo methodInfo);
+        IMcpPluginBuilder WithTool(Type classType, MethodInfo method);
+        IMcpPluginBuilder WithTool(McpPluginToolAttribute attribute, Type classType, MethodInfo method);
+        IMcpPluginBuilder WithTool(string name, string? title, Type classType, MethodInfo method);
         IMcpPluginBuilder AddTool(string name, IRunTool runner);
 
-        IMcpPluginBuilder WithPrompt(string name, Type classType, MethodInfo methodInfo);
+        IMcpPluginBuilder WithPrompt(string name, Type classType, MethodInfo method);
         IMcpPluginBuilder AddPrompt(string name, IRunPrompt runner);
 
         IMcpPluginBuilder WithResource(Type classType, MethodInfo getContentMethod);

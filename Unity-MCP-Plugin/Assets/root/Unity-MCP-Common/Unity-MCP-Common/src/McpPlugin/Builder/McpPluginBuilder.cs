@@ -50,12 +50,11 @@ namespace com.IvanMurzak.Unity.MCP.Common
             _services.AddSingleton<IHubEndpointConnectionBuilder, HubEndpointConnectionBuilder>();
         }
 
-        public IMcpPluginBuilder WithTool(string name, Type classType, MethodInfo method)
+        public IMcpPluginBuilder WithTool(McpPluginToolAttribute attribute, Type classType, MethodInfo method)
         {
             if (isBuilt)
                 throw new InvalidOperationException("The builder has already been built.");
 
-            var attribute = method.GetCustomAttribute<McpPluginToolAttribute>();
             if (attribute == null)
             {
                 _logger?.LogWarning($"Method {classType.FullName}{method.Name} does not have a '{nameof(McpPluginToolAttribute)}'.");
@@ -72,6 +71,23 @@ namespace com.IvanMurzak.Unity.MCP.Common
                 attribute: attribute
             ));
             return this;
+        }
+
+        public IMcpPluginBuilder WithTool(Type classType, MethodInfo method)
+        {
+            if (isBuilt)
+                throw new InvalidOperationException("The builder has already been built.");
+
+            var attribute = method.GetCustomAttribute<McpPluginToolAttribute>();
+            return WithTool(attribute!, classType, method);
+        }
+        public IMcpPluginBuilder WithTool(string name, string? title, Type classType, MethodInfo method)
+        {
+            if (isBuilt)
+                throw new InvalidOperationException("The builder has already been built.");
+
+            var attribute = new McpPluginToolAttribute(name, title);
+            return WithTool(attribute, classType, method);
         }
 
         public IMcpPluginBuilder AddTool(string name, IRunTool runner)
