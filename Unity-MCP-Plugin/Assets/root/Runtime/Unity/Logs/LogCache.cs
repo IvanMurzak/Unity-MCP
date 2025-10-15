@@ -31,7 +31,7 @@ namespace com.IvanMurzak.Unity.MCP
 
         static string _cacheFileName = "editor-logs.txt";
         static string _cacheFile = $"{Path.Combine(_cacheFilePath, _cacheFileName)}";
-        static volatile Mutex _fileLock = new();
+        static readonly Mutex _fileLock = new();
         static bool _initialized = false;
 
         public static void Initialize()
@@ -64,7 +64,7 @@ namespace com.IvanMurzak.Unity.MCP
             _fileLock.WaitOne();
             try
             {
-                string data = JsonUtility.ToJson(new LogWrapper { entries = entries });
+                var data = JsonUtility.ToJson(new LogWrapper { entries = entries });
                 Directory.CreateDirectory(_cacheFilePath);
                 // Atomic File Write
                 await File.WriteAllTextAsync(_cacheFile + ".tmp", data);
@@ -86,7 +86,7 @@ namespace com.IvanMurzak.Unity.MCP
                 {
                     return new ConcurrentQueue<LogEntry>();
                 }
-                string json = await File.ReadAllTextAsync(_cacheFile);
+                var json = await File.ReadAllTextAsync(_cacheFile);
                 return await Task.Run(() =>
                 {
                     LogWrapper wrapper = JsonUtility.FromJson<LogWrapper>(json);
