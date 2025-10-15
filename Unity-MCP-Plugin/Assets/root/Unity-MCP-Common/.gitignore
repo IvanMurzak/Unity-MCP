@@ -41,5 +41,4 @@ _ReSharper*/
 # Unity-MCP-Common.csproj
 !Unity-MCP-Common/Unity-MCP-Common.csproj*
 !Unity-MCP-Common.Tests~/Unity-MCP-Common.Tests~.csproj*
-
-Unity-MCP-Common.sln*
+!Unity-MCP-Common.sln*
