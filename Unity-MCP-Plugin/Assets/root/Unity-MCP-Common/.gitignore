@@ -29,15 +29,6 @@ Thumbs.db
 _ReSharper*/
 [Tt]est[Rr]esult*/
 
-# Unity
-[Ll]ibrary/
-[Tt]emp/
-[Oo]bj/
-[Bb]uild/
-[Bb]uilds/
-[Ll]ogs/
-[Mm]emoryCaptures/
-
 # Unity-MCP-Common.csproj
 !Unity-MCP-Common/Unity-MCP-Common.csproj*
 !Unity-MCP-Common.Tests~/Unity-MCP-Common.Tests~.csproj*
