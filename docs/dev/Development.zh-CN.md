@@ -162,25 +162,25 @@ Editor 组件提供 Unity Editor 集成,实现 MCP 功能(Tools、Prompts、Reso
 
 **主要职责:**
 
-1. **插件生命周期管理** ([Startup.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Startup.cs))
+1. **插件生命周期管理** ([Startup.cs](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Startup.cs))
    - 通过 `[InitializeOnLoad]` 在 Unity Editor 加载时自动初始化
    - 管理 Editor 生命周期事件(程序集重新加载、播放模式转换)期间的连接持久性
    - 在域重新加载或退出播放模式后自动重新连接
 
-2. **MCP Server 二进制文件管理** ([Startup.Server.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Startup.Server.cs))
+2. **MCP Server 二进制文件管理** ([Startup.Server.cs](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Startup.Server.cs))
    - 从 GitHub releases 下载和管理 `Unity-MCP-Server` 可执行文件
    - 跨平台二进制文件选择(Windows/macOS/Linux, x86/x64/ARM/ARM64)
    - 强制执行服务器和插件之间的版本兼容性
    - 为 MCP 客户端生成配置(包含可执行文件路径和连接设置的 JSON)
 
-3. **MCP API 实现** ([Scripts/API/](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/))
+3. **MCP API 实现** ([Scripts/API/](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/))
    - **Tools**(50+):GameObject、Scene、Assets、Prefabs、Scripts、Components、Editor Control、Test Runner、Console、Reflection
    - **Prompts**:常见 Unity 开发任务的预构建模板
    - **Resources**:基于 URI 访问 Unity Editor 数据并进行 JSON 序列化
    - 所有操作都在 Unity 的主线程上执行以保证线程安全
    - 使用 `[McpPluginTool]`、`[McpPluginPrompt]`、`[McpPluginResource]` 基于属性的发现
 
-4. **Editor UI** ([Scripts/UI/](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/))
+4. **Editor UI** ([Scripts/UI/](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/))
    - 连接管理的配置窗口(`Window > AI Game Developer`)
    - 通过 Unity 菜单项进行服务器二进制文件管理和日志访问
 
@@ -192,24 +192,24 @@ Runtime 组件提供在 Editor 和 Runtime 模式之间共享的核心基础设�
 
 **主要职责:**
 
-1. **插件核心与 SignalR 连接** ([UnityMcpPlugin.cs](../Unity-MCP-Plugin/Assets/root/Runtime/UnityMcpPlugin.cs))
+1. **插件核心与 SignalR 连接** ([UnityMcpPlugin.cs](../../Unity-MCP-Plugin/Assets/root/Runtime/UnityMcpPlugin.cs))
    - 通过 `BuildAndStart()` 管理插件生命周期的线程安全单例
    - 使用反射从程序集中发现 MCP Tools/Prompts/Resources
    - 建立与 Unity-MCP-Server 的 SignalR 连接,并使用响应式状态监控(R3 库)
    - 配置管理:主机、端口、超时、版本兼容性
 
-2. **主线程调度器** ([MainThreadDispatcher.cs](../Unity-MCP-Plugin/Assets/root/Runtime/Utils/MainThreadDispatcher.cs))
+2. **主线程调度器** ([MainThreadDispatcher.cs](../../Unity-MCP-Plugin/Assets/root/Runtime/Utils/MainThreadDispatcher.cs))
    - 将来自 SignalR 后台线程的 Unity API 调用编组到 Unity 的主线程
    - 在 Unity 的 Update 循环中基于队列的执行
    - 对于线程安全的 MCP 操作执行至关重要
 
-3. **Unity 类型序列化** ([ReflectionConverters/](../Unity-MCP-Plugin/Assets/root/Runtime/ReflectionConverters/), [JsonConverters/](../Unity-MCP-Plugin/Assets/root/Runtime/JsonConverters/))
+3. **Unity 类型序列化** ([ReflectionConverters/](../../Unity-MCP-Plugin/Assets/root/Runtime/ReflectionConverters/), [JsonConverters/](../../Unity-MCP-Plugin/Assets/root/Runtime/JsonConverters/))
    - Unity 类型的自定义 JSON 序列化(GameObject、Component、Transform、Vector3、Quaternion 等)
    - 将 Unity 对象转换为引用格式(`GameObjectRef`、`ComponentRef`),并使用 instanceID 跟踪
    - 与 ReflectorNet 集成进行对象内省和组件序列化
    - 为 MCP 协议类型定义提供 JSON schemas
 
-4. **日志与诊断** ([Logger/](../Unity-MCP-Plugin/Assets/root/Runtime/Logger/), [Unity/Logs/](../Unity-MCP-Plugin/Assets/root/Runtime/Unity/Logs/))
+4. **日志与诊断** ([Logger/](../../Unity-MCP-Plugin/Assets/root/Runtime/Logger/), [Unity/Logs/](../../Unity-MCP-Plugin/Assets/root/Runtime/Unity/Logs/))
    - 将 Microsoft.Extensions.Logging 桥接到带有颜色编码级别的 Unity Console
    - 收集 Unity Console 日志,通过 MCP Tools 进行 AI 上下文检索
 
@@ -480,16 +480,16 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 
 > 位置:`.github/workflows`
 
-### 🚀 [release.yml](.github/workflows/release.yml)
+### 🚀 [release.yml](../../.github/workflows/release.yml)
 
 **触发器:** 推送到 `main` 分支
 **目的:** 协调整个发布过程的主要发布工作流
 
 **流程:**
 
-1. **版本检查** - 从 [package.json](Unity-MCP-Plugin/Assets/root/package.json) 提取版本并检查发布标签是否已存在
+1. **版本检查** - 从 [package.json](../../Unity-MCP-Plugin/Assets/root/package.json) 提取版本并检查发布标签是否已存在
 2. **构建 Unity 安装器** - 测试并导出 Unity 包安装器(`AI-Game-Dev-Installer.unitypackage`)
-3. **构建 MCP Server** - 使用 [build-all.sh](Unity-MCP-Server/build-all.sh) 编译跨平台可执行文件(Windows、macOS、Linux)
+3. **构建 MCP Server** - 使用 [build-all.sh](../../Unity-MCP-Server/build-all.sh) 编译跨平台可执行文件(Windows、macOS、Linux)
 4. **Unity 插件测试** - 运行全面测试:
    - 3 个 Unity 版本:`2022.3.61f1`、`2023.2.20f1`、`6000.2.3f1`
    - 3 种测试模式:`editmode`、`playmode`、`standalone`
@@ -501,7 +501,7 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 8. **部署** - 触发 NuGet 和 Docker 的部署工作流
 9. **清理** - 成功发布后删除构建工件
 
-### 🧪 [test_pull_request.yml](.github/workflows/test_pull_request.yml)
+### 🧪 [test_pull_request.yml](../../.github/workflows/test_pull_request.yml)
 
 **触发器:** 拉取请求到 `main` 或 `dev` 分支
 **目的:** 在合并之前验证 PR 更改
@@ -512,7 +512,7 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 2. 运行与发布工作流相同的 18 个 Unity 测试矩阵组合
 3. 所有测试必须通过才能合并 PR
 
-### 🔧 [test_unity_plugin.yml](.github/workflows/test_unity_plugin.yml)
+### 🔧 [test_unity_plugin.yml](../../.github/workflows/test_unity_plugin.yml)
 
 **类型:** 可重用工作流
 **目的:** 发布和 PR 工作流使用的参数化 Unity 测试工作流
@@ -527,7 +527,7 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 - 缓存 Unity Library 以加快后续运行
 - 上传测试工件以进行调试
 
-### 📦 [deploy.yml](.github/workflows/deploy.yml)
+### 📦 [deploy.yml](../../.github/workflows/deploy.yml)
 
 **触发器:** 由发布工作流调用 OR 手动调度 OR 在发布发布时
 **目的:** 将 MCP Server 部署到 NuGet 和 Docker Hub
@@ -547,7 +547,7 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 - 使用版本号和 `latest` 标签
 - 使用 GitHub Actions 缓存进行构建优化
 
-### 🎯 [deploy_server_executables.yml](.github/workflows/deploy_server_executables.yml)
+### 🎯 [deploy_server_executables.yml](../../.github/workflows/deploy_server_executables.yml)
 
 **触发器:** GitHub release 发布
 **目的:** 构建跨平台服务器可执行文件并上传到 release
@@ -555,7 +555,7 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 **流程:**
 
 - 在 macOS 上运行以支持交叉编译
-- 使用 [build-all.sh](Unity-MCP-Server/build-all.sh) 为 Windows、macOS、Linux 构建可执行文件
+- 使用 [build-all.sh](../../Unity-MCP-Server/build-all.sh) 为 Windows、macOS、Linux 构建可执行文件
 - 为每个平台创建 ZIP 存档
 - 上传到 GitHub release
 

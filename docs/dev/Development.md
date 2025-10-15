@@ -162,25 +162,25 @@ The Editor component provides Unity Editor integration, implementing MCP capabil
 
 **Main Responsibilities:**
 
-1. **Plugin Lifecycle Management** ([Startup.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Startup.cs))
+1. **Plugin Lifecycle Management** ([Startup.cs](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Startup.cs))
    - Auto-initializes on Unity Editor load via `[InitializeOnLoad]`
    - Manages connection persistence across Editor lifecycle events (assembly reload, play mode transitions)
    - Automatic reconnection after domain reload or Play mode exit
 
-2. **MCP Server Binary Management** ([Startup.Server.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Startup.Server.cs))
+2. **MCP Server Binary Management** ([Startup.Server.cs](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Startup.Server.cs))
    - Downloads and manages `Unity-MCP-Server` executable from GitHub releases
    - Cross-platform binary selection (Windows/macOS/Linux, x86/x64/ARM/ARM64)
    - Version compatibility enforcement between server and plugin
    - Configuration generation for MCP clients (JSON with executable paths and connection settings)
 
-3. **MCP API Implementation** ([Scripts/API/](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/))
+3. **MCP API Implementation** ([Scripts/API/](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/))
    - **Tools** (50+): GameObject, Scene, Assets, Prefabs, Scripts, Components, Editor Control, Test Runner, Console, Reflection
    - **Prompts**: Pre-built templates for common Unity development tasks
    - **Resources**: URI-based access to Unity Editor data with JSON serialization
    - All operations execute on Unity's main thread for thread safety
    - Attribute-based discovery using `[McpPluginTool]`, `[McpPluginPrompt]`, `[McpPluginResource]`
 
-4. **Editor UI** ([Scripts/UI/](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/))
+4. **Editor UI** ([Scripts/UI/](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/))
    - Configuration window for connection management (`Window > AI Game Developer`)
    - Server binary management and log access via Unity menu items
 
@@ -192,24 +192,24 @@ The Runtime component provides core infrastructure shared between Editor and Run
 
 **Main Responsibilities:**
 
-1. **Plugin Core & SignalR Connection** ([UnityMcpPlugin.cs](../Unity-MCP-Plugin/Assets/root/Runtime/UnityMcpPlugin.cs))
+1. **Plugin Core & SignalR Connection** ([UnityMcpPlugin.cs](../../Unity-MCP-Plugin/Assets/root/Runtime/UnityMcpPlugin.cs))
    - Thread-safe singleton managing plugin lifecycle via `BuildAndStart()`
    - Discovers MCP Tools/Prompts/Resources from assemblies using reflection
    - Establishes SignalR connection to Unity-MCP-Server with reactive state monitoring (R3 library)
    - Configuration management: host, port, timeout, version compatibility
 
-2. **Main Thread Dispatcher** ([MainThreadDispatcher.cs](../Unity-MCP-Plugin/Assets/root/Runtime/Utils/MainThreadDispatcher.cs))
+2. **Main Thread Dispatcher** ([MainThreadDispatcher.cs](../../Unity-MCP-Plugin/Assets/root/Runtime/Utils/MainThreadDispatcher.cs))
    - Marshals Unity API calls from SignalR background threads to Unity's main thread
    - Queue-based execution in Unity's Update loop
    - Critical for thread-safe MCP operation execution
 
-3. **Unity Type Serialization** ([ReflectionConverters/](../Unity-MCP-Plugin/Assets/root/Runtime/ReflectionConverters/), [JsonConverters/](../Unity-MCP-Plugin/Assets/root/Runtime/JsonConverters/))
+3. **Unity Type Serialization** ([ReflectionConverters/](../../Unity-MCP-Plugin/Assets/root/Runtime/ReflectionConverters/), [JsonConverters/](../../Unity-MCP-Plugin/Assets/root/Runtime/JsonConverters/))
    - Custom JSON serialization for Unity types (GameObject, Component, Transform, Vector3, Quaternion, etc.)
    - Converts Unity objects to reference format (`GameObjectRef`, `ComponentRef`) with instanceID tracking
    - Integrates with ReflectorNet for object introspection and component serialization
    - Provides JSON schemas for MCP protocol type definitions
 
-4. **Logging & Diagnostics** ([Logger/](../Unity-MCP-Plugin/Assets/root/Runtime/Logger/), [Unity/Logs/](../Unity-MCP-Plugin/Assets/root/Runtime/Unity/Logs/))
+4. **Logging & Diagnostics** ([Logger/](../../Unity-MCP-Plugin/Assets/root/Runtime/Logger/), [Unity/Logs/](../../Unity-MCP-Plugin/Assets/root/Runtime/Unity/Logs/))
    - Bridges Microsoft.Extensions.Logging to Unity Console with color-coded levels
    - Collects Unity Console logs for AI context retrieval via MCP Tools
 
@@ -480,16 +480,16 @@ The project implements a comprehensive CI/CD pipeline using GitHub Actions with 
 
 > Location: `.github/workflows`
 
-### 🚀 [release.yml](.github/workflows/release.yml)
+### 🚀 [release.yml](../../.github/workflows/release.yml)
 
 **Trigger:** Push to `main` branch
 **Purpose:** Main release workflow that orchestrates the entire release process
 
 **Process:**
 
-1. **Version Check** - Extracts version from [package.json](Unity-MCP-Plugin/Assets/root/package.json) and checks if release tag already exists
+1. **Version Check** - Extracts version from [package.json](../../Unity-MCP-Plugin/Assets/root/package.json) and checks if release tag already exists
 2. **Build Unity Installer** - Tests and exports Unity package installer (`AI-Game-Dev-Installer.unitypackage`)
-3. **Build MCP Server** - Compiles cross-platform executables (Windows, macOS, Linux) using [build-all.sh](Unity-MCP-Server/build-all.sh)
+3. **Build MCP Server** - Compiles cross-platform executables (Windows, macOS, Linux) using [build-all.sh](../../Unity-MCP-Server/build-all.sh)
 4. **Unity Plugin Testing** - Runs comprehensive tests across:
    - 3 Unity versions: `2022.3.61f1`, `2023.2.20f1`, `6000.2.3f1`
    - 3 test modes: `editmode`, `playmode`, `standalone`
@@ -501,7 +501,7 @@ The project implements a comprehensive CI/CD pipeline using GitHub Actions with 
 8. **Deploy** - Triggers deployment workflow for NuGet and Docker
 9. **Cleanup** - Removes build artifacts after successful publishing
 
-### 🧪 [test_pull_request.yml](.github/workflows/test_pull_request.yml)
+### 🧪 [test_pull_request.yml](../../.github/workflows/test_pull_request.yml)
 
 **Trigger:** Pull requests to `main` or `dev` branches
 **Purpose:** Validates PR changes before merging
@@ -512,7 +512,7 @@ The project implements a comprehensive CI/CD pipeline using GitHub Actions with 
 2. Runs the same 18 Unity test matrix combinations as the release workflow
 3. All tests must pass before PR can be merged
 
-### 🔧 [test_unity_plugin.yml](.github/workflows/test_unity_plugin.yml)
+### 🔧 [test_unity_plugin.yml](../../.github/workflows/test_unity_plugin.yml)
 
 **Type:** Reusable workflow
 **Purpose:** Parameterized Unity testing workflow used by both release and PR workflows
@@ -527,7 +527,7 @@ The project implements a comprehensive CI/CD pipeline using GitHub Actions with 
 - Caches Unity Library for faster subsequent runs
 - Uploads test artifacts for debugging
 
-### 📦 [deploy.yml](.github/workflows/deploy.yml)
+### 📦 [deploy.yml](../../.github/workflows/deploy.yml)
 
 **Trigger:** Called by release workflow OR manual dispatch OR on release published
 **Purpose:** Deploys MCP Server to NuGet and Docker Hub
@@ -547,7 +547,7 @@ The project implements a comprehensive CI/CD pipeline using GitHub Actions with 
 - Tags with version number and `latest`
 - Uses GitHub Actions cache for build optimization
 
-### 🎯 [deploy_server_executables.yml](.github/workflows/deploy_server_executables.yml)
+### 🎯 [deploy_server_executables.yml](../../.github/workflows/deploy_server_executables.yml)
 
 **Trigger:** GitHub release published
 **Purpose:** Builds and uploads cross-platform server executables to release
@@ -555,7 +555,7 @@ The project implements a comprehensive CI/CD pipeline using GitHub Actions with 
 **Process:**
 
 - Runs on macOS for cross-compilation support
-- Builds executables for Windows, macOS, Linux using [build-all.sh](Unity-MCP-Server/build-all.sh)
+- Builds executables for Windows, macOS, Linux using [build-all.sh](../../Unity-MCP-Server/build-all.sh)
 - Creates ZIP archives for each platform
 - Uploads to the GitHub release
 

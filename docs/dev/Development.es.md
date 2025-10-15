@@ -162,25 +162,25 @@ El componente Editor proporciona integración con Unity Editor, implementando ca
 
 **Responsabilidades principales:**
 
-1. **Gestión del ciclo de vida del plugin** ([Startup.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Startup.cs))
+1. **Gestión del ciclo de vida del plugin** ([Startup.cs](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Startup.cs))
    - Auto-inicialización al cargar Unity Editor vía `[InitializeOnLoad]`
    - Gestiona persistencia de conexión a través de eventos del ciclo de vida del Editor (recarga de ensamblados, transiciones de modo Play)
    - Reconexión automática después de recarga de dominio o salida del modo Play
 
-2. **Gestión de binarios del servidor MCP** ([Startup.Server.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Startup.Server.cs))
+2. **Gestión de binarios del servidor MCP** ([Startup.Server.cs](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Startup.Server.cs))
    - Descarga y gestiona el ejecutable `Unity-MCP-Server` desde releases de GitHub
    - Selección de binarios multiplataforma (Windows/macOS/Linux, x86/x64/ARM/ARM64)
    - Aplicación de compatibilidad de versiones entre servidor y plugin
    - Generación de configuración para clientes MCP (JSON con rutas de ejecutables y configuración de conexión)
 
-3. **Implementación de API MCP** ([Scripts/API/](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/))
+3. **Implementación de API MCP** ([Scripts/API/](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/))
    - **Tools** (50+): GameObject, Scene, Assets, Prefabs, Scripts, Components, Editor Control, Test Runner, Console, Reflection
    - **Prompts**: Plantillas predefinidas para tareas comunes de desarrollo en Unity
    - **Resources**: Acceso basado en URI a datos de Unity Editor con serialización JSON
    - Todas las operaciones se ejecutan en el hilo principal de Unity para seguridad de hilos
    - Descubrimiento basado en atributos usando `[McpPluginTool]`, `[McpPluginPrompt]`, `[McpPluginResource]`
 
-4. **UI del Editor** ([Scripts/UI/](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/))
+4. **UI del Editor** ([Scripts/UI/](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/))
    - Ventana de configuración para gestión de conexión (`Window > AI Game Developer`)
    - Gestión de binarios del servidor y acceso a logs vía elementos del menú de Unity
 
@@ -192,24 +192,24 @@ El componente Runtime proporciona infraestructura central compartida entre modos
 
 **Responsabilidades principales:**
 
-1. **Core del plugin y conexión SignalR** ([UnityMcpPlugin.cs](../Unity-MCP-Plugin/Assets/root/Runtime/UnityMcpPlugin.cs))
+1. **Core del plugin y conexión SignalR** ([UnityMcpPlugin.cs](../../Unity-MCP-Plugin/Assets/root/Runtime/UnityMcpPlugin.cs))
    - Singleton thread-safe que gestiona el ciclo de vida del plugin vía `BuildAndStart()`
    - Descubre MCP Tools/Prompts/Resources desde ensamblados usando reflection
    - Establece conexión SignalR a Unity-MCP-Server con monitoreo reactivo de estado (librería R3)
    - Gestión de configuración: host, puerto, timeout, compatibilidad de versión
 
-2. **Dispatcher del hilo principal** ([MainThreadDispatcher.cs](../Unity-MCP-Plugin/Assets/root/Runtime/Utils/MainThreadDispatcher.cs))
+2. **Dispatcher del hilo principal** ([MainThreadDispatcher.cs](../../Unity-MCP-Plugin/Assets/root/Runtime/Utils/MainThreadDispatcher.cs))
    - Organiza llamadas a la API de Unity desde hilos en segundo plano de SignalR al hilo principal de Unity
    - Ejecución basada en cola en el bucle Update de Unity
    - Crítico para la ejecución thread-safe de operaciones MCP
 
-3. **Serialización de tipos de Unity** ([ReflectionConverters/](../Unity-MCP-Plugin/Assets/root/Runtime/ReflectionConverters/), [JsonConverters/](../Unity-MCP-Plugin/Assets/root/Runtime/JsonConverters/))
+3. **Serialización de tipos de Unity** ([ReflectionConverters/](../../Unity-MCP-Plugin/Assets/root/Runtime/ReflectionConverters/), [JsonConverters/](../../Unity-MCP-Plugin/Assets/root/Runtime/JsonConverters/))
    - Serialización JSON personalizada para tipos de Unity (GameObject, Component, Transform, Vector3, Quaternion, etc.)
    - Convierte objetos de Unity a formato de referencia (`GameObjectRef`, `ComponentRef`) con seguimiento de instanceID
    - Se integra con ReflectorNet para introspección de objetos y serialización de componentes
    - Proporciona esquemas JSON para definiciones de tipos del protocolo MCP
 
-4. **Logging y diagnósticos** ([Logger/](../Unity-MCP-Plugin/Assets/root/Runtime/Logger/), [Unity/Logs/](../Unity-MCP-Plugin/Assets/root/Runtime/Unity/Logs/))
+4. **Logging y diagnósticos** ([Logger/](../../Unity-MCP-Plugin/Assets/root/Runtime/Logger/), [Unity/Logs/](../../Unity-MCP-Plugin/Assets/root/Runtime/Unity/Logs/))
    - Conecta Microsoft.Extensions.Logging a Unity Console con niveles codificados por colores
    - Recopila logs de Unity Console para recuperación de contexto de IA vía MCP Tools
 
@@ -480,16 +480,16 @@ El proyecto implementa un pipeline CI/CD completo usando GitHub Actions con múl
 
 > Ubicación: `.github/workflows`
 
-### 🚀 [release.yml](.github/workflows/release.yml)
+### 🚀 [release.yml](../../.github/workflows/release.yml)
 
 **Disparador:** Push a rama `main`
 **Propósito:** Flujo de trabajo principal de release que orquesta todo el proceso de lanzamiento
 
 **Proceso:**
 
-1. **Verificación de versión** - Extrae versión de [package.json](Unity-MCP-Plugin/Assets/root/package.json) y verifica si la etiqueta de release ya existe
+1. **Verificación de versión** - Extrae versión de [package.json](../../Unity-MCP-Plugin/Assets/root/package.json) y verifica si la etiqueta de release ya existe
 2. **Construcción de instalador Unity** - Prueba y exporta instalador de paquete Unity (`AI-Game-Dev-Installer.unitypackage`)
-3. **Construcción de servidor MCP** - Compila ejecutables multiplataforma (Windows, macOS, Linux) usando [build-all.sh](Unity-MCP-Server/build-all.sh)
+3. **Construcción de servidor MCP** - Compila ejecutables multiplataforma (Windows, macOS, Linux) usando [build-all.sh](../../Unity-MCP-Server/build-all.sh)
 4. **Pruebas del plugin Unity** - Ejecuta pruebas completas en:
    - 3 versiones de Unity: `2022.3.61f1`, `2023.2.20f1`, `6000.2.3f1`
    - 3 modos de prueba: `editmode`, `playmode`, `standalone`
@@ -501,7 +501,7 @@ El proyecto implementa un pipeline CI/CD completo usando GitHub Actions con múl
 8. **Despliegue** - Dispara flujo de trabajo de despliegue para NuGet y Docker
 9. **Limpieza** - Elimina artefactos de construcción después de publicación exitosa
 
-### 🧪 [test_pull_request.yml](.github/workflows/test_pull_request.yml)
+### 🧪 [test_pull_request.yml](../../.github/workflows/test_pull_request.yml)
 
 **Disparador:** Pull requests a ramas `main` o `dev`
 **Propósito:** Valida cambios de PR antes de fusionar
@@ -512,7 +512,7 @@ El proyecto implementa un pipeline CI/CD completo usando GitHub Actions con múl
 2. Ejecuta las mismas 18 combinaciones de matriz de pruebas que el flujo de trabajo de release
 3. Todas las pruebas deben pasar antes de que el PR pueda fusionarse
 
-### 🔧 [test_unity_plugin.yml](.github/workflows/test_unity_plugin.yml)
+### 🔧 [test_unity_plugin.yml](../../.github/workflows/test_unity_plugin.yml)
 
 **Tipo:** Flujo de trabajo reutilizable
 **Propósito:** Flujo de trabajo de pruebas de Unity parametrizado usado por flujos de trabajo de release y PR
@@ -527,7 +527,7 @@ El proyecto implementa un pipeline CI/CD completo usando GitHub Actions con múl
 - Cachea Unity Library para ejecuciones subsecuentes más rápidas
 - Sube artefactos de prueba para depuración
 
-### 📦 [deploy.yml](.github/workflows/deploy.yml)
+### 📦 [deploy.yml](../../.github/workflows/deploy.yml)
 
 **Disparador:** Llamado por flujo de trabajo de release O despacho manual O al publicar release
 **Propósito:** Despliega servidor MCP a NuGet y Docker Hub
@@ -547,7 +547,7 @@ El proyecto implementa un pipeline CI/CD completo usando GitHub Actions con múl
 - Etiqueta con número de versión y `latest`
 - Usa caché de GitHub Actions para optimización de construcción
 
-### 🎯 [deploy_server_executables.yml](.github/workflows/deploy_server_executables.yml)
+### 🎯 [deploy_server_executables.yml](../../.github/workflows/deploy_server_executables.yml)
 
 **Disparador:** Release de GitHub publicado
 **Propósito:** Construye y sube ejecutables multiplataforma del servidor al release
@@ -555,7 +555,7 @@ El proyecto implementa un pipeline CI/CD completo usando GitHub Actions con múl
 **Proceso:**
 
 - Se ejecuta en macOS para soporte de compilación cruzada
-- Construye ejecutables para Windows, macOS, Linux usando [build-all.sh](Unity-MCP-Server/build-all.sh)
+- Construye ejecutables para Windows, macOS, Linux usando [build-all.sh](../../Unity-MCP-Server/build-all.sh)
 - Crea archivos ZIP para cada plataforma
 - Sube al release de GitHub
 

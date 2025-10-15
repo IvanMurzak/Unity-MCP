@@ -162,25 +162,25 @@ Editorコンポーネントは、Unity Editorの統合を提供し、MCP機能(T
 
 **主な責務:**
 
-1. **プラグインライフサイクル管理** ([Startup.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Startup.cs))
+1. **プラグインライフサイクル管理** ([Startup.cs](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Startup.cs))
    - `[InitializeOnLoad]`を介したUnity Editor読み込み時の自動初期化
    - Editorライフサイクルイベント(アセンブリリロード、Playモード遷移)全体での接続の永続化を管理
    - ドメインリロードまたはPlayモード終了後の自動再接続
 
-2. **MCPサーバーバイナリ管理** ([Startup.Server.cs](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Startup.Server.cs))
+2. **MCPサーバーバイナリ管理** ([Startup.Server.cs](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Startup.Server.cs))
    - GitHubリリースから`Unity-MCP-Server`実行可能ファイルをダウンロード・管理
    - クロスプラットフォームバイナリ選択(Windows/macOS/Linux、x86/x64/ARM/ARM64)
    - サーバーとプラグイン間のバージョン互換性の強制
    - MCPクライアント用の設定生成(実行可能ファイルパスと接続設定を含むJSON)
 
-3. **MCP API実装** ([Scripts/API/](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/))
+3. **MCP API実装** ([Scripts/API/](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/))
    - **Tools** (50+): GameObject、Scene、Assets、Prefabs、Scripts、Components、Editor Control、Test Runner、Console、Reflection
    - **Prompts**: 一般的なUnity開発タスク用の事前構築されたテンプレート
    - **Resources**: JSONシリアライゼーションを使用したUnity EditorデータへのURIベースのアクセス
    - すべての操作はスレッドセーフのためにUnityのメインスレッドで実行
    - `[McpPluginTool]`、`[McpPluginPrompt]`、`[McpPluginResource]`を使用した属性ベースの検出
 
-4. **Editor UI** ([Scripts/UI/](../Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/))
+4. **Editor UI** ([Scripts/UI/](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/))
    - 接続管理用の設定ウィンドウ(`Window > AI Game Developer`)
    - Unityメニュー項目を介したサーバーバイナリ管理とログアクセス
 
@@ -192,24 +192,24 @@ Runtimeコンポーネントは、EditorモードとRuntimeモード間で共有
 
 **主な責務:**
 
-1. **プラグインコアとSignalR接続** ([UnityMcpPlugin.cs](../Unity-MCP-Plugin/Assets/root/Runtime/UnityMcpPlugin.cs))
+1. **プラグインコアとSignalR接続** ([UnityMcpPlugin.cs](../../Unity-MCP-Plugin/Assets/root/Runtime/UnityMcpPlugin.cs))
    - `BuildAndStart()`を介してプラグインライフサイクルを管理するスレッドセーフなシングルトン
    - リフレクションを使用してアセンブリからMCP Tools/Prompts/Resourcesを検出
    - Unity-MCP-ServerへのSignalR接続を確立し、リアクティブな状態監視を実装(R3ライブラリ)
    - 設定管理: ホスト、ポート、タイムアウト、バージョン互換性
 
-2. **メインスレッドディスパッチャ** ([MainThreadDispatcher.cs](../Unity-MCP-Plugin/Assets/root/Runtime/Utils/MainThreadDispatcher.cs))
+2. **メインスレッドディスパッチャ** ([MainThreadDispatcher.cs](../../Unity-MCP-Plugin/Assets/root/Runtime/Utils/MainThreadDispatcher.cs))
    - SignalRバックグラウンドスレッドからUnityのメインスレッドへUnity APIコールをマーシャリング
    - UnityのUpdateループでのキューベースの実行
    - スレッドセーフなMCP操作実行に不可欠
 
-3. **Unity型のシリアライゼーション** ([ReflectionConverters/](../Unity-MCP-Plugin/Assets/root/Runtime/ReflectionConverters/), [JsonConverters/](../Unity-MCP-Plugin/Assets/root/Runtime/JsonConverters/))
+3. **Unity型のシリアライゼーション** ([ReflectionConverters/](../../Unity-MCP-Plugin/Assets/root/Runtime/ReflectionConverters/), [JsonConverters/](../../Unity-MCP-Plugin/Assets/root/Runtime/JsonConverters/))
    - Unity型(GameObject、Component、Transform、Vector3、Quaternionなど)用のカスタムJSONシリアライゼーション
    - UnityオブジェクトをinstanceID追跡付きの参照形式(`GameObjectRef`、`ComponentRef`)に変換
    - オブジェクトのイントロスペクションとコンポーネントシリアライゼーションのためにReflectorNetと統合
    - MCPプロトコル型定義用のJSONスキーマを提供
 
-4. **ロギングと診断** ([Logger/](../Unity-MCP-Plugin/Assets/root/Runtime/Logger/), [Unity/Logs/](../Unity-MCP-Plugin/Assets/root/Runtime/Unity/Logs/))
+4. **ロギングと診断** ([Logger/](../../Unity-MCP-Plugin/Assets/root/Runtime/Logger/), [Unity/Logs/](../../Unity-MCP-Plugin/Assets/root/Runtime/Unity/Logs/))
    - Microsoft.Extensions.LoggingをUnity Consoleに色分けされたレベルでブリッジ
    - MCP Tools経由でAIコンテキスト取得用のUnity Consoleログを収集
 
@@ -480,16 +480,16 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 
 > 場所: `.github/workflows`
 
-### 🚀 [release.yml](.github/workflows/release.yml)
+### 🚀 [release.yml](../../.github/workflows/release.yml)
 
 **トリガー:** `main`ブランチへのプッシュ
 **目的:** リリースプロセス全体を調整するメインリリースワークフロー
 
 **プロセス:**
 
-1. **バージョンチェック** - [package.json](Unity-MCP-Plugin/Assets/root/package.json)からバージョンを抽出し、リリースタグがすでに存在するかチェック
+1. **バージョンチェック** - [package.json](../../Unity-MCP-Plugin/Assets/root/package.json)からバージョンを抽出し、リリースタグがすでに存在するかチェック
 2. **Unity Installerのビルド** - Unityパッケージインストーラー(`AI-Game-Dev-Installer.unitypackage`)をテストしてエクスポート
-3. **MCP Serverのビルド** - [build-all.sh](Unity-MCP-Server/build-all.sh)を使用してクロスプラットフォーム実行可能ファイル(Windows、macOS、Linux)をコンパイル
+3. **MCP Serverのビルド** - [build-all.sh](../../Unity-MCP-Server/build-all.sh)を使用してクロスプラットフォーム実行可能ファイル(Windows、macOS、Linux)をコンパイル
 4. **Unity Pluginのテスト** - 以下の包括的なテストを実行:
    - 3つのUnityバージョン: `2022.3.61f1`, `2023.2.20f1`, `6000.2.3f1`
    - 3つのテストモード: `editmode`, `playmode`, `standalone`
@@ -501,7 +501,7 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 8. **デプロイ** - NuGetとDocker用のデプロイワークフローをトリガー
 9. **クリーンアップ** - 公開成功後にビルドアーティファクトを削除
 
-### 🧪 [test_pull_request.yml](.github/workflows/test_pull_request.yml)
+### 🧪 [test_pull_request.yml](../../.github/workflows/test_pull_request.yml)
 
 **トリガー:** `main`または`dev`ブランチへのPull Request
 **目的:** マージ前にPRの変更を検証
@@ -512,7 +512,7 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 2. リリースワークフローと同じ18のUnityテストマトリックスの組み合わせを実行
 3. PRをマージする前にすべてのテストが成功する必要がある
 
-### 🔧 [test_unity_plugin.yml](.github/workflows/test_unity_plugin.yml)
+### 🔧 [test_unity_plugin.yml](../../.github/workflows/test_unity_plugin.yml)
 
 **タイプ:** 再利用可能なワークフロー
 **目的:** リリースワークフローとPRワークフローの両方で使用されるパラメータ化されたUnityテストワークフロー
@@ -527,7 +527,7 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 - 後続の実行を高速化するためにUnity Libraryをキャッシュ
 - デバッグ用のテストアーティファクトをアップロード
 
-### 📦 [deploy.yml](.github/workflows/deploy.yml)
+### 📦 [deploy.yml](../../.github/workflows/deploy.yml)
 
 **トリガー:** リリースワークフローによる呼び出しまたは手動ディスパッチまたはリリース公開時
 **目的:** MCP ServerをNuGetとDocker Hubにデプロイ
@@ -547,7 +547,7 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 - バージョン番号と`latest`でタグ付け
 - ビルド最適化のためにGitHub Actionsキャッシュを使用
 
-### 🎯 [deploy_server_executables.yml](.github/workflows/deploy_server_executables.yml)
+### 🎯 [deploy_server_executables.yml](../../.github/workflows/deploy_server_executables.yml)
 
 **トリガー:** GitHubリリース公開時
 **目的:** クロスプラットフォームサーバー実行可能ファイルをビルドし、リリースにアップロード
@@ -555,7 +555,7 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 **プロセス:**
 
 - クロスコンパイルサポートのためにmacOSで実行
-- [build-all.sh](Unity-MCP-Server/build-all.sh)を使用してWindows、macOS、Linux用の実行可能ファイルをビルド
+- [build-all.sh](../../Unity-MCP-Server/build-all.sh)を使用してWindows、macOS、Linux用の実行可能ファイルをビルド
 - 各プラットフォーム用のZIPアーカイブを作成
 - GitHubリリースにアップロード
 
