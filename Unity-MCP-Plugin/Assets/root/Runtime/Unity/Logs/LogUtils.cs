@@ -45,12 +45,20 @@ namespace com.IvanMurzak.Unity.MCP
 
         public static void SaveToFile()
         {
-            Task.Run(async () => await LogCache.CacheLogEntriesAsync(_logEntries.ToArray()));
+            var logEntries = GetAllLogs();
+            Task.Run(async () => await LogCache.CacheLogEntriesAsync(logEntries));
         }
 
         public static void LoadFromFile()
         {
-            Task.Run(async () => _logEntries = await LogCache.GetCachedLogEntriesAsync());
+            Task.Run(async () =>
+            {
+                var logEntries = await LogCache.GetCachedLogEntriesAsync();
+                lock (_lockObject)
+                {
+                    _logEntries = logEntries;
+                }
+            });
         }
 
         public static LogEntry[] GetAllLogs()
