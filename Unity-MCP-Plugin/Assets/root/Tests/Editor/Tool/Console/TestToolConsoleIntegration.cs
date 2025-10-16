@@ -245,7 +245,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 Debug.Log($"Test Log {i + 1}");
             }
             // Wait for log collection system to process (EditMode tests can only yield null)
-            for (int i = 0; i < 30000; i++)
+            for (int i = 0; i < 10000; i++)
             {
                 yield return null;
             }
@@ -262,17 +262,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             {
                 Debug.Log($"Test Log {i + 1}");
             }
+            for (int i = 0; i < 10000; i++)
+            {
+                yield return null;
+            }
             Assert.AreEqual(startCount + testCount, LogUtils.LogEntries, "Log entries count should include new entries.");
             LogUtils.SaveToFile();
             // Wait for log collection system to process (EditMode tests can only yield null)
-            for (int i = 0; i < 20000; i++)
+            for (int i = 0; i < 50000; i++)
             {
                 yield return null;
             }
             LogUtils.ClearLogs();
             Assert.AreEqual(0, LogUtils.LogEntries, "Log entries and Log Cache count should be empty.");
             LogUtils.LoadFromFile();
-            for (int i = 0; i < 30000; i++)
+            for (int i = 0; i < 50000; i++)
             {
                 yield return null;
             }
