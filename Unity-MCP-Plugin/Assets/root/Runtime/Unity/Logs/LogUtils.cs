@@ -7,9 +7,12 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
-
 #nullable enable
+using System;
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
+using System.Threading;
+using System.Threading.Tasks;
 using com.IvanMurzak.ReflectorNet.Utils;
 using UnityEngine;
 
@@ -18,11 +21,9 @@ namespace com.IvanMurzak.Unity.MCP
     public static class LogUtils
     {
         public const int MaxLogEntries = 5000; // Default max entries to keep in memory
-
-        static readonly ConcurrentQueue<LogEntry> _logEntries = new();
+        static ConcurrentQueue<LogEntry> _logEntries = new();
         static readonly object _lockObject = new();
         static bool _isSubscribed = false;
-
         public static int LogEntries
         {
             get
@@ -34,6 +35,7 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
+
         public static void ClearLogs()
         {
             lock (_lockObject)
@@ -41,6 +43,30 @@ namespace com.IvanMurzak.Unity.MCP
                 _logEntries.Clear();
             }
         }
+
+        public static void SaveToFile(Action? onCompleted = null)
+        {
+            var logEntries = GetAllLogs();
+            Task.Run(async () =>
+            {
+                await LogCache.CacheLogEntriesAsync(logEntries);
+                await MainThread.Instance.RunAsync(() => onCompleted?.Invoke());
+            });
+        }
+
+        public static void LoadFromFile(Action? onCompleted = null)
+        {
+            Task.Run(async () =>
+            {
+                var logEntries = await LogCache.GetCachedLogEntriesAsync();
+                lock (_lockObject)
+                {
+                    _logEntries = logEntries;
+                }
+                await MainThread.Instance.RunAsync(() => onCompleted?.Invoke());
+            });
+        }
+
         public static LogEntry[] GetAllLogs()
         {
             lock (_lockObject)
@@ -62,8 +88,8 @@ namespace com.IvanMurzak.Unity.MCP
                 {
                     if (!_isSubscribed)
                     {
-                        Application.logMessageReceived += OnLogMessageReceived;
                         Application.logMessageReceivedThreaded += OnLogMessageReceived;
+                        LogCache.Initialize();
                         _isSubscribed = true;
                     }
                 }
