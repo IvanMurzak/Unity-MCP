@@ -256,31 +256,59 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public IEnumerator GetLogs_Validate_ConsoleLogRetention()
         {
             // This test verifies that logs are being stored and read from the log cache properly.
-            var testCount = 15;
+            const int testCount = 15;
+            const int timeout = 100000;
+
+            // Ensure a clean slate
+            LogUtils.ClearLogs();
+            yield return null;
+
             var startCount = LogUtils.LogEntries;
+            Assert.AreEqual(0, startCount, "Log entries should be empty at the start.");
+
             for (int i = 0; i < testCount; i++)
             {
                 Debug.Log($"Test Log {i + 1}");
             }
-            for (int i = 0; i < 10000; i++)
+
+            // Wait for logs to be collected
+            int frameCount = 0;
+            while (LogUtils.LogEntries < startCount + testCount)
             {
                 yield return null;
+                frameCount++;
+                Assert.Less(frameCount, timeout, "Timeout waiting for logs to be collected.");
             }
             Assert.AreEqual(startCount + testCount, LogUtils.LogEntries, "Log entries count should include new entries.");
-            LogUtils.SaveToFile();
-            // Wait for log collection system to process (EditMode tests can only yield null)
-            for (int i = 0; i < 50000; i++)
+
+            // Save to file and wait for completion
+            bool saveCompleted = false;
+            LogUtils.SaveToFile(() => saveCompleted = true);
+            frameCount = 0;
+            while (!saveCompleted)
             {
                 yield return null;
+                frameCount++;
+                Assert.Less(frameCount, timeout, "Timeout waiting for SaveToFile to complete.");
             }
+
+            // Clear logs and confirm
             LogUtils.ClearLogs();
-            Assert.AreEqual(0, LogUtils.LogEntries, "Log entries and Log Cache count should be empty.");
-            LogUtils.LoadFromFile();
-            for (int i = 0; i < 50000; i++)
+            Assert.AreEqual(0, LogUtils.LogEntries, "Log entries should be cleared.");
+
+            // Load from file and wait for completion
+            bool loadCompleted = false;
+            LogUtils.LoadFromFile(() => loadCompleted = true);
+            frameCount = 0;
+            while (!loadCompleted)
             {
                 yield return null;
+                frameCount++;
+                Assert.Less(frameCount, timeout, "Timeout waiting for LoadFromFile to complete.");
             }
-            Assert.AreEqual(startCount + testCount, LogUtils.LogEntries, "LogUtils should have new logs in memory.");
+
+            // Final assertion
+            Assert.AreEqual(startCount + testCount, LogUtils.LogEntries, "LogUtils should have the restored logs in memory.");
         }
     }
 }

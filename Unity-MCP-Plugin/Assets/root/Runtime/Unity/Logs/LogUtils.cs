@@ -8,6 +8,7 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 #nullable enable
+using System;
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading;
@@ -43,13 +44,17 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
-        public static void SaveToFile()
+        public static void SaveToFile(Action? onCompleted = null)
         {
             var logEntries = GetAllLogs();
-            Task.Run(async () => await LogCache.CacheLogEntriesAsync(logEntries));
+            Task.Run(async () =>
+            {
+                await LogCache.CacheLogEntriesAsync(logEntries);
+                await MainThread.Instance.RunAsync(() => onCompleted?.Invoke());
+            });
         }
 
-        public static void LoadFromFile()
+        public static void LoadFromFile(Action? onCompleted = null)
         {
             Task.Run(async () =>
             {
@@ -58,6 +63,7 @@ namespace com.IvanMurzak.Unity.MCP
                 {
                     _logEntries = logEntries;
                 }
+                await MainThread.Instance.RunAsync(() => onCompleted?.Invoke());
             });
         }
 
