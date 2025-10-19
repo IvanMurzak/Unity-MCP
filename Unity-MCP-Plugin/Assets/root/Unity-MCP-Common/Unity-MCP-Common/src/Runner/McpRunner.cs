@@ -59,6 +59,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
             }
         }
 
+        #region Tools
         public bool HasTool(string name) => _tools.ContainsKey(name);
         public bool HasResource(string name) => _resources.ContainsKey(name);
 
@@ -148,7 +149,9 @@ namespace com.IvanMurzak.Unity.MCP.Common
                     .TaskFromResult();
             }
         }
+        #endregion
 
+        #region Resources
         public async Task<IResponseData<ResponseResourceContent[]>> RunResourceContent(IRequestResourceContent data, CancellationToken cancellationToken = default)
         {
             if (data == null)
@@ -194,7 +197,22 @@ namespace com.IvanMurzak.Unity.MCP.Common
                 .Pack(data.RequestID)
                 .TaskFromResult();
         }
+        IRunResource? FindResourceContentRunner(string uri, IDictionary<string, IRunResource> resources, out string? uriTemplate)
+        {
+            foreach (var route in resources)
+            {
+                if (IsMatch(route.Value.Route, uri))
+                {
+                    uriTemplate = route.Value.Route;
+                    return route.Value;
+                }
+            }
+            uriTemplate = null;
+            return null;
+        }
+        #endregion
 
+        #region Prompts
         public async Task<IResponseData<ResponseGetPrompt>> RunGetPrompt(IRequestGetPrompt request, CancellationToken cancellationToken = default)
         {
             if (!_prompts.TryGetValue(request.Name, out var runner))
@@ -243,21 +261,9 @@ namespace com.IvanMurzak.Unity.MCP.Common
                     .TaskFromResult();
             }
         }
+        #endregion
 
-        IRunResource? FindResourceContentRunner(string uri, IDictionary<string, IRunResource> resources, out string? uriTemplate)
-        {
-            foreach (var route in resources)
-            {
-                if (IsMatch(route.Value.Route, uri))
-                {
-                    uriTemplate = route.Value.Route;
-                    return route.Value;
-                }
-            }
-            uriTemplate = null;
-            return null;
-        }
-
+        #region Utils
         bool IsMatch(string uriTemplate, string uri)
         {
             // Convert pattern to regex
@@ -301,6 +307,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
             var parameterLogs = string.Join(Environment.NewLine, parameters.Select(kvp => $"{kvp.Key} = {kvp.Value ?? "null"}"));
             _logger.LogDebug("Parsed Parameters [{0}]:\n{1}", parameters.Count, parameterLogs);
         }
+        #endregion
 
         public void Dispose()
         {

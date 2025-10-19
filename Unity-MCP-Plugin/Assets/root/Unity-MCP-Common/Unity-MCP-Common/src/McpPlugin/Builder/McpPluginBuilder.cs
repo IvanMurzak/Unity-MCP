@@ -50,6 +50,23 @@ namespace com.IvanMurzak.Unity.MCP.Common
             _services.AddSingleton<IHubEndpointConnectionBuilder, HubEndpointConnectionBuilder>();
         }
 
+        #region Tool
+        public IMcpPluginBuilder WithTool(Type classType, MethodInfo method)
+        {
+            if (isBuilt)
+                throw new InvalidOperationException("The builder has already been built.");
+
+            var attribute = method.GetCustomAttribute<McpPluginToolAttribute>();
+            return WithTool(attribute!, classType, method);
+        }
+        public IMcpPluginBuilder WithTool(string name, string? title, Type classType, MethodInfo method)
+        {
+            if (isBuilt)
+                throw new InvalidOperationException("The builder has already been built.");
+
+            var attribute = new McpPluginToolAttribute(name, title);
+            return WithTool(attribute, classType, method);
+        }
         public IMcpPluginBuilder WithTool(McpPluginToolAttribute attribute, Type classType, MethodInfo method)
         {
             if (isBuilt)
@@ -72,24 +89,6 @@ namespace com.IvanMurzak.Unity.MCP.Common
             ));
             return this;
         }
-
-        public IMcpPluginBuilder WithTool(Type classType, MethodInfo method)
-        {
-            if (isBuilt)
-                throw new InvalidOperationException("The builder has already been built.");
-
-            var attribute = method.GetCustomAttribute<McpPluginToolAttribute>();
-            return WithTool(attribute!, classType, method);
-        }
-        public IMcpPluginBuilder WithTool(string name, string? title, Type classType, MethodInfo method)
-        {
-            if (isBuilt)
-                throw new InvalidOperationException("The builder has already been built.");
-
-            var attribute = new McpPluginToolAttribute(name, title);
-            return WithTool(attribute, classType, method);
-        }
-
         public IMcpPluginBuilder AddTool(string name, IRunTool runner)
         {
             if (isBuilt)
@@ -101,7 +100,9 @@ namespace com.IvanMurzak.Unity.MCP.Common
             _toolRunners.Add(name, runner);
             return this;
         }
+        #endregion
 
+        #region Prompt
         public IMcpPluginBuilder WithPrompt(string name, Type classType, MethodInfo methodInfo)
         {
             if (isBuilt)
@@ -136,7 +137,9 @@ namespace com.IvanMurzak.Unity.MCP.Common
             _promptRunners.Add(name, runner);
             return this;
         }
+        #endregion
 
+        #region Resource
         public IMcpPluginBuilder WithResource(Type classType, MethodInfo getContentMethod)
         {
             if (isBuilt)
@@ -172,7 +175,6 @@ namespace com.IvanMurzak.Unity.MCP.Common
 
             return this;
         }
-
         public IMcpPluginBuilder AddResource(IRunResource resourceParams)
         {
             if (isBuilt)
@@ -180,6 +182,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
 
             if (_resourceRunners == null)
                 throw new ArgumentNullException(nameof(_resourceRunners));
+
             if (resourceParams == null)
                 throw new ArgumentNullException(nameof(resourceParams));
 
@@ -189,7 +192,9 @@ namespace com.IvanMurzak.Unity.MCP.Common
             _resourceRunners.Add(resourceParams.Route, resourceParams);
             return this;
         }
+        #endregion
 
+        #region Other
         public IMcpPluginBuilder AddLogging(Action<ILoggingBuilder> loggingBuilder)
         {
             if (isBuilt)
@@ -235,5 +240,6 @@ namespace com.IvanMurzak.Unity.MCP.Common
 
             return ServiceProvider.GetRequiredService<IMcpPlugin>();
         }
+        #endregion
     }
 }

@@ -30,7 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="com.IvanMurzak.ReflectorNet" Version="2.1.0" />
+    <!-- <PackageReference Include="com.IvanMurzak.ReflectorNet" Version="2.1.1" /> -->
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.7" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.7" />
     <PackageReference Include="ModelContextProtocol" Version="0.3.0-preview.4" />
@@ -38,11 +38,15 @@
   </ItemGroup>
 
   <!-- <ItemGroup>
-    <Reference Include="./../../Plugins/com.IvanMurzak.ReflectorNet/ReflectorNet.dll">
-      <HintPath>./../../Plugins/com.IvanMurzak.ReflectorNet/ReflectorNet.dll</HintPath>
+    <Reference Include="./../../../Plugins/com.IvanMurzak.ReflectorNet/ReflectorNet.dll">
+      <HintPath>./../../../Plugins/com.IvanMurzak.ReflectorNet/ReflectorNet.dll</HintPath>
       <Private>true</Private>
     </Reference>
   </ItemGroup> -->
+
+  <ItemGroup>
+    <ProjectReference Include="./../../../../../../../dotnet/ReflectorNet/ReflectorNet/ReflectorNet.csproj"/>
+  </ItemGroup>
 
   <!-- Exclude temp build artifacts and tests from compilation -->
   <ItemGroup>
