@@ -143,11 +143,11 @@ namespace com.IvanMurzak.Unity.MCP.Common.Tests.Utils
                 [JsonSchema.Ref] = JsonSchema.RefValue + typeId
             };
 
-            if (required)
-                AddRequired(name);
-
             if (description != null)
                 Result[JsonSchema.Properties]![name]![JsonSchema.Description] = description;
+
+            if (required)
+                AddRequired(name);
 
             return this;
         }
