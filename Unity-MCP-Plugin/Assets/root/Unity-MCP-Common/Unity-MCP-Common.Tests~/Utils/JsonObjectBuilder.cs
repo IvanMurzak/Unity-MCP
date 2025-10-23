@@ -121,13 +121,13 @@ namespace com.IvanMurzak.Unity.MCP.Common.Tests.Utils
 
         public JsonObjectBuilder AddRefPropertyAndDefinition<T>(string name, bool required, JsonObject? definition, string? description = null) where T : notnull
         {
-            return AddRefProperty(name, TypeUtils.GetTypeId<T>(), required, description)
-                .AddDefinition(TypeUtils.GetTypeId<T>(), definition);
+            return AddRefProperty(name, TypeUtils.GetSchemaTypeId<T>(), required, description)
+                .AddDefinition(TypeUtils.GetSchemaTypeId<T>(), definition);
         }
 
         public JsonObjectBuilder AddRefProperty<T>(string name, bool required = false, string? description = null) where T : notnull
         {
-            return AddRefProperty(name, TypeUtils.GetTypeId<T>(), required, description);
+            return AddRefProperty(name, TypeUtils.GetSchemaTypeId<T>(), required, description);
         }
 
         public JsonObjectBuilder AddRefProperty(string name, string typeId, bool required = false, string? description = null)

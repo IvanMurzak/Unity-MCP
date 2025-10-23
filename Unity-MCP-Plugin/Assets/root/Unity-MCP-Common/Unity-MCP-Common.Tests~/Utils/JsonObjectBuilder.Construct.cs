@@ -11,7 +11,7 @@ namespace com.IvanMurzak.Unity.MCP.Common.Tests.Utils
             // Company definition
             return builder
                 .AddDefinition(
-                    TypeUtils.GetTypeId<SampleData.Company>(),
+                    TypeUtils.GetSchemaTypeId<SampleData.Company>(),
                     new JsonObjectBuilder()
                         .SetTypeObject()
                         .AddSimpleProperty(nameof(SampleData.Company.Name), JsonSchema.String, required: false)
@@ -23,7 +23,7 @@ namespace com.IvanMurzak.Unity.MCP.Common.Tests.Utils
 
                 // Address definition
                 .AddDefinition(
-                    TypeUtils.GetTypeId<SampleData.Address>(),
+                    TypeUtils.GetSchemaTypeId<SampleData.Address>(),
                     new JsonObjectBuilder()
                         .SetTypeObject()
                         .AddSimpleProperty(nameof(SampleData.Address.Street), JsonSchema.String, required: false)
@@ -39,7 +39,7 @@ namespace com.IvanMurzak.Unity.MCP.Common.Tests.Utils
 
                 // Person definition
                 .AddDefinition(
-                    TypeUtils.GetTypeId<SampleData.Person>(),
+                    TypeUtils.GetSchemaTypeId<SampleData.Person>(),
                     new JsonObjectBuilder()
                         .SetTypeObject()
                         .AddSimpleProperty(nameof(SampleData.Person.FirstName), JsonSchema.String, required: false)
@@ -60,7 +60,7 @@ namespace com.IvanMurzak.Unity.MCP.Common.Tests.Utils
 
                 // Dictionary<string, int> definition
                 .AddDefinition(
-                    TypeUtils.GetTypeId<Dictionary<string, int>>(),
+                    TypeUtils.GetSchemaTypeId<Dictionary<string, int>>(),
                     new JsonObject
                     {
                         [JsonSchema.Type] = JsonSchema.Object,
@@ -79,7 +79,7 @@ namespace com.IvanMurzak.Unity.MCP.Common.Tests.Utils
 
                 // Dictionary<string, Person[]> definition
                 .AddDefinition(
-                    TypeUtils.GetTypeId<Dictionary<string, SampleData.Person[]>>(),
+                    TypeUtils.GetSchemaTypeId<Dictionary<string, SampleData.Person[]>>(),
                     new JsonObject
                     {
                         [JsonSchema.Type] = JsonSchema.Object,
@@ -88,7 +88,7 @@ namespace com.IvanMurzak.Unity.MCP.Common.Tests.Utils
 
                 // Dictionary<string, Dictionary<string, Person>> definition
                 .AddDefinition(
-                    TypeUtils.GetTypeId<Dictionary<string, Dictionary<string, SampleData.Person>>>(),
+                    TypeUtils.GetSchemaTypeId<Dictionary<string, Dictionary<string, SampleData.Person>>>(),
                     new JsonObject
                     {
                         [JsonSchema.Type] = JsonSchema.Object,
@@ -97,7 +97,7 @@ namespace com.IvanMurzak.Unity.MCP.Common.Tests.Utils
 
                 // Dictionary<string, Person> definition
                 .AddDefinition(
-                    TypeUtils.GetTypeId<Dictionary<string, SampleData.Person>>(),
+                    TypeUtils.GetSchemaTypeId<Dictionary<string, SampleData.Person>>(),
                     new JsonObject
                     {
                         [JsonSchema.Type] = JsonSchema.Object,

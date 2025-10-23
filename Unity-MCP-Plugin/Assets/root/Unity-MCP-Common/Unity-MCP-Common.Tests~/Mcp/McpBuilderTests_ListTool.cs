@@ -272,8 +272,6 @@ namespace com.IvanMurzak.Unity.MCP.Common.Tests.Mcp
                     .BuildJsonElement());
         }
 
-
-
         [Fact]
         public async Task ListTool_GenericMethodWithComplexType_ShouldBeListed()
         {
