@@ -22,7 +22,7 @@ namespace com.IvanMurzak.Unity.MCP.Common.Model
                 return response;
 
             foreach (var item in response)
-                logger.LogInformation(ex, $"{item.Name}\n{item.ToJsonOrEmptyJsonObject(McpPlugin.Instance?.McpRunner.Reflector)}");
+                logger.LogInformation(ex, $"Tool: {item.Name}:\n{item.ToJsonOrEmptyJsonObject(McpPlugin.Instance?.McpRunner.Reflector)}");
 
             return response;
         }
