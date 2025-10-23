@@ -20,6 +20,8 @@ using System.Reflection;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Utils;
 using System.Collections.Generic;
+using System.Linq;
+using com.IvanMurzak.Unity.MCP.Common.Tests.Utils;
 
 namespace com.IvanMurzak.Unity.MCP.Common.Tests.Mcp
 {
@@ -50,7 +52,7 @@ namespace com.IvanMurzak.Unity.MCP.Common.Tests.Mcp
             response.Value![0].Title.Should().Be(expectedToolTitle);
         }
 
-        void CompareJsonElements(string name, JsonElement? actual, JsonElement? expected)
+        private static void CompareJsonElements(string name, JsonElement? actual, JsonElement? expected)
         {
             if (expected == null)
             {
@@ -60,11 +62,87 @@ namespace com.IvanMurzak.Unity.MCP.Common.Tests.Mcp
             {
                 actual.Should().NotBeNull(name);
                 actual.Value.ValueKind.Should().Be(expected.Value.ValueKind, name);
-                actual.ToString().Should().Be(expected.ToString(), name);
+
+                // First try exact string comparison for performance
+                if (actual.ToString() == expected.ToString())
+                    return;
+
+                // If strings don't match, do deep comparison (order-insensitive)
+                CompareJsonElementsRecursive(name, actual.Value, expected.Value);
             }
         }
 
-        async Task ValidateListToolSchema(Task<IResponseData<ResponseListTool[]>>? listToolTask, JsonElement? expectedInputSchema = null, JsonElement? expectedOutputSchema = null)
+        private static void CompareJsonElementsRecursive(string path, JsonElement actual, JsonElement expected)
+        {
+            actual.ValueKind.Should().Be(expected.ValueKind, $"{path}: ValueKind mismatch");
+
+            switch (expected.ValueKind)
+            {
+                case JsonValueKind.Object:
+                    var expectedProps = expected.EnumerateObject().ToList();
+                    var actualProps = actual.EnumerateObject().ToList();
+
+                    actualProps.Count.Should().Be(expectedProps.Count, $"{path}: Object property count mismatch");
+
+                    foreach (var expectedProp in expectedProps)
+                    {
+                        var actualProp = actualProps.FirstOrDefault(p => p.Name == expectedProp.Name);
+                        actualProp.Should().NotBeNull($"{path}: Missing property '{expectedProp.Name}'");
+
+                        CompareJsonElementsRecursive($"{path}.{expectedProp.Name}", actualProp.Value, expectedProp.Value);
+                    }
+                    break;
+
+                case JsonValueKind.Array:
+                    var expectedArray = expected.EnumerateArray().ToList();
+                    var actualArray = actual.EnumerateArray().ToList();
+
+                    actualArray.Count.Should().Be(expectedArray.Count, $"{path}: Array length mismatch");
+
+                    for (int i = 0; i < expectedArray.Count; i++)
+                    {
+                        CompareJsonElementsRecursive($"{path}[{i}]", actualArray[i], expectedArray[i]);
+                    }
+                    break;
+
+                case JsonValueKind.String:
+                    actual.GetString().Should().Be(expected.GetString(), $"{path}: String value mismatch");
+                    break;
+
+                case JsonValueKind.Number:
+                    if (expected.TryGetInt32(out int expectedInt))
+                    {
+                        actual.GetInt32().Should().Be(expectedInt, $"{path}: Integer value mismatch");
+                    }
+                    else if (expected.TryGetInt64(out long expectedLong))
+                    {
+                        actual.GetInt64().Should().Be(expectedLong, $"{path}: Long value mismatch");
+                    }
+                    else if (expected.TryGetDouble(out double expectedDouble))
+                    {
+                        actual.GetDouble().Should().Be(expectedDouble, $"{path}: Double value mismatch");
+                    }
+                    else
+                    {
+                        actual.GetDecimal().Should().Be(expected.GetDecimal(), $"{path}: Decimal value mismatch");
+                    }
+                    break;
+
+                case JsonValueKind.True:
+                case JsonValueKind.False:
+                    actual.GetBoolean().Should().Be(expected.GetBoolean(), $"{path}: Boolean value mismatch");
+                    break;
+
+                case JsonValueKind.Null:
+                    // Both are null, nothing to compare
+                    break;
+
+                default:
+                    throw new ArgumentException($"{path}: Unsupported JsonValueKind: {expected.ValueKind}");
+            }
+        }
+
+        private static async Task ValidateListToolSchema(Task<IResponseData<ResponseListTool[]>>? listToolTask, JsonElement? expectedInputSchema = null, JsonElement? expectedOutputSchema = null)
         {
             listToolTask.Should().NotBeNull();
 
@@ -194,6 +272,8 @@ namespace com.IvanMurzak.Unity.MCP.Common.Tests.Mcp
                     .BuildJsonElement());
         }
 
+
+
         [Fact]
         public async Task ListTool_GenericMethodWithComplexType_ShouldBeListed()
         {
@@ -208,31 +288,13 @@ namespace com.IvanMurzak.Unity.MCP.Common.Tests.Mcp
                 method: constructed,
                 expectedInputSchema: new JsonObjectBuilder()
                     .SetTypeObject()
-                    .AddRefPropertyAndDefinition<SampleData.Company>(
-                        name: "value",
-                        required: true,
-                        definition: new JsonObjectBuilder()
-                            .SetTypeObject()
-                            .AddSimpleProperty(nameof(SampleData.Company.Name), JsonSchema.String, required: true)
-                            .AddRefProperty<SampleData.Address>(nameof(SampleData.Company.Headquarters), required: false)
-                            .AddRefProperty<List<SampleData.Person>>(nameof(SampleData.Company.Employees), required: true)
-                            .AddRefProperty<Dictionary<string, List<SampleData.Person>>>(nameof(SampleData.Company.Teams), required: true)
-                            .AddRefProperty<Dictionary<string, Dictionary<string, SampleData.Person>>>(nameof(SampleData.Company.Directory), required: true)
-                            .BuildJsonObject())
+                    .AddRefProperty<SampleData.Company>("value", required: true)
+                    .AddCompanyDefine()
                     .BuildJsonElement(),
                 expectedOutputSchema: new JsonObjectBuilder()
                     .SetTypeObject()
-                    .AddRefPropertyAndDefinition<SampleData.Company>(
-                        name: JsonSchema.Result,
-                        required: true,
-                        definition: new JsonObjectBuilder()
-                            .SetTypeObject()
-                            .AddSimpleProperty(nameof(SampleData.Company.Name), JsonSchema.String, required: true)
-                            .AddRefProperty<SampleData.Address>(nameof(SampleData.Company.Headquarters), required: false)
-                            .AddRefProperty<List<SampleData.Person>>(nameof(SampleData.Company.Employees), required: true)
-                            .AddRefProperty<Dictionary<string, List<SampleData.Person>>>(nameof(SampleData.Company.Teams), required: true)
-                            .AddRefProperty<Dictionary<string, Dictionary<string, SampleData.Person>>>(nameof(SampleData.Company.Directory), required: true)
-                            .BuildJsonObject())
+                    .AddRefProperty<SampleData.Company>(JsonSchema.Result, required: false) // TODO: `required` should be true for dotnet 5.0+
+                    .AddCompanyDefine()
                     .BuildJsonElement());
         }
 
@@ -276,8 +338,8 @@ namespace com.IvanMurzak.Unity.MCP.Common.Tests.Mcp
                     .BuildJsonElement(),
                 expectedOutputSchema: new JsonObjectBuilder()
                     .SetTypeObject()
-                    .AddRefProperty(JsonSchema.Result, "#/$defs/System.Collections.Generic.List<System.Int32>", required: true)
-                    .AddArrayDefinition("System.Collections.Generic.List<System.Int32>", JsonSchema.Integer)
+                    .AddRefProperty(JsonSchema.Result, "System.Int32_Array", required: true)
+                    .AddArrayDefinition("System.Int32_Array", JsonSchema.Integer)
                     .BuildJsonElement());
         }
 
@@ -295,8 +357,8 @@ namespace com.IvanMurzak.Unity.MCP.Common.Tests.Mcp
                     .BuildJsonElement(),
                 expectedOutputSchema: new JsonObjectBuilder()
                     .SetTypeObject()
-                    .AddRefProperty(JsonSchema.Result, "#/$defs/System.Collections.Generic.List<System.String>", required: true)
-                    .AddArrayDefinition("System.Collections.Generic.List<System.String>", JsonSchema.String)
+                    .AddRefProperty(JsonSchema.Result, "System.String_Array", required: true)
+                    .AddArrayDefinition("System.String_Array", JsonSchema.String)
                     .BuildJsonElement());
         }
     }

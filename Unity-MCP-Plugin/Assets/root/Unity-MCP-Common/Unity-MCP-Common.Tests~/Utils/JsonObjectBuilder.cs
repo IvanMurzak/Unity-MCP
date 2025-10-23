@@ -179,6 +179,20 @@ namespace com.IvanMurzak.Unity.MCP.Common.Tests.Utils
             return AddDefinition(name, arrayDefinition);
         }
 
+        public JsonObjectBuilder AddArrayDefinitionRef(string name, string itemType)
+        {
+            var arrayDefinition = new JsonObject
+            {
+                [JsonSchema.Type] = JsonSchema.Array,
+                [JsonSchema.Items] = new JsonObject
+                {
+                    [JsonSchema.Ref] = JsonSchema.RefValue + itemType
+                }
+            };
+
+            return AddDefinition(name, arrayDefinition);
+        }
+
         public JsonObject? BuildJsonObject()
         {
             return Result;
