@@ -12,7 +12,7 @@
 
     <!-- NuGet Package Information -->
     <PackageId>com.IvanMurzak.Unity.MCP.Common</PackageId>
-    <Version>1.8.0</Version>
+    <Version>1.9.0</Version>
     <Authors>Ivan Murzak</Authors>
     <Copyright>Copyright © Ivan Murzak 2025</Copyright>
     <Description>Shared code between Unity-MCP-Plugin and Unity-MCP-Server projects.</Description>
@@ -30,7 +30,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- <PackageReference Include="com.IvanMurzak.ReflectorNet" Version="2.2.0" /> -->
+    <PackageReference Include="com.IvanMurzak.ReflectorNet" Version="2.2.0" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.10" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.10" />
     <PackageReference Include="ModelContextProtocol" Version="0.3.0-preview.4" />
@@ -44,9 +44,9 @@
     </Reference>
   </ItemGroup> -->
 
-  <ItemGroup>
+  <!-- <ItemGroup>
     <ProjectReference Include="./../../../../../../../dotnet/ReflectorNet/ReflectorNet/ReflectorNet.csproj" />
-  </ItemGroup>
+  </ItemGroup> -->
 
   <!-- Exclude temp build artifacts and tests from compilation -->
   <ItemGroup>
