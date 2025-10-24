@@ -177,7 +177,7 @@ namespace com.IvanMurzak.Unity.MCP.Common.Tests.Mcp
 
         async Task BuildAndValidateTool(Type classType, MethodInfo method, JsonElement? expectedInputSchema = null, JsonElement? expectedOutputSchema = null)
         {
-            var toolName = classType.Name;
+            var toolName = classType.GetTypeShortName();
             var toolTitle = $"Title of {toolName}";
 
             var reflector = new Reflector();
