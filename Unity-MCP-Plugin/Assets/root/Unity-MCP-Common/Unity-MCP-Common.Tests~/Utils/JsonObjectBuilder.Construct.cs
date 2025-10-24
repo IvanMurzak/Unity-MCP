@@ -64,7 +64,10 @@ namespace com.IvanMurzak.Unity.MCP.Common.Tests.Utils
                     new JsonObject
                     {
                         [JsonSchema.Type] = JsonSchema.Object,
-                        [JsonSchema.AdditionalProperties] = true
+                        [JsonSchema.AdditionalProperties] = new JsonObject
+                        {
+                            [JsonSchema.Type] = JsonSchema.Integer
+                        }
                     })
 
                 // int[] array definition
@@ -83,7 +86,14 @@ namespace com.IvanMurzak.Unity.MCP.Common.Tests.Utils
                     new JsonObject
                     {
                         [JsonSchema.Type] = JsonSchema.Object,
-                        [JsonSchema.AdditionalProperties] = true
+                        [JsonSchema.AdditionalProperties] = new JsonObject
+                        {
+                            [JsonSchema.Type] = JsonSchema.Array,
+                            [JsonSchema.Items] = new JsonObject
+                            {
+                                [JsonSchema.Ref] = JsonSchema.RefValue + TypeUtils.GetSchemaTypeId<SampleData.Person>()
+                            }
+                        }
                     })
 
                 // Dictionary<string, Dictionary<string, Person>> definition
@@ -92,7 +102,22 @@ namespace com.IvanMurzak.Unity.MCP.Common.Tests.Utils
                     new JsonObject
                     {
                         [JsonSchema.Type] = JsonSchema.Object,
-                        [JsonSchema.AdditionalProperties] = true
+                        [JsonSchema.AdditionalProperties] = new JsonObject
+                        {
+                            [JsonSchema.Type] = JsonSchema.Object,
+                            [JsonSchema.AdditionalProperties] = new JsonObjectBuilder()
+                                .SetTypeObject()
+                                .AddSimpleProperty(nameof(SampleData.Person.FirstName), JsonSchema.String, required: false)
+                                .AddSimpleProperty(nameof(SampleData.Person.LastName), JsonSchema.String, required: false)
+                                .AddSimpleProperty(nameof(SampleData.Person.Age), JsonSchema.Integer, required: true)
+                                .AddRefProperty<SampleData.Address>(nameof(SampleData.Person.Address), required: false)
+                                .AddRefProperty<string[]>(nameof(SampleData.Person.Tags), required: false)
+                                .AddRefProperty<Dictionary<string, int>>(nameof(SampleData.Person.Scores), required: false)
+                                .AddRefProperty<int[]>(nameof(SampleData.Person.Numbers), required: false)
+                                .AddRefProperty<string[][]>(nameof(SampleData.Person.JaggedAliases), required: false)
+                                .AddRefProperty<int[]>(nameof(SampleData.Person.Matrix2x2), required: false)
+                                .BuildJsonObject()
+                        }
                     })
 
                 // Dictionary<string, Person> definition
@@ -101,7 +126,18 @@ namespace com.IvanMurzak.Unity.MCP.Common.Tests.Utils
                     new JsonObject
                     {
                         [JsonSchema.Type] = JsonSchema.Object,
-                        [JsonSchema.AdditionalProperties] = true
+                        [JsonSchema.AdditionalProperties] = new JsonObjectBuilder()
+                            .SetTypeObject()
+                            .AddSimpleProperty(nameof(SampleData.Person.FirstName), JsonSchema.String, required: false)
+                            .AddSimpleProperty(nameof(SampleData.Person.LastName), JsonSchema.String, required: false)
+                            .AddSimpleProperty(nameof(SampleData.Person.Age), JsonSchema.Integer, required: true)
+                            .AddRefProperty<SampleData.Address>(nameof(SampleData.Person.Address), required: false)
+                            .AddRefProperty<string[]>(nameof(SampleData.Person.Tags), required: false)
+                            .AddRefProperty<Dictionary<string, int>>(nameof(SampleData.Person.Scores), required: false)
+                            .AddRefProperty<int[]>(nameof(SampleData.Person.Numbers), required: false)
+                            .AddRefProperty<string[][]>(nameof(SampleData.Person.JaggedAliases), required: false)
+                            .AddRefProperty<int[]>(nameof(SampleData.Person.Matrix2x2), required: false)
+                            .BuildJsonObject()
                     });
         }
     }
