@@ -1,4 +1,4 @@
-// Method with no arguments returning void
+// Method with no arguments returning List<int>
 using System.Collections.Generic;
 
 namespace com.IvanMurzak.Unity.MCP.Common.Tests.SampleData

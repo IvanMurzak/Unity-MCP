@@ -7,21 +7,21 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
-using Xunit;
-using FluentAssertions;
-using Xunit.Abstractions;
-using com.IvanMurzak.Unity.MCP.Common.Tests.Infrastructure;
-using com.IvanMurzak.Unity.MCP.Common.Model;
-using System.Threading.Tasks;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 using System;
-using System.Reflection;
-using com.IvanMurzak.ReflectorNet;
-using com.IvanMurzak.ReflectorNet.Utils;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Threading.Tasks;
+using com.IvanMurzak.ReflectorNet;
+using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Common.Model;
+using com.IvanMurzak.Unity.MCP.Common.Tests.Infrastructure;
 using com.IvanMurzak.Unity.MCP.Common.Tests.Utils;
+using FluentAssertions;
+using Xunit;
+using Xunit.Abstractions;
 
 namespace com.IvanMurzak.Unity.MCP.Common.Tests.Mcp
 {
@@ -291,7 +291,7 @@ namespace com.IvanMurzak.Unity.MCP.Common.Tests.Mcp
                     .BuildJsonElement(),
                 expectedOutputSchema: new JsonObjectBuilder()
                     .SetTypeObject()
-                    .AddRefProperty<SampleData.Company>(JsonSchema.Result, required: false) // TODO: `required` should be true for dotnet 5.0+
+                    .AddRefProperty<SampleData.Company>(JsonSchema.Result, required: false) // TODO: `required` should be true for .NET 5.0+
                     .AddCompanyDefine()
                     .BuildJsonElement());
         }
