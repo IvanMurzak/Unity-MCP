@@ -10,18 +10,15 @@
 using System;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
-using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Json;
 using com.IvanMurzak.ReflectorNet.Utils;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Common.Json.Converters
 {
-    public class QuaternionConverter : JsonConverter<Quaternion>, IJsonSchemaConverter
+    public class QuaternionConverter : JsonSchemaConverter<Quaternion>, IJsonSchemaConverter
     {
-        public string Id => typeof(Quaternion).GetTypeId();
-        public JsonNode GetScheme() => new JsonObject
+        public override JsonNode GetSchema() => new JsonObject
         {
             [JsonSchema.Type] = JsonSchema.Object,
             [JsonSchema.Properties] = new JsonObject
@@ -34,7 +31,7 @@ namespace com.IvanMurzak.Unity.MCP.Common.Json.Converters
             [JsonSchema.Required] = new JsonArray { "x", "y", "z", "w" },
             [JsonSchema.AdditionalProperties] = false
         };
-        public JsonNode GetSchemeRef() => new JsonObject
+        public override JsonNode GetSchemaRef() => new JsonObject
         {
             [JsonSchema.Ref] = JsonSchema.RefValue + Id
         };

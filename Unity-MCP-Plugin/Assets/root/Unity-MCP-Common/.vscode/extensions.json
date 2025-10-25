@@ -1,0 +1,8 @@
+{
+    "recommendations": [
+        "streetsidesoftware.code-spell-checker",
+        "ms-vscode.test-adapter-converter",
+        "ms-dotnettools.csharp",
+        "ms-dotnettools.csdevkit"
+    ]
+}

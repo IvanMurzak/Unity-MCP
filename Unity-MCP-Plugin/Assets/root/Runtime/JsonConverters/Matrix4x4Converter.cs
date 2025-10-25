@@ -10,18 +10,15 @@
 using System;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
-using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Json;
 using com.IvanMurzak.ReflectorNet.Utils;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Common.Json.Converters
 {
-    public class Matrix4x4Converter : JsonConverter<Matrix4x4>, IJsonSchemaConverter
+    public class Matrix4x4Converter : JsonSchemaConverter<Matrix4x4>, IJsonSchemaConverter
     {
-        public string Id => typeof(Matrix4x4).GetTypeId();
-        public JsonNode GetScheme() => new JsonObject
+        public override JsonNode GetSchema() => new JsonObject
         {
             [JsonSchema.Type] = JsonSchema.Object,
             [JsonSchema.Properties] = new JsonObject
@@ -52,7 +49,7 @@ namespace com.IvanMurzak.Unity.MCP.Common.Json.Converters
             },
             [JsonSchema.AdditionalProperties] = false
         };
-        public JsonNode GetSchemeRef() => new JsonObject
+        public override JsonNode GetSchemaRef() => new JsonObject
         {
             [JsonSchema.Ref] = JsonSchema.RefValue + Id
         };
