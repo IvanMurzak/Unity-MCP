@@ -18,6 +18,8 @@ using R3;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
+using System.Runtime.InteropServices;
+using System.Collections.Generic;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
 {
@@ -156,19 +158,41 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
                 var pathSegments = Consts.MCP.Server.BodyPathSegments(bodyPath);
 
-                // Navigate to the target location using bodyPath segments
-                var targetObj = NavigateToJsonPath(rootObj, pathSegments);
-                if (targetObj == null)
-                    return false;
+                var targetObjs = new List<JsonObject?>();
 
-                foreach (var kv in targetObj)
+                var mainTarget = NavigateToJsonPath(rootObj, pathSegments);
+                targetObjs.Add(mainTarget);
+
+                var isClaudeCodeOnWindows = configPath.EndsWith(".claude.json") && RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+
+                if (isClaudeCodeOnWindows && pathSegments.Length == 3 && pathSegments[0] == "projects" && pathSegments[2] == Consts.MCP.Server.DefaultBodyPath)
                 {
-                    var command = kv.Value?["command"]?.GetValue<string>();
-                    if (string.IsNullOrEmpty(command) || !IsCommandMatch(command!))
+                    var project = pathSegments[1];
+                    if (project.Length > 2 && char.IsLetter(project[0]) && project[1] == ':' && project[2] == '\\')
+                    {
+                        var altDrive = char.IsUpper(project[0]) ? char.ToLower(project[0]) : char.ToUpper(project[0]);
+                        var altProject = altDrive + project.Substring(1);
+                        var altSegments = new string[] { pathSegments[0], altProject, pathSegments[2] };
+                        var altTarget = NavigateToJsonPath(rootObj, altSegments);
+                        targetObjs.Add(altTarget);
+                    }
+                }
+
+                foreach (var targetObj in targetObjs)
+                {
+                    if (targetObj == null)
                         continue;
 
-                    var args = kv.Value?["args"]?.AsArray();
-                    return DoArgumentsMatch(args);
+                    foreach (var kv in targetObj)
+                    {
+                        var command = kv.Value?["command"]?.GetValue<string>();
+                        if (string.IsNullOrEmpty(command) || !IsCommandMatch(command!))
+                            continue;
+
+                        var args = kv.Value?["args"]?.AsArray();
+                        if (DoArgumentsMatch(args))
+                            return true;
+                    }
                 }
 
                 return false;
@@ -276,73 +300,88 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             try
             {
-                if (!File.Exists(configPath))
-                {
-                    // Create all necessary directories
-                    Directory.CreateDirectory(Path.GetDirectoryName(configPath));
+                Directory.CreateDirectory(Path.GetDirectoryName(configPath));
 
-                    // Create the file if it doesn't exist
-                    File.WriteAllText(
-                        path: configPath,
-                        contents: Startup.Server.RawJsonConfiguration(UnityMcpPlugin.Port, bodyPath, UnityMcpPlugin.TimeoutMs).ToString());
-                    return true;
+                JsonObject rootObj;
+
+                if (File.Exists(configPath))
+                {
+                    var json = File.ReadAllText(configPath);
+                    try
+                    {
+                        var parsed = JsonNode.Parse(json);
+                        rootObj = parsed?.AsObject() ?? new JsonObject();
+                    }
+                    catch
+                    {
+                        rootObj = new JsonObject();
+                    }
                 }
-
-                var json = File.ReadAllText(configPath);
-                JsonObject? rootObj = null;
-
-                try
+                else
                 {
-                    // Parse the existing config as JsonObject
-                    rootObj = JsonNode.Parse(json)?.AsObject();
-                    if (rootObj == null)
-                        throw new Exception("Config file is not a valid JSON object.");
-                }
-                catch
-                {
-                    File.WriteAllText(
-                        path: configPath,
-                        contents: Startup.Server.RawJsonConfiguration(UnityMcpPlugin.Port, bodyPath, UnityMcpPlugin.TimeoutMs).ToString());
-                    return true;
+                    rootObj = new JsonObject();
                 }
 
                 // Get path segments and navigate to the injection target
-                var pathSegments = Consts.MCP.Server.BodyPathSegments(bodyPath);
+                var bodyPaths = new List<string> { bodyPath };
 
-                // Generate the configuration to inject
-                var injectObj = Startup.Server.RawJsonConfiguration(UnityMcpPlugin.Port, pathSegments.Last(), UnityMcpPlugin.TimeoutMs);
-                if (injectObj == null)
-                    throw new Exception("Injected config is not a valid JSON object.");
+                var isClaudeCodeOnWindows = configPath.EndsWith(".claude.json") && RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
 
-                var injectMcpServers = injectObj[pathSegments.Last()]?.AsObject();
-                if (injectMcpServers == null)
-                    throw new Exception($"Missing '{pathSegments.Last()}' object in inject config.");
-
-                // Navigate to or create the target location in the existing JSON
-                var targetObj = EnsureJsonPathExists(rootObj, pathSegments);
-
-                // Find all command values in injectMcpServers for duplicate removal
-                var injectCommands = injectMcpServers
-                    .Select(kv => kv.Value?["command"]?.GetValue<string>())
-                    .Where(cmd => !string.IsNullOrEmpty(cmd))
-                    .ToHashSet();
-
-                // Remove any entry in targetObj with a matching command
-                var keysToRemove = targetObj
-                    .Where(kv => injectCommands.Contains(kv.Value?["command"]?.GetValue<string>()))
-                    .Select(kv => kv.Key)
-                    .ToList();
-
-                foreach (var key in keysToRemove)
-                    targetObj.Remove(key);
-
-                // Merge/overwrite entries from injectMcpServers
-                foreach (var kv in injectMcpServers)
+                if (isClaudeCodeOnWindows)
                 {
-                    // Clone the value to avoid parent conflict
-                    targetObj[kv.Key] = kv.Value?.ToJsonString() is string jsonStr
-                        ? JsonNode.Parse(jsonStr)
-                        : null;
+                    var segments = Consts.MCP.Server.BodyPathSegments(bodyPath);
+                    if (segments.Length == 3 && segments[0] == "projects" && segments[2] == Consts.MCP.Server.DefaultBodyPath)
+                    {
+                        var project = segments[1];
+                        if (project.Length > 2 && char.IsLetter(project[0]) && project[1] == ':' && project[2] == '\\')
+                        {
+                            var altDrive = char.IsUpper(project[0]) ? char.ToLower(project[0]) : char.ToUpper(project[0]);
+                            var altProject = altDrive + project.Substring(1);
+                            var altBodyPath = string.Join(Consts.MCP.Server.BodyPathDelimiter, new[] { segments[0], altProject, segments[2] });
+                            bodyPaths.Add(altBodyPath);
+                        }
+                    }
+                }
+
+                foreach (var bp in bodyPaths)
+                {
+                    var pathSegments = Consts.MCP.Server.BodyPathSegments(bp);
+
+                    // Generate the configuration to inject
+                    var injectObj = Startup.Server.RawJsonConfiguration(UnityMcpPlugin.Port, pathSegments.Last(), UnityMcpPlugin.TimeoutMs);
+                    if (injectObj == null)
+                        throw new Exception("Injected config is not a valid JSON object.");
+
+                    var injectMcpServers = injectObj[pathSegments.Last()]?.AsObject();
+                    if (injectMcpServers == null)
+                        throw new Exception($"Missing '{pathSegments.Last()}' object in inject config.");
+
+                    // Navigate to or create the target location in the existing JSON
+                    var targetObj = EnsureJsonPathExists(rootObj, pathSegments);
+
+                    // Find all command values in injectMcpServers for duplicate removal
+                    var injectCommands = injectMcpServers
+                        .Select(kv => kv.Value?["command"]?.GetValue<string>())
+                        .Where(cmd => !string.IsNullOrEmpty(cmd))
+                        .ToHashSet();
+
+                    // Remove any entry in targetObj with a matching command
+                    var keysToRemove = targetObj
+                        .Where(kv => injectCommands.Contains(kv.Value?["command"]?.GetValue<string>()))
+                        .Select(kv => kv.Key)
+                        .ToList();
+
+                    foreach (var key in keysToRemove)
+                        targetObj.Remove(key);
+
+                    // Merge/overwrite entries from injectMcpServers
+                    foreach (var kv in injectMcpServers)
+                    {
+                        // Clone the value to avoid parent conflict
+                        targetObj[kv.Key] = kv.Value?.ToJsonString() is string jsonStr
+                            ? JsonNode.Parse(jsonStr)
+                            : null;
+                    }
                 }
 
                 // Write back to file
