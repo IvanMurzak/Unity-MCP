@@ -50,10 +50,11 @@ namespace com.IvanMurzak.Unity.MCP
                 {
                     Debug.LogException(e);
                     Debug.LogError($"[{nameof(UnityMcpPlugin)}] <color=red><b>{ResourcesFileName}</b> file is corrupted at <i>{AssetsFilePath}</i></color>");
+                    Debug.LogError($"{DebugName} <color=red><b>{ResourcesFileName}</b> file is corrupted at <i>{AssetsFilePath}</i></color>");
                 }
                 if (config == null)
                 {
-                    Debug.Log($"[{nameof(UnityMcpPlugin)}] <color=orange><b>Creating {ResourcesFileName}</b> file at <i>{AssetsFilePath}</i></color>");
+                    Debug.Log($"{DebugName} <color=orange><b>Creating {ResourcesFileName}</b> file at <i>{AssetsFilePath}</i></color>");
                     config = new Data();
                     wasCreated = true;
                 }
@@ -62,7 +63,7 @@ namespace com.IvanMurzak.Unity.MCP
             catch (Exception e)
             {
                 Debug.LogException(e);
-                Debug.LogError($"[{nameof(UnityMcpPlugin)}] <color=red><b>{ResourcesFileName}</b> file can't be loaded from <i>{AssetsFilePath}</i></color>");
+                Debug.LogError($"{DebugName} <color=red><b>{ResourcesFileName}</b> file can't be loaded from <i>{AssetsFilePath}</i></color>");
             }
             throw new InvalidOperationException($"Failed to get or create {nameof(UnityMcpPlugin)} instance. Check logs for details.");
         }
@@ -89,7 +90,7 @@ namespace com.IvanMurzak.Unity.MCP
             }
             catch (Exception e)
             {
-                Debug.LogError($"[{nameof(UnityMcpPlugin)}] <color=red><b>{ResourcesFileName}</b> file can't be saved at <i>{AssetsFilePath}</i></color>");
+                Debug.LogError($"{DebugName}<color=red><b>{ResourcesFileName}</b> file can't be saved at <i>{AssetsFilePath}</i></color>");
                 Debug.LogException(e);
             }
 #else

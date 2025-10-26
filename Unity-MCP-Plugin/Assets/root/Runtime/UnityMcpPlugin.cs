@@ -45,6 +45,7 @@ namespace com.IvanMurzak.Unity.MCP
                 }
             }
         }
+        static string DebugName => $"[{nameof(UnityMcpPlugin)}]";
 
         public static void InitSingletonIfNeeded()
         {
@@ -149,18 +150,13 @@ namespace com.IvanMurzak.Unity.MCP
             var changed = false;
             var data = Instance.data ??= new Data();
 
-            if (data.Port < 0 || data.Port > Consts.Hub.MaxPort)
-            {
-                data.Port = Consts.Hub.DefaultPort;
-                changed = true;
-            }
-
             if (string.IsNullOrEmpty(data.Host))
             {
                 data.Host = Data.DefaultHost;
                 changed = true;
             }
 
+            // Data was changed during validation, need to notify subscribers
             if (changed)
                 NotifyChanged(data);
         }
@@ -222,8 +218,6 @@ namespace com.IvanMurzak.Unity.MCP
                 }
 
                 await instance.Disconnect();
-
-                // await (instance.RpcRouter?.Disconnect() ?? Task.CompletedTask);
             }
             finally
             {
