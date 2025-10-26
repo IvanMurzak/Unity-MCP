@@ -53,6 +53,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
 
         public static PlayerPrefsString TestCallRequestID = new PlayerPrefsString("Unity_MCP_TestRunner_TestCallRequestID");
 
+        public static PlayerPrefsBool IncludePassingTests = new PlayerPrefsBool("Unity_MCP_TestRunner_IncludePassingTests");
         public static PlayerPrefsBool IncludeMessage = new PlayerPrefsBool("Unity_MCP_TestRunner_IncludeMessage", true);
         public static PlayerPrefsBool IncludeMessageStacktrace = new PlayerPrefsBool("Unity_MCP_TestRunner_IncludeStacktrace");
 
@@ -87,10 +88,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             _summary.Clear();
             _summary.TotalTests = testCount;
 
-            // Subscribe on log messages
-            Application.logMessageReceived -= OnLogMessageReceived;
-            Application.logMessageReceived += OnLogMessageReceived;
-
+            // Subscribe to log messages (using threaded version to catch logs from all threads)
             Application.logMessageReceivedThreaded -= OnLogMessageReceived;
             Application.logMessageReceivedThreaded += OnLogMessageReceived;
 
@@ -104,7 +102,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
                 Debug.Log($"[{nameof(TestResultCollector)}] RunFinished.");
 
             // Unsubscribe from log messages
-            Application.logMessageReceived -= OnLogMessageReceived;
             Application.logMessageReceivedThreaded -= OnLogMessageReceived;
 
             var duration = DateTime.Now - startTime;
@@ -136,6 +133,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             if (string.IsNullOrEmpty(requestId) == false)
             {
                 var structuredResponse = CreateStructuredResponse(
+                    includePassingTests: IncludePassingTests.Value,
                     includeMessage: IncludeMessage.Value,
                     includeLogs: IncludeLogs.Value,
                     includeMessageStacktrace: IncludeMessageStacktrace.Value,
@@ -221,7 +219,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             }
         }
 
-        TestRunResponse CreateStructuredResponse(bool includeMessage, bool includeMessageStacktrace, bool includeLogs, bool includeLogsStacktrace)
+        TestRunResponse CreateStructuredResponse(bool includePassingTests, bool includeMessage, bool includeMessageStacktrace, bool includeLogs, bool includeLogsStacktrace)
         {
             var results = GetResults();
             var summary = GetSummary();
@@ -233,9 +231,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
                 Results = new List<TestResultData>()
             };
 
-            // Filter test results based on includeMessage and includeMessageStacktrace
+            // Filter test results based on includePassingTests, includeMessage and includeMessageStacktrace
             foreach (var result in results)
             {
+                // Skip passing tests if includePassingTests is false
+                if (!includePassingTests && result.Status == "Passed")
+                    continue;
+
                 var filteredResult = new TestResultData
                 {
                     Name = result.Name,
