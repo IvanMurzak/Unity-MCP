@@ -89,7 +89,7 @@ namespace com.IvanMurzak.Unity.MCP
             }
             catch (Exception e)
             {
-                Debug.LogError($"{DebugName}<color=red><b>{ResourcesFileName}</b> file can't be saved at <i>{AssetsFilePath}</i></color>");
+                Debug.LogError($"{DebugName} <color=red><b>{ResourcesFileName}</b> file can't be saved at <i>{AssetsFilePath}</i></color>");
                 Debug.LogException(e);
             }
 #else
