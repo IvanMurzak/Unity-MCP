@@ -25,13 +25,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
     public partial class MainWindowEditor : EditorWindow
     {
-        /// <summary>
-        /// Template for individual client configuration panels.
-        /// Must be assigned in the Inspector to: Assets/root/Editor/UI/uxml/ClientConfigPanel.uxml
-        /// </summary>
-        [SerializeField] private VisualTreeAsset? clientConfigPanelTemplate;
+        // Template paths for both local development and UPM package environments
+        const string ClientConfigPanelTemplatePathPackage = "Packages/com.ivanmurzak.unity.mcp/Editor/UI/uxml/ClientConfigPanel.uxml";
+        const string ClientConfigPanelTemplatePathLocal = "Assets/root/Editor/UI/uxml/ClientConfigPanel.uxml";
 
-        private struct ClientConfig
+        struct ClientConfig
         {
             public string Name;
             public string ConfigPath;
@@ -141,7 +139,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             ConfigureClientsFromArray(root, clientConfigs);
         }
 
-        private void ConfigureClientsFromArray(VisualElement root, ClientConfig[] clientConfigs)
+        void ConfigureClientsFromArray(VisualElement root, ClientConfig[] clientConfigs)
         {
             // Get the container where client panels will be added
             var container = root.Query<VisualElement>("ConfigureClientsContainer").First();
@@ -152,9 +150,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 return;
             }
 
+            // Try to load the template from both possible paths (UPM package or local development)
+            var clientConfigPanelTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(ClientConfigPanelTemplatePathPackage);
+
             if (clientConfigPanelTemplate == null)
             {
-                Debug.LogError("clientConfigPanelTemplate is not assigned. Please assign the ClientConfigPanel.uxml template in the Inspector.");
+                // Fallback to local development path
+                clientConfigPanelTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(ClientConfigPanelTemplatePathLocal);
+            }
+
+            if (clientConfigPanelTemplate == null)
+            {
+                Debug.LogError($"Failed to load ClientConfigPanel template from either path:\n" +
+                              $"- Package: {ClientConfigPanelTemplatePathPackage}\n" +
+                              $"- Local: {ClientConfigPanelTemplatePathLocal}");
                 return;
             }
 
