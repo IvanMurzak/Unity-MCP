@@ -11,19 +11,18 @@
 #nullable enable
 using com.IvanMurzak.Unity.MCP.Common;
 
-namespace com.IvanMurzak.Unity.MCP.Editor
+namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
-    internal class ClientConfig
+    internal class JsonClientConfig : ClientConfig
     {
-        public string Name;
-        public string ConfigPath;
-        public string BodyPath;
-
-        public ClientConfig(string name, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
+        public JsonClientConfig(string name, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
+            : base(name, configPath, bodyPath)
         {
-            Name = name;
-            ConfigPath = configPath;
-            BodyPath = bodyPath;
+        }
+
+        public override bool Configure()
+        {
+            return McpClientUtils.ConfigureJsonMcpClient(ConfigPath, BodyPath);
         }
     }
 }
