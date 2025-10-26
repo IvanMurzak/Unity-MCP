@@ -29,20 +29,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         const string ClientConfigPanelTemplatePathPackage = "Packages/com.ivanmurzak.unity.mcp/Editor/UI/uxml/ClientConfigPanel.uxml";
         const string ClientConfigPanelTemplatePathLocal = "Assets/root/Editor/UI/uxml/ClientConfigPanel.uxml";
 
-        struct ClientConfig
-        {
-            public string Name;
-            public string ConfigPath;
-            public string BodyPath;
-
-            public ClientConfig(string name, string configPath, string bodyPath)
-            {
-                Name = name;
-                ConfigPath = configPath;
-                BodyPath = bodyPath;
-            }
-        }
-
         string ProjectRootPath => Application.dataPath.EndsWith("/Assets")
             ? Application.dataPath.Substring(0, Application.dataPath.Length - "/Assets".Length)
             : Application.dataPath;
@@ -176,28 +162,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 // Clone the template using Unity's built-in method
                 var panel = clientConfigPanelTemplate.CloneTree();
 
-                // Update the client name
-                var clientNameLabel = panel.Q<Label>("clientNameLabel");
-                if (clientNameLabel != null)
-                {
-                    clientNameLabel.text = config.Name;
-                }
-
                 // Configure the panel with the client's configuration
-                ConfigureClient(panel, config.ConfigPath, config.BodyPath);
+                ConfigureClient(panel, config);
 
                 // Add the configured panel to the container
                 container.Add(panel);
             }
         }
 
-        void ConfigureClient(VisualElement root, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
+        void ConfigureClient(VisualElement root, ClientConfig config)
         {
-            var statusCircle = root.Query<VisualElement>("configureStatusCircle").First();
-            var statusText = root.Query<Label>("configureStatusText").First();
-            var btnConfigure = root.Query<Button>("btnConfigure").First();
+            var statusCircle = root.Q<VisualElement>("configureStatusCircle");
+            var statusText = root.Q<Label>("configureStatusText");
+            var btnConfigure = root.Q<Button>("btnConfigure");
 
-            var isConfiguredResult = IsMcpClientConfigured(configPath, bodyPath);
+            // Update the client name
+            var clientNameLabel = root.Q<Label>("clientNameLabel");
+            clientNameLabel.text = config.Name;
+
+            var isConfiguredResult = IsMcpClientConfigured(config.ConfigPath, config.BodyPath);
 
             statusCircle.RemoveFromClassList(USS_IndicatorClass_Connected);
             statusCircle.RemoveFromClassList(USS_IndicatorClass_Connecting);
@@ -212,7 +195,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             btnConfigure.RegisterCallback<ClickEvent>(evt =>
             {
-                var configureResult = ConfigureMcpClient(configPath, bodyPath);
+                var configureResult = ConfigureMcpClient(config.ConfigPath, config.BodyPath);
 
                 statusText.text = configureResult ? "Configured" : "Not Configured";
 
