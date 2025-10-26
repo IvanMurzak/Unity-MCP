@@ -26,8 +26,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         {
         }
 
-        public override bool Configure() => ConfigureTomlMcpClient(ConfigPath, Name, BodyPath);
-        public override bool IsConfigured() => IsMcpClientConfigured(ConfigPath, Name, BodyPath);
+        public override bool Configure() => ConfigureTomlMcpClient(ConfigPath, Consts.MCP.Server.DefaultServerName, BodyPath);
+        public override bool IsConfigured() => IsMcpClientConfigured(ConfigPath, Consts.MCP.Server.DefaultServerName, BodyPath);
 
         public static bool ConfigureTomlMcpClient(string configPath, string serverName = Consts.MCP.Server.DefaultServerName, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
         {
