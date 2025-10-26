@@ -15,9 +15,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
     public abstract class ClientConfig
     {
-        public string Name;
-        public string ConfigPath;
-        public string BodyPath;
+        public string Name { get; set; }
+        public string ConfigPath { get; set; }
+        public string BodyPath { get; set; }
 
         public ClientConfig(string name, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
         {

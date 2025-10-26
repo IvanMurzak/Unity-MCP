@@ -189,12 +189,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         static void ConfigureClient(VisualElement root, ClientConfig config)
         {
-            var statusCircle = root.Q<VisualElement>("configureStatusCircle");
-            var statusText = root.Q<Label>("configureStatusText");
-            var btnConfigure = root.Q<Button>("btnConfigure");
+            var statusCircle = root.Q<VisualElement>("configureStatusCircle") ?? throw new NullReferenceException("Status circle element not found in the template.");
+            var statusText = root.Q<Label>("configureStatusText") ?? throw new NullReferenceException("Status text element not found in the template.");
+            var btnConfigure = root.Q<Button>("btnConfigure") ?? throw new NullReferenceException("Configure button element not found in the template.");
 
             // Update the client name
-            var clientNameLabel = root.Q<Label>("clientNameLabel");
+            var clientNameLabel = root.Q<Label>("clientNameLabel") ?? throw new NullReferenceException("Client name label element not found in the template.");
             clientNameLabel.text = config.Name;
 
             var isConfiguredResult = config.IsConfigured();

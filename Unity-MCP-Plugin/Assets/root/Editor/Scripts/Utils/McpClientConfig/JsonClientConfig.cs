@@ -41,7 +41,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 if (!File.Exists(configPath))
                 {
                     // Create all necessary directories
-                    Directory.CreateDirectory(Path.GetDirectoryName(configPath));
+                    var directory = Path.GetDirectoryName(configPath);
+                    if (!string.IsNullOrEmpty(directory))
+                        Directory.CreateDirectory(directory);
 
                     // Create the file if it doesn't exist
                     File.WriteAllText(
@@ -201,9 +203,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                     foundPort = true;
                 else if (i == 1 && arg == targetTimeout)
                     foundTimeout = true;
-
-                // Check named format
-                else if (arg!.StartsWith($"{Consts.MCP.Server.Args.Port}=") && arg.Substring(Consts.MCP.Server.Args.Port.Length + 1) == targetPort)
+                else if (arg!.StartsWith($"{Consts.MCP.Server.Args.Port}=") && arg[(Consts.MCP.Server.Args.Port.Length + 1)..] == targetPort)
+                    foundPort = true;
+                else if (arg!.StartsWith($"{Consts.MCP.Server.Args.PluginTimeout}=") && arg[(Consts.MCP.Server.Args.PluginTimeout.Length + 1)..] == targetTimeout)
                     foundPort = true;
                 else if (arg!.StartsWith($"{Consts.MCP.Server.Args.PluginTimeout}=") && arg.Substring(Consts.MCP.Server.Args.PluginTimeout.Length + 1) == targetTimeout)
                     foundTimeout = true;
