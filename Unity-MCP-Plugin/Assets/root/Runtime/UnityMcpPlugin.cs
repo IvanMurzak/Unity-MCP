@@ -68,8 +68,7 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
-        public static bool IsLogActive(LogLevel level)
-            => (Instance.data ??= new Data()).LogLevel.IsActive(level);
+        public static bool IsLogEnabled(LogLevel level) => LogLevel.IsEnabled(level);
 
         public static LogLevel LogLevel
         {
