@@ -314,7 +314,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             JsonClientConfig.ConfigureJsonMcpClient(tempConfigPath, bodyPath);
 
             // Act
-            var isConfigured = McpClientUtils.IsMcpClientConfigured(tempConfigPath, bodyPath);
+            var isConfigured = JsonClientConfig.IsMcpClientConfigured(tempConfigPath, bodyPath);
 
             // Assert
             Assert.IsTrue(isConfigured, "Should detect that client is configured");
@@ -330,7 +330,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             JsonClientConfig.ConfigureJsonMcpClient(tempConfigPath, bodyPath);
 
             // Act
-            var isConfigured = McpClientUtils.IsMcpClientConfigured(tempConfigPath, bodyPath);
+            var isConfigured = JsonClientConfig.IsMcpClientConfigured(tempConfigPath, bodyPath);
 
             // Assert
             Assert.IsTrue(isConfigured, "Should detect that client is configured");
@@ -346,7 +346,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             JsonClientConfig.ConfigureJsonMcpClient(tempConfigPath, "mcpServers");
 
             // Act
-            var isConfigured = McpClientUtils.IsMcpClientConfigured(tempConfigPath, bodyPath);
+            var isConfigured = JsonClientConfig.IsMcpClientConfigured(tempConfigPath, bodyPath);
 
             // Assert
             Assert.IsFalse(isConfigured, "Should return false for non-existent path");

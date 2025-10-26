@@ -10,10 +10,10 @@
 
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Nodes;
+using System.Text;
 using com.IvanMurzak.Unity.MCP.Common;
 using UnityEngine;
 
@@ -26,100 +26,137 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         {
         }
 
-        public override bool Configure()
-        {
-            return ConfigureTomlMcpClient(ConfigPath, BodyPath);
-        }
+        public override bool Configure() => ConfigureTomlMcpClient(ConfigPath, Name, BodyPath);
+        public override bool IsConfigured() => IsMcpClientConfigured(ConfigPath, Name, BodyPath);
 
-        public static bool ConfigureTomlMcpClient(string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
+        public static bool ConfigureTomlMcpClient(string configPath, string serverName = Consts.MCP.Server.DefaultServerName, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
         {
             if (string.IsNullOrEmpty(configPath))
                 return false;
 
-            Debug.Log($"{Consts.Log.Tag} Configuring MCP client with path: {configPath} and bodyPath: {bodyPath}");
+            Debug.Log($"{Consts.Log.Tag} Configuring MCP client TOML with path: {configPath} and bodyPath: {bodyPath}");
 
             try
             {
+                var sectionName = $"{bodyPath}.{serverName}";
+
+                var commandPath = Startup.Server.ExecutableFullPath.Replace('\\', '/');
+                var args = new[]
+                {
+                    $"--port={UnityMcpPlugin.Port}",
+                    $"--plugin-timeout={UnityMcpPlugin.TimeoutMs}",
+                    $"--client-transport=stdio"
+                };
+
                 if (!File.Exists(configPath))
                 {
                     // Create all necessary directories
-                    Directory.CreateDirectory(Path.GetDirectoryName(configPath));
+                    var directory = Path.GetDirectoryName(configPath);
+                    if (!string.IsNullOrEmpty(directory))
+                        Directory.CreateDirectory(directory);
 
-                    // Create the file if it doesn't exist
-                    File.WriteAllText(
-                        path: configPath,
-                        contents: Startup.Server.RawJsonConfiguration(UnityMcpPlugin.Port, bodyPath, UnityMcpPlugin.TimeoutMs).ToString());
+                    // Create new TOML file with Unity-MCP configuration
+                    var tomlContent = GenerateTomlSection(sectionName, commandPath, args);
+                    File.WriteAllText(configPath, tomlContent);
+                    Debug.Log($"{Consts.Log.Tag} Created new TOML config file");
                     return true;
                 }
 
-                var json = File.ReadAllText(configPath);
-                JsonObject? rootObj = null;
+                // Read existing TOML file
+                var lines = File.ReadAllLines(configPath).ToList();
 
-                try
+                // Find or update the Unity-MCP section
+                var sectionIndex = FindTomlSection(lines, sectionName);
+
+                if (sectionIndex >= 0)
                 {
-                    // Parse the existing config as JsonObject
-                    rootObj = JsonNode.Parse(json)?.AsObject();
-                    if (rootObj == null)
-                        throw new Exception("Config file is not a valid JSON object.");
+                    // Section exists - update it
+                    var sectionEndIndex = FindSectionEnd(lines, sectionIndex);
+
+                    // Remove old section
+                    lines.RemoveRange(sectionIndex, sectionEndIndex - sectionIndex);
+
+                    // Insert updated section at the same position
+                    var newSection = GenerateTomlSection(sectionName, commandPath, args);
+                    lines.Insert(sectionIndex, newSection.TrimEnd());
+
+                    Debug.Log($"{Consts.Log.Tag} Updated existing TOML section [{sectionName}]");
                 }
-                catch
+                else
                 {
-                    File.WriteAllText(
-                        path: configPath,
-                        contents: Startup.Server.RawJsonConfiguration(UnityMcpPlugin.Port, bodyPath, UnityMcpPlugin.TimeoutMs).ToString());
-                    return true;
-                }
+                    // Section doesn't exist - add it
+                    // Add blank line if file is not empty and doesn't end with a blank line
+                    if (lines.Count > 0 && !string.IsNullOrWhiteSpace(lines[^1]))
+                        lines.Add("");
 
-                // Get path segments and navigate to the injection target
-                var pathSegments = Consts.MCP.Server.BodyPathSegments(bodyPath);
+                    lines.Add(GenerateTomlSection(sectionName, commandPath, args).TrimEnd());
 
-                // Generate the configuration to inject
-                var injectObj = Startup.Server.RawJsonConfiguration(UnityMcpPlugin.Port, pathSegments.Last(), UnityMcpPlugin.TimeoutMs);
-                if (injectObj == null)
-                    throw new Exception("Injected config is not a valid JSON object.");
-
-                var injectMcpServers = injectObj[pathSegments.Last()]?.AsObject();
-                if (injectMcpServers == null)
-                    throw new Exception($"Missing '{pathSegments.Last()}' object in inject config.");
-
-                // Navigate to or create the target location in the existing JSON
-                var targetObj = McpClientUtils.EnsureJsonPathExists(rootObj, pathSegments);
-
-                // Find all command values in injectMcpServers for duplicate removal
-                var injectCommands = injectMcpServers
-                    .Select(kv => kv.Value?["command"]?.GetValue<string>())
-                    .Where(cmd => !string.IsNullOrEmpty(cmd))
-                    .ToHashSet();
-
-                // Remove any entry in targetObj with a matching command
-                var keysToRemove = targetObj
-                    .Where(kv => injectCommands.Contains(kv.Value?["command"]?.GetValue<string>()))
-                    .Select(kv => kv.Key)
-                    .ToList();
-
-                foreach (var key in keysToRemove)
-                    targetObj.Remove(key);
-
-                // Merge/overwrite entries from injectMcpServers
-                foreach (var kv in injectMcpServers)
-                {
-                    // Clone the value to avoid parent conflict
-                    targetObj[kv.Key] = kv.Value?.ToJsonString() is string jsonStr
-                        ? JsonNode.Parse(jsonStr)
-                        : null;
+                    Debug.Log($"{Consts.Log.Tag} Added new TOML section [{sectionName}]");
                 }
 
                 // Write back to file
-                File.WriteAllText(configPath, rootObj.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+                File.WriteAllText(configPath, string.Join(Environment.NewLine, lines));
 
-                return McpClientUtils.IsMcpClientConfigured(configPath, bodyPath);
+                return true;
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Error reading config file: {ex.Message}");
+                Debug.LogError($"{Consts.Log.Tag} Error configuring TOML file: {ex.Message}");
                 Debug.LogException(ex);
                 return false;
             }
+        }
+
+        public static bool IsMcpClientConfigured(string configPath, string serverName = Consts.MCP.Server.DefaultServerName, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
+        {
+            return false;
+        }
+        private static string GenerateTomlSection(string sectionName, string command, string[] args)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine($"[{sectionName}]");
+            sb.AppendLine($"command = \"{EscapeTomlString(command)}\"");
+
+            // Format args as TOML array
+            sb.Append("args = [");
+            for (int i = 0; i < args.Length; i++)
+            {
+                sb.Append($"\"{EscapeTomlString(args[i])}\"");
+                if (i < args.Length - 1)
+                    sb.Append(",");
+            }
+            sb.AppendLine("]");
+
+            return sb.ToString();
+        }
+
+        private static string EscapeTomlString(string value)
+        {
+            return value.Replace("\\", "\\\\").Replace("\"", "\\\"");
+        }
+
+        private static int FindTomlSection(List<string> lines, string sectionName)
+        {
+            var sectionHeader = $"[{sectionName}]";
+            for (int i = 0; i < lines.Count; i++)
+            {
+                if (lines[i].Trim() == sectionHeader)
+                    return i;
+            }
+            return -1;
+        }
+
+        private static int FindSectionEnd(List<string> lines, int sectionStartIndex)
+        {
+            // Find the next section or end of file
+            for (int i = sectionStartIndex + 1; i < lines.Count; i++)
+            {
+                var trimmed = lines[i].Trim();
+                // New section starts with [
+                if (trimmed.StartsWith("[") && trimmed.EndsWith("]"))
+                    return i;
+            }
+            return lines.Count;
         }
     }
 }

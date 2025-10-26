@@ -73,6 +73,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         "mcp.json"
                     ),
                     bodyPath: Consts.MCP.Server.DefaultBodyPath
+                ),
+                new TomlClientConfig(
+                    name: "Codex",
+                    configPath: Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        ".codex",
+                        "config.toml"
+                    ),
+                    bodyPath: "mcp_servers"
                 )
             };
 
@@ -120,6 +129,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         "mcp.json"
                     ),
                     bodyPath: Consts.MCP.Server.DefaultBodyPath
+                ),
+                new TomlClientConfig(
+                    name: "Codex",
+                    configPath: Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        ".codex",
+                        "config.toml"
+                    ),
+                    bodyPath: "mcp_servers"
                 )
             };
 
@@ -179,7 +197,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             var clientNameLabel = root.Q<Label>("clientNameLabel");
             clientNameLabel.text = config.Name;
 
-            var isConfiguredResult = McpClientUtils.IsMcpClientConfigured(config.ConfigPath, config.BodyPath);
+            var isConfiguredResult = config.IsConfigured();
 
             statusCircle.RemoveFromClassList(USS_IndicatorClass_Connected);
             statusCircle.RemoveFromClassList(USS_IndicatorClass_Connecting);

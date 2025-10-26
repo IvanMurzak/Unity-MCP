@@ -26,10 +26,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         {
         }
 
-        public override bool Configure()
-        {
-            return ConfigureJsonMcpClient(ConfigPath, BodyPath);
-        }
+        public override bool Configure() => ConfigureJsonMcpClient(ConfigPath, BodyPath);
+        public override bool IsConfigured() => IsMcpClientConfigured(ConfigPath, BodyPath);
 
         public static bool ConfigureJsonMcpClient(string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
         {
@@ -83,7 +81,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                     throw new Exception($"Missing '{pathSegments.Last()}' object in inject config.");
 
                 // Navigate to or create the target location in the existing JSON
-                var targetObj = McpClientUtils.EnsureJsonPathExists(rootObj, pathSegments);
+                var targetObj = EnsureJsonPathExists(rootObj, pathSegments);
 
                 // Find all command values in injectMcpServers for duplicate removal
                 var injectCommands = injectMcpServers
@@ -112,7 +110,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 // Write back to file
                 File.WriteAllText(configPath, rootObj.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
 
-                return McpClientUtils.IsMcpClientConfigured(configPath, bodyPath);
+                return IsMcpClientConfigured(configPath, bodyPath);
             }
             catch (Exception ex)
             {
@@ -120,6 +118,133 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 Debug.LogException(ex);
                 return false;
             }
+        }
+        public static bool IsMcpClientConfigured(string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
+        {
+            if (string.IsNullOrEmpty(configPath) || !File.Exists(configPath))
+                return false;
+
+            try
+            {
+                var json = File.ReadAllText(configPath);
+
+                if (string.IsNullOrWhiteSpace(json))
+                    return false;
+
+                var rootObj = JsonNode.Parse(json)?.AsObject();
+                if (rootObj == null)
+                    return false;
+
+                var pathSegments = Consts.MCP.Server.BodyPathSegments(bodyPath);
+
+                // Navigate to the target location using bodyPath segments
+                var targetObj = NavigateToJsonPath(rootObj, pathSegments);
+                if (targetObj == null)
+                    return false;
+
+                foreach (var kv in targetObj)
+                {
+                    var command = kv.Value?["command"]?.GetValue<string>();
+                    if (string.IsNullOrEmpty(command) || !IsCommandMatch(command!))
+                        continue;
+
+                    var args = kv.Value?["args"]?.AsArray();
+                    return DoArgumentsMatch(args);
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error reading config file: {ex.Message}");
+                Debug.LogException(ex);
+                return false;
+            }
+        }
+
+        static bool IsCommandMatch(string command)
+        {
+            // Normalize both paths for comparison
+            try
+            {
+                var normalizedCommand = Path.GetFullPath(command.Replace('/', Path.DirectorySeparatorChar));
+                var normalizedTarget = Path.GetFullPath(Startup.Server.ExecutableFullPath.Replace('/', Path.DirectorySeparatorChar));
+                return string.Equals(normalizedCommand, normalizedTarget, StringComparison.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                // If normalization fails, fallback to string comparison
+                return string.Equals(command, Startup.Server.ExecutableFullPath, StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        static bool DoArgumentsMatch(JsonArray? args)
+        {
+            if (args == null)
+                return false;
+
+            var targetPort = UnityMcpPlugin.Port.ToString();
+            var targetTimeout = UnityMcpPlugin.TimeoutMs.ToString();
+
+            var foundPort = false;
+            var foundTimeout = false;
+
+            // Check for both positional and named argument formats
+            for (int i = 0; i < args.Count; i++)
+            {
+                var arg = args[i]?.GetValue<string>();
+                if (string.IsNullOrEmpty(arg))
+                    continue;
+
+                // Check positional format
+                if (i == 0 && arg == targetPort)
+                    foundPort = true;
+                else if (i == 1 && arg == targetTimeout)
+                    foundTimeout = true;
+
+                // Check named format
+                else if (arg!.StartsWith($"{Consts.MCP.Server.Args.Port}=") && arg.Substring(Consts.MCP.Server.Args.Port.Length + 1) == targetPort)
+                    foundPort = true;
+                else if (arg!.StartsWith($"{Consts.MCP.Server.Args.PluginTimeout}=") && arg.Substring(Consts.MCP.Server.Args.PluginTimeout.Length + 1) == targetTimeout)
+                    foundTimeout = true;
+            }
+
+            return foundPort && foundTimeout;
+        }
+
+        static JsonObject? NavigateToJsonPath(JsonObject rootObj, string[] pathSegments)
+        {
+            JsonObject? current = rootObj;
+
+            foreach (var segment in pathSegments)
+            {
+                if (current == null)
+                    return null;
+
+                current = current[segment]?.AsObject();
+            }
+
+            return current;
+        }
+        static JsonObject EnsureJsonPathExists(JsonObject rootObj, string[] pathSegments)
+        {
+            JsonObject current = rootObj;
+
+            foreach (var segment in pathSegments)
+            {
+                if (current[segment]?.AsObject() is JsonObject existingObj)
+                {
+                    current = existingObj;
+                }
+                else
+                {
+                    var newObj = new JsonObject();
+                    current[segment] = newObj;
+                    current = newObj;
+                }
+            }
+
+            return current;
         }
     }
 }
