@@ -18,10 +18,9 @@ namespace com.IvanMurzak.Unity.MCP
     {
         public class Data
         {
-            public const string DefaultHost = "http://localhost:8080";
+            public static string DefaultHost => $"http://localhost:{Consts.Hub.DefaultPort}";
 
             public string Host { get; set; } = DefaultHost;
-            public int Port { get; set; } = Consts.Hub.DefaultPort;
             public bool KeepConnected { get; set; } = true;
             public LogLevel LogLevel { get; set; } = LogLevel.Warning;
             public int TimeoutMs { get; set; } = Consts.Hub.DefaultTimeoutMs;
@@ -29,7 +28,6 @@ namespace com.IvanMurzak.Unity.MCP
             public Data SetDefault()
             {
                 Host = DefaultHost;
-                Port = Consts.Hub.DefaultPort;
                 KeepConnected = true;
                 LogLevel = LogLevel.Warning;
                 TimeoutMs = Consts.Hub.DefaultTimeoutMs;

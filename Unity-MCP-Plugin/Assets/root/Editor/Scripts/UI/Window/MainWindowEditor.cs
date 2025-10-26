@@ -34,7 +34,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         private void SaveChanges(string message)
         {
-            if (UnityMcpPlugin.IsLogActive(LogLevel.Info))
+            if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                 Debug.Log(message);
 
             saveChangesMessage = message;
