@@ -90,14 +90,9 @@ Be default recommended to use 'EditMode' for faster iteration during development
                     if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                         Debug.Log($"[TestRunner] Running {testMode} tests with filters: {filterParams}");
 
-                    // Only validate filters if filters are specified
-                    // For unfiltered runs (full test suite), validation is unnecessary and can cause timeouts
-                    if (filterParams.HasAnyFilter)
-                    {
-                        var validation = await ValidateTestFilters(TestRunnerApi, testMode, filterParams);
-                        if (validation != null)
-                            return ResponseCallTool.Error(validation).SetRequestID(requestId);
-                    }
+                    var validation = await ValidateTestFilters(TestRunnerApi, testMode, filterParams);
+                    if (validation != null)
+                        return ResponseCallTool.Error(validation).SetRequestID(requestId);
 
                     var filter = CreateTestFilter(testMode, filterParams);
 
