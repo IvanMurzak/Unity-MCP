@@ -49,7 +49,6 @@ namespace com.IvanMurzak.Unity.MCP
                 catch (Exception e)
                 {
                     Debug.LogException(e);
-                    Debug.LogError($"[{nameof(UnityMcpPlugin)}] <color=red><b>{ResourcesFileName}</b> file is corrupted at <i>{AssetsFilePath}</i></color>");
                     Debug.LogError($"{DebugName} <color=red><b>{ResourcesFileName}</b> file is corrupted at <i>{AssetsFilePath}</i></color>");
                 }
                 if (config == null)
