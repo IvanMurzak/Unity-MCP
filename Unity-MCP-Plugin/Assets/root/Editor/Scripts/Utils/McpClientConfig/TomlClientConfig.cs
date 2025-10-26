@@ -39,7 +39,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             try
             {
                 var sectionName = $"{bodyPath}.{serverName}";
-
                 var commandPath = Startup.Server.ExecutableFullPath.Replace('\\', '/');
                 var args = new[]
                 {
@@ -67,7 +66,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
                 // Find or update the Unity-MCP section
                 var sectionIndex = FindTomlSection(lines, sectionName);
-
                 if (sectionIndex >= 0)
                 {
                     // Section exists - update it
@@ -97,7 +95,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 // Write back to file
                 File.WriteAllText(configPath, string.Join(Environment.NewLine, lines));
 
-                return true;
+                return IsMcpClientConfigured(configPath, serverName, bodyPath);
             }
             catch (Exception ex)
             {
@@ -109,7 +107,180 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
         public static bool IsMcpClientConfigured(string configPath, string serverName = Consts.MCP.Server.DefaultServerName, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
         {
-            return false;
+            if (string.IsNullOrEmpty(configPath) || !File.Exists(configPath))
+                return false;
+
+            try
+            {
+                var sectionName = $"{bodyPath}.{serverName}";
+                var lines = File.ReadAllLines(configPath);
+
+                // Find the section
+                var sectionIndex = FindTomlSection(lines.ToList(), sectionName);
+                if (sectionIndex < 0)
+                    return false;
+
+                // Parse the section to extract command and args
+                var sectionEndIndex = FindSectionEnd(lines.ToList(), sectionIndex);
+                string? command = null;
+                List<string> args = new();
+
+                for (int i = sectionIndex + 1; i < sectionEndIndex; i++)
+                {
+                    var line = lines[i].Trim();
+                    if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#"))
+                        continue;
+
+                    // Parse command line
+                    if (line.StartsWith("command"))
+                    {
+                        command = ParseTomlStringValue(line);
+                    }
+                    // Parse args array
+                    else if (line.StartsWith("args"))
+                    {
+                        args = ParseTomlArrayValue(line);
+                    }
+                }
+
+                // Validate command matches
+                if (command == null || !IsCommandMatch(command))
+                    return false;
+
+                // Validate arguments match
+                return DoArgumentsMatch(args);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"{Consts.Log.Tag} Error reading TOML config file: {ex.Message}");
+                Debug.LogException(ex);
+                return false;
+            }
+        }
+
+        private static string? ParseTomlStringValue(string line)
+        {
+            // Parse: command = "value"
+            var parts = line.Split('=', 2);
+            if (parts.Length != 2)
+                return null;
+
+            var value = parts[1].Trim();
+            // Remove quotes
+            if (value.StartsWith("\"") && value.EndsWith("\""))
+            {
+                value = value[1..^1];
+                // Unescape
+                value = value.Replace("\\\"", "\"").Replace("\\\\", "\\");
+            }
+
+            return value;
+        }
+
+        private static List<string> ParseTomlArrayValue(string line)
+        {
+            // Parse: args = ["value1","value2","value3"]
+            var result = new List<string>();
+            var parts = line.Split('=', 2);
+            if (parts.Length != 2)
+                return result;
+
+            var arrayContent = parts[1].Trim();
+            // Remove array brackets
+            if (arrayContent.StartsWith("[") && arrayContent.EndsWith("]"))
+            {
+                arrayContent = arrayContent[1..^1];
+
+                // Simple parsing - split by comma and extract quoted strings
+                var inQuote = false;
+                var escaped = false;
+                var currentValue = new StringBuilder();
+
+                foreach (var ch in arrayContent)
+                {
+                    if (escaped)
+                    {
+                        currentValue.Append(ch);
+                        escaped = false;
+                        continue;
+                    }
+
+                    if (ch == '\\')
+                    {
+                        escaped = true;
+                        continue;
+                    }
+
+                    if (ch == '"')
+                    {
+                        if (inQuote)
+                        {
+                            // End of quoted string
+                            var value = currentValue.ToString();
+                            value = value.Replace("\\\"", "\"").Replace("\\\\", "\\");
+                            result.Add(value);
+                            currentValue.Clear();
+                        }
+                        inQuote = !inQuote;
+                    }
+                    else if (inQuote)
+                    {
+                        currentValue.Append(ch);
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        private static bool IsCommandMatch(string command)
+        {
+            // Normalize both paths for comparison
+            try
+            {
+                var normalizedCommand = Path.GetFullPath(command.Replace('/', Path.DirectorySeparatorChar));
+                var normalizedTarget = Path.GetFullPath(Startup.Server.ExecutableFullPath.Replace('/', Path.DirectorySeparatorChar));
+                return string.Equals(normalizedCommand, normalizedTarget, StringComparison.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                // If normalization fails, fallback to string comparison
+                return string.Equals(command, Startup.Server.ExecutableFullPath, StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        private static bool DoArgumentsMatch(List<string> args)
+        {
+            if (args == null || args.Count == 0)
+                return false;
+
+            var targetPort = UnityMcpPlugin.Port.ToString();
+            var targetTimeout = UnityMcpPlugin.TimeoutMs.ToString();
+
+            var foundPort = false;
+            var foundTimeout = false;
+
+            // Check for both positional and named argument formats
+            for (int i = 0; i < args.Count; i++)
+            {
+                var arg = args[i];
+                if (string.IsNullOrEmpty(arg))
+                    continue;
+
+                // Check positional format
+                if (i == 0 && arg == targetPort)
+                    foundPort = true;
+                else if (i == 1 && arg == targetTimeout)
+                    foundTimeout = true;
+
+                // Check named format
+                else if (arg.StartsWith($"{Consts.MCP.Server.Args.Port}=") && arg[(Consts.MCP.Server.Args.Port.Length + 1)..] == targetPort)
+                    foundPort = true;
+                else if (arg.StartsWith($"{Consts.MCP.Server.Args.PluginTimeout}=") && arg[(Consts.MCP.Server.Args.PluginTimeout.Length + 1)..] == targetTimeout)
+                    foundTimeout = true;
+            }
+
+            return foundPort && foundTimeout;
         }
         private static string GenerateTomlSection(string sectionName, string command, string[] args)
         {
