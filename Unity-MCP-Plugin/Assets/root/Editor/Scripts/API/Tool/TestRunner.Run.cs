@@ -96,14 +96,8 @@ Be default recommended to use 'EditMode' for faster iteration during development
 
                     var filter = CreateTestFilter(testMode, filterParams);
 
-                    // Schedule test execution for next editor update without blocking
-                    // Using EditorApplication.update (not delayCall) so it works even when Unity is in background
-                    void ExecuteTests()
-                    {
-                        TestRunnerApi.Execute(new ExecutionSettings(filter));
-                        EditorApplication.update -= ExecuteTests;
-                    }
-                    EditorApplication.update += ExecuteTests;
+                    // Delay test running, first need to return response to caller
+                    MainThread.Instance.Run(() => TestRunnerApi.Execute(new ExecutionSettings(filter)));
 
                     return ResponseCallTool.Processing().SetRequestID(requestId);
                 }
