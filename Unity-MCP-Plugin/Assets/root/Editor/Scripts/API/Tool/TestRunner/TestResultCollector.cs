@@ -64,7 +64,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
         {
             int newCount = System.Threading.Interlocked.Increment(ref counter);
 
-            if (UnityMcpPlugin.IsLogActive(LogLevel.Trace))
+            if (UnityMcpPlugin.IsLogEnabled(LogLevel.Trace))
                 Debug.Log($"[{nameof(TestResultCollector)}] Ctor.");
 
             if (newCount > 1)
@@ -73,7 +73,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
 
         public void RunStarted(ITestAdaptor testsToRun)
         {
-            if (UnityMcpPlugin.IsLogActive(LogLevel.Info))
+            if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                 Debug.Log($"[{nameof(TestResultCollector)}] RunStarted.");
 
             startTime = DateTime.Now;
@@ -94,13 +94,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             Application.logMessageReceivedThreaded -= OnLogMessageReceived;
             Application.logMessageReceivedThreaded += OnLogMessageReceived;
 
-            if (UnityMcpPlugin.IsLogActive(LogLevel.Info))
+            if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                 Debug.Log($"[{nameof(TestResultCollector)}] Run {TestModeAsString} started: {testCount} tests.");
         }
 
         public void RunFinished(ITestResultAdaptor result)
         {
-            if (UnityMcpPlugin.IsLogActive(LogLevel.Info))
+            if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                 Debug.Log($"[{nameof(TestResultCollector)}] RunFinished.");
 
             // Unsubscribe from log messages
@@ -123,7 +123,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
                 _summary.Status = TestRunStatus.Unknown;
             }
 
-            if (UnityMcpPlugin.IsLogActive(LogLevel.Info))
+            if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
             {
                 Debug.Log($"[{nameof(TestResultCollector)}] Run {TestModeAsString} finished with {_summary.TotalTests} test results. Result status: {result.TestStatus}");
                 Debug.Log($"[{nameof(TestResultCollector)}] Final duration: {duration:mm\\:ss\\.fff}. Completed: {_results.Count}/{_summary.TotalTests}");
@@ -176,7 +176,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
                     _ => string.Empty
                 };
 
-                if (UnityMcpPlugin.IsLogActive(LogLevel.Info))
+                if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                     Debug.Log($"[{nameof(TestResultCollector)}] {statusEmoji} Test finished ({_results.Count}/{_summary.TotalTests}): {result.Test.FullName} - {result.TestStatus}");
 
                 // Update summary counts
@@ -199,7 +199,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
                 // Check if all tests are complete
                 if (_results.Count >= _summary.TotalTests)
                 {
-                    if (UnityMcpPlugin.IsLogActive(LogLevel.Info))
+                    if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                         Debug.Log($"[{nameof(TestResultCollector)}] All tests completed via TestFinished. Final duration: {_summary.Duration:mm\\:ss\\.fff}");
                 }
             }

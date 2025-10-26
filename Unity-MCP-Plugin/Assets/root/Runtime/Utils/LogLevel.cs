@@ -22,9 +22,9 @@ namespace com.IvanMurzak.Unity.MCP.Utils
     public static class LogLevelEx
     {
         /// <summary>
-        /// Check if the LogLevel is active
-        /// If it is active the related message will be shown in the console
+        /// Check if the LogLevel is enabled
+        /// If it is enabled the related message will be shown in the console
         /// </summary>
-        public static bool IsActive(this LogLevel logLevel, LogLevel level) => logLevel <= level;
+        public static bool IsEnabled(this LogLevel logLevel, LogLevel level) => logLevel <= level;
     }
 }

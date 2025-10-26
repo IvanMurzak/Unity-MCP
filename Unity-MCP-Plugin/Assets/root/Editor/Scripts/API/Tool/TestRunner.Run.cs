@@ -68,7 +68,7 @@ Be default recommended to use 'EditMode' for faster iteration during development
 
             return await MainThread.Instance.RunAsync(async () =>
             {
-                if (UnityMcpPlugin.IsLogActive(LogLevel.Info))
+                if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                     Debug.Log($"[TestRunner] ------------------------------------- Preparing to run {testMode} tests.");
                 try
                 {
@@ -83,7 +83,7 @@ Be default recommended to use 'EditMode' for faster iteration during development
                     // Create filter parameters
                     var filterParams = new TestFilterParameters(testAssembly, testNamespace, testClass, testMethod);
 
-                    if (UnityMcpPlugin.IsLogActive(LogLevel.Info))
+                    if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                         Debug.Log($"[TestRunner] Running {testMode} tests with filters: {filterParams}");
 
                     // Validate specific test mode filter
@@ -100,7 +100,7 @@ Be default recommended to use 'EditMode' for faster iteration during development
                 }
                 catch (Exception ex)
                 {
-                    if (UnityMcpPlugin.IsLogActive(LogLevel.Error))
+                    if (UnityMcpPlugin.IsLogEnabled(LogLevel.Error))
                     {
                         Debug.LogException(ex);
                         Debug.LogError($"[TestRunner] ------------------------------------- Exception {testMode} tests.");
@@ -185,7 +185,7 @@ Be default recommended to use 'EditMode' for faster iteration during development
                         ? CountFilteredTests(testRoot, filterParams)
                         : 0;
 
-                    if (UnityMcpPlugin.IsLogActive(LogLevel.Info))
+                    if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                         Debug.Log($"[TestRunner] {testCount} {testMode} tests matched for {filterParams}");
 
                     tcs.SetResult(testCount);

@@ -12,7 +12,6 @@
 using System;
 using System.Threading.Tasks;
 using com.IvanMurzak.ReflectorNet;
-using Microsoft.AspNetCore.SignalR;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
