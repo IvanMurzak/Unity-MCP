@@ -139,7 +139,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
                         logger.LogTrace("Invoke '{0}', ConnectionId ='{1}'. RequestData:\n{2}\n{3}", methodName, connectionId, request, allConnections);
                     }
                     var invokeTask = client.InvokeAsync<ResponseData<TResponse>>(methodName, request, cancellationToken);
-                    var completed = await invokeTask.WaitWithTimeout(/*ConnectionConfig.TimeoutMs*/ 2000, cancellationToken);
+                    var completed = await invokeTask.WaitWithTimeout(ConnectionConfig.TimeoutMs, cancellationToken);
                     if (completed)
                     {
                         try
