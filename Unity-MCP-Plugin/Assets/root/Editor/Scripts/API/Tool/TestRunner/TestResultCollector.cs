@@ -135,12 +135,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             TestCallRequestID.Value = string.Empty;
             if (string.IsNullOrEmpty(requestId) == false)
             {
+                var structuredResponse = CreateStructuredResponse(
+                    includeMessage: IncludeMessage.Value,
+                    includeLogs: IncludeLogs.Value,
+                    includeMessageStacktrace: IncludeMessageStacktrace.Value,
+                    includeLogsStacktrace: IncludeLogsStacktrace.Value);
+
+                var jsonNode = System.Text.Json.JsonSerializer.SerializeToNode(structuredResponse);
+                var jsonString = jsonNode?.ToJsonString();
+
                 var response = ResponseCallTool
-                    .Success(FormatTestResults(
-                        includeMessage: IncludeMessage.Value,
-                        includeLogs: IncludeLogs.Value,
-                        includeMessageStacktrace: IncludeMessageStacktrace.Value,
-                        includeLogsStacktrace: IncludeLogsStacktrace.Value))
+                    .SuccessStructured(
+                        structuredContent: jsonNode,
+                        message: jsonString ?? "[Success] Test execution completed.")
                     .SetRequestID(requestId);
 
                 _ = UnityMcpPlugin.NotifyToolRequestCompleted(response);
@@ -214,67 +221,45 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             }
         }
 
-        string FormatTestResults(bool includeMessage, bool includeMessageStacktrace, bool includeLogs, bool includeLogsStacktrace)
+        TestRunResponse CreateStructuredResponse(bool includeMessage, bool includeMessageStacktrace, bool includeLogs, bool includeLogsStacktrace)
         {
             var results = GetResults();
             var summary = GetSummary();
             var logs = GetLogs();
 
-            var output = new StringBuilder();
-            output.AppendLine("[Success] Test execution completed.");
-            output.AppendLine();
-
-            // Summary
-            output.AppendLine("=== TEST SUMMARY ===");
-            output.AppendLine($"Status: {summary.Status}");
-            output.AppendLine($"Total: {summary.TotalTests}");
-            output.AppendLine($"Passed: {summary.PassedTests}");
-            output.AppendLine($"Failed: {summary.FailedTests}");
-            output.AppendLine($"Skipped: {summary.SkippedTests}");
-            output.AppendLine($"Duration: {summary.Duration:hh\\:mm\\:ss\\.fff}");
-            output.AppendLine();
-
-            // Individual test results
-            if (results.Any())
+            var response = new TestRunResponse
             {
-                output.AppendLine("=== TEST RESULTS ===");
-                foreach (var result in results)
+                Summary = summary,
+                Results = new List<TestResultData>()
+            };
+
+            // Filter test results based on includeMessage and includeMessageStacktrace
+            foreach (var result in results)
+            {
+                var filteredResult = new TestResultData
                 {
-                    output.AppendLine($"[{result.Status}] {result.Name}");
-                    output.AppendLine($"  Duration: {result.Duration:ss\\.fff}s");
-
-                    if (includeMessage)
-                    {
-                        if (!string.IsNullOrEmpty(result.Message))
-                            output.AppendLine($"  Message: {result.Message}");
-                    }
-
-                    if (includeMessageStacktrace)
-                    {
-                        if (!string.IsNullOrEmpty(result.StackTrace))
-                            output.AppendLine($"  Stack Trace: {result.StackTrace}");
-                    }
-
-                    output.AppendLine();
-                }
+                    Name = result.Name,
+                    Status = result.Status,
+                    Duration = result.Duration,
+                    Message = includeMessage ? result.Message : null,
+                    StackTrace = includeMessageStacktrace ? result.StackTrace : null
+                };
+                response.Results.Add(filteredResult);
             }
 
-            // Console logs
+            // Include logs if requested
             if (includeLogs && logs.Any())
             {
                 var minLogLevel = TestLogEntry.ToLogLevel((LogType)IncludeLogsMinLevel.Value);
-                output.AppendLine("=== CONSOLE LOGS ===");
-                foreach (var log in logs)
-                {
-                    if (log.LogLevel < minLogLevel)
-                        continue;
-                    output.AppendLine(log.ToStringFormat(
-                        includeType: true,
-                        includeStacktrace: includeLogsStacktrace));
-                }
+                response.Logs = logs
+                    .Where(log => log.LogLevel >= minLogLevel)
+                    .Select(log => includeLogsStacktrace
+                        ? log
+                        : new TestLogEntry(log.Type, log.Condition, null, log.Timestamp))
+                    .ToList();
             }
 
-            return output.ToString();
+            return response;
         }
 
         public static int CountTests(ITestAdaptor test)
