@@ -194,7 +194,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             btnConfigure.RegisterCallback<ClickEvent>(evt =>
             {
-                var configureResult = McpClientUtils.ConfigureJsonMcpClient(config.ConfigPath, config.BodyPath);
+                var configureResult = config.Configure();
 
                 statusText.text = configureResult ? "Configured" : "Not Configured";
 

@@ -55,7 +55,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var bodyPath = "mcpServers";
 
             // Act
-            var result = McpClientUtils.ConfigureJsonMcpClient(tempConfigPath, bodyPath);
+            var result = JsonClientConfig.ConfigureJsonMcpClient(tempConfigPath, bodyPath);
 
             // Assert
             Assert.IsTrue(result, "ConfigureMcpClient should return true");
@@ -81,7 +81,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var bodyPath = $"projects{Consts.MCP.Server.BodyPathDelimiter}myProject{Consts.MCP.Server.BodyPathDelimiter}mcpServers";
 
             // Act
-            var result = McpClientUtils.ConfigureJsonMcpClient(tempConfigPath, bodyPath);
+            var result = JsonClientConfig.ConfigureJsonMcpClient(tempConfigPath, bodyPath);
 
             // Assert
             Assert.IsTrue(result, "ConfigureMcpClient should return true");
@@ -125,7 +125,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             File.WriteAllText(tempConfigPath, existingJson);
 
             // Act
-            var result = McpClientUtils.ConfigureJsonMcpClient(tempConfigPath, bodyPath);
+            var result = JsonClientConfig.ConfigureJsonMcpClient(tempConfigPath, bodyPath);
 
             // Assert
             Assert.IsTrue(result, "ConfigureMcpClient should return true");
@@ -172,7 +172,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             File.WriteAllText(tempConfigPath, existingJson);
 
             // Act
-            var result = McpClientUtils.ConfigureJsonMcpClient(tempConfigPath, bodyPath);
+            var result = JsonClientConfig.ConfigureJsonMcpClient(tempConfigPath, bodyPath);
 
             // Assert
             Assert.IsTrue(result, "ConfigureMcpClient should return true");
@@ -221,7 +221,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             File.WriteAllText(tempConfigPath, existingJson);
 
             // Act
-            var result = McpClientUtils.ConfigureJsonMcpClient(tempConfigPath, bodyPath);
+            var result = JsonClientConfig.ConfigureJsonMcpClient(tempConfigPath, bodyPath);
 
             // Assert
             Assert.IsTrue(result, "ConfigureMcpClient should return true");
@@ -266,7 +266,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             File.WriteAllText(tempConfigPath, "{}");
 
             // Act
-            var result = McpClientUtils.ConfigureJsonMcpClient(tempConfigPath, bodyPath);
+            var result = JsonClientConfig.ConfigureJsonMcpClient(tempConfigPath, bodyPath);
 
             // Assert
             Assert.IsTrue(result, "ConfigureMcpClient should return true");
@@ -292,7 +292,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             File.WriteAllText(tempConfigPath, "{ invalid json }");
 
             // Act
-            var result = McpClientUtils.ConfigureJsonMcpClient(tempConfigPath, bodyPath);
+            var result = JsonClientConfig.ConfigureJsonMcpClient(tempConfigPath, bodyPath);
 
             // Assert
             Assert.IsTrue(result, "ConfigureMcpClient should return true");
@@ -311,7 +311,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = "mcpServers";
-            McpClientUtils.ConfigureJsonMcpClient(tempConfigPath, bodyPath);
+            JsonClientConfig.ConfigureJsonMcpClient(tempConfigPath, bodyPath);
 
             // Act
             var isConfigured = McpClientUtils.IsMcpClientConfigured(tempConfigPath, bodyPath);
@@ -327,7 +327,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = $"projects{Consts.MCP.Server.BodyPathDelimiter}myProject{Consts.MCP.Server.BodyPathDelimiter}mcpServers";
-            McpClientUtils.ConfigureJsonMcpClient(tempConfigPath, bodyPath);
+            JsonClientConfig.ConfigureJsonMcpClient(tempConfigPath, bodyPath);
 
             // Act
             var isConfigured = McpClientUtils.IsMcpClientConfigured(tempConfigPath, bodyPath);
@@ -343,7 +343,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = $"nonExistent{Consts.MCP.Server.BodyPathDelimiter}path{Consts.MCP.Server.BodyPathDelimiter}mcpServers";
-            McpClientUtils.ConfigureJsonMcpClient(tempConfigPath, "mcpServers");
+            JsonClientConfig.ConfigureJsonMcpClient(tempConfigPath, "mcpServers");
 
             // Act
             var isConfigured = McpClientUtils.IsMcpClientConfigured(tempConfigPath, bodyPath);
@@ -361,7 +361,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var bodyPath = $"level1{Consts.MCP.Server.BodyPathDelimiter}level2{Consts.MCP.Server.BodyPathDelimiter}level3{Consts.MCP.Server.BodyPathDelimiter}mcpServers";
 
             // Act
-            var result = McpClientUtils.ConfigureJsonMcpClient(tempConfigPath, bodyPath);
+            var result = JsonClientConfig.ConfigureJsonMcpClient(tempConfigPath, bodyPath);
 
             // Assert
             Assert.IsTrue(result, "ConfigureMcpClient should return true");

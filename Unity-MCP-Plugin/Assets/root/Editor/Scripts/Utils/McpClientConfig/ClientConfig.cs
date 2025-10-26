@@ -13,7 +13,7 @@ using com.IvanMurzak.Unity.MCP.Common;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
-    internal abstract class ClientConfig
+    public abstract class ClientConfig
     {
         public string Name;
         public string ConfigPath;
