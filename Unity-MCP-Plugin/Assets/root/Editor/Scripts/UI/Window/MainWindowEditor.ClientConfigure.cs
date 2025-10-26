@@ -25,80 +25,161 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
     public partial class MainWindowEditor : EditorWindow
     {
+        /// <summary>
+        /// Template for individual client configuration panels.
+        /// Must be assigned in the Inspector to: Assets/root/Editor/UI/uxml/ClientConfigPanel.uxml
+        /// </summary>
+        [SerializeField] private VisualTreeAsset? clientConfigPanelTemplate;
+
+        private struct ClientConfig
+        {
+            public string Name;
+            public string ConfigPath;
+            public string BodyPath;
+
+            public ClientConfig(string name, string configPath, string bodyPath)
+            {
+                Name = name;
+                ConfigPath = configPath;
+                BodyPath = bodyPath;
+            }
+        }
+
         string ProjectRootPath => Application.dataPath.EndsWith("/Assets")
             ? Application.dataPath.Substring(0, Application.dataPath.Length - "/Assets".Length)
             : Application.dataPath;
 
         void ConfigureClientsWindows(VisualElement root)
         {
-            ConfigureClient(root.Query<VisualElement>("ConfigureClient-Claude-Desktop").First(),
-                configPath: Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "Claude",
-                    "claude_desktop_config.json"
+            var clientConfigs = new ClientConfig[]
+            {
+                new ClientConfig(
+                    name: "Claude Desktop",
+                    configPath: Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                        "Claude",
+                        "claude_desktop_config.json"
+                    ),
+                    bodyPath: Consts.MCP.Server.DefaultBodyPath
                 ),
-                bodyPath: Consts.MCP.Server.DefaultBodyPath);
+                new ClientConfig(
+                    name: "Claude Code",
+                    configPath: Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        ".claude.json"
+                    ),
+                    bodyPath: $"projects{Consts.MCP.Server.BodyPathDelimiter}"
+                        + $"{ProjectRootPath.Replace("/", "\\")}{Consts.MCP.Server.BodyPathDelimiter}"
+                        + Consts.MCP.Server.DefaultBodyPath
+                ),
+                new ClientConfig(
+                    name: "VS Code (Copilot)",
+                    configPath: Path.Combine(
+                        ".vscode",
+                        "mcp.json"
+                    ),
+                    bodyPath: "servers"
+                ),
+                new ClientConfig(
+                    name: "Cursor",
+                    configPath: Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        ".cursor",
+                        "mcp.json"
+                    ),
+                    bodyPath: Consts.MCP.Server.DefaultBodyPath
+                )
+            };
 
-            ConfigureClient(root.Query<VisualElement>("ConfigureClient-Claude-Code").First(),
-                configPath: Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                    ".claude.json"
-                ),
-                bodyPath: $"projects{Consts.MCP.Server.BodyPathDelimiter}"
-                    + $"{ProjectRootPath.Replace("/", "\\")}{Consts.MCP.Server.BodyPathDelimiter}"
-                    + Consts.MCP.Server.DefaultBodyPath);
-
-            ConfigureClient(root.Query<VisualElement>("ConfigureClient-VS-Code").First(),
-                configPath: Path.Combine(
-                    ".vscode",
-                    "mcp.json"
-                ),
-                bodyPath: "servers");
-
-            ConfigureClient(root.Query<VisualElement>("ConfigureClient-Cursor").First(),
-                configPath: Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                    ".cursor",
-                    "mcp.json"
-                ),
-                bodyPath: Consts.MCP.Server.DefaultBodyPath);
+            ConfigureClientsFromArray(root, clientConfigs);
         }
 
         void ConfigureClientsMacAndLinux(VisualElement root)
         {
-            ConfigureClient(root.Query<VisualElement>("ConfigureClient-Claude-Desktop").First(),
-                configPath: Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                    "Library",
-                    "Application Support",
-                    "Claude",
-                    "claude_desktop_config.json"
+            var clientConfigs = new ClientConfig[]
+            {
+                new ClientConfig(
+                    name: "Claude Desktop",
+                    configPath: Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        "Library",
+                        "Application Support",
+                        "Claude",
+                        "claude_desktop_config.json"
+                    ),
+                    bodyPath: Consts.MCP.Server.DefaultBodyPath
                 ),
-                bodyPath: Consts.MCP.Server.DefaultBodyPath);
+                new ClientConfig(
+                    name: "Claude Code",
+                    configPath: Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        ".claude.json"
+                    ),
+                    bodyPath: $"projects{Consts.MCP.Server.BodyPathDelimiter}"
+                        + $"{ProjectRootPath}{Consts.MCP.Server.BodyPathDelimiter}"
+                        + Consts.MCP.Server.DefaultBodyPath
+                ),
+                new ClientConfig(
+                    name: "VS Code (Copilot)",
+                    configPath: Path.Combine(
+                        ".vscode",
+                        "mcp.json"
+                    ),
+                    bodyPath: "servers"
+                ),
+                new ClientConfig(
+                    name: "Cursor",
+                    configPath: Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        ".cursor",
+                        "mcp.json"
+                    ),
+                    bodyPath: Consts.MCP.Server.DefaultBodyPath
+                )
+            };
 
-            ConfigureClient(root.Query<VisualElement>("ConfigureClient-Claude-Code").First(),
-                configPath: Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                    ".claude.json"
-                ),
-                bodyPath: $"projects{Consts.MCP.Server.BodyPathDelimiter}"
-                    + $"{ProjectRootPath}{Consts.MCP.Server.BodyPathDelimiter}"
-                    + Consts.MCP.Server.DefaultBodyPath);
+            ConfigureClientsFromArray(root, clientConfigs);
+        }
 
-            ConfigureClient(root.Query<VisualElement>("ConfigureClient-VS-Code").First(),
-                configPath: Path.Combine(
-                    ".vscode",
-                    "mcp.json"
-                ),
-                bodyPath: "servers");
+        private void ConfigureClientsFromArray(VisualElement root, ClientConfig[] clientConfigs)
+        {
+            // Get the container where client panels will be added
+            var container = root.Query<VisualElement>("ConfigureClientsContainer").First();
 
-            ConfigureClient(root.Query<VisualElement>("ConfigureClient-Cursor").First(),
-                configPath: Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                    ".cursor",
-                    "mcp.json"
-                ),
-                bodyPath: Consts.MCP.Server.DefaultBodyPath);
+            if (container == null)
+            {
+                Debug.LogError("ConfigureClientsContainer not found in UXML. Please ensure the container element exists.");
+                return;
+            }
+
+            if (clientConfigPanelTemplate == null)
+            {
+                Debug.LogError("clientConfigPanelTemplate is not assigned. Please assign the ClientConfigPanel.uxml template in the Inspector.");
+                return;
+            }
+
+            // Clear any existing dynamic panels
+            container.Clear();
+
+            // Clone and configure a panel for each client
+            foreach (var config in clientConfigs)
+            {
+                // Clone the template using Unity's built-in method
+                var panel = clientConfigPanelTemplate.CloneTree();
+
+                // Update the client name
+                var clientNameLabel = panel.Q<Label>("clientNameLabel");
+                if (clientNameLabel != null)
+                {
+                    clientNameLabel.text = config.Name;
+                }
+
+                // Configure the panel with the client's configuration
+                ConfigureClient(panel, config.ConfigPath, config.BodyPath);
+
+                // Add the configured panel to the container
+                container.Add(panel);
+            }
         }
 
         void ConfigureClient(VisualElement root, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)

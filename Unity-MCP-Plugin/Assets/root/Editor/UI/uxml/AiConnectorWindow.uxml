@@ -27,38 +27,8 @@
             <ui:VisualElement name="divider" class="Divider" style="flex-grow: 1;" />
             <ui:Label text="Configure MCP Client" class="Header" />
             <ui:Label text="At least one client should be configured.&#10;Some clients need restart after configuration." class="section-desc" />
-            <ui:VisualElement name="ConfigureClient-Claude-Desktop" class="Frame-Group" style="flex-grow: 1;">
-                <ui:Label text="Claude Desktop" class="section-title" />
-                <ui:VisualElement class="row">
-                    <ui:VisualElement name="configureStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
-                    <ui:Label text="Not configured" name="configureStatusText" style="flex-grow: 1;" />
-                    <ui:Button name="btnConfigure" text="Configure" class="Button-Primary" />
-                </ui:VisualElement>
-            </ui:VisualElement>
-            <ui:VisualElement name="ConfigureClient-Claude-Code" class="Frame-Group" style="flex-grow: 1;">
-                <ui:Label text="Claude Code" class="section-title" />
-                <ui:VisualElement class="row">
-                    <ui:VisualElement name="configureStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
-                    <ui:Label text="Not configured" name="configureStatusText" style="flex-grow: 1;" />
-                    <ui:Button name="btnConfigure" text="Configure" class="Button-Primary" />
-                </ui:VisualElement>
-            </ui:VisualElement>
-            <ui:VisualElement name="ConfigureClient-VS-Code" class="Frame-Group" style="flex-grow: 1;">
-                <ui:Label text="VS Code (Copilot)" class="section-title" />
-                <ui:VisualElement class="row">
-                    <ui:VisualElement name="configureStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
-                    <ui:Label text="Not configured" name="configureStatusText" style="flex-grow: 1;" />
-                    <ui:Button name="btnConfigure" text="Configure" class="Button-Primary" />
-                </ui:VisualElement>
-            </ui:VisualElement>
-            <ui:VisualElement name="ConfigureClient-Cursor" class="Frame-Group" style="flex-grow: 1;">
-                <ui:Label text="Cursor" class="section-title" />
-                <ui:VisualElement class="row">
-                    <ui:VisualElement name="configureStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
-                    <ui:Label text="Not configured" name="configureStatusText" style="flex-grow: 1;" />
-                    <ui:Button name="btnConfigure" text="Configure" class="Button-Primary" />
-                </ui:VisualElement>
-            </ui:VisualElement>
+            <!-- Client panels are dynamically added here from ClientConfigPanel.uxml template -->
+            <ui:VisualElement name="ConfigureClientsContainer" />
             <ui:VisualElement name="ConfigureClient-Custom" class="Frame-Group" style="flex-grow: 1;">
                 <ui:Label text="Manual configuration" class="section-title" />
                 <ui:Label text="Copy paste the json into your MCP Client to configure it." name="Label" class="section-desc" />
