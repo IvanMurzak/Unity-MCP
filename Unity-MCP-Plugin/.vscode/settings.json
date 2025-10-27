@@ -87,7 +87,8 @@
         "signalr",
         "Trce",
         "uielements",
-        "unitypackage"
+        "unitypackage",
+        "Uxml"
     ],
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {

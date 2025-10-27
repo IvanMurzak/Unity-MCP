@@ -22,6 +22,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 {
     public partial class MainWindowEditor : EditorWindow
     {
+        // Template paths for both local development and UPM package environments
+        const string WindowUxmlPathPackage = "Packages/com.ivanmurzak.unity.mcp/Editor/UI/uxml/AiConnectorWindow.uxml";
+        const string WindowUxmlPathLocal = "Assets/root/Editor/UI/uxml/AiConnectorWindow.uxml";
+
         const string USS_IndicatorClass_Connected = "status-indicator-circle-online";
         const string USS_IndicatorClass_Connecting = "status-indicator-circle-connecting";
         const string USS_IndicatorClass_Disconnected = "status-indicator-circle-disconnected";
@@ -30,15 +34,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         const string ServerButtonText_Disconnect = "Disconnect";
         const string ServerButtonText_Stop = "Stop";
 
-        [SerializeField] VisualTreeAsset templateControlPanel;
-
         public void CreateGUI()
         {
             _disposables.Clear();
             rootVisualElement.Clear();
+
+            // Try to load the template from both possible paths (UPM package or local development)
+            var templateControlPanel = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(WindowUxmlPathPackage);
             if (templateControlPanel == null)
             {
-                Debug.LogError("'templateControlPanel' is not assigned. Please assign it in the inspector.");
+                // Fallback to local development path
+                templateControlPanel = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(WindowUxmlPathLocal);
+            }
+
+            if (templateControlPanel == null)
+            {
+                Debug.LogError($"Failed to load AiConnectorWindow from either path:\n" +
+                              $"- Package: {WindowUxmlPathPackage}\n" +
+                              $"- Local: {WindowUxmlPathLocal}");
                 return;
             }
 

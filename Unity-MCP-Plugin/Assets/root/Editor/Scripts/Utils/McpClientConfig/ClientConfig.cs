@@ -7,22 +7,26 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
-using UnityEditor;
+using com.IvanMurzak.Unity.MCP.Common;
 
-namespace com.IvanMurzak.Unity.MCP.Installer
+namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
-    [InitializeOnLoad]
-    public static partial class Installer
+    public abstract class ClientConfig
     {
-        public const string PackageId = "com.ivanmurzak.unity.mcp";
-        public const string Version = "0.21.0";
+        public string Name { get; set; }
+        public string ConfigPath { get; set; }
+        public string BodyPath { get; set; }
 
-        static Installer()
+        public ClientConfig(string name, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
         {
-#if !IVAN_MURZAK_INSTALLER_PROJECT
-            AddScopedRegistryIfNeeded(ManifestPath);
-#endif
+            Name = name;
+            ConfigPath = configPath;
+            BodyPath = bodyPath;
         }
+
+        public abstract bool Configure();
+        public abstract bool IsConfigured();
     }
 }
