@@ -73,6 +73,7 @@ Be default recommended to use 'EditMode' for faster iteration during development
             {
                 if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                     Debug.Log($"[TestRunner] ------------------------------------- Preparing to run {testMode} tests.");
+                    
                 try
                 {
                     TestResultCollector.TestCallRequestID.Value = requestId;
