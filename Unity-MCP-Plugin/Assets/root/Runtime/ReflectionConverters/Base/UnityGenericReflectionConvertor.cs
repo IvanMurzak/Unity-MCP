@@ -25,30 +25,14 @@ namespace com.IvanMurzak.Unity.MCP.Common.Reflection.Convertor
             => objType.GetFields(flags)
                 .Where(field => field.GetCustomAttribute<ObsoleteAttribute>() == null)
                 .Where(field => field.IsPublic || field.IsPrivate && field.GetCustomAttribute<SerializeField>() != null)
-                .Where(field => !IsReflectionType(field.FieldType));
+                .Where(field => !ReflectionTypeFilter.IsReflectionType(field.FieldType));
 
         public override IEnumerable<PropertyInfo>? GetSerializableProperties(Reflector reflector, Type objType, BindingFlags flags, ILogger? logger = null)
         {
             var baseProperties = base.GetSerializableProperties(reflector, objType, flags, logger);
             if (baseProperties == null) return null;
 
-            return baseProperties.Where(prop => !IsReflectionType(prop.PropertyType));
-        }
-
-        private static bool IsReflectionType(Type type)
-        {
-            // Prevent serialization of reflection types that cause circular references
-            // RuntimeType -> RuntimeModule -> RuntimeAssembly -> RuntimeModule -> ...
-            if (type == null) return false;
-
-            var fullName = type.FullName;
-            if (string.IsNullOrEmpty(fullName)) return false;
-
-            return fullName.StartsWith("System.Reflection.") ||
-                   fullName == "System.RuntimeType" ||
-                   fullName == "System.Reflection.RuntimeModule" ||
-                   fullName == "System.Reflection.RuntimeAssembly" ||
-                   fullName == "System.Type";
+            return baseProperties.Where(prop => !ReflectionTypeFilter.IsReflectionType(prop.PropertyType));
         }
     }
 }
