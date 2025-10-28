@@ -20,7 +20,7 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP
 {
-    public static class LogCache
+    public class LogCache
     {
         static string _cacheFilePath =
 #if UNITY_EDITOR
@@ -36,6 +36,8 @@ namespace com.IvanMurzak.Unity.MCP
         private static CancellationTokenSource _shutdownCts = new();
         private static TaskCompletionSource<bool> _shutdownTcs = new();
         private static IDisposable? _timerSubscription;
+        private static LogCache? _instance;
+        private static readonly object _lock = new object();
 
         public static void HandleQuit()
         {
@@ -45,7 +47,25 @@ namespace com.IvanMurzak.Unity.MCP
             lastLogTask.ContinueWith(_ => _shutdownTcs.TrySetResult(true));
         }
 
-        public static void Initialize()
+        public static LogCache Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    lock (_lock)
+                    {
+                        if (_instance == null && !Application.isBatchMode)
+                        {
+                            _instance = new LogCache();
+                        }
+                    }
+                }
+                return _instance!;
+            }
+        }
+
+        private LogCache()
         {
             if (_initialized) return;
 
