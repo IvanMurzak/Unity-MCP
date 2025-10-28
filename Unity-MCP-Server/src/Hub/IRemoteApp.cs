@@ -17,6 +17,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
     public interface IRemoteApp : IToolResponseReceiver, IResourceResponseReceiver, IDisposable
     {
         Task<IResponseData> OnListToolsUpdated(string data);
+        Task<IResponseData> OnListPromptsUpdated(string data);
         Task<IResponseData> OnListResourcesUpdated(string data);
         Task<IResponseData> OnToolRequestCompleted(ToolRequestCompletedData data);
         Task<VersionHandshakeResponse> OnVersionHandshake(VersionHandshakeRequest request);

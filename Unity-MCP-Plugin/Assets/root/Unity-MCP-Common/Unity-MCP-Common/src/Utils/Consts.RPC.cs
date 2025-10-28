@@ -38,6 +38,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
             public static class Server
             {
                 public const string OnListToolsUpdated = "OnListToolsUpdated";
+                public const string OnListPromptsUpdated = "OnListPromptsUpdated";
                 public const string OnListResourcesUpdated = "OnListResourcesUpdated";
                 public const string OnToolRequestCompleted = "OnToolRequestCompleted";
                 public const string OnVersionHandshake = "OnVersionHandshake";

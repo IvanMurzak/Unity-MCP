@@ -15,6 +15,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
 {
     public class RunResource : IRunResource
     {
+        public bool Enabled { get; set; } = true;
         public string Route { get; set; }
         public string Name { get; set; }
         public string? Description { get; set; }

@@ -29,6 +29,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
     /// </summary>
     public partial class RunTool : MethodWrapper, IRunTool
     {
+        public bool Enabled { get; set; } = true;
         public string? Title { get; protected set; }
         public MethodInfo? Method { get; private set; }
 

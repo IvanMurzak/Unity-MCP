@@ -29,6 +29,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
     /// </summary>
     public partial class RunPrompt : MethodWrapper, IRunPrompt
     {
+        public bool Enabled { get; set; } = true;
         public string Name { get; protected set; }
         public string? Title { get; protected set; }
         public MethodInfo? Method { get; private set; }

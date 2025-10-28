@@ -9,28 +9,24 @@
 */
 
 #nullable enable
-using System.Collections.Generic;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.Unity.MCP.Common.Model;
+using R3;
 
 namespace com.IvanMurzak.Unity.MCP.Common
 {
-    public interface IRunTool : IEnabled
+    public interface IPromptRunner
     {
-        string? Title { get; }
-        string? Description { get; }
-        JsonNode? InputSchema { get; }
-        JsonNode? OutputSchema { get; }
-
-        /// <summary>
-        /// Executes the target method with named parameters.
-        /// Missing parameters will be filled with their default values or the type's default value if no default is defined.
-        /// </summary>
-        /// <param name="namedParameters">A dictionary mapping parameter names to their values.</param>
-        /// <returns>The result of the method execution, or null if the method is void.</returns>
-        Task<ResponseCallTool> Run(string requestId, IReadOnlyDictionary<string, JsonElement>? namedParameters, CancellationToken cancellationToken = default);
+        Observable<Unit> OnPromptsUpdated { get; }
+        int EnabledPromptsCount { get; }
+        int TotalPromptsCount { get; }
+        bool HasPrompt(string name);
+        bool AddPrompt(IRunPrompt runner);
+        bool RemovePrompt(string name);
+        bool IsPromptEnabled(string name);
+        bool SetPromptEnabled(string name, bool enabled);
+        Task<IResponseData<ResponseGetPrompt>> RunGetPrompt(IRequestGetPrompt request, CancellationToken cancellationToken = default);
+        Task<IResponseData<ResponseListPrompts>> RunListPrompts(IRequestListPrompts request, CancellationToken cancellationToken = default);
     }
 }

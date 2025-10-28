@@ -163,7 +163,11 @@ namespace com.IvanMurzak.Unity.MCP
                 .Build(CreateDefaultReflector());
 
             if (!openConnectionIfNeeded)
+            {
+                _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() completed.",
+                    Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(BuildAndStartInternal));
                 return;
+            }
 
             if (KeepConnected)
             {

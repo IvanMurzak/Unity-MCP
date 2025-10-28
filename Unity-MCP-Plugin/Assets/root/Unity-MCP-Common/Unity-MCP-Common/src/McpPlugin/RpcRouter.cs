@@ -134,6 +134,12 @@ namespace com.IvanMurzak.Unity.MCP.Common
             return _connectionManager.InvokeAsync<string, ResponseData>(Consts.RPC.Server.OnListToolsUpdated, string.Empty, cancellationToken);
         }
 
+        public Task<ResponseData> NotifyAboutUpdatedPrompts(CancellationToken cancellationToken = default)
+        {
+            _logger.LogTrace("{class} Notify server about updated prompts.", nameof(RpcRouter));
+            return _connectionManager.InvokeAsync<string, ResponseData>(Consts.RPC.Server.OnListPromptsUpdated, string.Empty, cancellationToken);
+        }
+
         public Task<ResponseData> NotifyAboutUpdatedResources(CancellationToken cancellationToken = default)
         {
             _logger.LogTrace("{class} Notify server about updated resources.", nameof(RpcRouter));

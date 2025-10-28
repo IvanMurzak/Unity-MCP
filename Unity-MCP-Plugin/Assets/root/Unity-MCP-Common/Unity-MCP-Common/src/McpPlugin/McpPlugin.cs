@@ -10,6 +10,7 @@
 
 #nullable enable
 using System;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.Unity.MCP.Common.Model;
@@ -50,7 +51,7 @@ namespace com.IvanMurzak.Unity.MCP.Common
                 {
                     _logger.LogDebug("{class}.{method}, connection state: {2}",
                         nameof(McpPlugin),
-                        nameof(IRpcRouter.NotifyAboutUpdatedTools),
+                        nameof(ConnectionState),
                         state);
 
                     // Perform version handshake first
@@ -64,7 +65,88 @@ namespace com.IvanMurzak.Unity.MCP.Common
                     if (cancellationToken.IsCancellationRequested)
                         return;
 
+                    var tasks = Enumerable.Empty<Task>();
+
+                    if (mcpRunner.EnabledToolsCount > 0)
+                        tasks.Append(_rpcRouter.NotifyAboutUpdatedTools(cancellationToken));
+
+                    if (mcpRunner.EnabledPromptsCount > 0)
+                        tasks.Append(_rpcRouter.NotifyAboutUpdatedPrompts(cancellationToken));
+
+                    if (mcpRunner.EnabledResourcesCount > 0)
+                        tasks.Append(_rpcRouter.NotifyAboutUpdatedResources(cancellationToken));
+
+                    await Task.WhenAll(tasks);
+
+                    _logger.LogDebug("{class}.{method}, initial notifications sent.",
+                        nameof(McpPlugin),
+                        nameof(ConnectionState));
+                })
+                .AddTo(_disposables);
+
+            McpRunner.OnToolsUpdated
+                .Subscribe(async _ =>
+                {
+                    _logger.LogDebug("{class}.{method}, tools updated event received.",
+                        nameof(McpPlugin),
+                        nameof(McpRunner.OnToolsUpdated));
+
+                    if (cancellationToken.IsCancellationRequested)
+                        return;
+
+                    if (_rpcRouter == null)
+                    {
+                        _logger.LogWarning("{class}.{method}, RPC Router is not initialized, cannot notify about updated tools.",
+                            nameof(McpPlugin),
+                            nameof(McpRunner.OnToolsUpdated));
+                        return;
+                    }
+
                     await _rpcRouter.NotifyAboutUpdatedTools(cancellationToken);
+                })
+                .AddTo(_disposables);
+
+            McpRunner.OnPromptsUpdated
+                .Subscribe(async _ =>
+                {
+                    _logger.LogDebug("{class}.{method}, prompts updated event received.",
+                        nameof(McpPlugin),
+                        nameof(McpRunner.OnPromptsUpdated));
+
+                    if (cancellationToken.IsCancellationRequested)
+                        return;
+
+                    if (_rpcRouter == null)
+                    {
+                        _logger.LogWarning("{class}.{method}, RPC Router is not initialized, cannot notify about updated tools.",
+                            nameof(McpPlugin),
+                            nameof(McpRunner.OnToolsUpdated));
+                        return;
+                    }
+
+                    await _rpcRouter.NotifyAboutUpdatedPrompts(cancellationToken);
+                })
+                .AddTo(_disposables);
+
+            McpRunner.OnResourcesUpdated
+                .Subscribe(async _ =>
+                {
+                    _logger.LogDebug("{class}.{method}, resources updated event received.",
+                        nameof(McpPlugin),
+                        nameof(McpRunner.OnResourcesUpdated));
+
+                    if (cancellationToken.IsCancellationRequested)
+                        return;
+
+                    if (_rpcRouter == null)
+                    {
+                        _logger.LogWarning("{class}.{method}, RPC Router is not initialized, cannot notify about updated tools.",
+                            nameof(McpPlugin),
+                            nameof(McpRunner.OnToolsUpdated));
+                        return;
+                    }
+
+                    await _rpcRouter.NotifyAboutUpdatedResources(cancellationToken);
                 })
                 .AddTo(_disposables);
 

@@ -20,6 +20,7 @@ using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Common.Model;
 using Microsoft.Extensions.Logging;
+using R3;
 
 namespace com.IvanMurzak.Unity.MCP.Common
 {
@@ -32,8 +33,14 @@ namespace com.IvanMurzak.Unity.MCP.Common
         readonly ToolRunnerCollection _tools;
         readonly PromptRunnerCollection _prompts;
         readonly ResourceRunnerCollection _resources;
+        readonly Subject<Unit> _onToolsUpdated = new();
+        readonly Subject<Unit> _onPromptsUpdated = new();
+        readonly Subject<Unit> _onResourcesUpdated = new();
 
         public Reflector Reflector => _reflector;
+        public Observable<Unit> OnToolsUpdated => _onToolsUpdated;
+        public Observable<Unit> OnResourcesUpdated => _onResourcesUpdated;
+        public Observable<Unit> OnPromptsUpdated => _onPromptsUpdated;
 
         public McpRunner(ILogger<McpRunner> logger, Reflector reflector, ToolRunnerCollection tools, PromptRunnerCollection prompts, ResourceRunnerCollection resources)
         {
@@ -60,8 +67,58 @@ namespace com.IvanMurzak.Unity.MCP.Common
         }
 
         #region Tools
+        public int EnabledToolsCount => _tools.Count(kvp => kvp.Value.Enabled);
+        public int TotalToolsCount => _tools.Count;
         public bool HasTool(string name) => _tools.ContainsKey(name);
-        public bool HasResource(string name) => _resources.ContainsKey(name);
+        public bool AddTool(string name, IRunTool runner)
+        {
+            if (HasTool(name))
+            {
+                _logger.LogWarning("Tool with Name '{0}' already exists. Skipping addition.", name);
+                return false;
+            }
+
+            _tools[name] = runner;
+            _onToolsUpdated.OnNext(Unit.Default);
+            return true;
+        }
+        public bool RemoveTool(string name)
+        {
+            if (!HasTool(name))
+            {
+                _logger.LogWarning("Tool with Name '{0}' not found. Cannot remove.", name);
+                return false;
+            }
+
+            var removed = _tools.Remove(name);
+            if (removed)
+                _onToolsUpdated.OnNext(Unit.Default);
+
+            return removed;
+        }
+        public bool IsToolEnabled(string name)
+        {
+            if (!_tools.TryGetValue(name, out var runner))
+            {
+                _logger.LogWarning("Tool with Name '{0}' not found.", name);
+                return false;
+            }
+
+            return runner.Enabled;
+        }
+        public bool SetToolEnabled(string name, bool enabled)
+        {
+            if (!_tools.TryGetValue(name, out var runner))
+            {
+                _logger.LogWarning("Tool with Name '{0}' not found.", name);
+                return false;
+            }
+
+            runner.Enabled = enabled;
+            _onToolsUpdated.OnNext(Unit.Default);
+
+            return true;
+        }
 
         public async Task<IResponseData<ResponseCallTool>> RunCallTool(IRequestCallTool data, CancellationToken cancellationToken = default)
         {
@@ -152,6 +209,62 @@ namespace com.IvanMurzak.Unity.MCP.Common
         #endregion
 
         #region Resources
+        public int EnabledResourcesCount => _resources.Count(kvp => kvp.Value.Enabled);
+        public int TotalResourcesCount => _resources.Count;
+        public bool HasResource(string name) => _resources.ContainsKey(name);
+        public bool AddResource(IRunResource resourceParams)
+        {
+            if (resourceParams == null)
+                throw new ArgumentNullException(nameof(resourceParams));
+
+            if (HasResource(resourceParams.Name))
+            {
+                _logger.LogWarning("Resource with Name '{0}' already exists. Skipping addition.", resourceParams.Name);
+                return false;
+            }
+            _resources[resourceParams.Name] = resourceParams;
+            _onResourcesUpdated.OnNext(Unit.Default);
+
+            return true;
+        }
+        public bool RemoveResource(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+                throw new ArgumentException("Resource name is null or empty.", nameof(name));
+
+            if (!HasResource(name))
+            {
+                _logger.LogWarning("Resource with Name '{0}' does not exist. Skipping removal.", name);
+                return false;
+            }
+
+            _resources.Remove(name);
+            _onResourcesUpdated.OnNext(Unit.Default);
+
+            return true;
+        }
+        public bool IsResourceEnabled(string name)
+        {
+            if (!_resources.TryGetValue(name, out var runner))
+            {
+                _logger.LogWarning("Resource with Name '{0}' not found.", name);
+                return false;
+            }
+
+            return runner.Enabled;
+        }
+        public bool SetResourceEnabled(string name, bool enabled)
+        {
+            if (!_resources.TryGetValue(name, out var runner))
+            {
+                _logger.LogWarning("Resource with Name '{0}' not found.", name);
+                return false;
+            }
+
+            runner.Enabled = enabled;
+            _onResourcesUpdated.OnNext(Unit.Default);
+            return true;
+        }
         public async Task<IResponseData<ResponseResourceContent[]>> RunResourceContent(IRequestResourceContent data, CancellationToken cancellationToken = default)
         {
             if (data == null)
@@ -173,7 +286,6 @@ namespace com.IvanMurzak.Unity.MCP.Common
             var result = await runner.Run(parameters);
             return result.Pack(data.RequestID);
         }
-
         public async Task<IResponseData<ResponseListResource[]>> RunListResources(IRequestListResources data, CancellationToken cancellationToken = default)
         {
             _logger.LogDebug("Listing resources. [{Count}]", _resources.Count);
@@ -187,7 +299,6 @@ namespace com.IvanMurzak.Unity.MCP.Common
                 .ToArray()
                 .Pack(data.RequestID);
         }
-
         public Task<IResponseData<ResponseResourceTemplate[]>> RunResourceTemplates(IRequestListResourceTemplates data, CancellationToken cancellationToken = default)
         {
             _logger.LogDebug("Listing resource templates. [{Count}]", _resources.Count);
@@ -213,6 +324,63 @@ namespace com.IvanMurzak.Unity.MCP.Common
         #endregion
 
         #region Prompts
+        public int EnabledPromptsCount => _prompts.Count(kvp => kvp.Value.Enabled);
+        public int TotalPromptsCount => _prompts.Count;
+        public bool HasPrompt(string name) => _prompts.ContainsKey(name);
+        public bool AddPrompt(IRunPrompt runner)
+        {
+            if (runner == null)
+                throw new ArgumentNullException(nameof(runner));
+
+            if (HasPrompt(runner.Name))
+            {
+                _logger.LogWarning("Prompt with Name '{0}' already exists. Skipping addition.", runner.Name);
+                return false;
+            }
+
+            _prompts[runner.Name] = runner;
+            _onPromptsUpdated.OnNext(Unit.Default);
+            return true;
+        }
+        public bool RemovePrompt(string name)
+        {
+            if (!HasPrompt(name))
+            {
+                _logger.LogWarning("Prompt with Name '{0}' not found. Cannot remove.", name);
+                return false;
+            }
+
+            var removed = _prompts.Remove(name);
+            if (removed)
+                _onPromptsUpdated.OnNext(Unit.Default);
+
+            return removed;
+        }
+        public bool IsPromptEnabled(string name)
+        {
+            if (!_prompts.TryGetValue(name, out var runner))
+            {
+                _logger.LogWarning("Prompt with Name '{0}' not found.", name);
+                return false;
+            }
+
+            return runner.Enabled;
+        }
+        public bool SetPromptEnabled(string name, bool enabled)
+        {
+            if (!_prompts.TryGetValue(name, out var runner))
+            {
+                _logger.LogWarning("Prompt with Name '{0}' not found.", name);
+                return false;
+            }
+
+            _logger.LogInformation("Setting Prompt '{0}' enabled state to {1}.", name, enabled);
+
+            runner.Enabled = enabled;
+            _onPromptsUpdated.OnNext(Unit.Default);
+
+            return true;
+        }
         public async Task<IResponseData<ResponseGetPrompt>> RunGetPrompt(IRequestGetPrompt request, CancellationToken cancellationToken = default)
         {
             if (!_prompts.TryGetValue(request.Name, out var runner))
@@ -311,8 +479,9 @@ namespace com.IvanMurzak.Unity.MCP.Common
 
         public void Dispose()
         {
-            _resources.Clear();
             _tools.Clear();
+            _prompts.Clear();
+            _resources.Clear();
         }
     }
 }

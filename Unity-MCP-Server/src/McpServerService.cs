@@ -31,6 +31,8 @@ namespace com.IvanMurzak.Unity.MCP.Server
         readonly IPromptRunner _promptRunner;
         readonly IResourceRunner _resourceRunner;
         readonly EventAppToolsChange _eventAppToolsChange;
+        readonly EventAppPromptsChange _eventAppPromptsChange;
+        readonly EventAppResourcesChange _eventAppResourcesChange;
         readonly CompositeDisposable _disposables = new();
 
         public IMcpServer McpServer => _mcpServer;
@@ -48,7 +50,9 @@ namespace com.IvanMurzak.Unity.MCP.Server
             IToolRunner toolRunner,
             IPromptRunner promptRunner,
             IResourceRunner resourceRunner,
-            EventAppToolsChange eventAppToolsChange)
+            EventAppToolsChange eventAppToolsChange,
+            EventAppPromptsChange eventAppPromptsChange,
+            EventAppResourcesChange eventAppResourcesChange)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _logger.LogTrace("{0} Ctor.", GetType().GetTypeShortName());
@@ -58,6 +62,8 @@ namespace com.IvanMurzak.Unity.MCP.Server
             _promptRunner = promptRunner ?? throw new ArgumentNullException(nameof(promptRunner));
             _resourceRunner = resourceRunner ?? throw new ArgumentNullException(nameof(resourceRunner));
             _eventAppToolsChange = eventAppToolsChange ?? throw new ArgumentNullException(nameof(eventAppToolsChange));
+            _eventAppPromptsChange = eventAppPromptsChange ?? throw new ArgumentNullException(nameof(eventAppPromptsChange));
+            _eventAppResourcesChange = eventAppResourcesChange ?? throw new ArgumentNullException(nameof(eventAppResourcesChange));
 
             // if (Instance != null)
             //     throw new InvalidOperationException($"{typeof(McpServerService).Name} is already initialized.");
@@ -74,8 +80,22 @@ namespace com.IvanMurzak.Unity.MCP.Server
                 {
                     _logger.LogTrace("{type} EventAppToolsChange. ConnectionId: {connectionId}", GetType().GetTypeShortName(), data.ConnectionId);
                     OnListToolUpdated(data, cancellationToken);
-                    // OnListResourcesUpdated(data, cancellationToken);
+                })
+                .AddTo(_disposables);
+
+            _eventAppPromptsChange
+                .Subscribe(data =>
+                {
+                    _logger.LogTrace("{type} EventAppPromptsChange. ConnectionId: {connectionId}", GetType().GetTypeShortName(), data.ConnectionId);
                     OnListPromptsUpdated(data, cancellationToken);
+                })
+                .AddTo(_disposables);
+
+            _eventAppResourcesChange
+                .Subscribe(data =>
+                {
+                    _logger.LogTrace("{type} EventAppResourcesChange. ConnectionId: {connectionId}", GetType().GetTypeShortName(), data.ConnectionId);
+                    OnListResourcesUpdated(data, cancellationToken);
                 })
                 .AddTo(_disposables);
 
@@ -115,19 +135,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
                 _logger.LogError("{type} Error updating resource: {Message}", GetType().GetTypeShortName(), ex.Message);
             }
         }
-        async void OnListResourcesUpdated(EventAppToolsChange.EventData eventData, CancellationToken cancellationToken)
-        {
-            _logger.LogTrace("{type} {method}", GetType().GetTypeShortName(), nameof(OnListResourcesUpdated));
-            try
-            {
-                await McpServer.SendNotificationAsync(NotificationMethods.ResourceListChangedNotification, cancellationToken);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("{type} Error updating resource list: {Message}", GetType().GetTypeShortName(), ex.Message);
-            }
-        }
-        async void OnListPromptsUpdated(EventAppToolsChange.EventData eventData, CancellationToken cancellationToken)
+        async void OnListPromptsUpdated(EventAppPromptsChange.EventData eventData, CancellationToken cancellationToken)
         {
             _logger.LogTrace("{type} {method}", GetType().GetTypeShortName(), nameof(OnListPromptsUpdated));
             try
@@ -137,6 +145,18 @@ namespace com.IvanMurzak.Unity.MCP.Server
             catch (Exception ex)
             {
                 _logger.LogError("{type} Error updating prompts: {Message}", GetType().GetTypeShortName(), ex.Message);
+            }
+        }
+        async void OnListResourcesUpdated(EventAppResourcesChange.EventData eventData, CancellationToken cancellationToken)
+        {
+            _logger.LogTrace("{type} {method}", GetType().GetTypeShortName(), nameof(OnListResourcesUpdated));
+            try
+            {
+                await McpServer.SendNotificationAsync(NotificationMethods.ResourceListChangedNotification, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("{type} Error updating resource list: {Message}", GetType().GetTypeShortName(), ex.Message);
             }
         }
     }

@@ -11,23 +11,16 @@
 #nullable enable
 using System.Threading;
 using System.Threading.Tasks;
-using com.IvanMurzak.Unity.MCP.Common.Model;
 using Microsoft.AspNetCore.SignalR.Client;
 using R3;
 
 namespace com.IvanMurzak.Unity.MCP.Common
 {
-    public interface IRpcRouter : IDisposableAsync
+    public interface IConnection : IDisposableAsync
     {
         ReadOnlyReactiveProperty<bool> KeepConnected { get; }
         ReadOnlyReactiveProperty<HubConnectionState> ConnectionState { get; }
         Task<bool> Connect(CancellationToken cancellationToken = default);
         Task Disconnect(CancellationToken cancellationToken = default);
-
-        Task<ResponseData> NotifyAboutUpdatedTools(CancellationToken cancellationToken = default);
-        Task<ResponseData> NotifyAboutUpdatedPrompts(CancellationToken cancellationToken = default);
-        Task<ResponseData> NotifyAboutUpdatedResources(CancellationToken cancellationToken = default);
-        Task<ResponseData> NotifyToolRequestCompleted(ResponseCallTool response, CancellationToken cancellationToken = default);
-        Task<VersionHandshakeResponse?> PerformVersionHandshake(CancellationToken cancellationToken = default);
     }
 }

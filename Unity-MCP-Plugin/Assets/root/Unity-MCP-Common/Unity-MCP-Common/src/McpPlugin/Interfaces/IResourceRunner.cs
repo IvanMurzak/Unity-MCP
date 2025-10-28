@@ -9,28 +9,25 @@
 */
 
 #nullable enable
-using System.Collections.Generic;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.Unity.MCP.Common.Model;
+using R3;
 
 namespace com.IvanMurzak.Unity.MCP.Common
 {
-    public interface IRunTool : IEnabled
+    public interface IResourceRunner
     {
-        string? Title { get; }
-        string? Description { get; }
-        JsonNode? InputSchema { get; }
-        JsonNode? OutputSchema { get; }
-
-        /// <summary>
-        /// Executes the target method with named parameters.
-        /// Missing parameters will be filled with their default values or the type's default value if no default is defined.
-        /// </summary>
-        /// <param name="namedParameters">A dictionary mapping parameter names to their values.</param>
-        /// <returns>The result of the method execution, or null if the method is void.</returns>
-        Task<ResponseCallTool> Run(string requestId, IReadOnlyDictionary<string, JsonElement>? namedParameters, CancellationToken cancellationToken = default);
+        Observable<Unit> OnResourcesUpdated { get; }
+        int EnabledResourcesCount { get; }
+        int TotalResourcesCount { get; }
+        bool HasResource(string name);
+        bool AddResource(IRunResource resourceParams);
+        bool RemoveResource(string name);
+        bool IsResourceEnabled(string name);
+        bool SetResourceEnabled(string name, bool enabled);
+        Task<IResponseData<ResponseResourceContent[]>> RunResourceContent(IRequestResourceContent request, CancellationToken cancellationToken = default);
+        Task<IResponseData<ResponseListResource[]>> RunListResources(IRequestListResources request, CancellationToken cancellationToken = default);
+        Task<IResponseData<ResponseResourceTemplate[]>> RunResourceTemplates(IRequestListResourceTemplates request, CancellationToken cancellationToken = default);
     }
 }

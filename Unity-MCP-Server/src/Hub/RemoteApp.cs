@@ -21,13 +21,24 @@ namespace com.IvanMurzak.Unity.MCP.Server
     {
         readonly Common.Version _version;
         readonly EventAppToolsChange _eventAppToolsChange;
+        readonly EventAppPromptsChange _eventAppPromptsChange;
+        readonly EventAppResourcesChange _eventAppResourcesChange;
         readonly IRequestTrackingService _requestTrackingService;
 
-        public RemoteApp(ILogger<RemoteApp> logger, Common.Version version, IHubContext<RemoteApp> hubContext, EventAppToolsChange eventAppToolsChange, IRequestTrackingService requestTrackingService)
+        public RemoteApp(
+            ILogger<RemoteApp> logger,
+            Common.Version version,
+            IHubContext<RemoteApp> hubContext,
+            EventAppToolsChange eventAppToolsChange,
+            EventAppPromptsChange eventAppPromptsChange,
+            EventAppResourcesChange eventAppResourcesChange,
+            IRequestTrackingService requestTrackingService)
             : base(logger, hubContext)
         {
             _version = version ?? throw new ArgumentNullException(nameof(version));
             _eventAppToolsChange = eventAppToolsChange ?? throw new ArgumentNullException(nameof(eventAppToolsChange));
+            _eventAppPromptsChange = eventAppPromptsChange ?? throw new ArgumentNullException(nameof(eventAppPromptsChange));
+            _eventAppResourcesChange = eventAppResourcesChange ?? throw new ArgumentNullException(nameof(eventAppResourcesChange));
             _requestTrackingService = requestTrackingService ?? throw new ArgumentNullException(nameof(requestTrackingService));
         }
 
@@ -44,10 +55,30 @@ namespace com.IvanMurzak.Unity.MCP.Server
             return ResponseData.Success(data, string.Empty).TaskFromResult<IResponseData>();
         }
 
+        public Task<IResponseData> OnListPromptsUpdated(string data)
+        {
+            _logger.LogTrace("{method}. {guid}. Data: {data}",
+                nameof(IRemoteApp.OnListPromptsUpdated), _guid, data);
+
+            _eventAppPromptsChange.OnNext(new EventAppPromptsChange.EventData
+            {
+                ConnectionId = Context.ConnectionId,
+                Data = data
+            });
+
+            return ResponseData.Success(data, string.Empty).TaskFromResult<IResponseData>();
+        }
+
         public Task<IResponseData> OnListResourcesUpdated(string data)
         {
             _logger.LogTrace("{method}. {guid}. Data: {data}",
                 nameof(IRemoteApp.OnListResourcesUpdated), _guid, data);
+
+            _eventAppResourcesChange.OnNext(new EventAppResourcesChange.EventData
+            {
+                ConnectionId = Context.ConnectionId,
+                Data = data
+            });
 
             return ResponseData.Success(data, string.Empty).TaskFromResult<IResponseData>();
         }

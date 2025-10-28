@@ -8,22 +8,16 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 
-#nullable enable
-using System.Text.Json.Serialization;
+using R3;
 
-namespace com.IvanMurzak.Unity.MCP.Common
+namespace com.IvanMurzak.Unity.MCP.Server
 {
-    public interface IRunResource : IEnabled
+    public class EventAppResourcesChange : Subject<EventAppResourcesChange.EventData>
     {
-        string Route { get; set; }
-        string Name { get; set; }
-        string? Description { get; set; }
-        string? MimeType { get; set; }
-
-        [JsonIgnore]
-        IRunResourceContent RunGetContent { get; set; }
-
-        [JsonIgnore]
-        IRunResourceContext RunListContext { get; set; }
+        public class EventData
+        {
+            public string ConnectionId { get; set; } = string.Empty;
+            public string Data { get; set; } = string.Empty;
+        }
     }
 }

@@ -9,21 +9,14 @@
 */
 
 #nullable enable
-using System.Text.Json.Serialization;
+using Microsoft.Extensions.Logging;
 
 namespace com.IvanMurzak.Unity.MCP.Common
 {
-    public interface IRunResource : IEnabled
+    public interface IMcpPlugin : IConnection, IDisposableAsync
     {
-        string Route { get; set; }
-        string Name { get; set; }
-        string? Description { get; set; }
-        string? MimeType { get; set; }
-
-        [JsonIgnore]
-        IRunResourceContent RunGetContent { get; set; }
-
-        [JsonIgnore]
-        IRunResourceContext RunListContext { get; set; }
+        ILogger Logger { get; }
+        IMcpRunner McpRunner { get; }
+        IRpcRouter? RpcRouter { get; }
     }
 }

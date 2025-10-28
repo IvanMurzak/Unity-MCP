@@ -18,7 +18,7 @@ using com.IvanMurzak.Unity.MCP.Common.Model;
 
 namespace com.IvanMurzak.Unity.MCP.Common
 {
-    public interface IRunPrompt
+    public interface IRunPrompt : IEnabled
     {
         string Name { get; }
         string? Title { get; }

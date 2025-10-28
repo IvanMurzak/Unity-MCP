@@ -75,7 +75,9 @@ namespace com.IvanMurzak.Unity.MCP.Server
                                 server.Services!.GetRequiredService<IToolRunner>(),
                                 server.Services!.GetRequiredService<IPromptRunner>(),
                                 server.Services!.GetRequiredService<IResourceRunner>(),
-                                server.Services!.GetRequiredService<EventAppToolsChange>()
+                                server.Services!.GetRequiredService<EventAppToolsChange>(),
+                                server.Services!.GetRequiredService<EventAppPromptsChange>(),
+                                server.Services!.GetRequiredService<EventAppResourcesChange>()
                             );
 
                             try

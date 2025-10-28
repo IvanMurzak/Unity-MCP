@@ -15,8 +15,5 @@ namespace com.IvanMurzak.Unity.MCP.Common
     public interface IMcpRunner : IToolRunner, IResourceRunner, IPromptRunner, IDisposable
     {
         Reflector Reflector { get; }
-
-        bool HasTool(string name);
-        bool HasResource(string name);
     }
 }
