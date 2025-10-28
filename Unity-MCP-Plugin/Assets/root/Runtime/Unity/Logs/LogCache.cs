@@ -34,23 +34,31 @@ namespace com.IvanMurzak.Unity.MCP
         static readonly SemaphoreSlim _fileLock = new(1, 1);
         static bool _initialized = false;
         private static CancellationTokenSource _shutdownCts = new();
+        private static TaskCompletionSource<bool> _shutdownTcs = new();
+        private static IDisposable? _timerSubscription;
 
         public static void HandleQuit()
         {
             _shutdownCts.Cancel();
+            _timerSubscription?.Dispose();
+            var lastLogTask = HandleLogCache();
+            lastLogTask.ContinueWith(_ => _shutdownTcs.TrySetResult(true));
         }
 
         public static void Initialize()
         {
             if (_initialized) return;
 
-            var subscription = Observable.Timer(
+            _timerSubscription = Observable.Timer(
                 TimeSpan.FromSeconds(1),
                 TimeSpan.FromSeconds(1)
             )
             .Subscribe(x =>
             {
-                Task.Run(HandleLogCache, _shutdownCts.Token);
+                if (!_shutdownCts.IsCancellationRequested)
+                {
+                    Task.Run(HandleLogCache, _shutdownCts.Token);
+                }
             });
             _initialized = true;
         }
