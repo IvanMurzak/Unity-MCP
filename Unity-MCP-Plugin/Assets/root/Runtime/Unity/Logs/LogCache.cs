@@ -33,6 +33,12 @@ namespace com.IvanMurzak.Unity.MCP
         static string _cacheFile = $"{Path.Combine(_cacheFilePath, _cacheFileName)}";
         static readonly SemaphoreSlim _fileLock = new(1, 1);
         static bool _initialized = false;
+        private static CancellationTokenSource _shutdownCts = new();
+
+        public static void HandleQuit()
+        {
+            _shutdownCts.Cancel();
+        }
 
         public static void Initialize()
         {
@@ -44,9 +50,8 @@ namespace com.IvanMurzak.Unity.MCP
             )
             .Subscribe(x =>
             {
-                Task.Run(HandleLogCache);
+                Task.Run(HandleLogCache, _shutdownCts.Token);
             });
-
             _initialized = true;
         }
 
