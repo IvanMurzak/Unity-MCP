@@ -24,6 +24,7 @@ namespace com.IvanMurzak.Unity.MCP
         static ConcurrentQueue<LogEntry> _logEntries = new();
         static readonly object _lockObject = new();
         static bool _isSubscribed = false;
+        private static CancellationTokenSource _shutdownCts = new();
         public static int LogEntries
         {
             get
@@ -65,6 +66,12 @@ namespace com.IvanMurzak.Unity.MCP
                 }
                 await MainThread.Instance.RunAsync(() => onCompleted?.Invoke());
             });
+        }
+
+        public static void HandleQuit()
+        {
+            SaveToFile();
+            LogCache.HandleQuit();
         }
 
         public static LogEntry[] GetAllLogs()

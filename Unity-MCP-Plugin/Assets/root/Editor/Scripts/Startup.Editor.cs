@@ -40,7 +40,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             if (UnityMcpPlugin.IsLogActive(LogLevel.Debug))
                 Debug.Log($"{DebugName} OnApplicationQuitting triggered");
             Disconnect();
-            LogUtils.SaveToFile();
+            LogUtils.HandleQuit();
         }
         static void OnBeforeAssemblyReload()
         {
