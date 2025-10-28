@@ -14,7 +14,7 @@ using com.IvanMurzak.Unity.MCP.Common.Model;
 
 namespace com.IvanMurzak.Unity.MCP.Server
 {
-    public interface IRemoteApp : IToolResponseReceiver, IResourceResponseReceiver, IDisposable
+    public interface IMcpServerHub : IToolResponseReceiver, IResourceResponseReceiver, IDisposable
     {
         Task<IResponseData> OnListToolsUpdated(string data);
         Task<IResponseData> OnListPromptsUpdated(string data);

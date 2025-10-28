@@ -30,9 +30,9 @@ namespace com.IvanMurzak.Unity.MCP.Server
         readonly IToolRunner _toolRunner;
         readonly IPromptRunner _promptRunner;
         readonly IResourceRunner _resourceRunner;
-        readonly EventAppToolsChange _eventAppToolsChange;
-        readonly EventAppPromptsChange _eventAppPromptsChange;
-        readonly EventAppResourcesChange _eventAppResourcesChange;
+        readonly HubEventToolsChange _eventAppToolsChange;
+        readonly HubEventPromptsChange _eventAppPromptsChange;
+        readonly HubEventResourcesChange _eventAppResourcesChange;
         readonly CompositeDisposable _disposables = new();
 
         public IMcpServer McpServer => _mcpServer;
@@ -50,9 +50,9 @@ namespace com.IvanMurzak.Unity.MCP.Server
             IToolRunner toolRunner,
             IPromptRunner promptRunner,
             IResourceRunner resourceRunner,
-            EventAppToolsChange eventAppToolsChange,
-            EventAppPromptsChange eventAppPromptsChange,
-            EventAppResourcesChange eventAppResourcesChange)
+            HubEventToolsChange eventAppToolsChange,
+            HubEventPromptsChange eventAppPromptsChange,
+            HubEventResourcesChange eventAppResourcesChange)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _logger.LogTrace("{0} Ctor.", GetType().GetTypeShortName());
@@ -111,7 +111,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
             return McpPlugin.StaticDisposeAsync();
         }
 
-        async void OnListToolUpdated(EventAppToolsChange.EventData eventData, CancellationToken cancellationToken)
+        async void OnListToolUpdated(HubEventToolsChange.EventData eventData, CancellationToken cancellationToken)
         {
             _logger.LogTrace("{type} {method}", GetType().GetTypeShortName(), nameof(OnListToolUpdated));
             try
@@ -123,7 +123,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
                 _logger.LogError("{type} Error updating tools: {Message}", GetType().GetTypeShortName(), ex.Message);
             }
         }
-        async void OnResourceUpdated(EventAppToolsChange.EventData eventData, CancellationToken cancellationToken)
+        async void OnResourceUpdated(HubEventToolsChange.EventData eventData, CancellationToken cancellationToken)
         {
             _logger.LogTrace("{type} {method}", GetType().GetTypeShortName(), nameof(OnResourceUpdated));
             try
@@ -135,7 +135,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
                 _logger.LogError("{type} Error updating resource: {Message}", GetType().GetTypeShortName(), ex.Message);
             }
         }
-        async void OnListPromptsUpdated(EventAppPromptsChange.EventData eventData, CancellationToken cancellationToken)
+        async void OnListPromptsUpdated(HubEventPromptsChange.EventData eventData, CancellationToken cancellationToken)
         {
             _logger.LogTrace("{type} {method}", GetType().GetTypeShortName(), nameof(OnListPromptsUpdated));
             try
@@ -147,7 +147,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
                 _logger.LogError("{type} Error updating prompts: {Message}", GetType().GetTypeShortName(), ex.Message);
             }
         }
-        async void OnListResourcesUpdated(EventAppResourcesChange.EventData eventData, CancellationToken cancellationToken)
+        async void OnListResourcesUpdated(HubEventResourcesChange.EventData eventData, CancellationToken cancellationToken)
         {
             _logger.LogTrace("{type} {method}", GetType().GetTypeShortName(), nameof(OnListResourcesUpdated));
             try

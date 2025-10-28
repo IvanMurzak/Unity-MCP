@@ -22,12 +22,12 @@ namespace com.IvanMurzak.Unity.MCP.Server
     public class RemoteResourceRunner : IResourceRunner, IDisposable
     {
         readonly ILogger _logger;
-        readonly IHubContext<RemoteApp> _remoteAppContext;
+        readonly IHubContext<McpServerHub> _remoteAppContext;
         readonly IRequestTrackingService _requestTrackingService;
         readonly CancellationTokenSource cts = new();
         readonly CompositeDisposable _disposables = new();
 
-        public RemoteResourceRunner(ILogger<RemoteResourceRunner> logger, IHubContext<RemoteApp> remoteAppContext, IRequestTrackingService requestTrackingService)
+        public RemoteResourceRunner(ILogger<RemoteResourceRunner> logger, IHubContext<McpServerHub> remoteAppContext, IRequestTrackingService requestTrackingService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _logger.LogTrace("Ctor.");
@@ -37,7 +37,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
 
         public Task<IResponseData<ResponseResourceContent[]>> RunResourceContent(IRequestResourceContent requestData, CancellationToken cancellationToken = default)
         {
-            return ClientUtils.InvokeAsync<IRequestResourceContent, ResponseResourceContent[], RemoteApp>(
+            return ClientUtils.InvokeAsync<IRequestResourceContent, ResponseResourceContent[], McpServerHub>(
                 logger: _logger,
                 hubContext: _remoteAppContext,
                 methodName: Consts.RPC.Client.RunResourceContent,
@@ -47,7 +47,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
 
         public Task<IResponseData<ResponseListResource[]>> RunListResources(IRequestListResources requestData, CancellationToken cancellationToken = default)
         {
-            return ClientUtils.InvokeAsync<IRequestListResources, ResponseListResource[], RemoteApp>(
+            return ClientUtils.InvokeAsync<IRequestListResources, ResponseListResource[], McpServerHub>(
                 logger: _logger,
                 hubContext: _remoteAppContext,
                 methodName: Consts.RPC.Client.RunListResources,
@@ -57,7 +57,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
 
         public Task<IResponseData<ResponseResourceTemplate[]>> RunResourceTemplates(IRequestListResourceTemplates requestData, CancellationToken cancellationToken = default)
         {
-            return ClientUtils.InvokeAsync<IRequestListResourceTemplates, ResponseResourceTemplate[], RemoteApp>(
+            return ClientUtils.InvokeAsync<IRequestListResourceTemplates, ResponseResourceTemplate[], McpServerHub>(
                 logger: _logger,
                 hubContext: _remoteAppContext,
                 methodName: Consts.RPC.Client.RunListResourceTemplates,

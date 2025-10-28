@@ -12,7 +12,7 @@ using R3;
 
 namespace com.IvanMurzak.Unity.MCP.Server
 {
-    public class EventAppResourcesChange : Subject<EventAppResourcesChange.EventData>
+    public class HubEventResourcesChange : Subject<HubEventResourcesChange.EventData>
     {
         public class EventData
         {

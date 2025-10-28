@@ -21,9 +21,9 @@ namespace com.IvanMurzak.Unity.MCP.Server
             if (dataArguments.ClientTransport == Consts.MCP.Server.TransportMethod.stdio)
                 builder.Services.AddHostedService<McpServerService>();
 
-            builder.Services.AddSingleton<EventAppToolsChange>();
-            builder.Services.AddSingleton<EventAppPromptsChange>();
-            builder.Services.AddSingleton<EventAppResourcesChange>();
+            builder.Services.AddSingleton<HubEventToolsChange>();
+            builder.Services.AddSingleton<HubEventPromptsChange>();
+            builder.Services.AddSingleton<HubEventResourcesChange>();
             builder.Services.AddSingleton<IRequestTrackingService, RequestTrackingService>();
             builder.Services.AddSingleton<IToolRunner, RemoteToolRunner>();
             builder.Services.AddSingleton<IPromptRunner, RemotePromptRunner>();

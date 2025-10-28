@@ -17,21 +17,21 @@ using Microsoft.Extensions.Logging;
 
 namespace com.IvanMurzak.Unity.MCP.Server
 {
-    public class RemoteApp : BaseHub<RemoteApp>, IRemoteApp
+    public class McpServerHub : BaseHub<McpServerHub>, IMcpServerHub
     {
         readonly Common.Version _version;
-        readonly EventAppToolsChange _eventAppToolsChange;
-        readonly EventAppPromptsChange _eventAppPromptsChange;
-        readonly EventAppResourcesChange _eventAppResourcesChange;
+        readonly HubEventToolsChange _eventAppToolsChange;
+        readonly HubEventPromptsChange _eventAppPromptsChange;
+        readonly HubEventResourcesChange _eventAppResourcesChange;
         readonly IRequestTrackingService _requestTrackingService;
 
-        public RemoteApp(
-            ILogger<RemoteApp> logger,
+        public McpServerHub(
+            ILogger<McpServerHub> logger,
             Common.Version version,
-            IHubContext<RemoteApp> hubContext,
-            EventAppToolsChange eventAppToolsChange,
-            EventAppPromptsChange eventAppPromptsChange,
-            EventAppResourcesChange eventAppResourcesChange,
+            IHubContext<McpServerHub> hubContext,
+            HubEventToolsChange eventAppToolsChange,
+            HubEventPromptsChange eventAppPromptsChange,
+            HubEventResourcesChange eventAppResourcesChange,
             IRequestTrackingService requestTrackingService)
             : base(logger, hubContext)
         {
@@ -45,9 +45,9 @@ namespace com.IvanMurzak.Unity.MCP.Server
         public Task<IResponseData> OnListToolsUpdated(string data)
         {
             _logger.LogTrace("{method}. {guid}. Data: {data}",
-                nameof(IRemoteApp.OnListToolsUpdated), _guid, data);
+                nameof(IMcpServerHub.OnListToolsUpdated), _guid, data);
 
-            _eventAppToolsChange.OnNext(new EventAppToolsChange.EventData
+            _eventAppToolsChange.OnNext(new HubEventToolsChange.EventData
             {
                 ConnectionId = Context.ConnectionId,
                 Data = data
@@ -58,9 +58,9 @@ namespace com.IvanMurzak.Unity.MCP.Server
         public Task<IResponseData> OnListPromptsUpdated(string data)
         {
             _logger.LogTrace("{method}. {guid}. Data: {data}",
-                nameof(IRemoteApp.OnListPromptsUpdated), _guid, data);
+                nameof(IMcpServerHub.OnListPromptsUpdated), _guid, data);
 
-            _eventAppPromptsChange.OnNext(new EventAppPromptsChange.EventData
+            _eventAppPromptsChange.OnNext(new HubEventPromptsChange.EventData
             {
                 ConnectionId = Context.ConnectionId,
                 Data = data
@@ -72,9 +72,9 @@ namespace com.IvanMurzak.Unity.MCP.Server
         public Task<IResponseData> OnListResourcesUpdated(string data)
         {
             _logger.LogTrace("{method}. {guid}. Data: {data}",
-                nameof(IRemoteApp.OnListResourcesUpdated), _guid, data);
+                nameof(IMcpServerHub.OnListResourcesUpdated), _guid, data);
 
-            _eventAppResourcesChange.OnNext(new EventAppResourcesChange.EventData
+            _eventAppResourcesChange.OnNext(new HubEventResourcesChange.EventData
             {
                 ConnectionId = Context.ConnectionId,
                 Data = data
@@ -86,7 +86,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
         public Task<IResponseData> OnToolRequestCompleted(ToolRequestCompletedData data)
         {
             _logger.LogTrace("{method}. {guid}. RequestId: {requestId}",
-                nameof(IRemoteApp.OnToolRequestCompleted), _guid, data.RequestId);
+                nameof(IMcpServerHub.OnToolRequestCompleted), _guid, data.RequestId);
 
             try
             {
@@ -105,7 +105,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
             try
             {
                 _logger.LogTrace("{method}. {guid}. PluginVersion: {pluginVersion}, ApiVersion: {apiVersion}, UnityVersion: {unityVersion}",
-                    nameof(IRemoteApp.OnVersionHandshake), _guid, request.PluginVersion, request.ApiVersion, request.UnityVersion);
+                    nameof(IMcpServerHub.OnVersionHandshake), _guid, request.PluginVersion, request.ApiVersion, request.UnityVersion);
 
                 var serverApiVersion = _version.Api;
                 var isApiVersionCompatible = IsApiVersionCompatible(request.ApiVersion, serverApiVersion);

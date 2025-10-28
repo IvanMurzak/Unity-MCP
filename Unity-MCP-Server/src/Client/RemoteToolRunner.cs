@@ -22,12 +22,12 @@ namespace com.IvanMurzak.Unity.MCP.Server
     public class RemoteToolRunner : IToolRunner, IDisposable
     {
         readonly ILogger _logger;
-        readonly IHubContext<RemoteApp> _remoteAppContext;
+        readonly IHubContext<McpServerHub> _remoteAppContext;
         readonly IRequestTrackingService _requestTrackingService;
         readonly CancellationTokenSource cts = new();
         readonly CompositeDisposable _disposables = new();
 
-        public RemoteToolRunner(ILogger<RemoteToolRunner> logger, IHubContext<RemoteApp> remoteAppContext, IRequestTrackingService requestTrackingService)
+        public RemoteToolRunner(ILogger<RemoteToolRunner> logger, IHubContext<McpServerHub> remoteAppContext, IRequestTrackingService requestTrackingService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _logger.LogTrace("Ctor.");
@@ -43,7 +43,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
                 request.RequestID,
                 async () =>
                 {
-                    var responseData = await ClientUtils.InvokeAsync<IRequestCallTool, ResponseCallTool, RemoteApp>(
+                    var responseData = await ClientUtils.InvokeAsync<IRequestCallTool, ResponseCallTool, McpServerHub>(
                         logger: _logger,
                         hubContext: _remoteAppContext,
                         methodName: Consts.RPC.Client.RunCallTool,
@@ -60,7 +60,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
         }
 
         public Task<IResponseData<ResponseListTool[]>> RunListTool(IRequestListTool request, CancellationToken cancellationToken = default)
-            => ClientUtils.InvokeAsync<IRequestListTool, ResponseListTool[], RemoteApp>(
+            => ClientUtils.InvokeAsync<IRequestListTool, ResponseListTool[], McpServerHub>(
                 logger: _logger,
                 hubContext: _remoteAppContext,
                 methodName: Consts.RPC.Client.RunListTool,

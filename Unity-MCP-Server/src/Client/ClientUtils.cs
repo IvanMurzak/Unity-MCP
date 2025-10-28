@@ -30,7 +30,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
         static readonly ConcurrentDictionary<Type, ConcurrentDictionary<string, bool>> ConnectedClients = new();
         static readonly ConcurrentDictionary<Type, string> LastSuccessfulClients = new();
 
-        static IEnumerable<string> AllConnections => ConnectedClients.TryGetValue(typeof(RemoteApp), out var clients)
+        static IEnumerable<string> AllConnections => ConnectedClients.TryGetValue(typeof(McpServerHub), out var clients)
             ? clients?.Keys ?? new string[0]
             : Enumerable.Empty<string>();
 
@@ -121,7 +121,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
                 {
                     retryCount++;
 
-                    var connectionId = GetBestConnectionId(typeof(RemoteApp), retryCount - 1);
+                    var connectionId = GetBestConnectionId(typeof(McpServerHub), retryCount - 1);
                     var client = string.IsNullOrEmpty(connectionId)
                         ? null
                         : hubContext.Clients.Client(connectionId);
@@ -149,7 +149,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
                                 return ResponseData<TResponse>.Error(request.RequestID, $"Invoke '{request}' returned null result.")
                                     .Log(logger);
 
-                            LastSuccessfulClients[typeof(RemoteApp)] = connectionId!;
+                            LastSuccessfulClients[typeof(McpServerHub)] = connectionId!;
                             return result;
                         }
                         catch (Exception ex)

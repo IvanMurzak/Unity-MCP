@@ -111,7 +111,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
 
                 // Setup SignalR ----------------------------------------------------
                 app.UseRouting();
-                app.MapHub<RemoteApp>(Consts.Hub.RemoteApp, options =>
+                app.MapHub<McpServerHub>(Consts.Hub.RemoteApp, options =>
                 {
                     options.Transports = HttpTransports.All;
                     options.ApplicationMaxBufferSize = 1024 * 1024 * 10; // 10 MB

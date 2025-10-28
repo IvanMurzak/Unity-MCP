@@ -22,12 +22,12 @@ namespace com.IvanMurzak.Unity.MCP.Server
     public class RemotePromptRunner : IPromptRunner, IDisposable
     {
         readonly ILogger _logger;
-        readonly IHubContext<RemoteApp> _remoteAppContext;
+        readonly IHubContext<McpServerHub> _remoteAppContext;
         readonly IRequestTrackingService _requestTrackingService;
         readonly CancellationTokenSource cts = new();
         readonly CompositeDisposable _disposables = new();
 
-        public RemotePromptRunner(ILogger<RemotePromptRunner> logger, IHubContext<RemoteApp> remoteAppContext, IRequestTrackingService requestTrackingService)
+        public RemotePromptRunner(ILogger<RemotePromptRunner> logger, IHubContext<McpServerHub> remoteAppContext, IRequestTrackingService requestTrackingService)
         {
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
             _logger.LogTrace("Ctor.");
@@ -43,7 +43,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
                 request.RequestID,
                 async () =>
                 {
-                    var responseData = await ClientUtils.InvokeAsync<IRequestCallTool, ResponseCallTool, RemoteApp>(
+                    var responseData = await ClientUtils.InvokeAsync<IRequestCallTool, ResponseCallTool, McpServerHub>(
                         logger: _logger,
                         hubContext: _remoteAppContext,
                         methodName: Consts.RPC.Client.RunCallTool,
@@ -60,7 +60,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
         }
 
         public Task<IResponseData<ResponseListTool[]>> RunListTool(IRequestListTool request, CancellationToken cancellationToken = default)
-            => ClientUtils.InvokeAsync<IRequestListTool, ResponseListTool[], RemoteApp>(
+            => ClientUtils.InvokeAsync<IRequestListTool, ResponseListTool[], McpServerHub>(
                 logger: _logger,
                 hubContext: _remoteAppContext,
                 methodName: Consts.RPC.Client.RunListTool,
@@ -90,7 +90,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
         {
             var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cts.Token, cancellationToken);
 
-            var responseData = await ClientUtils.InvokeAsync<IRequestGetPrompt, ResponseGetPrompt, RemoteApp>(
+            var responseData = await ClientUtils.InvokeAsync<IRequestGetPrompt, ResponseGetPrompt, McpServerHub>(
                 logger: _logger,
                 hubContext: _remoteAppContext,
                 methodName: Consts.RPC.Client.RunGetPrompt,
@@ -104,7 +104,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
         }
 
         public Task<IResponseData<ResponseListPrompts>> RunListPrompts(IRequestListPrompts request, CancellationToken cancellationToken = default)
-            => ClientUtils.InvokeAsync<IRequestListPrompts, ResponseListPrompts, RemoteApp>(
+            => ClientUtils.InvokeAsync<IRequestListPrompts, ResponseListPrompts, McpServerHub>(
                 logger: _logger,
                 hubContext: _remoteAppContext,
                 methodName: Consts.RPC.Client.RunListPrompts,
