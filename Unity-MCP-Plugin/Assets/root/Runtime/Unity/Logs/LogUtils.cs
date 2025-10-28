@@ -96,7 +96,6 @@ namespace com.IvanMurzak.Unity.MCP
                     if (!_isSubscribed)
                     {
                         Application.logMessageReceivedThreaded += OnLogMessageReceived;
-                        LogCache.Initialize();
                         _isSubscribed = true;
                     }
                 }
