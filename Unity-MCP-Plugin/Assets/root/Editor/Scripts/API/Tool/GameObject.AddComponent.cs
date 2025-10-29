@@ -60,6 +60,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 var newComponent = go.AddComponent(type);
 
+                if (newComponent == null)
+                {
+                    stringBuilder.AppendLine($"[Warning] Component '{componentName}' already exists on GameObject or cannot be added.");
+                    continue;
+                }
+
                 stringBuilder.AppendLine($"[Success] Added component '{componentName}'. Component instanceID='{newComponent.GetInstanceID()}'.");
             }
 
