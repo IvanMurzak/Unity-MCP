@@ -24,6 +24,15 @@ namespace com.IvanMurzak.Unity.MCP.Common.Reflection.Convertor
         public override IEnumerable<FieldInfo>? GetSerializableFields(Reflector reflector, Type objType, BindingFlags flags, ILogger? logger = null)
             => objType.GetFields(flags)
                 .Where(field => field.GetCustomAttribute<ObsoleteAttribute>() == null)
-                .Where(field => field.IsPublic || field.IsPrivate && field.GetCustomAttribute<SerializeField>() != null);
+                .Where(field => field.IsPublic || field.IsPrivate && field.GetCustomAttribute<SerializeField>() != null)
+                .Where(field => !ReflectionTypeFilter.IsReflectionType(field.FieldType));
+
+        public override IEnumerable<PropertyInfo>? GetSerializableProperties(Reflector reflector, Type objType, BindingFlags flags, ILogger? logger = null)
+        {
+            var baseProperties = base.GetSerializableProperties(reflector, objType, flags, logger);
+            if (baseProperties == null) return null;
+
+            return baseProperties.Where(prop => !ReflectionTypeFilter.IsReflectionType(prop.PropertyType));
+        }
     }
 }
