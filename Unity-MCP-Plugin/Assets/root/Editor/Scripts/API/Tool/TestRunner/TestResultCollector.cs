@@ -165,7 +165,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
                 var testResult = new TestResultData
                 {
                     Name = result.Test.FullName,
-                    Status = result.TestStatus.ToString(),
+                    Status = ConvertTestStatus(result.TestStatus),
                     Duration = TimeSpan.FromSeconds(result.Duration),
                     Message = result.Message,
                     StackTrace = result.StackTrace
@@ -235,7 +235,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             foreach (var result in results)
             {
                 // Skip passing tests if includePassingTests is false
-                if (!includePassingTests && result.Status == "Passed")
+                if (!includePassingTests && result.Status == TestResultStatus.Passed)
                     continue;
 
                 var filteredResult = new TestResultData
@@ -280,6 +280,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             {
                 return 0;
             }
+        }
+
+        static TestResultStatus ConvertTestStatus(TestStatus testStatus)
+        {
+            return testStatus switch
+            {
+                TestStatus.Passed => TestResultStatus.Passed,
+                TestStatus.Failed => TestResultStatus.Failed,
+                TestStatus.Skipped => TestResultStatus.Skipped,
+                _ => TestResultStatus.Skipped
+            };
         }
     }
 }
