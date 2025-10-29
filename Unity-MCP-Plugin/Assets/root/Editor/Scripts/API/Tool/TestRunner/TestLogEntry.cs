@@ -16,10 +16,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
 {
     public class TestLogEntry
     {
-        public string Condition;
-        public string? StackTrace;
-        public LogType Type;
-        public DateTime Timestamp;
+        public string Condition { get; set; }
+        public string? StackTrace { get; set; }
+        public LogType Type { get; set; }
+        public DateTime Timestamp { get; set; }
 
         public int LogLevel => ToLogLevel(Type);
 

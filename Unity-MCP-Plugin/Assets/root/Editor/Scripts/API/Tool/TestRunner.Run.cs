@@ -20,6 +20,7 @@ using com.IvanMurzak.Unity.MCP.Common;
 using com.IvanMurzak.Unity.MCP.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API.TestRunner;
 using com.IvanMurzak.Unity.MCP.Utils;
+using UnityEditor;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 
@@ -47,7 +48,9 @@ Be default recommended to use 'EditMode' for faster iteration during development
             [Description("Specific fully qualified test method to run (optional). Example: 'MyTestNamespace.FixtureName.TestName'")]
             string? testMethod = null,
 
-            [Description("Include test result messages in the test results (default: true). If just need pass/fail status, set to false.")]
+            [Description("Include details for all tests, both passing and failing (default: false). If you just need details for failing tests, set to false.")]
+            bool includePassingTests = false,
+            [Description("Include test result messages in the test results (default: true). If you just need pass/fail status, set to false.")]
             bool includeMessages = true,
             [Description("Include stack traces in the test results (default: false).")]
             bool includeStacktrace = false,
@@ -70,9 +73,11 @@ Be default recommended to use 'EditMode' for faster iteration during development
             {
                 if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                     Debug.Log($"[TestRunner] ------------------------------------- Preparing to run {testMode} tests.");
+                    
                 try
                 {
                     TestResultCollector.TestCallRequestID.Value = requestId;
+                    TestResultCollector.IncludePassingTests.Value = includePassingTests;
                     TestResultCollector.IncludeMessage.Value = includeMessages;
                     TestResultCollector.IncludeMessageStacktrace.Value = includeStacktrace;
 
@@ -86,7 +91,6 @@ Be default recommended to use 'EditMode' for faster iteration during development
                     if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                         Debug.Log($"[TestRunner] Running {testMode} tests with filters: {filterParams}");
 
-                    // Validate specific test mode filter
                     var validation = await ValidateTestFilters(TestRunnerApi, testMode, filterParams);
                     if (validation != null)
                         return ResponseCallTool.Error(validation).SetRequestID(requestId);
