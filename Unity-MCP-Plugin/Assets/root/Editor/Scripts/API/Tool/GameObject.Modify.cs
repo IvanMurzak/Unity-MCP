@@ -16,6 +16,7 @@ using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API

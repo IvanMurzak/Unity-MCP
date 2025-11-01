@@ -121,7 +121,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 .Query<VisualElement>("ServerConnectionInfo").First()
                 .Query<Label>("connectionStatusText").First();
 
-            McpPlugin.DoAlways(plugin =>
+            McpPlugin.McpPlugin.DoAlways(plugin =>
             {
                 Observable.CombineLatest(
                     UnityMcpPlugin.ConnectionState,

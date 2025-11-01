@@ -18,7 +18,7 @@ using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
-using com.IvanMurzak.Unity.MCP.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {

@@ -13,6 +13,8 @@ using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEditor;
 using UnityEngine;
 
