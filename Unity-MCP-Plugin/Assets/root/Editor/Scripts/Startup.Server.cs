@@ -16,6 +16,7 @@ using System.Net;
 using System.Runtime.InteropServices;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
 using UnityEngine;
 

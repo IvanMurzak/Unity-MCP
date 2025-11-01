@@ -165,7 +165,7 @@ Required:
                     : methodWrapper.Invoke();
 
                 var result = task.Result;
-                return $"[Success] Execution result:\n```json\n{result.ToJson(McpPlugin.Instance!.McpManager.Reflector)}\n```";
+                return $"[Success] Execution result:\n```json\n{result.ToJson(McpPlugin.McpPlugin.Instance!.McpManager.Reflector)}\n```";
             };
 
             if (executeInMainThread)
