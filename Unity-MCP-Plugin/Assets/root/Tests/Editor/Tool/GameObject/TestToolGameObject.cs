@@ -7,6 +7,8 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
+#nullable enable
 using com.IvanMurzak.ReflectorNet;
 using NUnit.Framework;
 using UnityEngine;

@@ -8,6 +8,7 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 
+#nullable enable
 using com.IvanMurzak.McpPlugin.Common;
 using NUnit.Framework;
 

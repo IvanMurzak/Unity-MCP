@@ -7,6 +7,8 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
+#nullable enable
 using System.Collections;
 using com.IvanMurzak.Unity.MCP.Utils;
 using NUnit.Framework;
