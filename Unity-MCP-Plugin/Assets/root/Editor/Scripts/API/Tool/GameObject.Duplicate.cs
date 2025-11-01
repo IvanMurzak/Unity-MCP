@@ -11,6 +11,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;

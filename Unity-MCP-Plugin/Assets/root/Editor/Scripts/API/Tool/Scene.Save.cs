@@ -10,9 +10,9 @@
 #nullable enable
 using System.ComponentModel;
 using System.Linq;
-using com.IvanMurzak.McpPlugin.Common;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
-using com.IvanMurzak.Unity.MCP.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {

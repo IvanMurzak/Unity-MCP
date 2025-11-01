@@ -7,14 +7,14 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
 using System.ComponentModel;
 using System.Text;
-using com.IvanMurzak.McpPlugin.Common;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
-using com.IvanMurzak.Unity.MCP.Utils;
 using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -51,11 +51,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             var obj = (object)asset;
             var result = new StringBuilder();
 
-            var success = McpPlugin.Instance!.McpRunner.Reflector.TryPopulate(
+            var success = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.TryPopulate(
                 ref obj,
                 data: content,
                 stringBuilder: result,
-                logger: McpPlugin.Instance.Logger);
+                logger: McpPlugin.McpPlugin.Instance.Logger);
 
             // AssetDatabase.CreateAsset(asset, assetPath);
             AssetDatabase.SaveAssets();

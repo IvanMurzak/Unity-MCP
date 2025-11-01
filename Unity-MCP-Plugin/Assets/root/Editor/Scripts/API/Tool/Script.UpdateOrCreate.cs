@@ -12,7 +12,7 @@
 using System.ComponentModel;
 using System.IO;
 using System.Threading.Tasks;
-using com.IvanMurzak.McpPlugin.Common;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;

@@ -10,13 +10,11 @@
 #nullable enable
 using System.ComponentModel;
 using System.Text;
-using com.IvanMurzak.McpPlugin.Common;
-using com.IvanMurzak.McpPlugin.Common.Model;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
-using com.IvanMurzak.Unity.MCP.Utils;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -79,11 +77,11 @@ You can modify multiple GameObjects at once. Just provide the same number of Gam
                     objToModify = component;
                 }
 
-                var success = McpPlugin.Instance!.McpRunner.Reflector.TryPopulate(
+                var success = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.TryPopulate(
                     ref objToModify,
                     data: gameObjectDiffs[i],
                     stringBuilder: stringBuilder,
-                    logger: McpPlugin.Instance.Logger);
+                    logger: McpPlugin.McpPlugin.Instance.Logger);
             }
 
             var result = stringBuilder.ToString();

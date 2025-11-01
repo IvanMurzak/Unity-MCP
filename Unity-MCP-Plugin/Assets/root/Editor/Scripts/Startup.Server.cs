@@ -21,7 +21,7 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
 {
-    using Consts = Common.Consts;
+    using Consts = McpPlugin.Common.Consts;
 
     public static partial class Startup
     {

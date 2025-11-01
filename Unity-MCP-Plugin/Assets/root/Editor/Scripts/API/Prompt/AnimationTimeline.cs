@@ -10,7 +10,7 @@
 
 #nullable enable
 using System.ComponentModel;
-using com.IvanMurzak.McpPlugin.Common;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common.Model;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API

@@ -11,7 +11,7 @@
 #nullable enable
 using System.ComponentModel;
 using System.Text;
-using com.IvanMurzak.McpPlugin.Common;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using UnityEditor;
 

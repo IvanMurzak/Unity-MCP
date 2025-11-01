@@ -7,13 +7,12 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
 using System.ComponentModel;
-using com.IvanMurzak.McpPlugin.Common;
-using com.IvanMurzak.McpPlugin.Common.Reflection;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Utils;
-using com.IvanMurzak.Unity.MCP.Utils;
 using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -48,13 +47,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (asset == null)
                 return Error.NotFoundAsset(assetPath, assetGuid);
 
-            var reflector = McpPlugin.Instance!.McpRunner.Reflector;
+            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
             var serialized = reflector.Serialize(
                 asset,
                 name: asset.name,
                 recursive: true,
-                logger: McpPlugin.Instance.Logger
+                logger: McpPlugin.McpPlugin.Instance.Logger
             );
             var json = serialized.ToJson(reflector);
 

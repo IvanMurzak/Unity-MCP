@@ -10,6 +10,7 @@
 #nullable enable
 using System.ComponentModel;
 using System.Linq;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet;
@@ -75,7 +76,7 @@ Even private methods are available. Use 'Reflection_MethodCall' to call the meth
                 if (methods.Count == 0)
                     return $"[Success] Method not found. With request:\n{filter}";
 
-                var reflector = McpPlugin.Instance!.McpRunner.Reflector;
+                var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
                 var methodRefs = methods
                     .Select(method => new MethodData(reflector, method, justRef: false))

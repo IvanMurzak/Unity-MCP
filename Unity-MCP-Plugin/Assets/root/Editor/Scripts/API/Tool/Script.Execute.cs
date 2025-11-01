@@ -83,7 +83,7 @@ Do NOT use top-level statements or code outside a class. Top-level statements ar
             }
 
             var parsedParameters = parameters
-                ?.Select(p => McpPlugin.Instance!.McpRunner.Reflector.Deserialize(p, logger: McpPlugin.Instance.Logger))
+                ?.Select(p => McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Deserialize(p, logger: McpPlugin.McpPlugin.Instance.Logger))
                 ?.ToArray();
 
             var compilation = CSharpCompilation.Create(

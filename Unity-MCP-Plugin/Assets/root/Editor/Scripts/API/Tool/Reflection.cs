@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
@@ -149,7 +150,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         {
             public static string MoreThanOneMethodFound(List<MethodInfo> methods)
             {
-                var reflector = McpPlugin.Instance!.McpRunner.Reflector;
+                var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
                 var methodsString = methods
                     .Select(method => new MethodData(reflector, method, justRef: false))
                     .ToJson(reflector);

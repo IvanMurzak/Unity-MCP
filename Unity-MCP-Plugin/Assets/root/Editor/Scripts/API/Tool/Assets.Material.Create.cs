@@ -7,10 +7,11 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
 using System.ComponentModel;
 using System.IO;
-using com.IvanMurzak.McpPlugin.Common;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using UnityEditor;
 
@@ -60,10 +61,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
 
-            var result = McpPlugin.Instance!.McpRunner.Reflector.Serialize(
+            var result = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Serialize(
                 material,
                 name: material.name,
-                logger: McpPlugin.Instance.Logger
+                logger: McpPlugin.McpPlugin.Instance.Logger
             );
             return $"[Success] Material instanceID '{material.GetInstanceID()}' created at '{assetPath}'.\n{result}";
         });

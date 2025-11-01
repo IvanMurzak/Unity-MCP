@@ -12,6 +12,7 @@ using System;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Utils;

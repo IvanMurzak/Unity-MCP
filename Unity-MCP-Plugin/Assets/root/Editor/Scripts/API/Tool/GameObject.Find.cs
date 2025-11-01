@@ -9,6 +9,7 @@
 */
 #nullable enable
 using System.ComponentModel;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Utils;
@@ -44,13 +45,13 @@ Also, it returns Components preview just for the target GameObject.")]
                 if (error != null)
                     return $"[Error] {error}";
 
-                var reflector = McpPlugin.Instance!.McpRunner.Reflector;
+                var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
                 var serializedGo = reflector.Serialize(
                     obj: go,
                     name: go.name,
                     recursive: !briefData,
-                    logger: McpPlugin.Instance.Logger
+                    logger: McpPlugin.McpPlugin.Instance.Logger
                 );
                 var json = serializedGo.ToJson(reflector);
                 return @$"[Success] Found GameObject.
