@@ -15,7 +15,6 @@ using System.Text;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
-using com.IvanMurzak.Unity.MCP.Utils;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
