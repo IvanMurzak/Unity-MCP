@@ -13,7 +13,7 @@ using System.Threading;
 using UnityEditor;
 using UnityEngine;
 
-namespace com.IvanMurzak.Unity.MCP.Utils
+namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
 {
 #if UNITY_EDITOR
     [InitializeOnLoad]

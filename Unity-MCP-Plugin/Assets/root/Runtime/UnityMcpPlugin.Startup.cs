@@ -7,24 +7,26 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
+#nullable enable
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.McpPlugin.Common.Reflection.Convertor;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Convertor;
-using com.IvanMurzak.Unity.MCP.Common;
-using com.IvanMurzak.Unity.MCP.Common.Json;
-using com.IvanMurzak.Unity.MCP.Common.Json.Converters;
-using com.IvanMurzak.Unity.MCP.Common.Reflection.Convertor;
+using com.IvanMurzak.Unity.MCP.JsonConverters;
 using com.IvanMurzak.Unity.MCP.Reflection.Convertor;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.Extensions.Logging;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP
 {
-    using Consts = Common.Consts;
-    using LogLevel = Utils.LogLevel;
+    using Consts = McpPlugin.Common.Consts;
+    using LogLevel = Runtime.Utils.LogLevel;
     using MicrosoftLogLevel = Microsoft.Extensions.Logging.LogLevel;
 
     public partial class UnityMcpPlugin
@@ -32,7 +34,7 @@ namespace com.IvanMurzak.Unity.MCP
         public const string Version = "0.21.0";
 
         static volatile object initializingMutex = new();
-        static volatile Mutex initializedMutex = new();
+        static volatile Mutex connectionMutex = new();
         static volatile bool isInitializing = false;
         static volatile bool isInitialized = false;
 
@@ -59,7 +61,7 @@ namespace com.IvanMurzak.Unity.MCP
                 isInitializing = true;
             }
 
-            initializedMutex.WaitOne();
+            connectionMutex.WaitOne();
             try
             {
                 if (isInitialized)
@@ -69,14 +71,14 @@ namespace com.IvanMurzak.Unity.MCP
 
                     if (openConnectionIfNeeded && KeepConnected)
                     {
-                        if (!McpPlugin.HasInstance)
+                        if (!McpPlugin.McpPlugin.HasInstance)
                         {
                             _logger.Log(MicrosoftLogLevel.Error, "{tag} {class} instance is null while isInitialized is true.",
                                 Consts.Log.Tag, nameof(UnityMcpPlugin));
 
                             return;
                         }
-                        await McpPlugin.Instance.Connect();
+                        await McpPlugin.McpPlugin.Instance!.Connect();
                     }
                     return;
                 }
@@ -97,13 +99,13 @@ namespace com.IvanMurzak.Unity.MCP
                 _logger.Log(MicrosoftLogLevel.Error, "{tag} {class} Error during MCP plugin initialization: {exception}",
                     Consts.Log.Tag, nameof(UnityMcpPlugin), ex);
 
-                await McpPlugin.StaticDisposeAsync();
+                await McpPlugin.McpPlugin.StaticDisposeAsync();
             }
             finally
             {
                 _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() completed.",
                     Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(BuildAndStart));
-                initializedMutex.ReleaseMutex();
+                connectionMutex.ReleaseMutex();
                 lock (initializingMutex)
                 {
                     isInitializing = false;
@@ -116,7 +118,7 @@ namespace com.IvanMurzak.Unity.MCP
             _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() called.",
                 Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(BuildAndStartInternal));
 
-            if (McpPlugin.HasInstance)
+            if (McpPlugin.McpPlugin.HasInstance)
             {
                 _logger.Log(MicrosoftLogLevel.Error, "{tag} {class} instance already exists.",
                     Consts.Log.Tag, nameof(UnityMcpPlugin));
@@ -125,11 +127,11 @@ namespace com.IvanMurzak.Unity.MCP
 
             MainThreadInstaller.Init();
 
-            var version = new Common.Version
+            var version = new McpPlugin.Common.Version
             {
                 Api = Consts.ApiVersion,
                 Plugin = UnityMcpPlugin.Version,
-                UnityVersion = Application.unityVersion
+                Environment = Application.unityVersion
             };
             var loggerProvider = new UnityLoggerProvider();
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
@@ -140,7 +142,7 @@ namespace com.IvanMurzak.Unity.MCP
                     _logger.Log(MicrosoftLogLevel.Information, "{tag} MCP server address: {host}",
                         Consts.Log.Tag, Host);
 
-                    config.Endpoint = Host;
+                    config.Host = Host;
                 })
                 .AddLogging(loggingBuilder =>
                 {

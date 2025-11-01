@@ -12,9 +12,9 @@ using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text.Json;
+using com.IvanMurzak.McpPlugin.Common;
+using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet;
-using com.IvanMurzak.Unity.MCP.Common.Model;
-using com.IvanMurzak.Unity.MCP.Common;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils

@@ -46,7 +46,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             EditorUtility.SetDirty(UnityMcpPlugin.AssetFile); // Undo record completed
         }
 
-        private void OnChanged(UnityMcpPlugin.Data data) => Repaint();
+        private void OnChanged(UnityMcpPlugin.UnityConnectionConfig data) => Repaint();
 
         private void OnEnable()
         {

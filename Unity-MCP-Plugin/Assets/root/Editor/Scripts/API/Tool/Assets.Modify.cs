@@ -10,10 +10,10 @@
 #nullable enable
 using System.ComponentModel;
 using System.Text;
+using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
-using com.IvanMurzak.Unity.MCP.Common;
-using com.IvanMurzak.Unity.MCP.Common.Model.Unity;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Utils;
 using UnityEditor;
 

@@ -12,8 +12,8 @@ using System;
 using System.ComponentModel;
 using System.IO;
 using System.Text;
+using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.ReflectorNet.Utils;
-using com.IvanMurzak.Unity.MCP.Common;
 using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API

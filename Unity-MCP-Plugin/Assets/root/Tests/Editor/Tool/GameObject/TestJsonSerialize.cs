@@ -10,8 +10,8 @@
 using System;
 using System.Collections;
 using System.Globalization;
+using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.ReflectorNet;
-using com.IvanMurzak.Unity.MCP.Common;
 using com.IvanMurzak.Unity.MCP.Utils;
 using NUnit.Framework;
 using UnityEngine.TestTools;

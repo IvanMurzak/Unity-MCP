@@ -9,9 +9,9 @@
 */
 #nullable enable
 using System;
+using com.IvanMurzak.McpPlugin.Common;
+using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet;
-using com.IvanMurzak.Unity.MCP.Common.Model;
-using com.IvanMurzak.Unity.MCP.Common;
 using NUnit.Framework;
 using UnityEngine;
 

@@ -8,7 +8,7 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 
-using com.IvanMurzak.Unity.MCP.Common;
+using com.IvanMurzak.McpPlugin.Common;
 using NUnit.Framework;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests

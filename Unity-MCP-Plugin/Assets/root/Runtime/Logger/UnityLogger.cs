@@ -10,11 +10,12 @@
 
 #nullable enable
 using System;
-using com.IvanMurzak.Unity.MCP.Common;
+using com.IvanMurzak.McpPlugin.Common;
 using Microsoft.Extensions.Logging;
 
 namespace com.IvanMurzak.Unity.MCP.Utils
 {
+    using LogLevel = Runtime.Utils.LogLevel;
     using LogLevelMicrosoft = Microsoft.Extensions.Logging.LogLevel;
 
     public class UnityLogger : ILogger

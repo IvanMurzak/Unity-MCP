@@ -10,9 +10,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Text.Json;
+using com.IvanMurzak.McpPlugin.Common;
+using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet;
-using com.IvanMurzak.Unity.MCP.Common;
-using com.IvanMurzak.Unity.MCP.Common.Model;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;

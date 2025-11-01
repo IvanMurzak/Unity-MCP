@@ -9,7 +9,7 @@
 */
 #nullable enable
 using System.Collections;
-using com.IvanMurzak.Unity.MCP.Common;
+using com.IvanMurzak.McpPlugin.Common;
 using NUnit.Framework;
 using UnityEngine.TestTools;
 

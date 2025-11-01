@@ -8,20 +8,20 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 using System.Collections;
-using com.IvanMurzak.Unity.MCP.Common.Model.Unity;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
+using com.IvanMurzak.McpPlugin.Common;
+using com.IvanMurzak.McpPlugin.Common.Model;
+using com.IvanMurzak.ReflectorNet;
+using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Utils;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
-using com.IvanMurzak.Unity.MCP.Common.Model;
-using System.Text.Json;
-using System.Linq;
-using System.Collections.Generic;
-using com.IvanMurzak.ReflectorNet;
-using com.IvanMurzak.Unity.MCP.Common;
-using UnityEditor;
-using com.IvanMurzak.ReflectorNet.Model;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {

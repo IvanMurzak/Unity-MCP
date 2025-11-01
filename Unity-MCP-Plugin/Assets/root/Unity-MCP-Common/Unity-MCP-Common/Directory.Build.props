@@ -1,6 +1,0 @@
-<Project>
-  <PropertyGroup>
-    <BaseIntermediateOutputPath>./obj~/</BaseIntermediateOutputPath>
-    <RestoreOutputPath>./obj~/</RestoreOutputPath>
-  </PropertyGroup>
-</Project>

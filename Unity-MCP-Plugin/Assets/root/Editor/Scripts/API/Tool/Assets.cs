@@ -8,7 +8,7 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 #nullable enable
-using com.IvanMurzak.Unity.MCP.Common;
+using com.IvanMurzak.McpPlugin.Common;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {

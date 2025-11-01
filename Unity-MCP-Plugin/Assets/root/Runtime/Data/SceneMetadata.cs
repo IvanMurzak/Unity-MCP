@@ -7,15 +7,16 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+#nullable enable
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using com.IvanMurzak.Unity.MCP.Common;
+using com.IvanMurzak.McpPlugin.Common;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
 using UnityEngine.SceneManagement;
 
-namespace com.IvanMurzak.Unity.MCP
+namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
     public class SceneMetadata
     {
@@ -54,7 +55,7 @@ namespace com.IvanMurzak.Unity.MCP
 
             return sb.ToString();
         }
-        public static SceneMetadata FromScene(Scene scene, int includeChildrenDepth = 3)
+        public static SceneMetadata? FromScene(Scene scene, int includeChildrenDepth = 3)
         {
             if (!scene.IsValid())
                 return null;
@@ -66,8 +67,11 @@ namespace com.IvanMurzak.Unity.MCP
                 isDirty = scene.isDirty,
                 isLoaded = scene.isLoaded,
                 rootGameObjects = GameObjectUtils.FindRootGameObjects(scene)
-                    .Select(x => x.ToMetadata(includeChildrenDepth))
-                    .ToList()
+                    ?.Select(x => x.ToMetadata(includeChildrenDepth))
+                    ?.Where(x => x != null)
+                    ?.Select(x => x!)
+                    ?.ToList()
+                    ?? new List<GameObjectMetadata>()
             };
         }
     }

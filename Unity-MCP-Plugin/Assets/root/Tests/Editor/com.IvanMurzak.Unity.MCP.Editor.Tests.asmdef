@@ -7,7 +7,7 @@
         "com.IvanMurzak.Unity.MCP.Runtime",
         "com.IvanMurzak.Unity.MCP.TestFiles",
         "com.IvanMurzak.Unity.MCP.Editor",
-        "com.IvanMurzak.Unity.MCP.Common"
+        "com.IvanMurzak.McpPlugin.Common"
     ],
     "includePlatforms": [
         "Editor"

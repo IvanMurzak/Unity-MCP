@@ -13,9 +13,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text.Json.Nodes;
 using System.Threading;
+using com.IvanMurzak.McpPlugin.Common;
+using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet;
-using com.IvanMurzak.Unity.MCP.Common;
-using com.IvanMurzak.Unity.MCP.Common.Model;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
@@ -36,9 +36,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             _reflector = new Reflector();
 
             // Register Unity type converters to avoid circular reference issues
-            _reflector.JsonSerializer.AddConverter(new com.IvanMurzak.Unity.MCP.Common.Json.Converters.Vector3Converter());
-            _reflector.JsonSerializer.AddConverter(new com.IvanMurzak.Unity.MCP.Common.Json.Converters.ColorConverter());
-            _reflector.JsonSerializer.AddConverter(new com.IvanMurzak.Unity.MCP.Common.Json.Converters.QuaternionConverter());
+            _reflector.JsonSerializer.AddConverter(new com.IvanMurzak.McpPlugin.Common.Json.Converters.Vector3Converter());
+            _reflector.JsonSerializer.AddConverter(new com.IvanMurzak.McpPlugin.Common.Json.Converters.ColorConverter());
+            _reflector.JsonSerializer.AddConverter(new com.IvanMurzak.McpPlugin.Common.Json.Converters.QuaternionConverter());
 
             _mockLogger = UnityLoggerFactory.LoggerFactory.CreateLogger<RunToolStructuredContentTests>();
         }
