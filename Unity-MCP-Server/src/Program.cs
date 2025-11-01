@@ -11,9 +11,11 @@
 using System;
 using System.Text.Json;
 using System.Threading.Tasks;
+using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.McpPlugin.Common;
+using com.IvanMurzak.McpPlugin.Common.Utils;
+using com.IvanMurzak.McpPlugin.Server;
 using com.IvanMurzak.ReflectorNet;
-using com.IvanMurzak.Unity.MCP.Common;
-using com.IvanMurzak.Unity.MCP.Common.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
@@ -48,10 +50,6 @@ namespace com.IvanMurzak.Unity.MCP.Server
             var logger = LogManager.GetCurrentClassLogger();
             try
             {
-                // TODO: remove usage of static ConnectionConfig, replace it with instance with DI injection.
-                // Set the runtime configurable timeout
-                ConnectionConfig.TimeoutMs = dataArguments.PluginTimeoutMs;
-
                 var consoleWriteLine = dataArguments.ClientTransport switch
                 {
                     Consts.MCP.Server.TransportMethod.stdio => (Action<string>)(message => Console.Error.WriteLine(message)),
@@ -81,18 +79,14 @@ namespace com.IvanMurzak.Unity.MCP.Server
                     configure.KeepAliveInterval = TimeSpan.FromSeconds(30);
                     configure.HandshakeTimeout = TimeSpan.FromMinutes(2);
                 })
-                .AddJsonProtocol(options => RpcJsonConfiguration.ConfigureJsonSerializer(reflector, options));
+                .AddJsonProtocol(options => SignalR_JsonConfiguration.ConfigureJsonSerializer(reflector, options));
 
                 // Setup MCP Plugin ---------------------------------------------------------------
-                var version = new Common.Version
+                var version = new McpPlugin.Common.Version
                 {
                     Api = Consts.ApiVersion,
                     Plugin = Consts.ApiVersion
                 };
-                builder.Services.WithAppFeatures(version, new NLogLoggerProvider(), configure =>
-                {
-                    configure.WithServerFeatures(dataArguments);
-                }).Build(reflector);
 
                 builder.Services.WithMcpServer(dataArguments, logger);
 
@@ -111,7 +105,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
 
                 // Setup SignalR ----------------------------------------------------
                 app.UseRouting();
-                app.MapHub<RemoteApp>(Consts.Hub.RemoteApp, options =>
+                app.MapHub<McpServerHub>(Consts.Hub.RemoteApp, options =>
                 {
                     options.Transports = HttpTransports.All;
                     options.ApplicationMaxBufferSize = 1024 * 1024 * 10; // 10 MB
@@ -140,7 +134,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
                     });
                 }
 
-                // Print logs -------------------------------------------------------
+                #region Print Logs
                 if (logger.IsEnabled(NLog.LogLevel.Debug))
                 {
                     var endpointDataSource = app.Services.GetRequiredService<Microsoft.AspNetCore.Routing.EndpointDataSource>();
@@ -166,6 +160,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
                         }
                     });
                 }
+                #endregion
 
                 await app.RunAsync();
             }
