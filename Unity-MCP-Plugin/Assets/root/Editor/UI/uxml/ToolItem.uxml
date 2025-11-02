@@ -1,0 +1,20 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/UnityLocalAi/Editor/MCPTools/MCPToolsWindow.uss?fileID=7433441132597879392&amp;guid=525911ffb58076f44a1788589abac01d&amp;type=3#MCPToolsWindow" />
+    <ui:VisualElement class="tool-item-container">
+        <ui:VisualElement class="tool-item-header">
+            <ui:VisualElement class="tool-item-title-container">
+                <ui:Label name="tool-title" text="Tool title, could be multiple lines long" class="tool-title" />
+                <ui:Label name="tool-id" text="tool-id-single-line" class="tool-id" />
+            </ui:VisualElement>
+            <ui:Toggle name="tool-toggle" />
+        </ui:VisualElement>
+        <ui:VisualElement name="tool-item-details" class="tool-item-details">
+            <ui:Foldout name="description-foldout" text="Description" class="details-foldout">
+                <ui:Label name="description-text" text="Tool description abc abc abc..." class="details-text" />
+            </ui:Foldout>
+            <ui:Foldout name="arguments-foldout" text="Input arguments (2)" class="details-foldout">
+                <ui:VisualElement name="arguments-container" />
+            </ui:Foldout>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
