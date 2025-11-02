@@ -14,9 +14,10 @@ using System;
 
 namespace com.IvanMurzak.Unity.MCP
 {
-
     public partial class UnityMcpPlugin
     {
+        public const string Version = "0.21.0";
+
         protected UnityMcpPlugin(UnityConnectionConfig? config = null)
         {
             if (config == null)

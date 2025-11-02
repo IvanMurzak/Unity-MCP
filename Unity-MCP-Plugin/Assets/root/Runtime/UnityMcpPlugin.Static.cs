@@ -31,6 +31,7 @@ namespace com.IvanMurzak.Unity.MCP
         static readonly Subject<UnityConnectionConfig> _onConfigChanged = new Subject<UnityConnectionConfig>();
         static readonly ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger<UnityMcpPlugin>();
         static readonly object _instanceMutex = new();
+        static readonly Mutex _connectionMutex = new();
 
         static string DebugName => $"[{nameof(UnityMcpPlugin)}]";
         static UnityMcpPlugin instance = null!;
@@ -192,18 +193,17 @@ namespace com.IvanMurzak.Unity.MCP
             return subscription;
         }
 
-        public static async Task<bool> Connect(bool initIfNeeded = true)
+        public static async Task<bool> Connect()
         {
             _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() called.",
                 Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(Connect));
 
-            connectionMutex.WaitOne();
+            _connectionMutex.WaitOne();
             try
             {
                 var mcpPlugin = Instance.McpPluginInstance;
                 if (mcpPlugin == null)
                 {
-                    isInitialized = false;
                     _logger.LogError("{tag} {class}.{method}() isInitialized set <false>.",
                         Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(Connect));
                     return false; // ignore
@@ -214,7 +214,7 @@ namespace com.IvanMurzak.Unity.MCP
             {
                 _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() completed.",
                     Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(Connect));
-                connectionMutex.ReleaseMutex();
+                _connectionMutex.ReleaseMutex();
             }
         }
 
@@ -223,13 +223,12 @@ namespace com.IvanMurzak.Unity.MCP
             _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() called.",
                 Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(Disconnect));
 
-            connectionMutex.WaitOne();
+            _connectionMutex.WaitOne();
             try
             {
                 var mcpPlugin = Instance.McpPluginInstance;
                 if (mcpPlugin == null)
                 {
-                    isInitialized = false;
                     _logger.LogDebug("{tag} {class}.{method}() isInitialized set <false>.",
                         Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(Disconnect));
 
@@ -243,7 +242,7 @@ namespace com.IvanMurzak.Unity.MCP
             {
                 _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() completed.",
                     Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(Disconnect));
-                connectionMutex.ReleaseMutex();
+                _connectionMutex.ReleaseMutex();
             }
         }
 
