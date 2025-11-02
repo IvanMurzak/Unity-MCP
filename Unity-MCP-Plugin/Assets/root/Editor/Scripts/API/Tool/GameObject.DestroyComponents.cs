@@ -9,12 +9,10 @@
 */
 
 #nullable enable
-using System;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using com.IvanMurzak.McpPlugin;
-using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
@@ -40,6 +38,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             var go = gameObjectRef.FindGameObject(out var error);
             if (error != null)
                 return $"[Error] {error}";
+
+            if (go == null)
+                return $"[Error] GameObject by {nameof(gameObjectRef)} not found.";
 
             var destroyCounter = 0;
             var stringBuilder = new StringBuilder();

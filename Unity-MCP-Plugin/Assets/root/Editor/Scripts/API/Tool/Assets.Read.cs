@@ -45,7 +45,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             var asset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(assetPath);
             if (asset == null)
-                return Error.NotFoundAsset(assetPath, assetGuid);
+                return Error.NotFoundAsset(assetPath!, assetGuid!);
 
             var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
@@ -58,12 +58,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             var json = serialized.ToJson(reflector);
 
             return $"[Success] Loaded asset at path '{assetPath}'.\n{json}";
-
-            //             var instanceID = asset.GetInstanceID();
-            //             return @$"[Success] Loaded asset.
-            // # Asset path: {assetPath}
-            // # Asset GUID: {assetGuid}
-            // # Asset instanceID: {instanceID}";
         });
     }
 }

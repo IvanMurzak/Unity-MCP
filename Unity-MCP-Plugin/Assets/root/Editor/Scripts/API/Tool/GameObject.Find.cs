@@ -46,6 +46,9 @@ Also, it returns Components preview just for the target GameObject.")]
                 if (error != null)
                     return $"[Error] {error}";
 
+                if (go == null)
+                    return $"[Error] GameObject by {nameof(gameObjectRef)} not found.";
+
                 var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
                 var serializedGo = reflector.Serialize(
@@ -67,7 +70,7 @@ Also, it returns Components preview just for the target GameObject.")]
 ```
 
 # Hierarchy:
-{go.ToMetadata(includeChildrenDepth).Print()}
+{go.ToMetadata(includeChildrenDepth)?.Print() ?? "null"}
 ";
             });
         }

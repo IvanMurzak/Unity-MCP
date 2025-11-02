@@ -47,6 +47,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     var go = gameObjectRefs[i].FindGameObject(out var error);
                     if (error != null)
                         return $"[Error] {error}";
+                    if (go == null)
+                        return $"[Error] GameObject by {nameof(gameObjectRefs)}[{i}] not found.";
 
                     gos.Add(go);
                 }

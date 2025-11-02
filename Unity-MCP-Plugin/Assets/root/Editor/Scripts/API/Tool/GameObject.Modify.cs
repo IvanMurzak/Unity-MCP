@@ -62,6 +62,11 @@ You can modify multiple GameObjects at once. Just provide the same number of Gam
                     stringBuilder.AppendLine($"[Error] {error}");
                     continue;
                 }
+                if (go == null)
+                {
+                    stringBuilder.AppendLine($"[Error] GameObject by {nameof(gameObjectRefs)}[{i}] not found.");
+                    continue;
+                }
                 var objToModify = (object)go;
 
                 // LLM may mistakenly provide "typeName" as a Component type when it should be a GameObject.

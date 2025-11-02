@@ -52,7 +52,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             {
                 parentGo = GameObjectUtils.FindByPath(parentPath);
                 if (parentGo == null)
-                    return Tool_GameObject.Error.NotFoundGameObjectAtPath(parentPath);
+                    return Tool_GameObject.Error.NotFoundGameObjectAtPath(parentPath!);
             }
 
             position ??= Vector3.zero;
@@ -60,6 +60,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             scale ??= Vector3.one;
 
             var go = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+            if (go == null)
+                return $"[Error] Failed to instantiate prefab from path '{prefabAssetPath}'.";
+
             go.name = name ?? prefab.name;
             if (parentGo != null)
                 go.transform.SetParent(parentGo.transform, false);

@@ -62,7 +62,7 @@ Note: Please 'Close' the prefab later to exit prefab editing mode.")]
 
             return @$"[Success] Prefab '{prefabStage.assetPath}' opened. Use '{name}' to close it.
 # Prefab information:
-{prefabStage.prefabContentsRoot.ToMetadata().Print()}";
+{prefabStage.prefabContentsRoot.ToMetadata()?.Print() ?? "null"}";
         });
     }
 }

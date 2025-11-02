@@ -39,7 +39,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (error != null)
                 return $"[Error] {error}";
 
-            if ((componentNames?.Length ?? 0) == 0)
+            if (go == null)
+                return "[Error] GameObject not found.";
+
+            if (componentNames == null)
+                return $"[Error] No component names provided.";
+
+            if (componentNames.Length == 0)
                 return $"[Error] No component names provided.";
 
             var stringBuilder = new StringBuilder();
