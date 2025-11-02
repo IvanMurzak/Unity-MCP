@@ -51,7 +51,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         {
             if (UnityMcpPlugin.IsLogEnabled(LogLevel.Debug))
                 Debug.Log($"{DebugName} OnAfterReload triggered - BuildAndStart with openConnection: {!EnvironmentUtils.IsCi()}");
-            UnityMcpPlugin.BuildAndStart(openConnectionIfNeeded: !EnvironmentUtils.IsCi());
+
+            var unityMcpPluginInstance = UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
+
+            if (!EnvironmentUtils.IsCi())
+                unityMcpPluginInstance.ConnectIfNeeded();
         }
 
         static void OnPlayModeStateChanged(PlayModeStateChange state)
@@ -85,14 +89,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         {
                             if (UnityMcpPlugin.IsLogEnabled(LogLevel.Trace))
                                 Debug.Log($"{DebugName} Initiating delayed reconnection after Play mode exit");
-                            UnityMcpPlugin.BuildAndStart();
+
+                            UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded().ConnectIfNeeded();
                         };
 
                         // No delay, immediate reconnection for the case if Unity Editor in background
                         // (has no focus)
                         if (UnityMcpPlugin.IsLogEnabled(LogLevel.Trace))
                             Debug.Log($"{DebugName} Initiating reconnection after Play mode exit");
-                        UnityMcpPlugin.BuildAndStart();
+
+                        UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded().ConnectIfNeeded();
                     }
                     break;
 

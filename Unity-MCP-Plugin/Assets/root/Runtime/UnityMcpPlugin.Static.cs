@@ -66,23 +66,51 @@ namespace com.IvanMurzak.Unity.MCP
 
         public static bool IsLogEnabled(LogLevel level) => LogLevel.IsEnabled(level);
 
+        private static LogLevel _logLevelCache = LogLevel.Trace;
         public static LogLevel LogLevel
         {
-            get => Instance.data?.LogLevel ?? LogLevel.Trace;
+            get => _logLevelCache;
             set
             {
+                _logLevelCache = value;
                 Instance.data ??= new UnityConnectionConfig();
                 Instance.data.LogLevel = value;
                 NotifyChanged(Instance.data);
             }
         }
+        private static string _hostCache = UnityConnectionConfig.DefaultHost;
         public static string Host
         {
-            get => Instance.data?.Host ?? UnityConnectionConfig.DefaultHost;
+            get => _hostCache ?? UnityConnectionConfig.DefaultHost;
             set
             {
+                _hostCache = value;
                 Instance.data ??= new UnityConnectionConfig();
                 Instance.data.Host = value;
+                NotifyChanged(Instance.data);
+            }
+        }
+        private static bool _keepConnectedCache = true;
+        public static bool KeepConnected
+        {
+            get => _keepConnectedCache;
+            set
+            {
+                _keepConnectedCache = value;
+                Instance.data ??= new UnityConnectionConfig();
+                Instance.data.KeepConnected = value;
+                NotifyChanged(Instance.data);
+            }
+        }
+        private static int _timeoutMsCache = Consts.Hub.DefaultTimeoutMs;
+        public static int TimeoutMs
+        {
+            get => _timeoutMsCache;
+            set
+            {
+                _timeoutMsCache = value;
+                Instance.data ??= new UnityConnectionConfig();
+                Instance.data.TimeoutMs = value;
                 NotifyChanged(Instance.data);
             }
         }
@@ -94,26 +122,6 @@ namespace com.IvanMurzak.Unity.MCP
                     return uri.Port;
 
                 return Consts.Hub.DefaultPort;
-            }
-        }
-        public static bool KeepConnected
-        {
-            get => Instance.data?.KeepConnected ?? true;
-            set
-            {
-                Instance.data ??= new UnityConnectionConfig();
-                Instance.data.KeepConnected = value;
-                NotifyChanged(Instance.data);
-            }
-        }
-        public static int TimeoutMs
-        {
-            get => Instance.data?.TimeoutMs ?? Consts.Hub.DefaultTimeoutMs;
-            set
-            {
-                Instance.data ??= new UnityConnectionConfig();
-                Instance.data.TimeoutMs = value;
-                NotifyChanged(Instance.data);
             }
         }
         public static ReadOnlyReactiveProperty<HubConnectionState> ConnectionState

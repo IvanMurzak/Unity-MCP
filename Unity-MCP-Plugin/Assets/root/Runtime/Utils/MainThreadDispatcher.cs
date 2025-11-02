@@ -26,7 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         public static bool IsMainThread => Thread.CurrentThread.ManagedThreadId == MainThreadId;
 
         static readonly ConcurrentQueue<Action> _actions = new ConcurrentQueue<Action>();
-        static MainThreadDispatcher instance;
+        static MainThreadDispatcher instance = null!;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Initialize()

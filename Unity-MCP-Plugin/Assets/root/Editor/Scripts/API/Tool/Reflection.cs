@@ -90,7 +90,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             // Prepare Namespace
             filter.Namespace = filter.Namespace?.Trim()?.Replace("null", string.Empty);
             if (string.IsNullOrEmpty(filter.TypeName))
-                filter.TypeName = null;
+                filter.TypeName = null!;
 
             var typesEnumerable = AllTypes
                 .Where(type => type.IsVisible)
@@ -138,7 +138,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     .Select(method => new
                     {
                         Method = method,
-                        MatchLevel = Compare(method.GetParameters(), filter.InputParameters)
+                        MatchLevel = Compare(method.GetParameters(), filter.InputParameters!)
                     })
                     .Where(entry => entry.MatchLevel >= parametersMatchLevel)
                     .OrderByDescending(entry => entry.MatchLevel)

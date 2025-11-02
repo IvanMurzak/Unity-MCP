@@ -91,7 +91,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 rawJsonField.value = Startup.Server.RawJsonConfiguration(UnityMcpPlugin.Port, "mcpServers", UnityMcpPlugin.TimeoutMs).ToString();
 
                 SaveChanges($"[AI Game Developer] Timeout Changed: {newValue} ms");
-                UnityMcpPlugin.BuildAndStart();
+                UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded().ConnectIfNeeded();
             });
 
             var currentVersion = root.Query<TextField>("currentVersion").First();
@@ -229,7 +229,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     }
                     else
                     {
-                        UnityMcpPlugin.BuildAndStart();
+                        UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded().ConnectIfNeeded();
                     }
                 }
                 else if (btnConnectOrDisconnect.text.Equals(ServerButtonText_Disconnect, StringComparison.OrdinalIgnoreCase))

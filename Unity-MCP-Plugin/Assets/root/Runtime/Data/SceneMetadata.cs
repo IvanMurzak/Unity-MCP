@@ -14,15 +14,14 @@ using System.Linq;
 using System.Text;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
-using com.IvanMurzak.Unity.MCP.Utils;
 using UnityEngine.SceneManagement;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
     public class SceneMetadata
     {
-        public string path;
-        public string name;
+        public string path = null!;
+        public string name = null!;
         public bool isDirty;
         public bool isLoaded;
         public List<GameObjectMetadata> rootGameObjects = new();

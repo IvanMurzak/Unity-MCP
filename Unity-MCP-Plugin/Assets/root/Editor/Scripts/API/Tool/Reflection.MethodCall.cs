@@ -133,7 +133,7 @@ Required:
                 var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
                 var dictInputParameters = inputParameters?.ToImmutableDictionary(
-                    keySelector: p => p.name,
+                    keySelector: p => p.name ?? throw new InvalidOperationException($"Input parameter name is null. Please specify 'name' property for each input parameter."),
                     elementSelector: p => reflector.Deserialize(p, logger: McpPlugin.McpPlugin.Instance.Logger)
                 );
 
@@ -147,7 +147,7 @@ Required:
                 else
                 {
                     // Object instance needed. Probably instance method.
-                    var obj = reflector.Deserialize(targetObject, logger: McpPlugin.McpPlugin.Instance.Logger);
+                    var obj = reflector.Deserialize(targetObject!, logger: McpPlugin.McpPlugin.Instance.Logger);
                     if (obj == null)
                         return $"[Error] '{nameof(targetObject)}' deserialized instance is null. Please specify the '{nameof(targetObject)}' properly.";
 

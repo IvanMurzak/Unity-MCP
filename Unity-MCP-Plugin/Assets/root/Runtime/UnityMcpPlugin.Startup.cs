@@ -38,145 +38,145 @@ namespace com.IvanMurzak.Unity.MCP
         static volatile bool isInitializing = false;
         static volatile bool isInitialized = false;
 
-        public static async void BuildAndStart(bool openConnectionIfNeeded = true)
-        {
-            _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() called.",
-                Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(BuildAndStart));
+        // public static async void BuildAndStart(bool openConnectionIfNeeded = true)
+        // {
+        //     _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() called.",
+        //         Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(BuildAndStart));
 
-            // Disable automatic connection in CI environments
-            if (EnvironmentUtils.IsCi())
-                openConnectionIfNeeded = false;
+        //     // Disable automatic connection in CI environments
+        //     if (EnvironmentUtils.IsCi())
+        //         openConnectionIfNeeded = false;
 
-            lock (initializingMutex)
-            {
-                if (isInitializing)
-                {
-                    _logger.Log(MicrosoftLogLevel.Debug, "{tag} {class} is already in progress. Skipping this call.",
-                        Consts.Log.Tag, nameof(UnityMcpPlugin));
-                    _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() completed.",
-                        Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(BuildAndStart));
-                    return;
-                }
-                // Initialization started
-                isInitializing = true;
-            }
+        //     lock (initializingMutex)
+        //     {
+        //         if (isInitializing)
+        //         {
+        //             _logger.Log(MicrosoftLogLevel.Debug, "{tag} {class} is already in progress. Skipping this call.",
+        //                 Consts.Log.Tag, nameof(UnityMcpPlugin));
+        //             _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() completed.",
+        //                 Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(BuildAndStart));
+        //             return;
+        //         }
+        //         // Initialization started
+        //         isInitializing = true;
+        //     }
 
-            connectionMutex.WaitOne();
-            try
-            {
-                if (isInitialized)
-                {
-                    _logger.Log(MicrosoftLogLevel.Debug, "{tag} {class} is already initialized. Skipping this call.",
-                        Consts.Log.Tag, nameof(UnityMcpPlugin));
+        //     connectionMutex.WaitOne();
+        //     try
+        //     {
+        //         if (isInitialized)
+        //         {
+        //             _logger.Log(MicrosoftLogLevel.Debug, "{tag} {class} is already initialized. Skipping this call.",
+        //                 Consts.Log.Tag, nameof(UnityMcpPlugin));
 
-                    if (openConnectionIfNeeded && KeepConnected)
-                    {
-                        if (!McpPlugin.McpPlugin.HasInstance)
-                        {
-                            _logger.Log(MicrosoftLogLevel.Error, "{tag} {class} instance is null while isInitialized is true.",
-                                Consts.Log.Tag, nameof(UnityMcpPlugin));
+        //             if (openConnectionIfNeeded && KeepConnected)
+        //             {
+        //                 if (!McpPlugin.McpPlugin.HasInstance)
+        //                 {
+        //                     _logger.Log(MicrosoftLogLevel.Error, "{tag} {class} instance is null while isInitialized is true.",
+        //                         Consts.Log.Tag, nameof(UnityMcpPlugin));
 
-                            return;
-                        }
-                        await McpPlugin.McpPlugin.Instance!.Connect();
-                    }
-                    return;
-                }
+        //                     return;
+        //                 }
+        //                 await McpPlugin.McpPlugin.Instance!.Connect();
+        //             }
+        //             return;
+        //         }
 
-                await BuildAndStartInternal(openConnectionIfNeeded);
+        //         await BuildAndStartInternal(openConnectionIfNeeded);
 
-                isInitialized = true;
-                _logger.Log(MicrosoftLogLevel.Debug, "{tag} {class} isInitialized set <true>.",
-                    Consts.Log.Tag, nameof(UnityMcpPlugin));
-            }
-            catch (Exception ex)
-            {
-                isInitialized = false;
-                _logger.Log(MicrosoftLogLevel.Debug, "{tag} {class} isInitialized set <false>.",
-                    Consts.Log.Tag, nameof(UnityMcpPlugin));
+        //         isInitialized = true;
+        //         _logger.Log(MicrosoftLogLevel.Debug, "{tag} {class} isInitialized set <true>.",
+        //             Consts.Log.Tag, nameof(UnityMcpPlugin));
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         isInitialized = false;
+        //         _logger.Log(MicrosoftLogLevel.Debug, "{tag} {class} isInitialized set <false>.",
+        //             Consts.Log.Tag, nameof(UnityMcpPlugin));
 
-                Debug.LogException(ex);
-                _logger.Log(MicrosoftLogLevel.Error, "{tag} {class} Error during MCP plugin initialization: {exception}",
-                    Consts.Log.Tag, nameof(UnityMcpPlugin), ex);
+        //         Debug.LogException(ex);
+        //         _logger.Log(MicrosoftLogLevel.Error, "{tag} {class} Error during MCP plugin initialization: {exception}",
+        //             Consts.Log.Tag, nameof(UnityMcpPlugin), ex);
 
-                await McpPlugin.McpPlugin.StaticDisposeAsync();
-            }
-            finally
-            {
-                _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() completed.",
-                    Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(BuildAndStart));
-                connectionMutex.ReleaseMutex();
-                lock (initializingMutex)
-                {
-                    isInitializing = false;
-                }
-            }
-        }
+        //         await McpPlugin.McpPlugin.StaticDisposeAsync();
+        //     }
+        //     finally
+        //     {
+        //         _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() completed.",
+        //             Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(BuildAndStart));
+        //         connectionMutex.ReleaseMutex();
+        //         lock (initializingMutex)
+        //         {
+        //             isInitializing = false;
+        //         }
+        //     }
+        // }
 
-        static async Task BuildAndStartInternal(bool openConnectionIfNeeded)
-        {
-            _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() called.",
-                Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(BuildAndStartInternal));
+        // static async Task BuildAndStartInternal(bool openConnectionIfNeeded)
+        // {
+        //     _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() called.",
+        //         Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(BuildAndStartInternal));
 
-            if (McpPlugin.McpPlugin.HasInstance)
-            {
-                _logger.Log(MicrosoftLogLevel.Error, "{tag} {class} instance already exists.",
-                    Consts.Log.Tag, nameof(UnityMcpPlugin));
-                return;
-            }
+        //     if (McpPlugin.McpPlugin.HasInstance)
+        //     {
+        //         _logger.Log(MicrosoftLogLevel.Error, "{tag} {class} instance already exists.",
+        //             Consts.Log.Tag, nameof(UnityMcpPlugin));
+        //         return;
+        //     }
 
-            MainThreadInstaller.Init();
+        //     MainThreadInstaller.Init();
 
-            var version = new McpPlugin.Common.Version
-            {
-                Api = Consts.ApiVersion,
-                Plugin = UnityMcpPlugin.Version,
-                Environment = Application.unityVersion
-            };
-            var loggerProvider = new UnityLoggerProvider();
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-            var mcpPlugin = new McpPluginBuilder(version, loggerProvider)
-                .AddMcpPlugin()
-                .WithConfig(config =>
-                {
-                    _logger.Log(MicrosoftLogLevel.Information, "{tag} MCP server address: {host}",
-                        Consts.Log.Tag, Host);
+        //     var version = new McpPlugin.Common.Version
+        //     {
+        //         Api = Consts.ApiVersion,
+        //         Plugin = UnityMcpPlugin.Version,
+        //         Environment = Application.unityVersion
+        //     };
+        //     var loggerProvider = new UnityLoggerProvider();
+        //     var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+        //     var mcpPlugin = new McpPluginBuilder(version, loggerProvider)
+        //         .AddMcpPlugin()
+        //         .WithConfig(config =>
+        //         {
+        //             _logger.Log(MicrosoftLogLevel.Information, "{tag} MCP server address: {host}",
+        //                 Consts.Log.Tag, Host);
 
-                    config.Host = Host;
-                })
-                .AddLogging(loggingBuilder =>
-                {
-                    loggingBuilder.ClearProviders(); // 👈 Clears the default providers
-                    loggingBuilder.AddProvider(loggerProvider);
-                    loggingBuilder.SetMinimumLevel(LogLevel switch
-                    {
-                        LogLevel.Trace => MicrosoftLogLevel.Trace,
-                        LogLevel.Debug => MicrosoftLogLevel.Debug,
-                        LogLevel.Info => MicrosoftLogLevel.Information,
-                        LogLevel.Warning => MicrosoftLogLevel.Warning,
-                        LogLevel.Error => MicrosoftLogLevel.Error,
-                        LogLevel.Exception => MicrosoftLogLevel.Critical,
-                        _ => MicrosoftLogLevel.Warning
-                    });
-                })
-                .WithToolsFromAssembly(assemblies)
-                .WithPromptsFromAssembly(assemblies)
-                .WithResourcesFromAssembly(assemblies)
-                .Build(CreateDefaultReflector());
+        //             config.Host = Host;
+        //         })
+        //         .AddLogging(loggingBuilder =>
+        //         {
+        //             loggingBuilder.ClearProviders(); // 👈 Clears the default providers
+        //             loggingBuilder.AddProvider(loggerProvider);
+        //             loggingBuilder.SetMinimumLevel(LogLevel switch
+        //             {
+        //                 LogLevel.Trace => MicrosoftLogLevel.Trace,
+        //                 LogLevel.Debug => MicrosoftLogLevel.Debug,
+        //                 LogLevel.Info => MicrosoftLogLevel.Information,
+        //                 LogLevel.Warning => MicrosoftLogLevel.Warning,
+        //                 LogLevel.Error => MicrosoftLogLevel.Error,
+        //                 LogLevel.Exception => MicrosoftLogLevel.Critical,
+        //                 _ => MicrosoftLogLevel.Warning
+        //             });
+        //         })
+        //         .WithToolsFromAssembly(assemblies)
+        //         .WithPromptsFromAssembly(assemblies)
+        //         .WithResourcesFromAssembly(assemblies)
+        //         .Build(CreateDefaultReflector());
 
-            if (!openConnectionIfNeeded)
-                return;
+        //     if (!openConnectionIfNeeded)
+        //         return;
 
-            if (KeepConnected)
-            {
-                var message = "<b><color=yellow>Connecting</color></b>";
-                _logger.Log(MicrosoftLogLevel.Information, "{tag} {message} <color=orange>ಠ‿ಠ</color>",
-                    Consts.Log.Tag, message);
-                await mcpPlugin.Connect();
-            }
-            _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() completed.",
-                Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(BuildAndStartInternal));
-        }
+        //     if (KeepConnected)
+        //     {
+        //         var message = "<b><color=yellow>Connecting</color></b>";
+        //         _logger.Log(MicrosoftLogLevel.Information, "{tag} {message} <color=orange>ಠ‿ಠ</color>",
+        //             Consts.Log.Tag, message);
+        //         await mcpPlugin.Connect();
+        //     }
+        //     _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() completed.",
+        //         Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(BuildAndStartInternal));
+        // }
 
         static Reflector CreateDefaultReflector()
         {

@@ -13,6 +13,7 @@ using System;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.Unity.MCP.Utils;
+using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
 using UnityEngine;
 
@@ -55,18 +56,30 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
-        protected virtual void BuildMcpPluginIfNeeded()
+        public virtual UnityMcpPlugin ConnectIfNeeded()
+        {
+            var mcpPlugin = McpPluginInstance;
+            if (mcpPlugin == null)
+                throw new InvalidOperationException($"{nameof(McpPluginInstance)} is null. Please build the MCP plugin instance before connecting.");
+
+            if (mcpPlugin.ConnectionState.CurrentValue != HubConnectionState.Disconnected)
+                mcpPlugin.Connect();
+            return this;
+        }
+
+        public virtual UnityMcpPlugin BuildMcpPluginIfNeeded()
         {
             lock (buildMutex)
             {
                 if (mcpPluginInstance != null)
-                    return; // already built
+                    return this; // already built
 
                 mcpPluginInstance = BuildMcpPlugin(
                     version: BuildVersion(),
                     reflector: CreateDefaultReflector(),
                     loggerProvider: BuildLoggerProvider()
                 );
+                return this;
             }
         }
 

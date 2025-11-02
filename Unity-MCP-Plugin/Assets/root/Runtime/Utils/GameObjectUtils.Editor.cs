@@ -42,7 +42,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
                 return scene.Value.GetRootGameObjects();
             }
         }
-        public static GameObject FindByInstanceID(int instanceID)
+        public static GameObject? FindByInstanceID(int instanceID)
         {
             if (instanceID == 0)
                 return null;

@@ -40,7 +40,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (!scene.IsValid())
                 return Error.NotFoundSceneWithName(loadedSceneName);
 
-            return scene.ToMetadata(includeChildrenDepth: includeChildrenDepth).Print();
+            return scene.ToMetadata(includeChildrenDepth: includeChildrenDepth)?.Print() ?? "[]";
         });
     }
 }
