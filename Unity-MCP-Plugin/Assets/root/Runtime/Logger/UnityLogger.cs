@@ -10,7 +10,6 @@
 
 #nullable enable
 using System;
-using com.IvanMurzak.McpPlugin.Common;
 using Microsoft.Extensions.Logging;
 
 namespace com.IvanMurzak.Unity.MCP.Utils

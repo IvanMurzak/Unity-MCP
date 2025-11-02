@@ -22,6 +22,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         static Startup()
         {
             UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
+            UnityMcpPlugin.ConnectIfNeeded();
+
             Server.DownloadServerBinaryIfNeeded();
 
             if (Application.dataPath.Contains(" "))

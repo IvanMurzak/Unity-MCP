@@ -14,6 +14,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.McpPlugin.Common.Model;
+using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -133,6 +134,43 @@ namespace com.IvanMurzak.Unity.MCP
             ?.ToReadOnlyReactiveProperty(false)
             ?? throw new InvalidOperationException($"{nameof(Instance.McpPluginInstance)} is null");
 
+        public static void LogTrace(string message, Type sourceClass, Exception? exception = null)
+        {
+            UnityLoggerFactory.LoggerFactory
+                .CreateLogger(sourceClass.GetTypeShortName())
+                .LogTrace(message, exception);
+        }
+        public static void LogDebug(string message, Type sourceClass, Exception? exception = null)
+        {
+            UnityLoggerFactory.LoggerFactory
+                .CreateLogger(sourceClass.GetTypeShortName())
+                .LogDebug(message, exception);
+        }
+        public static void LogInfo(string message, Type sourceClass, Exception? exception = null)
+        {
+            UnityLoggerFactory.LoggerFactory
+                .CreateLogger(sourceClass.GetTypeShortName())
+                .LogInformation(message, exception);
+        }
+        public static void LogWarn(string message, Type sourceClass, Exception? exception = null)
+        {
+            UnityLoggerFactory.LoggerFactory
+                .CreateLogger(sourceClass.GetTypeShortName())
+                .LogWarning(message, exception);
+        }
+        public static void LogError(string message, Type sourceClass, Exception? exception = null)
+        {
+            UnityLoggerFactory.LoggerFactory
+                .CreateLogger(sourceClass.GetTypeShortName())
+                .LogError(message, exception);
+        }
+        public static void LogException(string message, Type sourceClass, Exception? exception = null)
+        {
+            UnityLoggerFactory.LoggerFactory
+                .CreateLogger(sourceClass.GetTypeShortName())
+                .LogCritical(message, exception);
+        }
+
         public static async Task NotifyToolRequestCompleted(ToolRequestCompletedData request, CancellationToken cancellationToken = default)
         {
             var mcpPlugin = Instance.McpPluginInstance ?? throw new InvalidOperationException($"{nameof(Instance.McpPluginInstance)} is null");
@@ -193,6 +231,14 @@ namespace com.IvanMurzak.Unity.MCP
             return subscription;
         }
 
+        public static Task<bool> ConnectIfNeeded()
+        {
+            if (KeepConnected == false)
+                return Task.FromResult(false);
+
+            return Connect();
+        }
+
         public static async Task<bool> Connect()
         {
             _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() called.",
@@ -201,6 +247,8 @@ namespace com.IvanMurzak.Unity.MCP
             _connectionMutex.WaitOne();
             try
             {
+                KeepConnected = true;
+
                 var mcpPlugin = Instance.McpPluginInstance;
                 if (mcpPlugin == null)
                 {

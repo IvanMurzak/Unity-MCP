@@ -9,7 +9,6 @@
 */
 
 #nullable enable
-using System.Threading;
 using com.IvanMurzak.McpPlugin.Common.Reflection.Convertor;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Convertor;
@@ -18,10 +17,8 @@ using com.IvanMurzak.Unity.MCP.Reflection.Convertor;
 
 namespace com.IvanMurzak.Unity.MCP
 {
-
     public partial class UnityMcpPlugin
     {
-
         static Reflector CreateDefaultReflector()
         {
             var reflector = new Reflector();
