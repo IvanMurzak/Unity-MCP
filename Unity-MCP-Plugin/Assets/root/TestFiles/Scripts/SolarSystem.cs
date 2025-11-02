@@ -18,15 +18,15 @@ namespace com.IvanMurzak.Unity.MCP
         [System.Serializable]
         public class PlanetData
         {
-            public GameObject planet;
+            public GameObject planet = null!;
             public float orbitRadius = 10f;
             public float orbitSpeed = 1f;
             public float rotationSpeed = 1f;
             public Vector3 orbitTilt = Vector3.zero;
         }
 
-        public GameObject sun;
-        public PlanetData[] planets;
+        public GameObject sun = null!;
+        public PlanetData[] planets = null!;
         public float globalOrbitSpeedMultiplier = 1f;
         public float globalSizeMultiplier = 1f;
 

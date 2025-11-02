@@ -88,7 +88,9 @@ namespace com.IvanMurzak.Unity.MCP.Server
                     Plugin = Consts.ApiVersion
                 };
 
-                builder.Services.WithMcpServer(dataArguments, logger);
+                builder.Services
+                    .WithMcpServer(dataArguments.ClientTransport, logger)
+                    .WithMcpPluginServer(dataArguments, version);
 
                 // builder.WebHost.UseUrls(Consts.Hub.DefaultEndpoint);
 
