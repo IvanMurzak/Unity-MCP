@@ -53,6 +53,19 @@ namespace com.IvanMurzak.Unity.MCP.Utils
             if (state == null) throw new ArgumentNullException(nameof(state));
 
             // Map LogLevel to short names
+#if UNITY_EDITOR
+            string logLevelShort = logLevel switch
+            {
+                LogLevelMicrosoft.Critical => "<color=#ff0000>crit: </color>",
+                LogLevelMicrosoft.Error => "<color=#ff6b6b>fail: </color>",
+                LogLevelMicrosoft.Warning => "<color=#ffaa00>warn: </color>",
+                LogLevelMicrosoft.Information => "<color=#00ff00>info: </color>",
+                LogLevelMicrosoft.Debug => "<color=#00ffff>dbug: </color>",
+                LogLevelMicrosoft.Trace => "<color=#aaaaaa>trce: </color>",
+                _ => "<color=#ffffff>none</color>"
+            };
+            var message = $"{logLevelShort}<color=#B4FF32>[AI]</color> <color=#007575><b>{_categoryName}</b></color> {formatter(state, exception)}";
+#else
             string logLevelShort = logLevel switch
             {
                 LogLevelMicrosoft.Critical => Consts.Log.Crit,
@@ -61,10 +74,11 @@ namespace com.IvanMurzak.Unity.MCP.Utils
                 LogLevelMicrosoft.Information => Consts.Log.Info,
                 LogLevelMicrosoft.Debug => Consts.Log.Dbug,
                 LogLevelMicrosoft.Trace => Consts.Log.Trce,
-                _ => "none: "
+                _ => "none"
             };
+            var message = $"{logLevelShort}[AI] {_categoryName} {formatter(state, exception)}";
+#endif
 
-            var message = $"{Consts.Log.Color.LevelStart}{logLevelShort}{Consts.Log.Color.LevelEnd}{Consts.Log.Tag} {Consts.Log.Color.CategoryStart}{_categoryName}{Consts.Log.Color.CategoryEnd} {formatter(state, exception)}";
             switch (logLevel)
             {
                 case LogLevelMicrosoft.Critical:
