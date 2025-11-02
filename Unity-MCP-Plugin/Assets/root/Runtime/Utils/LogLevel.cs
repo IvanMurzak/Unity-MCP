@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+
 namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
 {
     public enum LogLevel

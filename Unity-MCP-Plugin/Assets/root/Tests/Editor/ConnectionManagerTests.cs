@@ -12,6 +12,7 @@
 using System.Collections;
 using System.Threading;
 using System.Threading.Tasks;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
@@ -24,16 +25,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     [TestFixture]
     public class ConnectionManagerTests
     {
-        private ILogger<ConnectionManager> _mockLogger;
-        private MockHubEndpointConnectionBuilder _mockBuilder;
-        private ConnectionManager _connectionManager;
+        private ILogger<ConnectionManager> _mockLogger = null!;
+        private MockHubEndpointConnectionProvider _mockConnectionProvider = null!;
+        private ConnectionManager? _connectionManager;
+        private McpPlugin.Common.Version _testVersion = new();
 
         [SetUp]
         public void SetUp()
         {
             _mockLogger = new MockLogger<ConnectionManager>();
-            _mockBuilder = new MockHubEndpointConnectionBuilder();
-            _connectionManager = new ConnectionManager(_mockLogger, _mockBuilder);
+            _mockConnectionProvider = new MockHubEndpointConnectionProvider();
         }
 
         [TearDown]
@@ -45,6 +46,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [Test]
         public void ConnectionManager_Constructor_ShouldInitializeCorrectly()
         {
+            _connectionManager = new ConnectionManager(
+                logger: _mockLogger,
+                apiVersion: _testVersion,
+                endpoint: string.Empty,
+                hubConnectionBuilder: _mockConnectionProvider);
+
             // Assert
             Assert.IsNotNull(_connectionManager, "ConnectionManager should be initialized");
             Assert.AreEqual(HubConnectionState.Disconnected, _connectionManager.ConnectionState.CurrentValue,
@@ -56,9 +63,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [Test]
         public void ConnectionManager_Constructor_WithNullLogger_ShouldThrowArgumentNullException()
         {
+            ;
+
             // Act & Assert
             Assert.Throws<System.ArgumentNullException>(() =>
-                new ConnectionManager(null, _mockBuilder),
+                _connectionManager = new ConnectionManager(
+                    logger: null!,
+                    apiVersion: _testVersion,
+                    endpoint: string.Empty,
+                    hubConnectionBuilder: _mockConnectionProvider),
                 "Constructor should throw ArgumentNullException for null logger");
         }
 
@@ -67,7 +80,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Act & Assert
             Assert.Throws<System.ArgumentNullException>(() =>
-                new ConnectionManager(_mockLogger, null),
+                _connectionManager = new ConnectionManager(
+                    logger: _mockLogger,
+                    apiVersion: _testVersion,
+                    endpoint: string.Empty,
+                    hubConnectionBuilder: null!),
                 "Constructor should throw ArgumentNullException for null builder");
         }
 
@@ -78,7 +95,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             const string testEndpoint = "http://localhost:8080/hub";
 
             // Act
-            _connectionManager.Endpoint = testEndpoint;
+            _connectionManager = new ConnectionManager(
+                logger: _mockLogger,
+                apiVersion: _testVersion,
+                endpoint: testEndpoint,
+                hubConnectionBuilder: _mockConnectionProvider);
 
             // Assert
             Assert.AreEqual(testEndpoint, _connectionManager.Endpoint,
@@ -89,8 +110,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public IEnumerator ConnectionManager_Connect_WithInvalidEndpoint_ShouldReturnFalse()
         {
             // Arrange
-            _connectionManager.Endpoint = "invalid-endpoint";
-            _mockBuilder.ShouldFailConnection = true;
+            _connectionManager = new ConnectionManager(
+                logger: _mockLogger,
+                apiVersion: _testVersion,
+                endpoint: "invalid-endpoint",
+                hubConnectionBuilder: _mockConnectionProvider);
+
+            _mockConnectionProvider.ShouldFailConnection = true;
 
             // Act
             var task = _connectionManager.Connect(CancellationToken.None);
@@ -105,7 +131,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void ConnectionManager_Endpoint_ShouldHandleValidUrls()
         {
             // Arrange & Act
-            _connectionManager.Endpoint = "http://localhost:8080/hub";
+            _connectionManager = new ConnectionManager(
+                logger: _mockLogger,
+                apiVersion: _testVersion,
+                endpoint: "http://localhost:8080/hub",
+                hubConnectionBuilder: _mockConnectionProvider);
 
             // Assert
             Assert.AreEqual("http://localhost:8080/hub", _connectionManager.Endpoint,
@@ -115,6 +145,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator ConnectionManager_Disconnect_ShouldSetKeepConnectedToFalse()
         {
+            _connectionManager = new ConnectionManager(
+                logger: _mockLogger,
+                apiVersion: _testVersion,
+                endpoint: string.Empty,
+                hubConnectionBuilder: _mockConnectionProvider);
+
             // Act
             var task = _connectionManager.Disconnect(CancellationToken.None);
             while (!task.IsCompleted) yield return null;
@@ -142,6 +178,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [Test]
         public void ConnectionManager_Dispose_ShouldNotThrow()
         {
+            _connectionManager = new ConnectionManager(
+                logger: _mockLogger,
+                apiVersion: _testVersion,
+                endpoint: string.Empty,
+                hubConnectionBuilder: _mockConnectionProvider);
+
             // Act & Assert
             Assert.DoesNotThrow(() => _connectionManager.Dispose(),
                 "Dispose should not throw exceptions");
@@ -150,6 +192,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [Test]
         public void ConnectionManager_DisposeAsync_ShouldNotThrow()
         {
+            _connectionManager = new ConnectionManager(
+                logger: _mockLogger,
+                apiVersion: _testVersion,
+                endpoint: string.Empty,
+                hubConnectionBuilder: _mockConnectionProvider);
+
             // Act & Assert
             Assert.DoesNotThrow(() => _connectionManager.DisposeAsync().GetAwaiter().GetResult(),
                 "DisposeAsync should not throw exceptions");
@@ -162,10 +210,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public bool HasErrorLogs { get; private set; }
         public bool HasWarningLogs { get; private set; }
 
-        public System.IDisposable BeginScope<TState>(TState state) => null;
+        public System.IDisposable? BeginScope<TState>(TState state) where TState : notnull
+        {
+            return null;
+        }
+
         public bool IsEnabled(LogLevel logLevel) => true;
 
-        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, System.Exception exception, System.Func<TState, System.Exception, string> formatter)
+        public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, System.Exception? exception, System.Func<TState, System.Exception?, string> formatter)
         {
             var message = formatter(state, exception);
             Debug.Log($"[{logLevel}] {message}");
@@ -175,7 +227,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
     }
 
-    public class MockHubEndpointConnectionBuilder : IHubEndpointConnectionBuilder
+    public class MockHubEndpointConnectionProvider : IHubConnectionProvider
     {
         public bool ShouldFailConnection { get; set; } = false;
 
@@ -184,11 +236,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             await Task.Delay(10); // Simulate async operation
 
             if (ShouldFailConnection)
-                return null;
+                return null!;
 
             // For testing purposes, we return null to avoid complex mocking
             // Real implementation would create a HubConnection
-            return null;
+            return null!;
         }
     }
 }

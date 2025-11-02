@@ -9,7 +9,7 @@
 */
 
 #nullable enable
-using com.IvanMurzak.McpPlugin.Common;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using NUnit.Framework;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests

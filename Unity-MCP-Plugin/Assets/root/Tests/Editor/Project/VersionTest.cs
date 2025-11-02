@@ -40,8 +40,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator Version_Should_Match_PackageJson_Version()
         {
-            string packageJsonContent = null;
-            string packageJsonPath = null;
+            string? packageJsonContent = null;
+            string? packageJsonPath = null;
 
             // Try to get package info using PackageManager first
             var listRequest = Client.List(
@@ -100,7 +100,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [System.Serializable]
         private class PackageJsonData
         {
-            public string version;
+            public string? version;
         }
     }
 }

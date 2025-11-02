@@ -222,10 +222,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 if (btnConnectOrDisconnect.text.Equals(ServerButtonText_Connect, StringComparison.OrdinalIgnoreCase))
                 {
                     UnityMcpPlugin.KeepConnected = true;
-                    UnityMcpPlugin.Save();
-                    if (McpPlugin.HasInstance)
+                    UnityMcpPlugin.Instance.Save();
+                    if (UnityMcpPlugin.Instance.HasMcpPluginInstance)
                     {
-                        McpPlugin.Instance!.Connect();
+                        UnityMcpPlugin.Instance.McpPluginInstance!.Connect();
                     }
                     else
                     {
@@ -235,8 +235,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 else if (btnConnectOrDisconnect.text.Equals(ServerButtonText_Disconnect, StringComparison.OrdinalIgnoreCase))
                 {
                     UnityMcpPlugin.KeepConnected = false;
-                    UnityMcpPlugin.Save();
-                    if (McpPlugin.HasInstance)
+                    UnityMcpPlugin.Instance.Save();
+                    if (UnityMcpPlugin.Instance.HasMcpPluginInstance)
                     {
                         UnityMcpPlugin.Disconnect();
                     }
@@ -244,8 +244,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 else if (btnConnectOrDisconnect.text.Equals(ServerButtonText_Stop, StringComparison.OrdinalIgnoreCase))
                 {
                     UnityMcpPlugin.KeepConnected = false;
-                    UnityMcpPlugin.Save();
-                    if (McpPlugin.HasInstance)
+                    UnityMcpPlugin.Instance.Save();
+                    if (UnityMcpPlugin.Instance.HasMcpPluginInstance)
                     {
                         UnityMcpPlugin.Disconnect();
                     }

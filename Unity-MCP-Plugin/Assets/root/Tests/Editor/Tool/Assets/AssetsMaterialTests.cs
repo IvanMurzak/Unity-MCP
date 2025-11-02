@@ -56,7 +56,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         // [Test]
         // public void Material_Modify()
         // {
-        //     var reflector = McpPlugin.Instance!.McpRunner.Reflector;
+        //     var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
         //     var propertyName = "_Metallic";
         //     var propertyValue = 1;

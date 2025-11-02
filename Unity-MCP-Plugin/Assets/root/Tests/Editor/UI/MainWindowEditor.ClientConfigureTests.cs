@@ -21,12 +21,12 @@ using UnityEngine.TestTools;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
-    using Consts = Common.Consts;
+    using Consts = McpPlugin.Common.Consts;
 
     public class MainWindowEditorClientConfigureTests : BaseTest
     {
-        private MainWindowEditor mainWindowEditor;
-        private string tempConfigPath;
+        private MainWindowEditor mainWindowEditor = null!;
+        private string tempConfigPath = null!;
 
         [UnitySetUp]
         public override IEnumerator SetUp()
@@ -66,11 +66,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var rootObj = JsonNode.Parse(json)?.AsObject();
 
             Assert.IsNotNull(rootObj, "Root object should not be null");
-            Assert.IsNotNull(rootObj["mcpServers"], "mcpServers should exist");
+            Assert.IsNotNull(rootObj!["mcpServers"], "mcpServers should exist");
 
             var mcpServers = rootObj["mcpServers"]?.AsObject();
             Assert.IsNotNull(mcpServers, "mcpServers should be an object");
-            Assert.Greater(mcpServers.Count, 0, "mcpServers should contain at least one server entry");
+            Assert.Greater(mcpServers!.Count, 0, "mcpServers should contain at least one server entry");
 
             yield return null;
         }
@@ -92,19 +92,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var rootObj = JsonNode.Parse(json)?.AsObject();
 
             Assert.IsNotNull(rootObj, "Root object should not be null");
-            Assert.IsNotNull(rootObj["projects"], "projects should exist");
+            Assert.IsNotNull(rootObj!["projects"], "projects should exist");
 
             var projects = rootObj["projects"]?.AsObject();
             Assert.IsNotNull(projects, "projects should be an object");
-            Assert.IsNotNull(projects["myProject"], "myProject should exist");
+            Assert.IsNotNull(projects!["myProject"], "myProject should exist");
 
             var myProject = projects["myProject"]?.AsObject();
             Assert.IsNotNull(myProject, "myProject should be an object");
-            Assert.IsNotNull(myProject["mcpServers"], "mcpServers should exist in myProject");
+            Assert.IsNotNull(myProject!["mcpServers"], "mcpServers should exist in myProject");
 
             var mcpServers = myProject["mcpServers"]?.AsObject();
             Assert.IsNotNull(mcpServers, "mcpServers should be an object");
-            Assert.Greater(mcpServers.Count, 0, "mcpServers should contain at least one server entry");
+            Assert.Greater(mcpServers!.Count, 0, "mcpServers should contain at least one server entry");
 
             yield return null;
         }
@@ -135,11 +135,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var rootObj = JsonNode.Parse(json)?.AsObject();
 
             Assert.IsNotNull(rootObj, "Root object should not be null");
-            Assert.AreEqual("shouldBePreserved", rootObj["otherProperty"]?.GetValue<string>(), "Other properties should be preserved");
+            Assert.AreEqual("shouldBePreserved", rootObj!["otherProperty"]?.GetValue<string>(), "Other properties should be preserved");
 
             var mcpServers = rootObj["mcpServers"]?.AsObject();
             Assert.IsNotNull(mcpServers, "mcpServers should exist");
-            Assert.IsNotNull(mcpServers["existingServer"], "Existing server should be preserved");
+            Assert.IsNotNull(mcpServers!["existingServer"], "Existing server should be preserved");
             Assert.Greater(mcpServers.Count, 1, "Should have both existing and new server entries");
 
             yield return null;
@@ -182,19 +182,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var rootObj = JsonNode.Parse(json)?.AsObject();
 
             Assert.IsNotNull(rootObj, "Root object should not be null");
-            Assert.AreEqual("globalValue", rootObj["globalProperty"]?.GetValue<string>(), "Global properties should be preserved");
+            Assert.AreEqual("globalValue", rootObj!["globalProperty"]?.GetValue<string>(), "Global properties should be preserved");
 
             var projects = rootObj["projects"]?.AsObject();
             Assert.IsNotNull(projects, "projects should exist");
-            Assert.IsNotNull(projects["otherProject"], "Other project should be preserved");
+            Assert.IsNotNull(projects!["otherProject"], "Other project should be preserved");
 
             var myProject = projects["myProject"]?.AsObject();
             Assert.IsNotNull(myProject, "myProject should exist");
-            Assert.AreEqual("projectValue", myProject["projectProperty"]?.GetValue<string>(), "Project properties should be preserved");
+            Assert.AreEqual("projectValue", myProject!["projectProperty"]?.GetValue<string>(), "Project properties should be preserved");
 
             var mcpServers = myProject["mcpServers"]?.AsObject();
             Assert.IsNotNull(mcpServers, "mcpServers should exist");
-            Assert.IsNotNull(mcpServers["existingServer"], "Existing server should be preserved");
+            Assert.IsNotNull(mcpServers!["existingServer"], "Existing server should be preserved");
             Assert.Greater(mcpServers.Count, 1, "Should have both existing and new server entries");
 
             yield return null;
@@ -232,9 +232,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             Assert.IsNotNull(rootObj, "Root object should not be null");
 
-            var mcpServers = rootObj["mcpServers"]?.AsObject();
+            var mcpServers = rootObj!["mcpServers"]?.AsObject();
             Assert.IsNotNull(mcpServers, "mcpServers should exist");
-            Assert.IsNotNull(mcpServers["otherServer"], "Other server should be preserved");
+            Assert.IsNotNull(mcpServers!["otherServer"], "Other server should be preserved");
 
             // Check that the duplicate was replaced with new configuration
             var hasUnityMcpServer = false;
@@ -247,7 +247,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     var args = kv.Value?["args"]?.AsArray();
                     Assert.IsNotNull(args, "Args should exist for Unity-MCP server");
 
-                    var portArg = args.ToString();
+                    var portArg = args!.ToString();
                     Assert.IsTrue(portArg.Contains($"--port={UnityMcpPlugin.Port}"),
                         $"Should contain current port, but got: {portArg}");
                     break;
@@ -276,11 +276,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var rootObj = JsonNode.Parse(json)?.AsObject();
 
             Assert.IsNotNull(rootObj, "Root object should not be null");
-            Assert.IsNotNull(rootObj["mcpServers"], "mcpServers should be created");
+            Assert.IsNotNull(rootObj!["mcpServers"], "mcpServers should be created");
 
             var mcpServers = rootObj["mcpServers"]?.AsObject();
             Assert.IsNotNull(mcpServers, "mcpServers should be an object");
-            Assert.Greater(mcpServers.Count, 0, "mcpServers should contain at least one server entry");
+            Assert.Greater(mcpServers!.Count, 0, "mcpServers should contain at least one server entry");
 
             yield return null;
         }
@@ -302,7 +302,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var rootObj = JsonNode.Parse(json)?.AsObject();
 
             Assert.IsNotNull(rootObj, "Root object should not be null");
-            Assert.IsNotNull(rootObj["mcpServers"], "mcpServers should exist");
+            Assert.IsNotNull(rootObj!["mcpServers"], "mcpServers should exist");
 
             yield return null;
         }
@@ -371,23 +371,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var rootObj = JsonNode.Parse(json)?.AsObject();
 
             Assert.IsNotNull(rootObj, "Root object should not be null");
-            Assert.IsNotNull(rootObj["level1"], "level1 should exist");
+            Assert.IsNotNull(rootObj!["level1"], "level1 should exist");
 
             var level1 = rootObj["level1"]?.AsObject();
             Assert.IsNotNull(level1, "level1 should be an object");
-            Assert.IsNotNull(level1["level2"], "level2 should exist");
+            Assert.IsNotNull(level1!["level2"], "level2 should exist");
 
             var level2 = level1["level2"]?.AsObject();
             Assert.IsNotNull(level2, "level2 should be an object");
-            Assert.IsNotNull(level2["level3"], "level3 should exist");
+            Assert.IsNotNull(level2!["level3"], "level3 should exist");
 
             var level3 = level2["level3"]?.AsObject();
             Assert.IsNotNull(level3, "level3 should be an object");
-            Assert.IsNotNull(level3["mcpServers"], "mcpServers should exist");
+            Assert.IsNotNull(level3!["mcpServers"], "mcpServers should exist");
 
             var mcpServers = level3["mcpServers"]?.AsObject();
             Assert.IsNotNull(mcpServers, "mcpServers should be an object");
-            Assert.Greater(mcpServers.Count, 0, "mcpServers should contain at least one server entry");
+            Assert.Greater(mcpServers!.Count, 0, "mcpServers should contain at least one server entry");
 
             yield return null;
         }

@@ -18,6 +18,8 @@
         "Microsoft.AspNetCore.SignalR.Client.dll",
         "Microsoft.AspNetCore.SignalR.Client.Core.dll",
         "ReflectorNet.dll",
+        "McpPlugin.dll",
+        "McpPlugin.Common.dll",
         "R3.dll"
     ],
     "autoReferenced": false,

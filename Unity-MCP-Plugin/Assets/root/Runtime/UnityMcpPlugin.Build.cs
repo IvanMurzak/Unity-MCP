@@ -12,7 +12,6 @@
 using System;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet;
-using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.Extensions.Logging;
 using UnityEngine;
@@ -42,6 +41,16 @@ namespace com.IvanMurzak.Unity.MCP
                 lock (buildMutex)
                 {
                     mcpPluginInstance = value;
+                }
+            }
+        }
+        public bool HasMcpPluginInstance
+        {
+            get
+            {
+                lock (buildMutex)
+                {
+                    return mcpPluginInstance != null;
                 }
             }
         }

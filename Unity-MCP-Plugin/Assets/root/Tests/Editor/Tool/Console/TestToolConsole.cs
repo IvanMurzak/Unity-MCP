@@ -21,7 +21,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
     public class TestToolConsole : BaseTest
     {
-        Tool_Console _tool;
+        Tool_Console _tool = null!;
 
         [SetUp]
         public void TestSetUp()

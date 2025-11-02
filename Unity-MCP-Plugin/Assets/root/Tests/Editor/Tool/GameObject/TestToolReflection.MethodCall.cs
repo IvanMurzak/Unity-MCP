@@ -40,7 +40,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var methodInfo = classType.GetMethod(name);
 
             var obj = new UnityEditor.Build.NamedBuildTarget();
-            var serializedObj = McpPlugin.Instance!.McpRunner.Reflector.Serialize(obj);
+            var serializedObj = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Serialize(obj);
 
             ResultValidation(new Tool_Reflection().MethodCall(
                 filter: new MethodRef(methodInfo),
@@ -75,7 +75,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator MethodCall_UnityEngine_Transform_LookAt()
         {
-            var reflector = McpPlugin.Instance!.McpRunner.Reflector;
+            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
             var classType = typeof(UnityEngine.Transform);
             var name = nameof(UnityEngine.Transform.LookAt);
@@ -90,8 +90,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             go1.transform.position = new UnityEngine.Vector3(0, 0, 0);
             go2.transform.position = new UnityEngine.Vector3(1, 0, 0);
 
-            var serializedTransform1 = reflector.Serialize(go1.transform, logger: McpPlugin.Instance.Logger);
-            var serializedTransform2 = reflector.Serialize(go2.transform, logger: McpPlugin.Instance.Logger, name: "target");
+            var serializedTransform1 = reflector.Serialize(go1.transform, logger: McpPlugin.McpPlugin.Instance.Logger);
+            var serializedTransform2 = reflector.Serialize(go2.transform, logger: McpPlugin.McpPlugin.Instance.Logger, name: "target");
 
             UnityEngine.Debug.Log($"Serialized transforms");
             UnityEngine.Debug.Log($"Transform 1: {serializedTransform1}");

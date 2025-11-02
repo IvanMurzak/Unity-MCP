@@ -42,7 +42,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             Undo.RecordObject(UnityMcpPlugin.AssetFile, message); // Undo record started
             base.SaveChanges();
-            UnityMcpPlugin.Save();
+            UnityMcpPlugin.Instance.Save();
             UnityMcpPlugin.InvalidateAssetFile();
             EditorUtility.SetDirty(UnityMcpPlugin.AssetFile); // Undo record completed
         }

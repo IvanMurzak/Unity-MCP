@@ -33,7 +33,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     {
         static void PrintSerializers<TTarget>()
         {
-            Debug.Log($"Serialize <b>[{typeof(TTarget)}]</b> priority:\n" + string.Join("\n", McpPlugin.Instance!.McpRunner.Reflector.Convertors.GetAllSerializers()
+            Debug.Log($"Serialize <b>[{typeof(TTarget)}]</b> priority:\n" + string.Join("\n", McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Convertors.GetAllSerializers()
                 .Select(x => $"{x.GetType()}: Priority: {x.SerializationPriority(typeof(TTarget))}")
                 .ToList()));
         }
@@ -55,9 +55,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
         static void TestGetConvertor(Type type, Type serializerType)
         {
-            var converter = McpPlugin.Instance!.McpRunner.Reflector.Convertors.GetConvertor(type);
+            var converter = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Convertors.GetConvertor(type);
             Assert.IsNotNull(converter, $"{type}: Converter should not be null.");
-            Assert.AreEqual(serializerType, converter.GetType(), $"{type}: The convertor should be {serializerType}.");
+            Assert.AreEqual(serializerType, converter!.GetType(), $"{type}: The convertor should be {serializerType}.");
         }
 
         [UnityTest]
@@ -87,11 +87,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator SerializeMaterial()
         {
-            var reflector = McpPlugin.Instance!.McpRunner.Reflector;
+            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
             var material = new Material(Shader.Find("Standard"));
 
-            var serialized = McpPlugin.Instance!.McpRunner.Reflector.Serialize(material);
+            var serialized = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Serialize(material);
             var json = serialized.ToJson(reflector);
             Debug.Log($"[{nameof(TestSerializer)}] Result:\n{json}");
 
@@ -103,11 +103,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             var objMaterial = (object)material;
             var stringBuilder = new StringBuilder();
-            McpPlugin.Instance!.McpRunner.Reflector.TryPopulate(
+            McpPlugin.McpPlugin.Instance!.McpManager.Reflector.TryPopulate(
                 ref objMaterial,
                 data: serialized,
                 stringBuilder: stringBuilder,
-                logger: McpPlugin.Instance.Logger);
+                logger: McpPlugin.McpPlugin.Instance.Logger);
 
             Assert.AreEqual(glossinessValue, material.GetFloat("_Glossiness"), 0.001f, $"Material property '_Glossiness' should be {glossinessValue}.");
             Assert.AreEqual(colorValue, material.GetColor("_Color"), $"Material property '_Glossiness' should be {glossinessValue}.");
@@ -124,14 +124,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator SerializeMaterialArray()
         {
-            var reflector = McpPlugin.Instance!.McpRunner.Reflector;
+            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
             var material1 = new Material(Shader.Find("Standard"));
             var material2 = new Material(Shader.Find("Standard"));
 
             var materials = new[] { material1, material2 };
 
-            var serialized = McpPlugin.Instance!.McpRunner.Reflector.Serialize(materials, logger: McpPlugin.Instance.Logger);
+            var serialized = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Serialize(materials, logger: McpPlugin.McpPlugin.Instance.Logger);
             var json = serialized.ToJson(reflector);
             Debug.Log($"[{nameof(TestSerializer)}] Result:\n{json}");
 
@@ -152,19 +152,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
         void Test_Serialize_Deserialize<T>(T sourceObj)
         {
-            var reflector = McpPlugin.Instance!.McpRunner.Reflector;
+            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
             var type = typeof(T);
-            var serializedObj = reflector.Serialize(sourceObj, logger: McpPlugin.Instance.Logger);
-            var deserializedObj = reflector.Deserialize(serializedObj, logger: McpPlugin.Instance.Logger);
-
+            var serializedObj = reflector.Serialize(sourceObj, logger: McpPlugin.McpPlugin.Instance.Logger);
+            var deserializedObj = reflector.Deserialize(serializedObj, logger: McpPlugin.McpPlugin.Instance.Logger);
             Debug.Log($"[{type.Name}] Source:\n```json\n{sourceObj.ToJson(reflector)}\n```");
             Debug.Log($"[{type.Name}] Serialized:\n```json\n{serializedObj.ToJson(reflector)}\n```");
             Debug.Log($"[{type.Name}] Deserialized:\n```json\n{deserializedObj.ToJson(reflector)}\n```");
 
-            Assert.AreEqual(sourceObj.GetType(), deserializedObj.GetType(), $"Object type should be {sourceObj.GetType()}.");
+            Assert.AreEqual(sourceObj?.GetType(), deserializedObj?.GetType(), $"Object type should be {sourceObj?.GetType().Name ?? "null"}.");
 
-            foreach (var field in McpPlugin.Instance!.McpRunner.Reflector.GetSerializableFields(type) ?? Enumerable.Empty<FieldInfo>())
+            foreach (var field in McpPlugin.McpPlugin.Instance!.McpManager.Reflector.GetSerializableFields(type) ?? Enumerable.Empty<FieldInfo>())
             {
                 try
                 {
@@ -178,7 +177,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     throw ex;
                 }
             }
-            foreach (var prop in McpPlugin.Instance!.McpRunner.Reflector.GetSerializableProperties(type) ?? Enumerable.Empty<PropertyInfo>())
+            foreach (var prop in McpPlugin.McpPlugin.Instance!.McpManager.Reflector.GetSerializableProperties(type) ?? Enumerable.Empty<PropertyInfo>())
             {
                 try
                 {
