@@ -71,15 +71,16 @@ namespace com.IvanMurzak.Unity.MCP.Server
                 var reflector = new Reflector();
 
                 // Setup SignalR ---------------------------------------------------------------
-                builder.Services.AddSignalR(configure =>
-                {
-                    configure.EnableDetailedErrors = false;
-                    configure.MaximumReceiveMessageSize = 1024 * 1024 * 256; // 256 MB
-                    configure.ClientTimeoutInterval = TimeSpan.FromMinutes(5);
-                    configure.KeepAliveInterval = TimeSpan.FromSeconds(30);
-                    configure.HandshakeTimeout = TimeSpan.FromMinutes(2);
-                })
-                .AddJsonProtocol(options => SignalR_JsonConfiguration.ConfigureJsonSerializer(reflector, options));
+                builder.Services
+                    .AddSignalR(configure =>
+                    {
+                        configure.EnableDetailedErrors = false;
+                        configure.MaximumReceiveMessageSize = 1024 * 1024 * 256; // 256 MB
+                        configure.ClientTimeoutInterval = TimeSpan.FromMinutes(5);
+                        configure.KeepAliveInterval = TimeSpan.FromSeconds(30);
+                        configure.HandshakeTimeout = TimeSpan.FromMinutes(2);
+                    })
+                    .AddJsonProtocol(options => SignalR_JsonConfiguration.ConfigureJsonSerializer(reflector, options));
 
                 // Setup MCP Plugin ---------------------------------------------------------------
                 var version = new McpPlugin.Common.Version
