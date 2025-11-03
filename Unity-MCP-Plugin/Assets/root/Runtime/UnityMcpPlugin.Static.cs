@@ -171,7 +171,7 @@ namespace com.IvanMurzak.Unity.MCP
                 .LogCritical(message, exception);
         }
 
-        public static async Task NotifyToolRequestCompleted(ToolRequestCompletedData request, CancellationToken cancellationToken = default)
+        public static async Task NotifyToolRequestCompleted(RequestToolCompletedData request, CancellationToken cancellationToken = default)
         {
             var mcpPlugin = Instance.McpPluginInstance ?? throw new InvalidOperationException($"{nameof(Instance.McpPluginInstance)} is null");
 
@@ -201,7 +201,7 @@ namespace com.IvanMurzak.Unity.MCP
                 return;
             }
 
-            await mcpPlugin.RemoteMcpManagerHub.NotifyToolRequestCompleted(request, cancellationToken);
+            await mcpPlugin.RemoteMcpManagerHub.NotifyToolRequestCompleted(request);
         }
 
         public static void Validate()

@@ -140,7 +140,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
                         includeLogsStacktrace: IncludeLogsStacktrace.Value))
                     .SetRequestID(requestId);
 
-                _ = UnityMcpPlugin.NotifyToolRequestCompleted(new ToolRequestCompletedData
+                _ = UnityMcpPlugin.NotifyToolRequestCompleted(new RequestToolCompletedData
                 {
                     RequestId = requestId,
                     Result = response
