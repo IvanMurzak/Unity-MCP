@@ -130,10 +130,9 @@ namespace com.IvanMurzak.Unity.MCP
         static ReactiveProperty<HubConnectionState> _connectionState = new(HubConnectionState.Disconnected);
         public static ReadOnlyReactiveProperty<HubConnectionState> ConnectionState => _connectionState;
 
-        public static ReadOnlyReactiveProperty<bool> IsConnected => Instance.McpPluginInstance?.ConnectionState
-            ?.Select(x => x == HubConnectionState.Connected)
-            ?.ToReadOnlyReactiveProperty(false)
-            ?? throw new InvalidOperationException($"{nameof(Instance.McpPluginInstance)} is null");
+        public static ReadOnlyReactiveProperty<bool> IsConnected => _connectionState
+            .Select(x => x == HubConnectionState.Connected)
+            .ToReadOnlyReactiveProperty(false);
 
         public static void LogTrace(string message, Type sourceClass, Exception? exception = null)
         {
