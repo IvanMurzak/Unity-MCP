@@ -68,7 +68,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 UnityMcpPlugin.LogLevel = evt.newValue as LogLevel? ?? LogLevel.Warning;
                 SaveChanges($"[AI Game Developer] LogLevel Changed: {evt.newValue}");
-                // UnityMcpPlugin.BuildAndStart();
             });
 
             var inputTimeoutMs = root.Query<IntegerField>("inputTimeoutMs").First();
