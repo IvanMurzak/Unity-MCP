@@ -126,8 +126,9 @@ namespace com.IvanMurzak.Unity.MCP
                 return Consts.Hub.DefaultPort;
             }
         }
-        public static ReadOnlyReactiveProperty<HubConnectionState> ConnectionState
-            => Instance.McpPluginInstance?.ConnectionState ?? throw new InvalidOperationException($"{nameof(Instance.McpPluginInstance)} is null");
+
+        static ReactiveProperty<HubConnectionState> _connectionState = new(HubConnectionState.Disconnected);
+        public static ReadOnlyReactiveProperty<HubConnectionState> ConnectionState => _connectionState;
 
         public static ReadOnlyReactiveProperty<bool> IsConnected => Instance.McpPluginInstance?.ConnectionState
             ?.Select(x => x == HubConnectionState.Connected)
@@ -271,20 +272,40 @@ namespace com.IvanMurzak.Unity.MCP
             _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() called.",
                 Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(Disconnect));
 
-            _connectionMutex.WaitOne();
             try
             {
                 var mcpPlugin = McpPlugin.McpPlugin.Instance;
                 if (mcpPlugin == null)
                     await McpPlugin.McpPlugin.StaticDisposeAsync();
                 else
-                    await mcpPlugin.Disconnect();
+                {
+                    try
+                    {
+                        _connectionMutex.WaitOne();
+                        await mcpPlugin.Disconnect();
+                    }
+                    finally
+                    {
+                        _connectionMutex.ReleaseMutex();
+                    }
+                }
             }
             finally
             {
                 _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() completed.",
                     Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(Disconnect));
-                _connectionMutex.ReleaseMutex();
+            }
+        }
+
+        public static void StaticDispose()
+        {
+            _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() called.",
+                Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(StaticDispose));
+
+            lock (_instanceMutex)
+            {
+                instance?.Dispose();
+                instance = null!;
             }
         }
 

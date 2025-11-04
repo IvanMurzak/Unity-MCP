@@ -32,19 +32,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         {
             if (UnityMcpPlugin.IsLogEnabled(LogLevel.Debug))
                 Debug.Log($"{DebugName} OnApplicationUnloading triggered");
-            Disconnect();
+
+            UnityMcpPlugin.Disconnect();
+            UnityMcpPlugin.StaticDispose();
         }
         static void OnApplicationQuitting()
         {
             if (UnityMcpPlugin.IsLogEnabled(LogLevel.Debug))
                 Debug.Log($"{DebugName} OnApplicationQuitting triggered");
-            Disconnect();
+
+            UnityMcpPlugin.Disconnect();
+            UnityMcpPlugin.StaticDispose();
         }
         static void OnBeforeAssemblyReload()
         {
             if (UnityMcpPlugin.IsLogEnabled(LogLevel.Debug))
                 Debug.Log($"{DebugName} OnBeforeAssemblyReload triggered");
-            Disconnect();
+
+            UnityMcpPlugin.Disconnect();
+            UnityMcpPlugin.StaticDispose();
         }
         static void OnAfterAssemblyReload()
         {

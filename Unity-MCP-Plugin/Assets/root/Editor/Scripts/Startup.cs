@@ -35,7 +35,5 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             LogUtils.EnsureSubscribed(); // log collector
             API.Tool_TestRunner.Init(); // test runner
         }
-
-        static void Disconnect() => UnityMcpPlugin.Disconnect();
     }
 }

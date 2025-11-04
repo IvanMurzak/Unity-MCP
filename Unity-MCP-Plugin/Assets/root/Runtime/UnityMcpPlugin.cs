@@ -11,12 +11,15 @@
 #nullable enable
 
 using System;
+using R3;
 
 namespace com.IvanMurzak.Unity.MCP
 {
-    public partial class UnityMcpPlugin
+    public partial class UnityMcpPlugin : IDisposable
     {
         public const string Version = "0.21.0";
+
+        protected readonly CompositeDisposable _disposables = new();
 
         protected UnityMcpPlugin(UnityConnectionConfig? config = null)
         {
@@ -31,6 +34,13 @@ namespace com.IvanMurzak.Unity.MCP
             {
                 this.data = config ?? throw new InvalidOperationException("ConnectionConfig is null");
             }
+        }
+
+        public void Dispose()
+        {
+            _disposables.Dispose();
+            McpPluginInstance?.Dispose();
+            McpPluginInstance = null;
         }
     }
 }

@@ -14,6 +14,7 @@ using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.Extensions.Logging;
+using R3;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP
@@ -67,6 +68,11 @@ namespace com.IvanMurzak.Unity.MCP
                     reflector: CreateDefaultReflector(),
                     loggerProvider: BuildLoggerProvider()
                 );
+
+                mcpPluginInstance.ConnectionState
+                    .Subscribe(state => _connectionState.Value = state)
+                    .AddTo(_disposables);
+
                 return this;
             }
         }
