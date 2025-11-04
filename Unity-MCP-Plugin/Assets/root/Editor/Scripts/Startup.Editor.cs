@@ -10,7 +10,6 @@
 
 #nullable enable
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
-using com.IvanMurzak.Unity.MCP.Utils;
 using UnityEditor;
 using UnityEngine;
 
@@ -49,12 +48,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         }
         static void OnAfterAssemblyReload()
         {
+            var needToConnect = EnvironmentUtils.IsCi() == false;
+
             if (UnityMcpPlugin.IsLogEnabled(LogLevel.Debug))
-                Debug.Log($"{DebugName} OnAfterReload triggered - BuildAndStart with openConnection: {!EnvironmentUtils.IsCi()}");
+                Debug.Log($"{DebugName} OnAfterReload triggered - BuildAndStart with needToConnect: {needToConnect}");
 
             UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
 
-            if (!EnvironmentUtils.IsCi())
+            if (needToConnect)
                 UnityMcpPlugin.ConnectIfNeeded();
         }
 

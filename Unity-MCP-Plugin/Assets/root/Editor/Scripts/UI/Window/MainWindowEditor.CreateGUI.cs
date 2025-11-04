@@ -12,7 +12,6 @@
 using System;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
-using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.AspNetCore.SignalR.Client;
 using R3;
 using UnityEditor;
@@ -224,15 +223,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 {
                     UnityMcpPlugin.KeepConnected = true;
                     UnityMcpPlugin.Instance.Save();
-                    if (UnityMcpPlugin.Instance.HasMcpPluginInstance)
-                    {
-                        UnityMcpPlugin.Instance.McpPluginInstance!.Connect();
-                    }
-                    else
-                    {
-                        UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
-                        UnityMcpPlugin.ConnectIfNeeded();
-                    }
+                    UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
+                    UnityMcpPlugin.ConnectIfNeeded();
                 }
                 else if (btnConnectOrDisconnect.text.Equals(ServerButtonText_Disconnect, StringComparison.OrdinalIgnoreCase))
                 {

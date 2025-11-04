@@ -274,17 +274,11 @@ namespace com.IvanMurzak.Unity.MCP
             _connectionMutex.WaitOne();
             try
             {
-                var mcpPlugin = Instance.McpPluginInstance;
+                var mcpPlugin = McpPlugin.McpPlugin.Instance;
                 if (mcpPlugin == null)
-                {
-                    _logger.LogDebug("{tag} {class}.{method}() isInitialized set <false>.",
-                        Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(Disconnect));
-
                     await McpPlugin.McpPlugin.StaticDisposeAsync();
-                    return; // ignore
-                }
-
-                await mcpPlugin.Disconnect();
+                else
+                    await mcpPlugin.Disconnect();
             }
             finally
             {
