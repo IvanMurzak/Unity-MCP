@@ -49,8 +49,7 @@ namespace com.IvanMurzak.Unity.MCP
         {
             if (LogCache.Instance == null)
             {
-                Debug.LogWarning("[Warning] Log Cache is not initialized. Skipping cache save...");
-                return;
+                Debug.LogWarning("[Warning] Background Log Caching is not enabled");
             }
             var logEntries = GetAllLogs();
             Task.Run(async () =>
@@ -64,8 +63,7 @@ namespace com.IvanMurzak.Unity.MCP
         {
             if (LogCache.Instance == null)
             {
-                Debug.LogWarning("[Warning] Log Cache is not initialized. Skipping cache load...");
-                return;
+                Debug.LogWarning("[Warning] Background Log Caching is not enabled.");
             }
             Task.Run(async () =>
             {
