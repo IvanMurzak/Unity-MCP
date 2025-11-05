@@ -47,6 +47,11 @@ namespace com.IvanMurzak.Unity.MCP
 
         public static void SaveToFile(Action? onCompleted = null)
         {
+            if (LogCache.Instance == null)
+            {
+                Debug.LogWarning("[Warning] Log Cache is not initialized. Skipping cache save...");
+                return;
+            }
             var logEntries = GetAllLogs();
             Task.Run(async () =>
             {
@@ -57,6 +62,11 @@ namespace com.IvanMurzak.Unity.MCP
 
         public static void LoadFromFile(Action? onCompleted = null)
         {
+            if (LogCache.Instance == null)
+            {
+                Debug.LogWarning("[Warning] Log Cache is not initialized. Skipping cache load...");
+                return;
+            }
             Task.Run(async () =>
             {
                 var logEntries = await LogCache.GetCachedLogEntriesAsync();

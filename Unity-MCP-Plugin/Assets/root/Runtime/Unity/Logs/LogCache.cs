@@ -47,21 +47,18 @@ namespace com.IvanMurzak.Unity.MCP
             lastLogTask.ContinueWith(_ => _shutdownTcs.TrySetResult(true));
         }
 
-        public static LogCache Instance
+        public static LogCache? Instance
         {
             get
             {
-                if (_instance == null)
+                lock (_lock)
                 {
-                    lock (_lock)
+                    if (_instance == null && !Application.isBatchMode)
                     {
-                        if (_instance == null && !Application.isBatchMode)
-                        {
-                            _instance = new LogCache();
-                        }
+                        _instance = new LogCache();
                     }
+                    return _instance!;
                 }
-                return _instance!;
             }
         }
 
