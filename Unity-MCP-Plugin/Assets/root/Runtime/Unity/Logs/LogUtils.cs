@@ -36,7 +36,6 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
-
         public static void ClearLogs()
         {
             lock (_lockObject)
@@ -47,10 +46,6 @@ namespace com.IvanMurzak.Unity.MCP
 
         public static void SaveToFile(Action? onCompleted = null)
         {
-            if (LogCache.Instance == null)
-            {
-                Debug.LogWarning("[Warning] Background Log Caching is not enabled");
-            }
             var logEntries = GetAllLogs();
             Task.Run(async () =>
             {
@@ -61,10 +56,6 @@ namespace com.IvanMurzak.Unity.MCP
 
         public static void LoadFromFile(Action? onCompleted = null)
         {
-            if (LogCache.Instance == null)
-            {
-                Debug.LogWarning("[Warning] Background Log Caching is not enabled.");
-            }
             Task.Run(async () =>
             {
                 var logEntries = await LogCache.GetCachedLogEntriesAsync();

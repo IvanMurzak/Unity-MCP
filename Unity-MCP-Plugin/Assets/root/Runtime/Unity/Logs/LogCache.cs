@@ -47,13 +47,13 @@ namespace com.IvanMurzak.Unity.MCP
             lastLogTask.ContinueWith(_ => _shutdownTcs.TrySetResult(true));
         }
 
-        public static LogCache? Instance
+        public static LogCache Instance
         {
             get
             {
                 lock (_lock)
                 {
-                    if (_instance == null && !Application.isBatchMode)
+                    if (_instance == null)
                     {
                         _instance = new LogCache();
                     }
@@ -64,7 +64,7 @@ namespace com.IvanMurzak.Unity.MCP
 
         private LogCache()
         {
-            if (_initialized) return;
+            if (_initialized || Application.isBatchMode) return;
 
             _timerSubscription = Observable.Timer(
                 TimeSpan.FromSeconds(1),
