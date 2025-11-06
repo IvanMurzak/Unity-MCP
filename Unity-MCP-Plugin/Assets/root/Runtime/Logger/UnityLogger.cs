@@ -63,7 +63,7 @@ namespace com.IvanMurzak.Unity.MCP.Utils
                 LogLevelMicrosoft.Trace => "<color=#aaaaaa>trce: </color>",
                 _ => "<color=#ffffff>none</color>"
             };
-            var message = $"{logLevelShort}<color=#B4FF32>[AI]</color> <color=#007575><b>{_categoryName}</b></color> {formatter(state, exception)}";
+            var message = $"{logLevelShort} [{DateTime.Now:HH:mm:ss:ffff}] <color=#B4FF32>[AI]</color> <color=#007575><b>{_categoryName}</b></color> {formatter(state, exception)}";
 #else
             string logLevelShort = logLevel switch
             {
@@ -75,7 +75,7 @@ namespace com.IvanMurzak.Unity.MCP.Utils
                 LogLevelMicrosoft.Trace => Consts.Log.Trce,
                 _ => "none"
             };
-            var message = $"{logLevelShort}[AI] {_categoryName} {formatter(state, exception)}";
+            var message = $"{logLevelShort} [{DateTime.Now:HH:mm:ss:ffff}] [AI] {_categoryName} {formatter(state, exception)}";
 #endif
 
             switch (logLevel)

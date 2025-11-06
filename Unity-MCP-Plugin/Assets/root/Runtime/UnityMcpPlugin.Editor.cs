@@ -83,8 +83,8 @@ namespace com.IvanMurzak.Unity.MCP
                 if (!Directory.Exists(directory))
                     Directory.CreateDirectory(directory);
 
-                data ??= new UnityConnectionConfig();
-                var json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
+                unityConnectionConfig ??= new UnityConnectionConfig();
+                var json = JsonSerializer.Serialize(unityConnectionConfig, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(AssetsFilePath, json);
 
                 var assetFile = AssetFile;

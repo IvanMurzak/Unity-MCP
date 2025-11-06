@@ -37,6 +37,16 @@ namespace com.IvanMurzak.Unity.MCP
         static string DebugName => $"[{nameof(UnityMcpPlugin)}]";
         static UnityMcpPlugin instance = null!;
 
+        public static bool HasInstance
+        {
+            get
+            {
+                lock (_instanceMutex)
+                {
+                    return instance != null;
+                }
+            }
+        }
         public static UnityMcpPlugin Instance
         {
             get
@@ -68,52 +78,40 @@ namespace com.IvanMurzak.Unity.MCP
 
         public static bool IsLogEnabled(LogLevel level) => LogLevel.IsEnabled(level);
 
-        private static LogLevel _logLevelCache = LogLevel.Trace;
         public static LogLevel LogLevel
         {
-            get => _logLevelCache;
+            get => Instance.unityConnectionConfig.LogLevel;
             set
             {
-                _logLevelCache = value;
-                Instance.data ??= new UnityConnectionConfig();
-                Instance.data.LogLevel = value;
-                NotifyChanged(Instance.data);
+                Instance.unityConnectionConfig.LogLevel = value;
+                NotifyChanged(Instance.unityConnectionConfig);
             }
         }
-        private static string _hostCache = UnityConnectionConfig.DefaultHost;
         public static string Host
         {
-            get => _hostCache ?? UnityConnectionConfig.DefaultHost;
+            get => Instance.unityConnectionConfig.Host;
             set
             {
-                _hostCache = value;
-                Instance.data ??= new UnityConnectionConfig();
-                Instance.data.Host = value;
-                NotifyChanged(Instance.data);
+                Instance.unityConnectionConfig.Host = value;
+                NotifyChanged(Instance.unityConnectionConfig);
             }
         }
-        private static bool _keepConnectedCache = true;
         public static bool KeepConnected
         {
-            get => _keepConnectedCache;
+            get => Instance.unityConnectionConfig.KeepConnected;
             set
             {
-                _keepConnectedCache = value;
-                Instance.data ??= new UnityConnectionConfig();
-                Instance.data.KeepConnected = value;
-                NotifyChanged(Instance.data);
+                Instance.unityConnectionConfig.KeepConnected = value;
+                NotifyChanged(Instance.unityConnectionConfig);
             }
         }
-        private static int _timeoutMsCache = Consts.Hub.DefaultTimeoutMs;
         public static int TimeoutMs
         {
-            get => _timeoutMsCache;
+            get => Instance.unityConnectionConfig.TimeoutMs;
             set
             {
-                _timeoutMsCache = value;
-                Instance.data ??= new UnityConnectionConfig();
-                Instance.data.TimeoutMs = value;
-                NotifyChanged(Instance.data);
+                Instance.unityConnectionConfig.TimeoutMs = value;
+                NotifyChanged(Instance.unityConnectionConfig);
             }
         }
         public static int Port
@@ -134,41 +132,41 @@ namespace com.IvanMurzak.Unity.MCP
             .Select(x => x == HubConnectionState.Connected)
             .ToReadOnlyReactiveProperty(false);
 
-        public static void LogTrace(string message, Type sourceClass, Exception? exception = null)
+        public static void LogTrace(string message, Type sourceClass, params object?[] args)
         {
             UnityLoggerFactory.LoggerFactory
                 .CreateLogger(sourceClass.GetTypeShortName())
-                .LogTrace(message, exception);
+                .LogTrace(message, args);
         }
-        public static void LogDebug(string message, Type sourceClass, Exception? exception = null)
+        public static void LogDebug(string message, Type sourceClass, params object?[] args)
         {
             UnityLoggerFactory.LoggerFactory
                 .CreateLogger(sourceClass.GetTypeShortName())
-                .LogDebug(message, exception);
+                .LogDebug(message, args);
         }
-        public static void LogInfo(string message, Type sourceClass, Exception? exception = null)
+        public static void LogInfo(string message, Type sourceClass, params object?[] args)
         {
             UnityLoggerFactory.LoggerFactory
                 .CreateLogger(sourceClass.GetTypeShortName())
-                .LogInformation(message, exception);
+                .LogInformation(message, args);
         }
-        public static void LogWarn(string message, Type sourceClass, Exception? exception = null)
+        public static void LogWarn(string message, Type sourceClass, params object?[] args)
         {
             UnityLoggerFactory.LoggerFactory
                 .CreateLogger(sourceClass.GetTypeShortName())
-                .LogWarning(message, exception);
+                .LogWarning(message, args);
         }
-        public static void LogError(string message, Type sourceClass, Exception? exception = null)
+        public static void LogError(string message, Type sourceClass, params object?[] args)
         {
             UnityLoggerFactory.LoggerFactory
                 .CreateLogger(sourceClass.GetTypeShortName())
-                .LogError(message, exception);
+                .LogError(message, args);
         }
-        public static void LogException(string message, Type sourceClass, Exception? exception = null)
+        public static void LogException(string message, Type sourceClass, params object?[] args)
         {
             UnityLoggerFactory.LoggerFactory
                 .CreateLogger(sourceClass.GetTypeShortName())
-                .LogCritical(message, exception);
+                .LogCritical(message, args);
         }
 
         public static async Task NotifyToolRequestCompleted(RequestToolCompletedData request, CancellationToken cancellationToken = default)
@@ -207,7 +205,7 @@ namespace com.IvanMurzak.Unity.MCP
         public static void Validate()
         {
             var changed = false;
-            var data = Instance.data ??= new UnityConnectionConfig();
+            var data = Instance.unityConnectionConfig ??= new UnityConnectionConfig();
 
             if (string.IsNullOrEmpty(data.Host))
             {
@@ -227,7 +225,7 @@ namespace com.IvanMurzak.Unity.MCP
 
             var subscription = _onConfigChanged.Subscribe(action);
             if (invokeImmediately)
-                Safe.Run(action, Instance.data, logLevel: Instance.data?.LogLevel ?? LogLevel.Trace);
+                Safe.Run(action, Instance.unityConnectionConfig, logLevel: Instance.unityConnectionConfig?.LogLevel ?? LogLevel.Trace);
             return subscription;
         }
 
@@ -266,25 +264,35 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
-        public static async void Disconnect()
+        public async void DisconnectAsync()
         {
             _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() called.",
-                Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(Disconnect));
+                Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(DisconnectAsync));
 
             try
             {
                 var mcpPlugin = McpPlugin.McpPlugin.Instance;
                 if (mcpPlugin == null)
-                    await McpPlugin.McpPlugin.StaticDisposeAsync();
+                {
+                    _logger.LogWarning("{tag} {class}.{method}(): McpPlugin instance is null, nothing to disconnect, ignoring.",
+                        Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(DisconnectAsync));
+                    return;
+                }
                 else
                 {
                     try
                     {
+                        _logger.LogDebug("{tag} {class}.{method}(): Acquiring connection mutex.",
+                            Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(DisconnectAsync));
                         _connectionMutex.WaitOne();
+                        _logger.LogDebug("{tag} {class}.{method}(): Disconnecting McpPlugin instance.",
+                            Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(DisconnectAsync));
                         await mcpPlugin.Disconnect();
                     }
                     finally
                     {
+                        _logger.LogDebug("{tag} {class}.{method}(): Releasing connection mutex.",
+                            Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(DisconnectAsync));
                         _connectionMutex.ReleaseMutex();
                     }
                 }
@@ -292,7 +300,7 @@ namespace com.IvanMurzak.Unity.MCP
             finally
             {
                 _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() completed.",
-                    Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(Disconnect));
+                    Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(DisconnectAsync));
             }
         }
 

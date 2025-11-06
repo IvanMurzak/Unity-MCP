@@ -216,7 +216,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 .AddTo(_disposables);
             }).AddTo(_disposables);
 
-            btnConnectOrDisconnect.RegisterCallback<ClickEvent>(evt =>
+            btnConnectOrDisconnect.RegisterCallback<ClickEvent>((EventCallback<ClickEvent>)(evt =>
             {
                 if (btnConnectOrDisconnect.text.Equals(ServerButtonText_Connect, StringComparison.OrdinalIgnoreCase))
                 {
@@ -231,7 +231,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     UnityMcpPlugin.Instance.Save();
                     if (UnityMcpPlugin.Instance.HasMcpPluginInstance)
                     {
-                        UnityMcpPlugin.Disconnect();
+                        UnityMcpPlugin.Instance.DisconnectAsync();
                     }
                 }
                 else if (btnConnectOrDisconnect.text.Equals(ServerButtonText_Stop, StringComparison.OrdinalIgnoreCase))
@@ -240,14 +240,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     UnityMcpPlugin.Instance.Save();
                     if (UnityMcpPlugin.Instance.HasMcpPluginInstance)
                     {
-                        UnityMcpPlugin.Disconnect();
+                        UnityMcpPlugin.Instance.DisconnectAsync();
                     }
                 }
                 else
                 {
                     throw new Exception("Unknown button state: " + btnConnectOrDisconnect.text);
                 }
-            });
+            }));
 
             // Configure MCP Client
             // -----------------------------------------------------------------

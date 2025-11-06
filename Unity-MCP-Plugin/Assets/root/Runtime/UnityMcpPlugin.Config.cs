@@ -19,7 +19,7 @@ namespace com.IvanMurzak.Unity.MCP
     {
         protected readonly object configMutex = new();
 
-        protected UnityConnectionConfig data;
+        protected UnityConnectionConfig unityConnectionConfig;
 
 
         public class UnityConnectionConfig : ConnectionConfig

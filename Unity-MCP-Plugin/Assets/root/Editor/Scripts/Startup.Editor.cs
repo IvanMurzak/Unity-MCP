@@ -30,72 +30,68 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         }
         static void OnApplicationUnloading()
         {
-            if (UnityMcpPlugin.IsLogEnabled(LogLevel.Debug))
-                Debug.Log($"{DebugName} OnApplicationUnloading triggered");
+            UnityMcpPlugin.LogInfo("{method} triggered", typeof(Startup), nameof(OnApplicationUnloading));
 
-            UnityMcpPlugin.Disconnect();
-            UnityMcpPlugin.StaticDispose();
+            if (UnityMcpPlugin.HasInstance)
+                UnityMcpPlugin.Instance.DisconnectAsync();
+            // UnityMcpPlugin.StaticDispose();
         }
         static void OnApplicationQuitting()
         {
-            if (UnityMcpPlugin.IsLogEnabled(LogLevel.Debug))
-                Debug.Log($"{DebugName} OnApplicationQuitting triggered");
+            UnityMcpPlugin.LogInfo("{method} triggered", typeof(Startup), nameof(OnApplicationQuitting));
 
-            UnityMcpPlugin.Disconnect();
-            UnityMcpPlugin.StaticDispose();
+            if (UnityMcpPlugin.HasInstance)
+                UnityMcpPlugin.Instance.DisconnectAsync();
+            // UnityMcpPlugin.StaticDispose();
         }
         static void OnBeforeAssemblyReload()
         {
-            if (UnityMcpPlugin.IsLogEnabled(LogLevel.Debug))
-                Debug.Log($"{DebugName} OnBeforeAssemblyReload triggered");
+            UnityMcpPlugin.LogInfo("{0} triggered", typeof(Startup), nameof(OnBeforeAssemblyReload));
 
-            UnityMcpPlugin.Disconnect();
-            UnityMcpPlugin.StaticDispose();
+            if (UnityMcpPlugin.HasInstance)
+                UnityMcpPlugin.Instance.DisconnectAsync();
+            // UnityMcpPlugin.StaticDispose();
         }
         static void OnAfterAssemblyReload()
         {
-            var needToConnect = EnvironmentUtils.IsCi() == false;
+            var connectionAllowed = EnvironmentUtils.IsCi() == false;
 
-            if (UnityMcpPlugin.IsLogEnabled(LogLevel.Debug))
-                Debug.Log($"{DebugName} OnAfterReload triggered - BuildAndStart with needToConnect: {needToConnect}");
+            UnityMcpPlugin.LogInfo($"{nameof(OnAfterAssemblyReload)} triggered - BuildAndStart with {nameof(connectionAllowed)}: {connectionAllowed}",
+                typeof(Startup));
 
             UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
 
-            if (needToConnect)
+            if (connectionAllowed)
                 UnityMcpPlugin.ConnectIfNeeded();
         }
 
         static void OnPlayModeStateChanged(PlayModeStateChange state)
         {
             // Log Play mode state changes for debugging
-            if (UnityMcpPlugin.IsLogEnabled(LogLevel.Debug))
-                Debug.Log($"{DebugName} Play mode state changed: {state}");
+            UnityMcpPlugin.LogInfo($"Play mode state changed: {state}", typeof(Startup));
 
             switch (state)
             {
                 case PlayModeStateChange.ExitingPlayMode:
                     // Unity is about to exit Play mode - connection may be lost
                     // The OnBeforeReload will handle disconnection if domain reload occurs
-                    if (UnityMcpPlugin.IsLogEnabled(LogLevel.Trace))
-                        Debug.Log($"{DebugName} Exiting Play mode - connection may be affected by domain reload");
+                    UnityMcpPlugin.LogTrace($"Exiting Play mode - connection may be affected by domain reload", typeof(Startup));
                     break;
 
                 case PlayModeStateChange.EnteredEditMode:
                     // Unity has returned to Edit mode - ensure connection is re-established
                     // if the configuration expects it to be connected
-                    if (UnityMcpPlugin.IsLogEnabled(LogLevel.Trace))
-                        Debug.Log($"{DebugName} Entered Edit mode - KeepConnected: {UnityMcpPlugin.KeepConnected}, IsCi: {EnvironmentUtils.IsCi()}");
+                    UnityMcpPlugin.LogTrace($"Entered Edit mode - KeepConnected: {UnityMcpPlugin.KeepConnected}, IsCi: {EnvironmentUtils.IsCi()}",
+                        typeof(Startup));
 
                     if (UnityMcpPlugin.KeepConnected && !EnvironmentUtils.IsCi())
                     {
-                        if (UnityMcpPlugin.IsLogEnabled(LogLevel.Trace))
-                            Debug.Log($"{DebugName} Scheduling reconnection after Play mode exit");
+                        UnityMcpPlugin.LogTrace($"Scheduling reconnection after Play mode exit", typeof(Startup));
 
                         // Small delay to ensure Unity is fully settled in Edit mode
                         EditorApplication.delayCall += () =>
                         {
-                            if (UnityMcpPlugin.IsLogEnabled(LogLevel.Trace))
-                                Debug.Log($"{DebugName} Initiating delayed reconnection after Play mode exit");
+                            UnityMcpPlugin.LogTrace($"{DebugName} Initiating delayed reconnection after Play mode exit", typeof(Startup));
 
                             UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
                             UnityMcpPlugin.ConnectIfNeeded();
@@ -103,8 +99,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
                         // No delay, immediate reconnection for the case if Unity Editor in background
                         // (has no focus)
-                        if (UnityMcpPlugin.IsLogEnabled(LogLevel.Trace))
-                            Debug.Log($"{DebugName} Initiating reconnection after Play mode exit");
+                        UnityMcpPlugin.LogTrace($"Initiating reconnection after Play mode exit", typeof(Startup));
 
                         UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
                         UnityMcpPlugin.ConnectIfNeeded();
@@ -112,13 +107,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     break;
 
                 case PlayModeStateChange.ExitingEditMode:
-                    if (UnityMcpPlugin.IsLogEnabled(LogLevel.Trace))
-                        Debug.Log($"{DebugName} Exiting Edit mode to enter Play mode");
+                    UnityMcpPlugin.LogTrace($"Exiting Edit mode to enter Play mode", typeof(Startup));
                     break;
 
                 case PlayModeStateChange.EnteredPlayMode:
-                    if (UnityMcpPlugin.IsLogEnabled(LogLevel.Trace))
-                        Debug.Log($"{DebugName} Entered Play mode");
+                    UnityMcpPlugin.LogTrace($"Entered Play mode", typeof(Startup));
                     break;
             }
         }
