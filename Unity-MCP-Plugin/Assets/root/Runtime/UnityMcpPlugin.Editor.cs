@@ -51,13 +51,13 @@ namespace com.IvanMurzak.Unity.MCP
                 }
                 catch (Exception e)
                 {
-                    _logger.LogCritical(e, "{tag} {class}.{method}: <color=red><b>{file}</b> file is corrupted at <i>{path}</i></color>",
-                        Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(UnityMcpPlugin), ResourcesFileName, AssetsFilePath);
+                    _logger.LogCritical(e, "{method}: <color=red><b>{file}</b> file is corrupted at <i>{path}</i></color>",
+                        nameof(GetOrCreateConfig), ResourcesFileName, AssetsFilePath);
                 }
                 if (config == null)
                 {
-                    _logger.LogWarning("{tag} {class}.{method}: <color=orange><b>Creating {file}</b> file at <i>{path}</i></color>",
-                        Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(UnityMcpPlugin), ResourcesFileName, AssetsFilePath);
+                    _logger.LogWarning("{method}: <color=orange><b>Creating {file}</b> file at <i>{path}</i></color>",
+                        nameof(GetOrCreateConfig), ResourcesFileName, AssetsFilePath);
 
                     config = new UnityConnectionConfig();
                     wasCreated = true;
@@ -67,8 +67,8 @@ namespace com.IvanMurzak.Unity.MCP
             }
             catch (Exception e)
             {
-                _logger.LogCritical(e, "{tag} {class}.{method}: <color=red><b>{file}</b> file can't be loaded from <i>{path}</i></color>",
-                    Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(UnityMcpPlugin), ResourcesFileName, AssetsFilePath);
+                _logger.LogCritical(e, "{method}: <color=red><b>{file}</b> file can't be loaded from <i>{path}</i></color>",
+                    nameof(GetOrCreateConfig), ResourcesFileName, AssetsFilePath);
                 throw e;
             }
         }
@@ -95,8 +95,8 @@ namespace com.IvanMurzak.Unity.MCP
             }
             catch (Exception e)
             {
-                _logger.LogCritical(e, "{tag} {class}.{method}: <color=red><b>{file}</b> file can't be saved at <i>{path}</i></color>",
-                    Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(Save), ResourcesFileName, AssetsFilePath);
+                _logger.LogCritical(e, "{method}: <color=red><b>{file}</b> file can't be saved at <i>{path}</i></color>",
+                    nameof(Save), ResourcesFileName, AssetsFilePath);
             }
 #else
             // do nothing in runtime builds

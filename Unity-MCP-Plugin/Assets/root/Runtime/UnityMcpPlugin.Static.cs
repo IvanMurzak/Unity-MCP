@@ -14,7 +14,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.McpPlugin.Common.Model;
-using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -130,43 +129,6 @@ namespace com.IvanMurzak.Unity.MCP
         public static ReadOnlyReactiveProperty<bool> IsConnected => _connectionState
             .Select(x => x == HubConnectionState.Connected)
             .ToReadOnlyReactiveProperty(false);
-
-        public void LogTrace(string message, Type sourceClass, params object?[] args)
-        {
-            UnityLoggerFactory.LoggerFactory
-                .CreateLogger(sourceClass.GetTypeShortName())
-                .LogTrace(message, args);
-        }
-        public void LogDebug(string message, Type sourceClass, params object?[] args)
-        {
-            UnityLoggerFactory.LoggerFactory
-                .CreateLogger(sourceClass.GetTypeShortName())
-                .LogDebug(message, args);
-        }
-        public void LogInfo(string message, Type sourceClass, params object?[] args)
-        {
-            UnityLoggerFactory.LoggerFactory
-                .CreateLogger(sourceClass.GetTypeShortName())
-                .LogInformation(message, args);
-        }
-        public void LogWarn(string message, Type sourceClass, params object?[] args)
-        {
-            UnityLoggerFactory.LoggerFactory
-                .CreateLogger(sourceClass.GetTypeShortName())
-                .LogWarning(message, args);
-        }
-        public void LogError(string message, Type sourceClass, params object?[] args)
-        {
-            UnityLoggerFactory.LoggerFactory
-                .CreateLogger(sourceClass.GetTypeShortName())
-                .LogError(message, args);
-        }
-        public void LogException(string message, Type sourceClass, params object?[] args)
-        {
-            UnityLoggerFactory.LoggerFactory
-                .CreateLogger(sourceClass.GetTypeShortName())
-                .LogCritical(message, args);
-        }
 
         public static async Task NotifyToolRequestCompleted(RequestToolCompletedData request, CancellationToken cancellationToken = default)
         {

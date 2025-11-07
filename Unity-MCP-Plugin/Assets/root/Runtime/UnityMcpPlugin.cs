@@ -11,6 +11,9 @@
 #nullable enable
 
 using System;
+using com.IvanMurzak.ReflectorNet;
+using com.IvanMurzak.Unity.MCP.Utils;
+using Microsoft.Extensions.Logging;
 using R3;
 
 namespace com.IvanMurzak.Unity.MCP
@@ -34,6 +37,43 @@ namespace com.IvanMurzak.Unity.MCP
             {
                 this.unityConnectionConfig = config ?? throw new InvalidOperationException("ConnectionConfig is null");
             }
+        }
+
+        public void LogTrace(string message, Type sourceClass, params object?[] args)
+        {
+            UnityLoggerFactory.LoggerFactory
+                .CreateLogger(sourceClass.GetTypeShortName())
+                .LogTrace(message, args);
+        }
+        public void LogDebug(string message, Type sourceClass, params object?[] args)
+        {
+            UnityLoggerFactory.LoggerFactory
+                .CreateLogger(sourceClass.GetTypeShortName())
+                .LogDebug(message, args);
+        }
+        public void LogInfo(string message, Type sourceClass, params object?[] args)
+        {
+            UnityLoggerFactory.LoggerFactory
+                .CreateLogger(sourceClass.GetTypeShortName())
+                .LogInformation(message, args);
+        }
+        public void LogWarn(string message, Type sourceClass, params object?[] args)
+        {
+            UnityLoggerFactory.LoggerFactory
+                .CreateLogger(sourceClass.GetTypeShortName())
+                .LogWarning(message, args);
+        }
+        public void LogError(string message, Type sourceClass, params object?[] args)
+        {
+            UnityLoggerFactory.LoggerFactory
+                .CreateLogger(sourceClass.GetTypeShortName())
+                .LogError(message, args);
+        }
+        public void LogException(string message, Type sourceClass, params object?[] args)
+        {
+            UnityLoggerFactory.LoggerFactory
+                .CreateLogger(sourceClass.GetTypeShortName())
+                .LogCritical(message, args);
         }
 
         public void Dispose()
