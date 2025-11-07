@@ -27,8 +27,8 @@ namespace com.IvanMurzak.Unity.MCP
         public static void InvalidateAssetFile() => UnityEditor.AssetDatabase.ImportAsset(AssetsFilePath, UnityEditor.ImportAssetOptions.ForceUpdate);
 #endif
 
-        static UnityConnectionConfig GetOrCreateConfig() => GetOrCreateConfig(out _);
-        static UnityConnectionConfig GetOrCreateConfig(out bool wasCreated)
+        UnityConnectionConfig GetOrCreateConfig() => GetOrCreateConfig(out _);
+        UnityConnectionConfig GetOrCreateConfig(out bool wasCreated)
         {
             wasCreated = false;
             try
