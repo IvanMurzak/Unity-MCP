@@ -32,6 +32,13 @@ namespace com.IvanMurzak.Unity.MCP.Utils
 
         public bool IsEnabled(LogLevelMicrosoft logLevel)
         {
+            // Prevent infinite loop during UnityMcpPlugin initialization by checking if instance exists
+            if (!UnityMcpPlugin.HasInstance)
+            {
+                // During initialization, allow all log levels
+                return true;
+            }
+
             return UnityMcpPlugin.IsLogEnabled(logLevel switch
             {
                 LogLevelMicrosoft.Critical => LogLevel.Exception,
