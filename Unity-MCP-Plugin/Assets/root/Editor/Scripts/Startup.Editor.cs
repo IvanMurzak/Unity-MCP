@@ -34,7 +34,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             if (UnityMcpPlugin.HasInstance)
                 UnityMcpPlugin.Instance.DisconnectImmediate();
-            // UnityMcpPlugin.StaticDispose();
         }
         static void OnApplicationQuitting()
         {
@@ -42,7 +41,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             if (UnityMcpPlugin.HasInstance)
                 UnityMcpPlugin.Instance.DisconnectImmediate();
-            // UnityMcpPlugin.StaticDispose();
         }
         static void OnBeforeAssemblyReload()
         {
@@ -50,8 +48,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             if (UnityMcpPlugin.HasInstance)
                 UnityMcpPlugin.Instance.DisconnectImmediate();
-
-            // UnityMcpPlugin.StaticDispose();
         }
         static void OnAfterAssemblyReload()
         {
