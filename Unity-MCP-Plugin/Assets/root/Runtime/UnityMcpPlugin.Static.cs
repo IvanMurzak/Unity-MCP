@@ -32,7 +32,6 @@ namespace com.IvanMurzak.Unity.MCP
         static readonly Subject<UnityConnectionConfig> _onConfigChanged = new Subject<UnityConnectionConfig>();
         static readonly ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger<UnityMcpPlugin>();
         static readonly object _instanceMutex = new();
-        static readonly Mutex _connectionMutex = new();
 
         static string DebugName => $"[{nameof(UnityMcpPlugin)}]";
         static UnityMcpPlugin instance = null!;
@@ -242,7 +241,6 @@ namespace com.IvanMurzak.Unity.MCP
             _logger.Log(MicrosoftLogLevel.Trace, "{method} called.",
                 nameof(Connect));
 
-            // _connectionMutex.WaitOne();
             try
             {
                 var mcpPlugin = Instance.McpPluginInstance;
@@ -258,7 +256,6 @@ namespace com.IvanMurzak.Unity.MCP
             {
                 _logger.Log(MicrosoftLogLevel.Trace, "{method} completed.",
                     nameof(Connect));
-                //  _connectionMutex.ReleaseMutex();
             }
         }
 
@@ -282,7 +279,6 @@ namespace com.IvanMurzak.Unity.MCP
                     {
                         _logger.LogDebug("{method}: Acquiring connection mutex.",
                             nameof(DisconnectImmediate));
-                        //_connectionMutex.WaitOne();
                         _logger.LogDebug("{method}: Disconnecting McpPlugin instance.",
                             nameof(DisconnectImmediate));
                         mcpPlugin.DisconnectImmediate();
@@ -296,7 +292,6 @@ namespace com.IvanMurzak.Unity.MCP
                     {
                         _logger.LogDebug("{method}: Releasing connection mutex.",
                             nameof(DisconnectImmediate));
-                        //_connectionMutex.ReleaseMutex();
                     }
                 }
             }
