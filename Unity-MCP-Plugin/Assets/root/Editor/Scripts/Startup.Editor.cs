@@ -33,7 +33,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             UnityMcpPlugin.LogInfo("{method} triggered", typeof(Startup), nameof(OnApplicationUnloading));
 
             if (UnityMcpPlugin.HasInstance)
-                UnityMcpPlugin.Instance.DisconnectAsync();
+                UnityMcpPlugin.Instance.DisconnectImmediate();
             // UnityMcpPlugin.StaticDispose();
         }
         static void OnApplicationQuitting()
@@ -41,15 +41,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             UnityMcpPlugin.LogInfo("{method} triggered", typeof(Startup), nameof(OnApplicationQuitting));
 
             if (UnityMcpPlugin.HasInstance)
-                UnityMcpPlugin.Instance.DisconnectAsync();
+                UnityMcpPlugin.Instance.DisconnectImmediate();
             // UnityMcpPlugin.StaticDispose();
         }
         static void OnBeforeAssemblyReload()
         {
-            UnityMcpPlugin.LogInfo("{0} triggered", typeof(Startup), nameof(OnBeforeAssemblyReload));
+            UnityMcpPlugin.LogInfo("{method} triggered", typeof(Startup), nameof(OnBeforeAssemblyReload));
 
             if (UnityMcpPlugin.HasInstance)
-                UnityMcpPlugin.Instance.DisconnectAsync();
+                UnityMcpPlugin.Instance.DisconnectImmediate();
+
             // UnityMcpPlugin.StaticDispose();
         }
         static void OnAfterAssemblyReload()

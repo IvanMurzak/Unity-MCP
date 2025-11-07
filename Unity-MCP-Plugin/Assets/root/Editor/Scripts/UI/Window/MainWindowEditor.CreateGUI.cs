@@ -123,8 +123,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             McpPlugin.McpPlugin.DoAlways(plugin =>
             {
                 Observable.CombineLatest(
-                    UnityMcpPlugin.ConnectionState,
-                    plugin.KeepConnected,
+                    UnityMcpPlugin.ConnectionState, plugin.KeepConnected,
                     (connectionState, keepConnected) => (connectionState, keepConnected)
                 )
                 .ThrottleLast(TimeSpan.FromMilliseconds(10))
@@ -231,7 +230,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     UnityMcpPlugin.Instance.Save();
                     if (UnityMcpPlugin.Instance.HasMcpPluginInstance)
                     {
-                        UnityMcpPlugin.Instance.DisconnectAsync();
+                        UnityMcpPlugin.Instance.DisconnectImmediate();
                     }
                 }
                 else if (btnConnectOrDisconnect.text.Equals(ServerButtonText_Stop, StringComparison.OrdinalIgnoreCase))
@@ -240,7 +239,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     UnityMcpPlugin.Instance.Save();
                     if (UnityMcpPlugin.Instance.HasMcpPluginInstance)
                     {
-                        UnityMcpPlugin.Instance.DisconnectAsync();
+                        UnityMcpPlugin.Instance.DisconnectImmediate();
                     }
                 }
                 else

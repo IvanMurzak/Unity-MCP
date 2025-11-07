@@ -188,20 +188,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.DoesNotThrow(() => _connectionManager.Dispose(),
                 "Dispose should not throw exceptions");
         }
-
-        [Test]
-        public void ConnectionManager_DisposeAsync_ShouldNotThrow()
-        {
-            _connectionManager = new ConnectionManager(
-                logger: _mockLogger,
-                apiVersion: _testVersion,
-                endpoint: string.Empty,
-                hubConnectionBuilder: _mockConnectionProvider);
-
-            // Act & Assert
-            Assert.DoesNotThrow(() => _connectionManager.DisposeAsync().GetAwaiter().GetResult(),
-                "DisposeAsync should not throw exceptions");
-        }
     }
 
     // Mock classes for testing

@@ -69,7 +69,7 @@ namespace com.IvanMurzak.Unity.MCP
                     if (instance == null)
                     {
                         _logger.LogWarning("{method}: ConnectionConfig instance is null",
-                            nameof(UnityMcpPlugin), nameof(InitSingletonIfNeeded));
+                            nameof(InitSingletonIfNeeded));
                         return;
                     }
                 }
@@ -180,7 +180,7 @@ namespace com.IvanMurzak.Unity.MCP
                 if (cancellationToken.IsCancellationRequested)
                 {
                     _logger.LogWarning("{method}: operation cancelled while waiting for connection.",
-                        nameof(UnityMcpPlugin), nameof(NotifyToolRequestCompleted));
+                        nameof(NotifyToolRequestCompleted));
                     return;
                 }
             }
@@ -188,14 +188,14 @@ namespace com.IvanMurzak.Unity.MCP
             if (mcpPlugin.McpManager == null)
             {
                 _logger.LogCritical("{method}: {instance} is null",
-                    nameof(UnityMcpPlugin), nameof(NotifyToolRequestCompleted), nameof(mcpPlugin.McpManager));
+                    nameof(NotifyToolRequestCompleted), nameof(mcpPlugin.McpManager));
                 return;
             }
 
             if (mcpPlugin.RemoteMcpManagerHub == null)
             {
                 _logger.LogCritical("{method}: {instance} is null",
-                    nameof(UnityMcpPlugin), nameof(NotifyToolRequestCompleted), nameof(mcpPlugin.RemoteMcpManagerHub));
+                    nameof(NotifyToolRequestCompleted), nameof(mcpPlugin.RemoteMcpManagerHub));
                 return;
             }
 
@@ -240,18 +240,16 @@ namespace com.IvanMurzak.Unity.MCP
         public static async Task<bool> Connect()
         {
             _logger.Log(MicrosoftLogLevel.Trace, "{method} called.",
-                nameof(UnityMcpPlugin), nameof(Connect));
+                nameof(Connect));
 
-            _connectionMutex.WaitOne();
+            // _connectionMutex.WaitOne();
             try
             {
-                KeepConnected = true;
-
                 var mcpPlugin = Instance.McpPluginInstance;
                 if (mcpPlugin == null)
                 {
                     _logger.LogError("{method} isInitialized set <false>.",
-                        nameof(UnityMcpPlugin), nameof(Connect));
+                        nameof(Connect));
                     return false; // ignore
                 }
                 return await mcpPlugin.Connect();
@@ -259,23 +257,23 @@ namespace com.IvanMurzak.Unity.MCP
             finally
             {
                 _logger.Log(MicrosoftLogLevel.Trace, "{method} completed.",
-                    nameof(UnityMcpPlugin), nameof(Connect));
-                _connectionMutex.ReleaseMutex();
+                    nameof(Connect));
+                //  _connectionMutex.ReleaseMutex();
             }
         }
 
-        public async void DisconnectAsync()
+        public void DisconnectImmediate()
         {
             _logger.Log(MicrosoftLogLevel.Trace, "{method} called.",
-                nameof(UnityMcpPlugin), nameof(DisconnectAsync));
+                nameof(DisconnectImmediate));
 
             try
             {
-                var mcpPlugin = McpPlugin.McpPlugin.Instance;
+                var mcpPlugin = McpPluginInstance;
                 if (mcpPlugin == null)
                 {
                     _logger.LogWarning("{method}: McpPlugin instance is null, nothing to disconnect, ignoring.",
-                        nameof(UnityMcpPlugin), nameof(DisconnectAsync));
+                        nameof(DisconnectImmediate));
                     return;
                 }
                 else
@@ -283,36 +281,38 @@ namespace com.IvanMurzak.Unity.MCP
                     try
                     {
                         _logger.LogDebug("{method}: Acquiring connection mutex.",
-                            nameof(UnityMcpPlugin), nameof(DisconnectAsync));
-                        _connectionMutex.WaitOne();
+                            nameof(DisconnectImmediate));
+                        //_connectionMutex.WaitOne();
                         _logger.LogDebug("{method}: Disconnecting McpPlugin instance.",
-                            nameof(UnityMcpPlugin), nameof(DisconnectAsync));
-                        await mcpPlugin.Disconnect();
+                            nameof(DisconnectImmediate));
+                        mcpPlugin.DisconnectImmediate();
                     }
                     catch (Exception e)
                     {
                         _logger.LogError("{method}: Exception during disconnecting: {exception}",
-                            nameof(UnityMcpPlugin), nameof(DisconnectAsync), e);
+                            nameof(DisconnectImmediate), e);
                     }
                     finally
                     {
                         _logger.LogDebug("{method}: Releasing connection mutex.",
-                            nameof(UnityMcpPlugin), nameof(DisconnectAsync));
-                        _connectionMutex.ReleaseMutex();
+                            nameof(DisconnectImmediate));
+                        //_connectionMutex.ReleaseMutex();
                     }
                 }
             }
             finally
             {
                 _logger.Log(MicrosoftLogLevel.Trace, "{method} completed.",
-                    nameof(UnityMcpPlugin), nameof(DisconnectAsync));
+                    nameof(DisconnectImmediate));
             }
         }
 
         public static void StaticDispose()
         {
             _logger.Log(MicrosoftLogLevel.Trace, "{method} called.",
-                nameof(UnityMcpPlugin), nameof(StaticDispose));
+                nameof(StaticDispose));
+
+            _connectionState.Dispose();
 
             lock (_instanceMutex)
             {
