@@ -31,11 +31,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             Debug.Log($"IsLogEnabled(Error): {UnityMcpPlugin.IsLogEnabled(LogLevel.Error)}");
 
             Debug.Log("=== Testing all log levels ===");
-            UnityMcpPlugin.LogTrace("This is a TRACE message", typeof(TestLogLevel));
-            UnityMcpPlugin.LogDebug("This is a DEBUG message", typeof(TestLogLevel));
-            UnityMcpPlugin.LogInfo("This is an INFO message", typeof(TestLogLevel));
-            UnityMcpPlugin.LogWarn("This is a WARNING message", typeof(TestLogLevel));
-            UnityMcpPlugin.LogError("This is an ERROR message", typeof(TestLogLevel));
+            UnityMcpPlugin.Instance.LogTrace("This is a TRACE message", typeof(TestLogLevel));
+            UnityMcpPlugin.Instance.LogDebug("This is a DEBUG message", typeof(TestLogLevel));
+            UnityMcpPlugin.Instance.LogInfo("This is an INFO message", typeof(TestLogLevel));
+            UnityMcpPlugin.Instance.LogWarn("This is a WARNING message", typeof(TestLogLevel));
+            UnityMcpPlugin.Instance.LogError("This is an ERROR message", typeof(TestLogLevel));
         }
     }
 }

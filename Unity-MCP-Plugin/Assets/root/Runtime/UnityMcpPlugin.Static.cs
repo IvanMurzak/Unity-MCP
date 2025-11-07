@@ -131,37 +131,37 @@ namespace com.IvanMurzak.Unity.MCP
             .Select(x => x == HubConnectionState.Connected)
             .ToReadOnlyReactiveProperty(false);
 
-        public static void LogTrace(string message, Type sourceClass, params object?[] args)
+        public void LogTrace(string message, Type sourceClass, params object?[] args)
         {
             UnityLoggerFactory.LoggerFactory
                 .CreateLogger(sourceClass.GetTypeShortName())
                 .LogTrace(message, args);
         }
-        public static void LogDebug(string message, Type sourceClass, params object?[] args)
+        public void LogDebug(string message, Type sourceClass, params object?[] args)
         {
             UnityLoggerFactory.LoggerFactory
                 .CreateLogger(sourceClass.GetTypeShortName())
                 .LogDebug(message, args);
         }
-        public static void LogInfo(string message, Type sourceClass, params object?[] args)
+        public void LogInfo(string message, Type sourceClass, params object?[] args)
         {
             UnityLoggerFactory.LoggerFactory
                 .CreateLogger(sourceClass.GetTypeShortName())
                 .LogInformation(message, args);
         }
-        public static void LogWarn(string message, Type sourceClass, params object?[] args)
+        public void LogWarn(string message, Type sourceClass, params object?[] args)
         {
             UnityLoggerFactory.LoggerFactory
                 .CreateLogger(sourceClass.GetTypeShortName())
                 .LogWarning(message, args);
         }
-        public static void LogError(string message, Type sourceClass, params object?[] args)
+        public void LogError(string message, Type sourceClass, params object?[] args)
         {
             UnityLoggerFactory.LoggerFactory
                 .CreateLogger(sourceClass.GetTypeShortName())
                 .LogError(message, args);
         }
-        public static void LogException(string message, Type sourceClass, params object?[] args)
+        public void LogException(string message, Type sourceClass, params object?[] args)
         {
             UnityLoggerFactory.LoggerFactory
                 .CreateLogger(sourceClass.GetTypeShortName())
