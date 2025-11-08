@@ -74,12 +74,12 @@ namespace com.IvanMurzak.Unity.MCP.Utils
 #else
             string logLevelShort = logLevel switch
             {
-                LogLevelMicrosoft.Critical => Consts.Log.Crit,
-                LogLevelMicrosoft.Error => Consts.Log.Fail,
-                LogLevelMicrosoft.Warning => Consts.Log.Warn,
-                LogLevelMicrosoft.Information => Consts.Log.Info,
-                LogLevelMicrosoft.Debug => Consts.Log.Dbug,
-                LogLevelMicrosoft.Trace => Consts.Log.Trce,
+                LogLevelMicrosoft.Critical => "crit: ",
+                LogLevelMicrosoft.Error => "fail: ",
+                LogLevelMicrosoft.Warning => "warn: ",
+                LogLevelMicrosoft.Information => "info: ",
+                LogLevelMicrosoft.Debug => "dbug: ",
+                LogLevelMicrosoft.Trace => "trce: ",
                 _ => "none"
             };
             var message = $"{logLevelShort} [{DateTime.Now:HH:mm:ss:ffff}] [AI] {_categoryName} {formatter(state, exception)}";
