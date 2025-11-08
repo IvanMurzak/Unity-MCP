@@ -10,7 +10,6 @@
 
 #nullable enable
 using System;
-using System.Collections.Concurrent;
 using System.IO;
 using System.Text.Json;
 using System.Threading;
@@ -65,7 +64,7 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
-        private LogCache()
+        internal LogCache()
         {
             if (isInitialized || Application.isBatchMode)
                 return;
