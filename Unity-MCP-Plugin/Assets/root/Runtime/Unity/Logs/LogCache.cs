@@ -91,7 +91,7 @@ namespace com.IvanMurzak.Unity.MCP
             await _fileLock.WaitAsync();
             try
             {
-                var data = JsonUtility.ToJson(new LogWrapper { entries = entries }.ToJson(null));
+                var data = JsonUtility.ToJson(new LogWrapper { entries = entries });
 
                 if (!Directory.Exists(_cacheFilePath))
                     Directory.CreateDirectory(_cacheFilePath);
