@@ -112,7 +112,11 @@ namespace com.IvanMurzak.Unity.MCP
         {
             try
             {
-                var logEntry = new LogEntry(message, stackTrace, type);
+                var logEntry = new LogEntry(
+                    message: message,
+                    stackTrace: stackTrace,
+                    logType: type);
+
                 lock (_lockObject)
                 {
                     _logEntries.Enqueue(logEntry);

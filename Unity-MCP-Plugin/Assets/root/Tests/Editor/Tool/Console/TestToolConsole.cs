@@ -325,9 +325,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange & Act
             var logEntry = new LogEntry(
-                "Test message",
-                "Test stack trace",
-                LogType.Warning
+                message: "Test message",
+                stackTrace: "Test stack trace",
+                logType: LogType.Warning
             );
 
             // Assert
@@ -343,9 +343,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange - Test with Warning to avoid causing test failure
             var logEntry = new LogEntry(
-                "Test message",
-                "Test stack trace",
-                LogType.Warning
+                message: "Test message",
+                stackTrace: "Test stack trace",
+                logType: LogType.Warning
             );
 
             // Act
@@ -362,9 +362,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Test Error log type creation directly (without using Debug.LogError)
             var errorLogEntry = new LogEntry(
-                "Error message",
-                "Error stack trace",
-                LogType.Error
+                message: "Error message",
+                stackTrace: "Error stack trace",
+                logType: LogType.Error
             );
 
             // Assert
@@ -379,9 +379,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Test Assert log type creation directly (without using Debug.LogAssertion)
             var assertLogEntry = new LogEntry(
-                "Assert message",
-                "Assert stack trace",
-                LogType.Assert
+                message: "Assert message",
+                stackTrace: "Assert stack trace",
+                logType: LogType.Assert
             );
 
             // Assert
