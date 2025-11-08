@@ -6,6 +6,11 @@ param(
     [string]$VersionTo
 )
 
+# Set location to repository root (parent of commands folder)
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$repoRoot = Split-Path -Parent $scriptDir
+Push-Location $repoRoot
+
 # Get repository URL from git remote
 $repoUrl = (git remote get-url origin) -replace '\.git$', ''
 if ($repoUrl -match '^git@github\.com:(.+)') {
@@ -68,3 +73,5 @@ foreach ($sha in $commits) {
 }
 
 Write-Host "Release notes generated successfully in $filename"
+
+Pop-Location

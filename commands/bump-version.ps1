@@ -27,6 +27,11 @@ param(
     [switch]$WhatIf
 )
 
+# Set location to repository root (parent of commands folder)
+$scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$repoRoot = Split-Path -Parent $scriptDir
+Push-Location $repoRoot
+
 # Script configuration
 $ErrorActionPreference = "Stop"
 
@@ -113,7 +118,7 @@ function Test-SemanticVersion {
 
 function Get-CurrentVersion {
     # Extract current version from package.json
-    $packageJsonPath = Join-Path $PSScriptRoot "Unity-MCP-Plugin/Assets/root/package.json"
+    $packageJsonPath = "Unity-MCP-Plugin/Assets/root/package.json"
     if (-not (Test-Path $packageJsonPath)) {
         throw "Could not find package.json at: $packageJsonPath"
     }
@@ -132,7 +137,7 @@ function Update-VersionFiles {
     $changes = @()
 
     foreach ($file in $VersionFiles) {
-        $fullPath = Join-Path $PSScriptRoot $file.Path
+        $fullPath = $file.Path
 
         if (-not (Test-Path $fullPath)) {
             Write-ColorText "⚠️  File not found: $($file.Path)" "Yellow"
@@ -177,6 +182,7 @@ function Update-VersionFiles {
 
     if ($changes.Count -eq 0) {
         Write-ColorText "❌ No version references found to update!" "Red"
+        Pop-Location
         exit 1
     }
 
@@ -189,7 +195,7 @@ function Update-VersionFiles {
 
     # Apply changes
     foreach ($change in $changes) {
-        $fullPath = Join-Path $PSScriptRoot $change.Path
+        $fullPath = $change.Path
         Set-Content -Path $fullPath -Value $change.Content -NoNewline
     }
 
@@ -205,6 +211,7 @@ try {
     if (-not (Test-SemanticVersion $NewVersion)) {
         Write-ColorText "❌ Invalid semantic version format: $NewVersion" "Red"
         Write-ColorText "Expected format: major.minor.patch (e.g., '1.2.3')" "Yellow"
+        Pop-Location
         exit 1
     }
 
@@ -215,6 +222,7 @@ try {
 
     if ($currentVersion -eq $NewVersion) {
         Write-ColorText "⚠️  New version is the same as current version" "Yellow"
+        Pop-Location
         exit 0
     }
 
@@ -225,6 +233,7 @@ try {
 
     if ($WhatIf) {
         Write-ColorText "`n✅ Preview completed. Use without -WhatIf to apply changes." "Green"
+        Pop-Location
         exit 0
     }
 
@@ -235,8 +244,11 @@ try {
         Write-ColorText "   Version: $currentVersion → $NewVersion" "White"
         Write-ColorText "`n💡 Remember to commit these changes to git" "Cyan"
     }
+
+    Pop-Location
 }
 catch {
     Write-ColorText "`n❌ Script failed: $($_.Exception.Message)" "Red"
+    Pop-Location
     exit 1
 }
