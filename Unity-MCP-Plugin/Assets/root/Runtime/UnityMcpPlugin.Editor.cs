@@ -12,7 +12,6 @@
 using System;
 using System.IO;
 using System.Text.Json;
-using com.IvanMurzak.McpPlugin.Common;
 using Microsoft.Extensions.Logging;
 using UnityEngine;
 
@@ -25,6 +24,7 @@ namespace com.IvanMurzak.Unity.MCP
 #if UNITY_EDITOR
         public static TextAsset AssetFile => UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(AssetsFilePath);
         public static void InvalidateAssetFile() => UnityEditor.AssetDatabase.ImportAsset(AssetsFilePath, UnityEditor.ImportAssetOptions.ForceUpdate);
+        public static void MarkAssetFileDirty() => UnityEditor.EditorUtility.SetDirty(AssetFile);
 #endif
 
         UnityConnectionConfig GetOrCreateConfig() => GetOrCreateConfig(out _);

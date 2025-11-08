@@ -31,7 +31,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public static void ShowWindowVoid() => ShowWindow();
 
         public void Invalidate() => CreateGUI();
-        void OnValidate() => UnityMcpPlugin.Validate();
+        void OnValidate() => UnityMcpPlugin.Instance.Validate();
 
         private void SaveChanges(string message)
         {
@@ -44,7 +44,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             base.SaveChanges();
             UnityMcpPlugin.Instance.Save();
             UnityMcpPlugin.InvalidateAssetFile();
-            EditorUtility.SetDirty(UnityMcpPlugin.AssetFile); // Undo record completed
+            UnityMcpPlugin.MarkAssetFileDirty(); // Undo record completed
         }
 
         private void OnChanged(UnityMcpPlugin.UnityConnectionConfig data) => Repaint();

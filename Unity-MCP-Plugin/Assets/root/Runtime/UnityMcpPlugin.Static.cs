@@ -32,7 +32,6 @@ namespace com.IvanMurzak.Unity.MCP
         static readonly ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger<UnityMcpPlugin>();
         static readonly object _instanceMutex = new();
 
-        static string DebugName => $"[{nameof(UnityMcpPlugin)}]";
         static UnityMcpPlugin instance = null!;
 
         public static bool HasInstance
@@ -161,22 +160,6 @@ namespace com.IvanMurzak.Unity.MCP
             }
 
             await mcpPlugin.RemoteMcpManagerHub.NotifyToolRequestCompleted(request);
-        }
-
-        public static void Validate()
-        {
-            var changed = false;
-            var data = Instance.unityConnectionConfig ??= new UnityConnectionConfig();
-
-            if (string.IsNullOrEmpty(data.Host))
-            {
-                data.Host = UnityConnectionConfig.DefaultHost;
-                changed = true;
-            }
-
-            // Data was changed during validation, need to notify subscribers
-            if (changed)
-                NotifyChanged(data);
         }
 
         public static IDisposable SubscribeOnChanged(Action<UnityConnectionConfig> action, bool invokeImmediately = true)

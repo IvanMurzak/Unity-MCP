@@ -39,6 +39,22 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
+        public void Validate()
+        {
+            var changed = false;
+            var data = unityConnectionConfig ??= new UnityConnectionConfig();
+
+            if (string.IsNullOrEmpty(data.Host))
+            {
+                data.Host = UnityConnectionConfig.DefaultHost;
+                changed = true;
+            }
+
+            // Data was changed during validation, need to notify subscribers
+            if (changed)
+                NotifyChanged(data);
+        }
+
         public void LogTrace(string message, Type sourceClass, params object?[] args)
         {
             UnityLoggerFactory.LoggerFactory
