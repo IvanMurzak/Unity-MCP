@@ -12,9 +12,9 @@
 using System;
 using System.Collections.Concurrent;
 using System.IO;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using com.IvanMurzak.ReflectorNet;
 using R3;
 using UnityEngine;
 
@@ -28,43 +28,49 @@ namespace com.IvanMurzak.Unity.MCP
 
         static readonly string _cacheFileName = "editor-logs.txt";
         static readonly string _cacheFile = $"{Path.Combine(_cacheFilePath, _cacheFileName)}";
+        static readonly object _lock = new();
         static readonly SemaphoreSlim _fileLock = new(1, 1);
         static readonly CancellationTokenSource _shutdownCts = new();
         static readonly TaskCompletionSource<bool> _shutdownTcs = new();
+        static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            WriteIndented = false,
+            AllowTrailingCommas = true,
+        };
 
-        static bool _initialized = false;
-        static IDisposable? _timerSubscription;
-        static LogCache? _instance;
-        static readonly object _lock = new object();
+        static bool isInitialized;
+        static LogCache? instance;
+        static IDisposable? timerSubscription;
 
         public static void HandleQuit()
         {
             if (!_shutdownCts.IsCancellationRequested)
                 _shutdownCts.Cancel();
-            _timerSubscription?.Dispose();
+            timerSubscription?.Dispose();
             var lastLogTask = HandleLogCache();
             lastLogTask.ContinueWith(_ => _shutdownTcs.TrySetResult(true));
         }
 
-        public static bool HasInstance => _instance != null;
+        public static bool HasInstance => instance != null;
         public static LogCache Instance
         {
             get
             {
                 lock (_lock)
                 {
-                    _instance ??= new LogCache();
-                    return _instance!;
+                    instance ??= new LogCache();
+                    return instance!;
                 }
             }
         }
 
         private LogCache()
         {
-            if (_initialized || Application.isBatchMode)
+            if (isInitialized || Application.isBatchMode)
                 return;
 
-            _timerSubscription = Observable.Timer(
+            timerSubscription = Observable.Timer(
                     TimeSpan.FromSeconds(1),
                     TimeSpan.FromSeconds(1)
                 )
@@ -74,7 +80,7 @@ namespace com.IvanMurzak.Unity.MCP
                         Task.Run(HandleLogCache, _shutdownCts.Token);
                 });
 
-            _initialized = true;
+            isInitialized = true;
         }
 
         public static async Task HandleLogCache()
@@ -91,36 +97,38 @@ namespace com.IvanMurzak.Unity.MCP
             await _fileLock.WaitAsync();
             try
             {
-                var data = JsonUtility.ToJson(new LogWrapper { entries = entries });
+                await Task.Run(() =>
+                {
+                    var data = new LogWrapper { Entries = entries };
+                    var json = JsonSerializer.Serialize(data, _jsonOptions);
 
-                if (!Directory.Exists(_cacheFilePath))
-                    Directory.CreateDirectory(_cacheFilePath);
+                    if (!Directory.Exists(_cacheFilePath))
+                        Directory.CreateDirectory(_cacheFilePath);
 
-                // Atomic File Write
-                await File.WriteAllTextAsync(_cacheFile + ".tmp", data);
-                if (File.Exists(_cacheFile))
-                    File.Delete(_cacheFile);
-                File.Move(_cacheFile + ".tmp", _cacheFile);
+                    // Atomic File Write
+                    File.WriteAllText(_cacheFile + ".tmp", json);
+                    if (File.Exists(_cacheFile))
+                        File.Delete(_cacheFile);
+                    File.Move(_cacheFile + ".tmp", _cacheFile);
+                });
             }
             finally
             {
                 _fileLock.Release();
             }
         }
-        public static async Task<ConcurrentQueue<LogEntry>> GetCachedLogEntriesAsync()
+        public static async Task<LogWrapper?> GetCachedLogEntriesAsync()
         {
             await _fileLock.WaitAsync();
             try
             {
-                if (!File.Exists(_cacheFile))
-                {
-                    return new ConcurrentQueue<LogEntry>();
-                }
-                var json = await File.ReadAllTextAsync(_cacheFile);
                 return await Task.Run(() =>
                 {
-                    var wrapper = JsonUtility.FromJson<LogWrapper>(json);
-                    return new ConcurrentQueue<LogEntry>(wrapper.entries);
+                    if (!File.Exists(_cacheFile))
+                        return null;
+
+                    var json = File.ReadAllText(_cacheFile);
+                    return JsonSerializer.Deserialize<LogWrapper>(json, _jsonOptions);
                 });
             }
             finally
@@ -131,8 +139,8 @@ namespace com.IvanMurzak.Unity.MCP
 
         public void Dispose()
         {
-            _timerSubscription?.Dispose();
-            _timerSubscription = null;
+            timerSubscription?.Dispose();
+            timerSubscription = null;
 
             if (!_shutdownCts.IsCancellationRequested)
                 _shutdownCts.Cancel();

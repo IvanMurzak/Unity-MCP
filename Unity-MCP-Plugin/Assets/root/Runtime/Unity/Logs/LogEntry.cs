@@ -14,32 +14,31 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP
 {
-    [Serializable]
     public class LogEntry
     {
-        public string message;
-        public string stackTrace;
-        public LogType logType;
-        public DateTime timestamp;
-        public string logTypeString;
+        public string Message { get; set; }
+        public string StackTrace { get; set; }
+        public LogType LogType { get; set; }
+        public DateTime Timestamp { get; set; }
+        public string LogTypeString { get; set; }
 
         public LogEntry(string message, string stackTrace, LogType logType)
         {
-            this.message = message;
-            this.stackTrace = stackTrace;
-            this.logType = logType;
-            this.timestamp = DateTime.Now;
-            this.logTypeString = logType.ToString();
+            this.Message = message;
+            this.StackTrace = stackTrace;
+            this.LogType = logType;
+            this.Timestamp = DateTime.Now;
+            this.LogTypeString = logType.ToString();
         }
 
         public override string ToString() => ToString(includeStackTrace: false);
 
         public string ToString(bool includeStackTrace)
         {
-            if (includeStackTrace && !string.IsNullOrEmpty(stackTrace))
-                return $"{timestamp:yyyy-MM-dd HH:mm:ss.fff} [{logTypeString}] {message}\nStack Trace:\n{stackTrace}";
+            if (includeStackTrace && !string.IsNullOrEmpty(StackTrace))
+                return $"{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{LogTypeString}] {Message}\nStack Trace:\n{StackTrace}";
             else
-                return $"{timestamp:yyyy-MM-dd HH:mm:ss.fff} [{logTypeString}] {message}";
+                return $"{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{LogTypeString}] {Message}";
         }
     }
 }

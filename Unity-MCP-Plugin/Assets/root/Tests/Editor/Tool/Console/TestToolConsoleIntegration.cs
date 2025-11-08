@@ -287,14 +287,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(startCount + testCount, LogUtils.LogEntries, "Log entries count should include new entries.");
 
             // Save to file and wait for completion
-            var saveCompleted = false;
-            LogUtils.SaveToFile(() => saveCompleted = true);
+            var saveTask = LogUtils.SaveToFile();
             frameCount = 0;
-            while (!saveCompleted)
+            while (!saveTask.IsCompleted)
             {
                 yield return null;
                 frameCount++;
-                Assert.Less(frameCount, timeout, "Timeout waiting for SaveToFile to complete.");
+                Assert.Less(frameCount, timeout, $"Timeout waiting for {nameof(LogUtils.SaveToFile)} to complete.");
             }
 
             // Clear logs and confirm
@@ -302,14 +301,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(0, LogUtils.LogEntries, "Log entries should be cleared.");
 
             // Load from file and wait for completion
-            var loadCompleted = false;
-            LogUtils.LoadFromFile(() => loadCompleted = true);
+            var loadTask = LogUtils.LoadFromFile();
             frameCount = 0;
-            while (!loadCompleted)
+            while (!loadTask.IsCompleted)
             {
                 yield return null;
                 frameCount++;
-                Assert.Less(frameCount, timeout, "Timeout waiting for LoadFromFile to complete.");
+                Assert.Less(frameCount, timeout, $"Timeout waiting for {nameof(LogUtils.LoadFromFile)} to complete.");
             }
 
             // Final assertion

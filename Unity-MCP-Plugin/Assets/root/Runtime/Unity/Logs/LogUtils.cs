@@ -7,11 +7,9 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
-using System;
 using System.Collections.Concurrent;
-using System.Diagnostics.CodeAnalysis;
-using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.ReflectorNet.Utils;
 using UnityEngine;
@@ -24,7 +22,6 @@ namespace com.IvanMurzak.Unity.MCP
         static ConcurrentQueue<LogEntry> _logEntries = new();
         static readonly object _lockObject = new();
         static bool _isSubscribed = false;
-        private static CancellationTokenSource _shutdownCts = new();
         public static int LogEntries
         {
             get
@@ -44,32 +41,24 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
-        public static void SaveToFile(Action? onCompleted = null)
+        public static async Task SaveToFile()
         {
             var logEntries = GetAllLogs();
-            Task.Run(async () =>
-            {
-                await LogCache.CacheLogEntriesAsync(logEntries);
-                await MainThread.Instance.RunAsync(() => onCompleted?.Invoke());
-            });
+            await LogCache.CacheLogEntriesAsync(logEntries);
         }
 
-        public static void LoadFromFile(Action? onCompleted = null)
+        public static async Task LoadFromFile()
         {
-            Task.Run(async () =>
+            var logWrapper = await LogCache.GetCachedLogEntriesAsync();
+            lock (_lockObject)
             {
-                var logEntries = await LogCache.GetCachedLogEntriesAsync();
-                lock (_lockObject)
-                {
-                    _logEntries = logEntries;
-                }
-                await MainThread.Instance.RunAsync(() => onCompleted?.Invoke());
-            });
+                _logEntries = new ConcurrentQueue<LogEntry>(logWrapper?.Entries ?? System.Array.Empty<LogEntry>());
+            }
         }
 
-        public static void HandleQuit()
+        public static async Task HandleQuit()
         {
-            SaveToFile();
+            await SaveToFile();
             LogCache.HandleQuit();
         }
 
