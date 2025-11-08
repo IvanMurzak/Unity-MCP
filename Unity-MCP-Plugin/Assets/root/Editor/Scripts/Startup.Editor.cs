@@ -84,7 +84,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     UnityMcpPlugin.Instance.LogTrace($"Entered Edit mode - KeepConnected: {UnityMcpPlugin.KeepConnected}, IsCi: {EnvironmentUtils.IsCi()}",
                         typeof(Startup));
 
-                    if (UnityMcpPlugin.KeepConnected && !EnvironmentUtils.IsCi())
+                    if (EnvironmentUtils.IsCi())
+                    {
+                        UnityMcpPlugin.Instance.LogTrace($"Skipping reconnection in CI environment", typeof(Startup));
+                        break;
+                    }
+
+                    if (UnityMcpPlugin.KeepConnected)
                     {
                         UnityMcpPlugin.Instance.LogTrace($"Scheduling reconnection after Play mode exit", typeof(Startup));
 

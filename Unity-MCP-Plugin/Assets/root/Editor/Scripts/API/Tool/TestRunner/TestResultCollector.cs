@@ -126,7 +126,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             }
 
             UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
-            UnityMcpPlugin.ConnectIfNeeded();
+
+            if (!EnvironmentUtils.IsCi())
+                UnityMcpPlugin.ConnectIfNeeded();
 
             var requestId = TestCallRequestID.Value;
             TestCallRequestID.Value = string.Empty;

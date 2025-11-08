@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEditor;
 using UnityEngine;
 
@@ -22,7 +23,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         static Startup()
         {
             UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
-            UnityMcpPlugin.ConnectIfNeeded();
+
+            if (!EnvironmentUtils.IsCi())
+                UnityMcpPlugin.ConnectIfNeeded();
 
             Server.DownloadServerBinaryIfNeeded();
 
