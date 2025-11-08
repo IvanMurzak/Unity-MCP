@@ -21,7 +21,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
 {
     public static partial class GameObjectUtils
     {
-        public static GameObject[] FindRootGameObjects(Scene? scene = null)
+        public static GameObject[]? FindRootGameObjects(Scene? scene = null)
         {
             if (scene == null)
             {
@@ -33,7 +33,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
                 return scene.Value.GetRootGameObjects();
             }
         }
-        public static GameObject FindByInstanceID(int instanceID)
+        public static GameObject? FindByInstanceID(int instanceID)
         {
             if (instanceID == 0)
                 return null;
