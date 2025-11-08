@@ -43,12 +43,20 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
+        /// <summary>
+        /// Asynchronously saves all current log entries to the cache file.
+        /// </summary>
+        /// <returns>A task that completes when the save operation is finished.</returns>
         public static async Task SaveToFile()
         {
             var logEntries = GetAllLogs();
             await LogCache.CacheLogEntriesAsync(logEntries);
         }
 
+        /// <summary>
+        /// Asynchronously loads log entries from the cache file and replaces the current log entries.
+        /// </summary>
+        /// <returns>A task that completes when the load operation is finished.</returns>
         public static async Task LoadFromFile()
         {
             var logWrapper = await LogCache.GetCachedLogEntriesAsync();
@@ -62,6 +70,10 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
+        /// <summary>
+        /// Asynchronously handles application quit by saving log entries to file and cleaning up resources.
+        /// </summary>
+        /// <returns>A task that completes when the quit handling is finished.</returns>
         public static async Task HandleQuit()
         {
             await SaveToFile();
