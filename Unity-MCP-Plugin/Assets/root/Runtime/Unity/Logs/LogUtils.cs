@@ -19,9 +19,11 @@ namespace com.IvanMurzak.Unity.MCP
     public static class LogUtils
     {
         public const int MaxLogEntries = 5000; // Default max entries to keep in memory
-        static ConcurrentQueue<LogEntry> _logEntries = new();
+
+        static readonly ConcurrentQueue<LogEntry> _logEntries = new();
         static readonly object _lockObject = new();
         static bool _isSubscribed = false;
+
         public static int LogEntries
         {
             get
@@ -52,7 +54,11 @@ namespace com.IvanMurzak.Unity.MCP
             var logWrapper = await LogCache.GetCachedLogEntriesAsync();
             lock (_lockObject)
             {
-                _logEntries = new ConcurrentQueue<LogEntry>(logWrapper?.Entries ?? System.Array.Empty<LogEntry>());
+                _logEntries.Clear();
+                if (logWrapper?.Entries == null)
+                    return;
+                foreach (var entry in logWrapper.Entries)
+                    _logEntries.Enqueue(entry);
             }
         }
 
