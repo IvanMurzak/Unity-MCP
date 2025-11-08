@@ -20,15 +20,13 @@ namespace com.IvanMurzak.Unity.MCP
         public string StackTrace { get; set; }
         public LogType LogType { get; set; }
         public DateTime Timestamp { get; set; }
-        public string LogTypeString { get; set; }
 
         public LogEntry(string message, string stackTrace, LogType logType)
         {
-            this.Message = message;
-            this.StackTrace = stackTrace;
-            this.LogType = logType;
-            this.Timestamp = DateTime.Now;
-            this.LogTypeString = logType.ToString();
+            Message = message;
+            StackTrace = stackTrace;
+            LogType = logType;
+            Timestamp = DateTime.Now;
         }
 
         public override string ToString() => ToString(includeStackTrace: false);
@@ -36,9 +34,9 @@ namespace com.IvanMurzak.Unity.MCP
         public string ToString(bool includeStackTrace)
         {
             if (includeStackTrace && !string.IsNullOrEmpty(StackTrace))
-                return $"{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{LogTypeString}] {Message}\nStack Trace:\n{StackTrace}";
+                return $"{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{LogType}] {Message}\nStack Trace:\n{StackTrace}";
             else
-                return $"{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{LogTypeString}] {Message}";
+                return $"{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{LogType}] {Message}";
         }
     }
 }

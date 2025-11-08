@@ -334,7 +334,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual("Test message", logEntry.Message);
             Assert.AreEqual("Test stack trace", logEntry.StackTrace);
             Assert.AreEqual(LogType.Warning, logEntry.LogType);
-            Assert.AreEqual("Warning", logEntry.LogTypeString);
             Assert.IsTrue(logEntry.Timestamp <= DateTime.Now);
             Assert.IsTrue(logEntry.Timestamp >= DateTime.Now.AddMinutes(-1)); // Should be very recent
         }
@@ -372,7 +371,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual("Error message", errorLogEntry.Message);
             Assert.AreEqual("Error stack trace", errorLogEntry.StackTrace);
             Assert.AreEqual(LogType.Error, errorLogEntry.LogType);
-            Assert.AreEqual("Error", errorLogEntry.LogTypeString);
             Assert.IsTrue(errorLogEntry.ToString().Contains("[Error]"), "Should format Error type correctly");
         }
 
@@ -390,7 +388,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual("Assert message", assertLogEntry.Message);
             Assert.AreEqual("Assert stack trace", assertLogEntry.StackTrace);
             Assert.AreEqual(LogType.Assert, assertLogEntry.LogType);
-            Assert.AreEqual("Assert", assertLogEntry.LogTypeString);
             Assert.IsTrue(assertLogEntry.ToString().Contains("[Assert]"), "Should format Assert type correctly");
         }
         [Test]
