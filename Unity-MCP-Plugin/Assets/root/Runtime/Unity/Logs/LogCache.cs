@@ -36,7 +36,6 @@ namespace com.IvanMurzak.Unity.MCP
         {
             PropertyNameCaseInsensitive = true,
             WriteIndented = false,
-            AllowTrailingCommas = true,
         };
 
         static bool isInitialized;
