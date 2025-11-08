@@ -7,9 +7,10 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
 using System.Collections.Generic;
-using com.IvanMurzak.Unity.MCP.Common;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.Unity.MCP.Editor.API.TestRunner;
 using UnityEditor;
 using UnityEditor.TestTools.TestRunner.Api;

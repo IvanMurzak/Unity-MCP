@@ -10,11 +10,11 @@
 
 #nullable enable
 using System;
-using com.IvanMurzak.Unity.MCP.Common;
 using Microsoft.Extensions.Logging;
 
 namespace com.IvanMurzak.Unity.MCP.Utils
 {
+    using LogLevel = Runtime.Utils.LogLevel;
     using LogLevelMicrosoft = Microsoft.Extensions.Logging.LogLevel;
 
     public class UnityLogger : ILogger
@@ -32,6 +32,13 @@ namespace com.IvanMurzak.Unity.MCP.Utils
 
         public bool IsEnabled(LogLevelMicrosoft logLevel)
         {
+            // Prevent infinite loop during UnityMcpPlugin initialization by checking if instance exists
+            if (!UnityMcpPlugin.HasInstance)
+            {
+                // During initialization, allow all log levels
+                return true;
+            }
+
             return UnityMcpPlugin.IsLogEnabled(logLevel switch
             {
                 LogLevelMicrosoft.Critical => LogLevel.Exception,
@@ -52,18 +59,32 @@ namespace com.IvanMurzak.Unity.MCP.Utils
             if (state == null) throw new ArgumentNullException(nameof(state));
 
             // Map LogLevel to short names
+#if UNITY_EDITOR
             string logLevelShort = logLevel switch
             {
-                LogLevelMicrosoft.Critical => Consts.Log.Crit,
-                LogLevelMicrosoft.Error => Consts.Log.Fail,
-                LogLevelMicrosoft.Warning => Consts.Log.Warn,
-                LogLevelMicrosoft.Information => Consts.Log.Info,
-                LogLevelMicrosoft.Debug => Consts.Log.Dbug,
-                LogLevelMicrosoft.Trace => Consts.Log.Trce,
-                _ => "none: "
+                LogLevelMicrosoft.Critical => "<color=#ff0000>crit: </color>",
+                LogLevelMicrosoft.Error => "<color=#ff6b6b>fail: </color>",
+                LogLevelMicrosoft.Warning => "<color=#ffaa00>warn: </color>",
+                LogLevelMicrosoft.Information => "<color=#00ff00>info: </color>",
+                LogLevelMicrosoft.Debug => "<color=#00ffff>dbug: </color>",
+                LogLevelMicrosoft.Trace => "<color=#aaaaaa>trce: </color>",
+                _ => "<color=#ffffff>none</color>"
             };
+            var message = $"{logLevelShort} [{DateTime.Now:HH:mm:ss:ffff}] <color=#B4FF32>[AI]</color> <color=#007575><b>{_categoryName}</b></color> {formatter(state, exception)}";
+#else
+            string logLevelShort = logLevel switch
+            {
+                LogLevelMicrosoft.Critical => "crit: ",
+                LogLevelMicrosoft.Error => "fail: ",
+                LogLevelMicrosoft.Warning => "warn: ",
+                LogLevelMicrosoft.Information => "info: ",
+                LogLevelMicrosoft.Debug => "dbug: ",
+                LogLevelMicrosoft.Trace => "trce: ",
+                _ => "none"
+            };
+            var message = $"{logLevelShort} [{DateTime.Now:HH:mm:ss:ffff}] [AI] {_categoryName} {formatter(state, exception)}";
+#endif
 
-            var message = $"{Consts.Log.Color.LevelStart}{logLevelShort}{Consts.Log.Color.LevelEnd}{Consts.Log.Tag} {Consts.Log.Color.CategoryStart}{_categoryName}{Consts.Log.Color.CategoryEnd} {formatter(state, exception)}";
             switch (logLevel)
             {
                 case LogLevelMicrosoft.Critical:

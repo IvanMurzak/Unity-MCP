@@ -4,8 +4,7 @@
     "references": [
         "UnityEngine.TestRunner",
         "com.IvanMurzak.Unity.MCP.Runtime",
-        "com.IvanMurzak.Unity.MCP.TestFiles",
-        "com.IvanMurzak.Unity.MCP.Common"
+        "com.IvanMurzak.Unity.MCP.TestFiles"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -18,6 +17,8 @@
         "Microsoft.AspNetCore.SignalR.Client.dll",
         "Microsoft.AspNetCore.SignalR.Client.Core.dll",
         "ReflectorNet.dll",
+        "McpPlugin.dll",
+        "McpPlugin.Common.dll",
         "R3.dll"
     ],
     "autoReferenced": false,

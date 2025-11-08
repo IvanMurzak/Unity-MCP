@@ -7,10 +7,12 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
 using System;
 using System.IO;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP
@@ -22,10 +24,11 @@ namespace com.IvanMurzak.Unity.MCP
 #if UNITY_EDITOR
         public static TextAsset AssetFile => UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(AssetsFilePath);
         public static void InvalidateAssetFile() => UnityEditor.AssetDatabase.ImportAsset(AssetsFilePath, UnityEditor.ImportAssetOptions.ForceUpdate);
+        public static void MarkAssetFileDirty() => UnityEditor.EditorUtility.SetDirty(AssetFile);
 #endif
 
-        static UnityMcpPlugin GetOrCreateInstance() => GetOrCreateInstance(out _);
-        static UnityMcpPlugin GetOrCreateInstance(out bool wasCreated)
+        UnityConnectionConfig GetOrCreateConfig() => GetOrCreateConfig(out _);
+        UnityConnectionConfig GetOrCreateConfig(out bool wasCreated)
         {
             wasCreated = false;
             try
@@ -39,35 +42,38 @@ namespace com.IvanMurzak.Unity.MCP
 #else
                 var json = Resources.Load<TextAsset>(ResourcesFileName).text;
 #endif
-                Data? config = null;
+                UnityConnectionConfig? config = null;
                 try
                 {
                     config = string.IsNullOrWhiteSpace(json)
                         ? null
-                        : JsonSerializer.Deserialize<Data>(json);
+                        : JsonSerializer.Deserialize<UnityConnectionConfig>(json);
                 }
                 catch (Exception e)
                 {
-                    Debug.LogException(e);
-                    Debug.LogError($"{DebugName} <color=red><b>{ResourcesFileName}</b> file is corrupted at <i>{AssetsFilePath}</i></color>");
+                    _logger.LogCritical(e, "{method}: <color=red><b>{file}</b> file is corrupted at <i>{path}</i></color>",
+                        nameof(GetOrCreateConfig), ResourcesFileName, AssetsFilePath);
                 }
                 if (config == null)
                 {
-                    Debug.Log($"{DebugName} <color=orange><b>Creating {ResourcesFileName}</b> file at <i>{AssetsFilePath}</i></color>");
-                    config = new Data();
+                    _logger.LogWarning("{method}: <color=orange><b>Creating {file}</b> file at <i>{path}</i></color>",
+                        nameof(GetOrCreateConfig), ResourcesFileName, AssetsFilePath);
+
+                    config = new UnityConnectionConfig();
                     wasCreated = true;
                 }
-                return new UnityMcpPlugin() { data = config };
+
+                return config;
             }
             catch (Exception e)
             {
-                Debug.LogException(e);
-                Debug.LogError($"{DebugName} <color=red><b>{ResourcesFileName}</b> file can't be loaded from <i>{AssetsFilePath}</i></color>");
+                _logger.LogCritical(e, "{method}: <color=red><b>{file}</b> file can't be loaded from <i>{path}</i></color>",
+                    nameof(GetOrCreateConfig), ResourcesFileName, AssetsFilePath);
+                throw e;
             }
-            throw new InvalidOperationException($"Failed to get or create {nameof(UnityMcpPlugin)} instance. Check logs for details.");
         }
 
-        public static void Save()
+        public void Save()
         {
 #if UNITY_EDITOR
             Validate();
@@ -77,8 +83,8 @@ namespace com.IvanMurzak.Unity.MCP
                 if (!Directory.Exists(directory))
                     Directory.CreateDirectory(directory);
 
-                var data = Instance.data ??= new Data();
-                var json = JsonSerializer.Serialize(data, new JsonSerializerOptions { WriteIndented = true });
+                unityConnectionConfig ??= new UnityConnectionConfig();
+                var json = JsonSerializer.Serialize(unityConnectionConfig, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(AssetsFilePath, json);
 
                 var assetFile = AssetFile;
@@ -89,10 +95,11 @@ namespace com.IvanMurzak.Unity.MCP
             }
             catch (Exception e)
             {
-                Debug.LogError($"{DebugName} <color=red><b>{ResourcesFileName}</b> file can't be saved at <i>{AssetsFilePath}</i></color>");
-                Debug.LogException(e);
+                _logger.LogCritical(e, "{method}: <color=red><b>{file}</b> file can't be saved at <i>{path}</i></color>",
+                    nameof(Save), ResourcesFileName, AssetsFilePath);
             }
 #else
+            // do nothing in runtime builds
             return;
 #endif
         }

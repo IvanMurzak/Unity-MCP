@@ -7,27 +7,29 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+
+#nullable enable
 using System.Collections.Generic;
 using System.Text;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
 using UnityEngine;
 
-namespace com.IvanMurzak.Unity.MCP
+namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
     public class GameObjectMetadata
     {
         public int instanceID;
-        public string path;
-        public string name;
-        public string sceneName;
-        public string tag;
+        public string? path;
+        public string? name;
+        public string? sceneName;
+        public string? tag;
         public bool activeSelf;
         public bool activeInHierarchy;
         public List<GameObjectMetadata> children = new();
 
-        public string Print(int limit = Common.Consts.MCP.Plugin.LinesLimit)
+        public string Print(int limit = McpPlugin.Common.Consts.MCP.Plugin.LinesLimit)
         {
             var sb = new StringBuilder();
 
@@ -73,7 +75,7 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
-        public static GameObjectMetadata FromGameObject(GameObject go, int includeChildrenDepth = 3)
+        public static GameObjectMetadata? FromGameObject(GameObject go, int includeChildrenDepth = 3)
         {
             if (go == null)
                 return null;
@@ -96,7 +98,8 @@ namespace com.IvanMurzak.Unity.MCP
                 foreach (Transform child in go.transform)
                 {
                     var childMetadata = FromGameObject(child.gameObject, includeChildrenDepth - 1);
-                    metadata.children.Add(childMetadata);
+                    if (childMetadata != null)
+                        metadata.children.Add(childMetadata);
                 }
             }
 
