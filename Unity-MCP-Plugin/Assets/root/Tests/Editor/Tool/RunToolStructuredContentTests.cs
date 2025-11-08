@@ -8,14 +8,15 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 
+#nullable enable
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text.Json.Nodes;
 using System.Threading;
+using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet;
-using com.IvanMurzak.Unity.MCP.Common;
-using com.IvanMurzak.Unity.MCP.Common.Model;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
@@ -27,8 +28,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     [TestFixture]
     public class RunToolStructuredContentTests
     {
-        private Reflector _reflector;
-        private Microsoft.Extensions.Logging.ILogger _mockLogger;
+        private Reflector _reflector = new Reflector();
+        private Microsoft.Extensions.Logging.ILogger _mockLogger = UnityLoggerFactory.LoggerFactory.CreateLogger<RunToolStructuredContentTests>();
 
         [SetUp]
         public void SetUp()
@@ -36,9 +37,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             _reflector = new Reflector();
 
             // Register Unity type converters to avoid circular reference issues
-            _reflector.JsonSerializer.AddConverter(new com.IvanMurzak.Unity.MCP.Common.Json.Converters.Vector3Converter());
-            _reflector.JsonSerializer.AddConverter(new com.IvanMurzak.Unity.MCP.Common.Json.Converters.ColorConverter());
-            _reflector.JsonSerializer.AddConverter(new com.IvanMurzak.Unity.MCP.Common.Json.Converters.QuaternionConverter());
+            _reflector.JsonSerializer.AddConverter(new com.IvanMurzak.Unity.MCP.JsonConverters.Vector3Converter());
+            _reflector.JsonSerializer.AddConverter(new com.IvanMurzak.Unity.MCP.JsonConverters.ColorConverter());
+            _reflector.JsonSerializer.AddConverter(new com.IvanMurzak.Unity.MCP.JsonConverters.QuaternionConverter());
 
             _mockLogger = UnityLoggerFactory.LoggerFactory.CreateLogger<RunToolStructuredContentTests>();
         }
@@ -247,18 +248,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var structuredContent = result.StructuredContent;
 
             // Check if properties are in camelCase (name, age) or PascalCase (Name, Age)
-            var nameNode = structuredContent["name"] ?? structuredContent["Name"];
+            var nameNode = structuredContent!["name"] ?? structuredContent["Name"];
             var ageNode = structuredContent["age"] ?? structuredContent["Age"];
 
             Assert.IsNotNull(nameNode, "Should have name/Name property");
             Assert.IsNotNull(ageNode, "Should have age/Age property");
-            Assert.AreEqual(expectedValue.Name, nameNode.GetValue<string>(), "Name should match");
-            Assert.AreEqual(expectedValue.Age, ageNode.GetValue<int>(), "Age should match");
+            Assert.AreEqual(expectedValue.Name, nameNode!.GetValue<string>(), "Name should match");
+            Assert.AreEqual(expectedValue.Age, ageNode!.GetValue<int>(), "Age should match");
 
             // Message should contain JSON representation
             var message = result.GetMessage();
             Assert.IsNotNull(message, "Message should not be null");
-            Assert.IsTrue(message.Contains(expectedValue.Name), "Message should contain serialized data");
+            Assert.IsTrue(message!.Contains(expectedValue.Name), "Message should contain serialized data");
         }
 
         [UnityTest]
@@ -282,16 +283,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNotNull(result.StructuredContent, "Nested class should have structured content");
 
             var structuredContent = result.StructuredContent;
-            var companyNameNode = structuredContent["companyName"] ?? structuredContent["CompanyName"];
+            var companyNameNode = structuredContent!["companyName"] ?? structuredContent["CompanyName"];
             var employeeNode = structuredContent["employee"] ?? structuredContent["Employee"];
 
             Assert.IsNotNull(companyNameNode, "Should have companyName/CompanyName property");
             Assert.IsNotNull(employeeNode, "Should have employee/Employee property");
-            Assert.AreEqual(expectedValue.CompanyName, companyNameNode.GetValue<string>(), "Company name should match");
+            Assert.AreEqual(expectedValue.CompanyName, companyNameNode!.GetValue<string>(), "Company name should match");
 
-            var nameNode = employeeNode["name"] ?? employeeNode["Name"];
+            var nameNode = employeeNode!["name"] ?? employeeNode["Name"];
             Assert.IsNotNull(nameNode, "Employee should have name/Name property");
-            Assert.AreEqual(expectedValue.Employee.Name, nameNode.GetValue<string>(), "Employee name should match");
+            Assert.AreEqual(expectedValue.Employee.Name, nameNode!.GetValue<string>(), "Employee name should match");
         }
 
         [UnityTest]
@@ -314,11 +315,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
             Assert.IsNotNull(result.StructuredContent, "List should have structured content");
 
-            var structuredContent = result.StructuredContent.AsArray();
+            var structuredContent = result.StructuredContent!.AsArray();
             Assert.AreEqual(expectedValue.Count, structuredContent.Count, $"List should have {expectedValue.Count} items");
             for (int i = 0; i < expectedValue.Count; i++)
             {
-                Assert.AreEqual(expectedValue[i], structuredContent[i].GetValue<int>(), $"Item at index {i} should match");
+                Assert.AreEqual(expectedValue[i], structuredContent[i]?.GetValue<int>(), $"Item at index {i} should match");
             }
         }
 
@@ -345,8 +346,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var structuredContent = result.StructuredContent;
             foreach (var kvp in expectedValue)
             {
-                Assert.IsNotNull(structuredContent[kvp.Key], $"Should have {kvp.Key}");
-                Assert.AreEqual(kvp.Value, structuredContent[kvp.Key].GetValue<string>(), $"{kvp.Key} value should match");
+                Assert.IsNotNull(structuredContent?[kvp.Key], $"Should have {kvp.Key}");
+                Assert.AreEqual(kvp.Value, structuredContent?[kvp.Key]?.GetValue<string>(), $"{kvp.Key} value should match");
             }
         }
 
@@ -370,11 +371,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
             Assert.IsNotNull(result.StructuredContent, "Array should have structured content");
 
-            var structuredContent = result.StructuredContent.AsArray();
+            var structuredContent = result.StructuredContent!.AsArray();
             Assert.AreEqual(expectedValue.Length, structuredContent.Count, $"Array should have {expectedValue.Length} items");
             for (int i = 0; i < expectedValue.Length; i++)
             {
-                Assert.AreEqual(expectedValue[i], structuredContent[i].GetValue<int>(), $"Item at index {i} should match expected value");
+                Assert.AreEqual(expectedValue[i], structuredContent![i]?.GetValue<int>(), $"Item at index {i} should match expected value");
             }
         }
 
@@ -403,18 +404,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNotNull(result.StructuredContent, "Vector3 should have structured content");
 
             var structuredContent = result.StructuredContent;
-            Assert.IsNotNull(structuredContent["x"], "Should have x property");
-            Assert.IsNotNull(structuredContent["y"], "Should have y property");
-            Assert.IsNotNull(structuredContent["z"], "Should have z property");
-            Assert.AreEqual(expectedValue.x, structuredContent["x"].GetValue<float>(), 0.001f, "X should match");
-            Assert.AreEqual(expectedValue.y, structuredContent["y"].GetValue<float>(), 0.001f, "Y should match");
-            Assert.AreEqual(expectedValue.z, structuredContent["z"].GetValue<float>(), 0.001f, "Z should match");
+            Assert.IsNotNull(structuredContent!["x"], "Should have x property");
+            Assert.IsNotNull(structuredContent!["y"], "Should have y property");
+            Assert.IsNotNull(structuredContent!["z"], "Should have z property");
+            Assert.AreEqual(expectedValue.x, structuredContent!["x"]?.GetValue<float>(), 0.001f, "X should match");
+            Assert.AreEqual(expectedValue.y, structuredContent!["y"]?.GetValue<float>(), 0.001f, "Y should match");
+            Assert.AreEqual(expectedValue.z, structuredContent!["z"]?.GetValue<float>(), 0.001f, "Z should match");
 
             // Verify the Vector3 can be reconstructed from structured content
             var reconstructedVector = new Vector3(
-                structuredContent["x"].GetValue<float>(),
-                structuredContent["y"].GetValue<float>(),
-                structuredContent["z"].GetValue<float>()
+                structuredContent!["x"]!.GetValue<float>(),
+                structuredContent!["y"]!.GetValue<float>(),
+                structuredContent!["z"]!.GetValue<float>()
             );
             Assert.AreEqual(expectedValue, reconstructedVector, "Reconstructed Vector3 should match original");
         }
@@ -440,17 +441,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNotNull(result.StructuredContent, "Color should have structured content");
 
             var structuredContent = result.StructuredContent;
-            Assert.IsNotNull(structuredContent["r"], "Should have r property");
-            Assert.IsNotNull(structuredContent["g"], "Should have g property");
-            Assert.IsNotNull(structuredContent["b"], "Should have b property");
-            Assert.IsNotNull(structuredContent["a"], "Should have a property");
+            Assert.IsNotNull(structuredContent!["r"], "Should have r property");
+            Assert.IsNotNull(structuredContent!["g"], "Should have g property");
+            Assert.IsNotNull(structuredContent!["b"], "Should have b property");
+            Assert.IsNotNull(structuredContent!["a"], "Should have a property");
 
             // Verify the Color can be reconstructed from structured content
             var reconstructedColor = new Color(
-                structuredContent["r"].GetValue<float>(),
-                structuredContent["g"].GetValue<float>(),
-                structuredContent["b"].GetValue<float>(),
-                structuredContent["a"].GetValue<float>()
+                structuredContent!["r"]!.GetValue<float>(),
+                structuredContent!["g"]!.GetValue<float>(),
+                structuredContent!["b"]!.GetValue<float>(),
+                structuredContent!["a"]!.GetValue<float>()
             );
             Assert.AreEqual(expectedValue, reconstructedColor, "Reconstructed Color should match original");
         }
@@ -476,17 +477,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNotNull(result.StructuredContent, "Quaternion should have structured content");
 
             var structuredContent = result.StructuredContent;
-            Assert.IsNotNull(structuredContent["x"], "Should have x property");
-            Assert.IsNotNull(structuredContent["y"], "Should have y property");
-            Assert.IsNotNull(structuredContent["z"], "Should have z property");
-            Assert.IsNotNull(structuredContent["w"], "Should have w property");
+            Assert.IsNotNull(structuredContent!["x"], "Should have x property");
+            Assert.IsNotNull(structuredContent!["y"], "Should have y property");
+            Assert.IsNotNull(structuredContent!["z"], "Should have z property");
+            Assert.IsNotNull(structuredContent!["w"], "Should have w property");
 
             // Verify the Quaternion can be reconstructed from structured content
             var reconstructedQuaternion = new Quaternion(
-                structuredContent["x"].GetValue<float>(),
-                structuredContent["y"].GetValue<float>(),
-                structuredContent["z"].GetValue<float>(),
-                structuredContent["w"].GetValue<float>()
+                structuredContent["x"]!.GetValue<float>(),
+                structuredContent["y"]!.GetValue<float>(),
+                structuredContent["z"]!.GetValue<float>(),
+                structuredContent["w"]!.GetValue<float>()
             );
             Assert.AreEqual(expectedValue, reconstructedQuaternion, "Reconstructed Quaternion should match original");
         }
@@ -539,15 +540,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
             Assert.IsNotNull(result.StructuredContent, "List of custom objects should have structured content");
 
-            var structuredContent = result.StructuredContent.AsArray();
+            var structuredContent = result.StructuredContent!.AsArray();
             Assert.AreEqual(expectedValue.Count, structuredContent.Count, $"List should have {expectedValue.Count} items");
 
             for (int i = 0; i < expectedValue.Count; i++)
             {
-                var nameNode = structuredContent[i]["name"] ?? structuredContent[i]["Name"];
-                var ageNode = structuredContent[i]["age"] ?? structuredContent[i]["Age"];
-                Assert.AreEqual(expectedValue[i].Name, nameNode.GetValue<string>(), $"Item {i} name should match");
-                Assert.AreEqual(expectedValue[i].Age, ageNode.GetValue<int>(), $"Item {i} age should match");
+                var nameNode = structuredContent[i]?["name"] ?? structuredContent[i]?["Name"];
+                var ageNode = structuredContent[i]?["age"] ?? structuredContent[i]?["Age"];
+                Assert.AreEqual(expectedValue[i].Name, nameNode?.GetValue<string>(), $"Item {i} name should match");
+                Assert.AreEqual(expectedValue[i].Age, ageNode?.GetValue<int>(), $"Item {i} age should match");
             }
         }
 
@@ -574,12 +575,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var structuredContent = result.StructuredContent;
             foreach (var kvp in expectedValue)
             {
-                Assert.IsNotNull(structuredContent[kvp.Key], $"Should have {kvp.Key} key");
+                Assert.IsNotNull(structuredContent![kvp.Key], $"Should have {kvp.Key} key");
 
-                var nameNode = structuredContent[kvp.Key]["name"] ?? structuredContent[kvp.Key]["Name"];
-                var ageNode = structuredContent[kvp.Key]["age"] ?? structuredContent[kvp.Key]["Age"];
-                Assert.AreEqual(kvp.Value.Name, nameNode.GetValue<string>(), $"{kvp.Key} name should match");
-                Assert.AreEqual(kvp.Value.Age, ageNode.GetValue<int>(), $"{kvp.Key} age should match");
+                var nameNode = structuredContent[kvp.Key]?["name"] ?? structuredContent[kvp.Key]?["Name"];
+                var ageNode = structuredContent[kvp.Key]?["age"] ?? structuredContent[kvp.Key]?["Age"];
+                Assert.AreEqual(kvp.Value.Name, nameNode?.GetValue<string>(), $"{kvp.Key} name should match");
+                Assert.AreEqual(kvp.Value.Age, ageNode?.GetValue<int>(), $"{kvp.Key} age should match");
             }
         }
 
@@ -606,7 +607,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNotNull(result.StructuredContent, "Should have structured content");
 
             // Verify it can be serialized to valid JSON
-            var jsonString = result.StructuredContent.ToJsonString();
+            var jsonString = result.StructuredContent!.ToJsonString();
             Assert.IsNotNull(jsonString, "Should serialize to JSON string");
             Assert.IsTrue(jsonString.Contains("name") || jsonString.Contains("Name"), "JSON should contain name/Name property");
             Assert.IsTrue(jsonString.Contains(expectedValue.Name), $"JSON should contain the name value: {expectedValue.Name}");
@@ -614,8 +615,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Verify it can be deserialized back
             var deserializedNode = JsonNode.Parse(jsonString);
             Assert.IsNotNull(deserializedNode, "Should deserialize back to JsonNode");
-            var deserializedNameNode = deserializedNode["name"] ?? deserializedNode["Name"];
-            Assert.AreEqual(expectedValue.Name, deserializedNameNode.GetValue<string>(), "Deserialized value should match");
+            var deserializedNameNode = deserializedNode!["name"] ?? deserializedNode!["Name"];
+            Assert.AreEqual(expectedValue.Name, deserializedNameNode?.GetValue<string>(), "Deserialized value should match");
         }
 
         #endregion
@@ -632,7 +633,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public static bool ReturnBool() => true;
         public static ResponseStatus ReturnEnum() => ResponseStatus.Success;
         public static Microsoft.Extensions.Logging.LogLevel ReturnMicrosoftLogLevel() => Microsoft.Extensions.Logging.LogLevel.Information;
-        public static string ReturnNull() => null;
+        public static string? ReturnNull() => null;
 
         // Custom classes
         public static Person ReturnCustomClass() => new Person { Name = "John Doe", Age = 30 };
@@ -679,15 +680,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     [Serializable]
     public class Person
     {
-        public string Name { get; set; }
+        public string Name { get; set; } = null!;
         public int Age { get; set; }
     }
 
     [Serializable]
     public class Company
     {
-        public string CompanyName { get; set; }
-        public Person Employee { get; set; }
+        public string CompanyName { get; set; } = null!;
+        public Person Employee { get; set; } = null!;
     }
 
     #endregion

@@ -7,13 +7,12 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+
+#nullable enable
 using System.ComponentModel;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Utils;
-using com.IvanMurzak.Unity.MCP.Common;
-using com.IvanMurzak.Unity.MCP.Common.Reflection;
-using com.IvanMurzak.Unity.MCP.Utils;
 using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -46,25 +45,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             var asset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(assetPath);
             if (asset == null)
-                return Error.NotFoundAsset(assetPath, assetGuid);
+                return Error.NotFoundAsset(assetPath!, assetGuid!);
 
-            var reflector = McpPlugin.Instance!.McpRunner.Reflector;
+            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
             var serialized = reflector.Serialize(
                 asset,
                 name: asset.name,
                 recursive: true,
-                logger: McpPlugin.Instance.Logger
+                logger: McpPlugin.McpPlugin.Instance.Logger
             );
             var json = serialized.ToJson(reflector);
 
             return $"[Success] Loaded asset at path '{assetPath}'.\n{json}";
-
-            //             var instanceID = asset.GetInstanceID();
-            //             return @$"[Success] Loaded asset.
-            // # Asset path: {assetPath}
-            // # Asset GUID: {assetGuid}
-            // # Asset instanceID: {instanceID}";
         });
     }
 }

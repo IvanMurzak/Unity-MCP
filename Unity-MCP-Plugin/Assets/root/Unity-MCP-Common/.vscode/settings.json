@@ -1,8 +1,0 @@
-{
-  "files.exclude": {
-    "**/*.meta": true
-  },
-  "cSpell.words": [
-    "Xunit"
-  ]
-}

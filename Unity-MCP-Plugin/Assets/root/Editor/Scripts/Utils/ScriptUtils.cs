@@ -11,7 +11,7 @@
 #nullable enable
 using System.Collections.Generic;
 using System.Linq;
-using com.IvanMurzak.Unity.MCP.Common.Model;
+using com.IvanMurzak.McpPlugin.Common.Model;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using UnityEditor;
@@ -167,7 +167,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 }
 
                 // Send notification and mark for cleanup
-                _ = UnityMcpPlugin.NotifyToolRequestCompleted(response);
+                _ = UnityMcpPlugin.NotifyToolRequestCompleted(new RequestToolCompletedData
+                {
+                    RequestId = requestId,
+                    Result = response
+                });
                 processedKeys.Add(key);
             }
 

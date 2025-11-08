@@ -7,12 +7,12 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
-#nullable enable
-using com.IvanMurzak.Unity.MCP.Common.Model.Unity;
-using com.IvanMurzak.Unity.MCP.Common;
-using com.IvanMurzak.ReflectorNet.Model;
 
-namespace com.IvanMurzak.Unity.MCP.Utils
+#nullable enable
+using com.IvanMurzak.ReflectorNet.Model;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
+
+namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
 {
     public static class ExtensionsSerializedMember
     {
@@ -20,7 +20,7 @@ namespace com.IvanMurzak.Unity.MCP.Utils
         {
             try
             {
-                var objectRef = member.GetValue<ObjectRef>(McpPlugin.Instance!.McpRunner.Reflector);
+                var objectRef = member.GetValue<ObjectRef>(McpPlugin.McpPlugin.Instance!.McpManager.Reflector);
                 if (objectRef != null)
                 {
                     instanceID = objectRef.InstanceID;
@@ -37,7 +37,7 @@ namespace com.IvanMurzak.Unity.MCP.Utils
                 var fieldValue = member.GetField(ObjectRef.ObjectRefProperty.InstanceID);
                 if (fieldValue != null)
                 {
-                    instanceID = fieldValue.GetValue<int>(McpPlugin.Instance!.McpRunner.Reflector);
+                    instanceID = fieldValue.GetValue<int>(McpPlugin.McpPlugin.Instance!.McpManager.Reflector);
                     return true;
                 }
             }
@@ -53,7 +53,7 @@ namespace com.IvanMurzak.Unity.MCP.Utils
         {
             try
             {
-                var objectRef = member.GetValue<GameObjectRef>(McpPlugin.Instance!.McpRunner.Reflector);
+                var objectRef = member.GetValue<GameObjectRef>(McpPlugin.McpPlugin.Instance!.McpManager.Reflector);
                 if (objectRef != null)
                 {
                     instanceID = objectRef.InstanceID;
@@ -70,7 +70,7 @@ namespace com.IvanMurzak.Unity.MCP.Utils
                 var fieldValue = member.GetField(ObjectRef.ObjectRefProperty.InstanceID);
                 if (fieldValue != null)
                 {
-                    instanceID = fieldValue.GetValue<int>(McpPlugin.Instance!.McpRunner.Reflector);
+                    instanceID = fieldValue.GetValue<int>(McpPlugin.McpPlugin.Instance!.McpManager.Reflector);
                     return true;
                 }
             }

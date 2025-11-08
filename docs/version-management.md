@@ -10,10 +10,10 @@ The `bump-version.ps1` script automates version updates across all project files
 
 ```powershell
 # Preview what changes will be made
-.\bump-version.ps1 -NewVersion "0.18.0" -WhatIf
+.\commands\bump-version.ps1 -NewVersion "0.18.0" -WhatIf
 
 # Apply the version bump
-.\bump-version.ps1 -NewVersion "0.18.0"
+.\commands\bump-version.ps1 -NewVersion "0.18.0"
 ```
 
 ## Prerequisites

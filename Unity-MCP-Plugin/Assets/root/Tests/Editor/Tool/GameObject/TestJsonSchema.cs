@@ -7,20 +7,22 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
+#nullable enable
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.Globalization;
+using System.Text.Json;
 using System.Text.Json.Nodes;
-using com.IvanMurzak.Unity.MCP.Common.Model.Unity;
+using com.IvanMurzak.McpPlugin.Common;
+using com.IvanMurzak.McpPlugin.Common.Model;
+using com.IvanMurzak.ReflectorNet;
+using com.IvanMurzak.ReflectorNet.Model;
+using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using NUnit.Framework;
 using UnityEngine.TestTools;
-using com.IvanMurzak.ReflectorNet.Utils;
-using com.IvanMurzak.Unity.MCP.Common.Model;
-using com.IvanMurzak.ReflectorNet;
-using com.IvanMurzak.Unity.MCP.Common;
-using System.Text.Json;
-using System.Collections.Generic;
-using com.IvanMurzak.ReflectorNet.Model;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
@@ -61,7 +63,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                             if (typeObject.TryGetPropertyValue("enum", out var enumValue))
                                 continue; // Skip enum types
                         }
-                        Assert.Fail($"Unexpected type node for '{type.GetTypeName(pretty: true)}'.\nThe '{JsonSchema.Type}' node has the type '{typeNode.GetType().GetTypeShortName()}':\n{typeNode}");
+                        Assert.Fail($"Unexpected type node for '{type.GetTypeName(pretty: true)}'.\nThe '{JsonSchema.Type}' node has the type '{typeNode?.GetType().GetTypeShortName()}':\n{typeNode}");
                         break;
                 }
             }
@@ -70,13 +72,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             ValidateMethodInputSchema(JsonNode.Parse(schema.ToString()));
         }
-        static void ValidateMethodInputSchema(JsonNode schema)
+        static void ValidateMethodInputSchema(JsonNode? schema)
         {
             UnityEngine.Debug.Log($"  Schema: {schema}");
 
             Assert.IsNotNull(schema, $"Schema is null");
 
-            var json = schema.ToJsonString();
+            var json = schema!.ToJsonString();
 
             Assert.IsNotNull(json, $"Json is null");
             Assert.IsFalse(json.Contains($"\"{JsonSchema.Error}\":"), $"Json contains {JsonSchema.Error} string");
@@ -85,7 +87,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator Primitives()
         {
-            var reflector = McpPlugin.Instance!.McpRunner.Reflector;
+            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
             ValidateType<int>(reflector);
             ValidateType<float>(reflector);
@@ -99,7 +101,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator Classes()
         {
-            var reflector = McpPlugin.Instance!.McpRunner.Reflector;
+            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
             ValidateType<ObjectRef>(reflector);
 
@@ -122,7 +124,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator Structs()
         {
-            var reflector = McpPlugin.Instance!.McpRunner.Reflector;
+            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
             ValidateType<DateTime>(reflector);
             ValidateType<TimeSpan>(reflector);
@@ -133,7 +135,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator UnityStructs()
         {
-            var reflector = McpPlugin.Instance!.McpRunner.Reflector;
+            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
             ValidateType<UnityEngine.Color32>(reflector);
             ValidateType<UnityEngine.Color>(reflector);
@@ -154,7 +156,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator Unity()
         {
-            var reflector = McpPlugin.Instance!.McpRunner.Reflector;
+            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
             ValidateType<UnityEngine.Object>(reflector);
             ValidateType<UnityEngine.Rigidbody>(reflector);
@@ -170,7 +172,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator MCP_Tools()
         {
-            var task = McpPlugin.Instance.McpRunner.RunListTool(new RequestListTool());
+            var task = McpPlugin.McpPlugin.Instance!.McpManager.ToolManager!.RunListTool(new RequestListTool());
             while (!task.IsCompleted)
             {
                 yield return null; // Wait for the task to complete
@@ -184,7 +186,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Validate the array of tools doesn't have duplicated tool names
             var toolNames = new HashSet<string>();
 
-            foreach (var tool in tools)
+            foreach (var tool in tools!)
             {
                 UnityEngine.Debug.Log($"Tool: {tool.Name} - {tool.Description}");
                 ValidateMethodInputSchema(tool.InputSchema);

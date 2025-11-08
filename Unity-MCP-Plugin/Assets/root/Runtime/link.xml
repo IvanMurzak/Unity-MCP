@@ -1,6 +1,7 @@
 <linker>
   <!-- Unity MCP -->
-  <assembly fullname="com.IvanMurzak.Unity.MCP.Common" preserve="all"/>
+  <assembly fullname="com.IvanMurzak.McpPlugin" preserve="all"/>
+  <assembly fullname="com.IvanMurzak.McpPlugin.Common" preserve="all"/>
   <assembly fullname="com.IvanMurzak.Unity.MCP.Runtime" preserve="all"/>
   <assembly fullname="com.IvanMurzak.Unity.MCP.Tests" preserve="all"/>
 
