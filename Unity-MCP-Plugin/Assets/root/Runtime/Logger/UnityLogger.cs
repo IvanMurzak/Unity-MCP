@@ -87,7 +87,7 @@ namespace com.IvanMurzak.Unity.MCP.Utils
 #if UNITY_EDITOR
             string logLevelShort = logLevel switch
             {
-                LogLevelMicrosoft.Critical => "<color=#ff0000>crit</color>",
+                LogLevelMicrosoft.Critical => "<color=#ff0000>crit:</color>",
                 LogLevelMicrosoft.Error => "<color=#ff6b6b>fail:</color>",
                 LogLevelMicrosoft.Warning => "<color=#ffaa00>warn:</color>",
                 LogLevelMicrosoft.Information => "<color=#00ff00>info:</color>",
