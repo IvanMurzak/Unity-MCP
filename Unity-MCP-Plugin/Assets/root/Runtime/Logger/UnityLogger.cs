@@ -20,12 +20,37 @@ namespace com.IvanMurzak.Unity.MCP.Utils
     public class UnityLogger : ILogger
     {
         readonly string _categoryName;
+        readonly string _categoryColor;
+
+        // Colors that look good on dark gray background
+        private static readonly string[] CategoryColors = new[]
+        {
+            "#FF6B9D", // Pink
+            "#4ECDC4", // Teal
+            "#FFD93D", // Yellow
+            "#95E1D3", // Mint
+            "#F38181", // Coral
+            "#AA96DA", // Purple
+            "#6BCF7F", // Green
+            "#5DADE2", // Blue
+            "#F8B739", // Orange
+            "#EC7063", // Red
+            "#48C9B0", // Turquoise
+            "#AF7AC5", // Violet
+            "#58D68D", // Lime
+            "#F5B041", // Amber
+            "#85C1E2"  // Sky Blue
+        };
 
         public UnityLogger(string categoryName)
         {
             _categoryName = categoryName.Contains('.')
                 ? categoryName.Substring(categoryName.LastIndexOf('.') + 1)
                 : categoryName;
+
+            // Use hashcode to consistently select a color for this category
+            var colorIndex = Math.Abs(categoryName.GetHashCode()) % CategoryColors.Length;
+            _categoryColor = CategoryColors[colorIndex];
         }
 
         public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null!;
@@ -62,24 +87,24 @@ namespace com.IvanMurzak.Unity.MCP.Utils
 #if UNITY_EDITOR
             string logLevelShort = logLevel switch
             {
-                LogLevelMicrosoft.Critical => "<color=#ff0000>crit: </color>",
-                LogLevelMicrosoft.Error => "<color=#ff6b6b>fail: </color>",
-                LogLevelMicrosoft.Warning => "<color=#ffaa00>warn: </color>",
-                LogLevelMicrosoft.Information => "<color=#00ff00>info: </color>",
-                LogLevelMicrosoft.Debug => "<color=#00ffff>dbug: </color>",
-                LogLevelMicrosoft.Trace => "<color=#aaaaaa>trce: </color>",
+                LogLevelMicrosoft.Critical => "<color=#ff0000>crit</color>",
+                LogLevelMicrosoft.Error => "<color=#ff6b6b>fail:</color>",
+                LogLevelMicrosoft.Warning => "<color=#ffaa00>warn:</color>",
+                LogLevelMicrosoft.Information => "<color=#00ff00>info:</color>",
+                LogLevelMicrosoft.Debug => "<color=#00ffff>dbug:</color>",
+                LogLevelMicrosoft.Trace => "<color=#aaaaaa>trce:</color>",
                 _ => "<color=#ffffff>none</color>"
             };
-            var message = $"{logLevelShort} [{DateTime.Now:HH:mm:ss:ffff}] <color=#B4FF32>[AI]</color> <color=#007575><b>{_categoryName}</b></color> {formatter(state, exception)}";
+            var message = $"{logLevelShort} [{DateTime.Now:HH:mm:ss:ffff}] <color=#B4FF32>[AI]</color> <color={_categoryColor}><b>{_categoryName}</b></color> {formatter(state, exception)}";
 #else
             string logLevelShort = logLevel switch
             {
-                LogLevelMicrosoft.Critical => "crit: ",
-                LogLevelMicrosoft.Error => "fail: ",
-                LogLevelMicrosoft.Warning => "warn: ",
-                LogLevelMicrosoft.Information => "info: ",
-                LogLevelMicrosoft.Debug => "dbug: ",
-                LogLevelMicrosoft.Trace => "trce: ",
+                LogLevelMicrosoft.Critical => "crit:",
+                LogLevelMicrosoft.Error => "fail:",
+                LogLevelMicrosoft.Warning => "warn:",
+                LogLevelMicrosoft.Information => "info:",
+                LogLevelMicrosoft.Debug => "dbug:",
+                LogLevelMicrosoft.Trace => "trce:",
                 _ => "none"
             };
             var message = $"{logLevelShort} [{DateTime.Now:HH:mm:ss:ffff}] [AI] {_categoryName} {formatter(state, exception)}";
