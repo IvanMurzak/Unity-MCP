@@ -29,13 +29,13 @@ namespace com.IvanMurzak.Unity.MCP
             if (config == null)
             {
                 config = GetOrCreateConfig(out var wasCreated);
-                this.unityConnectionConfig = config ?? throw new InvalidOperationException("ConnectionConfig is null");
+                unityConnectionConfig = config ?? throw new InvalidOperationException($"{nameof(UnityConnectionConfig)} is null");
                 if (wasCreated)
                     Save();
             }
             else
             {
-                this.unityConnectionConfig = config ?? throw new InvalidOperationException("ConnectionConfig is null");
+                unityConnectionConfig = config ?? throw new InvalidOperationException($"{nameof(UnityConnectionConfig)} is null");
             }
         }
 

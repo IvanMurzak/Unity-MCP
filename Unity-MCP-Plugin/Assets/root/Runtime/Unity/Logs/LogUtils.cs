@@ -21,6 +21,7 @@ namespace com.IvanMurzak.Unity.MCP
         public const int MaxLogEntries = 5000; // Default max entries to keep in memory
 
         static readonly ConcurrentQueue<LogEntry> _logEntries = new();
+        static readonly LogCache _logCache = new();
         static readonly object _lockObject = new();
         static bool _isSubscribed = false;
 
@@ -50,7 +51,7 @@ namespace com.IvanMurzak.Unity.MCP
         public static async Task SaveToFile()
         {
             var logEntries = GetAllLogs();
-            await LogCache.CacheLogEntriesAsync(logEntries);
+            await _logCache.CacheLogEntriesAsync(logEntries);
         }
 
         /// <summary>
@@ -59,7 +60,7 @@ namespace com.IvanMurzak.Unity.MCP
         /// <returns>A task that completes when the load operation is finished.</returns>
         public static async Task LoadFromFile()
         {
-            var logWrapper = await LogCache.GetCachedLogEntriesAsync();
+            var logWrapper = await _logCache.GetCachedLogEntriesAsync();
             lock (_lockObject)
             {
                 _logEntries.Clear();
@@ -77,7 +78,7 @@ namespace com.IvanMurzak.Unity.MCP
         public static async Task HandleQuit()
         {
             await SaveToFile();
-            LogCache.HandleQuit();
+            await _logCache.HandleQuit();
         }
 
         public static LogEntry[] GetAllLogs()

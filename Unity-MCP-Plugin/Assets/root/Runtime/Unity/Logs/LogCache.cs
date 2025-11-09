@@ -19,54 +19,33 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP
 {
-    public class LogCache : IDisposable
+    internal class LogCache : IDisposable
     {
-        static readonly string _cacheFilePath = Application.isEditor
-            ? $"{Path.GetDirectoryName(Application.dataPath)}/Temp/mcp-server"
-            : $"{Application.persistentDataPath}/Temp/mcp-server";
+        readonly string _cacheFilePath;
+        readonly string _cacheFileName;
+        readonly string _cacheFile;
+        readonly JsonSerializerOptions _jsonOptions;
+        readonly SemaphoreSlim _fileLock = new(1, 1);
+        readonly CancellationTokenSource _shutdownCts = new();
 
-        static readonly string _cacheFileName = "editor-logs.txt";
-        static readonly string _cacheFile = $"{Path.Combine(_cacheFilePath, _cacheFileName)}";
-        static readonly object _lock = new();
-        static readonly SemaphoreSlim _fileLock = new(1, 1);
-        static readonly CancellationTokenSource _shutdownCts = new();
-        static readonly TaskCompletionSource<bool> _shutdownTcs = new();
-        static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
+        IDisposable? timerSubscription;
+
+        internal LogCache(string? cacheFilePath = null, string? cacheFileName = null, JsonSerializerOptions? jsonOptions = null)
         {
-            PropertyNameCaseInsensitive = true,
-            WriteIndented = false,
-        };
+            _cacheFilePath = cacheFilePath ?? (Application.isEditor
+                ? $"{Path.GetDirectoryName(Application.dataPath)}/Temp/mcp-server"
+                : $"{Application.persistentDataPath}/Temp/mcp-server");
 
-        static bool isInitialized;
-        static LogCache? instance;
-        static IDisposable? timerSubscription;
+            _cacheFileName = cacheFileName ?? (Application.isEditor
+                ? "editor-logs.txt"
+                : "player-logs.txt");
 
-        public static void HandleQuit()
-        {
-            if (!_shutdownCts.IsCancellationRequested)
-                _shutdownCts.Cancel();
-            timerSubscription?.Dispose();
-            var lastLogTask = HandleLogCache();
-            lastLogTask.ContinueWith(_ => _shutdownTcs.TrySetResult(true));
-        }
-
-        public static bool HasInstance => instance != null;
-        public static LogCache Instance
-        {
-            get
+            _cacheFile = $"{Path.Combine(_cacheFilePath, _cacheFileName)}";
+            _jsonOptions = jsonOptions ?? new JsonSerializerOptions
             {
-                lock (_lock)
-                {
-                    instance ??= new LogCache();
-                    return instance!;
-                }
-            }
-        }
-
-        internal LogCache()
-        {
-            if (isInitialized || Application.isBatchMode)
-                return;
+                PropertyNameCaseInsensitive = true,
+                WriteIndented = false,
+            };
 
             timerSubscription = Observable.Timer(
                     TimeSpan.FromSeconds(1),
@@ -77,11 +56,17 @@ namespace com.IvanMurzak.Unity.MCP
                     if (!_shutdownCts.IsCancellationRequested)
                         Task.Run(HandleLogCache, _shutdownCts.Token);
                 });
-
-            isInitialized = true;
         }
 
-        public static async Task HandleLogCache()
+        public async Task HandleQuit()
+        {
+            if (!_shutdownCts.IsCancellationRequested)
+                _shutdownCts.Cancel();
+            timerSubscription?.Dispose();
+            await HandleLogCache();
+        }
+
+        public async Task HandleLogCache()
         {
             if (LogUtils.LogEntries > 0)
             {
@@ -90,7 +75,7 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
-        public static async Task CacheLogEntriesAsync(LogEntry[] entries)
+        public async Task CacheLogEntriesAsync(LogEntry[] entries)
         {
             await _fileLock.WaitAsync();
             try
@@ -115,7 +100,7 @@ namespace com.IvanMurzak.Unity.MCP
                 _fileLock.Release();
             }
         }
-        public static async Task<LogWrapper?> GetCachedLogEntriesAsync()
+        public async Task<LogWrapper?> GetCachedLogEntriesAsync()
         {
             await _fileLock.WaitAsync();
             try
@@ -143,6 +128,8 @@ namespace com.IvanMurzak.Unity.MCP
             if (!_shutdownCts.IsCancellationRequested)
                 _shutdownCts.Cancel();
             _shutdownCts.Dispose();
+
+            _fileLock.Dispose();
         }
 
         ~LogCache() => Dispose();
