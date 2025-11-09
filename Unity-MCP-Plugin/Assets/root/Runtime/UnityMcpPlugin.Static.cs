@@ -204,7 +204,7 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
-        public Task Disconnect()
+        public async Task Disconnect()
         {
             _logger.Log(MicrosoftLogLevel.Trace, "{method} called.",
                 nameof(Disconnect));
@@ -216,28 +216,21 @@ namespace com.IvanMurzak.Unity.MCP
                 {
                     _logger.LogWarning("{method}: McpPlugin instance is null, nothing to disconnect, ignoring.",
                         nameof(Disconnect));
-                    return Task.CompletedTask;
+                    return;
                 }
                 else
                 {
                     try
                     {
-                        _logger.LogDebug("{method}: Acquiring connection mutex.",
-                            nameof(Disconnect));
                         _logger.LogDebug("{method}: Disconnecting McpPlugin instance.",
                             nameof(Disconnect));
-                        return mcpPlugin.Disconnect();
+                        await mcpPlugin.Disconnect();
                     }
                     catch (Exception e)
                     {
                         _logger.LogError("{method}: Exception during disconnecting: {exception}",
                             nameof(Disconnect), e);
-                        return Task.CompletedTask;
-                    }
-                    finally
-                    {
-                        _logger.LogDebug("{method}: Releasing connection mutex.",
-                            nameof(Disconnect));
+                        return;
                     }
                 }
             }
