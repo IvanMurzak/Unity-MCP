@@ -94,44 +94,32 @@ namespace com.IvanMurzak.Unity.MCP
 
         protected virtual IMcpPlugin BuildMcpPlugin(McpPlugin.Common.Version version, Reflector reflector, ILoggerProvider? loggerProvider = null)
         {
-            _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() called.",
-                Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(BuildMcpPlugin));
+            _logger.Log(MicrosoftLogLevel.Trace, "{method} called.",
+                nameof(BuildMcpPlugin));
 
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
             var mcpPlugin = new McpPluginBuilder(version, loggerProvider)
                 .AddMcpPlugin()
                 .WithConfig(config =>
                 {
-                    _logger.Log(MicrosoftLogLevel.Information, "{tag} MCP server address: {host}",
-                        Consts.Log.Tag, Host);
-
+                    _logger.LogInformation("Unity-MCP server host: {host}", Host);
                     config.Host = Host;
                 })
                 .AddLogging(loggingBuilder =>
                 {
                     loggingBuilder.ClearProviders(); // 👈 Clears the default providers
+                    loggingBuilder.SetMinimumLevel(MicrosoftLogLevel.Trace);
 
                     if (loggerProvider != null)
                         loggingBuilder.AddProvider(loggerProvider);
-
-                    loggingBuilder.SetMinimumLevel(LogLevel switch
-                    {
-                        LogLevel.Trace => MicrosoftLogLevel.Trace,
-                        LogLevel.Debug => MicrosoftLogLevel.Debug,
-                        LogLevel.Info => MicrosoftLogLevel.Information,
-                        LogLevel.Warning => MicrosoftLogLevel.Warning,
-                        LogLevel.Error => MicrosoftLogLevel.Error,
-                        LogLevel.Exception => MicrosoftLogLevel.Critical,
-                        _ => MicrosoftLogLevel.Warning
-                    });
                 })
                 .WithToolsFromAssembly(assemblies)
                 .WithPromptsFromAssembly(assemblies)
                 .WithResourcesFromAssembly(assemblies)
                 .Build(reflector);
 
-            _logger.Log(MicrosoftLogLevel.Trace, "{tag} {class}.{method}() completed.",
-                Consts.Log.Tag, nameof(UnityMcpPlugin), nameof(BuildMcpPlugin));
+            _logger.Log(MicrosoftLogLevel.Trace, "{method} completed.",
+                nameof(BuildMcpPlugin));
 
             return mcpPlugin;
         }

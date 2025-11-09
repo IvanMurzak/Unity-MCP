@@ -204,6 +204,43 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
+        public async Task Disconnect()
+        {
+            _logger.Log(MicrosoftLogLevel.Trace, "{method} called.",
+                nameof(Disconnect));
+
+            try
+            {
+                var mcpPlugin = McpPluginInstance;
+                if (mcpPlugin == null)
+                {
+                    _logger.LogWarning("{method}: McpPlugin instance is null, nothing to disconnect, ignoring.",
+                        nameof(Disconnect));
+                    return;
+                }
+                else
+                {
+                    try
+                    {
+                        _logger.LogDebug("{method}: Disconnecting McpPlugin instance.",
+                            nameof(Disconnect));
+                        await mcpPlugin.Disconnect();
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogError("{method}: Exception during disconnecting: {exception}",
+                            nameof(Disconnect), e);
+                        return;
+                    }
+                }
+            }
+            finally
+            {
+                _logger.Log(MicrosoftLogLevel.Trace, "{method} completed.",
+                    nameof(Disconnect));
+            }
+        }
+
         public void DisconnectImmediate()
         {
             _logger.Log(MicrosoftLogLevel.Trace, "{method} called.",
