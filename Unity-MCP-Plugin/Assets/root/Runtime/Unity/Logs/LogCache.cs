@@ -75,12 +75,12 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
-        public async Task CacheLogEntriesAsync(LogEntry[] entries)
+        public Task CacheLogEntriesAsync(LogEntry[] entries)
         {
-            await _fileLock.WaitAsync();
-            try
+            return Task.Run(async () =>
             {
-                await Task.Run(() =>
+                await _fileLock.WaitAsync();
+                try
                 {
                     var data = new LogWrapper { Entries = entries };
                     var json = JsonSerializer.Serialize(data, _jsonOptions);
@@ -93,31 +93,31 @@ namespace com.IvanMurzak.Unity.MCP
                     if (File.Exists(_cacheFile))
                         File.Delete(_cacheFile);
                     File.Move(_cacheFile + ".tmp", _cacheFile);
-                });
-            }
-            finally
-            {
-                _fileLock.Release();
-            }
+                }
+                finally
+                {
+                    _fileLock.Release();
+                }
+            });
         }
-        public async Task<LogWrapper?> GetCachedLogEntriesAsync()
+        public Task<LogWrapper?> GetCachedLogEntriesAsync()
         {
-            await _fileLock.WaitAsync();
-            try
+            return Task.Run(async () =>
             {
-                return await Task.Run(() =>
+                await _fileLock.WaitAsync();
+                try
                 {
                     if (!File.Exists(_cacheFile))
                         return null;
 
                     var json = File.ReadAllText(_cacheFile);
                     return JsonSerializer.Deserialize<LogWrapper>(json, _jsonOptions);
-                });
-            }
-            finally
-            {
-                _fileLock.Release();
-            }
+                }
+                finally
+                {
+                    _fileLock.Release();
+                }
+            });
         }
 
         public void Dispose()

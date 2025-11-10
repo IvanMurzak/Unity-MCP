@@ -13,6 +13,7 @@ using System.Collections;
 using System.Linq;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using NUnit.Framework;
+using R3;
 using UnityEngine;
 using UnityEngine.TestTools;
 
@@ -271,9 +272,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var startCount = LogUtils.LogEntries;
             Assert.AreEqual(0, startCount, "Log entries should be empty at the start.");
 
-            for (int i = 0; i < testCount; i++)
+            var logMessages = Enumerable.Repeat("Test Log", testCount)
+                .Select((msg, index) => $"{msg} {index + 1}")
+                .ToArray();
+
+            foreach (var logMessage in logMessages)
             {
-                Debug.Log($"Test Log {i + 1}");
+                Debug.Log(logMessage);
             }
 
             // Wait for logs to be collected
@@ -299,6 +304,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Clear logs and confirm
             LogUtils.ClearLogs();
             Assert.AreEqual(0, LogUtils.LogEntries, "Log entries should be cleared.");
+            Assert.AreEqual(0, LogUtils.GetAllLogs().Length, "Log entries should be cleared.");
 
             // Load from file and wait for completion
             var loadTask = LogUtils.LoadFromFile();
@@ -310,8 +316,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 Assert.Less(frameCount, timeout, $"Timeout waiting for {nameof(LogUtils.LoadFromFile)} to complete.");
             }
 
+            var allLogs = LogUtils.GetAllLogs();
+
+            Assert.AreEqual(LogUtils.LogEntries, allLogs.Length, "Loaded log entries count should match the saved entries.");
+
             // Final assertion
             Assert.AreEqual(startCount + testCount, LogUtils.LogEntries, "LogUtils should have the restored logs in memory.");
+
+            for (int i = 0; i < testCount; i++)
+            {
+                var expectedMessage = logMessages[i];
+                Assert.IsTrue(allLogs.Any(entry => entry.Message == expectedMessage),
+                    $"Restored logs should contain: {expectedMessage}");
+            }
         }
     }
 }

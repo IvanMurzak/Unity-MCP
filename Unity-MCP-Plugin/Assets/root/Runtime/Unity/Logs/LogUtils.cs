@@ -20,10 +20,10 @@ namespace com.IvanMurzak.Unity.MCP
     {
         public const int MaxLogEntries = 5000; // Default max entries to keep in memory
 
-        static readonly ConcurrentQueue<LogEntry> _logEntries = new();
+        static ConcurrentQueue<LogEntry> _logEntries = new();
         static readonly LogCache _logCache = new();
         static readonly object _lockObject = new();
-        static bool _isSubscribed = false;
+        static volatile bool _isSubscribed = false;
 
         public static int LogEntries
         {
@@ -40,7 +40,7 @@ namespace com.IvanMurzak.Unity.MCP
         {
             lock (_lockObject)
             {
-                _logEntries.Clear();
+                _logEntries = new ConcurrentQueue<LogEntry>();
             }
         }
 
@@ -63,11 +63,12 @@ namespace com.IvanMurzak.Unity.MCP
             var logWrapper = await _logCache.GetCachedLogEntriesAsync();
             lock (_lockObject)
             {
-                _logEntries.Clear();
-                if (logWrapper?.Entries == null)
-                    return;
-                foreach (var entry in logWrapper.Entries)
-                    _logEntries.Enqueue(entry);
+                _logEntries = new ConcurrentQueue<LogEntry>(logWrapper?.Entries ?? new LogEntry[0]);
+                // _logEntries.Clear();
+                // if (logWrapper?.Entries == null)
+                //     return;
+                // foreach (var entry in logWrapper.Entries)
+                //     _logEntries.Enqueue(entry);
             }
         }
 
