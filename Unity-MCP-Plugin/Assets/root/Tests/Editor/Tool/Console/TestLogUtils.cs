@@ -269,7 +269,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             const int expectedLogs = 3;
             yield return WaitForLogCount(expectedLogs);
 
-            var originalLogs = LogUtils.GetAllLogs();
+
 
             // Save and reload
             yield return WaitForTask(LogUtils.SaveToFile());
@@ -356,7 +356,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             yield return WaitForLogCount(testCount);
 
-            var originalLogs = LogUtils.GetAllLogs();
+
 
             // Save and reload
             yield return WaitForTask(LogUtils.SaveToFile());

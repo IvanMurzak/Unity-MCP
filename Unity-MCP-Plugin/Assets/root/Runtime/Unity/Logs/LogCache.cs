@@ -34,7 +34,7 @@ namespace com.IvanMurzak.Unity.MCP
         internal LogCache(string? cacheFilePath = null, string? cacheFileName = null, JsonSerializerOptions? jsonOptions = null)
         {
             if (!MainThread.Instance.IsMainThread)
-                throw new System.Exception($"{nameof(LogUtils)} must be initialized on the main thread.");
+                throw new System.Exception($"{nameof(LogCache)} must be initialized on the main thread.");
 
             _cacheFilePath = cacheFilePath ?? (Application.isEditor
                 ? $"{Path.GetDirectoryName(Application.dataPath)}/Temp/mcp-server"
