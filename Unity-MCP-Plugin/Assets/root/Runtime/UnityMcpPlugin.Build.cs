@@ -94,7 +94,7 @@ namespace com.IvanMurzak.Unity.MCP
 
         protected virtual IMcpPlugin BuildMcpPlugin(McpPlugin.Common.Version version, Reflector reflector, ILoggerProvider? loggerProvider = null)
         {
-            _logger.Log(MicrosoftLogLevel.Trace, "{method} called.",
+            _logger.LogTrace("{method} called.",
                 nameof(BuildMcpPlugin));
 
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
@@ -118,7 +118,7 @@ namespace com.IvanMurzak.Unity.MCP
                 .WithResourcesFromAssembly(assemblies)
                 .Build(reflector);
 
-            _logger.Log(MicrosoftLogLevel.Trace, "{method} completed.",
+            _logger.LogTrace("{method} completed.",
                 nameof(BuildMcpPlugin));
 
             return mcpPlugin;
