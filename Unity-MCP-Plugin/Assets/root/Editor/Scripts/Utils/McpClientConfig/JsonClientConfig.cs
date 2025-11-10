@@ -14,7 +14,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using com.IvanMurzak.Unity.MCP.Common;
+using com.IvanMurzak.McpPlugin.Common;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils

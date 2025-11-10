@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEditor;
 using UnityEngine;
 
@@ -17,11 +18,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
     [InitializeOnLoad]
     public static partial class Startup
     {
-        static string DebugName => $"<b>[AI-Editor]</b>";
-
         static Startup()
         {
-            UnityMcpPlugin.BuildAndStart();
+            UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
+
+            if (!EnvironmentUtils.IsCi())
+                UnityMcpPlugin.ConnectIfNeeded();
+
             Server.DownloadServerBinaryIfNeeded();
 
             if (Application.dataPath.Contains(" "))
@@ -33,7 +36,5 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             LogUtils.EnsureSubscribed(); // log collector
             API.Tool_TestRunner.Init(); // test runner
         }
-
-        static void Disconnect() => UnityMcpPlugin.Disconnect();
     }
 }

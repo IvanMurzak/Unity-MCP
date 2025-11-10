@@ -27,6 +27,7 @@ namespace com.IvanMurzak.Unity.MCP.Utils
                     {
                         builder.ClearProviders();
                         builder.AddProvider(new UnityLoggerProvider());
+                        builder.SetMinimumLevel(Microsoft.Extensions.Logging.LogLevel.Trace);
                     });
                 }
                 return _loggerFactory;

@@ -7,12 +7,13 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
 using System.Collections.Generic;
-using com.IvanMurzak.Unity.MCP.Common.Model.Unity;
-using com.IvanMurzak.Unity.MCP.Common;
+using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Editor.Tests.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -55,7 +56,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         // [Test]
         // public void Material_Modify()
         // {
-        //     var reflector = McpPlugin.Instance!.McpRunner.Reflector;
+        //     var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
         //     var propertyName = "_Metallic";
         //     var propertyValue = 1;

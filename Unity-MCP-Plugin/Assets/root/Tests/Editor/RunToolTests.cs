@@ -8,6 +8,7 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 
+#nullable enable
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -15,9 +16,10 @@ using System.Reflection;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.McpPlugin.Common;
+using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet;
-using com.IvanMurzak.Unity.MCP.Common;
-using com.IvanMurzak.Unity.MCP.Common.Model;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 using UnityEngine.TestTools;
@@ -27,8 +29,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     [TestFixture]
     public class RunToolTests
     {
-        private Reflector _reflector;
-        private ILogger _mockLogger;
+        private Reflector _reflector = new Reflector();
+        private ILogger _mockLogger = new MockLogger<RunTool>();
 
         [SetUp]
         public void SetUp()
@@ -155,7 +157,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ResponseStatus.Error, result.Status, "Should return error status");
 
             var message = result.GetMessage();
-            Assert.IsTrue(message.Contains(TestStaticMethods.TestExceptionMessage),
+            Assert.IsTrue(message?.Contains(TestStaticMethods.TestExceptionMessage),
                 $"Error message should contain original exception message '{TestStaticMethods.TestExceptionMessage}'. Actual: {message}");
         }
 
@@ -167,7 +169,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
 
             // Act
-            var task = runTool.Run("test-request-id", (Dictionary<string, JsonElement>)null, CancellationToken.None);
+            var task = runTool.Run("test-request-id", null!, CancellationToken.None);
             while (!task.IsCompleted)
                 yield return null; // Wait for task to complete
 
@@ -183,7 +185,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Act & Assert
             Assert.Throws<ArgumentNullException>(() =>
-                new RunTool(_reflector, _mockLogger, (MethodInfo)null),
+                new RunTool(_reflector, _mockLogger, null!),
                 "Constructor should throw ArgumentNullException for null MethodInfo");
         }
 

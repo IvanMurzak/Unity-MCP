@@ -7,17 +7,18 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+
+#nullable enable
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using com.IvanMurzak.Unity.MCP.Common;
-using com.IvanMurzak.Unity.MCP.Common.Model.Unity;
-using com.IvanMurzak.Unity.MCP.Utils;
+using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-using com.IvanMurzak.ReflectorNet.Utils;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -46,6 +47,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     var go = gameObjectRefs[i].FindGameObject(out var error);
                     if (error != null)
                         return $"[Error] {error}";
+                    if (go == null)
+                        return $"[Error] GameObject by {nameof(gameObjectRefs)}[{i}] not found.";
 
                     gos.Add(go);
                 }

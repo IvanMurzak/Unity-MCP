@@ -15,12 +15,11 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
-using com.IvanMurzak.Unity.MCP.Common;
-using com.IvanMurzak.Unity.MCP.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API.TestRunner;
-using com.IvanMurzak.Unity.MCP.Utils;
-using UnityEditor;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 
@@ -73,7 +72,7 @@ Be default recommended to use 'EditMode' for faster iteration during development
             {
                 if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                     Debug.Log($"[TestRunner] ------------------------------------- Preparing to run {testMode} tests.");
-                    
+
                 try
                 {
                     TestResultCollector.TestCallRequestID.Value = requestId;

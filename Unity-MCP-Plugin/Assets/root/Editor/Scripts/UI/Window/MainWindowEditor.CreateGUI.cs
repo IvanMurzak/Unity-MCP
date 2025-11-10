@@ -10,8 +10,8 @@
 
 #nullable enable
 using System;
-using com.IvanMurzak.Unity.MCP.Common;
-using com.IvanMurzak.Unity.MCP.Utils;
+using com.IvanMurzak.McpPlugin.Common;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using Microsoft.AspNetCore.SignalR.Client;
 using R3;
 using UnityEditor;
@@ -68,7 +68,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 UnityMcpPlugin.LogLevel = evt.newValue as LogLevel? ?? LogLevel.Warning;
                 SaveChanges($"[AI Game Developer] LogLevel Changed: {evt.newValue}");
-                // UnityMcpPlugin.BuildAndStart();
             });
 
             var inputTimeoutMs = root.Query<IntegerField>("inputTimeoutMs").First();
@@ -90,7 +89,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 rawJsonField.value = Startup.Server.RawJsonConfiguration(UnityMcpPlugin.Port, "mcpServers", UnityMcpPlugin.TimeoutMs).ToString();
 
                 SaveChanges($"[AI Game Developer] Timeout Changed: {newValue} ms");
-                UnityMcpPlugin.BuildAndStart();
+                UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
+                UnityMcpPlugin.ConnectIfNeeded();
             });
 
             var currentVersion = root.Query<TextField>("currentVersion").First();
@@ -120,11 +120,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 .Query<VisualElement>("ServerConnectionInfo").First()
                 .Query<Label>("connectionStatusText").First();
 
-            McpPlugin.DoAlways(plugin =>
+            McpPlugin.McpPlugin.DoAlways(plugin =>
             {
                 Observable.CombineLatest(
-                    UnityMcpPlugin.ConnectionState,
-                    plugin.KeepConnected,
+                    UnityMcpPlugin.ConnectionState, plugin.KeepConnected,
                     (connectionState, keepConnected) => (connectionState, keepConnected)
                 )
                 .ThrottleLast(TimeSpan.FromMilliseconds(10))
@@ -216,44 +215,38 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 .AddTo(_disposables);
             }).AddTo(_disposables);
 
-            btnConnectOrDisconnect.RegisterCallback<ClickEvent>(evt =>
+            btnConnectOrDisconnect.RegisterCallback<ClickEvent>((EventCallback<ClickEvent>)(evt =>
             {
                 if (btnConnectOrDisconnect.text.Equals(ServerButtonText_Connect, StringComparison.OrdinalIgnoreCase))
                 {
                     UnityMcpPlugin.KeepConnected = true;
-                    UnityMcpPlugin.Save();
-                    if (McpPlugin.HasInstance)
-                    {
-                        McpPlugin.Instance!.Connect();
-                    }
-                    else
-                    {
-                        UnityMcpPlugin.BuildAndStart();
-                    }
+                    UnityMcpPlugin.Instance.Save();
+                    UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
+                    UnityMcpPlugin.ConnectIfNeeded();
                 }
                 else if (btnConnectOrDisconnect.text.Equals(ServerButtonText_Disconnect, StringComparison.OrdinalIgnoreCase))
                 {
                     UnityMcpPlugin.KeepConnected = false;
-                    UnityMcpPlugin.Save();
-                    if (McpPlugin.HasInstance)
+                    UnityMcpPlugin.Instance.Save();
+                    if (UnityMcpPlugin.Instance.HasMcpPluginInstance)
                     {
-                        UnityMcpPlugin.Disconnect();
+                        UnityMcpPlugin.Instance.Disconnect();
                     }
                 }
                 else if (btnConnectOrDisconnect.text.Equals(ServerButtonText_Stop, StringComparison.OrdinalIgnoreCase))
                 {
                     UnityMcpPlugin.KeepConnected = false;
-                    UnityMcpPlugin.Save();
-                    if (McpPlugin.HasInstance)
+                    UnityMcpPlugin.Instance.Save();
+                    if (UnityMcpPlugin.Instance.HasMcpPluginInstance)
                     {
-                        UnityMcpPlugin.Disconnect();
+                        UnityMcpPlugin.Instance.Disconnect();
                     }
                 }
                 else
                 {
                     throw new Exception("Unknown button state: " + btnConnectOrDisconnect.text);
                 }
-            });
+            }));
 
             // Configure MCP Client
             // -----------------------------------------------------------------

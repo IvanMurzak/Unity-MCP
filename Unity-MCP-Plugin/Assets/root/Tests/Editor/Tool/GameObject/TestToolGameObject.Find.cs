@@ -7,11 +7,13 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
+#nullable enable
 using System.Collections;
-using com.IvanMurzak.Unity.MCP.Common.Model;
-using com.IvanMurzak.Unity.MCP.Common.Model.Unity;
+using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API;
-using com.IvanMurzak.Unity.MCP.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -24,10 +26,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public IEnumerator FindByInstanceId()
         {
             var child = new GameObject(GO_ParentName).AddChild(GO_Child1Name);
+            Assert.IsNotNull(child, "Child GameObject should be created");
+
             var result = new Tool_GameObject().Find(
                 gameObjectRef: new GameObjectRef
                 {
-                    InstanceID = child.GetInstanceID()
+                    InstanceID = child!.GetInstanceID()
                 });
             ResultValidation(result);
 
@@ -69,8 +73,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public IEnumerator FindByInstanceId_IncludeChildrenDepth_1_BriefData_False()
         {
             var go = new GameObject(GO_ParentName);
-            go.AddChild(GO_Child1Name).AddComponent<SphereCollider>();
-            go.AddChild(GO_Child2Name).AddComponent<SphereCollider>();
+            go.AddChild(GO_Child1Name)!.AddComponent<SphereCollider>();
+            go.AddChild(GO_Child2Name)!.AddComponent<SphereCollider>();
             go.AddComponent<SolarSystem>();
             yield return null;
             var result = new Tool_GameObject().Find(
@@ -89,7 +93,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             yield return null;
         }
 
-        IResponseData<ResponseCallTool> FindByJson(string json) => RunTool("GameObject_Find", json);
+        ResponseData<ResponseCallTool> FindByJson(string json) => RunTool("GameObject_Find", json);
 
         [UnityTest]
         public IEnumerator FindByJson_IncludeChildrenDepth_0_BriefData_True()

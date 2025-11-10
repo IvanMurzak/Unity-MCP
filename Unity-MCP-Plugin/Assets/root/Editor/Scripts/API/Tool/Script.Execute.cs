@@ -7,15 +7,16 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
 using System;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
-using com.IvanMurzak.Unity.MCP.Common;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
@@ -83,7 +84,7 @@ Do NOT use top-level statements or code outside a class. Top-level statements ar
             }
 
             var parsedParameters = parameters
-                ?.Select(p => McpPlugin.Instance!.McpRunner.Reflector.Deserialize(p, logger: McpPlugin.Instance.Logger))
+                ?.Select(p => McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Deserialize(p, logger: McpPlugin.McpPlugin.Instance.Logger))
                 ?.ToArray();
 
             var compilation = CSharpCompilation.Create(

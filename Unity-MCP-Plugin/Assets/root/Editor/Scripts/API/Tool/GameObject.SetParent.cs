@@ -7,14 +7,16 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+
+#nullable enable
 using System.ComponentModel;
 using System.Text;
-using com.IvanMurzak.Unity.MCP.Common;
-using com.IvanMurzak.Unity.MCP.Common.Model.Unity;
-using com.IvanMurzak.Unity.MCP.Utils;
-using UnityEditor.SceneManagement;
+using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
+using UnityEditor.SceneManagement;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -39,19 +41,29 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 var stringBuilder = new StringBuilder();
                 int changedCount = 0;
 
+                var parentGo = parentGameObjectRef.FindGameObject(out var error);
+                if (error != null)
+                {
+                    stringBuilder.AppendLine(error);
+                    return stringBuilder.ToString();
+                }
+                if (parentGo == null)
+                {
+                    stringBuilder.AppendLine($"[Error] GameObject by {nameof(parentGameObjectRef)} not found.");
+                    return stringBuilder.ToString();
+                }
+
                 for (var i = 0; i < gameObjectRefs.Count; i++)
                 {
-                    var targetGo = gameObjectRefs[i].FindGameObject(out var error);
+                    var targetGo = gameObjectRefs[i].FindGameObject(out error);
                     if (error != null)
                     {
                         stringBuilder.AppendLine(error);
                         continue;
                     }
-
-                    var parentGo = parentGameObjectRef.FindGameObject(out error);
-                    if (error != null)
+                    if (targetGo == null)
                     {
-                        stringBuilder.AppendLine(error);
+                        stringBuilder.AppendLine($"[Error] GameObject by {nameof(gameObjectRefs)}[{i}] not found.");
                         continue;
                     }
 

@@ -2,7 +2,6 @@
     "name": "com.IvanMurzak.Unity.MCP.Runtime",
     "rootNamespace": "com.IvanMurzak.Unity.MCP.Runtime",
     "references": [
-        "com.IvanMurzak.Unity.MCP.Common",
         "Extensions.Unity.PlayerPrefsEx"
     ],
     "includePlatforms": [],

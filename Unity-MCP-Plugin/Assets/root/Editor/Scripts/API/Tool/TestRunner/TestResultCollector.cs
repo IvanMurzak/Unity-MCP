@@ -7,15 +7,15 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using com.IvanMurzak.Unity.MCP.Common.Model;
-using com.IvanMurzak.Unity.MCP.Utils;
+using com.IvanMurzak.McpPlugin.Common.Model;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using Extensions.Unity.PlayerPrefsEx;
-using NUnit.Framework.Internal;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 
@@ -65,8 +65,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
         {
             int newCount = System.Threading.Interlocked.Increment(ref counter);
 
-            if (UnityMcpPlugin.IsLogEnabled(LogLevel.Trace))
-                Debug.Log($"[{nameof(TestResultCollector)}] Ctor.");
+            UnityMcpPlugin.Instance.LogTrace("Ctor", typeof(TestResultCollector));
 
             if (newCount > 1)
                 throw new InvalidOperationException($"Only one instance of {nameof(TestResultCollector)} is allowed. Current count: {newCount}");
@@ -74,8 +73,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
 
         public void RunStarted(ITestAdaptor testsToRun)
         {
-            if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
-                Debug.Log($"[{nameof(TestResultCollector)}] RunStarted.");
+            UnityMcpPlugin.Instance.LogInfo("RunStarted", typeof(TestResultCollector));
 
             startTime = DateTime.Now;
             var testCount = CountTests(testsToRun);
@@ -92,14 +90,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             Application.logMessageReceivedThreaded -= OnLogMessageReceived;
             Application.logMessageReceivedThreaded += OnLogMessageReceived;
 
-            if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
-                Debug.Log($"[{nameof(TestResultCollector)}] Run {TestModeAsString} started: {testCount} tests.");
+            UnityMcpPlugin.Instance.LogInfo("Run {testMode} started: {testCount} tests.",
+                typeof(TestResultCollector), TestModeAsString, testCount);
         }
 
         public void RunFinished(ITestResultAdaptor result)
         {
-            if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
-                Debug.Log($"[{nameof(TestResultCollector)}] RunFinished.");
+            UnityMcpPlugin.Instance.LogInfo("RunFinished", typeof(TestResultCollector));
 
             // Unsubscribe from log messages
             Application.logMessageReceivedThreaded -= OnLogMessageReceived;
@@ -120,13 +117,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
                 _summary.Status = TestRunStatus.Unknown;
             }
 
-            if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
-            {
-                Debug.Log($"[{nameof(TestResultCollector)}] Run {TestModeAsString} finished with {_summary.TotalTests} test results. Result status: {result.TestStatus}");
-                Debug.Log($"[{nameof(TestResultCollector)}] Final duration: {duration:mm\\:ss\\.fff}. Completed: {_results.Count}/{_summary.TotalTests}");
-            }
+            UnityMcpPlugin.Instance.LogInfo("Run {testMode} finished with {totalTests} test results. Result status: {status}",
+                typeof(TestResultCollector), TestModeAsString, _summary.TotalTests, result.TestStatus);
+            UnityMcpPlugin.Instance.LogInfo("Final duration: {duration:mm\\:ss\\.fff}. Completed: {completed}/{total}",
+                typeof(TestResultCollector), duration, _results.Count, _summary.TotalTests);
 
-            UnityMcpPlugin.BuildAndStart();
+            UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
+
+            if (!EnvironmentUtils.IsCi())
+                UnityMcpPlugin.ConnectIfNeeded();
 
             var requestId = TestCallRequestID.Value;
             TestCallRequestID.Value = string.Empty;
@@ -148,7 +147,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
                         message: jsonString ?? "[Success] Test execution completed.")
                     .SetRequestID(requestId);
 
-                _ = UnityMcpPlugin.NotifyToolRequestCompleted(response);
+                _ = UnityMcpPlugin.NotifyToolRequestCompleted(new RequestToolCompletedData
+                {
+                    RequestId = requestId,
+                    Result = response
+                });
             }
         }
 
@@ -181,8 +184,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
                     _ => string.Empty
                 };
 
-                if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
-                    Debug.Log($"[{nameof(TestResultCollector)}] {statusEmoji} Test finished ({_results.Count}/{_summary.TotalTests}): {result.Test.FullName} - {result.TestStatus}");
+                UnityMcpPlugin.Instance.LogInfo("{emoji} Test finished ({counter}/{total}): {testName} - {testStatus}",
+                    typeof(TestResultCollector), statusEmoji, _results.Count, _summary.TotalTests, result.Test.FullName, result.TestStatus);
 
                 // Update summary counts
                 switch (result.TestStatus)
@@ -204,8 +207,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
                 // Check if all tests are complete
                 if (_results.Count >= _summary.TotalTests)
                 {
-                    if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
-                        Debug.Log($"[{nameof(TestResultCollector)}] All tests completed via TestFinished. Final duration: {_summary.Duration:mm\\:ss\\.fff}");
+                    UnityMcpPlugin.Instance.LogInfo("All tests completed via TestFinished. Final duration: {duration:mm\\:ss\\.fff}",
+                        typeof(TestResultCollector), _summary.Duration);
                 }
             }
         }
