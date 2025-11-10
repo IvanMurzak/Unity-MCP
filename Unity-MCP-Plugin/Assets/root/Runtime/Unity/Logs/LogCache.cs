@@ -7,11 +7,11 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
 using System;
-using System.Collections;
-using System.Collections.Concurrent;
 using System.IO;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.ReflectorNet.Utils;
@@ -20,67 +20,57 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP
 {
-    public class LogCache
+    internal class LogCache : IDisposable
     {
-        static string _cacheFilePath =
-#if UNITY_EDITOR
-            $"{Path.GetDirectoryName(Application.dataPath)}/Temp/mcp-server";
-#else
-            $"{Application.persistentDataPath}/Temp/mcp-server";
-#endif
+        readonly string _cacheFilePath;
+        readonly string _cacheFileName;
+        readonly string _cacheFile;
+        readonly JsonSerializerOptions _jsonOptions;
+        readonly SemaphoreSlim _fileLock = new(1, 1);
+        readonly CancellationTokenSource _shutdownCts = new();
 
-        static string _cacheFileName = "editor-logs.txt";
-        static string _cacheFile = $"{Path.Combine(_cacheFilePath, _cacheFileName)}";
-        static readonly SemaphoreSlim _fileLock = new(1, 1);
-        static bool _initialized = false;
-        private static CancellationTokenSource _shutdownCts = new();
-        private static TaskCompletionSource<bool> _shutdownTcs = new();
-        private static IDisposable? _timerSubscription;
-        private static LogCache? _instance;
-        private static readonly object _lock = new object();
+        IDisposable? timerSubscription;
 
-        public static void HandleQuit()
+        internal LogCache(string? cacheFilePath = null, string? cacheFileName = null, JsonSerializerOptions? jsonOptions = null)
         {
-            _shutdownCts.Cancel();
-            _timerSubscription?.Dispose();
-            var lastLogTask = HandleLogCache();
-            lastLogTask.ContinueWith(_ => _shutdownTcs.TrySetResult(true));
-        }
+            if (!MainThread.Instance.IsMainThread)
+                throw new System.Exception($"{nameof(LogUtils)} must be initialized on the main thread.");
 
-        public static LogCache Instance
-        {
-            get
+            _cacheFilePath = cacheFilePath ?? (Application.isEditor
+                ? $"{Path.GetDirectoryName(Application.dataPath)}/Temp/mcp-server"
+                : $"{Application.persistentDataPath}/Temp/mcp-server");
+
+            _cacheFileName = cacheFileName ?? (Application.isEditor
+                ? "editor-logs.txt"
+                : "player-logs.txt");
+
+            _cacheFile = $"{Path.Combine(_cacheFilePath, _cacheFileName)}";
+            _jsonOptions = jsonOptions ?? new JsonSerializerOptions
             {
-                lock (_lock)
+                PropertyNameCaseInsensitive = true,
+                WriteIndented = false,
+            };
+
+            timerSubscription = Observable.Timer(
+                    TimeSpan.FromSeconds(1),
+                    TimeSpan.FromSeconds(1)
+                )
+                .Subscribe(x =>
                 {
-                    if (_instance == null)
-                    {
-                        _instance = new LogCache();
-                    }
-                    return _instance!;
-                }
-            }
+                    if (!_shutdownCts.IsCancellationRequested)
+                        Task.Run(HandleLogCache, _shutdownCts.Token);
+                });
         }
 
-        private LogCache()
+        public async Task HandleQuit()
         {
-            if (_initialized || Application.isBatchMode) return;
-
-            _timerSubscription = Observable.Timer(
-                TimeSpan.FromSeconds(1),
-                TimeSpan.FromSeconds(1)
-            )
-            .Subscribe(x =>
-            {
-                if (!_shutdownCts.IsCancellationRequested)
-                {
-                    Task.Run(HandleLogCache, _shutdownCts.Token);
-                }
-            });
-            _initialized = true;
+            if (!_shutdownCts.IsCancellationRequested)
+                _shutdownCts.Cancel();
+            timerSubscription?.Dispose();
+            await HandleLogCache();
         }
 
-        public static async Task HandleLogCache()
+        public async Task HandleLogCache()
         {
             if (LogUtils.LogEntries > 0)
             {
@@ -89,44 +79,69 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
-        public static async Task CacheLogEntriesAsync(LogEntry[] entries)
+        public Task CacheLogEntriesAsync(LogEntry[] entries)
         {
-            await _fileLock.WaitAsync();
-            try
+            return Task.Run(async () =>
             {
-                var data = JsonUtility.ToJson(new LogWrapper { entries = entries });
-                Directory.CreateDirectory(_cacheFilePath);
-                // Atomic File Write
-                await File.WriteAllTextAsync(_cacheFile + ".tmp", data);
-                if (File.Exists(_cacheFile))
-                    File.Delete(_cacheFile);
-                File.Move(_cacheFile + ".tmp", _cacheFile);
-            }
-            finally
-            {
-                _fileLock.Release();
-            }
-        }
-        public static async Task<ConcurrentQueue<LogEntry>> GetCachedLogEntriesAsync()
-        {
-            await _fileLock.WaitAsync();
-            try
-            {
-                if (!File.Exists(_cacheFile))
+                await _fileLock.WaitAsync();
+                try
                 {
-                    return new ConcurrentQueue<LogEntry>();
+                    var data = new LogWrapper { Entries = entries };
+
+                    if (!Directory.Exists(_cacheFilePath))
+                        Directory.CreateDirectory(_cacheFilePath);
+
+                    // Stream JSON directly to file without creating entire JSON string in memory
+                    var tempFile = _cacheFile + ".tmp";
+                    using (var fileStream = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true))
+                    {
+                        await System.Text.Json.JsonSerializer.SerializeAsync(fileStream, data, _jsonOptions);
+                        await fileStream.FlushAsync();
+                    }
+
+                    // Atomic file replacement
+                    if (File.Exists(_cacheFile))
+                        File.Delete(_cacheFile);
+                    File.Move(tempFile, _cacheFile);
                 }
-                var json = await File.ReadAllTextAsync(_cacheFile);
-                return await Task.Run(() =>
+                finally
                 {
-                    LogWrapper wrapper = JsonUtility.FromJson<LogWrapper>(json);
-                    return new ConcurrentQueue<LogEntry>(wrapper.entries);
-                });
-            }
-            finally
-            {
-                _fileLock.Release();
-            }
+                    _fileLock.Release();
+                }
+            });
         }
+        public Task<LogWrapper?> GetCachedLogEntriesAsync()
+        {
+            return Task.Run(async () =>
+            {
+                await _fileLock.WaitAsync();
+                try
+                {
+                    if (!File.Exists(_cacheFile))
+                        return null;
+
+                    using var fileStream = File.OpenRead(_cacheFile);
+                    return await System.Text.Json.JsonSerializer.DeserializeAsync<LogWrapper>(fileStream, _jsonOptions);
+                }
+                finally
+                {
+                    _fileLock.Release();
+                }
+            });
+        }
+
+        public void Dispose()
+        {
+            timerSubscription?.Dispose();
+            timerSubscription = null;
+
+            if (!_shutdownCts.IsCancellationRequested)
+                _shutdownCts.Cancel();
+            _shutdownCts.Dispose();
+
+            _fileLock.Dispose();
+        }
+
+        ~LogCache() => Dispose();
     }
 }

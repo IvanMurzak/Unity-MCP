@@ -7,13 +7,18 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
 
 namespace com.IvanMurzak.Unity.MCP
 {
-    [System.Serializable]
-    internal class LogWrapper
+    public class LogWrapper
     {
-        public LogEntry[]? entries;
+        public LogEntry[]? Entries { get; set; }
+
+        public LogWrapper()
+        {
+            // none
+        }
     }
 }

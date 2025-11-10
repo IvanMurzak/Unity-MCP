@@ -25,6 +25,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [SetUp]
         public void TestSetUp()
         {
+            // var task = LogUtils.EnsureSubscribed();
+            // while (!task.IsCompleted)
+            //     yield return null;
             _tool = new Tool_Console();
         }
 
@@ -261,59 +264,77 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public IEnumerator GetLogs_Validate_ConsoleLogRetention()
         {
             // This test verifies that logs are being stored and read from the log cache properly.
-            var testCount = 15;
-            var timeout = 100000;
+            const int testCount = 15;
+            const int timeout = 100000;
+
+            var logMessages = Enumerable.Range(1, testCount)
+                .Select(i => $"Test Log {i}")
+                .ToArray();
+
+            Debug.Log($"Starting log retention test with {testCount} logs.");
+            Debug.Log($"Generated log messages:\n{string.Join("\n", logMessages)}");
 
             // Ensure a clean slate
+            Debug.Log($"Clearing existing logs.");
             LogUtils.ClearLogs();
             yield return null;
 
             var startCount = LogUtils.LogEntries;
             Assert.AreEqual(0, startCount, "Log entries should be empty at the start.");
 
-            for (int i = 0; i < testCount; i++)
+            foreach (var logMessage in logMessages)
             {
-                Debug.Log($"Test Log {i + 1}");
+                Debug.Log(logMessage);
             }
 
             // Wait for logs to be collected
             var frameCount = 0;
-            while (LogUtils.LogEntries < startCount + testCount)
+            while (LogUtils.LogEntries < testCount)
             {
                 yield return null;
                 frameCount++;
                 Assert.Less(frameCount, timeout, "Timeout waiting for logs to be collected.");
             }
-            Assert.AreEqual(startCount + testCount, LogUtils.LogEntries, "Log entries count should include new entries.");
+            Assert.AreEqual(testCount, LogUtils.LogEntries, "Log entries count should include new entries.");
 
             // Save to file and wait for completion
-            var saveCompleted = false;
-            LogUtils.SaveToFile(() => saveCompleted = true);
+            var saveTask = LogUtils.SaveToFile();
             frameCount = 0;
-            while (!saveCompleted)
+            while (!saveTask.IsCompleted)
             {
                 yield return null;
                 frameCount++;
-                Assert.Less(frameCount, timeout, "Timeout waiting for SaveToFile to complete.");
+                Assert.Less(frameCount, timeout, $"Timeout waiting for {nameof(LogUtils.SaveToFile)} to complete.");
             }
 
             // Clear logs and confirm
             LogUtils.ClearLogs();
             Assert.AreEqual(0, LogUtils.LogEntries, "Log entries should be cleared.");
+            Assert.AreEqual(0, LogUtils.GetAllLogs().Length, "Log entries should be cleared.");
 
             // Load from file and wait for completion
-            var loadCompleted = false;
-            LogUtils.LoadFromFile(() => loadCompleted = true);
+            var loadTask = LogUtils.LoadFromFile();
             frameCount = 0;
-            while (!loadCompleted)
+            while (!loadTask.IsCompleted)
             {
                 yield return null;
                 frameCount++;
-                Assert.Less(frameCount, timeout, "Timeout waiting for LoadFromFile to complete.");
+                Assert.Less(frameCount, timeout, $"Timeout waiting for {nameof(LogUtils.LoadFromFile)} to complete.");
             }
 
+            var allLogs = LogUtils.GetAllLogs();
+
+            Assert.AreEqual(LogUtils.LogEntries, allLogs.Length, "Loaded log entries count should match the saved entries.");
+
             // Final assertion
-            Assert.AreEqual(startCount + testCount, LogUtils.LogEntries, "LogUtils should have the restored logs in memory.");
+            Assert.AreEqual(testCount, LogUtils.LogEntries, "LogUtils should have the restored logs in memory.");
+
+            for (int i = 0; i < testCount; i++)
+            {
+                var expectedMessage = logMessages[i];
+                Assert.IsTrue(allLogs.Any(entry => entry.Message == expectedMessage),
+                    $"Restored logs should contain: {expectedMessage}");
+            }
         }
     }
 }

@@ -14,32 +14,48 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP
 {
-    [Serializable]
     public class LogEntry
     {
-        public string message;
-        public string stackTrace;
-        public LogType logType;
-        public DateTime timestamp;
-        public string logTypeString;
+        public LogType LogType { get; set; }
+        public string Message { get; set; }
+        public DateTime Timestamp { get; set; }
+        public string? StackTrace { get; set; }
 
-        public LogEntry(string message, string stackTrace, LogType logType)
+        public LogEntry()
         {
-            this.message = message;
-            this.stackTrace = stackTrace;
-            this.logType = logType;
-            this.timestamp = DateTime.Now;
-            this.logTypeString = logType.ToString();
+            LogType = LogType.Log;
+            Message = string.Empty;
+            Timestamp = DateTime.Now;
+            StackTrace = null;
+        }
+        public LogEntry(LogType logType, string message)
+        {
+            LogType = logType;
+            Message = message;
+            Timestamp = DateTime.Now;
+        }
+        public LogEntry(LogType logType, string message, string? stackTrace = null)
+        {
+            LogType = logType;
+            Message = message;
+            Timestamp = DateTime.Now;
+            StackTrace = stackTrace;
+        }
+        public LogEntry(LogType logType, string message, DateTime timestamp, string? stackTrace = null)
+        {
+            LogType = logType;
+            Message = message;
+            Timestamp = timestamp;
+            StackTrace = stackTrace;
         }
 
         public override string ToString() => ToString(includeStackTrace: false);
 
         public string ToString(bool includeStackTrace)
         {
-            if (includeStackTrace && !string.IsNullOrEmpty(stackTrace))
-                return $"{timestamp:yyyy-MM-dd HH:mm:ss.fff} [{logTypeString}] {message}\nStack Trace:\n{stackTrace}";
-            else
-                return $"{timestamp:yyyy-MM-dd HH:mm:ss.fff} [{logTypeString}] {message}";
+            return includeStackTrace && !string.IsNullOrEmpty(StackTrace)
+                ? $"{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{LogType}] {Message}\nStack Trace:\n{StackTrace}"
+                : $"{Timestamp:yyyy-MM-dd HH:mm:ss.fff} [{LogType}] {Message}";
         }
     }
 }

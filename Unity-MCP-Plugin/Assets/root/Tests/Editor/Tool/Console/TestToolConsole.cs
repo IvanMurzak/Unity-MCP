@@ -325,18 +325,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange & Act
             var logEntry = new LogEntry(
-                "Test message",
-                "Test stack trace",
-                LogType.Warning
+                message: "Test message",
+                stackTrace: "Test stack trace",
+                logType: LogType.Warning
             );
 
             // Assert
-            Assert.AreEqual("Test message", logEntry.message);
-            Assert.AreEqual("Test stack trace", logEntry.stackTrace);
-            Assert.AreEqual(LogType.Warning, logEntry.logType);
-            Assert.AreEqual("Warning", logEntry.logTypeString);
-            Assert.IsTrue(logEntry.timestamp <= DateTime.Now);
-            Assert.IsTrue(logEntry.timestamp >= DateTime.Now.AddMinutes(-1)); // Should be very recent
+            Assert.AreEqual("Test message", logEntry.Message);
+            Assert.AreEqual("Test stack trace", logEntry.StackTrace);
+            Assert.AreEqual(LogType.Warning, logEntry.LogType);
+            Assert.IsTrue(logEntry.Timestamp <= DateTime.Now);
+            Assert.IsTrue(logEntry.Timestamp >= DateTime.Now.AddMinutes(-1)); // Should be very recent
         }
 
         [Test]
@@ -344,9 +343,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange - Test with Warning to avoid causing test failure
             var logEntry = new LogEntry(
-                "Test message",
-                "Test stack trace",
-                LogType.Warning
+                message: "Test message",
+                stackTrace: "Test stack trace",
+                logType: LogType.Warning
             );
 
             // Act
@@ -355,7 +354,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Assert
             Assert.IsTrue(result.Contains("[Warning]"), "Should contain log type");
             Assert.IsTrue(result.Contains("Test message"), "Should contain message");
-            Assert.IsTrue(result.Contains(logEntry.timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff")), "Should contain formatted timestamp");
+            Assert.IsTrue(result.Contains(logEntry.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff")), "Should contain formatted timestamp");
         }
 
         [Test]
@@ -363,16 +362,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Test Error log type creation directly (without using Debug.LogError)
             var errorLogEntry = new LogEntry(
-                "Error message",
-                "Error stack trace",
-                LogType.Error
+                message: "Error message",
+                stackTrace: "Error stack trace",
+                logType: LogType.Error
             );
 
             // Assert
-            Assert.AreEqual("Error message", errorLogEntry.message);
-            Assert.AreEqual("Error stack trace", errorLogEntry.stackTrace);
-            Assert.AreEqual(LogType.Error, errorLogEntry.logType);
-            Assert.AreEqual("Error", errorLogEntry.logTypeString);
+            Assert.AreEqual("Error message", errorLogEntry.Message);
+            Assert.AreEqual("Error stack trace", errorLogEntry.StackTrace);
+            Assert.AreEqual(LogType.Error, errorLogEntry.LogType);
             Assert.IsTrue(errorLogEntry.ToString().Contains("[Error]"), "Should format Error type correctly");
         }
 
@@ -381,16 +379,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Test Assert log type creation directly (without using Debug.LogAssertion)
             var assertLogEntry = new LogEntry(
-                "Assert message",
-                "Assert stack trace",
-                LogType.Assert
+                message: "Assert message",
+                stackTrace: "Assert stack trace",
+                logType: LogType.Assert
             );
 
             // Assert
-            Assert.AreEqual("Assert message", assertLogEntry.message);
-            Assert.AreEqual("Assert stack trace", assertLogEntry.stackTrace);
-            Assert.AreEqual(LogType.Assert, assertLogEntry.logType);
-            Assert.AreEqual("Assert", assertLogEntry.logTypeString);
+            Assert.AreEqual("Assert message", assertLogEntry.Message);
+            Assert.AreEqual("Assert stack trace", assertLogEntry.StackTrace);
+            Assert.AreEqual(LogType.Assert, assertLogEntry.LogType);
             Assert.IsTrue(assertLogEntry.ToString().Contains("[Assert]"), "Should format Assert type correctly");
         }
         [Test]
