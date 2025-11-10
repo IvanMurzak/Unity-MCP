@@ -25,6 +25,13 @@ namespace com.IvanMurzak.Unity.MCP
         static readonly object _lockObject = new();
         static volatile bool _isSubscribed = false;
 
+        static LogUtils()
+        {
+            if (!MainThread.Instance.IsMainThread)
+                throw new System.Exception($"{nameof(LogUtils)} must be initialized on the main thread.");
+            EnsureSubscribed();
+        }
+
         public static int LogEntries
         {
             get
@@ -48,10 +55,10 @@ namespace com.IvanMurzak.Unity.MCP
         /// Asynchronously saves all current log entries to the cache file.
         /// </summary>
         /// <returns>A task that completes when the save operation is finished.</returns>
-        public static async Task SaveToFile()
+        public static Task SaveToFile()
         {
             var logEntries = GetAllLogs();
-            await _logCache.CacheLogEntriesAsync(logEntries);
+            return _logCache.CacheLogEntriesAsync(logEntries);
         }
 
         /// <summary>
@@ -64,11 +71,6 @@ namespace com.IvanMurzak.Unity.MCP
             lock (_lockObject)
             {
                 _logEntries = new ConcurrentQueue<LogEntry>(logWrapper?.Entries ?? new LogEntry[0]);
-                // _logEntries.Clear();
-                // if (logWrapper?.Entries == null)
-                //     return;
-                // foreach (var entry in logWrapper.Entries)
-                //     _logEntries.Enqueue(entry);
             }
         }
 
@@ -90,14 +92,9 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
-        static LogUtils()
+        public static Task EnsureSubscribed()
         {
-            EnsureSubscribed();
-        }
-
-        public static void EnsureSubscribed()
-        {
-            MainThread.Instance.RunAsync(() =>
+            return MainThread.Instance.RunAsync(() =>
             {
                 lock (_lockObject)
                 {

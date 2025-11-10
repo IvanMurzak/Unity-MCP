@@ -16,11 +16,18 @@ namespace com.IvanMurzak.Unity.MCP
 {
     public class LogEntry
     {
-        public LogType LogType { get; }
-        public string Message { get; }
-        public DateTime Timestamp { get; }
-        public string? StackTrace { get; }
+        public LogType LogType { get; set; }
+        public string Message { get; set; }
+        public DateTime Timestamp { get; set; }
+        public string? StackTrace { get; set; }
 
+        public LogEntry()
+        {
+            LogType = LogType.Log;
+            Message = string.Empty;
+            Timestamp = DateTime.Now;
+            StackTrace = null;
+        }
         public LogEntry(LogType logType, string message)
         {
             LogType = logType;

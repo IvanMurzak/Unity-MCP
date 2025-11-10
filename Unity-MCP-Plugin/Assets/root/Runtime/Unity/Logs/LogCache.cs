@@ -14,6 +14,7 @@ using System.IO;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using com.IvanMurzak.ReflectorNet.Utils;
 using R3;
 using UnityEngine;
 
@@ -32,6 +33,9 @@ namespace com.IvanMurzak.Unity.MCP
 
         internal LogCache(string? cacheFilePath = null, string? cacheFileName = null, JsonSerializerOptions? jsonOptions = null)
         {
+            if (!MainThread.Instance.IsMainThread)
+                throw new System.Exception($"{nameof(LogUtils)} must be initialized on the main thread.");
+
             _cacheFilePath = cacheFilePath ?? (Application.isEditor
                 ? $"{Path.GetDirectoryName(Application.dataPath)}/Temp/mcp-server"
                 : $"{Application.persistentDataPath}/Temp/mcp-server");
@@ -77,13 +81,13 @@ namespace com.IvanMurzak.Unity.MCP
 
         public Task CacheLogEntriesAsync(LogEntry[] entries)
         {
-            return Task.Run(async () =>
+            return Task.Run(() =>
             {
-                await _fileLock.WaitAsync();
+                _fileLock.Wait();
                 try
                 {
                     var data = new LogWrapper { Entries = entries };
-                    var json = JsonSerializer.Serialize(data, _jsonOptions);
+                    var json = System.Text.Json.JsonSerializer.Serialize(data, _jsonOptions);
 
                     if (!Directory.Exists(_cacheFilePath))
                         Directory.CreateDirectory(_cacheFilePath);
@@ -102,16 +106,16 @@ namespace com.IvanMurzak.Unity.MCP
         }
         public Task<LogWrapper?> GetCachedLogEntriesAsync()
         {
-            return Task.Run(async () =>
+            return Task.Run(() =>
             {
-                await _fileLock.WaitAsync();
+                _fileLock.Wait();
                 try
                 {
                     if (!File.Exists(_cacheFile))
                         return null;
 
                     var json = File.ReadAllText(_cacheFile);
-                    return JsonSerializer.Deserialize<LogWrapper>(json, _jsonOptions);
+                    return System.Text.Json.JsonSerializer.Deserialize<LogWrapper>(json, _jsonOptions);
                 }
                 finally
                 {

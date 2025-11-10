@@ -15,5 +15,10 @@ namespace com.IvanMurzak.Unity.MCP
     public class LogWrapper
     {
         public LogEntry[]? Entries { get; set; }
+
+        public LogWrapper()
+        {
+            // none
+        }
     }
 }
