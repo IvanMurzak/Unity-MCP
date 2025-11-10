@@ -81,22 +81,28 @@ namespace com.IvanMurzak.Unity.MCP
 
         public Task CacheLogEntriesAsync(LogEntry[] entries)
         {
-            return Task.Run(() =>
+            return Task.Run(async () =>
             {
-                _fileLock.Wait();
+                await _fileLock.WaitAsync();
                 try
                 {
                     var data = new LogWrapper { Entries = entries };
-                    var json = System.Text.Json.JsonSerializer.Serialize(data, _jsonOptions);
 
                     if (!Directory.Exists(_cacheFilePath))
                         Directory.CreateDirectory(_cacheFilePath);
 
-                    // Atomic File Write
-                    File.WriteAllText(_cacheFile + ".tmp", json);
+                    // Stream JSON directly to file without creating entire JSON string in memory
+                    var tempFile = _cacheFile + ".tmp";
+                    using (var fileStream = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true))
+                    {
+                        await System.Text.Json.JsonSerializer.SerializeAsync(fileStream, data, _jsonOptions);
+                        await fileStream.FlushAsync();
+                    }
+
+                    // Atomic file replacement
                     if (File.Exists(_cacheFile))
                         File.Delete(_cacheFile);
-                    File.Move(_cacheFile + ".tmp", _cacheFile);
+                    File.Move(tempFile, _cacheFile);
                 }
                 finally
                 {
@@ -106,16 +112,16 @@ namespace com.IvanMurzak.Unity.MCP
         }
         public Task<LogWrapper?> GetCachedLogEntriesAsync()
         {
-            return Task.Run(() =>
+            return Task.Run(async () =>
             {
-                _fileLock.Wait();
+                await _fileLock.WaitAsync();
                 try
                 {
                     if (!File.Exists(_cacheFile))
                         return null;
 
-                    var json = File.ReadAllText(_cacheFile);
-                    return System.Text.Json.JsonSerializer.Deserialize<LogWrapper>(json, _jsonOptions);
+                    var fileStream = File.OpenRead(_cacheFile);
+                    return await System.Text.Json.JsonSerializer.DeserializeAsync<LogWrapper>(fileStream, _jsonOptions);
                 }
                 finally
                 {
