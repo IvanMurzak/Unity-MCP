@@ -120,7 +120,7 @@ namespace com.IvanMurzak.Unity.MCP
                     if (!File.Exists(_cacheFile))
                         return null;
 
-                    var fileStream = File.OpenRead(_cacheFile);
+                    using var fileStream = File.OpenRead(_cacheFile);
                     return await System.Text.Json.JsonSerializer.DeserializeAsync<LogWrapper>(fileStream, _jsonOptions);
                 }
                 finally
