@@ -183,7 +183,7 @@ namespace com.IvanMurzak.Unity.MCP
 
         public static async Task<bool> Connect()
         {
-            _logger.Log(MicrosoftLogLevel.Trace, "{method} called.",
+            _logger.LogTrace("{method} called.",
                 nameof(Connect));
 
             try
@@ -199,14 +199,14 @@ namespace com.IvanMurzak.Unity.MCP
             }
             finally
             {
-                _logger.Log(MicrosoftLogLevel.Trace, "{method} completed.",
+                _logger.LogTrace("{method} completed.",
                     nameof(Connect));
             }
         }
 
         public async Task Disconnect()
         {
-            _logger.Log(MicrosoftLogLevel.Trace, "{method} called.",
+            _logger.LogTrace("{method} called.",
                 nameof(Disconnect));
 
             try
@@ -236,14 +236,14 @@ namespace com.IvanMurzak.Unity.MCP
             }
             finally
             {
-                _logger.Log(MicrosoftLogLevel.Trace, "{method} completed.",
+                _logger.LogTrace("{method} completed.",
                     nameof(Disconnect));
             }
         }
 
         public void DisconnectImmediate()
         {
-            _logger.Log(MicrosoftLogLevel.Trace, "{method} called.",
+            _logger.LogTrace("{method} called.",
                 nameof(DisconnectImmediate));
 
             try
@@ -259,8 +259,6 @@ namespace com.IvanMurzak.Unity.MCP
                 {
                     try
                     {
-                        _logger.LogDebug("{method}: Acquiring connection mutex.",
-                            nameof(DisconnectImmediate));
                         _logger.LogDebug("{method}: Disconnecting McpPlugin instance.",
                             nameof(DisconnectImmediate));
                         mcpPlugin.DisconnectImmediate();
@@ -270,23 +268,18 @@ namespace com.IvanMurzak.Unity.MCP
                         _logger.LogError("{method}: Exception during disconnecting: {exception}",
                             nameof(DisconnectImmediate), e);
                     }
-                    finally
-                    {
-                        _logger.LogDebug("{method}: Releasing connection mutex.",
-                            nameof(DisconnectImmediate));
-                    }
                 }
             }
             finally
             {
-                _logger.Log(MicrosoftLogLevel.Trace, "{method} completed.",
+                _logger.LogTrace("{method} completed.",
                     nameof(DisconnectImmediate));
             }
         }
 
         public static void StaticDispose()
         {
-            _logger.Log(MicrosoftLogLevel.Trace, "{method} called.",
+            _logger.LogTrace("{method} called.",
                 nameof(StaticDispose));
 
             _connectionState.Dispose();

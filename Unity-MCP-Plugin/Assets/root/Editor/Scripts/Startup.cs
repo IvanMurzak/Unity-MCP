@@ -18,8 +18,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
     [InitializeOnLoad]
     public static partial class Startup
     {
-        static string DebugName => $"<b>[AI-Editor]</b>";
-
         static Startup()
         {
             UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
