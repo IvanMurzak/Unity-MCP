@@ -8,6 +8,7 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 
+#nullable enable
 using Extensions.Unity.PlayerPrefsEx;
 using UnityEditor;
 
@@ -34,7 +35,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 return;
 
             // Perform initialization
-            McpPluginUnity.Init();
+            UnityMcpPlugin.InitSingletonIfNeeded();
             MainWindowEditor.ShowWindow();
 
             isInitialized.Value = true;

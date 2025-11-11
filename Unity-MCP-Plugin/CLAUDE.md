@@ -35,7 +35,7 @@ Unity-MCP is a bridge between Large Language Models (LLMs) and Unity Editor that
 ```
 Assets/root/
 ├── Runtime/                 # Core runtime functionality
-│   ├── Config/             # McpPluginUnity configuration system
+│   ├── Config/             # UnityMcpPlugin configuration system
 │   ├── Extensions/         # Unity-specific extension methods
 │   ├── JsonConverters/     # Custom JSON serialization for Unity types
 │   ├── ReflectionConverters/ # Advanced reflection system for Unity objects
@@ -58,7 +58,7 @@ Tools are implemented using attributes:
 - **Reflection System**: Custom converters in `ReflectionConverters/` enable AI to read/write complex Unity data structures
 
 ### Connection Management
-- **Configuration**: `McpPluginUnity` class manages connection settings (host, port, logging level)
+- **Configuration**: `UnityMcpPlugin` class manages connection settings (host, port, logging level)
 - **Transport**: SignalR-based communication with external MCP clients
 - **Real-time Updates**: Reactive extensions (R3) for connection state management
 
@@ -86,7 +86,7 @@ Tools are implemented using attributes:
 - Use structured error responses for AI consumption
 - Include helpful context in error messages
 - Handle both Unity-specific and general exceptions
-- Log errors with appropriate log levels using `McpPluginUnity.LogLevel`
+- Log errors with appropriate log levels using `UnityMcpPlugin.LogLevel`
 
 ## Important Notes
 
@@ -97,7 +97,7 @@ Tools are implemented using attributes:
 
 ### Configuration
 - Main configuration through `Window/AI Game Developer`
-- Connection settings stored in `McpPluginUnity.Data`
+- Connection settings stored in `UnityMcpPlugin.Data`
 - Runtime configuration via `Assets/Resources/Unity-MCP-ConnectionConfig.json`
 
 ### Dependencies

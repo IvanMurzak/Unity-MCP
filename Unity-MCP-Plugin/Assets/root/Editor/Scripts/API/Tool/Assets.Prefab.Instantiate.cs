@@ -7,12 +7,12 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+
+#nullable enable
 using System.ComponentModel;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
-using com.IvanMurzak.Unity.MCP.Common;
-using com.IvanMurzak.Unity.MCP.Editor.Utils;
-using com.IvanMurzak.Unity.MCP.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEditor;
 using UnityEngine;
 
@@ -52,7 +52,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             {
                 parentGo = GameObjectUtils.FindByPath(parentPath);
                 if (parentGo == null)
-                    return Tool_GameObject.Error.NotFoundGameObjectAtPath(parentPath);
+                    return Tool_GameObject.Error.NotFoundGameObjectAtPath(parentPath!);
             }
 
             position ??= Vector3.zero;
@@ -60,6 +60,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             scale ??= Vector3.one;
 
             var go = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+            if (go == null)
+                return $"[Error] Failed to instantiate prefab from path '{prefabAssetPath}'.";
+
             go.name = name ?? prefab.name;
             if (parentGo != null)
                 go.transform.SetParent(parentGo.transform, false);

@@ -7,11 +7,11 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
 using System;
+using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet;
-using com.IvanMurzak.Unity.MCP.Common.Model;
-using com.IvanMurzak.Unity.MCP.Common;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -21,10 +21,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
     {
         public ValidateToolResultExecutor(Reflector? reflector = null) : base()
         {
-            reflector ??= McpPlugin.Instance!.McpRunner.Reflector ??
+            reflector ??= McpPlugin.McpPlugin.Instance!.McpManager.Reflector ??
                 throw new ArgumentNullException(nameof(reflector), "Reflector cannot be null. Ensure McpPlugin is initialized before using this executor.");
 
-            SetAction<IResponseData<ResponseCallTool>, IResponseData<ResponseCallTool>>(result =>
+            SetAction<ResponseData<ResponseCallTool>, ResponseData<ResponseCallTool>>(result =>
             {
                 var jsonResult = result.ToJson(reflector);
                 Debug.Log($"Tool execution result:\n{jsonResult}");

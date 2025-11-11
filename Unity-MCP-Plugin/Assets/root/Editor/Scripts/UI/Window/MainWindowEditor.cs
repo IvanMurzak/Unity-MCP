@@ -8,7 +8,8 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 
-using com.IvanMurzak.Unity.MCP.Utils;
+#nullable enable
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using R3;
 using UnityEditor;
 using UnityEngine;
@@ -30,31 +31,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public static void ShowWindowVoid() => ShowWindow();
 
         public void Invalidate() => CreateGUI();
-        void OnValidate() => McpPluginUnity.Validate();
+        void OnValidate() => UnityMcpPlugin.Instance.Validate();
 
         private void SaveChanges(string message)
         {
-            if (McpPluginUnity.IsLogActive(LogLevel.Info))
+            if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                 Debug.Log(message);
 
             saveChangesMessage = message;
 
-            Undo.RecordObject(McpPluginUnity.AssetFile, message); // Undo record started
+            Undo.RecordObject(UnityMcpPlugin.AssetFile, message); // Undo record started
             base.SaveChanges();
-            McpPluginUnity.Save();
-            McpPluginUnity.InvalidateAssetFile();
-            EditorUtility.SetDirty(McpPluginUnity.AssetFile); // Undo record completed
+            UnityMcpPlugin.Instance.Save();
+            UnityMcpPlugin.InvalidateAssetFile();
+            UnityMcpPlugin.MarkAssetFileDirty(); // Undo record completed
         }
 
-        private void OnChanged(McpPluginUnity.Data data) => Repaint();
+        private void OnChanged(UnityMcpPlugin.UnityConnectionConfig data) => Repaint();
 
         private void OnEnable()
         {
-            McpPluginUnity.SubscribeOnChanged(OnChanged);
+            _disposables.Add(UnityMcpPlugin.SubscribeOnChanged(OnChanged));
         }
         private void OnDisable()
         {
-            McpPluginUnity.UnsubscribeOnChanged(OnChanged);
             _disposables.Clear();
         }
     }

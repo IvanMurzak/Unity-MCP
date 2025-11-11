@@ -6,7 +6,7 @@
                 <ui:VisualElement style="flex-grow: 1; background-color: rgba(0, 0, 0, 0);">
                     <ui:Label text="AI Game Developer" name="labelSettings" class="Header" />
                     <ui:VisualElement name="divider" class="Divider" />
-                    <ui:EnumField label="Log Level" name="dropdownLogLevel" type="com.IvanMurzak.Unity.MCP.Utils.LogLevel, com.IvanMurzak.Unity.MCP.Runtime" value="Warning" class="ContentItem" style="align-self: flex-start;" />
+                    <ui:EnumField label="Log Level" name="dropdownLogLevel" type="com.IvanMurzak.Unity.MCP.Runtime.Utils.LogLevel, com.IvanMurzak.Unity.MCP.Runtime" value="Warning" class="ContentItem" style="align-self: flex-start;" />
                     <ui:IntegerField label="Timeout (ms)" name="inputTimeoutMs" value="10000" class="ContentItem" style="align-self: flex-start;" />
                     <ui:TextField picking-mode="Ignore" label="Version" value="0.0.0" readonly="true" name="currentVersion" focusable="false" class="ContentItem transparent-text-field" style="align-self: flex-start;" />
                 </ui:VisualElement>
@@ -27,38 +27,8 @@
             <ui:VisualElement name="divider" class="Divider" style="flex-grow: 1;" />
             <ui:Label text="Configure MCP Client" class="Header" />
             <ui:Label text="At least one client should be configured.&#10;Some clients need restart after configuration." class="section-desc" />
-            <ui:VisualElement name="ConfigureClient-Claude-Desktop" class="Frame-Group" style="flex-grow: 1;">
-                <ui:Label text="Claude Desktop" class="section-title" />
-                <ui:VisualElement class="row">
-                    <ui:VisualElement name="configureStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
-                    <ui:Label text="Not configured" name="configureStatusText" style="flex-grow: 1;" />
-                    <ui:Button name="btnConfigure" text="Configure" class="Button-Primary" />
-                </ui:VisualElement>
-            </ui:VisualElement>
-            <ui:VisualElement name="ConfigureClient-Claude-Code" class="Frame-Group" style="flex-grow: 1;">
-                <ui:Label text="Claude Code" class="section-title" />
-                <ui:VisualElement class="row">
-                    <ui:VisualElement name="configureStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
-                    <ui:Label text="Not configured" name="configureStatusText" style="flex-grow: 1;" />
-                    <ui:Button name="btnConfigure" text="Configure" class="Button-Primary" />
-                </ui:VisualElement>
-            </ui:VisualElement>
-            <ui:VisualElement name="ConfigureClient-VS-Code" class="Frame-Group" style="flex-grow: 1;">
-                <ui:Label text="VS Code (Copilot)" class="section-title" />
-                <ui:VisualElement class="row">
-                    <ui:VisualElement name="configureStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
-                    <ui:Label text="Not configured" name="configureStatusText" style="flex-grow: 1;" />
-                    <ui:Button name="btnConfigure" text="Configure" class="Button-Primary" />
-                </ui:VisualElement>
-            </ui:VisualElement>
-            <ui:VisualElement name="ConfigureClient-Cursor" class="Frame-Group" style="flex-grow: 1;">
-                <ui:Label text="Cursor" class="section-title" />
-                <ui:VisualElement class="row">
-                    <ui:VisualElement name="configureStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
-                    <ui:Label text="Not configured" name="configureStatusText" style="flex-grow: 1;" />
-                    <ui:Button name="btnConfigure" text="Configure" class="Button-Primary" />
-                </ui:VisualElement>
-            </ui:VisualElement>
+            <!-- Client panels are dynamically added here from ClientConfigPanel.uxml template -->
+            <ui:VisualElement name="ConfigureClientsContainer" />
             <ui:VisualElement name="ConfigureClient-Custom" class="Frame-Group" style="flex-grow: 1;">
                 <ui:Label text="Manual configuration" class="section-title" />
                 <ui:Label text="Copy paste the json into your MCP Client to configure it." name="Label" class="section-desc" />

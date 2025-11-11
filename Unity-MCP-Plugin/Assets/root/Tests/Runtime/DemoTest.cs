@@ -7,6 +7,8 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
+#nullable enable
 using System.Collections;
 using NUnit.Framework;
 using UnityEngine;
@@ -32,6 +34,9 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Tests
         [UnityTest]
         public IEnumerator Always_Valid_Test()
         {
+            Debug.Log($"[{nameof(DemoTest)}] Test Log Message ABC");
+            Debug.Log($"[{nameof(DemoTest)}] Test Log Message ABC 123");
+
             Assert.IsTrue(true, "This test is a placeholder and should be replaced with actual test logic.");
             yield return null;
         }

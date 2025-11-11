@@ -9,8 +9,7 @@
 */
 
 #nullable enable
-using System.Threading.Tasks;
-using com.IvanMurzak.Unity.MCP.Common;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEditor;
 using UnityEngine;
 
@@ -19,11 +18,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
     [InitializeOnLoad]
     public static partial class Startup
     {
-        static string DebugName => $"<b>[AI-Editor]</b>";
-
         static Startup()
         {
-            McpPluginUnity.BuildAndStart();
+            UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
+
+            if (!EnvironmentUtils.IsCi())
+                UnityMcpPlugin.ConnectIfNeeded();
+
             Server.DownloadServerBinaryIfNeeded();
 
             if (Application.dataPath.Contains(" "))
@@ -32,19 +33,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             SubscribeOnEditorEvents();
 
             // Initialize sub-systems
-            API.Tool_TestRunner.Init();
-        }
-
-        static async void Disconnect()
-        {
-            var instance = McpPlugin.Instance;
-            if (instance == null)
-            {
-                await McpPlugin.StaticDisposeAsync();
-                return; // ignore
-            }
-
-            await (instance.RpcRouter?.Disconnect() ?? Task.CompletedTask);
+            LogUtils.EnsureSubscribed(); // log collector
+            API.Tool_TestRunner.Init(); // test runner
         }
     }
 }

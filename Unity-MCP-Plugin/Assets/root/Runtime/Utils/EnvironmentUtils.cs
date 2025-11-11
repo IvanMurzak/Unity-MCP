@@ -11,9 +11,9 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
-using com.IvanMurzak.Unity.MCP.Common;
+using com.IvanMurzak.McpPlugin.Common.Utils;
 
-namespace com.IvanMurzak.Unity.MCP.Utils
+namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
 {
     public static class EnvironmentUtils
     {

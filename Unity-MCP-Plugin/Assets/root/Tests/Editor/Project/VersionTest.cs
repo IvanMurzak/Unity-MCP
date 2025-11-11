@@ -7,6 +7,8 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
+#nullable enable
 using System.Collections;
 using System.IO;
 using System.Linq;
@@ -38,8 +40,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator Version_Should_Match_PackageJson_Version()
         {
-            string packageJsonContent = null;
-            string packageJsonPath = null;
+            string? packageJsonContent = null;
+            string? packageJsonPath = null;
 
             // Try to get package info using PackageManager first
             var listRequest = Client.List(
@@ -87,7 +89,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 "Version not found in package.json");
 
             // Compare versions
-            var pluginVersion = McpPluginUnity.Version;
+            var pluginVersion = UnityMcpPlugin.Version;
             Assert.AreEqual(packageJson.version, pluginVersion,
                 $"Version mismatch: package.json has '{packageJson.version}' but Startup.Version is '{pluginVersion}'. Package.json path: {packageJsonPath}");
 
@@ -98,7 +100,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [System.Serializable]
         private class PackageJsonData
         {
-            public string version;
+            public string? version;
         }
     }
 }

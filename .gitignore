@@ -1,1 +1,7 @@
 .claude
+.aider*
+.roo
+.CONVENTIONS.md
+commands/TestResults
+commands/.env
+!commands/.env.example

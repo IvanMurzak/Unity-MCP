@@ -10,10 +10,10 @@ The `bump-version.ps1` script automates version updates across all project files
 
 ```powershell
 # Preview what changes will be made
-.\bump-version.ps1 -NewVersion "0.18.0" -WhatIf
+.\commands\bump-version.ps1 -NewVersion "0.18.0" -WhatIf
 
 # Apply the version bump
-.\bump-version.ps1 -NewVersion "0.18.0"
+.\commands\bump-version.ps1 -NewVersion "0.18.0"
 ```
 
 ## Prerequisites
@@ -25,14 +25,14 @@ The `bump-version.ps1` script automates version updates across all project files
 ### ✅ Automated Updates
 The script automatically updates version numbers in:
 
-| File | Location | Description |
-|------|----------|-------------|
-| `README.md` | Download URL section | Download installer URL |
-| `Unity-MCP-Server/server.json` | Version field (2 occurrences) | Server version (2 occurrences) |
-| `AssetStore-Installer/.../Installer.cs` | Version constant | C# version constant |
-| `Unity-MCP-Plugin/.../package.json` | Version field | Unity package version |
-| `Unity-MCP-Plugin/.../README.md` | Download URL section | Plugin download URL |
-| `Unity-MCP-Plugin/.../McpPluginUnity.Startup.cs` | Version constant | Plugin C# version constant |
+| File                                             | Location                      | Description                    |
+| ------------------------------------------------ | ----------------------------- | ------------------------------ |
+| `README.md`                                      | Download URL section          | Download installer URL         |
+| `Unity-MCP-Server/server.json`                   | Version field (2 occurrences) | Server version (2 occurrences) |
+| `Installer/.../Installer.cs`                     | Version constant              | C# version constant            |
+| `Unity-MCP-Plugin/.../package.json`              | Version field                 | Unity package version          |
+| `Unity-MCP-Plugin/.../README.md`                 | Download URL section          | Plugin download URL            |
+| `Unity-MCP-Plugin/.../UnityMcpPlugin.Startup.cs` | Version constant              | Plugin C# version constant     |
 
 ### 🔍 Preview Mode
 Use `-WhatIf` to see exactly what changes will be made without applying them:
@@ -84,10 +84,10 @@ git commit -m "chore: Bump version from 0.17.1 to 0.18.0"
 
 ### Command Line Parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
+| Parameter     | Type   | Description                                      |
+| ------------- | ------ | ------------------------------------------------ |
 | `-NewVersion` | String | New semantic version (e.g., "0.18.0") - Required |
-| `-WhatIf` | Switch | Preview changes without applying |
+| `-WhatIf`     | Switch | Preview changes without applying                 |
 
 ### Usage Syntax
 
