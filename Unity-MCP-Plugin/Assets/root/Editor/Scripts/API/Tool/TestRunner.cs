@@ -66,7 +66,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             else
             {
                 if (UnityMcpPlugin.IsLogEnabled(LogLevel.Trace))
-                    Debug.Log($"[{nameof(TestRunnerApi)}] Callbacks already registered globally - skipping registration.");
+                    Debug.LogWarning($"[{nameof(TestRunnerApi)}] Callbacks already registered globally - skipping registration.");
             }
 
             return testRunnerApi;
