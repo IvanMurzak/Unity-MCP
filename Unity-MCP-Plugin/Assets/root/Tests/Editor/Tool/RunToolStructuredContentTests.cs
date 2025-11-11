@@ -17,6 +17,7 @@ using System.Threading;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet;
+using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
@@ -142,7 +143,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNotNull(result, "Result should not be null");
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
             Assert.AreEqual(expectedValue.ToString(), result.GetMessage(), "Should return bool as string");
-            Assert.IsNull(result.StructuredContent, "Primitive types should not have structured content");
+            Assert.IsNull(result.StructuredContent![JsonSchema.Result], "Primitive types should not have structured content");
 
             // Verify the bool value can be parsed back to the original value
             var parsedValue = bool.Parse(result.GetMessage());
@@ -371,7 +372,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
             Assert.IsNotNull(result.StructuredContent, "Array should have structured content");
 
-            var structuredContent = result.StructuredContent!.AsArray();
+            var structuredContent = result.StructuredContent![JsonSchema.Result]!.AsArray();
             Assert.AreEqual(expectedValue.Length, structuredContent.Count, $"Array should have {expectedValue.Length} items");
             for (int i = 0; i < expectedValue.Length; i++)
             {
@@ -440,18 +441,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
             Assert.IsNotNull(result.StructuredContent, "Color should have structured content");
 
-            var structuredContent = result.StructuredContent;
-            Assert.IsNotNull(structuredContent!["r"], "Should have r property");
-            Assert.IsNotNull(structuredContent!["g"], "Should have g property");
-            Assert.IsNotNull(structuredContent!["b"], "Should have b property");
-            Assert.IsNotNull(structuredContent!["a"], "Should have a property");
+            var structuredContent = result.StructuredContent![JsonSchema.Result]!;
+            Assert.IsNotNull(structuredContent["r"], "Should have r property");
+            Assert.IsNotNull(structuredContent["g"], "Should have g property");
+            Assert.IsNotNull(structuredContent["b"], "Should have b property");
+            Assert.IsNotNull(structuredContent["a"], "Should have a property");
 
             // Verify the Color can be reconstructed from structured content
             var reconstructedColor = new Color(
-                structuredContent!["r"]!.GetValue<float>(),
-                structuredContent!["g"]!.GetValue<float>(),
-                structuredContent!["b"]!.GetValue<float>(),
-                structuredContent!["a"]!.GetValue<float>()
+                structuredContent["r"]!.GetValue<float>(),
+                structuredContent["g"]!.GetValue<float>(),
+                structuredContent["b"]!.GetValue<float>(),
+                structuredContent["a"]!.GetValue<float>()
             );
             Assert.AreEqual(expectedValue, reconstructedColor, "Reconstructed Color should match original");
         }
