@@ -12,7 +12,7 @@
 using System.Collections.Generic;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.Unity.MCP.Editor.API.TestRunner;
-using com.IvanMurzak.Unity.MCP.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEditor;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;

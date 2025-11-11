@@ -23,7 +23,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
 {
     public class TestResultCollector : ICallbacks
     {
-        static int counter = 0;
+        static volatile int counter = 0;
 
         readonly object _logsMutex = new();
         readonly List<TestResultData> _results = new();
@@ -138,13 +138,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
                     includeMessageStacktrace: IncludeMessageStacktrace.Value,
                     includeLogsStacktrace: IncludeLogsStacktrace.Value);
 
-                var jsonNode = System.Text.Json.JsonSerializer.SerializeToNode(structuredResponse);
+                var mcpPlugin = UnityMcpPlugin.Instance.McpPluginInstance ?? throw new InvalidOperationException("MCP Plugin instance is not available.");
+                var jsonOptions = mcpPlugin.McpManager.Reflector.JsonSerializerOptions;
+                var jsonNode = System.Text.Json.JsonSerializer.SerializeToNode(structuredResponse, jsonOptions);
                 var jsonString = jsonNode?.ToJsonString();
 
-                var response = ResponseCallTool
+                var response = ResponseCallValueTool<TestRunResponse>
                     .SuccessStructured(
                         structuredContent: jsonNode,
-                        message: jsonString ?? "[Success] Test execution completed.")
+                        message: jsonString ?? "[Success] Test execution completed.") // Needed for MCP backward compatibility: https://modelcontextprotocol.io/specification/2025-06-18/server/tools#structured-content
                     .SetRequestID(requestId);
 
                 _ = UnityMcpPlugin.NotifyToolRequestCompleted(new RequestToolCompletedData

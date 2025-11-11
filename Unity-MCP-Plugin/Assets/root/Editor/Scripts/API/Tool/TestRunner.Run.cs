@@ -34,7 +34,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         )]
         [Description(@"Execute Unity tests and return detailed results. Supports filtering by test mode, assembly, namespace, class, and method.
 Be default recommended to use 'EditMode' for faster iteration during development.")]
-        public static async Task<ResponseCallTool> Run
+        public static async Task<ResponseCallValueTool<TestRunResponse>> Run
         (
             [Description("Test mode to run. Options: '" + nameof(TestMode.EditMode) + "', '" + nameof(TestMode.PlayMode) + "'. Default: '" + nameof(TestMode.EditMode) + "'")]
             TestMode testMode = TestMode.EditMode,
@@ -66,7 +66,7 @@ Be default recommended to use 'EditMode' for faster iteration during development
         )
         {
             if (requestId == null || string.IsNullOrWhiteSpace(requestId))
-                return ResponseCallTool.Error("Original request with valid RequestID must be provided.");
+                return ResponseCallValueTool<TestRunResponse>.Error("Original request with valid RequestID must be provided.");
 
             return await MainThread.Instance.RunAsync(async () =>
             {
@@ -92,14 +92,14 @@ Be default recommended to use 'EditMode' for faster iteration during development
 
                     var validation = await ValidateTestFilters(TestRunnerApi, testMode, filterParams);
                     if (validation != null)
-                        return ResponseCallTool.Error(validation).SetRequestID(requestId);
+                        return ResponseCallValueTool<TestRunResponse>.Error(validation).SetRequestID(requestId);
 
                     var filter = CreateTestFilter(testMode, filterParams);
 
                     // Delay test running, first need to return response to caller
                     MainThread.Instance.Run(() => TestRunnerApi.Execute(new ExecutionSettings(filter)));
 
-                    return ResponseCallTool.Processing().SetRequestID(requestId);
+                    return ResponseCallValueTool<TestRunResponse>.Processing().SetRequestID(requestId);
                 }
                 catch (Exception ex)
                 {
@@ -108,7 +108,7 @@ Be default recommended to use 'EditMode' for faster iteration during development
                         Debug.LogException(ex);
                         Debug.LogError($"[TestRunner] ------------------------------------- Exception {testMode} tests.");
                     }
-                    return ResponseCallTool.Error(Error.TestExecutionFailed(ex.Message)).SetRequestID(requestId);
+                    return ResponseCallValueTool<TestRunResponse>.Error(Error.TestExecutionFailed(ex.Message)).SetRequestID(requestId);
                 }
             }).Unwrap();
         }
