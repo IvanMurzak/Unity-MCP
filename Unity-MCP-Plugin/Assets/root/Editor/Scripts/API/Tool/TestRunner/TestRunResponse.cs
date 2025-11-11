@@ -9,16 +9,14 @@
 */
 
 #nullable enable
-using System;
+using System.Collections.Generic;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
 {
-    public class TestResultData
+    public class TestRunResponse
     {
-        public string Name { get; set; } = string.Empty;
-        public TestResultStatus Status { get; set; } = TestResultStatus.Skipped;
-        public TimeSpan Duration { get; set; }
-        public string? Message { get; set; }
-        public string? StackTrace { get; set; }
+        public TestSummaryData Summary { get; set; } = new TestSummaryData();
+        public List<TestResultData> Results { get; set; } = new List<TestResultData>();
+        public List<TestLogEntry>? Logs { get; set; }
     }
 }

@@ -12,6 +12,7 @@
 using System.Collections.Generic;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.Unity.MCP.Editor.API.TestRunner;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEditor;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
@@ -25,6 +26,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         static readonly object _lock = new();
         static volatile TestRunnerApi? _testRunnerApi = null!;
         static volatile TestResultCollector? _resultCollector = null!;
+        static volatile bool _callbacksRegistered = false;
+
         static Tool_TestRunner()
         {
             _testRunnerApi ??= CreateInstance();
@@ -44,12 +47,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         }
         public static TestRunnerApi CreateInstance()
         {
-            // if (UnityMcpPlugin.IsLogActive(MCP.Utils.LogLevel.Trace))
-            //     Debug.Log($"[{nameof(TestRunnerApi)}] Ctor.");
+            if (UnityMcpPlugin.IsLogEnabled(LogLevel.Trace))
+                Debug.Log($"[{nameof(TestRunnerApi)}] Creating new instance. Existing API: {_testRunnerApi != null}, Existing Collector: {_resultCollector != null}, Callbacks Registered: {_callbacksRegistered}");
 
             _resultCollector ??= new TestResultCollector();
             var testRunnerApi = ScriptableObject.CreateInstance<TestRunnerApi>();
-            testRunnerApi.RegisterCallbacks(_resultCollector);
+
+            // Only register callbacks once globally to prevent accumulation
+            // Unity's TestRunnerApi maintains a static callback list, so multiple RegisterCallbacks calls add duplicates
+            if (!_callbacksRegistered)
+            {
+                if (UnityMcpPlugin.IsLogEnabled(LogLevel.Trace))
+                    Debug.Log($"[{nameof(TestRunnerApi)}] Registering callbacks for the first (and only) time.");
+
+                testRunnerApi.RegisterCallbacks(_resultCollector);
+                _callbacksRegistered = true;
+            }
+            else
+            {
+                if (UnityMcpPlugin.IsLogEnabled(LogLevel.Trace))
+                    Debug.LogWarning($"[{nameof(TestRunnerApi)}] Callbacks already registered globally - skipping registration.");
+            }
+
             return testRunnerApi;
         }
 
