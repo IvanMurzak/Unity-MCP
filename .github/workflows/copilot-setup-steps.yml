@@ -1,0 +1,51 @@
+name: "Copilot Setup Steps"
+
+# Automatically run the setup steps when they are changed to allow for easy validation, and
+# allow manual testing through the repository's "Actions" tab
+on:
+  workflow_dispatch:
+  # push:
+  #   paths:
+  #     - .github/workflows/copilot-setup-steps.yml
+  # pull_request:
+  #   paths:
+  #     - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  # The job MUST be called `copilot-setup-steps` or it will not be picked up by Copilot.
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+
+    # Set the permissions to the lowest permissions possible needed for your steps.
+    # Copilot will be given its own token for its operations.
+    permissions:
+      # If you want to clone the repository as part of your setup steps, for example to install dependencies, you'll need the `contents: read` permission. If you don't clone the repository in your setup steps, Copilot will do this for you automatically after the steps complete.
+      contents: read
+
+    # You can define any steps you want, and they will run before the agent starts.
+    # If you do not check out your code, Copilot will do this for you.
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Install Unity-MCP-Server docker image
+        run: docker run -d -p 9090:9090 --name unity-mcp-server ivanmurzakdev/unity-mcp-server:latest
+
+      - name: Install Unity Editor docker image
+        run: docker run -d -p 9090:9090 -e projectPath --name unity-editor unityci/editor:ubuntu-2022.3.61f1-linux-il2cpp-3
+
+      #  - uses: game-ci/unity-test-runner@v4
+      #   id: tests
+      #   env:
+      #     UNITY_LICENSE:  ${{ secrets.UNITY_LICENSE }}
+      #     UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
+      #     UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+      #   with:
+      #     projectPath:    ${{ inputs.projectPath }}
+      #     unityVersion:   ${{ inputs.unityVersion }}
+      #     testMode:       ${{ inputs.testMode }}
+      #     customImage:    ${{ steps.custom_image.outputs.image }}
+      #     githubToken:    ${{ secrets.GITHUB_TOKEN }}
+      #     checkName:      ${{ inputs.unityVersion }} ${{ inputs.testMode }} ${{ matrix.platform }} Test Results
+      #     artifactsPath:  artifacts-${{ inputs.unityVersion }}-${{ inputs.testMode }}-${{ matrix.platform }}
+      #     customParameters: -CI true -GITHUB_ACTIONS true
