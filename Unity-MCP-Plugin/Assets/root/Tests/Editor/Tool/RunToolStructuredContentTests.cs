@@ -66,7 +66,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNotNull(result, "Result should not be null");
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
             Assert.AreEqual(expectedValue.ToString(), result.GetMessage(), "Should return int as string");
-            Assert.IsNull(result.StructuredContent, "Primitive types should not have structured content");
+            Assert.IsNull(result.StructuredContent![JsonSchema.Result], "Primitive types should not have structured content");
 
             // Verify the int value can be parsed back to the original value
             var parsedValue = int.Parse(result.GetMessage());
@@ -92,7 +92,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNotNull(result, "Result should not be null");
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
             Assert.AreEqual(expectedValue, result.GetMessage(), "Should return string value");
-            Assert.IsNull(result.StructuredContent, "String is primitive and should not have structured content");
+            Assert.IsNull(result.StructuredContent![JsonSchema.Result], "String is primitive and should not have structured content");
 
             // Verify the string value matches exactly (no corruption)
             Assert.AreEqual(expectedValue, result.GetMessage(), "String should match original value exactly");
@@ -117,7 +117,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNotNull(result, "Result should not be null");
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
             Assert.AreEqual(expectedValue.ToString(), result.GetMessage(), "Should return float as string");
-            Assert.IsNull(result.StructuredContent, "Primitive types should not have structured content");
+            Assert.IsNull(result.StructuredContent![JsonSchema.Result], "Primitive types should not have structured content");
 
             // Verify the float value can be parsed back to the original value
             var parsedValue = float.Parse(result.GetMessage());
@@ -169,7 +169,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNotNull(result, "Result should not be null");
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
             Assert.AreEqual(expectedEnumValue.ToString(), result.GetMessage(), "Should return enum as string");
-            Assert.IsNull(result.StructuredContent, "Enum is primitive and should not have structured content");
+            Assert.IsNull(result.StructuredContent![JsonSchema.Result], "Enum is primitive and should not have structured content");
 
             // Verify the enum value can be parsed back to the original value
             var parsedValue = Enum.Parse(typeof(ResponseStatus), result.GetMessage());
@@ -215,7 +215,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNotNull(result, "Result should not be null");
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
             Assert.AreEqual(expectedValue.ToString(), result.GetMessage(), "Should return Microsoft.Extensions.Logging.LogLevel as string");
-            Assert.IsNull(result.StructuredContent, "Enum is primitive and should not have structured content");
+            Assert.IsNull(result.StructuredContent![JsonSchema.Result], "Enum is primitive and should not have structured content");
 
             // Verify the enum value can be parsed back to the original value
             var parsedValue = Enum.Parse(typeof(Microsoft.Extensions.Logging.LogLevel), result.GetMessage());
@@ -246,10 +246,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
             Assert.IsNotNull(result.StructuredContent, "Custom class should have structured content");
 
-            var structuredContent = result.StructuredContent;
+            var structuredContent = result.StructuredContent![JsonSchema.Result]!;
 
             // Check if properties are in camelCase (name, age) or PascalCase (Name, Age)
-            var nameNode = structuredContent!["name"] ?? structuredContent["Name"];
+            var nameNode = structuredContent["name"] ?? structuredContent["Name"];
             var ageNode = structuredContent["age"] ?? structuredContent["Age"];
 
             Assert.IsNotNull(nameNode, "Should have name/Name property");
@@ -283,8 +283,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
             Assert.IsNotNull(result.StructuredContent, "Nested class should have structured content");
 
-            var structuredContent = result.StructuredContent;
-            var companyNameNode = structuredContent!["companyName"] ?? structuredContent["CompanyName"];
+            var structuredContent = result.StructuredContent![JsonSchema.Result]!;
+            var companyNameNode = structuredContent["companyName"] ?? structuredContent["CompanyName"];
             var employeeNode = structuredContent["employee"] ?? structuredContent["Employee"];
 
             Assert.IsNotNull(companyNameNode, "Should have companyName/CompanyName property");
@@ -316,7 +316,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
             Assert.IsNotNull(result.StructuredContent, "List should have structured content");
 
-            var structuredContent = result.StructuredContent!.AsArray();
+            var structuredContent = result.StructuredContent![JsonSchema.Result]!.AsArray();
             Assert.AreEqual(expectedValue.Count, structuredContent.Count, $"List should have {expectedValue.Count} items");
             for (int i = 0; i < expectedValue.Count; i++)
             {
@@ -344,11 +344,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
             Assert.IsNotNull(result.StructuredContent, "Dictionary should have structured content");
 
-            var structuredContent = result.StructuredContent;
+            var structuredContent = result.StructuredContent![JsonSchema.Result]!;
             foreach (var kvp in expectedValue)
             {
-                Assert.IsNotNull(structuredContent?[kvp.Key], $"Should have {kvp.Key}");
-                Assert.AreEqual(kvp.Value, structuredContent?[kvp.Key]?.GetValue<string>(), $"{kvp.Key} value should match");
+                Assert.IsNotNull(structuredContent[kvp.Key], $"Should have {kvp.Key}");
+                Assert.AreEqual(kvp.Value, structuredContent[kvp.Key]?.GetValue<string>(), $"{kvp.Key} value should match");
             }
         }
 
@@ -404,19 +404,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
             Assert.IsNotNull(result.StructuredContent, "Vector3 should have structured content");
 
-            var structuredContent = result.StructuredContent;
-            Assert.IsNotNull(structuredContent!["x"], "Should have x property");
-            Assert.IsNotNull(structuredContent!["y"], "Should have y property");
-            Assert.IsNotNull(structuredContent!["z"], "Should have z property");
-            Assert.AreEqual(expectedValue.x, structuredContent!["x"]?.GetValue<float>(), 0.001f, "X should match");
-            Assert.AreEqual(expectedValue.y, structuredContent!["y"]?.GetValue<float>(), 0.001f, "Y should match");
-            Assert.AreEqual(expectedValue.z, structuredContent!["z"]?.GetValue<float>(), 0.001f, "Z should match");
+            var structuredContent = result.StructuredContent![JsonSchema.Result]!;
+            Assert.IsNotNull(structuredContent["x"], "Should have x property");
+            Assert.IsNotNull(structuredContent["y"], "Should have y property");
+            Assert.IsNotNull(structuredContent["z"], "Should have z property");
+            Assert.AreEqual(expectedValue.x, structuredContent["x"]?.GetValue<float>(), 0.001f, "X should match");
+            Assert.AreEqual(expectedValue.y, structuredContent["y"]?.GetValue<float>(), 0.001f, "Y should match");
+            Assert.AreEqual(expectedValue.z, structuredContent["z"]?.GetValue<float>(), 0.001f, "Z should match");
 
             // Verify the Vector3 can be reconstructed from structured content
             var reconstructedVector = new Vector3(
-                structuredContent!["x"]!.GetValue<float>(),
-                structuredContent!["y"]!.GetValue<float>(),
-                structuredContent!["z"]!.GetValue<float>()
+                structuredContent["x"]!.GetValue<float>(),
+                structuredContent["y"]!.GetValue<float>(),
+                structuredContent["z"]!.GetValue<float>()
             );
             Assert.AreEqual(expectedValue, reconstructedVector, "Reconstructed Vector3 should match original");
         }
@@ -477,11 +477,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
             Assert.IsNotNull(result.StructuredContent, "Quaternion should have structured content");
 
-            var structuredContent = result.StructuredContent;
-            Assert.IsNotNull(structuredContent!["x"], "Should have x property");
-            Assert.IsNotNull(structuredContent!["y"], "Should have y property");
-            Assert.IsNotNull(structuredContent!["z"], "Should have z property");
-            Assert.IsNotNull(structuredContent!["w"], "Should have w property");
+            var structuredContent = result.StructuredContent![JsonSchema.Result]!;
+            Assert.IsNotNull(structuredContent["x"], "Should have x property");
+            Assert.IsNotNull(structuredContent["y"], "Should have y property");
+            Assert.IsNotNull(structuredContent["z"], "Should have z property");
+            Assert.IsNotNull(structuredContent["w"], "Should have w property");
 
             // Verify the Quaternion can be reconstructed from structured content
             var reconstructedQuaternion = new Quaternion(
@@ -541,7 +541,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
             Assert.IsNotNull(result.StructuredContent, "List of custom objects should have structured content");
 
-            var structuredContent = result.StructuredContent!.AsArray();
+            var structuredContent = result.StructuredContent![JsonSchema.Result]!.AsArray();
             Assert.AreEqual(expectedValue.Count, structuredContent.Count, $"List should have {expectedValue.Count} items");
 
             for (int i = 0; i < expectedValue.Count; i++)
@@ -573,10 +573,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
             Assert.IsNotNull(result.StructuredContent, "Dictionary with complex values should have structured content");
 
-            var structuredContent = result.StructuredContent;
+            var structuredContent = result.StructuredContent![JsonSchema.Result]!;
             foreach (var kvp in expectedValue)
             {
-                Assert.IsNotNull(structuredContent![kvp.Key], $"Should have {kvp.Key} key");
+                Assert.IsNotNull(structuredContent[kvp.Key], $"Should have {kvp.Key} key");
 
                 var nameNode = structuredContent[kvp.Key]?["name"] ?? structuredContent[kvp.Key]?["Name"];
                 var ageNode = structuredContent[kvp.Key]?["age"] ?? structuredContent[kvp.Key]?["Age"];
@@ -608,7 +608,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNotNull(result.StructuredContent, "Should have structured content");
 
             // Verify it can be serialized to valid JSON
-            var jsonString = result.StructuredContent!.ToJsonString();
+            var jsonString = result.StructuredContent![JsonSchema.Result]!.ToJsonString();
             Assert.IsNotNull(jsonString, "Should serialize to JSON string");
             Assert.IsTrue(jsonString.Contains("name") || jsonString.Contains("Name"), "JSON should contain name/Name property");
             Assert.IsTrue(jsonString.Contains(expectedValue.Name), $"JSON should contain the name value: {expectedValue.Name}");
