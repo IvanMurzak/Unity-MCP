@@ -138,8 +138,10 @@ namespace com.IvanMurzak.Unity.MCP
             {
                 foreach (var tool in toolManager.GetAllTools())
                 {
-                    var isEnabled = unityConnectionConfig.EnabledTools.Contains(tool.Title!);
-                    toolManager.SetToolEnabled(tool.Title!, isEnabled);
+                    var isEnabled = unityConnectionConfig.EnabledTools.Contains(tool.Name!);
+                    toolManager.SetToolEnabled(tool.Name!, isEnabled);
+                    _logger.LogDebug("{method}: Tool '{tool}' enabled: {isEnabled}",
+                        nameof(ApplyConfigToMcpPlugin), tool.Name, isEnabled);
                 }
             }
 
@@ -151,6 +153,8 @@ namespace com.IvanMurzak.Unity.MCP
                 {
                     var isEnabled = unityConnectionConfig.EnabledPrompts.Contains(prompt.Name);
                     promptManager.SetPromptEnabled(prompt.Name, isEnabled);
+                    _logger.LogDebug("{method}: Prompt '{prompt}' enabled: {isEnabled}",
+                        nameof(ApplyConfigToMcpPlugin), prompt.Name, isEnabled);
                 }
             }
 
@@ -162,6 +166,8 @@ namespace com.IvanMurzak.Unity.MCP
                 {
                     var isEnabled = unityConnectionConfig.EnabledResources.Contains(resource.Name);
                     resourceManager.SetResourceEnabled(resource.Name, isEnabled);
+                    _logger.LogDebug("{method}: Resource '{resource}' enabled: {isEnabled}",
+                        nameof(ApplyConfigToMcpPlugin), resource.Name, isEnabled);
                 }
             }
 
