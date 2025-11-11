@@ -61,7 +61,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         public ResponseListResource[] CurrentSceneAll() => MainThread.Instance.Run(()
             => EditorSceneManager.GetActiveScene().GetRootGameObjects()
                 .SelectMany(root => GameObjectUtils.GetAllRecursively(root))
-                .Select(kvp => new ResponseListResource($"gameObject://currentScene/{kvp.Key}", kvp.Value.name, Consts.MimeType.TextJson))
+                .Select(kvp => new ResponseListResource(
+                    uri: $"gameObject://currentScene/{kvp.Key}",
+                    name: kvp.Value.name,
+                    enabled: true,
+                    mimeType: Consts.MimeType.TextJson))
                 .ToArray());
     }
 }
