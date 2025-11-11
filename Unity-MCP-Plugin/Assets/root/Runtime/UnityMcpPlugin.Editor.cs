@@ -35,12 +35,12 @@ namespace com.IvanMurzak.Unity.MCP
             {
 #if UNITY_EDITOR
                 var json = Application.isPlaying
-                    ? Resources.Load<TextAsset>(ResourcesFileName).text
+                    ? UnityEngine.Resources.Load<TextAsset>(ResourcesFileName).text
                     : File.Exists(AssetsFilePath)
                         ? File.ReadAllText(AssetsFilePath)
                         : null;
 #else
-                var json = Resources.Load<TextAsset>(ResourcesFileName).text;
+                var json = UnityEngine.Resources.Load<TextAsset>(ResourcesFileName).text;
 #endif
                 UnityConnectionConfig? config = null;
                 try

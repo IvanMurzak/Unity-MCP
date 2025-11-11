@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System.Collections.Generic;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
@@ -21,12 +22,17 @@ namespace com.IvanMurzak.Unity.MCP
 
         protected UnityConnectionConfig unityConnectionConfig;
 
-
         public class UnityConnectionConfig : ConnectionConfig
         {
             public static string DefaultHost => $"http://localhost:{Consts.Hub.DefaultPort}";
+            public static List<string> DefaultEnabledTools => new() { "*" };
+            public static List<string> DefaultEnabledPrompts => new() { "*" };
+            public static List<string> DefaultEnabledResources => new() { "*" };
 
             public LogLevel LogLevel { get; set; } = LogLevel.Warning;
+            public List<string> EnabledTools { get; set; } = DefaultEnabledTools;
+            public List<string> EnabledPrompts { get; set; } = DefaultEnabledPrompts;
+            public List<string> EnabledResources { get; set; } = DefaultEnabledResources;
 
             public UnityConnectionConfig()
             {
@@ -39,6 +45,9 @@ namespace com.IvanMurzak.Unity.MCP
                 KeepConnected = true;
                 LogLevel = LogLevel.Warning;
                 TimeoutMs = Consts.Hub.DefaultTimeoutMs;
+                EnabledTools = DefaultEnabledTools;
+                EnabledPrompts = DefaultEnabledPrompts;
+                EnabledResources = DefaultEnabledResources;
                 return this;
             }
         }
