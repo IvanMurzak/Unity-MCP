@@ -134,11 +134,12 @@ namespace com.IvanMurzak.Unity.MCP
 
             // Enable/Disable tools based on config
             var toolManager = mcpPlugin.McpManager.ToolManager;
-            if (toolManager != null && unityConnectionConfig.EnabledTools.All(x => x != "*"))
+            if (toolManager != null)
             {
+                var allEnabled = unityConnectionConfig.EnabledTools.Contains("*");
                 foreach (var tool in toolManager.GetAllTools())
                 {
-                    var isEnabled = unityConnectionConfig.EnabledTools.Contains(tool.Name!);
+                    var isEnabled = allEnabled || unityConnectionConfig.EnabledTools.Contains(tool.Name!);
                     toolManager.SetToolEnabled(tool.Name!, isEnabled);
                     _logger.LogDebug("{method}: Tool '{tool}' enabled: {isEnabled}",
                         nameof(ApplyConfigToMcpPlugin), tool.Name, isEnabled);
@@ -147,11 +148,12 @@ namespace com.IvanMurzak.Unity.MCP
 
             // Enable/Disable prompts based on config
             var promptManager = mcpPlugin.McpManager.PromptManager;
-            if (promptManager != null && unityConnectionConfig.EnabledPrompts.All(x => x != "*"))
+            if (promptManager != null)
             {
+                var allEnabled = unityConnectionConfig.EnabledPrompts.Contains("*");
                 foreach (var prompt in promptManager.GetAllPrompts())
                 {
-                    var isEnabled = unityConnectionConfig.EnabledPrompts.Contains(prompt.Name);
+                    var isEnabled = allEnabled || unityConnectionConfig.EnabledPrompts.Contains(prompt.Name);
                     promptManager.SetPromptEnabled(prompt.Name, isEnabled);
                     _logger.LogDebug("{method}: Prompt '{prompt}' enabled: {isEnabled}",
                         nameof(ApplyConfigToMcpPlugin), prompt.Name, isEnabled);
@@ -160,11 +162,12 @@ namespace com.IvanMurzak.Unity.MCP
 
             // Enable/Disable resources based on config
             var resourceManager = mcpPlugin.McpManager.ResourceManager;
-            if (resourceManager != null && unityConnectionConfig.EnabledResources.All(x => x != "*"))
+            if (resourceManager != null)
             {
+                var allEnabled = unityConnectionConfig.EnabledResources.Contains("*");
                 foreach (var resource in resourceManager.GetAllResources())
                 {
-                    var isEnabled = unityConnectionConfig.EnabledResources.Contains(resource.Name);
+                    var isEnabled = allEnabled || unityConnectionConfig.EnabledResources.Contains(resource.Name);
                     resourceManager.SetResourceEnabled(resource.Name, isEnabled);
                     _logger.LogDebug("{method}: Resource '{resource}' enabled: {isEnabled}",
                         nameof(ApplyConfigToMcpPlugin), resource.Name, isEnabled);
