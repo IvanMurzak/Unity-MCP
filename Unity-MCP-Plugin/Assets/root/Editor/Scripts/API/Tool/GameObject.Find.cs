@@ -7,13 +7,15 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+
+#nullable enable
 using System.ComponentModel;
-using com.IvanMurzak.Unity.MCP.Common;
-using com.IvanMurzak.Unity.MCP.Common.Model.Unity;
-using com.IvanMurzak.Unity.MCP.Utils;
-using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet;
+using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -44,13 +46,16 @@ Also, it returns Components preview just for the target GameObject.")]
                 if (error != null)
                     return $"[Error] {error}";
 
-                var reflector = McpPlugin.Instance!.McpRunner.Reflector;
+                if (go == null)
+                    return $"[Error] GameObject by {nameof(gameObjectRef)} not found.";
+
+                var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
                 var serializedGo = reflector.Serialize(
                     obj: go,
                     name: go.name,
                     recursive: !briefData,
-                    logger: McpPlugin.Instance.Logger
+                    logger: McpPlugin.McpPlugin.Instance.Logger
                 );
                 var json = serializedGo.ToJson(reflector);
                 return @$"[Success] Found GameObject.
@@ -65,7 +70,7 @@ Also, it returns Components preview just for the target GameObject.")]
 ```
 
 # Hierarchy:
-{go.ToMetadata(includeChildrenDepth).Print()}
+{go.ToMetadata(includeChildrenDepth)?.Print() ?? "null"}
 ";
             });
         }

@@ -11,9 +11,10 @@
 #nullable enable
 using System;
 using System.Threading;
+using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.Extensions.Logging;
 
-namespace com.IvanMurzak.Unity.MCP.Utils
+namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
 {
     internal static class Safe
     {

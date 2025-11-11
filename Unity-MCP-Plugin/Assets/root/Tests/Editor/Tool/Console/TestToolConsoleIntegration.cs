@@ -7,7 +7,8 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+
+#nullable enable
 using System.Collections;
 using System.Linq;
 using com.IvanMurzak.Unity.MCP.Editor.API;
@@ -19,7 +20,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
     public class TestToolConsoleIntegration : BaseTest
     {
-        private Tool_Console _tool;
+        private Tool_Console _tool = null!;
 
         [SetUp]
         public void TestSetUp()
@@ -228,7 +229,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 .FirstOrDefault() as System.ComponentModel.DescriptionAttribute;
             Assert.IsNotNull(descriptionAttr, $"{parameterName} parameter should have Description attribute");
 
-            var description = descriptionAttr.Description;
+            var description = descriptionAttr!.Description;
             Assert.IsNotNull(description, "Description should not be null");
             Assert.IsTrue(description.EndsWith($"Max: {LogUtils.MaxLogEntries}"),
                 $"{parameterName} parameter description should end with 'Max: {LogUtils.MaxLogEntries}'. Actual description: '{description}'");

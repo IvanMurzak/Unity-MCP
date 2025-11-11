@@ -14,7 +14,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
-using com.IvanMurzak.Unity.MCP.Common;
+using com.IvanMurzak.McpPlugin.Common;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils

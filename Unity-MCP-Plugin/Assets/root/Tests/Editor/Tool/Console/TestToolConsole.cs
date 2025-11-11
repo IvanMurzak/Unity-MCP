@@ -7,7 +7,8 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+
+#nullable enable
 using System;
 using System.Collections;
 using System.Linq;
@@ -20,7 +21,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
     public class TestToolConsole : BaseTest
     {
-        Tool_Console _tool;
+        Tool_Console _tool = null!;
 
         [SetUp]
         public void TestSetUp()

@@ -7,10 +7,11 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
 using System.Linq;
-using com.IvanMurzak.Unity.MCP.Common.Model.Unity;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using NUnit.Framework;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests.RefTypes

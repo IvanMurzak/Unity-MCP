@@ -7,17 +7,17 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using UnityEngine;
-using com.IvanMurzak.Unity.MCP.Common.Model.Unity;
-using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.ReflectorNet;
-using com.IvanMurzak.Unity.MCP.Common;
+using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using UnityEngine;
 
-namespace com.IvanMurzak.Unity.MCP.Utils
+namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
 {
     public static partial class GameObjectUtils
     {
@@ -193,7 +193,7 @@ namespace com.IvanMurzak.Unity.MCP.Utils
         }
         public static string? Print(this GameObject? go) => go == null
             ? null
-            : $"instanceID: {go.GetInstanceID()}, path: {go.GetPath()}, bounds: {go.CalculateBounds().ToJson(McpPlugin.Instance!.McpRunner.Reflector)}";
+            : $"instanceID: {go.GetInstanceID()}, path: {go.GetPath()}, bounds: {go.CalculateBounds().ToJson(McpPlugin.McpPlugin.Instance!.McpManager.Reflector)}";
 
         public static string Print(this IEnumerable<GameObject> gos)
         {
@@ -203,7 +203,7 @@ namespace com.IvanMurzak.Unity.MCP.Utils
 
             return sb.ToString();
         }
-        public static GameObjectMetadata ToMetadata(this GameObject go, int includeChildrenDepth = 3)
+        public static GameObjectMetadata? ToMetadata(this GameObject go, int includeChildrenDepth = 3)
             => GameObjectMetadata.FromGameObject(go, includeChildrenDepth);
 
         public static Bounds CalculateBounds(this GameObject go)

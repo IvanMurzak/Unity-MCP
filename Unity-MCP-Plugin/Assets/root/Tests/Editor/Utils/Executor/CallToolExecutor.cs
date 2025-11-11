@@ -7,14 +7,15 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
 using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Text.Json;
+using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet;
-using com.IvanMurzak.Unity.MCP.Common.Model;
-using com.IvanMurzak.Unity.MCP.Common;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
@@ -35,7 +36,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
             if (toolName == null) throw new ArgumentNullException(nameof(toolName));
             if (json == null) throw new ArgumentNullException(nameof(json));
 
-            reflector ??= McpPlugin.Instance!.McpRunner.Reflector ??
+            reflector ??= McpPlugin.McpPlugin.Instance!.McpManager.Reflector ??
                 throw new ArgumentNullException(nameof(reflector), "Reflector cannot be null. Ensure McpPlugin is initialized before using this executor.");
 
             SetAction(() =>
@@ -45,7 +46,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
                 var parameters = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json, reflector.JsonSerializerOptions);
                 var request = new RequestCallTool(toolName, parameters!);
 
-                var task = McpPlugin.Instance!.McpRunner.RunCallTool(request);
+                var task = McpPlugin.McpPlugin.Instance!.McpManager.ToolManager!.RunCallTool(request);
                 var result = task.Result;
 
                 Debug.Log($"{toolName} Completed");

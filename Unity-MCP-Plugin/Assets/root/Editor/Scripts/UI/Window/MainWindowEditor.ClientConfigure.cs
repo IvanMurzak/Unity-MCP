@@ -11,18 +11,14 @@
 #nullable enable
 using System;
 using System.IO;
-using System.Linq;
-using System.Text.Json;
-using System.Text.Json.Nodes;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
-using R3;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
 {
-    using Consts = Common.Consts;
+    using Consts = McpPlugin.Common.Consts;
 
     public partial class MainWindowEditor : EditorWindow
     {

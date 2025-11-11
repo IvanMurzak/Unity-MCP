@@ -7,10 +7,11 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+
+#nullable enable
 using System.Linq;
-using com.IvanMurzak.Unity.MCP.Common;
-using com.IvanMurzak.Unity.MCP.Utils;
+using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -26,8 +27,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             public static string SceneNameIsEmpty()
                 => $"[Error] Scene name is empty. Available scenes:\n{ScenesPrinted}";
-            public static string NotFoundSceneWithName(string name)
-                => $"[Error] Scene '{name}' not found. Available scenes:\n{ScenesPrinted}";
+            public static string NotFoundSceneWithName(string? name)
+                => $"[Error] Scene '{name ?? "null"}' not found. Available scenes:\n{ScenesPrinted}";
             public static string ScenePathIsEmpty()
                 => "[Error] Scene path is empty. Please provide a valid path. Sample: \"Assets/Scenes/MyScene.unity\".";
             public static string FilePathMustEndsWithUnity()

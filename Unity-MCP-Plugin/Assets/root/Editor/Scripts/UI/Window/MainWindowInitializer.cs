@@ -8,6 +8,7 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 
+#nullable enable
 using Extensions.Unity.PlayerPrefsEx;
 using UnityEditor;
 

@@ -10,28 +10,60 @@
 
 #nullable enable
 using System;
-using com.IvanMurzak.Unity.MCP.Common;
 using Microsoft.Extensions.Logging;
 
 namespace com.IvanMurzak.Unity.MCP.Utils
 {
+    using LogLevel = Runtime.Utils.LogLevel;
     using LogLevelMicrosoft = Microsoft.Extensions.Logging.LogLevel;
 
     public class UnityLogger : ILogger
     {
         readonly string _categoryName;
+        readonly string _categoryColor;
+
+        // Colors that look good on dark gray background
+        private static readonly string[] CategoryColors = new[]
+        {
+            "#FF6B9D", // Pink
+            "#4ECDC4", // Teal
+            "#FFD93D", // Yellow
+            "#95E1D3", // Mint
+            "#F38181", // Coral
+            "#AA96DA", // Purple
+            "#6BCF7F", // Green
+            "#5DADE2", // Blue
+            "#F8B739", // Orange
+            "#EC7063", // Red
+            "#48C9B0", // Turquoise
+            "#AF7AC5", // Violet
+            "#58D68D", // Lime
+            "#F5B041", // Amber
+            "#85C1E2"  // Sky Blue
+        };
 
         public UnityLogger(string categoryName)
         {
             _categoryName = categoryName.Contains('.')
                 ? categoryName.Substring(categoryName.LastIndexOf('.') + 1)
                 : categoryName;
+
+            // Use hashcode to consistently select a color for this category
+            var colorIndex = Math.Abs(categoryName.GetHashCode()) % CategoryColors.Length;
+            _categoryColor = CategoryColors[colorIndex];
         }
 
         public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null!;
 
         public bool IsEnabled(LogLevelMicrosoft logLevel)
         {
+            // Prevent infinite loop during UnityMcpPlugin initialization by checking if instance exists
+            if (!UnityMcpPlugin.HasInstance)
+            {
+                // During initialization, allow all log levels
+                return true;
+            }
+
             return UnityMcpPlugin.IsLogEnabled(logLevel switch
             {
                 LogLevelMicrosoft.Critical => LogLevel.Exception,
@@ -52,18 +84,32 @@ namespace com.IvanMurzak.Unity.MCP.Utils
             if (state == null) throw new ArgumentNullException(nameof(state));
 
             // Map LogLevel to short names
+#if UNITY_EDITOR
             string logLevelShort = logLevel switch
             {
-                LogLevelMicrosoft.Critical => Consts.Log.Crit,
-                LogLevelMicrosoft.Error => Consts.Log.Fail,
-                LogLevelMicrosoft.Warning => Consts.Log.Warn,
-                LogLevelMicrosoft.Information => Consts.Log.Info,
-                LogLevelMicrosoft.Debug => Consts.Log.Dbug,
-                LogLevelMicrosoft.Trace => Consts.Log.Trce,
-                _ => "none: "
+                LogLevelMicrosoft.Critical => "<color=#ff0000>crit:</color>",
+                LogLevelMicrosoft.Error => "<color=#ff6b6b>fail:</color>",
+                LogLevelMicrosoft.Warning => "<color=#ffaa00>warn:</color>",
+                LogLevelMicrosoft.Information => "<color=#00ff00>info:</color>",
+                LogLevelMicrosoft.Debug => "<color=#00ffff>dbug:</color>",
+                LogLevelMicrosoft.Trace => "<color=#aaaaaa>trce:</color>",
+                _ => "<color=#ffffff>none</color>"
             };
+            var message = $"{logLevelShort} [{DateTime.Now:HH:mm:ss:ffff}] <color=#B4FF32>[AI]</color> <color={_categoryColor}><b>{_categoryName}</b></color> {formatter(state, exception)}";
+#else
+            string logLevelShort = logLevel switch
+            {
+                LogLevelMicrosoft.Critical => "crit:",
+                LogLevelMicrosoft.Error => "fail:",
+                LogLevelMicrosoft.Warning => "warn:",
+                LogLevelMicrosoft.Information => "info:",
+                LogLevelMicrosoft.Debug => "dbug:",
+                LogLevelMicrosoft.Trace => "trce:",
+                _ => "none"
+            };
+            var message = $"{logLevelShort} [{DateTime.Now:HH:mm:ss:ffff}] [AI] {_categoryName} {formatter(state, exception)}";
+#endif
 
-            var message = $"{Consts.Log.Color.LevelStart}{logLevelShort}{Consts.Log.Color.LevelEnd}{Consts.Log.Tag} {Consts.Log.Color.CategoryStart}{_categoryName}{Consts.Log.Color.CategoryEnd} {formatter(state, exception)}";
             switch (logLevel)
             {
                 case LogLevelMicrosoft.Critical:
