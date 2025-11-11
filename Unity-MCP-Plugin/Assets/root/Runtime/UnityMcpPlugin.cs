@@ -55,42 +55,9 @@ namespace com.IvanMurzak.Unity.MCP
                 NotifyChanged(data);
         }
 
-        public void LogTrace(string message, Type sourceClass, params object?[] args)
-        {
-            UnityLoggerFactory.LoggerFactory
-                .CreateLogger(sourceClass.GetTypeShortName())
-                .LogTrace(message, args);
-        }
-        public void LogDebug(string message, Type sourceClass, params object?[] args)
-        {
-            UnityLoggerFactory.LoggerFactory
-                .CreateLogger(sourceClass.GetTypeShortName())
-                .LogDebug(message, args);
-        }
-        public void LogInfo(string message, Type sourceClass, params object?[] args)
-        {
-            UnityLoggerFactory.LoggerFactory
-                .CreateLogger(sourceClass.GetTypeShortName())
-                .LogInformation(message, args);
-        }
-        public void LogWarn(string message, Type sourceClass, params object?[] args)
-        {
-            UnityLoggerFactory.LoggerFactory
-                .CreateLogger(sourceClass.GetTypeShortName())
-                .LogWarning(message, args);
-        }
-        public void LogError(string message, Type sourceClass, params object?[] args)
-        {
-            UnityLoggerFactory.LoggerFactory
-                .CreateLogger(sourceClass.GetTypeShortName())
-                .LogError(message, args);
-        }
-        public void LogException(string message, Type sourceClass, params object?[] args)
-        {
-            UnityLoggerFactory.LoggerFactory
-                .CreateLogger(sourceClass.GetTypeShortName())
-                .LogCritical(message, args);
-        }
+        public McpPlugin.IToolManager? Tools => McpPluginInstance?.McpManager.ToolManager;
+        public McpPlugin.IPromptManager? Prompts => McpPluginInstance?.McpManager.PromptManager;
+        public McpPlugin.IResourceManager? Resources => McpPluginInstance?.McpManager.ResourceManager;
 
         public void Dispose()
         {
