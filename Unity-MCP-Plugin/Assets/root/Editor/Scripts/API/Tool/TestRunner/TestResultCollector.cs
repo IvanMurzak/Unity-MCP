@@ -23,7 +23,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
 {
     public class TestResultCollector : ICallbacks
     {
-        static int counter = 0;
+        static volatile int counter = 0;
 
         readonly object _logsMutex = new();
         readonly List<TestResultData> _results = new();
@@ -53,6 +53,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
 
         public static PlayerPrefsString TestCallRequestID = new PlayerPrefsString("Unity_MCP_TestRunner_TestCallRequestID");
 
+        public static PlayerPrefsBool IncludePassingTests = new PlayerPrefsBool("Unity_MCP_TestRunner_IncludePassingTests");
         public static PlayerPrefsBool IncludeMessage = new PlayerPrefsBool("Unity_MCP_TestRunner_IncludeMessage", true);
         public static PlayerPrefsBool IncludeMessageStacktrace = new PlayerPrefsBool("Unity_MCP_TestRunner_IncludeStacktrace");
 
@@ -85,10 +86,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             _summary.Clear();
             _summary.TotalTests = testCount;
 
-            // Subscribe on log messages
-            Application.logMessageReceived -= OnLogMessageReceived;
-            Application.logMessageReceived += OnLogMessageReceived;
-
+            // Subscribe to log messages (using threaded version to catch logs from all threads)
             Application.logMessageReceivedThreaded -= OnLogMessageReceived;
             Application.logMessageReceivedThreaded += OnLogMessageReceived;
 
@@ -101,7 +99,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             UnityMcpPlugin.Instance.LogInfo("RunFinished", typeof(TestResultCollector));
 
             // Unsubscribe from log messages
-            Application.logMessageReceived -= OnLogMessageReceived;
             Application.logMessageReceivedThreaded -= OnLogMessageReceived;
 
             var duration = DateTime.Now - startTime;
@@ -134,12 +131,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             TestCallRequestID.Value = string.Empty;
             if (string.IsNullOrEmpty(requestId) == false)
             {
-                var response = ResponseCallTool
-                    .Success(FormatTestResults(
-                        includeMessage: IncludeMessage.Value,
-                        includeLogs: IncludeLogs.Value,
-                        includeMessageStacktrace: IncludeMessageStacktrace.Value,
-                        includeLogsStacktrace: IncludeLogsStacktrace.Value))
+                var structuredResponse = CreateStructuredResponse(
+                    includePassingTests: IncludePassingTests.Value,
+                    includeMessage: IncludeMessage.Value,
+                    includeLogs: IncludeLogs.Value,
+                    includeMessageStacktrace: IncludeMessageStacktrace.Value,
+                    includeLogsStacktrace: IncludeLogsStacktrace.Value);
+
+                var mcpPlugin = UnityMcpPlugin.Instance.McpPluginInstance ?? throw new InvalidOperationException("MCP Plugin instance is not available.");
+                var jsonOptions = mcpPlugin.McpManager.Reflector.JsonSerializerOptions;
+                var jsonNode = System.Text.Json.JsonSerializer.SerializeToNode(structuredResponse, jsonOptions);
+                var jsonString = jsonNode?.ToJsonString();
+
+                var response = ResponseCallValueTool<TestRunResponse>
+                    .SuccessStructured(
+                        structuredContent: jsonNode,
+                        message: jsonString ?? "[Success] Test execution completed.") // Needed for MCP backward compatibility: https://modelcontextprotocol.io/specification/2025-06-18/server/tools#structured-content
                     .SetRequestID(requestId);
 
                 _ = UnityMcpPlugin.NotifyToolRequestCompleted(new RequestToolCompletedData
@@ -163,7 +170,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
                 var testResult = new TestResultData
                 {
                     Name = result.Test.FullName,
-                    Status = result.TestStatus.ToString(),
+                    Status = ConvertTestStatus(result.TestStatus),
                     Duration = TimeSpan.FromSeconds(result.Duration),
                     Message = result.Message,
                     StackTrace = result.StackTrace
@@ -217,67 +224,49 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             }
         }
 
-        string FormatTestResults(bool includeMessage, bool includeMessageStacktrace, bool includeLogs, bool includeLogsStacktrace)
+        TestRunResponse CreateStructuredResponse(bool includePassingTests, bool includeMessage, bool includeMessageStacktrace, bool includeLogs, bool includeLogsStacktrace)
         {
             var results = GetResults();
             var summary = GetSummary();
             var logs = GetLogs();
 
-            var output = new StringBuilder();
-            output.AppendLine("[Success] Test execution completed.");
-            output.AppendLine();
-
-            // Summary
-            output.AppendLine("=== TEST SUMMARY ===");
-            output.AppendLine($"Status: {summary.Status}");
-            output.AppendLine($"Total: {summary.TotalTests}");
-            output.AppendLine($"Passed: {summary.PassedTests}");
-            output.AppendLine($"Failed: {summary.FailedTests}");
-            output.AppendLine($"Skipped: {summary.SkippedTests}");
-            output.AppendLine($"Duration: {summary.Duration:hh\\:mm\\:ss\\.fff}");
-            output.AppendLine();
-
-            // Individual test results
-            if (results.Any())
+            var response = new TestRunResponse
             {
-                output.AppendLine("=== TEST RESULTS ===");
-                foreach (var result in results)
+                Summary = summary,
+                Results = new List<TestResultData>()
+            };
+
+            // Filter test results based on includePassingTests, includeMessage and includeMessageStacktrace
+            foreach (var result in results)
+            {
+                // Skip passing tests if includePassingTests is false
+                if (!includePassingTests && result.Status == TestResultStatus.Passed)
+                    continue;
+
+                var filteredResult = new TestResultData
                 {
-                    output.AppendLine($"[{result.Status}] {result.Name}");
-                    output.AppendLine($"  Duration: {result.Duration:ss\\.fff}s");
-
-                    if (includeMessage)
-                    {
-                        if (!string.IsNullOrEmpty(result.Message))
-                            output.AppendLine($"  Message: {result.Message}");
-                    }
-
-                    if (includeMessageStacktrace)
-                    {
-                        if (!string.IsNullOrEmpty(result.StackTrace))
-                            output.AppendLine($"  Stack Trace: {result.StackTrace}");
-                    }
-
-                    output.AppendLine();
-                }
+                    Name = result.Name,
+                    Status = result.Status,
+                    Duration = result.Duration,
+                    Message = includeMessage ? result.Message : null,
+                    StackTrace = includeMessageStacktrace ? result.StackTrace : null
+                };
+                response.Results.Add(filteredResult);
             }
 
-            // Console logs
+            // Include logs if requested
             if (includeLogs && logs.Any())
             {
                 var minLogLevel = TestLogEntry.ToLogLevel((LogType)IncludeLogsMinLevel.Value);
-                output.AppendLine("=== CONSOLE LOGS ===");
-                foreach (var log in logs)
-                {
-                    if (log.LogLevel < minLogLevel)
-                        continue;
-                    output.AppendLine(log.ToStringFormat(
-                        includeType: true,
-                        includeStacktrace: includeLogsStacktrace));
-                }
+                response.Logs = logs
+                    .Where(log => log.LogLevel >= minLogLevel)
+                    .Select(log => includeLogsStacktrace
+                        ? log
+                        : new TestLogEntry(log.Type, log.Condition, null, log.Timestamp))
+                    .ToList();
             }
 
-            return output.ToString();
+            return response;
         }
 
         public static int CountTests(ITestAdaptor test)
@@ -296,6 +285,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             {
                 return 0;
             }
+        }
+
+        static TestResultStatus ConvertTestStatus(TestStatus testStatus)
+        {
+            return testStatus switch
+            {
+                TestStatus.Passed => TestResultStatus.Passed,
+                TestStatus.Failed => TestResultStatus.Failed,
+                TestStatus.Skipped => TestResultStatus.Skipped,
+                _ => TestResultStatus.Skipped
+            };
         }
     }
 }
