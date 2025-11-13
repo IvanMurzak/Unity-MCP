@@ -31,17 +31,33 @@ jobs:
       - name: Create Docker network
         run: docker network create unity-mcp-network
 
-      - name: Install Unity Editor docker image
+      - name: Start Unity Editor container
         run: |
           docker run -d \
             -v ${{ github.workspace }}/Unity-MCP-Plugin:/project \
-            -e UNITY_LICENSE="${{ secrets.UNITY_LICENSE }}" \
-            -e UNITY_EMAIL="${{ secrets.UNITY_EMAIL }}" \
-            -e UNITY_PASSWORD="${{ secrets.UNITY_PASSWORD }}" \
             --network unity-mcp-network \
             --name unity-editor \
             unityci/editor:ubuntu-2022.3.61f1-linux-il2cpp-3 \
-            bash -c "unity-editor -projectPath /project -batchmode -nographics -logFile /dev/stdout"
+            tail -f /dev/null
+
+      - name: Activate Unity License
+        run: |
+          echo "Creating Unity license directory..."
+          docker exec unity-editor mkdir -p /root/.local/share/unity3d/Unity
+          
+          echo "Writing Unity license file..."
+          docker exec unity-editor bash -c 'echo "$UNITY_LICENSE" > /root/.local/share/unity3d/Unity/Unity_lic.ulf'
+          
+          echo "Unity license file created successfully"
+          docker exec unity-editor ls -la /root/.local/share/unity3d/Unity/
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+
+      - name: Start Unity Editor
+        run: |
+          echo "Starting Unity Editor process..."
+          docker exec -d unity-editor bash -c "unity-editor -projectPath /project -batchmode -nographics -logFile /dev/stdout"
+          echo "Unity Editor process started in background"
 
       - name: Wait for Unity Editor to initialize
         run: |
