@@ -80,5 +80,8 @@ jobs:
         run: |
           docker run -d \
             -p 9090:9090 \
+            -e UNITY_MCP_PORT=9090 \
+            -e UNITY_MCP_CLIENT_TRANSPORT=http \
+            -e UNITY_MCP_PLUGIN_TIMEOUT=120000 \
             --name unity-mcp-server \
             ivanmurzakdev/unity-mcp-server:latest
