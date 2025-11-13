@@ -28,6 +28,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
+      - name: Create Docker network
+        run: docker network create unity-mcp-network
+
       - name: Install Unity Editor docker image
         run: |
           docker run -d \
@@ -35,6 +38,7 @@ jobs:
             -e UNITY_LICENSE="${{ secrets.UNITY_LICENSE }}" \
             -e UNITY_EMAIL="${{ secrets.UNITY_EMAIL }}" \
             -e UNITY_PASSWORD="${{ secrets.UNITY_PASSWORD }}" \
+            --network unity-mcp-network \
             --name unity-editor \
             unityci/editor:ubuntu-2022.3.61f1-linux-il2cpp-3 \
             bash -c "unity-editor -projectPath /project -batchmode -nographics -logFile /dev/stdout || tail -f /dev/null"
@@ -83,5 +87,6 @@ jobs:
             -e UNITY_MCP_PORT=8080 \
             -e UNITY_MCP_CLIENT_TRANSPORT=http \
             -e UNITY_MCP_PLUGIN_TIMEOUT=120000 \
+            --network unity-mcp-network \
             --name unity-mcp-server \
             ivanmurzakdev/unity-mcp-server:latest
