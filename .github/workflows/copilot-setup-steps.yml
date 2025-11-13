@@ -40,6 +40,9 @@ jobs:
             unityci/editor:ubuntu-2022.3.61f1-linux-il2cpp-3 \
             tail -f /dev/null
 
+      - name: Start Unity Editor container
+        run: docker start unity-editor
+
       - name: Create Unity License file
         run: |
           echo "Creating Unity license directory..."
@@ -55,9 +58,6 @@ jobs:
 
       - name: Start Unity Editor
         run: |
-          echo "Starting Unity Editor container..."
-          docker start unity-editor
-
           echo "Starting Unity Editor process..."
           docker exec -d unity-editor bash -c "unity-editor -projectPath /project -batchmode -nographics -logFile /dev/stdout"
           echo "Unity Editor process started in background"
