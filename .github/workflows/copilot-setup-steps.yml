@@ -31,23 +31,23 @@ jobs:
       - name: Create Docker network
         run: docker network create unity-mcp-network
 
-      - name: Start Unity Editor container
+      - name: Create Unity Editor container
         run: |
-          docker run -d \
+          docker create \
             -v ${{ github.workspace }}/Unity-MCP-Plugin:/project \
             --network unity-mcp-network \
             --name unity-editor \
             unityci/editor:ubuntu-2022.3.61f1-linux-il2cpp-3 \
             tail -f /dev/null
 
-      - name: Activate Unity License
+      - name: Create Unity License file
         run: |
           echo "Creating Unity license directory..."
           docker exec unity-editor mkdir -p /root/.local/share/unity3d/Unity
-          
+
           echo "Writing Unity license file..."
           docker exec unity-editor bash -c 'echo "$UNITY_LICENSE" > /root/.local/share/unity3d/Unity/Unity_lic.ulf'
-          
+
           echo "Unity license file created successfully"
           docker exec unity-editor ls -la /root/.local/share/unity3d/Unity/
         env:
@@ -55,6 +55,9 @@ jobs:
 
       - name: Start Unity Editor
         run: |
+          echo "Starting Unity Editor container..."
+          docker start unity-editor
+
           echo "Starting Unity Editor process..."
           docker exec -d unity-editor bash -c "unity-editor -projectPath /project -batchmode -nographics -logFile /dev/stdout"
           echo "Unity Editor process started in background"
@@ -62,7 +65,7 @@ jobs:
       - name: Wait for Unity Editor to initialize
         run: |
           echo "Waiting for Unity Editor to initialize..."
-          timeout=1800  # 30 minutes timeout
+          timeout=200
           elapsed=0
           unity_started=false
 
@@ -88,8 +91,8 @@ jobs:
               fi
             fi
 
-            sleep 5
-            elapsed=$((elapsed + 5))
+            sleep 10
+            elapsed=$((elapsed + 10))
             echo "Waited ${elapsed}s..."
           done
 
