@@ -69,6 +69,10 @@ jobs:
 
           if [ $elapsed -ge $timeout ]; then
             echo "Timeout waiting for Unity Editor initialization"
+            echo "Container status:"
+            docker ps -a | grep unity-editor
+            echo "Running processes in container:"
+            docker exec unity-editor ps aux || true
             echo "Last 50 lines of Unity Editor logs:"
             docker logs unity-editor --tail 50
             exit 1
