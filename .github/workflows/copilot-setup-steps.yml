@@ -41,27 +41,33 @@ jobs:
             --network unity-mcp-network \
             --name unity-editor \
             unityci/editor:ubuntu-2022.3.61f1-linux-il2cpp-3 \
-            bash -c "unity-editor -projectPath /project -batchmode -nographics -logFile /dev/stdout || tail -f /dev/null"
+            bash -c "unity-editor -projectPath /project -batchmode -nographics -logFile /dev/stdout"
 
       - name: Wait for Unity Editor to initialize
         run: |
           echo "Waiting for Unity Editor to initialize..."
           timeout=1800  # 30 minutes timeout
           elapsed=0
+          unity_started=false
 
           while [ $elapsed -lt $timeout ]; do
-            # Check if Unity is running (not just tail)
-            if docker exec unity-editor ps aux | grep -q "[u]nity-editor"; then
+            # Check if container is still running
+            if ! docker ps --filter "name=unity-editor" --filter "status=running" | grep -q unity-editor; then
+              echo "ERROR: Unity Editor container stopped unexpectedly"
+              echo "Container status:"
+              docker ps -a | grep unity-editor
+              echo "Unity Editor logs:"
+              docker logs unity-editor
+              exit 1
+            fi
+
+            # Check for multiple possible Unity process names
+            if docker exec unity-editor ps aux | grep -E "[U]nity|[u]nity-editor" | grep -v grep; then
               echo "Unity Editor process is running, waiting for initialization..."
+              unity_started=true
               # Check logs for initialization complete or specific ready messages
               if docker logs unity-editor 2>&1 | grep -q "Initialize mono"; then
                 echo "Unity Editor initialized successfully!"
-                break
-              fi
-            else
-              # If unity-editor process not found, check if container fell back to tail (license issue)
-              if docker exec unity-editor ps aux | grep -q "[t]ail"; then
-                echo "Unity Editor failed to start (likely licensing issue), but container is ready"
                 break
               fi
             fi
@@ -72,13 +78,24 @@ jobs:
           done
 
           if [ $elapsed -ge $timeout ]; then
-            echo "Timeout waiting for Unity Editor initialization"
+            echo "ERROR: Timeout waiting for Unity Editor initialization"
             echo "Container status:"
             docker ps -a | grep unity-editor
             echo "Running processes in container:"
             docker exec unity-editor ps aux || true
-            echo "Last 50 lines of Unity Editor logs:"
-            docker logs unity-editor --tail 50
+            echo "Unity Editor logs:"
+            docker logs unity-editor
+            exit 1
+          fi
+
+          if [ "$unity_started" = false ]; then
+            echo "ERROR: Unity Editor process never started"
+            echo "Container status:"
+            docker ps -a | grep unity-editor
+            echo "Running processes in container:"
+            docker exec unity-editor ps aux || true
+            echo "Unity Editor logs:"
+            docker logs unity-editor
             exit 1
           fi
 
