@@ -71,6 +71,9 @@ jobs:
           echo "Unity Editor started, streaming logs until method completes..."
           echo "================================================"
 
+          docker logs -f unity-editor &
+          LOGS_PID=$!
+
           # Follow logs and look for completion indicators
           timeout=600  # 10 minutes timeout for method execution
           elapsed=0
