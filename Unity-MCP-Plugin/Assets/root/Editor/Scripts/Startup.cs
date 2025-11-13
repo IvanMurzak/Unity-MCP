@@ -36,5 +36,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             LogUtils.EnsureSubscribed(); // log collector
             API.Tool_TestRunner.Init(); // test runner
         }
+        public static void Init()
+        {
+            // Intentionally left blank.
+            // This method is used to force the static constructor to run.
+            Debug.Log("com.IvanMurzak.Unity.MCP.Editor.Startup.Init");
+        }
     }
 }

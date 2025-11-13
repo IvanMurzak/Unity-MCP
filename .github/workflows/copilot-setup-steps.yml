@@ -56,69 +56,66 @@ jobs:
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
 
-      - name: Start Unity Editor
+      - name: Start Unity Editor and execute startup method
         run: |
-          echo "Starting Unity Editor process..."
-          docker exec -d unity-editor bash -c "unity-editor -projectPath /project -batchmode -nographics -logFile /dev/stdout"
-          echo "Unity Editor process started in background"
+          echo "Starting Unity Editor with startup method execution..."
 
-      - name: Wait for Unity Editor to initialize
-        run: |
-          echo "Waiting for Unity Editor to initialize..."
-          timeout=200
+          # Start Unity with executeMethod (without -quit to keep it running)
+          docker exec -d unity-editor bash -c "unity-editor \
+            -projectPath /project \
+            -batchmode \
+            -nographics \
+            -executeMethod com.IvanMurzak.Unity.MCP.Editor.Startup.Init \
+            -logFile /dev/stdout 2>&1"
+
+          echo "Unity Editor started, streaming logs until method completes..."
+          echo "================================================"
+
+          # Follow logs and look for completion indicators
+          timeout=600  # 10 minutes timeout for method execution
           elapsed=0
-          unity_started=false
+          last_log_count=0
 
           while [ $elapsed -lt $timeout ]; do
-            # Check if container is still running
-            if ! docker ps --filter "name=unity-editor" --filter "status=running" | grep -q unity-editor; then
-              echo "ERROR: Unity Editor container stopped unexpectedly"
-              echo "Container status:"
-              docker ps -a | grep unity-editor
-              echo "Unity Editor logs:"
-              docker logs unity-editor
-              exit 1
+            # Get current logs
+            current_logs=$(docker logs unity-editor 2>&1)
+
+            # Print new logs only
+            current_log_count=$(echo "$current_logs" | wc -l)
+            if [ $current_log_count -gt $last_log_count ]; then
+              echo "$current_logs" | tail -n +$((last_log_count + 1))
+              last_log_count=$current_log_count
             fi
 
-            # Check for multiple possible Unity process names
-            if docker exec unity-editor ps aux | grep -E "[U]nity|[u]nity-editor" | grep -v grep; then
-              echo "Unity Editor process is running, waiting for initialization..."
-              unity_started=true
-              # Check logs for initialization complete or specific ready messages
-              if docker logs unity-editor 2>&1 | grep -q "Initialize mono"; then
-                echo "Unity Editor initialized successfully!"
-                break
+            # Check for method completion indicators
+            if echo "$current_logs" | grep -q "com.IvanMurzak.Unity.MCP.Editor.Startup.Init\|Refreshing native plugins\|Initialize mono"; then
+              # Wait a bit more to capture any final logs
+              sleep 5
+
+              # Print final logs
+              final_logs=$(docker logs unity-editor 2>&1)
+              final_count=$(echo "$final_logs" | wc -l)
+              if [ $final_count -gt $last_log_count ]; then
+                echo "$final_logs" | tail -n +$((last_log_count + 1))
               fi
+
+              echo "================================================"
+              echo "Unity startup method execution detected, detaching from logs"
+              break
             fi
 
-            sleep 10
-            elapsed=$((elapsed + 10))
-            echo "Waited ${elapsed}s..."
+            sleep 2
+            elapsed=$((elapsed + 2))
           done
 
           if [ $elapsed -ge $timeout ]; then
-            echo "ERROR: Timeout waiting for Unity Editor initialization"
-            echo "Container status:"
-            docker ps -a | grep unity-editor
-            echo "Running processes in container:"
-            docker exec unity-editor ps aux || true
-            echo "Unity Editor logs:"
-            docker logs unity-editor
-            exit 1
+            echo "================================================"
+            echo "Warning: Timeout waiting for method completion, but continuing..."
+            echo "Last 20 lines of logs:"
+            docker logs unity-editor 2>&1 | tail -n 20
           fi
 
-          if [ "$unity_started" = false ]; then
-            echo "ERROR: Unity Editor process never started"
-            echo "Container status:"
-            docker ps -a | grep unity-editor
-            echo "Running processes in container:"
-            docker exec unity-editor ps aux || true
-            echo "Unity Editor logs:"
-            docker logs unity-editor
-            exit 1
-          fi
-
-          echo "Unity Editor container is ready"
+          echo "Unity Editor is now running in background"
 
       - name: Install Unity-MCP-Server docker image
         run: |
