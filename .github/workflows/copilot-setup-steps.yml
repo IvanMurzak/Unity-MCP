@@ -79,8 +79,8 @@ jobs:
       - name: Install Unity-MCP-Server docker image
         run: |
           docker run -d \
-            -p 9090:9090 \
-            -e UNITY_MCP_PORT=9090 \
+            -p 8080:8080 \
+            -e UNITY_MCP_PORT=8080 \
             -e UNITY_MCP_CLIENT_TRANSPORT=http \
             -e UNITY_MCP_PLUGIN_TIMEOUT=120000 \
             --name unity-mcp-server \
