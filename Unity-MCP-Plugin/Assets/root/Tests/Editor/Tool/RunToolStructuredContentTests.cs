@@ -52,7 +52,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnInt));
-            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
             var expectedValue = TestReturnTypeMethods.ReturnInt();
 
             // Act
@@ -78,7 +78,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnString));
-            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
             var expectedValue = TestReturnTypeMethods.ReturnString();
 
             // Act
@@ -103,7 +103,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnFloat));
-            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
             var expectedValue = TestReturnTypeMethods.ReturnFloat();
 
             // Act
@@ -129,7 +129,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnBool));
-            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
             var expectedValue = TestReturnTypeMethods.ReturnBool();
 
             // Act
@@ -155,7 +155,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnEnum));
-            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
             var expectedEnumValue = TestReturnTypeMethods.ReturnEnum();
 
             // Act
@@ -181,7 +181,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnNull));
-            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
 
             // Act
             var task = runTool.Run("test-request-id", CancellationToken.None);
@@ -201,7 +201,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnMicrosoftLogLevel));
-            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
             var expectedValue = TestReturnTypeMethods.ReturnMicrosoftLogLevel();
 
             // Act
@@ -231,7 +231,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnCustomClass));
-            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
             var expectedValue = TestReturnTypeMethods.ReturnCustomClass();
 
             // Act
@@ -268,7 +268,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnNestedClass));
-            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
             var expectedValue = TestReturnTypeMethods.ReturnNestedClass();
 
             // Act
@@ -301,7 +301,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnList));
-            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
             var expectedValue = TestReturnTypeMethods.ReturnList();
 
             // Act
@@ -329,7 +329,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnDictionary));
-            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
             var expectedValue = TestReturnTypeMethods.ReturnDictionary();
 
             // Act
@@ -357,7 +357,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnArray));
-            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
             var expectedValue = TestReturnTypeMethods.ReturnArray();
 
             // Act
@@ -389,7 +389,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnVector3));
-            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
             var expectedValue = TestReturnTypeMethods.ReturnVector3();
 
             // Act
@@ -426,7 +426,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnColor));
-            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
             var expectedValue = TestReturnTypeMethods.ReturnColor();
 
             // Act
@@ -462,7 +462,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnQuaternion));
-            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
             var expectedValue = TestReturnTypeMethods.ReturnQuaternion();
 
             // Act
@@ -502,7 +502,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnResponseCallTool));
-            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
 
             // Act
             var task = runTool.Run("test-request-id", CancellationToken.None);
@@ -526,7 +526,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnListOfCustomObjects));
-            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
             var expectedValue = TestReturnTypeMethods.ReturnListOfCustomObjects();
 
             // Act
@@ -558,7 +558,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnDictionaryWithComplexValues));
-            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
             var expectedValue = TestReturnTypeMethods.ReturnDictionaryWithComplexValues();
 
             // Act
@@ -594,7 +594,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var methodInfo = typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnCustomClass));
-            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
             var expectedValue = TestReturnTypeMethods.ReturnCustomClass();
 
             // Act
