@@ -28,6 +28,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
+      - name: Remove existing Docker network and containers
+        run: |
+          docker rm -f unity-editor || true
+          docker rm -f unity-mcp-server || true
+          docker network rm unity-mcp-network || true
+
       - name: Create Docker network
         run: docker network create unity-mcp-network
 
@@ -43,18 +49,21 @@ jobs:
       - name: Start Unity Editor container
         run: docker start unity-editor
 
-      - name: Create Unity License file
+      - name: Activate Unity License (manual activation)
         run: |
           echo "Creating Unity license directory..."
           docker exec unity-editor mkdir -p /root/.local/share/unity3d/Unity
 
           echo "Writing Unity license file..."
-          docker exec unity-editor bash -c 'echo "$UNITY_LICENSE" > /root/.local/share/unity3d/Unity/Unity_lic.ulf'
+          cat > /tmp/Unity_lic.ulf << 'EOF'
+          ${{ secrets.UNITY_LICENSE }}
+          EOF
 
-          echo "Unity license file created successfully"
+          docker cp /tmp/Unity_lic.ulf unity-editor:/root/.local/share/unity3d/Unity/Unity_lic.ulf
+          rm /tmp/Unity_lic.ulf
+
+          echo "Unity license file created"
           docker exec unity-editor ls -la /root/.local/share/unity3d/Unity/
-        env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
 
       - name: Start Unity Editor and execute startup method
         run: |
@@ -65,6 +74,8 @@ jobs:
             -projectPath /project \
             -batchmode \
             -nographics \
+            -username ${{ secrets.UNITY_EMAIL }} \
+            -password ${{ secrets.UNITY_PASSWORD }} \
             -executeMethod com.IvanMurzak.Unity.MCP.Editor.Startup.Init \
             -logFile /dev/stdout 2>&1"
 
