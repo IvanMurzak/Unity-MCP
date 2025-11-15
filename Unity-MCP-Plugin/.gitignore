@@ -60,3 +60,7 @@ UserSettings/Layouts/*
 
 # Unity Render cache
 kernelsCache/*
+
+# Ignore temporaries from GameCI
+/[Aa]rtifacts/
+/[Cc]odeCoverage/
