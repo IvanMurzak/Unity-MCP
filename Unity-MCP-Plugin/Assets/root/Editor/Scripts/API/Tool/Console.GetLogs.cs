@@ -54,14 +54,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     {
                         var cutoffTime = DateTime.Now.AddMinutes(-lastMinutes);
                         allLogs = allLogs
-                            .Where(log => log.timestamp >= cutoffTime);
+                            .Where(log => log.Timestamp >= cutoffTime);
                     }
 
                     // Apply log type filter
                     if (logTypeFilter.HasValue)
                     {
                         allLogs = allLogs
-                            .Where(log => log.logType == logTypeFilter.Value);
+                            .Where(log => log.LogType == logTypeFilter.Value);
                     }
 
                     // Take the most recent entries (up to maxEntries)
