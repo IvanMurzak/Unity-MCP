@@ -39,7 +39,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 Debug.Log($"{nameof(Startup)} {nameof(OnApplicationUnloading)} triggered: No UnityMcpPlugin instance to disconnect.");
             }
-            LogUtils.SaveToFile();
+            LogUtils.SaveToFileImmediate();
         }
         static void OnApplicationQuitting()
         {
@@ -65,7 +65,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 Debug.Log($"{nameof(Startup)} {nameof(OnBeforeAssemblyReload)} triggered: No UnityMcpPlugin instance to disconnect.");
             }
-            LogUtils.SaveToFile();
+            LogUtils.SaveToFileImmediate();
         }
         static void OnAfterAssemblyReload()
         {

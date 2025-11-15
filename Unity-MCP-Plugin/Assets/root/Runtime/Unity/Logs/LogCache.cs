@@ -86,29 +86,47 @@ namespace com.IvanMurzak.Unity.MCP
                 await _fileLock.WaitAsync();
                 try
                 {
-                    var data = new LogWrapper { Entries = entries };
-
-                    if (!Directory.Exists(_cacheFilePath))
-                        Directory.CreateDirectory(_cacheFilePath);
-
-                    // Stream JSON directly to file without creating entire JSON string in memory
-                    var tempFile = _cacheFile + ".tmp";
-                    using (var fileStream = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: true))
-                    {
-                        await System.Text.Json.JsonSerializer.SerializeAsync(fileStream, data, _jsonOptions);
-                        await fileStream.FlushAsync();
-                    }
-
-                    // Atomic file replacement
-                    if (File.Exists(_cacheFile))
-                        File.Delete(_cacheFile);
-                    File.Move(tempFile, _cacheFile);
+                    WriteCacheToFile(entries);
                 }
                 finally
                 {
                     _fileLock.Release();
                 }
             });
+        }
+
+        public void CacheLogEntries(LogEntry[] entries)
+        {
+            _fileLock.Wait();
+            try
+            {
+                WriteCacheToFile(entries);
+            }
+            finally
+            {
+                _fileLock.Release();
+            }
+        }
+
+        void WriteCacheToFile(LogEntry[] entries)
+        {
+            var data = new LogWrapper { Entries = entries };
+
+            if (!Directory.Exists(_cacheFilePath))
+                Directory.CreateDirectory(_cacheFilePath);
+
+            // Stream JSON directly to file without creating entire JSON string in memory
+            var tempFile = _cacheFile + ".tmp";
+            using (var fileStream = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: false))
+            {
+                System.Text.Json.JsonSerializer.Serialize(fileStream, data, _jsonOptions);
+                fileStream.Flush();
+            }
+
+            // Atomic file replacement
+            if (File.Exists(_cacheFile))
+                File.Delete(_cacheFile);
+            File.Move(tempFile, _cacheFile);
         }
         public Task<LogWrapper?> GetCachedLogEntriesAsync()
         {

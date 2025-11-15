@@ -50,6 +50,15 @@ namespace com.IvanMurzak.Unity.MCP
                 _logEntries = new ConcurrentQueue<LogEntry>();
             }
         }
+        /// <summary>
+        /// Synchronously saves all current log entries to the cache file.
+        /// </summary>
+        /// <returns>A task that completes when the save operation is finished.</returns>
+        public static void SaveToFileImmediate()
+        {
+            var logEntries = GetAllLogs();
+            _logCache.CacheLogEntriesAsync(logEntries);
+        }
 
         /// <summary>
         /// Asynchronously saves all current log entries to the cache file.
@@ -80,7 +89,7 @@ namespace com.IvanMurzak.Unity.MCP
         /// <returns>A task that completes when the quit handling is finished.</returns>
         public static async Task HandleQuit()
         {
-            await SaveToFile();
+            SaveToFileImmediate();
             await _logCache.HandleQuit();
         }
 
