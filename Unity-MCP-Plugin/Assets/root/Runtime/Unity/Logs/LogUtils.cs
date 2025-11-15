@@ -90,7 +90,7 @@ namespace com.IvanMurzak.Unity.MCP
         public static async Task HandleQuit()
         {
             SaveToFileImmediate();
-            await _logCache.HandleQuit();
+            _logCache.HandleQuit();
         }
 
         public static LogEntry[] GetAllLogs()

@@ -28,6 +28,7 @@ namespace com.IvanMurzak.Unity.MCP
         readonly JsonSerializerOptions _jsonOptions;
         readonly SemaphoreSlim _fileLock = new(1, 1);
         readonly CancellationTokenSource _shutdownCts = new();
+        bool _saving = false;
 
         IDisposable? timerSubscription;
 
@@ -57,7 +58,7 @@ namespace com.IvanMurzak.Unity.MCP
                 )
                 .Subscribe(x =>
                 {
-                    if (!_shutdownCts.IsCancellationRequested)
+                    if (!_saving && !_shutdownCts.IsCancellationRequested)
                         Task.Run(HandleLogCache, _shutdownCts.Token);
                 });
         }
@@ -110,6 +111,7 @@ namespace com.IvanMurzak.Unity.MCP
 
         void WriteCacheToFile(LogEntry[] entries)
         {
+            _saving = true;
             var data = new LogWrapper { Entries = entries };
 
             if (!Directory.Exists(_cacheFilePath))
@@ -127,6 +129,7 @@ namespace com.IvanMurzak.Unity.MCP
             if (File.Exists(_cacheFile))
                 File.Delete(_cacheFile);
             File.Move(tempFile, _cacheFile);
+            _saving = false;
         }
         public Task<LogWrapper?> GetCachedLogEntriesAsync()
         {
