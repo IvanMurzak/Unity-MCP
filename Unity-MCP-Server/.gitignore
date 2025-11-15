@@ -34,9 +34,6 @@ artifacts/
 # Whitelist .csproj files
 !*.csproj
 
-*.sln
-*.sln.meta
-
 # Whitelist specific DLLs
 !ReflectorNet.dll
 
