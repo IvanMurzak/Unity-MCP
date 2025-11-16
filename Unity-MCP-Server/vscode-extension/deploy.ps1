@@ -3,19 +3,19 @@
 
 <#
 .SYNOPSIS
-    Builds and deploys Unity MCP Server VS Code extension to the marketplace.
+    Deploys Unity MCP Server VS Code extension to the marketplace.
 
 .DESCRIPTION
-    This script automates the complete deployment process:
-    1. Builds the .NET MCP server for all platforms
-    2. Copies binaries to the extension folder
-    3. Installs npm dependencies
-    4. Compiles TypeScript code
-    5. Packages the extension (.vsix)
-    6. Publishes to VS Code marketplace
+    This script automates the deployment process:
+    1. Installs npm dependencies
+    2. Compiles TypeScript code
+    3. Packages the extension (.vsix)
+    4. Publishes to VS Code marketplace
 
-.PARAMETER SkipBuild
-    Skip building the .NET server binaries (use existing binaries)
+    NOTE: Server binaries are NOT included in the extension package.
+    The extension downloads them dynamically from GitHub releases at runtime.
+    Make sure the server binaries are already uploaded to GitHub releases
+    before deploying a new extension version.
 
 .PARAMETER SkipPublish
     Only create the .vsix package without publishing
@@ -25,11 +25,7 @@
 
 .EXAMPLE
     .\deploy.ps1
-    Full build and publish
-
-.EXAMPLE
-    .\deploy.ps1 -SkipBuild
-    Use existing binaries and publish
+    Package and publish to marketplace
 
 .EXAMPLE
     .\deploy.ps1 -SkipPublish
@@ -37,7 +33,6 @@
 #>
 
 param(
-    [switch]$SkipBuild,
     [switch]$SkipPublish,
     [string]$Token = $env:VSCE_PAT
 )
@@ -62,10 +57,7 @@ function Write-Error-Custom {
 
 # Get script directory
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$ServerDir = Split-Path -Parent $ScriptDir
 $ExtensionDir = Join-Path $ScriptDir ""
-$PublishDir = Join-Path $ServerDir "publish"
-$ServerBinariesDir = Join-Path $ExtensionDir "server"
 
 Write-Host @"
 ╔════════════════════════════════════════════════════════════╗
@@ -75,66 +67,10 @@ Write-Host @"
 ╚════════════════════════════════════════════════════════════╝
 "@ -ForegroundColor Magenta
 
-# Step 1: Build .NET Server (unless skipped)
-if (-not $SkipBuild) {
-    Write-Step "Building .NET MCP Server for all platforms..."
+Write-Host "`nNOTE: Server binaries are downloaded from GitHub releases at runtime." -ForegroundColor Yellow
+Write-Host "Make sure binaries are uploaded to GitHub releases before publishing!`n" -ForegroundColor Yellow
 
-    Push-Location $ServerDir
-    try {
-        $buildScript = Join-Path $ServerDir "build-all.ps1"
-        if (Test-Path $buildScript) {
-            & $buildScript Release
-            if ($LASTEXITCODE -ne 0) {
-                throw "Build failed with exit code $LASTEXITCODE"
-            }
-            Write-Success "Server binaries built successfully"
-        }
-        else {
-            Write-Error-Custom "Build script not found: $buildScript"
-            exit 1
-        }
-    }
-    finally {
-        Pop-Location
-    }
-}
-else {
-    Write-Step "Skipping .NET build (using existing binaries)"
-}
-
-# Step 2: Copy binaries to extension folder
-Write-Step "Copying server binaries to extension folder..."
-
-if (-not (Test-Path $PublishDir)) {
-    Write-Error-Custom "Publish directory not found: $PublishDir"
-    exit 1
-}
-
-# Remove old binaries
-if (Test-Path $ServerBinariesDir) {
-    Remove-Item -Path $ServerBinariesDir -Recurse -Force
-}
-
-# Create server directory
-New-Item -ItemType Directory -Path $ServerBinariesDir -Force | Out-Null
-
-# Copy all platform binaries
-$platforms = @("win-x64", "win-x86", "win-arm64", "linux-x64", "linux-arm64", "osx-x64", "osx-arm64")
-
-foreach ($platform in $platforms) {
-    $sourcePath = Join-Path $PublishDir $platform
-    $destPath = Join-Path $ServerBinariesDir $platform
-
-    if (Test-Path $sourcePath) {
-        Copy-Item -Path $sourcePath -Destination $destPath -Recurse -Force
-        Write-Success "Copied $platform binaries"
-    }
-    else {
-        Write-Warning "Platform binaries not found: $platform (skipping)"
-    }
-}
-
-# Step 3: Install npm dependencies
+# Step 1: Install npm dependencies
 Write-Step "Installing npm dependencies..."
 
 Push-Location $ExtensionDir
@@ -154,7 +90,7 @@ finally {
     Pop-Location
 }
 
-# Step 4: Compile TypeScript
+# Step 2: Compile TypeScript
 Write-Step "Compiling TypeScript code..."
 
 Push-Location $ExtensionDir
@@ -169,7 +105,7 @@ finally {
     Pop-Location
 }
 
-# Step 5: Package extension
+# Step 3: Package extension
 Write-Step "Packaging VS Code extension..."
 
 Push-Location $ExtensionDir
@@ -198,7 +134,7 @@ finally {
     Pop-Location
 }
 
-# Step 6: Publish to marketplace (unless skipped)
+# Step 4: Publish to marketplace (unless skipped)
 if (-not $SkipPublish) {
     Write-Step "Publishing to VS Code Marketplace..."
 

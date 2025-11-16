@@ -1,6 +1,6 @@
 {
   "name": "unity-mcp",
-  "displayName": "AI Game Developer (Unity-MCP)",
+  "displayName": "AI Game Developer (Unity-MCP Server)",
   "description": "Unity MCP Server - A Model Context Protocol server that enables AI assistants to interact with Unity Editor and games through the Unity-MCP Plugin",
   "version": "0.22.1",
   "publisher": "IvanMurzak",
@@ -36,7 +36,7 @@
   "main": "./out/extension.js",
   "contributes": {
     "configuration": {
-      "title": "AI Game Developer (Unity-MCP)",
+      "title": "AI Game Developer (Unity-MCP Server)",
       "properties": {
         "unityMcp.port": {
           "type": "number",
@@ -96,6 +96,7 @@
     "publish": "vsce publish"
   },
   "devDependencies": {
+    "@types/adm-zip": "^0.5.0",
     "@types/node": "^20.x",
     "@types/vscode": "^1.85.0",
     "@typescript-eslint/eslint-plugin": "^6.x",
@@ -104,5 +105,7 @@
     "typescript": "^5.3.0",
     "@vscode/vsce": "^2.22.0"
   },
-  "dependencies": {}
+  "dependencies": {
+    "adm-zip": "^0.5.10"
+  }
 }

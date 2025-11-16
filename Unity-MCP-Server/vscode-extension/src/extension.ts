@@ -1,13 +1,12 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
-import * as os from 'os';
 import { ChildProcess, spawn } from 'child_process';
+import * as serverBinaryManager from './serverBinaryManager';
 
 let mcpServerProcess: ChildProcess | null = null;
 let outputChannel: vscode.OutputChannel;
 let statusBarItem: vscode.StatusBarItem;
 
-export function activate(context: vscode.ExtensionContext) {
+export async function activate(context: vscode.ExtensionContext) {
     console.log('Unity MCP extension is now active');
 
     // Create output channel
@@ -42,6 +41,33 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
 
+    // Ensure server binary exists and is up to date
+    const extensionVersion = context.extension.packageJSON.version;
+    outputChannel.appendLine(`Extension version: ${extensionVersion}`);
+
+    updateStatusBar('stopped');
+    statusBarItem.text = '$(sync~spin) Unity MCP (Initializing...)';
+    statusBarItem.show();
+
+    const binaryReady = await serverBinaryManager.ensureServerBinaryExists(
+        context,
+        extensionVersion,
+        outputChannel
+    );
+
+    if (!binaryReady) {
+        vscode.window.showErrorMessage(
+            'Failed to download Unity MCP Server binary. Please check the output channel for details.',
+            'Show Output'
+        ).then(selection => {
+            if (selection === 'Show Output') {
+                outputChannel.show();
+            }
+        });
+        updateStatusBar('error');
+        return;
+    }
+
     // Auto-start if enabled
     const config = vscode.workspace.getConfiguration('unityMcp');
     if (config.get<boolean>('autoStart', true)) {
@@ -62,53 +88,7 @@ export function deactivate() {
 }
 
 function getServerExecutablePath(context: vscode.ExtensionContext): string {
-    const platform = os.platform();
-    const arch = os.arch();
-
-    let platformFolder: string;
-    let executableName: string;
-
-    if (platform === 'win32') {
-        if (arch === 'x64') {
-            platformFolder = 'win-x64';
-        } else if (arch === 'ia32') {
-            platformFolder = 'win-x86';
-        } else if (arch === 'arm64') {
-            platformFolder = 'win-arm64';
-        } else {
-            throw new Error(`Unsupported Windows architecture: ${arch}`);
-        }
-        executableName = 'unity-mcp-server.exe';
-    } else if (platform === 'darwin') {
-        if (arch === 'arm64') {
-            platformFolder = 'osx-arm64';
-        } else if (arch === 'x64') {
-            platformFolder = 'osx-x64';
-        } else {
-            throw new Error(`Unsupported macOS architecture: ${arch}`);
-        }
-        executableName = 'unity-mcp-server';
-    } else if (platform === 'linux') {
-        if (arch === 'x64') {
-            platformFolder = 'linux-x64';
-        } else if (arch === 'arm64') {
-            platformFolder = 'linux-arm64';
-        } else {
-            throw new Error(`Unsupported Linux architecture: ${arch}`);
-        }
-        executableName = 'unity-mcp-server';
-    } else {
-        throw new Error(`Unsupported platform: ${platform}`);
-    }
-
-    const executablePath = path.join(
-        context.extensionPath,
-        'server',
-        platformFolder,
-        executableName
-    );
-
-    return executablePath;
+    return serverBinaryManager.getServerExecutablePath(context);
 }
 
 async function startServer(context: vscode.ExtensionContext) {
