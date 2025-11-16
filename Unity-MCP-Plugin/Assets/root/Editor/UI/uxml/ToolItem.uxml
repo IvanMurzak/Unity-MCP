@@ -12,6 +12,9 @@
             <ui:Foldout name="description-foldout" text="Description" class="details-foldout">
                 <ui:Label name="description-text" text="Tool description abc abc abc..." class="details-text" />
             </ui:Foldout>
+            <ui:Foldout name="outputs-foldout" text="Outputs" class="details-foldout">
+                <ui:VisualElement name="outputs-container" />
+            </ui:Foldout>
             <ui:Foldout name="arguments-foldout" text="Input arguments (2)" class="details-foldout">
                 <ui:VisualElement name="arguments-container" />
             </ui:Foldout>

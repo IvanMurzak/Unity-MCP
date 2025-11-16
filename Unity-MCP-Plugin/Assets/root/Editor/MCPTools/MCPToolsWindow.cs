@@ -8,20 +8,17 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 
-/*
- * MCP Tools Editor Window
- * Ready for PR:
- * - Stable UI loading with safe USS application (try/catch).
- * - Dropdown 'Type' + text filter with live filtering.
- * - Tool enabled/disabled state persisted via EditorPrefs (JSON).
- * - Mock tools expanded for testing editor/code workflows.
- * - Safe queries and null-checks to avoid runtime errors.
- 
- */
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
+using System.Reflection;
+using System.Text.Json.Nodes;
+using com.IvanMurzak.McpPlugin.Common;
+using com.IvanMurzak.ReflectorNet;
+using com.IvanMurzak.ReflectorNet.Json;
+using com.IvanMurzak.Unity.MCP;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -29,7 +26,12 @@ using UnityEngine.UIElements;
 public class MCPToolsWindow : EditorWindow
 {
     private VisualTreeAsset toolItemTemplate;
-    private List<ToolData> allTools;
+    private List<ToolViewModel> allTools = new();
+    private object? toolManager;
+    private MethodInfo? getAllToolsMethod;
+    private MethodInfo? isToolEnabledMethod;
+    private MethodInfo? setToolEnabledMethod;
+    private const string FilterStatsFormat = "Filtered: {0}, Total: {1}";
 
     [MenuItem("Window/MCP Tools")]
     public static void ShowWindow()
@@ -40,15 +42,17 @@ public class MCPToolsWindow : EditorWindow
 
     public void CreateGUI()
     {
+        UnityMcpPlugin.InitSingletonIfNeeded();
+        UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
+
         VisualElement root = rootVisualElement;
 
-        // Try multiple likely locations for the UXML (project refactor may move files).
         string[] uxmlPaths =
         {
             "Assets/root/Editor/UI/uxml/MCPToolsWindow.uxml",
             "Assets/root/Editor/MCPTools/MCPToolsWindow.uxml",
             "Assets/UnityLocalAi/Editor/MCPTools/MCPToolsWindow.uxml",
-            "Assets/root/Editor/UI/uxml/MCPToolsWindow.uxml" // keep as last-resort duplicate
+            "Assets/root/Editor/UI/uxml/MCPToolsWindow.uxml"
         };
 
         VisualTreeAsset visualTree = null;
@@ -70,7 +74,6 @@ public class MCPToolsWindow : EditorWindow
 
         visualTree.CloneTree(root);
 
-        // Try multiple likely locations for the USS stylesheet.
         string[] ussPaths =
         {
             "Assets/root/Editor/UI/uss/MCPToolsWindow.uss",
@@ -102,7 +105,6 @@ public class MCPToolsWindow : EditorWindow
             Debug.LogWarning("[MCPTools] USS not found; continuing without stylesheet. Checked: " + string.Join(", ", ussPaths));
         }
 
-        // Try multiple likely locations for the ToolItem template.
         string[] toolItemPaths =
         {
             "Assets/root/Editor/UI/uxml/ToolItem.uxml",
@@ -126,22 +128,16 @@ public class MCPToolsWindow : EditorWindow
             Debug.LogWarning("[MCPTools] ToolItem UXML not found. Checked: " + string.Join(", ", toolItemPaths));
         }
 
-        // Load mock data once and keep it in memory for filtering.
-        allTools = GetMockTools();
-        // Try to restore saved tool enabled/disabled state from EditorPrefs (if any).
-        LoadToolState();
+        RefreshTools();
 
-        // Populate simple DropdownField choices from code to avoid UXML <Choice> deserialization issues.
         var typeDropdown = root.Q<DropdownField>("type-dropdown");
         if (typeDropdown != null)
         {
             typeDropdown.choices = new List<string> { "Enabled", "Disabled", "All" };
             typeDropdown.index = 0;
-            // Re-populate the list whenever the dropdown selection changes.
             typeDropdown.RegisterValueChangedCallback(evt => PopulateToolList());
         }
 
-        // Hook up filter text field to allow searching by title/id/description.
         var filterField = root.Q<TextField>("filter-textfield");
         if (filterField != null)
         {
@@ -149,6 +145,103 @@ public class MCPToolsWindow : EditorWindow
         }
 
         PopulateToolList();
+    }
+
+    private void RefreshTools()
+    {
+        toolManager = UnityMcpPlugin.HasInstance ? UnityMcpPlugin.Instance.Tools : null;
+        if (toolManager != null)
+        {
+            getAllToolsMethod = toolManager.GetType().GetMethod("GetAllTools");
+            isToolEnabledMethod = toolManager.GetType().GetMethod("IsToolEnabled", new[] { typeof(string) });
+            setToolEnabledMethod = toolManager.GetType().GetMethod("SetToolEnabled", new[] { typeof(string), typeof(bool) });
+        }
+
+        var refreshed = new List<ToolViewModel>();
+        if (toolManager != null && getAllToolsMethod != null)
+        {
+            var raw = getAllToolsMethod.Invoke(toolManager, null) as IEnumerable;
+            if (raw != null)
+            {
+                foreach (var tool in raw)
+                {
+                    var toolName = GetStringProperty(tool, "Name");
+                    var titleCandidate = GetStringProperty(tool, "Title");
+                    var description = GetStringProperty(tool, "Description");
+                    var title = !string.IsNullOrWhiteSpace(titleCandidate) ? titleCandidate : toolName;
+
+                    var isEnabled = !string.IsNullOrWhiteSpace(toolName) && InvokeBoolMethod(isToolEnabledMethod, toolManager, toolName);
+
+                    refreshed.Add(new ToolViewModel
+                    {
+                        Title = title,
+                        Name = toolName,
+                        Description = description,
+                        IsEnabled = isEnabled,
+                        Inputs = ParseSchemaArguments(GetSchemaProperty(tool, "InputSchema")),
+                        Outputs = ParseSchemaArguments(GetSchemaProperty(tool, "OutputSchema"))
+                    });
+                }
+            }
+        }
+
+        allTools = refreshed;
+    }
+
+    private static IReadOnlyList<ArgumentData> ParseSchemaArguments(JsonNode? schema)
+    {
+        var list = new List<ArgumentData>();
+        if (schema?.AsObject()?.TryGetPropertyValue(SchemaPropertyNames.Properties, out var properties) != true)
+            return list;
+
+        foreach (var item in properties!.AsObject())
+        {
+            var inputName = item.Key;
+            var description = string.Empty;
+            if (item.Value?.AsObject().TryGetPropertyValue(SchemaPropertyNames.Description, out var desc) == true)
+            {
+                description = desc?.ToString() ?? string.Empty;
+            }
+
+            list.Add(new ArgumentData(inputName, description));
+        }
+
+        return list;
+    }
+
+    private static string GetStringProperty(object? obj, string propertyName)
+    {
+        if (obj == null)
+            return string.Empty;
+
+        var prop = obj.GetType().GetProperty(propertyName);
+        return prop?.GetValue(obj)?.ToString() ?? string.Empty;
+    }
+
+    private static JsonNode? GetSchemaProperty(object? obj, string propertyName)
+    {
+        if (obj == null)
+            return null;
+
+        var prop = obj.GetType().GetProperty(propertyName);
+        return prop?.GetValue(obj) as JsonNode;
+    }
+
+    private static bool InvokeBoolMethod(MethodInfo? method, object instance, params object[] args)
+    {
+        if (method == null)
+            return false;
+
+        var result = method.Invoke(instance, args);
+        return result is bool b && b;
+    }
+
+    private static void InvokeVoidMethod(MethodInfo? method, object? instance, params object[] args)
+    {
+        if (method == null || instance == null)
+            return;
+
+        method.Invoke(instance, args);
     }
 
     private void PopulateToolList()
@@ -160,88 +253,79 @@ public class MCPToolsWindow : EditorWindow
             return;
         }
 
-        // Clear existing items
         scrollView.Clear();
 
-        // Read current filter values
         var root = rootVisualElement;
-        var typeDropdown = root.Q<DropdownField>("type-dropdown");
         var filterField = root.Q<TextField>("filter-textfield");
-        string filterText = filterField?.value?.Trim() ?? "";
+        string filterText = filterField?.value?.Trim() ?? string.Empty;
 
-        // Determine desired filter: Enabled / Disabled / All
+        var typeDropdown = root.Q<DropdownField>("type-dropdown");
         string selectedType = "All";
         if (typeDropdown != null && typeDropdown.index >= 0 && typeDropdown.index < typeDropdown.choices.Count)
             selectedType = typeDropdown.choices[typeDropdown.index];
 
-        // Work from cached allTools list
-        var tools = allTools ?? GetMockTools();
-
-        IEnumerable<ToolData> filtered = tools;
-
-        // Apply enabled/disabled filter
+        IEnumerable<ToolViewModel> filtered = allTools;
         if (selectedType == "Enabled")
             filtered = filtered.Where(t => t.IsEnabled);
         else if (selectedType == "Disabled")
             filtered = filtered.Where(t => !t.IsEnabled);
 
-        // Apply text filter (title, id, description)
         if (!string.IsNullOrEmpty(filterText))
         {
             filtered = filtered.Where(t =>
                 (!string.IsNullOrEmpty(t.Title) && t.Title.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0) ||
-                (!string.IsNullOrEmpty(t.Id) && t.Id.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0) ||
-                (!string.IsNullOrEmpty(t.Description) && t.Description.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0)
-            );
+                (!string.IsNullOrEmpty(t.Name) && t.Name.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                (!string.IsNullOrEmpty(t.Description) && t.Description.IndexOf(filterText, StringComparison.OrdinalIgnoreCase) >= 0));
         }
 
-        foreach (var tool in filtered)
+        var filteredList = filtered.ToList();
+        var statsLabel = root.Q<Label>("filter-stats-label");
+        if (statsLabel != null)
+            statsLabel.text = string.Format(FilterStatsFormat, filteredList.Count, allTools.Count);
+
+        foreach (var tool in filteredList)
         {
             var toolItem = toolItemTemplate.Instantiate();
 
             var titleLabel = toolItem.Q<Label>("tool-title");
-            if (titleLabel != null) titleLabel.text = tool.Title;
+            if (titleLabel != null)
+                titleLabel.text = tool.Title;
+
             var idLabel = toolItem.Q<Label>("tool-id");
-            if (idLabel != null) idLabel.text = tool.Id;
+            if (idLabel != null)
+                idLabel.text = tool.Name;
 
             var toolToggle = toolItem.Q<Toggle>("tool-toggle");
             if (toolToggle != null)
             {
                 toolToggle.value = tool.IsEnabled;
-                // Ensure USS can style the toggle using the 'checked' class.
                 toolToggle.EnableInClassList("checked", tool.IsEnabled);
             }
 
-            // The UXML uses class="tool-item-container" (not name). Query by class to find it.
             var toolItemContainer = toolItem.Q<VisualElement>(null, "tool-item-container") ?? toolItem;
-
             UpdateToolItemClasses(toolItemContainer, toolToggle != null && toolToggle.value);
 
-            // Capture the container and toggle reference for the callback to avoid re-querying.
+            var capturedTool = tool;
             var capturedContainer = toolItemContainer;
             var capturedToggle = toolToggle;
-            var toolId = tool.Id;
+            var toolId = tool.Name;
+
             if (toolToggle != null)
             {
                 toolToggle.RegisterValueChangedCallback(evt =>
                 {
-                    if (capturedToggle != null) capturedToggle.EnableInClassList("checked", evt.newValue);
+                    if (capturedToggle != null)
+                        capturedToggle.EnableInClassList("checked", evt.newValue);
+
                     UpdateToolItemClasses(capturedContainer, evt.newValue);
 
-                    // Persist change to the master list and save state so it survives editor restarts.
-                    if (allTools != null)
+                    capturedTool.IsEnabled = evt.newValue;
+                    if (!string.IsNullOrWhiteSpace(toolId))
                     {
-                        var stored = allTools.FirstOrDefault(t => t.Id == toolId);
-                        if (stored != null)
-                        {
-                            stored.IsEnabled = evt.newValue;
-                            SaveToolState();
-                        }
+                        InvokeVoidMethod(setToolEnabledMethod, toolManager, toolId, evt.newValue);
                     }
 
-                    // Refresh the list to respect current filters (an item might need to disappear).
-                    // Use a delayed call to avoid modifying the visual tree while it's being iterated.
-                    EditorApplication.delayCall += () => PopulateToolList();
+                    EditorApplication.delayCall += PopulateToolList;
                 });
             }
 
@@ -251,7 +335,8 @@ public class MCPToolsWindow : EditorWindow
                 if (!string.IsNullOrEmpty(tool.Description))
                 {
                     var descLabel = descriptionFoldout.Q<Label>("description-text");
-                    if (descLabel != null) descLabel.text = tool.Description;
+                    if (descLabel != null)
+                        descLabel.text = tool.Description;
                 }
                 else
                 {
@@ -259,198 +344,80 @@ public class MCPToolsWindow : EditorWindow
                 }
             }
 
-            var argumentsFoldout = toolItem.Q<Foldout>("arguments-foldout");
-            if (argumentsFoldout != null)
-            {
-                if (tool.Arguments != null && tool.Arguments.Count > 0)
-                {
-                    argumentsFoldout.text = $"Input arguments ({tool.Arguments.Count})";
-                    var argumentsContainer = toolItem.Q("arguments-container");
-                    if (argumentsContainer != null)
-                    {
-                        foreach (var arg in tool.Arguments)
-                        {
-                            var argItem = new VisualElement();
-                            argItem.AddToClassList("argument-item");
-
-                            var nameLabel = new Label(arg.Name);
-                            nameLabel.AddToClassList("argument-name");
-                            argItem.Add(nameLabel);
-
-                            var descLabel = new Label(arg.Description);
-                            descLabel.AddToClassList("argument-description");
-                            argItem.Add(descLabel);
-
-                            argumentsContainer.Add(argItem);
-                        }
-                    }
-                }
-                else
-                {
-                    argumentsFoldout.style.display = DisplayStyle.None;
-                }
-            }
-
+            PopulateArgumentFoldout(toolItem, "arguments-foldout", "arguments-container", "Input arguments", tool.Inputs);
+            PopulateArgumentFoldout(toolItem, "outputs-foldout", "outputs-container", "Outputs", tool.Outputs);
             scrollView.Add(toolItem);
+        }
+    }
+
+    private void PopulateArgumentFoldout(VisualElement toolItem, string foldoutName, string containerName, string titlePrefix, IReadOnlyList<ArgumentData> arguments)
+    {
+        var foldout = toolItem.Q<Foldout>(foldoutName);
+        if (foldout == null)
+            return;
+
+        if (arguments.Count == 0)
+        {
+            foldout.style.display = DisplayStyle.None;
+            return;
+        }
+
+        foldout.text = $"{titlePrefix} ({arguments.Count})";
+        var container = toolItem.Q(containerName);
+        if (container == null)
+            return;
+
+        foreach (var arg in arguments)
+        {
+            var argItem = new VisualElement();
+            argItem.AddToClassList("argument-item");
+
+            var nameLabel = new Label(arg.Name);
+            nameLabel.AddToClassList("argument-name");
+            argItem.Add(nameLabel);
+
+            var descLabel = new Label(arg.Description);
+            descLabel.AddToClassList("argument-description");
+            argItem.Add(descLabel);
+
+            container.Add(argItem);
         }
     }
 
     private void UpdateToolItemClasses(VisualElement toolItemContainer, bool isEnabled)
     {
-        if (toolItemContainer == null) return;
+        if (toolItemContainer == null)
+            return;
+
         toolItemContainer.EnableInClassList("enabled", isEnabled);
         toolItemContainer.EnableInClassList("disabled", !isEnabled);
     }
 
-    // --- Mock Data ---
-    public class ToolData
+    private class ToolViewModel
     {
-        public string Title { get; set; }
-        public string Id { get; set; }
+        public string Title { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
         public bool IsEnabled { get; set; }
-        public string Description { get; set; }
-        public List<ArgumentData> Arguments { get; set; }
+        public IReadOnlyList<ArgumentData> Inputs { get; set; } = Array.Empty<ArgumentData>();
+        public IReadOnlyList<ArgumentData> Outputs { get; set; } = Array.Empty<ArgumentData>();
     }
 
-    public class ArgumentData
+    private static class SchemaPropertyNames
     {
-        public string Name { get; set; }
-        public string Description { get; set; }
+        public const string Properties = "properties";
+        public const string Description = "description";
     }
 
-    // Persist tool enabled/disabled state between editor sessions using EditorPrefs.
-    private const string TOOL_STATE_KEY = "MCPTools_ToolStates_v1";
-
-    private void SaveToolState()
+    public sealed class ArgumentData
     {
-        try
-        {
-            if (allTools == null) return;
-            string json = JsonSerializer.Serialize(allTools);
-            EditorPrefs.SetString(TOOL_STATE_KEY, json);
-        }
-        catch (Exception ex)
-        {
-            Debug.LogWarning($"[MCPTools] Failed to save tool state: {ex.Message}");
-        }
-    }
+        public string Name { get; }
+        public string Description { get; }
 
-    private void LoadToolState()
-    {
-        try
+        public ArgumentData(string name, string description)
         {
-            if (!EditorPrefs.HasKey(TOOL_STATE_KEY)) return;
-            string json = EditorPrefs.GetString(TOOL_STATE_KEY);
-            var saved = JsonSerializer.Deserialize<List<ToolData>>(json);
-            if (saved == null || allTools == null) return;
-            foreach (var s in saved)
-            {
-                var existing = allTools.FirstOrDefault(t => t.Id == s.Id);
-                if (existing != null)
-                {
-                    existing.IsEnabled = s.IsEnabled;
-                }
-            }
+            Name = name ?? string.Empty;
+            Description = description ?? string.Empty;
         }
-        catch (Exception ex)
-        {
-            Debug.LogWarning($"[MCPTools] Failed to load saved tool state: {ex.Message}");
-        }
-    }
-
-    private List<ToolData> GetMockTools()
-    {
-        // Expanded mock tool set to test filtering and different editor-related actions.
-        return new List<ToolData>
-        {
-            new ToolData
-            {
-                Title = "Open Script in IDE",
-                Id = "open-script",
-                IsEnabled = true,
-                Description = "Opens the selected C# script in the external IDE at the given line.",
-                Arguments = new List<ArgumentData>
-                {
-                    new ArgumentData { Name = "filePath", Description = "Path to the script file" },
-                    new ArgumentData { Name = "lineNumber", Description = "Line number to jump to (optional)" }
-                }
-            },
-            new ToolData
-            {
-                Title = "Format Project Code",
-                Id = "format-code",
-                IsEnabled = true,
-                Description = "Runs the project code formatter / prettifier.",
-                Arguments = new List<ArgumentData>
-                {
-                    new ArgumentData { Name = "style", Description = "Formatting style (default/strict)" }
-                }
-            },
-            new ToolData
-            {
-                Title = "Create GameObject from Prefab",
-                Id = "create-gameobject",
-                IsEnabled = true,
-                Description = "Instantiates a prefab into the current scene.",
-                Arguments = new List<ArgumentData>
-                {
-                    new ArgumentData { Name = "prefabPath", Description = "Path to the prefab asset" },
-                    new ArgumentData { Name = "objectName", Description = "Name for the new GameObject" }
-                }
-            },
-            new ToolData
-            {
-                Title = "Run Editor Menu Command",
-                Id = "run-editor-command",
-                IsEnabled = true,
-                Description = "Execute an arbitrary editor menu command (useful for automation).",
-                Arguments = new List<ArgumentData>
-                {
-                    new ArgumentData { Name = "menuPath", Description = "Full menu path (e.g. File/Save Project)" }
-                }
-            },
-            new ToolData
-            {
-                Title = "Rename Asset",
-                Id = "rename-asset",
-                IsEnabled = false,
-                Description = "Renames an asset on disk and refreshes the AssetDatabase.",
-                Arguments = new List<ArgumentData>
-                {
-                    new ArgumentData { Name = "assetPath", Description = "Existing asset path" },
-                    new ArgumentData { Name = "newName", Description = "New filename (without folder path)" }
-                }
-            },
-            new ToolData
-            {
-                Title = "Build Project",
-                Id = "build-project",
-                IsEnabled = false,
-                Description = "Starts a build for the chosen target platform.",
-                Arguments = new List<ArgumentData>
-                {
-                    new ArgumentData { Name = "target", Description = "Build target (e.g. StandaloneWindows64, Android)" }
-                }
-            },
-            new ToolData
-            {
-                Title = "Run Linter",
-                Id = "lint-project",
-                IsEnabled = true,
-                Description = "Runs code linting across the project and reports issues.",
-                Arguments = new List<ArgumentData>
-                {
-                    new ArgumentData { Name = "ruleset", Description = "Optional ruleset to use" }
-                }
-            },
-            new ToolData
-            {
-                Title = "Clear Console",
-                Id = "clear-console",
-                IsEnabled = true,
-                Description = "Clears the Unity console messages.",
-                Arguments = new List<ArgumentData>()
-            }
-        };
     }
 }
