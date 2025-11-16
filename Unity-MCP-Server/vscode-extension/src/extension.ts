@@ -26,6 +26,22 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.commands.registerCommand('unityMcp.showStatus', showStatus)
     );
 
+    // Watch for configuration changes
+    context.subscriptions.push(
+        vscode.workspace.onDidChangeConfiguration(async (e) => {
+            if (e.affectsConfiguration('unityMcp.port') ||
+                e.affectsConfiguration('unityMcp.pluginTimeout') ||
+                e.affectsConfiguration('unityMcp.clientTransport')) {
+
+                if (mcpServerProcess) {
+                    outputChannel.appendLine('Configuration changed, restarting server...');
+                    vscode.window.showInformationMessage('Unity MCP configuration changed. Restarting server...');
+                    await restartServer(context);
+                }
+            }
+        })
+    );
+
     // Auto-start if enabled
     const config = vscode.workspace.getConfiguration('unityMcp');
     if (config.get<boolean>('autoStart', true)) {
