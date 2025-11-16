@@ -1,0 +1,105 @@
+{
+  "name": "unity-mcp",
+  "displayName": "Unity MCP",
+  "description": "Unity MCP Server - A Model Context Protocol server that enables AI assistants to interact with Unity Editor and games through the Unity-MCP Plugin",
+  "version": "0.22.1",
+  "publisher": "IvanMurzak",
+  "author": {
+    "name": "Ivan Murzak"
+  },
+  "license": "Apache-2.0",
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "AI Tools"
+  ],
+  "keywords": [
+    "unity",
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "assistant",
+    "game-development",
+    "unity-editor"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/IvanMurzak/Unity-MCP.git"
+  },
+  "bugs": {
+    "url": "https://github.com/IvanMurzak/Unity-MCP/issues"
+  },
+  "homepage": "https://github.com/IvanMurzak/Unity-MCP#readme",
+  "main": "./out/extension.js",
+  "contributes": {
+    "configuration": {
+      "title": "Unity MCP",
+      "properties": {
+        "unityMcp.port": {
+          "type": "number",
+          "default": 8080,
+          "description": "Port for Unity MCP Server communication"
+        },
+        "unityMcp.pluginTimeout": {
+          "type": "number",
+          "default": 10000,
+          "description": "Plugin connection timeout in milliseconds"
+        },
+        "unityMcp.clientTransport": {
+          "type": "string",
+          "enum": ["stdio", "http"],
+          "default": "stdio",
+          "description": "Transport method for MCP client communication"
+        },
+        "unityMcp.autoStart": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically start Unity MCP Server when VS Code opens"
+        }
+      }
+    },
+    "commands": [
+      {
+        "command": "unityMcp.start",
+        "title": "Unity MCP: Start Server"
+      },
+      {
+        "command": "unityMcp.stop",
+        "title": "Unity MCP: Stop Server"
+      },
+      {
+        "command": "unityMcp.restart",
+        "title": "Unity MCP: Restart Server"
+      },
+      {
+        "command": "unityMcp.showStatus",
+        "title": "Unity MCP: Show Status"
+      }
+    ]
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "lint": "eslint src --ext ts",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/node": "^20.x",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.x",
+    "@typescript-eslint/parser": "^6.x",
+    "eslint": "^8.x",
+    "typescript": "^5.3.0",
+    "@vscode/vsce": "^2.22.0"
+  },
+  "dependencies": {}
+}
