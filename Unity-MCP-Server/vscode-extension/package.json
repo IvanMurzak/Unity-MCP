@@ -1,6 +1,6 @@
 {
   "name": "unity-mcp",
-  "displayName": "Unity MCP",
+  "displayName": "AI Game Developer (Unity-MCP)",
   "description": "Unity MCP Server - A Model Context Protocol server that enables AI assistants to interact with Unity Editor and games through the Unity-MCP Plugin",
   "version": "0.22.1",
   "publisher": "IvanMurzak",
@@ -36,7 +36,7 @@
   "main": "./out/extension.js",
   "contributes": {
     "configuration": {
-      "title": "Unity MCP",
+      "title": "AI Game Developer (Unity-MCP)",
       "properties": {
         "unityMcp.port": {
           "type": "number",
@@ -50,7 +50,10 @@
         },
         "unityMcp.clientTransport": {
           "type": "string",
-          "enum": ["stdio", "http"],
+          "enum": [
+            "stdio",
+            "http"
+          ],
           "default": "stdio",
           "description": "Transport method for MCP client communication"
         },
