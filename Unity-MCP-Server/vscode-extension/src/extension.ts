@@ -10,7 +10,7 @@ export async function activate(context: vscode.ExtensionContext) {
     console.log('Unity MCP extension is now active');
 
     // Create output channel
-    outputChannel = vscode.window.createOutputChannel('Unity MCP');
+    outputChannel = vscode.window.createOutputChannel('Unity-MCP');
 
     // Create status bar item
     statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
