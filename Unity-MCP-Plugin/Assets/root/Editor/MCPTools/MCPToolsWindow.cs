@@ -8,22 +8,21 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 
+#nullable enable
+
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
 using com.IvanMurzak.McpPlugin;
-using com.IvanMurzak.ReflectorNet.Json;
+using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP;
-using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 public class MCPToolsWindow : EditorWindow
 {
-    public McpPlugin.IToolManager? Tools => McpPluginInstance?.McpManager.ToolManager;
     private static readonly string[] WindowUxmlPaths =
     {
         "Packages/com.ivanmurzak.unity.mcp/Editor/UI/uxml/MCPToolsWindow.uxml",
@@ -47,7 +46,6 @@ public class MCPToolsWindow : EditorWindow
         "ToolItem template is missing. Please ensure ToolItem.uxml exists in the package or the Assets/root folder.";
 
     private VisualTreeAsset? toolItemTemplate;
-    private IToolManager? toolManager;
     private List<ToolViewModel> allTools = new();
 
     private ScrollView? toolListScrollView;
@@ -108,42 +106,31 @@ public class MCPToolsWindow : EditorWindow
 
     private void RefreshTools()
     {
-        toolManager = ResolveToolManager();
+        var toolManager = UnityMcpPlugin.Instance.McpPluginInstance?.McpManager.ToolManager;
         var refreshed = new List<ToolViewModel>();
 
         if (toolManager != null)
         {
-            foreach (var tool in toolManager.GetAllTools() ?? Array.Empty<ITool>())
+            foreach (var tool in toolManager.GetAllTools())
             {
                 if (tool == null)
                     continue;
 
-                refreshed.Add(BuildToolViewModel(tool));
+                refreshed.Add(BuildToolViewModel(toolManager, tool));
             }
         }
 
         allTools = refreshed;
     }
 
-    private IToolManager? ResolveToolManager()
+    private ToolViewModel BuildToolViewModel(IToolManager toolManager, IRunTool tool)
     {
-        return UnityMcpPlugin.Instance?.Tools;
-    }
-
-    private ToolViewModel BuildToolViewModel(ITool tool)
-    {
-        var toolName = tool.Name ?? string.Empty;
-        var titleCandidate = tool.Title;
-        var title = !string.IsNullOrWhiteSpace(titleCandidate) ? titleCandidate : toolName;
-        var description = tool.Description ?? string.Empty;
-        var isEnabled = !string.IsNullOrWhiteSpace(toolName) && toolManager?.IsToolEnabled(toolName) == true;
-
         return new ToolViewModel
         {
-            Title = title,
-            Name = toolName,
-            Description = description,
-            IsEnabled = isEnabled,
+            Name = tool.Name,
+            Title = tool.Title,
+            Description = tool.Description,
+            IsEnabled = toolManager?.IsToolEnabled(tool.Name) == true,
             Inputs = ParseSchemaArguments(tool.InputSchema),
             Outputs = ParseSchemaArguments(tool.OutputSchema)
         };
@@ -267,6 +254,13 @@ public class MCPToolsWindow : EditorWindow
                     toolToggle.EnableInClassList("checked", evt.newValue);
                     UpdateToolItemClasses(toolItemContainer, evt.newValue);
 
+                    var toolManager = UnityMcpPlugin.Instance.McpPluginInstance?.McpManager.ToolManager;
+                    if (toolManager == null)
+                    {
+                        UnityMcpPlugin.Instance.LogError("ToolManager is not available.", typeof(MCPToolsWindow));
+                        return;
+                    }
+
                     tool.IsEnabled = evt.newValue;
                     if (!string.IsNullOrWhiteSpace(toolId) && toolManager != null)
                     {
@@ -315,9 +309,9 @@ public class MCPToolsWindow : EditorWindow
         if (!string.IsNullOrEmpty(filterText))
         {
             filtered = filtered.Where(t =>
-                (!string.IsNullOrEmpty(t.Title) && t.Title.Contains(filterText, StringComparison.OrdinalIgnoreCase)) ||
-                (!string.IsNullOrEmpty(t.Name) && t.Name.Contains(filterText, StringComparison.OrdinalIgnoreCase)) ||
-                (!string.IsNullOrEmpty(t.Description) && t.Description.Contains(filterText, StringComparison.OrdinalIgnoreCase)));
+                t.Name.Contains(filterText, StringComparison.OrdinalIgnoreCase) ||
+                (t.Title?.Contains(filterText, StringComparison.OrdinalIgnoreCase) == true) ||
+                (t.Description?.Contains(filterText, StringComparison.OrdinalIgnoreCase) == true));
         }
 
         return filtered;
@@ -377,9 +371,9 @@ public class MCPToolsWindow : EditorWindow
 
     private class ToolViewModel
     {
-        public string Title { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
+        public string? Title { get; set; } = string.Empty;
+        public string? Description { get; set; } = string.Empty;
         public bool IsEnabled { get; set; }
         public IReadOnlyList<ArgumentData> Inputs { get; set; } = Array.Empty<ArgumentData>();
         public IReadOnlyList<ArgumentData> Outputs { get; set; } = Array.Empty<ArgumentData>();
