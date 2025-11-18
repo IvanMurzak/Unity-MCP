@@ -25,6 +25,12 @@ using UnityEngine.UIElements;
 
 public class MCPToolsWindow : EditorWindow
 {
+    public enum ToolFilterType
+    {
+        All,
+        Enabled,
+        Disabled
+    }
     private static readonly string[] WindowUxmlPaths =
     {
         "Packages/com.ivanmurzak.unity.mcp/Editor/UI/uxml/MCPToolsWindow.uxml",
@@ -99,8 +105,8 @@ public class MCPToolsWindow : EditorWindow
         typeDropdown = root.Q<DropdownField>("type-dropdown");
         if (typeDropdown != null)
         {
-            typeDropdown.choices = new List<string> { "Enabled", "Disabled", "All" };
-            typeDropdown.index = 0;
+            typeDropdown.choices = Enum.GetNames(typeof(ToolFilterType)).ToList();
+            typeDropdown.index = (int)ToolFilterType.All;
             typeDropdown.RegisterValueChangedCallback(evt => PopulateToolList());
         }
 
@@ -307,14 +313,19 @@ public class MCPToolsWindow : EditorWindow
     {
         var filtered = allTools.AsEnumerable();
 
-        var selectedType = "All";
+        var selectedType = ToolFilterType.All;
         if (typeDropdown != null && typeDropdown.index >= 0 && typeDropdown.index < typeDropdown.choices.Count)
-            selectedType = typeDropdown.choices[typeDropdown.index];
+        {
+            if (Enum.TryParse<ToolFilterType>(typeDropdown.choices[typeDropdown.index], out var parsedType))
+                selectedType = parsedType;
+        }
 
-        if (selectedType == "Enabled")
-            filtered = filtered.Where(t => t.IsEnabled);
-        else if (selectedType == "Disabled")
-            filtered = filtered.Where(t => !t.IsEnabled);
+        filtered = selectedType switch
+        {
+            ToolFilterType.Enabled => filtered.Where(t => t.IsEnabled),
+            ToolFilterType.Disabled => filtered.Where(t => !t.IsEnabled),
+            _ => filtered
+        };
 
         var filterText = filterField?.value?.Trim();
         if (!string.IsNullOrEmpty(filterText))
