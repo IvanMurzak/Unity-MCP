@@ -17,6 +17,8 @@ using System.Text.Json.Nodes;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP;
+using com.IvanMurzak.Unity.MCP.Utils;
+using Microsoft.Extensions.Logging;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -52,6 +54,8 @@ public class MCPToolsWindow : EditorWindow
     private TextField? filterField;
     private DropdownField? typeDropdown;
     private Label? filterStatsLabel;
+
+    readonly Microsoft.Extensions.Logging.ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger(nameof(MCPToolsWindow));
 
     [MenuItem("Window/MCP Tools")]
     public static void ShowWindow()
@@ -136,23 +140,25 @@ public class MCPToolsWindow : EditorWindow
         };
     }
 
-    private static VisualTreeAsset? LoadVisualTreeAsset(IEnumerable<string> paths, string description)
+    private VisualTreeAsset? LoadVisualTreeAsset(IEnumerable<string> paths, string description)
     {
         foreach (var path in paths)
         {
             var asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(path);
             if (asset != null)
             {
-                Debug.Log($"[MCPTools] Loaded {description} template from: {path}");
+                _logger.LogInformation("{method} Loaded {description} template from: {path}",
+                    nameof(LoadVisualTreeAsset), description, path);
                 return asset;
             }
         }
 
-        Debug.LogWarning($"[MCPTools] {description} template not found. Checked: {string.Join(", ", paths)}");
+        _logger.LogWarning("{method} {description} template not found. Checked: {paths}",
+            nameof(LoadVisualTreeAsset), description, string.Join(", ", paths));
         return null;
     }
 
-    private static void ApplyStyleSheets(VisualElement root)
+    private void ApplyStyleSheets(VisualElement root)
     {
         foreach (var path in WindowUssPaths)
         {
@@ -163,17 +169,20 @@ public class MCPToolsWindow : EditorWindow
             try
             {
                 root.styleSheets.Add(sheet);
-                Debug.Log($"[MCPTools] Applied USS from: {path}");
+                _logger.LogInformation("{method} Applied USS from: {path}",
+                    nameof(ApplyStyleSheets), path);
                 return;
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[MCPTools] Failed to add USS '{path}': {ex.Message}");
+                _logger.LogWarning("{method} Failed to add USS '{path}': {message}",
+                    nameof(ApplyStyleSheets), path, ex.Message);
                 return;
             }
         }
 
-        Debug.LogWarning($"[MCPTools] USS not found; checked: {string.Join(", ", WindowUssPaths)}");
+        _logger.LogWarning("{method} USS not found; checked: {paths}",
+            nameof(ApplyStyleSheets), string.Join(", ", WindowUssPaths));
     }
 
     private IReadOnlyList<ArgumentData> ParseSchemaArguments(JsonNode? schema)
@@ -208,7 +217,8 @@ public class MCPToolsWindow : EditorWindow
     {
         if (toolListScrollView == null)
         {
-            Debug.LogWarning("[MCPTools] UI scroll view missing when populating tool list.");
+            _logger.LogWarning("{method} UI scroll view missing when populating tool list.",
+                nameof(PopulateToolList));
             return;
         }
 
@@ -257,7 +267,8 @@ public class MCPToolsWindow : EditorWindow
                     var toolManager = UnityMcpPlugin.Instance.McpPluginInstance?.McpManager.ToolManager;
                     if (toolManager == null)
                     {
-                        UnityMcpPlugin.Instance.LogError("ToolManager is not available.", typeof(MCPToolsWindow));
+                        _logger.LogError("{method} ToolManager is not available.",
+                            nameof(PopulateToolList));
                         return;
                     }
 

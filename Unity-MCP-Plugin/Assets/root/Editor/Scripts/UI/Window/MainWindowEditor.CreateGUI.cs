@@ -230,7 +230,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     UnityMcpPlugin.Instance.Save();
                     if (UnityMcpPlugin.Instance.HasMcpPluginInstance)
                     {
-                        UnityMcpPlugin.Instance.Disconnect();
+                        _ = UnityMcpPlugin.Instance.Disconnect();
                     }
                 }
                 else if (btnConnectOrDisconnect.text.Equals(ServerButtonText_Stop, StringComparison.OrdinalIgnoreCase))
@@ -239,7 +239,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     UnityMcpPlugin.Instance.Save();
                     if (UnityMcpPlugin.Instance.HasMcpPluginInstance)
                     {
-                        UnityMcpPlugin.Instance.Disconnect();
+                        _ = UnityMcpPlugin.Instance.Disconnect();
                     }
                 }
                 else
