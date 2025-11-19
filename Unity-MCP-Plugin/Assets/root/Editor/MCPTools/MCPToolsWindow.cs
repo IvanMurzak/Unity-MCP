@@ -7,6 +7,7 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+#nullable enable
 
 using System;
 using System.Collections;
@@ -14,7 +15,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
 using com.IvanMurzak.McpPlugin;
-using com.IvanMurzak.ReflectorNet.Json;
+using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEditor;
@@ -23,7 +24,6 @@ using UnityEngine.UIElements;
 
 public class MCPToolsWindow : EditorWindow
 {
-    public McpPlugin.IToolManager? Tools => McpPluginInstance?.McpManager.ToolManager;
     private static readonly string[] WindowUxmlPaths =
     {
         "Packages/com.ivanmurzak.unity.mcp/Editor/UI/uxml/MCPToolsWindow.uxml",
@@ -113,7 +113,7 @@ public class MCPToolsWindow : EditorWindow
 
         if (toolManager != null)
         {
-            foreach (var tool in toolManager.GetAllTools() ?? Array.Empty<ITool>())
+            foreach (var tool in toolManager.GetAllTools() ?? Array.Empty<IRunTool>())
             {
                 if (tool == null)
                     continue;
@@ -130,7 +130,7 @@ public class MCPToolsWindow : EditorWindow
         return UnityMcpPlugin.Instance?.Tools;
     }
 
-    private ToolViewModel BuildToolViewModel(ITool tool)
+    private ToolViewModel BuildToolViewModel(IRunTool tool)
     {
         var toolName = tool.Name ?? string.Empty;
         var titleCandidate = tool.Title;
