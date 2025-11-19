@@ -7,23 +7,30 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
 
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json.Nodes;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP;
-using com.IvanMurzak.Unity.MCP.Runtime.Utils;
+using com.IvanMurzak.Unity.MCP.Utils;
+using Microsoft.Extensions.Logging;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 public class MCPToolsWindow : EditorWindow
 {
+    public enum ToolFilterType
+    {
+        All,
+        Enabled,
+        Disabled
+    }
     private static readonly string[] WindowUxmlPaths =
     {
         "Packages/com.ivanmurzak.unity.mcp/Editor/UI/uxml/MCPToolsWindow.uxml",
@@ -47,13 +54,14 @@ public class MCPToolsWindow : EditorWindow
         "ToolItem template is missing. Please ensure ToolItem.uxml exists in the package or the Assets/root folder.";
 
     private VisualTreeAsset? toolItemTemplate;
-    private IToolManager? toolManager;
     private List<ToolViewModel> allTools = new();
 
     private ScrollView? toolListScrollView;
     private TextField? filterField;
     private DropdownField? typeDropdown;
     private Label? filterStatsLabel;
+
+    readonly Microsoft.Extensions.Logging.ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger(nameof(MCPToolsWindow));
 
     [MenuItem("Window/MCP Tools")]
     public static void ShowWindow()
@@ -97,8 +105,8 @@ public class MCPToolsWindow : EditorWindow
         typeDropdown = root.Q<DropdownField>("type-dropdown");
         if (typeDropdown != null)
         {
-            typeDropdown.choices = new List<string> { "Enabled", "Disabled", "All" };
-            typeDropdown.index = 0;
+            typeDropdown.choices = Enum.GetNames(typeof(ToolFilterType)).ToList();
+            typeDropdown.index = (int)ToolFilterType.All;
             typeDropdown.RegisterValueChangedCallback(evt => PopulateToolList());
         }
 
@@ -108,64 +116,55 @@ public class MCPToolsWindow : EditorWindow
 
     private void RefreshTools()
     {
-        toolManager = ResolveToolManager();
+        var toolManager = UnityMcpPlugin.Instance.McpPluginInstance?.McpManager.ToolManager;
         var refreshed = new List<ToolViewModel>();
 
         if (toolManager != null)
         {
-            foreach (var tool in toolManager.GetAllTools() ?? Array.Empty<IRunTool>())
+            foreach (var tool in toolManager.GetAllTools())
             {
                 if (tool == null)
                     continue;
 
-                refreshed.Add(BuildToolViewModel(tool));
+                refreshed.Add(BuildToolViewModel(toolManager, tool));
             }
         }
 
         allTools = refreshed;
     }
 
-    private IToolManager? ResolveToolManager()
+    private ToolViewModel BuildToolViewModel(IToolManager toolManager, IRunTool tool)
     {
-        return UnityMcpPlugin.Instance?.Tools;
-    }
-
-    private ToolViewModel BuildToolViewModel(IRunTool tool)
-    {
-        var toolName = tool.Name ?? string.Empty;
-        var titleCandidate = tool.Title;
-        var title = !string.IsNullOrWhiteSpace(titleCandidate) ? titleCandidate : toolName;
-        var description = tool.Description ?? string.Empty;
-        var isEnabled = !string.IsNullOrWhiteSpace(toolName) && toolManager?.IsToolEnabled(toolName) == true;
-
         return new ToolViewModel
         {
-            Title = title,
-            Name = toolName,
-            Description = description,
-            IsEnabled = isEnabled,
+            Name = tool.Name,
+            Title = tool.Title,
+            Description = tool.Description,
+            IsEnabled = toolManager?.IsToolEnabled(tool.Name) == true,
             Inputs = ParseSchemaArguments(tool.InputSchema),
             Outputs = ParseSchemaArguments(tool.OutputSchema)
         };
     }
 
-    private static VisualTreeAsset? LoadVisualTreeAsset(IEnumerable<string> paths, string description)
+    private VisualTreeAsset? LoadVisualTreeAsset(IEnumerable<string> paths, string description)
     {
         foreach (var path in paths)
         {
             var asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(path);
             if (asset != null)
             {
-                Debug.Log($"[MCPTools] Loaded {description} template from: {path}");
+                _logger.LogInformation("{method} Loaded {description} template from: {path}",
+                    nameof(LoadVisualTreeAsset), description, path);
                 return asset;
             }
         }
 
-        Debug.LogWarning($"[MCPTools] {description} template not found. Checked: {string.Join(", ", paths)}");
+        _logger.LogWarning("{method} {description} template not found. Checked: {paths}",
+            nameof(LoadVisualTreeAsset), description, string.Join(", ", paths));
         return null;
     }
 
-    private static void ApplyStyleSheets(VisualElement root)
+    private void ApplyStyleSheets(VisualElement root)
     {
         foreach (var path in WindowUssPaths)
         {
@@ -176,17 +175,20 @@ public class MCPToolsWindow : EditorWindow
             try
             {
                 root.styleSheets.Add(sheet);
-                Debug.Log($"[MCPTools] Applied USS from: {path}");
+                _logger.LogInformation("{method} Applied USS from: {path}",
+                    nameof(ApplyStyleSheets), path);
                 return;
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[MCPTools] Failed to add USS '{path}': {ex.Message}");
+                _logger.LogWarning("{method} Failed to add USS '{path}': {message}",
+                    nameof(ApplyStyleSheets), path, ex.Message);
                 return;
             }
         }
 
-        Debug.LogWarning($"[MCPTools] USS not found; checked: {string.Join(", ", WindowUssPaths)}");
+        _logger.LogWarning("{method} USS not found; checked: {paths}",
+            nameof(ApplyStyleSheets), string.Join(", ", WindowUssPaths));
     }
 
     private IReadOnlyList<ArgumentData> ParseSchemaArguments(JsonNode? schema)
@@ -221,7 +223,8 @@ public class MCPToolsWindow : EditorWindow
     {
         if (toolListScrollView == null)
         {
-            Debug.LogWarning("[MCPTools] UI scroll view missing when populating tool list.");
+            _logger.LogWarning("{method} UI scroll view missing when populating tool list.",
+                nameof(PopulateToolList));
             return;
         }
 
@@ -267,6 +270,14 @@ public class MCPToolsWindow : EditorWindow
                     toolToggle.EnableInClassList("checked", evt.newValue);
                     UpdateToolItemClasses(toolItemContainer, evt.newValue);
 
+                    var toolManager = UnityMcpPlugin.Instance.McpPluginInstance?.McpManager.ToolManager;
+                    if (toolManager == null)
+                    {
+                        _logger.LogError("{method} ToolManager is not available.",
+                            nameof(PopulateToolList));
+                        return;
+                    }
+
                     tool.IsEnabled = evt.newValue;
                     if (!string.IsNullOrWhiteSpace(toolId) && toolManager != null)
                     {
@@ -302,22 +313,27 @@ public class MCPToolsWindow : EditorWindow
     {
         var filtered = allTools.AsEnumerable();
 
-        var selectedType = "All";
+        var selectedType = ToolFilterType.All;
         if (typeDropdown != null && typeDropdown.index >= 0 && typeDropdown.index < typeDropdown.choices.Count)
-            selectedType = typeDropdown.choices[typeDropdown.index];
+        {
+            if (Enum.TryParse<ToolFilterType>(typeDropdown.choices[typeDropdown.index], out var parsedType))
+                selectedType = parsedType;
+        }
 
-        if (selectedType == "Enabled")
-            filtered = filtered.Where(t => t.IsEnabled);
-        else if (selectedType == "Disabled")
-            filtered = filtered.Where(t => !t.IsEnabled);
+        filtered = selectedType switch
+        {
+            ToolFilterType.Enabled => filtered.Where(t => t.IsEnabled),
+            ToolFilterType.Disabled => filtered.Where(t => !t.IsEnabled),
+            _ => filtered
+        };
 
         var filterText = filterField?.value?.Trim();
         if (!string.IsNullOrEmpty(filterText))
         {
             filtered = filtered.Where(t =>
-                (!string.IsNullOrEmpty(t.Title) && t.Title.Contains(filterText, StringComparison.OrdinalIgnoreCase)) ||
-                (!string.IsNullOrEmpty(t.Name) && t.Name.Contains(filterText, StringComparison.OrdinalIgnoreCase)) ||
-                (!string.IsNullOrEmpty(t.Description) && t.Description.Contains(filterText, StringComparison.OrdinalIgnoreCase)));
+                t.Name.Contains(filterText, StringComparison.OrdinalIgnoreCase) ||
+                (t.Title?.Contains(filterText, StringComparison.OrdinalIgnoreCase) == true) ||
+                (t.Description?.Contains(filterText, StringComparison.OrdinalIgnoreCase) == true));
         }
 
         return filtered;
@@ -377,9 +393,9 @@ public class MCPToolsWindow : EditorWindow
 
     private class ToolViewModel
     {
-        public string Title { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
-        public string Description { get; set; } = string.Empty;
+        public string? Title { get; set; } = string.Empty;
+        public string? Description { get; set; } = string.Empty;
         public bool IsEnabled { get; set; }
         public IReadOnlyList<ArgumentData> Inputs { get; set; } = Array.Empty<ArgumentData>();
         public IReadOnlyList<ArgumentData> Outputs { get; set; } = Array.Empty<ArgumentData>();
