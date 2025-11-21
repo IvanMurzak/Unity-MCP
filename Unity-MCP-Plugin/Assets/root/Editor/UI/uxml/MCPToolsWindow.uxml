@@ -1,14 +1,18 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/UnityLocalAi/Editor/MCPTools/MCPToolsWindow.uss?fileID=7433441132597879392&amp;guid=525911ffb58076f44a1788589abac01d&amp;type=3#MCPToolsWindow" />
+    <Style src="project://database/Assets/root/Editor/UI/uss/MCPToolsWindow.uss?fileID=7433441132597879392&amp;guid=525911ffb58076f44a1788589abac01d&amp;type=3#MCPToolsWindow" />
     <ui:VisualElement class="root-container">
-        <ui:Label text="MCP Tools" class="header-title" />
-        <ui:Label text="See and control all MCP tools. Disable not needed tools for saving LLM context." class="header-description" />
-        <ui:VisualElement class="filter-container">
-            <ui:Label text="Filter:" class="filter-label" />
-            <ui:TextField name="filter-textfield" value="" class="filter-textfield" />
-            <ui:Label text="Type:" class="filter-label" />
-            <ui:DropdownField name="type-dropdown" index="0" class="type-dropdown" />
-            <ui:Label text="Filtered: 10, Total: 42" name="filter-stats-label" class="filter-stats-label" />
+        <ui:VisualElement class="header-container">
+            <ui:Label text="MCP Tools" class="header-title" />
+            <ui:Label text="See and control all MCP tools. Disable not needed tools for saving LLM context." class="header-description" />
+            <ui:VisualElement class="filter-row">
+                <ui:Label text="Filter:" class="filter-label" />
+                <ui:TextField name="filter-textfield" class="filter-textfield" />
+            </ui:VisualElement>
+            <ui:VisualElement class="filter-row">
+                <ui:Label text="Type:" class="filter-label" />
+                <ui:DropdownField name="type-dropdown" index="0" class="type-dropdown" />
+                <ui:Label text="Filtered: 10, Total: 42" name="filter-stats-label" class="filter-stats-label" />
+            </ui:VisualElement>
         </ui:VisualElement>
         <ui:ScrollView name="tool-list-scrollview" class="tool-list-scrollview" />
     </ui:VisualElement>

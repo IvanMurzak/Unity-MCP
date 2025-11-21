@@ -1,8 +1,13 @@
 /* General Styles */
 .root-container {
     background-color: #383838;
-    padding: 15px;
+    /* padding: 15px; REMOVED */
     color: #E0E0E0;
+    flex-grow: 1;
+}
+
+.header-container {
+    padding: 15px 15px 0 15px;
 }
 
 .header-title {
@@ -19,33 +24,37 @@
 }
 
 /* Filter Section */
-.filter-container {
+.filter-row {
     flex-direction: row;
     align-items: center;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
 }
 
 .filter-label {
     margin-right: 5px;
+    width: 45px;
 }
 
 .filter-textfield {
     flex-grow: 1;
-    margin-right: 15px;
 }
 
 .type-dropdown {
     width: 100px;
-    margin-right: 15px;
 }
 
 .filter-stats-label {
     color: #B0B0B0;
+    margin-left: auto;
 }
 
 /* Tool List */
 .tool-list-scrollview {
     flex-grow: 1;
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-bottom: 15px;
+    padding-top: 5px;
 }
 
 /* Tool Item */
