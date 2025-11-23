@@ -111,7 +111,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 return Consts.MCP.Server.Config(
                     executablePath: ExecutableFullPath.Replace('\\', '/'),
-                    serverName: "AI-Game-Developer",
+                    serverName: "ai-game-developer",
                     bodyPath: bodyPath,
                     port: port,
                     timeoutMs: timeoutMs
