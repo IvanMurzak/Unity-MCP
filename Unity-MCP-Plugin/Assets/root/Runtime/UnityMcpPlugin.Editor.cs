@@ -19,7 +19,7 @@ namespace com.IvanMurzak.Unity.MCP
 {
     public partial class UnityMcpPlugin
     {
-        public static string ResourcesFileName => "Unity-MCP-ConnectionConfig";
+        public static string ResourcesFileName => "AI-Game-Developer-Config";
         public static string AssetsFilePath => $"Assets/Resources/{ResourcesFileName}.json";
 #if UNITY_EDITOR
         public static TextAsset AssetFile => UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(AssetsFilePath);
