@@ -15,6 +15,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
     public abstract class ClientConfig
     {
+        public static readonly string[] DeprecatedMcpServerNames = { "Unity-MCP" };
+        public const string DefaultMcpServerName = "ai-game-developer";
+
         public string Name { get; set; }
         public string ConfigPath { get; set; }
         public string BodyPath { get; set; }

@@ -17,7 +17,6 @@ using System.Runtime.InteropServices;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
-using com.IvanMurzak.Unity.MCP.Utils;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
@@ -111,6 +110,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 return Consts.MCP.Server.Config(
                     executablePath: ExecutableFullPath.Replace('\\', '/'),
+                    serverName: Utils.ClientConfig.DefaultMcpServerName,
                     bodyPath: bodyPath,
                     port: port,
                     timeoutMs: timeoutMs
