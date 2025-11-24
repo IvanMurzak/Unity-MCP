@@ -50,33 +50,6 @@ namespace com.IvanMurzak.Unity.MCP
                 EnabledResources = DefaultEnabledResources;
                 return this;
             }
-
-            /// <summary>
-            /// Generate a deterministic TCP port based on current directory.
-            /// Uses SHA256 hash for better distribution and less collisions.
-            /// Port range: 50000-59999 (less commonly used dynamic ports).
-            /// </summary>
-            public static int GeneratePortFromDirectory()
-            {
-                const int MinPort = 50000; // Higher range to avoid common dynamic ports
-                const int MaxPort = 59999;
-                const int PortRange = MaxPort - MinPort + 1;
-
-                var currentDir = System.Environment.CurrentDirectory.ToLowerInvariant();
-
-                using (var sha256 = System.Security.Cryptography.SHA256.Create())
-                {
-                    var hashBytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(currentDir));
-
-                    // Use first 4 bytes to create an integer
-                    var hash = System.BitConverter.ToInt32(hashBytes, 0);
-
-                    // Map to port range
-                    var port = MinPort + (System.Math.Abs(hash) % PortRange);
-
-                    return port;
-                }
-            }
         }
     }
 }
