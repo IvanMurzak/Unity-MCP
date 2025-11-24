@@ -24,7 +24,7 @@ namespace com.IvanMurzak.Unity.MCP
 
         public class UnityConnectionConfig : ConnectionConfig
         {
-            public static string DefaultHost => $"http://localhost:{Consts.Hub.DefaultPort}";
+            public static string DefaultHost => $"http://localhost:{GeneratePortFromDirectory()}";
             public static List<string> DefaultEnabledTools => new() { "*" };
             public static List<string> DefaultEnabledPrompts => new() { "*" };
             public static List<string> DefaultEnabledResources => new() { "*" };
