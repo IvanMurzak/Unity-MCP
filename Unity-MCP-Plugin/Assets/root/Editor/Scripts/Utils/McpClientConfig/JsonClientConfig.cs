@@ -85,6 +85,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 // Navigate to or create the target location in the existing JSON
                 var targetObj = EnsureJsonPathExists(rootObj, pathSegments);
 
+                // Removing is not needed because we check all MCP servers for command match. Let's keep it commented just in case.
+                // foreach (var deprecatedName in DeprecatedMcpServerNames)
+                //     targetObj.Remove(deprecatedName);
+
                 // Find all command values in injectMcpServers for duplicate removal
                 var injectCommands = injectMcpServers
                     .Select(kv => kv.Value?["command"]?.GetValue<string>())

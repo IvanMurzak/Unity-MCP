@@ -143,7 +143,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     };
                     inputFieldHost.tooltip = plugin.KeepConnected.CurrentValue
                         ? "Editable only when disconnected from the MCP Server."
-                        : $"The server URL. http://localhost:{Consts.Hub.DefaultPort}";
+                        : $"The server URL. http://localhost:{UnityMcpPlugin.GeneratePortFromDirectory()}";
 
                     // Update the style class
                     if (inputFieldHost.isReadOnly)
@@ -230,7 +230,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     UnityMcpPlugin.Instance.Save();
                     if (UnityMcpPlugin.Instance.HasMcpPluginInstance)
                     {
-                        UnityMcpPlugin.Instance.Disconnect();
+                        _ = UnityMcpPlugin.Instance.Disconnect();
                     }
                 }
                 else if (btnConnectOrDisconnect.text.Equals(ServerButtonText_Stop, StringComparison.OrdinalIgnoreCase))
@@ -239,7 +239,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     UnityMcpPlugin.Instance.Save();
                     if (UnityMcpPlugin.Instance.HasMcpPluginInstance)
                     {
-                        UnityMcpPlugin.Instance.Disconnect();
+                        _ = UnityMcpPlugin.Instance.Disconnect();
                     }
                 }
                 else

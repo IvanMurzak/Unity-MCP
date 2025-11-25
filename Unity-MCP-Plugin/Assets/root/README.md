@@ -96,7 +96,7 @@
 
 ### Option 1 - Installer
 
-- **[⬇️ Download Installer](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.22.0/AI-Game-Dev-Installer.unitypackage)**
+- **[⬇️ Download Installer](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.22.1/AI-Game-Dev-Installer.unitypackage)**
 - **📂 Import installer into Unity project**
   > - You can double-click on the file - Unity will open it automatically
   > - OR: Open Unity Editor first, then click on `Assets/Import Package/Custom Package`, and choose the file
@@ -378,7 +378,7 @@ docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer": {
       "url": "http://localhost:8080"
     }
   }
@@ -403,7 +403,7 @@ docker run -t -e UNITY_MCP_CLIENT_TRANSPORT=stdio -p 8080:8080 ivanmurzakdev/uni
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer": {
       "command": "docker",
       "args": [
         "run",
@@ -433,7 +433,7 @@ docker run -e UNITY_MCP_PORT=123 -p 123:123 ivanmurzakdev/unity-mcp-server
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer": {
       "url": "http://localhost:123"
     }
   }
@@ -459,7 +459,7 @@ You may launch Unity `MCP Server` directly from a binary file. You would need to
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer": {
       "command": "<project>/Library/mcp-server/win-x64/unity-mcp-server.exe",
       "args": [
         "--port=8080",
