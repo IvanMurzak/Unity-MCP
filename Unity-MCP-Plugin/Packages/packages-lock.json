@@ -18,11 +18,11 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.ide.visualstudio": {
-      "version": "2.0.23",
+      "version": "2.0.25",
       "depth": 0,
       "source": "registry",
       "dependencies": {
-        "com.unity.test-framework": "1.1.9"
+        "com.unity.test-framework": "1.1.31"
       },
       "url": "https://packages.unity.com"
     },
@@ -117,7 +117,7 @@
       "url": "https://packages.unity.com"
     },
     "com.unity.toolchain.win-x86_64-linux-x86_64": {
-      "version": "2.0.10",
+      "version": "2.0.11",
       "depth": 0,
       "source": "registry",
       "dependencies": {
@@ -143,79 +143,79 @@
       "url": "https://package.openupm.com"
     },
     "org.nuget.microsoft.aspnetcore.connections.abstractions": {
-      "version": "9.0.10",
+      "version": "10.0.0",
       "depth": 2,
       "source": "registry",
       "dependencies": {
-        "org.nuget.microsoft.extensions.features": "9.0.10",
-        "org.nuget.microsoft.bcl.asyncinterfaces": "9.0.10",
-        "org.nuget.system.io.pipelines": "9.0.10"
+        "org.nuget.microsoft.extensions.features": "10.0.0",
+        "org.nuget.microsoft.bcl.asyncinterfaces": "10.0.0",
+        "org.nuget.system.io.pipelines": "10.0.0"
       },
       "url": "https://package.openupm.com"
     },
     "org.nuget.microsoft.aspnetcore.http.connections.client": {
-      "version": "9.0.10",
+      "version": "10.0.0",
       "depth": 1,
       "source": "registry",
       "dependencies": {
-        "org.nuget.microsoft.aspnetcore.http.connections.common": "9.0.10",
-        "org.nuget.microsoft.extensions.logging.abstractions": "9.0.10",
-        "org.nuget.microsoft.extensions.options": "9.0.10",
-        "org.nuget.system.net.serversentevents": "9.0.10"
+        "org.nuget.microsoft.aspnetcore.http.connections.common": "10.0.0",
+        "org.nuget.microsoft.extensions.logging.abstractions": "10.0.0",
+        "org.nuget.microsoft.extensions.options": "10.0.0",
+        "org.nuget.system.net.serversentevents": "10.0.0"
       },
       "url": "https://package.openupm.com"
     },
     "org.nuget.microsoft.aspnetcore.http.connections.common": {
-      "version": "9.0.10",
+      "version": "10.0.0",
       "depth": 2,
       "source": "registry",
       "dependencies": {
-        "org.nuget.microsoft.aspnetcore.connections.abstractions": "9.0.10",
-        "org.nuget.system.text.json": "9.0.10"
+        "org.nuget.microsoft.aspnetcore.connections.abstractions": "10.0.0",
+        "org.nuget.system.text.json": "10.0.0"
       },
       "url": "https://package.openupm.com"
     },
     "org.nuget.microsoft.aspnetcore.signalr.client": {
-      "version": "9.0.10",
+      "version": "10.0.0",
       "depth": 0,
       "source": "registry",
       "dependencies": {
-        "org.nuget.microsoft.aspnetcore.signalr.client.core": "9.0.10",
-        "org.nuget.microsoft.aspnetcore.http.connections.client": "9.0.10"
+        "org.nuget.microsoft.aspnetcore.signalr.client.core": "10.0.0",
+        "org.nuget.microsoft.aspnetcore.http.connections.client": "10.0.0"
       },
       "url": "https://package.openupm.com"
     },
     "org.nuget.microsoft.aspnetcore.signalr.client.core": {
-      "version": "9.0.10",
+      "version": "10.0.0",
       "depth": 1,
       "source": "registry",
       "dependencies": {
-        "org.nuget.microsoft.aspnetcore.signalr.protocols.json": "9.0.10",
-        "org.nuget.microsoft.aspnetcore.signalr.common": "9.0.10",
-        "org.nuget.microsoft.bcl.timeprovider": "9.0.10",
-        "org.nuget.microsoft.extensions.dependencyinjection": "9.0.10",
-        "org.nuget.microsoft.extensions.logging": "9.0.10",
-        "org.nuget.system.threading.channels": "9.0.10"
+        "org.nuget.microsoft.aspnetcore.signalr.protocols.json": "10.0.0",
+        "org.nuget.microsoft.aspnetcore.signalr.common": "10.0.0",
+        "org.nuget.microsoft.bcl.timeprovider": "10.0.0",
+        "org.nuget.microsoft.extensions.dependencyinjection": "10.0.0",
+        "org.nuget.microsoft.extensions.logging": "10.0.0",
+        "org.nuget.system.threading.channels": "10.0.0"
       },
       "url": "https://package.openupm.com"
     },
     "org.nuget.microsoft.aspnetcore.signalr.common": {
-      "version": "9.0.10",
+      "version": "10.0.0",
       "depth": 1,
       "source": "registry",
       "dependencies": {
-        "org.nuget.microsoft.aspnetcore.connections.abstractions": "9.0.10",
-        "org.nuget.microsoft.extensions.options": "9.0.10",
-        "org.nuget.system.text.json": "9.0.10"
+        "org.nuget.microsoft.aspnetcore.connections.abstractions": "10.0.0",
+        "org.nuget.microsoft.extensions.options": "10.0.0",
+        "org.nuget.system.text.json": "10.0.0"
       },
       "url": "https://package.openupm.com"
     },
     "org.nuget.microsoft.aspnetcore.signalr.protocols.json": {
-      "version": "9.0.10",
+      "version": "10.0.0",
       "depth": 0,
       "source": "registry",
       "dependencies": {
-        "org.nuget.microsoft.aspnetcore.signalr.common": "9.0.10"
+        "org.nuget.microsoft.aspnetcore.signalr.common": "10.0.0"
       },
       "url": "https://package.openupm.com"
     },
@@ -229,21 +229,21 @@
       "url": "https://package.openupm.com"
     },
     "org.nuget.microsoft.bcl.memory": {
-      "version": "9.0.10",
+      "version": "10.0.0",
       "depth": 0,
       "source": "registry",
       "dependencies": {
-        "org.nuget.system.memory": "4.5.5",
-        "org.nuget.system.runtime.compilerservices.unsafe": "6.0.0"
+        "org.nuget.system.memory": "4.6.3",
+        "org.nuget.system.runtime.compilerservices.unsafe": "6.1.2"
       },
       "url": "https://package.openupm.com"
     },
     "org.nuget.microsoft.bcl.timeprovider": {
-      "version": "9.0.10",
+      "version": "10.0.0",
       "depth": 2,
       "source": "registry",
       "dependencies": {
-        "org.nuget.microsoft.bcl.asyncinterfaces": "9.0.10"
+        "org.nuget.microsoft.bcl.asyncinterfaces": "10.0.0"
       },
       "url": "https://package.openupm.com"
     },
@@ -290,12 +290,12 @@
       "url": "https://package.openupm.com"
     },
     "org.nuget.microsoft.extensions.caching.abstractions": {
-      "version": "9.0.10",
+      "version": "10.0.0",
       "depth": 0,
       "source": "registry",
       "dependencies": {
-        "org.nuget.microsoft.extensions.primitives": "9.0.10",
-        "org.nuget.system.threading.tasks.extensions": "4.5.4"
+        "org.nuget.microsoft.extensions.primitives": "10.0.0",
+        "org.nuget.system.threading.tasks.extensions": "4.6.3"
       },
       "url": "https://package.openupm.com"
     },
@@ -432,7 +432,7 @@
       "url": "https://package.openupm.com"
     },
     "org.nuget.microsoft.extensions.features": {
-      "version": "9.0.10",
+      "version": "10.0.0",
       "depth": 3,
       "source": "registry",
       "dependencies": {},
@@ -636,7 +636,7 @@
     },
     "org.nuget.microsoft.extensions.primitives": {
       "version": "10.0.0",
-      "depth": 2,
+      "depth": 1,
       "source": "registry",
       "dependencies": {
         "org.nuget.system.memory": "4.6.3",
@@ -714,7 +714,7 @@
     },
     "org.nuget.system.memory": {
       "version": "4.6.3",
-      "depth": 2,
+      "depth": 1,
       "source": "registry",
       "dependencies": {
         "org.nuget.system.buffers": "4.6.1",
@@ -724,19 +724,19 @@
       "url": "https://package.openupm.com"
     },
     "org.nuget.system.net.serversentevents": {
-      "version": "9.0.10",
+      "version": "10.0.0",
       "depth": 2,
       "source": "registry",
       "dependencies": {
-        "org.nuget.microsoft.bcl.asyncinterfaces": "9.0.10",
-        "org.nuget.system.memory": "4.5.5",
-        "org.nuget.system.threading.tasks.extensions": "4.5.4"
+        "org.nuget.microsoft.bcl.asyncinterfaces": "10.0.0",
+        "org.nuget.system.memory": "4.6.3",
+        "org.nuget.system.threading.tasks.extensions": "4.6.3"
       },
       "url": "https://package.openupm.com"
     },
     "org.nuget.system.numerics.vectors": {
       "version": "4.6.1",
-      "depth": 3,
+      "depth": 2,
       "source": "registry",
       "dependencies": {},
       "url": "https://package.openupm.com"
@@ -753,7 +753,7 @@
     },
     "org.nuget.system.runtime.compilerservices.unsafe": {
       "version": "6.1.2",
-      "depth": 2,
+      "depth": 1,
       "source": "registry",
       "dependencies": {},
       "url": "https://package.openupm.com"
@@ -802,12 +802,12 @@
       "url": "https://package.openupm.com"
     },
     "org.nuget.system.threading.channels": {
-      "version": "9.0.10",
+      "version": "10.0.0",
       "depth": 2,
       "source": "registry",
       "dependencies": {
-        "org.nuget.microsoft.bcl.asyncinterfaces": "9.0.10",
-        "org.nuget.system.threading.tasks.extensions": "4.5.4"
+        "org.nuget.microsoft.bcl.asyncinterfaces": "10.0.0",
+        "org.nuget.system.threading.tasks.extensions": "4.6.3"
       },
       "url": "https://package.openupm.com"
     },
