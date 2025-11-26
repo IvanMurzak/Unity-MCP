@@ -78,6 +78,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     ),
                     bodyPath: Consts.MCP.Server.DefaultBodyPath
                 ),
+                new JsonClientConfig(
+                    name: "Antigravity (Gemini)",
+                    configPath: Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        ".gemini",
+                        "antigravity",
+                        "mcp_config.json"
+                    ),
+                    bodyPath: Consts.MCP.Server.DefaultBodyPath
+                ),
                 new TomlClientConfig(
                     name: "Codex",
                     configPath: Path.Combine(
@@ -139,6 +149,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     configPath: Path.Combine(
                         ".gemini",
                         "settings.json"
+                    ),
+                    bodyPath: Consts.MCP.Server.DefaultBodyPath
+                ),
+                new JsonClientConfig(
+                    name: "Antigravity (Gemini)",
+                    configPath: Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        ".gemini",
+                        "antigravity",
+                        "mcp_config.json"
                     ),
                     bodyPath: Consts.MCP.Server.DefaultBodyPath
                 ),
