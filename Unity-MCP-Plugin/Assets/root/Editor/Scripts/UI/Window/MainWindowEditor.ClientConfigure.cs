@@ -35,15 +35,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             var clientConfigs = new ClientConfig[]
             {
                 new JsonClientConfig(
-                    name: "Claude Desktop",
-                    configPath: Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                        "Claude",
-                        "claude_desktop_config.json"
-                    ),
-                    bodyPath: Consts.MCP.Server.DefaultBodyPath
-                ),
-                new JsonClientConfig(
                     name: "Claude Code",
                     configPath: Path.Combine(
                         Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
@@ -54,7 +45,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         + Consts.MCP.Server.DefaultBodyPath
                 ),
                 new JsonClientConfig(
-                    name: "VS Code (Copilot)",
+                    name: "Claude Desktop",
+                    configPath: Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                        "Claude",
+                        "claude_desktop_config.json"
+                    ),
+                    bodyPath: Consts.MCP.Server.DefaultBodyPath
+                ),
+                new JsonClientConfig(
+                    name: "Visual Studio Code (Copilot)",
                     configPath: Path.Combine(
                         ".vscode",
                         "mcp.json"
@@ -67,6 +67,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                         ".cursor",
                         "mcp.json"
+                    ),
+                    bodyPath: Consts.MCP.Server.DefaultBodyPath
+                ),
+                new JsonClientConfig(
+                    name: "Gemini",
+                    configPath: Path.Combine(
+                        ".gemini",
+                        "settings.json"
                     ),
                     bodyPath: Consts.MCP.Server.DefaultBodyPath
                 ),
@@ -89,6 +97,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             var clientConfigs = new ClientConfig[]
             {
                 new JsonClientConfig(
+                    name: "Claude Code",
+                    configPath: Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        ".claude.json"
+                    ),
+                    bodyPath: $"projects{Consts.MCP.Server.BodyPathDelimiter}"
+                        + $"{ProjectRootPath}{Consts.MCP.Server.BodyPathDelimiter}"
+                        + Consts.MCP.Server.DefaultBodyPath
+                ),
+                new JsonClientConfig(
                     name: "Claude Desktop",
                     configPath: Path.Combine(
                         Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
@@ -100,17 +118,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     bodyPath: Consts.MCP.Server.DefaultBodyPath
                 ),
                 new JsonClientConfig(
-                    name: "Claude Code",
-                    configPath: Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                        ".claude.json"
-                    ),
-                    bodyPath: $"projects{Consts.MCP.Server.BodyPathDelimiter}"
-                        + $"{ProjectRootPath}{Consts.MCP.Server.BodyPathDelimiter}"
-                        + Consts.MCP.Server.DefaultBodyPath
-                ),
-                new JsonClientConfig(
-                    name: "VS Code (Copilot)",
+                    name: "Visual Studio Code (Copilot)",
                     configPath: Path.Combine(
                         ".vscode",
                         "mcp.json"
@@ -123,6 +131,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                         ".cursor",
                         "mcp.json"
+                    ),
+                    bodyPath: Consts.MCP.Server.DefaultBodyPath
+                ),
+                new JsonClientConfig(
+                    name: "Gemini",
+                    configPath: Path.Combine(
+                        ".gemini",
+                        "settings.json"
                     ),
                     bodyPath: Consts.MCP.Server.DefaultBodyPath
                 ),
