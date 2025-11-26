@@ -36,8 +36,9 @@
 
   <ItemGroup>
     <!-- <ProjectReference Include="./../Unity-MCP-Plugin/Assets/root/Unity-MCP-Common/Unity-MCP-Common/Unity-MCP-Common.csproj" /> -->
+    <ProjectReference Include="./../../../dotnet/MCP-Plugin-dotnet/McpPlugin.Server/McpPlugin.Server.csproj" />
     <PackageReference Include="com.IvanMurzak.ReflectorNet" Version="2.3.2" />
-    <PackageReference Include="com.IvanMurzak.McpPlugin.Server" Version="0.2.6" />
+    <!-- <PackageReference Include="com.IvanMurzak.McpPlugin.Server" Version="0.2.6" /> -->
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.10" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.10" />
     <PackageReference Include="NLog.Web.AspNetCore" Version="6.0.6" />
