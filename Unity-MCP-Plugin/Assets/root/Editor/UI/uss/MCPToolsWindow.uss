@@ -1,7 +1,6 @@
 /* General Styles */
 .root-container {
     background-color: #383838;
-    /* padding: 15px; REMOVED */
     color: #E0E0E0;
     flex-grow: 1;
 }
@@ -123,36 +122,43 @@
 
 /* Tool Item Highlighting */
 .tool-item-container.enabled {
-    background-color: rgba(46, 139, 87, 0.3); /* SeaGreen with transparency */
+    background-color: #3A4039;
 }
 
 .tool-item-container.disabled {
-    background-color: rgba(139, 0, 0, 0.3); /* DarkRed with transparency */
+    background-color: #3F393A;
 }
 
-/* Toggle Switch Styles - minimal and compatible with older USS parsers */
-.unity-toggle .unity-toggle__input {
+/* Toggle Switch Styles */
+.tool-switch .unity-toggle__input {
     width: 40px;
     height: 20px;
     border-radius: 10px;
     background-color: #707070;
+    border-width: 0;
     -unity-background-image-tint-color: white;
 }
 
-.unity-toggle .unity-toggle__checkmark {
+.tool-switch .unity-toggle__checkmark {
     width: 16px;
     height: 16px;
-    border-radius: 8px;
+    border-radius: 10px;
     background-color: white;
-    /* Use margin to shift the checkmark instead of transform for compatibility */
+    background-image: none; /* Remove default tick icon */
+    opacity: 1; /* Ensure visible */
     margin-left: 2px;
 }
 
-/* Use the 'checked' class (Unity adds this) to change visual state.
-   Keep changes simple to avoid StylePropertyReader index errors. */
-.unity-toggle.checked .unity-toggle__input {
-    background-color: #2E8B57; /* SeaGreen */
+/* Checked State */
+.tool-switch.checked .unity-toggle__input {
+    background-color: #51C663; /* SeaGreen */
 }
-.unity-toggle.checked .unity-toggle__checkmark {
+.tool-switch.checked .unity-toggle__checkmark {
     margin-left: 22px;
+    background-image: none;
+}
+
+/* Disabled Tool State (Unchecked) */
+.tool-item-container.disabled .tool-switch .unity-toggle__input {
+    background-color: #863A3B;
 }
