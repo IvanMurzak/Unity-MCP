@@ -139,59 +139,57 @@ openupm add com.ivanmurzak.unity.mcp
 
 如果自动配置因任何原因对您不起作用，请使用 `AI Game Developer (Unity-MCP)` 窗口中的JSON手动配置任何 `MCP 客户端`。
 
-<details>
-  <summary>为 <b>Windows</b> 配置 <b><code>Claude Code</code></b></summary>
+### 命令行配置
 
-  将 `unityProjectPath` 替换为您的实际项目路径
+**1. 为您的环境选择`<command>`**
+
+| 平台                | `<command>` |
+|---------------------|----------------|
+| Windows x64         | `"<unityProjectPath>/Library/mcp-server/win-x64/unity-mcp-server.exe" port=<port> client-transport=stdio` |
+| Windows x86         | `"<unityProjectPath>/Library/mcp-server/win-x86/unity-mcp-server.exe" port=<port> client-transport=stdio` |
+| Windows arm64       | `"<unityProjectPath>/Library/mcp-server/win-arm64/unity-mcp-server.exe" port=<port> client-transport=stdio` |
+| MacOS Apple-Silicon | `"<unityProjectPath>/Library/mcp-server/osx-arm64/unity-mcp-server" port=<port> client-transport=stdio` |
+| MacOS Apple-Intel   | `"<unityProjectPath>/Library/mcp-server/osx-x64/unity-mcp-server" port=<port> client-transport=stdio` |
+| Linux x64           | `"<unityProjectPath>/Library/mcp-server/linux-x64/unity-mcp-server" port=<port> client-transport=stdio` |
+| Linux arm64         | `"<unityProjectPath>/Library/mcp-server/linux-arm64/unity-mcp-server" port=<port> client-transport=stdio` |
+
+**2. 将`<unityProjectPath>`替换为Unity项目的完整路径**
+**3. 将`<port>`替换为AI Game Developer配置中的端口**
+**4. 使用命令行添加MCP服务器**
+
+<details>
+  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/gemini-64.png" width="16" height="16" alt="Gemini"> Gemini</summary>
 
   ```bash
-  claude mcp add Unity-MCP "<unityProjectPath>/Library/mcp-server/win-x64/unity-mcp-server.exe" client-transport=stdio
+  gemini mcp add ai-game-developer <command>
   ```
-
+  > 从上表中替换`<command>`
 </details>
 
 <details>
-  <summary>为 <b>MacOS Apple-Silicon</b> 配置 <b><code>Claude Code</code></b></summary>
-
-  将 `unityProjectPath` 替换为您的实际项目路径
+  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/claude-64.png" width="16" height="16" alt="Gemini"> Claude Code</summary>
 
   ```bash
-  claude mcp add Unity-MCP "<unityProjectPath>/Library/mcp-server/osx-arm64/unity-mcp-server" client-transport=stdio
+  claude mcp add ai-game-developer <command>
   ```
-
+  > 从上表中替换`<command>`
 </details>
 
 <details>
-  <summary>为 <b>MacOS Apple-Intel</b> 配置 <b><code>Claude Code</code></b></summary>
-
-  将 `unityProjectPath` 替换为您的实际项目路径
+  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/github-copilot-64.png" width="16" height="16" alt="Gemini"> GitHub Copilot CLI</summary>
 
   ```bash
-  claude mcp add Unity-MCP "<unityProjectPath>/Library/mcp-server/osx-x64/unity-mcp-server" client-transport=stdio
+  copilot
   ```
-
-</details>
-
-<details>
-  <summary>为 <b>Linux x64</b> 配置 <b><code>Claude Code</code></b></summary>
-
-  将 `unityProjectPath` 替换为您的实际项目路径
 
   ```bash
-  claude mcp add Unity-MCP "<unityProjectPath>/Library/mcp-server/linux-x64/unity-mcp-server" client-transport=stdio
+  /mcp add
   ```
 
-</details>
-
-<details>
-  <summary>为 <b>Linux arm64</b> 配置 <b><code>Claude Code</code></b></summary>
-
-  将 `unityProjectPath` 替换为您的实际项目路径
-
-  ```bash
-  claude mcp add Unity-MCP "<unityProjectPath>/Library/mcp-server/linux-arm64/unity-mcp-server" client-transport=stdio
-  ```
-
+  服务器名称: `ai-game-developer`
+  服务器类型: `local`
+  命令: `<command>`
+  > 从上表中替换`<command>`
 </details>
 
 ---

@@ -142,9 +142,9 @@ If automatic configuration doesn't work for you for any reason, use the JSON fro
 
 ### Command line configuration
 
-**1. Choose your Command for your environment**
+**1. Choose your `<command>` for your environment**
 
-| Platform            | Command |
+| Platform            | `<command>` |
 |---------------------|----------------|
 | Windows x64         | `"<unityProjectPath>/Library/mcp-server/win-x64/unity-mcp-server.exe" port=<port> client-transport=stdio` |
 | Windows x86         | `"<unityProjectPath>/Library/mcp-server/win-x86/unity-mcp-server.exe" port=<port> client-transport=stdio` |
@@ -159,7 +159,7 @@ If automatic configuration doesn't work for you for any reason, use the JSON fro
 **4. Add MCP server using command line**
 
 <details>
-  <summary><img src="docs/img/mcp-clients/gemini-64.png" width="16" height="16" alt="Gemini"> Gemini</summary>
+  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/gemini-64.png" width="16" height="16" alt="Gemini"> Gemini</summary>
 
   ```bash
   gemini mcp add ai-game-developer <command>
@@ -168,7 +168,7 @@ If automatic configuration doesn't work for you for any reason, use the JSON fro
 </details>
 
 <details>
-  <summary><img src="docs/img/mcp-clients/claude-64.png" width="16" height="16" alt="Gemini"> Claude Code</summary>
+  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/claude-64.png" width="16" height="16" alt="Gemini"> Claude Code</summary>
 
   ```bash
   claude mcp add ai-game-developer <command>
@@ -177,7 +177,7 @@ If automatic configuration doesn't work for you for any reason, use the JSON fro
 </details>
 
 <details>
-  <summary><img src="docs/img/mcp-clients/github-copilot-64.png" width="16" height="16" alt="Gemini"> GitHub Copilot CLI</summary>
+  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/github-copilot-64.png" width="16" height="16" alt="Gemini"> GitHub Copilot CLI</summary>
 
   ```bash
   copilot
