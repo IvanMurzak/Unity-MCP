@@ -171,7 +171,7 @@ function Update-VersionFiles {
             # Show the actual changes
             foreach ($match in $regexMatches) {
                 $newValue = $match.Value -replace $file.Pattern, $replacement
-                Write-ColorText "   $($regexMatches.Value) → $newValue" "Gray"
+                Write-ColorText "   $($match.Value) → $newValue" "Gray"
             }
         }
         else {
