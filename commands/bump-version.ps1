@@ -156,22 +156,22 @@ function Update-VersionFiles {
         # Check if any changes were made
         if ($originalContent -ne $newContent) {
             # Count matches for reporting
-            $matches = [regex]::Matches($originalContent, $file.Pattern)
+            $regexMatches = [regex]::Matches($originalContent, $file.Pattern)
 
             $changes += @{
                 Path            = $file.Path
                 Description     = $file.Description
-                Matches         = $matches.Count
+                Matches         = $regexMatches.Count
                 Content         = $newContent
                 OriginalContent = $originalContent
             }
 
-            Write-ColorText "📝 $($file.Description): $($matches.Count) occurrence(s)" "Green"
+            Write-ColorText "📝 $($file.Description): $($regexMatches.Count) occurrence(s)" "Green"
 
             # Show the actual changes
-            foreach ($match in $matches) {
+            foreach ($match in $regexMatches) {
                 $newValue = $match.Value -replace $file.Pattern, $replacement
-                Write-ColorText "   $($match.Value) → $newValue" "Gray"
+                Write-ColorText "   $($regexMatches.Value) → $newValue" "Gray"
             }
         }
         else {
