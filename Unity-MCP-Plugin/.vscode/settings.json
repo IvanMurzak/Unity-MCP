@@ -66,7 +66,7 @@
     "explorer.fileNesting.patterns": {
         "*.sln": "*.csproj"
     },
-    "dotnet.defaultSolution": "Unity-MCP-Plugin.sln",
+    "dotnet.defaultSolution": "Unity-MCP-Plugin.slnx",
     "cSpell.words": [
         "aspnetcore",
         "Cdecl",

@@ -13,7 +13,7 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>unity-mcp-server</ToolCommandName>
     <PackageId>com.IvanMurzak.Unity.MCP.Server</PackageId>
-    <Version>0.22.1</Version>
+    <Version>0.24.0</Version>
     <Authors>Ivan Murzak</Authors>
     <Company>Ivan Murzak</Company>
     <Copyright>Copyright © 2025 Ivan Murzak</Copyright>
@@ -32,15 +32,17 @@
     <GenerateStaticWebAssetsEndpointsManifest>false</GenerateStaticWebAssetsEndpointsManifest>
     <DebugType>none</DebugType>
     <DebugSymbols>false</DebugSymbols>
+    <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
   </PropertyGroup>
 
   <ItemGroup>
     <!-- <ProjectReference Include="./../Unity-MCP-Plugin/Assets/root/Unity-MCP-Common/Unity-MCP-Common/Unity-MCP-Common.csproj" /> -->
+    <!-- <ProjectReference Include="./../../../dotnet/MCP-Plugin-dotnet/McpPlugin.Server/McpPlugin.Server.csproj" /> -->
     <PackageReference Include="com.IvanMurzak.ReflectorNet" Version="2.3.2" />
-    <PackageReference Include="com.IvanMurzak.McpPlugin.Server" Version="0.2.6" />
-    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="9.0.10" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.10" />
-    <PackageReference Include="NLog.Web.AspNetCore" Version="6.0.6" />
+    <PackageReference Include="com.IvanMurzak.McpPlugin.Server" Version="0.3.0" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
+    <PackageReference Include="NLog.Web.AspNetCore" Version="6.1.0" />
     <PackageReference Include="R3" Version="1.3.0" />
   </ItemGroup>
 
