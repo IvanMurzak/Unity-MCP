@@ -63,13 +63,11 @@ public class MCPToolsWindow : EditorWindow
 
     readonly Microsoft.Extensions.Logging.ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger(nameof(MCPToolsWindow));
 
-    [MenuItem("Window/MCP Tools")]
     public static void ShowWindow()
     {
         var wnd = GetWindow<MCPToolsWindow>();
         wnd.titleContent = new GUIContent("MCP Tools");
     }
-
     public void CreateGUI()
     {
         rootVisualElement.Clear();
@@ -374,9 +372,12 @@ public class MCPToolsWindow : EditorWindow
             nameLabel.AddToClassList("argument-name");
             argItem.Add(nameLabel);
 
-            var descLabel = new Label(arg.Description);
-            descLabel.AddToClassList("argument-description");
-            argItem.Add(descLabel);
+            if (!string.IsNullOrEmpty(arg.Description))
+            {
+                var descLabel = new Label(arg.Description);
+                descLabel.AddToClassList("argument-description");
+                argItem.Add(descLabel);
+            }
 
             container.Add(argItem);
         }

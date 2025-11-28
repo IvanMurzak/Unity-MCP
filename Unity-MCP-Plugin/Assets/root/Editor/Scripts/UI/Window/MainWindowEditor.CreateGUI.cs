@@ -10,6 +10,7 @@
 
 #nullable enable
 using System;
+using System.Linq;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -247,6 +248,39 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     throw new Exception("Unknown button state: " + btnConnectOrDisconnect.text);
                 }
             }));
+
+            // Tools Configuration
+            // -----------------------------------------------------------------
+            var btnOpenTools = root.Query<Button>("btnOpenTools").First();
+            btnOpenTools.RegisterCallback<ClickEvent>(evt =>
+            {
+                MCPToolsWindow.ShowWindow();
+            });
+
+            var toolsStatusLabel = root.Query<Label>("toolsStatusLabel").First();
+
+            McpPlugin.McpPlugin.DoAlways(plugin =>
+            {
+                Observable.Interval(TimeSpan.FromSeconds(1))
+                    .ObserveOnCurrentSynchronizationContext()
+                    .Subscribe(_ =>
+                    {
+                        var toolManager = UnityMcpPlugin.Instance.McpPluginInstance?.McpManager.ToolManager;
+                        if (toolManager != null)
+                        {
+                            var allTools = toolManager.GetAllTools().ToList();
+                            var total = allTools.Count;
+                            var active = allTools.Count(t => toolManager.IsToolEnabled(t.Name));
+                            var disabled = total - active;
+                            toolsStatusLabel.text = $"Total tools ({total}), active tools ({active}), disabled tools ({disabled})";
+                        }
+                        else
+                        {
+                            toolsStatusLabel.text = "Total tools (0), active tools (0), disabled tools (0)";
+                        }
+                    })
+                    .AddTo(_disposables);
+            }).AddTo(_disposables);
 
             // Configure MCP Client
             // -----------------------------------------------------------------

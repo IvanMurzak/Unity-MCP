@@ -15,7 +15,7 @@
             <ui:Foldout name="outputs-foldout" text="Outputs" class="details-foldout">
                 <ui:VisualElement name="outputs-container" />
             </ui:Foldout>
-            <ui:Foldout name="arguments-foldout" text="Input arguments (2)" class="details-foldout">
+            <ui:Foldout name="arguments-foldout" text="Input arguments (2)">
                 <ui:VisualElement name="arguments-container" />
             </ui:Foldout>
         </ui:VisualElement>
