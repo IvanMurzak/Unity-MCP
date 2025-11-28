@@ -20,6 +20,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Executors for creating assets
             var materialEx = new CreateMaterialExecutor("TestMaterial.mat", "Standard", "Assets", "Unity-MCP-Test", "DataPopulation");
             var textureEx = new CreateTextureExecutor("TestTexture.png", "Assets", "Unity-MCP-Test", "DataPopulation");
+            var spriteEx = new CreateSpriteExecutor("TestSprite.png", "Assets", "Unity-MCP-Test", "DataPopulation");
             var soEx = new CreateScriptableObjectExecutor<DataPopulationTestScriptableObject>("TestSO.asset", "Assets", "Unity-MCP-Test", "DataPopulation");
 
             var prefabSourceGoEx = new CreateGameObjectExecutor("PrefabSource");
@@ -50,6 +51,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 Assert.IsNotNull(comp.textureField, "Texture should be populated");
                 Assert.AreEqual(textureEx.Asset!.name, comp.textureField.name);
 
+                Assert.IsNotNull(comp.spriteField, "Sprite should be populated");
+                Assert.AreEqual(spriteEx.Sprite!.name, comp.spriteField.name);
+
                 Assert.IsNotNull(comp.scriptableObjectField, "SO should be populated");
                 Assert.AreEqual(soEx.Asset!.name, comp.scriptableObjectField.name);
 
@@ -76,6 +80,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     var soRef = new AssetObjectRef() { AssetPath = soEx.AssetPath };
                     var prefabRef = new AssetObjectRef() { AssetPath = prefabEx.AssetPath };
                     var goRef = new ObjectRef(targetGoEx.GameObject!.GetInstanceID());
+                    var spriteRef = new AssetObjectRef() { AssetPath = spriteEx.AssetPath };
 
                     var goModification = SerializedMember.FromValue(
                         reflector: reflector,
@@ -94,14 +99,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "materialField", type: typeof(Material), value: matRef));
                     componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "gameObjectField", type: typeof(GameObject), value: goRef));
                     componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "textureField", type: typeof(Texture2D), value: texRef));
+                    componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "spriteField", type: typeof(Sprite), value: spriteRef));
                     componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "scriptableObjectField", type: typeof(DataPopulationTestScriptableObject), value: soRef));
                     componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "prefabField", type: typeof(GameObject), value: prefabRef));
                     componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "intField", type: typeof(int), value: 42));
                     componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "stringField", type: typeof(string), value: "Hello World"));
 
-                    var matRefArrayItem = new ObjectRef(materialEx.Asset!.GetInstanceID());
+                    var matRefArrayItem = new AssetObjectRef(materialEx.AssetPath!);
                     var goRefArrayItem = new ObjectRef(targetGoEx.GameObject!.GetInstanceID());
-                    var prefabRefArrayItem = new ObjectRef(prefabEx.Asset!.GetInstanceID());
+                    var prefabRefArrayItem = new AssetObjectRef(prefabEx.AssetPath!);
 
                     componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "materialArray", type: typeof(Material[]), value: new object[] { matRefArrayItem, matRefArrayItem }));
                     componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "gameObjectArray", type: typeof(GameObject[]), value: new object[] { goRefArrayItem, prefabRefArrayItem }));
@@ -135,6 +141,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             materialEx
                 .Nest(textureEx)
+                .Nest(spriteEx)
                 .Nest(soEx)
                 .Nest(prefabSourceGoEx)
                 .Nest(prefabEx)

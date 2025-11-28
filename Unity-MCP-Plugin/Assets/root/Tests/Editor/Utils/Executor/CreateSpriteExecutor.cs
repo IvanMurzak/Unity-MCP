@@ -9,47 +9,42 @@
 */
 
 #nullable enable
-using System.IO;
 using UnityEditor;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
 {
-    public class CreateTextureExecutor : BaseCreateAssetExecutor<Texture2D>
+    public class CreateSpriteExecutor : CreateTextureExecutor
     {
-        public CreateTextureExecutor(string assetName, params string[] folders) : base(assetName, folders)
+        public Sprite Sprite { get; private set; } = null!;
+
+        public CreateSpriteExecutor(string assetName, params string[] folders) : base(assetName, folders)
         {
-            SetAction(() =>
+            SetAction<Texture2D, Sprite>((texture) =>
             {
-                Debug.Log($"Creating Texture: {AssetPath}");
+                if (texture == null) throw new System.ArgumentNullException(nameof(texture));
 
-                var texture = new Texture2D(64, 64);
-                // Fill with some color
-                var colors = new Color[64 * 64];
-                for (int i = 0; i < colors.Length; i++)
+                Debug.Log($"Converting Texture to Sprite: {AssetPath}");
+
+                var importer = AssetImporter.GetAtPath(AssetPath) as TextureImporter;
+                if (importer != null)
                 {
-                    colors[i] = Color.red;
+                    importer.textureType = TextureImporterType.Sprite;
+                    importer.SaveAndReimport();
                 }
-                texture.SetPixels(colors);
-                texture.Apply();
 
-                var bytes = texture.EncodeToPNG();
-                File.WriteAllBytes(AssetPath, bytes);
+                Sprite = AssetDatabase.LoadAssetAtPath<Sprite>(AssetPath);
 
-                AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-
-                Asset = AssetDatabase.LoadAssetAtPath<Texture2D>(AssetPath);
-
-                if (Asset == null)
+                if (Sprite == null)
                 {
-                    Debug.LogError($"Failed to load created texture at {AssetPath}");
+                    Debug.LogError($"Failed to load created sprite at {AssetPath}");
                 }
                 else
                 {
-                    Debug.Log($"Created Texture: {AssetPath}");
+                    Debug.Log($"Created Sprite: {AssetPath}");
                 }
 
-                return Asset;
+                return Sprite;
             });
         }
     }
