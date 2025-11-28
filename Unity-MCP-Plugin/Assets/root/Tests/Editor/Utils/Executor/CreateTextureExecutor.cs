@@ -14,13 +14,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
 
                 var texture = new Texture2D(64, 64);
                 // Fill with some color
-                for (int x = 0; x < 64; x++)
+                var colors = new Color[64 * 64];
+                for (int i = 0; i < colors.Length; i++)
                 {
-                    for (int y = 0; y < 64; y++)
-                    {
-                        texture.SetPixel(x, y, Color.red);
-                    }
+                    colors[i] = Color.red;
                 }
+                texture.SetPixels(colors);
                 texture.Apply();
 
                 var bytes = texture.EncodeToPNG();

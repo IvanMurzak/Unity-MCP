@@ -186,7 +186,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             ILogger? logger = null)
         {
             if (logger?.IsEnabled(LogLevel.Information) == true)
-                logger.LogInformation($"[UnityEngine_GameObject_ReflectionConvertor] TryPopulateField called for obj type: {obj?.GetType().FullName}, field: {fieldValue.name}");
+                logger.LogInformation($"[{GetType().GetTypeShortName()}] TryPopulateField called for obj type: {obj?.GetType().GetTypeName(pretty: false)}, field: {fieldValue.name}");
 
             var padding = StringUtils.GetPadding(depth);
             var go = obj as UnityEngine.GameObject;

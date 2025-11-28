@@ -57,7 +57,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 Assert.AreEqual(prefabEx.Asset!.name, comp.prefabField.name);
 
                 Assert.IsNotNull(comp.materialArray, "Material array should be populated");
-                Assert.AreEqual(2, comp!.materialArray!.Length);
+                Assert.AreEqual(2, comp.materialArray.Length);
                 Assert.AreEqual(materialEx.Asset.name, comp.materialArray[0].name);
 
                 Assert.IsNotNull(comp.gameObjectArray, "GameObject array should be populated");
