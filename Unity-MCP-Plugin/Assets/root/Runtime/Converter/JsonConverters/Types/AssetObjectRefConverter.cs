@@ -51,7 +51,7 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
                             assetObjectRef.AssetGuid = reader.GetString();
                             break;
                         default:
-                            throw new JsonException($"Unexpected property name: {propertyName}. "
+                            throw new JsonException($"[AssetObjectRefConverter] Unexpected property name: {propertyName}. "
                                 + $"Expected {AssetObjectRef.AssetObjectRefProperty.All.JoinEnclose()}.");
                     }
                 }
