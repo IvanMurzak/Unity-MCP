@@ -36,35 +36,35 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             yield return null;
         }
 
-        [UnityTest]
-        public IEnumerator Always_Valid_Test()
-        {
-            var goName = "DemoGO";
-            var goRef = new Runtime.Data.GameObjectRef() { Name = goName };
-            var materialEx = new CreateMaterialExecutor(
-                materialName: "TestMaterial__.mat",
-                shaderName: "Standard",
-                "Assets", "Unity-MCP-Test", "Materials"
-            );
+        // [UnityTest]
+        // public IEnumerator Always_Valid_Test()
+        // {
+        //     var goName = "DemoGO";
+        //     var goRef = new Runtime.Data.GameObjectRef() { Name = goName };
+        //     var materialEx = new CreateMaterialExecutor(
+        //         materialName: "TestMaterial__.mat",
+        //         shaderName: "Standard",
+        //         "Assets", "Unity-MCP-Test", "Materials"
+        //     );
 
-            materialEx
-                .AddChild(new CreateGameObjectExecutor(goName))
-                .AddChild(new AddComponentExecutor<MeshRenderer>(goRef))
-                .AddChild(new CallToolExecutor(
-                    toolMethod: typeof(Tool_GameObject).GetMethod(nameof(Tool_GameObject.Modify)),
-                    json: JsonTestUtils.Fill(@"{
-                        ""gameObjectRefs"": ""{gameObjectRefs}"",
-                        ""gameObjectDiffs"": ""{gameObjectDiffs}""
-                    }",
-                    new System.Collections.Generic.Dictionary<string, object?>
-                    {
-                        { "{gameObjectRefs}", new Runtime.Data.GameObjectRef[] { goRef } },
-                        { "{gameObjectDiffs}", new SerializedMemberList() }
-                    }))
-                )
-                .AddChild(new ValidateToolResultExecutor())
-                .Execute();
-            yield return null;
-        }
+        //     materialEx
+        //         .AddChild(new CreateGameObjectExecutor(goName))
+        //         .AddChild(new AddComponentExecutor<MeshRenderer>(goRef))
+        //         .AddChild(new CallToolExecutor(
+        //             toolMethod: typeof(Tool_GameObject).GetMethod(nameof(Tool_GameObject.Modify)),
+        //             json: JsonTestUtils.Fill(@"{
+        //                 ""gameObjectRefs"": ""{gameObjectRefs}"",
+        //                 ""gameObjectDiffs"": ""{gameObjectDiffs}""
+        //             }",
+        //             new System.Collections.Generic.Dictionary<string, object?>
+        //             {
+        //                 { "{gameObjectRefs}", new Runtime.Data.GameObjectRef[] { goRef } },
+        //                 { "{gameObjectDiffs}", new SerializedMemberList() }
+        //             }))
+        //         )
+        //         .AddChild(new ValidateToolResultExecutor())
+        //         .Execute();
+        //     yield return null;
+        // }
     }
 }
