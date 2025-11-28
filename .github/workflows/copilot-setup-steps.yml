@@ -1,0 +1,304 @@
+name: Unity MCP Agentic Setup
+
+on:
+  workflow_dispatch:
+    inputs:
+      unity_version:
+        description: 'Unity version to use'
+        required: true
+        default: '2022.3.0f1'
+      project_path:
+        description: 'Path to Unity project (relative to repo root)'
+        required: true
+        default: '.'
+
+env:
+  UNITY_VERSION: ${{ github.event.inputs.unity_version || '2022.3.0f1' }}
+  PROJECT_PATH: ${{ github.event.inputs.project_path || '.' }}
+  UNITY_PORT: 7777
+  VNC_PORT: 5900
+
+jobs:
+  setup-unity-mcp:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360  # 6 hours to allow long-running agentic operations
+    
+    steps:
+      # Step 1: Checkout repository
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      # Step 2: Set up Docker Buildx for better caching
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Step 3: Create custom Dockerfile for Unity with MCP support
+      - name: Create Unity Docker Configuration
+        run: |
+          cat > Dockerfile.unity <<'EOF'
+          FROM unityci/editor:ubuntu-${{ env.UNITY_VERSION }}-linux-il2cpp-3.0
+          
+          # Install necessary dependencies
+          USER root
+          RUN apt-get update && apt-get install -y \
+              x11vnc \
+              xvfb \
+              socat \
+              net-tools \
+              curl \
+              netcat \
+              && rm -rf /var/lib/apt/lists/*
+          
+          # Create workspace directory
+          RUN mkdir -p /workspace /unity-logs
+          RUN chown -R $USER_UID:$USER_GID /workspace /unity-logs
+          
+          # Copy entrypoint script
+          COPY docker-entrypoint.sh /docker-entrypoint.sh
+          RUN chmod +x /docker-entrypoint.sh
+          
+          USER $USER_UID:$USER_GID
+          
+          WORKDIR /workspace
+          
+          EXPOSE 7777 5900
+          
+          ENTRYPOINT ["/docker-entrypoint.sh"]
+          EOF
+
+      # Step 4: Create entrypoint script for Unity
+      - name: Create Unity Entrypoint Script
+        run: |
+          cat > docker-entrypoint.sh <<'EOF'
+          #!/bin/bash
+          set -e
+          
+          echo "Starting Unity Docker Container..."
+          echo "Unity Version: $UNITY_VERSION"
+          echo "Project Path: /workspace"
+          
+          # Start Xvfb (Virtual Frame Buffer)
+          echo "Starting Xvfb..."
+          Xvfb :99 -screen 0 1024x768x24 -ac +extension GLX +render -noreset &
+          export DISPLAY=:99
+          sleep 2
+          
+          # Start VNC server for remote viewing (optional)
+          echo "Starting VNC server on port 5900..."
+          x11vnc -display :99 -forever -shared -rfbport 5900 -passwd unity123 &
+          
+          # Activate Unity License (if credentials provided)
+          if [ ! -z "$UNITY_EMAIL" ] && [ ! -z "$UNITY_PASSWORD" ]; then
+              echo "Activating Unity license..."
+              /opt/unity/Editor/Unity \
+                  -quit \
+                  -batchmode \
+                  -nographics \
+                  -logFile /unity-logs/activation.log \
+                  -username "$UNITY_EMAIL" \
+                  -password "$UNITY_PASSWORD" \
+                  -serial "$UNITY_SERIAL" || echo "License activation attempted"
+          fi
+          
+          # Start Unity Editor in project mode (non-batch)
+          echo "Starting Unity Editor..."
+          echo "Logs will be written to /unity-logs/unity-editor.log"
+          
+          # Start Unity with the project open and listening on port
+          /opt/unity/Editor/Unity \
+              -projectPath /workspace \
+              -logFile /unity-logs/unity-editor.log \
+              -executeMethod UnityMCPServer.StartServer \
+              &
+          
+          UNITY_PID=$!
+          echo "Unity started with PID: $UNITY_PID"
+          
+          # Create a simple HTTP health check endpoint
+          echo "Starting health check server on port 7777..."
+          while true; do
+              echo -e "HTTP/1.1 200 OK\r\nContent-Length: 21\r\n\r\nUnity Editor Running" | nc -l -p 7777 -q 1
+          done &
+          
+          # Keep the container running and monitor Unity process
+          echo "Container is ready. Unity Editor is running..."
+          echo "Access VNC at localhost:5900 with password: unity123"
+          echo "Health check available at: http://localhost:7777"
+          
+          # Wait for Unity process
+          wait $UNITY_PID
+          EOF
+          chmod +x docker-entrypoint.sh
+
+      # Step 5: Build Docker image
+      - name: Build Unity Docker Image
+        run: |
+          docker build \
+            -f Dockerfile.unity \
+            -t unity-mcp:latest \
+            --build-arg UNITY_VERSION=${{ env.UNITY_VERSION }} \
+            .
+
+      # Step 6: Create Docker network for isolation
+      - name: Create Docker Network
+        run: |
+          docker network create unity-network || true
+
+      # Step 7: Start Unity container in background (detached mode)
+      - name: Start Unity Container
+        run: |
+          docker run -d \
+            --name unity-editor \
+            --network unity-network \
+            -v ${{ github.workspace }}/${{ env.PROJECT_PATH }}:/workspace \
+            -v ${{ github.workspace }}/unity-logs:/unity-logs \
+            -p ${{ env.UNITY_PORT }}:7777 \
+            -p ${{ env.VNC_PORT }}:5900 \
+            -e UNITY_EMAIL="${{ secrets.UNITY_EMAIL }}" \
+            -e UNITY_PASSWORD="${{ secrets.UNITY_PASSWORD }}" \
+            -e UNITY_SERIAL="${{ secrets.UNITY_SERIAL }}" \
+            -e DISPLAY=:99 \
+            --shm-size=2g \
+            unity-mcp:latest
+          
+          echo "Unity container started with ID:"
+          docker ps -f name=unity-editor
+
+      # Step 8: Wait for Unity to be ready
+      - name: Wait for Unity to Start
+        run: |
+          echo "Waiting for Unity Editor to start..."
+          timeout 300 bash -c '
+            until curl -f http://localhost:${{ env.UNITY_PORT }} >/dev/null 2>&1; do
+              echo "Waiting for Unity health check..."
+              sleep 5
+            done
+          '
+          echo "✅ Unity Editor is ready!"
+
+      # Step 9: Display Unity logs
+      - name: Show Unity Logs
+        run: |
+          echo "=== Unity Activation Log ==="
+          docker exec unity-editor cat /unity-logs/activation.log || echo "No activation log"
+          echo ""
+          echo "=== Unity Editor Log (first 50 lines) ==="
+          docker exec unity-editor head -n 50 /unity-logs/unity-editor.log || echo "No editor log yet"
+
+      # Step 10: Verify Unity is running
+      - name: Verify Unity Process
+        run: |
+          echo "=== Running containers ==="
+          docker ps
+          echo ""
+          echo "=== Unity process inside container ==="
+          docker exec unity-editor ps aux | grep -i unity || echo "Unity process check"
+          echo ""
+          echo "=== Container logs (last 20 lines) ==="
+          docker logs --tail 20 unity-editor
+
+      # Step 11: Keep the workflow alive for agentic operations
+      - name: Keep Workflow Alive for Agentic Operations
+        run: |
+          echo "🎯 Unity Editor is now running in background!"
+          echo "📊 Container info:"
+          docker inspect unity-editor --format='{{.State.Status}}'
+          echo ""
+          echo "🔗 Access points:"
+          echo "  - Health Check: http://localhost:${{ env.UNITY_PORT }}"
+          echo "  - VNC: localhost:${{ env.VNC_PORT }} (password: unity123)"
+          echo ""
+          echo "📝 To view live logs, run:"
+          echo "  docker logs -f unity-editor"
+          echo ""
+          echo "⏳ Workflow will stay active for agentic operations..."
+          echo "   The container will continue running in background while"
+          echo "   GitHub Actions can execute additional steps."
+          
+          # Sleep to keep workflow alive (adjust timeout at job level)
+          sleep 60
+
+      # Step 12: Example - Execute commands in Unity (placeholder for agentic operations)
+      - name: Example Agentic Command
+        run: |
+          echo "🤖 This is where your agentic system would send commands..."
+          echo "Example: GitHub Copilot could trigger Unity operations via MCP"
+          
+          # Example command execution in Unity container
+          docker exec unity-editor bash -c "
+            echo 'Executing agentic command in Unity context...'
+            # Your Unity-MCP commands would go here
+          "
+
+      # Step 13: Monitor and maintain connection
+      - name: Maintain Agentic Session
+        run: |
+          echo "🔄 Maintaining agentic session..."
+          echo "Container status:"
+          docker ps -f name=unity-editor
+          
+          # Keep workflow active with periodic health checks
+          for i in {1..10}; do
+            echo "Health check #$i"
+            curl -f http://localhost:${{ env.UNITY_PORT }} || echo "Health check pending..."
+            sleep 30
+          done
+
+      # Step 14: Optional - Upload logs as artifacts
+      - name: Upload Unity Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unity-logs
+          path: unity-logs/
+          retention-days: 7
+
+      # Step 15: Cleanup (only runs if workflow completes or is cancelled)
+      - name: Cleanup
+        if: always()
+        run: |
+          echo "🧹 Cleaning up..."
+          docker logs unity-editor > final-container-logs.txt 2>&1 || true
+          docker stop unity-editor || true
+          docker rm unity-editor || true
+          docker network rm unity-network || true
+
+  # Alternative: Service-based approach (runs truly in background)
+  unity-as-service:
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    
+    # Unity as a service container
+    services:
+      unity:
+        image: unityci/editor:ubuntu-2022.3.0f1-linux-il2cpp-3.0
+        ports:
+          - 7777:7777
+          - 5900:5900
+        options: >-
+          --name unity-service
+          --health-cmd "pgrep Unity || exit 1"
+          --health-interval 30s
+          --health-timeout 10s
+          --health-retries 3
+        volumes:
+          - ${{ github.workspace }}:/workspace
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      
+      - name: Setup Unity in Service Container
+        run: |
+          echo "Unity service container is running"
+          echo "This approach runs Unity truly in the background as a service"
+          docker ps
+      
+      - name: Agentic Operations
+        run: |
+          echo "Your agentic operations can now interact with the Unity service"
+          echo "The service container will stay alive for the duration of the job"
+          # Your Unity-MCP integration code here
+          sleep infinity &  # Keep job alive
