@@ -244,8 +244,8 @@ public class McpToolsWindow : EditorWindow
         var filteredTools = FilterTools().ToList();
         UpdateFilterStats(filteredTools);
 
-        toolListView.visible = filteredTools.Count >= 0;
-        toolListView.style.display = filteredTools.Count >= 0 ? DisplayStyle.Flex : DisplayStyle.None;
+        toolListView.visible = filteredTools.Count > 0;
+        toolListView.style.display = filteredTools.Count > 0 ? DisplayStyle.Flex : DisplayStyle.None;
         emptyListLabel.style.display = filteredTools.Count == 0 ? DisplayStyle.Flex : DisplayStyle.None;
 
         toolListView.makeItem = MakeToolItem;
