@@ -4,10 +4,10 @@ namespace com.IvanMurzak.Unity.MCP.TestFiles
 {
     public class DataPopulationTestScript : MonoBehaviour
     {
+        public Sprite spriteField;
         public Material materialField;
         public GameObject gameObjectField;
         public Texture2D textureField;
-        public Sprite spriteField;
         public ScriptableObject scriptableObjectField;
         public GameObject prefabField;
 

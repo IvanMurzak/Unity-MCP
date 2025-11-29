@@ -12,9 +12,8 @@
 
 namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
 {
-    public partial class UnityEngine_Transform_ReflectionConvertor : UnityEngine_GenericComponent_ReflectionConvertor<UnityEngine.Transform>
+    public abstract class UnityEngine_GenericComponent_ReflectionConvertor<T> : UnityEngine_Object_ReflectionConvertor<T> where T : UnityEngine.Component
     {
-        // public override bool AllowCascadeSerialize => false;
-        // public override bool AllowCascadePopulate => false;
+        public override bool AllowSetValue => false;
     }
 }

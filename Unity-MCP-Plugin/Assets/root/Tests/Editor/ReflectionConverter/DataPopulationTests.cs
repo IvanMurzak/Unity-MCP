@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Editor.Tests.Utils;
+using com.IvanMurzak.Unity.MCP.Reflection.Convertor;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.TestFiles;
 using NUnit.Framework;
@@ -12,11 +13,18 @@ using UnityEngine.TestTools;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
-    public class DataPopulationTests
+    public class DataPopulationTests : BaseTest
     {
+        [UnitySetUp]
+        public override IEnumerator SetUp() => base.SetUp();
+
+        [UnityTearDown]
+        public override IEnumerator TearDown() => base.TearDown();
+
         [UnityTest]
         public IEnumerator Populate_All_Types_Test()
         {
+            Debug.Log("[DataPopulationTests] Running updated test version.");
             // Executors for creating assets
             var materialEx = new CreateMaterialExecutor("TestMaterial.mat", "Standard", "Assets", "Unity-MCP-Test", "DataPopulation");
             var textureEx = new CreateTextureExecutor("TestTexture.png", "Assets", "Unity-MCP-Test", "DataPopulation");
@@ -73,7 +81,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 typeof(Tool_GameObject).GetMethod(nameof(Tool_GameObject.Modify)),
                 () =>
                 {
-                    var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+                    var plugin = UnityMcpPlugin.Instance;
+                    Debug.Log($"[DataPopulationTests] Plugin: {plugin}");
+                    var mcpInstance = plugin?.McpPluginInstance;
+                    Debug.Log($"[DataPopulationTests] McpInstance: {mcpInstance}");
+                    var manager = mcpInstance?.McpManager;
+                    Debug.Log($"[DataPopulationTests] Manager: {manager}");
+                    var reflector = manager?.Reflector;
+                    Debug.Log($"[DataPopulationTests] Reflector: {reflector}");
+
+                    if (reflector == null)
+                    {
+                        Debug.LogError("[DataPopulationTests] Reflector is null! Cannot proceed with serialization.");
+                        return "{}";
+                    }
 
                     var matRef = new AssetObjectRef() { AssetPath = materialEx.AssetPath };
                     var texRef = new AssetObjectRef() { AssetPath = textureEx.AssetPath };
@@ -96,10 +117,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                         value: new ComponentRef(addCompEx.Component!.GetInstanceID())
                     );
 
+                    componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "spriteField", type: typeof(Sprite), value: spriteRef));
                     componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "materialField", type: typeof(Material), value: matRef));
                     componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "gameObjectField", type: typeof(GameObject), value: goRef));
                     componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "textureField", type: typeof(Texture2D), value: texRef));
-                    componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "spriteField", type: typeof(Sprite), value: spriteRef));
                     componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "scriptableObjectField", type: typeof(DataPopulationTestScriptableObject), value: soRef));
                     componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "prefabField", type: typeof(GameObject), value: prefabRef));
                     componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "intField", type: typeof(int), value: 42));

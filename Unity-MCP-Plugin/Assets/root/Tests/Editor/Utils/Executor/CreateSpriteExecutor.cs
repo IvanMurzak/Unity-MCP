@@ -38,6 +38,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
                 if (Sprite == null)
                 {
                     Debug.LogError($"Failed to load created sprite at {AssetPath}");
+                    throw new System.Exception($"Failed to load created sprite at {AssetPath}");
                 }
                 else
                 {
