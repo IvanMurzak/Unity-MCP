@@ -518,7 +518,8 @@ public class McpToolsWindow : EditorWindow
 
         private string GetFoldoutKey(string toolName, string foldoutName)
         {
-            return $"Unity_MCP_ToolsWindow_{toolName}_{foldoutName}_Expanded";
+            var sanitizedName = toolName.Replace(" ", "_").Replace(".", "_");
+            return $"Unity_MCP_ToolsWindow_{sanitizedName}_{foldoutName}_Expanded";
         }
     }
 
