@@ -1,8 +1,9 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.TestFiles
 {
-    public class DataPopulationTestScript : MonoBehaviour
+    public class DataFieldPopulationTestScriptableObject : ScriptableObject
     {
         public Sprite spriteField;
         public Material materialField;
@@ -13,6 +14,9 @@ namespace com.IvanMurzak.Unity.MCP.TestFiles
 
         public Material[] materialArray;
         public GameObject[] gameObjectArray;
+
+        public List<Material> materialList;
+        public List<GameObject> gameObjectList;
 
         public int intField;
         public string stringField;

@@ -29,7 +29,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var materialEx = new CreateMaterialExecutor("TestMaterial.mat", "Standard", "Assets", "Unity-MCP-Test", "DataPopulation");
             var textureEx = new CreateTextureExecutor("TestTexture.png", Color.magenta, 64, 64, "Assets", "Unity-MCP-Test", "DataPopulation");
             var spriteEx = new CreateSpriteExecutor("TestSprite.png", Color.green, 64, 64, "Assets", "Unity-MCP-Test", "DataPopulation");
-            var soEx = new CreateScriptableObjectExecutor<DataPopulationTestScriptableObject>("TestSO.asset", "Assets", "Unity-MCP-Test", "DataPopulation");
+            var soEx = new CreateScriptableObjectExecutor<DataFieldPopulationTestScriptableObject>("TestSO.asset", "Assets", "Unity-MCP-Test", "DataPopulation");
 
             var prefabSourceGoEx = new CreateGameObjectExecutor("PrefabSource");
             var prefabEx = new CreatePrefabExecutor("TestPrefab.prefab", null, "Assets", "Unity-MCP-Test", "DataPopulation");
@@ -38,7 +38,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var targetGoName = "TargetGO";
             var targetGoRef = new GameObjectRef() { Name = targetGoName };
             var targetGoEx = new CreateGameObjectExecutor(targetGoName);
-            var addCompEx = new AddComponentExecutor<DataPopulationTestScript>(targetGoRef);
+            var addCompEx = new AddComponentExecutor<DataFieldPopulationTestScript>(targetGoRef);
 
             // Validation Executor
             var validateEx = new LazyNodeExecutor();
@@ -74,6 +74,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
                 Assert.IsNotNull(comp.gameObjectArray, "GameObject array should be populated");
                 Assert.AreEqual(2, comp.gameObjectArray!.Length);
+
+                Assert.IsNotNull(comp.materialList, "Material list should be populated");
+                Assert.AreEqual(2, comp.materialList.Count);
+                Assert.AreEqual(materialEx.Asset.name, comp.materialList[0].name);
+
+                Assert.IsNotNull(comp.gameObjectList, "GameObject list should be populated");
+                Assert.AreEqual(2, comp.gameObjectList.Count);
             });
 
             // Chain creation
@@ -112,8 +119,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
                     var componentModification = SerializedMember.FromValue(
                         reflector: reflector,
-                        name: "DataPopulationTestScript",
-                        type: typeof(DataPopulationTestScript),
+                        name: "DataFieldPopulationTestScript",
+                        type: typeof(DataFieldPopulationTestScript),
                         value: new ComponentRef(addCompEx.Component!.GetInstanceID())
                     );
 
@@ -121,7 +128,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "materialField", type: typeof(Material), value: matRef));
                     componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "gameObjectField", type: typeof(GameObject), value: goRef));
                     componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "textureField", type: typeof(Texture2D), value: texRef));
-                    componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "scriptableObjectField", type: typeof(DataPopulationTestScriptableObject), value: soRef));
+                    componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "scriptableObjectField", type: typeof(DataFieldPopulationTestScriptableObject), value: soRef));
                     componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "prefabField", type: typeof(GameObject), value: prefabRef));
                     componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "intField", type: typeof(int), value: 42));
                     componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "stringField", type: typeof(string), value: "Hello World"));
@@ -132,6 +139,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
                     componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "materialArray", type: typeof(Material[]), value: new object[] { matRefArrayItem, matRefArrayItem }));
                     componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "gameObjectArray", type: typeof(GameObject[]), value: new object[] { goRefArrayItem, prefabRefArrayItem }));
+
+                    componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "materialList", type: typeof(List<Material>), value: new object[] { matRefArrayItem, matRefArrayItem }));
+                    componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "gameObjectList", type: typeof(List<GameObject>), value: new object[] { goRefArrayItem, prefabRefArrayItem }));
 
                     goModification.AddField(componentModification);
 
