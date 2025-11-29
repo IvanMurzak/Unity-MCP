@@ -9,15 +9,15 @@
             <ui:Toggle name="tool-toggle" class="tool-switch" />
         </ui:VisualElement>
         <ui:VisualElement name="tool-item-details">
-            <ui:Foldout name="description-foldout" text="Description" class="tool-item-foldout" style="margin-top: 10px;">
+            <ui:Foldout name="description-foldout" text="Description" class="tool-item-foldout" style="margin-top: 10px;" value="false">
                 <ui:Label name="description-text" text="Tool description abc abc abc..." class="details-text" />
                 <ui:VisualElement style="margin-bottom: 7px;" />
             </ui:Foldout>
-            <ui:Foldout name="arguments-foldout" text="Input arguments (2)" class="tool-item-foldout">
+            <ui:Foldout name="arguments-foldout" text="Input arguments (2)" class="tool-item-foldout" value="false">
                 <ui:VisualElement name="arguments-container" />
                 <ui:VisualElement style="margin-bottom: 7px;" />
             </ui:Foldout>
-            <ui:Foldout name="outputs-foldout" text="Outputs" class="tool-item-foldout">
+            <ui:Foldout name="outputs-foldout" text="Outputs" class="tool-item-foldout" value="false">
                 <ui:VisualElement name="outputs-container" />
             </ui:Foldout>
         </ui:VisualElement>

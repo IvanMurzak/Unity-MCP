@@ -64,8 +64,8 @@
 .tool-list-view .unity-scroll-view__content-container {
     padding-left: 15px;
     padding-right: 15px;
-    padding-bottom: 15px;
-    padding-top: 5px;
+    padding-top: 20px;
+    padding-bottom: 20px;
 }
 
 /* Empty List Label */
@@ -86,7 +86,6 @@
     background-color: #4A4A4A;
     border-radius: 12px;
     padding: 10px;
-    margin-top: 10px;
     margin-bottom: 7px;
 }
 
