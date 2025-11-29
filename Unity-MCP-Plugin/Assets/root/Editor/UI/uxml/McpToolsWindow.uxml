@@ -1,6 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/root/Editor/UI/uss/MCPToolsWindow.uss?fileID=7433441132597879392&amp;guid=525911ffb58076f44a1788589abac01d&amp;type=3#MCPToolsWindow" />
-    <ui:VisualElement class="root-container">
+    <Style src="project://database/Assets/root/Editor/UI/uss/McpToolsWindow.uss?fileID=7433441132597879392&amp;guid=525911ffb58076f44a1788589abac01d&amp;type=3#McpToolsWindow" />
+    <ui:VisualElement class="root-container" style="min-width: 320px;">
         <ui:VisualElement class="header-container">
             <ui:Label text="MCP Tools" class="header-title" />
             <ui:Label text="See and control all MCP tools. Disable not needed tools for saving LLM context." class="header-description" />

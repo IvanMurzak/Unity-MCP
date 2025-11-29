@@ -254,7 +254,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             var btnOpenTools = root.Query<Button>("btnOpenTools").First();
             btnOpenTools.RegisterCallback<ClickEvent>(evt =>
             {
-                MCPToolsWindow.ShowWindow();
+                McpToolsWindow.ShowWindow();
             });
 
             var toolsStatusLabel = root.Query<Label>("toolsStatusLabel").First();

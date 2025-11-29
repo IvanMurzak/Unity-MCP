@@ -1,5 +1,5 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/root/Editor/UI/uss/MCPToolsWindow.uss?fileID=7433441132597879392&amp;guid=525911ffb58076f44a1788589abac01d&amp;type=3#MCPToolsWindow" />
+    <Style src="project://database/Assets/root/Editor/UI/uss/McpToolsWindow.uss?fileID=7433441132597879392&amp;guid=525911ffb58076f44a1788589abac01d&amp;type=3#McpToolsWindow" />
     <ui:VisualElement class="tool-item-container">
         <ui:VisualElement class="tool-item-header">
             <ui:VisualElement class="tool-item-title-container">

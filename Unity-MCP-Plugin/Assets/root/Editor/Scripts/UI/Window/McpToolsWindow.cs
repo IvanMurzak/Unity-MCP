@@ -23,7 +23,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-public class MCPToolsWindow : EditorWindow
+public class McpToolsWindow : EditorWindow
 {
     public enum ToolFilterType
     {
@@ -33,8 +33,8 @@ public class MCPToolsWindow : EditorWindow
     }
     private static readonly string[] WindowUxmlPaths =
     {
-        "Packages/com.ivanmurzak.unity.mcp/Editor/UI/uxml/MCPToolsWindow.uxml",
-        "Assets/root/Editor/UI/uxml/MCPToolsWindow.uxml"
+        "Packages/com.ivanmurzak.unity.mcp/Editor/UI/uxml/McpToolsWindow.uxml",
+        "Assets/root/Editor/UI/uxml/McpToolsWindow.uxml"
     };
 
     private static readonly string[] ToolItemUxmlPaths =
@@ -45,8 +45,8 @@ public class MCPToolsWindow : EditorWindow
 
     private static readonly string[] WindowUssPaths =
     {
-        "Packages/com.ivanmurzak.unity.mcp/Editor/UI/uss/MCPToolsWindow.uss",
-        "Assets/root/Editor/UI/uss/MCPToolsWindow.uss"
+        "Packages/com.ivanmurzak.unity.mcp/Editor/UI/uss/McpToolsWindow.uss",
+        "Assets/root/Editor/UI/uss/McpToolsWindow.uss"
     };
 
     private const string FilterStatsFormat = "Filtered: {0}, Total: {1}";
@@ -61,11 +61,11 @@ public class MCPToolsWindow : EditorWindow
     private DropdownField? typeDropdown;
     private Label? filterStatsLabel;
 
-    readonly Microsoft.Extensions.Logging.ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger(nameof(MCPToolsWindow));
+    readonly Microsoft.Extensions.Logging.ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger(nameof(McpToolsWindow));
 
     public static void ShowWindow()
     {
-        var wnd = GetWindow<MCPToolsWindow>();
+        var wnd = GetWindow<McpToolsWindow>();
         wnd.titleContent = new GUIContent("MCP Tools");
     }
     public void CreateGUI()
