@@ -25,7 +25,7 @@
                 <ui:Button name="btnConnectOrDisconnect" text="Connect" class="Button-Primary" />
             </ui:VisualElement>
             <ui:VisualElement name="divider" class="Divider" style="flex-grow: 1;" />
-            <ui:VisualElement name="ToolsConfigurationSection" style="margin-top: 10px; flex-direction: row; justify-content: space-between; align-items: center;">
+            <ui:VisualElement name="ToolsConfigurationSection" class="row">
                 <ui:VisualElement>
                     <ui:Label text="Tools Configuration" class="Header" />
                     <ui:Label name="toolsStatusLabel" text="Total tools (0), active tools (0), disabled tools (0)" class="section-desc" />
