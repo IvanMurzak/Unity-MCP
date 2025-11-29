@@ -17,18 +17,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
 {
     public class CreateTextureExecutor : BaseCreateAssetExecutor<Texture2D>
     {
-        public CreateTextureExecutor(string assetName, params string[] folders) : base(assetName, folders)
+        public CreateTextureExecutor(string assetName, Color color, int width = 64, int height = 64, params string[] folders) : base(assetName, folders)
         {
             SetAction(() =>
             {
-                Debug.Log($"Creating Texture: {AssetPath}");
+                Debug.Log($"Creating Texture: {AssetPath} ({width}x{height}) with color {color}");
 
-                var texture = new Texture2D(64, 64);
+                var texture = new Texture2D(width, height);
                 // Fill with some color
-                var colors = new Color[64 * 64];
+                var colors = new Color[width * height];
                 for (int i = 0; i < colors.Length; i++)
                 {
-                    colors[i] = Color.red;
+                    colors[i] = color;
                 }
                 texture.SetPixels(colors);
                 texture.Apply();

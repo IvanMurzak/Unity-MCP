@@ -18,12 +18,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
     {
         public Sprite Sprite { get; private set; } = null!;
 
-        public CreateSpriteExecutor(string assetName, params string[] folders) : base(assetName, folders)
+        public CreateSpriteExecutor(string assetName, Color color, int width = 64, int height = 64, params string[] folders) : base(assetName, color, width, height, folders)
         {
-            SetAction<Texture2D, Sprite>((texture) =>
+            SetAction(() =>
             {
-                if (texture == null) throw new System.ArgumentNullException(nameof(texture));
-
                 Debug.Log($"Converting Texture to Sprite: {AssetPath}");
 
                 var importer = AssetImporter.GetAtPath(AssetPath) as TextureImporter;

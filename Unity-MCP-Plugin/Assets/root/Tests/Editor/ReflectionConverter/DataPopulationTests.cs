@@ -27,8 +27,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Debug.Log("[DataPopulationTests] Running updated test version.");
             // Executors for creating assets
             var materialEx = new CreateMaterialExecutor("TestMaterial.mat", "Standard", "Assets", "Unity-MCP-Test", "DataPopulation");
-            var textureEx = new CreateTextureExecutor("TestTexture.png", "Assets", "Unity-MCP-Test", "DataPopulation");
-            var spriteEx = new CreateSpriteExecutor("TestSprite.png", "Assets", "Unity-MCP-Test", "DataPopulation");
+            var textureEx = new CreateTextureExecutor("TestTexture.png", Color.magenta, 64, 64, "Assets", "Unity-MCP-Test", "DataPopulation");
+            var spriteEx = new CreateSpriteExecutor("TestSprite.png", Color.green, 64, 64, "Assets", "Unity-MCP-Test", "DataPopulation");
             var soEx = new CreateScriptableObjectExecutor<DataPopulationTestScriptableObject>("TestSO.asset", "Assets", "Unity-MCP-Test", "DataPopulation");
 
             var prefabSourceGoEx = new CreateGameObjectExecutor("PrefabSource");
