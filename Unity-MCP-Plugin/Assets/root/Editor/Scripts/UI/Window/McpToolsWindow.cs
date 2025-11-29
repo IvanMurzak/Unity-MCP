@@ -57,6 +57,7 @@ public class McpToolsWindow : EditorWindow
     private List<ToolViewModel> allTools = new();
 
     private ListView? toolListView;
+    private Label? emptyListLabel;
     private TextField? filterField;
     private DropdownField? typeDropdown;
     private Label? filterStatsLabel;
@@ -110,6 +111,7 @@ public class McpToolsWindow : EditorWindow
 
         filterStatsLabel = root.Q<Label>("filter-stats-label");
         toolListView = root.Q<ListView>("tool-list-view");
+        emptyListLabel = root.Q<Label>("empty-list-label");
     }
 
     private void RefreshTools()
@@ -232,8 +234,19 @@ public class McpToolsWindow : EditorWindow
             return;
         }
 
+        if (emptyListLabel == null)
+        {
+            _logger.LogWarning("{method} Empty list label missing when populating tool list.",
+                nameof(PopulateToolList));
+            return;
+        }
+
         var filteredTools = FilterTools().ToList();
         UpdateFilterStats(filteredTools);
+
+        toolListView.visible = filteredTools.Count >= 0;
+        toolListView.style.display = filteredTools.Count >= 0 ? DisplayStyle.Flex : DisplayStyle.None;
+        emptyListLabel.style.display = filteredTools.Count == 0 ? DisplayStyle.Flex : DisplayStyle.None;
 
         toolListView.makeItem = MakeToolItem;
         toolListView.bindItem = (element, index) =>

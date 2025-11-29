@@ -14,6 +14,7 @@
                 <ui:Label text="Filtered: 10, Total: 42" name="filter-stats-label" class="filter-stats-label" />
             </ui:VisualElement>
         </ui:VisualElement>
+        <ui:Label name="empty-list-label" text="No tools by current filter" class="empty-list-label" />
         <ui:ListView name="tool-list-view" class="tool-list-view" />
     </ui:VisualElement>
 </ui:UXML>

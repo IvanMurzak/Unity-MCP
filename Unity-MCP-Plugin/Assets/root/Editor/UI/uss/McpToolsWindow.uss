@@ -68,6 +68,19 @@
     padding-top: 5px;
 }
 
+/* Empty List Label */
+.empty-list-label {
+    flex-grow: 1;
+    text-align: center;
+    -unity-text-align: middle-center;
+    font-size: 18px;
+    color: #808080;
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-bottom: 15px;
+    padding-top: 5px;
+}
+
 /* Tool Item */
 .tool-item-container {
     background-color: #4A4A4A;
