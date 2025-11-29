@@ -122,11 +122,8 @@ public class McpToolsWindow : EditorWindow
 
         if (toolManager != null)
         {
-            foreach (var tool in toolManager.GetAllTools())
+            foreach (var tool in toolManager.GetAllTools().Where(tool => tool != null))
             {
-                if (tool == null)
-                    continue;
-
                 refreshed.Add(BuildToolViewModel(toolManager, tool));
             }
         }
@@ -176,7 +173,7 @@ public class McpToolsWindow : EditorWindow
             {
                 _logger.LogWarning("{method} Failed to add USS '{path}': {message}",
                     nameof(ApplyStyleSheets), path, ex.Message);
-                return;
+                // Continue to next path instead of returning
             }
         }
 
@@ -223,10 +220,7 @@ public class McpToolsWindow : EditorWindow
         };
         toolListView.unbindItem = (element, index) =>
         {
-            if (index >= 0 && index < filteredTools.Count)
-            {
-                UnbindToolItem(element, filteredTools[index]);
-            }
+            UnbindToolItem(element);
         };
 
         toolListView.itemsSource = filteredTools;
@@ -262,6 +256,7 @@ public class McpToolsWindow : EditorWindow
                 if (!string.IsNullOrWhiteSpace(tool.Name))
                 {
                     toolManager.SetToolEnabled(tool.Name, evt.newValue);
+                    UnityMcpPlugin.Instance.Save();
                 }
 
                 if (typeDropdown?.index != (int)ToolFilterType.All)
@@ -369,7 +364,7 @@ public class McpToolsWindow : EditorWindow
         PopulateArgumentFoldout(toolItem, "outputs-foldout", "outputs-container", "Outputs", tool.Outputs);
     }
 
-    private void UnbindToolItem(VisualElement toolItem, ToolViewModel tool)
+    private void UnbindToolItem(VisualElement toolItem)
     {
         toolItem.userData = null;
     }
