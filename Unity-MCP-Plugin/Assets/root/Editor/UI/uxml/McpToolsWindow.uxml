@@ -11,7 +11,7 @@
             <ui:VisualElement class="filter-row">
                 <ui:Label text="Type:" class="filter-label" />
                 <ui:DropdownField name="type-dropdown" index="0" class="type-dropdown" />
-                <ui:Label text="Filtered: 10, Total: 42" name="filter-stats-label" class="filter-stats-label" />
+                <ui:Label text="Filtered: 0, Total: 0" name="filter-stats-label" class="filter-stats-label" />
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:Label name="empty-list-label" text="No tools by current filter" class="empty-list-label" />
