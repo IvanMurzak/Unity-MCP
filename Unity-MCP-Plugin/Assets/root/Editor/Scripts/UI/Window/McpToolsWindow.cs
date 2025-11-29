@@ -298,7 +298,23 @@ public class McpToolsWindow : EditorWindow
                 }
             });
         }
+
+        toolItem.Query<Foldout>().ForEach(foldout =>
+        {
+            foldout.RegisterValueChangedCallback(evt =>
+            {
+                UpdateFoldoutState(foldout, evt.newValue);
+            });
+            UpdateFoldoutState(foldout, foldout.value);
+        });
+
         return toolItem;
+    }
+
+    private void UpdateFoldoutState(Foldout foldout, bool expanded)
+    {
+        foldout.EnableInClassList("expanded", expanded);
+        foldout.EnableInClassList("collapsed", !expanded);
     }
 
     private void BindToolItem(VisualElement toolItem, ToolViewModel tool)

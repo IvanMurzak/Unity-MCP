@@ -123,6 +123,28 @@
     -unity-font-style: bold;
 }
 
+.tool-item-foldout .unity-foldout__content {
+    display: flex !important;
+    overflow: hidden;
+    transition-property: max-height, opacity, margin-top, margin-bottom, padding-top, padding-bottom;
+    transition-duration: 250ms;
+    transition-timing-function: ease-in-out;
+    opacity: 1;
+    max-height: 1000px;
+}
+
+.tool-item-foldout.collapsed .unity-foldout__content {
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    transition-property: max-height, opacity, margin-top, margin-bottom, padding-top, padding-bottom;
+    transition-duration: 150ms;
+    transition-timing-function: ease-in-out;
+}
+
 .details-text {
     white-space: normal;
     margin-left: 15px; /* Indent content */
