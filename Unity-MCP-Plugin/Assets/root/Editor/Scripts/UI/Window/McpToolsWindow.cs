@@ -221,6 +221,13 @@ public class McpToolsWindow : EditorWindow
                 BindToolItem(element, filteredTools[index]);
             }
         };
+        toolListView.unbindItem = (element, index) =>
+        {
+            if (index >= 0 && index < filteredTools.Count)
+            {
+                UnbindToolItem(element, filteredTools[index]);
+            }
+        };
 
         toolListView.itemsSource = filteredTools;
         toolListView.selectionType = SelectionType.None;
@@ -263,12 +270,23 @@ public class McpToolsWindow : EditorWindow
                 }
             });
         }
+        else
+        {
+            _logger.LogWarning("{method} Tool toggle missing in tool item template.",
+                nameof(MakeToolItem));
+        }
 
         toolItem.Query<Foldout>().ForEach(foldout =>
         {
             foldout.RegisterValueChangedCallback(evt =>
             {
                 UpdateFoldoutState(foldout, evt.newValue);
+                if (toolItem.userData is ToolViewModel tool)
+                {
+                    if (foldout.name == "description-foldout") tool.descriptionExpanded.Value = evt.newValue;
+                    else if (foldout.name == "arguments-foldout") tool.inputsExpanded.Value = evt.newValue;
+                    else if (foldout.name == "outputs-foldout") tool.outputsExpanded.Value = evt.newValue;
+                }
             });
             UpdateFoldoutState(foldout, foldout.value);
         });
@@ -314,38 +332,46 @@ public class McpToolsWindow : EditorWindow
             var hasDescription = !string.IsNullOrEmpty(tool.Description);
             descriptionFoldout.style.display = hasDescription ? DisplayStyle.Flex : DisplayStyle.None;
 
+            descriptionFoldout.SetValueWithoutNotify(tool.descriptionExpanded.Value);
             UpdateFoldoutState(descriptionFoldout, tool.descriptionExpanded.Value);
-            descriptionFoldout.RegisterValueChangedCallback(evt =>
-            {
-                tool.descriptionExpanded.Value = evt.newValue;
-                UpdateFoldoutState(descriptionFoldout, tool.descriptionExpanded.Value);
-            });
+        }
+        else
+        {
+            _logger.LogWarning("{method} Description foldout missing for tool: {toolName}",
+                nameof(BindToolItem), tool.Name);
         }
 
         var inputArgumentsFoldout = toolItem.Q<Foldout>("arguments-foldout");
         if (inputArgumentsFoldout != null)
         {
+            inputArgumentsFoldout.SetValueWithoutNotify(tool.inputsExpanded.Value);
             UpdateFoldoutState(inputArgumentsFoldout, tool.inputsExpanded.Value);
-            inputArgumentsFoldout.RegisterValueChangedCallback(evt =>
-            {
-                tool.inputsExpanded.Value = evt.newValue;
-                UpdateFoldoutState(inputArgumentsFoldout, tool.inputsExpanded.Value);
-            });
+        }
+        else
+        {
+            _logger.LogWarning("{method} Input arguments foldout missing for tool: {toolName}",
+                nameof(BindToolItem), tool.Name);
         }
 
         var outputsFoldout = toolItem.Q<Foldout>("outputs-foldout");
         if (outputsFoldout != null)
         {
+            outputsFoldout.SetValueWithoutNotify(tool.outputsExpanded.Value);
             UpdateFoldoutState(outputsFoldout, tool.outputsExpanded.Value);
-            outputsFoldout.RegisterValueChangedCallback(evt =>
-            {
-                tool.outputsExpanded.Value = evt.newValue;
-                UpdateFoldoutState(outputsFoldout, tool.outputsExpanded.Value);
-            });
+        }
+        else
+        {
+            _logger.LogWarning("{method} Outputs foldout missing for tool: {toolName}",
+                nameof(BindToolItem), tool.Name);
         }
 
         PopulateArgumentFoldout(toolItem, "arguments-foldout", "arguments-container", "Input arguments", tool.Inputs);
         PopulateArgumentFoldout(toolItem, "outputs-foldout", "outputs-container", "Outputs", tool.Outputs);
+    }
+
+    private void UnbindToolItem(VisualElement toolItem, ToolViewModel tool)
+    {
+        toolItem.userData = null;
     }
 
     private IEnumerable<ToolViewModel> FilterTools()
