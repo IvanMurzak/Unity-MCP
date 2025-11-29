@@ -52,5 +52,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
                 return Asset;
             });
         }
+        protected override void PostExecute(object? input)
+        {
+            base.PostExecute(input);
+            Object.DestroyImmediate(Asset);
+        }
     }
 }

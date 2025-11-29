@@ -46,5 +46,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
                 return Sprite;
             });
         }
+
+        protected override void PostExecute(object? input)
+        {
+            base.PostExecute(input);
+            Object.DestroyImmediate(Sprite);
+        }
     }
 }
