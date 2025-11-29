@@ -31,7 +31,7 @@
 .filter-label {
     margin-right: 5px;
     width: 45px;
-    font-style: bold;
+    -unity-font-style: bold;
 }
 
 .filter-textfield {
@@ -71,7 +71,6 @@
 /* Empty List Label */
 .empty-list-label {
     flex-grow: 1;
-    text-align: center;
     -unity-text-align: middle-center;
     font-size: 18px;
     color: #808080;

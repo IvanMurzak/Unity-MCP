@@ -18,6 +18,7 @@ using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP;
 using com.IvanMurzak.Unity.MCP.Utils;
+using Extensions.Unity.PlayerPrefsEx;
 using Microsoft.Extensions.Logging;
 using UnityEditor;
 using UnityEngine;
@@ -135,15 +136,7 @@ public class McpToolsWindow : EditorWindow
 
     private ToolViewModel BuildToolViewModel(IToolManager toolManager, IRunTool tool)
     {
-        return new ToolViewModel
-        {
-            Name = tool.Name,
-            Title = tool.Title,
-            Description = tool.Description,
-            IsEnabled = toolManager?.IsToolEnabled(tool.Name) == true,
-            Inputs = ParseSchemaArguments(tool.InputSchema),
-            Outputs = ParseSchemaArguments(tool.OutputSchema)
-        };
+        return new ToolViewModel(toolManager, tool);
     }
 
     private VisualTreeAsset? LoadVisualTreeAsset(IEnumerable<string> paths, string description)
@@ -189,34 +182,6 @@ public class McpToolsWindow : EditorWindow
 
         _logger.LogWarning("{method} USS not found; checked: {paths}",
             nameof(ApplyStyleSheets), string.Join(", ", WindowUssPaths));
-    }
-
-    private IReadOnlyList<ArgumentData> ParseSchemaArguments(JsonNode? schema)
-    {
-        if (schema is not JsonObject schemaObject)
-            return Array.Empty<ArgumentData>();
-
-        if (!schemaObject.TryGetPropertyValue(JsonSchema.Properties, out var propertiesNode))
-            return Array.Empty<ArgumentData>();
-
-        if (propertiesNode is not JsonObject propertiesObject)
-            return Array.Empty<ArgumentData>();
-
-        var arguments = new List<ArgumentData>();
-        foreach (var (name, element) in propertiesObject)
-        {
-            var description = string.Empty;
-            if (element is JsonObject propertyObject &&
-                propertyObject.TryGetPropertyValue(JsonSchema.Description, out var descriptionNode) &&
-                descriptionNode != null)
-            {
-                description = descriptionNode.ToString();
-            }
-
-            arguments.Add(new ArgumentData(name, description));
-        }
-
-        return arguments;
     }
 
     private void PopulateToolList()
@@ -342,17 +307,41 @@ public class McpToolsWindow : EditorWindow
         var descriptionFoldout = toolItem.Q<Foldout>("description-foldout");
         if (descriptionFoldout != null)
         {
-            if (!string.IsNullOrEmpty(tool.Description))
+            var descLabel = descriptionFoldout.Q<Label>("description-text");
+            if (descLabel != null)
+                descLabel.text = tool.Description ?? string.Empty;
+
+            var hasDescription = !string.IsNullOrEmpty(tool.Description);
+            descriptionFoldout.style.display = hasDescription ? DisplayStyle.Flex : DisplayStyle.None;
+
+            UpdateFoldoutState(descriptionFoldout, tool.descriptionExpanded.Value);
+            descriptionFoldout.RegisterValueChangedCallback(evt =>
             {
-                descriptionFoldout.style.display = DisplayStyle.Flex;
-                var descLabel = descriptionFoldout.Q<Label>("description-text");
-                if (descLabel != null)
-                    descLabel.text = tool.Description;
-            }
-            else
+                tool.descriptionExpanded.Value = evt.newValue;
+                UpdateFoldoutState(descriptionFoldout, tool.descriptionExpanded.Value);
+            });
+        }
+
+        var inputArgumentsFoldout = toolItem.Q<Foldout>("arguments-foldout");
+        if (inputArgumentsFoldout != null)
+        {
+            UpdateFoldoutState(inputArgumentsFoldout, tool.inputsExpanded.Value);
+            inputArgumentsFoldout.RegisterValueChangedCallback(evt =>
             {
-                descriptionFoldout.style.display = DisplayStyle.None;
-            }
+                tool.inputsExpanded.Value = evt.newValue;
+                UpdateFoldoutState(inputArgumentsFoldout, tool.inputsExpanded.Value);
+            });
+        }
+
+        var outputsFoldout = toolItem.Q<Foldout>("outputs-foldout");
+        if (outputsFoldout != null)
+        {
+            UpdateFoldoutState(outputsFoldout, tool.outputsExpanded.Value);
+            outputsFoldout.RegisterValueChangedCallback(evt =>
+            {
+                tool.outputsExpanded.Value = evt.newValue;
+                UpdateFoldoutState(outputsFoldout, tool.outputsExpanded.Value);
+            });
         }
 
         PopulateArgumentFoldout(toolItem, "arguments-foldout", "arguments-container", "Input arguments", tool.Inputs);
@@ -450,12 +439,61 @@ public class McpToolsWindow : EditorWindow
 
     private class ToolViewModel
     {
-        public string Name { get; set; } = string.Empty;
-        public string? Title { get; set; } = string.Empty;
-        public string? Description { get; set; } = string.Empty;
+        public string Name { get; set; }
+        public string? Title { get; set; }
+        public string? Description { get; set; }
         public bool IsEnabled { get; set; }
-        public IReadOnlyList<ArgumentData> Inputs { get; set; } = Array.Empty<ArgumentData>();
-        public IReadOnlyList<ArgumentData> Outputs { get; set; } = Array.Empty<ArgumentData>();
+        public IReadOnlyList<ArgumentData> Inputs { get; set; }
+        public IReadOnlyList<ArgumentData> Outputs { get; set; }
+        public PlayerPrefsBool descriptionExpanded;
+        public PlayerPrefsBool inputsExpanded;
+        public PlayerPrefsBool outputsExpanded;
+
+        public ToolViewModel(IToolManager toolManager, IRunTool tool)
+        {
+            Name = tool.Name;
+            Title = tool.Title;
+            Description = tool.Description;
+            IsEnabled = toolManager?.IsToolEnabled(tool.Name) == true;
+            Inputs = ParseSchemaArguments(tool.InputSchema);
+            Outputs = ParseSchemaArguments(tool.OutputSchema);
+            descriptionExpanded = new PlayerPrefsBool(GetFoldoutKey(tool.Name, "description-foldout"));
+            inputsExpanded = new PlayerPrefsBool(GetFoldoutKey(tool.Name, "arguments-foldout"));
+            outputsExpanded = new PlayerPrefsBool(GetFoldoutKey(tool.Name, "outputs-foldout"));
+        }
+
+        private IReadOnlyList<ArgumentData> ParseSchemaArguments(JsonNode? schema)
+        {
+            if (schema is not JsonObject schemaObject)
+                return Array.Empty<ArgumentData>();
+
+            if (!schemaObject.TryGetPropertyValue(JsonSchema.Properties, out var propertiesNode))
+                return Array.Empty<ArgumentData>();
+
+            if (propertiesNode is not JsonObject propertiesObject)
+                return Array.Empty<ArgumentData>();
+
+            var arguments = new List<ArgumentData>();
+            foreach (var (name, element) in propertiesObject)
+            {
+                var description = string.Empty;
+                if (element is JsonObject propertyObject &&
+                    propertyObject.TryGetPropertyValue(JsonSchema.Description, out var descriptionNode) &&
+                    descriptionNode != null)
+                {
+                    description = descriptionNode.ToString();
+                }
+
+                arguments.Add(new ArgumentData(name, description));
+            }
+
+            return arguments;
+        }
+
+        private string GetFoldoutKey(string toolName, string foldoutName)
+        {
+            return $"Unity_MCP_ToolsWindow_{toolName}_{foldoutName}_Expanded";
+        }
     }
 
     public sealed class ArgumentData
