@@ -16,9 +16,8 @@
 }
 
 .header-description {
-    font-size: 14px;
     color: #B0B0B0;
-    margin-bottom: 15px;
+    margin-bottom: 7px;
     white-space: normal;
 }
 
@@ -26,12 +25,13 @@
 .filter-row {
     flex-direction: row;
     align-items: center;
-    margin-bottom: 10px;
+    margin-bottom: 4px;
 }
 
 .filter-label {
     margin-right: 5px;
     width: 45px;
+    font-style: bold;
 }
 
 .filter-textfield {
@@ -84,9 +84,10 @@
 /* Tool Item */
 .tool-item-container {
     background-color: #4A4A4A;
-    border-radius: 8px;
-    padding: 12px;
-    margin-bottom: 10px;
+    border-radius: 12px;
+    padding: 10px;
+    margin-top: 10px;
+    margin-bottom: 7px;
 }
 
 .tool-item-header {
@@ -112,14 +113,20 @@
 }
 
 /* Details Foldout */
-.details-foldout {
-    margin-top: 10px;
+.tool-item-foldout {
+    margin-left: -4px;
+    padding-left: 0px;
+}
+
+.tool-item-foldout .unity-foldout__text {
+    font-size: 13px;
+    -unity-font-style: bold;
 }
 
 .details-text {
     white-space: normal;
-    font-size: 13px;
     margin-left: 15px; /* Indent content */
+    margin-bottom: 8px;
 }
 
 /* Argument Item */
