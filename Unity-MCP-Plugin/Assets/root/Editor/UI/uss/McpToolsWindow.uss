@@ -57,6 +57,10 @@
     padding-top: 0;
 }
 
+.tool-list-view .unity-list-view__item:hover {
+    background-color: rgba(0, 0, 0, 0);
+}
+
 .tool-list-view .unity-scroll-view__content-container {
     padding-left: 15px;
     padding-right: 15px;
