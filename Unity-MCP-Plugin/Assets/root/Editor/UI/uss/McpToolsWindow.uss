@@ -147,10 +147,12 @@
 /* Tool Item Highlighting */
 .tool-item-container.enabled {
     background-color: #3A4039;
+    transition-duration: 200ms;
 }
 
 .tool-item-container.disabled {
     background-color: #3F393A;
+    transition-duration: 200ms;
 }
 
 /* Toggle Switch Styles */
@@ -161,6 +163,7 @@
     background-color: #707070;
     border-width: 0;
     -unity-background-image-tint-color: white;
+    transition-duration: 200ms;
 }
 
 .tool-switch .unity-toggle__checkmark {
@@ -171,18 +174,22 @@
     background-image: none; /* Remove default tick icon */
     opacity: 1; /* Ensure visible */
     margin-left: 2px;
+    transition-duration: 200ms;
 }
 
 /* Checked State */
 .tool-switch.checked .unity-toggle__input {
     background-color: #51C663; /* SeaGreen */
+    transition-duration: 200ms;
 }
 .tool-switch.checked .unity-toggle__checkmark {
     margin-left: 22px;
     background-image: none;
+    transition-duration: 200ms;
 }
 
 /* Disabled Tool State (Unchecked) */
 .tool-item-container.disabled .tool-switch .unity-toggle__input {
     background-color: #863A3B;
+    transition-duration: 200ms;
 }
