@@ -67,7 +67,9 @@ public class McpToolsWindow : EditorWindow
 
     public static McpToolsWindow ShowWindow()
     {
-        var window = GetWindow<McpToolsWindow>("MCP Tools");
+        var window = GetWindow<McpToolsWindow>();
+        var icon = AssetDatabase.LoadAssetAtPath<Texture>("Assets/root/Editor/Gizmos/logo_32.png");
+        window.titleContent = new GUIContent("MCP Tools", icon);
         window.Focus();
 
         return window;
