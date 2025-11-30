@@ -25,9 +25,16 @@
                 <ui:Button name="btnConnectOrDisconnect" text="Connect" class="Button-Primary" />
             </ui:VisualElement>
             <ui:VisualElement name="divider" class="Divider" style="flex-grow: 1;" />
+            <ui:VisualElement name="ToolsConfigurationSection" class="row">
+                <ui:VisualElement>
+                    <ui:Label text="Tools Configuration" class="Header" />
+                    <ui:Label name="toolsStatusLabel" text="Total tools (0), active tools (0), disabled tools (0)" class="section-desc" />
+                </ui:VisualElement>
+                <ui:Button name="btnOpenTools" text="Open" class="Button-Primary" />
+            </ui:VisualElement>
+            <ui:VisualElement name="divider" class="Divider" style="flex-grow: 1;" />
             <ui:Label text="Configure MCP Client" class="Header" />
             <ui:Label text="At least one client should be configured.&#10;Some clients need restart after configuration." class="section-desc" />
-            <!-- Client panels are dynamically added here from ClientConfigPanel.uxml template -->
             <ui:VisualElement name="ConfigureClientsContainer" />
             <ui:VisualElement name="ConfigureClient-Custom" class="Frame-Group" style="flex-grow: 1;">
                 <ui:Label text="Manual configuration" class="section-title" />
