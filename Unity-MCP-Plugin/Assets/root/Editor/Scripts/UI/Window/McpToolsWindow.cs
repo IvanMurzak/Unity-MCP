@@ -65,10 +65,12 @@ public class McpToolsWindow : EditorWindow
 
     readonly Microsoft.Extensions.Logging.ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger(nameof(McpToolsWindow));
 
-    public static void ShowWindow()
+    public static McpToolsWindow ShowWindow()
     {
-        var wnd = GetWindow<McpToolsWindow>();
-        wnd.titleContent = new GUIContent("MCP Tools");
+        var window = GetWindow<McpToolsWindow>("MCP Tools");
+        window.Focus();
+
+        return window;
     }
     public void CreateGUI()
     {
