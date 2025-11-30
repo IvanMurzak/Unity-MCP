@@ -16,7 +16,10 @@ using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
 {
-    public static class EditorFile
+    /// <summary>
+    /// Utility class for loading Unity Editor assets with fallback paths.
+    /// </summary>
+    public static class EditorAssetLoader
     {
         public static readonly string[] PackageLogoIcon =
         {
@@ -24,6 +27,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             "Assets/root/Editor/Gizmos/logo_32.png"
         };
 
+        /// <summary>
+        /// Attempts to load an asset from multiple paths, trying each in order until one succeeds.
+        /// </summary>
+        /// <typeparam name="T">The type of asset to load.</typeparam>
+        /// <param name="paths">Collection of paths to try in order.</param>
+        /// <param name="logger">Optional logger for diagnostic messages.</param>
+        /// <returns>The loaded asset, or null if not found in any path.</returns>
         public static T? LoadAssetAtPath<T>(IEnumerable<string> paths, ILogger? logger = null) where T : UnityEngine.Object
         {
             foreach (var path in paths)

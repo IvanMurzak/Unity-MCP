@@ -69,7 +69,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public static McpToolsWindow ShowWindow()
         {
             var window = GetWindow<McpToolsWindow>("MCP Tools");
-            var icon = EditorFile.LoadAssetAtPath<Texture>(EditorFile.PackageLogoIcon);
+            var icon = EditorAssetLoader.LoadAssetAtPath<Texture>(EditorAssetLoader.PackageLogoIcon);
             if (icon != null)
                 window.titleContent = new GUIContent("MCP Tools", icon);
 
@@ -83,14 +83,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             InitializePlugin();
 
-            var visualTree = EditorFile.LoadAssetAtPath<VisualTreeAsset>(WindowUxmlPaths, _logger);
+            var visualTree = EditorAssetLoader.LoadAssetAtPath<VisualTreeAsset>(WindowUxmlPaths, _logger);
             if (visualTree == null)
                 return;
 
             visualTree.CloneTree(rootVisualElement);
             ApplyStyleSheets(rootVisualElement);
 
-            toolItemTemplate = EditorFile.LoadAssetAtPath<VisualTreeAsset>(ToolItemUxmlPaths, _logger);
+            toolItemTemplate = EditorAssetLoader.LoadAssetAtPath<VisualTreeAsset>(ToolItemUxmlPaths, _logger);
             InitializeFilters(rootVisualElement);
 
             RefreshTools();
@@ -145,7 +145,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         private void ApplyStyleSheets(VisualElement root)
         {
-            var sheet = EditorFile.LoadAssetAtPath<StyleSheet>(WindowUssPaths, _logger);
+            var sheet = EditorAssetLoader.LoadAssetAtPath<StyleSheet>(WindowUssPaths, _logger);
             if (sheet == null)
             {
                 _logger.LogWarning("{method} USS file not found.",
@@ -161,7 +161,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             }
             catch (Exception ex)
             {
-                _logger.LogError("{method} Failed to add USS: {ex}",
+                _logger.LogWarning("{method} Failed to add USS: {ex}",
                     nameof(ApplyStyleSheets), ex);
             }
         }
