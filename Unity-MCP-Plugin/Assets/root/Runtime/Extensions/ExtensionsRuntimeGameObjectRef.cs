@@ -19,6 +19,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
     {
         public static GameObject? FindGameObject(this GameObjectRef? objectRef)
             => FindGameObject(objectRef, out _);
+
         public static GameObject? FindGameObject(this GameObjectRef? objectRef, out string? error)
         {
             if (objectRef == null)

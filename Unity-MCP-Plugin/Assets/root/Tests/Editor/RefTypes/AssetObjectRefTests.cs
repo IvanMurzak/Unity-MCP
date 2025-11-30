@@ -10,7 +10,6 @@
 
 #nullable enable
 using System.Linq;
-using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using NUnit.Framework;
 

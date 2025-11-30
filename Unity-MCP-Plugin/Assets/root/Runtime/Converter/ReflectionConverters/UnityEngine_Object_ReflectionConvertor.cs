@@ -22,7 +22,6 @@ using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
-using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.Extensions.Logging;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
@@ -33,7 +32,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
     public partial class UnityEngine_Object_ReflectionConvertor<T> : UnityGenericReflectionConvertor<T> where T : UnityEngine.Object
     {
         public override bool AllowCascadePropertiesConversion => false;
-        public override bool AllowSetValue => false;
+        public override bool AllowSetValue => true;
 
         protected virtual IEnumerable<string> RestrictedInValuePropertyNames(Reflector reflector, JsonElement valueJsonElement) => new[]
         {
@@ -105,6 +104,9 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
             ILogger? logger = null)
         {
+            if (stringBuilder != null)
+                stringBuilder.AppendLine($"{StringUtils.GetPadding(depth)}[Info] TryPopulate called for type '{obj?.GetType().Name}'.");
+
             // Trying to fix JSON value body, if critical property is missed or detected return false
             if (!FixJsonValueBody(
                 reflector: reflector,
@@ -250,19 +252,28 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
         {
             var padding = StringUtils.GetPadding(depth);
 
+            if (stringBuilder != null)
+                stringBuilder.AppendLine($"{padding}[Info] SetValue called for type '{type.Name}'. Value kind: {value?.ValueKind}");
+
             if (logger?.IsEnabled(LogLevel.Trace) == true)
                 logger.LogTrace($"{padding}Set value type='{type.GetTypeName(pretty: true)}'. Convertor='{GetType().GetTypeShortName()}'.");
 
             try
             {
-                obj = value
+                var assetObj = value
                     .ToAssetObjectRef(
                         reflector: reflector,
                         suppressException: false,
                         depth: depth,
                         stringBuilder: stringBuilder,
                         logger: logger)
-                    .FindAssetObject();
+                    .FindAssetObject(type);
+
+                obj = assetObj;
+
+                if (stringBuilder != null)
+                    stringBuilder.AppendLine($"{padding}[Info] SetValue success. Obj is null? {obj == null}");
+
                 return true;
             }
             catch (Exception ex)
@@ -286,13 +297,21 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             StringBuilder? stringBuilder = null,
             ILogger? logger = null)
         {
+            var targetType = fallbackType ?? typeof(T);
+            var padding = StringUtils.GetPadding(depth);
+            if (logger?.IsEnabled(LogLevel.Information) == true)
+                logger.LogInformation($"{padding}[UnityEngine_Object_ReflectionConvertor] Deserialize called for {targetType.Name}. Convertor: {GetType().Name}");
+
+            if (stringBuilder != null)
+                stringBuilder.AppendLine($"{padding}[Info] Deserialize called for {targetType.Name}. Convertor: {GetType().Name}");
+
             return data.valueJsonElement
                 .ToAssetObjectRef(
                     reflector: reflector,
                     depth: depth,
                     stringBuilder: stringBuilder,
                     logger: logger)
-                .FindAssetObject();
+                .FindAssetObject(targetType);
         }
 
         protected override object? DeserializeValueAsJsonElement(
@@ -309,7 +328,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                     depth: depth,
                     stringBuilder: stringBuilder,
                     logger: logger)
-                .FindAssetObject();
+                .FindAssetObject(type);
         }
     }
 }
