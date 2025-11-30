@@ -148,13 +148,31 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
         {
             var padding = StringUtils.GetPadding(depth);
 
-            if (logger?.IsEnabled(LogLevel.Warning) == true)
-                logger.LogWarning($"{padding}Cannot set value for '{type.GetTypeShortName()}'. This type is not supported for setting values. Maybe did you want to set a field or a property? If so, set the value in the '{nameof(SerializedMember.fields)}' or '{nameof(SerializedMember.props)}' property instead.");
+            if (logger?.IsEnabled(LogLevel.Trace) == true)
+                logger.LogTrace($"{padding}Set value type='{type.GetTypeName(pretty: true)}'. Convertor='{GetType().GetTypeShortName()}'.");
 
-            if (stringBuilder != null)
-                stringBuilder.AppendLine($"{padding}[Warning] Cannot set value for '{type.GetTypeName(pretty: false)}'. This type is not supported for setting values. Maybe did you want to set a field or a property? If so, set the value in the '{nameof(SerializedMember.fields)}' or '{nameof(SerializedMember.props)}' property instead.");
+            try
+            {
+                obj = value
+                    .ToGameObjectRef(
+                        reflector: reflector,
+                        suppressException: false,
+                        depth: depth,
+                        stringBuilder: stringBuilder,
+                        logger: logger)
+                    .FindGameObject();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                if (logger?.IsEnabled(LogLevel.Error) == true)
+                    logger.LogError(ex, $"{padding}[Error] Failed to deserialize value for type '{type.GetTypeName(pretty: false)}'. Convertor: {GetType().GetTypeShortName()}. Exception: {ex.Message}");
 
-            return false;
+                if (stringBuilder != null)
+                    stringBuilder.AppendLine($"{padding}[Error] Failed to set value for type '{type.GetTypeName(pretty: false)}'. Convertor: {GetType().GetTypeShortName()}. Exception: {ex.Message}");
+
+                return false;
+            }
         }
 
         protected override bool TryPopulateField(
@@ -167,6 +185,9 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
             ILogger? logger = null)
         {
+            if (logger?.IsEnabled(LogLevel.Information) == true)
+                logger.LogInformation($"[{GetType().GetTypeShortName()}] TryPopulateField called for obj type: {obj?.GetType().GetTypeName(pretty: false)}, field: {fieldValue.name}");
+
             var padding = StringUtils.GetPadding(depth);
             var go = obj as UnityEngine.GameObject;
             if (go == null)

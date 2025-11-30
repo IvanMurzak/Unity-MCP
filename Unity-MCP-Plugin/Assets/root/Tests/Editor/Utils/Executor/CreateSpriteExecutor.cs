@@ -1,0 +1,70 @@
+/*
+┌──────────────────────────────────────────────────────────────────┐
+│  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
+│  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
+│  Copyright (c) 2025 Ivan Murzak                                  │
+│  Licensed under the Apache License, Version 2.0.                 │
+│  See the LICENSE file in the project root for more information.  │
+└──────────────────────────────────────────────────────────────────┘
+*/
+
+#nullable enable
+using UnityEditor;
+using UnityEngine;
+
+namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
+{
+    public class CreateSpriteExecutor : CreateTextureExecutor
+    {
+        public Sprite Sprite { get; private set; } = null!;
+
+        public CreateSpriteExecutor(string assetName, Color color, int width = 64, int height = 64, params string[] folders) : base(assetName, color, width, height, folders)
+        {
+            SetAction(() =>
+            {
+                Debug.Log($"Converting Texture to Sprite: {AssetPath}");
+
+                var importer = AssetImporter.GetAtPath(AssetPath) as TextureImporter;
+                if (importer != null)
+                {
+                    importer.textureType = TextureImporterType.Sprite;
+                    importer.spriteImportMode = SpriteImportMode.Single;
+                    AssetDatabase.WriteImportSettingsIfDirty(AssetPath);
+                    AssetDatabase.ImportAsset(AssetPath, ImportAssetOptions.ForceSynchronousImport);
+                }
+
+                Sprite = AssetDatabase.LoadAssetAtPath<Sprite>(AssetPath);
+                if (Sprite == null)
+                {
+                    var allAssets = AssetDatabase.LoadAllAssetsAtPath(AssetPath);
+                    foreach (var asset in allAssets)
+                    {
+                        if (asset is Sprite s)
+                        {
+                            Sprite = s;
+                            break;
+                        }
+                    }
+                }
+
+                if (Sprite == null)
+                {
+                    Debug.LogError($"Failed to load created sprite at {AssetPath}");
+                    throw new System.Exception($"Failed to load created sprite at {AssetPath}");
+                }
+                else
+                {
+                    Debug.Log($"Created Sprite: {AssetPath}");
+                }
+
+                return Sprite;
+            });
+        }
+
+        protected override void PostExecute(object? input)
+        {
+            base.PostExecute(input);
+            Object.DestroyImmediate(Sprite);
+        }
+    }
+}

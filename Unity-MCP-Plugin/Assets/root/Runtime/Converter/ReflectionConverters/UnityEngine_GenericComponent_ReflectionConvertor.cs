@@ -9,18 +9,11 @@
 */
 
 #nullable enable
-using System.Linq;
-using com.IvanMurzak.Unity.MCP.Runtime.Data;
-using NUnit.Framework;
 
-namespace com.IvanMurzak.Unity.MCP.Editor.Tests.RefTypes
+namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
 {
-    public partial class ObjectRefTests : BaseRefTests
+    public abstract class UnityEngine_GenericComponent_ReflectionConvertor<T> : UnityEngine_Object_ReflectionConvertor<T> where T : UnityEngine.Component
     {
-        [Test]
-        public void InstanceID_Description_Includes_All_Relevant_Props() => DescriptionContainsKeywords(
-            prop: typeof(ObjectRef).GetProperty(nameof(ObjectRef.InstanceID)),
-            expectedKeywords: ObjectRef.ObjectRefProperty.All
-                .Where(name => name != ObjectRef.ObjectRefProperty.InstanceID));
+        public override bool AllowSetValue => false;
     }
 }
