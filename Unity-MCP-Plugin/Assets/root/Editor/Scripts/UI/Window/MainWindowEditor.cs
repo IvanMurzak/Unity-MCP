@@ -22,8 +22,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         public static MainWindowEditor ShowWindow()
         {
-            var window = GetWindow<MainWindowEditor>();
-            window.titleContent = new GUIContent(text: "AI Game Developer");
+            var window = GetWindow<MainWindowEditor>("AI Game Developer");
             window.Focus();
 
             return window;
