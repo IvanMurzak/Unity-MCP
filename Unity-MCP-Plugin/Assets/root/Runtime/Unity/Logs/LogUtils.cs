@@ -10,6 +10,7 @@
 
 #nullable enable
 using System.Collections.Concurrent;
+using System.Threading.Tasks;
 using com.IvanMurzak.ReflectorNet.Utils;
 using UnityEngine;
 
@@ -19,9 +20,17 @@ namespace com.IvanMurzak.Unity.MCP
     {
         public const int MaxLogEntries = 5000; // Default max entries to keep in memory
 
-        static readonly ConcurrentQueue<LogEntry> _logEntries = new();
+        static ConcurrentQueue<LogEntry> _logEntries = new();
+        static readonly LogCache _logCache = new();
         static readonly object _lockObject = new();
-        static bool _isSubscribed = false;
+        static volatile bool _isSubscribed = false;
+
+        static LogUtils()
+        {
+            if (!MainThread.Instance.IsMainThread)
+                throw new System.Exception($"{nameof(LogUtils)} must be initialized on the main thread.");
+            EnsureSubscribed();
+        }
 
         public static int LogEntries
         {
@@ -38,9 +47,52 @@ namespace com.IvanMurzak.Unity.MCP
         {
             lock (_lockObject)
             {
-                _logEntries.Clear();
+                _logEntries = new ConcurrentQueue<LogEntry>();
             }
         }
+        /// <summary>
+        /// Synchronously saves all current log entries to the cache file.
+        /// </summary>
+        /// <returns>A task that completes when the save operation is finished.</returns>
+        public static void SaveToFileImmediate()
+        {
+            var logEntries = GetAllLogs();
+            _logCache.CacheLogEntriesAsync(logEntries);
+        }
+
+        /// <summary>
+        /// Asynchronously saves all current log entries to the cache file.
+        /// </summary>
+        /// <returns>A task that completes when the save operation is finished.</returns>
+        public static Task SaveToFile()
+        {
+            var logEntries = GetAllLogs();
+            return _logCache.CacheLogEntriesAsync(logEntries);
+        }
+
+        /// <summary>
+        /// Asynchronously loads log entries from the cache file and replaces the current log entries.
+        /// </summary>
+        /// <returns>A task that completes when the load operation is finished.</returns>
+        public static async Task LoadFromFile()
+        {
+            var logWrapper = await _logCache.GetCachedLogEntriesAsync();
+            lock (_lockObject)
+            {
+                _logEntries = new ConcurrentQueue<LogEntry>(logWrapper?.Entries ?? new LogEntry[0]);
+            }
+        }
+
+        /// <summary>
+        /// Asynchronously handles application quit by saving log entries to file and cleaning up resources.
+        /// </summary>
+        /// <returns>A task that completes when the quit handling is finished.</returns>
+        public static async Task HandleQuit()
+        {
+            SaveToFileImmediate();
+            _logCache.HandleQuit();
+        }
+
         public static LogEntry[] GetAllLogs()
         {
             lock (_lockObject)
@@ -49,20 +101,14 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
-        static LogUtils()
+        public static Task EnsureSubscribed()
         {
-            EnsureSubscribed();
-        }
-
-        public static void EnsureSubscribed()
-        {
-            MainThread.Instance.RunAsync(() =>
+            return MainThread.Instance.RunAsync(() =>
             {
                 lock (_lockObject)
                 {
                     if (!_isSubscribed)
                     {
-                        Application.logMessageReceived += OnLogMessageReceived;
                         Application.logMessageReceivedThreaded += OnLogMessageReceived;
                         _isSubscribed = true;
                     }
@@ -74,7 +120,11 @@ namespace com.IvanMurzak.Unity.MCP
         {
             try
             {
-                var logEntry = new LogEntry(message, stackTrace, type);
+                var logEntry = new LogEntry(
+                    message: message,
+                    stackTrace: stackTrace,
+                    logType: type);
+
                 lock (_lockObject)
                 {
                     _logEntries.Enqueue(logEntry);

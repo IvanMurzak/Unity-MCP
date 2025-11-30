@@ -39,6 +39,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 Debug.Log($"{nameof(Startup)} {nameof(OnApplicationUnloading)} triggered: No UnityMcpPlugin instance to disconnect.");
             }
+            LogUtils.SaveToFileImmediate();
         }
         static void OnApplicationQuitting()
         {
@@ -51,6 +52,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 Debug.Log($"{nameof(Startup)} {nameof(OnApplicationQuitting)} triggered: No UnityMcpPlugin instance to disconnect.");
             }
+            LogUtils.HandleQuit();
         }
         static void OnBeforeAssemblyReload()
         {
@@ -63,6 +65,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 Debug.Log($"{nameof(Startup)} {nameof(OnBeforeAssemblyReload)} triggered: No UnityMcpPlugin instance to disconnect.");
             }
+            LogUtils.SaveToFileImmediate();
         }
         static void OnAfterAssemblyReload()
         {
@@ -75,6 +78,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             if (connectionAllowed)
                 UnityMcpPlugin.ConnectIfNeeded();
+
+            LogUtils.LoadFromFile();
         }
 
         static void OnPlayModeStateChanged(PlayModeStateChange state)
