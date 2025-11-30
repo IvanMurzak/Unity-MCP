@@ -16,7 +16,6 @@ using System.Linq;
 using System.Text.Json.Nodes;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
-using com.IvanMurzak.Unity.MCP;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Extensions.Unity.PlayerPrefsEx;
 using Microsoft.Extensions.Logging;
@@ -69,9 +68,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         public static McpToolsWindow ShowWindow()
         {
-            var window = GetWindow<McpToolsWindow>();
-            var icon = AssetDatabase.LoadAssetAtPath<Texture>("Assets/root/Editor/Gizmos/logo_32.png");
-            window.titleContent = new GUIContent("MCP Tools", icon);
+            var window = GetWindow<McpToolsWindow>("MCP Tools");
+            var icon = EditorAssetLoader.LoadAssetAtPath<Texture>(EditorAssetLoader.PackageLogoIcon);
+            if (icon != null)
+                window.titleContent = new GUIContent("MCP Tools", icon);
+
             window.Focus();
 
             return window;
@@ -82,14 +83,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             InitializePlugin();
 
-            var visualTree = LoadVisualTreeAsset(WindowUxmlPaths, "MCPToolsWindow");
+            var visualTree = EditorAssetLoader.LoadAssetAtPath<VisualTreeAsset>(WindowUxmlPaths, _logger);
             if (visualTree == null)
                 return;
 
             visualTree.CloneTree(rootVisualElement);
             ApplyStyleSheets(rootVisualElement);
 
-            toolItemTemplate = LoadVisualTreeAsset(ToolItemUxmlPaths, "ToolItem");
+            toolItemTemplate = EditorAssetLoader.LoadAssetAtPath<VisualTreeAsset>(ToolItemUxmlPaths, _logger);
             InitializeFilters(rootVisualElement);
 
             RefreshTools();
@@ -142,49 +143,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             return new ToolViewModel(toolManager, tool);
         }
 
-        private VisualTreeAsset? LoadVisualTreeAsset(IEnumerable<string> paths, string description)
-        {
-            foreach (var path in paths)
-            {
-                var asset = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(path);
-                if (asset != null)
-                {
-                    _logger.LogInformation("{method} Loaded {description} template from: {path}",
-                        nameof(LoadVisualTreeAsset), description, path);
-                    return asset;
-                }
-            }
-
-            _logger.LogWarning("{method} {description} template not found. Checked: {paths}",
-                nameof(LoadVisualTreeAsset), description, string.Join(", ", paths));
-            return null;
-        }
-
         private void ApplyStyleSheets(VisualElement root)
         {
-            foreach (var path in WindowUssPaths)
+            var sheet = EditorAssetLoader.LoadAssetAtPath<StyleSheet>(WindowUssPaths, _logger);
+            if (sheet == null)
             {
-                var sheet = AssetDatabase.LoadAssetAtPath<StyleSheet>(path);
-                if (sheet == null)
-                    continue;
-
-                try
-                {
-                    root.styleSheets.Add(sheet);
-                    _logger.LogInformation("{method} Applied USS from: {path}",
-                        nameof(ApplyStyleSheets), path);
-                    return;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning("{method} Failed to add USS '{path}': {message}",
-                        nameof(ApplyStyleSheets), path, ex.Message);
-                    // Continue to next path instead of returning
-                }
+                _logger.LogWarning("{method} USS file not found.",
+                    nameof(ApplyStyleSheets));
+                return;
             }
-
-            _logger.LogWarning("{method} USS not found; checked: {paths}",
-                nameof(ApplyStyleSheets), string.Join(", ", WindowUssPaths));
+            try
+            {
+                root.styleSheets.Add(sheet);
+                _logger.LogTrace("{method} Applied USS",
+                    nameof(ApplyStyleSheets));
+                return;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("{method} Failed to add USS: {ex}",
+                    nameof(ApplyStyleSheets), ex);
+            }
         }
 
         private void PopulateToolList()

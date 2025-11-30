@@ -22,9 +22,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         public static MainWindowEditor ShowWindow()
         {
-            var window = GetWindow<MainWindowEditor>();
-            var icon = AssetDatabase.LoadAssetAtPath<Texture>("Assets/root/Editor/Gizmos/logo_32.png");
-            window.titleContent = new GUIContent("AI Game Developer", icon);
+            var window = GetWindow<MainWindowEditor>("AI Game Developer");
+            var icon = EditorAssetLoader.LoadAssetAtPath<Texture>(EditorAssetLoader.PackageLogoIcon);
+            if (icon != null)
+                window.titleContent = new GUIContent("AI Game Developer", icon);
             window.Focus();
 
             return window;
