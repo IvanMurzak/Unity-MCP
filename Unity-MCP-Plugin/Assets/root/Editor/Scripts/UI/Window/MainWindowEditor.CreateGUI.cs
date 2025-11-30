@@ -261,24 +261,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             McpPlugin.McpPlugin.DoAlways(plugin =>
             {
-                Observable.Interval(TimeSpan.FromSeconds(1))
+                var toolManager = plugin.McpManager.ToolManager;
+                if (toolManager == null)
+                {
+                    toolsStatusLabel.text = "Total tools (0), active tools (0), disabled tools (0)";
+                    return;
+                }
+
+                void UpdateStats()
+                {
+                    var allTools = toolManager.GetAllTools();
+                    var total = allTools.Count();
+                    var active = allTools.Count(t => toolManager.IsToolEnabled(t.Name));
+                    var disabled = total - active;
+                    toolsStatusLabel.text = $"Total tools ({total}), active tools ({active}), disabled tools ({disabled})";
+                }
+
+                UpdateStats();
+
+                toolManager.OnToolsUpdated
                     .ObserveOnCurrentSynchronizationContext()
-                    .Subscribe(_ =>
-                    {
-                        var toolManager = UnityMcpPlugin.Instance.McpPluginInstance?.McpManager.ToolManager;
-                        if (toolManager != null)
-                        {
-                            var allTools = toolManager.GetAllTools().ToList();
-                            var total = allTools.Count;
-                            var active = allTools.Count(t => toolManager.IsToolEnabled(t.Name));
-                            var disabled = total - active;
-                            toolsStatusLabel.text = $"Total tools ({total}), active tools ({active}), disabled tools ({disabled})";
-                        }
-                        else
-                        {
-                            toolsStatusLabel.text = "Total tools (0), active tools (0), disabled tools (0)";
-                        }
-                    })
+                    .Subscribe(_ => UpdateStats())
                     .AddTo(_disposables);
             }).AddTo(_disposables);
 
