@@ -50,6 +50,12 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
                         case GameObjectRef.GameObjectRefProperty.Name:
                             result.Name = reader.GetString();
                             break;
+                        case AssetObjectRef.AssetObjectRefProperty.AssetPath:
+                            result.AssetPath = reader.GetString();
+                            break;
+                        case AssetObjectRef.AssetObjectRefProperty.AssetGuid:
+                            result.AssetGuid = reader.GetString();
+                            break;
                         default:
                             throw new JsonException($"Unexpected property name: {propertyName}. "
                                 + $"Expected {GameObjectRef.GameObjectRefProperty.All.JoinEnclose()}.");
@@ -82,6 +88,12 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
 
             if (!string.IsNullOrEmpty(value.Name))
                 writer.WriteString(GameObjectRef.GameObjectRefProperty.Name, value.Name);
+
+            if (!string.IsNullOrEmpty(value.AssetPath))
+                writer.WriteString(AssetObjectRef.AssetObjectRefProperty.AssetPath, value.AssetPath);
+
+            if (!string.IsNullOrEmpty(value.AssetGuid))
+                writer.WriteString(AssetObjectRef.AssetObjectRefProperty.AssetGuid, value.AssetGuid);
 
             writer.WriteEndObject();
         }
