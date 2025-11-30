@@ -28,10 +28,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
                 if (importer != null)
                 {
                     importer.textureType = TextureImporterType.Sprite;
-                    importer.SaveAndReimport();
+                    importer.spriteImportMode = SpriteImportMode.Single;
+                    AssetDatabase.WriteImportSettingsIfDirty(AssetPath);
+                    AssetDatabase.ImportAsset(AssetPath, ImportAssetOptions.ForceSynchronousImport);
                 }
 
                 Sprite = AssetDatabase.LoadAssetAtPath<Sprite>(AssetPath);
+                if (Sprite == null)
+                {
+                    var allAssets = AssetDatabase.LoadAllAssetsAtPath(AssetPath);
+                    foreach (var asset in allAssets)
+                    {
+                        if (asset is Sprite s)
+                        {
+                            Sprite = s;
+                            break;
+                        }
+                    }
+                }
 
                 if (Sprite == null)
                 {

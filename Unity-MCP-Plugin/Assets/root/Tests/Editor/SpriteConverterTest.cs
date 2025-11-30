@@ -73,14 +73,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
                 // Try to populate
                 object? obj = container;
-                bool result = false;
 
-                result = reflector.TryPopulate(ref obj, new SerializedMember
+                var result = reflector.TryPopulate(ref obj, new SerializedMember
                 {
                     typeName = typeof(SpriteContainer).AssemblyQualifiedName,
                     fields = new SerializedMemberList { spriteMember },
                     props = new SerializedMemberList { spritePropertyMember }
                 });
+
+                Assert.IsTrue(result, "Population should succeed");
 
                 // Assert.IsTrue(result, "Population should succeed");
                 Assert.IsNotNull((obj as SpriteContainer)?.spriteField, "Sprite field should be populated");

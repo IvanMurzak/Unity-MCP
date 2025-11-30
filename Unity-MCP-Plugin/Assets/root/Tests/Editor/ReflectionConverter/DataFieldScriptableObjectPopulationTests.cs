@@ -37,7 +37,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             // Target GameObject for reference
             var targetGoName = "TargetGOSO";
-            var targetGoRef = new GameObjectRef() { Name = targetGoName };
             var targetGoEx = new CreateGameObjectExecutor(targetGoName);
 
             // Validation Executor

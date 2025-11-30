@@ -1,6 +1,7 @@
 #nullable enable
 using System.Collections;
 using System.Collections.Generic;
+using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Editor.Tests.Utils;
@@ -89,13 +90,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 () =>
                 {
                     var plugin = UnityMcpPlugin.Instance;
-                    Debug.Log($"[DataPopulationTests] Plugin: {plugin}");
+                    Debug.Log($"[DataPopulationTests] Plugin: {plugin?.GetType().GetTypeShortName() ?? "null"}");
                     var mcpInstance = plugin?.McpPluginInstance;
-                    Debug.Log($"[DataPopulationTests] McpInstance: {mcpInstance}");
+                    Debug.Log($"[DataPopulationTests] McpInstance: {mcpInstance?.GetType().GetTypeShortName() ?? "null"}");
                     var manager = mcpInstance?.McpManager;
-                    Debug.Log($"[DataPopulationTests] Manager: {manager}");
+                    Debug.Log($"[DataPopulationTests] Manager: {manager?.GetType().GetTypeShortName() ?? "null"}");
                     var reflector = manager?.Reflector;
-                    Debug.Log($"[DataPopulationTests] Reflector: {reflector}");
+                    Debug.Log($"[DataPopulationTests] Reflector: {reflector?.GetType().GetTypeShortName() ?? "null"}");
 
                     if (reflector == null)
                     {
