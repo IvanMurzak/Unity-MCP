@@ -19,6 +19,7 @@ using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.API.TestRunner;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
@@ -72,8 +73,9 @@ Be default recommended to use 'EditMode' for faster iteration during development
             {
                 if (UnityEditor.EditorUtility.scriptCompilationFailed)
                 {
+                    var compilationErrorDetails = ScriptUtils.GetCompilationErrorDetails();
                     return ResponseCallValueTool<TestRunResponse>
-                        .Error("Unity project has compilation error. Please fix all compilation errors before running tests.")
+                        .Error($"Unity project has compilation error. Please fix all compilation errors before running tests.\n{compilationErrorDetails}")
                         .SetRequestID(requestId);
                 }
 
