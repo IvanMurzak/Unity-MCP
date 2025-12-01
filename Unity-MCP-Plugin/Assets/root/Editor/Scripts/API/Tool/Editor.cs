@@ -24,8 +24,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 => "[Error] Script path is empty. Please provide a valid path. Sample: \"Assets/Scripts/MyScript.cs\".";
         }
 
-        [Description(@"Returns list of available information about 'UnityEditor.EditorApplication'.
-Use it to get information about the current state of the Unity Editor application. Such as: playmode, paused state, compilation state, etc.")]
+        [Description(@"Available information about 'UnityEditor.EditorApplication'.")]
         public class EditorStatsData
         {
             [Description("Whether the Editor is in Play mode.")]
