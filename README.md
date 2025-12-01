@@ -50,6 +50,7 @@
   - [Step 3: Configure `MCP Client`](#step-3-configure-mcp-client)
     - [Automatic configuration](#automatic-configuration)
     - [Manual configuration](#manual-configuration)
+    - [Command line configuration](#command-line-configuration)
 - [Use AI](#use-ai)
   - [Advanced Features for LLM](#advanced-features-for-llm)
     - [Core Capabilities](#core-capabilities)
@@ -96,7 +97,7 @@
 
 ### Option 1 - Installer
 
-- **[⬇️ Download Installer](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.22.1/AI-Game-Dev-Installer.unitypackage)**
+- **[⬇️ Download Installer](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.25.0/AI-Game-Dev-Installer.unitypackage)**
 - **📂 Import installer into Unity project**
   > - You can double-click on the file - Unity will open it automatically
   > - OR: Open Unity Editor first, then click on `Assets/Import Package/Custom Package`, and choose the file
@@ -139,59 +140,57 @@ Choose a single `MCP Client` you prefer - you don't need to install all of them.
 
 If automatic configuration doesn't work for you for any reason, use the JSON from the `AI Game Developer (Unity-MCP)` window to configure any `MCP Client` manually.
 
-<details>
-  <summary>Configure <b><code>Claude Code</code></b> for <b>Windows</b></summary>
+### Command line configuration
 
-  Replace `unityProjectPath` with your real project path
+**1. Choose your `<command>` for your environment**
+
+| Platform            | `<command>` |
+|---------------------|----------------|
+| Windows x64         | `"<unityProjectPath>/Library/mcp-server/win-x64/unity-mcp-server.exe" port=<port> client-transport=stdio` |
+| Windows x86         | `"<unityProjectPath>/Library/mcp-server/win-x86/unity-mcp-server.exe" port=<port> client-transport=stdio` |
+| Windows arm64       | `"<unityProjectPath>/Library/mcp-server/win-arm64/unity-mcp-server.exe" port=<port> client-transport=stdio` |
+| MacOS Apple-Silicon | `"<unityProjectPath>/Library/mcp-server/osx-arm64/unity-mcp-server" port=<port> client-transport=stdio` |
+| MacOS Apple-Intel   | `"<unityProjectPath>/Library/mcp-server/osx-x64/unity-mcp-server" port=<port> client-transport=stdio` |
+| Linux x64           | `"<unityProjectPath>/Library/mcp-server/linux-x64/unity-mcp-server" port=<port> client-transport=stdio` |
+| Linux arm64         | `"<unityProjectPath>/Library/mcp-server/linux-arm64/unity-mcp-server" port=<port> client-transport=stdio` |
+
+**2. Replace `<unityProjectPath>` with the full path to Unity project**
+**3. Replace `<port>` with your port from AI Game Developer configuration**
+**4. Add MCP server using command line**
+
+<details>
+  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/gemini-64.png" width="16" height="16" alt="Gemini"> Gemini</summary>
 
   ```bash
-  claude mcp add Unity-MCP "<unityProjectPath>/Library/mcp-server/win-x64/unity-mcp-server.exe" client-transport=stdio
+  gemini mcp add ai-game-developer <command>
   ```
-
+  > Replace `<command>` from the table above
 </details>
 
 <details>
-  <summary>Configure <b><code>Claude Code</code></b> for <b>MacOS Apple-Silicon</b></summary>
-
-  Replace `unityProjectPath` with your real project path
+  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/claude-64.png" width="16" height="16" alt="Gemini"> Claude Code</summary>
 
   ```bash
-  claude mcp add Unity-MCP "<unityProjectPath>/Library/mcp-server/osx-arm64/unity-mcp-server" client-transport=stdio
+  claude mcp add ai-game-developer <command>
   ```
-
+  > Replace `<command>` from the table above
 </details>
 
 <details>
-  <summary>Configure <b><code>Claude Code</code></b> for <b>MacOS Apple-Intel</b></summary>
-
-  Replace `unityProjectPath` with your real project path
+  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/github-copilot-64.png" width="16" height="16" alt="Gemini"> GitHub Copilot CLI</summary>
 
   ```bash
-  claude mcp add Unity-MCP "<unityProjectPath>/Library/mcp-server/osx-x64/unity-mcp-server" client-transport=stdio
+  copilot
   ```
-
-</details>
-
-<details>
-  <summary>Configure <b><code>Claude Code</code></b> for <b>Linux x64</b></summary>
-
-  Replace `unityProjectPath` with your real project path
 
   ```bash
-  claude mcp add Unity-MCP "<unityProjectPath>/Library/mcp-server/linux-x64/unity-mcp-server" client-transport=stdio
+  /mcp add
   ```
 
-</details>
-
-<details>
-  <summary>Configure <b><code>Claude Code</code></b> for <b>Linux arm64</b></summary>
-
-  Replace `unityProjectPath` with your real project path
-
-  ```bash
-  claude mcp add Unity-MCP "<unityProjectPath>/Library/mcp-server/linux-arm64/unity-mcp-server" client-transport=stdio
-  ```
-
+  Server name: `ai-game-developer`
+  Server type: `local`
+  Command: `<command>`
+  > Replace `<command>` from the table above
 </details>
 
 ---

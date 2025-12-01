@@ -20,7 +20,7 @@ namespace com.IvanMurzak.Unity.MCP
 {
     public partial class UnityMcpPlugin : IDisposable
     {
-        public const string Version = "0.22.1";
+        public const string Version = "0.25.0";
 
         protected readonly CompositeDisposable _disposables = new();
 
