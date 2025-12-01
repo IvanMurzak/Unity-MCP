@@ -70,6 +70,13 @@ Be default recommended to use 'EditMode' for faster iteration during development
 
             return await MainThread.Instance.RunAsync(async () =>
             {
+                if (UnityEditor.EditorUtility.scriptCompilationFailed)
+                {
+                    return ResponseCallValueTool<TestRunResponse>
+                        .Error("Unity project has compilation error. Please fix all compilation errors before running tests.")
+                        .SetRequestID(requestId);
+                }
+
                 if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                     Debug.Log($"[TestRunner] ------------------------------------- Preparing to run {testMode} tests.");
 
