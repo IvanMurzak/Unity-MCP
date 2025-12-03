@@ -80,6 +80,18 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
+        public virtual void DisposeMcpPluginInstance()
+        {
+            lock(buildMutex)
+            {
+                if(mcpPluginInstance != null)
+                {
+                    mcpPluginInstance.Dispose();
+                    mcpPluginInstance = null;
+                }
+            }
+        }
+
         protected virtual McpPlugin.Common.Version BuildVersion()
         {
             return new McpPlugin.Common.Version
