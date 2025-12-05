@@ -47,8 +47,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 EditorApplication.isPaused = isPaused;
 
                 var mcpPlugin = UnityMcpPlugin.Instance.McpPluginInstance ?? throw new InvalidOperationException("MCP Plugin instance is not available.");
-                var jsonOptions = mcpPlugin.McpManager.Reflector.JsonSerializerOptions;
-                var jsonNode = System.Text.Json.JsonSerializer.SerializeToNode(EditorStatsData.FromEditor(), jsonOptions);
+                var jsonNode = mcpPlugin.McpManager.Reflector.JsonSerializer.SerializeToNode(EditorStatsData.FromEditor());
                 var jsonString = jsonNode?.ToJsonString();
                 return ResponseCallValueTool<EditorStatsData?>.SuccessStructured(jsonNode, jsonString);
             });
