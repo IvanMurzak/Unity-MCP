@@ -43,7 +43,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
                 var json = jsonProvider();
                 Debug.Log($"{toolName} Started with JSON:\n{JsonTestUtils.Prettify(json)}");
 
-                var parameters = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json, reflector.JsonSerializerOptions);
+                var parameters = reflector.JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
                 using (var request = new RequestCallTool(toolName, parameters!))
                 {
                     var task = McpPlugin.McpPlugin.Instance!.McpManager.ToolManager!.RunCallTool(request);

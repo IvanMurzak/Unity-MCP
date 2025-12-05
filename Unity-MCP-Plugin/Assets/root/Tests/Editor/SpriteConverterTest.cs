@@ -54,8 +54,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
                 // Manually serialize AssetObjectRef to JsonElement to ensure valueJsonElement is populated
                 // This mimics how data comes from the wire (JSON)
-                var json = System.Text.Json.JsonSerializer.Serialize(assetRef, reflector.JsonSerializerOptions);
-                var jsonElement = System.Text.Json.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(json, reflector.JsonSerializerOptions);
+                var json = reflector.JsonSerializer.Serialize(assetRef);
+                var jsonElement = reflector.JsonSerializer.Deserialize<System.Text.Json.JsonElement>(json);
 
                 var spriteMember = new SerializedMember
                 {

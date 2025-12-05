@@ -48,10 +48,10 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
             ILogger? logger = null)
         {
             if (!suppressException)
-                return JsonSerializer.Deserialize<GameObjectRef>(jsonElement, reflector.JsonSerializerOptions);
+                return reflector.JsonSerializer.Deserialize<GameObjectRef>(jsonElement);
             try
             {
-                return JsonSerializer.Deserialize<GameObjectRef>(jsonElement, reflector.JsonSerializerOptions);
+                return reflector.JsonSerializer.Deserialize<GameObjectRef>(jsonElement);
             }
             catch
             {
@@ -87,10 +87,10 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
             ILogger? logger = null)
         {
             if (!suppressException)
-                return JsonSerializer.Deserialize<ComponentRef>(jsonElement, reflector.JsonSerializerOptions);
+                return reflector.JsonSerializer.Deserialize<ComponentRef>(jsonElement);
             try
             {
-                return JsonSerializer.Deserialize<ComponentRef>(jsonElement, reflector.JsonSerializerOptions);
+                return reflector.JsonSerializer.Deserialize<ComponentRef>(jsonElement);
             }
             catch
             {
@@ -126,10 +126,14 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
             ILogger? logger = null)
         {
             if (!suppressException)
-                return JsonSerializer.Deserialize<AssetObjectRef>(jsonElement, reflector?.JsonSerializerOptions);
+                return reflector != null
+                    ? reflector.JsonSerializer.Deserialize<AssetObjectRef>(jsonElement)
+                    : JsonSerializer.Deserialize<AssetObjectRef>(jsonElement);
             try
             {
-                return JsonSerializer.Deserialize<AssetObjectRef>(jsonElement, reflector?.JsonSerializerOptions);
+                return reflector != null
+                    ? reflector.JsonSerializer.Deserialize<AssetObjectRef>(jsonElement)
+                    : JsonSerializer.Deserialize<AssetObjectRef>(jsonElement);
             }
             catch
             {
@@ -165,10 +169,10 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
             ILogger? logger = null)
         {
             if (!suppressException)
-                return JsonSerializer.Deserialize<ObjectRef>(jsonElement, reflector.JsonSerializerOptions);
+                return reflector.JsonSerializer.Deserialize<ObjectRef>(jsonElement);
             try
             {
-                return JsonSerializer.Deserialize<ObjectRef>(jsonElement, reflector.JsonSerializerOptions);
+                return reflector.JsonSerializer.Deserialize<ObjectRef>(jsonElement);
             }
             catch
             {
