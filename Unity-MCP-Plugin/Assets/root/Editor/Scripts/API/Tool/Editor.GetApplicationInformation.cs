@@ -9,8 +9,10 @@
 */
 
 #nullable enable
+using System;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -22,19 +24,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "Editor_GetApplicationInformation",
             Title = "Get Unity Editor application information"
         )]
-        [Description(@"Returns list of available information about 'UnityEditor.EditorApplication'.
-Use it to get information about the current state of the Unity Editor application. Such as: playmode, paused state, compilation state, etc.
-EditorApplication.isPlaying - Whether the Editor is in Play mode.
-EditorApplication.isPaused - Whether the Editor is paused.
-EditorApplication.isCompiling - Is editor currently compiling scripts? (Read Only)
-EditorApplication.isPlayingOrWillChangePlaymode - Editor application state which is true only when the Editor is currently in or about to enter Play mode. (Read Only)
-EditorApplication.isUpdating - True if the Editor is currently refreshing the AssetDatabase. (Read Only)
-EditorApplication.applicationContentsPath - Path to the Unity editor contents folder. (Read Only)
-EditorApplication.applicationPath - Gets the path to the Unity Editor application. (Read Only)
-EditorApplication.timeSinceStartup - The time since the editor was started. (Read Only)")]
-        public string GetApplicationInformation()
+        [Description(@"Returns available information about 'UnityEditor.EditorApplication'.
+Use it to get information about the current state of the Unity Editor application. Such as: playmode, paused state, compilation state, etc.")]
+        public ResponseCallValueTool<EditorStatsData?> GetApplicationInformation()
         {
-            return MainThread.Instance.Run(() => "[Success] " + EditorStats);
+            return MainThread.Instance.Run(() =>
+            {
+                var mcpPlugin = UnityMcpPlugin.Instance.McpPluginInstance ?? throw new InvalidOperationException("MCP Plugin instance is not available.");
+                var jsonNode = mcpPlugin.McpManager.Reflector.JsonSerializer.SerializeToNode(EditorStatsData.FromEditor());
+                var jsonString = jsonNode?.ToJsonString();
+                return ResponseCallValueTool<EditorStatsData?>.SuccessStructured(jsonNode, jsonString);
+            });
         }
     }
 }
