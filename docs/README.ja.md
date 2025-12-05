@@ -96,7 +96,7 @@
 
 ### オプション1 - インストーラー
 
-- **[⬇️ インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.25.1/AI-Game-Dev-Installer.unitypackage)**
+- **[⬇️ インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.26.0/AI-Game-Dev-Installer.unitypackage)**
 - **📂 インストーラーをUnityプロジェクトにインポート**
   > - ファイルをダブルクリック - Unityが自動的に開きます
   > - または：最初にUnityエディターを開き、`Assets/Import Package/Custom Package`をクリックして、ファイルを選択
