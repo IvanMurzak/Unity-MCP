@@ -12,7 +12,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using Extensions.Unity.PlayerPrefsEx;
@@ -139,8 +138,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
                     includeLogsStacktrace: IncludeLogsStacktrace.Value);
 
                 var mcpPlugin = UnityMcpPlugin.Instance.McpPluginInstance ?? throw new InvalidOperationException("MCP Plugin instance is not available.");
-                var jsonOptions = mcpPlugin.McpManager.Reflector.JsonSerializerOptions;
-                var jsonNode = System.Text.Json.JsonSerializer.SerializeToNode(structuredResponse, jsonOptions);
+                var jsonNode = mcpPlugin.McpManager.Reflector.JsonSerializer.SerializeToNode(structuredResponse);
                 var jsonString = jsonNode?.ToJsonString();
 
                 var response = ResponseCallValueTool<TestRunResponse>

@@ -96,7 +96,7 @@
 
 ### 选项1 - 安装程序
 
-- **[⬇️ 下载安装程序](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.25.0/AI-Game-Dev-Installer.unitypackage)**
+- **[⬇️ 下载安装程序](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.26.0/AI-Game-Dev-Installer.unitypackage)**
 - **📂 将安装程序导入Unity项目**
   > - 您可以双击文件 - Unity会自动打开它
   > - 或者：先打开Unity编辑器，然后点击 `Assets/Import Package/Custom Package`，选择文件
