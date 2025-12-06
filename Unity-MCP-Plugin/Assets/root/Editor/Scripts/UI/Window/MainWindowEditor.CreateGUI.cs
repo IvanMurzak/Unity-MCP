@@ -102,15 +102,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             var inputFieldHost = root.Query<TextField>("InputServerURL").First();
             inputFieldHost.value = UnityMcpPlugin.Host;
-            inputFieldHost.RegisterCallback<FocusOutEvent>(evt =>
+            inputFieldHost.RegisterCallback<FocusOutEvent>(async evt =>
             {
                 var newValue = inputFieldHost.value;
                 if (UnityMcpPlugin.Host == newValue)
                     return;
 
+                if (UnityMcpPlugin.Instance.HasMcpPluginInstance)
+                {
+                    await UnityMcpPlugin.Instance.Disconnect();
+                }
+                
                 UnityMcpPlugin.Host = newValue;
                 SaveChanges($"[{nameof(MainWindowEditor)}] Host Changed: {newValue}");
                 Invalidate();
+
+                UnityMcpPlugin.Instance.Dispose();
+                UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
+                await UnityMcpPlugin.ConnectIfNeeded();
             });
 
             var btnConnectOrDisconnect = root.Query<Button>("btnConnectOrDisconnect").First();
