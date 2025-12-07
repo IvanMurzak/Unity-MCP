@@ -102,7 +102,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             var inputFieldHost = root.Query<TextField>("InputServerURL").First();
             inputFieldHost.value = UnityMcpPlugin.Host;
-            inputFieldHost.RegisterCallback<FocusOutEvent>(async evt =>
+            inputFieldHost.RegisterCallback<FocusOutEvent>(evt =>
             {
                 var newValue = inputFieldHost.value;
                 if (UnityMcpPlugin.Host == newValue)
@@ -114,7 +114,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
                 UnityMcpPlugin.Instance.DisposeMcpPluginInstance();
                 UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
-                await UnityMcpPlugin.ConnectIfNeeded();
             });
 
             var btnConnectOrDisconnect = root.Query<Button>("btnConnectOrDisconnect").First();
