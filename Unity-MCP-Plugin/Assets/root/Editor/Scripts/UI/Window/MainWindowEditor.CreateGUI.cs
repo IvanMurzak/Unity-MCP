@@ -108,16 +108,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 if (UnityMcpPlugin.Host == newValue)
                     return;
 
-                if (UnityMcpPlugin.Instance.HasMcpPluginInstance)
-                {
-                    await UnityMcpPlugin.Instance.Disconnect();
-                }
-                
                 UnityMcpPlugin.Host = newValue;
                 SaveChanges($"[{nameof(MainWindowEditor)}] Host Changed: {newValue}");
                 Invalidate();
 
-                UnityMcpPlugin.Instance.Dispose();
+                UnityMcpPlugin.Instance.DisposeMcpPluginInstance();
                 UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
                 await UnityMcpPlugin.ConnectIfNeeded();
             });
