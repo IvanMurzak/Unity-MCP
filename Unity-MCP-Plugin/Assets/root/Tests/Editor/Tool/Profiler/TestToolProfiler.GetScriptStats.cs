@@ -86,7 +86,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         [UnityTest]
-        public IEnumerator GetScriptStats_ReturnsFrameCount()
+        public IEnumerator GetScriptStats_ReturnsTotalFrameCount()
         {
             // Arrange - start profiler
             _tool.Start();
@@ -100,7 +100,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             var data = DeserializeStructuredResponse<Tool_Profiler.ScriptStatsData>(response.StructuredContent);
             Assert.IsNotNull(data, "Data should not be null.");
-            Assert.GreaterOrEqual(data!.FrameCount, 0, "FrameCount should be >= 0.");
+            Assert.GreaterOrEqual(data!.TotalFrameCount, 0, "TotalFrameCount should be >= 0.");
         }
 
         [UnityTest]

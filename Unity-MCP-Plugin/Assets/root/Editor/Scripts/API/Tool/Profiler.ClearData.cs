@@ -12,6 +12,7 @@
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using UnityEditorInternal;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -22,12 +23,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "Profiler_ClearData",
             Title = "Clear Profiler Data"
         )]
-        [Description(@"Clears the profiler data.
-Note: To clear profiler history, use the Clear button in Unity's Profiler window.")]
+        [Description("Clears all recorded profiler frames and data.")]
         public string ClearData()
         => MainThread.Instance.Run(() =>
         {
-            return "[Success] Profiler data cleared successfully.\nNote: To clear profiler history, use the Clear button in Unity's Profiler window.";
+            ProfilerDriver.ClearAllFrames();
+            return "[Success] Profiler data cleared successfully. All recorded frames have been removed.";
         });
     }
 }

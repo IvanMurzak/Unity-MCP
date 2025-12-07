@@ -15,7 +15,7 @@ using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using UnityEngine;
-using UnityEngine.Profiling;
+using Profiler = UnityEngine.Profiling.Profiler;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -33,7 +33,7 @@ Note: Detailed script profiling requires deep profiling mode in Unity's Profiler
         {
             return MainThread.Instance.Run(() =>
             {
-                if (!profilerEnabled)
+                if (!Profiler.enabled)
                     return ResponseCallValueTool<ScriptStatsData?>.Error(Error.ProfilerNotEnabled());
 
                 var data = new ScriptStatsData
@@ -41,7 +41,7 @@ Note: Detailed script profiling requires deep profiling mode in Unity's Profiler
                     FrameTimeMs = Time.deltaTime * 1000f,
                     FixedDeltaTimeMs = Time.fixedDeltaTime * 1000f,
                     TimeScale = Time.timeScale,
-                    FrameCount = Time.frameCount,
+                    TotalFrameCount = Time.frameCount,
                     RealtimeSinceStartup = Time.realtimeSinceStartup,
                     MonoMemoryUsageMB = Profiler.GetMonoUsedSizeLong() / 1048576f,
                     GCMemoryUsageMB = GC.GetTotalMemory(false) / 1048576f

@@ -15,7 +15,7 @@ using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
-using UnityEngine.Profiling;
+using Profiler = UnityEngine.Profiling.Profiler;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -34,7 +34,7 @@ Returns information about whether the profiler is enabled, active modules, and m
             {
                 var data = new ProfilerStatusData
                 {
-                    Enabled = profilerEnabled,
+                    Enabled = Profiler.enabled,
                     RuntimeProfilerEnabled = Profiler.enabled,
                     ActiveModules = enabledModules.ToList(),
                     MaxUsedMemoryMB = Profiler.maxUsedMemory / 1048576f,

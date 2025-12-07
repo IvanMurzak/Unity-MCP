@@ -15,7 +15,7 @@ using System.IO;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using UnityEngine;
-using UnityEngine.Profiling;
+using Profiler = UnityEngine.Profiling.Profiler;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -43,7 +43,7 @@ Note: This saves current statistics snapshot. For full profiler data, use Unity'
                 var data = new
                 {
                     timestamp = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
-                    enabled = profilerEnabled,
+                    enabled = Profiler.enabled,
                     memory = new
                     {
                         totalReservedMemoryMB = Profiler.GetTotalReservedMemoryLong() / 1048576f,

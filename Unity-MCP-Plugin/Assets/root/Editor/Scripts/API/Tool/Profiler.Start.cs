@@ -12,9 +12,11 @@
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+#if UNITY_EDITOR
 using UnityEditor;
+#endif
 using UnityEngine;
-using UnityEngine.Profiling;
+using Profiler = UnityEngine.Profiling.Profiler;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -31,12 +33,13 @@ Note: For detailed, historical profiling, use the Unity Profiler window directly
         public string Start()
         => MainThread.Instance.Run(() =>
         {
-            if (profilerEnabled)
+            if (Profiler.enabled)
                 return "[Success] Profiler is already running.";
 
-            profilerEnabled = true;
             Profiler.enabled = true;
+            #if UNITY_EDITOR
             EditorApplication.ExecuteMenuItem("Window/Analysis/Profiler");
+            #endif
 
             var data = new
             {

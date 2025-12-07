@@ -21,9 +21,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator GetMemoryStats_ReturnsValidMemoryData()
         {
+            // Arrange - start profiler
+            _tool.Start();
+            yield return null;
+
             // Act
             var response = _tool.GetMemoryStats();
-            yield return null;
 
             // Assert
             StructuredResponseValidation(response);
@@ -35,9 +38,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator GetMemoryStats_ReturnsPositiveReservedMemory()
         {
+            // Arrange - start profiler
+            _tool.Start();
+            yield return null;
+
             // Act
             var response = _tool.GetMemoryStats();
-            yield return null;
 
             // Assert
             StructuredResponseValidation(response);
@@ -50,9 +56,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator GetMemoryStats_ReturnsPositiveAllocatedMemory()
         {
+            // Arrange - start profiler
+            _tool.Start();
+            yield return null;
+
             // Act
             var response = _tool.GetMemoryStats();
-            yield return null;
 
             // Assert
             StructuredResponseValidation(response);
@@ -65,9 +74,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator GetMemoryStats_ReturnsMonoHeapData()
         {
+            // Arrange - start profiler
+            _tool.Start();
+            yield return null;
+
             // Act
             var response = _tool.GetMemoryStats();
-            yield return null;
 
             // Assert
             StructuredResponseValidation(response);
@@ -81,9 +93,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator GetMemoryStats_AllocatedLessThanOrEqualToReserved()
         {
+            // Arrange - start profiler
+            _tool.Start();
+            yield return null;
+
             // Act
             var response = _tool.GetMemoryStats();
-            yield return null;
 
             // Assert
             StructuredResponseValidation(response);
@@ -97,9 +112,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator GetMemoryStats_MonoUsedLessThanOrEqualToHeap()
         {
+            // Arrange - start profiler
+            _tool.Start();
+            yield return null;
+
             // Act
             var response = _tool.GetMemoryStats();
-            yield return null;
 
             // Assert
             StructuredResponseValidation(response);

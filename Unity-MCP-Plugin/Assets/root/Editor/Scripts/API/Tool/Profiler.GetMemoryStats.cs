@@ -14,7 +14,7 @@ using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
-using UnityEngine.Profiling;
+using Profiler = UnityEngine.Profiling.Profiler;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -32,6 +32,9 @@ All values are in megabytes (MB).")]
         {
             return MainThread.Instance.Run(() =>
             {
+                if (!Profiler.enabled)
+                    return ResponseCallValueTool<MemoryStatsData?>.Error(Error.ProfilerNotEnabled());
+                
                 var data = new MemoryStatsData
                 {
                     TotalReservedMemoryMB = Profiler.GetTotalReservedMemoryLong() / 1048576f,

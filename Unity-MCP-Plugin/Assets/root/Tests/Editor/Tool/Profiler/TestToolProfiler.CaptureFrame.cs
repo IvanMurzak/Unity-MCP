@@ -68,7 +68,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         [UnityTest]
-        public IEnumerator CaptureFrame_ReturnsFrameCount()
+        public IEnumerator CaptureFrame_ReturnsTotalFrameCount()
         {
             // Arrange - start profiler
             _tool.Start();
@@ -82,7 +82,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             var data = DeserializeStructuredResponse<Tool_Profiler.FrameCaptureData>(response.StructuredContent);
             Assert.IsNotNull(data, "Data should not be null.");
-            Assert.GreaterOrEqual(data!.FrameCount, 0, "FrameCount should be >= 0.");
+            Assert.GreaterOrEqual(data!.TotalFrameCount, 0, "TotalFrameCount should be >= 0.");
         }
 
         [UnityTest]
@@ -103,22 +103,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.GreaterOrEqual(data!.RealtimeSinceStartup, 0, "RealtimeSinceStartup should be >= 0.");
         }
 
-        [UnityTest]
-        public IEnumerator CaptureFrame_WithFrameCountParameter_ReturnsData()
-        {
-            // Arrange - start profiler
-            _tool.Start();
-            yield return null;
-
-            // Act
-            var response = _tool.CaptureFrame(frameCount: 5);
-
-            // Assert
-            StructuredResponseValidation(response);
-
-            var data = DeserializeStructuredResponse<Tool_Profiler.FrameCaptureData>(response.StructuredContent);
-            Assert.IsNotNull(data, "Data should not be null.");
-        }
     }
 }
 

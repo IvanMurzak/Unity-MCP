@@ -15,6 +15,7 @@ using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using UnityEngine;
+using Profiler = UnityEngine.Profiling.Profiler;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -27,23 +28,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         )]
         [Description(@"Captures current frame data from the Unity Profiler.
 Returns frame timing information, FPS, and frame counts.
-Note: Historical frame data requires using Unity's Profiler window.")]
-        public ResponseCallValueTool<FrameCaptureData?> CaptureFrame
-        (
-            [Description("The number of frames to capture. Note: Currently only captures current frame data.")]
-            int frameCount = 1
-        )
+Note: This captures a snapshot of the current frame only. Historical frame data requires using Unity's Profiler window.")]
+        public ResponseCallValueTool<FrameCaptureData?> CaptureFrame()
         {
             return MainThread.Instance.Run(() =>
             {
-                if (!profilerEnabled)
+                if (!Profiler.enabled)
                     return ResponseCallValueTool<FrameCaptureData?>.Error(Error.ProfilerNotEnabled());
 
                 var data = new FrameCaptureData
                 {
                     FrameTimeMs = Time.deltaTime * 1000f,
                     Fps = Time.deltaTime > 0 ? 1f / Time.deltaTime : 0f,
-                    FrameCount = Time.frameCount,
+                    TotalFrameCount = Time.frameCount,
                     RealtimeSinceStartup = Time.realtimeSinceStartup,
                     RenderedFrameCount = Time.renderedFrameCount
                 };

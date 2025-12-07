@@ -12,7 +12,7 @@
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
-using UnityEngine.Profiling;
+using Profiler = UnityEngine.Profiling.Profiler;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -27,10 +27,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         public string Stop()
         => MainThread.Instance.Run(() =>
         {
-            if (!profilerEnabled)
+            if (!Profiler.enabled)
                 return "[Success] Profiler is already stopped.";
 
-            profilerEnabled = false;
             Profiler.enabled = false;
 
             return "[Success] Profiler stopped successfully.";

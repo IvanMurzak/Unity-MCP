@@ -19,11 +19,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Profiler
     {
         /// <summary>
-        /// Tracks profiler enabled state locally.
-        /// </summary>
-        private static bool profilerEnabled = false;
-
-        /// <summary>
         /// Set of enabled profiler modules.
         /// </summary>
         private static readonly HashSet<string> enabledModules = new HashSet<string>()
@@ -168,8 +163,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             [Description("Time scale.")]
             public float TimeScale { get; set; }
 
-            [Description("Current frame count.")]
-            public int FrameCount { get; set; }
+            [Description("Total frame count since application start (Time.frameCount).")]
+            public int TotalFrameCount { get; set; }
 
             [Description("Real time since startup in seconds.")]
             public float RealtimeSinceStartup { get; set; }
@@ -190,13 +185,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             [Description("Frames per second.")]
             public float Fps { get; set; }
 
-            [Description("Current frame count.")]
-            public int FrameCount { get; set; }
+            [Description("Total frame count since application start (Time.frameCount). Includes frames where rendering may be skipped.")]
+            public int TotalFrameCount { get; set; }
 
             [Description("Real time since startup in seconds.")]
             public float RealtimeSinceStartup { get; set; }
 
-            [Description("Rendered frame count.")]
+            [Description("Number of frames that were actually rendered (Time.renderedFrameCount).")]
             public int RenderedFrameCount { get; set; }
         }
 

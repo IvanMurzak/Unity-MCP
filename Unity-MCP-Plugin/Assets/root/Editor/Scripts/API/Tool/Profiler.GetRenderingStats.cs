@@ -15,6 +15,7 @@ using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using UnityEngine;
+using Profiler = UnityEngine.Profiling.Profiler;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -32,7 +33,7 @@ Note: Detailed rendering statistics (draw calls, batches, etc.) require Unity's 
         {
             return MainThread.Instance.Run(() =>
             {
-                if (!profilerEnabled)
+                if (!Profiler.enabled)
                     return ResponseCallValueTool<RenderingStatsData?>.Error(Error.ProfilerNotEnabled());
 
                 var data = new RenderingStatsData
