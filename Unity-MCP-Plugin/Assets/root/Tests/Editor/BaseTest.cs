@@ -7,12 +7,13 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
+#nullable enable
 using System.Collections;
 using System.Collections.Generic;
 using System.Text.Json;
+using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet;
-using com.IvanMurzak.Unity.MCP.Common.Model;
-using com.IvanMurzak.Unity.MCP.Common;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -27,7 +28,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             Debug.Log($"[{GetType().GetTypeShortName()}] SetUp");
 
-            McpPluginUnity.Init();
+            UnityMcpPlugin.InitSingletonIfNeeded();
 
             yield return null;
         }
@@ -48,15 +49,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 Object.DestroyImmediate(go);
         }
 
-        protected virtual IResponseData<ResponseCallTool> RunTool(string toolName, string json)
+        protected virtual ResponseData<ResponseCallTool> RunTool(string toolName, string json)
         {
-            var reflector = McpPlugin.Instance!.McpRunner.Reflector;
+            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
             Debug.Log($"{toolName} Started with JSON:\n{json}");
 
             var parameters = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
-            var request = new RequestCallTool(toolName, parameters);
-            var task = McpPlugin.Instance.McpRunner.RunCallTool(request);
+            var request = new RequestCallTool(toolName, parameters!);
+            var task = McpPlugin.McpPlugin.Instance.McpManager.ToolManager!.RunCallTool(request);
             var result = task.Result;
 
             Debug.Log($"{toolName} Completed");
@@ -65,8 +66,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Debug.Log($"{toolName} Result:\n{jsonResult}");
 
             Assert.IsFalse(result.Status == ResponseStatus.Error, $"Tool call failed with error status: {result.Message}");
-            Assert.IsFalse(result.Message.Contains("[Error]"), $"Tool call failed with error: {result.Message}");
-            Assert.IsFalse(result.Value.Status == ResponseStatus.Error, $"Tool call failed");
+            Assert.IsNotNull(result.Message, $"Tool call returned null message");
+            Assert.IsFalse(result.Message!.Contains("[Error]"), $"Tool call failed with error: {result.Message}");
+            Assert.IsNotNull(result.Value, $"Tool call returned null value");
+            Assert.IsFalse(result.Value!.Status == ResponseStatus.Error, $"Tool call failed");
             Assert.IsFalse(jsonResult.Contains("[Error]"), $"Tool call failed with error in JSON: {jsonResult}");
             Assert.IsFalse(jsonResult.Contains("[Warning]"), $"Tool call contains warnings in JSON: {jsonResult}");
 

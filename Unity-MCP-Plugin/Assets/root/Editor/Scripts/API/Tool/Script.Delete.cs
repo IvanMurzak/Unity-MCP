@@ -7,14 +7,15 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
-using com.IvanMurzak.Unity.MCP.Common;
-using com.IvanMurzak.Unity.MCP.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEditor;
 

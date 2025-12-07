@@ -13,13 +13,13 @@ using System.Threading.Tasks;
 using com.IvanMurzak.ReflectorNet.Utils;
 using UnityEditor;
 
-namespace com.IvanMurzak.Unity.MCP.Utils
+namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
 {
     public static class MainThreadInstaller
     {
         public static void Init()
         {
-            MainThread.Instance = new UnityMainThread();
+            MainThread.Instance ??= new UnityMainThread();
         }
     }
     public class UnityMainThread : MainThread

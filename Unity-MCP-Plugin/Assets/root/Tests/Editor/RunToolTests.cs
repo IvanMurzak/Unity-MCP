@@ -8,6 +8,7 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 
+#nullable enable
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -15,9 +16,10 @@ using System.Reflection;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.McpPlugin.Common;
+using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet;
-using com.IvanMurzak.Unity.MCP.Common;
-using com.IvanMurzak.Unity.MCP.Common.Model;
 using Microsoft.Extensions.Logging;
 using NUnit.Framework;
 using UnityEngine.TestTools;
@@ -27,8 +29,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     [TestFixture]
     public class RunToolTests
     {
-        private Reflector _reflector;
-        private ILogger _mockLogger;
+        private Reflector _reflector = new Reflector();
+        private ILogger _mockLogger = new MockLogger<RunTool>();
 
         [SetUp]
         public void SetUp()
@@ -44,7 +46,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var methodInfo = typeof(TestStaticMethods).GetMethod(nameof(TestStaticMethods.SimpleStaticMethod));
 
             // Act
-            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo, "Test Tool");
+            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo: methodInfo, title: "Test Tool");
 
             // Assert
             Assert.IsNotNull(runTool, "RunTool should be created successfully");
@@ -60,7 +62,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var methodInfo = typeof(TestInstanceMethods).GetMethod(nameof(TestInstanceMethods.SimpleInstanceMethod));
 
             // Act
-            var runTool = RunTool.CreateFromInstanceMethod(_reflector, _mockLogger, testInstance, methodInfo, "Instance Tool");
+            var runTool = RunTool.CreateFromInstanceMethod(_reflector, _mockLogger, name: "name", testInstance, methodInfo, title: "Instance Tool");
 
             // Assert
             Assert.IsNotNull(runTool, "RunTool should be created successfully");
@@ -73,7 +75,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var methodInfo = typeof(TestStaticMethods).GetMethod(nameof(TestStaticMethods.AddNumbers));
-            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
 
             // Act
             var task = runTool.Run("test-request-id", CancellationToken.None, 5, 3);
@@ -94,7 +96,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var methodInfo = typeof(TestStaticMethods).GetMethod(nameof(TestStaticMethods.AddNumbers));
-            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
             var namedParams = new Dictionary<string, JsonElement>
             {
                 {"a", JsonSerializer.SerializeToElement(10)},
@@ -119,7 +121,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var methodInfo = typeof(TestStaticMethods).GetMethod(nameof(TestStaticMethods.MethodWithRequestID));
-            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
             const string expectedRequestId = "test-request-123";
 
             // Act
@@ -140,7 +142,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var methodInfo = typeof(TestStaticMethods).GetMethod(nameof(TestStaticMethods.ThrowingMethod));
-            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
 
             // Act
             var task = runTool.Run("test-request-id", CancellationToken.None);
@@ -155,7 +157,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ResponseStatus.Error, result.Status, "Should return error status");
 
             var message = result.GetMessage();
-            Assert.IsTrue(message.Contains(TestStaticMethods.TestExceptionMessage),
+            Assert.IsTrue(message?.Contains(TestStaticMethods.TestExceptionMessage),
                 $"Error message should contain original exception message '{TestStaticMethods.TestExceptionMessage}'. Actual: {message}");
         }
 
@@ -164,10 +166,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var methodInfo = typeof(TestStaticMethods).GetMethod(nameof(TestStaticMethods.SimpleStaticMethod));
-            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo: methodInfo);
 
             // Act
-            var task = runTool.Run("test-request-id", (Dictionary<string, JsonElement>)null, CancellationToken.None);
+            var task = runTool.Run("test-request-id", null!, CancellationToken.None);
             while (!task.IsCompleted)
                 yield return null; // Wait for task to complete
 
@@ -183,8 +185,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Act & Assert
             Assert.Throws<ArgumentNullException>(() =>
-                new RunTool(_reflector, _mockLogger, (MethodInfo)null),
+                new RunTool(_reflector, _mockLogger, name: "name", methodInfo: null!),
                 "Constructor should throw ArgumentNullException for null MethodInfo");
+        }
+
+        [Test]
+        public void RunTool_Constructor_WithNullName_ShouldThrow()
+        {
+            // Act & Assert
+            Assert.Throws<ArgumentNullException>(() =>
+                new RunTool(_reflector, _mockLogger, name: null!, methodInfo: typeof(TestStaticMethods).GetMethod(nameof(TestStaticMethods.SimpleStaticMethod))!),
+                "Constructor should throw ArgumentNullException for null name");
         }
 
         [UnityTest]
@@ -192,7 +203,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var methodInfo = typeof(TestStaticMethods).GetMethod(nameof(TestStaticMethods.AsyncMethod));
-            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, methodInfo);
+            var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
 
             // Act
             var task = runTool.Run("test-request-id", CancellationToken.None, "Hello");

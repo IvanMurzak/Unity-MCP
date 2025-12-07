@@ -7,12 +7,13 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+
+#nullable enable
 using System.ComponentModel;
-using com.IvanMurzak.Unity.MCP.Common.Model.Unity;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
-using com.IvanMurzak.Unity.MCP.Common;
-using com.IvanMurzak.Unity.MCP.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -55,10 +56,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             EditorUtility.SetDirty(go);
             EditorApplication.RepaintHierarchyWindow();
 
-            var result = McpPlugin.Instance!.McpRunner.Reflector.Serialize(
+            var result = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Serialize(
                 prefabGo,
                 recursive: false,
-                logger: McpPlugin.Instance.Logger
+                logger: McpPlugin.McpPlugin.Instance.Logger
             );
 
             return $"[Success] Prefab '{prefabAssetPath}' created from GameObject '{go.name}' (InstanceID: {go.GetInstanceID()}).\n" +

@@ -16,12 +16,12 @@ using System.Net;
 using System.Runtime.InteropServices;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using com.IvanMurzak.Unity.MCP.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
 {
-    using Consts = Common.Consts;
+    using Consts = McpPlugin.Common.Consts;
 
     public static partial class Startup
     {
@@ -110,6 +110,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 return Consts.MCP.Server.Config(
                     executablePath: ExecutableFullPath.Replace('\\', '/'),
+                    serverName: Utils.ClientConfig.DefaultMcpServerName,
                     bodyPath: bodyPath,
                     port: port,
                     timeoutMs: timeoutMs
@@ -117,7 +118,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             }
 
             public static string ExecutableZipUrl
-                => $"https://github.com/IvanMurzak/Unity-MCP/releases/download/{McpPluginUnity.Version}/{ExecutableName.ToLowerInvariant()}-{PlatformName}.zip";
+                => $"https://github.com/IvanMurzak/Unity-MCP/releases/download/{UnityMcpPlugin.Version}/{ExecutableName.ToLowerInvariant()}-{PlatformName}.zip";
 
             // ------------------------------------------------------------------------------------------------------------------------------------
 
@@ -135,7 +136,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     return false;
 
                 var existingVersion = File.ReadAllText(VersionFullPath);
-                return existingVersion == McpPluginUnity.Version;
+                return existingVersion == UnityMcpPlugin.Version;
+            }
+
+            public static void DeleteBinaryFolderIfExists()
+            {
+                if (Directory.Exists(ExecutableFolderRootPath))
+                {
+                    Directory.Delete(ExecutableFolderRootPath, recursive: true);
+                    Debug.Log($"Deleted existing MCP server folder: <color=orange>{ExecutableFolderRootPath}</color>");
+                }
             }
 
             public static Task<bool> DownloadServerBinaryIfNeeded()
@@ -160,14 +170,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 try
                 {
                     // Clear existed server folder
-                    if (Directory.Exists(ExecutableFolderPath))
-                        Directory.Delete(ExecutableFolderPath, true);
+                    DeleteBinaryFolderIfExists();
 
                     // Create folder if needed
                     if (!Directory.Exists(ExecutableFolderPath))
                         Directory.CreateDirectory(ExecutableFolderPath);
 
-                    var archiveFilePath = Path.GetFullPath($"{Application.temporaryCachePath}/{ExecutableName.ToLowerInvariant()}-{PlatformName}-{McpPluginUnity.Version}.zip");
+                    var archiveFilePath = Path.GetFullPath($"{Application.temporaryCachePath}/{ExecutableName.ToLowerInvariant()}-{PlatformName}-{UnityMcpPlugin.Version}.zip");
                     Debug.Log($"Temporary archive file path: <color=yellow>{archiveFilePath}</color>");
 
                     // Download the zip file from the GitHub release notes
@@ -187,7 +196,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         return false;
                     }
 
-                    File.WriteAllText(VersionFullPath, McpPluginUnity.Version);
+                    Debug.Log($"Downloaded and unpacked Unity-MCP-Server binary to: <color=green>{ExecutableFullPath}</color>");
+
+                    // Set executable permission on macOS and Linux
+                    if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                    {
+                        Debug.Log($"Setting executable permission for: <color=green>{ExecutableFullPath}</color>");
+                        UnixUtils.Set0755(ExecutableFullPath);
+                    }
+
+                    File.WriteAllText(VersionFullPath, UnityMcpPlugin.Version);
+
+                    Debug.Log($"MCP server version file created at: <color=green><b>COMPLETED</b></color>");
 
                     return IsBinaryExists() && IsVersionMatches();
                 }

@@ -7,13 +7,14 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+
+#nullable enable
 #if UNITY_EDITOR
-using com.IvanMurzak.Unity.MCP.Common;
+using com.IvanMurzak.McpPlugin.Common;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace com.IvanMurzak.Unity.MCP.Utils
+namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
 {
     public static partial class GameObjectUtils
     {
@@ -41,7 +42,7 @@ namespace com.IvanMurzak.Unity.MCP.Utils
                 return scene.Value.GetRootGameObjects();
             }
         }
-        public static GameObject FindByInstanceID(int instanceID)
+        public static GameObject? FindByInstanceID(int instanceID)
         {
             if (instanceID == 0)
                 return null;

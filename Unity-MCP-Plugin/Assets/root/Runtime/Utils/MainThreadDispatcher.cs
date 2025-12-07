@@ -7,13 +7,15 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
+#nullable enable
 using System;
 using System.Collections.Concurrent;
 using System.Threading;
 using UnityEditor;
 using UnityEngine;
 
-namespace com.IvanMurzak.Unity.MCP.Utils
+namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
 {
 #if UNITY_EDITOR
     [InitializeOnLoad]
@@ -24,7 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Utils
         public static bool IsMainThread => Thread.CurrentThread.ManagedThreadId == MainThreadId;
 
         static readonly ConcurrentQueue<Action> _actions = new ConcurrentQueue<Action>();
-        static MainThreadDispatcher instance;
+        static MainThreadDispatcher instance = null!;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Initialize()

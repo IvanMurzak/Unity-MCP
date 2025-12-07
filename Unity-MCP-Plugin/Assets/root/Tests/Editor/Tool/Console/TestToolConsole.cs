@@ -7,20 +7,21 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+
+#nullable enable
+using System;
+using System.Collections;
+using System.Linq;
+using com.IvanMurzak.Unity.MCP.Editor.API;
 using NUnit.Framework;
 using UnityEngine;
-using System.Linq;
-using System;
-using com.IvanMurzak.Unity.MCP.Editor.API;
-using System.Collections;
 using UnityEngine.TestTools;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
     public class TestToolConsole : BaseTest
     {
-        Tool_Console _tool;
+        Tool_Console _tool = null!;
 
         [SetUp]
         public void TestSetUp()
@@ -138,22 +139,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 yield return null;
 
             // Act - Get only warnings
-            var result = _tool.GetLogs(logTypeFilter: "Warning");
+            var result = _tool.GetLogs(logTypeFilter: LogType.Warning);
 
             // Assert
             ResultValidation(result);
             Assert.IsTrue(result.Contains("[Warning]"), "Should contain warning logs");
             Assert.IsFalse(result.Contains("[Log]") && !result.Contains("[Warning]"), "Should not contain non-warning logs in the log entries");
-        }
-        [Test]
-        public void GetLogs_WithInvalidLogTypeFilter_ReturnsError()
-        {
-            // Act
-            var result = _tool.GetLogs(logTypeFilter: "InvalidType");
-
-            // Assert
-            ErrorValidation(result);
-            Assert.IsTrue(result.Contains("Invalid logType filter"), $"Should contain invalid log type error.");
         }
 
         [UnityTest]
@@ -172,7 +163,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 yield return null;
 
             // Act - Test Error filter (should not return validation error)
-            var result = _tool.GetLogs(logTypeFilter: "Error");
+            var result = _tool.GetLogs(logTypeFilter: LogType.Error);
 
             // Assert - Should succeed even if no error logs are found
             ResultValidationUnexpected(result, logMessage, logWarningMessage);
@@ -194,7 +185,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 yield return null;
 
             // Act - Test Assert filter (should not return validation error)
-            var result = _tool.GetLogs(logTypeFilter: "Assert");
+            var result = _tool.GetLogs(logTypeFilter: LogType.Assert);
 
             // Assert - Should succeed even if no assertion logs are found
             ResultValidationUnexpected(result, logMessage, logWarningMessage);
@@ -228,7 +219,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 yield return null;
 
             // Act
-            var result = _tool.GetLogs(includeStackTrace: true, logTypeFilter: "Warning");
+            var result = _tool.GetLogs(includeStackTrace: true, logTypeFilter: LogType.Warning);
 
             // Assert
             ResultValidation(result);
@@ -263,7 +254,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void GetLogs_NoMatchingLogs_ReturnsNoLogsMessage()
         {
             // Act - Try to get logs with a very restrictive filter
-            var result = _tool.GetLogs(logTypeFilter: "Exception", lastMinutes: 1);
+            var result = _tool.GetLogs(logTypeFilter: LogType.Exception, lastMinutes: 1);
 
             // Assert
             ResultValidation(result);
@@ -283,7 +274,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 yield return null;
 
             // Test each safe log type filter
-            string[] logTypes = { "All", "Log", "Warning" };
+            LogType[] logTypes = { LogType.Log, LogType.Warning, LogType.Error };
 
             foreach (var logType in logTypes)
             {
@@ -293,10 +284,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 // Assert
                 ResultValidation(result);
 
-                if (logType == "All" || logType == "Log")
+                if (logType == LogType.Log)
                     Assert.IsTrue(result.Contains(regularLogMessage), $"Should contain regular log message for '{logType}' filter.");
 
-                if (logType == "All" || logType == "Warning")
+                if (logType == LogType.Warning)
                     Assert.IsTrue(result.Contains(warningLogMessage), $"Should contain warning log message for '{logType}' filter.");
             }
         }
@@ -319,7 +310,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Act - Combine multiple filters
             var result = _tool.GetLogs(
                 maxEntries: 1,
-                logTypeFilter: "Warning",
+                logTypeFilter: LogType.Warning,
                 includeStackTrace: true,
                 lastMinutes: 1
             );

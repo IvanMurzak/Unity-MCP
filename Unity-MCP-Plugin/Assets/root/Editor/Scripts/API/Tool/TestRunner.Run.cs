@@ -15,11 +15,12 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
-using com.IvanMurzak.Unity.MCP.Common;
-using com.IvanMurzak.Unity.MCP.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API.TestRunner;
-using com.IvanMurzak.Unity.MCP.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 
@@ -34,7 +35,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         )]
         [Description(@"Execute Unity tests and return detailed results. Supports filtering by test mode, assembly, namespace, class, and method.
 Be default recommended to use 'EditMode' for faster iteration during development.")]
-        public static async Task<ResponseCallTool> Run
+        public static async Task<ResponseCallValueTool<TestRunResponse>> Run
         (
             [Description("Test mode to run. Options: '" + nameof(TestMode.EditMode) + "', '" + nameof(TestMode.PlayMode) + "'. Default: '" + nameof(TestMode.EditMode) + "'")]
             TestMode testMode = TestMode.EditMode,
@@ -47,7 +48,9 @@ Be default recommended to use 'EditMode' for faster iteration during development
             [Description("Specific fully qualified test method to run (optional). Example: 'MyTestNamespace.FixtureName.TestName'")]
             string? testMethod = null,
 
-            [Description("Include test result messages in the test results (default: true). If just need pass/fail status, set to false.")]
+            [Description("Include details for all tests, both passing and failing (default: false). If you just need details for failing tests, set to false.")]
+            bool includePassingTests = false,
+            [Description("Include test result messages in the test results (default: true). If you just need pass/fail status, set to false.")]
             bool includeMessages = true,
             [Description("Include stack traces in the test results (default: false).")]
             bool includeStacktrace = false,
@@ -64,15 +67,25 @@ Be default recommended to use 'EditMode' for faster iteration during development
         )
         {
             if (requestId == null || string.IsNullOrWhiteSpace(requestId))
-                return ResponseCallTool.Error("Original request with valid RequestID must be provided.");
+                return ResponseCallValueTool<TestRunResponse>.Error("Original request with valid RequestID must be provided.");
 
             return await MainThread.Instance.RunAsync(async () =>
             {
-                if (McpPluginUnity.IsLogActive(LogLevel.Info))
+                if (UnityEditor.EditorUtility.scriptCompilationFailed)
+                {
+                    var compilationErrorDetails = ScriptUtils.GetCompilationErrorDetails();
+                    return ResponseCallValueTool<TestRunResponse>
+                        .Error($"Unity project has compilation error. Please fix all compilation errors before running tests.\n{compilationErrorDetails}")
+                        .SetRequestID(requestId);
+                }
+
+                if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                     Debug.Log($"[TestRunner] ------------------------------------- Preparing to run {testMode} tests.");
+
                 try
                 {
                     TestResultCollector.TestCallRequestID.Value = requestId;
+                    TestResultCollector.IncludePassingTests.Value = includePassingTests;
                     TestResultCollector.IncludeMessage.Value = includeMessages;
                     TestResultCollector.IncludeMessageStacktrace.Value = includeStacktrace;
 
@@ -83,29 +96,28 @@ Be default recommended to use 'EditMode' for faster iteration during development
                     // Create filter parameters
                     var filterParams = new TestFilterParameters(testAssembly, testNamespace, testClass, testMethod);
 
-                    if (McpPluginUnity.IsLogActive(LogLevel.Info))
+                    if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                         Debug.Log($"[TestRunner] Running {testMode} tests with filters: {filterParams}");
 
-                    // Validate specific test mode filter
                     var validation = await ValidateTestFilters(TestRunnerApi, testMode, filterParams);
                     if (validation != null)
-                        return ResponseCallTool.Error(validation).SetRequestID(requestId);
+                        return ResponseCallValueTool<TestRunResponse>.Error(validation).SetRequestID(requestId);
 
                     var filter = CreateTestFilter(testMode, filterParams);
 
                     // Delay test running, first need to return response to caller
                     MainThread.Instance.Run(() => TestRunnerApi.Execute(new ExecutionSettings(filter)));
 
-                    return ResponseCallTool.Processing().SetRequestID(requestId);
+                    return ResponseCallValueTool<TestRunResponse>.Processing().SetRequestID(requestId);
                 }
                 catch (Exception ex)
                 {
-                    if (McpPluginUnity.IsLogActive(LogLevel.Error))
+                    if (UnityMcpPlugin.IsLogEnabled(LogLevel.Error))
                     {
                         Debug.LogException(ex);
                         Debug.LogError($"[TestRunner] ------------------------------------- Exception {testMode} tests.");
                     }
-                    return ResponseCallTool.Error(Error.TestExecutionFailed(ex.Message)).SetRequestID(requestId);
+                    return ResponseCallValueTool<TestRunResponse>.Error(Error.TestExecutionFailed(ex.Message)).SetRequestID(requestId);
                 }
             }).Unwrap();
         }
@@ -185,7 +197,7 @@ Be default recommended to use 'EditMode' for faster iteration during development
                         ? CountFilteredTests(testRoot, filterParams)
                         : 0;
 
-                    if (McpPluginUnity.IsLogActive(LogLevel.Info))
+                    if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                         Debug.Log($"[TestRunner] {testCount} {testMode} tests matched for {filterParams}");
 
                     tcs.SetResult(testCount);

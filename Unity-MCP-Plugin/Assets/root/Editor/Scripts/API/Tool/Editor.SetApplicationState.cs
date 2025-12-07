@@ -7,10 +7,14 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+
+#nullable enable
+using System;
 using System.ComponentModel;
+using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
-using com.IvanMurzak.Unity.MCP.Common;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -23,7 +27,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Set Unity Editor application state"
         )]
         [Description("Control the Unity Editor application state. You can start, stop, or pause the 'playmode'.")]
-        public string SetApplicationState
+        public ResponseCallValueTool<EditorStatsData?> SetApplicationState
         (
             [Description("If true, the 'playmode' will be started. If false, the 'playmode' will be stopped.")]
             bool isPlaying = false,
@@ -33,9 +37,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         {
             return MainThread.Instance.Run(() =>
             {
+                if (UnityEditor.EditorUtility.scriptCompilationFailed)
+                {
+                    var compilationErrorDetails = ScriptUtils.GetCompilationErrorDetails();
+                    return ResponseCallValueTool<EditorStatsData?>
+                        .Error($"Unity project has compilation error. Please fix all compilation errors before doing this operation.\n{compilationErrorDetails}");
+                }
                 EditorApplication.isPlaying = isPlaying;
                 EditorApplication.isPaused = isPaused;
-                return $"[Success] {EditorStats}";
+
+                var mcpPlugin = UnityMcpPlugin.Instance.McpPluginInstance ?? throw new InvalidOperationException("MCP Plugin instance is not available.");
+                var jsonNode = mcpPlugin.McpManager.Reflector.JsonSerializer.SerializeToNode(EditorStatsData.FromEditor());
+                var jsonString = jsonNode?.ToJsonString();
+                return ResponseCallValueTool<EditorStatsData?>.SuccessStructured(jsonNode, jsonString);
             });
         }
     }

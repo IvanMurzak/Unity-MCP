@@ -7,16 +7,19 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
-using com.IvanMurzak.Unity.MCP.Common.Model.Unity;
+
+#nullable enable
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEngine;
 
-namespace com.IvanMurzak.Unity.MCP.Utils
+namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
 {
     public static class ExtensionsRuntimeGameObjectRef
     {
         public static GameObject? FindGameObject(this GameObjectRef? objectRef)
             => FindGameObject(objectRef, out _);
+
         public static GameObject? FindGameObject(this GameObjectRef? objectRef, out string? error)
         {
             if (objectRef == null)

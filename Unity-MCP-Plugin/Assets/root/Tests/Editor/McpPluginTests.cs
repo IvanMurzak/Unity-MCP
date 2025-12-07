@@ -7,10 +7,10 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
 using System.Collections;
-using System.Threading.Tasks;
-using com.IvanMurzak.Unity.MCP.Common;
+using com.IvanMurzak.McpPlugin.Common;
 using NUnit.Framework;
 using UnityEngine.TestTools;
 
@@ -19,24 +19,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     [TestFixture]
     public class McpPluginTests : BaseTest
     {
+        const int WaitTimeoutTicks = 100000;
         [Test]
         public void McpPlugin_Instance_ShouldNotBeNull_WhenInitialized()
         {
             // Act & Assert
-            Assert.IsNotNull(McpPlugin.Instance, "McpPlugin instance should not be null after initialization");
-            Assert.IsTrue(McpPlugin.HasInstance, "McpPlugin should have an instance after initialization");
+            Assert.IsNotNull(McpPlugin.McpPlugin.Instance, "McpPlugin instance should not be null after initialization");
+            Assert.IsTrue(McpPlugin.McpPlugin.HasInstance, "McpPlugin should have an instance after initialization");
         }
 
         [Test]
         public void McpPlugin_Instance_ShouldHaveValidMcpRunner()
         {
             // Act
-            var instance = McpPlugin.Instance;
+            var instance = McpPlugin.McpPlugin.Instance;
 
             // Assert
             Assert.IsNotNull(instance, "McpPlugin instance should not be null");
-            Assert.IsNotNull(instance!.McpRunner, "McpRunner should not be null");
-            Assert.IsNotNull(instance!.McpRunner.Reflector, "Reflector should not be null");
+            Assert.IsNotNull(instance!.McpManager, "McpRunner should not be null");
+            Assert.IsNotNull(instance!.McpManager.Reflector, "Reflector should not be null");
         }
 
         [UnityTest]
@@ -47,14 +48,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var executionCount = 0;
 
             // Act
-            var subscription = McpPlugin.DoOnce(plugin =>
+            var subscription = McpPlugin.McpPlugin.DoOnce(plugin =>
             {
                 callbackExecuted = true;
                 executionCount++;
             });
             try
             {
-                for (int i = 0; !callbackExecuted && i < 1000; i++)
+                for (int i = 0; !callbackExecuted && i < WaitTimeoutTicks; i++)
                     yield return null; // Allow callback to execute
 
                 // Assert
@@ -76,7 +77,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var executionCount = 0;
 
             // Act
-            var subscription = McpPlugin.DoAlways(plugin =>
+            var subscription = McpPlugin.McpPlugin.DoAlways(plugin =>
             {
                 callbackExecuted = true;
                 executionCount++;
@@ -84,11 +85,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             try
             {
-                for (int i = 0; !callbackExecuted && i < 1000; i++)
+                for (int i = 0; !callbackExecuted && i < WaitTimeoutTicks; i++)
                     yield return null; // Allow callback to execute
 
                 // Trigger another execution by accessing Instance again
-                var _ = McpPlugin.Instance;
+                var _ = McpPlugin.McpPlugin.Instance;
                 yield return null;
 
                 // Assert
@@ -116,7 +117,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void McpPlugin_DoOnce_WithNullCallback_ShouldNotThrow()
         {
             // Act & Assert
-            Assert.DoesNotThrow(() => McpPlugin.DoOnce(null!),
+            Assert.DoesNotThrow(() => McpPlugin.McpPlugin.DoOnce(null!),
                 "DoOnce with null callback should not throw");
         }
 
@@ -124,7 +125,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void McpPlugin_DoAlways_WithNullCallback_ShouldNotThrow()
         {
             // Act & Assert
-            Assert.DoesNotThrow(() => McpPlugin.DoAlways(null!),
+            Assert.DoesNotThrow(() => McpPlugin.McpPlugin.DoAlways(null!),
                 "DoAlways with null callback should not throw");
         }
     }

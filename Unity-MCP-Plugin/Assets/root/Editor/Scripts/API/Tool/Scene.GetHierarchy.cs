@@ -7,11 +7,12 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
-#pragma warning disable CS8632 // The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.
+
+#nullable enable
 using System.ComponentModel;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
-using com.IvanMurzak.Unity.MCP.Common;
-using com.IvanMurzak.Unity.MCP.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -39,7 +40,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (!scene.IsValid())
                 return Error.NotFoundSceneWithName(loadedSceneName);
 
-            return scene.ToMetadata(includeChildrenDepth: includeChildrenDepth).Print();
+            return scene.ToMetadata(includeChildrenDepth: includeChildrenDepth)?.Print() ?? "[]";
         });
     }
 }

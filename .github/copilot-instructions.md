@@ -252,7 +252,7 @@ Unity-MCP/
 │   ├── Assets/root/           # Plugin source code
 │   ├── ProjectSettings/       # Unity project settings
 │   └── Packages/              # Unity packages
-├── AssetStore-Installer/      # Unity package installer
+├── Installer/      # Unity package installer
 └── .github/workflows/         # CI/CD pipelines
 ```
 

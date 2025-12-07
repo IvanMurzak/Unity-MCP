@@ -66,21 +66,29 @@
     "explorer.fileNesting.patterns": {
         "*.sln": "*.csproj"
     },
-    "dotnet.defaultSolution": "Unity-MCP-Plugin.sln",
+    "dotnet.defaultSolution": "Unity-MCP-Plugin.slnx",
     "cSpell.words": [
         "aspnetcore",
+        "Cdecl",
         "codeanalysis",
+        "Dbug",
         "dependencyinjection",
+        "errno",
         "HDRP",
         "ivanmurzak",
+        "libc",
+        "Mathf",
         "Murzak",
         "openupm",
         "playmode",
         "Prefs",
+        "rwxr",
         "Scriptable",
         "signalr",
+        "Trce",
         "uielements",
-        "unitypackage"
+        "unitypackage",
+        "Uxml"
     ],
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {

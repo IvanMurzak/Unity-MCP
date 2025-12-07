@@ -1,1 +1,16 @@
+# GitHub
+.secrets
+
+# AI configurations
 .claude
+.gemini
+.aider*
+.roo
+
+# Commands and env files
+commands/TestResults
+commands/.env
+!commands/.env.example
+
+# Documentation
+.CONVENTIONS.md

@@ -7,15 +7,20 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
+#nullable enable
 using System;
 using System.Threading;
-using UnityEngine;
+using com.IvanMurzak.Unity.MCP.Utils;
+using Microsoft.Extensions.Logging;
 
-namespace com.IvanMurzak.Unity.MCP.Utils
+namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
 {
     internal static class Safe
     {
-        public static bool Run(Action action, LogLevel logLevel)
+        static readonly ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger("Safe");
+
+        public static bool Run(Action action, LogLevel? logLevel = null)
         {
             try
             {
@@ -24,13 +29,12 @@ namespace com.IvanMurzak.Unity.MCP.Utils
             }
             catch (Exception e)
             {
-                if (logLevel.IsActive(LogLevel.Exception))
-                    Debug.LogException(e);
-
+                if (logLevel?.IsEnabled(LogLevel.Error) ?? true)
+                    _logger.LogError(eventId: default, message: e.Message, exception: e);
                 return false;
             }
         }
-        public static bool Run<T>(Action<T> action, T value, LogLevel logLevel)
+        public static bool Run<T>(Action<T> action, T value, LogLevel? logLevel = null)
         {
             try
             {
@@ -39,13 +43,12 @@ namespace com.IvanMurzak.Unity.MCP.Utils
             }
             catch (Exception e)
             {
-                if (logLevel.IsActive(LogLevel.Exception))
-                    Debug.LogException(e);
-
+                if (logLevel?.IsEnabled(LogLevel.Error) ?? true)
+                    _logger.LogError(eventId: default, message: e.Message, exception: e);
                 return false;
             }
         }
-        public static bool Run<T1, T2>(Action<T1, T2> action, T1 value1, T2 value2, LogLevel logLevel)
+        public static bool Run<T1, T2>(Action<T1, T2> action, T1 value1, T2 value2, LogLevel? logLevel = null)
         {
             try
             {
@@ -54,13 +57,12 @@ namespace com.IvanMurzak.Unity.MCP.Utils
             }
             catch (Exception e)
             {
-                if (logLevel.IsActive(LogLevel.Exception))
-                    Debug.LogException(e);
-
+                if (logLevel?.IsEnabled(LogLevel.Error) ?? true)
+                    _logger.LogError(eventId: default, message: e.Message, exception: e);
                 return false;
             }
         }
-        public static TResult Run<TInput, TResult>(Func<TInput, TResult> action, TInput input, LogLevel logLevel)
+        public static TResult? Run<TInput, TResult>(Func<TInput, TResult> action, TInput input, LogLevel? logLevel = null)
         {
             try
             {
@@ -68,13 +70,12 @@ namespace com.IvanMurzak.Unity.MCP.Utils
             }
             catch (Exception e)
             {
-                if (logLevel.IsActive(LogLevel.Exception))
-                    Debug.LogException(e);
-
+                if (logLevel?.IsEnabled(LogLevel.Error) ?? true)
+                    _logger.LogError(eventId: default, message: e.Message, exception: e);
                 return default;
             }
         }
-        public static bool Run(WeakAction action, LogLevel logLevel)
+        public static bool Run(WeakAction action, LogLevel? logLevel = null)
         {
             try
             {
@@ -83,13 +84,12 @@ namespace com.IvanMurzak.Unity.MCP.Utils
             }
             catch (Exception e)
             {
-                if (logLevel.IsActive(LogLevel.Exception))
-                    Debug.LogException(e);
-
+                if (logLevel?.IsEnabled(LogLevel.Error) ?? true)
+                    _logger.LogError(eventId: default, message: e.Message, exception: e);
                 return false;
             }
         }
-        public static bool Run<T>(WeakAction<T> action, T value, LogLevel logLevel)
+        public static bool Run<T>(WeakAction<T> action, T value, LogLevel? logLevel = null)
         {
             try
             {
@@ -98,13 +98,12 @@ namespace com.IvanMurzak.Unity.MCP.Utils
             }
             catch (Exception e)
             {
-                if (logLevel.IsActive(LogLevel.Exception))
-                    Debug.LogException(e);
-
+                if (logLevel?.IsEnabled(LogLevel.Error) ?? true)
+                    _logger.LogError(eventId: default, message: e.Message, exception: e);
                 return false;
             }
         }
-        public static bool RunCancel(CancellationTokenSource cts, LogLevel logLevel)
+        public static bool RunCancel(CancellationTokenSource cts, LogLevel? logLevel = null)
         {
             try
             {
@@ -119,9 +118,8 @@ namespace com.IvanMurzak.Unity.MCP.Utils
             }
             catch (Exception e)
             {
-                if (logLevel.IsActive(LogLevel.Exception))
-                    Debug.LogException(e);
-
+                if (logLevel?.IsEnabled(LogLevel.Error) ?? true)
+                    _logger.LogError(eventId: default, message: e.Message, exception: e);
                 return false;
             }
         }

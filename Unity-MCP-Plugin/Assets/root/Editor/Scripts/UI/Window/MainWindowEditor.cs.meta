@@ -5,6 +5,7 @@ MonoImporter:
   serializedVersion: 2
   defaultReferences:
   - m_ViewDataDictionary: {instanceID: 0}
+  - clientConfigPanelTemplate: {fileID: 9197481963319205126, guid: 32175f1cbfef30643a283ee255d4d9c5, type: 3}
   - templateControlPanel: {fileID: 9197481963319205126, guid: 860dcfe1492152c418bf9bb580bb94cd, type: 3}
   executionOrder: 0
   icon: {instanceID: 0}
