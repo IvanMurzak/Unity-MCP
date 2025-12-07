@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using Extensions.Unity.PlayerPrefsEx;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -33,7 +34,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void ExistsKey_ExistingIntKey_ReturnsTrue()
         {
             // Arrange
-            PlayerPrefs.SetInt(TestKeyInt, 42);
+            PlayerPrefsEx.SetInt(TestKeyInt, 42);
 
             // Act
             var result = _tool.ExistsKey(TestKeyInt);
@@ -46,7 +47,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void ExistsKey_ExistingFloatKey_ReturnsTrue()
         {
             // Arrange
-            PlayerPrefs.SetFloat(TestKeyFloat, 3.14f);
+            PlayerPrefsEx.SetFloat(TestKeyFloat, 3.14f);
 
             // Act
             var result = _tool.ExistsKey(TestKeyFloat);
@@ -59,7 +60,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void ExistsKey_ExistingStringKey_ReturnsTrue()
         {
             // Arrange
-            PlayerPrefs.SetString(TestKeyString, "Hello");
+            PlayerPrefsEx.SetString(TestKeyString, "Hello");
 
             // Act
             var result = _tool.ExistsKey(TestKeyString);
@@ -92,7 +93,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void GetKeyType_IntKey_ReturnsInt()
         {
             // Arrange
-            PlayerPrefs.SetInt(TestKeyInt, 42);
+            PlayerPrefsEx.SetInt(TestKeyInt, 42);
 
             // Act
             var result = _tool.GetKeyType(TestKeyInt);
@@ -105,7 +106,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void GetKeyType_FloatKey_ReturnsFloat()
         {
             // Arrange
-            PlayerPrefs.SetFloat(TestKeyFloat, 3.14f);
+            PlayerPrefsEx.SetFloat(TestKeyFloat, 3.14f);
 
             // Act
             var result = _tool.GetKeyType(TestKeyFloat);
@@ -118,7 +119,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void GetKeyType_StringKey_ReturnsString()
         {
             // Arrange
-            PlayerPrefs.SetString(TestKeyString, "Hello World");
+            PlayerPrefsEx.SetString(TestKeyString, "Hello World");
 
             // Act
             var result = _tool.GetKeyType(TestKeyString);

@@ -12,6 +12,7 @@
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using Extensions.Unity.PlayerPrefsEx;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -34,7 +35,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (string.IsNullOrEmpty(key))
                 return Error.KeyIsNullOrEmpty();
 
-            bool exists = PlayerPrefs.HasKey(key);
+            // Check if key exists in any type
+            bool exists = PlayerPrefsEx.HasKey<int>(key) || 
+                         PlayerPrefsEx.HasKey<float>(key) || 
+                         PlayerPrefsEx.HasKey<string>(key) ||
+                         PlayerPrefsEx.HasKey<bool>(key);
+            
             return $"[Success] Key '{key}' existence check completed. Exists: {exists}";
         });
     }

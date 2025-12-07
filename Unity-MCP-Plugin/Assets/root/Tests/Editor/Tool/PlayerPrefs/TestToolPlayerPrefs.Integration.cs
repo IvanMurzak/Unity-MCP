@@ -10,6 +10,7 @@
 
 #nullable enable
 using com.IvanMurzak.Unity.MCP.Editor.API;
+using Extensions.Unity.PlayerPrefsEx;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -27,7 +28,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             const int value = 42;
 
             // Act & Assert - Write
-            var writeResult = _tool.WriteKey(key, value.ToString(), Tool_PlayerPrefs.PlayerPrefsValueType.@int);
+            var writeResult = _tool.WriteKey(key, value.ToString(), Tool_PlayerPrefs.PlayerPrefsValueType.Int);
             ResultValidation(writeResult);
 
             // Act & Assert - Exists
@@ -47,7 +48,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             ResultValidation(deleteResult);
 
             // Verify deletion
-            Assert.IsFalse(PlayerPrefs.HasKey(key), "Key should not exist after deletion.");
+            Assert.IsFalse(PlayerPrefsEx.HasKey<int>(key) || PlayerPrefsEx.HasKey<float>(key) || PlayerPrefsEx.HasKey<string>(key) || PlayerPrefsEx.HasKey<bool>(key), "Key should not exist after deletion.");
         }
 
         [Test]
@@ -58,7 +59,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             const float value = 3.14159f;
 
             // Act & Assert - Write
-            var writeResult = _tool.WriteKey(key, value.ToString(), Tool_PlayerPrefs.PlayerPrefsValueType.@float);
+            var writeResult = _tool.WriteKey(key, value.ToString(), Tool_PlayerPrefs.PlayerPrefsValueType.Float);
             ResultValidation(writeResult);
 
             // Act & Assert - Exists
@@ -78,7 +79,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             ResultValidation(deleteResult);
 
             // Verify deletion
-            Assert.IsFalse(PlayerPrefs.HasKey(key), "Key should not exist after deletion.");
+            Assert.IsFalse(PlayerPrefsEx.HasKey<int>(key) || PlayerPrefsEx.HasKey<float>(key) || PlayerPrefsEx.HasKey<string>(key) || PlayerPrefsEx.HasKey<bool>(key), "Key should not exist after deletion.");
         }
 
         [Test]
@@ -89,7 +90,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             const string value = "Integration Test String";
 
             // Act & Assert - Write
-            var writeResult = _tool.WriteKey(key, value, Tool_PlayerPrefs.PlayerPrefsValueType.@string);
+            var writeResult = _tool.WriteKey(key, value, Tool_PlayerPrefs.PlayerPrefsValueType.String);
             ResultValidation(writeResult);
 
             // Act & Assert - Exists
@@ -109,42 +110,42 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             ResultValidation(deleteResult);
 
             // Verify deletion
-            Assert.IsFalse(PlayerPrefs.HasKey(key), "Key should not exist after deletion.");
+            Assert.IsFalse(PlayerPrefsEx.HasKey<int>(key) || PlayerPrefsEx.HasKey<float>(key) || PlayerPrefsEx.HasKey<string>(key) || PlayerPrefsEx.HasKey<bool>(key), "Key should not exist after deletion.");
         }
 
         [Test]
         public void Integration_MultipleKeysAndDeleteAll()
         {
             // Arrange - Write multiple values
-            _tool.WriteKey(TestKeyInt, "100", Tool_PlayerPrefs.PlayerPrefsValueType.@int);
-            _tool.WriteKey(TestKeyFloat, "2.5", Tool_PlayerPrefs.PlayerPrefsValueType.@float);
-            _tool.WriteKey(TestKeyString, "Test", Tool_PlayerPrefs.PlayerPrefsValueType.@string);
+            _tool.WriteKey(TestKeyInt, "100", Tool_PlayerPrefs.PlayerPrefsValueType.Int);
+            _tool.WriteKey(TestKeyFloat, "2.5", Tool_PlayerPrefs.PlayerPrefsValueType.Float);
+            _tool.WriteKey(TestKeyString, "Test", Tool_PlayerPrefs.PlayerPrefsValueType.String);
 
             // Verify all keys exist
-            Assert.IsTrue(PlayerPrefs.HasKey(TestKeyInt), "Int key should exist.");
-            Assert.IsTrue(PlayerPrefs.HasKey(TestKeyFloat), "Float key should exist.");
-            Assert.IsTrue(PlayerPrefs.HasKey(TestKeyString), "String key should exist.");
+            Assert.IsTrue(PlayerPrefsEx.HasKey<int>(TestKeyInt), "Int key should exist.");
+            Assert.IsTrue(PlayerPrefsEx.HasKey<float>(TestKeyFloat), "Float key should exist.");
+            Assert.IsTrue(PlayerPrefsEx.HasKey<string>(TestKeyString), "String key should exist.");
 
             // Act - Delete all
             var result = _tool.DeleteAllKeys();
 
             // Assert
             ResultValidation(result);
-            Assert.IsFalse(PlayerPrefs.HasKey(TestKeyInt), "Int key should be deleted.");
-            Assert.IsFalse(PlayerPrefs.HasKey(TestKeyFloat), "Float key should be deleted.");
-            Assert.IsFalse(PlayerPrefs.HasKey(TestKeyString), "String key should be deleted.");
+            Assert.IsFalse(PlayerPrefsEx.HasKey<int>(TestKeyInt), "Int key should be deleted.");
+            Assert.IsFalse(PlayerPrefsEx.HasKey<float>(TestKeyFloat), "Float key should be deleted.");
+            Assert.IsFalse(PlayerPrefsEx.HasKey<string>(TestKeyString), "String key should be deleted.");
         }
 
         [Test]
         public void Integration_OverwriteValueWithDifferentType()
         {
             // Arrange - Write as int first
-            _tool.WriteKey(TestKeyInt, "42", Tool_PlayerPrefs.PlayerPrefsValueType.@int);
+            _tool.WriteKey(TestKeyInt, "42", Tool_PlayerPrefs.PlayerPrefsValueType.Int);
             var typeResult1 = _tool.GetKeyType(TestKeyInt);
             ResultValidationExpected(typeResult1, "type: int");
 
             // Act - Overwrite with string
-            _tool.WriteKey(TestKeyInt, "Hello", Tool_PlayerPrefs.PlayerPrefsValueType.@string);
+            _tool.WriteKey(TestKeyInt, "Hello", Tool_PlayerPrefs.PlayerPrefsValueType.String);
 
             // Assert - Type should now be string
             var typeResult2 = _tool.GetKeyType(TestKeyInt);
@@ -158,7 +159,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void Integration_SaveAndVerify()
         {
             // Arrange
-            _tool.WriteKey(TestKeyInt, "123", Tool_PlayerPrefs.PlayerPrefsValueType.@int);
+            _tool.WriteKey(TestKeyInt, "123", Tool_PlayerPrefs.PlayerPrefsValueType.Int);
 
             // Act
             var saveResult = _tool.Save();
@@ -181,7 +182,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             try
             {
                 // Act
-                var writeResult = _tool.WriteKey(specialKey, value, Tool_PlayerPrefs.PlayerPrefsValueType.@string);
+                var writeResult = _tool.WriteKey(specialKey, value, Tool_PlayerPrefs.PlayerPrefsValueType.String);
                 ResultValidation(writeResult);
 
                 var readResult = _tool.ReadKey(specialKey);
@@ -190,7 +191,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             finally
             {
                 // Cleanup
-                PlayerPrefs.DeleteKey(specialKey);
+                if (PlayerPrefsEx.HasKey<int>(specialKey))
+                    PlayerPrefsEx.DeleteKey<int>(specialKey);
+                if (PlayerPrefsEx.HasKey<float>(specialKey))
+                    PlayerPrefsEx.DeleteKey<float>(specialKey);
+                if (PlayerPrefsEx.HasKey<string>(specialKey))
+                    PlayerPrefsEx.DeleteKey<string>(specialKey);
+                if (PlayerPrefsEx.HasKey<bool>(specialKey))
+                    PlayerPrefsEx.DeleteKey<bool>(specialKey);
             }
         }
 
@@ -201,11 +209,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             const string value = "Hello\nWorld\tWith\r\nSpecial \"Chars\" & <symbols>";
 
             // Act
-            var writeResult = _tool.WriteKey(TestKeyString, value, Tool_PlayerPrefs.PlayerPrefsValueType.@string);
+            var writeResult = _tool.WriteKey(TestKeyString, value, Tool_PlayerPrefs.PlayerPrefsValueType.String);
             ResultValidation(writeResult);
 
             // Assert
-            Assert.AreEqual(value, PlayerPrefs.GetString(TestKeyString), "Special characters should be preserved.");
+            Assert.AreEqual(value, PlayerPrefsEx.GetString(TestKeyString, string.Empty), "Special characters should be preserved.");
         }
 
         [Test]
@@ -215,11 +223,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             const string value = "Привет мир! 你好世界! 🌍🚀";
 
             // Act
-            var writeResult = _tool.WriteKey(TestKeyString, value, Tool_PlayerPrefs.PlayerPrefsValueType.@string);
+            var writeResult = _tool.WriteKey(TestKeyString, value, Tool_PlayerPrefs.PlayerPrefsValueType.String);
             ResultValidation(writeResult);
 
             // Assert
-            Assert.AreEqual(value, PlayerPrefs.GetString(TestKeyString), "Unicode characters should be preserved.");
+            Assert.AreEqual(value, PlayerPrefsEx.GetString(TestKeyString, string.Empty), "Unicode characters should be preserved.");
         }
 
         [Test]
@@ -229,11 +237,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             const int value = int.MaxValue;
 
             // Act
-            var writeResult = _tool.WriteKey(TestKeyInt, value.ToString(), Tool_PlayerPrefs.PlayerPrefsValueType.@int);
+            var writeResult = _tool.WriteKey(TestKeyInt, value.ToString(), Tool_PlayerPrefs.PlayerPrefsValueType.Int);
             ResultValidation(writeResult);
 
             // Assert
-            Assert.AreEqual(value, PlayerPrefs.GetInt(TestKeyInt), "Large int value should be handled correctly.");
+            Assert.AreEqual(value, PlayerPrefsEx.GetInt(TestKeyInt, 0), "Large int value should be handled correctly.");
         }
 
         [Test]
@@ -243,11 +251,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             const int value = int.MinValue;
 
             // Act
-            var writeResult = _tool.WriteKey(TestKeyInt, value.ToString(), Tool_PlayerPrefs.PlayerPrefsValueType.@int);
+            var writeResult = _tool.WriteKey(TestKeyInt, value.ToString(), Tool_PlayerPrefs.PlayerPrefsValueType.Int);
             ResultValidation(writeResult);
 
             // Assert
-            Assert.AreEqual(value, PlayerPrefs.GetInt(TestKeyInt), "Small int value should be handled correctly.");
+            Assert.AreEqual(value, PlayerPrefsEx.GetInt(TestKeyInt, 0), "Small int value should be handled correctly.");
         }
 
         #endregion

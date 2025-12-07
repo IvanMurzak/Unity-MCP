@@ -11,6 +11,7 @@
 #nullable enable
 using System;
 using com.IvanMurzak.McpPlugin;
+using Extensions.Unity.PlayerPrefsEx;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -40,47 +41,42 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         }
 
         /// <summary>
-        /// Determines the value and type of a PlayerPrefs key.
-        /// Since PlayerPrefs doesn't expose the type, we try to infer it.
+        /// Determines the value and type of a PlayerPrefsEx key.
+        /// PlayerPrefsEx maintains type information, so we can check each type directly.
         /// </summary>
         private static (object value, string type) GetKeyValueAndType(string key)
         {
-            // First, try to get as string
-            string stringValue = PlayerPrefs.GetString(key, string.Empty);
-
-            if (!string.IsNullOrEmpty(stringValue))
+            // PlayerPrefsEx maintains type information, so we check each type
+            // Try int first
+            if (PlayerPrefsEx.HasKey<int>(key))
             {
-                // Try to parse as int
-                if (int.TryParse(stringValue, out int intResult))
-                {
-                    int intValue = PlayerPrefs.GetInt(key, int.MaxValue);
-                    if (intValue != int.MaxValue && intValue == intResult)
-                        return (intValue, "int");
-                }
+                int intValue = PlayerPrefsEx.GetInt(key, 0);
+                return (intValue, "int");
+            }
 
-                // Try to parse as float
-                if (float.TryParse(stringValue, out float floatResult))
-                {
-                    float floatValue = PlayerPrefs.GetFloat(key, float.NaN);
-                    if (!float.IsNaN(floatValue) && Math.Abs(floatValue - floatResult) < 0.0001f)
-                        return (floatValue, "float");
-                }
+            // Try float
+            if (PlayerPrefsEx.HasKey<float>(key))
+            {
+                float floatValue = PlayerPrefsEx.GetFloat(key, 0f);
+                return (floatValue, "float");
+            }
 
+            // Try string
+            if (PlayerPrefsEx.HasKey<string>(key))
+            {
+                string stringValue = PlayerPrefsEx.GetString(key, string.Empty);
                 return (stringValue, "string");
             }
 
-            // If string is empty, try int
-            int intVal = PlayerPrefs.GetInt(key, int.MinValue + 1);
-            if (intVal != int.MinValue + 1)
-                return (intVal, "int");
+            // Try bool (PlayerPrefsEx supports bool)
+            if (PlayerPrefsEx.HasKey<bool>(key))
+            {
+                bool boolValue = PlayerPrefsEx.GetBool(key, false);
+                return (boolValue, "bool");
+            }
 
-            // Try float
-            float floatVal = PlayerPrefs.GetFloat(key, float.NaN);
-            if (!float.IsNaN(floatVal))
-                return (floatVal, "float");
-
-            // Default to empty string
-            return (PlayerPrefs.GetString(key, string.Empty), "string");
+            // Default to empty string if key doesn't exist
+            return (string.Empty, "string");
         }
     }
 }

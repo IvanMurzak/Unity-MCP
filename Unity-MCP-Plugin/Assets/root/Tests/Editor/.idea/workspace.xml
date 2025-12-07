@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ChangeListManager">
+    <list default="true" id="5f97b946-04a9-4ef1-b4de-f11d54cac4d7" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/../../Editor/Scripts/API/Tool/PlayerPrefs.DeleteAllKeys.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Editor/Scripts/API/Tool/PlayerPrefs.DeleteAllKeys.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Editor/Scripts/API/Tool/PlayerPrefs.DeleteKey.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Editor/Scripts/API/Tool/PlayerPrefs.DeleteKey.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Editor/Scripts/API/Tool/PlayerPrefs.ExistsKey.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Editor/Scripts/API/Tool/PlayerPrefs.ExistsKey.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Editor/Scripts/API/Tool/PlayerPrefs.GetKeyType.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Editor/Scripts/API/Tool/PlayerPrefs.GetKeyType.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Editor/Scripts/API/Tool/PlayerPrefs.ReadKey.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Editor/Scripts/API/Tool/PlayerPrefs.ReadKey.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Editor/Scripts/API/Tool/PlayerPrefs.Save.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Editor/Scripts/API/Tool/PlayerPrefs.Save.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Editor/Scripts/API/Tool/PlayerPrefs.WriteKey.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Editor/Scripts/API/Tool/PlayerPrefs.WriteKey.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Editor/Scripts/API/Tool/PlayerPrefs.cs" beforeDir="false" afterPath="$PROJECT_DIR$/../../Editor/Scripts/API/Tool/PlayerPrefs.cs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/../../Editor/Scripts/API/Tool/TestRunner/TestRunResponse.cs.meta" beforeDir="false" afterPath="$PROJECT_DIR$/../../Editor/Scripts/API/Tool/TestRunner/TestRunResponse.cs.meta" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/../../../../.." />
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/BaseTest.cs" root0="SKIP_HIGHLIGHTING" />
+  </component>
+  <component name="ProjectColorInfo"><![CDATA[{
+  "associatedIndex": 6
+}]]></component>
+  <component name="ProjectId" id="36W8YXi6Dc4P2O4C3ATCVLnnH0z" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "git-widget-placeholder": "main-player-prefs",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="5f97b946-04a9-4ef1-b4de-f11d54cac4d7" name="Changes" comment="" />
+      <created>1765111014895</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1765111014895</updated>
+      <workItem from="1765111016618" duration="7000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="UnityProjectConfiguration" hasMinimizedUI="false" />
+  <component name="VcsManagerConfiguration">
+    <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <breakpoint enabled="true" type="DotNet_Exception_Breakpoints">
+          <properties exception="System.OperationCanceledException" breakIfHandledByOtherCode="false" displayValue="System.OperationCanceledException" />
+          <option name="timeStamp" value="1" />
+        </breakpoint>
+        <breakpoint enabled="true" type="DotNet_Exception_Breakpoints">
+          <properties exception="System.Threading.Tasks.TaskCanceledException" breakIfHandledByOtherCode="false" displayValue="System.Threading.Tasks.TaskCanceledException" />
+          <option name="timeStamp" value="2" />
+        </breakpoint>
+        <breakpoint enabled="true" type="DotNet_Exception_Breakpoints">
+          <properties exception="System.Threading.ThreadAbortException" breakIfHandledByOtherCode="false" displayValue="System.Threading.ThreadAbortException" />
+          <option name="timeStamp" value="3" />
+        </breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+  <component name="github-copilot-workspace">
+    <instructionFileLocations>
+      <option value=".github/instructions" />
+    </instructionFileLocations>
+    <promptFileLocations>
+      <option value=".github/prompts" />
+    </promptFileLocations>
+  </component>
+</project>

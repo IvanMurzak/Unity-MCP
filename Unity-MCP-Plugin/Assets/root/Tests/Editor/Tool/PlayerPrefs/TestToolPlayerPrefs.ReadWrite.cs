@@ -10,6 +10,7 @@
 
 #nullable enable
 using com.IvanMurzak.Unity.MCP.Editor.API;
+using Extensions.Unity.PlayerPrefsEx;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -24,7 +25,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             const int expectedValue = 12345;
-            PlayerPrefs.SetInt(TestKeyInt, expectedValue);
+            PlayerPrefsEx.SetInt(TestKeyInt, expectedValue);
 
             // Act
             var result = _tool.ReadKey(TestKeyInt);
@@ -38,7 +39,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             const float expectedValue = 2.71828f;
-            PlayerPrefs.SetFloat(TestKeyFloat, expectedValue);
+            PlayerPrefsEx.SetFloat(TestKeyFloat, expectedValue);
 
             // Act
             var result = _tool.ReadKey(TestKeyFloat);
@@ -52,7 +53,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             const string expectedValue = "Test String Value";
-            PlayerPrefs.SetString(TestKeyString, expectedValue);
+            PlayerPrefsEx.SetString(TestKeyString, expectedValue);
 
             // Act
             var result = _tool.ReadKey(TestKeyString);
@@ -106,11 +107,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             const int expectedValue = 999;
 
             // Act
-            var result = _tool.WriteKey(key, expectedValue.ToString(), Tool_PlayerPrefs.PlayerPrefsValueType.@int);
+            var result = _tool.WriteKey(key, expectedValue.ToString(), Tool_PlayerPrefs.PlayerPrefsValueType.Int);
 
             // Assert
             ResultValidation(result);
-            Assert.AreEqual(expectedValue, PlayerPrefs.GetInt(key), "Value should be written correctly.");
+            Assert.AreEqual(expectedValue, PlayerPrefsEx.GetInt(key, 0), "Value should be written correctly.");
         }
 
         [Test]
@@ -121,11 +122,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             const float expectedValue = 1.618f;
 
             // Act
-            var result = _tool.WriteKey(key, expectedValue.ToString(), Tool_PlayerPrefs.PlayerPrefsValueType.@float);
+            var result = _tool.WriteKey(key, expectedValue.ToString(), Tool_PlayerPrefs.PlayerPrefsValueType.Float);
 
             // Assert
             ResultValidation(result);
-            Assert.AreEqual(expectedValue, PlayerPrefs.GetFloat(key), 0.0001f, "Value should be written correctly.");
+            Assert.AreEqual(expectedValue, PlayerPrefsEx.GetFloat(key, 0f), 0.0001f, "Value should be written correctly.");
         }
 
         [Test]
@@ -136,18 +137,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             const string expectedValue = "Hello PlayerPrefs!";
 
             // Act
-            var result = _tool.WriteKey(key, expectedValue, Tool_PlayerPrefs.PlayerPrefsValueType.@string);
+            var result = _tool.WriteKey(key, expectedValue, Tool_PlayerPrefs.PlayerPrefsValueType.String);
 
             // Assert
             ResultValidation(result);
-            Assert.AreEqual(expectedValue, PlayerPrefs.GetString(key), "Value should be written correctly.");
+            Assert.AreEqual(expectedValue, PlayerPrefsEx.GetString(key, string.Empty), "Value should be written correctly.");
         }
 
         [Test]
         public void WriteKey_NullKey_ReturnsError()
         {
             // Act
-            var result = _tool.WriteKey(null!, "value", Tool_PlayerPrefs.PlayerPrefsValueType.@string);
+            var result = _tool.WriteKey(null!, "value", Tool_PlayerPrefs.PlayerPrefsValueType.String);
 
             // Assert
             ErrorValidation(result, "cannot be null or empty");
@@ -157,7 +158,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void WriteKey_EmptyKey_ReturnsError()
         {
             // Act
-            var result = _tool.WriteKey(string.Empty, "value", Tool_PlayerPrefs.PlayerPrefsValueType.@string);
+            var result = _tool.WriteKey(string.Empty, "value", Tool_PlayerPrefs.PlayerPrefsValueType.String);
 
             // Assert
             ErrorValidation(result, "cannot be null or empty");
@@ -167,7 +168,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void WriteKey_NullValue_ReturnsError()
         {
             // Act
-            var result = _tool.WriteKey(TestKeyString, null!, Tool_PlayerPrefs.PlayerPrefsValueType.@string);
+            var result = _tool.WriteKey(TestKeyString, null!, Tool_PlayerPrefs.PlayerPrefsValueType.String);
 
             // Assert
             ErrorValidation(result, "cannot be null");
@@ -177,7 +178,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void WriteKey_InvalidIntValue_ReturnsError()
         {
             // Act
-            var result = _tool.WriteKey(TestKeyInt, "not_a_number", Tool_PlayerPrefs.PlayerPrefsValueType.@int);
+            var result = _tool.WriteKey(TestKeyInt, "not_a_number", Tool_PlayerPrefs.PlayerPrefsValueType.Int);
 
             // Assert
             ErrorValidation(result, "Cannot parse");
@@ -187,7 +188,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void WriteKey_InvalidFloatValue_ReturnsError()
         {
             // Act
-            var result = _tool.WriteKey(TestKeyFloat, "not_a_float", Tool_PlayerPrefs.PlayerPrefsValueType.@float);
+            var result = _tool.WriteKey(TestKeyFloat, "not_a_float", Tool_PlayerPrefs.PlayerPrefsValueType.Float);
 
             // Assert
             ErrorValidation(result, "Cannot parse");
@@ -201,11 +202,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             const int expectedValue = -12345;
 
             // Act
-            var result = _tool.WriteKey(key, expectedValue.ToString(), Tool_PlayerPrefs.PlayerPrefsValueType.@int);
+            var result = _tool.WriteKey(key, expectedValue.ToString(), Tool_PlayerPrefs.PlayerPrefsValueType.Int);
 
             // Assert
             ResultValidation(result);
-            Assert.AreEqual(expectedValue, PlayerPrefs.GetInt(key), "Negative value should be written correctly.");
+            Assert.AreEqual(expectedValue, PlayerPrefsEx.GetInt(key, 0), "Negative value should be written correctly.");
         }
 
         [Test]
@@ -216,11 +217,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             const float expectedValue = -3.14159f;
 
             // Act
-            var result = _tool.WriteKey(key, expectedValue.ToString(), Tool_PlayerPrefs.PlayerPrefsValueType.@float);
+            var result = _tool.WriteKey(key, expectedValue.ToString(), Tool_PlayerPrefs.PlayerPrefsValueType.Float);
 
             // Assert
             ResultValidation(result);
-            Assert.AreEqual(expectedValue, PlayerPrefs.GetFloat(key), 0.0001f, "Negative float should be written correctly.");
+            Assert.AreEqual(expectedValue, PlayerPrefsEx.GetFloat(key, 0f), 0.0001f, "Negative float should be written correctly.");
         }
 
         [Test]
@@ -231,11 +232,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             const string expectedValue = "";
 
             // Act
-            var result = _tool.WriteKey(key, expectedValue, Tool_PlayerPrefs.PlayerPrefsValueType.@string);
+            var result = _tool.WriteKey(key, expectedValue, Tool_PlayerPrefs.PlayerPrefsValueType.String);
 
             // Assert
             ResultValidation(result);
-            Assert.AreEqual(expectedValue, PlayerPrefs.GetString(key), "Empty string should be written correctly.");
+            Assert.AreEqual(expectedValue, PlayerPrefsEx.GetString(key, string.Empty), "Empty string should be written correctly.");
         }
 
         [Test]
@@ -243,14 +244,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             const string key = TestKeyInt;
-            PlayerPrefs.SetInt(key, 100);
+            PlayerPrefsEx.SetInt(key, 100);
 
             // Act
-            var result = _tool.WriteKey(key, "200", Tool_PlayerPrefs.PlayerPrefsValueType.@int);
+            var result = _tool.WriteKey(key, "200", Tool_PlayerPrefs.PlayerPrefsValueType.Int);
 
             // Assert
             ResultValidation(result);
-            Assert.AreEqual(200, PlayerPrefs.GetInt(key), "Value should be overwritten.");
+            Assert.AreEqual(200, PlayerPrefsEx.GetInt(key, 0), "Value should be overwritten.");
         }
 
         #endregion

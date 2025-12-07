@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using Extensions.Unity.PlayerPrefsEx;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -22,15 +23,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void DeleteKey_ExistingKey_DeletesSuccessfully()
         {
             // Arrange
-            PlayerPrefs.SetInt(TestKeyInt, 42);
-            Assert.IsTrue(PlayerPrefs.HasKey(TestKeyInt), "Key should exist before deletion.");
+            PlayerPrefsEx.SetInt(TestKeyInt, 42);
+            Assert.IsTrue(PlayerPrefsEx.HasKey<int>(TestKeyInt), "Key should exist before deletion.");
 
             // Act
             var result = _tool.DeleteKey(TestKeyInt);
 
             // Assert
             ResultValidation(result);
-            Assert.IsFalse(PlayerPrefs.HasKey(TestKeyInt), "Key should not exist after deletion.");
+            Assert.IsFalse(PlayerPrefsEx.HasKey<int>(TestKeyInt), "Key should not exist after deletion.");
         }
 
         [Test]
@@ -70,42 +71,42 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void DeleteKey_IntKey_DeletesSuccessfully()
         {
             // Arrange
-            PlayerPrefs.SetInt(TestKeyInt, 999);
+            PlayerPrefsEx.SetInt(TestKeyInt, 999);
 
             // Act
             var result = _tool.DeleteKey(TestKeyInt);
 
             // Assert
             ResultValidation(result);
-            Assert.IsFalse(PlayerPrefs.HasKey(TestKeyInt), "Int key should be deleted.");
+            Assert.IsFalse(PlayerPrefsEx.HasKey<int>(TestKeyInt), "Int key should be deleted.");
         }
 
         [Test]
         public void DeleteKey_FloatKey_DeletesSuccessfully()
         {
             // Arrange
-            PlayerPrefs.SetFloat(TestKeyFloat, 3.14f);
+            PlayerPrefsEx.SetFloat(TestKeyFloat, 3.14f);
 
             // Act
             var result = _tool.DeleteKey(TestKeyFloat);
 
             // Assert
             ResultValidation(result);
-            Assert.IsFalse(PlayerPrefs.HasKey(TestKeyFloat), "Float key should be deleted.");
+            Assert.IsFalse(PlayerPrefsEx.HasKey<float>(TestKeyFloat), "Float key should be deleted.");
         }
 
         [Test]
         public void DeleteKey_StringKey_DeletesSuccessfully()
         {
             // Arrange
-            PlayerPrefs.SetString(TestKeyString, "Hello");
+            PlayerPrefsEx.SetString(TestKeyString, "Hello");
 
             // Act
             var result = _tool.DeleteKey(TestKeyString);
 
             // Assert
             ResultValidation(result);
-            Assert.IsFalse(PlayerPrefs.HasKey(TestKeyString), "String key should be deleted.");
+            Assert.IsFalse(PlayerPrefsEx.HasKey<string>(TestKeyString), "String key should be deleted.");
         }
 
         #endregion
@@ -116,18 +117,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void DeleteAllKeys_WithExistingKeys_DeletesAll()
         {
             // Arrange
-            PlayerPrefs.SetInt(TestKeyInt, 42);
-            PlayerPrefs.SetFloat(TestKeyFloat, 3.14f);
-            PlayerPrefs.SetString(TestKeyString, "Hello");
+            PlayerPrefsEx.SetInt(TestKeyInt, 42);
+            PlayerPrefsEx.SetFloat(TestKeyFloat, 3.14f);
+            PlayerPrefsEx.SetString(TestKeyString, "Hello");
 
             // Act
             var result = _tool.DeleteAllKeys();
 
             // Assert
             ResultValidation(result);
-            Assert.IsFalse(PlayerPrefs.HasKey(TestKeyInt), "Int key should be deleted.");
-            Assert.IsFalse(PlayerPrefs.HasKey(TestKeyFloat), "Float key should be deleted.");
-            Assert.IsFalse(PlayerPrefs.HasKey(TestKeyString), "String key should be deleted.");
+            Assert.IsFalse(PlayerPrefsEx.HasKey<int>(TestKeyInt), "Int key should be deleted.");
+            Assert.IsFalse(PlayerPrefsEx.HasKey<float>(TestKeyFloat), "Float key should be deleted.");
+            Assert.IsFalse(PlayerPrefsEx.HasKey<string>(TestKeyString), "String key should be deleted.");
         }
 
         [Test]
@@ -151,7 +152,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void Save_AfterWriting_SavesSuccessfully()
         {
             // Arrange
-            PlayerPrefs.SetInt(TestKeyInt, 42);
+            PlayerPrefsEx.SetInt(TestKeyInt, 42);
 
             // Act
             var result = _tool.Save();

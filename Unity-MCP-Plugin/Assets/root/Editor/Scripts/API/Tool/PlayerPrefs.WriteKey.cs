@@ -13,6 +13,7 @@ using System;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using Extensions.Unity.PlayerPrefsEx;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -21,9 +22,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         public enum PlayerPrefsValueType
         {
-            @int,
-            @float,
-            @string
+            Int,
+            Float,
+            String
         }
 
         [McpPluginTool
@@ -51,22 +52,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             try
             {
+                // Delete key from all types first to ensure clean overwrite
+                // PlayerPrefsEx stores each type separately, so we need to clear all
+                if (PlayerPrefsEx.HasKey<int>(key))
+                    PlayerPrefsEx.DeleteKey<int>(key);
+                if (PlayerPrefsEx.HasKey<float>(key))
+                    PlayerPrefsEx.DeleteKey<float>(key);
+                if (PlayerPrefsEx.HasKey<string>(key))
+                    PlayerPrefsEx.DeleteKey<string>(key);
+                if (PlayerPrefsEx.HasKey<bool>(key))
+                    PlayerPrefsEx.DeleteKey<bool>(key);
+
                 switch (valueType)
                 {
-                    case PlayerPrefsValueType.@int:
+                    case PlayerPrefsValueType.Int:
                         if (!int.TryParse(value, out int intValue))
                             return Error.FailedToWriteValue($"Cannot parse '{value}' as int.");
-                        PlayerPrefs.SetInt(key, intValue);
+                        PlayerPrefsEx.SetInt(key, intValue);
                         return $"[Success] Wrote int value '{intValue}' to key '{key}'.";
 
-                    case PlayerPrefsValueType.@float:
+                    case PlayerPrefsValueType.Float:
                         if (!float.TryParse(value, out float floatValue))
                             return Error.FailedToWriteValue($"Cannot parse '{value}' as float.");
-                        PlayerPrefs.SetFloat(key, floatValue);
+                        PlayerPrefsEx.SetFloat(key, floatValue);
                         return $"[Success] Wrote float value '{floatValue}' to key '{key}'.";
 
-                    case PlayerPrefsValueType.@string:
-                        PlayerPrefs.SetString(key, value);
+                    case PlayerPrefsValueType.String:
+                        PlayerPrefsEx.SetString(key, value);
                         return $"[Success] Wrote string value '{value}' to key '{key}'.";
 
                     default:

@@ -12,6 +12,7 @@
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using Extensions.Unity.PlayerPrefsEx;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -34,10 +35,36 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (string.IsNullOrEmpty(key))
                 return Error.KeyIsNullOrEmpty();
 
-            if (!PlayerPrefs.HasKey(key))
+            // Check if key exists in any type and delete it
+            bool deleted = false;
+            
+            if (PlayerPrefsEx.HasKey<int>(key))
+            {
+                PlayerPrefsEx.DeleteKey<int>(key);
+                deleted = true;
+            }
+            
+            if (PlayerPrefsEx.HasKey<float>(key))
+            {
+                PlayerPrefsEx.DeleteKey<float>(key);
+                deleted = true;
+            }
+            
+            if (PlayerPrefsEx.HasKey<string>(key))
+            {
+                PlayerPrefsEx.DeleteKey<string>(key);
+                deleted = true;
+            }
+            
+            if (PlayerPrefsEx.HasKey<bool>(key))
+            {
+                PlayerPrefsEx.DeleteKey<bool>(key);
+                deleted = true;
+            }
+            
+            if (!deleted)
                 return Error.KeyDoesNotExist(key);
 
-            PlayerPrefs.DeleteKey(key);
             return $"[Success] Deleted key '{key}' from PlayerPrefs.";
         });
     }

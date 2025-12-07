@@ -12,6 +12,7 @@
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using Extensions.Unity.PlayerPrefsEx;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -27,7 +28,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         public string Save()
         => MainThread.Instance.Run(() =>
         {
-            PlayerPrefs.Save();
+            PlayerPrefsEx.Save();
             return "[Success] PlayerPrefs saved to disk.";
         });
     }

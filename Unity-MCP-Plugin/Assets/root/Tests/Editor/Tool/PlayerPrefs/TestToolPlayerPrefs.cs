@@ -10,6 +10,7 @@
 
 #nullable enable
 using com.IvanMurzak.Unity.MCP.Editor.API;
+using Extensions.Unity.PlayerPrefsEx;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -38,17 +39,41 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Clean up test keys after each test
             CleanupTestKeys();
-            PlayerPrefs.Save();
+            PlayerPrefsEx.Save();
         }
 
         void CleanupTestKeys()
         {
-            PlayerPrefs.DeleteKey(TestKeyInt);
-            PlayerPrefs.DeleteKey(TestKeyFloat);
-            PlayerPrefs.DeleteKey(TestKeyString);
+            // Delete keys from PlayerPrefsEx for all possible types
+            if (PlayerPrefsEx.HasKey<int>(TestKeyInt))
+                PlayerPrefsEx.DeleteKey<int>(TestKeyInt);
+            if (PlayerPrefsEx.HasKey<float>(TestKeyInt))
+                PlayerPrefsEx.DeleteKey<float>(TestKeyInt);
+            if (PlayerPrefsEx.HasKey<string>(TestKeyInt))
+                PlayerPrefsEx.DeleteKey<string>(TestKeyInt);
+            if (PlayerPrefsEx.HasKey<bool>(TestKeyInt))
+                PlayerPrefsEx.DeleteKey<bool>(TestKeyInt);
+
+            if (PlayerPrefsEx.HasKey<int>(TestKeyFloat))
+                PlayerPrefsEx.DeleteKey<int>(TestKeyFloat);
+            if (PlayerPrefsEx.HasKey<float>(TestKeyFloat))
+                PlayerPrefsEx.DeleteKey<float>(TestKeyFloat);
+            if (PlayerPrefsEx.HasKey<string>(TestKeyFloat))
+                PlayerPrefsEx.DeleteKey<string>(TestKeyFloat);
+            if (PlayerPrefsEx.HasKey<bool>(TestKeyFloat))
+                PlayerPrefsEx.DeleteKey<bool>(TestKeyFloat);
+
+            if (PlayerPrefsEx.HasKey<int>(TestKeyString))
+                PlayerPrefsEx.DeleteKey<int>(TestKeyString);
+            if (PlayerPrefsEx.HasKey<float>(TestKeyString))
+                PlayerPrefsEx.DeleteKey<float>(TestKeyString);
+            if (PlayerPrefsEx.HasKey<string>(TestKeyString))
+                PlayerPrefsEx.DeleteKey<string>(TestKeyString);
+            if (PlayerPrefsEx.HasKey<bool>(TestKeyString))
+                PlayerPrefsEx.DeleteKey<bool>(TestKeyString);
 
             // Delete any keys that start with the test prefix
-            // Note: PlayerPrefs doesn't have a way to enumerate keys,
+            // Note: PlayerPrefsEx doesn't have a way to enumerate keys,
             // so we just delete the known test keys
         }
 
