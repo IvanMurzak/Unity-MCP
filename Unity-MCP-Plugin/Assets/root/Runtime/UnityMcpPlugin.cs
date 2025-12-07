@@ -59,14 +59,19 @@ namespace com.IvanMurzak.Unity.MCP
                 NotifyChanged(data);
         }
 
-        public void Dispose()
+        public void DisposeMcpPluginInstance()
         {
-            _disposables.Dispose();
             lock (buildMutex)
             {
                 mcpPluginInstance?.Dispose();
                 mcpPluginInstance = null;
             }
+        }
+
+        public void Dispose()
+        {
+            _disposables.Dispose();
+            DisposeMcpPluginInstance();
         }
     }
 }
