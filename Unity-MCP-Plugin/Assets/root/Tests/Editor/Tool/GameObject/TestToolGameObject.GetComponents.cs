@@ -39,7 +39,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             }}";
             Debug.Log($"Stringified request JSON:\n{json}");
 
-            var parameters = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
+            var parameters = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
             Assert.IsNotNull(parameters, "Parameters should be deserialized");
 
             var toolName = typeof(Tool_GameObject)
