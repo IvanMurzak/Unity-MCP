@@ -51,7 +51,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             while (!task.IsCompleted) yield return null;
 
             var result = task.Result.Message;
-            ResultValidation(result);
+            Assert.IsNotNull(result);
+            Assert.IsTrue(result!.Contains(GO_Child1Name), $"Result should contain {GO_Child1Name}");
 
             // The message is just success status now. The data is in Value.
             // But RunCallTool returns ResponseCallTool which wraps the result.
@@ -81,7 +82,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             Assert.AreEqual(ResponseStatus.Success, response.Status);
             Assert.IsNotNull(response.StructuredContent);
-            var findResponse = JsonSerializer.Deserialize<Tool_GameObject.GameObjectFindResponse>(response.StructuredContent!.ToJsonString());
+            var findResponse = DeserializeResponse(response.StructuredContent);
             Assert.IsNotNull(findResponse);
             Assert.IsNotNull(findResponse!.Hierarchy);
 
