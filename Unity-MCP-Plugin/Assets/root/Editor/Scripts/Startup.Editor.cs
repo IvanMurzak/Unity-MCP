@@ -17,6 +17,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 {
     public static partial class Startup
     {
+        public static com.IvanMurzak.Unity.MCP.LogUtils LogUtils { get; private set; }
+
         static void SubscribeOnEditorEvents()
         {
             Application.unloading += OnApplicationUnloading;
@@ -39,7 +41,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 Debug.Log($"{nameof(Startup)} {nameof(OnApplicationUnloading)} triggered: No UnityMcpPlugin instance to disconnect.");
             }
-            LogUtils.SaveToFileImmediate();
+            if (LogUtils != null)
+            {
+                LogUtils.SaveToFileImmediate();
+                LogUtils.Dispose();
+            }
         }
         static void OnApplicationQuitting()
         {
@@ -52,7 +58,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 Debug.Log($"{nameof(Startup)} {nameof(OnApplicationQuitting)} triggered: No UnityMcpPlugin instance to disconnect.");
             }
-            _ = LogUtils.HandleQuit();
+            if (LogUtils != null)
+            {
+                _ = LogUtils.HandleQuit();
+            }
         }
         static void OnBeforeAssemblyReload()
         {
@@ -65,7 +74,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 Debug.Log($"{nameof(Startup)} {nameof(OnBeforeAssemblyReload)} triggered: No UnityMcpPlugin instance to disconnect.");
             }
-            LogUtils.SaveToFileImmediate();
+            if (LogUtils != null)
+            {
+                LogUtils.SaveToFileImmediate();
+                LogUtils.Dispose();
+            }
         }
         static void OnAfterAssemblyReload()
         {
@@ -79,7 +92,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             if (connectionAllowed)
                 UnityMcpPlugin.ConnectIfNeeded();
 
-            _ = LogUtils.LoadFromFile();
+            if (LogUtils != null)
+            {
+                _ = LogUtils.LoadFromFile();
+            }
         }
 
         static void OnPlayModeStateChanged(PlayModeStateChange state)

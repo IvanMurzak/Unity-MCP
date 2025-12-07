@@ -22,6 +22,7 @@ namespace com.IvanMurzak.Unity.MCP
 {
     internal class LogCache : IDisposable
     {
+        readonly LogUtils _logUtils;
         readonly string _cacheFilePath;
         readonly string _cacheFileName;
         readonly string _cacheFile;
@@ -29,14 +30,16 @@ namespace com.IvanMurzak.Unity.MCP
         readonly SemaphoreSlim _fileLock = new(1, 1);
         readonly CancellationTokenSource _shutdownCts = new();
         bool _saving = false;
+        int _lastSavedCount = 0;
 
         IDisposable? timerSubscription;
 
-        internal LogCache(string? cacheFilePath = null, string? cacheFileName = null, JsonSerializerOptions? jsonOptions = null)
+        internal LogCache(LogUtils logUtils, string? cacheFilePath = null, string? cacheFileName = null, JsonSerializerOptions? jsonOptions = null)
         {
             if (!MainThread.Instance.IsMainThread)
-                throw new System.Exception($"{nameof(LogCache)} must be initialized on the main thread.");
+                throw new Exception($"{nameof(LogCache)} must be initialized on the main thread.");
 
+            _logUtils = logUtils;
             _cacheFilePath = cacheFilePath ?? (Application.isEditor
                 ? $"{Path.GetDirectoryName(Application.dataPath)}/Temp/mcp-server"
                 : $"{Application.persistentDataPath}/Temp/mcp-server");
@@ -73,21 +76,46 @@ namespace com.IvanMurzak.Unity.MCP
 
         public async Task HandleLogCache()
         {
-            if (LogUtils.LogEntries > 0)
+            var logs = _logUtils.GetAllLogs();
+            if (logs.Length < _lastSavedCount)
             {
-                var logs = LogUtils.GetAllLogs();
-                await CacheLogEntriesAsync(logs);
+                _lastSavedCount = 0;
+            }
+
+            if (logs.Length > _lastSavedCount)
+            {
+                var newLogs = new LogEntry[logs.Length - _lastSavedCount];
+                Array.Copy(logs, _lastSavedCount, newLogs, 0, newLogs.Length);
+                await AppendCacheEntriesAsync(newLogs);
+                _lastSavedCount = logs.Length;
             }
         }
 
-        public Task CacheLogEntriesAsync(LogEntry[] entries)
+        public void HandleLogCacheImmediate()
+        {
+            var logs = _logUtils.GetAllLogs();
+            if (logs.Length < _lastSavedCount)
+            {
+                _lastSavedCount = 0;
+            }
+
+            if (logs.Length > _lastSavedCount)
+            {
+                var newLogs = new LogEntry[logs.Length - _lastSavedCount];
+                Array.Copy(logs, _lastSavedCount, newLogs, 0, newLogs.Length);
+                AppendCacheEntries(newLogs);
+                _lastSavedCount = logs.Length;
+            }
+        }
+
+        Task AppendCacheEntriesAsync(LogEntry[] entries)
         {
             return Task.Run(async () =>
             {
                 await _fileLock.WaitAsync();
                 try
                 {
-                    WriteCacheToFile(entries);
+                    AppendCacheToFile(entries);
                 }
                 finally
                 {
@@ -96,12 +124,12 @@ namespace com.IvanMurzak.Unity.MCP
             });
         }
 
-        public void CacheLogEntries(LogEntry[] entries)
+        void AppendCacheEntries(LogEntry[] entries)
         {
             _fileLock.Wait();
             try
             {
-                WriteCacheToFile(entries);
+                AppendCacheToFile(entries);
             }
             finally
             {
@@ -109,28 +137,43 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
-        void WriteCacheToFile(LogEntry[] entries)
+        void AppendCacheToFile(LogEntry[] entries)
         {
             _saving = true;
-            var data = new LogWrapper { Entries = entries };
 
             if (!Directory.Exists(_cacheFilePath))
                 Directory.CreateDirectory(_cacheFilePath);
 
-            // Stream JSON directly to file without creating entire JSON string in memory
-            var tempFile = _cacheFile + ".tmp";
-            using (var fileStream = new FileStream(tempFile, FileMode.Create, FileAccess.Write, FileShare.None, bufferSize: 4096, useAsync: false))
+            using (var fileStream = new FileStream(_cacheFile, FileMode.Append, FileAccess.Write, FileShare.ReadWrite, bufferSize: 4096, useAsync: false))
             {
-                System.Text.Json.JsonSerializer.Serialize(fileStream, data, _jsonOptions);
+                foreach (var entry in entries)
+                {
+                    System.Text.Json.JsonSerializer.Serialize(fileStream, entry, _jsonOptions);
+                    fileStream.WriteByte((byte)'\n');
+                }
                 fileStream.Flush();
             }
-
-            // Atomic file replacement
-            if (File.Exists(_cacheFile))
-                File.Delete(_cacheFile);
-            File.Move(tempFile, _cacheFile);
             _saving = false;
         }
+
+        public void ClearCacheFile()
+        {
+            _fileLock.Wait();
+            try
+            {
+                File.Delete(_cacheFile);
+
+                if (File.Exists(_cacheFile))
+                    Debug.LogError($"Failed to delete cache file: {_cacheFile}");
+
+                _lastSavedCount = 0;
+            }
+            finally
+            {
+                _fileLock.Release();
+            }
+        }
+
         public Task<LogWrapper?> GetCachedLogEntriesAsync()
         {
             return Task.Run(async () =>
@@ -141,8 +184,25 @@ namespace com.IvanMurzak.Unity.MCP
                     if (!File.Exists(_cacheFile))
                         return null;
 
-                    using var fileStream = File.OpenRead(_cacheFile);
-                    return await System.Text.Json.JsonSerializer.DeserializeAsync<LogWrapper>(fileStream, _jsonOptions);
+                    var entries = new System.Collections.Generic.List<LogEntry>();
+                    using (var reader = new StreamReader(_cacheFile))
+                    {
+                        string? line;
+                        while ((line = await reader.ReadLineAsync()) != null)
+                        {
+                            if (!string.IsNullOrWhiteSpace(line))
+                            {
+                                try
+                                {
+                                    var entry = System.Text.Json.JsonSerializer.Deserialize<LogEntry>(line, _jsonOptions);
+                                    if (entry != null) entries.Add(entry);
+                                }
+                                catch { }
+                            }
+                        }
+                    }
+                    _lastSavedCount = entries.Count;
+                    return new LogWrapper { Entries = entries.ToArray() };
                 }
                 finally
                 {
@@ -153,6 +213,8 @@ namespace com.IvanMurzak.Unity.MCP
 
         public void Dispose()
         {
+            if (_shutdownCts.IsCancellationRequested) return;
+
             timerSubscription?.Dispose();
             timerSubscription = null;
 

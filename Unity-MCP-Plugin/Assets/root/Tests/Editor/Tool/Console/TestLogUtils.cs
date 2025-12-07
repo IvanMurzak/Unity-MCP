@@ -21,18 +21,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     public class TestLogUtils : BaseTest
     {
         private const int Timeout = 100000;
+        private LogUtils _logUtils;
 
         [SetUp]
         public void TestSetUp()
         {
-            LogUtils.ClearLogs();
+            _logUtils = new LogUtils("test-editor-logs.txt");
+            _logUtils.ClearCacheFile();
+        }
+
+        [TearDown]
+        public void TestTearDown()
+        {
+            _logUtils.Dispose();
         }
 
         [UnityTest]
         public IEnumerator SaveToFile_LoadFromFile_PreservesAllLogTypes()
         {
             // Test that all Unity log types are preserved during save/load
-            LogUtils.ClearLogs();
+            _logUtils.ClearLogs();
             yield return null;
 
             var testData = new[]
@@ -71,15 +79,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             yield return WaitForLogCount(testData.Length);
 
             // Save to file
-            yield return WaitForTask(LogUtils.SaveToFile());
+            yield return WaitForTask(_logUtils.SaveToFile());
 
             // Clear and reload
-            LogUtils.ClearLogs();
-            Assert.AreEqual(0, LogUtils.LogEntries);
+            _logUtils.ClearLogs(false);
+            Assert.AreEqual(0, _logUtils.LogEntries);
 
-            yield return WaitForTask(LogUtils.LoadFromFile());
+            yield return WaitForTask(_logUtils.LoadFromFile());
 
-            var loadedLogs = LogUtils.GetAllLogs();
+            var loadedLogs = _logUtils.GetAllLogs();
             Assert.AreEqual(testData.Length, loadedLogs.Length, "All log types should be preserved");
 
             // Verify each log type is preserved
@@ -95,7 +103,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public IEnumerator SaveToFile_LoadFromFile_PreservesSpecialCharacters()
         {
             // Test that special characters, unicode, and formatting are preserved
-            LogUtils.ClearLogs();
+            _logUtils.ClearLogs();
             yield return null;
 
             var specialMessages = new[]
@@ -118,11 +126,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             yield return WaitForLogCount(specialMessages.Length);
 
             // Save and reload
-            yield return WaitForTask(LogUtils.SaveToFile());
-            LogUtils.ClearLogs();
-            yield return WaitForTask(LogUtils.LoadFromFile());
+            yield return WaitForTask(_logUtils.SaveToFile());
+            _logUtils.ClearLogs(false);
+            yield return WaitForTask(_logUtils.LoadFromFile());
 
-            var loadedLogs = LogUtils.GetAllLogs();
+            var loadedLogs = _logUtils.GetAllLogs();
             Assert.AreEqual(specialMessages.Length, loadedLogs.Length, "All logs should be preserved");
 
             // Verify exact message preservation
@@ -145,7 +153,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 Application.SetStackTraceLogType(LogType.Warning, StackTraceLogType.ScriptOnly);
 
                 // Test that stack traces are preserved
-                LogUtils.ClearLogs();
+                _logUtils.ClearLogs();
                 yield return null;
 
                 // Generate logs with stack traces (only warnings, as errors/assertions fail tests)
@@ -156,7 +164,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 const int expectedLogs = 3;
                 yield return WaitForLogCount(expectedLogs);
 
-                var originalLogs = LogUtils.GetAllLogs();
+                var originalLogs = _logUtils.GetAllLogs();
                 Assert.AreEqual(expectedLogs, originalLogs.Length);
 
                 // Verify original logs have stack traces
@@ -167,11 +175,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }
 
                 // Save and reload
-                yield return WaitForTask(LogUtils.SaveToFile());
-                LogUtils.ClearLogs();
-                yield return WaitForTask(LogUtils.LoadFromFile());
+                yield return WaitForTask(_logUtils.SaveToFile());
+                _logUtils.ClearLogs(false);
+                yield return WaitForTask(_logUtils.LoadFromFile());
 
-                var loadedLogs = LogUtils.GetAllLogs();
+                var loadedLogs = _logUtils.GetAllLogs();
                 Assert.AreEqual(expectedLogs, loadedLogs.Length, "All logs should be preserved");
 
                 // Verify stack traces are preserved
@@ -196,7 +204,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public IEnumerator SaveToFile_LoadFromFile_PreservesTimestamps()
         {
             // Test that timestamps are preserved with accuracy
-            LogUtils.ClearLogs();
+            _logUtils.ClearLogs();
             yield return null;
 
             const int testCount = 5;
@@ -207,15 +215,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             yield return WaitForLogCount(testCount);
 
-            var originalLogs = LogUtils.GetAllLogs();
+            var originalLogs = _logUtils.GetAllLogs();
             var originalTimestamps = originalLogs.Select(log => log.Timestamp).ToArray();
 
             // Save and reload
-            yield return WaitForTask(LogUtils.SaveToFile());
-            LogUtils.ClearLogs();
-            yield return WaitForTask(LogUtils.LoadFromFile());
+            yield return WaitForTask(_logUtils.SaveToFile());
+            _logUtils.ClearLogs(false);
+            yield return WaitForTask(_logUtils.LoadFromFile());
 
-            var loadedLogs = LogUtils.GetAllLogs();
+            var loadedLogs = _logUtils.GetAllLogs();
             Assert.AreEqual(testCount, loadedLogs.Length);
 
             // Verify timestamps are preserved (allowing for minimal serialization precision loss)
@@ -237,26 +245,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public IEnumerator SaveToFile_LoadFromFile_HandlesEmptyLogs()
         {
             // Test saving/loading when there are no logs
-            LogUtils.ClearLogs();
+            _logUtils.ClearLogs();
             yield return null;
 
-            Assert.AreEqual(0, LogUtils.LogEntries);
+            Assert.AreEqual(0, _logUtils.LogEntries);
 
             // Save empty logs
-            yield return WaitForTask(LogUtils.SaveToFile());
+            yield return WaitForTask(_logUtils.SaveToFile());
 
             // Try to load (should result in empty logs)
-            yield return WaitForTask(LogUtils.LoadFromFile());
+            yield return WaitForTask(_logUtils.LoadFromFile());
 
-            Assert.AreEqual(0, LogUtils.LogEntries, "Loading empty logs should result in zero entries");
-            Assert.AreEqual(0, LogUtils.GetAllLogs().Length);
+            Assert.AreEqual(0, _logUtils.LogEntries, "Loading empty logs should result in zero entries");
+            Assert.AreEqual(0, _logUtils.GetAllLogs().Length);
         }
 
         [UnityTest]
         public IEnumerator SaveToFile_LoadFromFile_HandlesLargeMessages()
         {
             // Test very long log messages
-            LogUtils.ClearLogs();
+            _logUtils.ClearLogs();
             yield return null;
 
             var largeMessage = new string('A', 10000); // 10KB message
@@ -272,11 +280,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
 
             // Save and reload
-            yield return WaitForTask(LogUtils.SaveToFile());
-            LogUtils.ClearLogs();
-            yield return WaitForTask(LogUtils.LoadFromFile());
+            yield return WaitForTask(_logUtils.SaveToFile());
+            _logUtils.ClearLogs(false);
+            yield return WaitForTask(_logUtils.LoadFromFile());
 
-            var loadedLogs = LogUtils.GetAllLogs();
+            var loadedLogs = _logUtils.GetAllLogs();
             Assert.AreEqual(expectedLogs, loadedLogs.Length);
 
             // Verify large messages are preserved exactly
@@ -292,7 +300,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public IEnumerator SaveToFile_LoadFromFile_MultipleSaveCycles()
         {
             // Test multiple save/load cycles to ensure data integrity over time
-            LogUtils.ClearLogs();
+            _logUtils.ClearLogs();
             yield return null;
 
             const int cycles = 3;
@@ -309,18 +317,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 yield return WaitForLogCount((cycle + 1) * logsPerCycle);
 
                 // Save to file
-                yield return WaitForTask(LogUtils.SaveToFile());
+                yield return WaitForTask(_logUtils.SaveToFile());
 
                 // Verify count before clearing
-                Assert.AreEqual((cycle + 1) * logsPerCycle, LogUtils.LogEntries,
+                Assert.AreEqual((cycle + 1) * logsPerCycle, _logUtils.LogEntries,
                     $"Should have {(cycle + 1) * logsPerCycle} logs after cycle {cycle}");
 
                 // Clear and reload
-                LogUtils.ClearLogs();
-                yield return WaitForTask(LogUtils.LoadFromFile());
+                _logUtils.ClearLogs(false);
+                yield return WaitForTask(_logUtils.LoadFromFile());
 
                 // Verify all logs from all cycles are still present
-                var loadedLogs = LogUtils.GetAllLogs();
+                var loadedLogs = _logUtils.GetAllLogs();
                 Assert.AreEqual((cycle + 1) * logsPerCycle, loadedLogs.Length,
                     $"All logs should be preserved after cycle {cycle}");
 
@@ -341,7 +349,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public IEnumerator SaveToFile_LoadFromFile_PreservesLogOrder()
         {
             // Test that log order is preserved
-            LogUtils.ClearLogs();
+            _logUtils.ClearLogs();
             yield return null;
 
             const int testCount = 20;
@@ -359,11 +367,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
 
             // Save and reload
-            yield return WaitForTask(LogUtils.SaveToFile());
-            LogUtils.ClearLogs();
-            yield return WaitForTask(LogUtils.LoadFromFile());
+            yield return WaitForTask(_logUtils.SaveToFile());
+            _logUtils.ClearLogs(false);
+            yield return WaitForTask(_logUtils.LoadFromFile());
 
-            var loadedLogs = LogUtils.GetAllLogs();
+            var loadedLogs = _logUtils.GetAllLogs();
             Assert.AreEqual(testCount, loadedLogs.Length);
 
             // Verify order is preserved by comparing timestamps
@@ -382,12 +390,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             }
         }
 
+        [Test]
+        public void SaveToFileImmediate_WritesSynchronously()
+        {
+            // Test synchronous save
+            _logUtils.ClearLogs();
+
+            Debug.Log("Immediate save test");
+
+            // Since this is a synchronous test, we can't easily wait for the log callback if it's delayed.
+            // But we can verify that the method executes without throwing exceptions.
+            Assert.DoesNotThrow(() => _logUtils.SaveToFileImmediate());
+        }
+
         [UnityTest]
         public IEnumerator ClearLogs_RemovesAllLogs()
         {
             const int logsCount = 10;
             // Test that ClearLogs actually removes all logs
-            LogUtils.ClearLogs();
+            _logUtils.ClearLogs();
             yield return null;
 
             // Add some logs
@@ -397,13 +418,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             }
 
             yield return WaitForLogCount(logsCount);
-            Assert.AreEqual(logsCount, LogUtils.LogEntries);
+            Assert.AreEqual(logsCount, _logUtils.LogEntries);
 
             // Clear logs
-            LogUtils.ClearLogs();
+            _logUtils.ClearLogs();
 
-            Assert.AreEqual(0, LogUtils.LogEntries, "LogEntries should be zero after clear");
-            Assert.AreEqual(0, LogUtils.GetAllLogs().Length, "GetAllLogs should return empty array after clear");
+            Assert.AreEqual(0, _logUtils.LogEntries, "LogEntries should be zero after clear");
+            Assert.AreEqual(0, _logUtils.GetAllLogs().Length, "GetAllLogs should return empty array after clear");
         }
 
         #region Helper Methods
@@ -411,12 +432,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         private IEnumerator WaitForLogCount(int expectedCount)
         {
             var frameCount = 0;
-            while (LogUtils.LogEntries < expectedCount)
+            while (_logUtils.LogEntries < expectedCount)
             {
                 yield return null;
                 frameCount++;
                 Assert.Less(frameCount, Timeout,
-                    $"Timeout waiting for {expectedCount} logs. Current count: {LogUtils.LogEntries}");
+                    $"Timeout waiting for {expectedCount} logs. Current count: {_logUtils.LogEntries}");
             }
         }
 

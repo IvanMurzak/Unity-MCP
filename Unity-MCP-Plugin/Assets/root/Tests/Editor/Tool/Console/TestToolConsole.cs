@@ -29,7 +29,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             _tool = new Tool_Console();
 
             // Clear any existing logs by getting them all
-            LogUtils.ClearLogs();
+            Startup.LogUtils.ClearLogs();
         }
 
         void ResultValidation(string result)
@@ -200,13 +200,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Assert
             ErrorValidation(result1);
             Assert.IsTrue(result1.Contains("Invalid maxEntries value"), $"Should contain invalid maxEntries error.\nResult: {result1}");
-
-            // Act - Test with value above maximum
-            var result2 = _tool.GetLogs(maxEntries: LogUtils.MaxLogEntries + 1);
-
-            // Assert
-            ErrorValidation(result2);
-            Assert.IsTrue(result2.Contains("Invalid maxEntries value"), $"Should contain invalid maxEntries error.\nResult: {result2}");
         }
 
         [UnityTest]
@@ -395,15 +388,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Act
             var result1 = Tool_Console.Error.InvalidMaxEntries(0);
-            var result2 = Tool_Console.Error.InvalidMaxEntries(LogUtils.MaxLogEntries + 1);
 
             // Assert
             Assert.IsTrue(result1.Contains("[Error]"), "Should contain error prefix");
             Assert.IsTrue(result1.Contains("Invalid maxEntries value"), "Should contain error description");
             Assert.IsTrue(result1.Contains("'0'"), "Should contain the invalid value");
-
-            Assert.IsTrue(result2.Contains("[Error]"), "Should contain error prefix");
-            Assert.IsTrue(result2.Contains($"'{LogUtils.MaxLogEntries + 1}'"), "Should contain the invalid value");
         }
 
         [Test]

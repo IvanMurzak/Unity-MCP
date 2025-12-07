@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System;
 using System.Collections.Concurrent;
 using System.Threading.Tasks;
 using com.IvanMurzak.ReflectorNet.Utils;
@@ -16,23 +17,24 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP
 {
-    public static class LogUtils
+    public class LogUtils : IDisposable
     {
-        public const int MaxLogEntries = 5000; // Default max entries to keep in memory
+        ConcurrentQueue<LogEntry> _logEntries = new();
+        readonly LogCache _logCache;
+        readonly object _lockObject = new();
+        volatile bool _isSubscribed = false;
+        bool _disposed = false;
 
-        static ConcurrentQueue<LogEntry> _logEntries = new();
-        static readonly LogCache _logCache = new();
-        static readonly object _lockObject = new();
-        static volatile bool _isSubscribed = false;
-
-        static LogUtils()
+        public LogUtils(string? cacheFileName = null)
         {
             if (!MainThread.Instance.IsMainThread)
                 throw new System.Exception($"{nameof(LogUtils)} must be initialized on the main thread.");
-            EnsureSubscribed();
+
+            _logCache = new LogCache(this, cacheFileName: cacheFileName);
+            Subscribe();
         }
 
-        public static int LogEntries
+        public int LogEntries
         {
             get
             {
@@ -43,39 +45,48 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
-        public static void ClearLogs()
+        public void ClearLogs(bool clearFile = true)
         {
             lock (_lockObject)
             {
                 _logEntries = new ConcurrentQueue<LogEntry>();
             }
+            if (clearFile)
+                _logCache.ClearCacheFile();
         }
+
+        public void ClearCacheFile()
+        {
+            _logCache.ClearCacheFile();
+        }
+
         /// <summary>
         /// Synchronously saves all current log entries to the cache file.
         /// </summary>
         /// <returns>A task that completes when the save operation is finished.</returns>
-        public static void SaveToFileImmediate()
+        public void SaveToFileImmediate()
         {
-            var logEntries = GetAllLogs();
-            _logCache.CacheLogEntriesAsync(logEntries);
+            if (_disposed) return;
+            _logCache.HandleLogCacheImmediate();
         }
 
         /// <summary>
         /// Asynchronously saves all current log entries to the cache file.
         /// </summary>
         /// <returns>A task that completes when the save operation is finished.</returns>
-        public static Task SaveToFile()
+        public Task SaveToFile()
         {
-            var logEntries = GetAllLogs();
-            return _logCache.CacheLogEntriesAsync(logEntries);
+            if (_disposed) return Task.CompletedTask;
+            return _logCache.HandleLogCache();
         }
 
         /// <summary>
         /// Asynchronously loads log entries from the cache file and replaces the current log entries.
         /// </summary>
         /// <returns>A task that completes when the load operation is finished.</returns>
-        public static async Task LoadFromFile()
+        public async Task LoadFromFile()
         {
+            if (_disposed) return;
             var logWrapper = await _logCache.GetCachedLogEntriesAsync();
             lock (_lockObject)
             {
@@ -87,13 +98,14 @@ namespace com.IvanMurzak.Unity.MCP
         /// Asynchronously handles application quit by saving log entries to file and cleaning up resources.
         /// </summary>
         /// <returns>A task that completes when the quit handling is finished.</returns>
-        public static async Task HandleQuit()
+        public async Task HandleQuit()
         {
+            if (_disposed) return;
             SaveToFileImmediate();
-            _logCache.HandleQuit();
+            await _logCache.HandleQuit();
         }
 
-        public static LogEntry[] GetAllLogs()
+        public LogEntry[] GetAllLogs()
         {
             lock (_lockObject)
             {
@@ -101,22 +113,19 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
-        public static Task EnsureSubscribed()
+        public void Subscribe()
         {
-            return MainThread.Instance.RunAsync(() =>
+            lock (_lockObject)
             {
-                lock (_lockObject)
+                if (!_isSubscribed && !_disposed)
                 {
-                    if (!_isSubscribed)
-                    {
-                        Application.logMessageReceivedThreaded += OnLogMessageReceived;
-                        _isSubscribed = true;
-                    }
+                    Application.logMessageReceivedThreaded += OnLogMessageReceived;
+                    _isSubscribed = true;
                 }
-            });
+            }
         }
 
-        static void OnLogMessageReceived(string message, string stackTrace, LogType type)
+        void OnLogMessageReceived(string message, string stackTrace, LogType type)
         {
             try
             {
@@ -128,20 +137,25 @@ namespace com.IvanMurzak.Unity.MCP
                 lock (_lockObject)
                 {
                     _logEntries.Enqueue(logEntry);
-
-                    // Keep only the latest entries to prevent memory overflow
-                    while (_logEntries.Count > MaxLogEntries)
-                    {
-                        var success = _logEntries.TryDequeue(out _);
-                        if (!success)
-                            break; // Should not happen, but just in case
-                    }
                 }
             }
             catch
             {
                 // Ignore logging errors to prevent recursive issues
             }
+        }
+
+        public void Dispose()
+        {
+            if (_disposed) return;
+            _disposed = true;
+
+            if (_isSubscribed)
+            {
+                Application.logMessageReceivedThreaded -= OnLogMessageReceived;
+                _isSubscribed = false;
+            }
+            _logCache.Dispose();
         }
     }
 }

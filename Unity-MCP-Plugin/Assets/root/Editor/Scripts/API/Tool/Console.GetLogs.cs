@@ -28,7 +28,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [Description("Retrieves the Unity Console log entries. Supports filtering by log type and limiting the number of entries returned.")]
         public string GetLogs
         (
-            [Description("Maximum number of log entries to return. Default: 100, Max: 5000")]
+            [Description("Maximum number of log entries to return. Default: 100")]
             int maxEntries = 100,
             [Description("Filter by log type. 'null' means All.")]
             LogType? logTypeFilter = null,
@@ -43,11 +43,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 try
                 {
                     // Validate parameters
-                    if (maxEntries < 1 || maxEntries > LogUtils.MaxLogEntries)
+                    if (maxEntries < 1)
                         return Error.InvalidMaxEntries(maxEntries);
 
                     // Get all log entries as array to avoid concurrent modification
-                    var allLogs = LogUtils.GetAllLogs().AsEnumerable();
+                    var allLogs = Startup.LogUtils.GetAllLogs().AsEnumerable();
 
                     // Apply time filter if specified
                     if (lastMinutes > 0)

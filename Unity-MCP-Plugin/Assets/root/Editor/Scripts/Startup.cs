@@ -33,7 +33,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             SubscribeOnEditorEvents();
 
             // Initialize sub-systems
-            LogUtils.EnsureSubscribed(); // log collector
+            LogUtils = new com.IvanMurzak.Unity.MCP.LogUtils(); // log collector
             API.Tool_TestRunner.Init(); // test runner
         }
     }
