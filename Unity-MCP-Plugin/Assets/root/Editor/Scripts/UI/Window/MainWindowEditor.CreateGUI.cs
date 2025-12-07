@@ -111,6 +111,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 UnityMcpPlugin.Host = newValue;
                 SaveChanges($"[{nameof(MainWindowEditor)}] Host Changed: {newValue}");
                 Invalidate();
+
+                UnityMcpPlugin.Instance.DisposeMcpPluginInstance();
+                UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
             });
 
             var btnConnectOrDisconnect = root.Query<Button>("btnConnectOrDisconnect").First();
