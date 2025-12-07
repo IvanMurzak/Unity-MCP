@@ -10,6 +10,9 @@
 
 #nullable enable
 using System.Collections;
+using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
@@ -28,45 +31,72 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var child = new GameObject(GO_ParentName).AddChild(GO_Child1Name);
             Assert.IsNotNull(child, "Child GameObject should be created");
 
-            var result = new Tool_GameObject().Find(
+            var task = new Tool_GameObject().Find(
                 gameObjectRef: new GameObjectRef
                 {
                     InstanceID = child!.GetInstanceID()
-                });
-            ResultValidation(result);
+                },
+                requestId: "test-req-id");
+
+            while (!task.IsCompleted) yield return null;
+            var response = task.Result;
+
+            Assert.AreEqual(ResponseStatus.Success, response.Status);
+            Assert.IsNotNull(response.StructuredContent);
+            var findResponse = JsonSerializer.Deserialize<Tool_GameObject.GameObjectFindResponse>(response.StructuredContent!.ToJsonString());
+            Assert.IsNotNull(findResponse);
+            Assert.IsNotNull(findResponse!.Hierarchy);
+            var result = findResponse!.Hierarchy!.Print();
 
             Assert.IsTrue(result.Contains(GO_Child1Name), $"{GO_Child1Name} should be found in the path");
-            yield return null;
         }
 
         [UnityTest]
         public IEnumerator FindByPath()
         {
             var child = new GameObject(GO_ParentName).AddChild(GO_Child1Name);
-            var result = new Tool_GameObject().Find(
+            var task = new Tool_GameObject().Find(
                 gameObjectRef: new GameObjectRef
                 {
                     Path = $"{GO_ParentName}/{GO_Child1Name}"
-                });
-            ResultValidation(result);
+                },
+                requestId: "test-req-id");
+
+            while (!task.IsCompleted) yield return null;
+            var response = task.Result;
+
+            Assert.AreEqual(ResponseStatus.Success, response.Status);
+            Assert.IsNotNull(response.StructuredContent);
+            var findResponse = JsonSerializer.Deserialize<Tool_GameObject.GameObjectFindResponse>(response.StructuredContent!.ToJsonString());
+            Assert.IsNotNull(findResponse);
+            Assert.IsNotNull(findResponse!.Hierarchy);
+            var result = findResponse!.Hierarchy!.Print();
 
             Assert.IsTrue(result.Contains(GO_Child1Name), $"{GO_Child1Name} should be found in the path");
-            yield return null;
         }
 
         [UnityTest]
         public IEnumerator FindByName()
         {
             var child = new GameObject(GO_ParentName).AddChild(GO_Child1Name);
-            var result = new Tool_GameObject().Find(
+            var task = new Tool_GameObject().Find(
                 gameObjectRef: new GameObjectRef
                 {
                     Name = GO_Child1Name
-                });
-            ResultValidation(result);
+                },
+                requestId: "test-req-id");
+
+            while (!task.IsCompleted) yield return null;
+            var response = task.Result;
+
+            Assert.AreEqual(ResponseStatus.Success, response.Status);
+            Assert.IsNotNull(response.StructuredContent);
+            var findResponse = JsonSerializer.Deserialize<Tool_GameObject.GameObjectFindResponse>(response.StructuredContent!.ToJsonString());
+            Assert.IsNotNull(findResponse);
+            Assert.IsNotNull(findResponse!.Hierarchy);
+            var result = findResponse!.Hierarchy!.Print();
 
             Assert.IsTrue(result.Contains(GO_Child1Name), $"{GO_Child1Name} should be found in the path");
-            yield return null;
         }
 
         [UnityTest]
@@ -77,20 +107,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             go.AddChild(GO_Child2Name)!.AddComponent<SphereCollider>();
             go.AddComponent<SolarSystem>();
             yield return null;
-            var result = new Tool_GameObject().Find(
+            var task = new Tool_GameObject().Find(
                 gameObjectRef: new GameObjectRef
                 {
                     InstanceID = go.GetInstanceID()
                 },
-                includeChildrenDepth: 1,
-                briefData: false);
+                hierarchyDepth: 1,
+                briefData: false,
+                requestId: "test-req-id");
 
-            ResultValidation(result);
+            while (!task.IsCompleted) yield return null;
+            var response = task.Result;
+
+            Assert.AreEqual(ResponseStatus.Success, response.Status);
+            Assert.IsNotNull(response.StructuredContent);
+            var findResponse = JsonSerializer.Deserialize<Tool_GameObject.GameObjectFindResponse>(response.StructuredContent!.ToJsonString());
+            Assert.IsNotNull(findResponse);
+            Assert.IsNotNull(findResponse!.Hierarchy);
+            var result = findResponse!.Hierarchy!.Print();
 
             Assert.IsTrue(result.Contains(GO_ParentName), $"{GO_ParentName} should be found in the path");
             Assert.IsTrue(result.Contains(GO_Child1Name), $"{GO_Child1Name} should be found in the path");
             Assert.IsTrue(result.Contains(GO_Child2Name), $"{GO_Child2Name} should be found in the path");
-            yield return null;
         }
 
         ResponseData<ResponseCallTool> FindByJson(string json) => RunTool("GameObject_Find", json);
@@ -105,8 +143,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
               ""gameObjectRef"": {{
                 ""instanceID"": {go.GetInstanceID()}
               }},
-              ""includeChildrenDepth"": 0,
-              ""briefData"": true
+              ""hierarchyDepth"": 0,
+              ""briefData"": true,
+              ""requestId"": ""test-req-id""
             }}";
             FindByJson(json);
             yield return null;
@@ -122,7 +161,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
               ""gameObjectRef"": {{
                 ""instanceID"": {go.GetInstanceID()}
               }},
-              ""includeChildrenDepth"": 0
+              ""hierarchyDepth"": 0,
+              ""requestId"": ""test-req-id""
             }}";
             FindByJson(json);
             yield return null;
