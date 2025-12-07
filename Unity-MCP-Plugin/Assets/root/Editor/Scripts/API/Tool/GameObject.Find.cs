@@ -10,12 +10,15 @@
 
 #nullable enable
 using System.ComponentModel;
+using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin;
-using com.IvanMurzak.ReflectorNet;
+using com.IvanMurzak.McpPlugin.Common.Model;
+using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
+using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -31,48 +34,69 @@ First it looks for the opened Prefab, if any Prefab is opened it looks only ther
 If no opened Prefab it looks into current active scene.
 Returns GameObject information and its children.
 Also, it returns Components preview just for the target GameObject.")]
-        public string Find
+        public async Task<ResponseCallValueTool<GameObjectFindResponse>> Find
         (
             GameObjectRef gameObjectRef,
+            [Description("Include serialized data of the GameObject and its components.")]
+            bool includeData = true,
+            [Description("Include bounds of the GameObject.")]
+            bool includeBounds = true,
+            [Description("Include hierarchy metadata.")]
+            bool includeHierarchy = true,
             [Description("Determines the depth of the hierarchy to include. 0 - means only the target GameObject. 1 - means to include one layer below.")]
-            int includeChildrenDepth = 0,
-            [Description("If true, it will print only brief data of the target GameObject.")]
-            bool briefData = false
+            int hierarchyDepth = 0,
+            [Description("Performs deep serialization including all nested objects. Otherwise, only serializes top-level properties.")]
+            bool deepSerialization = true
         )
         {
-            return MainThread.Instance.Run(() =>
+            return await MainThread.Instance.RunAsync(() =>
             {
                 var go = gameObjectRef.FindGameObject(out var error);
                 if (error != null)
-                    return $"[Error] {error}";
+                    return ResponseCallValueTool<GameObjectFindResponse>.Error($"[Error] {error}");
 
                 if (go == null)
-                    return $"[Error] GameObject by {nameof(gameObjectRef)} not found.";
+                    return ResponseCallValueTool<GameObjectFindResponse>.Error($"[Error] GameObject by {nameof(gameObjectRef)} not found.");
 
-                var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+                var response = new GameObjectFindResponse();
 
-                var serializedGo = reflector.Serialize(
-                    obj: go,
-                    name: go.name,
-                    recursive: !briefData,
-                    logger: McpPlugin.McpPlugin.Instance.Logger
-                );
-                var json = serializedGo.ToJson(reflector);
-                return @$"[Success] Found GameObject.
-# Data:
-```json
-{json}
-```
+                if (includeData)
+                {
+                    var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+                    response.Data = reflector.Serialize(
+                        obj: go,
+                        name: go.name,
+                        recursive: deepSerialization,
+                        logger: McpPlugin.McpPlugin.Instance.Logger
+                    );
+                }
 
-# Bounds:
-```json
-{go.CalculateBounds().ToJson(reflector)}
-```
+                if (includeBounds)
+                {
+                    response.Bounds = go.CalculateBounds();
+                }
 
-# Hierarchy:
-{go.ToMetadata(includeChildrenDepth)?.Print() ?? "null"}
-";
+                if (includeHierarchy)
+                {
+                    response.Hierarchy = go.ToMetadata(hierarchyDepth);
+                }
+
+                var reflectorInstance = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+                var jsonNode = reflectorInstance.JsonSerializer.SerializeToNode(response);
+                var jsonString = jsonNode?.ToJsonString();
+
+                return ResponseCallValueTool<GameObjectFindResponse>.SuccessStructured(jsonNode, jsonString);
             });
+        }
+
+        public class GameObjectFindResponse
+        {
+            [Description("Serialized data of the GameObject and its components.")]
+            public SerializedMember? Data { get; set; }
+            [Description("Bounds of the GameObject.")]
+            public Bounds? Bounds { get; set; }
+            [Description("Hierarchy metadata of the GameObject.")]
+            public GameObjectMetadata? Hierarchy { get; set; } = null;
         }
     }
 }
