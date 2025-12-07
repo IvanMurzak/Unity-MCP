@@ -10,9 +10,7 @@
 
 #nullable enable
 using System.Collections;
-using System.Linq;
 using System.Text.Json;
-using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
@@ -35,8 +33,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 gameObjectRef: new GameObjectRef
                 {
                     InstanceID = child!.GetInstanceID()
-                },
-                requestId: "test-req-id");
+                });
 
             while (!task.IsCompleted) yield return null;
             var response = task.Result;
@@ -59,8 +56,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 gameObjectRef: new GameObjectRef
                 {
                     Path = $"{GO_ParentName}/{GO_Child1Name}"
-                },
-                requestId: "test-req-id");
+                });
 
             while (!task.IsCompleted) yield return null;
             var response = task.Result;
@@ -83,8 +79,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 gameObjectRef: new GameObjectRef
                 {
                     Name = GO_Child1Name
-                },
-                requestId: "test-req-id");
+                });
 
             while (!task.IsCompleted) yield return null;
             var response = task.Result;
@@ -113,8 +108,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     InstanceID = go.GetInstanceID()
                 },
                 hierarchyDepth: 1,
-                briefData: false,
-                requestId: "test-req-id");
+                deepSerialization: true);
 
             while (!task.IsCompleted) yield return null;
             var response = task.Result;

@@ -74,8 +74,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 {
                     InstanceID = child.GetInstanceID()
                 },
-                briefData: false,
-                requestId: "test-req-id");
+                deepSerialization: true);
 
             while (!task.IsCompleted) yield return null;
             var response = task.Result;

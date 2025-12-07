@@ -45,23 +45,18 @@ Also, it returns Components preview just for the target GameObject.")]
             bool includeHierarchy = true,
             [Description("Determines the depth of the hierarchy to include. 0 - means only the target GameObject. 1 - means to include one layer below.")]
             int hierarchyDepth = 0,
-            [Description("If true, it will print only brief data of the target GameObject.")]
-            bool briefData = false,
-            [RequestID]
-            string? requestId = null
+            [Description("Performs deep serialization including all nested objects. Otherwise, only serializes top-level properties.")]
+            bool deepSerialization = true
         )
         {
-            if (requestId == null || string.IsNullOrWhiteSpace(requestId))
-                return ResponseCallValueTool<GameObjectFindResponse>.Error("Original request with valid RequestID must be provided.");
-
             return await MainThread.Instance.RunAsync(() =>
             {
                 var go = gameObjectRef.FindGameObject(out var error);
                 if (error != null)
-                    return ResponseCallValueTool<GameObjectFindResponse>.Error($"[Error] {error}").SetRequestID(requestId);
+                    return ResponseCallValueTool<GameObjectFindResponse>.Error($"[Error] {error}");
 
                 if (go == null)
-                    return ResponseCallValueTool<GameObjectFindResponse>.Error($"[Error] GameObject by {nameof(gameObjectRef)} not found.").SetRequestID(requestId);
+                    return ResponseCallValueTool<GameObjectFindResponse>.Error($"[Error] GameObject by {nameof(gameObjectRef)} not found.");
 
                 var response = new GameObjectFindResponse();
 
@@ -71,7 +66,7 @@ Also, it returns Components preview just for the target GameObject.")]
                     response.Data = reflector.Serialize(
                         obj: go,
                         name: go.name,
-                        recursive: !briefData,
+                        recursive: deepSerialization,
                         logger: McpPlugin.McpPlugin.Instance.Logger
                     );
                 }
@@ -90,7 +85,7 @@ Also, it returns Components preview just for the target GameObject.")]
                 var jsonNode = reflectorInstance.JsonSerializer.SerializeToNode(response);
                 var jsonString = jsonNode?.ToJsonString();
 
-                return ResponseCallValueTool<GameObjectFindResponse>.SuccessStructured(jsonNode, jsonString).SetRequestID(requestId);
+                return ResponseCallValueTool<GameObjectFindResponse>.SuccessStructured(jsonNode, jsonString);
             });
         }
 
