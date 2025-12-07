@@ -52,7 +52,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 Debug.Log($"{nameof(Startup)} {nameof(OnApplicationQuitting)} triggered: No UnityMcpPlugin instance to disconnect.");
             }
-            LogUtils.HandleQuit();
+            _ = LogUtils.HandleQuit();
         }
         static void OnBeforeAssemblyReload()
         {
@@ -79,7 +79,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             if (connectionAllowed)
                 UnityMcpPlugin.ConnectIfNeeded();
 
-            LogUtils.LoadFromFile();
+            _ = LogUtils.LoadFromFile();
         }
 
         static void OnPlayModeStateChanged(PlayModeStateChange state)
