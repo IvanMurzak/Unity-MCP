@@ -58,6 +58,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 stringBuilder: result,
                 logger: McpPlugin.McpPlugin.Instance.Logger);
 
+            if (success)
+                EditorUtility.SetDirty(asset);
+
             // AssetDatabase.CreateAsset(asset, assetPath);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
