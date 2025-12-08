@@ -27,52 +27,39 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void TestSetUp()
         {
             _tool = new Tool_Console();
-
-            // Clear any existing logs by getting them all
-            UnityMcpPlugin.Instance.LogCollector?.Clear();
         }
 
-        void ResultValidation(string result)
+        void ResultValidation(LogEntry[] result)
         {
             Debug.Log($"[{nameof(TestToolConsole)}] Result:\n{result}");
             Assert.IsNotNull(result, "Result should not be null.");
             Assert.IsNotEmpty(result, "Result should not be empty.");
-            Assert.IsTrue(result.Contains("[Success]"), $"Should contain success message.");
         }
 
-        void ResultValidationExpected(string result, params string[] expectedLines)
+        void ResultValidationExpected(LogEntry[] result, params string[] expectedLines)
         {
             Debug.Log($"[{nameof(TestToolConsole)}] Result:\n{result}");
             Assert.IsNotNull(result, "Result should not be null.");
             Assert.IsNotEmpty(result, "Result should not be empty.");
-            Assert.IsTrue(result.Contains("[Success]"), $"Should contain success message.");
 
             if (expectedLines != null)
             {
                 foreach (var line in expectedLines)
-                    Assert.IsTrue(result.Contains(line), $"Should contain expected line: {line}");
+                    Assert.IsTrue(result.Any(entry => entry.Message.Contains(line)), $"Should contain expected line: {line}");
             }
         }
 
-        void ResultValidationUnexpected(string result, params string[] unexpectedLines)
+        void ResultValidationUnexpected(LogEntry[] result, params string[] unexpectedLines)
         {
             Debug.Log($"[{nameof(TestToolConsole)}] Result:\n{result}");
             Assert.IsNotNull(result, "Result should not be null.");
             Assert.IsNotEmpty(result, "Result should not be empty.");
-            Assert.IsTrue(result.Contains("[Success]"), $"Should contain success message.");
 
             if (unexpectedLines != null)
             {
                 foreach (var line in unexpectedLines)
-                    Assert.IsFalse(result.Contains(line), $"Should not contain unexpected line: {line}");
+                    Assert.IsFalse(result.Any(entry => entry.Message.Contains(line)), $"Should not contain unexpected line: {line}");
             }
-        }
-
-        void ErrorValidation(string result, string expectedErrorStart = "[Error]")
-        {
-            Debug.Log($"[{nameof(TestToolConsole)}] Error Result:\n{result}");
-            Assert.IsNotNull(result, "Result should not be null.");
-            Assert.IsTrue(result.StartsWith(expectedErrorStart), $"Result should start with '{expectedErrorStart}'.");
         }
 
         [UnityTest]
@@ -120,8 +107,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             ResultValidation(result);
 
             // Count the number of log entries in the result
-            var lines = result.Split('\n')
-                .Where(line => line.Contains("[Log]"))
+            var lines = result
+                .Where(entry => entry.Message.Contains("[Log]"))
                 .ToArray();
 
             Assert.AreEqual(lines.Length, limit, $"Should return exactly {limit} entries");
@@ -143,8 +130,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             // Assert
             ResultValidation(result);
-            Assert.IsTrue(result.Contains("[Warning]"), "Should contain warning logs");
-            Assert.IsFalse(result.Contains("[Log]") && !result.Contains("[Warning]"), "Should not contain non-warning logs in the log entries");
+            Assert.IsTrue(result.Any(entry => entry.LogType == LogType.Warning), "Should contain warning logs");
+            Assert.IsTrue(result.Any(entry => entry.LogType == LogType.Log), "Should contain log logs");
         }
 
         [UnityTest]
@@ -195,11 +182,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void GetLogs_WithInvalidMaxEntries_ReturnsError()
         {
             // Act - Test with value below minimum
-            var result1 = _tool.GetLogs(maxEntries: 0);
-
-            // Assert
-            ErrorValidation(result1);
-            Assert.IsTrue(result1.Contains("Invalid maxEntries value"), $"Should contain invalid maxEntries error.\nResult: {result1}");
+            Assert.Throws<ArgumentException>(
+                () => _tool.GetLogs(maxEntries: 0),
+                $"Should contain invalid maxEntries error");
         }
 
         [UnityTest]
@@ -218,7 +203,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             ResultValidation(result);
 
             // Stack traces should be included for warnings
-            if (result.Contains("[Warning]"))
+            if (result.Any(entry => entry.LogType == LogType.Warning))
             {
                 // Note: In Unity editor, stack traces might not always be present for all log types
                 // This test verifies the parameter is handled correctly
@@ -278,10 +263,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 ResultValidation(result);
 
                 if (logType == LogType.Log)
-                    Assert.IsTrue(result.Contains(regularLogMessage), $"Should contain regular log message for '{logType}' filter.");
+                    Assert.IsTrue(result.Any(entry => entry.Message == regularLogMessage), $"Should contain regular log message for '{logType}' filter.");
 
                 if (logType == LogType.Warning)
-                    Assert.IsTrue(result.Contains(warningLogMessage), $"Should contain warning log message for '{logType}' filter.");
+                    Assert.IsTrue(result.Any(entry => entry.Message == warningLogMessage), $"Should contain warning log message for '{logType}' filter.");
             }
         }
 
