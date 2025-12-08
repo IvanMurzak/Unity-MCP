@@ -288,55 +288,65 @@ namespace com.IvanMurzak.Unity.MCP
             _fileLock.Wait();
             try
             {
-                if (!File.Exists(_cacheFile))
-                    return new LogEntry[0];
-
-                using (var fileStream = new FileStream(_cacheFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                {
-                    var allLogs = ReadLinesReverse(fileStream)
-                        .Select(line =>
-                        {
-                            try
-                            {
-                                if (string.IsNullOrWhiteSpace(line))
-                                    return null;
-                                return System.Text.Json.JsonSerializer.Deserialize<LogEntry>(line, _jsonOptions);
-                            }
-                            catch
-                            {
-                                // Ignore corrupted lines
-                                return null;
-                            }
-                        })
-                        .Where(entry => entry != null)
-                        .Cast<LogEntry>();
-
-                    // Apply time filter if specified
-                    if (lastMinutes > 0)
-                    {
-                        var cutoffTime = DateTime.Now.AddMinutes(-lastMinutes);
-                        allLogs = allLogs
-                            .Where(log => log.Timestamp >= cutoffTime);
-                    }
-
-                    // Apply log type filter
-                    if (logTypeFilter.HasValue)
-                    {
-                        allLogs = allLogs
-                            .Where(log => log.LogType == logTypeFilter.Value);
-                    }
-
-                    // Take the most recent entries (up to maxEntries)
-                    var filteredLogs = allLogs
-                        .Take(maxEntries)
-                        .ToArray();
-
-                    return filteredLogs;
-                }
+                return QueryInternal(maxEntries, logTypeFilter, includeStackTrace, lastMinutes);
             }
             finally
             {
                 _fileLock.Release();
+            }
+        }
+
+        protected virtual LogEntry[] QueryInternal(
+            int maxEntries = 100,
+            LogType? logTypeFilter = null,
+            bool includeStackTrace = false,
+            int lastMinutes = 0)
+        {
+            if (!File.Exists(_cacheFile))
+                return new LogEntry[0];
+
+            using (var fileStream = new FileStream(_cacheFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            {
+                var allLogs = ReadLinesReverse(fileStream)
+                    .Select(line =>
+                    {
+                        try
+                        {
+                            if (string.IsNullOrWhiteSpace(line))
+                                return null;
+                            return System.Text.Json.JsonSerializer.Deserialize<LogEntry>(line, _jsonOptions);
+                        }
+                        catch
+                        {
+                            // Ignore corrupted lines
+                            return null;
+                        }
+                    })
+                    .Where(entry => entry != null)
+                    .Cast<LogEntry>();
+
+                // Apply time filter if specified
+                if (lastMinutes > 0)
+                {
+                    var cutoffTime = DateTime.Now.AddMinutes(-lastMinutes);
+                    allLogs = allLogs
+                        .Where(log => log.Timestamp >= cutoffTime);
+                }
+
+                // Apply log type filter
+                if (logTypeFilter.HasValue)
+                {
+                    allLogs = allLogs
+                        .Where(log => log.LogType == logTypeFilter.Value);
+                }
+
+                // Take the most recent entries (up to maxEntries)
+                var filteredLogs = allLogs
+                    .Take(maxEntries)
+                    .Reverse()
+                    .ToArray();
+
+                return filteredLogs;
             }
         }
 
