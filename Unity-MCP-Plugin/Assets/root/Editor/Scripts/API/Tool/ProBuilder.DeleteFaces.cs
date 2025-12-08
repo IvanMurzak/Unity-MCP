@@ -33,14 +33,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Delete ProBuilder faces"
         )]
         [Description(@"Deletes selected faces from a ProBuilder mesh.
-Use ProBuilder_GetMeshInfo first to get face indices.
-Deleting faces creates holes in the mesh or removes geometry entirely.")]
+You can select faces by index OR by direction (semantic selection).
+Deleting faces creates holes in the mesh or removes geometry entirely.
+
+Examples:
+- Delete bottom face: faceDirection=""down""
+- Delete specific faces: faceIndices=[0, 2, 4]")]
         public string DeleteFaces
         (
             [Description("Reference to the GameObject with a ProBuilderMesh component.")]
             GameObjectRef gameObjectRef,
-            [Description("Array of face indices to delete. Use ProBuilder_GetMeshInfo to get valid face indices.")]
-            int[] faceIndices
+            [Description("Array of face indices to delete. Use this OR faceDirection, not both. Use ProBuilder_GetMeshInfo to get valid face indices.")]
+            int[]? faceIndices = null,
+            [Description("Semantic face selection by direction: up, down, left, right, forward, back. Use this OR faceIndices, not both.")]
+            string? faceDirection = null
         )
         => MainThread.Instance.Run(() =>
         {
@@ -58,8 +64,27 @@ Deleting faces creates holes in the mesh or removes geometry entirely.")]
             if (proBuilderMesh == null)
                 return Error.ProBuilderMeshNotFound(go.GetInstanceID());
 
-            if (faceIndices == null || faceIndices.Length == 0)
-                return Error.NoFacesProvided();
+            // Resolve face indices from either direct indices or semantic direction
+            int[] resolvedFaceIndices;
+            string selectionMethod;
+
+            if (faceIndices != null && faceIndices.Length > 0)
+            {
+                resolvedFaceIndices = faceIndices;
+                selectionMethod = "by index";
+            }
+            else if (!string.IsNullOrEmpty(faceDirection))
+            {
+                var selectedIndices = FaceSelectionHelper.SelectFacesByDirection(proBuilderMesh, faceDirection, out var selectionError);
+                if (selectionError != null)
+                    return $"[Error] {selectionError}";
+                resolvedFaceIndices = selectedIndices!;
+                selectionMethod = $"by direction '{faceDirection}'";
+            }
+            else
+            {
+                return "[Error] Either faceIndices or faceDirection must be provided.";
+            }
 
             var faces = proBuilderMesh.faces;
             var faceCount = faces.Count();
@@ -67,7 +92,7 @@ Deleting faces creates holes in the mesh or removes geometry entirely.")]
                 return Error.MeshHasNoFaces();
 
             // Get unique face indices to handle duplicates
-            var uniqueFaceIndices = faceIndices.Distinct().ToArray();
+            var uniqueFaceIndices = resolvedFaceIndices.Distinct().ToArray();
 
             // Validate face indices
             var invalidIndices = uniqueFaceIndices.Where(i => i < 0 || i >= faceCount).ToList();
@@ -108,10 +133,11 @@ Deleting faces creates holes in the mesh or removes geometry entirely.")]
 
             // Build response
             var sb = new StringBuilder();
-            sb.AppendLine($"[Success] Deleted {faceIndices.Length} face(s) from the mesh.");
+            sb.AppendLine($"[Success] Deleted {uniqueFaceIndices.Length} face(s) {selectionMethod} from the mesh.");
             sb.AppendLine();
             sb.AppendLine("# Result:");
-            sb.AppendLine($"- Deleted Face Indices: {string.Join(", ", faceIndices)}");
+            sb.AppendLine($"- Face Selection: {selectionMethod}");
+            sb.AppendLine($"- Deleted Face Indices: {string.Join(", ", uniqueFaceIndices)}");
             sb.AppendLine($"- Faces Removed: {originalFaceCount - proBuilderMesh.faceCount}");
             sb.AppendLine($"- Vertices Removed: {originalVertexCount - proBuilderMesh.vertexCount}");
             sb.AppendLine();

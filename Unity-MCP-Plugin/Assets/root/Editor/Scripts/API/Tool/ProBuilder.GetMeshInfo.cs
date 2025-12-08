@@ -30,19 +30,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "ProBuilder_GetMeshInfo",
             Title = "Get ProBuilder mesh information"
         )]
-        [Description(@"Retrieves detailed information about a ProBuilder mesh including faces, vertices, and edges.
-Use this to understand the mesh structure before performing operations like extrusion or beveling.
-Face indices are used to select faces for operations like extrusion or deletion.
-Edge indices are used to select edges for operations like beveling.")]
+        [Description(@"Retrieves information about a ProBuilder mesh including faces, vertices, and edges.
+Use detail=""summary"" for a token-efficient overview showing face directions.
+Use detail=""full"" for detailed face-by-face information.
+
+TIP: With semantic face selection (faceDirection parameter) in Extrude/DeleteFaces/SetFaceMaterial,
+you often don't need GetMeshInfo at all - just use faceDirection=""up"" etc. directly.")]
         public string GetMeshInfo
         (
             [Description("Reference to the GameObject with a ProBuilderMesh component.")]
             GameObjectRef gameObjectRef,
-            [Description("If true, includes detailed vertex positions for each face.")]
+            [Description("Detail level: 'summary' for condensed face direction info (token-efficient), 'full' for detailed face-by-face data.")]
+            string detail = "summary",
+            [Description("If true, includes detailed vertex positions for each face (only with detail='full').")]
             bool includeVertexPositions = false,
-            [Description("If true, includes edge information for each face.")]
+            [Description("If true, includes edge information for each face (only with detail='full').")]
             bool includeEdges = true,
-            [Description("Maximum number of faces to include in detail. Use -1 for all faces. Default is 20.")]
+            [Description("Maximum number of faces to include in detail (only with detail='full'). Use -1 for all faces.")]
             int maxFacesToShow = 20
         )
         => MainThread.Instance.Run(() =>
@@ -84,72 +88,105 @@ Edge indices are used to select edges for operations like beveling.")]
             sb.AppendLine($"- Max: {bounds.max}");
             sb.AppendLine();
 
-            // Face details
-            var faces = proBuilderMesh.faces;
-            var positions = proBuilderMesh.positions;
-            var faceCount = faces.Count();
-            var facesToShow = maxFacesToShow < 0 ? faceCount : System.Math.Min(maxFacesToShow, faceCount);
-
-            sb.AppendLine($"# Faces (showing {facesToShow} of {faceCount}):");
-            sb.AppendLine("Use face indices for extrusion or deletion operations.");
-            sb.AppendLine();
-
-            for (int i = 0; i < facesToShow; i++)
+            // Summary mode - condensed face direction info
+            if (detail.ToLowerInvariant() == "summary")
             {
-                var face = faces[i];
-                var faceVertices = face.distinctIndexes;
-                var faceEdges = face.edges;
+                var directionSummary = FaceSelectionHelper.GetFaceDirectionSummary(proBuilderMesh);
+                var faces = proBuilderMesh.faces;
+                var positions = proBuilderMesh.positions;
 
-                // Calculate face center and normal
-                var center = Vector3.zero;
-                foreach (var vertIndex in faceVertices)
+                sb.AppendLine("# Face Directions (use with faceDirection parameter):");
+                foreach (var kvp in directionSummary)
                 {
-                    center += positions[vertIndex];
+                    if (kvp.Value.Count > 0)
+                    {
+                        var dirName = kvp.Key;
+                        var faceList = kvp.Value;
+                        var centerStr = "";
+
+                        // Show center of first face in this direction
+                        if (faceList.Count > 0 && faceList[0] < faces.Count)
+                        {
+                            var center = FaceSelectionHelper.GetFaceCenter(faces[faceList[0]], positions);
+                            centerStr = $" (first at {center.x:F1}, {center.y:F1}, {center.z:F1})";
+                        }
+
+                        sb.AppendLine($"- {dirName}: faces [{string.Join(", ", faceList)}]{centerStr}");
+                    }
                 }
-                var vertCount = faceVertices.Count();
-                center /= vertCount;
+                sb.AppendLine();
+                sb.AppendLine("TIP: Use faceDirection=\"up\" in Extrude/DeleteFaces/SetFaceMaterial instead of face indices.");
+                sb.AppendLine("Use detail=\"full\" for detailed per-face information.");
+            }
+            else
+            {
+                // Full mode - detailed face-by-face info
+                var faces = proBuilderMesh.faces;
+                var positions = proBuilderMesh.positions;
+                var faceCount = faces.Count();
+                var facesToShow = maxFacesToShow < 0 ? faceCount : System.Math.Min(maxFacesToShow, faceCount);
 
-                sb.AppendLine($"## Face {i}:");
-                sb.AppendLine($"  - Vertex Count: {vertCount}");
-                sb.AppendLine($"  - Triangle Count: {face.indexes.Count() / 3}");
-                sb.AppendLine($"  - Center (approx): ({center.x:F2}, {center.y:F2}, {center.z:F2})");
+                sb.AppendLine($"# Faces (showing {facesToShow} of {faceCount}):");
+                sb.AppendLine("Use face indices for operations, or use faceDirection for semantic selection.");
+                sb.AppendLine();
 
-                if (includeVertexPositions)
+                for (int i = 0; i < facesToShow; i++)
                 {
-                    sb.AppendLine($"  - Vertex Positions:");
+                    var face = faces[i];
+                    var faceVertices = face.distinctIndexes;
+                    var faceEdges = face.edges;
+
+                    // Calculate face center and normal
+                    var center = Vector3.zero;
                     foreach (var vertIndex in faceVertices)
                     {
-                        var pos = positions[vertIndex];
-                        sb.AppendLine($"    - [{vertIndex}]: ({pos.x:F3}, {pos.y:F3}, {pos.z:F3})");
+                        center += positions[vertIndex];
                     }
+                    var vertCount = faceVertices.Count();
+                    center /= vertCount;
+
+                    sb.AppendLine($"## Face {i}:");
+                    sb.AppendLine($"  - Vertex Count: {vertCount}");
+                    sb.AppendLine($"  - Triangle Count: {face.indexes.Count() / 3}");
+                    sb.AppendLine($"  - Center (approx): ({center.x:F2}, {center.y:F2}, {center.z:F2})");
+
+                    if (includeVertexPositions)
+                    {
+                        sb.AppendLine($"  - Vertex Positions:");
+                        foreach (var vertIndex in faceVertices)
+                        {
+                            var pos = positions[vertIndex];
+                            sb.AppendLine($"    - [{vertIndex}]: ({pos.x:F3}, {pos.y:F3}, {pos.z:F3})");
+                        }
+                    }
+
+                    if (includeEdges)
+                    {
+                        sb.AppendLine($"  - Edges ({faceEdges.Count()}):");
+                        foreach (var edge in faceEdges)
+                        {
+                            var p1 = positions[edge.a];
+                            var p2 = positions[edge.b];
+                            sb.AppendLine($"    - [{edge.a} -> {edge.b}]: ({p1.x:F2},{p1.y:F2},{p1.z:F2}) to ({p2.x:F2},{p2.y:F2},{p2.z:F2})");
+                        }
+                    }
+                    sb.AppendLine();
                 }
 
+                if (facesToShow < faceCount)
+                {
+                    sb.AppendLine($"... and {faceCount - facesToShow} more faces. Use maxFacesToShow=-1 to see all.");
+                }
+
+                // Unique edges summary
                 if (includeEdges)
                 {
-                    sb.AppendLine($"  - Edges ({faceEdges.Count()}):");
-                    foreach (var edge in faceEdges)
-                    {
-                        var p1 = positions[edge.a];
-                        var p2 = positions[edge.b];
-                        sb.AppendLine($"    - [{edge.a} -> {edge.b}]: ({p1.x:F2},{p1.y:F2},{p1.z:F2}) to ({p2.x:F2},{p2.y:F2},{p2.z:F2})");
-                    }
+                    var allEdges = proBuilderMesh.faces.SelectMany(f => f.edges).Distinct().ToList();
+                    sb.AppendLine();
+                    sb.AppendLine($"# Unique Edges Summary:");
+                    sb.AppendLine($"Total unique edges: {allEdges.Count}");
+                    sb.AppendLine("Use edge vertex pairs for bevel operations.");
                 }
-                sb.AppendLine();
-            }
-
-            if (facesToShow < faceCount)
-            {
-                sb.AppendLine($"... and {faceCount - facesToShow} more faces. Use maxFacesToShow=-1 to see all.");
-            }
-
-            // Unique edges summary
-            if (includeEdges)
-            {
-                var allEdges = proBuilderMesh.faces.SelectMany(f => f.edges).Distinct().ToList();
-                sb.AppendLine();
-                sb.AppendLine($"# Unique Edges Summary:");
-                sb.AppendLine($"Total unique edges: {allEdges.Count}");
-                sb.AppendLine("Use edge vertex pairs for bevel operations.");
             }
 
             return sb.ToString();

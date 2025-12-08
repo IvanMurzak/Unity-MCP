@@ -34,14 +34,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Extrude ProBuilder faces"
         )]
         [Description(@"Extrudes selected faces of a ProBuilder mesh along their normals.
-Use ProBuilder_GetMeshInfo first to get face indices.
-Extrusion creates new geometry by pushing faces outward (or inward with negative distance).")]
+You can select faces by index OR by direction (semantic selection).
+Extrusion creates new geometry by pushing faces outward (or inward with negative distance).
+
+Examples:
+- Extrude top face: faceDirection=""up""
+- Extrude specific faces: faceIndices=[0, 2, 4]")]
         public string Extrude
         (
             [Description("Reference to the GameObject with a ProBuilderMesh component.")]
             GameObjectRef gameObjectRef,
-            [Description("Array of face indices to extrude. Use ProBuilder_GetMeshInfo to get valid face indices.")]
-            int[] faceIndices,
+            [Description("Array of face indices to extrude. Use this OR faceDirection, not both. Use ProBuilder_GetMeshInfo to get valid face indices.")]
+            int[]? faceIndices = null,
+            [Description("Semantic face selection by direction: up, down, left, right, forward, back. Use this OR faceIndices, not both.")]
+            string? faceDirection = null,
             [Description("Distance to extrude the faces. Positive values extrude outward along face normals, negative values extrude inward.")]
             float distance = 0.5f,
             [Description("Extrusion method: 0 = Individual (each face extrudes independently), 1 = FaceNormal (faces extrude as a group along averaged normal), 2 = VertexNormal (vertices move along their normals).")]
@@ -63,8 +69,27 @@ Extrusion creates new geometry by pushing faces outward (or inward with negative
             if (proBuilderMesh == null)
                 return Error.ProBuilderMeshNotFound(go.GetInstanceID());
 
-            if (faceIndices == null || faceIndices.Length == 0)
-                return Error.NoFacesProvided();
+            // Resolve face indices from either direct indices or semantic direction
+            int[] resolvedFaceIndices;
+            string selectionMethod;
+
+            if (faceIndices != null && faceIndices.Length > 0)
+            {
+                resolvedFaceIndices = faceIndices;
+                selectionMethod = "by index";
+            }
+            else if (!string.IsNullOrEmpty(faceDirection))
+            {
+                var selectedIndices = FaceSelectionHelper.SelectFacesByDirection(proBuilderMesh, faceDirection, out var selectionError);
+                if (selectionError != null)
+                    return $"[Error] {selectionError}";
+                resolvedFaceIndices = selectedIndices!;
+                selectionMethod = $"by direction '{faceDirection}'";
+            }
+            else
+            {
+                return "[Error] Either faceIndices or faceDirection must be provided.";
+            }
 
             var faces = proBuilderMesh.faces;
             var faceCount = faces.Count();
@@ -72,14 +97,14 @@ Extrusion creates new geometry by pushing faces outward (or inward with negative
                 return Error.MeshHasNoFaces();
 
             // Validate face indices
-            var invalidIndices = faceIndices.Where(i => i < 0 || i >= faceCount).ToList();
+            var invalidIndices = resolvedFaceIndices.Where(i => i < 0 || i >= faceCount).ToList();
             if (invalidIndices.Any())
             {
                 return $"[Error] Invalid face indices: {string.Join(", ", invalidIndices)}. Valid range: 0 to {faceCount - 1}.";
             }
 
             // Get the faces to extrude
-            var facesToExtrude = faceIndices.Select(i => faces[i]).ToArray();
+            var facesToExtrude = resolvedFaceIndices.Select(i => faces[i]).ToArray();
 
             // Parse extrude method
             var method = extrudeMethod switch
@@ -116,10 +141,11 @@ Extrusion creates new geometry by pushing faces outward (or inward with negative
 
             // Build response
             var sb = new StringBuilder();
-            sb.AppendLine($"[Success] Extruded {facesToExtrude.Length} face(s) by {distance} units.");
+            sb.AppendLine($"[Success] Extruded {facesToExtrude.Length} face(s) {selectionMethod} by {distance} units.");
             sb.AppendLine();
             sb.AppendLine("# Result:");
-            sb.AppendLine($"- Extruded Face Indices: {string.Join(", ", faceIndices)}");
+            sb.AppendLine($"- Face Selection: {selectionMethod}");
+            sb.AppendLine($"- Extruded Face Indices: {string.Join(", ", resolvedFaceIndices)}");
             sb.AppendLine($"- Extrude Method: {method}");
             sb.AppendLine($"- Distance: {distance}");
             sb.AppendLine($"- New Faces Created: {newFaces.Length}");

@@ -32,16 +32,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Set material on ProBuilder faces"
         )]
         [Description(@"Assigns a material to specific faces of a ProBuilder mesh.
+You can select faces by index OR by direction (semantic selection).
 This enables multi-material meshes where different faces have different materials.
-Use ProBuilder_GetMeshInfo to get face indices.")]
+
+Examples:
+- Set material on top face: faceDirection=""up""
+- Set material on specific faces: faceIndices=[0, 2, 4]")]
         public string SetFaceMaterial
         (
             [Description("Reference to the GameObject with a ProBuilderMesh component.")]
             GameObjectRef gameObjectRef,
-            [Description("Array of face indices to apply the material to. Use ProBuilder_GetMeshInfo to get valid face indices.")]
-            int[] faceIndices,
             [Description("Path to the material asset (e.g., 'Assets/Materials/MyMaterial.mat') or material name.")]
-            string materialPath
+            string materialPath,
+            [Description("Array of face indices to apply the material to. Use this OR faceDirection, not both. Use ProBuilder_GetMeshInfo to get valid face indices.")]
+            int[]? faceIndices = null,
+            [Description("Semantic face selection by direction: up, down, left, right, forward, back. Use this OR faceIndices, not both.")]
+            string? faceDirection = null
         )
         => MainThread.Instance.Run(() =>
         {
@@ -59,11 +65,30 @@ Use ProBuilder_GetMeshInfo to get face indices.")]
             if (proBuilderMesh == null)
                 return Error.ProBuilderMeshNotFound(go.GetInstanceID());
 
-            if (faceIndices == null || faceIndices.Length == 0)
-                return Error.NoFacesProvided();
-
             if (string.IsNullOrEmpty(materialPath))
                 return "[Error] Material path is empty. Please provide a valid material path.";
+
+            // Resolve face indices from either direct indices or semantic direction
+            int[] resolvedFaceIndices;
+            string selectionMethod;
+
+            if (faceIndices != null && faceIndices.Length > 0)
+            {
+                resolvedFaceIndices = faceIndices;
+                selectionMethod = "by index";
+            }
+            else if (!string.IsNullOrEmpty(faceDirection))
+            {
+                var selectedIndices = FaceSelectionHelper.SelectFacesByDirection(proBuilderMesh, faceDirection, out var selectionError);
+                if (selectionError != null)
+                    return $"[Error] {selectionError}";
+                resolvedFaceIndices = selectedIndices!;
+                selectionMethod = $"by direction '{faceDirection}'";
+            }
+            else
+            {
+                return "[Error] Either faceIndices or faceDirection must be provided.";
+            }
 
             // Try to load the material
             Material? material = null;
@@ -96,7 +121,7 @@ Use ProBuilder_GetMeshInfo to get face indices.")]
                 return Error.MeshHasNoFaces();
 
             // Validate face indices
-            var invalidIndices = faceIndices.Where(i => i < 0 || i >= faceCount).ToList();
+            var invalidIndices = resolvedFaceIndices.Where(i => i < 0 || i >= faceCount).ToList();
             if (invalidIndices.Any())
             {
                 return $"[Error] Invalid face indices: {string.Join(", ", invalidIndices)}. Valid range: 0 to {faceCount - 1}.";
@@ -121,7 +146,7 @@ Use ProBuilder_GetMeshInfo to get face indices.")]
             }
 
             // Assign the submesh index to the selected faces
-            var selectedFaces = faceIndices.Select(i => faces[i]).ToArray();
+            var selectedFaces = resolvedFaceIndices.Select(i => faces[i]).ToArray();
             foreach (var face in selectedFaces)
             {
                 face.submeshIndex = materialIndex;
@@ -138,12 +163,13 @@ Use ProBuilder_GetMeshInfo to get face indices.")]
 
             // Build response
             var sb = new StringBuilder();
-            sb.AppendLine($"[Success] Applied material '{material.name}' to {faceIndices.Length} face(s).");
+            sb.AppendLine($"[Success] Applied material '{material.name}' to {resolvedFaceIndices.Length} face(s) {selectionMethod}.");
             sb.AppendLine();
             sb.AppendLine("# Result:");
             sb.AppendLine($"- Material: {material.name}");
             sb.AppendLine($"- Material Index: {materialIndex}");
-            sb.AppendLine($"- Faces Updated: {string.Join(", ", faceIndices)}");
+            sb.AppendLine($"- Face Selection: {selectionMethod}");
+            sb.AppendLine($"- Faces Updated: {string.Join(", ", resolvedFaceIndices)}");
             sb.AppendLine();
             sb.AppendLine("# Mesh Materials:");
             for (int i = 0; i < renderer.sharedMaterials.Length; i++)
