@@ -1,0 +1,282 @@
+# Unity Editor + MCP Server for GitHub Copilot Coding Agent
+#
+# IMPORTANT: Both Unity and MCP Server run as GitHub Services so they persist
+# after the setup job completes, allowing Copilot to connect to them.
+#
+# Architecture:
+#   ┌─────────────────────────────────────────────────────────────┐
+#   │ GitHub Actions Runner                                       │
+#   │                                                             │
+#   │  ┌─────────────────┐     SignalR      ┌─────────────────┐  │
+#   │  │ Unity Editor    │◄────────────────►│ Unity-MCP-Server│  │
+#   │  │ (SERVICE)       │   localhost      │ (SERVICE)       │  │
+#   │  │ localhost:8090  │                  │ localhost:8080  │  │
+#   │  └─────────────────┘                  └────────▲────────┘  │
+#   │                                                │            │
+#   │                                     MCP Protocol            │
+#   │                                                │            │
+#   │                               ┌────────────────┴──────────┐ │
+#   │                               │  GitHub Copilot Agent     │ │
+#   │                               └───────────────────────────┘ │
+#   └─────────────────────────────────────────────────────────────┘
+#
+# How it works:
+#   1. Services start immediately (before steps run)
+#   2. Unity service waits (doesn't run Unity yet - no license)
+#   3. Steps run: checkout, activate license
+#   4. Copy license + project INTO Unity service via docker cp
+#   5. Start Unity inside the service via docker exec
+#   6. Both services persist after job completes for Copilot to use
+#
+# Prerequisites:
+#   - UNITY_LICENSE: Contents of your .ulf license file
+#   - UNITY_EMAIL: Your Unity account email
+#   - UNITY_PASSWORD: Your Unity account password
+
+name: Copilot Setup Steps
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/copilot-setup-steps.yml'
+  pull_request:
+    paths:
+      - '.github/workflows/copilot-setup-steps.yml'
+
+jobs:
+  # IMPORTANT: Job name MUST be exactly 'copilot-setup-steps'
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    timeout-minutes: 59
+    permissions:
+      contents: read
+
+    # =========================================================================
+    # SERVICE CONTAINERS - These persist after job completes!
+    # =========================================================================
+    services:
+      # Unity Editor Service
+      # Starts with 'tail' entrypoint to stay alive without running Unity
+      # We'll start Unity later via docker exec after license is ready
+      unity-editor:
+        image: unityci/editor:ubuntu-2022.3.61f1-linux-il2cpp-3
+        ports:
+          - 8090:8090
+        # Use 'bash' as entrypoint - keeps container waiting for input
+        # The default ENTRYPOINT is ["bash", "-c"] which exits, but just "bash" waits
+        options: >-
+          --entrypoint /bin/bash
+          -t
+
+      # Unity-MCP-Server Service
+      # Bridges Copilot (MCP client) to Unity Editor
+      mcp-server:
+        image: ivanmurzakdev/unity-mcp-server:latest
+        ports:
+          - 8080:8080
+        env:
+          TRANSPORT: http
+          # Connect to Unity service via localhost (both services on host network)
+          SIGNALR_URL: http://localhost:8090/unityhub
+
+    steps:
+      # =========================================================================
+      # SETUP
+      # =========================================================================
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Find service containers
+        id: containers
+        run: |
+          echo "All running containers:"
+          docker ps --format "table {{.ID}}\t{{.Image}}\t{{.Status}}"
+          echo ""
+
+          # Find Unity service container (use grep for partial match on image name)
+          UNITY_CONTAINER=$(docker ps --format "{{.ID}} {{.Image}}" | grep -i "unityci/editor" | awk '{print $1}' | head -1)
+          if [ -z "$UNITY_CONTAINER" ]; then
+            echo "WARNING: Unity container not found by image name, trying by port..."
+            UNITY_CONTAINER=$(docker ps --format "{{.ID}} {{.Ports}}" | grep "8090" | awk '{print $1}' | head -1)
+          fi
+          echo "unity_container=$UNITY_CONTAINER" >> $GITHUB_OUTPUT
+          echo "Unity container: $UNITY_CONTAINER"
+
+          # Find MCP Server container
+          MCP_CONTAINER=$(docker ps --format "{{.ID}} {{.Image}}" | grep -i "unity-mcp-server" | awk '{print $1}' | head -1)
+          if [ -z "$MCP_CONTAINER" ]; then
+            echo "WARNING: MCP container not found by image name, trying by port..."
+            MCP_CONTAINER=$(docker ps --format "{{.ID}} {{.Ports}}" | grep "8080" | awk '{print $1}' | head -1)
+          fi
+          echo "mcp_container=$MCP_CONTAINER" >> $GITHUB_OUTPUT
+          echo "MCP Server container: $MCP_CONTAINER"
+
+      - name: Activate Unity License
+        uses: game-ci/unity-activate@v2
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+
+      # =========================================================================
+      # INJECT FILES INTO UNITY SERVICE
+      # =========================================================================
+
+      - name: Copy license to Unity service
+        run: |
+          UNITY_CONTAINER="${{ steps.containers.outputs.unity_container }}"
+
+          if [ -z "$UNITY_CONTAINER" ]; then
+            echo "ERROR: Unity container not found!"
+            exit 1
+          fi
+
+          echo "Copying license to Unity service container..."
+
+          # Create license directory in container
+          docker exec "$UNITY_CONTAINER" mkdir -p /root/.local/share/unity3d/Unity
+
+          # Copy GameCI activated license
+          if [ -d ~/.local/share/unity3d/Unity ]; then
+            docker cp ~/.local/share/unity3d/Unity/. "$UNITY_CONTAINER":/root/.local/share/unity3d/Unity/
+            echo "Copied activated license from GameCI"
+          fi
+
+          # Also write the secret directly as backup
+          echo '${{ secrets.UNITY_LICENSE }}' | docker exec -i "$UNITY_CONTAINER" tee /root/.local/share/unity3d/Unity/Unity_lic.ulf > /dev/null
+
+          echo "License files in container:"
+          docker exec "$UNITY_CONTAINER" ls -la /root/.local/share/unity3d/Unity/
+
+      - name: Copy project to Unity service
+        run: |
+          UNITY_CONTAINER="${{ steps.containers.outputs.unity_container }}"
+
+          echo "Copying Unity project to service container..."
+
+          # Create project directory
+          docker exec "$UNITY_CONTAINER" mkdir -p /project
+
+          # Copy the entire Unity project
+          docker cp "${{ github.workspace }}/UnityProject/." "$UNITY_CONTAINER":/project/
+
+          echo "Project copied. Contents:"
+          docker exec "$UNITY_CONTAINER" ls -la /project/
+
+      # =========================================================================
+      # START UNITY IN THE SERVICE
+      # =========================================================================
+
+      - name: Start Unity Editor in service
+        run: |
+          UNITY_CONTAINER="${{ steps.containers.outputs.unity_container }}"
+
+          echo "Starting Unity Editor inside service container..."
+
+          # Start Unity in background inside the service container
+          docker exec -d "$UNITY_CONTAINER" /bin/bash -c "
+            unity-editor \
+              -batchmode \
+              -nographics \
+              -logFile /tmp/unity.log \
+              -projectPath /project \
+              -executeMethod Editor.Startup.Init \
+              2>&1 &
+
+            # Keep this exec alive to monitor
+            tail -f /tmp/unity.log 2>/dev/null || sleep infinity
+          "
+
+          echo "Unity Editor starting in service container..."
+
+      - name: Wait for Unity initialization
+        run: |
+          UNITY_CONTAINER="${{ steps.containers.outputs.unity_container }}"
+
+          echo "Waiting for Unity to initialize..."
+          echo "This may take 2-5 minutes for first-time project import..."
+
+          timeout=300
+          elapsed=0
+
+          while [ $elapsed -lt $timeout ]; do
+            # Check for ready marker
+            if docker exec "$UNITY_CONTAINER" grep -q "Unity-MCP-Ready" /tmp/unity.log 2>/dev/null; then
+              echo ""
+              echo "Unity initialized successfully!"
+              exit 0
+            fi
+
+            # Check for license errors
+            if docker exec "$UNITY_CONTAINER" grep -q "No valid Unity Editor license" /tmp/unity.log 2>/dev/null; then
+              echo "ERROR: License activation failed!"
+              docker exec "$UNITY_CONTAINER" tail -50 /tmp/unity.log
+              exit 1
+            fi
+
+            # Check Unity process
+            if docker exec "$UNITY_CONTAINER" pgrep -f "Unity" > /dev/null 2>&1; then
+              : # Unity is running, continue waiting
+            else
+              # Check if Unity exited with error
+              if docker exec "$UNITY_CONTAINER" test -f /tmp/unity.log 2>/dev/null; then
+                if docker exec "$UNITY_CONTAINER" grep -q "Fatal Error" /tmp/unity.log 2>/dev/null; then
+                  echo "ERROR: Unity crashed!"
+                  docker exec "$UNITY_CONTAINER" tail -50 /tmp/unity.log
+                  exit 1
+                fi
+              fi
+            fi
+
+            sleep 10
+            elapsed=$((elapsed + 10))
+            printf "Waiting... %d/%ds " "$elapsed" "$timeout"
+            docker exec "$UNITY_CONTAINER" tail -1 /tmp/unity.log 2>/dev/null | head -c 60 || true
+            echo ""
+          done
+
+          echo ""
+          echo "Timeout reached. Final logs:"
+          docker exec "$UNITY_CONTAINER" tail -30 /tmp/unity.log 2>/dev/null || true
+
+      # =========================================================================
+      # VERIFICATION
+      # =========================================================================
+
+      - name: Verify setup
+        run: |
+          UNITY_CONTAINER="${{ steps.containers.outputs.unity_container }}"
+          MCP_CONTAINER="${{ steps.containers.outputs.mcp_container }}"
+
+          echo "=========================================="
+          echo "       COPILOT ENVIRONMENT READY"
+          echo "=========================================="
+          echo ""
+
+          echo "SERVICE CONTAINERS (persist after job):"
+          docker ps --format "  {{.ID}} | {{.Image}} | {{.Status}}" | head -5
+
+          echo ""
+          echo "UNITY SERVICE:"
+          echo "  Container: $UNITY_CONTAINER"
+          docker exec "$UNITY_CONTAINER" pgrep -a Unity 2>/dev/null | head -1 | sed 's/^/  Process: /' || echo "  Process: Starting..."
+          nc -zv localhost 8090 2>&1 | grep -q succeeded && echo "  Port 8090: OPEN" || echo "  Port 8090: Closed"
+
+          echo ""
+          echo "MCP SERVER SERVICE:"
+          echo "  Container: $MCP_CONTAINER"
+          nc -zv localhost 8080 2>&1 | grep -q succeeded && echo "  Port 8080: OPEN" || echo "  Port 8080: Closed"
+
+          echo ""
+          echo "UNITY LOGS (last 15 lines):"
+          docker exec "$UNITY_CONTAINER" tail -15 /tmp/unity.log 2>/dev/null | sed 's/^/  /' || echo "  No logs yet"
+
+          echo ""
+          echo "=========================================="
+          echo "Both services will persist for Copilot!"
+          echo ""
+          echo "Copilot MCP endpoint: http://localhost:8080"
+          echo "Unity health check:   http://localhost:8090"
+          echo "=========================================="
