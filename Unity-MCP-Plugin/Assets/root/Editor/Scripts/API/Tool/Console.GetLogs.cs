@@ -26,7 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Get Unity Console Logs"
         )]
         [Description("Retrieves the Unity Console log entries. Supports filtering by log type and limiting the number of entries returned.")]
-        public async Task<ResponseCallValueTool<LogEntry[]>> GetLogs
+        public ResponseCallValueTool<LogEntry[]> GetLogs
         (
             [Description("Maximum number of log entries to return. Default: 100")]
             int maxEntries = 100,
@@ -49,7 +49,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     return ResponseCallValueTool<LogEntry[]>.Error("[Error] LogCollector is not initialized.");
 
                 // Get all log entries as array to avoid concurrent modification
-                var logs = await logCollector.QueryAsync(
+                var logs = logCollector.Query(
                     maxEntries: maxEntries,
                     logTypeFilter: logTypeFilter,
                     includeStackTrace: includeStackTrace,
