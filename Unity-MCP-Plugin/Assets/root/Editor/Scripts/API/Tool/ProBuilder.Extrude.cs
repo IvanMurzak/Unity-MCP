@@ -50,8 +50,8 @@ Examples:
             string? faceDirection = null,
             [Description("Distance to extrude the faces. Positive values extrude outward along face normals, negative values extrude inward.")]
             float distance = 0.5f,
-            [Description("Extrusion method: 0 = Individual (each face extrudes independently), 1 = FaceNormal (faces extrude as a group along averaged normal), 2 = VertexNormal (vertices move along their normals).")]
-            int extrudeMethod = 1
+            [Description("Extrusion method: IndividualFaces (each face extrudes independently), FaceNormal (faces extrude as a group along averaged normal), VertexNormal (vertices move along their normals).")]
+            ExtrudeMethod extrudeMethod = ExtrudeMethod.FaceNormal
         )
         => MainThread.Instance.Run(() =>
         {
@@ -106,20 +106,11 @@ Examples:
             // Get the faces to extrude
             var facesToExtrude = resolvedFaceIndices.Select(i => faces[i]).ToArray();
 
-            // Parse extrude method
-            var method = extrudeMethod switch
-            {
-                0 => ExtrudeMethod.IndividualFaces,
-                1 => ExtrudeMethod.FaceNormal,
-                2 => ExtrudeMethod.VertexNormal,
-                _ => ExtrudeMethod.FaceNormal
-            };
-
             // Perform extrusion
             Face[]? newFaces = null;
             try
             {
-                newFaces = proBuilderMesh.Extrude(facesToExtrude, method, distance);
+                newFaces = proBuilderMesh.Extrude(facesToExtrude, extrudeMethod, distance);
             }
             catch (System.Exception ex)
             {
@@ -146,7 +137,7 @@ Examples:
             sb.AppendLine("# Result:");
             sb.AppendLine($"- Face Selection: {selectionMethod}");
             sb.AppendLine($"- Extruded Face Indices: {string.Join(", ", resolvedFaceIndices)}");
-            sb.AppendLine($"- Extrude Method: {method}");
+            sb.AppendLine($"- Extrude Method: {extrudeMethod}");
             sb.AppendLine($"- Distance: {distance}");
             sb.AppendLine($"- New Faces Created: {newFaces.Length}");
             sb.AppendLine();

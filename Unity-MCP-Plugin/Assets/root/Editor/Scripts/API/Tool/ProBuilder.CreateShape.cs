@@ -34,12 +34,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Create a ProBuilder shape"
         )]
         [Description(@"Creates a new ProBuilder mesh shape in the scene. ProBuilder shapes are editable 3D meshes
-that can be modified using other ProBuilder tools like extrusion, beveling, etc.
-Available shape types: Cube, Stair, CurvedStair, Prism, Cylinder, Plane, Door, Pipe, Cone, Sprite, Arch, Sphere, Torus.")]
+that can be modified using other ProBuilder tools like extrusion, beveling, etc.")]
         public string CreateShape
         (
-            [Description("The type of shape to create. Options: Cube, Stair, CurvedStair, Prism, Cylinder, Plane, Door, Pipe, Cone, Sprite, Arch, Sphere, Torus.")]
-            string shapeType,
+            [Description("The type of shape to create.")]
+            ShapeType shapeType,
             [Description("Name of the new GameObject.")]
             string? name = null,
             [Description("Parent GameObject reference. If not provided, the shape will be created at the root of the scene.")]
@@ -57,13 +56,6 @@ Available shape types: Cube, Stair, CurvedStair, Prism, Cylinder, Plane, Door, P
         )
         => MainThread.Instance.Run(() =>
         {
-            // Parse shape type
-            if (!Enum.TryParse<ShapeType>(shapeType, ignoreCase: true, out var parsedShapeType))
-            {
-                var validTypes = string.Join(", ", Enum.GetNames(typeof(ShapeType)));
-                return $"[Error] Invalid shape type '{shapeType}'. Valid types: {validTypes}";
-            }
-
             // Find parent if provided
             GameObject? parentGo = null;
             if (parentGameObjectRef?.IsValid ?? false)
@@ -80,7 +72,7 @@ Available shape types: Cube, Stair, CurvedStair, Prism, Cylinder, Plane, Door, P
             size ??= Vector3.one;
 
             // Create the ProBuilder shape
-            var proBuilderMesh = ShapeGenerator.CreateShape(parsedShapeType, PivotLocation.Center);
+            var proBuilderMesh = ShapeGenerator.CreateShape(shapeType, PivotLocation.Center);
 
             if (proBuilderMesh == null)
                 return $"[Error] Failed to create ProBuilder shape of type '{shapeType}'.";
