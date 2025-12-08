@@ -53,6 +53,7 @@ namespace com.IvanMurzak.Unity.MCP
             reflector.Convertors.Add(new UnityEngine_Transform_ReflectionConvertor());
             reflector.Convertors.Add(new UnityEngine_Renderer_ReflectionConvertor());
             reflector.Convertors.Add(new UnityEngine_MeshFilter_ReflectionConvertor());
+            reflector.Convertors.Add(new UnityEngine_Animator_ReflectionConvertor());
 
             // Assets
             reflector.Convertors.Add(new UnityEngine_Material_ReflectionConvertor());
