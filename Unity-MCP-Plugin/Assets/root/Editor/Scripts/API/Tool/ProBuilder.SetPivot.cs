@@ -11,6 +11,7 @@
 #if PROBUILDER_ENABLED
 #nullable enable
 using System.ComponentModel;
+using System.Linq;
 using System.Text;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
@@ -27,7 +28,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     /// <summary>
     /// Pivot location options for SetPivot tool.
     /// </summary>
-    public enum PivotLocation
+    public enum MeshPivotLocation
     {
         /// <summary>Center of mesh bounds</summary>
         Center,
@@ -56,7 +57,7 @@ Examples:
             [Description("Reference to the GameObject with a ProBuilderMesh component.")]
             GameObjectRef gameObjectRef,
             [Description("Where to place the pivot.")]
-            PivotLocation pivotLocation = PivotLocation.Center,
+            MeshPivotLocation pivotLocation = MeshPivotLocation.Center,
             [Description("Custom world position for pivot (only used when pivotLocation=Custom).")]
             Vector3? customPosition = null
         )
@@ -81,7 +82,7 @@ Examples:
 
             switch (pivotLocation)
             {
-                case PivotLocation.Center:
+                case MeshPivotLocation.Center:
                     // Get mesh bounds center in world space
                     var meshFilter = go.GetComponent<MeshFilter>();
                     if (meshFilter == null || meshFilter.sharedMesh == null)
@@ -90,14 +91,14 @@ Examples:
                     newPivotWorld = go.transform.TransformPoint(boundsCenter);
                     break;
 
-                case PivotLocation.FirstVertex:
+                case MeshPivotLocation.FirstVertex:
                     var positions = proBuilderMesh.positions;
                     if (positions == null || positions.Count == 0)
                         return "[Error] Mesh has no vertices.";
                     newPivotWorld = go.transform.TransformPoint(positions[0]);
                     break;
 
-                case PivotLocation.Custom:
+                case MeshPivotLocation.Custom:
                     if (!customPosition.HasValue)
                         return "[Error] customPosition is required when pivotLocation is Custom.";
                     newPivotWorld = customPosition.Value;
