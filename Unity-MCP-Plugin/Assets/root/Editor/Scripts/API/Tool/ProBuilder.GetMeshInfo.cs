@@ -40,8 +40,8 @@ you often don't need GetMeshInfo at all - just use faceDirection=""up"" etc. dir
         (
             [Description("Reference to the GameObject with a ProBuilderMesh component.")]
             GameObjectRef gameObjectRef,
-            [Description("Detail level: 'summary' for condensed face direction info (token-efficient), 'full' for detailed face-by-face data.")]
-            string detail = "summary",
+            [Description("Detail level for output.")]
+            MeshInfoDetailLevel detail = MeshInfoDetailLevel.Summary,
             [Description("If true, includes detailed vertex positions for each face (only with detail='full').")]
             bool includeVertexPositions = false,
             [Description("If true, includes edge information for each face (only with detail='full').")]
@@ -89,9 +89,9 @@ you often don't need GetMeshInfo at all - just use faceDirection=""up"" etc. dir
             sb.AppendLine();
 
             // Summary mode - condensed face direction info
-            if (detail.ToLowerInvariant() == "summary")
+            if (detail == MeshInfoDetailLevel.Summary)
             {
-                var directionSummary = FaceSelectionHelper.GetFaceDirectionSummary(proBuilderMesh);
+                var directionSummary = FaceSelectionHelper.GetFaceDirectionSummary(proBuilderMesh, out var otherFaces);
                 var faces = proBuilderMesh.faces;
                 var positions = proBuilderMesh.positions;
 
@@ -114,9 +114,13 @@ you often don't need GetMeshInfo at all - just use faceDirection=""up"" etc. dir
                         sb.AppendLine($"- {dirName}: faces [{string.Join(", ", faceList)}]{centerStr}");
                     }
                 }
+                if (otherFaces.Count > 0)
+                {
+                    sb.AppendLine($"- other: faces [{string.Join(", ", otherFaces)}]");
+                }
                 sb.AppendLine();
-                sb.AppendLine("TIP: Use faceDirection=\"up\" in Extrude/DeleteFaces/SetFaceMaterial instead of face indices.");
-                sb.AppendLine("Use detail=\"full\" for detailed per-face information.");
+                sb.AppendLine("TIP: Use faceDirection=Up in Extrude/DeleteFaces/SetFaceMaterial instead of face indices.");
+                sb.AppendLine("Use detail=Full for detailed per-face information.");
             }
             else
             {

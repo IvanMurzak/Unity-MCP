@@ -45,8 +45,8 @@ Examples:
             GameObjectRef gameObjectRef,
             [Description("Array of face indices to delete. Use this OR faceDirection, not both. Use ProBuilder_GetMeshInfo to get valid face indices.")]
             int[]? faceIndices = null,
-            [Description("Semantic face selection by direction: up, down, left, right, forward, back. Use this OR faceIndices, not both.")]
-            string? faceDirection = null
+            [Description("Semantic face selection by direction. Use this OR faceIndices, not both.")]
+            FaceDirection? faceDirection = null
         )
         => MainThread.Instance.Run(() =>
         {
@@ -73,13 +73,13 @@ Examples:
                 resolvedFaceIndices = faceIndices;
                 selectionMethod = "by index";
             }
-            else if (!string.IsNullOrEmpty(faceDirection))
+            else if (faceDirection.HasValue)
             {
-                var selectedIndices = FaceSelectionHelper.SelectFacesByDirection(proBuilderMesh, faceDirection, out var selectionError);
+                var selectedIndices = FaceSelectionHelper.SelectFacesByDirection(proBuilderMesh, faceDirection.Value, out var selectionError);
                 if (selectionError != null)
                     return $"[Error] {selectionError}";
                 resolvedFaceIndices = selectedIndices!;
-                selectionMethod = $"by direction '{faceDirection}'";
+                selectionMethod = $"by direction '{faceDirection.Value}'";
             }
             else
             {

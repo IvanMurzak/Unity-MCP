@@ -45,8 +45,8 @@ Examples:
             GameObjectRef gameObjectRef,
             [Description("Array of edge definitions. Each edge is [vertexA, vertexB]. Use ProBuilder_GetMeshInfo to get vertex indices.")]
             int[][]? edges = null,
-            [Description("Semantic face selection - subdivide all edges of faces facing this direction: up, down, left, right, forward, back.")]
-            string? faceDirection = null,
+            [Description("Semantic face selection - subdivide all edges of faces facing this direction.")]
+            FaceDirection? faceDirection = null,
             [Description("Number of subdivisions per edge. 1 = splits edge in half, 2 = splits into thirds, etc. Default is 1.")]
             int subdivisions = 1
         )
@@ -85,9 +85,9 @@ Examples:
                 edgesToSubdivide = edges.Select(e => new Edge(e[0], e[1])).ToList();
                 selectionMethod = "by vertex indices";
             }
-            else if (!string.IsNullOrEmpty(faceDirection))
+            else if (faceDirection.HasValue)
             {
-                var selectedIndices = FaceSelectionHelper.SelectFacesByDirection(proBuilderMesh, faceDirection, out var selectionError);
+                var selectedIndices = FaceSelectionHelper.SelectFacesByDirection(proBuilderMesh, faceDirection.Value, out var selectionError);
                 if (selectionError != null)
                     return $"[Error] {selectionError}";
 
@@ -100,7 +100,7 @@ Examples:
                 }
                 // Remove duplicates
                 edgesToSubdivide = edgesToSubdivide.Distinct().ToList();
-                selectionMethod = $"from faces facing '{faceDirection}'";
+                selectionMethod = $"from faces facing '{faceDirection.Value}'";
             }
             else
             {

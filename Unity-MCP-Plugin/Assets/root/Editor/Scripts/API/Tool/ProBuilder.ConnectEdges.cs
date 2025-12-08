@@ -46,8 +46,8 @@ Examples:
             GameObjectRef gameObjectRef,
             [Description("Array of edge definitions. Each edge is [vertexA, vertexB]. Use ProBuilder_GetMeshInfo to get vertex indices.")]
             int[][]? edges = null,
-            [Description("Semantic face selection - connect edges of faces facing this direction: up, down, left, right, forward, back.")]
-            string? faceDirection = null
+            [Description("Semantic face selection - connect edges of faces facing this direction.")]
+            FaceDirection? faceDirection = null
         )
         => MainThread.Instance.Run(() =>
         {
@@ -81,9 +81,9 @@ Examples:
                 edgesToConnect = edges.Select(e => new Edge(e[0], e[1])).ToList();
                 selectionMethod = "by vertex indices";
             }
-            else if (!string.IsNullOrEmpty(faceDirection))
+            else if (faceDirection.HasValue)
             {
-                var selectedIndices = FaceSelectionHelper.SelectFacesByDirection(proBuilderMesh, faceDirection, out var selectionError);
+                var selectedIndices = FaceSelectionHelper.SelectFacesByDirection(proBuilderMesh, faceDirection.Value, out var selectionError);
                 if (selectionError != null)
                     return $"[Error] {selectionError}";
 
@@ -96,7 +96,7 @@ Examples:
                 }
                 // Remove duplicates
                 edgesToConnect = edgesToConnect.Distinct().ToList();
-                selectionMethod = $"from faces facing '{faceDirection}'";
+                selectionMethod = $"from faces facing '{faceDirection.Value}'";
             }
             else
             {

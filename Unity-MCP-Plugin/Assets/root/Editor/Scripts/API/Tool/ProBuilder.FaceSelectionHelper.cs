@@ -10,14 +10,44 @@
 
 #if PROBUILDER_ENABLED
 #nullable enable
-using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.ProBuilder;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
+    /// <summary>
+    /// Direction for semantic face selection.
+    /// </summary>
+    public enum FaceDirection
+    {
+        [Description("Faces pointing upward (+Y)")]
+        Up,
+        [Description("Faces pointing downward (-Y)")]
+        Down,
+        [Description("Faces pointing left (-X)")]
+        Left,
+        [Description("Faces pointing right (+X)")]
+        Right,
+        [Description("Faces pointing forward (+Z)")]
+        Forward,
+        [Description("Faces pointing backward (-Z)")]
+        Back
+    }
+
+    /// <summary>
+    /// Detail level for mesh information output.
+    /// </summary>
+    public enum MeshInfoDetailLevel
+    {
+        [Description("Condensed face direction summary (token-efficient)")]
+        Summary,
+        [Description("Detailed face-by-face information")]
+        Full
+    }
+
     /// <summary>
     /// Helper for semantic face selection by direction.
     /// Allows selecting faces by their normal direction instead of indices.
@@ -31,49 +61,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         private const float DirectionThreshold = 0.7f;
 
         /// <summary>
-        /// Maps direction names to their corresponding vectors.
+        /// Maps FaceDirection enum to corresponding vectors.
         /// </summary>
-        private static readonly Dictionary<string, Vector3> DirectionMap = new(StringComparer.OrdinalIgnoreCase)
+        private static readonly Dictionary<FaceDirection, Vector3> DirectionMap = new()
         {
-            { "up", Vector3.up },
-            { "down", Vector3.down },
-            { "left", Vector3.left },
-            { "right", Vector3.right },
-            { "forward", Vector3.forward },
-            { "back", Vector3.back },
-            { "front", Vector3.forward },    // alias
-            { "backward", Vector3.back },    // alias
-            { "top", Vector3.up },           // alias
-            { "bottom", Vector3.down },      // alias
+            { FaceDirection.Up, Vector3.up },
+            { FaceDirection.Down, Vector3.down },
+            { FaceDirection.Left, Vector3.left },
+            { FaceDirection.Right, Vector3.right },
+            { FaceDirection.Forward, Vector3.forward },
+            { FaceDirection.Back, Vector3.back },
         };
-
-        /// <summary>
-        /// Gets the list of valid direction names for documentation.
-        /// </summary>
-        public static string ValidDirections => "up, down, left, right, forward, back (aliases: top, bottom, front, backward)";
 
         /// <summary>
         /// Selects face indices by direction from a ProBuilder mesh.
         /// </summary>
         /// <param name="mesh">The ProBuilder mesh</param>
-        /// <param name="direction">Direction name (up, down, left, right, forward, back)</param>
-        /// <param name="error">Error message if direction is invalid</param>
+        /// <param name="direction">Direction enum value</param>
+        /// <param name="error">Error message if no faces found</param>
         /// <returns>Array of face indices matching the direction, or null on error</returns>
-        public static int[]? SelectFacesByDirection(ProBuilderMesh mesh, string direction, out string? error)
+        public static int[]? SelectFacesByDirection(ProBuilderMesh mesh, FaceDirection direction, out string? error)
         {
             error = null;
 
-            if (string.IsNullOrWhiteSpace(direction))
-            {
-                error = $"Direction cannot be empty. Valid directions: {ValidDirections}";
-                return null;
-            }
-
-            if (!DirectionMap.TryGetValue(direction.Trim(), out var targetDir))
-            {
-                error = $"Invalid direction '{direction}'. Valid directions: {ValidDirections}";
-                return null;
-            }
+            var targetDir = DirectionMap[direction];
 
             var faces = mesh.faces;
             var positions = mesh.positions;
@@ -122,19 +133,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
         /// <summary>
         /// Gets a summary of face directions for a mesh (for condensed output).
+        /// Returns dictionary with FaceDirection enum keys plus "other" for unclassified faces.
         /// </summary>
-        public static Dictionary<string, List<int>> GetFaceDirectionSummary(ProBuilderMesh mesh)
+        public static Dictionary<FaceDirection, List<int>> GetFaceDirectionSummary(ProBuilderMesh mesh, out List<int> otherFaces)
         {
-            var result = new Dictionary<string, List<int>>
+            var result = new Dictionary<FaceDirection, List<int>>();
+            foreach (FaceDirection dir in System.Enum.GetValues(typeof(FaceDirection)))
             {
-                { "up", new List<int>() },
-                { "down", new List<int>() },
-                { "left", new List<int>() },
-                { "right", new List<int>() },
-                { "forward", new List<int>() },
-                { "back", new List<int>() },
-                { "other", new List<int>() }
-            };
+                result[dir] = new List<int>();
+            }
+            otherFaces = new List<int>();
 
             var faces = mesh.faces;
             var positions = mesh.positions;
@@ -144,7 +152,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 var normal = CalculateFaceNormal(faces[i], positions);
                 var assigned = false;
 
-                foreach (var kvp in DirectionMap.Take(6)) // Only primary 6 directions
+                foreach (var kvp in DirectionMap)
                 {
                     if (Vector3.Dot(normal.normalized, kvp.Value) >= DirectionThreshold)
                     {
@@ -156,7 +164,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 if (!assigned)
                 {
-                    result["other"].Add(i);
+                    otherFaces.Add(i);
                 }
             }
 
