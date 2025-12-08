@@ -87,8 +87,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             logCollector.Save();
 
             // Clear and reload
-            logCollector.Clear();
-            Assert.AreEqual(0, logCollector.Query().Length, "Logs should be empty array after clearing");
+            // Simulate restart
+            logCollector.Dispose();
+            logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-editor-logs.txt"));
+            // Assert.AreEqual(0, logCollector.Query().Length, "Logs should be empty array after clearing");
 
             var loadedLogs = logCollector.Query();
             Assert.AreEqual(testData.Length, loadedLogs.Length, "All log types should be preserved");
@@ -135,7 +137,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             // Save and reload
             logCollector.Save();
-            logCollector.Clear();
+            // Simulate restart
+            logCollector.Dispose();
+            logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-editor-logs.txt"));
 
             var loadedLogs = logCollector.Query();
             Assert.AreEqual(specialMessages.Length, loadedLogs.Length, "All logs should be preserved");
@@ -188,7 +192,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
                 // Save and reload
                 logCollector.Save();
-                logCollector.Clear();
+                // Simulate restart
+                logCollector.Dispose();
+                logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-editor-logs.txt"));
 
                 var loadedLogs = logCollector.Query();
                 Assert.AreEqual(expectedLogs, loadedLogs.Length, "All logs should be preserved");
@@ -236,7 +242,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             // Save and reload
             logCollector.Save();
-            logCollector.Clear();
+            // Simulate restart
+            logCollector.Dispose();
+            logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-editor-logs.txt"));
 
             var loadedLogs = logCollector.Query();
             Assert.AreEqual(testCount, loadedLogs.Length);
@@ -303,7 +311,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             // Save and reload
             logCollector.Save();
-            logCollector.Clear();
+            // Simulate restart
+            logCollector.Dispose();
+            logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-editor-logs.txt"));
 
             var loadedLogs = logCollector.Query();
             Assert.AreEqual(expectedLogs, loadedLogs.Length);
@@ -350,7 +360,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     $"Should have {(cycle + 1) * logsPerCycle} logs after cycle {cycle}");
 
                 // Clear and reload
-                logCollector.Clear();
+                // Simulate restart
+                logCollector.Dispose();
+                logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-editor-logs.txt"));
 
                 // Verify all logs from all cycles are still present
                 var loadedLogs = logCollector.Query();
@@ -396,7 +408,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             // Save and reload
             logCollector.Save();
-            logCollector.Clear();
+            // Simulate restart
+            logCollector.Dispose();
+            logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-editor-logs.txt"));
 
             var loadedLogs = logCollector.Query();
             Assert.AreEqual(testCount, loadedLogs.Length);

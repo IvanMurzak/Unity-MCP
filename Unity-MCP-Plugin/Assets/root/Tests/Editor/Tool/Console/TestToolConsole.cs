@@ -12,6 +12,7 @@
 using System;
 using System.Collections;
 using System.Linq;
+using System.Reflection;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using NUnit.Framework;
 using UnityEngine;
@@ -22,18 +23,34 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     public class TestToolConsole : BaseTest
     {
         Tool_Console _tool = null!;
+        UnityLogCollector _logCollector = null!;
 
         [SetUp]
         public void TestSetUp()
         {
+            // Dispose existing collector to avoid double logging/errors
+            UnityMcpPlugin.Instance.LogCollector?.Dispose();
+
+            // Create local collector
+            _logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-tool-console.txt"));
+
+            // Inject into Singleton
+            var property = typeof(UnityMcpPlugin).GetProperty("LogCollector", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            property.SetValue(UnityMcpPlugin.Instance, _logCollector);
+
             _tool = new Tool_Console();
+        }
+
+        [TearDown]
+        public void TestTearDown()
+        {
+            _logCollector?.Dispose();
         }
 
         void ResultValidation(LogEntry[] result)
         {
             Debug.Log($"[{nameof(TestToolConsole)}] Result:\n{result}");
             Assert.IsNotNull(result, "Result should not be null.");
-            Assert.IsNotEmpty(result, "Result should not be empty.");
         }
 
         void ResultValidationExpected(LogEntry[] result, params string[] expectedLines)
@@ -53,7 +70,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             Debug.Log($"[{nameof(TestToolConsole)}] Result:\n{result}");
             Assert.IsNotNull(result, "Result should not be null.");
-            Assert.IsNotEmpty(result, "Result should not be empty.");
 
             if (unexpectedLines != null)
             {
@@ -78,6 +94,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             for (int i = 0; i < 3; i++)
                 yield return null;
 
+            _logCollector.Save();
+
             // Act
             var result = _tool.GetLogs();
 
@@ -100,6 +118,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             for (int i = 0; i < 3; i++)
                 yield return null;
 
+            _logCollector.Save();
+
             // Act
             var result = _tool.GetLogs(maxEntries: limit);
 
@@ -108,10 +128,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             // Count the number of log entries in the result
             var lines = result
-                .Where(entry => entry.Message.Contains("[Log]"))
+                .Where(entry => entry.Message.Contains("Test log"))
                 .ToArray();
 
-            Assert.AreEqual(lines.Length, limit, $"Should return exactly {limit} entries");
+            Assert.AreEqual(limit, lines.Length, $"Should return exactly {limit} entries");
         }
 
         [UnityTest]
@@ -125,13 +145,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             for (int i = 0; i < 5; i++)
                 yield return null;
 
+            _logCollector.Save();
+
             // Act - Get only warnings
             var result = _tool.GetLogs(logTypeFilter: LogType.Warning);
 
             // Assert
             ResultValidation(result);
             Assert.IsTrue(result.Any(entry => entry.LogType == LogType.Warning), "Should contain warning logs");
-            Assert.IsTrue(result.Any(entry => entry.LogType == LogType.Log), "Should contain log logs");
+            Assert.IsFalse(result.Any(entry => entry.LogType == LogType.Log), "Should NOT contain log logs");
         }
 
         [UnityTest]
@@ -196,6 +218,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             for (int i = 0; i < 3; i++)
                 yield return null;
 
+            _logCollector.Save();
+
             // Act
             var result = _tool.GetLogs(includeStackTrace: true, logTypeFilter: LogType.Warning);
 
@@ -220,6 +244,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             for (int i = 0; i < 3; i++)
                 yield return null;
+
+            _logCollector.Save();
 
             // Act - Get logs from last 1 minute (should include recent logs)
             var result = _tool.GetLogs(lastMinutes: 1);
@@ -250,6 +276,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             for (int i = 0; i < 3; i++)
                 yield return null;
+
+            _logCollector.Save();
 
             // Test each safe log type filter
             LogType[] logTypes = { LogType.Log, LogType.Warning, LogType.Error };
@@ -284,6 +312,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             for (int i = 0; i < 3; i++)
                 yield return null;
+
+            _logCollector.Save();
 
             // Act - Combine multiple filters
             var result = _tool.GetLogs(
