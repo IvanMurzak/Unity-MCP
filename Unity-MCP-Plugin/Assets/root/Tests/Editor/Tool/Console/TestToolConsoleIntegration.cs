@@ -27,9 +27,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [SetUp]
         public void TestSetUp()
         {
-            // Dispose existing collector to avoid double logging/errors
-            UnityMcpPlugin.Instance.LogCollector?.Dispose();
-
             // Create local collector
             _logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-tool-console-integration.txt"));
 
