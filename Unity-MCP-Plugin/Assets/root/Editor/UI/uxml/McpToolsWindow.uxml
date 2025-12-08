@@ -1,0 +1,20 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/root/Editor/UI/uss/McpToolsWindow.uss?fileID=7433441132597879392&amp;guid=525911ffb58076f44a1788589abac01d&amp;type=3#McpToolsWindow" />
+    <ui:VisualElement class="root-container" style="min-width: 320px;">
+        <ui:VisualElement class="header-container">
+            <ui:Label text="MCP Tools" class="header-title" />
+            <ui:Label text="See and control all MCP tools. Disable not needed tools for saving LLM context." class="header-description" />
+            <ui:VisualElement class="filter-row">
+                <ui:Label text="Filter:" class="filter-label" />
+                <ui:TextField name="filter-textfield" class="filter-textfield" />
+            </ui:VisualElement>
+            <ui:VisualElement class="filter-row">
+                <ui:Label text="Type:" class="filter-label" />
+                <ui:DropdownField name="type-dropdown" index="0" class="type-dropdown" />
+                <ui:Label text="Filtered: 0, Total: 0" name="filter-stats-label" class="filter-stats-label" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:Label name="empty-list-label" text="No tools by current filter" class="empty-list-label" />
+        <ui:ListView name="tool-list-view" class="tool-list-view" />
+    </ui:VisualElement>
+</ui:UXML>

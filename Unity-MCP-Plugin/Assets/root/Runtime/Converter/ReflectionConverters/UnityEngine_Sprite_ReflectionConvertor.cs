@@ -19,7 +19,7 @@ using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
 {
-    public partial class UnityEngine_Sprite_ReflectionConvertor : UnityEngine_Object_ReflectionConvertor<UnityEngine.Sprite>
+    public partial class UnityEngine_Sprite_ReflectionConvertor : UnityEngine_Asset_ReflectionConvertor<UnityEngine.Sprite>
     {
         public override bool AllowCascadeSerialization => false;
 

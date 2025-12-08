@@ -13,7 +13,7 @@ using System.Collections.Generic;
 
 namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
 {
-    public partial class UnityEngine_Renderer_ReflectionConvertor : UnityEngine_Object_ReflectionConvertor<UnityEngine.Renderer>
+    public partial class UnityEngine_Renderer_ReflectionConvertor : UnityEngine_GenericComponent_ReflectionConvertor<UnityEngine.Renderer>
     {
         protected override IEnumerable<string> GetIgnoredProperties()
         {

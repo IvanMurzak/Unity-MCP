@@ -1,0 +1,215 @@
+/* General Styles */
+.root-container {
+    background-color: #383838;
+    color: #E0E0E0;
+    flex-grow: 1;
+}
+
+.header-container {
+    padding: 15px 25px 0 15px;
+}
+
+.header-title {
+    font-size: 24px;
+    -unity-font-style: bold;
+    margin-bottom: 5px;
+}
+
+.header-description {
+    color: #B0B0B0;
+    margin-bottom: 7px;
+    white-space: normal;
+}
+
+/* Filter Section */
+.filter-row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.filter-label {
+    margin-right: 5px;
+    width: 45px;
+    -unity-font-style: bold;
+}
+
+.filter-textfield {
+    flex-grow: 1;
+    flex-shrink: 1; /* Added to prevent overflow */
+}
+
+.type-dropdown {
+    width: 100px;
+}
+
+.filter-stats-label {
+    color: #B0B0B0;
+    margin-left: auto;
+}
+
+/* Tool List */
+.tool-list-view {
+    flex-grow: 1;
+    padding-left: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-top: 0;
+}
+
+.tool-list-view .unity-list-view__item:hover {
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.tool-list-view .unity-scroll-view__content-container {
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+/* Empty List Label */
+.empty-list-label {
+    flex-grow: 1;
+    -unity-text-align: middle-center;
+    font-size: 18px;
+    color: #808080;
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-bottom: 15px;
+    padding-top: 5px;
+}
+
+/* Tool Item */
+.tool-item-container {
+    background-color: #4A4A4A;
+    border-radius: 12px;
+    padding: 10px;
+    margin-bottom: 7px;
+}
+
+.tool-item-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.tool-item-title-container {
+    flex-grow: 1;
+    margin-right: 10px;
+}
+
+.tool-title {
+    font-size: 16px;
+    -unity-font-style: bold;
+    white-space: normal;
+}
+
+.tool-id {
+    font-size: 12px;
+    color: #B0B0B0;
+}
+
+/* Details Foldout */
+.tool-item-foldout {
+    margin-left: -4px;
+    padding-left: 0px;
+}
+
+.tool-item-foldout .unity-foldout__text {
+    font-size: 13px;
+    -unity-font-style: bold;
+}
+
+.tool-item-foldout .unity-foldout__content {
+    display: flex !important;
+    overflow: hidden;
+    transition-property: max-height, opacity, margin-top, margin-bottom, padding-top, padding-bottom;
+    transition-duration: 250ms;
+    transition-timing-function: ease-in-out;
+    opacity: 1;
+    max-height: 1000px;
+}
+
+.tool-item-foldout.collapsed .unity-foldout__content {
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    transition-property: max-height, opacity, margin-top, margin-bottom, padding-top, padding-bottom;
+    transition-duration: 150ms;
+    transition-timing-function: ease-in-out;
+}
+
+.details-text {
+    white-space: normal;
+    margin-left: 15px; /* Indent content */
+    margin-bottom: 8px;
+}
+
+/* Argument Item */
+.argument-item {
+    margin-left: 15px;
+    margin-bottom: 8px;
+}
+
+.argument-name {
+    -unity-font-style: bold;
+}
+
+.argument-description {
+    white-space: normal;
+    color: #B0B0B0;
+}
+
+/* Tool Item Highlighting */
+.tool-item-container.enabled {
+    background-color: #3A4039;
+    transition-duration: 200ms;
+}
+
+.tool-item-container.disabled {
+    background-color: #3F393A;
+    transition-duration: 200ms;
+}
+
+/* Toggle Switch Styles */
+.tool-switch .unity-toggle__input {
+    width: 40px;
+    height: 20px;
+    border-radius: 10px;
+    background-color: #707070;
+    border-width: 0;
+    -unity-background-image-tint-color: white;
+    transition-duration: 200ms;
+}
+
+.tool-switch .unity-toggle__checkmark {
+    width: 16px;
+    height: 16px;
+    border-radius: 10px;
+    background-color: white;
+    background-image: none; /* Remove default tick icon */
+    opacity: 1; /* Ensure visible */
+    margin-left: 2px;
+    transition-duration: 200ms;
+}
+
+/* Checked State */
+.tool-switch.checked .unity-toggle__input {
+    background-color: #51C663; /* SeaGreen */
+    transition-duration: 200ms;
+}
+.tool-switch.checked .unity-toggle__checkmark {
+    margin-left: 22px;
+    background-image: none;
+    transition-duration: 200ms;
+}
+
+/* Disabled Tool State (Unchecked) */
+.tool-item-container.disabled .tool-switch .unity-toggle__input {
+    background-color: #863A3B;
+    transition-duration: 200ms;
+}
