@@ -14,8 +14,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
+using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
@@ -28,6 +30,8 @@ namespace com.IvanMurzak.Unity.MCP
 
     public class FileLogStorage : ILogStorage, IDisposable
     {
+        protected const int DefaultMaxFileSizeMB = 512;
+
         protected readonly ILogger _logger;
         protected readonly string _cacheFilePath;
         protected readonly string _cacheFileName;
@@ -35,6 +39,8 @@ namespace com.IvanMurzak.Unity.MCP
         protected readonly JsonSerializerOptions _jsonOptions;
         protected readonly SemaphoreSlim _fileLock = new(1, 1);
         protected readonly int _fileBufferSize;
+        protected readonly long _maxFileSizeBytes;
+        protected readonly ThreadSafeBool _isDisposed = new(false);
 
         protected FileStream? fileWriteStream;
 
@@ -43,6 +49,7 @@ namespace com.IvanMurzak.Unity.MCP
             string? cacheFilePath = null,
             string? cacheFileName = null,
             int fileBufferSize = 4096,
+            int maxFileSizeMB = DefaultMaxFileSizeMB,
             JsonSerializerOptions? jsonOptions = null)
         {
             if (!MainThread.Instance.IsMainThread)
@@ -50,6 +57,9 @@ namespace com.IvanMurzak.Unity.MCP
 
             if (fileBufferSize <= 0)
                 throw new ArgumentOutOfRangeException(nameof(fileBufferSize), "File buffer size must be greater than zero.");
+
+            if (maxFileSizeMB <= 0)
+                throw new ArgumentOutOfRangeException(nameof(maxFileSizeMB), "Max file size must be greater than zero.");
 
             _logger = logger ?? UnityLoggerFactory.LoggerFactory.CreateLogger(GetType().GetTypeShortName());
 
@@ -66,15 +76,23 @@ namespace com.IvanMurzak.Unity.MCP
             {
                 PropertyNameCaseInsensitive = true,
                 WriteIndented = false,
+                DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
             };
 
             _fileBufferSize = fileBufferSize;
+            _maxFileSizeBytes = maxFileSizeMB * 1024L * 1024L;
 
             fileWriteStream = CreateWriteStream();
         }
 
         protected virtual FileStream CreateWriteStream()
         {
+            if (_isDisposed.Value)
+            {
+                _logger.LogWarning("{method} called but already disposed, ignored.",
+                    nameof(Flush));
+                throw new ObjectDisposedException(GetType().GetTypeShortName());
+            }
             if (!Directory.Exists(_cacheFilePath))
                 Directory.CreateDirectory(_cacheFilePath);
             return new FileStream(_cacheFile, FileMode.Append, FileAccess.Write, FileShare.Read, bufferSize: _fileBufferSize, useAsync: false);
@@ -82,6 +100,12 @@ namespace com.IvanMurzak.Unity.MCP
 
         public virtual void Flush()
         {
+            if (_isDisposed.Value)
+            {
+                _logger.LogWarning("{method} called but already disposed, ignored.",
+                    nameof(Flush));
+                return;
+            }
             _fileLock.Wait();
             try
             {
@@ -94,6 +118,12 @@ namespace com.IvanMurzak.Unity.MCP
         }
         public virtual async Task FlushAsync()
         {
+            if (_isDisposed.Value)
+            {
+                _logger.LogWarning("{method} called but already disposed, ignored.",
+                    nameof(FlushAsync));
+                return;
+            }
             _fileLock.Wait();
             try
             {
@@ -108,6 +138,12 @@ namespace com.IvanMurzak.Unity.MCP
 
         public virtual Task AppendAsync(LogEntry[] entries)
         {
+            if (_isDisposed.Value)
+            {
+                _logger.LogWarning("{method} called but already disposed, ignored.",
+                    nameof(AppendAsync));
+                return Task.CompletedTask;
+            }
             return Task.Run(async () =>
             {
                 await _fileLock.WaitAsync();
@@ -124,6 +160,12 @@ namespace com.IvanMurzak.Unity.MCP
 
         public virtual void Append(params LogEntry[] entries)
         {
+            if (_isDisposed.Value)
+            {
+                _logger.LogWarning("{method} called but already disposed, ignored.",
+                    nameof(Append));
+                return;
+            }
             _fileLock.Wait();
             try
             {
@@ -137,13 +179,53 @@ namespace com.IvanMurzak.Unity.MCP
 
         protected virtual void AppendInternal(params LogEntry[] entries)
         {
+            if (_isDisposed.Value)
+            {
+                _logger.LogWarning("{method} called but already disposed, ignored.",
+                    nameof(AppendInternal));
+                return;
+            }
             fileWriteStream ??= CreateWriteStream();
+
+            // Check if file size limit reached and reset if needed
+            if (fileWriteStream.Length >= _maxFileSizeBytes)
+            {
+                ResetLogFile();
+            }
 
             foreach (var entry in entries)
             {
                 System.Text.Json.JsonSerializer.Serialize(fileWriteStream, entry, _jsonOptions);
                 fileWriteStream.WriteByte((byte)'\n');
             }
+            fileWriteStream.Flush();
+        }
+
+        /// <summary>
+        /// Resets the log file by deleting it and creating a new one.
+        /// Called when file size limit is reached.
+        /// </summary>
+        protected virtual void ResetLogFile()
+        {
+            if (_isDisposed.Value)
+            {
+                _logger.LogWarning("{method} called but already disposed, ignored.",
+                    nameof(ResetLogFile));
+                return;
+            }
+
+            _logger.LogInformation("Log file size limit reached ({maxSizeMB}MB). Resetting log file.",
+                _maxFileSizeBytes / (1024 * 1024));
+
+            fileWriteStream?.Flush();
+            fileWriteStream?.Close();
+            fileWriteStream?.Dispose();
+            fileWriteStream = null;
+
+            if (File.Exists(_cacheFile))
+                File.Delete(_cacheFile);
+
+            fileWriteStream = CreateWriteStream();
         }
 
         /// <summary>
@@ -151,6 +233,12 @@ namespace com.IvanMurzak.Unity.MCP
         /// </summary>
         public virtual void Clear()
         {
+            if (_isDisposed.Value)
+            {
+                _logger.LogWarning("{method} called but already disposed, ignored.",
+                    nameof(Clear));
+                return;
+            }
             _fileLock.Wait();
             try
             {
@@ -176,6 +264,12 @@ namespace com.IvanMurzak.Unity.MCP
             bool includeStackTrace = false,
             int lastMinutes = 0)
         {
+            if (_isDisposed.Value)
+            {
+                _logger.LogWarning("{method} called but already disposed, ignored.",
+                    nameof(QueryAsync));
+                return Task.FromResult(new LogEntry[0]);
+            }
             return Task.Run(() => Query(maxEntries, logTypeFilter, includeStackTrace, lastMinutes));
         }
 
@@ -185,6 +279,12 @@ namespace com.IvanMurzak.Unity.MCP
             bool includeStackTrace = false,
             int lastMinutes = 0)
         {
+            if (_isDisposed.Value)
+            {
+                _logger.LogWarning("{method} called but already disposed, ignored.",
+                    nameof(Query));
+                return new LogEntry[0];
+            }
             _fileLock.Wait();
             try
             {
@@ -242,6 +342,12 @@ namespace com.IvanMurzak.Unity.MCP
 
         protected virtual IEnumerable<string> ReadLinesReverse(FileStream fileStream)
         {
+            if (_isDisposed.Value)
+            {
+                _logger.LogWarning("{method} called but already disposed, ignored.",
+                    nameof(ReadLinesReverse));
+                yield break;
+            }
             var position = fileStream.Length;
             if (position == 0) yield break;
 
@@ -288,7 +394,14 @@ namespace com.IvanMurzak.Unity.MCP
 
         public virtual void Dispose()
         {
+            if (!_isDisposed.TrySetTrue())
+                return; // already disposed
+
             Flush();
+
+            fileWriteStream?.Close();
+            fileWriteStream?.Dispose();
+            fileWriteStream = null;
 
             _fileLock.Dispose();
         }

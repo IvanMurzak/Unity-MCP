@@ -31,8 +31,9 @@ namespace com.IvanMurzak.Unity.MCP
             string? cacheFilePath = null,
             string? cacheFileName = null,
             int fileBufferSize = 4096,
+            int maxFileSizeMB = DefaultMaxFileSizeMB,
             JsonSerializerOptions? jsonOptions = null)
-            : base(logger, cacheFilePath, cacheFileName, fileBufferSize, jsonOptions)
+            : base(logger, cacheFilePath, cacheFileName, fileBufferSize, maxFileSizeMB, jsonOptions)
         {
             if (flushEntriesThreshold <= 0)
                 throw new System.ArgumentOutOfRangeException(nameof(flushEntriesThreshold), "Flush entries threshold must be greater than zero.");
@@ -44,6 +45,12 @@ namespace com.IvanMurzak.Unity.MCP
 
         public override void Flush()
         {
+            if (_isDisposed.Value)
+            {
+                _logger.LogWarning("{method} called but already disposed, ignored.",
+                    nameof(Flush));
+                return;
+            }
             _fileLock.Wait();
             try
             {
@@ -64,6 +71,12 @@ namespace com.IvanMurzak.Unity.MCP
         }
         public override async Task FlushAsync()
         {
+            if (_isDisposed.Value)
+            {
+                _logger.LogWarning("{method} called but already disposed, ignored.",
+                    nameof(Flush));
+                return;
+            }
             _fileLock.Wait();
             try
             {
@@ -87,6 +100,12 @@ namespace com.IvanMurzak.Unity.MCP
 
         protected override void AppendInternal(params LogEntry[] entries)
         {
+            if (_isDisposed.Value)
+            {
+                _logger.LogWarning("{method} called but already disposed, ignored.",
+                    nameof(AppendInternal));
+                return;
+            }
             foreach (var entry in entries)
             {
                 _logEntriesBuffer[_logEntriesBufferLength] = entry;
@@ -105,6 +124,12 @@ namespace com.IvanMurzak.Unity.MCP
         /// </summary>
         public override void Clear()
         {
+            if (_isDisposed.Value)
+            {
+                _logger.LogWarning("{method} called but already disposed, ignored.",
+                    nameof(Clear));
+                return;
+            }
             _fileLock.Wait();
             try
             {
@@ -131,6 +156,12 @@ namespace com.IvanMurzak.Unity.MCP
             bool includeStackTrace = false,
             int lastMinutes = 0)
         {
+            if (_isDisposed.Value)
+            {
+                _logger.LogWarning("{method} called but already disposed, ignored.",
+                    nameof(Query));
+                return new LogEntry[0];
+            }
             _fileLock.Wait();
             try
             {
@@ -169,11 +200,6 @@ namespace com.IvanMurzak.Unity.MCP
             {
                 _fileLock.Release();
             }
-        }
-
-        public override void Dispose()
-        {
-            base.Dispose();
         }
 
         ~BufferedFileLogStorage() => Dispose();

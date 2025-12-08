@@ -11,9 +11,7 @@
 #nullable enable
 using System;
 using System.ComponentModel;
-using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin;
-using com.IvanMurzak.McpPlugin.Common.Model;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
