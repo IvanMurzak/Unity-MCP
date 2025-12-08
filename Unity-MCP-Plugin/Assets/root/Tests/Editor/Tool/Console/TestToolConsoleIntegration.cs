@@ -11,6 +11,7 @@
 #nullable enable
 using System.Collections;
 using System.Linq;
+using System.Reflection;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using NUnit.Framework;
 using UnityEngine;
@@ -21,17 +22,35 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     public class TestToolConsoleIntegration : BaseTest
     {
         private Tool_Console _tool = null!;
+        private UnityLogCollector _logCollector = null!;
 
         [SetUp]
         public void TestSetUp()
         {
+            // Dispose existing collector to avoid double logging/errors
+            UnityMcpPlugin.Instance.LogCollector?.Dispose();
+
+            // Create local collector
+            _logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-tool-console-integration.txt"));
+
+            // Inject into Singleton
+            var property = typeof(UnityMcpPlugin).GetProperty("LogCollector", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+            property.SetValue(UnityMcpPlugin.Instance, _logCollector);
+
             _tool = new Tool_Console();
+        }
+
+        [TearDown]
+        public void TestTearDown()
+        {
+            _logCollector?.Dispose();
         }
 
         [UnityTest]
         public IEnumerator GetLogs_CapturesRealTimeLogs_Correctly()
         {
             // Arrange - Clear existing logs first
+            _logCollector.Clear();
             _tool.GetLogs(maxEntries: 100000);
 
             yield return null; // Wait one frame
@@ -55,6 +74,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Wait for log collection system to process (EditMode tests can only yield null)
             for (int i = 0; i < 5; i++)
                 yield return null;
+
+            _logCollector.Save();
 
             // Act - Retrieve logs
             var allLogsResult = _tool.GetLogs(maxEntries: 1000);
@@ -99,6 +120,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             for (int i = 0; i < 3; i++)
                 yield return null;
 
+            _logCollector.Save();
+
             // Act - Get logs from a very short time window (should not include the "old" log)
             var recentLogsResult = _tool.GetLogs(lastMinutes: 0); // 0 means all logs
 
@@ -108,6 +131,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Wait a few frames (EditMode tests can only yield null)
             for (int i = 0; i < 3; i++)
                 yield return null;
+
+            _logCollector.Save();
 
             // Get logs from last 1 minute (should include both)
             var minuteLogsResult = _tool.GetLogs(lastMinutes: 1);

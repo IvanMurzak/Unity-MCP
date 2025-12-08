@@ -356,7 +356,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 yield return WaitForTask(logCollector.SaveAsync());
 
                 // Verify count before clearing
-                Assert.AreEqual((cycle + 1) * logsPerCycle, logCollector.Query().Length,
+                var logs = logCollector.Query();
+                var testLogsCount = logs.Where(l => l.Message.StartsWith("Cycle")).Count();
+                Assert.AreEqual((cycle + 1) * logsPerCycle, testLogsCount,
                     $"Should have {(cycle + 1) * logsPerCycle} logs after cycle {cycle}");
 
                 // Clear and reload
@@ -366,7 +368,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
                 // Verify all logs from all cycles are still present
                 var loadedLogs = logCollector.Query();
-                Assert.AreEqual((cycle + 1) * logsPerCycle, loadedLogs.Length,
+                var loadedTestLogsCount = loadedLogs.Where(l => l.Message.StartsWith("Cycle")).Count();
+                Assert.AreEqual((cycle + 1) * logsPerCycle, loadedTestLogsCount,
                     $"All logs should be preserved after cycle {cycle}");
 
                 // Verify specific logs from each cycle
