@@ -26,7 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Get Unity Console Logs"
         )]
         [Description("Retrieves the Unity Console log entries. Supports filtering by log type and limiting the number of entries returned.")]
-        public ResponseCallValueTool<LogEntry[]> GetLogs
+        public LogEntry[] GetLogs
         (
             [Description("Maximum number of log entries to return. Default: 100")]
             int maxEntries = 100,
@@ -38,32 +38,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             int lastMinutes = 0
         )
         {
-            try
-            {
-                // Validate parameters
-                if (maxEntries < 1)
-                    return ResponseCallValueTool<LogEntry[]>.Error(Error.InvalidMaxEntries(maxEntries));
+            // Validate parameters
+            if (maxEntries < 1)
+                throw new ArgumentException(Error.InvalidMaxEntries(maxEntries));
 
-                var logCollector = UnityMcpPlugin.Instance.LogCollector;
-                if (logCollector == null)
-                    return ResponseCallValueTool<LogEntry[]>.Error("[Error] LogCollector is not initialized.");
+            var logCollector = UnityMcpPlugin.Instance.LogCollector;
+            if (logCollector == null)
+                throw new InvalidOperationException("[Error] LogCollector is not initialized.");
 
-                // Get all log entries as array to avoid concurrent modification
-                var logs = logCollector.Query(
-                    maxEntries: maxEntries,
-                    logTypeFilter: logTypeFilter,
-                    includeStackTrace: includeStackTrace,
-                    lastMinutes: lastMinutes
-                );
+            // Get all log entries as array to avoid concurrent modification
+            var logs = logCollector.Query(
+                maxEntries: maxEntries,
+                logTypeFilter: logTypeFilter,
+                includeStackTrace: includeStackTrace,
+                lastMinutes: lastMinutes
+            );
 
-                var result = UnityMcpPlugin.Instance.McpPluginInstance!.McpManager.Reflector.JsonSerializer.SerializeToNode(logs);
-                var response = ResponseCallValueTool<LogEntry[]>.SuccessStructured(result, result?.ToJsonString());
-                return response;
-            }
-            catch (Exception ex)
-            {
-                return ResponseCallValueTool<LogEntry[]>.Error($"[Error] Failed to retrieve console logs: {ex.Message}");
-            }
+            return logs;
         }
     }
 }
