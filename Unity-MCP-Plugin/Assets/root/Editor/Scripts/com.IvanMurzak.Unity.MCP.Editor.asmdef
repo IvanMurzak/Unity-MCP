@@ -3,7 +3,9 @@
     "rootNamespace": "com.IvanMurzak.Unity.MCP.Editor",
     "references": [
         "com.IvanMurzak.Unity.MCP.Runtime",
-        "Extensions.Unity.PlayerPrefsEx"
+        "Extensions.Unity.PlayerPrefsEx",
+        "Unity.ProBuilder",
+        "Unity.ProBuilder.Editor"
     ],
     "includePlatforms": [
         "Editor"
@@ -14,6 +16,12 @@
     "precompiledReferences": [],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.probuilder",
+            "expression": "",
+            "define": "PROBUILDER_ENABLED"
+        }
+    ],
     "noEngineReferences": false
 }
