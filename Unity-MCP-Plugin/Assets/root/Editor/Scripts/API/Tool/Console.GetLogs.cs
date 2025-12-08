@@ -11,9 +11,9 @@
 #nullable enable
 using System;
 using System.ComponentModel;
-using System.Linq;
+using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin;
-using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.McpPlugin.Common.Model;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -26,7 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Get Unity Console Logs"
         )]
         [Description("Retrieves the Unity Console log entries. Supports filtering by log type and limiting the number of entries returned.")]
-        public string GetLogs
+        public async Task<ResponseCallValueTool<LogEntry[]>> GetLogs
         (
             [Description("Maximum number of log entries to return. Default: 100")]
             int maxEntries = 100,
@@ -38,58 +38,32 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             int lastMinutes = 0
         )
         {
-            return MainThread.Instance.Run(() =>
+            try
             {
-                try
-                {
-                    // Validate parameters
-                    if (maxEntries < 1)
-                        return Error.InvalidMaxEntries(maxEntries);
+                // Validate parameters
+                if (maxEntries < 1)
+                    return ResponseCallValueTool<LogEntry[]>.Error(Error.InvalidMaxEntries(maxEntries));
 
-                    // Get all log entries as array to avoid concurrent modification
-                    var allLogs = Startup.LogUtils.GetAllLogs().AsEnumerable();
+                var logCollector = UnityMcpPlugin.Instance.LogCollector;
+                if (logCollector == null)
+                    return ResponseCallValueTool<LogEntry[]>.Error("[Error] LogCollector is not initialized.");
 
-                    // Apply time filter if specified
-                    if (lastMinutes > 0)
-                    {
-                        var cutoffTime = DateTime.Now.AddMinutes(-lastMinutes);
-                        allLogs = allLogs
-                            .Where(log => log.Timestamp >= cutoffTime);
-                    }
+                // Get all log entries as array to avoid concurrent modification
+                var logs = await logCollector.QueryAsync(
+                    maxEntries: maxEntries,
+                    logTypeFilter: logTypeFilter,
+                    includeStackTrace: includeStackTrace,
+                    lastMinutes: lastMinutes
+                );
 
-                    // Apply log type filter
-                    if (logTypeFilter.HasValue)
-                    {
-                        allLogs = allLogs
-                            .Where(log => log.LogType == logTypeFilter.Value);
-                    }
-
-                    // Take the most recent entries (up to maxEntries)
-                    var filteredLogs = allLogs
-                        .TakeLast(maxEntries)
-                        .ToArray();
-
-                    if (filteredLogs.Length == 0)
-                        return "[Success] No log entries found matching the specified criteria.";
-
-                    // Format output
-                    var logLines = filteredLogs.Select(log => log.ToString(includeStackTrace));
-                    var result = string.Join("\n", logLines);
-                    var summary = $"[Success] Retrieved {filteredLogs.Length} log entries";
-
-                    if (logTypeFilter.HasValue)
-                        summary += $" (filtered by {logTypeFilter.Value})";
-
-                    if (lastMinutes > 0)
-                        summary += $" (from last {lastMinutes} minutes)";
-
-                    return $"{summary}:\n{result}";
-                }
-                catch (Exception ex)
-                {
-                    return $"[Error] Failed to retrieve console logs: {ex.Message}";
-                }
-            });
+                var result = UnityMcpPlugin.Instance.McpPluginInstance!.McpManager.Reflector.JsonSerializer.SerializeToNode(logs);
+                var response = ResponseCallValueTool<LogEntry[]>.SuccessStructured(result, result?.ToJsonString());
+                return response;
+            }
+            catch (Exception ex)
+            {
+                return ResponseCallValueTool<LogEntry[]>.Error($"[Error] Failed to retrieve console logs: {ex.Message}");
+            }
         }
     }
 }

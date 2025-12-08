@@ -17,8 +17,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 {
     public static partial class Startup
     {
-        public static com.IvanMurzak.Unity.MCP.LogUtils LogUtils { get; private set; }
-
         static void SubscribeOnEditorEvents()
         {
             Application.unloading += OnApplicationUnloading;
@@ -36,15 +34,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 UnityMcpPlugin.Instance.LogInfo("{method} triggered", typeof(Startup), nameof(OnApplicationUnloading));
                 UnityMcpPlugin.Instance.DisconnectImmediate();
+                UnityMcpPlugin.Instance.LogCollector?.Save();
+                UnityMcpPlugin.Instance.LogCollector?.Dispose();
             }
             else
             {
                 Debug.Log($"{nameof(Startup)} {nameof(OnApplicationUnloading)} triggered: No UnityMcpPlugin instance to disconnect.");
-            }
-            if (LogUtils != null)
-            {
-                LogUtils.SaveToFileImmediate();
-                LogUtils.Dispose();
             }
         }
         static void OnApplicationQuitting()
@@ -53,14 +48,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 UnityMcpPlugin.Instance.LogInfo("{method} triggered", typeof(Startup), nameof(OnApplicationQuitting));
                 UnityMcpPlugin.Instance.DisconnectImmediate();
+                UnityMcpPlugin.Instance.LogCollector?.Save();
+                UnityMcpPlugin.Instance.LogCollector?.Dispose();
             }
             else
             {
                 Debug.Log($"{nameof(Startup)} {nameof(OnApplicationQuitting)} triggered: No UnityMcpPlugin instance to disconnect.");
-            }
-            if (LogUtils != null)
-            {
-                _ = LogUtils.HandleQuit();
             }
         }
         static void OnBeforeAssemblyReload()
@@ -69,15 +62,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 UnityMcpPlugin.Instance.LogInfo("{method} triggered", typeof(Startup), nameof(OnBeforeAssemblyReload));
                 UnityMcpPlugin.Instance.DisconnectImmediate();
+                UnityMcpPlugin.Instance.LogCollector?.Save();
+                UnityMcpPlugin.Instance.LogCollector?.Dispose();
             }
             else
             {
                 Debug.Log($"{nameof(Startup)} {nameof(OnBeforeAssemblyReload)} triggered: No UnityMcpPlugin instance to disconnect.");
-            }
-            if (LogUtils != null)
-            {
-                LogUtils.SaveToFileImmediate();
-                LogUtils.Dispose();
             }
         }
         static void OnAfterAssemblyReload()
@@ -91,11 +81,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             if (connectionAllowed)
                 UnityMcpPlugin.ConnectIfNeeded();
-
-            if (LogUtils != null)
-            {
-                _ = LogUtils.LoadFromFile();
-            }
         }
 
         static void OnPlayModeStateChanged(PlayModeStateChange state)

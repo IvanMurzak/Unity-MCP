@@ -11,9 +11,6 @@
 #nullable enable
 
 using System;
-using com.IvanMurzak.ReflectorNet;
-using com.IvanMurzak.Unity.MCP.Utils;
-using Microsoft.Extensions.Logging;
 using R3;
 
 namespace com.IvanMurzak.Unity.MCP
@@ -23,6 +20,8 @@ namespace com.IvanMurzak.Unity.MCP
         public const string Version = "0.26.0";
 
         protected readonly CompositeDisposable _disposables = new();
+
+        public UnityLogCollector? LogCollector { get; protected set; } = null;
 
         public McpPlugin.IToolManager? Tools => McpPluginInstance?.McpManager.ToolManager;
         public McpPlugin.IPromptManager? Prompts => McpPluginInstance?.McpManager.PromptManager;
@@ -57,6 +56,15 @@ namespace com.IvanMurzak.Unity.MCP
             // Data was changed during validation, need to notify subscribers
             if (changed)
                 NotifyChanged(data);
+        }
+
+        public void AddUnityLogCollector(ILogStorage logStorage)
+        {
+            if (LogCollector != null)
+                throw new InvalidOperationException($"{nameof(UnityLogCollector)} is already added.");
+
+            LogCollector = new UnityLogCollector(logStorage);
+            _disposables.Add(LogCollector);
         }
 
         public void DisposeMcpPluginInstance()

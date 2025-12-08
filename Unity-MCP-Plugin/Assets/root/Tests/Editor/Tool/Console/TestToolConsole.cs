@@ -29,7 +29,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             _tool = new Tool_Console();
 
             // Clear any existing logs by getting them all
-            Startup.LogUtils.ClearLogs();
+            UnityMcpPlugin.Instance.LogCollector?.Clear();
         }
 
         void ResultValidation(string result)

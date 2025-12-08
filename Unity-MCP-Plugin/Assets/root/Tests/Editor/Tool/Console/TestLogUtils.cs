@@ -21,26 +21,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     public class TestLogUtils : BaseTest
     {
         private const int Timeout = 100000;
-        private LogUtils _logUtils;
+        private UnityLogCollector? logCollector;
 
         [SetUp]
         public void TestSetUp()
         {
-            _logUtils = new LogUtils("test-editor-logs.txt");
-            _logUtils.ClearCacheFile();
+            logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-editor-logs.txt"));
+            logCollector.Clear();
         }
 
         [TearDown]
         public void TestTearDown()
         {
-            _logUtils.Dispose();
+            logCollector?.Dispose();
         }
 
         [UnityTest]
         public IEnumerator SaveToFile_LoadFromFile_PreservesAllLogTypes()
         {
+            if (logCollector == null)
+            {
+                Assert.Fail($"{nameof(logCollector)} is not initialized");
+                yield break;
+            }
             // Test that all Unity log types are preserved during save/load
-            _logUtils.ClearLogs();
+            logCollector.Clear();
             yield return null;
 
             var testData = new[]
@@ -79,15 +84,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             yield return WaitForLogCount(testData.Length);
 
             // Save to file
-            yield return WaitForTask(_logUtils.SaveToFile());
+            logCollector.Save();
 
             // Clear and reload
-            _logUtils.ClearLogs(false);
-            Assert.AreEqual(0, _logUtils.LogEntries);
+            logCollector.Clear();
+            Assert.AreEqual(0, logCollector.Query().Length, "Logs should be empty array after clearing");
 
-            yield return WaitForTask(_logUtils.LoadFromFile());
-
-            var loadedLogs = _logUtils.GetAllLogs();
+            var loadedLogs = logCollector.Query();
             Assert.AreEqual(testData.Length, loadedLogs.Length, "All log types should be preserved");
 
             // Verify each log type is preserved
@@ -102,8 +105,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator SaveToFile_LoadFromFile_PreservesSpecialCharacters()
         {
+            if (logCollector == null)
+            {
+                Assert.Fail($"{nameof(logCollector)} is not initialized");
+                yield break;
+            }
             // Test that special characters, unicode, and formatting are preserved
-            _logUtils.ClearLogs();
+            logCollector.Clear();
             yield return null;
 
             var specialMessages = new[]
@@ -126,11 +134,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             yield return WaitForLogCount(specialMessages.Length);
 
             // Save and reload
-            yield return WaitForTask(_logUtils.SaveToFile());
-            _logUtils.ClearLogs(false);
-            yield return WaitForTask(_logUtils.LoadFromFile());
+            logCollector.Save();
+            logCollector.Clear();
 
-            var loadedLogs = _logUtils.GetAllLogs();
+            var loadedLogs = logCollector.Query();
             Assert.AreEqual(specialMessages.Length, loadedLogs.Length, "All logs should be preserved");
 
             // Verify exact message preservation
@@ -144,6 +151,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator SaveToFile_LoadFromFile_PreservesStackTraces()
         {
+            if (logCollector == null)
+            {
+                Assert.Fail($"{nameof(logCollector)} is not initialized");
+                yield break;
+            }
             // Save original stack trace settings
             var originalWarningStackTrace = Application.GetStackTraceLogType(LogType.Warning);
 
@@ -153,7 +165,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 Application.SetStackTraceLogType(LogType.Warning, StackTraceLogType.ScriptOnly);
 
                 // Test that stack traces are preserved
-                _logUtils.ClearLogs();
+                logCollector.Clear();
                 yield return null;
 
                 // Generate logs with stack traces (only warnings, as errors/assertions fail tests)
@@ -164,7 +176,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 const int expectedLogs = 3;
                 yield return WaitForLogCount(expectedLogs);
 
-                var originalLogs = _logUtils.GetAllLogs();
+                var originalLogs = logCollector.Query();
                 Assert.AreEqual(expectedLogs, originalLogs.Length);
 
                 // Verify original logs have stack traces
@@ -175,11 +187,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }
 
                 // Save and reload
-                yield return WaitForTask(_logUtils.SaveToFile());
-                _logUtils.ClearLogs(false);
-                yield return WaitForTask(_logUtils.LoadFromFile());
+                logCollector.Save();
+                logCollector.Clear();
 
-                var loadedLogs = _logUtils.GetAllLogs();
+                var loadedLogs = logCollector.Query();
                 Assert.AreEqual(expectedLogs, loadedLogs.Length, "All logs should be preserved");
 
                 // Verify stack traces are preserved
@@ -203,8 +214,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator SaveToFile_LoadFromFile_PreservesTimestamps()
         {
+            if (logCollector == null)
+            {
+                Assert.Fail($"{nameof(logCollector)} is not initialized");
+                yield break;
+            }
             // Test that timestamps are preserved with accuracy
-            _logUtils.ClearLogs();
+            logCollector.Clear();
             yield return null;
 
             const int testCount = 5;
@@ -215,15 +231,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             yield return WaitForLogCount(testCount);
 
-            var originalLogs = _logUtils.GetAllLogs();
+            var originalLogs = logCollector.Query();
             var originalTimestamps = originalLogs.Select(log => log.Timestamp).ToArray();
 
             // Save and reload
-            yield return WaitForTask(_logUtils.SaveToFile());
-            _logUtils.ClearLogs(false);
-            yield return WaitForTask(_logUtils.LoadFromFile());
+            logCollector.Save();
+            logCollector.Clear();
 
-            var loadedLogs = _logUtils.GetAllLogs();
+            var loadedLogs = logCollector.Query();
             Assert.AreEqual(testCount, loadedLogs.Length);
 
             // Verify timestamps are preserved (allowing for minimal serialization precision loss)
@@ -244,27 +259,34 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator SaveToFile_LoadFromFile_HandlesEmptyLogs()
         {
+            if (logCollector == null)
+            {
+                Assert.Fail($"{nameof(logCollector)} is not initialized");
+                yield break;
+            }
             // Test saving/loading when there are no logs
-            _logUtils.ClearLogs();
+            logCollector.Clear();
             yield return null;
 
-            Assert.AreEqual(0, _logUtils.LogEntries);
+            Assert.AreEqual(0, logCollector.Query().Length);
 
             // Save empty logs
-            yield return WaitForTask(_logUtils.SaveToFile());
+            logCollector.Save();
 
-            // Try to load (should result in empty logs)
-            yield return WaitForTask(_logUtils.LoadFromFile());
-
-            Assert.AreEqual(0, _logUtils.LogEntries, "Loading empty logs should result in zero entries");
-            Assert.AreEqual(0, _logUtils.GetAllLogs().Length);
+            Assert.AreEqual(0, logCollector.Query().Length, "Loading empty logs should result in zero entries");
+            Assert.AreEqual(0, logCollector.Query().Length);
         }
 
         [UnityTest]
         public IEnumerator SaveToFile_LoadFromFile_HandlesLargeMessages()
         {
+            if (logCollector == null)
+            {
+                Assert.Fail($"{nameof(logCollector)} is not initialized");
+                yield break;
+            }
             // Test very long log messages
-            _logUtils.ClearLogs();
+            logCollector.Clear();
             yield return null;
 
             var largeMessage = new string('A', 10000); // 10KB message
@@ -280,11 +302,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
 
             // Save and reload
-            yield return WaitForTask(_logUtils.SaveToFile());
-            _logUtils.ClearLogs(false);
-            yield return WaitForTask(_logUtils.LoadFromFile());
+            logCollector.Save();
+            logCollector.Clear();
 
-            var loadedLogs = _logUtils.GetAllLogs();
+            var loadedLogs = logCollector.Query();
             Assert.AreEqual(expectedLogs, loadedLogs.Length);
 
             // Verify large messages are preserved exactly
@@ -299,8 +320,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator SaveToFile_LoadFromFile_MultipleSaveCycles()
         {
+            if (logCollector == null)
+            {
+                Assert.Fail($"{nameof(logCollector)} is not initialized");
+                yield break;
+            }
             // Test multiple save/load cycles to ensure data integrity over time
-            _logUtils.ClearLogs();
+            logCollector.Clear();
             yield return null;
 
             const int cycles = 3;
@@ -317,18 +343,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 yield return WaitForLogCount((cycle + 1) * logsPerCycle);
 
                 // Save to file
-                yield return WaitForTask(_logUtils.SaveToFile());
+                yield return WaitForTask(logCollector.SaveAsync());
 
                 // Verify count before clearing
-                Assert.AreEqual((cycle + 1) * logsPerCycle, _logUtils.LogEntries,
+                Assert.AreEqual((cycle + 1) * logsPerCycle, logCollector.Query().Length,
                     $"Should have {(cycle + 1) * logsPerCycle} logs after cycle {cycle}");
 
                 // Clear and reload
-                _logUtils.ClearLogs(false);
-                yield return WaitForTask(_logUtils.LoadFromFile());
+                logCollector.Clear();
 
                 // Verify all logs from all cycles are still present
-                var loadedLogs = _logUtils.GetAllLogs();
+                var loadedLogs = logCollector.Query();
                 Assert.AreEqual((cycle + 1) * logsPerCycle, loadedLogs.Length,
                     $"All logs should be preserved after cycle {cycle}");
 
@@ -348,8 +373,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator SaveToFile_LoadFromFile_PreservesLogOrder()
         {
+            if (logCollector == null)
+            {
+                Assert.Fail($"{nameof(logCollector)} is not initialized");
+                yield break;
+            }
             // Test that log order is preserved
-            _logUtils.ClearLogs();
+            logCollector.Clear();
             yield return null;
 
             const int testCount = 20;
@@ -364,14 +394,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             yield return WaitForLogCount(testCount);
 
-
-
             // Save and reload
-            yield return WaitForTask(_logUtils.SaveToFile());
-            _logUtils.ClearLogs(false);
-            yield return WaitForTask(_logUtils.LoadFromFile());
+            logCollector.Save();
+            logCollector.Clear();
 
-            var loadedLogs = _logUtils.GetAllLogs();
+            var loadedLogs = logCollector.Query();
             Assert.AreEqual(testCount, loadedLogs.Length);
 
             // Verify order is preserved by comparing timestamps
@@ -393,22 +420,32 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [Test]
         public void SaveToFileImmediate_WritesSynchronously()
         {
+            if (logCollector == null)
+            {
+                Assert.Fail($"{nameof(logCollector)} is not initialized");
+                return;
+            }
             // Test synchronous save
-            _logUtils.ClearLogs();
+            logCollector.Clear();
 
             Debug.Log("Immediate save test");
 
             // Since this is a synchronous test, we can't easily wait for the log callback if it's delayed.
             // But we can verify that the method executes without throwing exceptions.
-            Assert.DoesNotThrow(() => _logUtils.SaveToFileImmediate());
+            Assert.DoesNotThrow(() => logCollector.Save());
         }
 
         [UnityTest]
         public IEnumerator ClearLogs_RemovesAllLogs()
         {
+            if (logCollector == null)
+            {
+                Assert.Fail($"{nameof(logCollector)} is not initialized");
+                yield break;
+            }
             const int logsCount = 10;
             // Test that ClearLogs actually removes all logs
-            _logUtils.ClearLogs();
+            logCollector.Clear();
             yield return null;
 
             // Add some logs
@@ -418,26 +455,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             }
 
             yield return WaitForLogCount(logsCount);
-            Assert.AreEqual(logsCount, _logUtils.LogEntries);
+            Assert.AreEqual(logsCount, logCollector.Query().Length);
 
             // Clear logs
-            _logUtils.ClearLogs();
+            logCollector.Clear();
 
-            Assert.AreEqual(0, _logUtils.LogEntries, "LogEntries should be zero after clear");
-            Assert.AreEqual(0, _logUtils.GetAllLogs().Length, "GetAllLogs should return empty array after clear");
+            Assert.AreEqual(0, logCollector.Query().Length, "GetAllLogs should return empty array after clear");
         }
 
         #region Helper Methods
 
         private IEnumerator WaitForLogCount(int expectedCount)
         {
+            if (logCollector == null)
+            {
+                Assert.Fail($"{nameof(logCollector)} is not initialized");
+                yield break;
+            }
             var frameCount = 0;
-            while (_logUtils.LogEntries < expectedCount)
+            while (logCollector.Query(maxEntries: expectedCount).Length < expectedCount)
             {
                 yield return null;
                 frameCount++;
                 Assert.Less(frameCount, Timeout,
-                    $"Timeout waiting for {expectedCount} logs. Current count: {_logUtils.LogEntries}");
+                    $"Timeout waiting for {expectedCount} logs. Current count: {logCollector.Query(maxEntries: 2 ^ 12).Length}");
             }
         }
 
