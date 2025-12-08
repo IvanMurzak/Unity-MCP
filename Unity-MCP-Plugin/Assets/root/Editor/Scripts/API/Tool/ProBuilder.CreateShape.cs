@@ -16,9 +16,10 @@ using System.Text;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
+using System.Linq;
 using UnityEditor;
-using UnityEditor.ProBuilder;
 using UnityEngine;
 using UnityEngine.ProBuilder;
 using UnityEngine.ProBuilder.MeshOperations;
@@ -109,7 +110,8 @@ Available shape types: Cube, Stair, CurvedStair, Prism, Cylinder, Plane, Door, P
             if (size.Value != Vector3.one)
             {
                 var positions = proBuilderMesh.positions;
-                var bounds = proBuilderMesh.mesh.bounds;
+                var meshFilter = go.GetComponent<MeshFilter>();
+                var bounds = meshFilter != null ? meshFilter.sharedMesh.bounds : new Bounds();
                 var currentSize = bounds.size;
 
                 // Calculate scale factors
@@ -119,8 +121,9 @@ Available shape types: Cube, Stair, CurvedStair, Prism, Cylinder, Plane, Door, P
                     currentSize.z > 0 ? size.Value.z / currentSize.z : 1
                 );
 
-                var newPositions = new Vector3[positions.Count];
-                for (int i = 0; i < positions.Count; i++)
+                var posCount = positions.Count();
+                var newPositions = new Vector3[posCount];
+                for (int i = 0; i < posCount; i++)
                 {
                     newPositions[i] = Vector3.Scale(positions[i], scaleFactors);
                 }

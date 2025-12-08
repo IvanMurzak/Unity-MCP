@@ -17,6 +17,7 @@ using System.Text;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEditor;
 using UnityEngine;
@@ -66,14 +67,15 @@ Extrusion creates new geometry by pushing faces outward (or inward with negative
                 return Error.NoFacesProvided();
 
             var faces = proBuilderMesh.faces;
-            if (faces.Count == 0)
+            var faceCount = faces.Count();
+            if (faceCount == 0)
                 return Error.MeshHasNoFaces();
 
             // Validate face indices
-            var invalidIndices = faceIndices.Where(i => i < 0 || i >= faces.Count).ToList();
+            var invalidIndices = faceIndices.Where(i => i < 0 || i >= faceCount).ToList();
             if (invalidIndices.Any())
             {
-                return $"[Error] Invalid face indices: {string.Join(", ", invalidIndices)}. Valid range: 0 to {faces.Count - 1}.";
+                return $"[Error] Invalid face indices: {string.Join(", ", invalidIndices)}. Valid range: 0 to {faceCount - 1}.";
             }
 
             // Get the faces to extrude
@@ -131,7 +133,8 @@ Extrusion creates new geometry by pushing faces outward (or inward with negative
             // Show new face indices
             var allFaces = proBuilderMesh.faces;
             var newFaceIndices = new List<int>();
-            for (int i = 0; i < allFaces.Count; i++)
+            var allFaceCount = allFaces.Count();
+            for (int i = 0; i < allFaceCount; i++)
             {
                 if (newFaces.Contains(allFaces[i]))
                     newFaceIndices.Add(i);

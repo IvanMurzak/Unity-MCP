@@ -16,6 +16,7 @@ using System.Text;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEngine;
 using UnityEngine.ProBuilder;
@@ -74,7 +75,8 @@ Edge indices are used to select edges for operations like beveling.")]
             sb.AppendLine();
 
             // Bounds
-            var bounds = proBuilderMesh.mesh.bounds;
+            var meshFilter = go.GetComponent<MeshFilter>();
+            var bounds = meshFilter != null ? meshFilter.sharedMesh.bounds : new Bounds();
             sb.AppendLine("# Bounds:");
             sb.AppendLine($"- Center: {bounds.center}");
             sb.AppendLine($"- Size: {bounds.size}");
@@ -85,9 +87,10 @@ Edge indices are used to select edges for operations like beveling.")]
             // Face details
             var faces = proBuilderMesh.faces;
             var positions = proBuilderMesh.positions;
-            var facesToShow = maxFacesToShow < 0 ? faces.Count : System.Math.Min(maxFacesToShow, faces.Count);
+            var faceCount = faces.Count();
+            var facesToShow = maxFacesToShow < 0 ? faceCount : System.Math.Min(maxFacesToShow, faceCount);
 
-            sb.AppendLine($"# Faces (showing {facesToShow} of {faces.Count}):");
+            sb.AppendLine($"# Faces (showing {facesToShow} of {faceCount}):");
             sb.AppendLine("Use face indices for extrusion or deletion operations.");
             sb.AppendLine();
 
@@ -103,11 +106,12 @@ Edge indices are used to select edges for operations like beveling.")]
                 {
                     center += positions[vertIndex];
                 }
-                center /= faceVertices.Count;
+                var vertCount = faceVertices.Count();
+                center /= vertCount;
 
                 sb.AppendLine($"## Face {i}:");
-                sb.AppendLine($"  - Vertex Count: {faceVertices.Count}");
-                sb.AppendLine($"  - Triangle Count: {face.indexes.Count / 3}");
+                sb.AppendLine($"  - Vertex Count: {vertCount}");
+                sb.AppendLine($"  - Triangle Count: {face.indexes.Count() / 3}");
                 sb.AppendLine($"  - Center (approx): ({center.x:F2}, {center.y:F2}, {center.z:F2})");
 
                 if (includeVertexPositions)
@@ -122,7 +126,7 @@ Edge indices are used to select edges for operations like beveling.")]
 
                 if (includeEdges)
                 {
-                    sb.AppendLine($"  - Edges ({faceEdges.Count}):");
+                    sb.AppendLine($"  - Edges ({faceEdges.Count()}):");
                     foreach (var edge in faceEdges)
                     {
                         var p1 = positions[edge.a];
@@ -133,9 +137,9 @@ Edge indices are used to select edges for operations like beveling.")]
                 sb.AppendLine();
             }
 
-            if (facesToShow < faces.Count)
+            if (facesToShow < faceCount)
             {
-                sb.AppendLine($"... and {faces.Count - facesToShow} more faces. Use maxFacesToShow=-1 to see all.");
+                sb.AppendLine($"... and {faceCount - facesToShow} more faces. Use maxFacesToShow=-1 to see all.");
             }
 
             // Unique edges summary

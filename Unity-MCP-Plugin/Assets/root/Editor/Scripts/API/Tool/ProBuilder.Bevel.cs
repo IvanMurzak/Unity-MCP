@@ -17,6 +17,7 @@ using System.Text;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEditor;
 using UnityEngine;
@@ -92,7 +93,7 @@ Beveling replaces sharp edges with angled faces for a smoother appearance.")]
             List<Face>? newFaces = null;
             try
             {
-                newFaces = Bevel.BevelEdges(proBuilderMesh, edgeList, amount);
+                newFaces = UnityEngine.ProBuilder.MeshOperations.Bevel.BevelEdges(proBuilderMesh, edgeList, amount);
             }
             catch (System.Exception ex)
             {

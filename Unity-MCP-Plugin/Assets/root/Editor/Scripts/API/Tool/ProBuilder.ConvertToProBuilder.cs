@@ -15,6 +15,7 @@ using System.Text;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEditor;
 using UnityEngine;
@@ -72,21 +73,18 @@ The original mesh data is preserved and made editable.")]
                 return $"[Error] MeshFilter on '{go.name}' has no mesh assigned.";
             }
 
-            // Configure import settings
-            var importSettings = new MeshImportSettings
-            {
-                quads = preserveQuads,
-                smoothing = true,
-                smoothingAngle = 30f
-            };
-
             // Perform conversion
             ProBuilderMesh proBuilderMesh;
             try
             {
                 proBuilderMesh = go.AddComponent<ProBuilderMesh>();
-                var importer = new MeshImporter(sourceMesh, null, importSettings);
-                importer.Import(proBuilderMesh);
+                var importer = new MeshImporter(proBuilderMesh);
+                importer.Import(go, new MeshImportSettings
+                {
+                    quads = preserveQuads,
+                    smoothing = true,
+                    smoothingAngle = 30f
+                });
 
                 // Rebuild to ensure mesh is valid
                 proBuilderMesh.ToMesh();

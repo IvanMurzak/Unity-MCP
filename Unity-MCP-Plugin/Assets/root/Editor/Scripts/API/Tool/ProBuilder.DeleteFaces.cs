@@ -16,6 +16,7 @@ using System.Text;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEditor;
 using UnityEngine;
@@ -61,18 +62,22 @@ Deleting faces creates holes in the mesh or removes geometry entirely.")]
                 return Error.NoFacesProvided();
 
             var faces = proBuilderMesh.faces;
-            if (faces.Count == 0)
+            var faceCount = faces.Count();
+            if (faceCount == 0)
                 return Error.MeshHasNoFaces();
 
+            // Get unique face indices to handle duplicates
+            var uniqueFaceIndices = faceIndices.Distinct().ToArray();
+
             // Validate face indices
-            var invalidIndices = faceIndices.Where(i => i < 0 || i >= faces.Count).ToList();
+            var invalidIndices = uniqueFaceIndices.Where(i => i < 0 || i >= faceCount).ToList();
             if (invalidIndices.Any())
             {
-                return $"[Error] Invalid face indices: {string.Join(", ", invalidIndices)}. Valid range: 0 to {faces.Count - 1}.";
+                return $"[Error] Invalid face indices: {string.Join(", ", invalidIndices)}. Valid range: 0 to {faceCount - 1}.";
             }
 
             // Check if we're deleting all faces
-            if (faceIndices.Length >= faces.Count)
+            if (uniqueFaceIndices.Length >= faceCount)
             {
                 return "[Error] Cannot delete all faces from a mesh. At least one face must remain.";
             }
@@ -81,7 +86,7 @@ Deleting faces creates holes in the mesh or removes geometry entirely.")]
             var originalVertexCount = proBuilderMesh.vertexCount;
 
             // Get the faces to delete
-            var facesToDelete = faceIndices.Select(i => faces[i]).ToArray();
+            var facesToDelete = uniqueFaceIndices.Select(i => faces[i]).ToArray();
 
             // Perform deletion
             try

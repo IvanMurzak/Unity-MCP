@@ -42,9 +42,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             public static string NoEdgesProvided()
                 => "[Error] No edge indices provided. Please specify at least one edge index to operate on.";
 
-            public static string InvalidShapeType(string shapeType)
-                => $"[Error] Invalid shape type '{shapeType}'. Valid types: Cube, Sphere, Cylinder, Plane, Prism, Stairs, Door, Pipe, Cone, Sprite, Arch, Torus.";
-
             public static string ExtrusionFailed(string reason)
                 => $"[Error] Extrusion failed: {reason}";
 
