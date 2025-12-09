@@ -238,7 +238,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             yield return WaitForLogCount(testCount);
 
             var originalLogs = logCollector.Query();
-            var originalTimestamps = originalLogs.Select(log => log.Timestamp).ToArray();
 
             // Save and reload
             logCollector.Save();
@@ -581,7 +580,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 yield return null;
                 frameCount++;
                 Assert.Less(frameCount, Timeout,
-                    $"Timeout waiting for {expectedCount} logs. Current count: {logCollector.Query(maxEntries: 2 ^ 12).Length}");
+                    $"Timeout waiting for {expectedCount} logs. Current count: {logCollector.Query(maxEntries: 4096).Length}");
             }
         }
 
