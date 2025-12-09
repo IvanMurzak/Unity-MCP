@@ -91,6 +91,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
                 SaveChanges($"[AI Game Developer] Timeout Changed: {newValue} ms");
                 UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
+                UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
                 UnityMcpPlugin.ConnectIfNeeded();
             });
 
@@ -111,6 +112,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 UnityMcpPlugin.Host = newValue;
                 SaveChanges($"[{nameof(MainWindowEditor)}] Host Changed: {newValue}");
                 Invalidate();
+
+                UnityMcpPlugin.Instance.DisposeMcpPluginInstance();
+                UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
+                UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
             });
 
             var btnConnectOrDisconnect = root.Query<Button>("btnConnectOrDisconnect").First();
@@ -223,6 +228,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     UnityMcpPlugin.KeepConnected = true;
                     UnityMcpPlugin.Instance.Save();
                     UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
+                    UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
                     UnityMcpPlugin.ConnectIfNeeded();
                 }
                 else if (btnConnectOrDisconnect.text.Equals(ServerButtonText_Disconnect, StringComparison.OrdinalIgnoreCase))

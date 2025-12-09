@@ -12,22 +12,25 @@
 [![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&labelColor=333A41)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
-  <img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/level-building.gif" alt="AI work" title="Level building" width="100%">
+  <img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/promo/ai-developer-banner.jpg" alt="AI work" title="Level building" width="100%">
 
   <b>[English](https://github.com/IvanMurzak/Unity-MCP/blob/main/README.md) | [日本語](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.ja.md) | [Español](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.es.md)</b>
 
 </div>
 
-`Unity MCP` 是一个由AI驱动的游戏开发助手，充当 `MCP 客户端` 与 `Unity` 之间的桥梁。只需在聊天中输入消息，即可使用您选择的任何高级LLM模型完成工作。遇到需要修复的问题？让AI来解决。**[观看演示视频](https://www.youtube.com/watch?v=kQUOCQ-c0-M&list=PLyueiUu0xU70uzNoOaanGQD2hiyJmqHtK)**。
+`Unity MCP` 是一个由AI驱动的游戏开发助手，**适用于编辑器和运行时**。通过MCP将 **Claude**、**Cursor** 和 **Windsurf** 连接到Unity。自动化工作流程、生成代码，并**在您的游戏中启用AI**。
+
+与其他工具不同，该插件可在**编译后的游戏内部**运行，支持实时AI调试和玩家-AI交互。
 
 > **[💬 加入我们的Discord服务器](https://discord.gg/cfbdMZX99G)** - 提问、展示你的作品，与其他开发者交流！
 
 ## 功能特性
 
+- ✔️ **运行时AI** - 在编译后的游戏中直接使用LLM实现动态NPC行为或调试
 - ✔️ **自然对话** - 像与人类交谈一样与AI聊天
 - ✔️ **代码辅助** - 请AI编写代码和运行测试
 - ✔️ **调试支持** - 请AI获取日志并修复错误
-- ✔️ **多种LLM提供商** - 使用来自Anthropic、OpenAI、Microsoft或任何其他提供商的代理，无限制
+- ✔️ **多种LLM提供商** - 使用来自 **Anthropic**、**OpenAI**、**DeepSeek**、Microsoft或任何其他提供商的代理，无限制
 - ✔️ **灵活部署** - 通过配置支持本地（stdio）和远程（http）工作
 - ✔️ **丰富工具集** - 广泛的默认[MCP工具](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)
 - ✔️ **可扩展** - 在您的项目代码中创建[自定义MCP工具](#添加自定义mcp工具)
@@ -50,7 +53,8 @@
   - [步骤3：配置 `MCP 客户端`](#步骤3配置-mcp-客户端)
     - [自动配置](#自动配置)
     - [手动配置](#手动配置)
-- [使用AI](#使用ai)
+    - [命令行配置](#命令行配置)
+- [AI工作流示例：Claude 和 Gemini](#ai工作流示例claude-和-gemini)
   - [LLM高级功能](#llm高级功能)
     - [核心功能](#核心功能)
     - [反射功能](#反射功能)
@@ -96,7 +100,7 @@
 
 ### 选项1 - 安装程序
 
-- **[⬇️ 下载安装程序](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.26.0/AI-Game-Dev-Installer.unitypackage)**
+- **[⬇️ 下载安装程序](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.27.0/AI-Game-Dev-Installer.unitypackage)**
 - **📂 将安装程序导入Unity项目**
   > - 您可以双击文件 - Unity会自动打开它
   > - 或者：先打开Unity编辑器，然后点击 `Assets/Import Package/Custom Package`，选择文件
@@ -194,7 +198,7 @@ openupm add com.ivanmurzak.unity.mcp
 
 ---
 
-# 使用AI
+# AI工作流示例：Claude 和 Gemini
 
 在您的 `MCP 客户端` 中与AI（LLM）交流。要求它做任何您想要的事情。您对任务或想法描述得越好，它的表现就越好。
 
@@ -579,6 +583,8 @@ MCP - 模型上下文协议。简而言之，这是AI的 `USB Type-C`，专门�
 # 贡献 💙💛
 
 非常欢迎贡献。带来您的想法，让我们让游戏开发比以往任何时候都更简单！您有新的 `MCP 工具` 或功能的想法，或者发现了错误并知道如何修复它吗？
+
+**如果您觉得这个项目有用，请给它一个星标 🌟！**
 
 1. 👉 [阅读开发文档](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.zh-CN.md)
 2. 👉 [Fork项目](https://github.com/IvanMurzak/Unity-MCP/fork)

@@ -34,11 +34,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var json = $@"
             {{
               ""gameObjectRef"": ""{{ \""instanceID\"": {child!.GetInstanceID()} }}"",
-              ""briefData"": false
+              ""briefData"": false,
+              ""requestId"": ""test-req-id""
             }}";
             Debug.Log($"Stringified request JSON:\n{json}");
 
-            var parameters = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
+            var parameters = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
             Assert.IsNotNull(parameters, "Parameters should be deserialized");
 
             var toolName = typeof(Tool_GameObject)
@@ -47,13 +48,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 .Name;
 
             var task = McpPlugin.McpPlugin.Instance!.McpManager.ToolManager!.RunCallTool(new RequestCallTool(toolName, parameters!));
-            if (!task.IsCompleted)
-                yield return null;
+            while (!task.IsCompleted) yield return null;
 
             var result = task.Result.Message;
-            ResultValidation(result);
+            Assert.IsNotNull(result);
+            Assert.IsTrue(result!.Contains(GO_Child1Name), $"Result should contain {GO_Child1Name}");
 
-            Assert.IsTrue(result!.Contains(GO_Child1Name), $"{GO_Child1Name} should be found in the path");
+            // The message is just success status now. The data is in Value.
+            // But RunCallTool returns ResponseCallTool which wraps the result.
+            // We can check if the result is not error.
+            Assert.IsFalse(task.Result.Status == ResponseStatus.Error);
             yield return null;
         }
 
@@ -66,15 +70,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var meshRenderer = child!.AddComponent<MeshRenderer>();
             meshRenderer.sharedMaterial = new Material(Shader.Find("Standard"));
 
-            var result = new Tool_GameObject().Find(
+            var task = new Tool_GameObject().Find(
                 gameObjectRef: new Runtime.Data.GameObjectRef
                 {
                     InstanceID = child.GetInstanceID()
                 },
-                briefData: false);
-            ResultValidation(result);
+                deepSerialization: true);
 
-            Assert.IsTrue(result.Contains(GO_Child1Name), $"{GO_Child1Name} should be found in the path");
+            while (!task.IsCompleted) yield return null;
+            var response = task.Result;
+
+            Assert.AreEqual(ResponseStatus.Success, response.Status);
+            Assert.IsNotNull(response.StructuredContent);
+            var findResponse = DeserializeResponse(response.StructuredContent);
+            Assert.IsNotNull(findResponse);
+            Assert.IsNotNull(findResponse!.Hierarchy);
+
+            Assert.IsTrue(findResponse!.Hierarchy!.Print().Contains(GO_Child1Name), $"{GO_Child1Name} should be found in the path");
             yield return null;
         }
     }

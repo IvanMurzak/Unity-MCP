@@ -11,18 +11,17 @@
 #nullable enable
 
 using System;
-using com.IvanMurzak.ReflectorNet;
-using com.IvanMurzak.Unity.MCP.Utils;
-using Microsoft.Extensions.Logging;
 using R3;
 
 namespace com.IvanMurzak.Unity.MCP
 {
     public partial class UnityMcpPlugin : IDisposable
     {
-        public const string Version = "0.26.0";
+        public const string Version = "0.27.0";
 
         protected readonly CompositeDisposable _disposables = new();
+
+        public UnityLogCollector? LogCollector { get; protected set; } = null;
 
         public McpPlugin.IToolManager? Tools => McpPluginInstance?.McpManager.ToolManager;
         public McpPlugin.IPromptManager? Prompts => McpPluginInstance?.McpManager.PromptManager;
@@ -59,14 +58,41 @@ namespace com.IvanMurzak.Unity.MCP
                 NotifyChanged(data);
         }
 
-        public void Dispose()
+        public void AddUnityLogCollector(ILogStorage logStorage)
         {
-            _disposables.Dispose();
+            if (logStorage == null)
+                throw new ArgumentNullException(nameof(logStorage));
+
+            if (LogCollector != null)
+                throw new InvalidOperationException($"{nameof(UnityLogCollector)} is already added.");
+
+            LogCollector = new UnityLogCollector(logStorage);
+            _disposables.Add(LogCollector);
+        }
+
+        public void AddUnityLogCollectorIfNeeded(Func<ILogStorage> logStorageProvider)
+        {
+            if (LogCollector != null)
+                return;
+
+            AddUnityLogCollector(logStorageProvider());
+        }
+
+        public void DisposeMcpPluginInstance()
+        {
             lock (buildMutex)
             {
                 mcpPluginInstance?.Dispose();
                 mcpPluginInstance = null;
             }
+        }
+
+        public void Dispose()
+        {
+            _disposables.Dispose();
+            // LogCollector is disposed by _disposables
+            LogCollector = null;
+            DisposeMcpPluginInstance();
         }
     }
 }
