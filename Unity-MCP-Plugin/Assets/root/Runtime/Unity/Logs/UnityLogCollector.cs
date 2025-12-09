@@ -50,7 +50,6 @@ namespace com.IvanMurzak.Unity.MCP
         /// <summary>
         /// Synchronously saves all current log entries to the cache file.
         /// </summary>
-        /// <returns>A task that completes when the save operation is finished.</returns>
         public void Save()
         {
             if (_isDisposed.Value)
