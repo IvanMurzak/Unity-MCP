@@ -33,20 +33,21 @@ namespace com.IvanMurzak.Unity.MCP
             LogType = logType;
             Message = message;
             Timestamp = DateTime.Now;
+            StackTrace = null;
         }
         public LogEntry(LogType logType, string message, string? stackTrace = null)
         {
             LogType = logType;
             Message = message;
             Timestamp = DateTime.Now;
-            StackTrace = stackTrace;
+            StackTrace = string.IsNullOrEmpty(stackTrace) ? null : stackTrace;
         }
         public LogEntry(LogType logType, string message, DateTime timestamp, string? stackTrace = null)
         {
             LogType = logType;
             Message = message;
             Timestamp = timestamp;
-            StackTrace = stackTrace;
+            StackTrace = string.IsNullOrEmpty(stackTrace) ? null : stackTrace;
         }
 
         public override string ToString() => ToString(includeStackTrace: false);

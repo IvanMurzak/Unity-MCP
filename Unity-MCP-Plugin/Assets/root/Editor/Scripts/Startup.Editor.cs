@@ -78,6 +78,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 typeof(Startup));
 
             UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
+            UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
 
             if (connectionAllowed)
                 UnityMcpPlugin.ConnectIfNeeded();
@@ -119,6 +120,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         UnityMcpPlugin.Instance.LogTrace($"Initiating delayed reconnection after Play mode exit.", typeof(Startup));
 
                         UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
+                        UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
                         UnityMcpPlugin.ConnectIfNeeded();
                     };
 
@@ -127,6 +129,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     UnityMcpPlugin.Instance.LogTrace($"Initiating reconnection after Play mode exit.", typeof(Startup));
 
                     UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
+                    UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
                     UnityMcpPlugin.ConnectIfNeeded();
                     break;
 

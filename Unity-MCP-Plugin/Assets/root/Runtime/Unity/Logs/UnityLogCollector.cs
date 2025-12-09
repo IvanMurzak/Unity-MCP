@@ -10,7 +10,9 @@
 
 #nullable enable
 using System;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Utils;
 using UnityEngine;
 
@@ -21,13 +23,15 @@ namespace com.IvanMurzak.Unity.MCP
     /// </summary>
     public class UnityLogCollector : IDisposable
     {
+        private static readonly Regex RichTextRegex = new Regex(@"</?(b|i|size|color|material|quad|a)\b[^>]*>", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
         readonly ILogStorage _logStorage;
         bool _disposed = false;
 
         public UnityLogCollector(ILogStorage logStorage)
         {
             if (!MainThread.Instance.IsMainThread)
-                throw new Exception($"{nameof(UnityLogCollector)} must be initialized on the main thread.");
+                throw new Exception($"{GetType().GetTypeShortName()} constructor must be initialized on the main thread.");
 
             _logStorage = logStorage ?? throw new ArgumentNullException(nameof(logStorage));
 
@@ -88,8 +92,15 @@ namespace com.IvanMurzak.Unity.MCP
         {
             try
             {
+                // Strip rich text tags
+                var cleanMessage = RichTextRegex.Replace(message, string.Empty);
+
+                // Filter out recursive logs from McpToolManager to prevent "insane slashes" and huge logs
+                // if (cleanMessage.Contains("[AI] McpToolManager Success Response to AI"))
+                //     return;
+
                 var logEntry = new LogEntry(
-                    message: message,
+                    message: cleanMessage,
                     stackTrace: stackTrace,
                     logType: type);
 

@@ -21,7 +21,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         static Startup()
         {
             UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
-            UnityMcpPlugin.Instance.AddUnityLogCollector(new BufferedFileLogStorage());
+            UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
 
             if (!EnvironmentUtils.IsCi())
                 UnityMcpPlugin.ConnectIfNeeded();

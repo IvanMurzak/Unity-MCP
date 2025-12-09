@@ -90,7 +90,7 @@ namespace com.IvanMurzak.Unity.MCP
             if (_isDisposed.Value)
             {
                 _logger.LogWarning("{method} called but already disposed, ignored.",
-                    nameof(Flush));
+                    nameof(CreateWriteStream));
                 throw new ObjectDisposedException(GetType().GetTypeShortName());
             }
             if (!Directory.Exists(_cacheFilePath))
@@ -124,7 +124,7 @@ namespace com.IvanMurzak.Unity.MCP
                     nameof(FlushAsync));
                 return;
             }
-            _fileLock.Wait();
+            await _fileLock.WaitAsync();
             try
             {
                 if (fileWriteStream != null)
@@ -136,7 +136,7 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
-        public virtual Task AppendAsync(LogEntry[] entries)
+        public virtual Task AppendAsync(params LogEntry[] entries)
         {
             if (_isDisposed.Value)
             {
@@ -325,19 +325,19 @@ namespace com.IvanMurzak.Unity.MCP
                     .Where(entry => entry != null)
                     .Cast<LogEntry>();
 
-                // Apply time filter if specified
-                if (lastMinutes > 0)
-                {
-                    var cutoffTime = DateTime.Now.AddMinutes(-lastMinutes);
-                    allLogs = allLogs
-                        .Where(log => log.Timestamp >= cutoffTime);
-                }
-
                 // Apply log type filter
                 if (logTypeFilter.HasValue)
                 {
                     allLogs = allLogs
                         .Where(log => log.LogType == logTypeFilter.Value);
+                }
+
+                // Apply time filter if specified
+                if (lastMinutes > 0)
+                {
+                    var cutoffTime = DateTime.Now.AddMinutes(-lastMinutes);
+                    allLogs = allLogs
+                        .TakeWhile(log => log.Timestamp >= cutoffTime);
                 }
 
                 // Take the most recent entries (up to maxEntries)

@@ -75,10 +75,10 @@ namespace com.IvanMurzak.Unity.MCP
             if (_isDisposed.Value)
             {
                 _logger.LogWarning("{method} called but already disposed, ignored.",
-                    nameof(Flush));
+                    nameof(FlushAsync));
                 return;
             }
-            _fileLock.Wait();
+            await _fileLock.WaitAsync();
             try
             {
                 // Flush buffered entries to file
@@ -106,6 +106,11 @@ namespace com.IvanMurzak.Unity.MCP
                 _logger.LogWarning("{method} called but already disposed, ignored.",
                     nameof(AppendInternal));
                 return;
+            }
+            if (_logEntriesBufferLength >= _flushEntriesThreshold)
+            {
+                base.AppendInternal(_logEntriesBuffer);
+                _logEntriesBufferLength = 0;
             }
             foreach (var entry in entries)
             {
@@ -192,8 +197,13 @@ namespace com.IvanMurzak.Unity.MCP
                 if (logTypeFilter.HasValue && entry.LogType != logTypeFilter.Value)
                     continue;
 
-                if (lastMinutes > 0 && entry.Timestamp < cutoffTime)
-                    continue;
+                if (lastMinutes > 0)
+                {
+                    if (entry.Timestamp < cutoffTime)
+                    {
+                        return result.AsEnumerable().Reverse().ToArray();
+                    }
+                }
 
                 result.Add(entry);
                 if (result.Count >= maxEntries)

@@ -60,11 +60,22 @@ namespace com.IvanMurzak.Unity.MCP
 
         public void AddUnityLogCollector(ILogStorage logStorage)
         {
+            if (logStorage == null)
+                throw new ArgumentNullException(nameof(logStorage));
+
             if (LogCollector != null)
                 throw new InvalidOperationException($"{nameof(UnityLogCollector)} is already added.");
 
             LogCollector = new UnityLogCollector(logStorage);
             _disposables.Add(LogCollector);
+        }
+
+        public void AddUnityLogCollectorIfNeeded(Func<ILogStorage> logStorageProvider)
+        {
+            if (LogCollector != null)
+                return;
+
+            AddUnityLogCollector(logStorageProvider());
         }
 
         public void DisposeMcpPluginInstance()
