@@ -87,17 +87,17 @@ namespace com.IvanMurzak.Unity.MCP
                 unityConnectionConfig ??= new UnityConnectionConfig();
 
                 var enabledToolNames = Tools?.GetAllTools()
-                    .Where(t => Tools.IsToolEnabled(t.Name))
+                    ?.Where(t => Tools.IsToolEnabled(t.Name))
                     .Select(t => t.Name)
                     .ToList();
 
                 var enabledPromptNames = Prompts?.GetAllPrompts()
-                    .Where(p => Prompts.IsPromptEnabled(p.Name))
+                    ?.Where(p => Prompts.IsPromptEnabled(p.Name))
                     .Select(p => p.Name)
                     .ToList();
 
                 var enabledResourceNames = Resources?.GetAllResources()
-                    .Where(r => Resources.IsResourceEnabled(r.Name))
+                    ?.Where(r => Resources.IsResourceEnabled(r.Name))
                     .Select(r => r.Name)
                     .ToList();
 
