@@ -241,6 +241,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     tool.IsEnabled = evt.newValue;
                     if (!string.IsNullOrWhiteSpace(tool.Name))
                     {
+                        _logger.LogTrace("{method} Setting tool '{toolName}' enabled state to {enabled}.",
+                            nameof(MakeToolItem), tool.Name, evt.newValue);
                         toolManager.SetToolEnabled(tool.Name, evt.newValue);
                         UnityMcpPlugin.Instance.Save();
                     }
