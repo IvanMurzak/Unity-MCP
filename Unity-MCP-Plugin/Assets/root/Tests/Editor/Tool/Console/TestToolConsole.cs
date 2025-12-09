@@ -22,57 +22,52 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     public class TestToolConsole : BaseTest
     {
         Tool_Console _tool = null!;
+        UnityLogCollector _logCollector = null!;
 
         [SetUp]
         public void TestSetUp()
         {
+            // Create local collector
+            _logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-tool-console.txt"));
+
             _tool = new Tool_Console();
-
-            // Clear any existing logs by getting them all
-            LogUtils.ClearLogs();
         }
 
-        void ResultValidation(string result)
+        [TearDown]
+        public void TestTearDown()
+        {
+            _logCollector?.Dispose();
+        }
+
+        void ResultValidation(LogEntry[] result)
+        {
+            Debug.Log($"[{nameof(TestToolConsole)}] Result:\n{result}");
+            Assert.IsNotNull(result, "Result should not be null.");
+        }
+
+        void ResultValidationExpected(LogEntry[] result, params string[] expectedLines)
         {
             Debug.Log($"[{nameof(TestToolConsole)}] Result:\n{result}");
             Assert.IsNotNull(result, "Result should not be null.");
             Assert.IsNotEmpty(result, "Result should not be empty.");
-            Assert.IsTrue(result.Contains("[Success]"), $"Should contain success message.");
-        }
-
-        void ResultValidationExpected(string result, params string[] expectedLines)
-        {
-            Debug.Log($"[{nameof(TestToolConsole)}] Result:\n{result}");
-            Assert.IsNotNull(result, "Result should not be null.");
-            Assert.IsNotEmpty(result, "Result should not be empty.");
-            Assert.IsTrue(result.Contains("[Success]"), $"Should contain success message.");
 
             if (expectedLines != null)
             {
                 foreach (var line in expectedLines)
-                    Assert.IsTrue(result.Contains(line), $"Should contain expected line: {line}");
+                    Assert.IsTrue(result.Any(entry => entry.Message.Contains(line)), $"Should contain expected line: {line}");
             }
         }
 
-        void ResultValidationUnexpected(string result, params string[] unexpectedLines)
+        void ResultValidationUnexpected(LogEntry[] result, params string[] unexpectedLines)
         {
             Debug.Log($"[{nameof(TestToolConsole)}] Result:\n{result}");
             Assert.IsNotNull(result, "Result should not be null.");
-            Assert.IsNotEmpty(result, "Result should not be empty.");
-            Assert.IsTrue(result.Contains("[Success]"), $"Should contain success message.");
 
             if (unexpectedLines != null)
             {
                 foreach (var line in unexpectedLines)
-                    Assert.IsFalse(result.Contains(line), $"Should not contain unexpected line: {line}");
+                    Assert.IsFalse(result.Any(entry => entry.Message.Contains(line)), $"Should not contain unexpected line: {line}");
             }
-        }
-
-        void ErrorValidation(string result, string expectedErrorStart = "[Error]")
-        {
-            Debug.Log($"[{nameof(TestToolConsole)}] Error Result:\n{result}");
-            Assert.IsNotNull(result, "Result should not be null.");
-            Assert.IsTrue(result.StartsWith(expectedErrorStart), $"Result should start with '{expectedErrorStart}'.");
         }
 
         [UnityTest]
@@ -90,6 +85,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Wait for logs to be captured
             for (int i = 0; i < 3; i++)
                 yield return null;
+
+            _logCollector.Save();
 
             // Act
             var result = _tool.GetLogs();
@@ -113,6 +110,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             for (int i = 0; i < 3; i++)
                 yield return null;
 
+            _logCollector.Save();
+
             // Act
             var result = _tool.GetLogs(maxEntries: limit);
 
@@ -120,11 +119,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             ResultValidation(result);
 
             // Count the number of log entries in the result
-            var lines = result.Split('\n')
-                .Where(line => line.Contains("[Log]"))
+            var lines = result
+                .Where(entry => entry.Message.Contains("Test log"))
                 .ToArray();
 
-            Assert.AreEqual(lines.Length, limit, $"Should return exactly {limit} entries");
+            Assert.AreEqual(limit, lines.Length, $"Should return exactly {limit} entries");
         }
 
         [UnityTest]
@@ -138,13 +137,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             for (int i = 0; i < 5; i++)
                 yield return null;
 
+            _logCollector.Save();
+
             // Act - Get only warnings
             var result = _tool.GetLogs(logTypeFilter: LogType.Warning);
 
             // Assert
             ResultValidation(result);
-            Assert.IsTrue(result.Contains("[Warning]"), "Should contain warning logs");
-            Assert.IsFalse(result.Contains("[Log]") && !result.Contains("[Warning]"), "Should not contain non-warning logs in the log entries");
+            Assert.IsTrue(result.Any(entry => entry.LogType == LogType.Warning), "Should contain warning logs");
+            Assert.IsFalse(result.Any(entry => entry.LogType == LogType.Log), "Should NOT contain log logs");
         }
 
         [UnityTest]
@@ -195,18 +196,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void GetLogs_WithInvalidMaxEntries_ReturnsError()
         {
             // Act - Test with value below minimum
-            var result1 = _tool.GetLogs(maxEntries: 0);
-
-            // Assert
-            ErrorValidation(result1);
-            Assert.IsTrue(result1.Contains("Invalid maxEntries value"), $"Should contain invalid maxEntries error.\nResult: {result1}");
-
-            // Act - Test with value above maximum
-            var result2 = _tool.GetLogs(maxEntries: LogUtils.MaxLogEntries + 1);
-
-            // Assert
-            ErrorValidation(result2);
-            Assert.IsTrue(result2.Contains("Invalid maxEntries value"), $"Should contain invalid maxEntries error.\nResult: {result2}");
+            Assert.Throws<ArgumentException>(
+                () => _tool.GetLogs(maxEntries: 0),
+                $"Should contain invalid maxEntries error");
         }
 
         [UnityTest]
@@ -218,6 +210,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             for (int i = 0; i < 3; i++)
                 yield return null;
 
+            _logCollector.Save();
+
             // Act
             var result = _tool.GetLogs(includeStackTrace: true, logTypeFilter: LogType.Warning);
 
@@ -225,7 +219,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             ResultValidation(result);
 
             // Stack traces should be included for warnings
-            if (result.Contains("[Warning]"))
+            if (result.Any(entry => entry.LogType == LogType.Warning))
             {
                 // Note: In Unity editor, stack traces might not always be present for all log types
                 // This test verifies the parameter is handled correctly
@@ -242,6 +236,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             for (int i = 0; i < 3; i++)
                 yield return null;
+
+            _logCollector.Save();
 
             // Act - Get logs from last 1 minute (should include recent logs)
             var result = _tool.GetLogs(lastMinutes: 1);
@@ -273,6 +269,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             for (int i = 0; i < 3; i++)
                 yield return null;
 
+            _logCollector.Save();
+
             // Test each safe log type filter
             LogType[] logTypes = { LogType.Log, LogType.Warning, LogType.Error };
 
@@ -285,10 +283,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 ResultValidation(result);
 
                 if (logType == LogType.Log)
-                    Assert.IsTrue(result.Contains(regularLogMessage), $"Should contain regular log message for '{logType}' filter.");
+                    Assert.IsTrue(result.Any(entry => entry.Message == regularLogMessage), $"Should contain regular log message for '{logType}' filter.");
 
                 if (logType == LogType.Warning)
-                    Assert.IsTrue(result.Contains(warningLogMessage), $"Should contain warning log message for '{logType}' filter.");
+                    Assert.IsTrue(result.Any(entry => entry.Message == warningLogMessage), $"Should contain warning log message for '{logType}' filter.");
             }
         }
 
@@ -306,6 +304,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             for (int i = 0; i < 3; i++)
                 yield return null;
+
+            _logCollector.Save();
 
             // Act - Combine multiple filters
             var result = _tool.GetLogs(
@@ -325,18 +325,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange & Act
             var logEntry = new LogEntry(
-                "Test message",
-                "Test stack trace",
-                LogType.Warning
+                message: "Test message",
+                stackTrace: "Test stack trace",
+                logType: LogType.Warning
             );
 
             // Assert
-            Assert.AreEqual("Test message", logEntry.message);
-            Assert.AreEqual("Test stack trace", logEntry.stackTrace);
-            Assert.AreEqual(LogType.Warning, logEntry.logType);
-            Assert.AreEqual("Warning", logEntry.logTypeString);
-            Assert.IsTrue(logEntry.timestamp <= DateTime.Now);
-            Assert.IsTrue(logEntry.timestamp >= DateTime.Now.AddMinutes(-1)); // Should be very recent
+            Assert.AreEqual("Test message", logEntry.Message);
+            Assert.AreEqual("Test stack trace", logEntry.StackTrace);
+            Assert.AreEqual(LogType.Warning, logEntry.LogType);
+            Assert.IsTrue(logEntry.Timestamp <= DateTime.Now);
+            Assert.IsTrue(logEntry.Timestamp >= DateTime.Now.AddMinutes(-1)); // Should be very recent
         }
 
         [Test]
@@ -344,9 +343,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange - Test with Warning to avoid causing test failure
             var logEntry = new LogEntry(
-                "Test message",
-                "Test stack trace",
-                LogType.Warning
+                message: "Test message",
+                stackTrace: "Test stack trace",
+                logType: LogType.Warning
             );
 
             // Act
@@ -355,7 +354,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Assert
             Assert.IsTrue(result.Contains("[Warning]"), "Should contain log type");
             Assert.IsTrue(result.Contains("Test message"), "Should contain message");
-            Assert.IsTrue(result.Contains(logEntry.timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff")), "Should contain formatted timestamp");
+            Assert.IsTrue(result.Contains(logEntry.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.fff")), "Should contain formatted timestamp");
         }
 
         [Test]
@@ -363,16 +362,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Test Error log type creation directly (without using Debug.LogError)
             var errorLogEntry = new LogEntry(
-                "Error message",
-                "Error stack trace",
-                LogType.Error
+                message: "Error message",
+                stackTrace: "Error stack trace",
+                logType: LogType.Error
             );
 
             // Assert
-            Assert.AreEqual("Error message", errorLogEntry.message);
-            Assert.AreEqual("Error stack trace", errorLogEntry.stackTrace);
-            Assert.AreEqual(LogType.Error, errorLogEntry.logType);
-            Assert.AreEqual("Error", errorLogEntry.logTypeString);
+            Assert.AreEqual("Error message", errorLogEntry.Message);
+            Assert.AreEqual("Error stack trace", errorLogEntry.StackTrace);
+            Assert.AreEqual(LogType.Error, errorLogEntry.LogType);
             Assert.IsTrue(errorLogEntry.ToString().Contains("[Error]"), "Should format Error type correctly");
         }
 
@@ -381,16 +379,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Test Assert log type creation directly (without using Debug.LogAssertion)
             var assertLogEntry = new LogEntry(
-                "Assert message",
-                "Assert stack trace",
-                LogType.Assert
+                message: "Assert message",
+                stackTrace: "Assert stack trace",
+                logType: LogType.Assert
             );
 
             // Assert
-            Assert.AreEqual("Assert message", assertLogEntry.message);
-            Assert.AreEqual("Assert stack trace", assertLogEntry.stackTrace);
-            Assert.AreEqual(LogType.Assert, assertLogEntry.logType);
-            Assert.AreEqual("Assert", assertLogEntry.logTypeString);
+            Assert.AreEqual("Assert message", assertLogEntry.Message);
+            Assert.AreEqual("Assert stack trace", assertLogEntry.StackTrace);
+            Assert.AreEqual(LogType.Assert, assertLogEntry.LogType);
             Assert.IsTrue(assertLogEntry.ToString().Contains("[Assert]"), "Should format Assert type correctly");
         }
         [Test]
@@ -398,15 +395,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Act
             var result1 = Tool_Console.Error.InvalidMaxEntries(0);
-            var result2 = Tool_Console.Error.InvalidMaxEntries(LogUtils.MaxLogEntries + 1);
 
             // Assert
             Assert.IsTrue(result1.Contains("[Error]"), "Should contain error prefix");
             Assert.IsTrue(result1.Contains("Invalid maxEntries value"), "Should contain error description");
             Assert.IsTrue(result1.Contains("'0'"), "Should contain the invalid value");
-
-            Assert.IsTrue(result2.Contains("[Error]"), "Should contain error prefix");
-            Assert.IsTrue(result2.Contains($"'{LogUtils.MaxLogEntries + 1}'"), "Should contain the invalid value");
         }
 
         [Test]
