@@ -90,7 +90,7 @@ namespace com.IvanMurzak.Unity.MCP
         public void Dispose()
         {
             _disposables.Dispose();
-            LogCollector?.Dispose();
+            // LogCollector is disposed by _disposables
             LogCollector = null;
             DisposeMcpPluginInstance();
         }
