@@ -307,37 +307,17 @@ namespace com.IvanMurzak.Unity.MCP
 
             using (var fileStream = new FileStream(_cacheFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             {
-                var allLogs = ReadLinesReverse(fileStream)
-                    .Select(line =>
-                    {
-                        try
-                        {
-                            if (string.IsNullOrWhiteSpace(line))
-                                return null;
-                            return System.Text.Json.JsonSerializer.Deserialize<LogEntry>(line, _jsonOptions);
-                        }
-                        catch
-                        {
-                            // Ignore corrupted lines
-                            return null;
-                        }
-                    })
-                    .Where(entry => entry != null)
-                    .Cast<LogEntry>();
+                var cutoffTime = lastMinutes > 0
+                    ? DateTime.Now.AddMinutes(-lastMinutes)
+                    : (DateTime?)null;
+
+                var allLogs = ReadLogEntriesFromLinesInReverse(fileStream, cutoffTime);
 
                 // Apply log type filter
                 if (logTypeFilter.HasValue)
                 {
                     allLogs = allLogs
                         .Where(log => log.LogType == logTypeFilter.Value);
-                }
-
-                // Apply time filter if specified
-                if (lastMinutes > 0)
-                {
-                    var cutoffTime = DateTime.Now.AddMinutes(-lastMinutes);
-                    allLogs = allLogs
-                        .TakeWhile(log => log.Timestamp >= cutoffTime);
                 }
 
                 // Take the most recent entries (up to maxEntries)
@@ -350,12 +330,12 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
-        protected virtual IEnumerable<string> ReadLinesReverse(FileStream fileStream)
+        protected virtual IEnumerable<LogEntry> ReadLogEntriesFromLinesInReverse(FileStream fileStream, DateTime? cutoffTime = null)
         {
             if (_isDisposed.Value)
             {
                 _logger.LogWarning("{method} called but already disposed, ignored.",
-                    nameof(ReadLinesReverse));
+                    nameof(ReadLogEntriesFromLinesInReverse));
                 yield break;
             }
             var position = fileStream.Length;
@@ -379,9 +359,15 @@ namespace com.IvanMurzak.Unity.MCP
                         if (lineBuffer.Count > 0)
                         {
                             lineBuffer.Reverse();
-                            var line = System.Text.Encoding.UTF8.GetString(lineBuffer.ToArray());
+                            var logEntry = DeserializeLogEntry(lineBuffer);
+                            if (logEntry != null)
+                            {
+                                if (cutoffTime.HasValue && logEntry.Timestamp < cutoffTime.Value)
+                                    yield break;
+
+                                yield return logEntry;
+                            }
                             lineBuffer.Clear();
-                            yield return line;
                         }
                     }
                     else if (b == '\r')
@@ -398,7 +384,32 @@ namespace com.IvanMurzak.Unity.MCP
             if (lineBuffer.Count > 0)
             {
                 lineBuffer.Reverse();
-                yield return System.Text.Encoding.UTF8.GetString(lineBuffer.ToArray());
+                var logEntry = DeserializeLogEntry(lineBuffer);
+                if (logEntry != null)
+                {
+                    if (cutoffTime.HasValue && logEntry.Timestamp < cutoffTime.Value)
+                        yield break;
+
+                    yield return logEntry;
+                }
+            }
+        }
+
+        protected virtual LogEntry? DeserializeLogEntry(List<byte> jsonBytes)
+        {
+            var json = System.Text.Encoding.UTF8.GetString(jsonBytes.ToArray());
+            return DeserializeLogEntry(json);
+        }
+
+        protected virtual LogEntry? DeserializeLogEntry(string json)
+        {
+            try
+            {
+                return System.Text.Json.JsonSerializer.Deserialize<LogEntry>(json, _jsonOptions);
+            }
+            catch
+            {
+                return null;
             }
         }
 
