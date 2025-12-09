@@ -38,7 +38,7 @@ namespace com.IvanMurzak.Unity.MCP
             : base(logger, cacheFilePath, cacheFileName, fileBufferSize, maxFileSizeMB, jsonOptions)
         {
             if (flushEntriesThreshold <= 0)
-                throw new System.ArgumentOutOfRangeException(nameof(flushEntriesThreshold), "Flush entries threshold must be greater than zero.");
+                throw new ArgumentOutOfRangeException(nameof(flushEntriesThreshold), "Flush entries threshold must be greater than zero.");
 
             _flushEntriesThreshold = flushEntriesThreshold;
             _logEntriesBuffer = new LogEntry[flushEntriesThreshold];
@@ -60,7 +60,7 @@ namespace com.IvanMurzak.Unity.MCP
                 if (_logEntriesBufferLength > 0)
                 {
                     var entriesToFlush = new LogEntry[_logEntriesBufferLength];
-                    System.Array.Copy(_logEntriesBuffer, entriesToFlush, _logEntriesBufferLength);
+                    Array.Copy(_logEntriesBuffer, entriesToFlush, _logEntriesBufferLength);
                     base.AppendInternal(entriesToFlush);
                     _logEntriesBufferLength = 0;
                 }
@@ -86,7 +86,7 @@ namespace com.IvanMurzak.Unity.MCP
                 if (_logEntriesBufferLength > 0)
                 {
                     var entriesToFlush = new LogEntry[_logEntriesBufferLength];
-                    System.Array.Copy(_logEntriesBuffer, entriesToFlush, _logEntriesBufferLength);
+                    Array.Copy(_logEntriesBuffer, entriesToFlush, _logEntriesBufferLength);
                     base.AppendInternal(entriesToFlush);
                     _logEntriesBufferLength = 0;
                 }

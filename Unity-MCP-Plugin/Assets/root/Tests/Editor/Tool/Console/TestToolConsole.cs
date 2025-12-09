@@ -12,7 +12,6 @@
 using System;
 using System.Collections;
 using System.Linq;
-using System.Reflection;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using NUnit.Framework;
 using UnityEngine;
@@ -30,10 +29,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Create local collector
             _logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-tool-console.txt"));
-
-            // Inject into Singleton
-            var property = typeof(UnityMcpPlugin).GetProperty("LogCollector", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            property.SetValue(UnityMcpPlugin.Instance, _logCollector);
 
             _tool = new Tool_Console();
         }
