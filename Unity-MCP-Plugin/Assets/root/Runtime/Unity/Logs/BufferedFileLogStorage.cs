@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -166,7 +167,7 @@ namespace com.IvanMurzak.Unity.MCP
             {
                 _logger.LogWarning("{method} called but already disposed, ignored.",
                     nameof(Query));
-                return new LogEntry[0];
+                return Array.Empty<LogEntry>();
             }
             _fileLock.Wait();
             try

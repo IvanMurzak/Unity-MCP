@@ -268,7 +268,7 @@ namespace com.IvanMurzak.Unity.MCP
             {
                 _logger.LogWarning("{method} called but already disposed, ignored.",
                     nameof(QueryAsync));
-                return Task.FromResult(new LogEntry[0]);
+                return Task.FromResult(Array.Empty<LogEntry>());
             }
             return Task.Run(() => Query(maxEntries, logTypeFilter, includeStackTrace, lastMinutes));
         }
@@ -283,7 +283,7 @@ namespace com.IvanMurzak.Unity.MCP
             {
                 _logger.LogWarning("{method} called but already disposed, ignored.",
                     nameof(Query));
-                return new LogEntry[0];
+                return Array.Empty<LogEntry>();
             }
             _fileLock.Wait();
             try
@@ -303,7 +303,7 @@ namespace com.IvanMurzak.Unity.MCP
             int lastMinutes = 0)
         {
             if (!File.Exists(_cacheFile))
-                return new LogEntry[0];
+                return Array.Empty<LogEntry>();
 
             using (var fileStream = new FileStream(_cacheFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             {
@@ -425,6 +425,8 @@ namespace com.IvanMurzak.Unity.MCP
             fileWriteStream = null;
 
             _fileLock.Dispose();
+
+            GC.SuppressFinalize(this);
         }
 
         ~FileLogStorage() => Dispose();

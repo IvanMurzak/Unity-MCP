@@ -40,6 +40,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (maxEntries < 1)
                 throw new ArgumentException(Error.InvalidMaxEntries(maxEntries));
 
+            if (!UnityMcpPlugin.HasInstance)
+                throw new InvalidOperationException("[Error] UnityMcpPlugin is not initialized.");
+
             var logCollector = UnityMcpPlugin.Instance.LogCollector;
             if (logCollector == null)
                 throw new InvalidOperationException("[Error] LogCollector is not initialized.");

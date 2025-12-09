@@ -12,6 +12,7 @@
 using System;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Utils;
 using UnityEngine;
@@ -26,7 +27,7 @@ namespace com.IvanMurzak.Unity.MCP
         private static readonly Regex RichTextRegex = new Regex(@"</?(b|i|size|color|material|quad|a)\b[^>]*>", RegexOptions.Compiled | RegexOptions.IgnoreCase);
 
         readonly ILogStorage _logStorage;
-        bool _disposed = false;
+        readonly ThreadSafeBool _isDisposed = new(false);
 
         public UnityLogCollector(ILogStorage logStorage)
         {
@@ -40,7 +41,7 @@ namespace com.IvanMurzak.Unity.MCP
 
         public void Clear()
         {
-            if (_disposed)
+            if (_isDisposed.Value)
                 return;
 
             _logStorage.Clear();
@@ -52,7 +53,7 @@ namespace com.IvanMurzak.Unity.MCP
         /// <returns>A task that completes when the save operation is finished.</returns>
         public void Save()
         {
-            if (_disposed)
+            if (_isDisposed.Value)
                 return;
 
             _logStorage.Flush();
@@ -64,7 +65,7 @@ namespace com.IvanMurzak.Unity.MCP
         /// <returns>A task that completes when the save operation is finished.</returns>
         public Task SaveAsync()
         {
-            if (_disposed)
+            if (_isDisposed.Value)
                 return Task.CompletedTask;
 
             return _logStorage.FlushAsync();
@@ -114,16 +115,16 @@ namespace com.IvanMurzak.Unity.MCP
 
         public void Dispose()
         {
-            if (_disposed)
-                return;
-
-            Save();
-
-            _disposed = true;
+            if (!_isDisposed.TrySetTrue())
+                return; // already disposed
 
             Application.logMessageReceivedThreaded -= OnLogMessageReceived;
             _logStorage.Dispose();
+
+            GC.SuppressFinalize(this);
         }
+
+        ~UnityLogCollector() => Dispose();
     }
 }
 
