@@ -16,11 +16,9 @@ using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.McpPlugin.Common.Reflection.Convertor;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Convertor;
-using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Reflection.Convertor;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using NUnit.Framework;
@@ -91,7 +89,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             var material = new Material(Shader.Find("Standard"));
 
-            var serialized = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Serialize(material);
+            var serialized = reflector.Serialize(material);
             var json = serialized.ToJson(reflector);
             Debug.Log($"[{nameof(TestSerializer)}] Result:\n{json}");
 
@@ -103,7 +101,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             var objMaterial = (object)material;
             var stringBuilder = new StringBuilder();
-            McpPlugin.McpPlugin.Instance!.McpManager.Reflector.TryPopulate(
+            reflector.TryPopulate(
                 ref objMaterial,
                 data: serialized,
                 stringBuilder: stringBuilder,
@@ -131,7 +129,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             var materials = new[] { material1, material2 };
 
-            var serialized = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Serialize(materials, logger: McpPlugin.McpPlugin.Instance.Logger);
+            var serialized = reflector.Serialize(materials, logger: McpPlugin.McpPlugin.Instance.Logger);
             var json = serialized.ToJson(reflector);
             Debug.Log($"[{nameof(TestSerializer)}] Result:\n{json}");
 
@@ -163,7 +161,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             Assert.AreEqual(sourceObj?.GetType(), deserializedObj?.GetType(), $"Object type should be {sourceObj?.GetType().Name ?? "null"}.");
 
-            foreach (var field in McpPlugin.McpPlugin.Instance!.McpManager.Reflector.GetSerializableFields(type) ?? Enumerable.Empty<FieldInfo>())
+            foreach (var field in reflector.GetSerializableFields(type) ?? Enumerable.Empty<FieldInfo>())
             {
                 try
                 {
@@ -177,7 +175,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     throw ex;
                 }
             }
-            foreach (var prop in McpPlugin.McpPlugin.Instance!.McpManager.Reflector.GetSerializableProperties(type) ?? Enumerable.Empty<PropertyInfo>())
+            foreach (var prop in reflector.GetSerializableProperties(type) ?? Enumerable.Empty<PropertyInfo>())
             {
                 try
                 {

@@ -34,12 +34,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 UnityMcpPlugin.Instance.LogInfo("{method} triggered", typeof(Startup), nameof(OnApplicationUnloading));
                 UnityMcpPlugin.Instance.DisconnectImmediate();
+                UnityMcpPlugin.Instance.LogCollector?.Save();
+                UnityMcpPlugin.Instance.LogCollector?.Dispose();
             }
             else
             {
                 Debug.Log($"{nameof(Startup)} {nameof(OnApplicationUnloading)} triggered: No UnityMcpPlugin instance to disconnect.");
             }
-            LogUtils.SaveToFileImmediate();
         }
         static void OnApplicationQuitting()
         {
@@ -47,12 +48,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 UnityMcpPlugin.Instance.LogInfo("{method} triggered", typeof(Startup), nameof(OnApplicationQuitting));
                 UnityMcpPlugin.Instance.DisconnectImmediate();
+                UnityMcpPlugin.Instance.LogCollector?.Save();
+                UnityMcpPlugin.Instance.LogCollector?.Dispose();
             }
             else
             {
                 Debug.Log($"{nameof(Startup)} {nameof(OnApplicationQuitting)} triggered: No UnityMcpPlugin instance to disconnect.");
             }
-            _ = LogUtils.HandleQuit();
         }
         static void OnBeforeAssemblyReload()
         {
@@ -60,12 +62,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 UnityMcpPlugin.Instance.LogInfo("{method} triggered", typeof(Startup), nameof(OnBeforeAssemblyReload));
                 UnityMcpPlugin.Instance.DisconnectImmediate();
+                UnityMcpPlugin.Instance.LogCollector?.Save();
+                UnityMcpPlugin.Instance.LogCollector?.Dispose();
             }
             else
             {
                 Debug.Log($"{nameof(Startup)} {nameof(OnBeforeAssemblyReload)} triggered: No UnityMcpPlugin instance to disconnect.");
             }
-            LogUtils.SaveToFileImmediate();
         }
         static void OnAfterAssemblyReload()
         {
@@ -75,11 +78,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 typeof(Startup));
 
             UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
+            UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
 
             if (connectionAllowed)
                 UnityMcpPlugin.ConnectIfNeeded();
-
-            _ = LogUtils.LoadFromFile();
         }
 
         static void OnPlayModeStateChanged(PlayModeStateChange state)
@@ -118,6 +120,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         UnityMcpPlugin.Instance.LogTrace($"Initiating delayed reconnection after Play mode exit.", typeof(Startup));
 
                         UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
+                        UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
                         UnityMcpPlugin.ConnectIfNeeded();
                     };
 
@@ -126,6 +129,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     UnityMcpPlugin.Instance.LogTrace($"Initiating reconnection after Play mode exit.", typeof(Startup));
 
                     UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
+                    UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
                     UnityMcpPlugin.ConnectIfNeeded();
                     break;
 

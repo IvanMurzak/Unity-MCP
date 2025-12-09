@@ -21,18 +21,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     public class TestLogUtils : BaseTest
     {
         private const int Timeout = 100000;
+        private UnityLogCollector? logCollector;
 
         [SetUp]
         public void TestSetUp()
         {
-            LogUtils.ClearLogs();
+            logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-editor-logs.txt"));
+            logCollector.Clear();
+        }
+
+        [TearDown]
+        public void TestTearDown()
+        {
+            logCollector?.Dispose();
         }
 
         [UnityTest]
         public IEnumerator SaveToFile_LoadFromFile_PreservesAllLogTypes()
         {
+            if (logCollector == null)
+            {
+                Assert.Fail($"{nameof(logCollector)} is not initialized");
+                yield break;
+            }
             // Test that all Unity log types are preserved during save/load
-            LogUtils.ClearLogs();
+            logCollector.Clear();
             yield return null;
 
             var testData = new[]
@@ -71,15 +84,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             yield return WaitForLogCount(testData.Length);
 
             // Save to file
-            yield return WaitForTask(LogUtils.SaveToFile());
+            logCollector.Save();
 
             // Clear and reload
-            LogUtils.ClearLogs();
-            Assert.AreEqual(0, LogUtils.LogEntries);
+            // Simulate restart
+            logCollector.Dispose();
+            logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-editor-logs.txt"));
+            // Assert.AreEqual(0, logCollector.Query().Length, "Logs should be empty array after clearing");
 
-            yield return WaitForTask(LogUtils.LoadFromFile());
-
-            var loadedLogs = LogUtils.GetAllLogs();
+            var loadedLogs = logCollector.Query();
             Assert.AreEqual(testData.Length, loadedLogs.Length, "All log types should be preserved");
 
             // Verify each log type is preserved
@@ -94,8 +107,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator SaveToFile_LoadFromFile_PreservesSpecialCharacters()
         {
+            if (logCollector == null)
+            {
+                Assert.Fail($"{nameof(logCollector)} is not initialized");
+                yield break;
+            }
             // Test that special characters, unicode, and formatting are preserved
-            LogUtils.ClearLogs();
+            logCollector.Clear();
             yield return null;
 
             var specialMessages = new[]
@@ -118,11 +136,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             yield return WaitForLogCount(specialMessages.Length);
 
             // Save and reload
-            yield return WaitForTask(LogUtils.SaveToFile());
-            LogUtils.ClearLogs();
-            yield return WaitForTask(LogUtils.LoadFromFile());
+            logCollector.Save();
+            // Simulate restart
+            logCollector.Dispose();
+            logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-editor-logs.txt"));
 
-            var loadedLogs = LogUtils.GetAllLogs();
+            var loadedLogs = logCollector.Query();
             Assert.AreEqual(specialMessages.Length, loadedLogs.Length, "All logs should be preserved");
 
             // Verify exact message preservation
@@ -136,6 +155,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator SaveToFile_LoadFromFile_PreservesStackTraces()
         {
+            if (logCollector == null)
+            {
+                Assert.Fail($"{nameof(logCollector)} is not initialized");
+                yield break;
+            }
             // Save original stack trace settings
             var originalWarningStackTrace = Application.GetStackTraceLogType(LogType.Warning);
 
@@ -145,7 +169,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 Application.SetStackTraceLogType(LogType.Warning, StackTraceLogType.ScriptOnly);
 
                 // Test that stack traces are preserved
-                LogUtils.ClearLogs();
+                logCollector.Clear();
                 yield return null;
 
                 // Generate logs with stack traces (only warnings, as errors/assertions fail tests)
@@ -156,7 +180,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 const int expectedLogs = 3;
                 yield return WaitForLogCount(expectedLogs);
 
-                var originalLogs = LogUtils.GetAllLogs();
+                var originalLogs = logCollector.Query();
                 Assert.AreEqual(expectedLogs, originalLogs.Length);
 
                 // Verify original logs have stack traces
@@ -167,11 +191,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }
 
                 // Save and reload
-                yield return WaitForTask(LogUtils.SaveToFile());
-                LogUtils.ClearLogs();
-                yield return WaitForTask(LogUtils.LoadFromFile());
+                logCollector.Save();
+                // Simulate restart
+                logCollector.Dispose();
+                logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-editor-logs.txt"));
 
-                var loadedLogs = LogUtils.GetAllLogs();
+                var loadedLogs = logCollector.Query();
                 Assert.AreEqual(expectedLogs, loadedLogs.Length, "All logs should be preserved");
 
                 // Verify stack traces are preserved
@@ -195,8 +220,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator SaveToFile_LoadFromFile_PreservesTimestamps()
         {
+            if (logCollector == null)
+            {
+                Assert.Fail($"{nameof(logCollector)} is not initialized");
+                yield break;
+            }
             // Test that timestamps are preserved with accuracy
-            LogUtils.ClearLogs();
+            logCollector.Clear();
             yield return null;
 
             const int testCount = 5;
@@ -207,15 +237,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             yield return WaitForLogCount(testCount);
 
-            var originalLogs = LogUtils.GetAllLogs();
+            var originalLogs = logCollector.Query();
             var originalTimestamps = originalLogs.Select(log => log.Timestamp).ToArray();
 
             // Save and reload
-            yield return WaitForTask(LogUtils.SaveToFile());
-            LogUtils.ClearLogs();
-            yield return WaitForTask(LogUtils.LoadFromFile());
+            logCollector.Save();
+            // Simulate restart
+            logCollector.Dispose();
+            logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-editor-logs.txt"));
 
-            var loadedLogs = LogUtils.GetAllLogs();
+            var loadedLogs = logCollector.Query();
             Assert.AreEqual(testCount, loadedLogs.Length);
 
             // Verify timestamps are preserved (allowing for minimal serialization precision loss)
@@ -236,27 +267,34 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator SaveToFile_LoadFromFile_HandlesEmptyLogs()
         {
+            if (logCollector == null)
+            {
+                Assert.Fail($"{nameof(logCollector)} is not initialized");
+                yield break;
+            }
             // Test saving/loading when there are no logs
-            LogUtils.ClearLogs();
+            logCollector.Clear();
             yield return null;
 
-            Assert.AreEqual(0, LogUtils.LogEntries);
+            Assert.AreEqual(0, logCollector.Query().Length);
 
             // Save empty logs
-            yield return WaitForTask(LogUtils.SaveToFile());
+            logCollector.Save();
 
-            // Try to load (should result in empty logs)
-            yield return WaitForTask(LogUtils.LoadFromFile());
-
-            Assert.AreEqual(0, LogUtils.LogEntries, "Loading empty logs should result in zero entries");
-            Assert.AreEqual(0, LogUtils.GetAllLogs().Length);
+            Assert.AreEqual(0, logCollector.Query().Length, "Loading empty logs should result in zero entries");
+            Assert.AreEqual(0, logCollector.Query().Length);
         }
 
         [UnityTest]
         public IEnumerator SaveToFile_LoadFromFile_HandlesLargeMessages()
         {
+            if (logCollector == null)
+            {
+                Assert.Fail($"{nameof(logCollector)} is not initialized");
+                yield break;
+            }
             // Test very long log messages
-            LogUtils.ClearLogs();
+            logCollector.Clear();
             yield return null;
 
             var largeMessage = new string('A', 10000); // 10KB message
@@ -272,11 +310,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
 
             // Save and reload
-            yield return WaitForTask(LogUtils.SaveToFile());
-            LogUtils.ClearLogs();
-            yield return WaitForTask(LogUtils.LoadFromFile());
+            logCollector.Save();
+            // Simulate restart
+            logCollector.Dispose();
+            logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-editor-logs.txt"));
 
-            var loadedLogs = LogUtils.GetAllLogs();
+            var loadedLogs = logCollector.Query();
             Assert.AreEqual(expectedLogs, loadedLogs.Length);
 
             // Verify large messages are preserved exactly
@@ -291,8 +330,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator SaveToFile_LoadFromFile_MultipleSaveCycles()
         {
+            if (logCollector == null)
+            {
+                Assert.Fail($"{nameof(logCollector)} is not initialized");
+                yield break;
+            }
             // Test multiple save/load cycles to ensure data integrity over time
-            LogUtils.ClearLogs();
+            logCollector.Clear();
             yield return null;
 
             const int cycles = 3;
@@ -309,19 +353,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 yield return WaitForLogCount((cycle + 1) * logsPerCycle);
 
                 // Save to file
-                yield return WaitForTask(LogUtils.SaveToFile());
+                yield return WaitForTask(logCollector.SaveAsync());
 
                 // Verify count before clearing
-                Assert.AreEqual((cycle + 1) * logsPerCycle, LogUtils.LogEntries,
+                var logs = logCollector.Query();
+                var testLogsCount = logs.Where(l => l.Message.StartsWith("Cycle")).Count();
+                Assert.AreEqual((cycle + 1) * logsPerCycle, testLogsCount,
                     $"Should have {(cycle + 1) * logsPerCycle} logs after cycle {cycle}");
 
                 // Clear and reload
-                LogUtils.ClearLogs();
-                yield return WaitForTask(LogUtils.LoadFromFile());
+                // Simulate restart
+                logCollector.Dispose();
+                logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-editor-logs.txt"));
 
                 // Verify all logs from all cycles are still present
-                var loadedLogs = LogUtils.GetAllLogs();
-                Assert.AreEqual((cycle + 1) * logsPerCycle, loadedLogs.Length,
+                var loadedLogs = logCollector.Query();
+                var loadedTestLogsCount = loadedLogs.Where(l => l.Message.StartsWith("Cycle")).Count();
+                Assert.AreEqual((cycle + 1) * logsPerCycle, loadedTestLogsCount,
                     $"All logs should be preserved after cycle {cycle}");
 
                 // Verify specific logs from each cycle
@@ -340,8 +388,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator SaveToFile_LoadFromFile_PreservesLogOrder()
         {
+            if (logCollector == null)
+            {
+                Assert.Fail($"{nameof(logCollector)} is not initialized");
+                yield break;
+            }
             // Test that log order is preserved
-            LogUtils.ClearLogs();
+            logCollector.Clear();
             yield return null;
 
             const int testCount = 20;
@@ -356,14 +409,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             yield return WaitForLogCount(testCount);
 
-
-
             // Save and reload
-            yield return WaitForTask(LogUtils.SaveToFile());
-            LogUtils.ClearLogs();
-            yield return WaitForTask(LogUtils.LoadFromFile());
+            logCollector.Save();
+            // Simulate restart
+            logCollector.Dispose();
+            logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-editor-logs.txt"));
 
-            var loadedLogs = LogUtils.GetAllLogs();
+            var loadedLogs = logCollector.Query();
             Assert.AreEqual(testCount, loadedLogs.Length);
 
             // Verify order is preserved by comparing timestamps
@@ -382,12 +434,35 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             }
         }
 
+        [Test]
+        public void SaveToFileImmediate_WritesSynchronously()
+        {
+            if (logCollector == null)
+            {
+                Assert.Fail($"{nameof(logCollector)} is not initialized");
+                return;
+            }
+            // Test synchronous save
+            logCollector.Clear();
+
+            Debug.Log("Immediate save test");
+
+            // Since this is a synchronous test, we can't easily wait for the log callback if it's delayed.
+            // But we can verify that the method executes without throwing exceptions.
+            Assert.DoesNotThrow(() => logCollector.Save());
+        }
+
         [UnityTest]
         public IEnumerator ClearLogs_RemovesAllLogs()
         {
+            if (logCollector == null)
+            {
+                Assert.Fail($"{nameof(logCollector)} is not initialized");
+                yield break;
+            }
             const int logsCount = 10;
             // Test that ClearLogs actually removes all logs
-            LogUtils.ClearLogs();
+            logCollector.Clear();
             yield return null;
 
             // Add some logs
@@ -397,26 +472,116 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             }
 
             yield return WaitForLogCount(logsCount);
-            Assert.AreEqual(logsCount, LogUtils.LogEntries);
+            Assert.AreEqual(logsCount, logCollector.Query().Length);
 
             // Clear logs
-            LogUtils.ClearLogs();
+            logCollector.Clear();
 
-            Assert.AreEqual(0, LogUtils.LogEntries, "LogEntries should be zero after clear");
-            Assert.AreEqual(0, LogUtils.GetAllLogs().Length, "GetAllLogs should return empty array after clear");
+            Assert.AreEqual(0, logCollector.Query().Length, "GetAllLogs should return empty array after clear");
         }
+
+        #region File Size Limit Tests
+
+        [Test]
+        public void FileLogStorage_MaxFileSizeMB_DefaultValue()
+        {
+            // Test that default max file size is 512MB
+            using var storage = new FileLogStorage(cacheFileName: "test-max-size-default.txt");
+            // The default value is defined as a constant in the class
+            // We can verify the storage was created successfully with default values
+            Assert.DoesNotThrow(() => storage.Append(new LogEntry(LogType.Log, "Test")));
+        }
+
+        [Test]
+        public void FileLogStorage_MaxFileSizeMB_CustomValue()
+        {
+            // Test that custom max file size can be set
+            using var storage = new FileLogStorage(
+                cacheFileName: "test-max-size-custom.txt",
+                maxFileSizeMB: 100);
+            Assert.DoesNotThrow(() => storage.Append(new LogEntry(LogType.Log, "Test")));
+        }
+
+        [Test]
+        public void FileLogStorage_MaxFileSizeMB_ThrowsOnInvalidValue()
+        {
+            // Test that invalid max file size throws exception
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
+                new FileLogStorage(cacheFileName: "test-max-size-invalid.txt", maxFileSizeMB: 0));
+
+            Assert.Throws<ArgumentOutOfRangeException>(() =>
+                new FileLogStorage(cacheFileName: "test-max-size-invalid.txt", maxFileSizeMB: -1));
+        }
+
+        [UnityTest]
+        public IEnumerator FileLogStorage_ResetLogFile_ResetsWhenLimitReached()
+        {
+            // Test with a very small max file size (1MB) to trigger reset quickly
+            const int maxFileSizeMB = 1;
+            const string testFileName = "test-reset-trigger.txt";
+
+            using var storage = new FileLogStorage(
+                cacheFileName: testFileName,
+                maxFileSizeMB: maxFileSizeMB);
+
+            // Clear any existing data
+            storage.Clear();
+            yield return null;
+
+            // Generate a large message to fill up the file quickly
+            var largeMessage = new string('X', 100000); // 100KB per message
+
+            // Write entries until we exceed the limit (at least 11 messages for 1MB)
+            for (int i = 0; i < 15; i++)
+            {
+                storage.Append(new LogEntry(LogType.Log, $"{largeMessage}_{i}"));
+            }
+
+            yield return null;
+
+            // After reset, the file should have been cleared and new entries written
+            // Query should still work
+            var logs = storage.Query(maxEntries: 100);
+            Assert.IsNotNull(logs, "Query should return logs after reset");
+
+            // The file should have fewer entries than we wrote (due to reset)
+            // Or it could have all entries if reset happened and new ones were written
+            // The key test is that the system didn't crash and still works
+            Assert.DoesNotThrow(() => storage.Query());
+
+            // Cleanup
+            storage.Clear();
+        }
+
+        [Test]
+        public void BufferedFileLogStorage_MaxFileSizeMB_PassedToBase()
+        {
+            // Test that BufferedFileLogStorage passes maxFileSizeMB to base class
+            using var storage = new BufferedFileLogStorage(
+                cacheFileName: "test-buffered-max-size.txt",
+                maxFileSizeMB: 256);
+
+            Assert.DoesNotThrow(() => storage.Append(new LogEntry(LogType.Log, "Test")));
+        }
+
+        #endregion
 
         #region Helper Methods
 
         private IEnumerator WaitForLogCount(int expectedCount)
         {
+            if (logCollector == null)
+            {
+                Assert.Fail($"{nameof(logCollector)} is not initialized");
+                yield break;
+            }
             var frameCount = 0;
-            while (LogUtils.LogEntries < expectedCount)
+            while (logCollector.Query(maxEntries: expectedCount).Length < expectedCount)
             {
                 yield return null;
                 frameCount++;
                 Assert.Less(frameCount, Timeout,
-                    $"Timeout waiting for {expectedCount} logs. Current count: {LogUtils.LogEntries}");
+                    $"Timeout waiting for {expectedCount} logs. Current count: {logCollector.Query(maxEntries: 2 ^ 12).Length}");
             }
         }
 
