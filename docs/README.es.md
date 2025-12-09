@@ -12,22 +12,25 @@
 [![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&labelColor=333A41)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
-  <img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/level-building.gif" alt="AI work" title="Level building" width="100%">
+  <img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/promo/ai-developer-banner.jpg" alt="AI work" title="Level building" width="100%">
 
   <b>[English](https://github.com/IvanMurzak/Unity-MCP/blob/main/README.md) | [中文](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.zh-CN.md) | [日本語](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.ja.md)</b>
 
 </div>
 
-`Unity MCP` es un asistente de desarrollo de juegos impulsado por IA que sirve como puente entre el `Cliente MCP` y `Unity`. Simplemente escribe un mensaje en el chat y haz el trabajo usando cualquier modelo LLM avanzado de tu elección. ¿Tienes un problema que arreglar? Pídele a la IA que lo solucione. **[Mira los videos de demostración](https://www.youtube.com/watch?v=kQUOCQ-c0-M&list=PLyueiUu0xU70uzNoOaanGQD2hiyJmqHtK)**.
+`Unity MCP` es un asistente de desarrollo de juegos impulsado por IA **para Editor y Runtime**. Conecta **Claude**, **Cursor** y **Windsurf** a Unity vía MCP. Automatiza flujos de trabajo, genera código y **habilita IA dentro de tus juegos**.
+
+A diferencia de otras herramientas, este plugin funciona **dentro de tu juego compilado**, permitiendo depuración IA en tiempo real e interacción jugador-IA.
 
 > **[💬 Únete a nuestro servidor de Discord](https://discord.gg/cfbdMZX99G)** - ¡Haz preguntas, muestra tu trabajo y conéctate con otros desarrolladores!
 
 ## Características
 
+- ✔️ **IA en Runtime** - Usa LLMs directamente dentro de tu juego compilado para comportamiento dinámico de NPCs o depuración
 - ✔️ **Conversación natural** - Chatea con la IA como lo harías con un humano
 - ✔️ **Asistencia de código** - Pídele a la IA que escriba código y ejecute pruebas
 - ✔️ **Soporte de depuración** - Pídele a la IA que obtenga registros y corrija errores
-- ✔️ **Múltiples proveedores de LLM** - Usa agentes de Anthropic, OpenAI, Microsoft o cualquier otro proveedor sin límites
+- ✔️ **Múltiples proveedores de LLM** - Usa agentes de **Anthropic**, **OpenAI**, **DeepSeek**, Microsoft o cualquier otro proveedor sin límites
 - ✔️ **Despliegue flexible** - Funciona localmente (stdio) y remotamente (http) por configuración
 - ✔️ **Conjunto de herramientas rico** - Amplio rango de [Herramientas MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md) por defecto
 - ✔️ **Extensible** - Crea [herramientas MCP personalizadas en el código de tu proyecto](#agregar-herramienta-mcp-personalizada)
@@ -50,7 +53,8 @@
   - [Paso 3: Configurar el `Cliente MCP`](#paso-3-configurar-el-cliente-mcp)
     - [Configuración automática](#configuración-automática)
     - [Configuración manual](#configuración-manual)
-- [Usar IA](#usar-ia)
+    - [Configuración por línea de comandos](#configuración-por-línea-de-comandos)
+- [Ejemplos de Flujo de Trabajo IA: Claude y Gemini](#ejemplos-de-flujo-de-trabajo-ia-claude-y-gemini)
   - [Características avanzadas para LLM](#características-avanzadas-para-llm)
     - [Capacidades principales](#capacidades-principales)
     - [Características de reflexión](#características-de-reflexión)
@@ -96,7 +100,7 @@
 
 ### Opción 1 - Instalador
 
-- **[⬇️ Descargar Instalador](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.26.0/AI-Game-Dev-Installer.unitypackage)**
+- **[⬇️ Descargar Instalador](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.27.0/AI-Game-Dev-Installer.unitypackage)**
 - **📂 Importar instalador al proyecto Unity**
   > - Puedes hacer doble clic en el archivo - Unity lo abrirá automáticamente
   > - O: Abre Unity Editor primero, luego haz clic en `Assets/Import Package/Custom Package`, y elige el archivo
@@ -194,7 +198,7 @@ Si la configuración automática no funciona por alguna razón, usa el JSON de l
 
 ---
 
-# Usar IA
+# Ejemplos de Flujo de Trabajo IA: Claude y Gemini
 
 Comunícate con la IA (LLM) en tu `Cliente MCP`. Pídele que haga cualquier cosa que quieras. Mientras mejor describas tu tarea o idea, mejor será su rendimiento.
 
@@ -579,6 +583,8 @@ Un `Prompt MCP` te permite inyectar prompts predefinidos en la conversación con
 # Contribución 💙💛
 
 Las contribuciones son muy apreciadas. ¡Trae tus ideas y hagamos el desarrollo de juegos más simple que nunca! ¿Tienes una idea para una nueva `Herramienta MCP` o característica, o encontraste un bug y sabes cómo arreglarlo?
+
+**¡Por favor dale una estrella 🌟 a este proyecto si lo encuentras útil!**
 
 1. 👉 [Lee la documentación de desarrollo](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.es.md)
 2. 👉 [Haz fork del proyecto](https://github.com/IvanMurzak/Unity-MCP/fork)
