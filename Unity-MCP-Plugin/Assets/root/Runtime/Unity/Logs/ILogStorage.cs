@@ -9,20 +9,30 @@
 */
 
 #nullable enable
-using com.IvanMurzak.McpPlugin;
+using System;
+using System.Threading.Tasks;
 
-namespace com.IvanMurzak.Unity.MCP.Editor.API
+namespace com.IvanMurzak.Unity.MCP
 {
-    [McpPluginToolType]
-    public partial class Tool_Console
+    public interface ILogStorage : IDisposable
     {
-        public static class Error
-        {
-            public static string InvalidMaxEntries(int entriesCount)
-                => $"[Error] Invalid maxEntries value '{entriesCount}'. Must be greater than 0.";
+        Task AppendAsync(params LogEntry[] entries);
+        void Append(params LogEntry[] entries);
 
-            public static string InvalidLogTypeFilter(string logType)
-                => $"[Error] Invalid logType filter '{logType}'. Valid values: All, Error, Assert, Warning, Log, Exception.";
-        }
+        Task FlushAsync();
+        void Flush();
+
+        Task<LogEntry[]> QueryAsync(
+            int maxEntries = 100,
+            UnityEngine.LogType? logTypeFilter = null,
+            bool includeStackTrace = false,
+            int lastMinutes = 0);
+        LogEntry[] Query(
+            int maxEntries = 100,
+            UnityEngine.LogType? logTypeFilter = null,
+            bool includeStackTrace = false,
+            int lastMinutes = 0);
+
+        void Clear();
     }
 }

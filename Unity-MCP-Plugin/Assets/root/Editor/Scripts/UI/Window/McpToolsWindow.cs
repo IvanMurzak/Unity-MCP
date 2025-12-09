@@ -101,6 +101,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         {
             UnityMcpPlugin.InitSingletonIfNeeded();
             UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
+            UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
         }
 
         private void InitializeFilters(VisualElement root)
