@@ -27,7 +27,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void TestSetUp()
         {
             // Create local collector
-            _logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-tool-console-integration.txt"));
+            _logCollector = new UnityLogCollector(new FileLogStorage(requestedFileName: "test-tool-console-integration.txt"));
 
             _tool = new Tool_Console();
         }

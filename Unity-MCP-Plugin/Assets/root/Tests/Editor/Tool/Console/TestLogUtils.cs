@@ -26,7 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [SetUp]
         public void TestSetUp()
         {
-            logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-editor-logs.txt"));
+            logCollector = new UnityLogCollector(new FileLogStorage(requestedFileName: "test-editor-logs.txt"));
             logCollector.Clear();
         }
 
@@ -89,7 +89,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Clear and reload
             // Simulate restart
             logCollector.Dispose();
-            logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-editor-logs.txt"));
+            logCollector = new UnityLogCollector(new FileLogStorage(requestedFileName: "test-editor-logs.txt"));
             // Assert.AreEqual(0, logCollector.Query().Length, "Logs should be empty array after clearing");
 
             var loadedLogs = logCollector.Query();
@@ -139,7 +139,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             logCollector.Save();
             // Simulate restart
             logCollector.Dispose();
-            logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-editor-logs.txt"));
+            logCollector = new UnityLogCollector(new FileLogStorage(requestedFileName: "test-editor-logs.txt"));
 
             var loadedLogs = logCollector.Query();
             Assert.AreEqual(specialMessages.Length, loadedLogs.Length, "All logs should be preserved");
@@ -194,7 +194,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 logCollector.Save();
                 // Simulate restart
                 logCollector.Dispose();
-                logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-editor-logs.txt"));
+                logCollector = new UnityLogCollector(new FileLogStorage(requestedFileName: "test-editor-logs.txt"));
 
                 var loadedLogs = logCollector.Query();
                 Assert.AreEqual(expectedLogs, loadedLogs.Length, "All logs should be preserved");
@@ -243,7 +243,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             logCollector.Save();
             // Simulate restart
             logCollector.Dispose();
-            logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-editor-logs.txt"));
+            logCollector = new UnityLogCollector(new FileLogStorage(requestedFileName: "test-editor-logs.txt"));
 
             var loadedLogs = logCollector.Query();
             Assert.AreEqual(testCount, loadedLogs.Length);
@@ -312,7 +312,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             logCollector.Save();
             // Simulate restart
             logCollector.Dispose();
-            logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-editor-logs.txt"));
+            logCollector = new UnityLogCollector(new FileLogStorage(requestedFileName: "test-editor-logs.txt"));
 
             var loadedLogs = logCollector.Query();
             Assert.AreEqual(expectedLogs, loadedLogs.Length);
@@ -363,7 +363,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 // Clear and reload
                 // Simulate restart
                 logCollector.Dispose();
-                logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-editor-logs.txt"));
+                logCollector = new UnityLogCollector(new FileLogStorage(requestedFileName: "test-editor-logs.txt"));
 
                 // Verify all logs from all cycles are still present
                 var loadedLogs = logCollector.Query();
@@ -412,7 +412,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             logCollector.Save();
             // Simulate restart
             logCollector.Dispose();
-            logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-editor-logs.txt"));
+            logCollector = new UnityLogCollector(new FileLogStorage(requestedFileName: "test-editor-logs.txt"));
 
             var loadedLogs = logCollector.Query();
             Assert.AreEqual(testCount, loadedLogs.Length);
@@ -485,7 +485,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void FileLogStorage_MaxFileSizeMB_DefaultValue()
         {
             // Test that default max file size is 512MB
-            using var storage = new FileLogStorage(cacheFileName: "test-max-size-default.txt");
+            using var storage = new FileLogStorage(requestedFileName: "test-max-size-default.txt");
             // The default value is defined as a constant in the class
             // We can verify the storage was created successfully with default values
             Assert.DoesNotThrow(() => storage.Append(new LogEntry(LogType.Log, "Test")));
@@ -496,7 +496,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Test that custom max file size can be set
             using var storage = new FileLogStorage(
-                cacheFileName: "test-max-size-custom.txt",
+                requestedFileName: "test-max-size-custom.txt",
                 maxFileSizeMB: 100);
             Assert.DoesNotThrow(() => storage.Append(new LogEntry(LogType.Log, "Test")));
         }
@@ -506,10 +506,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Test that invalid max file size throws exception
             Assert.Throws<ArgumentOutOfRangeException>(() =>
-                new FileLogStorage(cacheFileName: "test-max-size-invalid.txt", maxFileSizeMB: 0));
+                new FileLogStorage(requestedFileName: "test-max-size-invalid.txt", maxFileSizeMB: 0));
 
             Assert.Throws<ArgumentOutOfRangeException>(() =>
-                new FileLogStorage(cacheFileName: "test-max-size-invalid.txt", maxFileSizeMB: -1));
+                new FileLogStorage(requestedFileName: "test-max-size-invalid.txt", maxFileSizeMB: -1));
         }
 
         [UnityTest]
@@ -520,7 +520,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             const string testFileName = "test-reset-trigger.txt";
 
             using var storage = new FileLogStorage(
-                cacheFileName: testFileName,
+                requestedFileName: testFileName,
                 maxFileSizeMB: maxFileSizeMB);
 
             // Clear any existing data
