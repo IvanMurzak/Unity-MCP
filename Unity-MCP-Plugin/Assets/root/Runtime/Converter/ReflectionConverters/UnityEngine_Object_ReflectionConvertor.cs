@@ -55,7 +55,8 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
             int depth = 0,
             StringBuilder? stringBuilder = null,
-            ILogger? logger = null)
+            ILogger? logger = null,
+            SerializationContext? context = null)
         {
             if (obj == null)
                 return SerializedMember.FromValue(reflector, type, value: null, name: name);
@@ -77,14 +78,16 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                         flags: flags,
                         depth: depth,
                         stringBuilder: stringBuilder,
-                        logger: logger),
+                        logger: logger,
+                        context: context),
                     props = SerializeProperties(
                         reflector,
                         obj: obj,
                         flags: flags,
                         depth: depth,
                         stringBuilder: stringBuilder,
-                        logger: logger)
+                        logger: logger,
+                        context: context)
                 }.SetValue(reflector, new ObjectRef(unityObject?.GetInstanceID() ?? 0));
             }
             else
@@ -295,7 +298,8 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             string? fallbackName = null,
             int depth = 0,
             StringBuilder? stringBuilder = null,
-            ILogger? logger = null)
+            ILogger? logger = null,
+            DeserializationContext? context = null)
         {
             var targetType = fallbackType ?? typeof(T);
             var padding = StringUtils.GetPadding(depth);
