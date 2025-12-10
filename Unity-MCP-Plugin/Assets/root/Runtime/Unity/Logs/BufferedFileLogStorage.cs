@@ -145,11 +145,11 @@ namespace com.IvanMurzak.Unity.MCP
                 fileWriteStream = null;
                 _logEntriesBufferLength = 0;
 
-                if (File.Exists(_cacheFile))
-                    File.Delete(_cacheFile);
+                if (File.Exists(filePath))
+                    File.Delete(filePath);
 
-                if (File.Exists(_cacheFile))
-                    _logger.LogError("Failed to delete cache file: {file}", _cacheFile);
+                if (File.Exists(filePath))
+                    _logger.LogError("Failed to delete cache file: {file}", filePath);
             }
             finally
             {
