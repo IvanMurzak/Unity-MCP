@@ -298,7 +298,8 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             string? fallbackName = null,
             int depth = 0,
             StringBuilder? stringBuilder = null,
-            ILogger? logger = null)
+            ILogger? logger = null,
+            DeserializationContext? context = null)
         {
             var targetType = fallbackType ?? typeof(T);
             var padding = StringUtils.GetPadding(depth);

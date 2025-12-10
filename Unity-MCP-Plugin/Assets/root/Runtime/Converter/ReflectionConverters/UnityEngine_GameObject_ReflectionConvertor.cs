@@ -322,7 +322,8 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             string? fallbackName = null,
             int depth = 0,
             StringBuilder? stringBuilder = null,
-            ILogger? logger = null)
+            ILogger? logger = null,
+            DeserializationContext? context = null)
         {
             return data.valueJsonElement
                 .ToGameObjectRef(
