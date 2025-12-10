@@ -61,7 +61,8 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             bool recursive = true,
             BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
             int depth = 0, StringBuilder? stringBuilder = null,
-            ILogger? logger = null)
+            ILogger? logger = null,
+            SerializationContext? context = null)
         {
             if (obj == null)
                 return SerializedMember.FromValue(reflector, type, value: null, name: name);
@@ -79,14 +80,16 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                         flags: flags,
                         depth: depth,
                         stringBuilder: stringBuilder,
-                        logger: logger),
+                        logger: logger,
+                        context: context),
                     props = SerializeProperties(
                         reflector,
                         obj: obj,
                         flags: flags,
                         depth: depth,
                         stringBuilder: stringBuilder,
-                        logger: logger)
+                        logger: logger,
+                        context: context)
                 }.SetValue(reflector, new GameObjectRef(unityObject?.GetInstanceID() ?? 0));
             }
             else
@@ -102,7 +105,8 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             BindingFlags flags,
             int depth = 0,
             StringBuilder? stringBuilder = null,
-            ILogger? logger = null)
+            ILogger? logger = null,
+            SerializationContext? context = null)
         {
             var serializedFields = base.SerializeFields(
                 reflector: reflector,
@@ -110,7 +114,8 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                 flags: flags,
                 depth: depth,
                 stringBuilder: stringBuilder,
-                logger: logger) ?? new();
+                logger: logger,
+                context: context) ?? new();
 
             var go = obj as UnityEngine.GameObject;
             if (go == null)
@@ -130,7 +135,8 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                     flags: flags,
                     depth: depth + 1,
                     stringBuilder: stringBuilder,
-                    logger: logger
+                    logger: logger,
+                    context: context
                 );
                 serializedFields.Add(componentSerialized);
             }
