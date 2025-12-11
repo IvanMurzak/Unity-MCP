@@ -11,24 +11,25 @@
         "MCP",
         "Unity MCP"
     ],
-    "version": "0.26.0",
+    "version": "0.28.0",
     "unity": "2022.3",
-    "description": "Bridge between LLM and Unity. It expose Unity API to LLM and allows LLM to control Unity. It is based on Model Context Protocol (MCP) and uses SignalR for communication.",
+    "description": "AI-powered bridge connecting LLMs and advanced AI agents to the Unity Editor via the Model Context Protocol (MCP). Chat with AI to generate code, debug errors, and automate game development tasks directly within your project.",
     "dependencies": {
         "com.unity.test-framework": "1.1.33",
         "com.unity.modules.uielements": "1.0.0",
         "extensions.unity.playerprefsex": "2.0.2",
-        "org.nuget.microsoft.bcl.memory": "10.0.0",
-        "org.nuget.microsoft.aspnetcore.signalr.client": "10.0.0",
-        "org.nuget.microsoft.aspnetcore.signalr.protocols.json": "10.0.0",
+        "org.nuget.microsoft.bcl.memory": "10.0.1",
+        "org.nuget.microsoft.aspnetcore.signalr.client": "10.0.1",
+        "org.nuget.microsoft.aspnetcore.signalr.protocols.json": "10.0.1",
         "org.nuget.microsoft.codeanalysis.csharp": "4.14.0",
-        "org.nuget.microsoft.extensions.caching.abstractions": "10.0.0",
-        "org.nuget.microsoft.extensions.dependencyinjection.abstractions": "10.0.0",
-        "org.nuget.microsoft.extensions.hosting": "10.0.0",
-        "org.nuget.microsoft.extensions.hosting.abstractions": "10.0.0",
-        "org.nuget.microsoft.extensions.logging.abstractions": "10.0.0",
+        "org.nuget.microsoft.extensions.caching.abstractions": "10.0.1",
+        "org.nuget.microsoft.extensions.dependencyinjection.abstractions": "10.0.1",
+        "org.nuget.microsoft.extensions.hosting": "10.0.1",
+        "org.nuget.microsoft.extensions.hosting.abstractions": "10.0.1",
+        "org.nuget.microsoft.extensions.logging": "10.0.1",
+        "org.nuget.microsoft.extensions.logging.abstractions": "10.0.1",
         "org.nuget.r3": "1.3.0",
-        "org.nuget.system.text.json": "10.0.0"
+        "org.nuget.system.text.json": "10.0.1"
     },
     "scopedRegistries": [
         {

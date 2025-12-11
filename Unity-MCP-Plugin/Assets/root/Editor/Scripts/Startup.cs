@@ -21,6 +21,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         static Startup()
         {
             UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
+            UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
 
             if (!EnvironmentUtils.IsCi())
                 UnityMcpPlugin.ConnectIfNeeded();
@@ -33,7 +34,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             SubscribeOnEditorEvents();
 
             // Initialize sub-systems
-            LogUtils.EnsureSubscribed(); // log collector
             API.Tool_TestRunner.Init(); // test runner
         }
         public static void Init()
