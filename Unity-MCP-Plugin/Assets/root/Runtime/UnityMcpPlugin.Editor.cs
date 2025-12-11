@@ -11,6 +11,7 @@
 #nullable enable
 using System;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using UnityEngine;
@@ -47,7 +48,10 @@ namespace com.IvanMurzak.Unity.MCP
                 {
                     config = string.IsNullOrWhiteSpace(json)
                         ? null
-                        : JsonSerializer.Deserialize<UnityConnectionConfig>(json);
+                        : JsonSerializer.Deserialize<UnityConnectionConfig>(json, new JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true
+                        });
                 }
                 catch (Exception e)
                 {
@@ -84,7 +88,39 @@ namespace com.IvanMurzak.Unity.MCP
                     Directory.CreateDirectory(directory);
 
                 unityConnectionConfig ??= new UnityConnectionConfig();
-                var json = JsonSerializer.Serialize(unityConnectionConfig, new JsonSerializerOptions { WriteIndented = true });
+
+                var enabledToolNames = Tools?.GetAllTools()
+                    ?.Where(t => Tools.IsToolEnabled(t.Name))
+                    .Select(t => t.Name)
+                    .ToList();
+
+                var enabledPromptNames = Prompts?.GetAllPrompts()
+                    ?.Where(p => Prompts.IsPromptEnabled(p.Name))
+                    .Select(p => p.Name)
+                    .ToList();
+
+                var enabledResourceNames = Resources?.GetAllResources()
+                    ?.Where(r => Resources.IsResourceEnabled(r.Name))
+                    .Select(r => r.Name)
+                    .ToList();
+
+                unityConnectionConfig.EnabledTools = enabledToolNames != null && enabledToolNames.Count > 0
+                    ? enabledToolNames
+                    : UnityConnectionConfig.DefaultEnabledTools;
+
+                unityConnectionConfig.EnabledPrompts = enabledPromptNames != null && enabledPromptNames.Count > 0
+                    ? enabledPromptNames
+                    : UnityConnectionConfig.DefaultEnabledPrompts;
+
+                unityConnectionConfig.EnabledResources = enabledResourceNames != null && enabledResourceNames.Count > 0
+                    ? enabledResourceNames
+                    : UnityConnectionConfig.DefaultEnabledResources;
+
+                var json = JsonSerializer.Serialize(unityConnectionConfig, new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                });
                 File.WriteAllText(AssetsFilePath, json);
 
                 var assetFile = AssetFile;

@@ -32,7 +32,8 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
             int depth = 0,
             StringBuilder? stringBuilder = null,
-            ILogger? logger = null)
+            ILogger? logger = null,
+            SerializationContext? context = null)
         {
             if (obj == null)
                 return SerializedMember.FromValue(reflector, type, value: null, name: name);
@@ -51,7 +52,8 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                 flags: flags,
                 depth: depth,
                 stringBuilder: stringBuilder,
-                logger: logger);
+                logger: logger,
+                context: context);
         }
     }
 }

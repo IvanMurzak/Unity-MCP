@@ -39,7 +39,8 @@ namespace com.IvanMurzak.McpPlugin.Common.Reflection.Convertor
             string? fallbackName = null,
             int depth = 0,
             StringBuilder? stringBuilder = null,
-            ILogger? logger = null)
+            ILogger? logger = null,
+            DeserializationContext? context = null)
         {
             var type = fallbackType ?? typeof(T);
             if (typeof(UnityEngine.Object).IsAssignableFrom(type))
