@@ -48,7 +48,10 @@ namespace com.IvanMurzak.Unity.MCP
                 {
                     config = string.IsNullOrWhiteSpace(json)
                         ? null
-                        : JsonSerializer.Deserialize<UnityConnectionConfig>(json);
+                        : JsonSerializer.Deserialize<UnityConnectionConfig>(json, new JsonSerializerOptions
+                        {
+                            PropertyNameCaseInsensitive = true
+                        });
                 }
                 catch (Exception e)
                 {
@@ -113,7 +116,11 @@ namespace com.IvanMurzak.Unity.MCP
                     ? enabledResourceNames
                     : UnityConnectionConfig.DefaultEnabledResources;
 
-                var json = JsonSerializer.Serialize(unityConnectionConfig, new JsonSerializerOptions { WriteIndented = true });
+                var json = JsonSerializer.Serialize(unityConnectionConfig, new JsonSerializerOptions
+                {
+                    WriteIndented = true,
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                });
                 File.WriteAllText(AssetsFilePath, json);
 
                 var assetFile = AssetFile;
