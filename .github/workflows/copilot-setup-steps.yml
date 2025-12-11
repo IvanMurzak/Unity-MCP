@@ -49,21 +49,12 @@ jobs:
       - name: Start Unity Editor container
         run: docker start unity-editor
 
-      - name: Activate Unity License (manual activation)
-        run: |
-          echo "Creating Unity license directory..."
-          docker exec unity-editor mkdir -p /root/.local/share/unity3d/Unity
-
-          echo "Writing Unity license file..."
-          cat > /tmp/Unity_lic.ulf << 'EOF'
-          ${{ secrets.UNITY_LICENSE }}
-          EOF
-
-          docker cp /tmp/Unity_lic.ulf unity-editor:/root/.local/share/unity3d/Unity/Unity_lic.ulf
-          rm /tmp/Unity_lic.ulf
-
-          echo "Unity license file created"
-          docker exec unity-editor ls -la /root/.local/share/unity3d/Unity/
+      - name: Activate Unity License
+        uses: game-ci/unity-activate@v2
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
 
       - name: Start Unity Editor and execute startup method
         run: |
