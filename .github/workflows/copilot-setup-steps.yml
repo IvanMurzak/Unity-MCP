@@ -4,21 +4,21 @@
 # after the setup job completes, allowing Copilot to connect to them.
 #
 # Architecture:
-#   ┌─────────────────────────────────────────────────────────────┐
-#   │ GitHub Actions Runner                                       │
-#   │                                                             │
-#   │  ┌─────────────────┐     SignalR      ┌─────────────────┐  │
-#   │  │ Unity Editor    │◄────────────────►│ Unity-MCP-Server│  │
-#   │  │ (SERVICE)       │   localhost      │ (SERVICE)       │  │
-#   │  │ localhost:8090  │                  │ localhost:8080  │  │
-#   │  └─────────────────┘                  └────────▲────────┘  │
-#   │                                                │            │
-#   │                                     MCP Protocol            │
-#   │                                                │            │
-#   │                               ┌────────────────┴──────────┐ │
-#   │                               │  GitHub Copilot Agent     │ │
-#   │                               └───────────────────────────┘ │
-#   └─────────────────────────────────────────────────────────────┘
+#   ┌──────────────────────────────────────────────────────────────┐
+#   │ GitHub Actions Runner                                        │
+#   │                                                              │
+#   │  ┌─────────────────┐     SignalR      ┌───────────────────┐  │
+#   │  │ Unity Editor    │◄────────────────►│ Unity-MCP-Server  │  │
+#   │  │ (SERVICE)       │   localhost      │ (SERVICE)         │  │
+#   │  │ localhost:55123 │                  │ localhost:55123   │  │
+#   │  └─────────────────┘                  └────────▲──────────┘  │
+#   │                                                │             │
+#   │                                     MCP Protocol             │
+#   │                                                │             │
+#   │                               ┌────────────────┴──────────┐  │
+#   │                               │  GitHub Copilot Agent     │  │
+#   │                               └───────────────────────────┘  │
+#   └──────────────────────────────────────────────────────────────┘
 #
 # How it works:
 #   1. Services start immediately (before steps run)
@@ -39,10 +39,10 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - '.github/workflows/copilot-setup-steps.yml'
+      - ".github/workflows/copilot-setup-steps.yml"
   pull_request:
     paths:
-      - '.github/workflows/copilot-setup-steps.yml'
+      - ".github/workflows/copilot-setup-steps.yml"
 
 jobs:
   # IMPORTANT: Job name MUST be exactly 'copilot-setup-steps'
@@ -62,7 +62,7 @@ jobs:
       unity-editor:
         image: unityci/editor:ubuntu-2022.3.61f1-linux-il2cpp-3
         ports:
-          - 8090:8090
+          - 55123:55123
         # Use 'bash' as entrypoint - keeps container waiting for input
         # The default ENTRYPOINT is ["bash", "-c"] which exits, but just "bash" waits
         options: >-
@@ -74,11 +74,11 @@ jobs:
       mcp-server:
         image: ivanmurzakdev/unity-mcp-server:latest
         ports:
-          - 8080:8080
+          - 55123:55123
         env:
           TRANSPORT: http
           # Connect to Unity service via localhost (both services on host network)
-          SIGNALR_URL: http://localhost:8090/unityhub
+          SIGNALR_URL: http://localhost:55123/unityhub
 
     steps:
       # =========================================================================
@@ -99,7 +99,7 @@ jobs:
           UNITY_CONTAINER=$(docker ps --format "{{.ID}} {{.Image}}" | grep -i "unityci/editor" | awk '{print $1}' | head -1)
           if [ -z "$UNITY_CONTAINER" ]; then
             echo "WARNING: Unity container not found by image name, trying by port..."
-            UNITY_CONTAINER=$(docker ps --format "{{.ID}} {{.Ports}}" | grep "8090" | awk '{print $1}' | head -1)
+            UNITY_CONTAINER=$(docker ps --format "{{.ID}} {{.Ports}}" | grep "55123" | awk '{print $1}' | head -1)
           fi
           echo "unity_container=$UNITY_CONTAINER" >> $GITHUB_OUTPUT
           echo "Unity container: $UNITY_CONTAINER"
@@ -108,7 +108,7 @@ jobs:
           MCP_CONTAINER=$(docker ps --format "{{.ID}} {{.Image}}" | grep -i "unity-mcp-server" | awk '{print $1}' | head -1)
           if [ -z "$MCP_CONTAINER" ]; then
             echo "WARNING: MCP container not found by image name, trying by port..."
-            MCP_CONTAINER=$(docker ps --format "{{.ID}} {{.Ports}}" | grep "8080" | awk '{print $1}' | head -1)
+            MCP_CONTAINER=$(docker ps --format "{{.ID}} {{.Ports}}" | grep "55123" | awk '{print $1}' | head -1)
           fi
           echo "mcp_container=$MCP_CONTAINER" >> $GITHUB_OUTPUT
           echo "MCP Server container: $MCP_CONTAINER"
@@ -262,12 +262,12 @@ jobs:
           echo "UNITY SERVICE:"
           echo "  Container: $UNITY_CONTAINER"
           docker exec "$UNITY_CONTAINER" pgrep -a Unity 2>/dev/null | head -1 | sed 's/^/  Process: /' || echo "  Process: Starting..."
-          nc -zv localhost 8090 2>&1 | grep -q succeeded && echo "  Port 8090: OPEN" || echo "  Port 8090: Closed"
+          nc -zv localhost 55123 2>&1 | grep -q succeeded && echo "  Port 55123: OPEN" || echo "  Port 55123: Closed"
 
           echo ""
           echo "MCP SERVER SERVICE:"
           echo "  Container: $MCP_CONTAINER"
-          nc -zv localhost 8080 2>&1 | grep -q succeeded && echo "  Port 8080: OPEN" || echo "  Port 8080: Closed"
+          nc -zv localhost 55123 2>&1 | grep -q succeeded && echo "  Port 55123: OPEN" || echo "  Port 55123: Closed"
 
           echo ""
           echo "UNITY LOGS (last 15 lines):"
@@ -277,6 +277,6 @@ jobs:
           echo "=========================================="
           echo "Both services will persist for Copilot!"
           echo ""
-          echo "Copilot MCP endpoint: http://localhost:8080"
-          echo "Unity health check:   http://localhost:8090"
+          echo "Copilot MCP endpoint: http://localhost:55123"
+          echo "Unity health check:   http://localhost:55123"
           echo "=========================================="
