@@ -54,7 +54,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 return Error.NotFoundPrefabAtPath(prefabAssetPath);
 
             EditorUtility.SetDirty(go);
-            EditorApplication.RepaintHierarchyWindow();
+
+            UnityEditor.EditorApplication.RepaintHierarchyWindow();
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
             var result = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Serialize(
                 prefabGo,

@@ -53,6 +53,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (!scene.IsValid())
                 return $"[Error] Failed to load scene at '{path}'.\n{LoadedScenesText}";
 
+            UnityEditor.EditorApplication.RepaintHierarchyWindow();
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+
             return $"[Success] Scene loaded at '{path}'.\n{LoadedScenesText}";
         });
     }

@@ -9,11 +9,11 @@
 */
 
 #nullable enable
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using com.IvanMurzak.McpPlugin;
-using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
@@ -28,43 +28,59 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Destroy Components from a GameObject in opened Prefab or in a Scene"
         )]
         [Description("Destroy one or many components from target GameObject. Can't destroy missed components.")]
-        public string DestroyComponents
+        public DestroyComponentsResponse DestroyComponents
         (
             GameObjectRef gameObjectRef,
             ComponentRefList destroyComponentRefs
         )
-        => MainThread.Instance.Run(() =>
         {
-            var go = gameObjectRef.FindGameObject(out var error);
-            if (error != null)
-                return $"[Error] {error}";
-
-            if (go == null)
-                return $"[Error] GameObject by {nameof(gameObjectRef)} not found.";
-
-            var destroyCounter = 0;
-            var stringBuilder = new StringBuilder();
-
-            var allComponents = go.GetComponents<UnityEngine.Component>();
-            foreach (var component in allComponents)
+            return MainThread.Instance.Run(() =>
             {
-                if (destroyComponentRefs.Any(cr => cr.Matches(component)))
+                var go = gameObjectRef.FindGameObject(out var error);
+                if (error != null)
+                    throw new System.Exception(error);
+
+                if (go == null)
+                    throw new System.Exception($"GameObject by {nameof(gameObjectRef)} not found.");
+
+                var destroyCounter = 0;
+                var stringBuilder = new StringBuilder();
+
+                var allComponents = go.GetComponents<UnityEngine.Component>();
+
+                var response = new DestroyComponentsResponse();
+
+                foreach (var component in allComponents)
                 {
-                    if (component == null)
+                    if (destroyComponentRefs.Any(cr => cr.Matches(component)))
                     {
-                        stringBuilder.AppendLine($"[Warning] Component instanceID='0' is null. Skipping destruction.");
-                        continue; // Skip null components
+                        if (component == null)
+                        {
+                            response.Errors ??= new List<string>();
+                            response.Errors.Add($"Component instanceID='0' is null. Skipping destruction.");
+                            continue; // Skip null components
+                        }
+                        var destroyedComponentRef = new ComponentRef(component);
+                        UnityEngine.Object.DestroyImmediate(component);
+                        destroyCounter++;
+                        response.DestroyedComponents ??= new ComponentRefList();
+                        response.DestroyedComponents.Add(destroyedComponentRef);
                     }
-                    UnityEngine.Object.DestroyImmediate(component);
-                    destroyCounter++;
-                    stringBuilder.AppendLine($"[Success] Destroyed component instanceID='{component.GetInstanceID()}', type='{component.GetType().GetTypeName(pretty: false)}'.");
                 }
-            }
 
-            if (destroyCounter == 0)
-                return Error.NotFoundComponents(destroyComponentRefs, allComponents);
+                if (destroyCounter == 0)
+                    throw new System.Exception(Error.NotFoundComponents(destroyComponentRefs, allComponents));
 
-            return $"[Success] Destroyed {destroyCounter} components from GameObject.\n{stringBuilder}";
-        });
+                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+
+                return response;
+            });
+        }
+
+        public class DestroyComponentsResponse
+        {
+            public ComponentRefList? DestroyedComponents { get; set; }
+            public List<string>? Errors { get; set; }
+        }
     }
 }

@@ -71,7 +71,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             var bounds = go.CalculateBounds();
 
             EditorUtility.SetDirty(go);
-            EditorApplication.RepaintHierarchyWindow();
+            UnityEditor.EditorApplication.RepaintProjectWindow();
+            UnityEditor.EditorApplication.RepaintHierarchyWindow();
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
             return $"[Success] Prefab successfully instantiated.\n{go.Print()}";
         });

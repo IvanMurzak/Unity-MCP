@@ -13,12 +13,11 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 
-namespace com.IvanMurzak.Unity.MCP.Editor.Models
+namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
-    public class SceneData
+    public class SceneData : SceneRef
     {
         public string Name { get; set; } = string.Empty;
-        public string Path { get; set; } = string.Empty;
         public bool IsLoaded { get; set; }
         public bool IsDirty { get; set; }
         public bool IsSubScene { get; set; } = false;
@@ -27,7 +26,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Models
 to open a Scene that does not exist. In this case, the Scene returned from EditorSceneManager.OpenScene
 would return False for IsValid.")]
         public bool IsValid { get; set; } = true;
-        public int BuildIndex { get; set; } = -1;
         public int RootCount { get; set; } = 0;
         public List<GameObjectData>? RootGameObjects { get; set; } = null;
     }

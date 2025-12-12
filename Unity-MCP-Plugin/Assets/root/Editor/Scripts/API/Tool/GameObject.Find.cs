@@ -11,13 +11,9 @@
 #nullable enable
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
-using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
-using com.IvanMurzak.Unity.MCP.Editor.Models;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
-using com.IvanMurzak.Unity.MCP.Runtime.Utils;
-using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {

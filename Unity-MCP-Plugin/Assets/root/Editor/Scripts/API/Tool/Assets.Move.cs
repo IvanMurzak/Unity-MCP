@@ -55,6 +55,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 }
             }
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+            UnityEditor.EditorApplication.RepaintProjectWindow();
+            UnityEditor.EditorApplication.RepaintHierarchyWindow();
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
             return stringBuilder.ToString();
         });
     }

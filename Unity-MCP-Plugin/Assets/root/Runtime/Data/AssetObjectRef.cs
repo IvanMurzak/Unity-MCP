@@ -48,6 +48,18 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 
         public AssetObjectRef() : this(id: 0) { }
         public AssetObjectRef(int id) => InstanceID = id;
+        public AssetObjectRef(UnityEngine.Object? obj) : base(obj)
+        {
+#if UNITY_EDITOR
+            if (obj != null)
+            {
+                AssetPath = UnityEditor.AssetDatabase.GetAssetPath(obj);
+                AssetGuid = !StringUtils.IsNullOrEmpty(AssetPath)
+                    ? UnityEditor.AssetDatabase.AssetPathToGUID(AssetPath)
+                    : null;
+            }
+#endif
+        }
         public AssetObjectRef(string assetPath) => this.AssetPath = assetPath;
 
         [JsonIgnore]

@@ -52,6 +52,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (!saved)
                 return $"[Error] Failed to save scene at '{path}'.\n{LoadedScenesText}";
 
+            UnityEditor.EditorApplication.RepaintHierarchyWindow();
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+
             return $"[Success] Scene saved at '{path}'.\n{LoadedScenesText}";
         });
     }

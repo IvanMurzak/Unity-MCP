@@ -74,7 +74,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 }
 
                 if (changedCount > 0)
+                {
                     EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+                    UnityEditor.EditorApplication.RepaintProjectWindow();
+                    UnityEditor.EditorApplication.RepaintHierarchyWindow();
+                    UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                }
 
                 return stringBuilder.ToString();
             });

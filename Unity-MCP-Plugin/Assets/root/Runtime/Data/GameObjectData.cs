@@ -11,11 +11,10 @@
 #nullable enable
 using System.ComponentModel;
 using com.IvanMurzak.ReflectorNet.Model;
-using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEngine;
 
-namespace com.IvanMurzak.Unity.MCP.Editor.Models
+namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
     public class GameObjectData
     {

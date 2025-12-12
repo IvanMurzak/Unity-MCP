@@ -11,7 +11,6 @@
 #nullable enable
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
-using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.ReflectorNet.Utils;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -29,25 +28,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             [Description("Path to the scene file.")]
             string path
         )
-        => MainThread.Instance.Run(() =>
         {
-            if (string.IsNullOrEmpty(path))
-                return Error.ScenePathIsEmpty();
+            return MainThread.Instance.Run(() =>
+            {
+                if (string.IsNullOrEmpty(path))
+                    return Error.ScenePathIsEmpty();
 
-            if (path.EndsWith(".unity") == false)
-                return Error.FilePathMustEndsWithUnity();
+                if (path.EndsWith(".unity") == false)
+                    return Error.FilePathMustEndsWithUnity();
 
-            // Create a new empty scene
-            var scene = UnityEditor.SceneManagement.EditorSceneManager.NewScene(
-                UnityEditor.SceneManagement.NewSceneSetup.DefaultGameObjects,
-                UnityEditor.SceneManagement.NewSceneMode.Single);
+                // Create a new empty scene
+                var scene = UnityEditor.SceneManagement.EditorSceneManager.NewScene(
+                    UnityEditor.SceneManagement.NewSceneSetup.DefaultGameObjects,
+                    UnityEditor.SceneManagement.NewSceneMode.Single);
 
-            // Save the scene asset at the specified path
-            bool saved = UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene, path);
-            if (!saved)
-                return $"[Error] Failed to save scene at '{path}'.\n{LoadedScenesText}";
+                // Save the scene asset at the specified path
+                bool saved = UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene, path);
+                if (!saved)
+                    return $"[Error] Failed to save scene at '{path}'.\n{LoadedScenesText}";
 
-            return $"[Success] Scene created at '{path}'.\n{LoadedScenesText}";
-        });
+                UnityEditor.EditorApplication.RepaintHierarchyWindow();
+                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+
+                return $"[Success] Scene created at '{path}'.\n{LoadedScenesText}";
+            });
+        }
     }
 }

@@ -64,6 +64,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             // AssetDatabase.CreateAsset(asset, assetPath);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+            UnityEditor.EditorApplication.RepaintProjectWindow();
+            UnityEditor.EditorApplication.RepaintHierarchyWindow();
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
             return result.ToString();
 

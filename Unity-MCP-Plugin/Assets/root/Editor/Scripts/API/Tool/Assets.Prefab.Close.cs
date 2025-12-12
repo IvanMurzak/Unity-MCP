@@ -48,6 +48,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             StageUtility.GoBackToPreviousStage();
 
+            UnityEditor.EditorApplication.RepaintHierarchyWindow();
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+
             return @$"[Success] Prefab at asset path '{assetPath}' closed. " +
                    $"Prefab with GameObject.name '{goName}' saved: {save}.";
         });

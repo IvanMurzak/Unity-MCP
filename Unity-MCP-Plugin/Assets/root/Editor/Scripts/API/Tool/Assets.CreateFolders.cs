@@ -45,12 +45,12 @@ Use it to organize scripts and assets in the project. Does AssetDatabase.Refresh
                     stringBuilder.AppendLine(Error.SourcePathIsEmpty());
                     continue;
                 }
-
-
-#nullable enable
             }
 
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+            UnityEditor.EditorApplication.RepaintHierarchyWindow();
+            UnityEditor.EditorApplication.RepaintProjectWindow();
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
             return stringBuilder.ToString();
         });
     }

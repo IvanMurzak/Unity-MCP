@@ -60,6 +60,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 stringBuilder.AppendLine($"[Success] Copied asset from {sourcePath} to {destinationPath}.");
             }
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+            UnityEditor.EditorApplication.RepaintProjectWindow();
+            UnityEditor.EditorApplication.RepaintHierarchyWindow();
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
             return stringBuilder.ToString();
         });
     }

@@ -66,6 +66,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 name: material.name,
                 logger: McpPlugin.McpPlugin.Instance.Logger
             );
+            UnityEditor.EditorApplication.RepaintProjectWindow();
+            UnityEditor.EditorApplication.RepaintHierarchyWindow();
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
             return $"[Success] Material instanceID '{material.GetInstanceID()}' created at '{assetPath}'.\n{result}";
         });
     }

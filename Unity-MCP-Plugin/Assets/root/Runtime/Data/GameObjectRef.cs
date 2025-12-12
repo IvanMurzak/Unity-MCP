@@ -69,11 +69,10 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
         {
             this.InstanceID = instanceID;
         }
-        public GameObjectRef(GameObject go)
+        public GameObjectRef(GameObject? go) : base(go)
         {
-            this.InstanceID = go.GetInstanceID();
-            this.Name = go.name;
-            this.Path = go.GetPath();
+            this.Name = go?.name;
+            this.Path = go?.GetPath();
         }
 
         public override string ToString()
