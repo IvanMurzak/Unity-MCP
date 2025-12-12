@@ -10,9 +10,7 @@
 
 #nullable enable
 using System.ComponentModel;
-using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin;
-using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
@@ -34,7 +32,7 @@ First it looks for the opened Prefab, if any Prefab is opened it looks only ther
 If no opened Prefab it looks into current active scene.
 Returns GameObject information and its children.
 Also, it returns Components preview just for the target GameObject.")]
-        public async Task<ResponseCallValueTool<GameObjectFindResponse>> Find
+        public GameObjectFindResponse Find
         (
             GameObjectRef gameObjectRef,
             [Description("Include serialized data of the GameObject and its components.")]
@@ -49,14 +47,14 @@ Also, it returns Components preview just for the target GameObject.")]
             bool deepSerialization = true
         )
         {
-            return await MainThread.Instance.RunAsync(() =>
+            return MainThread.Instance.Run(() =>
             {
                 var go = gameObjectRef.FindGameObject(out var error);
                 if (error != null)
-                    return ResponseCallValueTool<GameObjectFindResponse>.Error($"[Error] {error}");
+                    throw new System.Exception(error);
 
                 if (go == null)
-                    return ResponseCallValueTool<GameObjectFindResponse>.Error($"[Error] GameObject by {nameof(gameObjectRef)} not found.");
+                    throw new System.Exception("GameObject not found after successful search.");
 
                 var response = new GameObjectFindResponse();
 
@@ -72,20 +70,12 @@ Also, it returns Components preview just for the target GameObject.")]
                 }
 
                 if (includeBounds)
-                {
                     response.Bounds = go.CalculateBounds();
-                }
 
                 if (includeHierarchy)
-                {
                     response.Hierarchy = go.ToMetadata(hierarchyDepth);
-                }
 
-                var reflectorInstance = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
-                var jsonNode = reflectorInstance.JsonSerializer.SerializeToNode(response);
-                var jsonString = jsonNode?.ToJsonString();
-
-                return ResponseCallValueTool<GameObjectFindResponse>.SuccessStructured(jsonNode, jsonString);
+                return response;
             });
         }
 
