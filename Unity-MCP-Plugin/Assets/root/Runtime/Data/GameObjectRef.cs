@@ -13,6 +13,8 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text.Json.Serialization;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
+using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
@@ -66,6 +68,12 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
         public GameObjectRef(int instanceID)
         {
             this.InstanceID = instanceID;
+        }
+        public GameObjectRef(GameObject go)
+        {
+            this.InstanceID = go.GetInstanceID();
+            this.Name = go.name;
+            this.Path = go.GetPath();
         }
 
         public override string ToString()

@@ -10,8 +10,10 @@
 
 #nullable enable
 using System.ComponentModel;
+using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Models;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -23,9 +25,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Get list of currently loaded scenes"
         )]
         [Description("Returns the list of currently loaded scenes.")]
-        public string GetLoaded() => MainThread.Instance.Run(() =>
+        public SceneData[] GetLoaded()
         {
-            return $"[Success] " + LoadedScenes;
-        });
+            return MainThread.Instance.Run(() =>
+            {
+                return LoadedScenes
+                    .Select(scene =>
+                    {
+                        return new SceneData
+                        {
+                            Name = scene.name,
+                            Path = scene.path,
+                            IsLoaded = scene.isLoaded,
+                            IsDirty = scene.isDirty,
+                            BuildIndex = scene.buildIndex,
+                            RootCount = scene.rootCount,
+                            IsSubScene = scene.isSubScene,
+                            RootGameObjects = scene.GetRootGameObjects()
+                                .Select(go => go.ToGameObjectData(
+                                    includeData: false,
+                                    includeBounds: false,
+                                    includeHierarchy: false,
+                                    hierarchyDepth: 0,
+                                    deepSerialization: false
+                                )).ToList()
+                        };
+                    }).ToArray();
+            });
+        }
     }
 }

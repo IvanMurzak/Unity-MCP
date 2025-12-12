@@ -13,6 +13,7 @@ using System.Text.Json;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.API;
+using com.IvanMurzak.Unity.MCP.Editor.Models;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using NUnit.Framework;
@@ -200,7 +201,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             FindByJson(json);
         }
 
-        private Tool_GameObject.GameObjectFindResponse? DeserializeResponse(System.Text.Json.Nodes.JsonNode? structuredContent)
+        private GameObjectData? DeserializeResponse(System.Text.Json.Nodes.JsonNode? structuredContent)
         {
             if (structuredContent == null) return null;
             var jsonString = structuredContent.ToJsonString();
@@ -220,7 +221,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 IncludeFields = true,
                 PropertyNameCaseInsensitive = true
             };
-            return System.Text.Json.JsonSerializer.Deserialize<Tool_GameObject.GameObjectFindResponse>(contentToDeserialize, options);
+            return System.Text.Json.JsonSerializer.Deserialize<GameObjectData>(contentToDeserialize, options);
         }
     }
 }

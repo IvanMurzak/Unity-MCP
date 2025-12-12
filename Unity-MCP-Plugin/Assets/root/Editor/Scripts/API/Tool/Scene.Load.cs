@@ -51,9 +51,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 });
 
             if (!scene.IsValid())
-                return $"[Error] Failed to load scene at '{path}'.\n{LoadedScenes}";
+                return $"[Error] Failed to load scene at '{path}'.\n{LoadedScenesText}";
 
-            return $"[Success] Scene loaded at '{path}'.\n{LoadedScenes}";
+            return $"[Success] Scene loaded at '{path}'.\n{LoadedScenesText}";
         });
     }
 }

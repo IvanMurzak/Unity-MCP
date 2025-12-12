@@ -9,9 +9,11 @@
 */
 
 #nullable enable
+using System;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -24,7 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Get Scene Hierarchy"
         )]
         [Description("This tool retrieves the list of root GameObjects in the specified scene.")]
-        public string GetHierarchyRoot
+        public SceneMetadata GetHierarchyRoot
         (
             [Description("Determines the depth of the hierarchy to include.")]
             int includeChildrenDepth = 3,
@@ -38,9 +40,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 : UnityEngine.SceneManagement.SceneManager.GetSceneByName(loadedSceneName);
 
             if (!scene.IsValid())
-                return Error.NotFoundSceneWithName(loadedSceneName);
+                throw new ArgumentException(Error.NotFoundSceneWithName(loadedSceneName));
 
-            return scene.ToMetadata(includeChildrenDepth: includeChildrenDepth)?.Print() ?? "[]";
+            return scene.ToMetadata(includeChildrenDepth: includeChildrenDepth)
+                ?? throw new Exception("Failed to get scene metadata.");
         });
     }
 }

@@ -45,9 +45,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             // Save the scene asset at the specified path
             bool saved = UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene, path);
             if (!saved)
-                return $"[Error] Failed to save scene at '{path}'.\n{LoadedScenes}";
+                return $"[Error] Failed to save scene at '{path}'.\n{LoadedScenesText}";
 
-            return $"[Success] Scene created at '{path}'.\n{LoadedScenes}";
+            return $"[Success] Scene created at '{path}'.\n{LoadedScenesText}";
         });
     }
 }

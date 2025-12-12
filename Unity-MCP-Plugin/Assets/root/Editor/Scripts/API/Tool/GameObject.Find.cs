@@ -13,6 +13,7 @@ using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Models;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
@@ -32,7 +33,7 @@ First it looks for the opened Prefab, if any Prefab is opened it looks only ther
 If no opened Prefab it looks into current active scene.
 Returns GameObject information and its children.
 Also, it returns Components preview just for the target GameObject.")]
-        public GameObjectFindResponse Find
+        public GameObjectData Find
         (
             GameObjectRef gameObjectRef,
             [Description("Include serialized data of the GameObject and its components.")]
@@ -56,37 +57,14 @@ Also, it returns Components preview just for the target GameObject.")]
                 if (go == null)
                     throw new System.Exception("GameObject not found after successful search.");
 
-                var response = new GameObjectFindResponse();
-
-                if (includeData)
-                {
-                    var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
-                    response.Data = reflector.Serialize(
-                        obj: go,
-                        name: go.name,
-                        recursive: deepSerialization,
-                        logger: McpPlugin.McpPlugin.Instance.Logger
-                    );
-                }
-
-                if (includeBounds)
-                    response.Bounds = go.CalculateBounds();
-
-                if (includeHierarchy)
-                    response.Hierarchy = go.ToMetadata(hierarchyDepth);
-
-                return response;
+                return go.ToGameObjectData(
+                    includeData: includeData,
+                    includeBounds: includeBounds,
+                    includeHierarchy: includeHierarchy,
+                    hierarchyDepth: hierarchyDepth,
+                    deepSerialization: deepSerialization
+                );
             });
-        }
-
-        public class GameObjectFindResponse
-        {
-            [Description("Serialized data of the GameObject and its components.")]
-            public SerializedMember? Data { get; set; }
-            [Description("Bounds of the GameObject.")]
-            public Bounds? Bounds { get; set; }
-            [Description("Hierarchy metadata of the GameObject.")]
-            public GameObjectMetadata? Hierarchy { get; set; } = null;
         }
     }
 }
