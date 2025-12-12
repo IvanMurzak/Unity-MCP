@@ -40,6 +40,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             PrefabUtility.SaveAsPrefabAsset(prefabGo, assetPath);
 
+            UnityEditor.EditorApplication.RepaintHierarchyWindow();
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+
             return @$"[Success] Prefab at asset path '{assetPath}' saved. " +
                    $"Prefab with GameObject.name '{goName}'.";
         });

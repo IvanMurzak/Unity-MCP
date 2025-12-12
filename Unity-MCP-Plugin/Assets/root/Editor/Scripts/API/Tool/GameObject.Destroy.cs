@@ -9,13 +9,12 @@
 */
 
 #nullable enable
+using System;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
-using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
-using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -26,20 +25,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "GameObject_Destroy",
             Title = "Destroy GameObject in opened Prefab or in a Scene"
         )]
-        [Description(@"Destroy a GameObject and all nested GameObjects recursively.
-Use 'instanceID' whenever possible, because it finds the exact GameObject, when 'path' may find a wrong one.")]
-        public string Destroy
-        (
-            GameObjectRef gameObjectRef
-        )
-        => MainThread.Instance.Run(() =>
+        [Description(@"Destroy a GameObject and all nested GameObjects recursively.")]
+        public void Destroy(GameObjectRef gameObjectRef)
         {
-            var go = gameObjectRef.FindGameObject(out var error);
-            if (error != null)
-                return $"[Error] {error}";
+            MainThread.Instance.Run(() =>
+            {
+                var go = gameObjectRef.FindGameObject(out var error);
+                if (error != null)
+                    throw new Exception(error);
 
-            Object.DestroyImmediate(go);
-            return $"[Success] Destroy GameObject.";
-        });
+                UnityEngine.Object.DestroyImmediate(go);
+                UnityEditor.EditorApplication.RepaintHierarchyWindow();
+                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+            });
+        }
     }
 }

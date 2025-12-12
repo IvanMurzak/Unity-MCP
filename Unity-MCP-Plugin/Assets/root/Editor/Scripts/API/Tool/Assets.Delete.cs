@@ -47,6 +47,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             }
 
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+            UnityEditor.EditorApplication.RepaintProjectWindow();
+            UnityEditor.EditorApplication.RepaintHierarchyWindow();
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+
             return "[Success] Deleted assets at paths:\n" + string.Join("\n", paths);
         });
     }

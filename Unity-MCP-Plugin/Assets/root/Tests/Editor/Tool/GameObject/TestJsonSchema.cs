@@ -111,7 +111,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             ValidateType<GameObjectComponentsRefList>(reflector);
 
             ValidateType<ComponentData>(reflector);
-            ValidateType<ComponentDataLight>(reflector);
+            ValidateType<ComponentDataShallow>(reflector);
             ValidateType<ComponentRef>(reflector);
             ValidateType<ComponentRefList>(reflector);
 

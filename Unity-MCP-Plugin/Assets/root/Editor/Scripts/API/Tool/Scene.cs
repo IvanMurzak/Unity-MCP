@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System.Collections.Generic;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
@@ -18,7 +19,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     [McpPluginToolType]
     public partial class Tool_Scene
     {
-        public static string LoadedScenes
+        public static IEnumerable<UnityEngine.SceneManagement.Scene> LoadedScenes => SceneUtils.GetAllLoadedScenes();
+        public static string LoadedScenesText
             => $"Loaded Scenes:\n{string.Join("\n", SceneUtils.GetAllLoadedScenes().Select(scene => scene.name))}";
 
         public static class Error

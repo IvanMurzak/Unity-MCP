@@ -9,33 +9,26 @@
 */
 
 #nullable enable
+using System.ComponentModel;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
-    [System.Serializable]
-    public class ComponentDataLight
+    [Description(@"Scene reference. Used to find a Scene.")]
+    public class SceneRef : ObjectRef
     {
-        public string typeName { get; set; } = string.Empty;
-        public Enabled isEnabled { get; set; }
-        public int instanceID { get; set; }
+        public string Path { get; set; } = string.Empty;
+        public int BuildIndex { get; set; } = -1;
 
-        public ComponentDataLight() { }
-
-        public enum Enabled
+        public SceneRef() { }
+        public SceneRef(int instanceID)
         {
-            NA = -1,
-            False = 0,
-            True = 1
+            this.InstanceID = instanceID;
         }
-    }
-    public static class ComponentDataLightExtension
-    {
-        public static bool IsEnabled(this ComponentDataLight componentData)
-            => componentData.isEnabled == ComponentDataLight.Enabled.True;
-    }
-    public static class ComponentDataLightEnabledExtension
-    {
-        public static bool ToBool(this ComponentDataLight.Enabled enabled)
-            => enabled == ComponentDataLight.Enabled.True;
+        public SceneRef(UnityEngine.SceneManagement.Scene scene)
+        {
+            this.InstanceID = scene.GetHashCode();
+            this.Path = scene.path;
+            this.BuildIndex = scene.buildIndex;
+        }
     }
 }

@@ -19,7 +19,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     [McpPluginToolType]
     public partial class Tool_Component
     {
-        static IEnumerable<Type> AllComponentTypes => AppDomain.CurrentDomain.GetAssemblies()
+        public static IEnumerable<Type> AllComponentTypes => AppDomain.CurrentDomain.GetAssemblies()
             .SelectMany(assembly => assembly.GetTypes())
             .Where(type => typeof(UnityEngine.Component).IsAssignableFrom(type) && !type.IsAbstract);
 

@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text.Json.Serialization;
+using com.IvanMurzak.ReflectorNet;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
@@ -57,6 +58,13 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
         public ComponentRef(int instanceID)
         {
             this.InstanceID = instanceID;
+        }
+        public ComponentRef(UnityEngine.Component component) : base(component)
+        {
+            var go = component.gameObject;
+            var components = go.GetComponents<UnityEngine.Component>();
+            this.Index = System.Array.IndexOf(components, component);
+            this.TypeName = component.GetType().GetTypeShortName();
         }
 
         public override string ToString()

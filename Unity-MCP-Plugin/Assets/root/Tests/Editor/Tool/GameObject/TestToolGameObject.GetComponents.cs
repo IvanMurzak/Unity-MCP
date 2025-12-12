@@ -70,23 +70,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var meshRenderer = child!.AddComponent<MeshRenderer>();
             meshRenderer.sharedMaterial = new Material(Shader.Find("Standard"));
 
-            var task = new Tool_GameObject().Find(
+            var response = new Tool_GameObject().Find(
                 gameObjectRef: new Runtime.Data.GameObjectRef
                 {
                     InstanceID = child.GetInstanceID()
                 },
                 deepSerialization: true);
 
-            while (!task.IsCompleted) yield return null;
-            var response = task.Result;
+            Assert.IsNotNull(response);
+            Assert.IsNotNull(response!.Hierarchy);
 
-            Assert.AreEqual(ResponseStatus.Success, response.Status);
-            Assert.IsNotNull(response.StructuredContent);
-            var findResponse = DeserializeResponse(response.StructuredContent);
-            Assert.IsNotNull(findResponse);
-            Assert.IsNotNull(findResponse!.Hierarchy);
-
-            Assert.IsTrue(findResponse!.Hierarchy!.Print().Contains(GO_Child1Name), $"{GO_Child1Name} should be found in the path");
+            Assert.IsTrue(response!.Hierarchy!.Print().Contains(GO_Child1Name), $"{GO_Child1Name} should be found in the path");
             yield return null;
         }
     }

@@ -29,8 +29,12 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
         [Description("instanceID of the UnityEngine.Object. If this is '0', then it will be used as 'null'.")]
         public virtual int InstanceID { get; set; } = 0;
 
-        public ObjectRef() : this(id: 0) { }
-        public ObjectRef(int id) => InstanceID = id;
+        public ObjectRef() : this(instanceID: 0) { }
+        public ObjectRef(int instanceID) => InstanceID = instanceID;
+        public ObjectRef(UnityEngine.Object? obj)
+        {
+            InstanceID = obj?.GetInstanceID() ?? 0;
+        }
 
         public override string ToString()
         {

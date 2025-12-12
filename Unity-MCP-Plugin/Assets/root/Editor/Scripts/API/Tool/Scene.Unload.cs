@@ -47,7 +47,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             while (!asyncOperation.isDone)
                 await Task.Yield();
 
-            return $"[Success] Scene '{name}' unloaded.\n{LoadedScenes}";
+            return $"[Success] Scene '{name}' unloaded.\n{LoadedScenesText}";
         });
     }
 }

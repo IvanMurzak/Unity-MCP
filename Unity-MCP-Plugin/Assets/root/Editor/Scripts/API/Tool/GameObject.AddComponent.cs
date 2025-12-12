@@ -9,13 +9,14 @@
 */
 
 #nullable enable
+using System;
+using System.Collections.Generic;
 using System.ComponentModel;
-using System.Text;
+using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
-using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -27,58 +28,80 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Add Component to a GameObject in opened Prefab or in a Scene"
         )]
         [Description("Add a component to a GameObject.")]
-        public string AddComponent
+        public AddComponentResponse AddComponent
         (
             [Description("Full name of the Component. It should include full namespace path and the class name.")]
             string[] componentNames,
             GameObjectRef gameObjectRef
         )
-        => MainThread.Instance.Run(() =>
         {
-            var go = gameObjectRef.FindGameObject(out var error);
-            if (error != null)
-                return $"[Error] {error}";
-
-            if (go == null)
-                return "[Error] GameObject not found.";
-
-            if (componentNames == null)
-                return $"[Error] No component names provided.";
-
-            if (componentNames.Length == 0)
-                return $"[Error] No component names provided.";
-
-            var stringBuilder = new StringBuilder();
-
-            foreach (var componentName in componentNames)
+            return MainThread.Instance.Run(() =>
             {
-                var type = TypeUtils.GetType(componentName);
-                if (type == null)
+                var go = gameObjectRef.FindGameObject(out var error);
+                if (error != null)
+                    throw new Exception(error);
+
+                if (go == null)
+                    throw new Exception("GameObject not found.");
+
+                if (componentNames == null)
+                    throw new Exception("No component names provided.");
+
+                if (componentNames.Length == 0)
+                    throw new Exception("No component names provided.");
+
+                var response = new AddComponentResponse();
+
+                foreach (var componentName in componentNames)
                 {
-                    stringBuilder.AppendLine(Tool_Component.Error.NotFoundComponentType(componentName));
-                    continue;
+                    var type = TypeUtils.GetType(componentName);
+                    if (type == null)
+                    {
+                        // try to find component with exact class name without namespace
+                        type = Tool_Component.AllComponentTypes.FirstOrDefault(t => t.Name == componentName);
+                        if (type == null)
+                        {
+                            response.Errors ??= new List<string>();
+                            response.Errors.Add(Tool_Component.Error.NotFoundComponentType(componentName));
+                            continue;
+                        }
+                    }
+
+                    // Check if type is a subclass of UnityEngine.Component
+                    if (!typeof(UnityEngine.Component).IsAssignableFrom(type))
+                    {
+                        response.Errors ??= new List<string>();
+                        response.Errors.Add(Tool_Component.Error.TypeMustBeComponent(componentName));
+                        continue;
+                    }
+
+                    var newComponent = go.AddComponent(type);
+
+                    if (newComponent == null)
+                    {
+                        response.Errors ??= new List<string>();
+                        response.Errors.Add($"[Warning] Component '{componentName}' already exists on GameObject or cannot be added.");
+                        continue;
+                    }
+
+                    response.Messages ??= new List<string>();
+                    response.Messages.Add($"[Success] Added component '{componentName}'.");
+
+                    response.AddedComponents.Add(new ComponentDataShallow(newComponent));
                 }
 
-                // Check if type is a subclass of UnityEngine.Component
-                if (!typeof(UnityEngine.Component).IsAssignableFrom(type))
-                {
-                    stringBuilder.AppendLine(Tool_Component.Error.TypeMustBeComponent(componentName));
-                    continue;
-                }
+                UnityEditor.EditorUtility.SetDirty(go);
+                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
-                var newComponent = go.AddComponent(type);
+                return response;
+            });
+        }
 
-                if (newComponent == null)
-                {
-                    stringBuilder.AppendLine($"[Warning] Component '{componentName}' already exists on GameObject or cannot be added.");
-                    continue;
-                }
-
-                stringBuilder.AppendLine($"[Success] Added component '{componentName}'. Component instanceID='{newComponent.GetInstanceID()}'.");
-            }
-
-            stringBuilder.AppendLine(go.Print());
-            return stringBuilder.ToString();
-        });
+        public class AddComponentResponse
+        {
+            public List<ComponentDataShallow> AddedComponents { get; set; } = new List<ComponentDataShallow>();
+            public List<string>? Messages { get; set; }
+            public List<string>? Errors { get; set; }
+        }
     }
 }

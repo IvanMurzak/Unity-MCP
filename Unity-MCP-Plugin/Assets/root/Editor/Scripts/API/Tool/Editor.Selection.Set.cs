@@ -40,6 +40,8 @@ Selection.activeInstanceID -  The 'instanceID' of the actual object selection. I
                 Selection.instanceIDs = instanceIDs ?? new int[0];
                 Selection.activeInstanceID = activeInstanceID;
 
+                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+
                 return "[Success] " + SelectionPrint;
             });
         }
