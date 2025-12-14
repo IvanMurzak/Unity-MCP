@@ -15,6 +15,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
+using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Utils;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Data
@@ -25,11 +26,13 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
     {
         public static partial class AssetObjectRefProperty
         {
+            public const string AssetType = "assetType";
             public const string AssetPath = "assetPath";
             public const string AssetGuid = "assetGuid";
 
             public static IEnumerable<string> All => ObjectRefProperty.All.Concat(new[]
             {
+                AssetType,
                 AssetPath,
                 AssetGuid
             });
@@ -37,6 +40,10 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
         [JsonInclude, JsonPropertyName(ObjectRefProperty.InstanceID)]
         [Description("instanceID of the UnityEngine.Object. If this is '0' and 'assetPath' and 'assetGuid' is not provided, empty or null, then it will be used as 'null'.")]
         public override int InstanceID { get; set; } = 0;
+
+        [JsonInclude, JsonPropertyName(AssetObjectRefProperty.AssetType)]
+        [Description("Type of the asset.")]
+        public Type? AssetType { get; set; }
 
         [JsonInclude, JsonPropertyName(AssetObjectRefProperty.AssetPath)]
         [Description("Path to the asset within the project. Starts with 'Assets/'")]
@@ -53,6 +60,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 #if UNITY_EDITOR
             if (obj != null)
             {
+                AssetType = obj.GetType();
                 AssetPath = UnityEditor.AssetDatabase.GetAssetPath(obj);
                 AssetGuid = !StringUtils.IsNullOrEmpty(AssetPath)
                     ? UnityEditor.AssetDatabase.AssetPathToGUID(AssetPath)
