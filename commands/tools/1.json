@@ -1,0 +1,77 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+        "assetRef": {
+            "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef",
+            "description": "Reference to UnityEngine.Object asset instance. It could be Material, ScriptableObject, Prefab, and any other Asset. Anything located in the Assets folder."
+        },
+        "content": {
+            "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.SerializedMember",
+            "description": "The asset content. It overrides the existing asset content."
+        }
+    },
+    "$defs": {
+        "com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef": {
+            "type": "object",
+            "properties": {
+                "AssetPath": {
+                    "type": "string",
+                    "description": "Path to the asset within the project. Starts with \u0027Assets/\u0027"
+                },
+                "AssetGuid": {
+                    "type": "string",
+                    "description": "Unique identifier for the asset."
+                }
+            },
+            "additionalProperties": false,
+            "description": "Reference to UnityEngine.Object asset instance. It could be Material, ScriptableObject, Prefab, and any other Asset. Anything located in the Assets folder."
+        },
+        "com.IvanMurzak.ReflectorNet.Model.SerializedMemberList": {
+            "type": "array",
+            "items": {
+                "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.SerializedMember"
+            }
+        },
+        "com.IvanMurzak.ReflectorNet.Model.SerializedMember": {
+            "type": "object",
+            "properties": {
+                "typeName": {
+                    "type": "string",
+                    "description": "Full type name. Eg: \u0027System.String\u0027, \u0027System.Int32\u0027, \u0027UnityEngine.Vector3\u0027, etc."
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Object name."
+                },
+                "value": {
+                    "description": "Value of the object, serialized as a non stringified JSON element. Can be null if the value is not set. Can be default value if the value is an empty object or array json."
+                },
+                "fields": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.SerializedMember",
+                        "description": "Nested field value."
+                    },
+                    "description": "Fields of the object, serialized as a list of \u0027SerializedMember\u0027."
+                },
+                "props": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.SerializedMember",
+                        "description": "Nested property value."
+                    },
+                    "description": "Properties of the object, serialized as a list of \u0027SerializedMember\u0027."
+                }
+            },
+            "required": [
+                "typeName"
+            ],
+            "additionalProperties": false
+        }
+    },
+    "required": [
+        "assetRef",
+        "content"
+    ]
+}
