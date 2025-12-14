@@ -59,8 +59,11 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
         {
             this.InstanceID = instanceID;
         }
-        public ComponentRef(UnityEngine.Component component) : base(component)
+        public ComponentRef(UnityEngine.Component? component) : base(component)
         {
+            if (component == null)
+                return;
+
             var go = component.gameObject;
             var components = go.GetComponents<UnityEngine.Component>();
             this.Index = System.Array.IndexOf(components, component);

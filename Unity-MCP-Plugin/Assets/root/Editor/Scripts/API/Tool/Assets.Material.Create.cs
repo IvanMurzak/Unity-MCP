@@ -22,7 +22,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             "Assets_Material_Create",
-            Title = "Create Material asset"
+            Title = "Assets / Create Material"
         )]
         [Description(@"Create new material asset with default parameters. Creates folders recursively if they do not exist. Provide proper 'shaderName', to find the shader, use 'Shader.Find' method.")]
         public string CreateMaterial

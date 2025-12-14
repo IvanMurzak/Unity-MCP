@@ -22,7 +22,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             "Assets_Prefab_Save",
-            Title = "Save prefab"
+            Title = "Assets / Prefab / Save"
         )]
         [Description("Save a prefab. Use it when you are in prefab editing mode in Unity Editor.")]
         public string Save() => MainThread.Instance.Run(() =>

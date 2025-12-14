@@ -10,8 +10,11 @@
 
 #nullable enable
 using System.ComponentModel;
+using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -21,28 +24,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             "Editor_Selection_Set",
-            Title = "Set Selection in Unity Editor"
+            Title = "Editor / Selection / Set"
         )]
-        [Description(@"'UnityEditor.Selection'. Access to the selection in the editor.
-Use it to select Assets or GameObjects in a scene. Set empty array to clear selection.
-Selection.instanceIDs - The actual unfiltered selection from the Scene returned as instance ids.
-Selection.activeInstanceID -  The 'instanceID' of the actual object selection. Includes Prefabs, non-modifiable objects.")]
-        public string Set
-        (
-            [Description("The 'instanceID' array of the target GameObjects.")]
-            int[]? instanceIDs = null,
-            [Description("The 'instanceID' of the target Object.")]
-            int activeInstanceID = 0
-        )
+        [Description(@"Set the current Selection in the Unity Editor to the provided objects.")]
+        public SelectionData Set(ObjectRef[] select)
         {
             return MainThread.Instance.Run(() =>
             {
-                Selection.instanceIDs = instanceIDs ?? new int[0];
-                Selection.activeInstanceID = activeInstanceID;
+                var objects = select.Select(o => o.FindObject()).ToArray();
+                if (objects.Any(o => o == null))
+                    throw new System.Exception("One or more objects could not be found. Please ensure all provided ObjectRefs are valid.");
+
+                Selection.objects = objects;
 
                 UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
-                return "[Success] " + SelectionPrint;
+                return SelectionData.FromSelection();
             });
         }
     }

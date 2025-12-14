@@ -9,30 +9,20 @@
 */
 
 #nullable enable
-using System.ComponentModel;
-using System.Linq;
-using com.IvanMurzak.McpPlugin;
-using com.IvanMurzak.ReflectorNet.Utils;
-using com.IvanMurzak.Unity.MCP.Runtime.Utils;
-using UnityEditor;
 
-namespace com.IvanMurzak.Unity.MCP.Editor.API
+namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
-    public partial class Tool_Assets_Shader
+    /// <summary>
+    /// Utility class for loading Unity Editor assets with fallback paths.
+    /// </summary>
+    public static class EditorUtils
     {
-        [McpPluginTool
-        (
-            "Assets_Shader_ListAll",
-            Title = "Assets / List Shaders"
-        )]
-        [Description(@"List all available shaders in the project assets and packages. Returns their names.")]
-        public string[] ListAll() => MainThread.Instance.Run(() =>
+        public static void RepaintAllEditorWindows()
         {
-            return ShaderUtils.GetAllShaders()
-                .Where(shader => shader != null)
-                .Select(shader => shader.name)
-                .OrderBy(name => name)
-                .ToArray();
-        });
+            UnityEditor.EditorApplication.RepaintProjectWindow();
+            UnityEditor.EditorApplication.RepaintHierarchyWindow();
+            UnityEditor.EditorApplication.RepaintAnimationWindow();
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+        }
     }
 }

@@ -68,9 +68,10 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                 case Type t when t == typeof(int):
                     if (material.HasInt(propertyValue.name))
                     {
-                        material.SetInt(propertyValue.name, propertyValue.GetValue<int>(reflector));
+                        var value = propertyValue.GetValue<int>(reflector);
+                        material.SetInt(propertyValue.name, value);
                         if (stringBuilder != null)
-                            stringBuilder.AppendLine($"{padding}[Success] Property '{propertyValue.name}' modified to '{propertyValue.GetValue<int>(reflector)}'. Convertor: {GetType().GetTypeShortName()}");
+                            stringBuilder.AppendLine($"{padding}[Success] Property '{propertyValue.name}' modified to '{value}'. Convertor: {GetType().GetTypeShortName()}");
                         return true;
                     }
                     if (stringBuilder != null)
@@ -79,9 +80,10 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                 case Type t when t == typeof(float):
                     if (material.HasFloat(propertyValue.name))
                     {
-                        material.SetFloat(propertyValue.name, propertyValue.GetValue<float>(reflector));
+                        var value = propertyValue.GetValue<float>(reflector);
+                        material.SetFloat(propertyValue.name, value);
                         if (stringBuilder != null)
-                            stringBuilder.AppendLine($"{padding}[Success] Property '{propertyValue.name}' modified to '{propertyValue.GetValue<float>(reflector)}'. Convertor: {GetType().GetTypeShortName()}");
+                            stringBuilder.AppendLine($"{padding}[Success] Property '{propertyValue.name}' modified to '{value}'. Convertor: {GetType().GetTypeShortName()}");
                         return true;
                     }
                     if (stringBuilder != null)
@@ -90,9 +92,10 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                 case Type t when t == typeof(Color):
                     if (material.HasColor(propertyValue.name))
                     {
-                        material.SetColor(propertyValue.name, propertyValue.GetValue<Color>(reflector));
+                        var value = propertyValue.GetValue<Color>(reflector);
+                        material.SetColor(propertyValue.name, value);
                         if (stringBuilder != null)
-                            stringBuilder.AppendLine($"{padding}[Success] Property '{propertyValue.name}' modified to '{propertyValue.GetValue<Color>(reflector)}'. Convertor: {GetType().GetTypeShortName()}");
+                            stringBuilder.AppendLine($"{padding}[Success] Property '{propertyValue.name}' modified to '{value}'. Convertor: {GetType().GetTypeShortName()}");
                         return true;
                     }
                     if (stringBuilder != null)
@@ -101,9 +104,10 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                 case Type t when t == typeof(Vector4):
                     if (material.HasVector(propertyValue.name))
                     {
-                        material.SetVector(propertyValue.name, propertyValue.GetValue<Vector4>(reflector));
+                        var value = propertyValue.GetValue<Vector4>(reflector);
+                        material.SetVector(propertyValue.name, value);
                         if (stringBuilder != null)
-                            stringBuilder.AppendLine($"{padding}[Success] Property '{propertyValue.name}' modified to '{propertyValue.GetValue<Vector4>(reflector)}'. Convertor: {GetType().GetTypeShortName()}");
+                            stringBuilder.AppendLine($"{padding}[Success] Property '{propertyValue.name}' modified to '{value}'. Convertor: {GetType().GetTypeShortName()}");
                         return true;
                     }
                     if (stringBuilder != null)

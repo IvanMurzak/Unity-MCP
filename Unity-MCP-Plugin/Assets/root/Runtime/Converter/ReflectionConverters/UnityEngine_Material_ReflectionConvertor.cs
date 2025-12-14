@@ -32,6 +32,12 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
         const string FieldShader = "shader";
         const string FieldName = "name";
 
+        static readonly string[] AllFieldNames = new[]
+        {
+            FieldShader,
+            FieldName
+        };
+
         // public override bool AllowCascadeSerialization => false;
         public override bool AllowSetValue => false;
 
@@ -331,10 +337,10 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             }
 
             if (logger?.IsEnabled(LogLevel.Error) == true)
-                logger.LogError($"{padding}[Error] Field '{fieldValue.name}' is not supported for setting values in runtime. Convertor: {GetType().GetTypeShortName()}");
+                logger.LogError($"{padding}[Error] Field '{fieldValue.name}' doesn't exist. Available fields: {string.Join(", ", AllFieldNames)}. If you need something else, please check Properties instead of Fields. Convertor: {GetType().GetTypeShortName()}");
 
             if (stringBuilder != null)
-                stringBuilder.AppendLine($"{padding}[Error] Field '{fieldValue.name}' is not supported for setting values in runtime. Convertor: {GetType().GetTypeShortName()}");
+                stringBuilder.AppendLine($"{padding}[Error] Field '{fieldValue.name}' doesn't exist. Available fields: {string.Join(", ", AllFieldNames)}. If you need something else, please check Properties instead of Fields. Convertor: {GetType().GetTypeShortName()}");
 
             return false;
         }

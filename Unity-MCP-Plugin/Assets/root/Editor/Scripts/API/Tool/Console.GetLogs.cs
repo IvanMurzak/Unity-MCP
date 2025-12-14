@@ -21,9 +21,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             "Console_GetLogs",
-            Title = "Get Unity Console Logs"
+            Title = "Console / Get Logs"
         )]
-        [Description("Retrieves the Unity Console log entries. Supports filtering by log type and limiting the number of entries returned.")]
+        [Description("Retrieves Unity Editor logs.")]
         public LogEntry[] GetLogs
         (
             [Description("Maximum number of log entries to return. Minimum: 1. Default: 100")]

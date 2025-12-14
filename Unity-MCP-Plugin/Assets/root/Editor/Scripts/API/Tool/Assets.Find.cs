@@ -9,10 +9,11 @@
 */
 
 #nullable enable
+using System.Collections.Generic;
 using System.ComponentModel;
-using System.Text;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -23,7 +24,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             "Assets_Find",
-            Title = "Find assets in the project"
+            Title = "Assets / Find"
         )]
         [Description(@"Search the asset database using the search filter string.
 Available types:
@@ -46,7 +47,7 @@ t:Texture
 t:VideoClip
 t:VisualEffectAsset
 t:VisualEffectSubgraph")]
-        public string Search
+        public List<AssetObjectRef> Find
         (
 // <ref>https://docs.unity3d.com/ScriptReference/AssetDatabase.FindAssets.html</ref>
 [Description(@"Searching filter. Could be empty.
@@ -61,34 +62,32 @@ Note:
 Searching is case insensitive.")]
             string? filter = null,
             [Description("The folders where the search will start. If null, the search will be performed in all folders.")]
-            string[]? searchInFolders = null
+            string[]? searchInFolders = null,
+            [Description("Maximum number of assets to return. If the number of found assets exceeds this limit, the result will be truncated.")]
+            int maxResults = 10
         )
-        => MainThread.Instance.Run(() =>
         {
-            var assetGuids = (searchInFolders?.Length ?? 0) == 0
-                ? AssetDatabase.FindAssets(filter ?? string.Empty)
-                : AssetDatabase.FindAssets(filter ?? string.Empty, searchInFolders);
-
-            var stringBuilder = new StringBuilder();
-            stringBuilder.AppendLine("instanceID | assetGuid                            | assetPath");
-            stringBuilder.AppendLine("-----------+--------------------------------------+---------------------------------");
-            //                       " -12345    | 8e09c738-7b14-4d83-9740-2b396bd4cfc9 | Assets/Editor/Image.png");
-
-            for (var i = 0; i < assetGuids.Length; i++)
+            return MainThread.Instance.Run(() =>
             {
-                if (i >= Consts.MCP.Plugin.LinesLimit)
-                {
-                    stringBuilder.AppendLine($"... and {assetGuids.Length - i} more assets. Use {nameof(searchInFolders)} parameter to specify request.");
-                    break;
-                }
-                var assetPath = AssetDatabase.GUIDToAssetPath(assetGuids[i]);
-                var assetObject = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(assetPath);
-                if (assetObject == null) continue;
-                var instanceID = assetObject.GetInstanceID();
-                stringBuilder.AppendLine($"{instanceID,-10} | {assetGuids[i],-36} | {assetPath}");
-            }
+                var assetGuids = (searchInFolders?.Length ?? 0) == 0
+                    ? AssetDatabase.FindAssets(filter ?? string.Empty)
+                    : AssetDatabase.FindAssets(filter ?? string.Empty, searchInFolders);
 
-            return $"[Success] Assets found: {assetGuids.Length}.\n{stringBuilder}";
-        });
+                var response = new List<AssetObjectRef>();
+
+                for (var i = 0; i < assetGuids.Length && i < maxResults; i++)
+                {
+                    var assetPath = AssetDatabase.GUIDToAssetPath(assetGuids[i]);
+                    var assetType = AssetDatabase.GetMainAssetTypeAtPath(assetPath);
+                    var assetObject = AssetDatabase.LoadAssetAtPath(assetPath, assetType);
+                    if (assetObject == null)
+                        continue;
+
+                    response.Add(new AssetObjectRef(assetObject));
+                }
+
+                return response;
+            });
+        }
     }
 }

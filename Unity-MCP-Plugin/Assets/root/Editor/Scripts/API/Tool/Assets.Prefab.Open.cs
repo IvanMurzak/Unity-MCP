@@ -25,7 +25,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             "Assets_Prefab_Open",
-            Title = "Open prefab"
+            Title = "Assets / Prefab / Open"
         )]
         [Description(@"Open prefab edit mode for a specific GameObject. In the Edit mode you can modify the prefab.
 The modification will be applied to the all instances of the prefab across the project.

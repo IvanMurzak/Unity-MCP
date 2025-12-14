@@ -9,9 +9,10 @@
 */
 
 #nullable enable
+using System.ComponentModel;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
-using com.IvanMurzak.McpPlugin.Common;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -19,20 +20,45 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     [McpPluginToolType]
     public partial class Tool_Editor_Selection
     {
-        public static string SelectionPrint => @$"Editor Selection:
-Selection.gameObjects: {Selection.gameObjects?.Select(go => go.GetInstanceID()).JoinString(", ")}
-Selection.transforms: {Selection.transforms?.Select(t => t.GetInstanceID()).JoinString(", ")}
-Selection.instanceIDs: {Selection.instanceIDs?.JoinString(", ")}
-Selection.assetGUIDs: {Selection.assetGUIDs?.JoinString(", ")}
-Selection.activeGameObject: {Selection.activeGameObject?.GetInstanceID()}
-Selection.activeInstanceID: {Selection.activeInstanceID}
-Selection.activeObject: {Selection.activeObject?.GetInstanceID()}
-Selection.activeTransform: {Selection.activeTransform?.GetInstanceID()}";
-
         public static class Error
         {
             public static string ScriptPathIsEmpty()
                 => "[Error] Script path is empty. Please provide a valid path. Sample: \"Assets/Scripts/MyScript.cs\".";
+        }
+
+        public class SelectionData
+        {
+            [Description("Returns the actual game object selection. Includes Prefabs, non-modifiable objects.")]
+            public GameObjectRef[]? gameObjects;
+            [Description("Returns the top level selection, excluding Prefabs.")]
+            public ComponentRef[]? transforms;
+            [Description("The actual unfiltered selection from the Scene returned as instance ids instead of objects.")]
+            public int[]? instanceIDs;
+            [Description("Returns the guids of the selected assets.")]
+            public string[]? assetGUIDs;
+            [Description("Returns the active game object. (The one shown in the inspector).")]
+            public GameObjectRef? activeGameObject;
+            [Description("Returns the instanceID of the actual object selection. Includes Prefabs, non-modifiable objects")]
+            public int activeInstanceID;
+            [Description("Returns the actual object selection. Includes Prefabs, non-modifiable objects.")]
+            public ObjectRef? activeObject;
+            [Description("Returns the active transform. (The one shown in the inspector).")]
+            public ComponentRef? activeTransform;
+
+            public static SelectionData FromSelection()
+            {
+                return new SelectionData
+                {
+                    gameObjects = Selection.gameObjects?.Select(go => new GameObjectRef(go)).ToArray(),
+                    transforms = Selection.transforms?.Select(t => new ComponentRef(t)).ToArray(),
+                    instanceIDs = Selection.instanceIDs,
+                    assetGUIDs = Selection.assetGUIDs,
+                    activeGameObject = new GameObjectRef(Selection.activeGameObject),
+                    activeInstanceID = Selection.activeInstanceID,
+                    activeObject = new ObjectRef(Selection.activeObject),
+                    activeTransform = new ComponentRef(Selection.activeTransform)
+                };
+            }
         }
     }
 }

@@ -13,6 +13,7 @@ using System;
 using System.ComponentModel;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.ReflectorNet;
 using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -21,28 +22,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Component_GetAll",
-            Title = "Get list of all Components"
+            "Component_List",
+            Title = "Components / List"
         )]
-        [Description("Returns the list of all available components in the project.")]
-        public string GetAll
+        [Description("List C# class names extended from UnityEngine.Component.")]
+        public string[] List
         (
             [Description("Substring for searching components. Could be empty.")]
             string? search = null
         )
         {
             var componentTypes = AllComponentTypes
-                .Select(type => type.FullName)
-                .ToList();
+                .Select(type => type.GetTypeName(pretty: true));
 
             if (!string.IsNullOrEmpty(search))
             {
                 componentTypes = componentTypes
-                    .Where(typeName => typeName != null && typeName.Contains(search, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
+                    .Where(typeName => typeName != null && typeName.Contains(search, StringComparison.OrdinalIgnoreCase));
             }
 
-            return string.Join("\n", componentTypes);
+            return componentTypes.ToArray();
         }
     }
 }

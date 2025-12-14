@@ -14,7 +14,7 @@ using System.Collections.Generic;
 using Microsoft.Extensions.Logging;
 using UnityEditor;
 
-namespace com.IvanMurzak.Unity.MCP.Editor
+namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
     /// <summary>
     /// Utility class for loading Unity Editor assets with fallback paths.

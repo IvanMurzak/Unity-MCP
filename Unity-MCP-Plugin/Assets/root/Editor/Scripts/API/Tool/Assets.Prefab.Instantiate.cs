@@ -23,9 +23,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             "Assets_Prefab_Instantiate",
-            Title = "Instantiate prefab in the current active scene"
+            Title = "Assets / Prefab / Instantiate"
         )]
-        [Description("Instantiates prefab in a scene.")]
+        [Description("Instantiates prefab in the current active scene.")]
         public string Instantiate
         (
             [Description("Prefab asset path.")]

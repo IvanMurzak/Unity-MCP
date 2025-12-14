@@ -21,8 +21,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Assets_CreateFolders",
-            Title = "Assets Create Folders"
+            "Assets_CreateFolder",
+            Title = "Assets / Create Folder"
         )]
         [Description(@"Create folders at specific locations in the project.
 Use it to organize scripts and assets in the project. Does AssetDatabase.Refresh() at the end.")]
@@ -31,27 +31,29 @@ Use it to organize scripts and assets in the project. Does AssetDatabase.Refresh
             [Description("The paths for the folders to create.")]
             string[] paths
         )
-        => MainThread.Instance.Run(() =>
         {
-            if (paths.Length == 0)
-                return Error.SourcePathsArrayIsEmpty();
-
-            var stringBuilder = new StringBuilder();
-
-            for (var i = 0; i < paths.Length; i++)
+            return MainThread.Instance.Run(() =>
             {
-                if (string.IsNullOrEmpty(paths[i]))
-                {
-                    stringBuilder.AppendLine(Error.SourcePathIsEmpty());
-                    continue;
-                }
-            }
+                if (paths.Length == 0)
+                    return Error.SourcePathsArrayIsEmpty();
 
-            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-            UnityEditor.EditorApplication.RepaintHierarchyWindow();
-            UnityEditor.EditorApplication.RepaintProjectWindow();
-            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
-            return stringBuilder.ToString();
-        });
+                var stringBuilder = new StringBuilder();
+
+                for (var i = 0; i < paths.Length; i++)
+                {
+                    if (string.IsNullOrEmpty(paths[i]))
+                    {
+                        stringBuilder.AppendLine(Error.SourcePathIsEmpty());
+                        continue;
+                    }
+                }
+
+                AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+                UnityEditor.EditorApplication.RepaintHierarchyWindow();
+                UnityEditor.EditorApplication.RepaintProjectWindow();
+                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                return stringBuilder.ToString();
+            });
+        }
     }
 }
