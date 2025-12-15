@@ -25,12 +25,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "reflection-methodcall",
+            "reflection-method-call",
             Title = "Method C# / Call"
         )]
         [Description(@"Call C# method. Any method could be called, even private methods.
 It requires to receive proper method schema.
-Use 'reflection-methodfind' to find available method before using it.
+Use 'reflection-method-find' to find available method before using it.
 Receives input parameters and returns result.")]
         public string MethodCall
         (
