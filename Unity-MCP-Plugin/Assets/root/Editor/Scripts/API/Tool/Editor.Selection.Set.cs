@@ -23,7 +23,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Editor_Selection_Set",
+            "editor-selection-set",
             Title = "Editor / Selection / Set"
         )]
         [Description(@"Set the current Selection in the Unity Editor to the provided objects.")]

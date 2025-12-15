@@ -24,7 +24,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Script_UpdateOrCreate",
+            "script-updateorcreate",
             Title = "Script / Update or Create"
         )]
         [Description("Updates or creates script file with the provided C# code. Does AssetDatabase.Refresh() at the end. Provides compilation error details if the code has syntax errors.")]

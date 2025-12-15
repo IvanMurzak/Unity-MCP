@@ -24,7 +24,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "GameObject_Component_Add",
+            "gameobject-component-add",
             Title = "GameObject / Component / Add"
         )]
         [Description("Add Component to GameObject in opened Prefab or in a Scene.")]

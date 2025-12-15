@@ -25,7 +25,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "GameObject_Modify",
+            "gameobject-modify",
             Title = "GameObject / Modify"
         )]
         [Description(@"Modify GameObjects and/or attached component's field and properties in opened Prefab or in a Scene.

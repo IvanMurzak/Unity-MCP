@@ -21,7 +21,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Scene_Save",
+            "scene-save",
             Title = "Scene / Save"
         )]
         [Description("Save Opened scene to the asset file.")]

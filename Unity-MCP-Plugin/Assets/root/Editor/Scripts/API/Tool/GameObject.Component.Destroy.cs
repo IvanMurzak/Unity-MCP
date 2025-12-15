@@ -23,7 +23,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "GameObject_Component_Destroy",
+            "gameobject-component-destroy",
             Title = "GameObject / Component / Destroy"
         )]
         [Description("Destroy one or many components from target GameObject. Can't destroy missed components.")]

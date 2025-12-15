@@ -22,7 +22,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Assets_Prefab_Instantiate",
+            "assets-prefab-instantiate",
             Title = "Assets / Prefab / Instantiate"
         )]
         [Description("Instantiates prefab in the current active scene.")]

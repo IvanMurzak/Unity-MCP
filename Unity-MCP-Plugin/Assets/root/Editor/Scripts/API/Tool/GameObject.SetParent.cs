@@ -23,7 +23,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "GameObject_SetParent",
+            "gameobject-setparent",
             Title = "GameObject / Set Parent"
         )]
         [Description(@"Set parent GameObject to list of GameObjects in opened Prefab or in a Scene.")]

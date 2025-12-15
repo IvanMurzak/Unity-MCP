@@ -24,7 +24,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Assets_Modify",
+            "assets-modify",
             Title = "Assets / Modify"
         )]
         [Description(@"Modify asset file in the project. Not allowed to modify asset file in 'Packages/' folder. Please modify it in 'Assets/' folder.")]

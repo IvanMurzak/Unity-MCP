@@ -22,7 +22,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Assets_Find",
+            "assets-find",
             Title = "Assets / Find"
         )]
         [Description(@"Search the asset database using the search filter string.

@@ -20,7 +20,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Scene_Create",
+            "scene-create",
             Title = "Scene / Create"
         )]
         [Description("Create new scene in the project assets.")]

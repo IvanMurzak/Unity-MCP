@@ -22,12 +22,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Reflection_MethodFind",
+            "reflection-methodfind",
             Title = "Method C# / Find"
         )]
         [Description(@"Find method in the project using C# Reflection.
 It looks for all assemblies in the project and finds method by its name, class name and parameters.
-Even private methods are available. Use 'Reflection_MethodCall' to call the method after finding it.")]
+Even private methods are available. Use 'reflection-methodcall' to call the method after finding it.")]
         public string MethodFind
         (
             MethodRef filter,

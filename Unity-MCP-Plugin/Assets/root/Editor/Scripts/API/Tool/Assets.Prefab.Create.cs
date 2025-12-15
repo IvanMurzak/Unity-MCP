@@ -22,7 +22,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Assets_Prefab_Create",
+            "assets-prefab-create",
             Title = "Assets / Prefab / Create"
         )]
         [Description("Create a prefab from a GameObject in the current active scene. The prefab will be saved in the project assets at the specified path.")]

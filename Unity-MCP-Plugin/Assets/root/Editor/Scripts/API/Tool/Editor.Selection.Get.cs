@@ -22,7 +22,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Editor_Selection_Get",
+            "editor-selection-get",
             Title = "Editor / Selection / Get"
         )]
         [Description(@"Get information about the current Selection in the Unity Editor.")]

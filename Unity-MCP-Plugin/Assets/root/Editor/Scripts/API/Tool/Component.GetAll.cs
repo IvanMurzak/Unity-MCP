@@ -22,7 +22,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Component_List",
+            "component-list",
             Title = "Components / List"
         )]
         [Description("List C# class names extended from UnityEngine.Component.")]

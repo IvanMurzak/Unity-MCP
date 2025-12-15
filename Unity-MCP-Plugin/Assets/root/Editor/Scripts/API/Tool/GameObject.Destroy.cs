@@ -22,7 +22,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "GameObject_Destroy",
+            "gameobject-destroy",
             Title = "GameObject / Destroy"
         )]
         [Description(@"Destroy GameObject and all nested GameObjects recursively in opened Prefab or in a Scene.")]

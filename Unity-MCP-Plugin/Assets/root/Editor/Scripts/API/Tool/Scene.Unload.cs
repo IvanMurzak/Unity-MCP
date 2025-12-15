@@ -22,7 +22,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Scene_Unload",
+            "scene-unload",
             Title = "Scene / Unload"
         )]
         [Description("Unload scene from the Opened scenes in Unity Editor.")]

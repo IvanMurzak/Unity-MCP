@@ -21,7 +21,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Assets_CreateFolder",
+            "assets-createfolder",
             Title = "Assets / Create Folder"
         )]
         [Description(@"Create folders at specific locations in the project.

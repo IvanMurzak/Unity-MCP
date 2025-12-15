@@ -22,7 +22,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Scene_Open",
+            "scene-open",
             Title = "Scene / Open"
         )]
         [Description("Open scene from the project asset file.")]

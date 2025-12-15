@@ -20,7 +20,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Script_Read",
+            "script-read",
             Title = "Script / Read"
         )]
         [Description("Reads the content of a script file and returns it as a string.")]

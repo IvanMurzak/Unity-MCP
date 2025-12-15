@@ -21,7 +21,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Assets_Prefab_Close",
+            "assets-prefab-close",
             Title = "Assets / Prefab / Close"
         )]
         [Description("Close currently opened prefab. Use it when you are in prefab editing mode in Unity Editor.")]
