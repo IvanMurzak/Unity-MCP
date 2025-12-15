@@ -26,10 +26,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [Description(@"Refreshes the AssetDatabase. Use it if any new files were added or updated in the project outside of Unity API.
 Don't need to call it for Scripts manipulations.
 It also triggers scripts recompilation if any changes in '.cs' files.")]
-        public string Refresh() => MainThread.Instance.Run(() =>
+        public void Refresh(ImportAssetOptions? options = ImportAssetOptions.ForceSynchronousImport)
         {
-            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-            return @$"[Success] AssetDatabase refreshed. {AssetDatabase.GetAllAssetPaths().Length} assets found. Use 'assets-find' for more details.";
-        });
+            MainThread.Instance.Run(() =>
+            {
+                AssetDatabase.Refresh(options ?? ImportAssetOptions.ForceSynchronousImport);
+            });
+        }
     }
 }

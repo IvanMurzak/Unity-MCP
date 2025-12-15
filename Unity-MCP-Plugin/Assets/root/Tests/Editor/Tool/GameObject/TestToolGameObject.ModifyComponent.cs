@@ -131,8 +131,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             yield return null;
         }
 
-        ResponseData<ResponseCallTool> ModifyByJson(string json) => RunTool("GameObject_Modify", json);
-        ResponseData<ResponseCallTool> CreateGameObjectByJson(string json) => RunTool("GameObject_Create", json);
+        ResponseData<ResponseCallTool> ModifyByJson(string json) => RunTool("gameobject-modify", json);
+        ResponseData<ResponseCallTool> CreateGameObjectByJson(string json) => RunTool("gameobject-create", json);
         void ValidateResult(ResponseData<ResponseCallTool> result, bool shouldContainSuccessMessage = true)
         {
             Assert.IsNotNull(result);

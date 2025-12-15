@@ -153,7 +153,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 "Deep serialization should produce more data than shallow serialization");
         }
 
-        ResponseData<ResponseCallTool> FindByJson(string json) => RunTool("GameObject_Find", json);
+        ResponseData<ResponseCallTool> FindByJson(string json) => RunTool("gameobject-find", json);
 
         [Test]
         public void FindByJson_HierarchyDepth_0_DeepSerialization_False()

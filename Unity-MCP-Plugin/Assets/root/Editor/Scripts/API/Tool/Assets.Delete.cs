@@ -11,7 +11,6 @@
 #nullable enable
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Text;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using UnityEditor;
@@ -26,7 +25,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Assets / Delete"
         )]
         [Description(@"Delete the assets at paths from the project. Does AssetDatabase.Refresh() at the end.")]
-        public string Delete
+        public DeleteAssetsResponse Delete
         (
             [Description("The paths of the assets")]
             string[] paths
@@ -35,16 +34,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             return MainThread.Instance.Run(() =>
             {
                 if (paths.Length == 0)
-                    return Error.SourcePathsArrayIsEmpty();
+                    throw new System.Exception(Error.SourcePathsArrayIsEmpty());
 
+                var response = new DeleteAssetsResponse();
                 var outFailedPaths = new List<string>();
                 var success = AssetDatabase.DeleteAssets(paths, outFailedPaths);
+
                 if (!success)
                 {
-                    var stringBuilder = new StringBuilder();
+                    response.errors ??= new();
                     foreach (var failedPath in outFailedPaths)
-                        stringBuilder.AppendLine($"[Error] Failed to delete asset at {failedPath}.");
-                    return stringBuilder.ToString();
+                        response.errors.Add($"Failed to delete asset at {failedPath}.");
+                }
+
+                // Add successfully deleted paths
+                foreach (var path in paths)
+                {
+                    if (!outFailedPaths.Contains(path))
+                    {
+                        response.deletedPaths ??= new();
+                        response.deletedPaths.Add(path);
+                    }
                 }
 
                 AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
@@ -52,8 +62,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 UnityEditor.EditorApplication.RepaintHierarchyWindow();
                 UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
-                return "[Success] Deleted assets at paths:\n" + string.Join("\n", paths);
+                return response;
             });
+        }
+
+        public class DeleteAssetsResponse
+        {
+            public List<string>? deletedPaths;
+            public List<string>? errors;
         }
     }
 }

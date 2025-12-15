@@ -65,7 +65,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     var newAsset = AssetDatabase.LoadAssetAtPath(destinationPath, newAssetType);
 
                     response.copiedAssets ??= new();
-                    response.copiedAssets?.Add(new AssetObjectRef(newAsset));
+                    response.copiedAssets.Add(new AssetObjectRef(newAsset));
                 }
 
                 AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);

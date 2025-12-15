@@ -69,6 +69,9 @@ Searching is case insensitive.")]
             int maxResults = 10
         )
         {
+            if (maxResults <= 0)
+                throw new System.ArgumentException($"{nameof(maxResults)} must be greater than zero.");
+
             return MainThread.Instance.Run(() =>
             {
                 var assetGuids = (searchInFolders?.Length ?? 0) == 0
