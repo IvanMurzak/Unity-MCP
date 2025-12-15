@@ -26,7 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             "Reflection_MethodCall",
-            Title = "Method (C#) / Call"
+            Title = "Method C# / Call"
         )]
         [Description(@"Call C# method. Any method could be called, even private methods.
 It requires to receive proper method schema.

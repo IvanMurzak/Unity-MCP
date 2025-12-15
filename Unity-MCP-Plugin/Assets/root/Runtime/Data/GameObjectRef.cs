@@ -69,7 +69,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
         {
             this.InstanceID = instanceID;
         }
-        public GameObjectRef(GameObject? go) : base(go)
+        public GameObjectRef(GameObject? go) : base(go, throwIfNotAnAsset: false)
         {
             this.Name = go?.name;
             this.Path = go?.GetPath();

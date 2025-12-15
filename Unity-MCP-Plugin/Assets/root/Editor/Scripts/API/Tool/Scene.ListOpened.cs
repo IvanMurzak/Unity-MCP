@@ -21,16 +21,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Scene_GetLoaded",
-            Title = "Get list of currently loaded scenes"
+            "Scene_ListOpened",
+            Title = "Scene / List Opened"
         )]
-        [Description("Returns the list of currently loaded scenes.")]
-        public SceneData[] GetLoaded()
+        [Description("Returns the list of currently opened scenes in Unity Editor.")]
+        public SceneDataShallow[] ListOpened()
         {
             return MainThread.Instance.Run(() =>
             {
-                return LoadedScenes
-                    .Select(scene => scene.ToSceneData())
+                return OpenedScenes
+                    .Select(scene => scene.ToSceneDataShallow())
                     .ToArray();
             });
         }

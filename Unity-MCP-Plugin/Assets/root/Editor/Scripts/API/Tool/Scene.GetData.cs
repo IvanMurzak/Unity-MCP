@@ -14,7 +14,6 @@ using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
-using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -22,29 +21,43 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Scene_GetHierarchy",
-            Title = "Get Scene Hierarchy"
+            "Scene_GetData",
+            Title = "Scene / Get Data"
         )]
         [Description("This tool retrieves the list of root GameObjects in the specified scene.")]
-        public SceneMetadata GetHierarchyRoot
+        public SceneData GetData
         (
+            [Description("Name of the opened scene. If empty or null, the active scene will be used.")]
+            string? openedSceneName = null,
+            [Description("If true, includes root GameObjects in the scene data.")]
+            bool includeRootGameObjects = false,
             [Description("Determines the depth of the hierarchy to include.")]
             int includeChildrenDepth = 3,
-            [Description("Name of the loaded scene. If empty string, the active scene will be used.")]
-            string? loadedSceneName = null
+            [Description("If true, performs deep serialization of GameObjects.")]
+            bool deepSerialization = false,
+            [Description("If true, includes bounding box information for GameObjects.")]
+            bool includeBounds = false,
+            [Description("If true, includes component data for GameObjects.")]
+            bool includeData = false
         )
         {
             return MainThread.Instance.Run(() =>
             {
-                var scene = string.IsNullOrEmpty(loadedSceneName)
+                var scene = string.IsNullOrEmpty(openedSceneName)
                     ? UnityEngine.SceneManagement.SceneManager.GetActiveScene()
-                    : UnityEngine.SceneManagement.SceneManager.GetSceneByName(loadedSceneName);
+                    : UnityEngine.SceneManagement.SceneManager.GetSceneByName(openedSceneName);
 
                 if (!scene.IsValid())
-                    throw new ArgumentException(Error.NotFoundSceneWithName(loadedSceneName));
+                    throw new ArgumentException(Error.NotFoundSceneWithName(openedSceneName));
 
-                return scene.ToMetadata(includeChildrenDepth: includeChildrenDepth)
-                    ?? throw new Exception("Failed to get scene metadata.");
+                return new SceneData(
+                    scene: scene,
+                    includeRootGameObjects: includeRootGameObjects,
+                    includeChildrenDepth: includeChildrenDepth,
+                    deepSerialization: deepSerialization,
+                    includeBounds: includeBounds,
+                    includeData: includeData
+                );
             });
         }
     }

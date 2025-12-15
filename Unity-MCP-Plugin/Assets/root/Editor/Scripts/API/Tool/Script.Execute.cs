@@ -27,7 +27,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             "Script_Execute",
-            Title = "Execute C# code immediately"
+            Title = "Script / Execute"
         )]
         [Description("Compiles and executes C# code dynamically using Roslyn. The provided code must define a class with a static method to execute.")]
         public static string Execute

@@ -16,6 +16,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
@@ -54,20 +55,42 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 
         public AssetObjectRef() : this(id: 0) { }
         public AssetObjectRef(int id) => InstanceID = id;
-        public AssetObjectRef(UnityEngine.Object? obj) : base(obj)
+#if UNITY_EDITOR
+        public AssetObjectRef(string assetPath) : this(
+            UnityEditor.AssetDatabase.LoadAssetAtPath(
+                assetPath,
+                UnityEditor.AssetDatabase.GetMainAssetTypeAtPath(
+                    assetPath)
+                ?? throw new ArgumentException($"Cannot determine asset type at path '{assetPath}'."))
+            ?? throw new ArgumentException($"No asset found at path '{assetPath}'."))
+        {
+            // empty
+        }
+#else
+        public AssetObjectRef(string assetPath) : this()
+        {
+            AssetPath = assetPath;
+        }
+#endif
+        public AssetObjectRef(UnityEngine.Object? obj, bool throwIfNotAnAsset = true) : base(obj)
         {
 #if UNITY_EDITOR
             if (obj != null)
             {
+                if (!obj.IsAsset())
+                {
+                    if (throwIfNotAnAsset)
+                        throw new ArgumentException($"Provided object (InstanceID={obj.GetInstanceID()}) is not an asset.");
+                    return;
+                }
                 AssetType = obj.GetType();
-                AssetPath = UnityEditor.AssetDatabase.GetAssetPath(obj);
+                AssetPath = obj.GetAssetPath();
                 AssetGuid = !StringUtils.IsNullOrEmpty(AssetPath)
                     ? UnityEditor.AssetDatabase.AssetPathToGUID(AssetPath)
                     : null;
             }
 #endif
         }
-        public AssetObjectRef(string assetPath) => this.AssetPath = assetPath;
 
         [JsonIgnore]
         public virtual bool IsValid

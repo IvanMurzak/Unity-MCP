@@ -10,24 +10,37 @@
 
 #nullable enable
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
-    public class SceneData : SceneRef
+    public class SceneData : SceneDataShallow
     {
-        public string Name { get; set; } = string.Empty;
-        public bool IsLoaded { get; set; }
-        public bool IsDirty { get; set; }
-        public bool IsSubScene { get; set; } = false;
-
-        [Description(@"Whether this is a valid Scene. A Scene may be invalid if, for example, you tried
-to open a Scene that does not exist. In this case, the Scene returned from EditorSceneManager.OpenScene
-would return False for IsValid.")]
-        public bool IsValid { get; set; } = true;
-        public int RootCount { get; set; } = 0;
         public List<GameObjectData>? RootGameObjects { get; set; } = null;
+
+        public SceneData() { }
+        public SceneData(
+            UnityEngine.SceneManagement.Scene scene,
+            bool includeRootGameObjects = false,
+            int includeChildrenDepth = 0,
+            bool deepSerialization = false,
+            bool includeBounds = false,
+            bool includeData = false)
+            : base(scene)
+        {
+            if (includeRootGameObjects)
+            {
+                this.RootGameObjects = scene.GetRootGameObjects()
+                    .Select(go => go.ToGameObjectData(
+                        includeData: includeData,
+                        includeBounds: includeBounds,
+                        includeHierarchy: includeChildrenDepth > 0,
+                        hierarchyDepth: includeChildrenDepth,
+                        deepSerialization: deepSerialization
+                    ))
+                    .ToList();
+            }
+        }
     }
 
     public static class SceneDataExtensions
@@ -36,29 +49,7 @@ would return False for IsValid.")]
             this UnityEngine.SceneManagement.Scene scene,
             bool includeRootGameObjects = false)
         {
-            var sceneData = new SceneData
-            {
-                Name = scene.name,
-                Path = scene.path,
-                IsLoaded = scene.isLoaded,
-                IsDirty = scene.isDirty,
-                BuildIndex = scene.buildIndex,
-                RootCount = scene.rootCount,
-                IsSubScene = scene.isSubScene,
-                IsValid = scene.IsValid()
-            };
-            if (includeRootGameObjects)
-            {
-                sceneData.RootGameObjects = scene.GetRootGameObjects()
-                    .Select(go => go.ToGameObjectData(
-                        includeData: false,
-                        includeBounds: false,
-                        includeHierarchy: false,
-                        hierarchyDepth: 0,
-                        deepSerialization: false
-                    )).ToList();
-            }
-            return sceneData;
+            return new SceneData(scene, includeRootGameObjects: includeRootGameObjects);
         }
     }
 }

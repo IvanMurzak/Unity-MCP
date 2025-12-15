@@ -22,40 +22,43 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             "Scene_Save",
-            Title = "Save scene"
+            Title = "Scene / Save"
         )]
-        [Description("Save scene from the project assets.")]
-        public string Save
+        [Description("Save Opened scene to the asset file.")]
+        public void Save
         (
-            [Description("Path to the scene file.")]
-            string path,
-            [Description("Name of the opened scene. Could be empty if need to save current active scene. It is helpful when multiple scenes are opened.")]
-            string? targetSceneName = null
+            [Description("Name of the opened scene that should be saved. Could be empty if need to save the current active scene.")]
+            string? openedSceneName = null,
+            [Description("Path to the scene file. Should end with \".unity\". If null or empty save to the existed scene asset file.")]
+            string? path = null
         )
-        => MainThread.Instance.Run(() =>
         {
-            if (string.IsNullOrEmpty(path))
-                return Error.ScenePathIsEmpty();
+            MainThread.Instance.Run(() =>
+            {
+                if (string.IsNullOrEmpty(path))
+                    throw new System.Exception(Error.ScenePathIsEmpty());
 
-            if (path.EndsWith(".unity") == false)
-                return Error.FilePathMustEndsWithUnity();
+                var scene = string.IsNullOrEmpty(openedSceneName)
+                    ? SceneUtils.GetActiveScene()
+                    : SceneUtils.GetAllOpenedScenes()
+                        .FirstOrDefault(scene => scene.name == openedSceneName);
 
-            var scene = string.IsNullOrEmpty(targetSceneName)
-                ? SceneUtils.GetActiveScene()
-                : SceneUtils.GetAllLoadedScenes()
-                    .FirstOrDefault(scene => scene.name == targetSceneName);
+                if (!scene.IsValid())
+                    throw new System.Exception(Error.NotFoundSceneWithName(openedSceneName));
 
-            if (!scene.IsValid())
-                return Error.NotFoundSceneWithName(targetSceneName);
+                if (string.IsNullOrEmpty(path))
+                    path = scene.path;
 
-            bool saved = UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene, path);
-            if (!saved)
-                return $"[Error] Failed to save scene at '{path}'.\n{LoadedScenesText}";
+                if (path!.EndsWith(".unity") == false)
+                    throw new System.Exception(Error.FilePathMustEndsWithUnity());
 
-            UnityEditor.EditorApplication.RepaintHierarchyWindow();
-            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                bool saved = UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene, path);
+                if (!saved)
+                    throw new System.Exception($"Failed to save scene at '{path}'.\n{OpenedScenesText}");
 
-            return $"[Success] Scene saved at '{path}'.\n{LoadedScenesText}";
-        });
+                UnityEditor.EditorApplication.RepaintHierarchyWindow();
+                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+            });
+        }
     }
 }

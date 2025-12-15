@@ -19,13 +19,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     [McpPluginToolType]
     public partial class Tool_Scene
     {
-        public static IEnumerable<UnityEngine.SceneManagement.Scene> LoadedScenes => SceneUtils.GetAllLoadedScenes();
-        public static string LoadedScenesText
-            => $"Loaded Scenes:\n{string.Join("\n", SceneUtils.GetAllLoadedScenes().Select(scene => scene.name))}";
+        public static IEnumerable<UnityEngine.SceneManagement.Scene> OpenedScenes => SceneUtils.GetAllOpenedScenes();
+        public static string OpenedScenesText
+            => $"Opened Scenes:\n{string.Join("\n", SceneUtils.GetAllOpenedScenes().Select(scene => scene.name))}";
 
         public static class Error
         {
-            static string ScenesPrinted => string.Join("\n", SceneUtils.GetAllLoadedScenes().Select(scene => scene.name));
+            static string ScenesPrinted => string.Join("\n", SceneUtils.GetAllOpenedScenes().Select(scene => scene.name));
 
             public static string SceneNameIsEmpty()
                 => $"[Error] Scene name is empty. Available scenes:\n{ScenesPrinted}";
