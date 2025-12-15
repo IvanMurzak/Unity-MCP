@@ -33,17 +33,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             [Description("Name of the loaded scene. If empty string, the active scene will be used.")]
             string? loadedSceneName = null
         )
-        => MainThread.Instance.Run(() =>
         {
-            var scene = string.IsNullOrEmpty(loadedSceneName)
-                ? UnityEngine.SceneManagement.SceneManager.GetActiveScene()
-                : UnityEngine.SceneManagement.SceneManager.GetSceneByName(loadedSceneName);
+            return MainThread.Instance.Run(() =>
+            {
+                var scene = string.IsNullOrEmpty(loadedSceneName)
+                    ? UnityEngine.SceneManagement.SceneManager.GetActiveScene()
+                    : UnityEngine.SceneManagement.SceneManager.GetSceneByName(loadedSceneName);
 
-            if (!scene.IsValid())
-                throw new ArgumentException(Error.NotFoundSceneWithName(loadedSceneName));
+                if (!scene.IsValid())
+                    throw new ArgumentException(Error.NotFoundSceneWithName(loadedSceneName));
 
-            return scene.ToMetadata(includeChildrenDepth: includeChildrenDepth)
-                ?? throw new Exception("Failed to get scene metadata.");
-        });
+                return scene.ToMetadata(includeChildrenDepth: includeChildrenDepth)
+                    ?? throw new Exception("Failed to get scene metadata.");
+            });
+        }
     }
 }

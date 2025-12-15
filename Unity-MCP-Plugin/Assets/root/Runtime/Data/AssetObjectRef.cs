@@ -20,7 +20,7 @@ using com.IvanMurzak.ReflectorNet.Utils;
 namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
     [Serializable]
-    [Description("Reference to UnityEngine.Object asset instance. It could be Material, ScriptableObject, Prefab, and any other Asset. Anything located in the Assets folder.")]
+    [Description("Reference to UnityEngine.Object asset instance. It could be Material, ScriptableObject, Prefab, and any other Asset. Anything located in the Assets and Packages folders.")]
     public class AssetObjectRef : ObjectRef
     {
         public static partial class AssetObjectRefProperty

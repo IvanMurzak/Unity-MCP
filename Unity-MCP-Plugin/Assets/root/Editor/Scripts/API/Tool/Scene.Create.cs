@@ -20,7 +20,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             "Scene_Create",
-            Title = "Create new scene"
+            Title = "Scene / Create"
         )]
         [Description("Create new scene in the project assets.")]
         public string Create
@@ -34,7 +34,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 if (string.IsNullOrEmpty(path))
                     return Error.ScenePathIsEmpty();
 
-                if (path.EndsWith(".unity") == false)
+                if (!path.EndsWith(".unity"))
                     return Error.FilePathMustEndsWithUnity();
 
                 // Create a new empty scene

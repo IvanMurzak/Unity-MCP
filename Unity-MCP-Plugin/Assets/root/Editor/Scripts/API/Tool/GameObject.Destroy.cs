@@ -23,9 +23,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             "GameObject_Destroy",
-            Title = "Destroy GameObject in opened Prefab or in a Scene"
+            Title = "GameObject / Destroy"
         )]
-        [Description(@"Destroy a GameObject and all nested GameObjects recursively.")]
+        [Description(@"Destroy GameObject and all nested GameObjects recursively in opened Prefab or in a Scene.")]
         public void Destroy(GameObjectRef gameObjectRef)
         {
             MainThread.Instance.Run(() =>

@@ -26,9 +26,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             "GameObject_Create",
-            Title = "Create a new GameObject in opened Prefab or in a Scene"
+            Title = "GameObject / Create"
         )]
-        [Description(@"Create a new GameObject at specific path.
+        [Description(@"Create a new GameObject in opened Prefab or in a Scene.
 if needed - provide proper 'position', 'rotation' and 'scale' to reduce amount of operations.")]
         public GameObjectRef Create
         (

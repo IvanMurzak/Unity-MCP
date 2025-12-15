@@ -22,10 +22,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Assets_Read",
+            "Assets_GetData",
             Title = "Assets / Get Data"
         )]
-        [Description(@"Get Unity asset data from the asset file in the project. It includes all serializable fields and properties of the asset.")]
+        [Description(@"Get asset data from the asset file in the Unity project. It includes all serializable fields and properties of the asset.")]
         public SerializedMember GetData(AssetObjectRef assetRef)
         {
             return MainThread.Instance.Run(() =>

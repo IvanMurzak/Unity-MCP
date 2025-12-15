@@ -12,7 +12,6 @@
 using System.ComponentModel;
 using System.Text;
 using com.IvanMurzak.McpPlugin;
-using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
@@ -25,12 +24,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             "GameObject_SetParent",
-            Title = "Set parent GameObject in opened Prefab or in a Scene"
+            Title = "GameObject / Set Parent"
         )]
-        [Description(@"Set GameObjects in opened Prefab or in a Scene by 'instanceID' (int) array.")]
+        [Description(@"Set parent GameObject to list of GameObjects in opened Prefab or in a Scene.")]
         public string SetParent
         (
+            [Description("List of references to the GameObjects to set new parent.")]
             GameObjectRefList gameObjectRefs,
+            [Description("Reference to the parent GameObject.")]
             GameObjectRef parentGameObjectRef,
             [Description("A boolean flag indicating whether the GameObject's world position should remain unchanged when setting its parent.")]
             bool worldPositionStays = true

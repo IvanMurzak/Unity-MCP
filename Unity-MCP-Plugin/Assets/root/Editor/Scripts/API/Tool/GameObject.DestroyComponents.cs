@@ -12,7 +12,6 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
-using System.Text;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
@@ -24,8 +23,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "GameObject_DestroyComponents",
-            Title = "Destroy Components from a GameObject in opened Prefab or in a Scene"
+            "GameObject_Components_Destroy",
+            Title = "GameObject / Component / Destroy"
         )]
         [Description("Destroy one or many components from target GameObject. Can't destroy missed components.")]
         public DestroyComponentsResponse DestroyComponents
@@ -44,7 +43,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     throw new System.Exception($"GameObject by {nameof(gameObjectRef)} not found.");
 
                 var destroyCounter = 0;
-                var stringBuilder = new StringBuilder();
 
                 var allComponents = go.GetComponents<UnityEngine.Component>();
 

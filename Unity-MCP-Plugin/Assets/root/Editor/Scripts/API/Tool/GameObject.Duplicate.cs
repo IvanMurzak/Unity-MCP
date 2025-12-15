@@ -27,7 +27,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             "GameObject_Duplicate",
-            Title = "Duplicate GameObjects"
+            Title = "GameObject / Duplicate"
         )]
         [Description(@"Duplicate GameObjects in opened Prefab or in a Scene.")]
         public List<GameObjectRef> Duplicate(GameObjectRefList gameObjectRefs)

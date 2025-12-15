@@ -12,8 +12,6 @@
 using System.ComponentModel;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
-using com.IvanMurzak.McpPlugin.Common;
-using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
@@ -25,7 +23,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             "Reflection_MethodFind",
-            Title = "Find method using reflection"
+            Title = "Method (C#) / Find"
         )]
         [Description(@"Find method in the project using C# Reflection.
 It looks for all assemblies in the project and finds method by its name, class name and parameters.
