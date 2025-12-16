@@ -491,7 +491,7 @@ El proyecto implementa un pipeline CI/CD completo usando GitHub Actions con múl
 2. **Construcción de instalador Unity** - Prueba y exporta instalador de paquete Unity (`AI-Game-Dev-Installer.unitypackage`)
 3. **Construcción de servidor MCP** - Compila ejecutables multiplataforma (Windows, macOS, Linux) usando [build-all.sh](../../Unity-MCP-Server/build-all.sh)
 4. **Pruebas del plugin Unity** - Ejecuta pruebas completas en:
-   - 3 versiones de Unity: `2022.3.61f1`, `2023.2.20f1`, `6000.3.1f1`
+   - 3 versiones de Unity: `2022.3.69f1`, `2023.2.22f1`, `6000.3.1f1`
    - 3 modos de prueba: `editmode`, `playmode`, `standalone`
    - 2 sistemas operativos: `windows-latest`, `ubuntu-latest`
    - Total: **18 combinaciones de matriz de pruebas**

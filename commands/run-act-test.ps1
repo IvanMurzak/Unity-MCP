@@ -7,7 +7,7 @@
     This script reads Unity secrets from a .env file and runs the specified
     GitHub Actions workflow job using the act command with enhanced debugging capabilities.
 .PARAMETER JobName
-    The name of the job to run (default: test-unity-2022-3-61f1-standalone)
+    The name of the job to run (default: test-unity-2022-3-69f1-standalone)
 .PARAMETER WorkflowFile
     The workflow file to run (default: ./.github/workflows/test_pull_request_manual.yml)
 .PARAMETER Verbose
@@ -20,14 +20,14 @@
     Enable GitHub Actions step debugging (ACTIONS_STEP_DEBUG=true)
 .EXAMPLE
     .\run-act-test.ps1
-    .\run-act-test.ps1 -JobName test-unity-2023-2-20f1-editmode
+    .\run-act-test.ps1 -JobName test-unity-2023-2-22f1-editmode
     .\run-act-test.ps1 -Verbose -StepDebug
     .\run-act-test.ps1 -DryRun
     .\run-act-test.ps1 -LogFile "./act-logs.txt"
 #>
 
 param(
-    [string]$JobName = "test-unity-2022-3-61f1-standalone",
+    [string]$JobName = "test-unity-2022-3-69f1-standalone",
     [string]$WorkflowFile = "./.github/workflows/test_pull_request_manual.yml",
     [switch]$Verbose,
     [switch]$DryRun,
@@ -52,12 +52,14 @@ try {
     $dockerVersion = docker --version 2>&1
     if ($LASTEXITCODE -eq 0) {
         Write-Host "[OK] Docker installed: $dockerVersion" -ForegroundColor Green
-    } else {
+    }
+    else {
         Write-Host "[ERROR] Docker is not responding properly" -ForegroundColor Red
         Pop-Location
         exit 1
     }
-} catch {
+}
+catch {
     Write-Host "[ERROR] Docker is not installed or not in PATH" -ForegroundColor Red
     Write-Host "Please install Docker Desktop: https://www.docker.com/products/docker-desktop" -ForegroundColor Yellow
     Pop-Location
@@ -69,13 +71,15 @@ try {
     $dockerPs = docker ps 2>&1
     if ($LASTEXITCODE -eq 0) {
         Write-Host "[OK] Docker daemon is running" -ForegroundColor Green
-    } else {
+    }
+    else {
         Write-Host "[ERROR] Docker daemon is not running" -ForegroundColor Red
         Write-Host "Please start Docker Desktop" -ForegroundColor Yellow
         Pop-Location
         exit 1
     }
-} catch {
+}
+catch {
     Write-Host "[ERROR] Cannot connect to Docker daemon" -ForegroundColor Red
     Write-Host "Please start Docker Desktop" -ForegroundColor Yellow
     Pop-Location
@@ -87,12 +91,14 @@ try {
     $actVersion = act --version 2>&1
     if ($LASTEXITCODE -eq 0) {
         Write-Host "[OK] Act installed: $actVersion" -ForegroundColor Green
-    } else {
+    }
+    else {
         Write-Host "[ERROR] Act is not responding properly" -ForegroundColor Red
         Pop-Location
         exit 1
     }
-} catch {
+}
+catch {
     Write-Host "[ERROR] Act is not installed or not in PATH" -ForegroundColor Red
     Write-Host "Please install act: https://github.com/nektos/act" -ForegroundColor Yellow
     Pop-Location
@@ -219,7 +225,8 @@ if ($LogFile) {
     # Execute with log file
     Invoke-Expression "$actCommand 2>&1 | Tee-Object -FilePath `"$LogFile`""
     $exitCode = $LASTEXITCODE
-} else {
+}
+else {
     # Execute normally
     Invoke-Expression $actCommand
     $exitCode = $LASTEXITCODE
@@ -249,7 +256,8 @@ if ($exitCode -ne 0) {
         Write-Host "  - Docker is not properly installed or not in PATH" -ForegroundColor Yellow
         Write-Host "  - A command within the container doesn't exist" -ForegroundColor Yellow
         Write-Host "  - Docker-in-Docker (DinD) issues with nested containers" -ForegroundColor Yellow
-    } elseif ($exitCode -eq 1) {
+    }
+    elseif ($exitCode -eq 1) {
         Write-Host "Exit code 1 indicates a general failure" -ForegroundColor Yellow
         Write-Host "Check the output above for specific error messages" -ForegroundColor Yellow
     }
@@ -272,7 +280,8 @@ if ($exitCode -ne 0) {
     if ($LogFile) {
         Write-Host "Log file saved to: $LogFile" -ForegroundColor Cyan
     }
-} else {
+}
+else {
     Write-Host ""
     Write-Host "Workflow completed successfully!" -ForegroundColor Green
 

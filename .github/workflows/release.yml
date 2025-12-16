@@ -57,8 +57,8 @@ jobs:
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           projectPath: ./Installer
-          unityVersion: 2022.3.61f1
-          customImage: "unityci/editor:ubuntu-2022.3.61f1-base-3"
+          unityVersion: 2022.3.69f1
+          customImage: "unityci/editor:ubuntu-2022.3.69f1-base-3"
           testMode: editmode
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           checkName: Unity Installer EditMode Test Results
@@ -84,8 +84,8 @@ jobs:
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           projectPath: ./Installer
-          unityVersion: 2022.3.61f1
-          customImage: "unityci/editor:ubuntu-2022.3.61f1-base-3"
+          unityVersion: 2022.3.69f1
+          customImage: "unityci/editor:ubuntu-2022.3.69f1-base-3"
           buildName: AI-Game-Dev-Installer
           buildsPath: build
           buildMethod: com.IvanMurzak.Unity.MCP.Installer.PackageExporter.ExportPackage
@@ -128,21 +128,21 @@ jobs:
 
   # --- EDIT MODE ---
 
-  test-unity-2022-3-61f1-editmode:
+  test-unity-2022-3-69f1-editmode:
     needs: [build-and-zip-mcp-server, build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-MCP-Plugin"
-      unityVersion: "2022.3.61f1"
+      unityVersion: "2022.3.69f1"
       testMode: "editmode"
     secrets: inherit
 
-  test-unity-2023-2-20f1-editmode:
+  test-unity-2023-2-22f1-editmode:
     needs: [build-and-zip-mcp-server, build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-MCP-Plugin"
-      unityVersion: "2023.2.20f1"
+      unityVersion: "2023.2.22f1"
       testMode: "editmode"
     secrets: inherit
 
@@ -157,21 +157,21 @@ jobs:
 
   # --- PLAY MODE ---
 
-  # test-unity-2022-3-61f1-playmode:
+  # test-unity-2022-3-69f1-playmode:
   #   needs: [build-and-zip-mcp-server, build-unity-installer]
   #   uses: ./.github/workflows/test_unity_plugin.yml
   #   with:
   #     projectPath: './Unity-MCP-Plugin'
-  #     unityVersion: '2022.3.61f1'
+  #     unityVersion: '2022.3.69f1'
   #     testMode: 'playmode'
   #   secrets: inherit
 
-  # test-unity-2023-2-20f1-playmode:
+  # test-unity-2023-2-22f1-playmode:
   #   needs: [build-and-zip-mcp-server, build-unity-installer]
   #   uses: ./.github/workflows/test_unity_plugin.yml
   #   with:
   #     projectPath: './Unity-MCP-Plugin'
-  #     unityVersion: '2023.2.20f1'
+  #     unityVersion: '2023.2.22f1'
   #     testMode: 'playmode'
   #   secrets: inherit
 
@@ -186,21 +186,21 @@ jobs:
 
   # --- STANDALONE ---
 
-  test-unity-2022-3-61f1-standalone:
+  test-unity-2022-3-69f1-standalone:
     needs: [build-and-zip-mcp-server, build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-MCP-Plugin"
-      unityVersion: "2022.3.61f1"
+      unityVersion: "2022.3.69f1"
       testMode: "standalone"
     secrets: inherit
 
-  test-unity-2023-2-20f1-standalone:
+  test-unity-2023-2-22f1-standalone:
     needs: [build-and-zip-mcp-server, build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-MCP-Plugin"
-      unityVersion: "2023.2.20f1"
+      unityVersion: "2023.2.22f1"
       testMode: "standalone"
     secrets: inherit
 
@@ -221,12 +221,12 @@ jobs:
         check-version-tag,
         build-and-zip-mcp-server,
         build-unity-installer,
-        test-unity-2022-3-61f1-editmode,
-        # test-unity-2022-3-61f1-playmode,
-        test-unity-2022-3-61f1-standalone,
-        test-unity-2023-2-20f1-editmode,
-        # test-unity-2023-2-20f1-playmode,
-        test-unity-2023-2-20f1-standalone,
+        test-unity-2022-3-69f1-editmode,
+        # test-unity-2022-3-69f1-playmode,
+        test-unity-2022-3-69f1-standalone,
+        test-unity-2023-2-22f1-editmode,
+        # test-unity-2023-2-22f1-playmode,
+        test-unity-2023-2-22f1-standalone,
         test-unity-6000-3-1f1-editmode,
         # test-unity-6000-3-1f1-playmode,
         test-unity-6000-3-1f1-standalone,
