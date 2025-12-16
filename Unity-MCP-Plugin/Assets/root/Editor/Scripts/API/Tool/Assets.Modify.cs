@@ -10,7 +10,6 @@
 
 #nullable enable
 using System.ComponentModel;
-using System.Text;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
@@ -34,47 +33,49 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             [Description("The asset content. It overrides the existing asset content.")]
             SerializedMember content
         )
-        => MainThread.Instance.Run(() =>
         {
-            if (assetRef?.IsValid == false)
-                return $"[Error] Invalid asset reference.";
+            return MainThread.Instance.Run(() =>
+            {
+                if (assetRef?.IsValid == false)
+                    return $"[Error] Invalid asset reference.";
 
-            if (assetRef?.AssetPath?.StartsWith("Packages/") == true)
-                return Error.NotAllowedToModifyAssetInPackages(assetRef.AssetPath);
+                if (assetRef?.AssetPath?.StartsWith("Packages/") == true)
+                    return Error.NotAllowedToModifyAssetInPackages(assetRef.AssetPath);
 
-            var asset = assetRef.FindAssetObject(); // AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(assetPath);
-            if (asset == null)
-                return $"[Error] Asset not found using the reference:\n{assetRef}";
+                var asset = assetRef.FindAssetObject(); // AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(assetPath);
+                if (asset == null)
+                    return $"[Error] Asset not found using the reference:\n{assetRef}";
 
-            // Fixing instanceID - inject expected instance ID into the valueJsonElement
-            content.valueJsonElement.SetProperty(ObjectRef.ObjectRefProperty.InstanceID, asset.GetInstanceID());
+                // Fixing instanceID - inject expected instance ID into the valueJsonElement
+                content.valueJsonElement.SetProperty(ObjectRef.ObjectRefProperty.InstanceID, asset.GetInstanceID());
 
-            var obj = (object)asset;
-            var result = new StringBuilder();
+                var obj = (object)asset;
+                var logs = new Logs();
 
-            var success = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.TryPopulate(
-                ref obj,
-                data: content,
-                stringBuilder: result,
-                logger: McpPlugin.McpPlugin.Instance.Logger);
+                var success = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.TryPopulate(
+                    ref obj,
+                    data: content,
+                    logs: logs,
+                    logger: McpPlugin.McpPlugin.Instance.Logger);
 
-            if (success)
-                EditorUtility.SetDirty(asset);
+                if (success)
+                    EditorUtility.SetDirty(asset);
 
-            // AssetDatabase.CreateAsset(asset, assetPath);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-            UnityEditor.EditorApplication.RepaintProjectWindow();
-            UnityEditor.EditorApplication.RepaintHierarchyWindow();
-            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                // AssetDatabase.CreateAsset(asset, assetPath);
+                AssetDatabase.SaveAssets();
+                AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+                UnityEditor.EditorApplication.RepaintProjectWindow();
+                UnityEditor.EditorApplication.RepaintHierarchyWindow();
+                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
-            return result.ToString();
+                return logs.ToString();
 
-            //             var instanceID = asset.GetInstanceID();
-            //             return @$"[Success] Loaded asset.
-            // # Asset path: {assetPath}
-            // # Asset GUID: {assetGuid}
-            // # Asset instanceID: {instanceID}";
-        });
+                //             var instanceID = asset.GetInstanceID();
+                //             return @$"[Success] Loaded asset.
+                // # Asset path: {assetPath}
+                // # Asset GUID: {assetGuid}
+                // # Asset instanceID: {instanceID}";
+            });
+        }
     }
 }

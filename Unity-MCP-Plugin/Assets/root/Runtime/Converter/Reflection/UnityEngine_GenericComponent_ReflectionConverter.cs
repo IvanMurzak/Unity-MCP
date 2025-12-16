@@ -10,10 +10,10 @@
 
 #nullable enable
 
-namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
+namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
-    public partial class UnityStructReflectionConvertor<T> : UnityGenericNoPropertiesReflectionConvertor<T>
+    public abstract class UnityEngine_GenericComponent_ReflectionConverter<T> : UnityEngine_Object_ReflectionConverter<T> where T : UnityEngine.Component
     {
-        public override bool AllowCascadeSerialization => false;
+        public override bool AllowSetValue => false;
     }
 }

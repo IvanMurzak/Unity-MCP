@@ -11,6 +11,7 @@
 #nullable enable
 using System;
 using System.ComponentModel;
+using System.Linq;
 using System.Text;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Model;
@@ -75,13 +76,13 @@ Use 'gameobject-component-get' first to inspect the component structure before m
                     index = targetIndex
                 };
 
-                var stringBuilder = new StringBuilder();
+                var logs = new Logs();
                 var objToModify = (object)targetComponent;
 
                 var success = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.TryPopulate(
                     ref objToModify,
                     data: componentDiff,
-                    stringBuilder: stringBuilder,
+                    logs: logs,
                     logger: McpPlugin.McpPlugin.Instance.Logger);
 
                 if (success)
@@ -93,9 +94,9 @@ Use 'gameobject-component-get' first to inspect the component structure before m
 
                 UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
-                var log = stringBuilder.ToString();
-                if (!string.IsNullOrEmpty(log))
-                    response.log = log;
+                response.logs = logs
+                    .Select(log => log.ToString())
+                    .ToArray();
 
                 // Return updated component data
                 response.component = new ComponentDataShallow(targetComponent);
@@ -119,7 +120,7 @@ Use 'gameobject-component-get' first to inspect the component structure before m
             public ComponentDataShallow? component;
 
             [Description("Log of modifications made and any warnings/errors encountered.")]
-            public string? log;
+            public string[]? logs;
         }
     }
 }

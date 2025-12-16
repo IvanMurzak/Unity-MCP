@@ -9,9 +9,9 @@
 */
 
 #nullable enable
-using System.Text;
 using System.Text.Json;
 using com.IvanMurzak.ReflectorNet;
+using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using Microsoft.Extensions.Logging;
 
@@ -24,7 +24,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
             Reflector reflector,
             bool suppressException = true,
             int depth = 0,
-            StringBuilder? stringBuilder = null,
+            Logs? logs = null,
             ILogger? logger = null)
         {
             if (jsonElement == null)
@@ -32,11 +32,11 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
 
             return ToGameObjectRef(
                 jsonElement: jsonElement.Value,
-                reflector,
-                suppressException,
-                depth,
-                stringBuilder,
-                logger
+                reflector: reflector,
+                suppressException: suppressException,
+                depth: depth,
+                logs: logs,
+                logger: logger
             );
         }
         public static GameObjectRef? ToGameObjectRef(
@@ -44,7 +44,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
             Reflector reflector,
             bool suppressException = true,
             int depth = 0,
-            StringBuilder? stringBuilder = null,
+            Logs? logs = null,
             ILogger? logger = null)
         {
             if (!suppressException)
@@ -63,7 +63,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
             Reflector reflector,
             bool suppressException = true,
             int depth = 0,
-            StringBuilder? stringBuilder = null,
+            Logs? logs = null,
             ILogger? logger = null)
         {
             if (jsonElement == null)
@@ -71,11 +71,11 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
 
             return ToComponentRef(
                 jsonElement: jsonElement.Value,
-                reflector,
-                suppressException,
-                depth,
-                stringBuilder,
-                logger
+                reflector: reflector,
+                suppressException: suppressException,
+                depth: depth,
+                logs: logs,
+                logger: logger
             );
         }
         public static ComponentRef? ToComponentRef(
@@ -83,7 +83,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
             Reflector reflector,
             bool suppressException = true,
             int depth = 0,
-            StringBuilder? stringBuilder = null,
+            Logs? logs = null,
             ILogger? logger = null)
         {
             if (!suppressException)
@@ -102,7 +102,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
             Reflector? reflector = null,
             bool suppressException = true,
             int depth = 0,
-            StringBuilder? stringBuilder = null,
+            Logs? logs = null,
             ILogger? logger = null)
         {
             if (jsonElement == null)
@@ -110,11 +110,11 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
 
             return ToAssetObjectRef(
                 jsonElement: jsonElement.Value,
-                reflector,
-                suppressException,
-                depth,
-                stringBuilder,
-                logger
+                reflector: reflector,
+                suppressException: suppressException,
+                depth: depth,
+                logs: logs,
+                logger: logger
             );
         }
         public static AssetObjectRef? ToAssetObjectRef(
@@ -122,7 +122,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
             Reflector? reflector = null,
             bool suppressException = true,
             int depth = 0,
-            StringBuilder? stringBuilder = null,
+            Logs? logs = null,
             ILogger? logger = null)
         {
             if (!suppressException)
@@ -145,7 +145,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
             Reflector reflector,
             bool suppressException = true,
             int depth = 0,
-            StringBuilder? stringBuilder = null,
+            Logs? logs = null,
             ILogger? logger = null)
         {
             if (jsonElement == null)
@@ -153,11 +153,11 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
 
             return ToObjectRef(
                 jsonElement: jsonElement.Value,
-                reflector,
-                suppressException,
-                depth,
-                stringBuilder,
-                logger
+                reflector: reflector,
+                suppressException: suppressException,
+                depth: depth,
+                logs: logs,
+                logger: logger
             );
         }
         public static ObjectRef? ToObjectRef(
@@ -165,7 +165,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
             Reflector reflector,
             bool suppressException = true,
             int depth = 0,
-            StringBuilder? stringBuilder = null,
+            Logs? logs = null,
             ILogger? logger = null)
         {
             if (!suppressException)

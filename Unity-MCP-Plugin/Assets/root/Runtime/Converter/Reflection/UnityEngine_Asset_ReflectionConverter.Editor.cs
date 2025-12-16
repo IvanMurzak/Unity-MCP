@@ -8,22 +8,21 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 
+#if UNITY_EDITOR
 #nullable enable
 using System;
 using System.Reflection;
-using System.Text;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using Microsoft.Extensions.Logging;
-using UnityEngine;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
-namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
+namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
-    public class UnityEngine_Asset_ReflectionConvertor<T> : UnityEngine_Object_ReflectionConvertor<T> where T : UnityEngine.Object
+    public partial class UnityEngine_Asset_ReflectionConverter<T> : UnityEngine_Object_ReflectionConverter<T> where T : UnityEngine.Object
     {
         public override bool TryPopulate(
             Reflector reflector,
@@ -31,19 +30,19 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             SerializedMember data,
             Type? dataType = null,
             int depth = 0,
-            StringBuilder? stringBuilder = null,
+            Logs? logs = null,
             BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
             ILogger? logger = null)
         {
             var padding = StringUtils.GetPadding(depth);
 
             if (logger?.IsEnabled(LogLevel.Trace) == true)
-                logger.LogTrace($"{padding}Populate asset from data. Convertor='{GetType().GetTypeShortName()}'.");
+                logger.LogTrace($"{padding}Populate asset from data. Converter='{GetType().GetTypeShortName()}'.");
 
             var objectRef = data.valueJsonElement.ToAssetObjectRef(
                 reflector: reflector,
                 depth: depth,
-                stringBuilder: stringBuilder,
+                logs: logs,
                 logger: logger);
 
             if (objectRef == null)
@@ -54,7 +53,6 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                 return false;
             }
 
-#if UNITY_EDITOR
             var instanceID = objectRef.InstanceID;
             if (instanceID != 0)
             {
@@ -62,13 +60,12 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                 if (loadedObj != null)
                 {
                     obj = loadedObj;
-                    if (stringBuilder != null)
-                        stringBuilder.AppendLine($"{padding}[Success] Assigned asset from InstanceID: {instanceID}. Convertor: {GetType().GetTypeShortName()}");
+                    logs?.Success($"Assigned asset from InstanceID: '{instanceID}'. Converter: {GetType().GetTypeShortName()}", depth);
                     return true;
                 }
 
                 if (logger?.IsEnabled(LogLevel.Warning) == true)
-                    logger.LogWarning($"{padding}InstanceID {instanceID} found but failed to load asset. Convertor: {GetType().GetTypeShortName()}");
+                    logger.LogWarning($"{padding}InstanceID '{instanceID}' found but failed to load asset. Converter: {GetType().GetTypeShortName()}");
             }
 
             if (!string.IsNullOrEmpty(objectRef.AssetPath))
@@ -77,13 +74,12 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                 if (loadedObj != null)
                 {
                     obj = loadedObj;
-                    if (stringBuilder != null)
-                        stringBuilder.AppendLine($"{padding}[Success] Assigned asset from AssetPath: {objectRef.AssetPath}. Convertor: {GetType().GetTypeShortName()}");
+                    logs?.Success($"Set asset from AssetPath: '{objectRef.AssetPath}'. Converter: {GetType().GetTypeShortName()}", depth);
                     return true;
                 }
 
                 if (logger?.IsEnabled(LogLevel.Warning) == true)
-                    logger.LogWarning($"{padding}AssetPath {objectRef.AssetPath} found but failed to load asset. Convertor: {GetType().GetTypeShortName()}");
+                    logger.LogWarning($"{padding}AssetPath '{objectRef.AssetPath}' found but failed to load asset. Converter: {GetType().GetTypeShortName()}");
             }
 
             if (!string.IsNullOrEmpty(objectRef.AssetGuid))
@@ -92,30 +88,26 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                 if (loadedObj != null)
                 {
                     obj = loadedObj;
-                    if (stringBuilder != null)
-                        stringBuilder.AppendLine($"{padding}[Success] Assigned asset from AssetGuid: {objectRef.AssetGuid}. Convertor: {GetType().GetTypeShortName()}");
+                    logs?.Success($"Set asset from AssetGuid: '{objectRef.AssetGuid}'. Converter: {GetType().GetTypeShortName()}", depth);
                     return true;
                 }
 
                 if (logger?.IsEnabled(LogLevel.Warning) == true)
-                    logger.LogWarning($"{padding}AssetGuid {objectRef.AssetGuid} found but failed to load asset. Convertor: {GetType().GetTypeShortName()}");
+                    logger.LogWarning($"{padding}AssetGuid '{objectRef.AssetGuid}' found but failed to load asset. Converter: {GetType().GetTypeShortName()}");
             }
-#endif
 
             // If we reached here, we failed to find the asset.
-            // Should we set obj to null? The Sprite convertor does.
+            // Should we set obj to null? The Sprite Converter does.
             obj = null;
 
             if (logger?.IsEnabled(LogLevel.Trace) == true)
-                logger.LogTrace($"{padding}[Success] Failed to find asset. Cleared the reference. Convertor: {GetType().GetTypeShortName()}");
+                logger.LogTrace($"{padding}[Warning] Failed to find asset. Cleared the reference. Converter: {GetType().GetTypeShortName()}");
 
-            if (stringBuilder != null)
-                stringBuilder.AppendLine($"{padding}[Success] Failed to find asset. Cleared the reference. Convertor: {GetType().GetTypeShortName()}");
+            logs?.Warning($"Failed to find asset. Cleared the reference. Converter: {GetType().GetTypeShortName()}", depth);
 
             return true;
         }
 
-#if UNITY_EDITOR
         protected virtual T? LoadFromInstanceID(int instanceID)
         {
             var obj = UnityEditor.EditorUtility.InstanceIDToObject(instanceID);
@@ -134,6 +126,6 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                 return null;
             return LoadFromAssetPath(path);
         }
-#endif
     }
 }
+#endif

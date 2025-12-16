@@ -112,25 +112,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                         value: new AssetObjectRef() { AssetPath = soEx.AssetPath }
                     );
 
-                    soModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "spriteField", type: typeof(Sprite), value: spriteRef));
-                    soModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "materialField", type: typeof(Material), value: matRef));
-                    soModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "gameObjectField", type: typeof(GameObject), value: goRef));
-                    soModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "textureField", type: typeof(Texture2D), value: texRef));
-                    soModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "scriptableObjectField", type: typeof(DataFieldPopulationTestScriptableObject), value: soRef));
-                    soModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "prefabField", type: typeof(GameObject), value: prefabRef));
-                    soModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "intField", type: typeof(int), value: 42));
-                    soModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "stringField", type: typeof(string), value: "Hello World"));
+                    soModification.AddField(SerializedMember.FromValue(reflector: reflector, name: nameof(DataFieldPopulationTestScriptableObject.spriteField), type: typeof(Sprite), value: spriteRef));
+                    soModification.AddField(SerializedMember.FromValue(reflector: reflector, name: nameof(DataFieldPopulationTestScriptableObject.materialField), type: typeof(Material), value: matRef));
+                    soModification.AddField(SerializedMember.FromValue(reflector: reflector, name: nameof(DataFieldPopulationTestScriptableObject.gameObjectField), type: typeof(GameObject), value: goRef));
+                    soModification.AddField(SerializedMember.FromValue(reflector: reflector, name: nameof(DataFieldPopulationTestScriptableObject.textureField), type: typeof(Texture2D), value: texRef));
+                    soModification.AddField(SerializedMember.FromValue(reflector: reflector, name: nameof(DataFieldPopulationTestScriptableObject.scriptableObjectField), type: typeof(DataFieldPopulationTestScriptableObject), value: soRef));
+                    soModification.AddField(SerializedMember.FromValue(reflector: reflector, name: nameof(DataFieldPopulationTestScriptableObject.prefabField), type: typeof(GameObject), value: prefabRef));
+                    soModification.AddField(SerializedMember.FromValue(reflector: reflector, name: nameof(DataFieldPopulationTestScriptableObject.intField), type: typeof(int), value: 42));
+                    soModification.AddField(SerializedMember.FromValue(reflector: reflector, name: nameof(DataFieldPopulationTestScriptableObject.stringField), type: typeof(string), value: "Hello World"));
 
                     var matRefArrayItem = new AssetObjectRef(materialEx.AssetPath!);
                     var goRefArrayItem = new ObjectRef(targetGoEx.GameObject!.GetInstanceID());
                     var prefabRefArrayItem = new AssetObjectRef(prefabEx.AssetPath!);
 
-                    soModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "materialArray", type: typeof(Material[]), value: new object[] { matRefArrayItem, matRefArrayItem }));
-                    soModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "gameObjectArray", type: typeof(GameObject[]), value: new object[] { goRefArrayItem, prefabRefArrayItem }));
+                    soModification.AddField(SerializedMember.FromValue(reflector: reflector, name: nameof(DataFieldPopulationTestScriptableObject.materialArray), type: typeof(Material[]), value: new object[] { matRefArrayItem, matRefArrayItem }));
+                    soModification.AddField(SerializedMember.FromValue(reflector: reflector, name: nameof(DataFieldPopulationTestScriptableObject.gameObjectArray), type: typeof(GameObject[]), value: new object[] { goRefArrayItem, prefabRefArrayItem }));
 
-                    soModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "materialList", type: typeof(List<Material>), value: new object[] { matRefArrayItem, matRefArrayItem }));
-                    soModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "gameObjectList", type: typeof(List<GameObject>), value: new object[] { goRefArrayItem, prefabRefArrayItem }));
-
+                    soModification.AddField(SerializedMember.FromValue(reflector: reflector, name: nameof(DataFieldPopulationTestScriptableObject.materialList), type: typeof(List<Material>), value: new object[] { matRefArrayItem, matRefArrayItem }));
+                    soModification.AddField(SerializedMember.FromValue(reflector: reflector, name: nameof(DataFieldPopulationTestScriptableObject.gameObjectList), type: typeof(List<GameObject>), value: new object[] { goRefArrayItem, prefabRefArrayItem }));
                     var options = new System.Text.Json.JsonSerializerOptions { WriteIndented = true };
                     var assetRefJson = System.Text.Json.JsonSerializer.Serialize(new AssetObjectRef() { AssetPath = soEx.AssetPath }, options);
                     var contentJson = System.Text.Json.JsonSerializer.Serialize(soModification, options);

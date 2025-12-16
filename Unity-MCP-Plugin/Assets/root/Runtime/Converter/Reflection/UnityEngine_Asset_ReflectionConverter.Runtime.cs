@@ -8,21 +8,22 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 
-#nullable enable
+
 #if !UNITY_EDITOR
+#nullable enable
 using System;
 using System.Reflection;
-using System.Text;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using Microsoft.Extensions.Logging;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
-namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
+namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
-    public partial class UnityEngine_Sprite_ReflectionConvertor : UnityEngine_Asset_ReflectionConvertor<UnityEngine.Sprite>
+    public partial class UnityEngine_Asset_ReflectionConverter<T> : UnityEngine_Object_ReflectionConverter<T> where T : UnityEngine.Object
     {
         public override bool TryPopulate(
             Reflector reflector,
@@ -30,22 +31,39 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             SerializedMember data,
             Type? dataType = null,
             int depth = 0,
-            StringBuilder? stringBuilder = null,
+            Logs? logs = null,
             BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
             ILogger? logger = null)
         {
             var padding = StringUtils.GetPadding(depth);
 
             if (logger?.IsEnabled(LogLevel.Trace) == true)
-                logger.LogTrace($"{StringUtils.GetPadding(depth)}Populate sprite from data. Convertor='{GetType().GetTypeShortName()}'.");
+                logger.LogTrace($"{padding}Populate asset from data. Converter='{GetType().GetTypeShortName()}'.");
 
-            if (logger?.IsEnabled(LogLevel.Error) == true)
-                logger.LogError($"{padding}Operation is not supported in runtime. Convertor: {GetType().GetTypeShortName()}");
+            var objectRef = data.valueJsonElement.ToAssetObjectRef(
+                reflector: reflector,
+                depth: depth,
+                logs: logs,
+                logger: logger);
 
-            if (stringBuilder != null)
-                stringBuilder.AppendLine($"{padding}[Error] Operation is not supported in runtime. Convertor: {GetType().GetTypeShortName()}");
+            if (objectRef == null)
+            {
+                // If no object ref, maybe we should fall back to base behavior?
+                // But for assets, usually we expect an object ref.
+                // Let's return false to indicate we couldn't populate it as an asset.
+                return false;
+            }
 
-            return false;
+            // If we reached here, we failed to find the asset.
+            // Should we set obj to null? The Sprite Converter does.
+            obj = null;
+
+            if (logger?.IsEnabled(LogLevel.Trace) == true)
+                logger.LogTrace($"{padding}[Warning] Failed to find asset. Cleared the reference. Converter: {GetType().GetTypeShortName()}");
+
+            logs?.Warning($"Failed to find asset. Cleared the reference. Converter: {GetType().GetTypeShortName()}", depth);
+
+            return true;
         }
     }
 }

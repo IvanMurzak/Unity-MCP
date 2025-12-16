@@ -15,7 +15,6 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.Json;
-using com.IvanMurzak.McpPlugin.Common.Reflection.Convertor;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
@@ -26,9 +25,9 @@ using UnityEngine;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
-namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
+namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
-    public partial class UnityEngine_GameObject_ReflectionConvertor : UnityGenericReflectionConvertor<UnityEngine.GameObject>
+    public partial class UnityEngine_GameObject_ReflectionConverter : UnityGenericReflectionConverter<UnityEngine.GameObject>
     {
         const string ComponentNamePrefix = "component_";
         static string GetComponentName(int index) => $"{ComponentNamePrefix}{index}";
@@ -60,7 +59,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             string? name = null,
             bool recursive = true,
             BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
-            int depth = 0, StringBuilder? stringBuilder = null,
+            int depth = 0, Logs? logs = null,
             ILogger? logger = null,
             SerializationContext? context = null)
         {
@@ -79,7 +78,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                         obj: obj,
                         flags: flags,
                         depth: depth,
-                        stringBuilder: stringBuilder,
+                        logs: logs,
                         logger: logger,
                         context: context),
                     props = SerializeProperties(
@@ -87,7 +86,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                         obj: obj,
                         flags: flags,
                         depth: depth,
-                        stringBuilder: stringBuilder,
+                        logs: logs,
                         logger: logger,
                         context: context)
                 }.SetValue(reflector, new GameObjectRef(unityObject?.GetInstanceID() ?? 0));
@@ -104,7 +103,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             object obj,
             BindingFlags flags,
             int depth = 0,
-            StringBuilder? stringBuilder = null,
+            Logs? logs = null,
             ILogger? logger = null,
             SerializationContext? context = null)
         {
@@ -113,7 +112,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                 obj: obj,
                 flags: flags,
                 depth: depth,
-                stringBuilder: stringBuilder,
+                logs: logs,
                 logger: logger,
                 context: context) ?? new();
 
@@ -134,7 +133,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                     recursive: true,
                     flags: flags,
                     depth: depth + 1,
-                    stringBuilder: stringBuilder,
+                    logs: logs,
                     logger: logger,
                     context: context
                 );
@@ -149,13 +148,13 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             Type type,
             JsonElement? value,
             int depth = 0,
-            StringBuilder? stringBuilder = null,
+            Logs? logs = null,
             ILogger? logger = null)
         {
             var padding = StringUtils.GetPadding(depth);
 
             if (logger?.IsEnabled(LogLevel.Trace) == true)
-                logger.LogTrace($"{padding}Set value type='{type.GetTypeName(pretty: true)}'. Convertor='{GetType().GetTypeShortName()}'.");
+                logger.LogTrace($"{padding}Set value type='{type.GetTypeName(pretty: true)}'. Converter='{GetType().GetTypeShortName()}'.");
 
             try
             {
@@ -164,7 +163,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                         reflector: reflector,
                         suppressException: false,
                         depth: depth,
-                        stringBuilder: stringBuilder,
+                        logs: logs,
                         logger: logger)
                     .FindGameObject();
                 return true;
@@ -172,10 +171,9 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             catch (Exception ex)
             {
                 if (logger?.IsEnabled(LogLevel.Error) == true)
-                    logger.LogError(ex, $"{padding}[Error] Failed to deserialize value for type '{type.GetTypeName(pretty: false)}'. Convertor: {GetType().GetTypeShortName()}. Exception: {ex.Message}");
+                    logger.LogError(ex, $"{padding}[Error] Failed to deserialize value for type '{type.GetTypeName(pretty: false)}'. Converter: {GetType().GetTypeShortName()}. Exception: {ex.Message}");
 
-                if (stringBuilder != null)
-                    stringBuilder.AppendLine($"{padding}[Error] Failed to set value for type '{type.GetTypeName(pretty: false)}'. Convertor: {GetType().GetTypeShortName()}. Exception: {ex.Message}");
+                logs?.Error($"Failed to set value for type '{type.GetTypeName(pretty: false)}'. Converter: {GetType().GetTypeShortName()}. Exception: {ex.Message}", depth);
 
                 return false;
             }
@@ -187,7 +185,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             Type objType,
             SerializedMember fieldValue,
             int depth = 0,
-            StringBuilder? stringBuilder = null,
+            Logs? logs = null,
             BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
             ILogger? logger = null)
         {
@@ -201,8 +199,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                 if (logger?.IsEnabled(LogLevel.Error) == true)
                     logger.LogError($"{padding}[Error] Object is not a GameObject.");
 
-                if (stringBuilder != null)
-                    stringBuilder.AppendLine($"{padding}[Error] Object is not a GameObject.");
+                logs?.Error($"Object is not a GameObject.", depth);
 
                 return false;
             }
@@ -231,8 +228,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                     if (logger?.IsEnabled(LogLevel.Error) == true)
                         logger.LogError($"{padding}[Error] Type not found for field '{fieldValue.name}' with type name '{fieldValue.typeName}'.");
 
-                    if (stringBuilder != null)
-                        stringBuilder.AppendLine($"{padding}[Error] Type not found: '{fieldValue.typeName}'");
+                    logs?.Error($"Type not found: '{fieldValue.typeName}'", depth);
 
                     return false;
                 }
@@ -246,17 +242,18 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                         objType: objType,
                         fieldValue: fieldValue,
                         depth: depth,
-                        stringBuilder: stringBuilder,
+                        logs: logs,
                         flags: flags,
                         logger: logger);
                 }
 
-                if (logger?.IsEnabled(LogLevel.Error) == true)
-                    logger.LogError($"{padding}[Error] {error}");
+                if (error != null)
+                {
+                    if (logger?.IsEnabled(LogLevel.Error) == true)
+                        logger.LogError($"{padding}[Error] {error}");
 
-                if (stringBuilder != null)
-                    stringBuilder.AppendLine($"{padding}[Error] {error}");
-
+                    logs?.Error(error, depth);
+                }
                 return false;
             }
 
@@ -267,7 +264,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                 fallbackObjType: type,
                 depth: depth,
                 flags: flags,
-                stringBuilder: stringBuilder,
+                logs: logs,
                 logger: logger);
         }
 
@@ -321,7 +318,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             Type? fallbackType = null,
             string? fallbackName = null,
             int depth = 0,
-            StringBuilder? stringBuilder = null,
+            Logs? logs = null,
             ILogger? logger = null,
             DeserializationContext? context = null)
         {
@@ -329,7 +326,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                 .ToGameObjectRef(
                     reflector: reflector,
                     depth: depth,
-                    stringBuilder: stringBuilder,
+                    logs: logs,
                     logger: logger)
                 .FindGameObject();
         }
@@ -339,14 +336,14 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             SerializedMember data,
             Type type,
             int depth = 0,
-            StringBuilder? stringBuilder = null,
+            Logs? logs = null,
             ILogger? logger = null)
         {
             return data.valueJsonElement
                 .ToGameObjectRef(
                     reflector: reflector,
                     depth: depth,
-                    stringBuilder: stringBuilder,
+                    logs: logs,
                     logger: logger)
                 .FindGameObject();
         }

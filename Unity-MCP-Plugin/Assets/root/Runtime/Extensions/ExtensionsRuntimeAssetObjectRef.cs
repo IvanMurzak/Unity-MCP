@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System.Linq;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
@@ -34,7 +35,12 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
                 var obj = UnityEditor.EditorUtility.InstanceIDToObject(assetObjectRef.InstanceID);
                 if (obj != null && type.IsAssignableFrom(obj.GetType()))
                     return obj;
-                return null;
+
+                var assetPath = UnityEditor.AssetDatabase.GetAssetPath(assetObjectRef.InstanceID);
+                var asset = UnityEditor.AssetDatabase.LoadAllAssetsAtPath(assetPath)
+                    .FirstOrDefault(asset => asset != null && type.IsAssignableFrom(asset.GetType()));
+                if (asset != null)
+                    return asset;
             }
 
             if (!string.IsNullOrEmpty(assetObjectRef.AssetPath))
@@ -43,27 +49,21 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
                 if (result == null)
                 {
                     // Fallback: Try loading all assets and finding the one of the correct type
-                    var allAssets = UnityEditor.AssetDatabase.LoadAllAssetsAtPath(assetObjectRef.AssetPath);
-                    foreach (var asset in allAssets)
-                    {
-                        if (asset != null)
-                        {
-                            if (type.IsAssignableFrom(asset.GetType()))
-                            {
-                                result = asset;
-                                break;
-                            }
-                        }
-                    }
+                    var asset = UnityEditor.AssetDatabase.LoadAllAssetsAtPath(assetObjectRef.AssetPath)
+                        .FirstOrDefault(asset => asset != null && type.IsAssignableFrom(asset.GetType()));
+                    if (asset != null)
+                        return asset;
                 }
                 return result;
             }
 
             if (!string.IsNullOrEmpty(assetObjectRef.AssetGuid))
             {
-                var path = UnityEditor.AssetDatabase.GUIDToAssetPath(assetObjectRef.AssetGuid);
-                if (!string.IsNullOrEmpty(path))
-                    return UnityEditor.AssetDatabase.LoadAssetAtPath(path, type);
+                var assetPath = UnityEditor.AssetDatabase.GUIDToAssetPath(assetObjectRef.AssetGuid);
+                var asset = UnityEditor.AssetDatabase.LoadAllAssetsAtPath(assetPath)
+                    .FirstOrDefault(asset => asset != null && type.IsAssignableFrom(asset.GetType()));
+                if (asset != null)
+                    return asset;
             }
 #endif
 

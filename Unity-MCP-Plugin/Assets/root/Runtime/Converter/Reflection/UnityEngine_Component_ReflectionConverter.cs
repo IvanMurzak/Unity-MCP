@@ -17,9 +17,9 @@ using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
-namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
+namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
-    public partial class UnityEngine_Component_ReflectionConvertor : UnityEngine_Object_ReflectionConvertor<UnityEngine.Component>
+    public partial class UnityEngine_Component_ReflectionConverter : UnityEngine_Object_ReflectionConverter<UnityEngine.Component>
     {
         public override bool AllowSetValue => false;
 
@@ -36,14 +36,14 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             SerializedMember data,
             Type type,
             int depth = 0,
-            StringBuilder? stringBuilder = null,
+            Logs? logs = null,
             ILogger? logger = null)
         {
             return data.valueJsonElement
                 .ToObjectRef(
                     reflector: reflector,
                     depth: depth,
-                    stringBuilder: stringBuilder,
+                    logs: logs,
                     logger: logger)
                 .FindObject() as UnityEngine.Component;
         }

@@ -9,12 +9,19 @@
 */
 
 #nullable enable
+using System.Collections.Generic;
 
-namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
+namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
-    public partial class UnityEngine_Transform_ReflectionConvertor : UnityEngine_GenericComponent_ReflectionConvertor<UnityEngine.Transform>
+    public partial class UnityEngine_Renderer_ReflectionConverter : UnityEngine_GenericComponent_ReflectionConverter<UnityEngine.Renderer>
     {
-        // public override bool AllowCascadeSerialize => false;
-        // public override bool AllowCascadePopulate => false;
+        protected override IEnumerable<string> GetIgnoredProperties()
+        {
+            foreach (var property in base.GetIgnoredProperties())
+                yield return property;
+
+            yield return nameof(UnityEngine.Renderer.material);
+            yield return nameof(UnityEngine.Renderer.materials);
+        }
     }
 }
