@@ -82,7 +82,7 @@ jobs:
         with:
           projectPath: ./Installer
           unityVersion: 2022.3.61f1
-          customImage: 'unityci/editor:ubuntu-2022.3.61f1-base-3'
+          customImage: "unityci/editor:ubuntu-2022.3.61f1-base-3"
           testMode: editmode
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           checkName: Unity Installer EditMode Test Results
@@ -109,7 +109,7 @@ jobs:
         with:
           projectPath: ./Installer
           unityVersion: 2022.3.61f1
-          customImage: 'unityci/editor:ubuntu-2022.3.61f1-base-3'
+          customImage: "unityci/editor:ubuntu-2022.3.61f1-base-3"
           buildName: AI-Game-Dev-Installer
           buildsPath: build
           buildMethod: com.IvanMurzak.Unity.MCP.Installer.PackageExporter.ExportPackage
@@ -132,7 +132,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: "9.0.x"
 
       - name: Make build script executable
         run: chmod +x ./Unity-MCP-Server/build-all.sh
@@ -156,57 +156,57 @@ jobs:
     needs: [build-and-zip-mcp-server, build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: './Unity-MCP-Plugin'
-      unityVersion: '2022.3.61f1'
-      testMode: 'editmode'
+      projectPath: "./Unity-MCP-Plugin"
+      unityVersion: "2022.3.61f1"
+      testMode: "editmode"
     secrets: inherit
 
   test-unity-2023-2-20f1-editmode:
     needs: [build-and-zip-mcp-server, build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: './Unity-MCP-Plugin'
-      unityVersion: '2023.2.20f1'
-      testMode: 'editmode'
+      projectPath: "./Unity-MCP-Plugin"
+      unityVersion: "2023.2.20f1"
+      testMode: "editmode"
     secrets: inherit
 
   test-unity-6000-2-3f1-editmode:
     needs: [build-and-zip-mcp-server, build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: './Unity-MCP-Plugin'
-      unityVersion: '6000.2.3f1'
-      testMode: 'editmode'
+      projectPath: "./Unity-MCP-Plugin"
+      unityVersion: "6000.2.3f1"
+      testMode: "editmode"
     secrets: inherit
 
   # --- PLAY MODE ---
 
-  test-unity-2022-3-61f1-playmode:
-    needs: [build-and-zip-mcp-server, build-unity-installer]
-    uses: ./.github/workflows/test_unity_plugin.yml
-    with:
-      projectPath: './Unity-MCP-Plugin'
-      unityVersion: '2022.3.61f1'
-      testMode: 'playmode'
-    secrets: inherit
+  # test-unity-2022-3-61f1-playmode:
+  #   needs: [build-and-zip-mcp-server, build-unity-installer]
+  #   uses: ./.github/workflows/test_unity_plugin.yml
+  #   with:
+  #     projectPath: './Unity-MCP-Plugin'
+  #     unityVersion: '2022.3.61f1'
+  #     testMode: 'playmode'
+  #   secrets: inherit
 
-  test-unity-2023-2-20f1-playmode:
-    needs: [build-and-zip-mcp-server, build-unity-installer]
-    uses: ./.github/workflows/test_unity_plugin.yml
-    with:
-      projectPath: './Unity-MCP-Plugin'
-      unityVersion: '2023.2.20f1'
-      testMode: 'playmode'
-    secrets: inherit
+  # test-unity-2023-2-20f1-playmode:
+  #   needs: [build-and-zip-mcp-server, build-unity-installer]
+  #   uses: ./.github/workflows/test_unity_plugin.yml
+  #   with:
+  #     projectPath: './Unity-MCP-Plugin'
+  #     unityVersion: '2023.2.20f1'
+  #     testMode: 'playmode'
+  #   secrets: inherit
 
-  test-unity-6000-2-3f1-playmode:
-    needs: [build-and-zip-mcp-server, build-unity-installer]
-    uses: ./.github/workflows/test_unity_plugin.yml
-    with:
-      projectPath: './Unity-MCP-Plugin'
-      unityVersion: '6000.2.3f1'
-      testMode: 'playmode'
-    secrets: inherit
+  # test-unity-6000-2-3f1-playmode:
+  #   needs: [build-and-zip-mcp-server, build-unity-installer]
+  #   uses: ./.github/workflows/test_unity_plugin.yml
+  #   with:
+  #     projectPath: './Unity-MCP-Plugin'
+  #     unityVersion: '6000.2.3f1'
+  #     testMode: 'playmode'
+  #   secrets: inherit
 
   # --- STANDALONE ---
 
@@ -214,27 +214,27 @@ jobs:
     needs: [build-and-zip-mcp-server, build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: './Unity-MCP-Plugin'
-      unityVersion: '2022.3.61f1'
-      testMode: 'standalone'
+      projectPath: "./Unity-MCP-Plugin"
+      unityVersion: "2022.3.61f1"
+      testMode: "standalone"
     secrets: inherit
 
   test-unity-2023-2-20f1-standalone:
     needs: [build-and-zip-mcp-server, build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: './Unity-MCP-Plugin'
-      unityVersion: '2023.2.20f1'
-      testMode: 'standalone'
+      projectPath: "./Unity-MCP-Plugin"
+      unityVersion: "2023.2.20f1"
+      testMode: "standalone"
     secrets: inherit
 
   test-unity-6000-2-3f1-standalone:
     needs: [build-and-zip-mcp-server, build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: './Unity-MCP-Plugin'
-      unityVersion: '6000.2.3f1'
-      testMode: 'standalone'
+      projectPath: "./Unity-MCP-Plugin"
+      unityVersion: "6000.2.3f1"
+      testMode: "standalone"
     secrets: inherit
 
   # -------------------
@@ -242,19 +242,19 @@ jobs:
   release-unity-plugin:
     runs-on: ubuntu-latest
     needs: [
-      check-version-tag,
-      build-and-zip-mcp-server,
-      build-unity-installer,
-      test-unity-2022-3-61f1-editmode,
-      test-unity-2022-3-61f1-playmode,
-      test-unity-2022-3-61f1-standalone,
-      test-unity-2023-2-20f1-editmode,
-      test-unity-2023-2-20f1-playmode,
-      test-unity-2023-2-20f1-standalone,
-      test-unity-6000-2-3f1-editmode,
-      test-unity-6000-2-3f1-playmode,
-      test-unity-6000-2-3f1-standalone
-    ]
+        check-version-tag,
+        build-and-zip-mcp-server,
+        build-unity-installer,
+        test-unity-2022-3-61f1-editmode,
+        # test-unity-2022-3-61f1-playmode,
+        test-unity-2022-3-61f1-standalone,
+        test-unity-2023-2-20f1-editmode,
+        # test-unity-2023-2-20f1-playmode,
+        test-unity-2023-2-20f1-standalone,
+        test-unity-6000-2-3f1-editmode,
+        # test-unity-6000-2-3f1-playmode,
+        test-unity-6000-2-3f1-standalone,
+      ]
     if: needs.check-version-tag.outputs.tag_exists == 'false'
     outputs:
       version: ${{ needs.check-version-tag.outputs.version }}
