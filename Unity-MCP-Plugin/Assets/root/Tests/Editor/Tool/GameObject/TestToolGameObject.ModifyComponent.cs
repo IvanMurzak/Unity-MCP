@@ -131,15 +131,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             yield return null;
         }
 
-        ResponseData<ResponseCallTool> ModifyByJson(string json) => RunTool("GameObject_Modify", json);
-        ResponseData<ResponseCallTool> CreateGameObjectByJson(string json) => RunTool("GameObject_Create", json);
-        void ValidateResult(ResponseData<ResponseCallTool> result)
+        ResponseData<ResponseCallTool> ModifyByJson(string json) => RunTool("gameobject-modify", json);
+        ResponseData<ResponseCallTool> CreateGameObjectByJson(string json) => RunTool("gameobject-create", json);
+        void ValidateResult(ResponseData<ResponseCallTool> result, bool shouldContainSuccessMessage = true)
         {
             Assert.IsNotNull(result);
             Assert.IsFalse(result.Status == ResponseStatus.Error, "Modification failed");
-            Assert.IsNotNull(result.Message, "Result message should not be null.");
-            Assert.IsTrue(result.Message!.Contains("[Success]"), "Result should contain success message.");
-            Assert.IsFalse(result.Message!.Contains("[Error]"), "Result should not contain error message.");
+            if (shouldContainSuccessMessage)
+            {
+                Assert.IsNotNull(result.Message, "Result message should not be null.");
+                Assert.IsTrue(result.Message!.Contains("[Success]"), "Result should contain success message.");
+                Assert.IsFalse(result.Message!.Contains("[Error]"), "Result should not contain error message.");
+            }
         }
 
         [UnityTest]
@@ -543,7 +546,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             }}";
 
             var result = CreateGameObjectByJson(json);
-            ValidateResult(result);
+            ValidateResult(result, shouldContainSuccessMessage: false);
 
             var go = new GameObjectRef() { Name = goName }.FindGameObject();
 
@@ -571,7 +574,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             }}";
 
             var result = CreateGameObjectByJson(json);
-            ValidateResult(result);
+            ValidateResult(result, shouldContainSuccessMessage: false);
 
             var go = new GameObjectRef() { Name = goName }.FindGameObject();
 
@@ -599,7 +602,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             }}";
 
             var result = CreateGameObjectByJson(json);
-            ValidateResult(result);
+            ValidateResult(result, shouldContainSuccessMessage: false);
 
             var go = new GameObjectRef() { Name = goName }.FindGameObject();
 

@@ -11,7 +11,6 @@
 #nullable enable
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Text;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using UnityEditor;
@@ -22,32 +21,55 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Assets_Delete",
-            Title = "Assets Delete"
+            "assets-delete",
+            Title = "Assets / Delete"
         )]
         [Description(@"Delete the assets at paths from the project. Does AssetDatabase.Refresh() at the end.")]
-        public string Delete
+        public DeleteAssetsResponse Delete
         (
             [Description("The paths of the assets")]
             string[] paths
         )
-        => MainThread.Instance.Run(() =>
         {
-            if (paths.Length == 0)
-                return Error.SourcePathsArrayIsEmpty();
-
-            var outFailedPaths = new List<string>();
-            var success = AssetDatabase.DeleteAssets(paths, outFailedPaths);
-            if (!success)
+            return MainThread.Instance.Run(() =>
             {
-                var stringBuilder = new StringBuilder();
-                foreach (var failedPath in outFailedPaths)
-                    stringBuilder.AppendLine($"[Error] Failed to delete asset at {failedPath}.");
-                return stringBuilder.ToString();
-            }
+                if (paths.Length == 0)
+                    throw new System.Exception(Error.SourcePathsArrayIsEmpty());
 
-            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-            return "[Success] Deleted assets at paths:\n" + string.Join("\n", paths);
-        });
+                var response = new DeleteAssetsResponse();
+                var outFailedPaths = new List<string>();
+                var success = AssetDatabase.DeleteAssets(paths, outFailedPaths);
+
+                if (!success)
+                {
+                    response.errors ??= new();
+                    foreach (var failedPath in outFailedPaths)
+                        response.errors.Add($"Failed to delete asset at {failedPath}.");
+                }
+
+                // Add successfully deleted paths
+                foreach (var path in paths)
+                {
+                    if (!outFailedPaths.Contains(path))
+                    {
+                        response.deletedPaths ??= new();
+                        response.deletedPaths.Add(path);
+                    }
+                }
+
+                AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+                UnityEditor.EditorApplication.RepaintProjectWindow();
+                UnityEditor.EditorApplication.RepaintHierarchyWindow();
+                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+
+                return response;
+            });
+        }
+
+        public class DeleteAssetsResponse
+        {
+            public List<string>? deletedPaths;
+            public List<string>? errors;
+        }
     }
 }

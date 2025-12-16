@@ -25,8 +25,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Script_Delete",
-            Title = "Delete Script content"
+            "script-delete",
+            Title = "Script / Delete"
         )]
         [Description("Delete the script file(s). Does AssetDatabase.Refresh() and waits for Unity compilation to complete before reporting results.")]
         public static ResponseCallTool Delete

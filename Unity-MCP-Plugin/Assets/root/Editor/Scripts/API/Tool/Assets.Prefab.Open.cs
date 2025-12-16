@@ -24,8 +24,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Assets_Prefab_Open",
-            Title = "Open prefab"
+            "assets-prefab-open",
+            Title = "Assets / Prefab / Open"
         )]
         [Description(@"Open prefab edit mode for a specific GameObject. In the Edit mode you can modify the prefab.
 The modification will be applied to the all instances of the prefab across the project.
@@ -59,6 +59,9 @@ Note: Please 'Close' the prefab later to exit prefab editing mode.")]
                 .GetMethod(nameof(Close))
                 .GetCustomAttribute<McpPluginToolAttribute>()
                 .Name;
+
+            UnityEditor.EditorApplication.RepaintHierarchyWindow();
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
             return @$"[Success] Prefab '{prefabStage.assetPath}' opened. Use '{name}' to close it.
 # Prefab information:

@@ -22,19 +22,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Assets_Shader_ListAll",
-            Title = "List all shader names"
+            "assets-shader-listall",
+            Title = "Assets / List Shaders"
         )]
-        [Description(@"Scans the project assets to find all shaders and to get the name from each of them. Returns the list of shader names.")]
-        public string ListAll() => MainThread.Instance.Run(() =>
+        [Description(@"List all available shaders in the project assets and packages. Returns their names.")]
+        public string[] ListAll() => MainThread.Instance.Run(() =>
         {
-            var shaderNames = ShaderUtils.GetAllShaders()
+            return ShaderUtils.GetAllShaders()
                 .Where(shader => shader != null)
                 .Select(shader => shader.name)
                 .OrderBy(name => name)
-                .ToList();
-
-            return "[Success] List of all shader names in the project:\n" + string.Join("\n", shaderNames);
+                .ToArray();
         });
     }
 }

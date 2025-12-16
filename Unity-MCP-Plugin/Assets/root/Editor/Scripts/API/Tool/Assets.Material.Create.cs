@@ -21,8 +21,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Assets_Material_Create",
-            Title = "Create Material asset"
+            "assets-material-create",
+            Title = "Assets / Create Material"
         )]
         [Description(@"Create new material asset with default parameters. Creates folders recursively if they do not exist. Provide proper 'shaderName', to find the shader, use 'Shader.Find' method.")]
         public string CreateMaterial
@@ -66,6 +66,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 name: material.name,
                 logger: McpPlugin.McpPlugin.Instance.Logger
             );
+            UnityEditor.EditorApplication.RepaintProjectWindow();
+            UnityEditor.EditorApplication.RepaintHierarchyWindow();
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
             return $"[Success] Material instanceID '{material.GetInstanceID()}' created at '{assetPath}'.\n{result}";
         });
     }

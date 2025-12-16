@@ -15,8 +15,6 @@ using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
 using com.IvanMurzak.McpPlugin;
-using com.IvanMurzak.McpPlugin.Common;
-using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
@@ -27,12 +25,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Reflection_MethodCall",
-            Title = "Call method using C# reflection"
+            "reflection-method-call",
+            Title = "Method C# / Call"
         )]
         [Description(@"Call C# method. Any method could be called, even private methods.
 It requires to receive proper method schema.
-Use 'Reflection_MethodFind' to find available method before using it.
+Use 'reflection-method-find' to find available method before using it.
 Receives input parameters and returns result.")]
         public string MethodCall
         (

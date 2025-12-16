@@ -13,6 +13,8 @@ using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.ReflectorNet;
+using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 
 namespace com.IvanMurzak.Unity.MCP.JsonConverters
@@ -43,6 +45,9 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
                     {
                         case ObjectRef.ObjectRefProperty.InstanceID:
                             assetObjectRef.InstanceID = reader.GetInt32();
+                            break;
+                        case AssetObjectRef.AssetObjectRefProperty.AssetType:
+                            assetObjectRef.AssetType = TypeUtils.GetType(reader.GetString());
                             break;
                         case AssetObjectRef.AssetObjectRefProperty.AssetPath:
                             assetObjectRef.AssetPath = reader.GetString();
@@ -77,6 +82,10 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
 
             // Write the "instanceID" property
             writer.WriteNumber(ObjectRef.ObjectRefProperty.InstanceID, value.InstanceID);
+
+            // Write the "assetType" property
+            if (value.AssetType != null)
+                writer.WriteString(AssetObjectRef.AssetObjectRefProperty.AssetType, value.AssetType.GetTypeName(pretty: true));
 
             // Write the "assetPath" property
             if (!string.IsNullOrEmpty(value.AssetPath))

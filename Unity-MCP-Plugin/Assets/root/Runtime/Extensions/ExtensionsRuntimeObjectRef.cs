@@ -28,10 +28,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
         }
         public static ObjectRef? ToObjectRef(this UnityEngine.Object? obj)
         {
-            if (obj == null)
-                return new ObjectRef();
-
-            return new ObjectRef(obj.GetInstanceID());
+            return new ObjectRef(obj);
         }
     }
 }

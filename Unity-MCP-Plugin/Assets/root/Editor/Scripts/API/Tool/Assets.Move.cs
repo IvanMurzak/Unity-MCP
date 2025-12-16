@@ -21,8 +21,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Assets_Move",
-            Title = "Assets Move"
+            "assets-move",
+            Title = "Assets / Move"
         )]
         [Description(@"Move the assets at paths in the project. Should be used for asset rename. Does AssetDatabase.Refresh() at the end.")]
         public string Move
@@ -55,6 +55,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 }
             }
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+            UnityEditor.EditorApplication.RepaintProjectWindow();
+            UnityEditor.EditorApplication.RepaintHierarchyWindow();
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
             return stringBuilder.ToString();
         });
     }

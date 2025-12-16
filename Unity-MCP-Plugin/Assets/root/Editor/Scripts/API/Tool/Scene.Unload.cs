@@ -22,10 +22,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Scene_Unload",
-            Title = "Unload scene"
+            "scene-unload",
+            Title = "Scene / Unload"
         )]
-        [Description("Destroys all GameObjects associated with the given Scene and removes the Scene from the SceneManager.")]
+        [Description("Unload scene from the Opened scenes in Unity Editor.")]
         public Task<string> Unload
         (
             [Description("Name of the loaded scene.")]
@@ -36,7 +36,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (string.IsNullOrEmpty(name))
                 return Error.SceneNameIsEmpty();
 
-            var scene = SceneUtils.GetAllLoadedScenes()
+            var scene = SceneUtils.GetAllOpenedScenes()
                 .FirstOrDefault(scene => scene.name == name);
 
             if (!scene.IsValid())
@@ -47,7 +47,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             while (!asyncOperation.isDone)
                 await Task.Yield();
 
-            return $"[Success] Scene '{name}' unloaded.\n{LoadedScenes}";
+            return $"[Success] Scene '{name}' unloaded.\n{OpenedScenesText}";
         });
     }
 }

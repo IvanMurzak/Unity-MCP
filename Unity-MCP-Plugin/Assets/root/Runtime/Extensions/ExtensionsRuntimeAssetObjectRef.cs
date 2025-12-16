@@ -116,7 +116,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
             if (obj == null)
                 return new AssetObjectRef();
 
-            return new AssetObjectRef(obj.GetInstanceID());
+            return new AssetObjectRef(obj);
         }
     }
 }

@@ -39,10 +39,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
         }
         public static GameObjectRef? ToGameObjectRef(this GameObject? obj)
         {
-            if (obj == null)
-                return new GameObjectRef();
-
-            return new GameObjectRef(obj.GetInstanceID());
+            return new GameObjectRef(obj);
         }
     }
 }

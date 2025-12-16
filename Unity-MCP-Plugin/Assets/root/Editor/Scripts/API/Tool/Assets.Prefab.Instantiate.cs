@@ -22,10 +22,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Assets_Prefab_Instantiate",
-            Title = "Instantiate prefab in the current active scene"
+            "assets-prefab-instantiate",
+            Title = "Assets / Prefab / Instantiate"
         )]
-        [Description("Instantiates prefab in a scene.")]
+        [Description("Instantiates prefab in the current active scene.")]
         public string Instantiate
         (
             [Description("Prefab asset path.")]
@@ -71,7 +71,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             var bounds = go.CalculateBounds();
 
             EditorUtility.SetDirty(go);
-            EditorApplication.RepaintHierarchyWindow();
+            UnityEditor.EditorApplication.RepaintProjectWindow();
+            UnityEditor.EditorApplication.RepaintHierarchyWindow();
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
             return $"[Success] Prefab successfully instantiated.\n{go.Print()}";
         });

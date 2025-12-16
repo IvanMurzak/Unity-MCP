@@ -9,23 +9,20 @@
 */
 
 #nullable enable
-using System.ComponentModel;
-using com.IvanMurzak.McpPlugin;
-using com.IvanMurzak.ReflectorNet.Utils;
 
-namespace com.IvanMurzak.Unity.MCP.Editor.API
+namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
-    public partial class Tool_Scene
+    /// <summary>
+    /// Utility class for loading Unity Editor assets with fallback paths.
+    /// </summary>
+    public static class EditorUtils
     {
-        [McpPluginTool
-        (
-            "Scene_GetLoaded",
-            Title = "Get list of currently loaded scenes"
-        )]
-        [Description("Returns the list of currently loaded scenes.")]
-        public string GetLoaded() => MainThread.Instance.Run(() =>
+        public static void RepaintAllEditorWindows()
         {
-            return $"[Success] " + LoadedScenes;
-        });
+            UnityEditor.EditorApplication.RepaintProjectWindow();
+            UnityEditor.EditorApplication.RepaintHierarchyWindow();
+            UnityEditor.EditorApplication.RepaintAnimationWindow();
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+        }
     }
 }

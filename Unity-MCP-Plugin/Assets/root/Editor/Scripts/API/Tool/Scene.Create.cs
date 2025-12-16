@@ -11,8 +11,8 @@
 #nullable enable
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
-using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -20,34 +20,41 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Scene_Create",
-            Title = "Create new scene"
+            "scene-create",
+            Title = "Scene / Create"
         )]
         [Description("Create new scene in the project assets.")]
-        public string Create
+        public SceneDataShallow Create
         (
-            [Description("Path to the scene file.")]
-            string path
+            [Description("Path to the scene file. Should end with \".unity\" extension.")]
+            string path,
+            UnityEditor.SceneManagement.NewSceneSetup? newSceneSetup = UnityEditor.SceneManagement.NewSceneSetup.DefaultGameObjects,
+            UnityEditor.SceneManagement.NewSceneMode? newSceneMode = UnityEditor.SceneManagement.NewSceneMode.Single
         )
-        => MainThread.Instance.Run(() =>
         {
-            if (string.IsNullOrEmpty(path))
-                return Error.ScenePathIsEmpty();
+            return MainThread.Instance.Run(() =>
+            {
+                if (string.IsNullOrEmpty(path))
+                    throw new System.Exception(Error.ScenePathIsEmpty());
 
-            if (path.EndsWith(".unity") == false)
-                return Error.FilePathMustEndsWithUnity();
+                if (!path.EndsWith(".unity"))
+                    throw new System.Exception(Error.FilePathMustEndsWithUnity());
 
-            // Create a new empty scene
-            var scene = UnityEditor.SceneManagement.EditorSceneManager.NewScene(
-                UnityEditor.SceneManagement.NewSceneSetup.DefaultGameObjects,
-                UnityEditor.SceneManagement.NewSceneMode.Single);
+                // Create a new empty scene
+                var scene = UnityEditor.SceneManagement.EditorSceneManager.NewScene(
+                    newSceneSetup ?? UnityEditor.SceneManagement.NewSceneSetup.DefaultGameObjects,
+                    newSceneMode ?? UnityEditor.SceneManagement.NewSceneMode.Single);
 
-            // Save the scene asset at the specified path
-            bool saved = UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene, path);
-            if (!saved)
-                return $"[Error] Failed to save scene at '{path}'.\n{LoadedScenes}";
+                // Save the scene asset at the specified path
+                bool saved = UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene, path);
+                if (!saved)
+                    throw new System.Exception($"Failed to save scene at '{path}'.\n{OpenedScenesText}");
 
-            return $"[Success] Scene created at '{path}'.\n{LoadedScenes}";
-        });
+                UnityEditor.EditorApplication.RepaintHierarchyWindow();
+                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+
+                return scene.ToSceneDataShallow();
+            });
+        }
     }
 }

@@ -12,7 +12,6 @@
 using System;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
-using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEditor;
@@ -23,11 +22,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Editor_SetApplicationState",
-            Title = "Set Unity Editor application state"
+            "editor-application-setstate",
+            Title = "Editor / Application / Set State"
         )]
         [Description("Control the Unity Editor application state. You can start, stop, or pause the 'playmode'.")]
-        public ResponseCallValueTool<EditorStatsData?> SetApplicationState
+        public EditorStatsData? SetApplicationState
         (
             [Description("If true, the 'playmode' will be started. If false, the 'playmode' will be stopped.")]
             bool isPlaying = false,
@@ -40,16 +39,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 if (UnityEditor.EditorUtility.scriptCompilationFailed)
                 {
                     var compilationErrorDetails = ScriptUtils.GetCompilationErrorDetails();
-                    return ResponseCallValueTool<EditorStatsData?>
-                        .Error($"Unity project has compilation error. Please fix all compilation errors before doing this operation.\n{compilationErrorDetails}");
+                    throw new Exception($"Unity project has compilation error. Please fix all compilation errors before doing this operation.\n{compilationErrorDetails}");
                 }
                 EditorApplication.isPlaying = isPlaying;
                 EditorApplication.isPaused = isPaused;
 
-                var mcpPlugin = UnityMcpPlugin.Instance.McpPluginInstance ?? throw new InvalidOperationException("MCP Plugin instance is not available.");
-                var jsonNode = mcpPlugin.McpManager.Reflector.JsonSerializer.SerializeToNode(EditorStatsData.FromEditor());
-                var jsonString = jsonNode?.ToJsonString();
-                return ResponseCallValueTool<EditorStatsData?>.SuccessStructured(jsonNode, jsonString);
+                return EditorStatsData.FromEditor();
             });
         }
     }

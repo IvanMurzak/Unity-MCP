@@ -10,8 +10,11 @@
 
 #nullable enable
 using System.ComponentModel;
+using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -19,22 +22,52 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Editor_Selection_Get",
-            Title = "Get current Selection value in Unity Editor"
+            "editor-selection-get",
+            Title = "Editor / Selection / Get"
         )]
-        [Description(@"'UnityEditor.Selection'. Access to the selection in the editor.
-Use it to get information about selected Assets or GameObjects in a scene.
-Selection.transforms - Returns the top level selection instanceIDs, excluding Prefabs.
-Selection.instanceIDs - The actual unfiltered selection from the Scene returned as instance ids instead of objects.
-Selection.gameObjects - Returns the actual game object selection. Includes Prefabs, non-modifiable objects. (Read Only)
-Selection.assetGUIDs - Returns the guids of the selected assets. (Read Only)
-Selection.activeGameObject - Returns the active game object. (The one shown in the inspector). (Read Only)
-Selection.activeInstanceID - Returns the instanceID of the actual object selection. Includes Prefabs, non-modifiable objects.
-Selection.activeObject - Returns the actual object selection. Includes Prefabs, non-modifiable objects.
-Selection.activeTransform - Returns the active transform. (The one shown in the inspector).")]
-        public string Get()
+        [Description(@"Get information about the current Selection in the Unity Editor.")]
+        public SelectionData Get(
+            bool includeGameObjects = false,
+            bool includeTransforms = false,
+            bool includeInstanceIDs = false,
+            bool includeAssetGUIDs = false,
+            bool includeActiveObject = true,
+            bool includeActiveTransform = true)
         {
-            return MainThread.Instance.Run(() => "[Success] " + SelectionPrint);
+            return MainThread.Instance.Run(() =>
+            {
+                var response = new SelectionData()
+                {
+                    activeGameObject = Selection.activeGameObject != null
+                        ? new GameObjectRef(Selection.activeGameObject)
+                        : null,
+                    activeInstanceID = Selection.activeInstanceID
+                };
+
+                if (includeGameObjects)
+                    response.gameObjects = Selection.gameObjects?.Select(go => new GameObjectRef(go)).ToArray();
+
+                if (includeTransforms)
+                    response.transforms = Selection.transforms?.Select(t => new ComponentRef(t)).ToArray();
+
+                if (includeInstanceIDs)
+                    response.instanceIDs = Selection.instanceIDs;
+
+                if (includeAssetGUIDs)
+                    response.assetGUIDs = Selection.assetGUIDs;
+
+                if (includeActiveObject)
+                    response.activeObject = Selection.activeObject != null
+                        ? new ObjectRef(Selection.activeObject)
+                        : null;
+
+                if (includeActiveTransform)
+                    response.activeTransform = Selection.activeTransform != null
+                        ? new ComponentRef(Selection.activeTransform)
+                        : null;
+
+                return response;
+            });
         }
     }
 }

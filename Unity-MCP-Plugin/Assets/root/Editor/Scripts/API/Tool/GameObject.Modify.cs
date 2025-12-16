@@ -25,10 +25,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "GameObject_Modify",
-            Title = "Modify GameObjects in opened Prefab or in a Scene"
+            "gameobject-modify",
+            Title = "GameObject / Modify"
         )]
-        [Description(@"Modify GameObjects and/or attached component's field and properties.
+        [Description(@"Modify GameObjects and/or attached component's field and properties in opened Prefab or in a Scene.
 You can modify multiple GameObjects at once. Just provide the same number of GameObject references and SerializedMember objects.")]
         public string Modify
         (
@@ -42,59 +42,66 @@ You can modify multiple GameObjects at once. Just provide the same number of Gam
                 "Check the result of this command to see what was changed. The ignored fields and properties will be listed.")]
             SerializedMemberList gameObjectDiffs
         )
-        => MainThread.Instance.Run(() =>
         {
-            if (gameObjectRefs.Count == 0)
-                return "[Error] No GameObject references provided. Please provide at least one GameObject reference.";
-
-            if (gameObjectDiffs.Count != gameObjectRefs.Count)
-                return $"[Error] The number of {nameof(gameObjectDiffs)} and {nameof(gameObjectRefs)} should be the same. " +
-                    $"{nameof(gameObjectDiffs)}: {gameObjectDiffs.Count}, {nameof(gameObjectRefs)}: {gameObjectRefs.Count}";
-
-            var stringBuilder = new StringBuilder();
-
-            for (int i = 0; i < gameObjectRefs.Count; i++)
+            return MainThread.Instance.Run(() =>
             {
+                if (gameObjectRefs.Count == 0)
+                    return "[Error] No GameObject references provided. Please provide at least one GameObject reference.";
 
-                var go = gameObjectRefs[i].FindGameObject(out var error);
-                if (error != null)
-                {
-                    stringBuilder.AppendLine($"[Error] {error}");
-                    continue;
-                }
-                if (go == null)
-                {
-                    stringBuilder.AppendLine($"[Error] GameObject by {nameof(gameObjectRefs)}[{i}] not found.");
-                    continue;
-                }
-                var objToModify = (object)go;
+                if (gameObjectDiffs.Count != gameObjectRefs.Count)
+                    return $"[Error] The number of {nameof(gameObjectDiffs)} and {nameof(gameObjectRefs)} should be the same. " +
+                        $"{nameof(gameObjectDiffs)}: {gameObjectDiffs.Count}, {nameof(gameObjectRefs)}: {gameObjectRefs.Count}";
 
-                // LLM may mistakenly provide "typeName" as a Component type when it should be a GameObject.
-                // It is fine, lets handle it gracefully.
-                var type = TypeUtils.GetType(gameObjectDiffs[i].typeName);
-                if (type != null && typeof(UnityEngine.Component).IsAssignableFrom(type))
+                var stringBuilder = new StringBuilder();
+
+                for (int i = 0; i < gameObjectRefs.Count; i++)
                 {
-                    var component = go.GetComponent(type);
-                    if (component == null)
+
+                    var go = gameObjectRefs[i].FindGameObject(out var error);
+                    if (error != null)
                     {
-                        stringBuilder.AppendLine($"[Error] Component '{type.GetTypeName(pretty: false)}' not found on GameObject '{go.name.ValueOrNull()}'.");
+                        stringBuilder.AppendLine($"[Error] {error}");
                         continue;
                     }
-                    // Switch to the component type for modification.
-                    objToModify = component;
+                    if (go == null)
+                    {
+                        stringBuilder.AppendLine($"[Error] GameObject by {nameof(gameObjectRefs)}[{i}] not found.");
+                        continue;
+                    }
+                    var objToModify = (object)go;
+
+                    // LLM may mistakenly provide "typeName" as a Component type when it should be a GameObject.
+                    // It is fine, lets handle it gracefully.
+                    var type = TypeUtils.GetType(gameObjectDiffs[i].typeName);
+                    if (type != null && typeof(UnityEngine.Component).IsAssignableFrom(type))
+                    {
+                        var component = go.GetComponent(type);
+                        if (component == null)
+                        {
+                            stringBuilder.AppendLine($"[Error] Component '{type.GetTypeName(pretty: false)}' not found on GameObject '{go.name.ValueOrNull()}'.");
+                            continue;
+                        }
+                        // Switch to the component type for modification.
+                        objToModify = component;
+                    }
+
+                    var success = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.TryPopulate(
+                        ref objToModify,
+                        data: gameObjectDiffs[i],
+                        stringBuilder: stringBuilder,
+                        logger: McpPlugin.McpPlugin.Instance.Logger);
+
+                    if (success)
+                        UnityEditor.EditorUtility.SetDirty(go);
                 }
 
-                var success = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.TryPopulate(
-                    ref objToModify,
-                    data: gameObjectDiffs[i],
-                    stringBuilder: stringBuilder,
-                    logger: McpPlugin.McpPlugin.Instance.Logger);
-            }
+                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
-            var result = stringBuilder.ToString();
-            return string.IsNullOrEmpty(result)
-                ? "[Success] No modifications were made."
-                : result;
-        });
+                var result = stringBuilder.ToString();
+                return string.IsNullOrEmpty(result)
+                    ? "[Success] No modifications were made."
+                    : result;
+            });
+        }
     }
 }

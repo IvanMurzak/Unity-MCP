@@ -24,10 +24,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Assets_Modify",
-            Title = "Modify asset file"
+            "assets-modify",
+            Title = "Assets / Modify"
         )]
-        [Description(@"Modify asset in the project. Not allowed to modify asset in 'Packages/' folder. Please modify it in 'Assets/' folder.")]
+        [Description(@"Modify asset file in the project. Not allowed to modify asset file in 'Packages/' folder. Please modify it in 'Assets/' folder.")]
         public string Modify
         (
             AssetObjectRef assetRef,
@@ -64,6 +64,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             // AssetDatabase.CreateAsset(asset, assetPath);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+            UnityEditor.EditorApplication.RepaintProjectWindow();
+            UnityEditor.EditorApplication.RepaintHierarchyWindow();
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
             return result.ToString();
 

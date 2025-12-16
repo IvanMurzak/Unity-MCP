@@ -21,8 +21,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "Assets_Prefab_Save",
-            Title = "Save prefab"
+            "assets-prefab-save",
+            Title = "Assets / Prefab / Save"
         )]
         [Description("Save a prefab. Use it when you are in prefab editing mode in Unity Editor.")]
         public string Save() => MainThread.Instance.Run(() =>
@@ -39,6 +39,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             var goName = prefabGo.name;
 
             PrefabUtility.SaveAsPrefabAsset(prefabGo, assetPath);
+
+            UnityEditor.EditorApplication.RepaintHierarchyWindow();
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
             return @$"[Success] Prefab at asset path '{assetPath}' saved. " +
                    $"Prefab with GameObject.name '{goName}'.";

@@ -18,8 +18,8 @@ using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
-using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.Extensions.Logging;
+using UnityEditor;
 using UnityEngine;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
@@ -72,9 +72,12 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                 case Type t when t == typeof(int):
                     if (material.HasInt(propertyValue.name))
                     {
-                        material.SetInt(propertyValue.name, propertyValue.GetValue<int>(reflector));
+                        var value = propertyValue.GetValue<int>(reflector);
+                        material.SetInt(propertyValue.name, value);
                         if (stringBuilder != null)
-                            stringBuilder.AppendLine($"{padding}[Success] Property '{propertyValue.name}' modified to '{propertyValue.GetValue<int>(reflector)}'. Convertor: {GetType().GetTypeShortName()}");
+                            stringBuilder.AppendLine($"{padding}[Success] Property '{propertyValue.name}' modified to '{value}'. Convertor: {GetType().GetTypeShortName()}");
+                        EditorUtility.SetDirty(material);
+                        RepaintAllEditorWindows();
                         return true;
                     }
 
@@ -86,9 +89,12 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                 case Type t when t == typeof(float):
                     if (material.HasFloat(propertyValue.name))
                     {
-                        material.SetFloat(propertyValue.name, propertyValue.GetValue<float>(reflector));
+                        var value = propertyValue.GetValue<float>(reflector);
+                        material.SetFloat(propertyValue.name, value);
                         if (stringBuilder != null)
-                            stringBuilder.AppendLine($"{padding}[Success] Property '{propertyValue.name}' modified to '{propertyValue.GetValue<float>(reflector)}'. Convertor: {GetType().GetTypeShortName()}");
+                            stringBuilder.AppendLine($"{padding}[Success] Property '{propertyValue.name}' modified to '{value}'. Convertor: {GetType().GetTypeShortName()}");
+                        EditorUtility.SetDirty(material);
+                        RepaintAllEditorWindows();
                         return true;
                     }
 
@@ -100,9 +106,12 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                 case Type t when t == typeof(Color):
                     if (material.HasColor(propertyValue.name))
                     {
-                        material.SetColor(propertyValue.name, propertyValue.GetValue<Color>(reflector));
+                        var value = propertyValue.GetValue<Color>(reflector);
+                        material.SetColor(propertyValue.name, value);
                         if (stringBuilder != null)
-                            stringBuilder.AppendLine($"{padding}[Success] Property '{propertyValue.name}' modified to '{propertyValue.GetValue<Color>(reflector)}'. Convertor: {GetType().GetTypeShortName()}");
+                            stringBuilder.AppendLine($"{padding}[Success] Property '{propertyValue.name}' modified to '{value}'. Convertor: {GetType().GetTypeShortName()}");
+                        EditorUtility.SetDirty(material);
+                        RepaintAllEditorWindows();
                         return true;
                     }
 
@@ -114,9 +123,12 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                 case Type t when t == typeof(Vector4):
                     if (material.HasVector(propertyValue.name))
                     {
-                        material.SetVector(propertyValue.name, propertyValue.GetValue<Vector4>(reflector));
+                        var value = propertyValue.GetValue<Vector4>(reflector);
+                        material.SetVector(propertyValue.name, value);
                         if (stringBuilder != null)
-                            stringBuilder.AppendLine($"{padding}[Success] Property '{propertyValue.name}' modified to '{propertyValue.GetValue<Vector4>(reflector)}'. Convertor: {GetType().GetTypeShortName()}");
+                            stringBuilder.AppendLine($"{padding}[Success] Property '{propertyValue.name}' modified to '{value}'. Convertor: {GetType().GetTypeShortName()}");
+                        EditorUtility.SetDirty(material);
+                        RepaintAllEditorWindows();
                         return true;
                     }
 
@@ -133,6 +145,8 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                         material.SetTexture(propertyValue.name, texture);
                         if (stringBuilder != null)
                             stringBuilder.AppendLine($"{padding}[Success] Property '{propertyValue.name}' modified to '{texture?.name ?? "null"}'. Convertor: {GetType().GetTypeShortName()}");
+                        EditorUtility.SetDirty(material);
+                        RepaintAllEditorWindows();
                         return true;
                     }
 
@@ -149,6 +163,13 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                         stringBuilder.AppendLine($"{padding}[Error] Property type '{propertyValue.typeName}' is not supported. Supported types are: int, float, Color, Vector4, Texture. Convertor: {GetType().GetTypeShortName()}");
                     return false;
             }
+        }
+        private static void RepaintAllEditorWindows()
+        {
+            UnityEditor.EditorApplication.RepaintProjectWindow();
+            UnityEditor.EditorApplication.RepaintHierarchyWindow();
+            UnityEditor.EditorApplication.RepaintAnimationWindow();
+            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
         }
     }
 }

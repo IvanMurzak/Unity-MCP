@@ -9,31 +9,29 @@
 */
 
 #nullable enable
-using System;
 using System.ComponentModel;
+using System.Linq;
 using com.IvanMurzak.McpPlugin;
-using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
-    public partial class Tool_Editor
+    public partial class Tool_Scene
     {
         [McpPluginTool
         (
-            "Editor_GetApplicationInformation",
-            Title = "Get Unity Editor application information"
+            "scene-listopened",
+            Title = "Scene / List Opened"
         )]
-        [Description(@"Returns available information about 'UnityEditor.EditorApplication'.
-Use it to get information about the current state of the Unity Editor application. Such as: playmode, paused state, compilation state, etc.")]
-        public ResponseCallValueTool<EditorStatsData?> GetApplicationInformation()
+        [Description("Returns the list of currently opened scenes in Unity Editor.")]
+        public SceneDataShallow[] ListOpened()
         {
             return MainThread.Instance.Run(() =>
             {
-                var mcpPlugin = UnityMcpPlugin.Instance.McpPluginInstance ?? throw new InvalidOperationException("MCP Plugin instance is not available.");
-                var jsonNode = mcpPlugin.McpManager.Reflector.JsonSerializer.SerializeToNode(EditorStatsData.FromEditor());
-                var jsonString = jsonNode?.ToJsonString();
-                return ResponseCallValueTool<EditorStatsData?>.SuccessStructured(jsonNode, jsonString);
+                return OpenedScenes
+                    .Select(scene => scene.ToSceneDataShallow())
+                    .ToArray();
             });
         }
     }

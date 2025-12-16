@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """
 MCP Tool JSON Validator using OpenAI API
-Validates MCP tool JSON files using OpenAI's API for comprehensive schema validation.
+Validates MCP tool JSON by actually injecting it into OpenAI API.
+Tests if the tool definition is accepted by OpenAI's function calling system.
+This is a real "battle test" - if OpenAI API accepts it, it's valid!
 """
 
 import json
@@ -69,9 +71,29 @@ def get_openai_client():
     return OpenAI(api_key=api_key)
 
 
+def convert_mcp_to_openai_tool(mcp_tool):
+    """
+    Convert MCP tool definition to OpenAI function calling format.
+
+    Args:
+        mcp_tool: MCP tool definition from the JSON
+
+    Returns:
+        OpenAI tool definition
+    """
+    return {
+        "type": "function",
+        "function": {
+            "name": mcp_tool.get("name", "unknown"),
+            "description": mcp_tool.get("description", ""),
+            "parameters": mcp_tool.get("inputSchema", {})
+        }
+    }
+
+
 def validate_with_openai(json_content, filename):
     """
-    Validate MCP tool JSON using OpenAI API.
+    Validate MCP tool JSON by actually injecting it into OpenAI API.
 
     Args:
         json_content: The parsed JSON content
@@ -82,77 +104,118 @@ def validate_with_openai(json_content, filename):
     """
     client = get_openai_client()
 
-    validation_prompt = """You are a JSON schema validator specializing in MCP (Model Context Protocol) tool definitions.
-
-Analyze the following MCP tool JSON and validate it thoroughly. Check for:
-
-1. **Structure Compliance**: Verify it follows the MCP tool specification format
-2. **Schema Validity**: Check if inputSchema and outputSchema are valid JSON schemas
-3. **Reference Integrity**: Verify all $ref references point to existing definitions in $defs
-4. **Type Consistency**: Ensure all type declarations are valid and consistent
-5. **Required Fields**: Check that all required fields are present
-6. **Circular References**: Detect any circular reference issues
-7. **Best Practices**: Identify any deviations from JSON schema best practices
-8. **Descriptions**: Check if important fields have helpful descriptions
-
-Respond ONLY with a JSON object in this exact format:
-{
-    "isValid": true/false,
-    "errors": [
-        {
-            "severity": "error",
-            "location": "path.to.field or line number",
-            "message": "Description of the error",
-            "suggestion": "How to fix it"
-        }
-    ],
-    "warnings": [
-        {
-            "severity": "warning",
-            "location": "path.to.field",
-            "message": "Description of the warning",
-            "suggestion": "Recommendation"
-        }
-    ],
-    "info": [
-        {
-            "severity": "info",
-            "message": "General information or best practice suggestion"
-        }
-    ],
-    "summary": "Brief summary of the validation result"
-}
-
-MCP Tool JSON to validate:
-"""
+    validation_results = {
+        "isValid": True,
+        "errors": [],
+        "warnings": [],
+        "info": [],
+        "summary": ""
+    }
 
     try:
-        print(f"{Colors.BLUE}🔍 Sending to OpenAI API for validation...{Colors.RESET}")
+        # Extract tools from MCP JSON
+        tools_list = []
+
+        # Check if it's wrapped in a result object (like the example)
+        if "result" in json_content and "tools" in json_content["result"]:
+            mcp_tools = json_content["result"]["tools"]
+        elif "tools" in json_content:
+            mcp_tools = json_content["tools"]
+        elif isinstance(json_content, list):
+            mcp_tools = json_content
+        else:
+            # Assume single tool
+            mcp_tools = [json_content]
+
+        print(f"{Colors.BLUE}🔍 Injecting {len(mcp_tools)} tool(s) into OpenAI API...{Colors.RESET}")
+
+        # Convert each MCP tool to OpenAI format
+        for i, mcp_tool in enumerate(mcp_tools):
+            try:
+                openai_tool = convert_mcp_to_openai_tool(mcp_tool)
+                tools_list.append(openai_tool)
+                print(f"{Colors.BLUE}  ├─ Tool {i+1}: {openai_tool['function']['name']}{Colors.RESET}")
+            except Exception as e:
+                validation_results["isValid"] = False
+                validation_results["errors"].append({
+                    "severity": "error",
+                    "location": f"tools[{i}]",
+                    "message": f"Failed to convert MCP tool to OpenAI format: {str(e)}",
+                    "suggestion": "Check that the tool has required fields: name, description, inputSchema"
+                })
+
+        if not tools_list:
+            validation_results["isValid"] = False
+            validation_results["errors"].append({
+                "severity": "error",
+                "location": "root",
+                "message": "No valid tools found in the JSON",
+                "suggestion": "Ensure the JSON contains a 'tools' array with tool definitions"
+            })
+            return validation_results
+
+        # Try to make a test API call with the tools to validate them
+        print(f"{Colors.BLUE}  └─ Testing with OpenAI API...{Colors.RESET}")
 
         response = client.chat.completions.create(
-            model="gpt-4o",
+            model="gpt-4o-mini",  # Use cheaper model for validation
             messages=[
                 {
-                    "role": "system",
-                    "content": "You are a precise JSON schema validator. Always respond with valid JSON only."
-                },
-                {
                     "role": "user",
-                    "content": validation_prompt + "\n```json\n" + json.dumps(json_content, indent=2) + "\n```"
+                    "content": "Hello"
                 }
             ],
-            temperature=0,
-            response_format={"type": "json_object"}
+            tools=tools_list,
+            tool_choice="none"  # Don't actually call the tools
         )
 
-        result_text = response.choices[0].message.content
-        result = json.loads(result_text)
+        # If we got here, the tools are valid!
+        validation_results["isValid"] = True
+        validation_results["summary"] = f"Successfully validated {len(tools_list)} tool(s) with OpenAI API"
+        validation_results["info"].append({
+            "severity": "info",
+            "message": f"All {len(tools_list)} tool definition(s) accepted by OpenAI API"
+        })
 
-        return result
+        # Check for missing descriptions or other best practices
+        for i, mcp_tool in enumerate(mcp_tools):
+            tool_name = mcp_tool.get("name", f"tool_{i}")
+
+            if not mcp_tool.get("description"):
+                validation_results["warnings"].append({
+                    "severity": "warning",
+                    "location": f"tools[{i}].description",
+                    "message": f"Tool '{tool_name}' is missing a description",
+                    "suggestion": "Add a description to help the AI understand when to use this tool"
+                })
+
+        return validation_results
 
     except Exception as e:
-        print(f"{Colors.RED}Error communicating with OpenAI API: {e}{Colors.RESET}")
-        return None
+        # Parse OpenAI API error for specific validation issues
+        error_message = str(e)
+
+        validation_results["isValid"] = False
+
+        # Try to extract specific error details
+        if "Invalid schema" in error_message or "invalid" in error_message.lower():
+            validation_results["errors"].append({
+                "severity": "error",
+                "location": "inputSchema",
+                "message": f"OpenAI API rejected the schema: {error_message}",
+                "suggestion": "Check that inputSchema follows JSON Schema Draft 7 specification"
+            })
+        else:
+            validation_results["errors"].append({
+                "severity": "error",
+                "location": "API call",
+                "message": f"OpenAI API error: {error_message}",
+                "suggestion": "Review the full error message and check your tool definition"
+            })
+
+        validation_results["summary"] = "Validation failed - OpenAI API rejected the tool definition"
+
+        return validation_results
 
 
 def print_validation_results(result, filename):

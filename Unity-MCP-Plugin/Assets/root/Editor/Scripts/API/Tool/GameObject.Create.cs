@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
@@ -24,12 +25,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "GameObject_Create",
-            Title = "Create a new GameObject in opened Prefab or in a Scene"
+            "gameobject-create",
+            Title = "GameObject / Create"
         )]
-        [Description(@"Create a new GameObject at specific path.
+        [Description(@"Create a new GameObject in opened Prefab or in a Scene.
 if needed - provide proper 'position', 'rotation' and 'scale' to reduce amount of operations.")]
-        public string Create
+        public GameObjectRef Create
         (
             [Description("Name of the new GameObject.")]
             string name,
@@ -43,53 +44,49 @@ if needed - provide proper 'position', 'rotation' and 'scale' to reduce amount o
             Vector3? scale = null,
             [Description("World or Local space of transform.")]
             bool isLocalSpace = false,
-            [Description("-1 - No primitive type; 0 - Cube; 1 - Sphere; 2 - Capsule; 3 - Cylinder; 4 - Plane; 5 - Quad.")]
-            int primitiveType = -1
+            PrimitiveType? primitiveType = null
         )
-        => MainThread.Instance.Run(() =>
         {
-            if (string.IsNullOrEmpty(name))
-                return Error.GameObjectNameIsEmpty();
-
-            var parentGo = default(GameObject);
-            if (parentGameObjectRef?.IsValid ?? false)
+            return MainThread.Instance.Run(() =>
             {
-                parentGo = parentGameObjectRef.FindGameObject(out var error);
-                if (error != null)
-                    return $"[Error] {error}";
-            }
+                if (string.IsNullOrEmpty(name))
+                    throw new ArgumentException(Error.GameObjectNameIsEmpty());
 
-            position ??= Vector3.zero;
-            rotation ??= Vector3.zero;
-            scale ??= Vector3.one;
+                var parentGo = default(GameObject);
+                if (parentGameObjectRef?.IsValid ?? false)
+                {
+                    parentGo = parentGameObjectRef.FindGameObject(out var error);
+                    if (error != null)
+                        throw new Exception(error);
+                }
 
-            var go = primitiveType switch
-            {
-                0 => GameObject.CreatePrimitive(PrimitiveType.Cube),
-                1 => GameObject.CreatePrimitive(PrimitiveType.Sphere),
-                2 => GameObject.CreatePrimitive(PrimitiveType.Capsule),
-                3 => GameObject.CreatePrimitive(PrimitiveType.Cylinder),
-                4 => GameObject.CreatePrimitive(PrimitiveType.Plane),
-                5 => GameObject.CreatePrimitive(PrimitiveType.Quad),
-                _ => new GameObject(name)
-            };
-            go.name = name;
+                position ??= Vector3.zero;
+                rotation ??= Vector3.zero;
+                scale ??= Vector3.one;
 
-            // Set parent if provided
-            if (parentGo != null)
-                go.transform.SetParent(parentGo.transform, false);
+                var go = primitiveType != null
+                    ? GameObject.CreatePrimitive(primitiveType.Value)
+                    : new GameObject(name);
 
-            // Set the transform properties
-            go.SetTransform(
-                position: position,
-                rotation: rotation,
-                scale: scale,
-                isLocalSpace: isLocalSpace);
+                go.name = name;
 
-            EditorUtility.SetDirty(go);
-            EditorApplication.RepaintHierarchyWindow();
+                // Set parent if provided
+                if (parentGo != null)
+                    go.transform.SetParent(parentGo.transform, false);
 
-            return $"[Success] Created GameObject.\n{go.Print()}";
-        });
+                // Set the transform properties
+                go.SetTransform(
+                    position: position,
+                    rotation: rotation,
+                    scale: scale,
+                    isLocalSpace: isLocalSpace);
+
+                EditorUtility.SetDirty(go);
+                UnityEditor.EditorApplication.RepaintHierarchyWindow();
+                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+
+                return new GameObjectRef(go);
+            });
+        }
     }
 }

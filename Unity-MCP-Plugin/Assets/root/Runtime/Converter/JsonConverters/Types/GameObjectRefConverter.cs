@@ -13,6 +13,8 @@ using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.ReflectorNet;
+using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 
 namespace com.IvanMurzak.Unity.MCP.JsonConverters
@@ -49,6 +51,9 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
                             break;
                         case GameObjectRef.GameObjectRefProperty.Name:
                             result.Name = reader.GetString();
+                            break;
+                        case AssetObjectRef.AssetObjectRefProperty.AssetType:
+                            result.AssetType = TypeUtils.GetType(reader.GetString());
                             break;
                         case AssetObjectRef.AssetObjectRefProperty.AssetPath:
                             result.AssetPath = reader.GetString();
@@ -88,6 +93,9 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
 
             if (!string.IsNullOrEmpty(value.Name))
                 writer.WriteString(GameObjectRef.GameObjectRefProperty.Name, value.Name);
+
+            if (value.AssetType != null)
+                writer.WriteString(AssetObjectRef.AssetObjectRefProperty.AssetType, value.AssetType.GetTypeName(pretty: true));
 
             if (!string.IsNullOrEmpty(value.AssetPath))
                 writer.WriteString(AssetObjectRef.AssetObjectRefProperty.AssetPath, value.AssetPath);
