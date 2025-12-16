@@ -35,30 +35,6 @@ jobs:
         with:
           tag: ${{ steps.get_version.outputs.current-version }}
 
-  # test-unity-mcp-common:
-  #   runs-on: ubuntu-latest
-  #   needs: check-version-tag
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
-
-  #     - name: Setup .NET
-  #       uses: actions/setup-dotnet@v4
-  #       with:
-  #         dotnet-version: '9.0.x'
-
-  #     - name: Restore dependencies
-  #       working-directory: Unity-MCP-Plugin/Assets/root/Unity-MCP-Common
-  #       run: dotnet restore
-
-  #     - name: Build
-  #       working-directory: Unity-MCP-Plugin/Assets/root/Unity-MCP-Common
-  #       run: dotnet build --no-restore --configuration Release
-
-  #     - name: Test
-  #       working-directory: Unity-MCP-Plugin/Assets/root/Unity-MCP-Common
-  #       run: dotnet test --no-build --verbosity normal --configuration Release
-
   build-unity-installer:
     runs-on: ubuntu-latest
     needs: [check-version-tag]
