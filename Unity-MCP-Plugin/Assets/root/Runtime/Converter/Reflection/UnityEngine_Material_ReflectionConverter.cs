@@ -25,9 +25,9 @@ using UnityEngine;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
-namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
+namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
-    public partial class UnityEngine_Material_ReflectionConvertor : UnityEngine_Object_ReflectionConvertor<Material>
+    public partial class UnityEngine_Material_ReflectionConverter : UnityEngine_Object_ReflectionConverter<Material>
     {
         const string FieldShader = "shader";
         const string FieldName = "name";
@@ -130,10 +130,10 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             if (material == null)
             {
                 if (logger?.IsEnabled(LogLevel.Error) == true)
-                    logger.LogError($"{padding}[Error] Object is not a Material. The type is {obj.GetType().GetTypeShortName()}. Convertor: {GetType().GetTypeShortName()}");
+                    logger.LogError($"{padding}[Error] Object is not a Material. The type is {obj.GetType().GetTypeName(pretty: false)}. Converter: {GetType().GetTypeShortName()}");
 
                 if (stringBuilder != null)
-                    stringBuilder.AppendLine($"{padding}[Error] Object is not a Material. The type is {obj.GetType().GetTypeShortName()}. Convertor: {GetType().GetTypeShortName()}");
+                    stringBuilder.AppendLine($"{padding}[Error] Object is not a Material. The type is {obj.GetType().GetTypeName(pretty: false)}. Converter: {GetType().GetTypeShortName()}");
 
                 return SerializedMember.FromValue(reflector, type, value: null, name: name);
             }
@@ -163,8 +163,8 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                     UnityEngine.Rendering.ShaderPropertyType.Range => material.GetFloat(propName),
                     UnityEngine.Rendering.ShaderPropertyType.Color => material.GetColor(propName),
                     UnityEngine.Rendering.ShaderPropertyType.Vector => material.GetVector(propName),
-                    UnityEngine.Rendering.ShaderPropertyType.Texture => material.GetTexture(propName)?.GetInstanceID() != null
-                        ? new ObjectRef(material.GetTexture(propName).GetInstanceID())
+                    UnityEngine.Rendering.ShaderPropertyType.Texture => material.GetTexture(propName) != null
+                        ? new ObjectRef(material.GetTexture(propName))
                         : null,
                     _ => throw new NotSupportedException($"Unsupported shader property type: '{shader.GetPropertyType(i)}'."
                         + " Supported types are: Int, Float, Range, Color, Vector, Texture.")
@@ -192,7 +192,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                     SerializedMember.FromValue(reflector, name: FieldShader, value: shader.name)
                 },
                 props = properties,
-            }.SetValue(reflector, new ObjectRef(material.GetInstanceID()));
+            }.SetValue(reflector, new ObjectRef(material));
         }
 
         public override bool TryPopulate(
@@ -271,16 +271,16 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             var padding = StringUtils.GetPadding(depth);
 
             if (logger?.IsEnabled(LogLevel.Trace) == true)
-                logger.LogTrace($"{StringUtils.GetPadding(depth)}Populate field for type='{objType.GetTypeName(pretty: true)}'. Convertor='{GetType().GetTypeShortName()}'.");
+                logger.LogTrace($"{StringUtils.GetPadding(depth)}Populate field for type='{objType.GetTypeName(pretty: true)}'. Converter='{GetType().GetTypeShortName()}'.");
 
             var material = obj as Material;
             if (material == null)
             {
                 if (logger?.IsEnabled(LogLevel.Error) == true)
-                    logger.LogError($"{padding}[Error] Object is not a Material. Convertor: {GetType().GetTypeShortName()}");
+                    logger.LogError($"{padding}[Error] Object is not a Material. Converter: {GetType().GetTypeShortName()}");
 
                 if (stringBuilder != null)
-                    stringBuilder.AppendLine($"{padding}[Error] Object is not a Material. Convertor: {GetType().GetTypeShortName()}");
+                    stringBuilder.AppendLine($"{padding}[Error] Object is not a Material. Converter: {GetType().GetTypeShortName()}");
 
                 return false;
             }
@@ -290,7 +290,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                 material.name = fieldValue.GetValue<string>(reflector);
 
                 if (logger?.IsEnabled(LogLevel.Information) == true)
-                    logger.LogInformation($"{padding}[Success] Material name set to '{material.name}'. Convertor: {GetType().GetTypeShortName()}");
+                    logger.LogInformation($"{padding}[Success] Material name set to '{material.name}'. Converter: {GetType().GetTypeShortName()}");
 
                 if (stringBuilder != null)
                     stringBuilder.AppendLine($"{padding}[Success] Material name set to '{material.name}'.");
@@ -305,7 +305,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                 if (string.IsNullOrEmpty(shaderName) || material.shader.name == shaderName)
                 {
                     if (logger?.IsEnabled(LogLevel.Information) == true)
-                        logger.LogInformation($"{padding}Material '{material.name}' shader is already set to '{shaderName}'. Convertor: {GetType().GetTypeShortName()}");
+                        logger.LogInformation($"{padding}Material '{material.name}' shader is already set to '{shaderName}'. Converter: {GetType().GetTypeShortName()}");
 
                     if (stringBuilder != null)
                         stringBuilder.AppendLine($"{padding}[Info] Material '{material.name}' shader is already set to '{shaderName}'.");
@@ -317,7 +317,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                 if (shader == null)
                 {
                     if (logger?.IsEnabled(LogLevel.Error) == true)
-                        logger.LogError($"{padding}[Error] Shader '{shaderName}' not found. Convertor: {GetType().GetTypeShortName()}");
+                        logger.LogError($"{padding}[Error] Shader '{shaderName}' not found. Converter: {GetType().GetTypeShortName()}");
 
                     if (stringBuilder != null)
                         stringBuilder.AppendLine($"{padding}[Error] Shader '{shaderName}' not found.");
@@ -328,7 +328,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                 material.shader = shader;
 
                 if (logger?.IsEnabled(LogLevel.Information) == true)
-                    logger.LogInformation($"{padding}[Success] Material '{material.name}' shader set to '{shaderName}'. Convertor: {GetType().GetTypeShortName()}");
+                    logger.LogInformation($"{padding}[Success] Material '{material.name}' shader set to '{shaderName}'. Converter: {GetType().GetTypeShortName()}");
 
                 if (stringBuilder != null)
                     stringBuilder.AppendLine($"{padding}[Success] Material '{material.name}' shader set to '{shaderName}'.");
@@ -337,10 +337,10 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             }
 
             if (logger?.IsEnabled(LogLevel.Error) == true)
-                logger.LogError($"{padding}[Error] Field '{fieldValue.name}' doesn't exist. Available fields: {string.Join(", ", AllFieldNames)}. If you need something else, please check Properties instead of Fields. Convertor: {GetType().GetTypeShortName()}");
+                logger.LogError($"{padding}[Error] Field '{fieldValue.name}' doesn't exist. Available fields: {string.Join(", ", AllFieldNames)}. If you need something else, please check Properties instead of Fields. Converter: {GetType().GetTypeShortName()}");
 
             if (stringBuilder != null)
-                stringBuilder.AppendLine($"{padding}[Error] Field '{fieldValue.name}' doesn't exist. Available fields: {string.Join(", ", AllFieldNames)}. If you need something else, please check Properties instead of Fields. Convertor: {GetType().GetTypeShortName()}");
+                stringBuilder.AppendLine($"{padding}[Error] Field '{fieldValue.name}' doesn't exist. Available fields: {string.Join(", ", AllFieldNames)}. If you need something else, please check Properties instead of Fields. Converter: {GetType().GetTypeShortName()}");
 
             return false;
         }

@@ -9,12 +9,11 @@
 */
 
 #nullable enable
-using com.IvanMurzak.McpPlugin.Common.Reflection.Convertor;
 using com.IvanMurzak.ReflectorNet;
-using com.IvanMurzak.ReflectorNet.Convertor;
+using com.IvanMurzak.ReflectorNet.Converter;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.Unity.MCP.Editor.Tests.Utils;
-using com.IvanMurzak.Unity.MCP.Reflection.Convertor;
+using com.IvanMurzak.Unity.MCP.Reflection.Converter;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using NUnit.Framework;
 using UnityEngine;
@@ -34,16 +33,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 var reflector = new Reflector();
 
                 // Match UnityMcpPlugin.CreateDefaultReflector
-                reflector.Convertors.Remove<GenericReflectionConvertor<object>>();
-                reflector.Convertors.Add(new UnityGenericReflectionConvertor<object>());
+                reflector.Converters.Remove<GenericReflectionConverter<object>>();
+                reflector.Converters.Add(new UnityGenericReflectionConverter<object>());
 
                 // Register converters in the order they are in UnityMcpPlugin.Converters.cs
                 // Assets
-                reflector.Convertors.Add(new UnityEngine_Material_ReflectionConvertor());
-                reflector.Convertors.Add(new UnityEngine_Sprite_ReflectionConvertor());
+                reflector.Converters.Add(new UnityEngine_Material_ReflectionConverter());
+                reflector.Converters.Add(new UnityEngine_Sprite_ReflectionConverter());
 
                 // Fallback
-                reflector.Convertors.Add(new UnityEngine_Object_ReflectionConvertor());
+                reflector.Converters.Add(new UnityEngine_Object_ReflectionConverter());
 
                 // Create a dummy object to populate
                 var container = new SpriteContainer();

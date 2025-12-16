@@ -15,7 +15,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using com.IvanMurzak.ReflectorNet;
-using com.IvanMurzak.ReflectorNet.Convertor;
+using com.IvanMurzak.ReflectorNet.Converter;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
@@ -23,9 +23,9 @@ using Microsoft.Extensions.Logging;
 using UnityEngine;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
-namespace com.IvanMurzak.McpPlugin.Common.Reflection.Convertor
+namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
-    public partial class UnityGenericReflectionConvertor<T> : GenericReflectionConvertor<T>
+    public partial class UnityGenericReflectionConverter<T> : GenericReflectionConverter<T>
     {
         public override IEnumerable<FieldInfo>? GetSerializableFields(Reflector reflector, Type objType, BindingFlags flags, ILogger? logger = null)
             => objType.GetFields(flags)
@@ -100,9 +100,9 @@ namespace com.IvanMurzak.McpPlugin.Common.Reflection.Convertor
             var field = objType.GetField(fieldValue.name, flags);
             if (field == null)
             {
-                logger?.LogError("{padding}Field {field} not found on {type}", padding, fieldValue.name, objType.Name);
+                logger?.LogError("{padding}Field {field} not found on {type}", padding, fieldValue.name, objType.GetTypeName(pretty: false));
                 if (stringBuilder != null)
-                    stringBuilder.AppendLine($"{padding}[Error] Field {fieldValue.name} not found on {objType.Name}");
+                    stringBuilder.AppendLine($"{padding}[Error] Field {fieldValue.name} not found on {objType.GetTypeName(pretty: false)}");
                 return false;
             }
 
@@ -134,18 +134,18 @@ namespace com.IvanMurzak.McpPlugin.Common.Reflection.Convertor
             var padding = StringUtils.GetPadding(depth);
             if (obj == null)
             {
-                logger?.LogError("{padding}obj is null in TryPopulateProperty for {property}", padding, member.name);
+                logger?.LogError("{padding}obj is null in TryPopulateProperty for '{property}'", padding, member.name);
                 if (stringBuilder != null)
-                    stringBuilder.AppendLine($"{padding}[Error] obj is null in TryPopulateProperty for {member.name}");
+                    stringBuilder.AppendLine($"{padding}[Error] obj is null in TryPopulateProperty for '{member.name}'");
                 return false;
             }
 
             var property = objType.GetProperty(member.name, flags);
             if (property == null || !property.CanWrite)
             {
-                logger?.LogError("{padding}Property {property} not found or not writable on {type}", padding, member.name, objType.Name);
+                logger?.LogError("{padding}Property '{property}' not found or not writable on '{type}'", padding, member.name, objType.GetTypeName(pretty: false));
                 if (stringBuilder != null)
-                    stringBuilder.AppendLine($"{padding}[Error] Property {member.name} not found or not writable on {objType.Name}");
+                    stringBuilder.AppendLine($"{padding}[Error] Property '{member.name}' not found or not writable on {objType.GetTypeName(pretty: false)}");
                 return false;
             }
 
@@ -157,9 +157,9 @@ namespace com.IvanMurzak.McpPlugin.Common.Reflection.Convertor
             }
             catch (Exception e)
             {
-                logger?.LogError(e, "{padding}Failed to set property {property}", padding, member.name);
+                logger?.LogError(e, "{padding}Failed to set property '{property}'", padding, member.name);
                 if (stringBuilder != null)
-                    stringBuilder.AppendLine($"{padding}[Error] Failed to set property {member.name}: {e.Message}");
+                    stringBuilder.AppendLine($"{padding}[Error] Failed to set property '{member.name}': {e.Message}");
                 return false;
             }
         }

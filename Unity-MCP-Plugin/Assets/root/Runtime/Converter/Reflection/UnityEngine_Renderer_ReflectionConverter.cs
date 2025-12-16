@@ -11,16 +11,17 @@
 #nullable enable
 using System.Collections.Generic;
 
-namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
+namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
-    public partial class UnityEngine_MeshFilter_ReflectionConvertor : UnityEngine_Object_ReflectionConvertor<UnityEngine.MeshFilter>
+    public partial class UnityEngine_Renderer_ReflectionConverter : UnityEngine_GenericComponent_ReflectionConverter<UnityEngine.Renderer>
     {
         protected override IEnumerable<string> GetIgnoredProperties()
         {
             foreach (var property in base.GetIgnoredProperties())
                 yield return property;
 
-            yield return nameof(UnityEngine.MeshFilter.mesh);
+            yield return nameof(UnityEngine.Renderer.material);
+            yield return nameof(UnityEngine.Renderer.materials);
         }
     }
 }

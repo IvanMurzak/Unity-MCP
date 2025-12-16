@@ -95,7 +95,7 @@ Use 'gameobject-component-get' first to inspect the component structure before m
 
                 var log = stringBuilder.ToString();
                 if (!string.IsNullOrEmpty(log))
-                    response.log = log;
+                    response.logs = log.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
                 // Return updated component data
                 response.component = new ComponentDataShallow(targetComponent);
@@ -119,7 +119,7 @@ Use 'gameobject-component-get' first to inspect the component structure before m
             public ComponentDataShallow? component;
 
             [Description("Log of modifications made and any warnings/errors encountered.")]
-            public string? log;
+            public string[]? logs;
         }
     }
 }

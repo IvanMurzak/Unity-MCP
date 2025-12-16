@@ -9,12 +9,22 @@
 */
 
 #nullable enable
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using com.IvanMurzak.ReflectorNet;
+using com.IvanMurzak.ReflectorNet.Converter;
+using UnityEngine;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 
-namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
+namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
-    public partial class UnityEngine_Transform_ReflectionConvertor : UnityEngine_GenericComponent_ReflectionConvertor<UnityEngine.Transform>
+    public partial class UnityArrayReflectionConverter : ArrayReflectionConverter
     {
-        // public override bool AllowCascadeSerialize => false;
-        // public override bool AllowCascadePopulate => false;
+        public override IEnumerable<FieldInfo>? GetSerializableFields(Reflector reflector, Type objType, BindingFlags flags, ILogger? logger = null)
+            => objType.GetFields(flags)
+                .Where(field => field.GetCustomAttribute<ObsoleteAttribute>() == null)
+                .Where(field => field.IsPublic || field.IsPrivate && field.GetCustomAttribute<SerializeField>() != null);
     }
 }

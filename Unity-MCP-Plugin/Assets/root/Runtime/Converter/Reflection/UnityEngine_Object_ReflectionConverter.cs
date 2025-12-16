@@ -16,7 +16,6 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using com.IvanMurzak.McpPlugin.Common.Reflection.Convertor;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
@@ -26,10 +25,10 @@ using Microsoft.Extensions.Logging;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
-namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
+namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
-    public class UnityEngine_Object_ReflectionConvertor : UnityEngine_Object_ReflectionConvertor<UnityEngine.Object> { }
-    public partial class UnityEngine_Object_ReflectionConvertor<T> : UnityGenericReflectionConvertor<T> where T : UnityEngine.Object
+    public class UnityEngine_Object_ReflectionConverter : UnityEngine_Object_ReflectionConverter<UnityEngine.Object> { }
+    public partial class UnityEngine_Object_ReflectionConverter<T> : UnityGenericReflectionConverter<T> where T : UnityEngine.Object
     {
         public override bool AllowCascadePropertiesConversion => false;
         public override bool AllowSetValue => true;
@@ -64,7 +63,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             var unityObject = obj as T;
 
             if (!type.IsClass)
-                throw new ArgumentException($"Unsupported type: '{type.GetTypeName(pretty: false)}'. Convertor: {GetType().GetTypeShortName()}");
+                throw new ArgumentException($"Unsupported type: '{type.GetTypeName(pretty: false)}'. Converter: {GetType().GetTypeShortName()}");
 
             if (recursive)
             {
@@ -88,11 +87,11 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                         stringBuilder: stringBuilder,
                         logger: logger,
                         context: context)
-                }.SetValue(reflector, new ObjectRef(unityObject?.GetInstanceID() ?? 0));
+                }.SetValue(reflector, new ObjectRef(unityObject));
             }
             else
             {
-                var objectRef = new ObjectRef(unityObject?.GetInstanceID() ?? 0);
+                var objectRef = new ObjectRef(unityObject);
                 return SerializedMember.FromValue(reflector, type, objectRef, name);
             }
         }
@@ -259,7 +258,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                 stringBuilder.AppendLine($"{padding}[Info] SetValue called for type '{type.Name}'. Value kind: {value?.ValueKind}");
 
             if (logger?.IsEnabled(LogLevel.Trace) == true)
-                logger.LogTrace($"{padding}Set value type='{type.GetTypeName(pretty: true)}'. Convertor='{GetType().GetTypeShortName()}'.");
+                logger.LogTrace($"{padding}Set value type='{type.GetTypeName(pretty: true)}'. Converter='{GetType().GetTypeShortName()}'.");
 
             try
             {
@@ -282,10 +281,10 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             catch (Exception ex)
             {
                 if (logger?.IsEnabled(LogLevel.Error) == true)
-                    logger.LogError(ex, $"{padding}[Error] Failed to deserialize value for type '{type.GetTypeName(pretty: false)}'. Convertor: {GetType().GetTypeShortName()}. Exception: {ex.Message}");
+                    logger.LogError(ex, $"{padding}[Error] Failed to deserialize value for type '{type.GetTypeName(pretty: false)}'. Converter: {GetType().GetTypeShortName()}. Exception: {ex.Message}");
 
                 if (stringBuilder != null)
-                    stringBuilder.AppendLine($"{padding}[Error] Failed to set value for type '{type.GetTypeName(pretty: false)}'. Convertor: {GetType().GetTypeShortName()}. Exception: {ex.Message}");
+                    stringBuilder.AppendLine($"{padding}[Error] Failed to set value for type '{type.GetTypeName(pretty: false)}'. Converter: {GetType().GetTypeShortName()}. Exception: {ex.Message}");
 
                 return false;
             }
@@ -304,10 +303,23 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             var targetType = fallbackType ?? typeof(T);
             var padding = StringUtils.GetPadding(depth);
             if (logger?.IsEnabled(LogLevel.Information) == true)
-                logger.LogInformation($"{padding}[UnityEngine_Object_ReflectionConvertor] Deserialize called for {targetType.Name}. Convertor: {GetType().Name}");
+                logger.LogInformation($"{padding}[UnityEngine_Object_ReflectionConverter] Deserialize called for {targetType.GetTypeName(pretty: true)}. Converter: {GetType().GetTypeShortName()}");
 
             if (stringBuilder != null)
-                stringBuilder.AppendLine($"{padding}[Info] Deserialize called for {targetType.Name}. Convertor: {GetType().Name}");
+                stringBuilder.AppendLine($"{padding}[Info] Deserialize called for '{targetType.GetTypeName(pretty: true)}'. Converter: {GetType().GetTypeShortName()}");
+
+            if (!TryDeserializeValue(
+                reflector,
+                data: data,
+                result: out var result,
+                type: out var type,
+                fallbackType: fallbackType,
+                depth: depth,
+                stringBuilder: stringBuilder,
+                logger: logger))
+            {
+                return result;
+            }
 
             return data.valueJsonElement
                 .ToAssetObjectRef(

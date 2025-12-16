@@ -24,9 +24,9 @@ using UnityEngine;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
-namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
+namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
-    public partial class UnityEngine_Material_ReflectionConvertor : UnityEngine_Object_ReflectionConvertor<Material>
+    public partial class UnityEngine_Material_ReflectionConverter : UnityEngine_Object_ReflectionConverter<Material>
     {
         protected override bool TryPopulateProperty(
             Reflector reflector,
@@ -41,16 +41,16 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             var padding = StringUtils.GetPadding(depth);
 
             if (logger?.IsEnabled(LogLevel.Trace) == true)
-                logger.LogTrace($"{StringUtils.GetPadding(depth)}PopulateProperty property='{propertyValue.name}' type='{propertyValue.typeName}'. Convertor='{GetType().GetTypeShortName()}'.");
+                logger.LogTrace($"{StringUtils.GetPadding(depth)}PopulateProperty property='{propertyValue.name}' type='{propertyValue.typeName}'. Converter='{GetType().GetTypeShortName()}'.");
 
             var material = obj as Material;
             if (material == null)
             {
                 if (logger?.IsEnabled(LogLevel.Error) == true)
-                    logger.LogError($"{padding}Object is not a Material or is null. Convertor: {GetType().GetTypeShortName()}");
+                    logger.LogError($"{padding}Object is not a Material or is null. Converter: {GetType().GetTypeShortName()}");
 
                 if (stringBuilder != null)
-                    stringBuilder.AppendLine($"{padding}[Error] Object is not a Material or is null. Convertor: {GetType().GetTypeShortName()}");
+                    stringBuilder.AppendLine($"{padding}[Error] Object is not a Material or is null. Converter: {GetType().GetTypeShortName()}");
 
                 return false;
             }
@@ -59,10 +59,10 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
             if (propType == null)
             {
                 if (logger?.IsEnabled(LogLevel.Error) == true)
-                    logger.LogError($"{padding}Property type '{propertyValue.typeName}' not found. Convertor: {GetType().GetTypeShortName()}");
+                    logger.LogError($"{padding}Property type '{propertyValue.typeName}' not found. Converter: {GetType().GetTypeShortName()}");
 
                 if (stringBuilder != null)
-                    stringBuilder.AppendLine($"{padding}[Error] Property type '{propertyValue.typeName}' not found. Convertor: {GetType().GetTypeShortName()}");
+                    stringBuilder.AppendLine($"{padding}[Error] Property type '{propertyValue.typeName}' not found. Converter: {GetType().GetTypeShortName()}");
 
                 return false;
             }
@@ -75,14 +75,14 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                         var value = propertyValue.GetValue<int>(reflector);
                         material.SetInt(propertyValue.name, value);
                         if (stringBuilder != null)
-                            stringBuilder.AppendLine($"{padding}[Success] Property '{propertyValue.name}' modified to '{value}'. Convertor: {GetType().GetTypeShortName()}");
+                            stringBuilder.AppendLine($"{padding}[Success] Property '{propertyValue.name}' modified to '{value}'. Converter: {GetType().GetTypeShortName()}");
                         EditorUtility.SetDirty(material);
                         RepaintAllEditorWindows();
                         return true;
                     }
 
                     if (stringBuilder != null)
-                        stringBuilder.AppendLine($"{padding}[Error] Property '{propertyValue.name}' not found. Convertor: {GetType().GetTypeShortName()}");
+                        stringBuilder.AppendLine($"{padding}[Error] Property '{propertyValue.name}' not found. Converter: {GetType().GetTypeShortName()}");
 
                     return false;
 
@@ -92,14 +92,14 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                         var value = propertyValue.GetValue<float>(reflector);
                         material.SetFloat(propertyValue.name, value);
                         if (stringBuilder != null)
-                            stringBuilder.AppendLine($"{padding}[Success] Property '{propertyValue.name}' modified to '{value}'. Convertor: {GetType().GetTypeShortName()}");
+                            stringBuilder.AppendLine($"{padding}[Success] Property '{propertyValue.name}' modified to '{value}'. Converter: {GetType().GetTypeShortName()}");
                         EditorUtility.SetDirty(material);
                         RepaintAllEditorWindows();
                         return true;
                     }
 
                     if (stringBuilder != null)
-                        stringBuilder.AppendLine($"{padding}[Error] Property '{propertyValue.name}' not found. Convertor: {GetType().GetTypeShortName()}");
+                        stringBuilder.AppendLine($"{padding}[Error] Property '{propertyValue.name}' not found. Converter: {GetType().GetTypeShortName()}");
 
                     return false;
 
@@ -109,14 +109,14 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                         var value = propertyValue.GetValue<Color>(reflector);
                         material.SetColor(propertyValue.name, value);
                         if (stringBuilder != null)
-                            stringBuilder.AppendLine($"{padding}[Success] Property '{propertyValue.name}' modified to '{value}'. Convertor: {GetType().GetTypeShortName()}");
+                            stringBuilder.AppendLine($"{padding}[Success] Property '{propertyValue.name}' modified to '{value}'. Converter: {GetType().GetTypeShortName()}");
                         EditorUtility.SetDirty(material);
                         RepaintAllEditorWindows();
                         return true;
                     }
 
                     if (stringBuilder != null)
-                        stringBuilder.AppendLine($"{padding}[Error] Property '{propertyValue.name}' not found. Convertor: {GetType().GetTypeShortName()}");
+                        stringBuilder.AppendLine($"{padding}[Error] Property '{propertyValue.name}' not found. Converter: {GetType().GetTypeShortName()}");
 
                     return false;
 
@@ -126,14 +126,14 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                         var value = propertyValue.GetValue<Vector4>(reflector);
                         material.SetVector(propertyValue.name, value);
                         if (stringBuilder != null)
-                            stringBuilder.AppendLine($"{padding}[Success] Property '{propertyValue.name}' modified to '{value}'. Convertor: {GetType().GetTypeShortName()}");
+                            stringBuilder.AppendLine($"{padding}[Success] Property '{propertyValue.name}' modified to '{value}'. Converter: {GetType().GetTypeShortName()}");
                         EditorUtility.SetDirty(material);
                         RepaintAllEditorWindows();
                         return true;
                     }
 
                     if (stringBuilder != null)
-                        stringBuilder.AppendLine($"{padding}[Error] Property '{propertyValue.name}' not found. Convertor: {GetType().GetTypeShortName()}");
+                        stringBuilder.AppendLine($"{padding}[Error] Property '{propertyValue.name}' not found. Converter: {GetType().GetTypeShortName()}");
 
                     return false;
 
@@ -144,23 +144,23 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Convertor
                         var texture = objTexture as Texture;
                         material.SetTexture(propertyValue.name, texture);
                         if (stringBuilder != null)
-                            stringBuilder.AppendLine($"{padding}[Success] Property '{propertyValue.name}' modified to '{texture?.name ?? "null"}'. Convertor: {GetType().GetTypeShortName()}");
+                            stringBuilder.AppendLine($"{padding}[Success] Property '{propertyValue.name}' modified to '{texture?.name ?? "null"}'. Converter: {GetType().GetTypeShortName()}");
                         EditorUtility.SetDirty(material);
                         RepaintAllEditorWindows();
                         return true;
                     }
 
                     if (stringBuilder != null)
-                        stringBuilder.AppendLine($"{padding}[Error] Property '{propertyValue.name}' not found. Convertor: {GetType().GetTypeShortName()}");
+                        stringBuilder.AppendLine($"{padding}[Error] Property '{propertyValue.name}' not found. Converter: {GetType().GetTypeShortName()}");
 
                     return false;
 
                 default:
                     if (logger?.IsEnabled(LogLevel.Error) == true)
-                        logger.LogError($"{padding}Property type '{propertyValue.typeName}' is not supported. Supported types are: int, float, Color, Vector4, Texture. Convertor: {GetType().GetTypeShortName()}");
+                        logger.LogError($"{padding}Property type '{propertyValue.typeName}' is not supported. Supported types are: int, float, Color, Vector4, Texture. Converter: {GetType().GetTypeShortName()}");
 
                     if (stringBuilder != null)
-                        stringBuilder.AppendLine($"{padding}[Error] Property type '{propertyValue.typeName}' is not supported. Supported types are: int, float, Color, Vector4, Texture. Convertor: {GetType().GetTypeShortName()}");
+                        stringBuilder.AppendLine($"{padding}[Error] Property type '{propertyValue.typeName}' is not supported. Supported types are: int, float, Color, Vector4, Texture. Converter: {GetType().GetTypeShortName()}");
                     return false;
             }
         }
