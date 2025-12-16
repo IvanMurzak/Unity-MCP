@@ -58,16 +58,15 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             var textureOrSprite = EditorUtility.InstanceIDToObject(instanceID);
             if (textureOrSprite == null) return null;
 
+            if (textureOrSprite is UnityEngine.Sprite sprite)
+                return sprite;
+
             if (textureOrSprite is UnityEngine.Texture2D texture)
             {
                 var path = AssetDatabase.GetAssetPath(texture);
                 return AssetDatabase.LoadAllAssetRepresentationsAtPath(path)
                     .OfType<UnityEngine.Sprite>()
                     .FirstOrDefault();
-            }
-            if (textureOrSprite is UnityEngine.Sprite sprite)
-            {
-                return sprite;
             }
             return null;
         }

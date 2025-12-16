@@ -12,7 +12,6 @@
 #if UNITY_EDITOR
 using System;
 using System.Linq;
-using System.Text;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
 using Microsoft.Extensions.Logging;
@@ -40,14 +39,14 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 logs: logs,
                 logger: logger);
 
-            if (result is UnityEngine.Sprite)
+            if (result is UnityEngine.Texture)
                 return baseResult;
 
-            if (result is UnityEngine.Texture texture)
+            if (result is UnityEngine.Sprite sprite)
             {
-                var path = AssetDatabase.GetAssetPath(texture);
+                var path = AssetDatabase.GetAssetPath(sprite);
                 result = AssetDatabase.LoadAllAssetRepresentationsAtPath(path)
-                    .OfType<UnityEngine.Sprite>()
+                    .OfType<UnityEngine.Texture>()
                     .FirstOrDefault();
                 return result != null;
             }
@@ -59,16 +58,15 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             var textureOrSprite = EditorUtility.InstanceIDToObject(instanceID);
             if (textureOrSprite == null) return null;
 
+            if (textureOrSprite is UnityEngine.Texture texture)
+                return texture;
+
             if (textureOrSprite is UnityEngine.Sprite sprite)
             {
                 var path = AssetDatabase.GetAssetPath(sprite);
                 return AssetDatabase.LoadAllAssetRepresentationsAtPath(path)
                     .OfType<UnityEngine.Texture>()
                     .FirstOrDefault();
-            }
-            if (textureOrSprite is UnityEngine.Texture texture)
-            {
-                return texture;
             }
             return null;
         }
