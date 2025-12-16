@@ -491,7 +491,7 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 2. **Unity Installerのビルド** - Unityパッケージインストーラー(`AI-Game-Dev-Installer.unitypackage`)をテストしてエクスポート
 3. **MCP Serverのビルド** - [build-all.sh](../../Unity-MCP-Server/build-all.sh)を使用してクロスプラットフォーム実行可能ファイル(Windows、macOS、Linux)をコンパイル
 4. **Unity Pluginのテスト** - 以下の包括的なテストを実行:
-   - 3つのUnityバージョン: `2022.3.61f1`, `2023.2.20f1`, `6000.2.3f1`
+   - 3つのUnityバージョン: `2022.3.61f1`, `2023.2.20f1`, `6000.3.1f1`
    - 3つのテストモード: `editmode`, `playmode`, `standalone`
    - 2つのオペレーティングシステム: `windows-latest`, `ubuntu-latest`
    - 合計: **18のテストマトリックスの組み合わせ**

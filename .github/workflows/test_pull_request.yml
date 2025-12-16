@@ -70,12 +70,12 @@ jobs:
       testMode: "editmode"
     secrets: inherit
 
-  test-unity-6000-2-3f1-editmode:
+  test-unity-6000-3-1f1-editmode:
     needs: [build-and-zip-mcp-server]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-MCP-Plugin"
-      unityVersion: "6000.2.3f1"
+      unityVersion: "6000.3.1f1"
       testMode: "editmode"
     secrets: inherit
 
@@ -99,12 +99,12 @@ jobs:
   #     testMode: 'playmode'
   #   secrets: inherit
 
-  # test-unity-6000-2-3f1-playmode:
+  # test-unity-6000-3-1f1-playmode:
   #   needs: [build-and-zip-mcp-server]
   #   uses: ./.github/workflows/test_unity_plugin.yml
   #   with:
   #     projectPath: './Unity-MCP-Plugin'
-  #     unityVersion: '6000.2.3f1'
+  #     unityVersion: '6000.3.1f1'
   #     testMode: 'playmode'
   #   secrets: inherit
 
@@ -128,12 +128,12 @@ jobs:
       testMode: "standalone"
     secrets: inherit
 
-  test-unity-6000-2-3f1-standalone:
+  test-unity-6000-3-1f1-standalone:
     needs: [build-and-zip-mcp-server]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-MCP-Plugin"
-      unityVersion: "6000.2.3f1"
+      unityVersion: "6000.3.1f1"
       testMode: "standalone"
     secrets: inherit
 

@@ -491,7 +491,7 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 2. **构建 Unity 安装器** - 测试并导出 Unity 包安装器(`AI-Game-Dev-Installer.unitypackage`)
 3. **构建 MCP Server** - 使用 [build-all.sh](../../Unity-MCP-Server/build-all.sh) 编译跨平台可执行文件(Windows、macOS、Linux)
 4. **Unity 插件测试** - 运行全面测试:
-   - 3 个 Unity 版本:`2022.3.61f1`、`2023.2.20f1`、`6000.2.3f1`
+   - 3 个 Unity 版本:`2022.3.61f1`、`2023.2.20f1`、`6000.3.1f1`
    - 3 种测试模式:`editmode`、`playmode`、`standalone`
    - 2 个操作系统:`windows-latest`、`ubuntu-latest`
    - 总计:**18 个测试矩阵组合**

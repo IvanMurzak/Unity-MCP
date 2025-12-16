@@ -101,7 +101,7 @@ docker run -p 8080:8080 unity-mcp-server
 Unity versions supported:
 - Unity 2022.3.61f1
 - Unity 2023.2.20f1
-- Unity 6000.2.3f1 (Unity 6)
+- Unity 6000.3.1f1 (Unity 6)
 
 The plugin is located in: `Unity-MCP-Plugin/`
 

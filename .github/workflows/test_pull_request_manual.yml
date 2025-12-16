@@ -4,29 +4,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  # test-unity-mcp-common:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
-
-  #     - name: Setup .NET
-  #       uses: actions/setup-dotnet@v4
-  #       with:
-  #         dotnet-version: '9.0.x'
-
-  #     - name: Restore dependencies
-  #       working-directory: Unity-MCP-Plugin/Assets/root/Unity-MCP-Common
-  #       run: dotnet restore
-
-  #     - name: Build
-  #       working-directory: Unity-MCP-Plugin/Assets/root/Unity-MCP-Common
-  #       run: dotnet build --no-restore --configuration Release
-
-  #     - name: Test
-  #       working-directory: Unity-MCP-Plugin/Assets/root/Unity-MCP-Common
-  #       run: dotnet test --no-build --verbosity normal --configuration Release
-
   # --- UNITY TESTS ---
   # -------------------
 
@@ -35,25 +12,25 @@ jobs:
   test-unity-2022-3-61f1-editmode:
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: './Unity-MCP-Plugin'
-      unityVersion: '2022.3.61f1'
-      testMode: 'editmode'
+      projectPath: "./Unity-MCP-Plugin"
+      unityVersion: "2022.3.61f1"
+      testMode: "editmode"
     secrets: inherit
 
   test-unity-2023-2-20f1-editmode:
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: './Unity-MCP-Plugin'
-      unityVersion: '2023.2.20f1'
-      testMode: 'editmode'
+      projectPath: "./Unity-MCP-Plugin"
+      unityVersion: "2023.2.20f1"
+      testMode: "editmode"
     secrets: inherit
 
-  test-unity-6000-2-3f1-editmode:
+  test-unity-6000-3-1f1-editmode:
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: './Unity-MCP-Plugin'
-      unityVersion: '6000.2.3f1'
-      testMode: 'editmode'
+      projectPath: "./Unity-MCP-Plugin"
+      unityVersion: "6000.3.1f1"
+      testMode: "editmode"
     secrets: inherit
 
   # --- PLAY MODE ---
@@ -61,25 +38,25 @@ jobs:
   test-unity-2022-3-61f1-playmode:
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: './Unity-MCP-Plugin'
-      unityVersion: '2022.3.61f1'
-      testMode: 'playmode'
+      projectPath: "./Unity-MCP-Plugin"
+      unityVersion: "2022.3.61f1"
+      testMode: "playmode"
     secrets: inherit
 
   test-unity-2023-2-20f1-playmode:
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: './Unity-MCP-Plugin'
-      unityVersion: '2023.2.20f1'
-      testMode: 'playmode'
+      projectPath: "./Unity-MCP-Plugin"
+      unityVersion: "2023.2.20f1"
+      testMode: "playmode"
     secrets: inherit
 
-  test-unity-6000-2-3f1-playmode:
+  test-unity-6000-3-1f1-playmode:
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: './Unity-MCP-Plugin'
-      unityVersion: '6000.2.3f1'
-      testMode: 'playmode'
+      projectPath: "./Unity-MCP-Plugin"
+      unityVersion: "6000.3.1f1"
+      testMode: "playmode"
     secrets: inherit
 
   # --- STANDALONE ---
@@ -87,25 +64,25 @@ jobs:
   test-unity-2022-3-61f1-standalone:
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: './Unity-MCP-Plugin'
-      unityVersion: '2022.3.61f1'
-      testMode: 'standalone'
+      projectPath: "./Unity-MCP-Plugin"
+      unityVersion: "2022.3.61f1"
+      testMode: "standalone"
     secrets: inherit
 
   test-unity-2023-2-20f1-standalone:
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: './Unity-MCP-Plugin'
-      unityVersion: '2023.2.20f1'
-      testMode: 'standalone'
+      projectPath: "./Unity-MCP-Plugin"
+      unityVersion: "2023.2.20f1"
+      testMode: "standalone"
     secrets: inherit
 
-  test-unity-6000-2-3f1-standalone:
+  test-unity-6000-3-1f1-standalone:
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: './Unity-MCP-Plugin'
-      unityVersion: '6000.2.3f1'
-      testMode: 'standalone'
+      projectPath: "./Unity-MCP-Plugin"
+      unityVersion: "6000.3.1f1"
+      testMode: "standalone"
     secrets: inherit
 
   # -------------------
