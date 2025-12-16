@@ -15,7 +15,7 @@
 .PARAMETER OutputDir
     Directory for test results and logs (default: ./TestResults)
 .EXAMPLE
-    .\run-unity-tests.ps1 -UnityPath "C:\Program Files\Unity\Hub\Editor\2022.3.69f1\Editor\Unity.exe"
+    .\run-unity-tests.ps1 -UnityPath "C:\Program Files\Unity\Hub\Editor\2022.3.62f3\Editor\Unity.exe"
     .\run-unity-tests.ps1 -UnityPath "C:\Unity\Editor\Unity.exe" -TestMode editmode
     .\run-unity-tests.ps1 -UnityPath "C:\Unity\Editor\Unity.exe" -TestMode all -Verbose
 #>
@@ -250,7 +250,7 @@ if (-not (Test-Path $UnityPath)) {
     Write-Error-Message "Unity.exe not found at: $UnityPath"
     Write-Host ""
     Write-Host "Please provide a valid path to Unity.exe:" -ForegroundColor Yellow
-    Write-Host "  Example: -UnityPath `"C:\Program Files\Unity\Hub\Editor\2022.3.69f1\Editor\Unity.exe`"" -ForegroundColor Gray
+    Write-Host "  Example: -UnityPath `"C:\Program Files\Unity\Hub\Editor\2022.3.62f3\Editor\Unity.exe`"" -ForegroundColor Gray
     Pop-Location
     exit 1
 }

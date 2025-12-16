@@ -52,12 +52,12 @@ jobs:
 
   # --- EDIT MODE ---
 
-  test-unity-2022-3-69f1-editmode:
+  test-unity-2022-3-62f3-editmode:
     needs: [build-and-zip-mcp-server]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-MCP-Plugin"
-      unityVersion: "2022.3.69f1"
+      unityVersion: "2022.3.62f3"
       testMode: "editmode"
     secrets: inherit
 
@@ -81,12 +81,12 @@ jobs:
 
   # --- PLAY MODE ---
 
-  # test-unity-2022-3-69f1-playmode:
+  # test-unity-2022-3-62f3-playmode:
   #   needs: [build-and-zip-mcp-server]
   #   uses: ./.github/workflows/test_unity_plugin.yml
   #   with:
   #     projectPath: './Unity-MCP-Plugin'
-  #     unityVersion: '2022.3.69f1'
+  #     unityVersion: '2022.3.62f3'
   #     testMode: 'playmode'
   #   secrets: inherit
 
@@ -110,12 +110,12 @@ jobs:
 
   # --- STANDALONE ---
 
-  test-unity-2022-3-69f1-standalone:
+  test-unity-2022-3-62f3-standalone:
     needs: [build-and-zip-mcp-server]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-MCP-Plugin"
-      unityVersion: "2022.3.69f1"
+      unityVersion: "2022.3.62f3"
       testMode: "standalone"
     secrets: inherit
 

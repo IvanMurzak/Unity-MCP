@@ -7,7 +7,7 @@
     This script reads Unity secrets from a .env file and runs the specified
     GitHub Actions workflow job using the act command with enhanced debugging capabilities.
 .PARAMETER JobName
-    The name of the job to run (default: test-unity-2022-3-69f1-standalone)
+    The name of the job to run (default: test-unity-2022-3-62f3-standalone)
 .PARAMETER WorkflowFile
     The workflow file to run (default: ./.github/workflows/test_pull_request_manual.yml)
 .PARAMETER Verbose
@@ -27,7 +27,7 @@
 #>
 
 param(
-    [string]$JobName = "test-unity-2022-3-69f1-standalone",
+    [string]$JobName = "test-unity-2022-3-62f3-standalone",
     [string]$WorkflowFile = "./.github/workflows/test_pull_request_manual.yml",
     [switch]$Verbose,
     [switch]$DryRun,

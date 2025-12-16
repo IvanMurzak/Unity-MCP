@@ -99,7 +99,7 @@ docker run -p 8080:8080 unity-mcp-server
 **CRITICAL LIMITATION**: Unity Editor is not available in standard CI environments. You cannot build, test, or run Unity projects in headless environments without Unity Editor installation.
 
 Unity versions supported:
-- Unity 2022.3.69f1
+- Unity 2022.3.62f3
 - Unity 2023.2.22f1
 - Unity 6000.3.1f1 (Unity 6)
 
