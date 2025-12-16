@@ -12,7 +12,6 @@
 #if UNITY_EDITOR
 using System;
 using System.Linq;
-using System.Text;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
 using Microsoft.Extensions.Logging;
@@ -22,17 +21,13 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
     public partial class UnityEngine_Sprite_ReflectionConverter : UnityEngine_Asset_ReflectionConverter<UnityEngine.Sprite>
     {
-        protected override bool TryDeserializeValue(Reflector reflector, SerializedMember? data, out object? result, out Type? type, Type? fallbackType = null, int depth = 0, StringBuilder? stringBuilder = null, ILogger? logger = null)
-        {
-            return base.TryDeserializeValue(reflector, data, out result, out type, fallbackType, depth, stringBuilder, logger);
-        }
         protected override bool TryDeserializeValueInternal(
             Reflector reflector,
             SerializedMember data,
             out object? result,
             Type type,
             int depth = 0,
-            StringBuilder? stringBuilder = null,
+            Logs? logs = null,
             ILogger? logger = null)
         {
             var baseResult = base.TryDeserializeValueInternal(
@@ -41,7 +36,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 result: out result,
                 type: type,
                 depth: depth,
-                stringBuilder: stringBuilder,
+                logs: logs,
                 logger: logger);
 
             if (result is UnityEngine.Sprite)

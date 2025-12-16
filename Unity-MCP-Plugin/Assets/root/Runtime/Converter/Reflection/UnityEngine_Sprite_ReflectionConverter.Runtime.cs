@@ -30,7 +30,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
         //     SerializedMember data,
         //     Type? dataType = null,
         //     int depth = 0,
-        //     StringBuilder? stringBuilder = null,
+        //     Logs? logs = null,
         //     BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
         //     ILogger? logger = null)
         // {

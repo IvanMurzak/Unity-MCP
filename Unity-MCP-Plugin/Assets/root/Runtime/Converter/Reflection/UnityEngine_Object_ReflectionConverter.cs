@@ -53,7 +53,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             bool recursive = true,
             BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
             int depth = 0,
-            StringBuilder? stringBuilder = null,
+            Logs? logs = null,
             ILogger? logger = null,
             SerializationContext? context = null)
         {
@@ -76,7 +76,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                         obj: obj,
                         flags: flags,
                         depth: depth,
-                        stringBuilder: stringBuilder,
+                        logs: logs,
                         logger: logger,
                         context: context),
                     props = SerializeProperties(
@@ -84,7 +84,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                         obj: obj,
                         flags: flags,
                         depth: depth,
-                        stringBuilder: stringBuilder,
+                        logs: logs,
                         logger: logger,
                         context: context)
                 }.SetValue(reflector, new ObjectRef(unityObject));
@@ -102,12 +102,11 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             SerializedMember data,
             Type? fallbackType = null,
             int depth = 0,
-            StringBuilder? stringBuilder = null,
+            Logs? logs = null,
             BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
             ILogger? logger = null)
         {
-            if (stringBuilder != null)
-                stringBuilder.AppendLine($"{StringUtils.GetPadding(depth)}[Info] TryPopulate called for type '{obj?.GetType().Name}'.");
+            logs?.Info($"TryPopulate called for type '{obj?.GetType().Name}'.", depth);
 
             // Trying to fix JSON value body, if critical property is missed or detected return false
             if (!FixJsonValueBody(
@@ -116,13 +115,21 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 data: data,
                 fallbackType: fallbackType,
                 depth: depth,
-                stringBuilder: stringBuilder,
+                logs: logs,
                 flags: flags,
                 logger: logger))
             {
                 return false;
             }
-            return base.TryPopulate(reflector, ref obj, data, fallbackType, depth, stringBuilder, flags, logger);
+            return base.TryPopulate(
+                reflector: reflector,
+                obj: ref obj,
+                data: data,
+                fallbackType: fallbackType,
+                depth: depth,
+                logs: logs,
+                flags: flags,
+                logger: logger);
         }
 
         protected virtual bool FixJsonValueBody(
@@ -131,7 +138,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             SerializedMember data,
             Type? fallbackType = null,
             int depth = 0,
-            StringBuilder? stringBuilder = null,
+            Logs? logs = null,
             BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
             ILogger? logger = null)
         {
@@ -160,8 +167,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                     if (logger?.IsEnabled(LogLevel.Warning) == true)
                         logger.LogWarning($"{StringUtils.GetPadding(depth)}'{knownField}' should be moved from '{SerializedMember.ValueName}'. Fixing the hierarchy automatically.");
 
-                    if (stringBuilder != null)
-                        stringBuilder.AppendLine($"{StringUtils.GetPadding(depth)}[Warning] '{knownField}' should be moved from '{SerializedMember.ValueName}'. Fixing the hierarchy automatically.");
+                    logs?.Warning($"'{knownField}' should be moved from '{SerializedMember.ValueName}'. Fixing the hierarchy automatically.", depth);
 
                     // handle known field
                     data.fields ??= new SerializedMemberList();
@@ -176,8 +182,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                     if (logger?.IsEnabled(LogLevel.Warning) == true)
                         logger.LogWarning($"{StringUtils.GetPadding(depth)}'{knownProperty}' should be moved from '{SerializedMember.ValueName}'. Fixing the hierarchy automatically.");
 
-                    if (stringBuilder != null)
-                        stringBuilder.AppendLine($"{StringUtils.GetPadding(depth)}[Warning] '{knownProperty}' should be moved from '{SerializedMember.ValueName}'. Fixing the hierarchy automatically.");
+                    logs?.Warning($"'{knownProperty}' should be moved from '{SerializedMember.ValueName}'. Fixing the hierarchy automatically.", depth);
 
                     // handle known property
                     data.props ??= new SerializedMemberList();
@@ -195,8 +200,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                         if (logger?.IsEnabled(LogLevel.Warning) == true)
                             logger.LogWarning($"{StringUtils.GetPadding(depth)}'{restrictedPropertyName}' should be moved from '{SerializedMember.ValueName}'. Fixing the hierarchy automatically.");
 
-                        if (stringBuilder != null)
-                            stringBuilder.AppendLine($"{StringUtils.GetPadding(depth)}[Warning] '{restrictedPropertyName}' should be moved from '{SerializedMember.ValueName}'. Fixing the hierarchy automatically.");
+                        logs?.Warning($"'{restrictedPropertyName}' should be moved from '{SerializedMember.ValueName}'. Fixing the hierarchy automatically.", depth);
 
                         // handle 'fields' property
                         data.fields ??= new SerializedMemberList();
@@ -208,8 +212,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                         if (logger?.IsEnabled(LogLevel.Warning) == true)
                             logger.LogWarning($"{StringUtils.GetPadding(depth)}'{restrictedPropertyName}' should be moved from '{SerializedMember.ValueName}'. Fixing the hierarchy automatically.");
 
-                        if (stringBuilder != null)
-                            stringBuilder.AppendLine($"{StringUtils.GetPadding(depth)}[Warning] '{restrictedPropertyName}' should be moved from '{SerializedMember.ValueName}'. Fixing the hierarchy automatically.");
+                        logs?.Warning($"'{restrictedPropertyName}' should be moved from '{SerializedMember.ValueName}'. Fixing the hierarchy automatically.", depth);
 
                         // handle 'props' property
                         data.props ??= new SerializedMemberList();
@@ -229,8 +232,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                         if (logger?.IsEnabled(LogLevel.Error) == true)
                             logger.LogError($"{StringUtils.GetPadding(depth)}Restricted property '{restrictedPropertyName}' found in '{SerializedMember.ValueName}'.");
 
-                        if (stringBuilder != null)
-                            stringBuilder.AppendLine($"{StringUtils.GetPadding(depth)}[Error] Restricted property '{restrictedPropertyName}' found in '{SerializedMember.ValueName}'.");
+                        logs?.Error($"Restricted property '{restrictedPropertyName}' found in '{SerializedMember.ValueName}'.", depth);
 
                         // If we found another restricted property, we need to stop processing
                         return false;
@@ -249,13 +251,12 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             Type type,
             JsonElement? value,
             int depth = 0,
-            StringBuilder? stringBuilder = null,
+            Logs? logs = null,
             ILogger? logger = null)
         {
             var padding = StringUtils.GetPadding(depth);
 
-            if (stringBuilder != null)
-                stringBuilder.AppendLine($"{padding}[Info] SetValue called for type '{type.Name}'. Value kind: {value?.ValueKind}");
+            logs?.Info($"SetValue called for type '{type.Name}'. Value kind: {value?.ValueKind}", depth);
 
             if (logger?.IsEnabled(LogLevel.Trace) == true)
                 logger.LogTrace($"{padding}Set value type='{type.GetTypeName(pretty: true)}'. Converter='{GetType().GetTypeShortName()}'.");
@@ -267,14 +268,13 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                         reflector: reflector,
                         suppressException: false,
                         depth: depth,
-                        stringBuilder: stringBuilder,
+                        logs: logs,
                         logger: logger)
                     .FindAssetObject(type);
 
                 obj = assetObj;
 
-                if (stringBuilder != null)
-                    stringBuilder.AppendLine($"{padding}[Info] SetValue success. Obj is null? {obj == null}");
+                logs?.Info($"SetValue success. Obj is null? {obj == null}", depth);
 
                 return true;
             }
@@ -283,8 +283,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 if (logger?.IsEnabled(LogLevel.Error) == true)
                     logger.LogError(ex, $"{padding}[Error] Failed to deserialize value for type '{type.GetTypeName(pretty: false)}'. Converter: {GetType().GetTypeShortName()}. Exception: {ex.Message}");
 
-                if (stringBuilder != null)
-                    stringBuilder.AppendLine($"{padding}[Error] Failed to set value for type '{type.GetTypeName(pretty: false)}'. Converter: {GetType().GetTypeShortName()}. Exception: {ex.Message}");
+                logs?.Error($"Failed to set value for type '{type.GetTypeName(pretty: false)}'. Converter: {GetType().GetTypeShortName()}. Exception: {ex.Message}", depth);
 
                 return false;
             }
@@ -296,7 +295,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             Type? fallbackType = null,
             string? fallbackName = null,
             int depth = 0,
-            StringBuilder? stringBuilder = null,
+            Logs? logs = null,
             ILogger? logger = null,
             DeserializationContext? context = null)
         {
@@ -305,8 +304,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             if (logger?.IsEnabled(LogLevel.Information) == true)
                 logger.LogInformation($"{padding}[UnityEngine_Object_ReflectionConverter] Deserialize called for {targetType.GetTypeName(pretty: true)}. Converter: {GetType().GetTypeShortName()}");
 
-            if (stringBuilder != null)
-                stringBuilder.AppendLine($"{padding}[Info] Deserialize called for '{targetType.GetTypeName(pretty: true)}'. Converter: {GetType().GetTypeShortName()}");
+            logs?.Info($"Deserialize called for '{targetType.GetTypeName(pretty: true)}'. Converter: {GetType().GetTypeShortName()}", depth);
 
             if (!TryDeserializeValue(
                 reflector,
@@ -315,7 +313,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 type: out var type,
                 fallbackType: fallbackType,
                 depth: depth,
-                stringBuilder: stringBuilder,
+                logs: logs,
                 logger: logger))
             {
                 return result;
@@ -325,7 +323,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 .ToAssetObjectRef(
                     reflector: reflector,
                     depth: depth,
-                    stringBuilder: stringBuilder,
+                    logs: logs,
                     logger: logger)
                 .FindAssetObject(targetType);
         }
@@ -335,14 +333,14 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             SerializedMember data,
             Type type,
             int depth = 0,
-            StringBuilder? stringBuilder = null,
+            Logs? logs = null,
             ILogger? logger = null)
         {
             return data.valueJsonElement
                 .ToAssetObjectRef(
                     reflector: reflector,
                     depth: depth,
-                    stringBuilder: stringBuilder,
+                    logs: logs,
                     logger: logger)
                 .FindAssetObject(type);
         }

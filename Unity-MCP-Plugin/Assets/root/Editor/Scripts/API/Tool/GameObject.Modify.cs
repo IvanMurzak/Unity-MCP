@@ -52,7 +52,7 @@ You can modify multiple GameObjects at once. Just provide the same number of Gam
                     return $"[Error] The number of {nameof(gameObjectDiffs)} and {nameof(gameObjectRefs)} should be the same. " +
                         $"{nameof(gameObjectDiffs)}: {gameObjectDiffs.Count}, {nameof(gameObjectRefs)}: {gameObjectRefs.Count}";
 
-                var stringBuilder = new StringBuilder();
+                var logs = new Logs();
 
                 for (int i = 0; i < gameObjectRefs.Count; i++)
                 {
@@ -60,12 +60,12 @@ You can modify multiple GameObjects at once. Just provide the same number of Gam
                     var go = gameObjectRefs[i].FindGameObject(out var error);
                     if (error != null)
                     {
-                        stringBuilder.AppendLine($"[Error] {error}");
+                        logs.Error(error);
                         continue;
                     }
                     if (go == null)
                     {
-                        stringBuilder.AppendLine($"[Error] GameObject by {nameof(gameObjectRefs)}[{i}] not found.");
+                        logs.Error($"GameObject by {nameof(gameObjectRefs)}[{i}] not found.");
                         continue;
                     }
                     var objToModify = (object)go;
@@ -78,7 +78,7 @@ You can modify multiple GameObjects at once. Just provide the same number of Gam
                         var component = go.GetComponent(type);
                         if (component == null)
                         {
-                            stringBuilder.AppendLine($"[Error] Component '{type.GetTypeName(pretty: false)}' not found on GameObject '{go.name.ValueOrNull()}'.");
+                            logs.Error($"Component '{type.GetTypeName(pretty: false)}' not found on GameObject '{go.name.ValueOrNull()}'.");
                             continue;
                         }
                         // Switch to the component type for modification.
@@ -88,7 +88,7 @@ You can modify multiple GameObjects at once. Just provide the same number of Gam
                     var success = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.TryPopulate(
                         ref objToModify,
                         data: gameObjectDiffs[i],
-                        stringBuilder: stringBuilder,
+                        logs: logs,
                         logger: McpPlugin.McpPlugin.Instance.Logger);
 
                     if (success)
@@ -97,10 +97,10 @@ You can modify multiple GameObjects at once. Just provide the same number of Gam
 
                 UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
-                var result = stringBuilder.ToString();
-                return string.IsNullOrEmpty(result)
-                    ? "[Success] No modifications were made."
-                    : result;
+                if (logs.Count == 0)
+                    logs.Warning("No modifications were made.");
+
+                return logs.ToString();
             });
         }
     }

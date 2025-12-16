@@ -99,17 +99,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             serialized.SetPropertyValue(reflector, "_Color", colorValue);
 
             var objMaterial = (object)material;
-            var stringBuilder = new StringBuilder();
+            var logs = new ReflectorNet.Model.Logs();
             reflector.TryPopulate(
                 ref objMaterial,
                 data: serialized,
-                stringBuilder: stringBuilder,
+                logs: logs,
                 logger: McpPlugin.McpPlugin.Instance.Logger);
 
             Assert.AreEqual(glossinessValue, material.GetFloat("_Glossiness"), 0.001f, $"Material property '_Glossiness' should be {glossinessValue}.");
             Assert.AreEqual(colorValue, material.GetColor("_Color"), $"Material property '_Glossiness' should be {glossinessValue}.");
 
-            var stringResult = stringBuilder.ToString();
+            var stringResult = logs.ToString();
 
             Assert.IsTrue(stringResult.Contains("[Success]"), $"String result should contain '[Success]'. Result: {stringResult}");
             Assert.IsFalse(stringResult.Contains("[Error]"), $"String result should not contain '[Error]'. Result: {stringResult}");

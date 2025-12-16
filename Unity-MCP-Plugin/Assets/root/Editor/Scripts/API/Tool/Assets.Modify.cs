@@ -10,7 +10,6 @@
 
 #nullable enable
 using System.ComponentModel;
-using System.Text;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
@@ -50,12 +49,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             content.valueJsonElement.SetProperty(ObjectRef.ObjectRefProperty.InstanceID, asset.GetInstanceID());
 
             var obj = (object)asset;
-            var result = new StringBuilder();
+            var logs = new Logs();
 
             var success = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.TryPopulate(
                 ref obj,
                 data: content,
-                stringBuilder: result,
+                logs: logs,
                 logger: McpPlugin.McpPlugin.Instance.Logger);
 
             if (success)
@@ -68,7 +67,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             UnityEditor.EditorApplication.RepaintHierarchyWindow();
             UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
-            return result.ToString();
+            return logs.ToString();
 
             //             var instanceID = asset.GetInstanceID();
             //             return @$"[Success] Loaded asset.

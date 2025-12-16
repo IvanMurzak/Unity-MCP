@@ -28,7 +28,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             out object? result,
             Type type,
             int depth = 0,
-            StringBuilder? stringBuilder = null,
+            Logs? logs = null,
             ILogger? logger = null)
         {
             var baseResult = base.TryDeserializeValueInternal(
@@ -37,7 +37,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 result: out result,
                 type: type,
                 depth: depth,
-                stringBuilder: stringBuilder,
+                logs: logs,
                 logger: logger);
 
             if (result is UnityEngine.Sprite)

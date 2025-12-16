@@ -31,7 +31,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             Type objType,
             SerializedMember propertyValue,
             int depth = 0,
-            StringBuilder? stringBuilder = null,
+            Logs? logs = null,
             BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance,
             ILogger? logger = null)
         {

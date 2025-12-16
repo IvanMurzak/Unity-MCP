@@ -32,7 +32,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
         //     bool recursive = true,
         //     BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
         //     int depth = 0,
-        //     StringBuilder? stringBuilder = null,
+        //     Logs? logs = null,
         //     ILogger? logger = null,
         //     SerializationContext? context = null)
         // {
@@ -53,7 +53,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
         //         recursive: recursive,
         //         flags: flags,
         //         depth: depth,
-        //         stringBuilder: stringBuilder,
+        //         logs: logs,
         //         logger: logger,
         //         context: context);
         // }

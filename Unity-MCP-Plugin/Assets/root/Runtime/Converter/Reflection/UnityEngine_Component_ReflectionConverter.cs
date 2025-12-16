@@ -36,14 +36,14 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             SerializedMember data,
             Type type,
             int depth = 0,
-            StringBuilder? stringBuilder = null,
+            Logs? logs = null,
             ILogger? logger = null)
         {
             return data.valueJsonElement
                 .ToObjectRef(
                     reflector: reflector,
                     depth: depth,
-                    stringBuilder: stringBuilder,
+                    logs: logs,
                     logger: logger)
                 .FindObject() as UnityEngine.Component;
         }
