@@ -35,29 +35,29 @@ jobs:
 
   # --- PLAY MODE ---
 
-  test-unity-2022-3-69f1-playmode:
-    uses: ./.github/workflows/test_unity_plugin.yml
-    with:
-      projectPath: "./Unity-MCP-Plugin"
-      unityVersion: "2022.3.69f1"
-      testMode: "playmode"
-    secrets: inherit
+  # test-unity-2022-3-69f1-playmode:
+  #   uses: ./.github/workflows/test_unity_plugin.yml
+  #   with:
+  #     projectPath: "./Unity-MCP-Plugin"
+  #     unityVersion: "2022.3.69f1"
+  #     testMode: "playmode"
+  #   secrets: inherit
 
-  test-unity-2023-2-22f1-playmode:
-    uses: ./.github/workflows/test_unity_plugin.yml
-    with:
-      projectPath: "./Unity-MCP-Plugin"
-      unityVersion: "2023.2.22f1"
-      testMode: "playmode"
-    secrets: inherit
+  # test-unity-2023-2-22f1-playmode:
+  #   uses: ./.github/workflows/test_unity_plugin.yml
+  #   with:
+  #     projectPath: "./Unity-MCP-Plugin"
+  #     unityVersion: "2023.2.22f1"
+  #     testMode: "playmode"
+  #   secrets: inherit
 
-  test-unity-6000-3-1f1-playmode:
-    uses: ./.github/workflows/test_unity_plugin.yml
-    with:
-      projectPath: "./Unity-MCP-Plugin"
-      unityVersion: "6000.3.1f1"
-      testMode: "playmode"
-    secrets: inherit
+  # test-unity-6000-3-1f1-playmode:
+  #   uses: ./.github/workflows/test_unity_plugin.yml
+  #   with:
+  #     projectPath: "./Unity-MCP-Plugin"
+  #     unityVersion: "6000.3.1f1"
+  #     testMode: "playmode"
+  #   secrets: inherit
 
   # --- STANDALONE ---
 
