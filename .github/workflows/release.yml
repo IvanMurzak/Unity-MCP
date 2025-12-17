@@ -132,7 +132,7 @@ jobs:
     needs: [build-and-zip-mcp-server, build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: "./Unity-MCP-Plugin"
+      projectPath: "./Unity-Tests/2022.3.62f3"
       unityVersion: "2022.3.62f3"
       testMode: "editmode"
     secrets: inherit
@@ -141,7 +141,7 @@ jobs:
     needs: [build-and-zip-mcp-server, build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: "./Unity-MCP-Plugin"
+      projectPath: "./Unity-Tests/2023.2.22f1"
       unityVersion: "2023.2.22f1"
       testMode: "editmode"
     secrets: inherit
@@ -150,7 +150,7 @@ jobs:
     needs: [build-and-zip-mcp-server, build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: "./Unity-MCP-Plugin"
+      projectPath: "./Unity-Tests/6000.3.1f1"
       unityVersion: "6000.3.1f1"
       testMode: "editmode"
     secrets: inherit
@@ -161,7 +161,7 @@ jobs:
   #   needs: [build-and-zip-mcp-server, build-unity-installer]
   #   uses: ./.github/workflows/test_unity_plugin.yml
   #   with:
-  #     projectPath: './Unity-MCP-Plugin'
+  #     projectPath: './Unity-Tests/2022.3.62f3'
   #     unityVersion: '2022.3.62f3'
   #     testMode: 'playmode'
   #   secrets: inherit
@@ -170,7 +170,7 @@ jobs:
   #   needs: [build-and-zip-mcp-server, build-unity-installer]
   #   uses: ./.github/workflows/test_unity_plugin.yml
   #   with:
-  #     projectPath: './Unity-MCP-Plugin'
+  #     projectPath: './Unity-Tests/2023.2.22f1'
   #     unityVersion: '2023.2.22f1'
   #     testMode: 'playmode'
   #   secrets: inherit
@@ -179,7 +179,7 @@ jobs:
   #   needs: [build-and-zip-mcp-server, build-unity-installer]
   #   uses: ./.github/workflows/test_unity_plugin.yml
   #   with:
-  #     projectPath: './Unity-MCP-Plugin'
+  #     projectPath: './Unity-Tests/6000.3.1f1'
   #     unityVersion: '6000.3.1f1'
   #     testMode: 'playmode'
   #   secrets: inherit

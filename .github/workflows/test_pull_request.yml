@@ -1,6 +1,7 @@
 name: test-pull-request
 
 on:
+  workflow_dispatch:
   pull_request:
     branches: [main, dev]
     types: [opened, synchronize, reopened]
@@ -24,29 +25,6 @@ jobs:
         shell: bash {0}
         run: cd Unity-MCP-Server && ./build-all.sh Release
 
-  # test-unity-mcp-common:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
-
-  #     - name: Setup .NET
-  #       uses: actions/setup-dotnet@v4
-  #       with:
-  #         dotnet-version: '9.0.x'
-
-  #     - name: Restore dependencies
-  #       working-directory: Unity-MCP-Plugin/Assets/root/Unity-MCP-Common
-  #       run: dotnet restore
-
-  #     - name: Build
-  #       working-directory: Unity-MCP-Plugin/Assets/root/Unity-MCP-Common
-  #       run: dotnet build --no-restore --configuration Release
-
-  #     - name: Test
-  #       working-directory: Unity-MCP-Plugin/Assets/root/Unity-MCP-Common
-  #       run: dotnet test --no-build --verbosity normal --configuration Release
-
   # --- UNITY TESTS ---
   # -------------------
 
@@ -56,7 +34,7 @@ jobs:
     needs: [build-and-zip-mcp-server]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: "./Unity-MCP-Plugin"
+      projectPath: "./Unity-Tests/2022.3.62f3"
       unityVersion: "2022.3.62f3"
       testMode: "editmode"
     secrets: inherit
@@ -65,7 +43,7 @@ jobs:
     needs: [build-and-zip-mcp-server]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: "./Unity-MCP-Plugin"
+      projectPath: "./Unity-Tests/2023.2.22f1"
       unityVersion: "2023.2.22f1"
       testMode: "editmode"
     secrets: inherit
@@ -74,7 +52,7 @@ jobs:
     needs: [build-and-zip-mcp-server]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: "./Unity-MCP-Plugin"
+      projectPath: "./Unity-Tests/6000.3.1f1"
       unityVersion: "6000.3.1f1"
       testMode: "editmode"
     secrets: inherit
@@ -85,7 +63,7 @@ jobs:
   #   needs: [build-and-zip-mcp-server]
   #   uses: ./.github/workflows/test_unity_plugin.yml
   #   with:
-  #     projectPath: './Unity-MCP-Plugin'
+  #     projectPath: './Unity-Tests/2022.3.62f3'
   #     unityVersion: '2022.3.62f3'
   #     testMode: 'playmode'
   #   secrets: inherit
@@ -94,7 +72,7 @@ jobs:
   #   needs: [build-and-zip-mcp-server]
   #   uses: ./.github/workflows/test_unity_plugin.yml
   #   with:
-  #     projectPath: './Unity-MCP-Plugin'
+  #     projectPath: './Unity-Tests/2023.2.22f1'
   #     unityVersion: '2023.2.22f1'
   #     testMode: 'playmode'
   #   secrets: inherit
@@ -103,7 +81,7 @@ jobs:
   #   needs: [build-and-zip-mcp-server]
   #   uses: ./.github/workflows/test_unity_plugin.yml
   #   with:
-  #     projectPath: './Unity-MCP-Plugin'
+  #     projectPath: './Unity-Tests/6000.3.1f1'
   #     unityVersion: '6000.3.1f1'
   #     testMode: 'playmode'
   #   secrets: inherit
@@ -114,7 +92,7 @@ jobs:
     needs: [build-and-zip-mcp-server]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: "./Unity-MCP-Plugin"
+      projectPath: "./Unity-Tests/2022.3.62f3"
       unityVersion: "2022.3.62f3"
       testMode: "standalone"
     secrets: inherit
@@ -123,7 +101,7 @@ jobs:
     needs: [build-and-zip-mcp-server]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: "./Unity-MCP-Plugin"
+      projectPath: "./Unity-Tests/2023.2.22f1"
       unityVersion: "2023.2.22f1"
       testMode: "standalone"
     secrets: inherit
@@ -132,7 +110,7 @@ jobs:
     needs: [build-and-zip-mcp-server]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: "./Unity-MCP-Plugin"
+      projectPath: "./Unity-Tests/6000.3.1f1"
       unityVersion: "6000.3.1f1"
       testMode: "standalone"
     secrets: inherit
