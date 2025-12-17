@@ -58,27 +58,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
                 var spriteMember = new SerializedMember
                 {
-                    name = "spriteField",
-                    typeName = typeof(Sprite).AssemblyQualifiedName,
+                    name = nameof(SpriteContainer.spriteField),
+                    typeName = typeof(Sprite).GetTypeId(), // typeof(Sprite).AssemblyQualifiedName,
                     valueJsonElement = jsonElement
                 };
 
                 var spritePropertyMember = new SerializedMember
                 {
-                    name = "spriteProperty",
-                    typeName = typeof(Sprite).AssemblyQualifiedName,
+                    name = nameof(SpriteContainer.spriteProperty),
+                    typeName = typeof(Sprite).GetTypeId(), // typeof(Sprite).AssemblyQualifiedName,
                     valueJsonElement = jsonElement
+                };
+
+                var data = new SerializedMember
+                {
+                    typeName = typeof(SpriteContainer).GetTypeId(), // typeof(SpriteContainer).AssemblyQualifiedName,
+                    fields = new SerializedMemberList { spriteMember },
+                    props = new SerializedMemberList { spritePropertyMember }
                 };
 
                 // Try to populate
                 object? obj = container;
-
-                var result = reflector.TryPopulate(ref obj, new SerializedMember
-                {
-                    typeName = typeof(SpriteContainer).AssemblyQualifiedName,
-                    fields = new SerializedMemberList { spriteMember },
-                    props = new SerializedMemberList { spritePropertyMember }
-                });
+                var result = reflector.TryPopulate(ref obj, data);
 
                 Assert.IsTrue(result, "Population should succeed");
 

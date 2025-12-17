@@ -95,7 +95,7 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
                 writer.WriteString(GameObjectRef.GameObjectRefProperty.Name, value.Name);
 
             if (value.AssetType != null)
-                writer.WriteString(AssetObjectRef.AssetObjectRefProperty.AssetType, value.AssetType.GetTypeName(pretty: true));
+                writer.WriteString(AssetObjectRef.AssetObjectRefProperty.AssetType, value.AssetType.GetTypeId());
 
             if (!string.IsNullOrEmpty(value.AssetPath))
                 writer.WriteString(AssetObjectRef.AssetObjectRefProperty.AssetPath, value.AssetPath);

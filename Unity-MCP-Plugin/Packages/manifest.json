@@ -1,10 +1,9 @@
 {
   "dependencies": {
     "com.unity.ide.visualstudio": "2.0.25",
-    "com.unity.postprocessing": "3.4.0",
-    "com.unity.render-pipelines.universal": "14.0.12",
+    "com.unity.postprocessing": "3.5.1",
+    "com.unity.render-pipelines.universal": "17.3.0",
     "com.unity.test-framework": "1.1.33",
-    "com.unity.toolchain.win-x86_64-linux-x86_64": "2.0.11",
     "extensions.unity.playerprefsex": "2.0.2",
     "org.nuget.microsoft.aspnetcore.signalr.client": "10.0.1",
     "org.nuget.microsoft.aspnetcore.signalr.protocols.json": "10.0.1",

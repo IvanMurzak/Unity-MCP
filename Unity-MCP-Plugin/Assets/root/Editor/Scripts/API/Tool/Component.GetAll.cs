@@ -33,7 +33,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         )
         {
             var componentTypes = AllComponentTypes
-                .Select(type => type.GetTypeName(pretty: true));
+                .Select(type => type.GetTypeId());
 
             if (!string.IsNullOrEmpty(search))
             {

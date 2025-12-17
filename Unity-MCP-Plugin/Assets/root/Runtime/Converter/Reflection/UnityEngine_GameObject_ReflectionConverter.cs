@@ -51,6 +51,9 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             yield return nameof(UnityEngine.GameObject.gameObject);
             yield return nameof(UnityEngine.GameObject.transform);
             yield return nameof(UnityEngine.GameObject.scene);
+#if UNITY_6000_0_OR_NEWER
+            yield return nameof(UnityEngine.GameObject.transformHandle);
+#endif
         }
         protected override SerializedMember InternalSerialize(
             Reflector reflector,
@@ -72,7 +75,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 return new SerializedMember()
                 {
                     name = name,
-                    typeName = type.FullName,
+                    typeName = type.GetTypeId(),
                     fields = SerializeFields(
                         reflector,
                         obj: obj,
@@ -154,7 +157,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             var padding = StringUtils.GetPadding(depth);
 
             if (logger?.IsEnabled(LogLevel.Trace) == true)
-                logger.LogTrace($"{padding}Set value type='{type.GetTypeName(pretty: true)}'. Converter='{GetType().GetTypeShortName()}'.");
+                logger.LogTrace($"{padding}Set value type='{type.GetTypeId()}'. Converter='{GetType().GetTypeShortName()}'.");
 
             try
             {
@@ -171,9 +174,9 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             catch (Exception ex)
             {
                 if (logger?.IsEnabled(LogLevel.Error) == true)
-                    logger.LogError(ex, $"{padding}[Error] Failed to deserialize value for type '{type.GetTypeName(pretty: false)}'. Converter: {GetType().GetTypeShortName()}. Exception: {ex.Message}");
+                    logger.LogError(ex, $"{padding}[Error] Failed to deserialize value for type '{type.GetTypeId()}'. Converter: {GetType().GetTypeShortName()}. Exception: {ex.Message}");
 
-                logs?.Error($"Failed to set value for type '{type.GetTypeName(pretty: false)}'. Converter: {GetType().GetTypeShortName()}. Exception: {ex.Message}", depth);
+                logs?.Error($"Failed to set value for type '{type.GetTypeId()}'. Converter: {GetType().GetTypeShortName()}. Exception: {ex.Message}", depth);
 
                 return false;
             }
@@ -190,7 +193,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             ILogger? logger = null)
         {
             if (logger?.IsEnabled(LogLevel.Information) == true)
-                logger.LogInformation($"[{GetType().GetTypeShortName()}] TryPopulateField called for obj type: {obj?.GetType().GetTypeName(pretty: false)}, field: {fieldValue.name}");
+                logger.LogInformation($"[{GetType().GetTypeShortName()}] TryPopulateField called for obj type: {obj?.GetType().GetTypeId()}, field: {fieldValue.name}");
 
             var padding = StringUtils.GetPadding(depth);
             var go = obj as UnityEngine.GameObject;
@@ -305,7 +308,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                     error = null;
                     return component;
                 }
-                error = $"Component of type '{typeName.GetTypeName(pretty: false)}' not found.";
+                error = $"Component of type '{typeName.GetTypeId()}' not found.";
                 return null;
             }
             error = $"No valid criteria provided to find the component. Use '{ObjectRef.ObjectRefProperty.InstanceID}', '{ComponentRef.ComponentRefProperty.Index}', or '{ComponentRef.ComponentRefProperty.TypeName}'.";

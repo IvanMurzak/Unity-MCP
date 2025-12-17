@@ -38,24 +38,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
         static void ValidateSchema(Reflector reflector, JsonNode schema, Type type)
         {
-            UnityEngine.Debug.Log($"Schema for '{type.GetTypeName(pretty: true)}': {schema}");
+            UnityEngine.Debug.Log($"Schema for '{type.GetTypeId()}': {schema}");
 
-            Assert.IsNotNull(schema, $"Schema for '{type.GetTypeName(pretty: true)}' is null");
+            Assert.IsNotNull(schema, $"Schema for '{type.GetTypeId()}' is null");
 
             Assert.IsFalse(schema.ToJsonString().Contains($"\"{JsonSchema.Error}\":"),
-                $"Schema for '{type.GetTypeName(pretty: true)}' contains {JsonSchema.Error} string");
+                $"Schema for '{type.GetTypeId()}' contains {JsonSchema.Error} string");
 
             var typeNodes = JsonSchema.FindAllProperties(schema, JsonSchema.Type);
             foreach (var typeNode in typeNodes)
             {
-                UnityEngine.Debug.Log($"Type node for '{type.GetTypeName(pretty: true)}': {typeNode}");
+                UnityEngine.Debug.Log($"Type node for '{type.GetTypeId()}': {typeNode}");
                 switch (typeNode)
                 {
                     case JsonValue value:
                         var typeValue = value.ToString();
-                        Assert.IsFalse(string.IsNullOrEmpty(typeValue), $"Type node for '{type.GetTypeName(pretty: true)}' is empty");
-                        Assert.IsFalse(typeValue == "null", $"Type node for '{type.GetTypeName(pretty: true)}' is \"null\" string");
-                        Assert.IsFalse(typeValue.Contains($"\"{JsonSchema.Error}\""), $"Type node for '{type.GetTypeName(pretty: true)}' contains error string");
+                        Assert.IsFalse(string.IsNullOrEmpty(typeValue), $"Type node for '{type.GetTypeId()}' is empty");
+                        Assert.IsFalse(typeValue == "null", $"Type node for '{type.GetTypeId()}' is \"null\" string");
+                        Assert.IsFalse(typeValue.Contains($"\"{JsonSchema.Error}\""), $"Type node for '{type.GetTypeId()}' contains error string");
                         break;
                     default:
                         if (typeNode is JsonObject typeObject)
@@ -63,7 +63,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                             if (typeObject.TryGetPropertyValue("enum", out var enumValue))
                                 continue; // Skip enum types
                         }
-                        Assert.Fail($"Unexpected type node for '{type.GetTypeName(pretty: true)}'.\nThe '{JsonSchema.Type}' node has the type '{typeNode?.GetType().GetTypeShortName()}':\n{typeNode}");
+                        Assert.Fail($"Unexpected type node for '{type.GetTypeId()}'.\nThe '{JsonSchema.Type}' node has the type '{typeNode?.GetType().GetTypeShortName()}':\n{typeNode}");
                         break;
                 }
             }

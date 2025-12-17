@@ -25,7 +25,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
         public ComponentDataShallow(UnityEngine.Component component)
         {
             instanceID = component.GetInstanceID();
-            typeName = component.GetType().GetTypeName();
+            typeName = component.GetType().GetTypeId();
             isEnabled = component is UnityEngine.Behaviour behaviour
                 ? (behaviour.enabled ? Enabled.True : Enabled.False)
                 : Enabled.NA;

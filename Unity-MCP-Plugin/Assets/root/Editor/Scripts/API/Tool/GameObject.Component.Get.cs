@@ -87,7 +87,7 @@ Use this to inspect component data before modifying it.")]
                 {
                     var serialized = reflector.Serialize(
                         obj: targetComponent,
-                        name: targetComponent.GetType().GetTypeName(pretty: true),
+                        name: targetComponent.GetType().GetTypeId(),
                         recursive: deepSerialization,
                         logger: logger
                     );
