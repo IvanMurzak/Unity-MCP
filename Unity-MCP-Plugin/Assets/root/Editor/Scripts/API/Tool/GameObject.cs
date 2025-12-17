@@ -46,9 +46,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             public static string TypeMismatch(string typeName, string expectedTypeName)
                 => $"[Error] Type mismatch. Expected '{expectedTypeName}', but got '{typeName}'.";
             public static string InvalidComponentPropertyType(SerializedMember serializedProperty, PropertyInfo propertyInfo)
-                => $"[Error] Invalid component property type '{serializedProperty.typeName}' for '{propertyInfo.Name}'. Expected '{propertyInfo.PropertyType.GetTypeName(pretty: false)}'.";
+                => $"[Error] Invalid component property type '{serializedProperty.typeName}' for '{propertyInfo.Name}'. Expected '{propertyInfo.PropertyType.GetTypeId()}'.";
             public static string InvalidComponentFieldType(SerializedMember serializedProperty, FieldInfo propertyInfo)
-                => $"[Error] Invalid component field type '{serializedProperty.typeName}' for '{propertyInfo.Name}'. Expected '{propertyInfo.FieldType.GetTypeName(pretty: false)}'.";
+                => $"[Error] Invalid component field type '{serializedProperty.typeName}' for '{propertyInfo.Name}'. Expected '{propertyInfo.FieldType.GetTypeId()}'.";
             public static string InvalidComponentType(string typeName)
                 => $"[Error] Invalid component type '{typeName}'. It should be a valid Component Type.";
             public static string NotFoundComponent(int componentInstanceID, IEnumerable<UnityEngine.Component> allComponents)
@@ -94,7 +94,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 => $"[Error] Component property type is empty. It should be a valid property type.";
 
             public static string InvalidInstanceID(Type holderType, string fieldName)
-                => $"[Error] Invalid instanceID '{fieldName}' for '{holderType.GetTypeName(pretty: false)}'. It should be a valid field name.";
+                => $"[Error] Invalid instanceID '{fieldName}' for '{holderType.GetTypeId()}'. It should be a valid field name.";
         }
     }
 }

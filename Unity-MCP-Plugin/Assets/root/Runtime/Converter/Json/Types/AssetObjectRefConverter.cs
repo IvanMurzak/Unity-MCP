@@ -85,7 +85,7 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
 
             // Write the "assetType" property
             if (value.AssetType != null)
-                writer.WriteString(AssetObjectRef.AssetObjectRefProperty.AssetType, value.AssetType.GetTypeName(pretty: true));
+                writer.WriteString(AssetObjectRef.AssetObjectRefProperty.AssetType, value.AssetType.GetTypeId());
 
             // Write the "assetPath" property
             if (!string.IsNullOrEmpty(value.AssetPath))

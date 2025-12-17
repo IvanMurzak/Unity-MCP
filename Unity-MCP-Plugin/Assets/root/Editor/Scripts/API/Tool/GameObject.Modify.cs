@@ -78,7 +78,7 @@ You can modify multiple GameObjects at once. Just provide the same number of Gam
                         var component = go.GetComponent(type);
                         if (component == null)
                         {
-                            logs.Error($"Component '{type.GetTypeName(pretty: false)}' not found on GameObject '{go.name.ValueOrNull()}'.");
+                            logs.Error($"Component '{type.GetTypeId()}' not found on GameObject '{go.name.ValueOrNull()}'.");
                             continue;
                         }
                         // Switch to the component type for modification.

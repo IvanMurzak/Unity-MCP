@@ -117,8 +117,8 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             var field = objType.GetField(fieldValue.name, flags);
             if (field == null)
             {
-                logger?.LogError("{padding}Field {field} not found on {type}", padding, fieldValue.name, objType.GetTypeName(pretty: false));
-                logs?.Error($"Field {fieldValue.name} not found on {objType.GetTypeName(pretty: false)}", depth);
+                logger?.LogError("{padding}Field {field} not found on {type}", padding, fieldValue.name, objType.GetTypeId());
+                logs?.Error($"Field {fieldValue.name} not found on {objType.GetTypeId()}", depth);
                 return false;
             }
 
@@ -157,8 +157,8 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             var property = objType.GetProperty(member.name, flags);
             if (property == null || !property.CanWrite)
             {
-                logger?.LogError("{padding}Property '{property}' not found or not writable on '{type}'", padding, member.name, objType.GetTypeName(pretty: false));
-                logs?.Error($"Property '{member.name}' not found or not writable on {objType.GetTypeName(pretty: false)}", depth);
+                logger?.LogError("{padding}Property '{property}' not found or not writable on '{type}'", padding, member.name, objType.GetTypeId());
+                logs?.Error($"Property '{member.name}' not found or not writable on {objType.GetTypeId()}", depth);
                 return false;
             }
 

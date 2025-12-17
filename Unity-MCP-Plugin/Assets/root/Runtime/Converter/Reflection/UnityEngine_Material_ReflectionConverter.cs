@@ -129,9 +129,9 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             if (material == null)
             {
                 if (logger?.IsEnabled(LogLevel.Error) == true)
-                    logger.LogError($"{padding}[Error] Object is not a Material. The type is {obj.GetType().GetTypeName(pretty: false)}. Converter: {GetType().GetTypeShortName()}");
+                    logger.LogError($"{padding}[Error] Object is not a Material. The type is {obj.GetType().GetTypeId()}. Converter: {GetType().GetTypeShortName()}");
 
-                logs?.Error($"Object is not a Material. The type is {obj.GetType().GetTypeName(pretty: false)}. Converter: {GetType().GetTypeShortName()}", depth);
+                logs?.Error($"Object is not a Material. The type is {obj.GetType().GetTypeId()}. Converter: {GetType().GetTypeShortName()}", depth);
 
                 return SerializedMember.FromValue(reflector, type, value: null, name: name);
             }
@@ -182,7 +182,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             return new SerializedMember()
             {
                 name = name,
-                typeName = type.FullName,
+                typeName = type.GetTypeId(),
                 fields = new SerializedMemberList()
                 {
                     SerializedMember.FromValue(reflector, name: FieldName, value: material.name),
@@ -293,7 +293,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             var padding = StringUtils.GetPadding(depth);
 
             if (logger?.IsEnabled(LogLevel.Trace) == true)
-                logger.LogTrace($"{StringUtils.GetPadding(depth)}Populate field for type='{objType.GetTypeName(pretty: true)}'. Converter='{GetType().GetTypeShortName()}'.");
+                logger.LogTrace($"{StringUtils.GetPadding(depth)}Populate field for type='{objType.GetTypeId()}'. Converter='{GetType().GetTypeShortName()}'.");
 
             var material = obj as Material;
             if (material == null)

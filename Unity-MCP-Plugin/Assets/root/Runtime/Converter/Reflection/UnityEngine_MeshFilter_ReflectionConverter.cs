@@ -13,7 +13,7 @@ using System.Collections.Generic;
 
 namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
-    public partial class UnityEngine_MeshFilter_ReflectionConverter : UnityEngine_Object_ReflectionConverter<UnityEngine.MeshFilter>
+    public partial class UnityEngine_MeshFilter_ReflectionConverter : UnityEngine_GenericComponent_ReflectionConverter<UnityEngine.MeshFilter>
     {
         protected override IEnumerable<string> GetIgnoredProperties()
         {
