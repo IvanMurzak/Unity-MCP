@@ -51,7 +51,9 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             yield return nameof(UnityEngine.GameObject.gameObject);
             yield return nameof(UnityEngine.GameObject.transform);
             yield return nameof(UnityEngine.GameObject.scene);
+#if UNITY_6000_0_OR_NEWER
             yield return nameof(UnityEngine.GameObject.transformHandle);
+#endif
         }
         protected override SerializedMember InternalSerialize(
             Reflector reflector,
