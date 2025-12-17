@@ -57,12 +57,20 @@ jobs:
       # --------------------------------------------------------------------- #
       # 2-c. Cache & run the Unity test-runner
       # --------------------------------------------------------------------- #
+      - name: Generate cache key
+        id: cache_key
+        run: |
+          # Sanitize projectPath: replace /, \, :, and spaces with underscores
+          sanitized_path=$(echo "${{ inputs.projectPath }}" | sed 's/[\/\\: ]/_/g')
+          echo "project_path_sanitized=$sanitized_path" >> $GITHUB_OUTPUT
+        shell: bash
+
       - uses: actions/cache@v4
         with:
           path: |
             ${{ inputs.projectPath }}/Library
             ~/.cache/unity3d
-          key: Library-${{ inputs.unityVersion }}-${{ inputs.testMode }}-${{ matrix.platform }}
+          key: ${{ steps.cache_key.outputs.project_path_sanitized }}-${{ inputs.testMode }}-${{ matrix.platform }}
 
       # --------------------------------------------------------------------- #
       - name: Generate custom image name
