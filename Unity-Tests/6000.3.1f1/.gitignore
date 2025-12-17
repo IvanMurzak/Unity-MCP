@@ -31,6 +31,7 @@ ExportedObj/
 *.csproj
 *.unityproj
 *.sln
+*.slnx
 *.suo
 *.tmp
 *.user
@@ -63,7 +64,6 @@ kernelsCache/*
 
 # Unity Editor
 UserSettings/
-*.slnx
 
 # Claude
 .claude/
