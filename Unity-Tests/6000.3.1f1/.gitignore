@@ -63,6 +63,7 @@ kernelsCache/*
 
 # Unity Editor
 UserSettings/
+*.slnx
 
 # Claude
 .claude/
