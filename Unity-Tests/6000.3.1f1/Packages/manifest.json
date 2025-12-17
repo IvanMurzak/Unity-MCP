@@ -3,7 +3,6 @@
     "com.ivanmurzak.unity.mcp": "file:./../../../Unity-MCP-Plugin/Assets/root",
     "com.unity.feature.development": "1.0.1",
     "com.unity.ide.visualstudio": "2.0.25",
-    "com.unity.render-pipelines.universal": "17.3.0",
     "com.unity.test-framework": "1.6.0",
     "com.unity.ugui": "2.0.0",
     "com.unity.modules.ai": "1.0.0",
