@@ -2,7 +2,7 @@
   "dependencies": {
     "com.ivanmurzak.unity.mcp": "file:./../../../Unity-MCP-Plugin/Assets/root",
     "com.unity.feature.development": "1.0.2",
-    "com.unity.test-framework": "1.1.33",
+    "com.unity.test-framework": "1.3.9",
     "com.unity.ugui": "2.0.0",
     "com.unity.modules.accessibility": "1.0.0",
     "com.unity.modules.ai": "1.0.0",
