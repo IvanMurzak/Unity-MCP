@@ -28,7 +28,7 @@ jobs:
   test-unity-6000-3-1f1-editmode:
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: "./Unity-MCP-Plugin"
+      projectPath: "./Unity-Tests/6000.3.1f1"
       unityVersion: "6000.3.1f1"
       testMode: "editmode"
     secrets: inherit
