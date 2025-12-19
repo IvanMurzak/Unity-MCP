@@ -8,13 +8,13 @@
     "source": "github",
     "subfolder": "Unity-MCP-Server"
   },
-  "version": "0.29.1",
+  "version": "0.30.0",
   "packages": [
     {
       "registry_type": "oci",
       "registry_base_url": "https://docker.io",
       "identifier": "ivanmurzakdev/unity-mcp-server",
-      "version": "0.29.1",
+      "version": "0.30.0",
       "transport": {
         "type": "stdio"
       },
