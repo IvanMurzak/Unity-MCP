@@ -62,6 +62,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     bodyPath: "servers"
                 ),
                 new JsonClientConfig(
+                    name: "Visual Studio (Copilot)",
+                    configPath: Path.Combine(
+                        ".vs",
+                        "mcp.json"
+                    ),
+                    bodyPath: "servers"
+                ),
+                new JsonClientConfig(
                     name: "Cursor",
                     configPath: Path.Combine(
                         Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
@@ -131,6 +139,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     name: "Visual Studio Code (Copilot)",
                     configPath: Path.Combine(
                         ".vscode",
+                        "mcp.json"
+                    ),
+                    bodyPath: "servers"
+                ),
+                new JsonClientConfig(
+                    name: "Visual Studio (Copilot)",
+                    configPath: Path.Combine(
+                        ".vs",
                         "mcp.json"
                     ),
                     bodyPath: "servers"
