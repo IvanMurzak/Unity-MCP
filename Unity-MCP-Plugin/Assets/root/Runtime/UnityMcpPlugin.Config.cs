@@ -26,14 +26,14 @@ namespace com.IvanMurzak.Unity.MCP
         {
             public static string DefaultHost => $"http://localhost:{GeneratePortFromDirectory()}";
 
-            public static Dictionary<string, bool> DefaultTools => new();
-            public static Dictionary<string, bool> DefaultPrompts => new();
-            public static Dictionary<string, bool> DefaultResources => new();
+            public static List<McpFeature> DefaultTools => new();
+            public static List<McpFeature> DefaultPrompts => new();
+            public static List<McpFeature> DefaultResources => new();
 
             public LogLevel LogLevel { get; set; } = LogLevel.Warning;
-            public Dictionary<string, bool> Tools { get; set; } = new();
-            public Dictionary<string, bool> Prompts { get; set; } = new();
-            public Dictionary<string, bool> Resources { get; set; } = new();
+            public List<McpFeature> Tools { get; set; } = new();
+            public List<McpFeature> Prompts { get; set; } = new();
+            public List<McpFeature> Resources { get; set; } = new();
 
             public UnityConnectionConfig()
             {
@@ -50,6 +50,19 @@ namespace com.IvanMurzak.Unity.MCP
                 Prompts = DefaultPrompts;
                 Resources = DefaultResources;
                 return this;
+            }
+
+            public class McpFeature
+            {
+                public string Name { get; set; } = string.Empty;
+                public bool Enabled { get; set; } = true;
+
+                public McpFeature() { }
+                public McpFeature(string name, bool enabled)
+                {
+                    Name = name;
+                    Enabled = enabled;
+                }
             }
         }
     }

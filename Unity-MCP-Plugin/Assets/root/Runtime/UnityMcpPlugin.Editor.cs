@@ -90,13 +90,16 @@ namespace com.IvanMurzak.Unity.MCP
                 unityConnectionConfig ??= new UnityConnectionConfig();
 
                 var enabledToolNames = Tools?.GetAllTools()
-                    ?.ToDictionary(t => t.Name, t => Tools.IsToolEnabled(t.Name));
+                    ?.Select(t => new UnityConnectionConfig.McpFeature(t.Name, Tools.IsToolEnabled(t.Name)))
+                    ?.ToList();
 
                 var enabledPromptNames = Prompts?.GetAllPrompts()
-                    ?.ToDictionary(p => p.Name, p => Prompts.IsPromptEnabled(p.Name));
+                    ?.Select(p => new UnityConnectionConfig.McpFeature(p.Name, Prompts.IsPromptEnabled(p.Name)))
+                    ?.ToList();
 
                 var enabledResourceNames = Resources?.GetAllResources()
-                    ?.ToDictionary(r => r.Name, r => Resources.IsResourceEnabled(r.Name));
+                    ?.Select(r => new UnityConnectionConfig.McpFeature(r.Name, Resources.IsResourceEnabled(r.Name)))
+                    ?.ToList();
 
                 unityConnectionConfig.Tools = enabledToolNames != null && enabledToolNames.Count > 0
                     ? enabledToolNames

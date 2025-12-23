@@ -138,7 +138,8 @@ namespace com.IvanMurzak.Unity.MCP
             {
                 foreach (var tool in toolManager.GetAllTools())
                 {
-                    var isEnabled = unityConnectionConfig.Tools.GetValueOrDefault(tool.Name!);
+                    var toolFeature = unityConnectionConfig.Tools.FirstOrDefault(t => t.Name == tool.Name!);
+                    var isEnabled = toolFeature == null || toolFeature.Enabled == true;
                     toolManager.SetToolEnabled(tool.Name!, isEnabled);
                     _logger.LogDebug("{method}: Tool '{tool}' enabled: {isEnabled}",
                         nameof(ApplyConfigToMcpPlugin), tool.Name, isEnabled);
@@ -151,7 +152,8 @@ namespace com.IvanMurzak.Unity.MCP
             {
                 foreach (var prompt in promptManager.GetAllPrompts())
                 {
-                    var isEnabled = unityConnectionConfig.Prompts.GetValueOrDefault(prompt.Name);
+                    var promptFeature = unityConnectionConfig.Prompts.FirstOrDefault(p => p.Name == prompt.Name);
+                    var isEnabled = promptFeature == null || promptFeature.Enabled == true;
                     promptManager.SetPromptEnabled(prompt.Name, isEnabled);
                     _logger.LogDebug("{method}: Prompt '{prompt}' enabled: {isEnabled}",
                         nameof(ApplyConfigToMcpPlugin), prompt.Name, isEnabled);
@@ -164,7 +166,8 @@ namespace com.IvanMurzak.Unity.MCP
             {
                 foreach (var resource in resourceManager.GetAllResources())
                 {
-                    var isEnabled = unityConnectionConfig.Resources.GetValueOrDefault(resource.Name);
+                    var resourceFeature = unityConnectionConfig.Resources.FirstOrDefault(r => r.Name == resource.Name);
+                    var isEnabled = resourceFeature == null || resourceFeature.Enabled == true;
                     resourceManager.SetResourceEnabled(resource.Name, isEnabled);
                     _logger.LogDebug("{method}: Resource '{resource}' enabled: {isEnabled}",
                         nameof(ApplyConfigToMcpPlugin), resource.Name, isEnabled);
