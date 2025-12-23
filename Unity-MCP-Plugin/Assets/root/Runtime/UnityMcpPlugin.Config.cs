@@ -25,14 +25,15 @@ namespace com.IvanMurzak.Unity.MCP
         public class UnityConnectionConfig : ConnectionConfig
         {
             public static string DefaultHost => $"http://localhost:{GeneratePortFromDirectory()}";
-            public static List<string> DefaultEnabledTools => new() { "*" };
-            public static List<string> DefaultEnabledPrompts => new() { "*" };
-            public static List<string> DefaultEnabledResources => new() { "*" };
+
+            public static Dictionary<string, bool> DefaultTools => new();
+            public static Dictionary<string, bool> DefaultPrompts => new();
+            public static Dictionary<string, bool> DefaultResources => new();
 
             public LogLevel LogLevel { get; set; } = LogLevel.Warning;
-            public List<string> EnabledTools { get; set; } = DefaultEnabledTools;
-            public List<string> EnabledPrompts { get; set; } = DefaultEnabledPrompts;
-            public List<string> EnabledResources { get; set; } = DefaultEnabledResources;
+            public Dictionary<string, bool> Tools { get; set; } = new();
+            public Dictionary<string, bool> Prompts { get; set; } = new();
+            public Dictionary<string, bool> Resources { get; set; } = new();
 
             public UnityConnectionConfig()
             {
@@ -45,9 +46,9 @@ namespace com.IvanMurzak.Unity.MCP
                 KeepConnected = true;
                 LogLevel = LogLevel.Warning;
                 TimeoutMs = Consts.Hub.DefaultTimeoutMs;
-                EnabledTools = DefaultEnabledTools;
-                EnabledPrompts = DefaultEnabledPrompts;
-                EnabledResources = DefaultEnabledResources;
+                Tools = DefaultTools;
+                Prompts = DefaultPrompts;
+                Resources = DefaultResources;
                 return this;
             }
         }
