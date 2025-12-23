@@ -100,7 +100,7 @@ Unlike other tools, this plugin works **inside your compiled game**, allowing fo
 
 ### Option 1 - Installer
 
-- **[⬇️ Download Installer](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.30.1/AI-Game-Dev-Installer.unitypackage)**
+- **[⬇️ Download Installer](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.30.2/AI-Game-Dev-Installer.unitypackage)**
 - **📂 Import installer into Unity project**
   > - You can double-click on the file - Unity will open it automatically
   > - OR: Open Unity Editor first, then click on `Assets/Import Package/Custom Package`, and choose the file
@@ -162,7 +162,7 @@ If automatic configuration doesn't work for you for any reason, use the JSON fro
 **4. Add MCP server using command line**
 
 <details>
-  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/gemini-64.png" width="16" height="16" alt="Gemini"> Gemini</summary>
+  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/gemini-64.png?raw=true" width="16" height="16" alt="Gemini"> Gemini</summary>
 
   ```bash
   gemini mcp add ai-game-developer <command>
@@ -171,7 +171,7 @@ If automatic configuration doesn't work for you for any reason, use the JSON fro
 </details>
 
 <details>
-  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/claude-64.png" width="16" height="16" alt="Gemini"> Claude Code</summary>
+  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/claude-64.png?raw=true" width="16" height="16" alt="Gemini"> Claude Code</summary>
 
   ```bash
   claude mcp add ai-game-developer <command>
@@ -180,7 +180,7 @@ If automatic configuration doesn't work for you for any reason, use the JSON fro
 </details>
 
 <details>
-  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/github-copilot-64.png" width="16" height="16" alt="Gemini"> GitHub Copilot CLI</summary>
+  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/github-copilot-64.png?raw=true" width="16" height="16" alt="Gemini"> GitHub Copilot CLI</summary>
 
   ```bash
   copilot

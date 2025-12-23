@@ -100,7 +100,7 @@
 
 ### オプション1 - インストーラー
 
-- **[⬇️ インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.30.1/AI-Game-Dev-Installer.unitypackage)**
+- **[⬇️ インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.30.2/AI-Game-Dev-Installer.unitypackage)**
 - **📂 インストーラーをUnityプロジェクトにインポート**
   > - ファイルをダブルクリック - Unityが自動的に開きます
   > - または：最初にUnityエディターを開き、`Assets/Import Package/Custom Package`をクリックして、ファイルを選択
@@ -162,7 +162,7 @@ openupm add com.ivanmurzak.unity.mcp
 **4. コマンドラインを使用してMCPサーバーを追加**
 
 <details>
-  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/gemini-64.png" width="16" height="16" alt="Gemini"> Gemini</summary>
+  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/gemini-64.png?raw=true" width="16" height="16" alt="Gemini"> Gemini</summary>
 
   ```bash
   gemini mcp add ai-game-developer <command>
@@ -171,7 +171,7 @@ openupm add com.ivanmurzak.unity.mcp
 </details>
 
 <details>
-  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/claude-64.png" width="16" height="16" alt="Gemini"> Claude Code</summary>
+  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/claude-64.png?raw=true" width="16" height="16" alt="Gemini"> Claude Code</summary>
 
   ```bash
   claude mcp add ai-game-developer <command>
@@ -180,7 +180,7 @@ openupm add com.ivanmurzak.unity.mcp
 </details>
 
 <details>
-  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/github-copilot-64.png" width="16" height="16" alt="Gemini"> GitHub Copilot CLI</summary>
+  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/github-copilot-64.png?raw=true" width="16" height="16" alt="Gemini"> GitHub Copilot CLI</summary>
 
   ```bash
   copilot

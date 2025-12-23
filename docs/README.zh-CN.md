@@ -100,7 +100,7 @@
 
 ### 选项1 - 安装程序
 
-- **[⬇️ 下载安装程序](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.30.1/AI-Game-Dev-Installer.unitypackage)**
+- **[⬇️ 下载安装程序](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.30.2/AI-Game-Dev-Installer.unitypackage)**
 - **📂 将安装程序导入Unity项目**
   > - 您可以双击文件 - Unity会自动打开它
   > - 或者：先打开Unity编辑器，然后点击 `Assets/Import Package/Custom Package`，选择文件
@@ -162,7 +162,7 @@ openupm add com.ivanmurzak.unity.mcp
 **4. 使用命令行添加MCP服务器**
 
 <details>
-  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/gemini-64.png" width="16" height="16" alt="Gemini"> Gemini</summary>
+  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/gemini-64.png?raw=true" width="16" height="16" alt="Gemini"> Gemini</summary>
 
   ```bash
   gemini mcp add ai-game-developer <command>
@@ -171,7 +171,7 @@ openupm add com.ivanmurzak.unity.mcp
 </details>
 
 <details>
-  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/claude-64.png" width="16" height="16" alt="Gemini"> Claude Code</summary>
+  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/claude-64.png?raw=true" width="16" height="16" alt="Gemini"> Claude Code</summary>
 
   ```bash
   claude mcp add ai-game-developer <command>
@@ -180,7 +180,7 @@ openupm add com.ivanmurzak.unity.mcp
 </details>
 
 <details>
-  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/github-copilot-64.png" width="16" height="16" alt="Gemini"> GitHub Copilot CLI</summary>
+  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/github-copilot-64.png?raw=true" width="16" height="16" alt="Gemini"> GitHub Copilot CLI</summary>
 
   ```bash
   copilot
