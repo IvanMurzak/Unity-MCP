@@ -49,7 +49,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
             {
                 var consoleWriteLine = dataArguments.ClientTransport switch
                 {
-                    Consts.MCP.Server.TransportMethod.stdio => (Action<string>)(message => Console.Error.WriteLine(message)),
+                    Consts.MCP.Server.TransportMethod.stdio => (Action<string>)(message => { /* ignore printing to stdout */ }),
                     Consts.MCP.Server.TransportMethod.http => (Action<string>)(message => Console.WriteLine(message)),
                     _ => throw new ArgumentException($"Unsupported transport method: {dataArguments.ClientTransport}. " +
                         $"Supported methods are: {Consts.MCP.Server.TransportMethod.stdio}, {Consts.MCP.Server.TransportMethod.http}")
