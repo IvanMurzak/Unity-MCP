@@ -21,14 +21,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     [McpPluginToolType]
     [InitializeOnLoad]
-    public static partial class Tool_TestRunner
+    public static partial class Tool_Tests
     {
         static readonly object _lock = new();
         static volatile TestRunnerApi? _testRunnerApi = null!;
         static volatile TestResultCollector? _resultCollector = null!;
         static volatile bool _callbacksRegistered = false;
 
-        static Tool_TestRunner()
+        static Tool_Tests()
         {
             _testRunnerApi ??= CreateInstance();
         }

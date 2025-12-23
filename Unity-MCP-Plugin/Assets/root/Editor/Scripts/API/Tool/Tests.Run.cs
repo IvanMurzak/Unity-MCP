@@ -26,11 +26,11 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
-    public static partial class Tool_TestRunner
+    public static partial class Tool_Tests
     {
         [McpPluginTool
         (
-            "testrunner-run",
+            "tests-run",
             Title = "Test Runner / Run Unity Tests"
         )]
         [Description(@"Execute Unity tests and return detailed results. Supports filtering by test mode, assembly, namespace, class, and method.

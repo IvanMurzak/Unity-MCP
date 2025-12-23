@@ -34,7 +34,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             SubscribeOnEditorEvents();
 
             // Initialize sub-systems
-            API.Tool_TestRunner.Init(); // test runner
+            API.Tool_Tests.Init();
         }
     }
 }
