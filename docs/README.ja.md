@@ -63,7 +63,7 @@
 <details>
   <summary>アセット / シェーダー (Assets / Shader)</summary>
 
-- `listall` - プロジェクトのアセットとパッケージで利用可能なすべてのシェーダーをリストします
+- `list-all` - プロジェクトのアセットとパッケージで利用可能なすべてのシェーダーをリストします
 
 </details>
 
@@ -162,7 +162,7 @@
 </details>
 
 <details>
-  <summary>テストランナー (Test Runner)</summary>
+  <summary>テストランナー (Tests)</summary>
 
 - `run` - フィルタリングと詳細な結果を使用して Unity テスト（エディットモード/プレイモード）を実行します
 

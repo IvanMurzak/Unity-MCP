@@ -63,7 +63,7 @@ Unlike other tools, this plugin works **inside your compiled game**, allowing fo
 <details>
   <summary>Assets / Shader</summary>
 
-- `listall` - List all available shaders in the project assets and packages
+- `list-all` - List all available shaders in the project assets and packages
 
 </details>
 
@@ -162,7 +162,7 @@ Unlike other tools, this plugin works **inside your compiled game**, allowing fo
 </details>
 
 <details>
-  <summary>Test Runner</summary>
+  <summary>Tests</summary>
 
 - `run` - Execute Unity tests (EditMode/PlayMode) with filtering and detailed results
 

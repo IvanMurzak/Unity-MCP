@@ -63,7 +63,7 @@
 <details>
   <summary>资源 / 着色器 (Assets / Shader)</summary>
 
-- `listall` - 列出项目资源和包中所有可用的着色器
+- `list-all` - 列出项目资源和包中所有可用的着色器
 
 </details>
 
@@ -162,7 +162,7 @@
 </details>
 
 <details>
-  <summary>测试运行器 (Test Runner)</summary>
+  <summary>测试运行器 (Tests)</summary>
 
 - `run` - 执行带有过滤和详细结果的 Unity 测试（编辑模式/播放模式）
 
