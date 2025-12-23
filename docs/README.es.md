@@ -37,6 +37,142 @@ A diferencia de otras herramientas, este plugin funciona **dentro de tu juego co
 
 [![DESCARGAR INSTALADOR](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download_es.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.30.2/AI-Game-Dev-Installer.unitypackage)
 
+### Herramientas
+
+<details>
+  <summary>Assets</summary>
+
+- `copy` - Copia el asset en la ruta y lo almacena en newPath
+- `create-folder` - Crea una nueva carpeta en la carpeta padre especificada
+- `delete` - Elimina los assets en las rutas del proyecto
+- `find` - Busca en la base de datos de assets usando la cadena de filtro de búsqueda
+- `get-data` - Obtiene los datos del asset del archivo de asset, incluyendo todos los campos y propiedades serializables
+- `modify` - Modifica el archivo de asset en el proyecto
+- `move` - Mueve los assets en las rutas del proyecto (también se usa para renombrar)
+- `refresh` - Refresca el AssetDatabase
+
+</details>
+
+<details>
+  <summary>Assets / Material</summary>
+
+- `create` - Crea un nuevo asset de material con parámetros por defecto
+
+</details>
+
+<details>
+  <summary>Assets / Shader</summary>
+
+- `listall` - Lista todos los shaders disponibles en los assets y paquetes del proyecto
+
+</details>
+
+<details>
+  <summary>Assets / Prefab</summary>
+
+- `create` - Crea un prefab a partir de un GameObject en la escena activa actual
+- `instantiate` - Instancia un prefab en la escena activa actual
+- `open` - Abre el modo de edición de prefab para un GameObject específico
+- `close` - Cierra el prefab actualmente abierto
+- `save` - Guarda un prefab en modo de edición de prefab
+
+</details>
+
+<details>
+  <summary>GameObject</summary>
+
+- `create` - Crea un nuevo GameObject en un Prefab abierto o en una Escena
+- `destroy` - Destruye el GameObject y todos los GameObjects anidados recursivamente
+- `duplicate` - Duplica GameObjects en un Prefab abierto o en una Escena
+- `find` - Encuentra un GameObject específico mediante la información proporcionada
+- `modify` - Modifica GameObjects y/o campos y propiedades de los componentes adjuntos
+- `set-parent` - Establece el GameObject padre para una lista de GameObjects
+
+</details>
+
+<details>
+  <summary>GameObject / Component</summary>
+
+- `add` - Agrega un Componente al GameObject
+- `destroy` - Destruye uno o varios componentes del GameObject objetivo
+- `get` - Obtiene información detallada sobre un Componente específico en un GameObject
+- `modify` - Modifica un Componente específico en un GameObject
+
+</details>
+
+<details>
+  <summary>Component</summary>
+
+- `list` - Lista los nombres de las clases C# extendidas de UnityEngine.Component
+
+</details>
+
+<details>
+  <summary>Scene</summary>
+
+- `create` - Crea una nueva escena en los assets del proyecto
+- `get-data` - Recupera la lista de GameObjects raíz en la escena especificada
+- `list-opened` - Devuelve la lista de escenas actualmente abiertas en el Editor de Unity
+- `open` - Abre una escena desde el archivo de asset del proyecto
+- `save` - Guarda la escena abierta en el archivo de asset
+- `set-active` - Establece la escena abierta especificada como la escena activa
+- `unload` - Descarga la escena de las escenas abiertas en el Editor de Unity
+
+</details>
+
+<details>
+  <summary>Script</summary>
+
+- `delete` - Elimina los archivos de script
+- `execute` - Compila y ejecuta código C# dinámicamente usando Roslyn
+- `read` - Lee el contenido de un archivo de script
+- `update-or-create` - Actualiza o crea un archivo de script con el código C# proporcionado
+
+</details>
+
+<details>
+  <summary>Console</summary>
+
+- `get-logs` - Recupera los registros del Editor de Unity con opciones de filtrado
+
+</details>
+
+<details>
+  <summary>Editor / Application</summary>
+
+- `get-state` - Devuelve información sobre el estado de la aplicación del Editor de Unity (modo juego, pausado, compilación)
+- `set-state` - Controla el estado de la aplicación del Editor de Unity (iniciar/detener/pausar modo juego)
+
+</details>
+
+<details>
+  <summary>Editor / Selection</summary>
+
+- `get` - Obtiene información sobre la Selección actual en el Editor de Unity
+- `set` - Establece la Selección actual en el Editor de Unity
+
+</details>
+
+<details>
+  <summary>Reflection</summary>
+
+- `method-find` - Encuentra un método en el proyecto usando Reflexión de C# (incluso métodos privados)
+- `method-call` - Llama a cualquier método C# con parámetros de entrada y devuelve los resultados
+
+</details>
+
+<details>
+  <summary>Test Runner</summary>
+
+- `run` - Ejecuta pruebas de Unity (EditMode/PlayMode) con filtrado y resultados detallados
+
+</details>
+
+#### Herramientas adicionales
+
+- [Animation](https://github.com/IvanMurzak/Unity-AI-Animation/)
+- [ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)
+
 ### Estado de estabilidad
 
 | Versión de Unity | Modo Editor | Modo Juego | Independiente |

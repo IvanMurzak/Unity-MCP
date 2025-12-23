@@ -22,7 +22,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "scene-setactive",
+            "scene-set-active",
             Title = "Scene / Set Active"
         )]
         [Description("Set the specified opened scene as the active scene.")]

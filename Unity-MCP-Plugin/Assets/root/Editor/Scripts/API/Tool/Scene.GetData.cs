@@ -21,7 +21,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "scene-getdata",
+            "scene-get-data",
             Title = "Scene / Get Data"
         )]
         [Description("This tool retrieves the list of root GameObjects in the specified scene.")]

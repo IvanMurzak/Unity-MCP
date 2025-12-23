@@ -37,6 +37,142 @@
 
 [![下载安装程序](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download_zh-CN.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.30.2/AI-Game-Dev-Installer.unitypackage)
 
+### 工具
+
+<details>
+  <summary>资源 (Assets)</summary>
+
+- `copy` - 复制指定路径的资源并存储到新路径
+- `create-folder` - 在指定的父文件夹中创建新文件夹
+- `delete` - 从项目中删除指定路径的资源
+- `find` - 使用搜索过滤字符串搜索资源数据库
+- `get-data` - 从资源文件中获取资源数据，包括所有可序列化的字段和属性
+- `modify` - 修改项目中的资源文件
+- `move` - 移动项目中的资源路径（也用于重命名）
+- `refresh` - 刷新资源数据库 (AssetDatabase)
+
+</details>
+
+<details>
+  <summary>资源 / 材质 (Assets / Material)</summary>
+
+- `create` - 使用默认参数创建新的材质资源
+
+</details>
+
+<details>
+  <summary>资源 / 着色器 (Assets / Shader)</summary>
+
+- `listall` - 列出项目资源和包中所有可用的着色器
+
+</details>
+
+<details>
+  <summary>资源 / 预制体 (Assets / Prefab)</summary>
+
+- `create` - 从当前活动场景中的游戏对象创建预制体
+- `instantiate` - 在当前活动场景中实例化预制体
+- `open` - 为特定游戏对象打开预制体编辑模式
+- `close` - 关闭当前打开的预制体
+- `save` - 在预制体编辑模式下保存预制体
+
+</details>
+
+<details>
+  <summary>游戏对象 (GameObject)</summary>
+
+- `create` - 在打开的预制体或场景中创建新的游戏对象
+- `destroy` - 递归销毁游戏对象及其所有嵌套的游戏对象
+- `duplicate` - 在打开的预制体或场景中复制游戏对象
+- `find` - 通过提供的信息查找特定的游戏对象
+- `modify` - 修改游戏对象和/或附加组件的字段和属性
+- `set-parent` - 为游戏对象列表设置父级游戏对象
+
+</details>
+
+<details>
+  <summary>游戏对象 / 组件 (GameObject / Component)</summary>
+
+- `add` - 向游戏对象添加组件
+- `destroy` - 从目标游戏对象中销毁一个或多个组件
+- `get` - 获取有关游戏对象上特定组件的详细信息
+- `modify` - 修改游戏对象上的特定组件
+
+</details>
+
+<details>
+  <summary>组件 (Component)</summary>
+
+- `list` - 列出继承自 UnityEngine.Component 的 C# 类名
+
+</details>
+
+<details>
+  <summary>场景 (Scene)</summary>
+
+- `create` - 在项目资源中创建新场景
+- `get-data` - 检索指定场景中的根游戏对象列表
+- `list-opened` - 返回 Unity 编辑器中当前打开的场景列表
+- `open` - 从项目资源文件打开场景
+- `save` - 将打开的场景保存到资源文件
+- `set-active` - 将指定的已打开场景设置为活动场景
+- `unload` - 从 Unity 编辑器中卸载已打开的场景
+
+</details>
+
+<details>
+  <summary>脚本 (Script)</summary>
+
+- `delete` - 删除脚本文件
+- `execute` - 使用 Roslyn 动态编译并执行 C# 代码
+- `read` - 读取脚本文件的内容
+- `update-or-create` - 使用提供的 C# 代码更新或创建脚本文件
+
+</details>
+
+<details>
+  <summary>控制台 (Console)</summary>
+
+- `get-logs` - 检索带有过滤选项的 Unity 编辑器日志
+
+</details>
+
+<details>
+  <summary>编辑器 / 应用程序 (Editor / Application)</summary>
+
+- `get-state` - 返回有关 Unity 编辑器应用程序状态的信息（播放模式、暂停、编译）
+- `set-state` - 控制 Unity 编辑器应用程序状态（开始/停止/暂停播放模式）
+
+</details>
+
+<details>
+  <summary>编辑器 / 选择 (Editor / Selection)</summary>
+
+- `get` - 获取有关 Unity 编辑器中当前选择的信息
+- `set` - 设置 Unity 编辑器中的当前选择
+
+</details>
+
+<details>
+  <summary>反射 (Reflection)</summary>
+
+- `method-find` - 使用 C# 反射在项目中查找方法（甚至是私有方法）
+- `method-call` - 调用任何带有输入参数的 C# 方法并返回结果
+
+</details>
+
+<details>
+  <summary>测试运行器 (Test Runner)</summary>
+
+- `run` - 执行带有过滤和详细结果的 Unity 测试（编辑模式/播放模式）
+
+</details>
+
+#### 附加工具
+
+- [动画 (Animation)](https://github.com/IvanMurzak/Unity-AI-Animation/)
+- [ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)
+
 ### 稳定性状态
 
 | Unity版本 | 编辑模式 | 播放模式 | 独立模式 |

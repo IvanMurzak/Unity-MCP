@@ -37,6 +37,142 @@
 
 [![インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download_ja.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.30.2/AI-Game-Dev-Installer.unitypackage)
 
+### ツール
+
+<details>
+  <summary>アセット (Assets)</summary>
+
+- `copy` - 指定したパスのアセットをコピーし、新しいパスに保存します
+- `create-folder` - 指定した親フォルダー内に新しいフォルダーを作成します
+- `delete` - プロジェクトから指定したパスのアセットを削除します
+- `find` - 検索フィルター文字列を使用してアセットデータベースを検索します
+- `get-data` - シリアル化可能なすべてのフィールドとプロパティを含む、アセットファイルからアセットデータを取得します
+- `modify` - プロジェクト内のアセットファイルを修正します
+- `move` - プロジェクト内のアセットのパスを移動します（名前の変更にも使用されます）
+- `refresh` - アセットデータベース (AssetDatabase) をリフレッシュします
+
+</details>
+
+<details>
+  <summary>アセット / マテリアル (Assets / Material)</summary>
+
+- `create` - デフォルトのパラメータで新しいマテリアルアセットを作成します
+
+</details>
+
+<details>
+  <summary>アセット / シェーダー (Assets / Shader)</summary>
+
+- `listall` - プロジェクトのアセットとパッケージで利用可能なすべてのシェーダーをリストします
+
+</details>
+
+<details>
+  <summary>アセット / プレハブ (Assets / Prefab)</summary>
+
+- `create` - 現在のアクティブなシーン内の GameObject からプレハブを作成します
+- `instantiate` - 現在のアクティブなシーン内にプレハブをインスタンス化します
+- `open` - 特定の GameObject のプレハブ編集モードを開きます
+- `close` - 現在開いているプレハブを閉じます
+- `save` - プレハブ編集モードでプレハブを保存します
+
+</details>
+
+<details>
+  <summary>ゲームオブジェクト (GameObject)</summary>
+
+- `create` - 開いているプレハブまたはシーン内に新しい GameObject を作成します
+- `destroy` - GameObject とすべてのネストされた GameObject を再帰的に破棄します
+- `duplicate` - 開いているプレハブまたはシーン内の GameObject を複製します
+- `find` - 提供された情報によって特定の GameObject を検索します
+- `modify` - GameObject および/或いはアタッチされたコンポーネントのフィールドとプロパティを修正します
+- `set-parent` - GameObject のリストに親 GameObject を設定します
+
+</details>
+
+<details>
+  <summary>ゲームオブジェクト / コンポーネント (GameObject / Component)</summary>
+
+- `add` - GameObject にコンポーネントを追加します
+- `destroy` - ターゲットの GameObject から 1 つまたは複数のコンポーネントを破棄します
+- `get` - GameObject 上の特定のコンポーネントに関する詳細情報を取得します
+- `modify` - GameObject 上の特定のコンポーネントを修正します
+
+</details>
+
+<details>
+  <summary>コンポーネント (Component)</summary>
+
+- `list` - UnityEngine.Component から拡張された C# クラス名をリストします
+
+</details>
+
+<details>
+  <summary>シーン (Scene)</summary>
+
+- `create` - プロジェクトアセット内に新しいシーンを作成します
+- `get-data` - 指定したシーン内のルート GameObject のリストを取得します
+- `list-opened` - Unity エディターで現在開いているシーンのリストを返します
+- `open` - プロジェクトアセットファイルからシーンを開きます
+- `save` - 開いているシーンをアセットファイルに保存します
+- `set-active` - 指定した開いているシーンをアクティブなシーンとして設定します
+- `unload` - Unity エディターで開いているシーンをアンロードします
+
+</details>
+
+<details>
+  <summary>スクリプト (Script)</summary>
+
+- `delete` - スクリプトファイルを削除します
+- `execute` - Roslyn を使用して C# コードを動的にコンパイルおよび実行します
+- `read` - スクリプトファイルの内容を読み取ります
+- `update-or-create` - 提供された C# コードでスクリプトファイルを更新または作成します
+
+</details>
+
+<details>
+  <summary>コンソール (Console)</summary>
+
+- `get-logs` - フィルタリングオプションを使用して Unity エディターのログを取得します
+
+</details>
+
+<details>
+  <summary>エディター / アプリケーション (Editor / Application)</summary>
+
+- `get-state` - Unity エディターのアプリケーション状態（プレイモード、一時停止、コンパイル）に関する情報を返します
+- `set-state` - Unity エディターのアプリケーション状態（プレイモードの開始/停止/一時停止）を制御します
+
+</details>
+
+<details>
+  <summary>エディター / 選択 (Editor / Selection)</summary>
+
+- `get` - Unity エディターでの現在の選択に関する情報を取得します
+- `set` - Unity エディターでの現在の選択を設定します
+
+</details>
+
+<details>
+  <summary>リフレクション (Reflection)</summary>
+
+- `method-find` - C# リフレクションを使用してプロジェクト内のメソッドを検索します（プライベートメソッドも含む）
+- `method-call` - 入力パラメータを使用して任意の C# メソッドを呼び出し、結果を返します
+
+</details>
+
+<details>
+  <summary>テストランナー (Test Runner)</summary>
+
+- `run` - フィルタリングと詳細な結果を使用して Unity テスト（エディットモード/プレイモード）を実行します
+
+</details>
+
+#### 追加ツール
+
+- [アニメーション (Animation)](https://github.com/IvanMurzak/Unity-AI-Animation/)
+- [ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)
+
 ### 安定性ステータス
 
 | Unityバージョン | エディットモード | プレイモード | スタンドアロン |

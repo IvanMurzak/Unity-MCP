@@ -19,7 +19,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         [McpPluginTool
         (
-            "editor-application-getstate",
+            "editor-application-get-state",
             Title = "Editor / Application / Get State"
         )]
         [Description(@"Returns available information about 'UnityEditor.EditorApplication'.

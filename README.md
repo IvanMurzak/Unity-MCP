@@ -37,6 +37,142 @@ Unlike other tools, this plugin works **inside your compiled game**, allowing fo
 
 [![DOWNLOAD INSTALLER](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.30.2/AI-Game-Dev-Installer.unitypackage)
 
+### Tools
+
+<details>
+  <summary>Assets</summary>
+
+- `copy` - Copy the asset at path and stores it at newPath
+- `create-folder` - Creates a new folder in the specified parent folder
+- `delete` - Delete the assets at paths from the project
+- `find` - Search the asset database using the search filter string
+- `get-data` - Get asset data from the asset file including all serializable fields and properties
+- `modify` - Modify asset file in the project
+- `move` - Move the assets at paths in the project (also used for rename)
+- `refresh` - Refreshes the AssetDatabase
+
+</details>
+
+<details>
+  <summary>Assets / Material</summary>
+
+- `create` - Create new material asset with default parameters
+
+</details>
+
+<details>
+  <summary>Assets / Shader</summary>
+
+- `listall` - List all available shaders in the project assets and packages
+
+</details>
+
+<details>
+  <summary>Assets / Prefab</summary>
+
+- `create` - Create a prefab from a GameObject in the current active scene
+- `instantiate` - Instantiates prefab in the current active scene
+- `open` - Open prefab edit mode for a specific GameObject
+- `close` - Close currently opened prefab
+- `save` - Save a prefab in prefab editing mode
+
+</details>
+
+<details>
+  <summary>GameObject</summary>
+
+- `create` - Create a new GameObject in opened Prefab or in a Scene
+- `destroy` - Destroy GameObject and all nested GameObjects recursively
+- `duplicate` - Duplicate GameObjects in opened Prefab or in a Scene
+- `find` - Finds specific GameObject by provided information
+- `modify` - Modify GameObjects and/or attached component's fields and properties
+- `set-parent` - Set parent GameObject to list of GameObjects
+
+</details>
+
+<details>
+  <summary>GameObject / Component</summary>
+
+- `add` - Add Component to GameObject
+- `destroy` - Destroy one or many components from target GameObject
+- `get` - Get detailed information about a specific Component on a GameObject
+- `modify` - Modify a specific Component on a GameObject
+
+</details>
+
+<details>
+  <summary>Component</summary>
+
+- `list` - List C# class names extended from UnityEngine.Component
+
+</details>
+
+<details>
+  <summary>Scene</summary>
+
+- `create` - Create new scene in the project assets
+- `get-data` - Retrieves the list of root GameObjects in the specified scene
+- `list-opened` - Returns the list of currently opened scenes in Unity Editor
+- `open` - Open scene from the project asset file
+- `save` - Save opened scene to the asset file
+- `set-active` - Set the specified opened scene as the active scene
+- `unload` - Unload scene from the opened scenes in Unity Editor
+
+</details>
+
+<details>
+  <summary>Script</summary>
+
+- `delete` - Delete the script file(s)
+- `execute` - Compiles and executes C# code dynamically using Roslyn
+- `read` - Reads the content of a script file
+- `update-or-create` - Updates or creates script file with the provided C# code
+
+</details>
+
+<details>
+  <summary>Console</summary>
+
+- `get-logs` - Retrieves Unity Editor logs with filtering options
+
+</details>
+
+<details>
+  <summary>Editor / Application</summary>
+
+- `get-state` - Returns information about the Unity Editor application state (playmode, paused, compilation)
+- `set-state` - Control the Unity Editor application state (start/stop/pause playmode)
+
+</details>
+
+<details>
+  <summary>Editor / Selection</summary>
+
+- `get` - Get information about the current Selection in the Unity Editor
+- `set` - Set the current Selection in the Unity Editor
+
+</details>
+
+<details>
+  <summary>Reflection</summary>
+
+- `method-find` - Find method in the project using C# Reflection (even private methods)
+- `method-call` - Call any C# method with input parameters and return results
+
+</details>
+
+<details>
+  <summary>Test Runner</summary>
+
+- `run` - Execute Unity tests (EditMode/PlayMode) with filtering and detailed results
+
+</details>
+
+#### Additional tools
+
+- [Animation](https://github.com/IvanMurzak/Unity-AI-Animation/)
+- [ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)
+
 ### Stability status
 
 | Unity Version | Editmode                                                                                                                                                                               | Playmode                                                                                                                                                                               | Standalone                                                                                                                                                                               |
