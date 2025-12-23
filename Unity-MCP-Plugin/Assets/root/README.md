@@ -12,25 +12,166 @@
 [![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&labelColor=333A41)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
-  <img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/level-building.gif" alt="AI work" title="Level building" width="100%">
+  <img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/promo/ai-developer-banner.jpg" alt="AI work" title="Level building" width="100%">
 
   <b>[中文](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.zh-CN.md) | [日本語](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.ja.md) | [Español](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.es.md)</b>
 
 </div>
 
-`Unity MCP` is an AI-powered game development assistant that serves as a bridge between `MCP Client` and `Unity`. Simply type a message in chat and get work done using any advanced LLM model of your choice. Have an issue to fix? Ask the AI to fix it. **[Watch demo videos](https://www.youtube.com/watch?v=kQUOCQ-c0-M&list=PLyueiUu0xU70uzNoOaanGQD2hiyJmqHtK)**.
+`Unity MCP` is an AI-powered game development assistant **for Editor & Runtime**. Connect **Claude**, **Cursor**, & **Windsurf** to Unity via MCP. Automate workflows, generate code, and **enable AI within your games**.
+
+Unlike other tools, this plugin works **inside your compiled game**, allowing for real-time AI debugging and player-AI interaction.
 
 > **[💬 Join our Discord Server](https://discord.gg/cfbdMZX99G)** - Ask questions, showcase your work, and connect with other developers!
 
 ## Features
 
+- ✔️ **Runtime AI** - Use LLMs directly inside your compiled game for dynamic NPC behavior or debugging
 - ✔️ **Natural conversation** - Chat with AI like you would with a human
 - ✔️ **Code assistance** - Ask AI to write code and run tests
 - ✔️ **Debug support** - Ask AI to get logs and fix errors
-- ✔️ **Multiple LLM providers** - Use agents from Anthropic, OpenAI, Microsoft, or any other provider with no limits
+- ✔️ **Multiple LLM providers** - Use agents from **Anthropic**, **OpenAI**, **DeepSeek**, Microsoft, or any other provider with no limits
 - ✔️ **Flexible deployment** - Works locally (stdio) and remotely (http) by configuration
 - ✔️ **Rich toolset** - Wide range of default [MCP Tools](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)
 - ✔️ **Extensible** - Create [custom MCP Tools in your project code](#add-custom-mcp-tool)
+
+[![DOWNLOAD INSTALLER](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.30.2/AI-Game-Dev-Installer.unitypackage)
+
+### Tools
+
+<details>
+  <summary>Assets</summary>
+
+- `copy` - Copy the asset at path and stores it at newPath
+- `create-folder` - Creates a new folder in the specified parent folder
+- `delete` - Delete the assets at paths from the project
+- `find` - Search the asset database using the search filter string
+- `get-data` - Get asset data from the asset file including all serializable fields and properties
+- `modify` - Modify asset file in the project
+- `move` - Move the assets at paths in the project (also used for rename)
+- `refresh` - Refreshes the AssetDatabase
+
+</details>
+
+<details>
+  <summary>Assets / Material</summary>
+
+- `create` - Create new material asset with default parameters
+
+</details>
+
+<details>
+  <summary>Assets / Shader</summary>
+
+- `listall` - List all available shaders in the project assets and packages
+
+</details>
+
+<details>
+  <summary>Assets / Prefab</summary>
+
+- `create` - Create a prefab from a GameObject in the current active scene
+- `instantiate` - Instantiates prefab in the current active scene
+- `open` - Open prefab edit mode for a specific GameObject
+- `close` - Close currently opened prefab
+- `save` - Save a prefab in prefab editing mode
+
+</details>
+
+<details>
+  <summary>GameObject</summary>
+
+- `create` - Create a new GameObject in opened Prefab or in a Scene
+- `destroy` - Destroy GameObject and all nested GameObjects recursively
+- `duplicate` - Duplicate GameObjects in opened Prefab or in a Scene
+- `find` - Finds specific GameObject by provided information
+- `modify` - Modify GameObjects and/or attached component's fields and properties
+- `set-parent` - Set parent GameObject to list of GameObjects
+
+</details>
+
+<details>
+  <summary>GameObject / Component</summary>
+
+- `add` - Add Component to GameObject
+- `destroy` - Destroy one or many components from target GameObject
+- `get` - Get detailed information about a specific Component on a GameObject
+- `modify` - Modify a specific Component on a GameObject
+
+</details>
+
+<details>
+  <summary>Component</summary>
+
+- `list` - List C# class names extended from UnityEngine.Component
+
+</details>
+
+<details>
+  <summary>Scene</summary>
+
+- `create` - Create new scene in the project assets
+- `get-data` - Retrieves the list of root GameObjects in the specified scene
+- `list-opened` - Returns the list of currently opened scenes in Unity Editor
+- `open` - Open scene from the project asset file
+- `save` - Save opened scene to the asset file
+- `set-active` - Set the specified opened scene as the active scene
+- `unload` - Unload scene from the opened scenes in Unity Editor
+
+</details>
+
+<details>
+  <summary>Script</summary>
+
+- `delete` - Delete the script file(s)
+- `execute` - Compiles and executes C# code dynamically using Roslyn
+- `read` - Reads the content of a script file
+- `update-or-create` - Updates or creates script file with the provided C# code
+
+</details>
+
+<details>
+  <summary>Console</summary>
+
+- `get-logs` - Retrieves Unity Editor logs with filtering options
+
+</details>
+
+<details>
+  <summary>Editor / Application</summary>
+
+- `get-state` - Returns information about the Unity Editor application state (playmode, paused, compilation)
+- `set-state` - Control the Unity Editor application state (start/stop/pause playmode)
+
+</details>
+
+<details>
+  <summary>Editor / Selection</summary>
+
+- `get` - Get information about the current Selection in the Unity Editor
+- `set` - Set the current Selection in the Unity Editor
+
+</details>
+
+<details>
+  <summary>Reflection</summary>
+
+- `method-find` - Find method in the project using C# Reflection (even private methods)
+- `method-call` - Call any C# method with input parameters and return results
+
+</details>
+
+<details>
+  <summary>Test Runner</summary>
+
+- `run` - Execute Unity tests (EditMode/PlayMode) with filtering and detailed results
+
+</details>
+
+#### Additional tools
+
+- [Animation](https://github.com/IvanMurzak/Unity-AI-Animation/)
+- [ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)
 
 ### Stability status
 
@@ -50,8 +191,8 @@
   - [Step 3: Configure `MCP Client`](#step-3-configure-mcp-client)
     - [Automatic configuration](#automatic-configuration)
     - [Manual configuration](#manual-configuration)
-    - [Command line configuration](#command-line-configuration)
-- [Use AI](#use-ai)
+      - [Command line configuration](#command-line-configuration)
+- [AI Workflow Examples: Claude \& Gemini](#ai-workflow-examples-claude--gemini)
   - [Advanced Features for LLM](#advanced-features-for-llm)
     - [Core Capabilities](#core-capabilities)
     - [Reflection-Powered Features](#reflection-powered-features)
@@ -68,7 +209,7 @@
     - [`STDIO` Transport](#stdio-transport)
     - [Custom `port`](#custom-port)
   - [Binary executable](#binary-executable)
-- [How it works](#how-it-works)
+- [How Unity MCP Architecture Works](#how-unity-mcp-architecture-works)
   - [What is `MCP`](#what-is-mcp)
   - [What is `MCP Client`](#what-is-mcp-client)
   - [What is `MCP Server`](#what-is-mcp-server)
@@ -118,6 +259,7 @@ Choose a single `MCP Client` you prefer - you don't need to install all of them.
 - [Claude Code](https://github.com/anthropics/claude-code) (highly recommended)
 - [Claude Desktop](https://claude.ai/download)
 - [GitHub Copilot in VS Code](https://code.visualstudio.com/docs/copilot/overview)
+- [Antigravity](https://antigravity.google/)
 - [Cursor](https://www.cursor.com/)
 - [Windsurf](https://windsurf.com)
 - Any other supported
@@ -140,7 +282,10 @@ Choose a single `MCP Client` you prefer - you don't need to install all of them.
 
 If automatic configuration doesn't work for you for any reason, use the JSON from the `AI Game Developer (Unity-MCP)` window to configure any `MCP Client` manually.
 
-### Command line configuration
+#### Command line configuration
+
+<details>
+  <summary><b>Create <code>command</code></b></summary>
 
 **1. Choose your `<command>` for your environment**
 
@@ -158,8 +303,10 @@ If automatic configuration doesn't work for you for any reason, use the JSON fro
 **3. Replace `<port>` with your port from AI Game Developer configuration**
 **4. Add MCP server using command line**
 
+</details>
+
 <details>
-  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/gemini-64.png" width="16" height="16" alt="Gemini"> Gemini</summary>
+  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/gemini-64.png?raw=true" width="16" height="16" alt="Gemini"> Gemini</summary>
 
   ```bash
   gemini mcp add ai-game-developer <command>
@@ -168,7 +315,7 @@ If automatic configuration doesn't work for you for any reason, use the JSON fro
 </details>
 
 <details>
-  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/claude-64.png" width="16" height="16" alt="Gemini"> Claude Code</summary>
+  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/claude-64.png?raw=true" width="16" height="16" alt="Gemini"> Claude Code</summary>
 
   ```bash
   claude mcp add ai-game-developer <command>
@@ -177,7 +324,7 @@ If automatic configuration doesn't work for you for any reason, use the JSON fro
 </details>
 
 <details>
-  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/github-copilot-64.png" width="16" height="16" alt="Gemini"> GitHub Copilot CLI</summary>
+  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/github-copilot-64.png?raw=true" width="16" height="16" alt="Gemini"> GitHub Copilot CLI</summary>
 
   ```bash
   copilot
@@ -195,7 +342,7 @@ If automatic configuration doesn't work for you for any reason, use the JSON fro
 
 ---
 
-# Use AI
+# AI Workflow Examples: Claude & Gemini
 
 Communicate with the AI (LLM) in your `MCP Client`. Ask it to do anything you want. The better you describe your task or idea, the better it will perform the job.
 
@@ -237,7 +384,7 @@ Unity MCP provides advanced tools that enable the LLM to work faster and more ef
 - ✔️ **Method execution** - Call any method in the entire codebase
 - ✔️ **Advanced parameters** - Provide any property for method calls, even references to existing objects in memory
 - ✔️ **Live Unity API** - Unity API instantly available - even when Unity changes, you get the fresh API
-- ✔️ **Self-documenting** - Access human-readable descriptions of any `class`, `method`, `field`, or `property` via `Description` attributes
+- ✔️ **Self-documenting** - Access human-readable descriptions of any `class`, `method`, or `property` via `Description` attributes
 
 ---
 
@@ -474,7 +621,7 @@ You may launch Unity `MCP Server` directly from a binary file. You would need to
 
 ---
 
-# How it works
+# How Unity MCP Architecture Works
 
 **[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** serves as a bridge between LLMs and Unity. It exposes and explains Unity's tools to the LLM, which then understands the interface and utilizes the tools according to user requests.
 
@@ -580,6 +727,8 @@ It is a bridge between `MCP Client` and "something else", in this particular cas
 # Contribution 💙💛
 
 Contributions are highly appreciated. Bring your ideas and let's make game development simpler than ever before! Do you have an idea for a new `MCP Tool` or feature, or did you spot a bug and know how to fix it?
+
+**Please give this project a star 🌟 if you find it useful!**
 
 1. 👉 [Read Development documentation](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.md)
 2. 👉 [Fork the project](https://github.com/IvanMurzak/Unity-MCP/fork)
