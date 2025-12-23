@@ -35,6 +35,8 @@ Unlike other tools, this plugin works **inside your compiled game**, allowing fo
 - ✔️ **Rich toolset** - Wide range of default [MCP Tools](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)
 - ✔️ **Extensible** - Create [custom MCP Tools in your project code](#add-custom-mcp-tool)
 
+[![DOWNLOAD INSTALLER](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.30.2/AI-Game-Dev-Installer.unitypackage)
+
 ### Stability status
 
 | Unity Version | Editmode                                                                                                                                                                               | Playmode                                                                                                                                                                               | Standalone                                                                                                                                                                               |
@@ -53,7 +55,7 @@ Unlike other tools, this plugin works **inside your compiled game**, allowing fo
   - [Step 3: Configure `MCP Client`](#step-3-configure-mcp-client)
     - [Automatic configuration](#automatic-configuration)
     - [Manual configuration](#manual-configuration)
-    - [Command line configuration](#command-line-configuration)
+      - [Command line configuration](#command-line-configuration)
 - [AI Workflow Examples: Claude \& Gemini](#ai-workflow-examples-claude--gemini)
   - [Advanced Features for LLM](#advanced-features-for-llm)
     - [Core Capabilities](#core-capabilities)
@@ -121,6 +123,7 @@ Choose a single `MCP Client` you prefer - you don't need to install all of them.
 - [Claude Code](https://github.com/anthropics/claude-code) (highly recommended)
 - [Claude Desktop](https://claude.ai/download)
 - [GitHub Copilot in VS Code](https://code.visualstudio.com/docs/copilot/overview)
+- [Antigravity](https://antigravity.google/)
 - [Cursor](https://www.cursor.com/)
 - [Windsurf](https://windsurf.com)
 - Any other supported
@@ -143,7 +146,10 @@ Choose a single `MCP Client` you prefer - you don't need to install all of them.
 
 If automatic configuration doesn't work for you for any reason, use the JSON from the `AI Game Developer (Unity-MCP)` window to configure any `MCP Client` manually.
 
-### Command line configuration
+#### Command line configuration
+
+<details>
+  <summary><b>Create <code>command</code></b></summary>
 
 **1. Choose your `<command>` for your environment**
 
@@ -160,6 +166,8 @@ If automatic configuration doesn't work for you for any reason, use the JSON fro
 **2. Replace `<unityProjectPath>` with the full path to Unity project**
 **3. Replace `<port>` with your port from AI Game Developer configuration**
 **4. Add MCP server using command line**
+
+</details>
 
 <details>
   <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/gemini-64.png?raw=true" width="16" height="16" alt="Gemini"> Gemini</summary>

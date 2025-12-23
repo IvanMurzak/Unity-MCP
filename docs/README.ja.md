@@ -35,6 +35,8 @@
 - ✔️ **豊富なツールセット** - 幅広いデフォルト[MCPツール](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)
 - ✔️ **拡張可能** - プロジェクトコードで[カスタムMCPツール](#カスタムmcpツールの追加)を作成
 
+[![インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download_ja.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.30.2/AI-Game-Dev-Installer.unitypackage)
+
 ### 安定性ステータス
 
 | Unityバージョン | エディットモード | プレイモード | スタンドアロン |
@@ -121,6 +123,7 @@ openupm add com.ivanmurzak.unity.mcp
 - [Claude Code](https://github.com/anthropics/claude-code)（強く推奨）
 - [Claude Desktop](https://claude.ai/download)
 - [GitHub Copilot in VS Code](https://code.visualstudio.com/docs/copilot/overview)
+- [Antigravity](https://antigravity.google/)
 - [Cursor](https://www.cursor.com/)
 - [Windsurf](https://windsurf.com)
 - その他サポートされているクライアント
@@ -145,6 +148,9 @@ openupm add com.ivanmurzak.unity.mcp
 
 ### コマンドライン設定
 
+<details>
+  <summary><b>作成 <code>command</code></b></summary>
+
 **1. 環境に応じた`<command>`を選択**
 
 | プラットフォーム | `<command>` |
@@ -160,6 +166,8 @@ openupm add com.ivanmurzak.unity.mcp
 **2. `<unityProjectPath>`をUnityプロジェクトへのフルパスに置き換える**
 **3. `<port>`をAI Game Developer設定のポートに置き換える**
 **4. コマンドラインを使用してMCPサーバーを追加**
+
+</details>
 
 <details>
   <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/gemini-64.png?raw=true" width="16" height="16" alt="Gemini"> Gemini</summary>

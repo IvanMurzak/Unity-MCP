@@ -35,6 +35,8 @@ A diferencia de otras herramientas, este plugin funciona **dentro de tu juego co
 - ✔️ **Conjunto de herramientas rico** - Amplio rango de [Herramientas MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md) por defecto
 - ✔️ **Extensible** - Crea [herramientas MCP personalizadas en el código de tu proyecto](#agregar-herramienta-mcp-personalizada)
 
+[![DESCARGAR INSTALADOR](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download_es.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.30.2/AI-Game-Dev-Installer.unitypackage)
+
 ### Estado de estabilidad
 
 | Versión de Unity | Modo Editor | Modo Juego | Independiente |
@@ -121,6 +123,7 @@ Elige un solo `Cliente MCP` que prefieras - no necesitas instalar todos. Esta se
 - [Claude Code](https://github.com/anthropics/claude-code) (altamente recomendado)
 - [Claude Desktop](https://claude.ai/download)
 - [GitHub Copilot in VS Code](https://code.visualstudio.com/docs/copilot/overview)
+- [Antigravity](https://antigravity.google/)
 - [Cursor](https://www.cursor.com/)
 - [Windsurf](https://windsurf.com)
 - Cualquier otro compatible
@@ -145,6 +148,9 @@ Si la configuración automática no funciona por alguna razón, usa el JSON de l
 
 ### Configuración por línea de comandos
 
+<details>
+  <summary><b>Crear <code>command</code></b></summary>
+
 **1. Elige tu `<command>` para tu entorno**
 
 | Plataforma          | `<command>` |
@@ -160,6 +166,8 @@ Si la configuración automática no funciona por alguna razón, usa el JSON de l
 **2. Reemplaza `<unityProjectPath>` con la ruta completa al proyecto Unity**
 **3. Reemplaza `<port>` con tu puerto de la configuración de AI Game Developer**
 **4. Agrega el servidor MCP usando la línea de comandos**
+
+</details>
 
 <details>
   <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/gemini-64.png?raw=true" width="16" height="16" alt="Gemini"> Gemini</summary>

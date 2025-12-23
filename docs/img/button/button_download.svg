@@ -1,0 +1,161 @@
+<svg width="480" height="90" viewBox="-10 -5 480 90" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="scanlines" patternUnits="userSpaceOnUse" width="4" height="4">
+      <path d="M0,2 L4,2" stroke="#000" stroke-width="1" opacity="0.3"/>
+    </pattern>
+  </defs>
+
+  <style>
+    /* Base Styles */
+    .container {
+      cursor: pointer;
+    }
+    
+    text {
+      font-family: 'Segoe UI Black', 'Arial Black', Impact, sans-serif;
+      font-weight: 900;
+      text-transform: uppercase;
+      font-size: 32px;
+      letter-spacing: 2px;
+      pointer-events: none;
+    }
+
+    /* Background Shape - Double Chamfer */
+    .bg-shape {
+      fill: #b30000;
+      stroke: none;
+      opacity: 0.9;
+      transition: fill 0.2s ease;
+    }
+    
+    .bg-scanlines {
+      fill: url(#scanlines);
+      pointer-events: none;
+    }
+
+    /* Borders */
+    .border-main {
+      fill: none;
+      stroke: #ff003c;
+      stroke-width: 2;
+    }
+    
+    /* Animated Border - Initially Paused/Hidden or Static */
+    .border-anim {
+      fill: none;
+      stroke: #00f0ff;
+      stroke-width: 3;
+      stroke-dasharray: 50 450; /* Adjusted for larger perimeter */
+      stroke-dashoffset: 0;
+      opacity: 0; /* Hidden on idle */
+      transition: opacity 0.2s;
+    }
+
+    /* Text Layers */
+    .text-base {
+      fill: #ffffff;
+      transition: fill 0.2s;
+    }
+    
+    /* Idle Glitch State (Always visible by default) */
+    .text-glitch-r,
+    .text-glitch-c {
+      display: block; /* Visible on idle */
+      mix-blend-mode: screen;
+      font-weight: 900;
+      animation: glitch-anim 0.4s infinite linear alternate-reverse;
+    }
+    .text-glitch-r { fill: #ff003c; opacity: 0.7; }
+    .text-glitch-c { fill: #00f0ff; opacity: 0.7; animation-delay: 0.2s; }
+    
+    .text-base-anim {
+        animation: text-shake 0.4s infinite;
+    }
+
+    /* HOVER STATE - SWAPPED */
+    /* On Hover: Stabilize text (hide glitches), Activate border */
+    .container:hover .text-glitch-r,
+    .container:hover .text-glitch-c {
+      display: none; /* Stop glitching */
+    }
+    .container:hover .text-base-anim {
+      animation: none; /* Stop shaking */
+      fill: #fff;
+      filter: drop-shadow(0 0 5px #00f0ff);
+    }
+    .container:hover .border-anim {
+      opacity: 1;
+      animation: border-travel 1s linear infinite; /* Fast travel on hover */
+    }
+    .container:hover .bg-shape {
+      fill: #990000;
+    }
+
+    /* Animations */
+    @keyframes border-travel {
+      0% { stroke-dashoffset: 500; }
+      100% { stroke-dashoffset: -500; }
+    }
+
+    @keyframes glitch-anim {
+      0% { transform: translate(-2px, -2px); opacity: 1; }
+      25% { transform: translate(2px, 2px); opacity: 0.8; }
+      50% { transform: translate(-1px, 2px); opacity: 1; }
+      75% { transform: translate(1px, -2px); opacity: 0.8; }
+      100% { transform: translate(0, 0); opacity: 1; }
+    }
+    
+    @keyframes text-shake {
+      0% { transform: translate(1px, 0); }
+      10% { transform: translate(-1px, 0); }
+      20% { transform: translate(0, 0); }
+      100% { transform: translate(0, 0); }
+    }
+    
+    /* Deco Blink */
+    .deco-rect {
+      fill: #ff003c;
+      animation: flash 4s infinite;
+    }
+    @keyframes flash {
+      0%, 90% { opacity: 1; }
+      92% { opacity: 0; }
+      94% { opacity: 1; }
+      96% { opacity: 0; }
+      100% { opacity: 1; }
+    }
+
+  </style>
+
+  <g class="container">
+    
+    <!-- 
+      Shape Logic: Widen to 460px. Height 80px.
+      TL(0,0) -> TR_Cut(430,0) -> TR(460,30) -> BR(460,80) -> BL_Cut(30,80) -> BL(0,50)
+    -->
+    <polygon points="0,0 430,0 460,30 460,80 30,80 0,50" class="bg-shape" />
+    <polygon points="0,0 430,0 460,30 460,80 30,80 0,50" class="bg-scanlines" />
+
+    <!-- Static Border -->
+    <path d="M0,0 L430,0 L460,30 L460,80 L30,80 L0,50 Z" class="border-main" />
+    
+    <!-- Animated Border (Active on Hover) -->
+    <path d="M0,0 L430,0 L460,30 L460,80 L30,80 L0,50 Z" class="border-anim" />
+
+    <!-- Decorative Elements -->
+    <rect x="440" y="5" width="10" height="10" class="deco-rect" />
+    <rect x="-5" y="55" width="20" height="4" fill="#00f0ff" />
+    <rect x="445" y="75" width="20" height="4" fill="#00f0ff" />
+
+    <!-- Text Group: Centered at 230, 40 -->
+    <g transform="translate(230, 40)" text-anchor="middle" dominant-baseline="central">
+      <!-- Glitch Layers (Visible on Idle) -->
+      <text class="text-glitch-r" x="2" y="2">DOWNLOAD INSTALLER</text>
+      <text class="text-glitch-c" x="-2" y="-2">DOWNLOAD INSTALLER</text>
+      
+      <!-- Main Text -->
+      <text class="text-base text-base-anim">DOWNLOAD INSTALLER</text>
+    </g>
+    
+  </g>
+</svg>

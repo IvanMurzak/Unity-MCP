@@ -35,6 +35,8 @@
 - ✔️ **丰富工具集** - 广泛的默认[MCP工具](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)
 - ✔️ **可扩展** - 在您的项目代码中创建[自定义MCP工具](#添加自定义mcp工具)
 
+[![下载安装程序](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download_zh-CN.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.30.2/AI-Game-Dev-Installer.unitypackage)
+
 ### 稳定性状态
 
 | Unity版本 | 编辑模式 | 播放模式 | 独立模式 |
@@ -121,6 +123,7 @@ openupm add com.ivanmurzak.unity.mcp
 - [Claude Code](https://github.com/anthropics/claude-code)（强烈推荐）
 - [Claude Desktop](https://claude.ai/download)
 - [GitHub Copilot in VS Code](https://code.visualstudio.com/docs/copilot/overview)
+- [Antigravity](https://antigravity.google/)
 - [Cursor](https://www.cursor.com/)
 - [Windsurf](https://windsurf.com)
 - 任何其他支持的客户端
@@ -145,6 +148,9 @@ openupm add com.ivanmurzak.unity.mcp
 
 ### 命令行配置
 
+<details>
+  <summary><b>创建 <code>command</code></b></summary>
+
 **1. 为您的环境选择`<command>`**
 
 | 平台                | `<command>` |
@@ -160,6 +166,8 @@ openupm add com.ivanmurzak.unity.mcp
 **2. 将`<unityProjectPath>`替换为Unity项目的完整路径**
 **3. 将`<port>`替换为AI Game Developer配置中的端口**
 **4. 使用命令行添加MCP服务器**
+
+</details>
 
 <details>
   <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/gemini-64.png?raw=true" width="16" height="16" alt="Gemini"> Gemini</summary>
