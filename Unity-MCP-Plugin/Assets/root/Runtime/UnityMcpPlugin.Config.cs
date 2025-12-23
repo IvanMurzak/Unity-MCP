@@ -25,14 +25,15 @@ namespace com.IvanMurzak.Unity.MCP
         public class UnityConnectionConfig : ConnectionConfig
         {
             public static string DefaultHost => $"http://localhost:{GeneratePortFromDirectory()}";
-            public static List<string> DefaultEnabledTools => new() { "*" };
-            public static List<string> DefaultEnabledPrompts => new() { "*" };
-            public static List<string> DefaultEnabledResources => new() { "*" };
+
+            public static List<McpFeature> DefaultTools => new();
+            public static List<McpFeature> DefaultPrompts => new();
+            public static List<McpFeature> DefaultResources => new();
 
             public LogLevel LogLevel { get; set; } = LogLevel.Warning;
-            public List<string> EnabledTools { get; set; } = DefaultEnabledTools;
-            public List<string> EnabledPrompts { get; set; } = DefaultEnabledPrompts;
-            public List<string> EnabledResources { get; set; } = DefaultEnabledResources;
+            public List<McpFeature> Tools { get; set; } = new();
+            public List<McpFeature> Prompts { get; set; } = new();
+            public List<McpFeature> Resources { get; set; } = new();
 
             public UnityConnectionConfig()
             {
@@ -45,10 +46,23 @@ namespace com.IvanMurzak.Unity.MCP
                 KeepConnected = true;
                 LogLevel = LogLevel.Warning;
                 TimeoutMs = Consts.Hub.DefaultTimeoutMs;
-                EnabledTools = DefaultEnabledTools;
-                EnabledPrompts = DefaultEnabledPrompts;
-                EnabledResources = DefaultEnabledResources;
+                Tools = DefaultTools;
+                Prompts = DefaultPrompts;
+                Resources = DefaultResources;
                 return this;
+            }
+
+            public class McpFeature
+            {
+                public string Name { get; set; } = string.Empty;
+                public bool Enabled { get; set; } = true;
+
+                public McpFeature() { }
+                public McpFeature(string name, bool enabled)
+                {
+                    Name = name;
+                    Enabled = enabled;
+                }
             }
         }
     }

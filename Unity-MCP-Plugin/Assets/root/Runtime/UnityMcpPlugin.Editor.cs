@@ -90,31 +90,28 @@ namespace com.IvanMurzak.Unity.MCP
                 unityConnectionConfig ??= new UnityConnectionConfig();
 
                 var enabledToolNames = Tools?.GetAllTools()
-                    ?.Where(t => Tools.IsToolEnabled(t.Name))
-                    .Select(t => t.Name)
-                    .ToList();
+                    ?.Select(t => new UnityConnectionConfig.McpFeature(t.Name, Tools.IsToolEnabled(t.Name)))
+                    ?.ToList();
 
                 var enabledPromptNames = Prompts?.GetAllPrompts()
-                    ?.Where(p => Prompts.IsPromptEnabled(p.Name))
-                    .Select(p => p.Name)
-                    .ToList();
+                    ?.Select(p => new UnityConnectionConfig.McpFeature(p.Name, Prompts.IsPromptEnabled(p.Name)))
+                    ?.ToList();
 
                 var enabledResourceNames = Resources?.GetAllResources()
-                    ?.Where(r => Resources.IsResourceEnabled(r.Name))
-                    .Select(r => r.Name)
-                    .ToList();
+                    ?.Select(r => new UnityConnectionConfig.McpFeature(r.Name, Resources.IsResourceEnabled(r.Name)))
+                    ?.ToList();
 
-                unityConnectionConfig.EnabledTools = enabledToolNames != null && enabledToolNames.Count > 0
+                unityConnectionConfig.Tools = enabledToolNames != null && enabledToolNames.Count > 0
                     ? enabledToolNames
-                    : UnityConnectionConfig.DefaultEnabledTools;
+                    : UnityConnectionConfig.DefaultTools;
 
-                unityConnectionConfig.EnabledPrompts = enabledPromptNames != null && enabledPromptNames.Count > 0
+                unityConnectionConfig.Prompts = enabledPromptNames != null && enabledPromptNames.Count > 0
                     ? enabledPromptNames
-                    : UnityConnectionConfig.DefaultEnabledPrompts;
+                    : UnityConnectionConfig.DefaultPrompts;
 
-                unityConnectionConfig.EnabledResources = enabledResourceNames != null && enabledResourceNames.Count > 0
+                unityConnectionConfig.Resources = enabledResourceNames != null && enabledResourceNames.Count > 0
                     ? enabledResourceNames
-                    : UnityConnectionConfig.DefaultEnabledResources;
+                    : UnityConnectionConfig.DefaultResources;
 
                 var json = JsonSerializer.Serialize(unityConnectionConfig, new JsonSerializerOptions
                 {
