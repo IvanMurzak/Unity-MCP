@@ -150,7 +150,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 catch (Exception ex)
                 {
                     /* skip inaccessible component */
-                    logger?.LogWarning(ex.GetDeepestInnerException(), "Failed to serialize component at index {index} of type '{type}'. Path: {path}.",
+                    logger?.LogWarning(ex.GetBaseException(), "Failed to serialize component at index {index} of type '{type}'. Path: {path}.",
                         i, component?.GetType().GetTypeId(), component == null
                             ? StringUtils.Null
                             : context?.GetPath(component) ?? StringUtils.Null);
