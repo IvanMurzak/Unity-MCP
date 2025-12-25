@@ -149,9 +149,9 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 }
                 catch (Exception ex)
                 {
-                    /* skip inaccessible fields */
-                    logger?.LogWarning(ex.GetDeepestInnerException(), "Failed to serialize component at index {index} '{propertyName}' of type '{type}'. Exception: {exMessage}",
-                        i, component?.GetType().GetTypeId(), ex.Message);
+                    /* skip inaccessible component */
+                    logger?.LogWarning(ex.GetDeepestInnerException(), "Failed to serialize component at index {index} of type '{type}'.",
+                        i, component?.GetType().GetTypeId());
                 }
             }
             return serializedFields;
