@@ -162,5 +162,41 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             yield return null;
         }
+        [UnityTest]
+        public IEnumerator MethodCall_UnityEngine_GameObject_SetActive_ReturnsVoid()
+        {
+            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+
+            var classType = typeof(UnityEngine.GameObject);
+            var methodInfo = classType.GetMethod(nameof(UnityEngine.GameObject.SetActive), new[] { typeof(bool) });
+            Assert.IsNotNull(methodInfo, "SetActive method should be found.");
+            Assert.AreEqual(typeof(void), methodInfo!.ReturnType, "SetActive should return void.");
+
+            var methodRef = new MethodRef(methodInfo);
+            UnityEngine.Debug.Log($"Input: {methodRef}\n");
+
+            var go = new UnityEngine.GameObject("TestGameObject");
+            Assert.IsTrue(go.activeSelf, "GameObject should be active by default.");
+
+            var serializedGo = reflector.Serialize(go, recursive: false, logger: McpPlugin.McpPlugin.Instance.Logger);
+            var serializedFalse = reflector.Serialize(false, name: "value");
+
+            UnityEngine.Debug.Log($"Serialized GameObject: {serializedGo}");
+            UnityEngine.Debug.Log($"Serialized bool: {serializedFalse}");
+
+            var result = new Tool_Reflection().MethodCall(
+                filter: methodRef,
+                targetObject: serializedGo,
+                inputParameters: new SerializedMemberList(serializedFalse),
+                executeInMainThread: true);
+
+            ResultValidation(result);
+            UnityEngine.Debug.Log($"Result typeName: {result.typeName}");
+            UnityEngine.Debug.Log($"Result: {result}");
+
+            Assert.IsFalse(go.activeSelf, "GameObject should be inactive after SetActive(false).");
+
+            yield return null;
+        }
     }
 }
