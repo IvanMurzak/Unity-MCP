@@ -151,9 +151,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 {
                     /* skip inaccessible component */
                     logger?.LogWarning(ex.GetBaseException(), "Failed to serialize component at index {index} of type '{type}'. Path: {path}.",
-                        i, component?.GetType().GetTypeId(), component == null
-                            ? StringUtils.Null
-                            : context?.GetPath(component) ?? StringUtils.Null);
+                        i, component?.GetType().GetTypeId(), context?.GetPath(go));
                 }
             }
             return serializedFields;
