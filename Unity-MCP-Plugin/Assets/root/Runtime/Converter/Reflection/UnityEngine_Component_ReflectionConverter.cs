@@ -29,6 +29,9 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 
             yield return nameof(UnityEngine.Component.gameObject);
             yield return nameof(UnityEngine.Component.transform);
+#if UNITY_6000_3_OR_NEWER
+            yield return nameof(UnityEngine.Component.transformHandle);
+#endif
         }
         protected override object? DeserializeValueAsJsonElement(
             Reflector reflector,

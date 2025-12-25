@@ -23,8 +23,11 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
     public partial class UnityArrayReflectionConverter : ArrayReflectionConverter
     {
         public override IEnumerable<FieldInfo>? GetSerializableFields(Reflector reflector, Type objType, BindingFlags flags, ILogger? logger = null)
-            => objType.GetFields(flags)
+        {
+            return objType.GetFields(flags)
                 .Where(field => field.GetCustomAttribute<ObsoleteAttribute>() == null)
+                .Where(field => field.GetCustomAttribute<NonSerializedAttribute>() == null)
                 .Where(field => field.IsPublic || field.IsPrivate && field.GetCustomAttribute<SerializeField>() != null);
+        }
     }
 }
