@@ -20,6 +20,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
     public partial class TestToolReflection : BaseTest
     {
+        void ResultValidation(SerializedMember result)
+        {
+            UnityEngine.Debug.Log($"Result: {result}");
+            Assert.IsNotNull(result, "Result should not be null.");
+        }
+
         [UnityTest]
         public IEnumerator MethodCall_UnityEditor_EditorUserBuildSettings_get_activeBuildTarget()
         {
