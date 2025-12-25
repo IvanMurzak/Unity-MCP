@@ -163,7 +163,7 @@ Required:
                     ? methodWrapper.InvokeDict(dictInputParameters)
                     : methodWrapper.Invoke();
 
-                return reflector.Serialize(task.Result);
+                return reflector.Serialize(task.Result, fallbackType: method.ReturnType);
             };
 
             if (executeInMainThread)

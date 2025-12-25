@@ -133,5 +133,34 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             yield return null;
         }
+        [UnityTest]
+        public IEnumerator MethodCall_UnityEngine_GameObject_GetComponent_Transform()
+        {
+            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+
+            var classType = typeof(UnityEngine.GameObject);
+            var methodInfo = classType.GetMethod(nameof(UnityEngine.GameObject.GetComponent), System.Type.EmptyTypes)
+                ?.MakeGenericMethod(typeof(UnityEngine.Transform));
+            Assert.IsNotNull(methodInfo, "GetComponent<Transform> method should be found.");
+
+            var methodRef = new MethodRef(methodInfo!);
+            UnityEngine.Debug.Log($"Input: {methodRef}\n");
+
+            var go = new UnityEngine.GameObject("TestGameObject");
+            var serializedGo = reflector.Serialize(go, recursive: false, logger: McpPlugin.McpPlugin.Instance.Logger);
+
+            UnityEngine.Debug.Log($"Serialized GameObject: {serializedGo}");
+
+            var result = new Tool_Reflection().MethodCall(
+                filter: methodRef,
+                targetObject: serializedGo,
+                executeInMainThread: true);
+
+            ResultValidation(result);
+            UnityEngine.Debug.Log($"Result typeName: {result.typeName}");
+            UnityEngine.Debug.Log($"Result: {result}");
+
+            yield return null;
+        }
     }
 }
