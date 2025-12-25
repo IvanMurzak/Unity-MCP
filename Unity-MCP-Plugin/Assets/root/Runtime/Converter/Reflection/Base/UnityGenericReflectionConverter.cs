@@ -47,7 +47,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             var type = fallbackType ?? typeof(T);
             if (typeof(UnityEngine.Object).IsAssignableFrom(type))
             {
-                return data.valueJsonElement
+                var result = data.valueJsonElement
                    .ToAssetObjectRef(
                        reflector: reflector,
                        suppressException: true,
@@ -55,6 +55,12 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                        logs: logs,
                        logger: logger)
                    .FindAssetObject(type);
+
+                // Register the object early (before deserializing children) so child references can resolve
+                if (result != null && context != null)
+                    context.Register(result);
+
+                return result;
             }
             return base.Deserialize(
                 reflector: reflector,
