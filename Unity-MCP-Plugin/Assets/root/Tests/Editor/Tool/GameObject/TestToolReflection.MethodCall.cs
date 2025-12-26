@@ -10,6 +10,7 @@
 
 #nullable enable
 using System.Collections;
+using com.IvanMurzak.McpPlugin.Common.Utils;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using NUnit.Framework;
@@ -21,7 +22,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     {
         void ResultValidation(SerializedMember result)
         {
-            UnityEngine.Debug.Log($"Result: {result}");
+            UnityEngine.Debug.Log($"Result: {result.ToPrettyJson()}");
             Assert.IsNotNull(result, "Result should not be null.");
         }
 
@@ -148,7 +149,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var go = new UnityEngine.GameObject("TestGameObject");
             var serializedGo = reflector.Serialize(go, recursive: false, logger: _logger);
 
-            UnityEngine.Debug.Log($"Serialized GameObject: {serializedGo}");
+            UnityEngine.Debug.Log($"Serialized GameObject: {serializedGo.ToPrettyJson()}");
 
             var result = new Tool_Reflection().MethodCall(
                 filter: methodRef,
@@ -157,7 +158,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             ResultValidation(result);
             UnityEngine.Debug.Log($"Result typeName: {result.typeName}");
-            UnityEngine.Debug.Log($"Result: {result}");
+            UnityEngine.Debug.Log($"Result: {result.ToPrettyJson()}");
 
             yield return null;
         }
@@ -180,8 +181,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var serializedGo = reflector.Serialize(go, recursive: false, logger: _logger);
             var serializedFalse = reflector.Serialize(false, name: "value");
 
-            UnityEngine.Debug.Log($"Serialized GameObject: {serializedGo}");
-            UnityEngine.Debug.Log($"Serialized bool: {serializedFalse}");
+            UnityEngine.Debug.Log($"Serialized GameObject: {serializedGo.ToPrettyJson()}");
+            UnityEngine.Debug.Log($"Serialized bool: {serializedFalse.ToPrettyJson()}");
 
             var result = new Tool_Reflection().MethodCall(
                 filter: methodRef,
@@ -191,7 +192,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             ResultValidation(result);
             UnityEngine.Debug.Log($"Result typeName: {result.typeName}");
-            UnityEngine.Debug.Log($"Result: {result}");
+            UnityEngine.Debug.Log($"Result: {result.ToPrettyJson()}");
 
             Assert.IsFalse(go.activeSelf, "GameObject should be inactive after SetActive(false).");
 

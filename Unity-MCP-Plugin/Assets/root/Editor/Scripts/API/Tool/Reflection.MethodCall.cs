@@ -96,7 +96,7 @@ Required:
 
             var methods = methodEnumerable.ToList();
             if (methods.Count == 0)
-                throw new Exception("Method not found.\n{filter}");
+                throw new Exception($"Method not found.\n{filter}");
 
             var method = default(MethodInfo);
 

@@ -64,14 +64,14 @@ Do NOT use top-level statements or code outside a class. Top-level statements ar
             return MainThread.Instance.Run(() =>
             {
                 // Compile C# code using Roslyn and execute it immediately
-                if (ExecuteCSharpCode(
+                if (!ExecuteCSharpCode(
                     className: className,
                     methodName: methodName,
                     code: csharpCode,
                     parameters: parameters,
                     returnValue: out var result,
                     error: out var error,
-                    logger: UnityLoggerFactory.LoggerFactory.CreateLogger("Tool_Script.Execute")) == false)
+                    logger: UnityLoggerFactory.LoggerFactory.CreateLogger("Tool_Script.Execute")))
                 {
                     throw new Exception(error);
                 }
