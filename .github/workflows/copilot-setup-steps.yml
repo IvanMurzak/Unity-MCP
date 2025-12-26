@@ -1,0 +1,131 @@
+name: "Copilot Setup Steps"
+
+# Automatically run the setup steps when they are changed to allow for easy validation, and
+# allow manual testing through the repository's "Actions" tab
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  # The job MUST be called `copilot-setup-steps` or it will not be picked up by Copilot.
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+
+    # Set the permissions to the lowest permissions possible needed for your steps.
+    # Copilot will be given its own token for its operations.
+    permissions:
+      # If you want to clone the repository as part of your setup steps, for example to install dependencies, you'll need the `contents: read` permission. If you don't clone the repository in your setup steps, Copilot will do this for you automatically after the steps complete.
+      contents: read
+
+    # You can define any steps you want, and they will run before the agent starts.
+    # If you do not check out your code, Copilot will do this for you.
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Remove existing Docker network and containers
+        run: |
+          docker rm -f unity-editor || true
+          docker rm -f unity-mcp-server || true
+          docker network rm unity-mcp-network || true
+
+      - name: Create Docker network
+        run: docker network create unity-mcp-network
+
+      - name: Create Unity Editor container
+        run: |
+          docker create \
+            -v ${{ github.workspace }}/Unity-MCP-Plugin:/project \
+            --network unity-mcp-network \
+            --name unity-editor \
+            unityci/editor:ubuntu-2022.3.61f1-linux-il2cpp-3 \
+            tail -f /dev/null
+
+      - name: Start Unity Editor container
+        run: docker start unity-editor
+
+      - name: Activate Unity License
+        uses: game-ci/unity-activate@v2
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+
+      - name: Start Unity Editor and execute startup method
+        run: |
+          echo "Starting Unity Editor with startup method execution..."
+
+          # Start Unity with executeMethod (without -quit to keep it running)
+          docker exec unity-editor bash -c "unity-editor \
+            -projectPath /project \
+            -batchmode \
+            -nographics \
+            -username ${{ secrets.UNITY_EMAIL }} \
+            -password ${{ secrets.UNITY_PASSWORD }} \
+            -executeMethod com.IvanMurzak.Unity.MCP.Editor.Startup.Init \
+            -logFile /dev/stdout 2>&1"
+
+          echo "Unity Editor started, streaming logs until method completes..."
+          echo "================================================"
+
+          # Follow logs and look for completion indicators
+          timeout=600  # 10 minutes timeout for method execution
+          elapsed=0
+          last_log_count=0
+
+          while [ $elapsed -lt $timeout ]; do
+            # Get current logs
+            current_logs=$(docker logs unity-editor 2>&1)
+
+            # Print new logs only
+            current_log_count=$(echo "$current_logs" | wc -l)
+            if [ $current_log_count -gt $last_log_count ]; then
+              echo "$current_logs" | tail -n +$((last_log_count + 1))
+              last_log_count=$current_log_count
+            fi
+
+            # Check for method completion indicators
+            if echo "$current_logs" | grep -q "com.IvanMurzak.Unity.MCP.Editor.Startup.Init\|Refreshing native plugins\|Initialize mono"; then
+              # Wait a bit more to capture any final logs
+              sleep 5
+
+              # Print final logs
+              final_logs=$(docker logs unity-editor 2>&1)
+              final_count=$(echo "$final_logs" | wc -l)
+              if [ $final_count -gt $last_log_count ]; then
+                echo "$final_logs" | tail -n +$((last_log_count + 1))
+              fi
+
+              echo "================================================"
+              echo "Unity startup method execution detected, detaching from logs"
+              break
+            fi
+
+            sleep 2
+            elapsed=$((elapsed + 2))
+          done
+
+          if [ $elapsed -ge $timeout ]; then
+            echo "================================================"
+            echo "Warning: Timeout waiting for method completion, but continuing..."
+            echo "Last 20 lines of logs:"
+            docker logs unity-editor 2>&1 | tail -n 20
+          fi
+
+          echo "Unity Editor is now running in background"
+
+      - name: Install Unity-MCP-Server docker image
+        run: |
+          docker run -d \
+            -p 55123:55123 \
+            -e UNITY_MCP_PORT=55123 \
+            -e UNITY_MCP_CLIENT_TRANSPORT=http \
+            -e UNITY_MCP_PLUGIN_TIMEOUT=120000 \
+            --network unity-mcp-network \
+            --name unity-mcp-server \
+            ivanmurzakdev/unity-mcp-server:latest
