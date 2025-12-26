@@ -3,7 +3,7 @@
 --- !u!129 &1
 PlayerSettings:
   m_ObjectHideFlags: 0
-  serializedVersion: 27
+  serializedVersion: 26
   productGUID: 677f1a56bbe0e744f8af218b14a9fe29
   AndroidProfiler: 0
   AndroidFilterTouchesWhenObscured: 0
@@ -77,7 +77,7 @@ PlayerSettings:
   androidMinimumWindowHeight: 300
   androidFullscreenMode: 1
   androidAutoRotationBehavior: 1
-  androidApplicationEntry: 1
+  androidPredictiveBackSupport: 1
   defaultIsNativeResolution: 1
   macRetinaSupport: 1
   runInBackground: 1
@@ -85,6 +85,7 @@ PlayerSettings:
   muteOtherAudioSources: 0
   Prepare IOS For Recording: 0
   Force IOS Speakers When Recording: 0
+  audioSpatialExperience: 0
   deferSystemGesturesMode: 0
   hideHomeButton: 0
   submitAnalytics: 1
@@ -97,7 +98,6 @@ PlayerSettings:
   useMacAppStoreValidation: 0
   macAppStoreCategory: public.app-category.games
   gpuSkinning: 0
-  meshDeformation: 0
   xboxPIXTextureCapture: 0
   xboxEnableAvatar: 0
   xboxEnableKinect: 0
@@ -129,14 +129,18 @@ PlayerSettings:
   switchAllowGpuScratchShrinking: 0
   switchNVNMaxPublicTextureIDCount: 0
   switchNVNMaxPublicSamplerIDCount: 0
-  switchMaxWorkerMultiple: 8
   switchNVNGraphicsFirmwareMemory: 32
+  switchMaxWorkerMultiple: 8
+  stadiaPresentMode: 0
+  stadiaTargetFramerate: 0
   vulkanNumSwapchainBuffers: 3
   vulkanEnableSetSRGBWrite: 0
   vulkanEnablePreTransform: 0
   vulkanEnableLateAcquireNextImage: 0
   vulkanEnableCommandBufferRecycling: 1
   loadStoreDebugModeEnabled: 0
+  visionOSBundleVersion: 1.0
+  tvOSBundleVersion: 1.0
   bundleVersion: 1.0
   preloadedAssets: []
   metroInputSource: 0
@@ -158,7 +162,6 @@ PlayerSettings:
   resetResolutionOnWindowResize: 0
   androidSupportedAspectRatio: 1
   androidMaxAspectRatio: 2.1
-  androidMinAspectRatio: 1
   applicationIdentifier:
     Standalone: com.Ivan-Murzak.Unity-MCP
   buildNumber:
@@ -179,18 +182,20 @@ PlayerSettings:
   ForceInternetPermission: 0
   ForceSDCardPermission: 0
   CreateWallpaper: 0
-  androidSplitApplicationBinary: 0
+  APKExpansionFiles: 0
   keepLoadedShadersAlive: 0
   StripUnusedMeshComponents: 0
   strictShaderVariantMatching: 0
   VertexChannelCompressionMask: 4054
   iPhoneSdkVersion: 988
+  iOSSimulatorArchitecture: 0
   iOSTargetOSVersionString: 13.0
   tvOSSdkVersion: 0
+  tvOSSimulatorArchitecture: 0
   tvOSRequireExtendedGameController: 0
   tvOSTargetOSVersionString: 13.0
-  bratwurstSdkVersion: 0
-  bratwurstTargetOSVersionString: 13.0
+  VisionOSSdkVersion: 0
+  VisionOSTargetOSVersionString: 1.0
   uIPrerenderedIcon: 0
   uIRequiresPersistentWiFi: 0
   uIRequiresFullScreen: 1
@@ -233,15 +238,16 @@ PlayerSettings:
   iOSMetalForceHardShadows: 0
   metalEditorSupport: 1
   metalAPIValidation: 1
+  metalCompileShaderBinary: 0
   iOSRenderExtraFrameOnPause: 0
   iosCopyPluginsCodeInsteadOfSymlink: 0
   appleDeveloperTeamID: 
   iOSManualSigningProvisioningProfileID: 
   tvOSManualSigningProvisioningProfileID: 
-  bratwurstManualSigningProvisioningProfileID: 
+  VisionOSManualSigningProvisioningProfileID: 
   iOSManualSigningProvisioningProfileType: 0
   tvOSManualSigningProvisioningProfileType: 0
-  bratwurstManualSigningProvisioningProfileType: 0
+  VisionOSManualSigningProvisioningProfileType: 0
   appleEnableAutomaticSigning: 0
   iOSRequireARKit: 0
   iOSAutomaticallyDetectAndAddCapabilities: 1
@@ -265,7 +271,6 @@ PlayerSettings:
   AndroidKeystoreName: 
   AndroidKeyaliasName: 
   AndroidEnableArmv9SecurityFeatures: 0
-  AndroidEnableArm64MTE: 0
   AndroidBuildApkPerCpuArchitecture: 0
   AndroidTVCompatibility: 0
   AndroidIsGame: 1
@@ -283,7 +288,6 @@ PlayerSettings:
   AndroidMinifyDebug: 0
   AndroidValidateAppBundleSize: 1
   AndroidAppBundleSizeToValidate: 200
-  AndroidReportGooglePlayAppDependencies: 1
   m_BuildTargetIcons:
   - m_BuildTarget: 
     m_Icons:
@@ -761,11 +765,7 @@ PlayerSettings:
   webGLMemoryLinearGrowthStep: 16
   webGLMemoryGeometricGrowthStep: 0.2
   webGLMemoryGeometricGrowthCap: 96
-  webGLEnableWebGPU: 0
   webGLPowerPreference: 2
-  webGLWebAssemblyTable: 0
-  webGLWebAssemblyBigInt: 0
-  webGLCloseOnQuit: 0
   scriptingDefineSymbols:
     Android: UNITY_POST_PROCESSING_STACK_V2
     Bratwurst: UNITY_POST_PROCESSING_STACK_V2
@@ -791,7 +791,6 @@ PlayerSettings:
     Standalone: 0
   il2cppCompilerConfiguration: {}
   il2cppCodeGeneration: {}
-  il2cppStacktraceInformation: {}
   managedStrippingLevel: {}
   incrementalIl2cppBuild: {}
   suppressCommonWarnings: 1
@@ -802,7 +801,6 @@ PlayerSettings:
   gcIncremental: 1
   gcWBarrierValidation: 0
   apiCompatibilityLevelPerPlatform: {}
-  editorAssembliesCompatibilityLevel: 1
   m_RenderingPath: 1
   m_MobileRenderingPath: 1
   metroPackageName: Unity-MCP
@@ -882,11 +880,9 @@ PlayerSettings:
   hmiPlayerDataPath: 
   hmiForceSRGBBlit: 1
   embeddedLinuxEnableGamepadInput: 1
-  hmiCpuConfiguration: 
   hmiLogStartupTiming: 0
-  qnxGraphicConfPath: 
+  hmiCpuConfiguration: 
   apiCompatibilityLevel: 6
-  captureStartupLogs: {}
   activeInputHandler: 0
   windowsGamepadBackendHint: 0
   cloudProjectId: 5fcc6164-d986-4a4b-bcc9-beede968cc5b
