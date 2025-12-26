@@ -11,7 +11,7 @@
         "MCP",
         "Unity MCP"
     ],
-    "version": "0.31.0",
+    "version": "0.32.0",
     "unity": "2022.3",
     "description": "AI-powered bridge connecting LLMs and advanced AI agents to the Unity Editor via the Model Context Protocol (MCP). Chat with AI to generate code, debug errors, and automate game development tasks directly within your project.",
     "dependencies": {
