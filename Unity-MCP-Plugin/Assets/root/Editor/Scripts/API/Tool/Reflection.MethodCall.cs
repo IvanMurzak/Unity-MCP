@@ -18,6 +18,7 @@ using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Utils;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -163,7 +164,15 @@ Required:
                     ? methodWrapper.InvokeDict(dictInputParameters)
                     : methodWrapper.Invoke();
 
-                return reflector.Serialize(task.Result, fallbackType: method.ReturnType);
+                var result = task.Result;
+                if (result is SerializedMember serializedResult)
+                    return serializedResult;
+
+                return reflector.Serialize(
+                    obj: result,
+                    fallbackType: method.ReturnType,
+                    logger: UnityLoggerFactory.LoggerFactory.CreateLogger("Tool_Reflection.MethodCall")
+                );
             };
 
             if (executeInMainThread)

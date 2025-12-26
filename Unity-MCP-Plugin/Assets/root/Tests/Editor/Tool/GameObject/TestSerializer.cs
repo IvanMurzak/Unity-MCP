@@ -260,6 +260,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 typeof(List<UnityEngine.Collider>),
                 logger: _logger) as List<UnityEngine.Collider>;
 
+            Assert.IsNotNull(deserializedColliderList, "Deserialized collider list should not be null.");
+
             var str = string.Join(", ", deserializedColliderList!.Select(c => c == null ? "null" : c.name));
             Debug.Log($"[{nameof(TestSerializer)}] deserializedColliderList: {str}");
 
@@ -332,6 +334,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 colliderListField!,
                 typeof(List<UnityEngine.Collider>),
                 logger: _logger) as List<UnityEngine.Collider>;
+
+            Assert.IsNotNull(deserializedColliderList, "Deserialized collider list should not be null.");
 
             var str = string.Join(", ", deserializedColliderList!.Select(c => c == null ? "null" : c.name));
             Debug.Log($"[{nameof(TestSerializer)}] deserializedColliderList: {str}");

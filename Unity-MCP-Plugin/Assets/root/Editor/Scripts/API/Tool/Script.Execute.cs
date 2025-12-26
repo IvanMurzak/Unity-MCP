@@ -76,7 +76,12 @@ Do NOT use top-level statements or code outside a class. Top-level statements ar
                     throw new Exception(error);
                 }
 
-                return McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Serialize(result);
+                if (result is SerializedMember serializedResult)
+                    return serializedResult;
+
+                return McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Serialize(
+                    obj: result,
+                    logger: UnityLoggerFactory.LoggerFactory.CreateLogger("Tool_Script.Execute"));
             });
         }
         static bool ExecuteCSharpCode(
