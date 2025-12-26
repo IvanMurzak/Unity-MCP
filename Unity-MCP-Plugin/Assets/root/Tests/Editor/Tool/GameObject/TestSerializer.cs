@@ -15,12 +15,13 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Converter;
 using com.IvanMurzak.Unity.MCP.Reflection.Converter;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using com.IvanMurzak.Unity.MCP.TestFiles;
 using NUnit.Framework;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.TestTools;
 
@@ -104,7 +105,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 ref objMaterial,
                 data: serialized,
                 logs: logs,
-                logger: McpPlugin.McpPlugin.Instance.Logger);
+                logger: _logger);
 
             Assert.AreEqual(glossinessValue, material.GetFloat("_Glossiness"), 0.001f, $"Material property '_Glossiness' should be {glossinessValue}.");
             Assert.AreEqual(colorValue, material.GetColor("_Color"), $"Material property '_Glossiness' should be {glossinessValue}.");
@@ -128,7 +129,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             var materials = new[] { material1, material2 };
 
-            var serialized = reflector.Serialize(materials, logger: McpPlugin.McpPlugin.Instance.Logger);
+            var serialized = reflector.Serialize(materials, logger: _logger);
             var json = serialized.ToJson(reflector);
             Debug.Log($"[{nameof(TestSerializer)}] Result:\n{json}");
 
@@ -152,8 +153,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
             var type = typeof(T);
-            var serializedObj = reflector.Serialize(sourceObj, logger: McpPlugin.McpPlugin.Instance.Logger);
-            var deserializedObj = reflector.Deserialize(serializedObj, logger: McpPlugin.McpPlugin.Instance.Logger);
+            var serializedObj = reflector.Serialize(sourceObj, logger: _logger);
+            var deserializedObj = reflector.Deserialize(serializedObj, logger: _logger);
             Debug.Log($"[{type.Name}] Source:\n```json\n{sourceObj.ToJson(reflector)}\n```");
             Debug.Log($"[{type.Name}] Serialized:\n```json\n{serializedObj.ToJson(reflector)}\n```");
             Debug.Log($"[{type.Name}] Deserialized:\n```json\n{deserializedObj.ToJson(reflector)}\n```");
@@ -199,6 +200,149 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Test_Serialize_Deserialize(new UnityEngine.Vector3(1, 2, 3));
             Test_Serialize_Deserialize(new UnityEngine.Color(1, 0.5f, 0, 1));
             Test_Serialize_Deserialize(new UnityEditor.Build.NamedBuildTarget());
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Serialize_GameObject_WithComponent_ListOfNullColliders()
+        {
+            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+
+            // Create a GameObject with the test component
+            var go = new GameObject("TestGameObject_ColliderList");
+            var component = go.AddComponent<ColliderListTestScript>();
+
+            // Set the list to contain two null objects
+            component.colliderList.Add(null!);
+            component.colliderList.Add(null!);
+
+            EditorUtility.SetDirty(go);
+            EditorUtility.SetDirty(component);
+
+            // Wait 3 frames to ensure everything is initialized
+            yield return null;
+            yield return null;
+            yield return null;
+
+            var serializedComponent = reflector.Serialize(
+                component,
+                recursive: true,
+                logger: _logger);
+
+            var jsonComponent = serializedComponent.ToJson(reflector);
+            Debug.Log($"[{nameof(TestSerializer)}] Serialized ColliderListTestScript:\n{jsonComponent}");
+
+            // Serialize the GameObject with recursive set to true
+            var serialized = reflector.Serialize(
+                go,
+                recursive: true,
+                logger: _logger);
+
+            var json = serialized.ToJson(reflector);
+            Debug.Log($"[{nameof(TestSerializer)}] Serialized GameObject with null collider list:\n{json}");
+
+            // Validate that the serialization completed without errors
+            Assert.IsNotNull(serialized, "Serialized result should not be null.");
+            Assert.IsNotNull(serialized.fields, "Serialized fields should not be null.");
+
+            // Validate that the component was serialized
+            var componentField = serialized.fields.FirstOrDefault(f => f.typeName?.Contains("ColliderListTestScript") == true);
+            Assert.IsNotNull(componentField, "Component field should be serialized.");
+
+            // Validate that the colliderList field exists in the component
+            Assert.IsNotNull(componentField!.fields, "Component fields should not be null.");
+            var colliderListField = componentField.fields.FirstOrDefault(f => f.name == "colliderList");
+            Assert.IsNotNull(colliderListField, "colliderList field should be serialized.");
+
+            var deserializedColliderList = reflector.Deserialize(
+                colliderListField!,
+                typeof(List<UnityEngine.Collider>),
+                logger: _logger) as List<UnityEngine.Collider>;
+
+            Assert.IsNotNull(deserializedColliderList, "Deserialized collider list should not be null.");
+
+            var str = string.Join(", ", deserializedColliderList!.Select(c => c == null ? "null" : c.name));
+            Debug.Log($"[{nameof(TestSerializer)}] deserializedColliderList: {str}");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Serialize_GameObject_WithComponent_ListOfDestroyedColliders()
+        {
+            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+
+            // Create a GameObject with the test component
+            var go = new GameObject("TestGameObject_ColliderList");
+            var component = go.AddComponent<ColliderListTestScript>();
+
+            // Create two GameObjects with colliders
+            var goCapsule = new GameObject("TestGameObject_CapsuleCollider");
+            var capsuleCollider = goCapsule.AddComponent<CapsuleCollider>();
+
+            var goBox = new GameObject("TestGameObject_BoxCollider");
+            var boxCollider = goBox.AddComponent<BoxCollider>();
+
+            // Add the colliders to the list
+            component.colliderList.Add(capsuleCollider);
+            component.colliderList.Add(boxCollider);
+
+            EditorUtility.SetDirty(go);
+            EditorUtility.SetDirty(component);
+
+            // Destroy the collider components
+            UnityEngine.Object.DestroyImmediate(capsuleCollider);
+            UnityEngine.Object.DestroyImmediate(boxCollider);
+
+            // Wait 3 frames to ensure everything is processed
+            yield return null;
+            yield return null;
+            yield return null;
+
+            var serializedComponent = reflector.Serialize(
+                component,
+                recursive: true,
+                logger: _logger);
+
+            var jsonComponent = serializedComponent.ToJson(reflector);
+            Debug.Log($"[{nameof(TestSerializer)}] Serialized ColliderListTestScript with destroyed colliders:\n{jsonComponent}");
+
+            // Serialize the GameObject with recursive set to true
+            var serialized = reflector.Serialize(
+                go,
+                recursive: true,
+                logger: _logger);
+
+            var json = serialized.ToJson(reflector);
+            Debug.Log($"[{nameof(TestSerializer)}] Serialized GameObject with destroyed collider list:\n{json}");
+
+            // Validate that the serialization completed without errors
+            Assert.IsNotNull(serialized, "Serialized result should not be null.");
+            Assert.IsNotNull(serialized.fields, "Serialized fields should not be null.");
+
+            // Validate that the component was serialized
+            var componentField = serialized.fields.FirstOrDefault(f => f.typeName?.Contains("ColliderListTestScript") == true);
+            Assert.IsNotNull(componentField, "Component field should be serialized.");
+
+            // Validate that the colliderList field exists in the component
+            Assert.IsNotNull(componentField!.fields, "Component fields should not be null.");
+            var colliderListField = componentField.fields.FirstOrDefault(f => f.name == "colliderList");
+            Assert.IsNotNull(colliderListField, "colliderList field should be serialized.");
+
+            var deserializedColliderList = reflector.Deserialize(
+                colliderListField!,
+                typeof(List<UnityEngine.Collider>),
+                logger: _logger) as List<UnityEngine.Collider>;
+
+            Assert.IsNotNull(deserializedColliderList, "Deserialized collider list should not be null.");
+
+            var str = string.Join(", ", deserializedColliderList!.Select(c => c == null ? "null" : c.name));
+            Debug.Log($"[{nameof(TestSerializer)}] deserializedColliderList: {str}");
+
+            // Cleanup the additional GameObjects
+            UnityEngine.Object.DestroyImmediate(goCapsule);
+            UnityEngine.Object.DestroyImmediate(goBox);
 
             yield return null;
         }

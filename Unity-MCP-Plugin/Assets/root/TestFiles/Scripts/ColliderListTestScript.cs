@@ -8,12 +8,13 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 
-#nullable enable
+using System.Collections.Generic;
+using UnityEngine;
 
-namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
+namespace com.IvanMurzak.Unity.MCP.TestFiles
 {
-    public abstract class UnityEngine_GenericComponent_ReflectionConverter<T> : UnityEngine_Object_ReflectionConverter<T> where T : UnityEngine.Component
+    public class ColliderListTestScript : MonoBehaviour
     {
-        public override bool AllowSetValue => false;
+        public List<Collider> colliderList = new List<Collider>();
     }
 }

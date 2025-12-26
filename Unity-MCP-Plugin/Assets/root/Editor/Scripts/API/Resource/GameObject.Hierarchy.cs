@@ -16,6 +16,8 @@ using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
+using com.IvanMurzak.Unity.MCP.Utils;
+using Microsoft.Extensions.Logging;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
@@ -51,7 +53,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     uri,
                     reflector.Serialize(
                         go,
-                        logger: McpPlugin.McpPlugin.Instance.Logger
+                        logger: UnityLoggerFactory.LoggerFactory.CreateLogger<Resource_GameObject>()
                     ).ToJson(reflector),
                     Consts.MimeType.TextJson
                 ).MakeArray();

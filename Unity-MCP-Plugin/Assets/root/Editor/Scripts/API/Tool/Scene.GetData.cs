@@ -14,6 +14,8 @@ using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using com.IvanMurzak.Unity.MCP.Utils;
+using Microsoft.Extensions.Logging;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -52,11 +54,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 return new SceneData(
                     scene: scene,
+                    reflector: McpPlugin.McpPlugin.Instance!.McpManager.Reflector,
                     includeRootGameObjects: includeRootGameObjects,
                     includeChildrenDepth: includeChildrenDepth,
                     deepSerialization: deepSerialization,
                     includeBounds: includeBounds,
-                    includeData: includeData
+                    includeData: includeData,
+                    logger: UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_Scene>()
                 );
             });
         }

@@ -19,6 +19,7 @@ using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
+using Microsoft.Extensions.Logging;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -58,7 +59,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         c,
                         name: $"[{i}]",
                         recursive: false,
-                        logger: McpPlugin.McpPlugin.Instance.Logger
+                        logger: UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_GameObject>()
                     ))
                     .ToList();
                 var previewJson = availableComponentsPreview.ToJson(McpPlugin.McpPlugin.Instance!.McpManager.Reflector);
@@ -77,7 +78,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         fallbackType: typeof(UnityEngine.Component),
                         name: $"[{i}]",
                         recursive: false,
-                        logger: McpPlugin.McpPlugin.Instance.Logger
+                        logger: UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_GameObject>()
                     ))
                     .ToList();
                 var previewJson = availableComponentsPreview.ToJson(McpPlugin.McpPlugin.Instance!.McpManager.Reflector);

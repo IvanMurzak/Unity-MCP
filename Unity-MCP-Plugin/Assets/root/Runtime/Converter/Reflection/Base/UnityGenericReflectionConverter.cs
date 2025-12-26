@@ -27,9 +27,12 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
     public partial class UnityGenericReflectionConverter<T> : GenericReflectionConverter<T>
     {
         public override IEnumerable<FieldInfo>? GetSerializableFields(Reflector reflector, Type objType, BindingFlags flags, ILogger? logger = null)
-            => objType.GetFields(flags)
+        {
+            return objType.GetFields(flags)
                 .Where(field => field.GetCustomAttribute<ObsoleteAttribute>() == null)
+                .Where(field => field.GetCustomAttribute<NonSerializedAttribute>() == null)
                 .Where(field => field.IsPublic || field.IsPrivate && field.GetCustomAttribute<SerializeField>() != null);
+        }
 
         public override object? Deserialize(
             Reflector reflector,
@@ -44,7 +47,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             var type = fallbackType ?? typeof(T);
             if (typeof(UnityEngine.Object).IsAssignableFrom(type))
             {
-                return data.valueJsonElement
+                var result = data.valueJsonElement
                    .ToAssetObjectRef(
                        reflector: reflector,
                        suppressException: true,
@@ -52,6 +55,12 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                        logs: logs,
                        logger: logger)
                    .FindAssetObject(type);
+
+                // Register the object early (before deserializing children) so child references can resolve
+                if (result != null && context != null)
+                    context.Register(result);
+
+                return result;
             }
             return base.Deserialize(
                 reflector: reflector,

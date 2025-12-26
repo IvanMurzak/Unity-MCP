@@ -17,6 +17,8 @@ using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
+using com.IvanMurzak.Unity.MCP.Utils;
+using Microsoft.Extensions.Logging;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -89,7 +91,7 @@ You can modify multiple GameObjects at once. Just provide the same number of Gam
                         ref objToModify,
                         data: gameObjectDiffs[i],
                         logs: logs,
-                        logger: McpPlugin.McpPlugin.Instance.Logger);
+                        logger: UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_GameObject>());
 
                     if (success)
                         UnityEditor.EditorUtility.SetDirty(go);

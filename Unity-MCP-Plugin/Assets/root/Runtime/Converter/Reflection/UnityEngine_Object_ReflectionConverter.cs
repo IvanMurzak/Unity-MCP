@@ -60,15 +60,20 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 return SerializedMember.FromValue(reflector, type, value: null, name: name);
 
             var unityObject = obj as T;
+            if (unityObject == null)
+            {
+                // UnityEngine.Object is destroyed but reference is not null
+                return SerializedMember.FromValue(reflector, type, value: null, name: name);
+            }
 
-            if (!type.IsClass)
+            if (!type.IsClass && !type.IsInterface)
                 throw new ArgumentException($"Unsupported type: '{type.GetTypeId()}'. Converter: {GetType().GetTypeShortName()}");
 
             if (recursive)
             {
                 return new SerializedMember()
                 {
-                    name = name,
+                    name = name ?? unityObject?.name,
                     typeName = type.GetTypeId(),
                     fields = SerializeFields(
                         reflector,

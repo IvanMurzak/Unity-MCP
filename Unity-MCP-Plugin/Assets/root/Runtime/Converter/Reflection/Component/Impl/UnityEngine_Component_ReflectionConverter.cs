@@ -9,25 +9,10 @@
 */
 
 #nullable enable
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using com.IvanMurzak.ReflectorNet;
-using com.IvanMurzak.ReflectorNet.Converter;
-using UnityEngine;
-using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
-    public partial class UnityArrayReflectionConverter : ArrayReflectionConverter
+    public partial class UnityEngine_Component_ReflectionConverter : UnityEngine_GenericComponent_ReflectionConverter<UnityEngine.Component>
     {
-        public override IEnumerable<FieldInfo>? GetSerializableFields(Reflector reflector, Type objType, BindingFlags flags, ILogger? logger = null)
-        {
-            return objType.GetFields(flags)
-                .Where(field => field.GetCustomAttribute<ObsoleteAttribute>() == null)
-                .Where(field => field.GetCustomAttribute<NonSerializedAttribute>() == null)
-                .Where(field => field.IsPublic || field.IsPrivate && field.GetCustomAttribute<SerializeField>() != null);
-        }
     }
 }

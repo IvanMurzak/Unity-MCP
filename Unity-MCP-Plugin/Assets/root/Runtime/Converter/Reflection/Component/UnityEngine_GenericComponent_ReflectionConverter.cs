@@ -9,16 +9,17 @@
 */
 
 #nullable enable
+
 using System;
 using System.Collections.Generic;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
-using ILogger = Microsoft.Extensions.Logging.ILogger;
+using Microsoft.Extensions.Logging;
 
 namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
-    public partial class UnityEngine_Component_ReflectionConverter : UnityEngine_Object_ReflectionConverter<UnityEngine.Component>
+    public abstract class UnityEngine_GenericComponent_ReflectionConverter<T> : UnityEngine_Object_ReflectionConverter<T> where T : UnityEngine.Component
     {
         public override bool AllowSetValue => false;
 
@@ -29,6 +30,9 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 
             yield return nameof(UnityEngine.Component.gameObject);
             yield return nameof(UnityEngine.Component.transform);
+#if UNITY_6000_3_OR_NEWER
+            yield return nameof(UnityEngine.Component.transformHandle);
+#endif
         }
         protected override object? DeserializeValueAsJsonElement(
             Reflector reflector,

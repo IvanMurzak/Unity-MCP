@@ -18,6 +18,7 @@ using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Utils;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -32,7 +33,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 It requires to receive proper method schema.
 Use 'reflection-method-find' to find available method before using it.
 Receives input parameters and returns result.")]
-        public string MethodCall
+        public SerializedMember MethodCall
         (
             MethodRef filter,
 
@@ -96,7 +97,7 @@ Required:
 
             var methods = methodEnumerable.ToList();
             if (methods.Count == 0)
-                return $"[Error] Method not found.\n{filter}";
+                throw new Exception($"Method not found.\n{filter}");
 
             var method = default(MethodInfo);
 
@@ -113,7 +114,7 @@ Required:
                     : null;
 
                 if (method == null)
-                    return Error.MoreThanOneMethodFound(methods);
+                    throw new Exception(Error.MoreThanOneMethodFound(methods));
             }
             else
             {
@@ -126,7 +127,7 @@ Required:
             // if (!inputParameters.IsMatch(method, out var matchError))
             //     return $"[Error] {matchError}";
 
-            Func<string> action = () =>
+            Func<SerializedMember> action = () =>
             {
                 var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
@@ -147,7 +148,7 @@ Required:
                     // Object instance needed. Probably instance method.
                     var obj = reflector.Deserialize(targetObject!, logger: McpPlugin.McpPlugin.Instance.Logger);
                     if (obj == null)
-                        return $"[Error] '{nameof(targetObject)}' deserialized instance is null. Please specify the '{nameof(targetObject)}' properly.";
+                        throw new Exception($"'{nameof(targetObject)}' deserialized instance is null. Please specify the '{nameof(targetObject)}' properly.");
 
                     methodWrapper = new MethodWrapper(
                         reflector: reflector,
@@ -157,14 +158,21 @@ Required:
                 }
 
                 if (!methodWrapper.VerifyParameters(dictInputParameters, out var error))
-                    return $"[Error] {error}";
+                    throw new Exception(error);
 
                 var task = dictInputParameters != null
                     ? methodWrapper.InvokeDict(dictInputParameters)
                     : methodWrapper.Invoke();
 
                 var result = task.Result;
-                return $"[Success] Execution result:\n```json\n{result.ToJson(McpPlugin.McpPlugin.Instance!.McpManager.Reflector)}\n```";
+                if (result is SerializedMember serializedResult)
+                    return serializedResult;
+
+                return reflector.Serialize(
+                    obj: result,
+                    fallbackType: method.ReturnType,
+                    logger: UnityLoggerFactory.LoggerFactory.CreateLogger("Tool_Reflection.MethodCall")
+                );
             };
 
             if (executeInMainThread)

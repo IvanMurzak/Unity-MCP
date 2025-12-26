@@ -17,8 +17,10 @@ using System.Reflection;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.Extensions.Logging;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -30,7 +32,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Script / Execute"
         )]
         [Description("Compiles and executes C# code dynamically using Roslyn. The provided code must define a class with a static method to execute.")]
-        public static string Execute
+        public static SerializedMember Execute
         (
             [Description(@"C# code that compiles and executes immediately. It won't be stored as a script in the project. It is temporary one shot C# code execution using Roslyn.
 IMPORTANT: The code must define a class (e.g., 'public class Script') with a static method (e.g., 'public static object Main()').
@@ -45,30 +47,51 @@ Do NOT use top-level statements or code outside a class. Top-level statements ar
         )
         {
             if (string.IsNullOrEmpty(csharpCode))
-                return $"[Error] '{nameof(csharpCode)}' is null or empty. Please provide valid C# code to execute.";
+                throw new Exception($"'{nameof(csharpCode)}' is null or empty. Please provide valid C# code to execute.");
 
             if (string.IsNullOrEmpty(className))
-                return $"[Error] '{nameof(className)}' cannot be null or empty.";
+                throw new Exception($"'{nameof(className)}' cannot be null or empty.");
 
             if (string.IsNullOrEmpty(methodName))
-                return $"[Error] '{nameof(methodName)}' cannot be null or empty.";
+                throw new Exception($"'{nameof(methodName)}' cannot be null or empty.");
 
             if (csharpCode.Contains(className) == false)
-                return $"[Error] '{nameof(csharpCode)}' does not contain class '{className}'. Please ensure the class is defined in the provided code.";
+                throw new Exception($"'{nameof(csharpCode)}' does not contain class '{className}'. Please ensure the class is defined in the provided code.");
 
             if (csharpCode.Contains(methodName) == false)
-                return $"[Error] '{nameof(csharpCode)}' does not contain method '{methodName}'. Please ensure the method is defined in the provided code.";
+                throw new Exception($"'{nameof(csharpCode)}' does not contain method '{methodName}'. Please ensure the method is defined in the provided code.");
 
             return MainThread.Instance.Run(() =>
             {
                 // Compile C# code using Roslyn and execute it immediately
-                if (ExecuteCSharpCode(className, methodName, csharpCode, parameters, out var result, out var error) == false)
-                    return $"[Error] {error}";
+                if (!ExecuteCSharpCode(
+                    className: className,
+                    methodName: methodName,
+                    code: csharpCode,
+                    parameters: parameters,
+                    returnValue: out var result,
+                    error: out var error,
+                    logger: UnityLoggerFactory.LoggerFactory.CreateLogger("Tool_Script.Execute")))
+                {
+                    throw new Exception(error);
+                }
 
-                return $"[Success] {result}";
+                if (result is SerializedMember serializedResult)
+                    return serializedResult;
+
+                return McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Serialize(
+                    obj: result,
+                    logger: UnityLoggerFactory.LoggerFactory.CreateLogger("Tool_Script.Execute"));
             });
         }
-        static bool ExecuteCSharpCode(string className, string methodName, string code, SerializedMemberList? parameters, out object? returnValue, out string? error)
+        static bool ExecuteCSharpCode(
+            string className,
+            string methodName,
+            string code,
+            SerializedMemberList? parameters,
+            out object? returnValue,
+            out string? error,
+            ILogger? logger = null)
         {
             if (string.IsNullOrEmpty(className))
             {
@@ -84,7 +107,9 @@ Do NOT use top-level statements or code outside a class. Top-level statements ar
             }
 
             var parsedParameters = parameters
-                ?.Select(p => McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Deserialize(p, logger: McpPlugin.McpPlugin.Instance.Logger))
+                ?.Select(p => McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Deserialize(
+                    data: p,
+                    logger: logger))
                 ?.ToArray();
 
             var compilation = CSharpCompilation.Create(

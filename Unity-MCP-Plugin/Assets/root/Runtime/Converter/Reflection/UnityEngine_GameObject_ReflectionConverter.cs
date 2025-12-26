@@ -74,7 +74,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             {
                 return new SerializedMember()
                 {
-                    name = name,
+                    name = name ?? unityObject?.name,
                     typeName = type.GetTypeId(),
                     fields = SerializeFields(
                         reflector,
@@ -124,23 +124,35 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 throw new ArgumentException("Object is not a GameObject.", nameof(obj));
             var components = go.GetComponents<UnityEngine.Component>();
 
+            if (components.Length == 0)
+                return serializedFields;
+
             serializedFields.Capacity += components.Length;
 
             for (int i = 0; i < components.Length; i++)
             {
                 var component = components[i];
-                var componentSerialized = reflector.Serialize(
-                    obj: component,
-                    fallbackType: component?.GetType() ?? typeof(UnityEngine.Component),
-                    name: GetComponentName(i),
-                    recursive: true,
-                    flags: flags,
-                    depth: depth + 1,
-                    logs: logs,
-                    logger: logger,
-                    context: context
-                );
-                serializedFields.Add(componentSerialized);
+                try
+                {
+                    var componentSerialized = reflector.Serialize(
+                        obj: component,
+                        fallbackType: component?.GetType() ?? typeof(UnityEngine.Component),
+                        name: GetComponentName(i),
+                        recursive: true,
+                        flags: flags,
+                        depth: depth + 1,
+                        logs: logs,
+                        logger: logger,
+                        context: context
+                    );
+                    serializedFields.Add(componentSerialized);
+                }
+                catch (Exception ex)
+                {
+                    /* skip inaccessible component */
+                    logger?.LogWarning(ex.GetBaseException(), "Failed to serialize component at index {index} of type '{type}'. Path: {path}.",
+                        i, component?.GetType().GetTypeId(), context?.GetPath(go));
+                }
             }
             return serializedFields;
         }

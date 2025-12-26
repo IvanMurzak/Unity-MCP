@@ -120,10 +120,14 @@ namespace com.IvanMurzak.Unity.MCP.Utils
                     break;
 
                 case LogLevelMicrosoft.Warning:
+                    if (exception != null)
+                        UnityEngine.Debug.LogWarning(exception);
                     UnityEngine.Debug.LogWarning(message);
                     break;
 
                 default:
+                    if (exception != null)
+                        UnityEngine.Debug.Log(exception);
                     UnityEngine.Debug.Log(message);
                     break;
             }
