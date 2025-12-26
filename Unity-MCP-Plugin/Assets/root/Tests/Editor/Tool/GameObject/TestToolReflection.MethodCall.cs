@@ -139,22 +139,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
             var classType = typeof(UnityEngine.GameObject);
-            var methodInfo = classType.GetMethod(nameof(UnityEngine.GameObject.GetComponent), System.Type.EmptyTypes)
-                ?.MakeGenericMethod(typeof(UnityEngine.Transform));
-            Assert.IsNotNull(methodInfo, "GetComponent<Transform> method should be found.");
+            var methodInfo = classType.GetMethod(nameof(UnityEngine.GameObject.GetComponent), new[] { typeof(System.Type) });
+            Assert.IsNotNull(methodInfo, "GetComponent(Type) method should be found.");
 
             var methodRef = new MethodRef(methodInfo!);
             UnityEngine.Debug.Log($"Input: {methodRef}\n");
 
             var go = new UnityEngine.GameObject("TestGameObject");
             var serializedGo = reflector.Serialize(go, recursive: false, logger: _logger);
+            var serializedType = reflector.Serialize(typeof(UnityEngine.Transform), logger: _logger);
 
             UnityEngine.Debug.Log($"Serialized GameObject: {serializedGo.ToPrettyJson()}");
 
             var result = new Tool_Reflection().MethodCall(
                 filter: methodRef,
                 targetObject: serializedGo,
-                executeInMainThread: true);
+                inputParameters: new SerializedMemberList(serializedType),
+                executeInMainThread: true,
+                typeNameMatchLevel: 6,
+                methodNameMatchLevel: 6);
 
             ResultValidation(result);
             UnityEngine.Debug.Log($"Result typeName: {result.typeName}");
