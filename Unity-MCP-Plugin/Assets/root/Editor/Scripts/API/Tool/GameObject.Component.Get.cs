@@ -19,6 +19,8 @@ using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
+using com.IvanMurzak.Unity.MCP.Utils;
+using Microsoft.Extensions.Logging;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -81,7 +83,7 @@ Use this to inspect component data before modifying it.")]
                 };
 
                 var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
-                var logger = McpPlugin.McpPlugin.Instance.Logger;
+                var logger = UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_GameObject>();
 
                 if (includeFields || includeProperties)
                 {

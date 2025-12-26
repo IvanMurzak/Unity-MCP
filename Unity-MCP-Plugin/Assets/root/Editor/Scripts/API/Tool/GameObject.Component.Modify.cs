@@ -18,6 +18,8 @@ using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
+using com.IvanMurzak.Unity.MCP.Utils;
+using Microsoft.Extensions.Logging;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -83,7 +85,7 @@ Use 'gameobject-component-get' first to inspect the component structure before m
                     ref objToModify,
                     data: componentDiff,
                     logs: logs,
-                    logger: McpPlugin.McpPlugin.Instance.Logger);
+                    logger: UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_GameObject>());
 
                 if (success)
                 {

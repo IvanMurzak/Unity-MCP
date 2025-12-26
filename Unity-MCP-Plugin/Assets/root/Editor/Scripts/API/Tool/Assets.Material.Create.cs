@@ -13,6 +13,8 @@ using System.ComponentModel;
 using System.IO;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Utils;
+using Microsoft.Extensions.Logging;
 using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -64,7 +66,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             var result = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Serialize(
                 material,
                 name: material.name,
-                logger: McpPlugin.McpPlugin.Instance.Logger
+                logger: UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_Assets>()
             );
             UnityEditor.EditorApplication.RepaintProjectWindow();
             UnityEditor.EditorApplication.RepaintHierarchyWindow();

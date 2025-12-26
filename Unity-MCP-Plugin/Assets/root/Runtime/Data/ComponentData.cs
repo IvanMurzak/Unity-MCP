@@ -41,7 +41,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
     //                 obj: go,
     //                 name: go.name,
     //                 recursive: deepSerialization,
-    //                 logger: McpPlugin.McpPlugin.Instance.Logger
+    //                 logger: UnityLoggerFactory.CreateLogger("GameObjectData")
     //             );
     //         }
 

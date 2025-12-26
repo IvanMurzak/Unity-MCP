@@ -11,6 +11,8 @@
 #nullable enable
 using System.Collections.Generic;
 using System.Linq;
+using com.IvanMurzak.ReflectorNet;
+using Microsoft.Extensions.Logging;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
@@ -21,22 +23,26 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
         public SceneData() { }
         public SceneData(
             UnityEngine.SceneManagement.Scene scene,
+            Reflector reflector,
             bool includeRootGameObjects = false,
             int includeChildrenDepth = 0,
             bool deepSerialization = false,
             bool includeBounds = false,
-            bool includeData = false)
+            bool includeData = false,
+            ILogger? logger = null)
             : base(scene)
         {
             if (includeRootGameObjects)
             {
                 this.RootGameObjects = scene.GetRootGameObjects()
                     .Select(go => go.ToGameObjectData(
+                        reflector: reflector,
                         includeData: includeData,
                         includeBounds: includeBounds,
                         includeHierarchy: includeChildrenDepth > 0,
                         hierarchyDepth: includeChildrenDepth,
-                        deepSerialization: deepSerialization
+                        deepSerialization: deepSerialization,
+                        logger: logger
                     ))
                     .ToList();
             }
@@ -47,9 +53,15 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
     {
         public static SceneData ToSceneData(
             this UnityEngine.SceneManagement.Scene scene,
-            bool includeRootGameObjects = false)
+            Reflector reflector,
+            bool includeRootGameObjects = false,
+            ILogger? logger = null)
         {
-            return new SceneData(scene, includeRootGameObjects: includeRootGameObjects);
+            return new SceneData(
+                scene: scene,
+                reflector: reflector,
+                includeRootGameObjects: includeRootGameObjects,
+                logger: logger);
         }
     }
 }

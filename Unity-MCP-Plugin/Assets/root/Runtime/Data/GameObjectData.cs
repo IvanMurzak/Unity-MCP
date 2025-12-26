@@ -10,9 +10,11 @@
 
 #nullable enable
 using System.ComponentModel;
+using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEngine;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
@@ -28,23 +30,24 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 
         public GameObjectData() { }
         public GameObjectData(
+            Reflector reflector,
             GameObject go,
             bool includeData = false,
             bool includeBounds = false,
             bool includeHierarchy = false,
             int hierarchyDepth = 0,
-            bool deepSerialization = false)
+            bool deepSerialization = false,
+            ILogger? logger = null)
         {
             Reference = new GameObjectRef(go);
 
             if (includeData)
             {
-                var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
                 Data = reflector.Serialize(
                     obj: go,
                     name: go.name,
                     recursive: deepSerialization,
-                    logger: McpPlugin.McpPlugin.Instance.Logger
+                    logger: logger
                 );
             }
 
@@ -60,19 +63,23 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
     {
         public static GameObjectData ToGameObjectData(
             this GameObject go,
+            Reflector reflector,
             bool includeData = false,
             bool includeBounds = false,
             bool includeHierarchy = false,
             int hierarchyDepth = 0,
-            bool deepSerialization = false)
+            bool deepSerialization = false,
+            ILogger? logger = null)
         {
             return new GameObjectData(
+                reflector: reflector,
                 go: go,
                 includeData: includeData,
                 includeBounds: includeBounds,
                 includeHierarchy: includeHierarchy,
                 hierarchyDepth: hierarchyDepth,
-                deepSerialization: deepSerialization
+                deepSerialization: deepSerialization,
+                logger: logger
             );
         }
     }

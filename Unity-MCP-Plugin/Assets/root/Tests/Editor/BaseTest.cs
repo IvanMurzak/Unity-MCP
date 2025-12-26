@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.Text.Json;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet;
+using com.IvanMurzak.Unity.MCP.Utils;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -23,12 +24,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
     public class BaseTest
     {
+        protected Microsoft.Extensions.Logging.ILogger _logger = null!;
+
         [UnitySetUp]
         public virtual IEnumerator SetUp()
         {
             Debug.Log($"[{GetType().GetTypeShortName()}] SetUp");
 
             UnityMcpPlugin.InitSingletonIfNeeded();
+
+            _logger = UnityLoggerFactory.LoggerFactory.CreateLogger("Tests");
 
             yield return null;
         }

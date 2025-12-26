@@ -14,6 +14,8 @@ using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
+using com.IvanMurzak.Unity.MCP.Utils;
+using Microsoft.Extensions.Logging;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -54,11 +56,13 @@ Also, it returns Components preview just for the target GameObject.")]
                     throw new System.Exception("GameObject not found after successful search.");
 
                 return go.ToGameObjectData(
+                    reflector: McpPlugin.McpPlugin.Instance!.McpManager.Reflector,
                     includeData: includeData,
                     includeBounds: includeBounds,
                     includeHierarchy: includeHierarchy,
                     hierarchyDepth: hierarchyDepth,
-                    deepSerialization: deepSerialization
+                    deepSerialization: deepSerialization,
+                    logger: UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_GameObject>()
                 );
             });
         }

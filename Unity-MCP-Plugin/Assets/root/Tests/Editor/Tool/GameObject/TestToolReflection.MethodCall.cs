@@ -10,7 +10,6 @@
 
 #nullable enable
 using System.Collections;
-using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using NUnit.Framework;
@@ -96,8 +95,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             go1.transform.position = new UnityEngine.Vector3(0, 0, 0);
             go2.transform.position = new UnityEngine.Vector3(1, 0, 0);
 
-            var serializedTransform1 = reflector.Serialize(go1.transform, logger: McpPlugin.McpPlugin.Instance.Logger);
-            var serializedTransform2 = reflector.Serialize(go2.transform, logger: McpPlugin.McpPlugin.Instance.Logger, name: "target");
+            var serializedTransform1 = reflector.Serialize(go1.transform, logger: _logger);
+            var serializedTransform2 = reflector.Serialize(go2.transform, logger: _logger, name: "target");
 
             UnityEngine.Debug.Log($"Serialized transforms");
             UnityEngine.Debug.Log($"Transform 1: {serializedTransform1}");
@@ -147,7 +146,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             UnityEngine.Debug.Log($"Input: {methodRef}\n");
 
             var go = new UnityEngine.GameObject("TestGameObject");
-            var serializedGo = reflector.Serialize(go, recursive: false, logger: McpPlugin.McpPlugin.Instance.Logger);
+            var serializedGo = reflector.Serialize(go, recursive: false, logger: _logger);
 
             UnityEngine.Debug.Log($"Serialized GameObject: {serializedGo}");
 
@@ -178,7 +177,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var go = new UnityEngine.GameObject("TestGameObject");
             Assert.IsTrue(go.activeSelf, "GameObject should be active by default.");
 
-            var serializedGo = reflector.Serialize(go, recursive: false, logger: McpPlugin.McpPlugin.Instance.Logger);
+            var serializedGo = reflector.Serialize(go, recursive: false, logger: _logger);
             var serializedFalse = reflector.Serialize(false, name: "value");
 
             UnityEngine.Debug.Log($"Serialized GameObject: {serializedGo}");

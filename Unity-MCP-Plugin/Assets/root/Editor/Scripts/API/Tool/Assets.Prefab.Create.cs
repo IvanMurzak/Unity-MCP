@@ -14,6 +14,8 @@ using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
+using com.IvanMurzak.Unity.MCP.Utils;
+using Microsoft.Extensions.Logging;
 using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -61,7 +63,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             var result = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Serialize(
                 prefabGo,
                 recursive: false,
-                logger: McpPlugin.McpPlugin.Instance.Logger
+                logger: UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_Assets_Prefab>()
             );
 
             return $"[Success] Prefab '{prefabAssetPath}' created from GameObject '{go.name}' (InstanceID: {go.GetInstanceID()}).\n" +
