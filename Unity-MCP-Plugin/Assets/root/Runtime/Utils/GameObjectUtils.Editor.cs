@@ -47,7 +47,11 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
             if (instanceID == 0)
                 return null;
 
-            var obj = UnityEditor.EditorUtility.InstanceIDToObject(instanceID);
+#if UNITY_6000_3_OR_NEWER
+            var obj = UnityEditor.EditorUtility.EntityIdToObject(instanceID);
+#else
+            var obj =  UnityEditor.EditorUtility.InstanceIDToObject(instanceID);
+#endif
             if (obj is not GameObject go)
                 return null;
 

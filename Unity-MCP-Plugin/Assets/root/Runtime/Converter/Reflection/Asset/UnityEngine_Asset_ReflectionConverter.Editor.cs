@@ -110,7 +110,11 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 
         protected virtual T? LoadFromInstanceID(int instanceID)
         {
-            var obj = UnityEditor.EditorUtility.InstanceIDToObject(instanceID);
+#if UNITY_6000_3_OR_NEWER
+            var obj = UnityEditor.EditorUtility.EntityIdToObject(instanceID);
+#else
+            var obj =  UnityEditor.EditorUtility.InstanceIDToObject(instanceID);
+#endif
             return obj as T;
         }
 

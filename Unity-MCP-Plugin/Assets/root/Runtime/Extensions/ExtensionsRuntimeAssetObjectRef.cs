@@ -11,6 +11,7 @@
 #nullable enable
 using System.Linq;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
 {
@@ -32,11 +33,19 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
 #if UNITY_EDITOR
             if (assetObjectRef.InstanceID != 0)
             {
+#if UNITY_6000_3_OR_NEWER
+                var obj = UnityEditor.EditorUtility.EntityIdToObject(assetObjectRef.InstanceID);
+#else
                 var obj = UnityEditor.EditorUtility.InstanceIDToObject(assetObjectRef.InstanceID);
+#endif
                 if (obj != null && type.IsAssignableFrom(obj.GetType()))
                     return obj;
 
+#if UNITY_6000_3_OR_NEWER
+                var assetPath = UnityEditor.AssetDatabase.GetAssetPath((EntityId)assetObjectRef.InstanceID);
+#else
                 var assetPath = UnityEditor.AssetDatabase.GetAssetPath(assetObjectRef.InstanceID);
+#endif
                 var asset = UnityEditor.AssetDatabase.LoadAllAssetsAtPath(assetPath)
                     .FirstOrDefault(asset => asset != null && type.IsAssignableFrom(asset.GetType()));
                 if (asset != null)
@@ -78,7 +87,11 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
 #if UNITY_EDITOR
             if (assetObjectRef.InstanceID != 0)
             {
+#if UNITY_6000_3_OR_NEWER
+                var obj = UnityEditor.EditorUtility.EntityIdToObject(assetObjectRef.InstanceID);
+#else
                 var obj = UnityEditor.EditorUtility.InstanceIDToObject(assetObjectRef.InstanceID);
+#endif
                 return obj as T;
             }
 
