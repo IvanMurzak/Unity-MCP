@@ -49,9 +49,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                     gos.Add(go);
                 }
-                Selection.instanceIDs = gos
-                    .Select(go => go.GetInstanceID())
-                    .ToArray();
+
+#if UNITY_6000_3_OR_NEWER
+                Selection.entityIds = gos.Select(go => go.GetEntityId()).ToArray();
+#else
+                Selection.instanceIDs = gos.Select(go => go.GetInstanceID()).ToArray();
+#endif
 
                 Unsupported.DuplicateGameObjectsUsingPasteboard();
                 UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
