@@ -89,7 +89,7 @@ Use this to check which packages are currently installed before adding or removi
                 var packages = listRequest.Result.AsEnumerable();
 
                 // Apply source filter
-                if (!string.IsNullOrEmpty(sourceFilter) && !sourceFilter.Equals("All", StringComparison.OrdinalIgnoreCase))
+                if (!string.IsNullOrEmpty(sourceFilter) && !sourceFilter!.Equals("All", StringComparison.OrdinalIgnoreCase))
                 {
                     if (Enum.TryParse<PackageSource>(sourceFilter, true, out var source))
                         packages = packages.Where(p => p.source == source);
