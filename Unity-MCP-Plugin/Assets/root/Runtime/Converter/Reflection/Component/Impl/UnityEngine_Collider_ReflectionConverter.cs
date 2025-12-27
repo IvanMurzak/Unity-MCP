@@ -9,11 +9,18 @@
 */
 
 #nullable enable
+using System.Collections.Generic;
 
 namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
-    public partial class UnityEngine_Component_ReflectionConverter : UnityEngine_GenericComponent_ReflectionConverter<UnityEngine.Component>
+    public partial class UnityEngine_Collider_ReflectionConverter : UnityEngine_GenericComponent_ReflectionConverter<UnityEngine.Collider>
     {
+        protected override IEnumerable<string> GetIgnoredProperties()
+        {
+            foreach (var property in base.GetIgnoredProperties())
+                yield return property;
 
+            yield return nameof(UnityEngine.Collider.material);
+        }
     }
 }
