@@ -13,26 +13,15 @@ using System;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEditor.PackageManager;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Package
     {
-        [Description("Result of package remove/uninstall operation.")]
-        public class PackageRemoveResult
-        {
-            [Description("Whether the operation was successful.")]
-            public bool Success { get; set; }
-
-            [Description("The name of the package that was removed.")]
-            public string PackageName { get; set; } = string.Empty;
-
-            [Description("Status message describing the result.")]
-            public string Message { get; set; } = string.Empty;
-        }
-
         [McpPluginTool
         (
             "package-remove",
@@ -40,25 +29,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         )]
         [Description(@"Remove (uninstall) a package from the Unity project.
 This removes the package from the project's manifest.json and triggers package resolution.
-Note: Built-in packages and packages that are dependencies of other installed packages cannot be removed.")]
-        public async Task<PackageRemoveResult> Remove
+Note: Built-in packages and packages that are dependencies of other installed packages cannot be removed.
+Note: Package removal may trigger a domain reload. The result will be sent after the reload completes.")]
+        public static ResponseCallTool Remove
         (
             [Description("The name of the package to remove. Example: 'com.unity.textmeshpro'. Do not include version number.")]
-            string packageName
+            string packageName,
+            [RequestID]
+            string? requestId = null
         )
         {
+            if (requestId == null || string.IsNullOrWhiteSpace(requestId))
+                return ResponseCallTool.Error("[Error] Original request with valid RequestID must be provided.");
+
             if (string.IsNullOrWhiteSpace(packageName))
-                throw new ArgumentException(Error.PackageNameIsEmpty());
+                return ResponseCallTool.Error(Error.PackageNameIsEmpty()).SetRequestID(requestId);
 
             // Remove version suffix if accidentally included
             var cleanPackageName = packageName.Contains("@")
                 ? packageName.Substring(0, packageName.IndexOf('@'))
                 : packageName;
 
-            return await MainThread.Instance.RunAsync(async () =>
+            MainThread.Instance.RunAsync(async () =>
             {
+                await Task.Yield();
+
                 // First verify the package is installed
-                var listRequest = Client.List(true);
+                var listRequest = Client.List(offlineMode: true);
                 while (!listRequest.IsCompleted)
                     await Task.Yield();
 
@@ -76,12 +73,12 @@ Note: Built-in packages and packages that are dependencies of other installed pa
 
                     if (!isInstalled)
                     {
-                        return new PackageRemoveResult
+                        _ = UnityMcpPlugin.NotifyToolRequestCompleted(new RequestToolCompletedData
                         {
-                            Success = false,
-                            PackageName = cleanPackageName,
-                            Message = Error.PackageNotFound(cleanPackageName)
-                        };
+                            RequestId = requestId,
+                            Result = ResponseCallTool.Error(Error.PackageNotFound(cleanPackageName)).SetRequestID(requestId)
+                        });
+                        return;
                     }
                 }
 
@@ -92,21 +89,25 @@ Note: Built-in packages and packages that are dependencies of other installed pa
 
                 if (removeRequest.Status == StatusCode.Failure)
                 {
-                    return new PackageRemoveResult
+                    var errorMessage = Error.PackageOperationFailed("remove", cleanPackageName, removeRequest.Error?.message ?? "Unknown error");
+                    _ = UnityMcpPlugin.NotifyToolRequestCompleted(new RequestToolCompletedData
                     {
-                        Success = false,
-                        PackageName = cleanPackageName,
-                        Message = Error.PackageOperationFailed("remove", cleanPackageName, removeRequest.Error?.message ?? "Unknown error")
-                    };
+                        RequestId = requestId,
+                        Result = ResponseCallTool.Error(errorMessage).SetRequestID(requestId)
+                    });
+                    return;
                 }
 
-                return new PackageRemoveResult
-                {
-                    Success = true,
-                    PackageName = cleanPackageName,
-                    Message = $"Successfully removed package '{cleanPackageName}'"
-                };
-            }).Unwrap();
+                // Schedule notification to be sent after domain reload completes
+                PackageUtils.SchedulePostDomainReloadNotification(
+                    requestId,
+                    cleanPackageName,
+                    "remove",
+                    expectedResult: true
+                );
+            });
+
+            return ResponseCallTool.Processing($"Removing package '{cleanPackageName}'. Waiting for package resolution and potential domain reload...").SetRequestID(requestId);
         }
     }
 }
