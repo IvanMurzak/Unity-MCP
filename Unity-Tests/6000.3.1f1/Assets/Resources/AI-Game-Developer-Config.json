@@ -1,15 +1,380 @@
 {
   "logLevel": 3,
-  "enabledTools": [
-    "*"
+  "tools": [
+    {
+      "name": "assets-copy",
+      "enabled": true
+    },
+    {
+      "name": "assets-create-folder",
+      "enabled": true
+    },
+    {
+      "name": "assets-delete",
+      "enabled": true
+    },
+    {
+      "name": "assets-find",
+      "enabled": true
+    },
+    {
+      "name": "assets-get-data",
+      "enabled": true
+    },
+    {
+      "name": "assets-material-create",
+      "enabled": true
+    },
+    {
+      "name": "assets-modify",
+      "enabled": true
+    },
+    {
+      "name": "assets-move",
+      "enabled": true
+    },
+    {
+      "name": "assets-refresh",
+      "enabled": true
+    },
+    {
+      "name": "assets-prefab-close",
+      "enabled": true
+    },
+    {
+      "name": "assets-prefab-create",
+      "enabled": true
+    },
+    {
+      "name": "assets-prefab-instantiate",
+      "enabled": true
+    },
+    {
+      "name": "assets-prefab-open",
+      "enabled": true
+    },
+    {
+      "name": "assets-prefab-save",
+      "enabled": true
+    },
+    {
+      "name": "assets-shader-list-all",
+      "enabled": true
+    },
+    {
+      "name": "component-list",
+      "enabled": true
+    },
+    {
+      "name": "console-get-logs",
+      "enabled": true
+    },
+    {
+      "name": "editor-application-get-state",
+      "enabled": true
+    },
+    {
+      "name": "editor-application-set-state",
+      "enabled": true
+    },
+    {
+      "name": "editor-selection-get",
+      "enabled": true
+    },
+    {
+      "name": "editor-selection-set",
+      "enabled": true
+    },
+    {
+      "name": "gameobject-component-add",
+      "enabled": true
+    },
+    {
+      "name": "gameobject-component-destroy",
+      "enabled": true
+    },
+    {
+      "name": "gameobject-component-get",
+      "enabled": true
+    },
+    {
+      "name": "gameobject-component-modify",
+      "enabled": true
+    },
+    {
+      "name": "gameobject-create",
+      "enabled": true
+    },
+    {
+      "name": "gameobject-destroy",
+      "enabled": true
+    },
+    {
+      "name": "gameobject-duplicate",
+      "enabled": true
+    },
+    {
+      "name": "gameobject-find",
+      "enabled": true
+    },
+    {
+      "name": "gameobject-modify",
+      "enabled": true
+    },
+    {
+      "name": "gameobject-set-parent",
+      "enabled": true
+    },
+    {
+      "name": "reflection-method-call",
+      "enabled": true
+    },
+    {
+      "name": "reflection-method-find",
+      "enabled": true
+    },
+    {
+      "name": "scene-create",
+      "enabled": true
+    },
+    {
+      "name": "scene-get-data",
+      "enabled": true
+    },
+    {
+      "name": "scene-list-opened",
+      "enabled": true
+    },
+    {
+      "name": "scene-open",
+      "enabled": true
+    },
+    {
+      "name": "scene-save",
+      "enabled": true
+    },
+    {
+      "name": "scene-set-active",
+      "enabled": true
+    },
+    {
+      "name": "scene-unload",
+      "enabled": true
+    },
+    {
+      "name": "script-delete",
+      "enabled": true
+    },
+    {
+      "name": "script-execute",
+      "enabled": true
+    },
+    {
+      "name": "script-read",
+      "enabled": true
+    },
+    {
+      "name": "script-update-or-create",
+      "enabled": true
+    },
+    {
+      "name": "tests-run",
+      "enabled": true
+    }
   ],
-  "enabledPrompts": [
-    "*"
+  "prompts": [
+    {
+      "name": "setup-animator-controller",
+      "enabled": true
+    },
+    {
+      "name": "create-simple-tweening",
+      "enabled": true
+    },
+    {
+      "name": "setup-timeline-sequence",
+      "enabled": true
+    },
+    {
+      "name": "add-animation-events",
+      "enabled": true
+    },
+    {
+      "name": "create-procedural-animation",
+      "enabled": true
+    },
+    {
+      "name": "setup-sprite-animation",
+      "enabled": true
+    },
+    {
+      "name": "add-ik-system",
+      "enabled": true
+    },
+    {
+      "name": "create-animation-blending",
+      "enabled": true
+    },
+    {
+      "name": "organize-project-structure",
+      "enabled": true
+    },
+    {
+      "name": "import-setup-sprites",
+      "enabled": true
+    },
+    {
+      "name": "setup-audio-manager",
+      "enabled": true
+    },
+    {
+      "name": "configure-build-settings",
+      "enabled": true
+    },
+    {
+      "name": "create-material-library",
+      "enabled": true
+    },
+    {
+      "name": "setup-asset-bundles",
+      "enabled": true
+    },
+    {
+      "name": "optimize-texture-settings",
+      "enabled": true
+    },
+    {
+      "name": "setup-addressables",
+      "enabled": true
+    },
+    {
+      "name": "add-debug-visualization",
+      "enabled": true
+    },
+    {
+      "name": "setup-performance-profiling",
+      "enabled": true
+    },
+    {
+      "name": "create-test-scene",
+      "enabled": true
+    },
+    {
+      "name": "add-logging-system",
+      "enabled": true
+    },
+    {
+      "name": "create-unit-tests",
+      "enabled": true
+    },
+    {
+      "name": "setup-debug-ui",
+      "enabled": true
+    },
+    {
+      "name": "add-assertion-checks",
+      "enabled": true
+    },
+    {
+      "name": "create-automated-tests",
+      "enabled": true
+    },
+    {
+      "name": "add-standard-components",
+      "enabled": true
+    },
+    {
+      "name": "setup-player-controller",
+      "enabled": true
+    },
+    {
+      "name": "create-ui-canvas",
+      "enabled": true
+    },
+    {
+      "name": "add-physics-interactions",
+      "enabled": true
+    },
+    {
+      "name": "create-interactive-object",
+      "enabled": true
+    },
+    {
+      "name": "setup-audio-source",
+      "enabled": true
+    },
+    {
+      "name": "create-particle-effects",
+      "enabled": true
+    },
+    {
+      "name": "setup-animator-component",
+      "enabled": true
+    },
+    {
+      "name": "setup-basic-scene",
+      "enabled": true
+    },
+    {
+      "name": "organize-scene-hierarchy",
+      "enabled": true
+    },
+    {
+      "name": "add-lighting-setup",
+      "enabled": true
+    },
+    {
+      "name": "create-prefab-from-selection",
+      "enabled": true
+    },
+    {
+      "name": "setup-scene-camera",
+      "enabled": true
+    },
+    {
+      "name": "create-environment-template",
+      "enabled": true
+    },
+    {
+      "name": "generate-monobehaviour-template",
+      "enabled": true
+    },
+    {
+      "name": "add-event-system",
+      "enabled": true
+    },
+    {
+      "name": "create-singleton-manager",
+      "enabled": true
+    },
+    {
+      "name": "setup-coroutine-framework",
+      "enabled": true
+    },
+    {
+      "name": "create-scriptableobject-data",
+      "enabled": true
+    },
+    {
+      "name": "implement-object-pooling",
+      "enabled": true
+    },
+    {
+      "name": "add-state-machine",
+      "enabled": true
+    },
+    {
+      "name": "setup-dependency-injection",
+      "enabled": true
+    }
   ],
-  "enabledResources": [
-    "*"
+  "resources": [
+    {
+      "name": "GameObject_CurrentScene",
+      "enabled": true
+    }
   ],
   "host": "http://localhost:51412",
   "timeoutMs": 10000,
-  "keepConnected": false
+  "keepConnected": true
 }

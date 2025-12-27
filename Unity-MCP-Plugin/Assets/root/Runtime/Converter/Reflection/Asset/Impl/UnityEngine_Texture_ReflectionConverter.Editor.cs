@@ -55,7 +55,11 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 
         protected override UnityEngine.Texture? LoadFromInstanceID(int instanceID)
         {
-            var textureOrSprite = EditorUtility.InstanceIDToObject(instanceID);
+#if UNITY_6000_3_OR_NEWER
+            var textureOrSprite = UnityEditor.EditorUtility.EntityIdToObject((UnityEngine.EntityId)instanceID);
+#else
+            var textureOrSprite = UnityEditor.EditorUtility.InstanceIDToObject(instanceID);
+#endif
             if (textureOrSprite == null) return null;
 
             if (textureOrSprite is UnityEngine.Texture texture)

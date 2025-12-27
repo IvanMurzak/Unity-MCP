@@ -41,7 +41,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     activeGameObject = Selection.activeGameObject != null
                         ? new GameObjectRef(Selection.activeGameObject)
                         : null,
+#if UNITY_6000_3_OR_NEWER
+                    activeInstanceID = (int)Selection.activeEntityId
+#else
                     activeInstanceID = Selection.activeInstanceID
+#endif
                 };
 
                 if (includeGameObjects)
@@ -51,7 +55,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     response.transforms = Selection.transforms?.Select(t => new ComponentRef(t)).ToArray();
 
                 if (includeInstanceIDs)
+#if UNITY_6000_3_OR_NEWER
+                    response.instanceIDs = Selection.entityIds.Select(x => (int)x).ToArray();
+#else
                     response.instanceIDs = Selection.instanceIDs;
+#endif
 
                 if (includeAssetGUIDs)
                     response.assetGUIDs = Selection.assetGUIDs;
