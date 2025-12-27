@@ -56,6 +56,8 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             ILogger? logger = null,
             SerializationContext? context = null)
         {
+            // UnityEngine.Debug.LogWarning($"Serialize: {name}, Type: {(obj?.GetType() ?? type).GetTypeId()}, Obj is null? {obj == null}.\nPath: {context?.BuildCurrentPath()}");
+
             if (obj == null)
                 return SerializedMember.FromValue(reflector, type, value: null, name: name);
 
@@ -350,6 +352,11 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                     logs: logs,
                     logger: logger)
                 .FindAssetObject(type);
+        }
+
+        protected override SerializedMemberList? SerializeFields(Reflector reflector, object obj, BindingFlags flags, int depth = 0, Logs? logs = null, ILogger? logger = null, SerializationContext? context = null)
+        {
+            return base.SerializeFields(reflector, obj, flags, depth, logs, logger, context);
         }
     }
 }
