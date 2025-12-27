@@ -34,7 +34,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
             if (assetObjectRef.InstanceID != 0)
             {
 #if UNITY_6000_3_OR_NEWER
-                var obj = UnityEditor.EditorUtility.EntityIdToObject(assetObjectRef.InstanceID);
+                var obj = UnityEditor.EditorUtility.EntityIdToObject((UnityEngine.EntityId)assetObjectRef.InstanceID);
 #else
                 var obj = UnityEditor.EditorUtility.InstanceIDToObject(assetObjectRef.InstanceID);
 #endif
@@ -42,7 +42,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
                     return obj;
 
 #if UNITY_6000_3_OR_NEWER
-                var assetPath = UnityEditor.AssetDatabase.GetAssetPath((EntityId)assetObjectRef.InstanceID);
+                var assetPath = UnityEditor.AssetDatabase.GetAssetPath((UnityEngine.EntityId)assetObjectRef.InstanceID);
 #else
                 var assetPath = UnityEditor.AssetDatabase.GetAssetPath(assetObjectRef.InstanceID);
 #endif
@@ -88,7 +88,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
             if (assetObjectRef.InstanceID != 0)
             {
 #if UNITY_6000_3_OR_NEWER
-                var obj = UnityEditor.EditorUtility.EntityIdToObject(assetObjectRef.InstanceID);
+                var obj = UnityEditor.EditorUtility.EntityIdToObject((UnityEngine.EntityId)assetObjectRef.InstanceID);
 #else
                 var obj = UnityEditor.EditorUtility.InstanceIDToObject(assetObjectRef.InstanceID);
 #endif

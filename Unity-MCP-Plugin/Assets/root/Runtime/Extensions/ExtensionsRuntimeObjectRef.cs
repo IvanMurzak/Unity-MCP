@@ -24,7 +24,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
             if (objectRef.InstanceID != 0)
             {
 #if UNITY_6000_3_OR_NEWER
-                return UnityEditor.EditorUtility.EntityIdToObject(objectRef.InstanceID);
+                return UnityEditor.EditorUtility.EntityIdToObject((UnityEngine.EntityId)objectRef.InstanceID);
 #else
                 return UnityEditor.EditorUtility.InstanceIDToObject(objectRef.InstanceID);
 #endif

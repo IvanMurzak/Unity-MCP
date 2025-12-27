@@ -52,14 +52,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     gameObjects = Selection.gameObjects?.Select(go => new GameObjectRef(go)).ToArray(),
                     transforms = Selection.transforms?.Select(t => new ComponentRef(t)).ToArray(),
 #if UNITY_6000_3_OR_NEWER
-                    instanceIDs = Selection.entityIds.Cast<int>().ToArray(),
+                    instanceIDs = Selection.entityIds.Select(x => (int)x).ToArray(),
 #else
                     instanceIDs = Selection.instanceIDs,
 #endif
                     assetGUIDs = Selection.assetGUIDs,
                     activeGameObject = new GameObjectRef(Selection.activeGameObject),
 #if UNITY_6000_3_OR_NEWER
-                    activeInstanceID = Selection.activeEntityId,
+                    activeInstanceID = (int)Selection.activeEntityId,
 #else
                     activeInstanceID = Selection.activeInstanceID,
 #endif
