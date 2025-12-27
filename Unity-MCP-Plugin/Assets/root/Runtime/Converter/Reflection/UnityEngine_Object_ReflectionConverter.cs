@@ -353,10 +353,5 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                     logger: logger)
                 .FindAssetObject(type);
         }
-
-        protected override SerializedMemberList? SerializeFields(Reflector reflector, object obj, BindingFlags flags, int depth = 0, Logs? logs = null, ILogger? logger = null, SerializationContext? context = null)
-        {
-            return base.SerializeFields(reflector, obj, flags, depth, logs, logger, context);
-        }
     }
 }

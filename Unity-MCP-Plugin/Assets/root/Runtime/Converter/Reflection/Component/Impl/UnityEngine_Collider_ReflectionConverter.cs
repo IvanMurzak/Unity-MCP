@@ -21,12 +21,6 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 yield return property;
 
             yield return nameof(UnityEngine.Collider.material);
-
-            // yield return nameof(UnityEngine.Collider.attachedRigidbody);
-            // yield return nameof(UnityEngine.Collider.attachedArticulationBody);
-            // #if UNITY_2023_1_OR_NEWER
-            //     yield return nameof(UnityEngine.Collider.GeometryHolder);
-            // #endif
         }
     }
 }
