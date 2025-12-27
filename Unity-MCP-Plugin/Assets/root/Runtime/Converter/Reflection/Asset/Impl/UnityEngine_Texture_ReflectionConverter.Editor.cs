@@ -58,7 +58,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 #if UNITY_6000_3_OR_NEWER
             var textureOrSprite = UnityEditor.EditorUtility.EntityIdToObject(instanceID);
 #else
-            var textureOrSprite =  UnityEditor.EditorUtility.InstanceIDToObject(instanceID);
+            var textureOrSprite = UnityEditor.EditorUtility.InstanceIDToObject(instanceID);
 #endif
             if (textureOrSprite == null) return null;
 
