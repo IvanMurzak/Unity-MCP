@@ -45,13 +45,16 @@ namespace com.IvanMurzak.Unity.MCP
             reflector.Converters.Add(new UnityEngine_Rect_ReflectionConverter());
             reflector.Converters.Add(new UnityEngine_RectInt_ReflectionConverter());
 
-            // Components
+            // Unity objects
             reflector.Converters.Add(new UnityEngine_Object_ReflectionConverter());
             reflector.Converters.Add(new UnityEngine_GameObject_ReflectionConverter());
+
+            // Components
             reflector.Converters.Add(new UnityEngine_Component_ReflectionConverter());
             reflector.Converters.Add(new UnityEngine_Transform_ReflectionConverter());
             reflector.Converters.Add(new UnityEngine_Renderer_ReflectionConverter());
             reflector.Converters.Add(new UnityEngine_MeshFilter_ReflectionConverter());
+            reflector.Converters.Add(new UnityEngine_Collider_ReflectionConverter());
 
             // Assets
             reflector.Converters.Add(new UnityEngine_Material_ReflectionConverter());
@@ -81,6 +84,12 @@ namespace com.IvanMurzak.Unity.MCP
             reflector.JsonSerializer.AddConverter(new AssetObjectRefConverter());
             reflector.JsonSerializer.AddConverter(new GameObjectRefConverter());
             reflector.JsonSerializer.AddConverter(new ComponentRefConverter());
+
+            // Blacklist types
+            // ---------------------------------------------------------
+#if UNITY_2023_1_OR_NEWER
+            reflector.Converters.BlacklistType(typeof(UnityEngine.LowLevelPhysics.GeometryHolder));
+#endif
 
             return reflector;
         }

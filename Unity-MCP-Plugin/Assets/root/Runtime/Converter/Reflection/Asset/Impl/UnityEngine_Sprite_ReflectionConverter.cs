@@ -12,8 +12,9 @@
 
 namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
-    public partial class UnityEngine_Component_ReflectionConverter : UnityEngine_GenericComponent_ReflectionConverter<UnityEngine.Component>
+    public partial class UnityEngine_Sprite_ReflectionConverter : UnityEngine_Asset_ReflectionConverter<UnityEngine.Sprite>
     {
-
+        public override bool AllowCascadeSerialization => false;
+        public override bool AllowSetValue => false;
     }
 }
