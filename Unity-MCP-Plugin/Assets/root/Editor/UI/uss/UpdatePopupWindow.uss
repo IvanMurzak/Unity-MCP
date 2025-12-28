@@ -2,7 +2,6 @@
     flex-direction: column;
     padding: 20px;
     align-items: center;
-    /* justify-content: flex-start; */
     flex-grow: 1;
     background-color: rgb(56, 56, 56);
 }
