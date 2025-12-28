@@ -17,6 +17,18 @@
             ]
         },
         {
+            "name": "http (59479)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "dotnet: build",
+            "program": "${workspaceFolder}/bin/Debug/net9.0/unity-mcp-server.exe",
+            "args": [
+                "--port=59479",
+                "--plugin-timeout=30000",
+                "--client-transport=http"
+            ]
+        },
+        {
             "name": "http (9090)",
             "type": "coreclr",
             "request": "launch",
