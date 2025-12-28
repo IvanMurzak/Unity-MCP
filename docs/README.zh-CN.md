@@ -168,6 +168,16 @@
 
 </details>
 
+<details>
+  <summary>包管理器 (Package Manager)</summary>
+
+- `add` - 从 Unity 包管理器注册表、Git URL 或本地路径安装包
+- `remove` - 从 Unity 项目中移除（卸载）包
+- `list` - 列出 Unity 项目中安装的所有包（UPM 包）
+- `search` - 在 Unity 包管理器注册表和已安装的包中搜索包
+
+</details>
+
 #### 附加工具
 
 - [动画 (Animation)](https://github.com/IvanMurzak/Unity-AI-Animation/)

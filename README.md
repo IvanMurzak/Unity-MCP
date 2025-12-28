@@ -168,6 +168,16 @@ Unlike other tools, this plugin works **inside your compiled game**, allowing fo
 
 </details>
 
+<details>
+  <summary>Package Manager</summary>
+
+- `add` - Install a package from the Unity Package Manager registry, Git URL, or local path
+- `remove` - Remove (uninstall) a package from the Unity project
+- `list` - List all packages installed in the Unity project (UPM packages)
+- `search` - Search for packages in both Unity Package Manager registry and installed packages
+
+</details>
+
 #### Additional tools
 
 - [Animation](https://github.com/IvanMurzak/Unity-AI-Animation/)

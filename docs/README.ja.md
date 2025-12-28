@@ -168,6 +168,16 @@
 
 </details>
 
+<details>
+  <summary>パッケージマネージャー (Package Manager)</summary>
+
+- `add` - Unity パッケージマネージャーレジストリ、Git URL、またはローカルパスからパッケージをインストールします
+- `remove` - Unity プロジェクトからパッケージを削除（アンインストール）します
+- `list` - Unity プロジェクトにインストールされているすべてのパッケージ（UPM パッケージ）をリストします
+- `search` - Unity パッケージマネージャーレジストリとインストール済みパッケージの両方でパッケージを検索します
+
+</details>
+
 #### 追加ツール
 
 - [アニメーション (Animation)](https://github.com/IvanMurzak/Unity-AI-Animation/)

@@ -168,6 +168,16 @@ A diferencia de otras herramientas, este plugin funciona **dentro de tu juego co
 
 </details>
 
+<details>
+  <summary>Package Manager (Gestor de Paquetes)</summary>
+
+- `add` - Instala un paquete desde el registro de Unity Package Manager, URL de Git o ruta local
+- `remove` - Elimina (desinstala) un paquete del proyecto Unity
+- `list` - Lista todos los paquetes instalados en el proyecto Unity (paquetes UPM)
+- `search` - Busca paquetes tanto en el registro de Unity Package Manager como en los paquetes instalados
+
+</details>
+
 #### Herramientas adicionales
 
 - [Animation](https://github.com/IvanMurzak/Unity-AI-Animation/)
