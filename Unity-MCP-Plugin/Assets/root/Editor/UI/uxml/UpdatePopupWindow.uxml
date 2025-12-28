@@ -1,0 +1,24 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <Style src="project://database/Assets/root/Editor/UI/uss/UpdatePopupWindow.uss?fileID=7433441132597879392&amp;guid=5bd367a2ccc1cbd4898560f06f04c22f&amp;type=3#UpdatePopupWindow" />
+    <ui:VisualElement class="popup-container">
+        <ui:Label text="Update Available" name="title" class="popup-title" />
+        <ui:VisualElement name="icon-container" class="icon-container" />
+        <ui:Label text="A new version of &lt;b&gt;&lt;color=red&gt;AI&lt;/color&gt; Game Developer&lt;/b&gt; is available!" name="message" class="popup-message" />
+        <ui:VisualElement class="version-container">
+            <ui:VisualElement class="version-row">
+                <ui:Label text="Current version:" class="version-label" />
+                <ui:Label text="0.0.0" name="current-version-value" class="version-value current-version" />
+            </ui:VisualElement>
+            <ui:VisualElement class="version-row">
+                <ui:Label text="Latest version:" class="version-label" />
+                <ui:Label text="0.0.0" name="latest-version-value" class="version-value latest-version" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement class="button-container">
+            <ui:Button text="Install Update" name="btn-install-update" class="btn-primary" />
+            <ui:Button text="View Releases" name="btn-view-releases" class="btn-secondary" />
+            <ui:Button text="Skip Version" name="btn-skip-version" class="btn-secondary" />
+            <ui:Button text="Do Not Show Again" name="btn-do-not-show-again" class="btn-tertiary" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
