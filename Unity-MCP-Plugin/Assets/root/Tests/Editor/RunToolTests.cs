@@ -12,12 +12,10 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin;
-using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet;
 using Microsoft.Extensions.Logging;
@@ -88,7 +86,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Assert
             Assert.IsNotNull(result, "Result should not be null");
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
-            Assert.AreEqual("8", result.GetMessage(), "Should return correct calculation result");
+
+            var expectedJson = JsonSerializer.Serialize(new { result = 8 });
+            Assert.AreEqual(expectedJson, result.GetMessage(), "Should return correct calculation result");
         }
 
         [UnityTest]
@@ -113,7 +113,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Assert
             Assert.IsNotNull(result, "Result should not be null");
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
-            Assert.AreEqual("25", result.GetMessage(), "Should return correct calculation result");
+
+            var expectedJson = JsonSerializer.Serialize(new { result = 25 });
+            Assert.AreEqual(expectedJson, result.GetMessage(), "Should return correct calculation result");
         }
 
         [UnityTest]
@@ -134,7 +136,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Assert
             Assert.IsNotNull(result, "Result should not be null");
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
-            Assert.AreEqual(expectedRequestId, result.GetMessage(), "Should return injected request ID");
+
+            var expectedJson = JsonSerializer.Serialize(new { result = expectedRequestId });
+            Assert.AreEqual(expectedJson, result.GetMessage(), "Should return injected request ID");
         }
 
         [UnityTest]
@@ -157,7 +161,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ResponseStatus.Error, result.Status, "Should return error status");
 
             var message = result.GetMessage();
-            Assert.IsTrue(message?.Contains(TestStaticMethods.TestExceptionMessage),
+            Assert.IsTrue(message != null && message.Contains(TestStaticMethods.TestExceptionMessage),
                 $"Error message should contain original exception message '{TestStaticMethods.TestExceptionMessage}'. Actual: {message}");
         }
 
@@ -215,7 +219,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Assert
             Assert.IsNotNull(result, "Result should not be null");
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
-            Assert.AreEqual("Hello Async", result.GetMessage(), "Should return async method result");
+
+            var expectedJson = JsonSerializer.Serialize(new { result = "Hello Async" });
+            Assert.AreEqual(expectedJson, result.GetMessage(), "Should return async method result");
         }
     }
 
