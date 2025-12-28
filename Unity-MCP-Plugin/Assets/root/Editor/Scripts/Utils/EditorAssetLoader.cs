@@ -23,8 +23,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
     {
         public static readonly string[] PackageLogoIcon =
         {
-            "Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/logo_32.png",
-            "Assets/root/Editor/Gizmos/logo_32.png"
+            "Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/logo_window_icon.png",
+            "Assets/root/Editor/Gizmos/logo_window_icon.png"
         };
 
         /// <summary>

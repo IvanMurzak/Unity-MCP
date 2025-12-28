@@ -26,7 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             var window = GetWindow<MainWindowEditor>("AI Game Developer");
             var icon = EditorAssetLoader.LoadAssetAtPath<Texture>(EditorAssetLoader.PackageLogoIcon);
             if (icon != null)
-                window.titleContent = new GUIContent("AI Game Developer", icon);
+                window.titleContent = new GUIContent("Game Developer", icon);
             window.Focus();
 
             return window;
