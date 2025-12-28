@@ -16,11 +16,37 @@ using System.Threading.Tasks;
 using Extensions.Unity.PlayerPrefsEx;
 using Microsoft.Extensions.Logging;
 using UnityEditor;
+using UnityEngine;
 using UnityEngine.Networking;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
+    /// <summary>
+    /// Represents a single tag from the GitHub API response.
+    /// </summary>
+    [Serializable]
+    internal class GitHubTag
+    {
+        public string name = string.Empty;
+    }
+
+    /// <summary>
+    /// Wrapper for deserializing GitHub tags array since JsonUtility doesn't support root-level arrays.
+    /// </summary>
+    [Serializable]
+    internal class GitHubTagsWrapper
+    {
+        public List<GitHubTag> tags = new();
+
+        public static GitHubTagsWrapper FromJson(string json)
+        {
+            // JsonUtility doesn't support root-level arrays, so we wrap it
+            var wrappedJson = $"{{\"tags\":{json}}}";
+            return JsonUtility.FromJson<GitHubTagsWrapper>(wrappedJson);
+        }
+    }
+
     /// <summary>
     /// Utility class for checking if a new version of the package is available on GitHub.
     /// </summary>
@@ -151,11 +177,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 {
                     return;
                 }
-                // Update the next check time only on successful check
-                if (!forceCheck)
-                {
-                    NextCheckTime.Value = DateTime.UtcNow.AddDays(1).ToString("O");
-                }
+
                 // Compare versions
                 var currentVersion = UnityMcpPlugin.Version;
                 if (IsNewerVersion(latestVersion!, currentVersion))
@@ -178,8 +200,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
             finally
             {
-                // Set next allowed check time to enforce cooldown
-                NextCheckTime.Value = DateTime.UtcNow.AddDays(1).ToString("O");
+                // Set next allowed check time to enforce cooldown (only for automatic checks)
+                if (!forceCheck)
+                {
+                    NextCheckTime.Value = DateTime.UtcNow.AddDays(1).ToString("O");
+                }
                 isChecking = false;
             }
         }
@@ -229,33 +254,44 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// </summary>
         internal static string? ParseLatestVersionFromJson(string json)
         {
-            // Simple JSON parsing for the tags array
-            // Response format: [{"name": "v0.33.1", ...}, {"name": "v0.33.0", ...}, ...]
+            if (string.IsNullOrEmpty(json))
+                return null;
 
-            var tags = new List<string>();
-            var tagMatches = Regex.Matches(json, @"""name""\s*:\s*""([^""]+)""");
+            var versions = new List<string>();
 
-            foreach (Match match in tagMatches)
+            try
             {
-                if (match.Groups.Count > 1)
+                var wrapper = GitHubTagsWrapper.FromJson(json);
+                if (wrapper?.tags == null || wrapper.tags.Count == 0)
+                    return null;
+
+                foreach (var tag in wrapper.tags)
                 {
-                    var tagName = match.Groups[1].Value;
+                    if (string.IsNullOrEmpty(tag.name))
+                        continue;
+
+                    var tagName = tag.name;
                     // Remove 'v' prefix if present
                     if (tagName.StartsWith("v") || tagName.StartsWith("V"))
                         tagName = tagName.Substring(1);
 
                     // Validate it looks like a version number
                     if (Regex.IsMatch(tagName, @"^\d+\.\d+(\.\d+)?"))
-                        tags.Add(tagName);
+                        versions.Add(tagName);
                 }
             }
+            catch
+            {
+                // If JSON parsing fails, return null
+                return null;
+            }
 
-            if (tags.Count == 0)
+            if (versions.Count == 0)
                 return null;
 
             // Sort versions and get the latest
-            tags.Sort((a, b) => CompareVersions(b, a)); // Descending order
-            return tags[0];
+            versions.Sort((a, b) => CompareVersions(b, a)); // Descending order
+            return versions[0];
         }
 
         /// <summary>

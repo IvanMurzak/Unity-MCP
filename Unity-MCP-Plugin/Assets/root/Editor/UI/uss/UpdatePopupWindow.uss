@@ -124,3 +124,26 @@
     background-color: rgb(110, 110, 110);
     transition-duration: 50ms;
 }
+
+.btn-tertiary {
+    height: 26px;
+    margin-top: 8px;
+    background-color: transparent;
+    border-radius: 4px;
+    border-width: 0;
+    color: rgb(140, 140, 140);
+    font-size: 11px;
+    transition-duration: 200ms;
+}
+
+.btn-tertiary:hover {
+    color: rgb(180, 180, 180);
+    background-color: rgba(255, 255, 255, 0.05);
+    transition-duration: 200ms;
+}
+
+.btn-tertiary:active {
+    color: rgb(200, 200, 200);
+    background-color: rgba(255, 255, 255, 0.1);
+    transition-duration: 50ms;
+}
