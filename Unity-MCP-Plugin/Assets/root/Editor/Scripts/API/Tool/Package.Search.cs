@@ -52,20 +52,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "package-search",
             Title = "Package Manager / Search"
         )]
-        [Description(@"Search for packages available in the Unity Package Manager registry.
+        [Description(@"Search for packages in both Unity Package Manager registry and installed packages.
 Use this to find packages by name before installing them. Returns available versions and installation status.
-The search queries the Unity registry and returns matching packages with their latest versions.")]
+Searches both the Unity registry and locally installed packages (including Git, local, and embedded sources).
+Results are prioritized: exact name match, exact display name match, name substring, display name substring, description substring.
+Note: Online mode uses server-side search (faster, searches by ID/name only). Offline mode uses cached data (searches ID, name, and description).")]
         public async Task<List<PackageSearchResult>> Search
         (
-            [Description(@"The package id, name or partial name. Can be:
+            [Description(@"The package id, name, or description. Can be:
 - Full package id: 'com.unity.textmeshpro'
 - Full package name: 'TextMesh Pro'
-- Partial name: 'TextMesh' (will search in Unity registry)")]
+- Partial name: 'TextMesh' (will search in Unity registry and installed packages)
+- Description keyword: 'rendering' (works in offline mode and for installed packages)")]
             string query,
             [Description("Maximum number of results to return. Default: 10")]
             int maxResults = 10,
-            [Description("Whether to perform the search in offline mode. Default: false")]
-            bool offlineMode = false
+            [Description("Whether to perform the search in offline mode (uses cached registry data). Default: true. Set to false to fetch latest from Unity registry (slower but more up-to-date).")]
+            bool offlineMode = true
         )
         {
             if (string.IsNullOrWhiteSpace(query))
@@ -76,26 +79,80 @@ The search queries the Unity registry and returns matching packages with their l
 
             return await MainThread.Instance.RunAsync(async () =>
             {
-                // First, get list of installed packages for comparison
-                var listRequest = Client.List(offlineMode: offlineMode);
+                // First, get list of installed packages
+                var listRequest = Client.List(offlineMode: true);
                 while (!listRequest.IsCompleted)
                     await Task.Yield();
 
                 var installedPackages = listRequest.Status == StatusCode.Success
-                    ? listRequest.Result.ToDictionary(p => p.name, p => p.version)
-                    : new Dictionary<string, string>();
+                    ? listRequest.Result.ToList()
+                    : new List<PackageInfo>();
 
-                // Search for packages in the registry
-                var searchRequest = Client.Search(packageIdOrName: query, offlineMode: offlineMode);
-                while (!searchRequest.IsCompleted)
-                    await Task.Yield();
-
-                if (searchRequest.Status == StatusCode.Failure)
-                    throw new Exception(Error.PackageSearchFailed(query, searchRequest.Error?.message ?? "Unknown error"));
+                var installedByName = installedPackages.ToDictionary(p => p.name, p => p);
 
                 var results = new List<PackageSearchResult>();
+                var addedPackageNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-                foreach (var pkg in searchRequest.Result.Take(maxResults))
+                // Search for packages in the registry
+                // Use Client.Search(query) for online mode (server-side search, faster)
+                // Use Client.SearchAll() for offline mode (cached data, allows local filtering)
+                if (offlineMode)
+                {
+                    var searchRequest = Client.SearchAll(offlineMode: true);
+                    while (!searchRequest.IsCompleted)
+                        await Task.Yield();
+
+                    if (searchRequest.Status == StatusCode.Success)
+                    {
+                        var resultPackages = searchRequest.Result
+                            .Select(p => (pkg: p, priority: GetSearchPriority(p.name, p.displayName, p.description, query)))
+                            .Where(x => x.priority > 0)
+                            .OrderBy(x => x.priority)
+                            .Take(maxResults)
+                            .Select(x => x.pkg);
+
+                        foreach (var pkg in resultPackages)
+                        {
+                            results.Add(CreateSearchResult(pkg, installedByName));
+                            addedPackageNames.Add(pkg.name);
+                        }
+                    }
+                }
+                else
+                {
+                    // Online mode: use targeted search (faster, won't hang)
+                    var searchRequest = Client.Search(query, offlineMode: false);
+                    while (!searchRequest.IsCompleted)
+                        await Task.Yield();
+
+                    if (searchRequest.Status == StatusCode.Success)
+                    {
+                        var resultPackages = searchRequest.Result
+                            .Select(p => (pkg: p, priority: GetSearchPriority(p.name, p.displayName, p.description, query)))
+                            .Where(x => x.priority > 0)
+                            .OrderBy(x => x.priority)
+                            .Take(maxResults)
+                            .Select(x => x.pkg);
+
+                        foreach (var pkg in resultPackages)
+                        {
+                            results.Add(CreateSearchResult(pkg, installedByName));
+                            addedPackageNames.Add(pkg.name);
+                        }
+                    }
+                }
+
+                // Also search through installed packages that match the query
+                // This catches packages from Git, local, embedded sources not in registry
+                var matchingInstalled = installedPackages
+                    .Where(p => !addedPackageNames.Contains(p.name))
+                    .Select(p => (pkg: p, priority: GetSearchPriority(p.name, p.displayName, p.description, query)))
+                    .Where(x => x.priority > 0)
+                    .OrderBy(x => x.priority)
+                    .Take(maxResults - results.Count)
+                    .Select(x => x.pkg);
+
+                foreach (var pkg in matchingInstalled)
                 {
                     var result = new PackageSearchResult
                     {
@@ -103,10 +160,8 @@ The search queries the Unity registry and returns matching packages with their l
                         DisplayName = pkg.displayName ?? pkg.name,
                         LatestVersion = pkg.version,
                         Description = TruncateDescription(pkg.description ?? string.Empty, 200),
-                        IsInstalled = installedPackages.ContainsKey(pkg.name),
-                        InstalledVersion = installedPackages.TryGetValue(pkg.name, out var installedVersion)
-                            ? installedVersion
-                            : null,
+                        IsInstalled = true,
+                        InstalledVersion = pkg.version,
                         AvailableVersions = pkg.versions?.compatible?.Take(5).ToList() ?? new List<string>()
                     };
 
@@ -115,6 +170,22 @@ The search queries the Unity registry and returns matching packages with their l
 
                 return results;
             }).Unwrap();
+        }
+
+        private static PackageSearchResult CreateSearchResult(PackageInfo pkg, Dictionary<string, PackageInfo> installedByName)
+        {
+            return new PackageSearchResult
+            {
+                Name = pkg.name,
+                DisplayName = pkg.displayName ?? pkg.name,
+                LatestVersion = pkg.version,
+                Description = TruncateDescription(pkg.description ?? string.Empty, 200),
+                IsInstalled = installedByName.ContainsKey(pkg.name),
+                InstalledVersion = installedByName.TryGetValue(pkg.name, out var installed)
+                    ? installed.version
+                    : null,
+                AvailableVersions = pkg.versions?.compatible?.Take(5).ToList() ?? new List<string>()
+            };
         }
 
         private static string TruncateDescription(string description, int maxLength)
