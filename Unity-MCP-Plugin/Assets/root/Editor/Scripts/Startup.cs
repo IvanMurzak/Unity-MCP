@@ -36,5 +36,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             // Initialize sub-systems
             API.Tool_Tests.Init();
         }
+        public static void Init()
+        {
+            // Intentionally left blank.
+            // This method is used to force the static constructor to run.
+            Debug.Log("com.IvanMurzak.Unity.MCP.Editor.Startup.Init");
+        }
     }
 }
