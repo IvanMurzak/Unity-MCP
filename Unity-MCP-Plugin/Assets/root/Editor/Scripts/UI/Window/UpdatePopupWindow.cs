@@ -59,8 +59,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             // Set window size and position (center on screen)
             var windowWidth = 350;
             var windowHeight = 410;
-            var x = 250;
-            var y = 250;
+
+            var mainWindowRect = EditorGUIUtility.GetMainWindowPosition();
+            var x = mainWindowRect.x + (mainWindowRect.width - windowWidth) / 2f;
+            var y = mainWindowRect.y + (mainWindowRect.height - windowHeight) / 2f;
 
             window.minSize = new Vector2(windowWidth, windowHeight);
             window.maxSize = new Vector2(windowWidth, windowHeight);
