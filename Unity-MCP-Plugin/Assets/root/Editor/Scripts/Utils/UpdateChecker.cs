@@ -16,7 +16,6 @@ using System.Threading.Tasks;
 using Extensions.Unity.PlayerPrefsEx;
 using Microsoft.Extensions.Logging;
 using UnityEditor;
-using UnityEngine;
 using UnityEngine.Networking;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
@@ -57,9 +56,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// </summary>
         public static string ReleasesUrl => GitHubReleasesUrl;
 
-        public static void Init(ILogger? logger = null)
+        public static void Init(ILogger? initLogger = null)
         {
-            UpdateChecker.logger = logger;
+            logger = initLogger;
 
             // Check for updates after Unity finishes loading
             EditorApplication.delayCall += CheckForUpdatesOnStartup;
