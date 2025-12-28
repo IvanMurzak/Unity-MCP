@@ -17,12 +17,36 @@ using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using UnityEditor.PackageManager;
-using UnityEditor.PackageManager.Requests;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Package
     {
+        [Description("Filter for package source in listing operations.")]
+        public enum PackageSourceFilter
+        {
+            [Description("Show all packages regardless of source.")]
+            All,
+
+            [Description("Packages from the Unity Registry (official Unity packages).")]
+            Registry,
+
+            [Description("Packages embedded directly in the project's Packages folder.")]
+            Embedded,
+
+            [Description("Packages referenced from a local folder path.")]
+            Local,
+
+            [Description("Packages installed from a Git repository URL.")]
+            Git,
+
+            [Description("Built-in Unity packages that come with the editor.")]
+            BuiltIn,
+
+            [Description("Packages installed from a local tarball (.tgz) file.")]
+            LocalTarball
+        }
+
         [Description("Package information returned from package list operation.")]
         public class PackageData
         {
@@ -68,8 +92,8 @@ Returns information about each installed package including name, version, source
 Use this to check which packages are currently installed before adding or removing packages.")]
         public async Task<List<PackageData>> List
         (
-            [Description("Filter packages by source. Options: 'All', 'Registry', 'Embedded', 'Local', 'Git', 'BuiltIn'. Default: 'All'")]
-            string? sourceFilter = null,
+            [Description("Filter packages by source.")]
+            PackageSourceFilter sourceFilter = PackageSourceFilter.All,
             [Description("Filter packages by name (case-insensitive substring match). Example: 'textmesh' will match 'com.unity.textmeshpro'.")]
             string? nameFilter = null,
             [Description("Include only direct dependencies (packages in manifest.json). If false, includes all resolved packages. Default: false")]
@@ -89,10 +113,20 @@ Use this to check which packages are currently installed before adding or removi
                 var packages = listRequest.Result.AsEnumerable();
 
                 // Apply source filter
-                if (!string.IsNullOrEmpty(sourceFilter) && !sourceFilter!.Equals("All", StringComparison.OrdinalIgnoreCase))
+                if (sourceFilter != PackageSourceFilter.All)
                 {
-                    if (Enum.TryParse<PackageSource>(sourceFilter, true, out var source))
-                        packages = packages.Where(p => p.source == source);
+                    var unitySource = sourceFilter switch
+                    {
+                        PackageSourceFilter.Registry => PackageSource.Registry,
+                        PackageSourceFilter.Embedded => PackageSource.Embedded,
+                        PackageSourceFilter.Local => PackageSource.Local,
+                        PackageSourceFilter.Git => PackageSource.Git,
+                        PackageSourceFilter.BuiltIn => PackageSource.BuiltIn,
+                        PackageSourceFilter.LocalTarball => PackageSource.LocalTarball,
+                        _ => PackageSource.Unknown
+                    };
+                    if (unitySource != PackageSource.Unknown)
+                        packages = packages.Where(p => p.source == unitySource);
                 }
 
                 // Apply name filter

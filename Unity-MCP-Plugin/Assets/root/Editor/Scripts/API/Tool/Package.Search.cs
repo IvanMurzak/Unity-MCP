@@ -25,8 +25,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [Description("Package search result with available versions.")]
         public class PackageSearchResult
         {
-            [Description("The official Unity name of the package used as the package ID.")]
-            public string Name { get; set; } = string.Empty;
+            [Description("Package ID.")]
+            public string Id { get; set; } = string.Empty;
 
             [Description("The display name of the package.")]
             public string DisplayName { get; set; } = string.Empty;
@@ -57,31 +57,36 @@ Use this to find packages by name before installing them. Returns available vers
 The search queries the Unity registry and returns matching packages with their latest versions.")]
         public async Task<List<PackageSearchResult>> Search
         (
-            [Description(@"The package name or search query. Can be:
-- Full package name: 'com.unity.textmeshpro'
-- Partial name: 'textmesh' (will search in Unity registry)
-- Empty to get a specific package info by exact name")]
+            [Description(@"The package id, name or partial name. Can be:
+- Full package id: 'com.unity.textmeshpro'
+- Full package name: 'TextMesh Pro'
+- Partial name: 'TextMesh' (will search in Unity registry)")]
             string query,
             [Description("Maximum number of results to return. Default: 10")]
-            int maxResults = 10
+            int maxResults = 10,
+            [Description("Whether to perform the search in offline mode. Default: false")]
+            bool offlineMode = false
         )
         {
             if (string.IsNullOrWhiteSpace(query))
                 throw new ArgumentException("Search query cannot be empty. Please provide a package name or search term.");
 
+            if (maxResults <= 0)
+                throw new ArgumentOutOfRangeException(nameof(maxResults), "Maximum results must be greater than zero.");
+
             return await MainThread.Instance.RunAsync(async () =>
             {
                 // First, get list of installed packages for comparison
-                var listRequest = Client.List(offlineMode: false);
+                var listRequest = Client.List(offlineMode: offlineMode);
                 while (!listRequest.IsCompleted)
                     await Task.Yield();
 
                 var installedPackages = listRequest.Status == StatusCode.Success
-                    ? listRequest.Result.ToDictionary(p => p.name, p => p.version)
+                    ? listRequest.Result.ToDictionary(p => p.packageId, p => p.version)
                     : new Dictionary<string, string>();
 
                 // Search for packages in the registry
-                var searchRequest = Client.Search(packageIdOrName: query, offlineMode: false);
+                var searchRequest = Client.Search(packageIdOrName: query, offlineMode: offlineMode);
                 while (!searchRequest.IsCompleted)
                     await Task.Yield();
 
@@ -94,12 +99,14 @@ The search queries the Unity registry and returns matching packages with their l
                 {
                     var result = new PackageSearchResult
                     {
-                        Name = pkg.name,
+                        Id = pkg.packageId,
                         DisplayName = pkg.displayName ?? pkg.name,
                         LatestVersion = pkg.version,
                         Description = TruncateDescription(pkg.description ?? string.Empty, 200),
-                        IsInstalled = installedPackages.ContainsKey(pkg.name),
-                        InstalledVersion = installedPackages.TryGetValue(pkg.name, out var installedVersion) ? installedVersion : null,
+                        IsInstalled = installedPackages.ContainsKey(pkg.packageId),
+                        InstalledVersion = installedPackages.TryGetValue(pkg.packageId, out var installedVersion)
+                            ? installedVersion
+                            : null,
                         AvailableVersions = pkg.versions?.compatible?.Take(5).ToList() ?? new List<string>()
                     };
 
