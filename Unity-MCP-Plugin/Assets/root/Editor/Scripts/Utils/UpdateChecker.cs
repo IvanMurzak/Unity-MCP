@@ -225,7 +225,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// <summary>
         /// Parses the latest version from GitHub tags API JSON response.
         /// </summary>
-        private static string? ParseLatestVersionFromJson(string json)
+        internal static string? ParseLatestVersionFromJson(string json)
         {
             // Simple JSON parsing for the tags array
             // Response format: [{"name": "v0.33.1", ...}, {"name": "v0.33.0", ...}, ...]
@@ -259,7 +259,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// <summary>
         /// Compares two version strings.
         /// </summary>
-        private static int CompareVersions(string v1, string v2)
+        internal static int CompareVersions(string v1, string v2)
         {
             var parts1 = v1.Split('.');
             var parts2 = v2.Split('.');
