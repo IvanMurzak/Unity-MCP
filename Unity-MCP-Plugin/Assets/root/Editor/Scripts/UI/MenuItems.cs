@@ -24,7 +24,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public static void ShowWindow() => MainWindowEditor.ShowWindow();
 
         [MenuItem("Tools/AI Game Developer/Check for Updates", priority = 999)]
-        public static void CheckForUpdates() => UpdateChecker.CheckForUpdatesAsync(forceCheck: true);
+        public static void CheckForUpdates() => _ = UpdateChecker.CheckForUpdatesAsync(forceCheck: true);
 
         [MenuItem("Tools/AI Game Developer/Download Server Binaries", priority = 1000)]
         public static Task DownloadServer() => Startup.Server.DownloadAndUnpackBinary();

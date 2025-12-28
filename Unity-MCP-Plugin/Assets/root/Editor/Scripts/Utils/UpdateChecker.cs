@@ -71,7 +71,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             if (!ShouldCheckForUpdates())
                 return;
 
-            CheckForUpdatesAsync();
+            _ = CheckForUpdatesAsync();
         }
 
         /// <summary>
@@ -119,7 +119,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// Asynchronously checks for updates from GitHub.
         /// </summary>
         /// <param name="forceCheck">If true, ignores cooldown and skipped version settings.</param>
-        public static async void CheckForUpdatesAsync(bool forceCheck = false)
+        public static async Task CheckForUpdatesAsync(bool forceCheck = false)
         {
             if (isChecking)
             {
@@ -140,7 +140,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 {
                     if (forceCheck)
                         logger?.LogWarning("Unable to check for updates. Please check your internet connection.");
-                    isChecking = false;
                     return;
                 }
 
@@ -150,10 +149,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 var skippedVersion = SkippedVersion.Value;
                 if (!string.IsNullOrEmpty(skippedVersion) && skippedVersion == latestVersion && !forceCheck)
                 {
-                    isChecking = false;
                     return;
                 }
-
+                // Update the next check time only on successful check
+                if (!forceCheck)
+                {
+                    NextCheckTime.Value = DateTime.UtcNow.AddDays(1).ToString("O");
+                }
                 // Compare versions
                 var currentVersion = UnityMcpPlugin.Version;
                 if (IsNewerVersion(latestVersion!, currentVersion))
