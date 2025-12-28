@@ -52,9 +52,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         /// </summary>
         public static UpdatePopupWindow ShowWindow(string currentVersion, string latestVersion)
         {
-            var window = GetWindow<UpdatePopupWindow>(true, "Update Available", true);
-            window._currentVersion = currentVersion;
-            window._latestVersion = latestVersion;
+            var window = GetWindow<UpdatePopupWindow>(utility: false, "Update Available", focus: true);
+            window._currentVersion = currentVersion ?? "Unknown";
+            window._latestVersion = latestVersion ?? "Unknown";
 
             // Set window size and position (center on screen)
             var windowWidth = 350;
@@ -66,6 +66,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             window.maxSize = new Vector2(windowWidth, windowHeight);
             window.position = new Rect(x, y, windowWidth, windowHeight);
 
+            window.CreateGUI();
             window.ShowUtility();
             window.Focus();
 
@@ -80,12 +81,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             ApplyStyleSheets(rootVisualElement);
 
             // Try to load UXML template
-            var visualTree = EditorAssetLoader.LoadAssetAtPath<VisualTreeAsset>(WindowUxmlPaths);
-            if (visualTree != null)
-            {
-                visualTree.CloneTree(rootVisualElement);
-                BindUI(rootVisualElement);
-            }
+            var visualTree = EditorAssetLoader.LoadAssetAtPath<VisualTreeAsset>(WindowUxmlPaths) ?? throw new System.NullReferenceException("UXML template not found in specified paths");
+            visualTree.CloneTree(rootVisualElement);
+            BindUI(rootVisualElement);
         }
 
         private void ApplyStyleSheets(VisualElement root)
@@ -97,42 +95,34 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             }
             else
             {
-                UnityMcpPlugin.Instance.LogWarn("Failed to load USS from paths: {paths}", typeof(UpdatePopupWindow), string.Join(", ", WindowUssPaths));
+                UnityMcpPlugin.Instance.LogWarn("Failed to load USS from paths: {paths}",
+                    typeof(UpdatePopupWindow), string.Join(", ", WindowUssPaths));
             }
         }
 
         private void BindUI(VisualElement root)
         {
             // Set icon
-            var iconContainer = root.Q<VisualElement>("icon-container");
-            if (iconContainer != null)
-            {
-                var icon = EditorAssetLoader.LoadAssetAtPath<Texture2D>(LogoIconPaths);
-                if (icon != null)
-                    iconContainer.style.backgroundImage = new StyleBackground(icon);
-            }
+            var iconContainer = root.Q<VisualElement>("icon-container") ?? throw new System.NullReferenceException("icon-container VisualElement not found");
+            var icon = EditorAssetLoader.LoadAssetAtPath<Texture2D>(LogoIconPaths) ?? throw new System.NullReferenceException("Logo icon not found in specified paths");
+            iconContainer.style.backgroundImage = new StyleBackground(icon);
 
             // Set version labels
-            var currentVersionLabel = root.Q<Label>("current-version-value");
-            if (currentVersionLabel != null)
-                currentVersionLabel.text = _currentVersion;
+            var currentVersionLabel = root.Q<Label>("current-version-value") ?? throw new System.NullReferenceException("current-version-value Label not found");
+            currentVersionLabel.text = _currentVersion;
 
-            var latestVersionLabel = root.Q<Label>("latest-version-value");
-            if (latestVersionLabel != null)
-                latestVersionLabel.text = _latestVersion;
+            var latestVersionLabel = root.Q<Label>("latest-version-value") ?? throw new System.NullReferenceException("latest-version-value Label not found");
+            latestVersionLabel.text = _latestVersion;
 
             // Bind buttons
-            var installUpdateButton = root.Q<Button>("btn-install-update");
-            if (installUpdateButton != null)
-                installUpdateButton.clicked += OnInstallUpdateClicked;
+            var installUpdateButton = root.Q<Button>("btn-install-update") ?? throw new System.NullReferenceException("btn-install-update Button not found");
+            installUpdateButton.clicked += OnInstallUpdateClicked;
 
-            var viewReleasesButton = root.Q<Button>("btn-view-releases");
-            if (viewReleasesButton != null)
-                viewReleasesButton.clicked += OnViewReleasesClicked;
+            var viewReleasesButton = root.Q<Button>("btn-view-releases") ?? throw new System.NullReferenceException("btn-view-releases Button not found");
+            viewReleasesButton.clicked += OnViewReleasesClicked;
 
-            var skipVersionButton = root.Q<Button>("btn-skip-version");
-            if (skipVersionButton != null)
-                skipVersionButton.clicked += OnSkipVersionClicked;
+            var skipVersionButton = root.Q<Button>("btn-skip-version") ?? throw new System.NullReferenceException("btn-skip-version Button not found");
+            skipVersionButton.clicked += OnSkipVersionClicked;
         }
 
         private void OnInstallUpdateClicked()
@@ -140,17 +130,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             if (_addRequest != null)
                 return; // Already in progress
 
-            var packageIdWithVersion = $"{PackageId}@{_latestVersion}";
-            _addRequest = Client.Add(packageIdWithVersion);
+            _addRequest = Client.Add($"{PackageId}@{_latestVersion}");
             EditorApplication.update += OnPackageInstallProgress;
 
             // Disable the button to prevent multiple clicks
-            var installButton = rootVisualElement.Q<Button>("btn-install-update");
-            if (installButton != null)
-            {
-                installButton.SetEnabled(false);
-                installButton.text = "Installing...";
-            }
+            var installButton = rootVisualElement.Q<Button>("btn-install-update") ?? throw new System.NullReferenceException("btn-install-update Button not found");
+            installButton.SetEnabled(false);
+            installButton.text = "Installing...";
         }
 
         private void OnPackageInstallProgress()
@@ -193,7 +179,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         private void OnViewReleasesClicked()
         {
             Application.OpenURL(UpdateChecker.ReleasesUrl);
-            Close();
         }
 
         private void OnSkipVersionClicked()

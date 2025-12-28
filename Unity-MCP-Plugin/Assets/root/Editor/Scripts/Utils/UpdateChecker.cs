@@ -173,7 +173,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
             catch (Exception ex)
             {
-                logger?.LogWarning(ex, $"Failed to check for updates");
+                logger?.LogWarning(ex, "Failed to check for updates");
             }
             finally
             {
