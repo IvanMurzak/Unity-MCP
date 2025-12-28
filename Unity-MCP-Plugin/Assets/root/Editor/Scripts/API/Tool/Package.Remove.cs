@@ -33,8 +33,8 @@ Note: Built-in packages and packages that are dependencies of other installed pa
 Note: Package removal may trigger a domain reload. The result will be sent after the reload completes.")]
         public static ResponseCallTool Remove
         (
-            [Description("The name of the package to remove. Example: 'com.unity.textmeshpro'. Do not include version number.")]
-            string packageName,
+            [Description("The ID of the package to remove. Example: 'com.unity.textmeshpro'. Do not include version number.")]
+            string packageId,
             [RequestID]
             string? requestId = null
         )
@@ -42,13 +42,13 @@ Note: Package removal may trigger a domain reload. The result will be sent after
             if (requestId == null || string.IsNullOrWhiteSpace(requestId))
                 return ResponseCallTool.Error("[Error] Original request with valid RequestID must be provided.");
 
-            if (string.IsNullOrWhiteSpace(packageName))
+            if (string.IsNullOrWhiteSpace(packageId))
                 return ResponseCallTool.Error(Error.PackageNameIsEmpty()).SetRequestID(requestId);
 
             // Remove version suffix if accidentally included
-            var cleanPackageName = packageName.Contains("@")
-                ? packageName.Substring(0, packageName.IndexOf('@'))
-                : packageName;
+            var cleanPackageId = packageId.Contains("@", StringComparison.OrdinalIgnoreCase)
+                ? packageId.Substring(0, packageId.IndexOf('@', StringComparison.OrdinalIgnoreCase))
+                : packageId;
 
             MainThread.Instance.RunAsync(async () =>
             {
@@ -64,7 +64,7 @@ Note: Package removal may trigger a domain reload. The result will be sent after
                     var isInstalled = false;
                     foreach (var pkg in listRequest.Result)
                     {
-                        if (pkg.name.Equals(cleanPackageName, StringComparison.OrdinalIgnoreCase))
+                        if (pkg.name.Equals(cleanPackageId, StringComparison.OrdinalIgnoreCase))
                         {
                             isInstalled = true;
                             break;
@@ -76,20 +76,20 @@ Note: Package removal may trigger a domain reload. The result will be sent after
                         _ = UnityMcpPlugin.NotifyToolRequestCompleted(new RequestToolCompletedData
                         {
                             RequestId = requestId,
-                            Result = ResponseCallTool.Error(Error.PackageNotFound(cleanPackageName)).SetRequestID(requestId)
+                            Result = ResponseCallTool.Error(Error.PackageNotFound(cleanPackageId)).SetRequestID(requestId)
                         });
                         return;
                     }
                 }
 
-                var removeRequest = Client.Remove(cleanPackageName);
+                var removeRequest = Client.Remove(cleanPackageId);
 
                 while (!removeRequest.IsCompleted)
                     await Task.Yield();
 
                 if (removeRequest.Status == StatusCode.Failure)
                 {
-                    var errorMessage = Error.PackageOperationFailed("remove", cleanPackageName, removeRequest.Error?.message ?? "Unknown error");
+                    var errorMessage = Error.PackageOperationFailed("remove", cleanPackageId, removeRequest.Error?.message ?? "Unknown error");
                     _ = UnityMcpPlugin.NotifyToolRequestCompleted(new RequestToolCompletedData
                     {
                         RequestId = requestId,
@@ -101,13 +101,13 @@ Note: Package removal may trigger a domain reload. The result will be sent after
                 // Schedule notification to be sent after domain reload completes
                 PackageUtils.SchedulePostDomainReloadNotification(
                     requestId,
-                    cleanPackageName,
+                    cleanPackageId,
                     "remove",
                     expectedResult: true
                 );
             });
 
-            return ResponseCallTool.Processing($"Removing package '{cleanPackageName}'. Waiting for package resolution and potential domain reload...").SetRequestID(requestId);
+            return ResponseCallTool.Processing($"Removing package '{cleanPackageId}'. Waiting for package resolution and potential domain reload...").SetRequestID(requestId);
         }
     }
 }
