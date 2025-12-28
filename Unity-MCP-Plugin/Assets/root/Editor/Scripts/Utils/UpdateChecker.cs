@@ -176,6 +176,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
             finally
             {
+                // Set next allowed check time to enforce cooldown
+                NextCheckTime.Value = DateTime.UtcNow.AddDays(1).ToString("O");
                 isChecking = false;
             }
         }
