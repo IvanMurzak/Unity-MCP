@@ -73,7 +73,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(expectedValue, result.StructuredContent![JsonSchema.Result]!.GetValue<int>(), "Structured content should contain the expected int value");
 
             // Verify the int value can be parsed back to the original value
-            var jsonNode = System.Text.Json.Nodes.JsonNode.Parse(result.GetMessage()!);
+            var jsonNode = JsonNode.Parse(result.GetMessage()!);
             var parsedValue = jsonNode![JsonSchema.Result]!.GetValue<int>();
             Assert.AreEqual(expectedValue, parsedValue, "Parsed int should match original value");
         }
@@ -104,7 +104,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(expectedValue, result.StructuredContent![JsonSchema.Result]!.GetValue<string>(), "Structured content should contain the expected string value");
 
             // Verify the string value matches exactly (no corruption)
-            var jsonNode = System.Text.Json.Nodes.JsonNode.Parse(result.GetMessage()!);
+            var jsonNode = JsonNode.Parse(result.GetMessage()!);
             var parsedValue = jsonNode![JsonSchema.Result]!.GetValue<string>();
             Assert.AreEqual(expectedValue, parsedValue, "String should match original value exactly");
         }
@@ -135,7 +135,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(expectedValue, result.StructuredContent![JsonSchema.Result]!.GetValue<float>(), 0.001f, "Structured content should contain the expected float value");
 
             // Verify the float value can be parsed back to the original value
-            var jsonNode = System.Text.Json.Nodes.JsonNode.Parse(result.GetMessage()!);
+            var jsonNode = JsonNode.Parse(result.GetMessage()!);
             var parsedValue = jsonNode![JsonSchema.Result]!.GetValue<float>();
             Assert.AreEqual(expectedValue, parsedValue, 0.001f, "Parsed float should match original value");
         }
@@ -166,7 +166,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(expectedValue, result.StructuredContent![JsonSchema.Result]!.GetValue<bool>(), "Structured content should contain the expected bool value");
 
             // Verify the bool value can be parsed back to the original value
-            var jsonNode = System.Text.Json.Nodes.JsonNode.Parse(result.GetMessage()!);
+            var jsonNode = JsonNode.Parse(result.GetMessage()!);
             var parsedValue = jsonNode![JsonSchema.Result]!.GetValue<bool>();
             Assert.AreEqual(expectedValue, parsedValue, "Parsed bool should match original value");
         }
@@ -206,18 +206,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsTrue(isStringMatch || isIntMatch, "Structured content should contain the expected enum value as string or int");
 
             // Verify the enum value can be parsed back to the original value
-            var jsonNode = System.Text.Json.Nodes.JsonNode.Parse(result.GetMessage()!);
+            var jsonNode = JsonNode.Parse(result.GetMessage()!);
             var resultValue = jsonNode![JsonSchema.Result];
             Assert.IsNotNull(resultValue, "Result value should not be null");
-            ResponseStatus parsedValue;
-            if (resultValue!.GetValueKind() == System.Text.Json.JsonValueKind.Number)
-            {
-                parsedValue = (ResponseStatus)resultValue.GetValue<int>();
-            }
-            else
-            {
-                parsedValue = (ResponseStatus)Enum.Parse(typeof(ResponseStatus), resultValue.GetValue<string>());
-            }
+
+            var parsedValue = resultValue!.GetValueKind() == System.Text.Json.JsonValueKind.Number
+                ? (ResponseStatus)resultValue.GetValue<int>()
+                : (ResponseStatus)Enum.Parse(typeof(ResponseStatus), resultValue.GetValue<string>());
+
             Assert.AreEqual(expectedEnumValue, parsedValue, "Parsed enum should match original value");
         }
 
@@ -276,18 +272,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsTrue(isStringMatch || isIntMatch, "Structured content should contain the expected enum value as string or int");
 
             // Verify the enum value can be parsed back to the original value
-            var jsonNode = System.Text.Json.Nodes.JsonNode.Parse(result.GetMessage()!);
+            var jsonNode = JsonNode.Parse(result.GetMessage()!);
             var resultValue = jsonNode![JsonSchema.Result];
             Assert.IsNotNull(resultValue, "Result value should not be null");
-            Microsoft.Extensions.Logging.LogLevel parsedValue;
-            if (resultValue!.GetValueKind() == System.Text.Json.JsonValueKind.Number)
-            {
-                parsedValue = (Microsoft.Extensions.Logging.LogLevel)resultValue.GetValue<int>();
-            }
-            else
-            {
-                parsedValue = (Microsoft.Extensions.Logging.LogLevel)Enum.Parse(typeof(Microsoft.Extensions.Logging.LogLevel), resultValue.GetValue<string>());
-            }
+            var parsedValue = resultValue!.GetValueKind() == System.Text.Json.JsonValueKind.Number
+                ? (LogLevel)resultValue.GetValue<int>()
+                : (LogLevel)Enum.Parse(typeof(LogLevel), resultValue.GetValue<string>());
+
             Assert.AreEqual(expectedValue, parsedValue, "Parsed enum should match original value");
         }
 
