@@ -138,11 +138,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
                     includeLogsStacktrace: IncludeLogsStacktrace.Value);
 
                 var mcpPlugin = UnityMcpPlugin.Instance.McpPluginInstance ?? throw new InvalidOperationException("MCP Plugin instance is not available.");
-                var jsonNode = mcpPlugin.McpManager.Reflector.JsonSerializer.SerializeToNode(structuredResponse);
-                var jsonString = jsonNode?.ToJsonString();
 
                 var response = ResponseCallValueTool<TestRunResponse>
-                    .SuccessStructured(jsonNode)
+                    .SuccessStructured(mcpPlugin.McpManager.Reflector.JsonSerializer.SerializeToNode(structuredResponse))
                     .SetRequestID(requestId);
 
                 _ = UnityMcpPlugin.NotifyToolRequestCompleted(new RequestToolCompletedData
