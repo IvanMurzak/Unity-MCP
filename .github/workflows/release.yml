@@ -344,10 +344,13 @@ jobs:
       - name: Send Release Notes to Discord
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_RELEASE_NOTES_WEBHOOK }}
+          RELEASE_NOTES: ${{ needs.release-unity-plugin.outputs.release_notes }}
+          VERSION: ${{ needs.release-unity-plugin.outputs.version }}
         run: |
-          # Get the release notes from the previous job
-          release_notes='${{ needs.release-unity-plugin.outputs.release_notes }}'
-          version='${{ needs.release-unity-plugin.outputs.version }}'
+          # Get the release notes from environment variables
+          # (Using env vars avoids shell quoting issues with apostrophes in commit messages)
+          release_notes="$RELEASE_NOTES"
+          version="$VERSION"
 
           # Convert usernames to GitHub profile links
           # Convert "by @username" to "by [@username](https://github.com/username)"
