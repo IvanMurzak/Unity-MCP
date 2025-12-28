@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System;
 using com.IvanMurzak.McpPlugin;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -35,6 +36,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             public static string PackageListFailed(string error)
                 => $"[Error] Failed to list packages: {error}";
+        }
+
+        /// <summary>
+        /// Returns search priority (lower = better match). Returns 0 if no match.
+        /// Priority order: 1=name exact, 2=displayName exact, 3=name substring, 4=displayName substring, 5=description substring
+        /// </summary>
+        protected static int GetSearchPriority(string? name, string? displayName, string? description, string query)
+        {
+            if (name?.Equals(query, StringComparison.OrdinalIgnoreCase) == true)
+                return 1;
+            if (displayName?.Equals(query, StringComparison.OrdinalIgnoreCase) == true)
+                return 2;
+            if (name?.Contains(query, StringComparison.OrdinalIgnoreCase) == true)
+                return 3;
+            if (displayName?.Contains(query, StringComparison.OrdinalIgnoreCase) == true)
+                return 4;
+            if (description?.Contains(query, StringComparison.OrdinalIgnoreCase) == true)
+                return 5;
+            return 0; // No match
         }
     }
 }

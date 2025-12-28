@@ -94,7 +94,7 @@ Use this to check which packages are currently installed before adding or removi
         (
             [Description("Filter packages by source.")]
             PackageSourceFilter sourceFilter = PackageSourceFilter.All,
-            [Description("Filter packages by name (case-insensitive substring match). Example: 'textmesh' will match 'com.unity.textmeshpro'.")]
+            [Description("Filter packages by name, display name, or description (case-insensitive). Results are prioritized: exact name match, exact display name match, name substring, display name substring, description substring.")]
             string? nameFilter = null,
             [Description("Include only direct dependencies (packages in manifest.json). If false, includes all resolved packages. Default: false")]
             bool directDependenciesOnly = false
@@ -129,12 +129,16 @@ Use this to check which packages are currently installed before adding or removi
                         packages = packages.Where(p => p.source == unitySource);
                 }
 
-                // Apply name filter
+                // Apply name filter with priority ordering
                 if (!string.IsNullOrEmpty(nameFilter))
                 {
-                    packages = packages.Where(p =>
-                        p.name.Contains(nameFilter, StringComparison.OrdinalIgnoreCase) ||
-                        (p.displayName?.Contains(nameFilter, StringComparison.OrdinalIgnoreCase) ?? false));
+                    return packages
+                        .Select(p => (pkg: p, priority: GetSearchPriority(p.name, p.displayName, p.description, nameFilter!)))
+                        .Where(x => x.priority > 0)
+                        .OrderBy(x => x.priority)
+                        .ThenBy(x => x.pkg.name)
+                        .Select(x => PackageData.FromPackageInfo(x.pkg))
+                        .ToList();
                 }
 
                 return packages
