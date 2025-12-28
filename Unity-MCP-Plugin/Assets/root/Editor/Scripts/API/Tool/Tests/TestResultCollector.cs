@@ -142,9 +142,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
                 var jsonString = jsonNode?.ToJsonString();
 
                 var response = ResponseCallValueTool<TestRunResponse>
-                    .SuccessStructured(
-                        structuredContent: jsonNode,
-                        message: jsonString ?? "[Success] Test execution completed.") // Needed for MCP backward compatibility: https://modelcontextprotocol.io/specification/2025-06-18/server/tools#structured-content
+                    .SuccessStructured(jsonNode)
                     .SetRequestID(requestId);
 
                 _ = UnityMcpPlugin.NotifyToolRequestCompleted(new RequestToolCompletedData
