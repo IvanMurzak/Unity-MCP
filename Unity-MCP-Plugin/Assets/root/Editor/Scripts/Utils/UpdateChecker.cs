@@ -11,13 +11,13 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Extensions.Unity.PlayerPrefsEx;
 using Microsoft.Extensions.Logging;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Networking;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
@@ -212,41 +212,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// <summary>
         /// Fetches the latest version tag from GitHub API.
         /// </summary>
-        private static Task<string?> FetchLatestVersionAsync()
+        private static async Task<string?> FetchLatestVersionAsync()
         {
-            var tcs = new TaskCompletionSource<string?>();
+            using var client = new HttpClient();
+            client.DefaultRequestHeaders.Add("User-Agent", "AI-Game-Developer-UpdateChecker");
 
-            var request = UnityWebRequest.Get(GitHubApiUrl);
-            request.SetRequestHeader("User-Agent", "AI-Game-Developer-UpdateChecker");
-
-            var operation = request.SendWebRequest();
-            operation.completed += _ =>
+            try
             {
-                try
-                {
-                    if (request.result != UnityWebRequest.Result.Success)
-                    {
-                        logger?.LogWarning("Failed to fetch tags: {error}", request.error);
-                        tcs.SetResult(null);
-                        return;
-                    }
-
-                    var json = request.downloadHandler.text;
-                    var latestVersion = ParseLatestVersionFromJson(json);
-                    tcs.SetResult(latestVersion);
-                }
-                catch (Exception ex)
-                {
-                    logger?.LogWarning(ex, "Failed to parse response");
-                    tcs.SetResult(null);
-                }
-                finally
-                {
-                    request.Dispose();
-                }
-            };
-
-            return tcs.Task;
+                var json = await client.GetStringAsync(GitHubApiUrl);
+                return ParseLatestVersionFromJson(json);
+            }
+            catch (HttpRequestException ex)
+            {
+                logger?.LogWarning("Failed to fetch tags: {error}", ex.Message);
+                return null;
+            }
+            catch (Exception ex)
+            {
+                logger?.LogWarning(ex, "Failed to parse response");
+                return null;
+            }
         }
 
         /// <summary>
