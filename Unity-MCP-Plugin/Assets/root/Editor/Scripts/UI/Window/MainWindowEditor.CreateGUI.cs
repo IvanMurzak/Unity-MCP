@@ -256,14 +256,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 McpToolsWindow.ShowWindow();
             });
 
-            var toolsStatusLabel = root.Query<Label>("toolsStatusLabel").First();
+            var toolsCountLabel = root.Query<Label>("toolsCountLabel").First();
 
             McpPlugin.McpPlugin.DoAlways(plugin =>
             {
                 var toolManager = plugin.McpManager.ToolManager;
                 if (toolManager == null)
                 {
-                    toolsStatusLabel.text = "Total tools (0), active tools (0), disabled tools (0)";
+                    toolsCountLabel.text = "0 / 0 tools";
                     return;
                 }
 
@@ -272,8 +272,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     var allTools = toolManager.GetAllTools();
                     var total = allTools.Count();
                     var active = allTools.Count(t => toolManager.IsToolEnabled(t.Name));
-                    var disabled = total - active;
-                    toolsStatusLabel.text = $"Total tools ({total}), active tools ({active}), disabled tools ({disabled})";
+                    toolsCountLabel.text = $"{active} / {total} tools";
                 }
 
                 UpdateStats();

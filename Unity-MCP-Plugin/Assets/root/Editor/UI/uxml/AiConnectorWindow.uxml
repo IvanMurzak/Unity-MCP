@@ -27,7 +27,9 @@
             <ui:VisualElement name="ToolsConfigurationSection" class="row">
                 <ui:VisualElement>
                     <ui:Label name="toolsCountLabel" text="49 / 49 tools" class="Header" />
-                    <ui:Label name="toolsStatusLabel" text="Active tools spend AI context. You are interested in to keep the context consumption smaller, because LLM works better when there is more free context. Consider to disable the tools you don't need." class="section-desc" />
+                    <ui:Foldout text="Review and manage MCP tools" value="false">
+                        <ui:Label name="toolsStatusLabel" text="Active tools spend AI context. You are interested in to keep the context consumption smaller, because LLM works better when there is more free context. Consider to disable the tools you don't need." class="section-desc" />
+                    </ui:Foldout>
                 </ui:VisualElement>
                 <ui:Button name="btnOpenTools" text="Open" class="Button-Primary" />
             </ui:VisualElement>
