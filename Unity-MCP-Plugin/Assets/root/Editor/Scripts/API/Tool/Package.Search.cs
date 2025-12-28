@@ -56,18 +56,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 Use this to find packages by name before installing them. Returns available versions and installation status.
 Searches both the Unity registry and locally installed packages (including Git, local, and embedded sources).
 Results are prioritized: exact name match, exact display name match, name substring, display name substring, description substring.
-Note: Online mode uses server-side search (faster, searches by ID/name only). Offline mode uses cached data (searches ID, name, and description).")]
+Note: Online mode fetches exact matches from live registry, then supplements with cached substring matches.")]
         public async Task<List<PackageSearchResult>> Search
         (
             [Description(@"The package id, name, or description. Can be:
 - Full package id: 'com.unity.textmeshpro'
 - Full package name: 'TextMesh Pro'
 - Partial name: 'TextMesh' (will search in Unity registry and installed packages)
-- Description keyword: 'rendering' (works in offline mode and for installed packages)")]
+- Description keyword: 'rendering' (searches in package descriptions)")]
             string query,
             [Description("Maximum number of results to return. Default: 10")]
             int maxResults = 10,
-            [Description("Whether to perform the search in offline mode (uses cached registry data). Default: true. Set to false to fetch latest from Unity registry (slower but more up-to-date).")]
+            [Description("Whether to perform the search in offline mode (uses cached registry data only). Default: true. Set to false to fetch latest exact matches from Unity registry.")]
             bool offlineMode = true
         )
         {
@@ -93,48 +93,49 @@ Note: Online mode uses server-side search (faster, searches by ID/name only). Of
                 var results = new List<PackageSearchResult>();
                 var addedPackageNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-                // Search for packages in the registry
-                // Use Client.Search(query) for online mode (server-side search, faster)
-                // Use Client.SearchAll() for offline mode (cached data, allows local filtering)
-                if (offlineMode)
+                // Online mode: first fetch exact matches from live registry, then supplement with cached substring matches
+                if (!offlineMode)
                 {
-                    var searchRequest = Client.SearchAll(offlineMode: true);
-                    while (!searchRequest.IsCompleted)
+                    var onlineSearchRequest = Client.Search(query, offlineMode: false);
+                    while (!onlineSearchRequest.IsCompleted)
                         await Task.Yield();
 
-                    if (searchRequest.Status == StatusCode.Success)
+                    if (onlineSearchRequest.Status == StatusCode.Success)
                     {
-                        var resultPackages = searchRequest.Result
+                        var onlineResults = onlineSearchRequest.Result
                             .Select(p => (pkg: p, priority: GetSearchPriority(p.name, p.displayName, p.description, query)))
                             .Where(x => x.priority > 0)
                             .OrderBy(x => x.priority)
                             .Take(maxResults)
                             .Select(x => x.pkg);
 
-                        foreach (var pkg in resultPackages)
+                        foreach (var pkg in onlineResults)
                         {
                             results.Add(CreateSearchResult(pkg, installedByName));
                             addedPackageNames.Add(pkg.name);
                         }
                     }
                 }
-                else
+
+                // Search cached registry data for substring matches (both online and offline modes)
+                // This provides substring search that the online API doesn't support
+                if (results.Count < maxResults)
                 {
-                    // Online mode: use targeted search (faster, won't hang)
-                    var searchRequest = Client.Search(query, offlineMode: false);
-                    while (!searchRequest.IsCompleted)
+                    var cachedSearchRequest = Client.SearchAll(offlineMode: true);
+                    while (!cachedSearchRequest.IsCompleted)
                         await Task.Yield();
 
-                    if (searchRequest.Status == StatusCode.Success)
+                    if (cachedSearchRequest.Status == StatusCode.Success)
                     {
-                        var resultPackages = searchRequest.Result
+                        var cachedResults = cachedSearchRequest.Result
+                            .Where(p => !addedPackageNames.Contains(p.name))
                             .Select(p => (pkg: p, priority: GetSearchPriority(p.name, p.displayName, p.description, query)))
                             .Where(x => x.priority > 0)
                             .OrderBy(x => x.priority)
-                            .Take(maxResults)
+                            .Take(maxResults - results.Count)
                             .Select(x => x.pkg);
 
-                        foreach (var pkg in resultPackages)
+                        foreach (var pkg in cachedResults)
                         {
                             results.Add(CreateSearchResult(pkg, installedByName));
                             addedPackageNames.Add(pkg.name);
