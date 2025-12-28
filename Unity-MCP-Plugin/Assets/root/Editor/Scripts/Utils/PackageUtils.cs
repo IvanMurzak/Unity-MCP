@@ -20,7 +20,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
     /// Utility class for handling package operations that may trigger domain reloads.
     /// Uses SessionState to persist notification data across domain reloads.
     /// </summary>
-    [InitializeOnLoad]
     public static class PackageUtils
     {
         private const string PendingNotificationKeysKey = "MCP_PendingPackageNotificationKeys";
@@ -28,7 +27,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
         private static bool _processPendingScheduled = false;
 
-        static PackageUtils()
+        public static void Init()
         {
             // Process any pending notifications after domain reload
             ScheduleProcessPendingNotifications();

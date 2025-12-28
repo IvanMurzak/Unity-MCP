@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEditor;
 using UnityEngine;
@@ -35,6 +36,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             // Initialize sub-systems
             API.Tool_Tests.Init();
+            UpdateChecker.Init();
+            PackageUtils.Init();
         }
     }
 }
