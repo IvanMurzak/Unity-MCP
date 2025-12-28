@@ -23,23 +23,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
     /// </summary>
     public class UpdatePopupWindow : EditorWindow
     {
-        private static readonly string[] WindowUxmlPaths =
-        {
-            "Packages/com.ivanmurzak.unity.mcp/Editor/UI/uxml/UpdatePopupWindow.uxml",
-            "Assets/root/Editor/UI/uxml/UpdatePopupWindow.uxml"
-        };
-
-        private static readonly string[] WindowUssPaths =
-        {
-            "Packages/com.ivanmurzak.unity.mcp/Editor/UI/uss/UpdatePopupWindow.uss",
-            "Assets/root/Editor/UI/uss/UpdatePopupWindow.uss"
-        };
-
-        private static readonly string[] LogoIconPaths =
-        {
-            "Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/logo_512.png",
-            "Assets/root/Editor/Gizmos/logo_512.png"
-        };
+        private static readonly string[] WindowUxmlPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/UpdatePopupWindow.uxml");
+        private static readonly string[] WindowUssPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uss/UpdatePopupWindow.uss");
+        private static readonly string[] LogoIconPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/Gizmos/logo_512.png");
 
         private const string PackageId = "com.ivanmurzak.unity.mcp";
 

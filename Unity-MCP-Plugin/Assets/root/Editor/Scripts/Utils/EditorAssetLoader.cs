@@ -21,11 +21,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
     /// </summary>
     public static class EditorAssetLoader
     {
-        public static readonly string[] PackageLogoIcon =
+        private const string PackagePathPrefix = "Packages/com.ivanmurzak.unity.mcp/";
+        private const string AssetsPathPrefix = "Assets/root/";
+
+        public static readonly string[] PackageLogoIcon = GetEditorAssetPaths("Editor/Gizmos/logo_window_icon.png");
+
+        /// <summary>
+        /// Generates an array of paths for an editor asset, with both package and development paths.
+        /// </summary>
+        /// <param name="relativePath">The path relative to the package/assets root (e.g., "Editor/Gizmos/logo.png").</param>
+        /// <returns>An array containing both the package path and the assets path.</returns>
+        public static string[] GetEditorAssetPaths(string relativePath)
         {
-            "Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/logo_window_icon.png",
-            "Assets/root/Editor/Gizmos/logo_window_icon.png"
-        };
+            return new[]
+            {
+                PackagePathPrefix + relativePath,
+                AssetsPathPrefix + relativePath
+            };
+        }
 
         /// <summary>
         /// Attempts to load an asset from multiple paths, trying each in order until one succeeds.
