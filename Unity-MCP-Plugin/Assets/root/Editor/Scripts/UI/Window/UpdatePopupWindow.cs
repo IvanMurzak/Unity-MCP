@@ -11,6 +11,8 @@
 #nullable enable
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEditor;
+using UnityEditor.PackageManager;
+using UnityEditor.PackageManager.Requests;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -39,8 +41,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             "Assets/root/Editor/Gizmos/logo_512.png"
         };
 
+        private const string PackageId = "com.ivanmurzak.unity.mcp";
+
         private string _currentVersion = string.Empty;
         private string _latestVersion = string.Empty;
+        private AddRequest? _addRequest;
 
         /// <summary>
         /// Shows the update popup window with version information.
@@ -132,7 +137,57 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         private void OnInstallUpdateClicked()
         {
-            // TODO: Implement auto-update installation
+            if (_addRequest != null)
+                return; // Already in progress
+
+            var packageIdWithVersion = $"{PackageId}@{_latestVersion}";
+            _addRequest = Client.Add(packageIdWithVersion);
+            EditorApplication.update += OnPackageInstallProgress;
+
+            // Disable the button to prevent multiple clicks
+            var installButton = rootVisualElement.Q<Button>("btn-install-update");
+            if (installButton != null)
+            {
+                installButton.SetEnabled(false);
+                installButton.text = "Installing...";
+            }
+        }
+
+        private void OnPackageInstallProgress()
+        {
+            if (_addRequest == null || !_addRequest.IsCompleted)
+                return;
+
+            EditorApplication.update -= OnPackageInstallProgress;
+
+            if (_addRequest.Status == StatusCode.Success)
+            {
+                UnityMcpPlugin.Instance.LogInfo("Package updated to version {version}", typeof(UpdatePopupWindow), _latestVersion);
+                EditorUtility.DisplayDialog(
+                    "Update Complete",
+                    $"AI Game Developer has been updated to version {_latestVersion}.\n\nUnity will recompile scripts automatically.",
+                    "OK");
+            }
+            else if (_addRequest.Status >= StatusCode.Failure)
+            {
+                var errorMessage = _addRequest.Error?.message ?? "Unknown error";
+                UnityMcpPlugin.Instance.LogError("Failed to update package: {error}", typeof(UpdatePopupWindow), errorMessage);
+                EditorUtility.DisplayDialog(
+                    "Update Failed",
+                    $"Failed to update the package:\n{errorMessage}",
+                    "OK");
+
+                // Re-enable the button on failure
+                var installButton = rootVisualElement.Q<Button>("btn-install-update");
+                if (installButton != null)
+                {
+                    installButton.SetEnabled(true);
+                    installButton.text = "Install Update";
+                }
+            }
+
+            _addRequest = null;
+            Close();
         }
 
         private void OnViewReleasesClicked()
