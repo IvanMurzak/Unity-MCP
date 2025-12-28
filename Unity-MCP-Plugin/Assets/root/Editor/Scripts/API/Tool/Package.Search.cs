@@ -25,8 +25,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [Description("Package search result with available versions.")]
         public class PackageSearchResult
         {
-            [Description("Package ID.")]
-            public string Id { get; set; } = string.Empty;
+            [Description("The official Unity name of the package used as the package ID.")]
+            public string Name { get; set; } = string.Empty;
 
             [Description("The display name of the package.")]
             public string DisplayName { get; set; } = string.Empty;
@@ -82,7 +82,7 @@ The search queries the Unity registry and returns matching packages with their l
                     await Task.Yield();
 
                 var installedPackages = listRequest.Status == StatusCode.Success
-                    ? listRequest.Result.ToDictionary(p => p.packageId, p => p.version)
+                    ? listRequest.Result.ToDictionary(p => p.name, p => p.version)
                     : new Dictionary<string, string>();
 
                 // Search for packages in the registry
@@ -99,12 +99,12 @@ The search queries the Unity registry and returns matching packages with their l
                 {
                     var result = new PackageSearchResult
                     {
-                        Id = pkg.packageId,
+                        Name = pkg.name,
                         DisplayName = pkg.displayName ?? pkg.name,
                         LatestVersion = pkg.version,
                         Description = TruncateDescription(pkg.description ?? string.Empty, 200),
-                        IsInstalled = installedPackages.ContainsKey(pkg.packageId),
-                        InstalledVersion = installedPackages.TryGetValue(pkg.packageId, out var installedVersion)
+                        IsInstalled = installedPackages.ContainsKey(pkg.name),
+                        InstalledVersion = installedPackages.TryGetValue(pkg.name, out var installedVersion)
                             ? installedVersion
                             : null,
                         AvailableVersions = pkg.versions?.compatible?.Take(5).ToList() ?? new List<string>()
