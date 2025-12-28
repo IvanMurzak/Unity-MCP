@@ -69,7 +69,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             window.position = new Rect(x, y, windowWidth, windowHeight);
 
             window.CreateGUI();
-            window.ShowUtility();
+            window.Show();
             window.Focus();
 
             return window;
