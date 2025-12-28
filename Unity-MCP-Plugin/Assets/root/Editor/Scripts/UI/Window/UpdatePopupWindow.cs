@@ -43,9 +43,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         private const string PackageId = "com.ivanmurzak.unity.mcp";
 
-        private string _currentVersion = string.Empty;
-        private string _latestVersion = string.Empty;
-        private AddRequest? _addRequest;
+        private string currentVersion = string.Empty;
+        private string latestVersion = string.Empty;
+        private AddRequest? addRequest;
 
         /// <summary>
         /// Shows the update popup window with version information.
@@ -53,14 +53,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public static UpdatePopupWindow ShowWindow(string currentVersion, string latestVersion)
         {
             var window = GetWindow<UpdatePopupWindow>(utility: false, "Update Available", focus: true);
-            window._currentVersion = currentVersion ?? "Unknown";
-            window._latestVersion = latestVersion ?? "Unknown";
+            window.currentVersion = currentVersion ?? "Unknown";
+            window.latestVersion = latestVersion ?? "Unknown";
 
             // Set window size and position (center on screen)
             var windowWidth = 350;
             var windowHeight = 410;
-            var x = windowWidth / 2;
-            var y = windowHeight / 2;
+            var x = 250;
+            var y = 250;
 
             window.minSize = new Vector2(windowWidth, windowHeight);
             window.maxSize = new Vector2(windowWidth, windowHeight);
@@ -109,10 +109,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             // Set version labels
             var currentVersionLabel = root.Q<Label>("current-version-value") ?? throw new System.NullReferenceException("current-version-value Label not found");
-            currentVersionLabel.text = _currentVersion;
+            currentVersionLabel.text = currentVersion;
 
             var latestVersionLabel = root.Q<Label>("latest-version-value") ?? throw new System.NullReferenceException("latest-version-value Label not found");
-            latestVersionLabel.text = _latestVersion;
+            latestVersionLabel.text = latestVersion;
 
             // Bind buttons
             var installUpdateButton = root.Q<Button>("btn-install-update") ?? throw new System.NullReferenceException("btn-install-update Button not found");
@@ -127,10 +127,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         private void OnInstallUpdateClicked()
         {
-            if (_addRequest != null)
+            if (addRequest != null)
                 return; // Already in progress
 
-            _addRequest = Client.Add($"{PackageId}@{_latestVersion}");
+            addRequest = Client.Add($"{PackageId}@{latestVersion}");
             EditorApplication.update += OnPackageInstallProgress;
 
             // Disable the button to prevent multiple clicks
@@ -141,22 +141,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         private void OnPackageInstallProgress()
         {
-            if (_addRequest == null || !_addRequest.IsCompleted)
+            if (addRequest == null)
+            {
+                EditorApplication.update -= OnPackageInstallProgress;
                 return;
+            }
+
+            if (!addRequest.IsCompleted)
+                return; // wait until completed
 
             EditorApplication.update -= OnPackageInstallProgress;
 
-            if (_addRequest.Status == StatusCode.Success)
+            if (addRequest.Status == StatusCode.Success)
             {
-                UnityMcpPlugin.Instance.LogInfo("Package updated to version {version}", typeof(UpdatePopupWindow), _latestVersion);
+                UnityMcpPlugin.Instance.LogInfo("Package updated to version {version}", typeof(UpdatePopupWindow), latestVersion);
                 EditorUtility.DisplayDialog(
                     "Update Complete",
-                    $"AI Game Developer has been updated to version {_latestVersion}.\n\nUnity will recompile scripts automatically.",
+                    $"AI Game Developer has been updated to version {latestVersion}.\n\nUnity will recompile scripts automatically.",
                     "OK");
             }
-            else if (_addRequest.Status >= StatusCode.Failure)
+            else if (addRequest.Status >= StatusCode.Failure)
             {
-                var errorMessage = _addRequest.Error?.message ?? "Unknown error";
+                var errorMessage = addRequest.Error?.message ?? "Unknown error";
                 UnityMcpPlugin.Instance.LogError("Failed to update package: {error}", typeof(UpdatePopupWindow), errorMessage);
                 EditorUtility.DisplayDialog(
                     "Update Failed",
@@ -172,7 +178,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 }
             }
 
-            _addRequest = null;
+            addRequest = null;
             Close();
         }
 
@@ -183,8 +189,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         private void OnSkipVersionClicked()
         {
-            UpdateChecker.SkipVersion(_latestVersion);
+            UpdateChecker.SkipVersion(latestVersion);
             Close();
+        }
+
+        void OnDestroy()
+        {
+            EditorApplication.update -= OnPackageInstallProgress;
         }
     }
 }
