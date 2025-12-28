@@ -12,6 +12,7 @@
 using System;
 using System.Linq;
 using com.IvanMurzak.McpPlugin.Common;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using Microsoft.AspNetCore.SignalR.Client;
 using R3;
@@ -24,8 +25,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
     public partial class MainWindowEditor : EditorWindow
     {
         // Template paths for both local development and UPM package environments
-        const string WindowUxmlPathPackage = "Packages/com.ivanmurzak.unity.mcp/Editor/UI/uxml/AiConnectorWindow.uxml";
-        const string WindowUxmlPathLocal = "Assets/root/Editor/UI/uxml/AiConnectorWindow.uxml";
+
+        public static readonly string[] WindowUxmlPath = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/AiConnectorWindow.uxml");
 
         const string USS_IndicatorClass_Connected = "status-indicator-circle-online";
         const string USS_IndicatorClass_Connecting = "status-indicator-circle-connecting";
@@ -41,18 +42,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             rootVisualElement.Clear();
 
             // Try to load the template from both possible paths (UPM package or local development)
-            var templateControlPanel = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(WindowUxmlPathPackage);
+            var templateControlPanel = EditorAssetLoader.LoadAssetAtPath<VisualTreeAsset>(WindowUxmlPath);
             if (templateControlPanel == null)
             {
-                // Fallback to local development path
-                templateControlPanel = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(WindowUxmlPathLocal);
-            }
-
-            if (templateControlPanel == null)
-            {
-                Debug.LogError($"Failed to load AiConnectorWindow from either path:\n" +
-                              $"- Package: {WindowUxmlPathPackage}\n" +
-                              $"- Local: {WindowUxmlPathLocal}");
+                Debug.LogError("AiConnectorWindow template not found in specified paths. Please ensure the template file exists.");
                 return;
             }
 

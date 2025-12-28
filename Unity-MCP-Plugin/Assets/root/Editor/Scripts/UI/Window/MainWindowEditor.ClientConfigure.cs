@@ -23,8 +23,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
     public partial class MainWindowEditor : EditorWindow
     {
         // Template paths for both local development and UPM package environments
-        const string ClientConfigPanelTemplatePathPackage = "Packages/com.ivanmurzak.unity.mcp/Editor/UI/uxml/ClientConfigPanel.uxml";
-        const string ClientConfigPanelTemplatePathLocal = "Assets/root/Editor/UI/uxml/ClientConfigPanel.uxml";
+
+        public static readonly string[] ClientConfigPanelTemplatePath = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/ClientConfigPanel.uxml");
 
         string ProjectRootPath => Application.dataPath.EndsWith("/Assets")
             ? Application.dataPath.Substring(0, Application.dataPath.Length - "/Assets".Length)
@@ -203,18 +203,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             }
 
             // Try to load the template from both possible paths (UPM package or local development)
-            var clientConfigPanelTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(ClientConfigPanelTemplatePathPackage);
+            var clientConfigPanelTemplate = EditorAssetLoader.LoadAssetAtPath<VisualTreeAsset>(ClientConfigPanelTemplatePath);
             if (clientConfigPanelTemplate == null)
             {
-                // Fallback to local development path
-                clientConfigPanelTemplate = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(ClientConfigPanelTemplatePathLocal);
-            }
-
-            if (clientConfigPanelTemplate == null)
-            {
-                Debug.LogError($"Failed to load ClientConfigPanel template from either path:\n" +
-                              $"- Package: {ClientConfigPanelTemplatePathPackage}\n" +
-                              $"- Local: {ClientConfigPanelTemplatePathLocal}");
+                Debug.LogError("ClientConfigPanel template not found in specified paths. Please ensure the template file exists.");
                 return;
             }
 
