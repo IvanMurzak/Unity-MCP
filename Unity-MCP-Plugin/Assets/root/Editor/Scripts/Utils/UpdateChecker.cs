@@ -203,7 +203,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 // Set next allowed check time to enforce cooldown (only for automatic checks)
                 if (!forceCheck)
                 {
-                    NextCheckTime.Value = DateTime.UtcNow.AddDays(1).ToString("O");
+                    NextCheckTime.Value = DateTime.UtcNow.AddHours(1).ToString("O");
                 }
                 isChecking = false;
             }
