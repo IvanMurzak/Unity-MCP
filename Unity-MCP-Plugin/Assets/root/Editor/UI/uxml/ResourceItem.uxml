@@ -3,8 +3,8 @@
         <ui:VisualElement class="item-header">
             <ui:VisualElement class="item-title-container">
                 <ui:Label name="item-title" text="Resource title, could be multiple lines long" class="item-title" />
-                <ui:Label name="item-uri" text="resource://uri/path" class="item-uri" />
-                <ui:Label name="item-mimetype" text="MimeType: application/json" class="item-mimetype" />
+                <ui:Label name="item-uri" text="resource://uri/path" class="item-metadata item-uri" />
+                <ui:Label name="item-mimetype" text="MimeType: application/json" class="item-metadata item-mimetype" />
             </ui:VisualElement>
             <ui:Toggle name="item-toggle" class="item-switch" />
         </ui:VisualElement>

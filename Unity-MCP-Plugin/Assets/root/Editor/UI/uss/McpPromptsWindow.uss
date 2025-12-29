@@ -1,19 +1,11 @@
 /* ==========================================================================
    MCP Prompts Window Styles
-   Imports common styles and adds prompt-specific customizations
+   Imports common list window styles and adds prompt-specific customizations
    ========================================================================== */
 
-@import url("common/_base.uss");
-@import url("common/_typography.uss");
-@import url("common/_buttons.uss");
-@import url("common/_forms.uss");
-@import url("common/_list-view.uss");
-@import url("common/_toggle-switch.uss");
-@import url("common/_foldout.uss");
+@import url("common/_mcp-list-window.uss");
 
-/* Prompt-specific: Role label */
+/* Prompt-specific: Role label color */
 .item-role {
-    font-size: 12px;
     color: #8FAADC;
-    -unity-font-style: italic;
 }
