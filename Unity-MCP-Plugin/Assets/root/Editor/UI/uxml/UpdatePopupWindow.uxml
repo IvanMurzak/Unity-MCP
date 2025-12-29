@@ -15,7 +15,7 @@
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement class="button-container">
-            <ui:Button text="Install Update" name="btn-install-update" class="btn-primary" />
+            <ui:Button text="Install Update" name="btn-install-update" class="btn-primary-bold" />
             <ui:Button text="View Releases" name="btn-view-releases" class="btn-secondary" />
             <ui:Button text="Skip Version" name="btn-skip-version" class="btn-secondary" />
             <ui:Button text="Do Not Show Again" name="btn-do-not-show-again" class="btn-tertiary" />

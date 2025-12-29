@@ -1,0 +1,43 @@
+/* ==========================================================================
+   Toggle Switch Styles - iOS-style toggle switches
+   ========================================================================== */
+
+/* Base Toggle Switch */
+.item-switch .unity-toggle__input {
+    width: 40px;
+    height: 20px;
+    border-radius: 10px;
+    background-color: #707070;
+    border-width: 0;
+    -unity-background-image-tint-color: white;
+    transition-duration: 200ms;
+}
+
+.item-switch .unity-toggle__checkmark {
+    width: 16px;
+    height: 16px;
+    border-radius: 10px;
+    background-color: white;
+    background-image: none;
+    opacity: 1;
+    margin-left: 2px;
+    transition-duration: 200ms;
+}
+
+/* Checked State */
+.item-switch.checked .unity-toggle__input {
+    background-color: #51C663;
+    transition-duration: 200ms;
+}
+
+.item-switch.checked .unity-toggle__checkmark {
+    margin-left: 22px;
+    background-image: none;
+    transition-duration: 200ms;
+}
+
+/* Disabled Item State (Unchecked) */
+.item-container.disabled .item-switch .unity-toggle__input {
+    background-color: #863A3B;
+    transition-duration: 200ms;
+}

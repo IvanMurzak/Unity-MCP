@@ -38,15 +38,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         [MenuItem("Tools/AI Game Developer/Open Server Log errors", priority = 1003)]
         public static void OpenServerLogErrors() => OpenFile(Startup.Server.ExecutableFolderPath + "/logs/server-log-error.txt");
 
-        // [MenuItem("Tools/AI Game Developer/Debug/Show Update Popup", priority = 2000)]
-        // public static void ShowUpdatePopup() => UpdatePopupWindow.ShowWindow(UnityMcpPlugin.Version, "99.99.99");
+        [MenuItem("Tools/AI Game Developer/Debug/Show Update Popup", priority = 2000)]
+        public static void ShowUpdatePopup() => UpdatePopupWindow.ShowWindow(UnityMcpPlugin.Version, "99.99.99");
 
-        // [MenuItem("Tools/AI Game Developer/Debug/Reset Update Preferences", priority = 2001)]
-        // public static void ResetUpdatePreferences()
-        // {
-        //     UpdateChecker.ClearPreferences();
-        //     Debug.Log("Update preferences have been reset.");
-        // }
+        [MenuItem("Tools/AI Game Developer/Debug/Reset Update Preferences", priority = 2001)]
+        public static void ResetUpdatePreferences()
+        {
+            UpdateChecker.ClearPreferences();
+            Debug.Log("Update preferences have been reset.");
+        }
 
         static void OpenFile(string path)
         {

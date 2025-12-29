@@ -1,212 +1,26 @@
-/* General Styles */
-.root-container {
-    background-color: #383838;
-    color: #E0E0E0;
-    flex-grow: 1;
-}
+/* ==========================================================================
+   MCP Resources Window Styles
+   Imports common styles and adds resource-specific customizations
+   ========================================================================== */
 
-.header-container {
-    padding: 15px 25px 0 15px;
-}
+@import url("common/_base.uss");
+@import url("common/_typography.uss");
+@import url("common/_buttons.uss");
+@import url("common/_forms.uss");
+@import url("common/_list-view.uss");
+@import url("common/_toggle-switch.uss");
+@import url("common/_foldout.uss");
 
-.header-title {
-    font-size: 24px;
-    -unity-font-style: bold;
-    margin-bottom: 5px;
-}
-
-.header-description {
-    color: #B0B0B0;
-    margin-bottom: 7px;
-    white-space: normal;
-}
-
-/* Filter Section */
-.filter-row {
-    flex-direction: row;
-    align-items: center;
-    margin-bottom: 4px;
-}
-
-.filter-label {
-    margin-right: 5px;
-    width: 45px;
-    -unity-font-style: bold;
-}
-
-.filter-textfield {
-    flex-grow: 1;
-    flex-shrink: 1;
-}
-
-.type-dropdown {
-    width: 100px;
-}
-
-.filter-stats-label {
-    color: #B0B0B0;
-    margin-left: auto;
-}
-
-/* Resource List */
-.resource-list-view {
-    flex-grow: 1;
-    padding-left: 0;
-    padding-right: 0;
-    padding-bottom: 0;
-    padding-top: 0;
-}
-
-.resource-list-view .unity-list-view__item:hover {
-    background-color: rgba(0, 0, 0, 0);
-}
-
-.resource-list-view .unity-scroll-view__content-container {
-    padding-left: 15px;
-    padding-right: 15px;
-    padding-top: 20px;
-    padding-bottom: 20px;
-}
-
-/* Empty List Label */
-.empty-list-label {
-    flex-grow: 1;
-    -unity-text-align: middle-center;
-    font-size: 18px;
-    color: #808080;
-    padding-left: 15px;
-    padding-right: 15px;
-    padding-bottom: 15px;
-    padding-top: 5px;
-}
-
-/* Resource Item */
-.resource-item-container {
-    background-color: #4A4A4A;
-    border-radius: 12px;
-    padding: 10px;
-    margin-bottom: 7px;
-}
-
-.resource-item-header {
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: flex-start;
-}
-
-.resource-item-title-container {
-    flex-grow: 1;
-    margin-right: 10px;
-}
-
-.resource-title {
-    font-size: 16px;
-    -unity-font-style: bold;
-    white-space: normal;
-}
-
-.resource-id {
-    font-size: 12px;
-    color: #B0B0B0;
-}
-
-.resource-uri {
+/* Resource-specific: URI label */
+.item-uri {
     font-size: 12px;
     color: #9ACD32;
     -unity-font-style: italic;
 }
 
-.resource-mimetype {
+/* Resource-specific: MIME type label */
+.item-mimetype {
     font-size: 12px;
     color: #DDA0DD;
     -unity-font-style: italic;
-}
-
-/* Details Foldout */
-.resource-item-foldout {
-    margin-left: -4px;
-    padding-left: 0px;
-}
-
-.resource-item-foldout .unity-foldout__text {
-    font-size: 13px;
-    -unity-font-style: bold;
-}
-
-.resource-item-foldout .unity-foldout__content {
-    display: flex !important;
-    overflow: hidden;
-    transition-property: max-height, opacity, margin-top, margin-bottom, padding-top, padding-bottom;
-    transition-duration: 250ms;
-    transition-timing-function: ease-in-out;
-    opacity: 1;
-    max-height: 1000px;
-}
-
-.resource-item-foldout.collapsed .unity-foldout__content {
-    max-height: 0;
-    opacity: 0;
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-    transition-property: max-height, opacity, margin-top, margin-bottom, padding-top, padding-bottom;
-    transition-duration: 150ms;
-    transition-timing-function: ease-in-out;
-}
-
-.details-text {
-    white-space: normal;
-    margin-left: 15px;
-    margin-bottom: 8px;
-}
-
-/* Resource Item Highlighting */
-.resource-item-container.enabled {
-    background-color: #3A4039;
-    transition-duration: 200ms;
-}
-
-.resource-item-container.disabled {
-    background-color: #3F393A;
-    transition-duration: 200ms;
-}
-
-/* Toggle Switch Styles */
-.resource-switch .unity-toggle__input {
-    width: 40px;
-    height: 20px;
-    border-radius: 10px;
-    background-color: #707070;
-    border-width: 0;
-    -unity-background-image-tint-color: white;
-    transition-duration: 200ms;
-}
-
-.resource-switch .unity-toggle__checkmark {
-    width: 16px;
-    height: 16px;
-    border-radius: 10px;
-    background-color: white;
-    background-image: none;
-    opacity: 1;
-    margin-left: 2px;
-    transition-duration: 200ms;
-}
-
-/* Checked State */
-.resource-switch.checked .unity-toggle__input {
-    background-color: #51C663;
-    transition-duration: 200ms;
-}
-.resource-switch.checked .unity-toggle__checkmark {
-    margin-left: 22px;
-    background-image: none;
-    transition-duration: 200ms;
-}
-
-/* Disabled Resource State (Unchecked) */
-.resource-item-container.disabled .resource-switch .unity-toggle__input {
-    background-color: #863A3B;
-    transition-duration: 200ms;
 }

@@ -105,7 +105,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             }
 
             filterStatsLabel = root.Q<Label>("filter-stats-label");
-            resourceListView = root.Q<ListView>("resource-list-view");
+            resourceListView = root.Q<ListView>("mcp-list-view");
             emptyListLabel = root.Q<Label>("empty-list-label");
         }
 
@@ -204,8 +204,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         private VisualElement MakeResourceItem()
         {
             var resourceItem = resourceItemTemplate!.Instantiate();
-            var resourceToggle = resourceItem.Q<Toggle>("resource-toggle");
-            var resourceItemContainer = resourceItem.Q<VisualElement>(null, "resource-item-container") ?? resourceItem;
+            var resourceToggle = resourceItem.Q<Toggle>("item-toggle");
+            var resourceItemContainer = resourceItem.Q<VisualElement>(null, "item-container") ?? resourceItem;
 
             if (resourceToggle != null)
             {
@@ -271,36 +271,36 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         {
             resourceItem.userData = resource;
 
-            var titleLabel = resourceItem.Q<Label>("resource-title");
+            var titleLabel = resourceItem.Q<Label>("item-title");
             if (titleLabel != null)
                 titleLabel.text = resource.Title ?? resource.Name;
 
-            var idLabel = resourceItem.Q<Label>("resource-id");
+            var idLabel = resourceItem.Q<Label>("item-id");
             if (idLabel != null)
                 idLabel.text = resource.Name;
 
-            var uriLabel = resourceItem.Q<Label>("resource-uri");
+            var uriLabel = resourceItem.Q<Label>("item-uri");
             if (uriLabel != null)
             {
                 uriLabel.text = resource.Uri ?? string.Empty;
                 uriLabel.style.display = string.IsNullOrEmpty(resource.Uri) ? DisplayStyle.None : DisplayStyle.Flex;
             }
 
-            var mimeTypeLabel = resourceItem.Q<Label>("resource-mimetype");
+            var mimeTypeLabel = resourceItem.Q<Label>("item-mimetype");
             if (mimeTypeLabel != null)
             {
                 mimeTypeLabel.text = string.IsNullOrEmpty(resource.MimeType) ? string.Empty : $"MimeType: {resource.MimeType}";
                 mimeTypeLabel.style.display = string.IsNullOrEmpty(resource.MimeType) ? DisplayStyle.None : DisplayStyle.Flex;
             }
 
-            var resourceToggle = resourceItem.Q<Toggle>("resource-toggle");
+            var resourceToggle = resourceItem.Q<Toggle>("item-toggle");
             if (resourceToggle != null)
             {
                 resourceToggle.SetValueWithoutNotify(resource.IsEnabled);
                 resourceToggle.EnableInClassList("checked", resource.IsEnabled);
             }
 
-            var resourceItemContainer = resourceItem.Q<VisualElement>(null, "resource-item-container") ?? resourceItem;
+            var resourceItemContainer = resourceItem.Q<VisualElement>(null, "item-container") ?? resourceItem;
             UpdateResourceItemClasses(resourceItemContainer, resource.IsEnabled);
 
             var descriptionFoldout = resourceItem.Q<Foldout>("description-foldout");

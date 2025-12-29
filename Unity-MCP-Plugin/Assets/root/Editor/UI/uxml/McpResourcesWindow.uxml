@@ -15,6 +15,6 @@
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:Label name="empty-list-label" text="No resources by current filter" class="empty-list-label" />
-        <ui:ListView name="resource-list-view" class="resource-list-view" />
+        <ui:ListView name="mcp-list-view" class="mcp-list-view" />
     </ui:VisualElement>
 </ui:UXML>

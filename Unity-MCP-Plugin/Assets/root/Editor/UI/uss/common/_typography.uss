@@ -1,0 +1,131 @@
+/* ==========================================================================
+   Typography Styles - Headers, titles, descriptions, and labels
+   ========================================================================== */
+
+/* Window Headers */
+.header-container {
+    padding: 15px 25px 0 15px;
+}
+
+.header-title {
+    font-size: 24px;
+    -unity-font-style: bold;
+    margin-bottom: 5px;
+}
+
+.header-description {
+    color: #B0B0B0;
+    margin-bottom: 7px;
+    white-space: normal;
+}
+
+/* Section Headers */
+.Header {
+    font-size: 20px;
+    padding-top: 10px;
+    padding-left: 0;
+    -unity-font-style: bold;
+}
+
+.section-title {
+    font-size: 16px;
+    -unity-font-style: bold;
+    margin-top: 0;
+    padding-left: 0;
+}
+
+.section-desc {
+    color: rgb(135, 135, 135);
+    margin-bottom: 8px;
+    white-space: normal;
+}
+
+/* Window title */
+.window-title {
+    font-size: 20px;
+    -unity-font-style: bold;
+}
+
+/* Popup titles */
+.popup-title {
+    font-size: 22px;
+    -unity-font-style: bold;
+    margin-bottom: 12px;
+    color: rgb(220, 220, 220);
+    -unity-text-align: middle-center;
+}
+
+.popup-message {
+    font-size: 13px;
+    color: rgb(180, 180, 180);
+    margin-bottom: 16px;
+    -unity-text-align: middle-center;
+    white-space: normal;
+    max-width: 340px;
+}
+
+/* Version labels */
+.version-label {
+    font-size: 12px;
+    color: rgb(160, 160, 160);
+    min-width: 100px;
+}
+
+.version-value {
+    font-size: 12px;
+    -unity-font-style: bold;
+    min-width: 60px;
+    -unity-text-align: middle-right;
+}
+
+.current-version {
+    color: rgb(180, 180, 180);
+}
+
+.latest-version {
+    color: rgb(111, 226, 101);
+}
+
+/* Status labels */
+.status-indicator {
+    color: green;
+    font-size: 18px;
+    -unity-font-style: bold;
+}
+
+.status-label {
+    font-size: 14px;
+    color: rgb(136, 136, 136);
+}
+
+.server-label {
+    font-size: 14px;
+    color: rgb(136, 136, 136);
+    margin-bottom: 8px;
+}
+
+/* Custom accent label */
+.custom-label {
+    font-size: 20px;
+    -unity-font-style: bold;
+    color: rgb(68, 138, 255);
+}
+
+/* Empty list label */
+.empty-list-label {
+    flex-grow: 1;
+    -unity-text-align: middle-center;
+    font-size: 18px;
+    color: #808080;
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-bottom: 15px;
+    padding-top: 5px;
+}
+
+/* Details text */
+.details-text {
+    white-space: normal;
+    margin-left: 15px;
+    margin-bottom: 8px;
+}

@@ -107,7 +107,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             }
 
             filterStatsLabel = root.Q<Label>("filter-stats-label");
-            promptListView = root.Q<ListView>("prompt-list-view");
+            promptListView = root.Q<ListView>("mcp-list-view");
             emptyListLabel = root.Q<Label>("empty-list-label");
         }
 
@@ -206,8 +206,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         private VisualElement MakePromptItem()
         {
             var promptItem = promptItemTemplate!.Instantiate();
-            var promptToggle = promptItem.Q<Toggle>("prompt-toggle");
-            var promptItemContainer = promptItem.Q<VisualElement>(null, "prompt-item-container") ?? promptItem;
+            var promptToggle = promptItem.Q<Toggle>("item-toggle");
+            var promptItemContainer = promptItem.Q<VisualElement>(null, "item-container") ?? promptItem;
 
             if (promptToggle != null)
             {
@@ -274,26 +274,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         {
             promptItem.userData = prompt;
 
-            var titleLabel = promptItem.Q<Label>("prompt-title");
+            var titleLabel = promptItem.Q<Label>("item-title");
             if (titleLabel != null)
                 titleLabel.text = prompt.Title ?? prompt.Name;
 
-            var idLabel = promptItem.Q<Label>("prompt-id");
+            var idLabel = promptItem.Q<Label>("item-id");
             if (idLabel != null)
                 idLabel.text = prompt.Name;
 
-            var roleLabel = promptItem.Q<Label>("prompt-role");
+            var roleLabel = promptItem.Q<Label>("item-role");
             if (roleLabel != null)
                 roleLabel.text = $"Role: {prompt.Role}";
 
-            var promptToggle = promptItem.Q<Toggle>("prompt-toggle");
+            var promptToggle = promptItem.Q<Toggle>("item-toggle");
             if (promptToggle != null)
             {
                 promptToggle.SetValueWithoutNotify(prompt.IsEnabled);
                 promptToggle.EnableInClassList("checked", prompt.IsEnabled);
             }
 
-            var promptItemContainer = promptItem.Q<VisualElement>(null, "prompt-item-container") ?? promptItem;
+            var promptItemContainer = promptItem.Q<VisualElement>(null, "item-container") ?? promptItem;
             UpdatePromptItemClasses(promptItemContainer, prompt.IsEnabled);
 
             var descriptionFoldout = promptItem.Q<Foldout>("description-foldout");

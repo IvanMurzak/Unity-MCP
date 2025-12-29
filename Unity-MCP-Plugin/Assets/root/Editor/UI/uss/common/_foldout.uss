@@ -1,0 +1,38 @@
+/* ==========================================================================
+   Foldout Styles - Animated expandable sections
+   ========================================================================== */
+
+/* Base Foldout */
+.item-foldout {
+    margin-left: -4px;
+    padding-left: 0px;
+}
+
+.item-foldout .unity-foldout__text {
+    font-size: 13px;
+    -unity-font-style: bold;
+}
+
+/* Foldout Content Animation */
+.item-foldout .unity-foldout__content {
+    display: flex !important;
+    overflow: hidden;
+    transition-property: max-height, opacity, margin-top, margin-bottom, padding-top, padding-bottom;
+    transition-duration: 250ms;
+    transition-timing-function: ease-in-out;
+    opacity: 1;
+    max-height: 1000px;
+}
+
+/* Collapsed State */
+.item-foldout.collapsed .unity-foldout__content {
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    transition-property: max-height, opacity, margin-top, margin-bottom, padding-top, padding-bottom;
+    transition-duration: 150ms;
+    transition-timing-function: ease-in-out;
+}

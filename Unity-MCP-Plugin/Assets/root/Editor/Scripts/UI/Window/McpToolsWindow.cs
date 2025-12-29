@@ -107,7 +107,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             }
 
             filterStatsLabel = root.Q<Label>("filter-stats-label");
-            toolListView = root.Q<ListView>("tool-list-view");
+            toolListView = root.Q<ListView>("mcp-list-view");
             emptyListLabel = root.Q<Label>("empty-list-label");
         }
 
@@ -206,8 +206,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         private VisualElement MakeToolItem()
         {
             var toolItem = toolItemTemplate!.Instantiate();
-            var toolToggle = toolItem.Q<Toggle>("tool-toggle");
-            var toolItemContainer = toolItem.Q<VisualElement>(null, "tool-item-container") ?? toolItem;
+            var toolToggle = toolItem.Q<Toggle>("item-toggle");
+            var toolItemContainer = toolItem.Q<VisualElement>(null, "item-container") ?? toolItem;
 
             if (toolToggle != null)
             {
@@ -275,22 +275,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         {
             toolItem.userData = tool;
 
-            var titleLabel = toolItem.Q<Label>("tool-title");
+            var titleLabel = toolItem.Q<Label>("item-title");
             if (titleLabel != null)
                 titleLabel.text = tool.Title;
 
-            var idLabel = toolItem.Q<Label>("tool-id");
+            var idLabel = toolItem.Q<Label>("item-id");
             if (idLabel != null)
                 idLabel.text = tool.Name;
 
-            var toolToggle = toolItem.Q<Toggle>("tool-toggle");
+            var toolToggle = toolItem.Q<Toggle>("item-toggle");
             if (toolToggle != null)
             {
                 toolToggle.SetValueWithoutNotify(tool.IsEnabled);
                 toolToggle.EnableInClassList("checked", tool.IsEnabled);
             }
 
-            var toolItemContainer = toolItem.Q<VisualElement>(null, "tool-item-container") ?? toolItem;
+            var toolItemContainer = toolItem.Q<VisualElement>(null, "item-container") ?? toolItem;
             UpdateToolItemClasses(toolItemContainer, tool.IsEnabled);
 
             var descriptionFoldout = toolItem.Q<Foldout>("description-foldout");

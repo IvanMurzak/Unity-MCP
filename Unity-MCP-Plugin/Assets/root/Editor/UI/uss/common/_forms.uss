@@ -1,0 +1,91 @@
+/* ==========================================================================
+   Form Styles - Text fields, dropdowns, filters
+   ========================================================================== */
+
+/* Filter Section */
+.filter-row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.filter-label {
+    margin-right: 5px;
+    width: 45px;
+    -unity-font-style: bold;
+}
+
+.filter-textfield {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.type-dropdown {
+    width: 100px;
+}
+
+.filter-stats-label {
+    color: #B0B0B0;
+    margin-left: auto;
+}
+
+/* Content Item (form fields) */
+.ContentItem {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.ContentItem .unity-label {
+    width: 85px;
+    min-width: 65px;
+    max-width: 85px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-left: -10px;
+}
+
+.ContentItem .unity-enum-field {
+    width: 80px;
+}
+
+.ContentItem .unity-integer-field__input {
+    width: 65px;
+}
+
+/* Text field states */
+.disabled-text-field {
+}
+
+.disabled-text-field .unity-text-field__input {
+    border-width: 0;
+    margin: 1px;
+    background-color: rgba(0, 255, 255, 0.1);
+}
+
+.transparent-text-field {
+}
+
+.transparent-text-field .unity-text-field__input {
+    border-width: 0;
+    margin: 1px;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.enabled-text-field .unity-text-field__input {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+/* Argument items (form-like display) */
+.argument-item {
+    margin-left: 15px;
+    margin-bottom: 8px;
+}
+
+.argument-name {
+    -unity-font-style: bold;
+}
+
+.argument-description {
+    white-space: normal;
+    color: #B0B0B0;
+}
