@@ -34,23 +34,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             Enabled,
             Disabled
         }
-        private static readonly string[] WindowUxmlPaths =
-        {
-            "Packages/com.ivanmurzak.unity.mcp/Editor/UI/uxml/McpToolsWindow.uxml",
-            "Assets/root/Editor/UI/uxml/McpToolsWindow.uxml"
-        };
-
-        private static readonly string[] ToolItemUxmlPaths =
-        {
-            "Packages/com.ivanmurzak.unity.mcp/Editor/UI/uxml/ToolItem.uxml",
-            "Assets/root/Editor/UI/uxml/ToolItem.uxml"
-        };
-
-        private static readonly string[] WindowUssPaths =
-        {
-            "Packages/com.ivanmurzak.unity.mcp/Editor/UI/uss/McpToolsWindow.uss",
-            "Assets/root/Editor/UI/uss/McpToolsWindow.uss"
-        };
+        private static readonly string[] WindowUxmlPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/McpToolsWindow.uxml");
+        private static readonly string[] ToolItemUxmlPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/ToolItem.uxml");
+        private static readonly string[] WindowUssPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uss/McpToolsWindow.uss");
 
         private const string FilterStatsFormat = "Filtered: {0}, Total: {1}";
         private const string MissingTemplateMessage =
@@ -74,6 +60,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             if (icon != null)
                 window.titleContent = new GUIContent("MCP Tools", icon);
 
+            window.Show();
             window.Focus();
 
             return window;
