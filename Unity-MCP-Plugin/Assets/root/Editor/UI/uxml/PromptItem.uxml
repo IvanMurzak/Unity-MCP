@@ -1,24 +1,22 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/root/Editor/UI/uss/McpToolsWindow.uss?fileID=7433441132597879392&amp;guid=525911ffb58076f44a1788589abac01d&amp;type=3#McpToolsWindow" />
+    <Style src="project://database/Assets/root/Editor/UI/uss/McpPromptsWindow.uss?fileID=7433441132597879392&amp;guid=525911ffb58076f44a1788589abac01d&amp;type=3#McpPromptsWindow" />
     <ui:VisualElement class="item-container">
         <ui:VisualElement class="item-header">
             <ui:VisualElement class="item-title-container">
-                <ui:Label name="item-title" text="Tool title, could be multiple lines long" class="item-title" />
-                <ui:Label name="item-id" text="tool-id-single-line" class="item-id" />
+                <ui:Label name="item-title" text="Prompt title, could be multiple lines long" class="item-title" />
+                <ui:Label name="item-id" text="prompt-id-single-line" class="item-id" />
+                <ui:Label name="item-role" text="Role: User" class="item-role" />
             </ui:VisualElement>
             <ui:Toggle name="item-toggle" class="item-switch" />
         </ui:VisualElement>
         <ui:VisualElement name="item-details">
             <ui:Foldout name="description-foldout" text="Description" class="item-foldout" style="margin-top: 10px;" value="false">
-                <ui:Label name="description-text" text="Tool description abc abc abc..." class="details-text" />
+                <ui:Label name="description-text" text="Prompt description abc abc abc..." class="details-text" />
                 <ui:VisualElement style="margin-bottom: 7px;" />
             </ui:Foldout>
-            <ui:Foldout name="arguments-foldout" text="Input arguments (2)" class="item-foldout" value="false">
+            <ui:Foldout name="arguments-foldout" text="Arguments (2)" class="item-foldout" value="false">
                 <ui:VisualElement name="arguments-container" />
                 <ui:VisualElement style="margin-bottom: 7px;" />
-            </ui:Foldout>
-            <ui:Foldout name="outputs-foldout" text="Outputs" class="item-foldout" value="false">
-                <ui:VisualElement name="outputs-container" />
             </ui:Foldout>
         </ui:VisualElement>
     </ui:VisualElement>

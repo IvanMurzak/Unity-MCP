@@ -1,0 +1,68 @@
+/* ==========================================================================
+   List View Styles - List containers and item styles
+   ========================================================================== */
+
+/* Base List View */
+.mcp-list-view {
+    flex-grow: 1;
+    padding-left: 0;
+    padding-right: 0;
+    padding-bottom: 0;
+    padding-top: 0;
+}
+
+.mcp-list-view .unity-list-view__item:hover {
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.mcp-list-view .unity-scroll-view__content-container {
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-top: 20px;
+    padding-bottom: 20px;
+}
+
+/* Item Container */
+.item-container {
+    background-color: #4A4A4A;
+    border-radius: 12px;
+    padding: 10px;
+    margin-bottom: 7px;
+}
+
+/* Item Header */
+.item-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+/* Item Title Container */
+.item-title-container {
+    flex-grow: 1;
+    margin-right: 10px;
+}
+
+/* Item Title */
+.item-title {
+    font-size: 16px;
+    -unity-font-style: bold;
+    white-space: normal;
+}
+
+/* Item ID/Subtitle */
+.item-id {
+    font-size: 12px;
+    color: #B0B0B0;
+}
+
+/* Item Highlighting States */
+.item-container.enabled {
+    background-color: #3A4039;
+    transition-duration: 200ms;
+}
+
+.item-container.disabled {
+    background-color: #3F393A;
+    transition-duration: 200ms;
+}

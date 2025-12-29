@@ -1,6 +1,6 @@
 /* ==========================================================================
-   MCP Tools Window Styles
-   Imports common styles - no tool-specific overrides needed
+   MCP Prompts Window Styles
+   Imports common styles and adds prompt-specific customizations
    ========================================================================== */
 
 @import url("common/_base.uss");
@@ -10,3 +10,10 @@
 @import url("common/_list-view.uss");
 @import url("common/_toggle-switch.uss");
 @import url("common/_foldout.uss");
+
+/* Prompt-specific: Role label */
+.item-role {
+    font-size: 12px;
+    color: #8FAADC;
+    -unity-font-style: italic;
+}

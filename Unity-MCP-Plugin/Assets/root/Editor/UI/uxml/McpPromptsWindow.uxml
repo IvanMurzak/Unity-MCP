@@ -1,9 +1,9 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/root/Editor/UI/uss/McpToolsWindow.uss?fileID=7433441132597879392&amp;guid=525911ffb58076f44a1788589abac01d&amp;type=3#McpToolsWindow" />
+    <Style src="project://database/Assets/root/Editor/UI/uss/McpPromptsWindow.uss?fileID=7433441132597879392&amp;guid=525911ffb58076f44a1788589abac01d&amp;type=3#McpPromptsWindow" />
     <ui:VisualElement class="root-container" style="min-width: 320px;">
         <ui:VisualElement class="header-container">
-            <ui:Label text="MCP Tools" class="header-title" />
-            <ui:Label text="See and control all MCP tools. Disable not needed tools for saving LLM context." class="header-description" />
+            <ui:Label text="MCP Prompts" class="header-title" />
+            <ui:Label text="See and control all MCP prompts. Disable not needed prompts. Passive prompts do not consume AI context. Don't need to disable them until you want to clear your commands list in the MCP client." class="header-description" />
             <ui:VisualElement class="filter-row">
                 <ui:Label text="Filter:" class="filter-label" />
                 <ui:TextField name="filter-textfield" class="filter-textfield" />
@@ -14,7 +14,7 @@
                 <ui:Label text="Filtered: 0, Total: 0" name="filter-stats-label" class="filter-stats-label" />
             </ui:VisualElement>
         </ui:VisualElement>
-        <ui:Label name="empty-list-label" text="No tools by current filter" class="empty-list-label" />
+        <ui:Label name="empty-list-label" text="No prompts by current filter" class="empty-list-label" />
         <ui:ListView name="mcp-list-view" class="mcp-list-view" />
     </ui:VisualElement>
 </ui:UXML>

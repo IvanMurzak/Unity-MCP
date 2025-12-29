@@ -1,0 +1,117 @@
+/* ==========================================================================
+   Button Styles - All button variants
+   ========================================================================== */
+
+/* Primary Button */
+.Button-Primary,
+.btn-primary {
+    background-color: rgb(175, 232, 230);
+    transition-duration: 200ms;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border-width: 0;
+    color: black;
+    font-size: 12px;
+}
+
+/* Primary Button Bold */
+.btn-primary-bold {
+    background-color: rgb(175, 232, 230);
+    transition-duration: 200ms;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border-width: 0;
+    color: black;
+    font-size: 14px;
+    -unity-font-style: bold;
+}
+
+.btn-primary-bold:hover {
+    background-color: rgb(118, 231, 227);
+    transition-duration: 200ms;
+}
+
+.btn-primary-bold:active {
+    background-color: rgb(250, 255, 234);
+    transition-duration: 50ms;
+}
+
+.Button-Primary:hover,
+.btn-primary:hover {
+    background-color: rgb(118, 231, 227);
+    transition-duration: 200ms;
+}
+
+.Button-Primary:active,
+.btn-primary:active {
+    background-color: rgb(250, 255, 234);
+    transition-duration: 50ms;
+}
+
+/* Secondary Button */
+.btn-secondary {
+    height: 30px;
+    background-color: rgb(70, 70, 70);
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: rgb(100, 100, 100);
+    color: rgb(200, 200, 200);
+    font-size: 12px;
+    transition-duration: 200ms;
+}
+
+.btn-secondary:hover {
+    background-color: rgb(90, 90, 90);
+    border-color: rgb(120, 120, 120);
+    transition-duration: 200ms;
+}
+
+.btn-secondary:active {
+    background-color: rgb(110, 110, 110);
+    transition-duration: 50ms;
+}
+
+/* Tertiary Button */
+.btn-tertiary {
+    height: 26px;
+    margin-top: 8px;
+    background-color: transparent;
+    border-radius: 4px;
+    border-width: 0;
+    color: rgb(140, 140, 140);
+    font-size: 11px;
+    transition-duration: 200ms;
+}
+
+.btn-tertiary:hover {
+    color: rgb(180, 180, 180);
+    background-color: rgba(255, 255, 255, 0.05);
+    transition-duration: 200ms;
+}
+
+.btn-tertiary:active {
+    color: rgb(200, 200, 200);
+    background-color: rgba(255, 255, 255, 0.1);
+    transition-duration: 50ms;
+}
+
+/* Alert Button */
+.Button-Alert {
+    background-color: rgb(88, 44, 44);
+    transition-duration: 200ms;
+}
+
+.Button-Alert:hover {
+    background-color: rgb(255, 110, 110);
+    transition-duration: 200ms;
+    color: black;
+}
+
+/* Accept Button */
+.Button-Accept {
+    transition-duration: 200ms;
+}
+
+.Button-Accept:hover {
+    transition-duration: 200ms;
+}

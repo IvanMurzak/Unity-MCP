@@ -1,0 +1,19 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <Style src="project://database/Assets/root/Editor/UI/uss/McpResourcesWindow.uss?fileID=7433441132597879392&amp;guid=525911ffb58076f44a1788589abac01d&amp;type=3#McpResourcesWindow" />
+    <ui:VisualElement class="item-container">
+        <ui:VisualElement class="item-header">
+            <ui:VisualElement class="item-title-container">
+                <ui:Label name="item-title" text="Resource title, could be multiple lines long" class="item-title" />
+                <ui:Label name="item-uri" text="resource://uri/path" class="item-uri" />
+                <ui:Label name="item-mimetype" text="MimeType: application/json" class="item-mimetype" />
+            </ui:VisualElement>
+            <ui:Toggle name="item-toggle" class="item-switch" />
+        </ui:VisualElement>
+        <ui:VisualElement name="item-details">
+            <ui:Foldout name="description-foldout" text="Description" class="item-foldout" style="margin-top: 10px;" value="false">
+                <ui:Label name="description-text" text="Resource description abc abc abc..." class="details-text" />
+                <ui:VisualElement style="margin-bottom: 7px;" />
+            </ui:Foldout>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

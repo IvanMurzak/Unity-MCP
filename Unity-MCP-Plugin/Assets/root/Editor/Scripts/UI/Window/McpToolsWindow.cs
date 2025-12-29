@@ -17,114 +17,35 @@ using System.Text.Json.Nodes;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
-using com.IvanMurzak.Unity.MCP.Utils;
 using Extensions.Unity.PlayerPrefsEx;
 using Microsoft.Extensions.Logging;
-using UnityEditor;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
 {
-    public class McpToolsWindow : EditorWindow
+    public class McpToolsWindow : McpListWindowBase<McpToolsWindow.ToolViewModel>
     {
-        public enum ToolFilterType
-        {
-            All,
-            Enabled,
-            Disabled
-        }
-        private static readonly string[] WindowUxmlPaths =
-        {
-            "Packages/com.ivanmurzak.unity.mcp/Editor/UI/uxml/McpToolsWindow.uxml",
-            "Assets/root/Editor/UI/uxml/McpToolsWindow.uxml"
-        };
+        private static readonly string[] _windowUxmlPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/McpToolsWindow.uxml");
+        private static readonly string[] _itemUxmlPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/ToolItem.uxml");
+        private static readonly string[] _windowUssPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uss/McpToolsWindow.uss");
 
-        private static readonly string[] ToolItemUxmlPaths =
-        {
-            "Packages/com.ivanmurzak.unity.mcp/Editor/UI/uxml/ToolItem.uxml",
-            "Assets/root/Editor/UI/uxml/ToolItem.uxml"
-        };
-
-        private static readonly string[] WindowUssPaths =
-        {
-            "Packages/com.ivanmurzak.unity.mcp/Editor/UI/uss/McpToolsWindow.uss",
-            "Assets/root/Editor/UI/uss/McpToolsWindow.uss"
-        };
-
-        private const string FilterStatsFormat = "Filtered: {0}, Total: {1}";
-        private const string MissingTemplateMessage =
+        protected override string[] WindowUxmlPaths => _windowUxmlPaths;
+        protected override string[] ItemUxmlPaths => _itemUxmlPaths;
+        protected override string[] WindowUssPaths => _windowUssPaths;
+        protected override string WindowTitle => "MCP Tools";
+        protected override string MissingTemplateMessage =>
             "ToolItem template is missing. Please ensure ToolItem.uxml exists in the package or the Assets/root folder.";
-
-        private VisualTreeAsset? toolItemTemplate;
-        private List<ToolViewModel> allTools = new();
-
-        private ListView? toolListView;
-        private Label? emptyListLabel;
-        private TextField? filterField;
-        private DropdownField? typeDropdown;
-        private Label? filterStatsLabel;
-
-        readonly Microsoft.Extensions.Logging.ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger(nameof(McpToolsWindow));
 
         public static McpToolsWindow ShowWindow()
         {
             var window = GetWindow<McpToolsWindow>("MCP Tools");
-            var icon = EditorAssetLoader.LoadAssetAtPath<Texture>(EditorAssetLoader.PackageLogoIcon);
-            if (icon != null)
-                window.titleContent = new GUIContent("MCP Tools", icon);
-
+            window.SetupWindowWithIcon();
+            window.Show();
             window.Focus();
-
             return window;
         }
-        public void CreateGUI()
-        {
-            rootVisualElement.Clear();
 
-            InitializePlugin();
-
-            var visualTree = EditorAssetLoader.LoadAssetAtPath<VisualTreeAsset>(WindowUxmlPaths, _logger);
-            if (visualTree == null)
-                return;
-
-            visualTree.CloneTree(rootVisualElement);
-            ApplyStyleSheets(rootVisualElement);
-
-            toolItemTemplate = EditorAssetLoader.LoadAssetAtPath<VisualTreeAsset>(ToolItemUxmlPaths, _logger);
-            InitializeFilters(rootVisualElement);
-
-            RefreshTools();
-            PopulateToolList();
-        }
-
-        private void InitializePlugin()
-        {
-            UnityMcpPlugin.InitSingletonIfNeeded();
-            UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
-            UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
-        }
-
-        private void InitializeFilters(VisualElement root)
-        {
-            filterField = root.Q<TextField>("filter-textfield");
-            if (filterField != null)
-                filterField.RegisterValueChangedCallback(evt => PopulateToolList());
-
-            typeDropdown = root.Q<DropdownField>("type-dropdown");
-            if (typeDropdown != null)
-            {
-                typeDropdown.choices = Enum.GetNames(typeof(ToolFilterType)).ToList();
-                typeDropdown.index = (int)ToolFilterType.All;
-                typeDropdown.RegisterValueChangedCallback(evt => PopulateToolList());
-            }
-
-            filterStatsLabel = root.Q<Label>("filter-stats-label");
-            toolListView = root.Q<ListView>("tool-list-view");
-            emptyListLabel = root.Q<Label>("empty-list-label");
-        }
-
-        private void RefreshTools()
+        protected override void RefreshItems()
         {
             var toolManager = UnityMcpPlugin.Instance.McpPluginInstance?.McpManager.ToolManager;
             var refreshed = new List<ToolViewModel>();
@@ -133,321 +54,90 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 foreach (var tool in toolManager.GetAllTools().Where(tool => tool != null))
                 {
-                    refreshed.Add(BuildToolViewModel(toolManager, tool));
+                    refreshed.Add(new ToolViewModel(toolManager, tool));
                 }
             }
 
-            allTools = refreshed;
+            allItems = refreshed;
         }
 
-        private ToolViewModel BuildToolViewModel(IToolManager toolManager, IRunTool tool)
+        protected override void OnItemToggleChanged(ToolViewModel viewModel, bool isEnabled)
         {
-            return new ToolViewModel(toolManager, tool);
-        }
-
-        private void ApplyStyleSheets(VisualElement root)
-        {
-            var sheet = EditorAssetLoader.LoadAssetAtPath<StyleSheet>(WindowUssPaths, _logger);
-            if (sheet == null)
+            var toolManager = UnityMcpPlugin.Instance.McpPluginInstance?.McpManager.ToolManager;
+            if (toolManager == null)
             {
-                _logger.LogWarning("{method} USS file not found.",
-                    nameof(ApplyStyleSheets));
-                return;
-            }
-            try
-            {
-                root.styleSheets.Add(sheet);
-                _logger.LogTrace("{method} Applied USS",
-                    nameof(ApplyStyleSheets));
-                return;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning("{method} Failed to add USS: {ex}",
-                    nameof(ApplyStyleSheets), ex);
-            }
-        }
-
-        private void PopulateToolList()
-        {
-            if (toolListView == null)
-            {
-                _logger.LogWarning("{method} UI list view missing when populating tool list.",
-                    nameof(PopulateToolList));
+                Logger.LogError("{method} ToolManager is not available.", nameof(OnItemToggleChanged));
                 return;
             }
 
-            if (toolItemTemplate == null)
+            viewModel.IsEnabled = isEnabled;
+            if (!string.IsNullOrWhiteSpace(viewModel.Name))
             {
-                _logger.LogWarning(MissingTemplateMessage);
-                return;
+                Logger.LogTrace("{method} Setting tool '{name}' enabled state to {enabled}.",
+                    nameof(OnItemToggleChanged), viewModel.Name, isEnabled);
+                toolManager.SetToolEnabled(viewModel.Name, isEnabled);
+                UnityMcpPlugin.Instance.Save();
             }
-
-            if (emptyListLabel == null)
-            {
-                _logger.LogWarning("{method} Empty list label missing when populating tool list.",
-                    nameof(PopulateToolList));
-                return;
-            }
-
-            var filteredTools = FilterTools().ToList();
-            UpdateFilterStats(filteredTools);
-
-            toolListView.visible = filteredTools.Count > 0;
-            toolListView.style.display = filteredTools.Count > 0 ? DisplayStyle.Flex : DisplayStyle.None;
-            emptyListLabel.style.display = filteredTools.Count == 0 ? DisplayStyle.Flex : DisplayStyle.None;
-
-            toolListView.makeItem = MakeToolItem;
-            toolListView.bindItem = (element, index) =>
-            {
-                if (index >= 0 && index < filteredTools.Count)
-                {
-                    BindToolItem(element, filteredTools[index]);
-                }
-            };
-            toolListView.unbindItem = (element, index) =>
-            {
-                UnbindToolItem(element);
-            };
-
-            toolListView.itemsSource = filteredTools;
-            toolListView.selectionType = SelectionType.None;
-            toolListView.virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight;
-            toolListView.Rebuild();
         }
 
-        private VisualElement MakeToolItem()
+        protected override void OnFoldoutChanged(ToolViewModel viewModel, string foldoutName, bool isExpanded)
         {
-            var toolItem = toolItemTemplate!.Instantiate();
-            var toolToggle = toolItem.Q<Toggle>("tool-toggle");
-            var toolItemContainer = toolItem.Q<VisualElement>(null, "tool-item-container") ?? toolItem;
-
-            if (toolToggle != null)
+            switch (foldoutName)
             {
-                toolToggle.RegisterValueChangedCallback(evt =>
-                {
-                    var tool = toolItem.userData as ToolViewModel;
-                    if (tool == null) return;
-
-                    toolToggle.EnableInClassList("checked", evt.newValue);
-                    UpdateToolItemClasses(toolItemContainer, evt.newValue);
-
-                    var toolManager = UnityMcpPlugin.Instance.McpPluginInstance?.McpManager.ToolManager;
-                    if (toolManager == null)
-                    {
-                        _logger.LogError("{method} ToolManager is not available.", nameof(MakeToolItem));
-                        return;
-                    }
-
-                    tool.IsEnabled = evt.newValue;
-                    if (!string.IsNullOrWhiteSpace(tool.Name))
-                    {
-                        _logger.LogTrace("{method} Setting tool '{toolName}' enabled state to {enabled}.",
-                            nameof(MakeToolItem), tool.Name, evt.newValue);
-                        toolManager.SetToolEnabled(tool.Name, evt.newValue);
-                        UnityMcpPlugin.Instance.Save();
-                    }
-
-                    if (typeDropdown?.index != (int)ToolFilterType.All)
-                    {
-                        EditorApplication.delayCall += PopulateToolList;
-                    }
-                });
+                case "description-foldout":
+                    viewModel.descriptionExpanded.Value = isExpanded;
+                    break;
+                case "arguments-foldout":
+                    viewModel.inputsExpanded.Value = isExpanded;
+                    break;
+                case "outputs-foldout":
+                    viewModel.outputsExpanded.Value = isExpanded;
+                    break;
             }
-            else
-            {
-                _logger.LogWarning("{method} Tool toggle missing in tool item template.",
-                    nameof(MakeToolItem));
-            }
-
-            toolItem.Query<Foldout>().ForEach(foldout =>
-            {
-                foldout.RegisterValueChangedCallback(evt =>
-                {
-                    UpdateFoldoutState(foldout, evt.newValue);
-                    if (toolItem.userData is ToolViewModel tool)
-                    {
-                        if (foldout.name == "description-foldout") tool.descriptionExpanded.Value = evt.newValue;
-                        else if (foldout.name == "arguments-foldout") tool.inputsExpanded.Value = evt.newValue;
-                        else if (foldout.name == "outputs-foldout") tool.outputsExpanded.Value = evt.newValue;
-                    }
-                });
-                UpdateFoldoutState(foldout, foldout.value);
-            });
-
-            return toolItem;
         }
 
-        private void UpdateFoldoutState(Foldout foldout, bool expanded)
+        protected override void BindItem(VisualElement element, ToolViewModel viewModel)
         {
-            foldout.EnableInClassList("expanded", expanded);
-            foldout.EnableInClassList("collapsed", !expanded);
-        }
+            BindCommonItemFields(element, viewModel);
+            BindDescriptionFoldout(element, viewModel, viewModel.descriptionExpanded.Value);
 
-        private void BindToolItem(VisualElement toolItem, ToolViewModel tool)
-        {
-            toolItem.userData = tool;
-
-            var titleLabel = toolItem.Q<Label>("tool-title");
-            if (titleLabel != null)
-                titleLabel.text = tool.Title;
-
-            var idLabel = toolItem.Q<Label>("tool-id");
-            if (idLabel != null)
-                idLabel.text = tool.Name;
-
-            var toolToggle = toolItem.Q<Toggle>("tool-toggle");
-            if (toolToggle != null)
-            {
-                toolToggle.SetValueWithoutNotify(tool.IsEnabled);
-                toolToggle.EnableInClassList("checked", tool.IsEnabled);
-            }
-
-            var toolItemContainer = toolItem.Q<VisualElement>(null, "tool-item-container") ?? toolItem;
-            UpdateToolItemClasses(toolItemContainer, tool.IsEnabled);
-
-            var descriptionFoldout = toolItem.Q<Foldout>("description-foldout");
-            if (descriptionFoldout != null)
-            {
-                var descLabel = descriptionFoldout.Q<Label>("description-text");
-                if (descLabel != null)
-                    descLabel.text = tool.Description ?? string.Empty;
-
-                var hasDescription = !string.IsNullOrEmpty(tool.Description);
-                descriptionFoldout.style.display = hasDescription ? DisplayStyle.Flex : DisplayStyle.None;
-
-                descriptionFoldout.SetValueWithoutNotify(tool.descriptionExpanded.Value);
-                UpdateFoldoutState(descriptionFoldout, tool.descriptionExpanded.Value);
-            }
-            else
-            {
-                _logger.LogWarning("{method} Description foldout missing for tool: {toolName}",
-                    nameof(BindToolItem), tool.Name);
-            }
-
-            var inputArgumentsFoldout = toolItem.Q<Foldout>("arguments-foldout");
+            var inputArgumentsFoldout = element.Q<Foldout>("arguments-foldout");
             if (inputArgumentsFoldout != null)
             {
-                inputArgumentsFoldout.SetValueWithoutNotify(tool.inputsExpanded.Value);
-                UpdateFoldoutState(inputArgumentsFoldout, tool.inputsExpanded.Value);
+                inputArgumentsFoldout.SetValueWithoutNotify(viewModel.inputsExpanded.Value);
+                UpdateFoldoutState(inputArgumentsFoldout, viewModel.inputsExpanded.Value);
             }
             else
             {
-                _logger.LogWarning("{method} Input arguments foldout missing for tool: {toolName}",
-                    nameof(BindToolItem), tool.Name);
+                Logger.LogWarning("{method} Input arguments foldout missing for tool: {name}",
+                    nameof(BindItem), viewModel.Name);
             }
 
-            var outputsFoldout = toolItem.Q<Foldout>("outputs-foldout");
+            var outputsFoldout = element.Q<Foldout>("outputs-foldout");
             if (outputsFoldout != null)
             {
-                outputsFoldout.SetValueWithoutNotify(tool.outputsExpanded.Value);
-                UpdateFoldoutState(outputsFoldout, tool.outputsExpanded.Value);
+                outputsFoldout.SetValueWithoutNotify(viewModel.outputsExpanded.Value);
+                UpdateFoldoutState(outputsFoldout, viewModel.outputsExpanded.Value);
             }
             else
             {
-                _logger.LogWarning("{method} Outputs foldout missing for tool: {toolName}",
-                    nameof(BindToolItem), tool.Name);
+                Logger.LogWarning("{method} Outputs foldout missing for tool: {name}",
+                    nameof(BindItem), viewModel.Name);
             }
 
-            PopulateArgumentFoldout(toolItem, "arguments-foldout", "arguments-container", "Input arguments", tool.Inputs);
-            PopulateArgumentFoldout(toolItem, "outputs-foldout", "outputs-container", "Outputs", tool.Outputs);
+            PopulateArgumentFoldout(element, "arguments-foldout", "arguments-container", "Input arguments", viewModel.Inputs);
+            PopulateArgumentFoldout(element, "outputs-foldout", "outputs-container", "Outputs", viewModel.Outputs);
         }
 
-        private void UnbindToolItem(VisualElement toolItem)
+        protected override IEnumerable<ToolViewModel> FilterByText(IEnumerable<ToolViewModel> items, string filterText)
         {
-            toolItem.userData = null;
+            return items.Where(t =>
+                t.Name.Contains(filterText, StringComparison.OrdinalIgnoreCase) ||
+                (t.Title?.Contains(filterText, StringComparison.OrdinalIgnoreCase) == true) ||
+                (t.Description?.Contains(filterText, StringComparison.OrdinalIgnoreCase) == true));
         }
 
-        private IEnumerable<ToolViewModel> FilterTools()
-        {
-            var filtered = allTools.AsEnumerable();
-
-            var selectedType = ToolFilterType.All;
-            if (typeDropdown != null && typeDropdown.index >= 0 && typeDropdown.index < typeDropdown.choices.Count)
-            {
-                if (Enum.TryParse<ToolFilterType>(typeDropdown.choices[typeDropdown.index], out var parsedType))
-                    selectedType = parsedType;
-            }
-
-            filtered = selectedType switch
-            {
-                ToolFilterType.Enabled => filtered.Where(t => t.IsEnabled),
-                ToolFilterType.Disabled => filtered.Where(t => !t.IsEnabled),
-                _ => filtered
-            };
-
-            var filterText = filterField?.value?.Trim();
-            if (!string.IsNullOrEmpty(filterText))
-            {
-                filtered = filtered.Where(t =>
-                    t.Name.Contains(filterText, StringComparison.OrdinalIgnoreCase) ||
-                    (t.Title?.Contains(filterText, StringComparison.OrdinalIgnoreCase) == true) ||
-                    (t.Description?.Contains(filterText, StringComparison.OrdinalIgnoreCase) == true));
-            }
-
-            return filtered;
-        }
-
-        private void UpdateFilterStats(IEnumerable<ToolViewModel> filteredTools)
-        {
-            if (filterStatsLabel == null)
-                return;
-
-            var filteredList = filteredTools.ToList();
-            filterStatsLabel.text = string.Format(FilterStatsFormat, filteredList.Count, allTools.Count);
-        }
-
-        private void PopulateArgumentFoldout(VisualElement toolItem, string foldoutName, string containerName, string titlePrefix, IReadOnlyList<ArgumentData> arguments)
-        {
-            var foldout = toolItem.Q<Foldout>(foldoutName);
-            if (foldout == null)
-                return;
-
-            var container = toolItem.Q(containerName);
-            if (container == null)
-                return;
-
-            container.Clear();
-
-            if (arguments.Count == 0)
-            {
-                foldout.style.display = DisplayStyle.None;
-                return;
-            }
-
-            foldout.style.display = DisplayStyle.Flex;
-            foldout.text = $"{titlePrefix} ({arguments.Count})";
-
-            foreach (var arg in arguments)
-            {
-                var argItem = new VisualElement();
-                argItem.AddToClassList("argument-item");
-
-                var nameLabel = new Label(arg.Name);
-                nameLabel.AddToClassList("argument-name");
-                argItem.Add(nameLabel);
-
-                if (!string.IsNullOrEmpty(arg.Description))
-                {
-                    var descLabel = new Label(arg.Description);
-                    descLabel.AddToClassList("argument-description");
-                    argItem.Add(descLabel);
-                }
-
-                container.Add(argItem);
-            }
-        }
-
-        private void UpdateToolItemClasses(VisualElement toolItemContainer, bool isEnabled)
-        {
-            if (toolItemContainer == null)
-                return;
-
-            toolItemContainer.EnableInClassList("enabled", isEnabled);
-            toolItemContainer.EnableInClassList("disabled", !isEnabled);
-        }
-
-        private class ToolViewModel
+        public class ToolViewModel : IMcpItemViewModel
         {
             public string Name { get; set; }
             public string? Title { get; set; }
@@ -504,18 +194,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 var sanitizedName = toolName.Replace(" ", "_").Replace(".", "_");
                 return $"Unity_MCP_ToolsWindow_{sanitizedName}_{foldoutName}_Expanded";
-            }
-        }
-
-        public sealed class ArgumentData
-        {
-            public string Name { get; }
-            public string Description { get; }
-
-            public ArgumentData(string name, string description)
-            {
-                Name = name ?? string.Empty;
-                Description = description ?? string.Empty;
             }
         }
     }

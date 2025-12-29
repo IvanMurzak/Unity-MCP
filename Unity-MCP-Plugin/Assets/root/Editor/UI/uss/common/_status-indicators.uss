@@ -1,0 +1,53 @@
+/* ==========================================================================
+   Status Indicator Styles - Connection status circles
+   ========================================================================== */
+
+/* Online/Connected Status */
+.status-indicator-circle-online {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background-color: rgb(111, 226, 101);
+    margin-right: 4px;
+}
+
+/* Connecting Status */
+.status-indicator-circle-connecting {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border-color: rgb(111, 226, 101);
+    border-width: 2px;
+    margin-right: 4px;
+}
+
+/* Disconnected/Offline Status */
+.status-indicator-circle-disconnected {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background-color: rgb(220, 76, 9);
+    margin-right: 4px;
+}
+
+/* Logo image */
+.logo-img {
+    width: 32px;
+    height: 32px;
+    background-color: rgb(238, 238, 238);
+}
+
+/* Icon container (for popups) */
+.icon-container {
+    width: 72px;
+    height: 72px;
+    margin-bottom: 12px;
+    transition-duration: 500ms;
+    transition-timing-function: ease-in-out-cubic;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.icon-container:hover {
+    scale: 0.9 0.9;
+    rotate: 0;
+}
