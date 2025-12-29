@@ -9,6 +9,8 @@
 */
 
 #nullable enable
+
+using System;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEditor;
 using UnityEditor.PackageManager;
@@ -21,13 +23,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor
     /// <summary>
     /// A popup window that notifies the user when a new version of AI Game Developer is available.
     /// </summary>
-    public class UpdatePopupWindow : EditorWindow
+    public class UpdatePopupWindow : McpWindowBase
     {
-        private static readonly string[] WindowUxmlPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/UpdatePopupWindow.uxml");
-        private static readonly string[] WindowUssPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uss/UpdatePopupWindow.uss");
+        private static readonly string[] _windowUxmlPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/UpdatePopupWindow.uxml");
+        private static readonly string[] _windowUssPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uss/UpdatePopupWindow.uss");
         private static readonly string[] LogoIconPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/Gizmos/logo_512.png");
 
         private const string PackageId = "com.ivanmurzak.unity.mcp";
+
+        protected override string[] WindowUxmlPaths => _windowUxmlPaths;
+        protected override string[] WindowUssPaths => _windowUssPaths;
+        protected override string WindowTitle => "Update Available";
 
         private string currentVersion = string.Empty;
         private string latestVersion = string.Empty;
@@ -61,7 +67,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             return window;
         }
 
-        public void CreateGUI()
+        public override void CreateGUI()
         {
             rootVisualElement.Clear();
 
@@ -71,23 +77,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             // Try to load UXML template
             var visualTree = EditorAssetLoader.LoadAssetAtPath<VisualTreeAsset>(WindowUxmlPaths);
             if (visualTree == null)
-                throw new System.InvalidOperationException("UXML template not found in specified paths");
+                throw new InvalidOperationException("UXML template not found in specified paths");
+
             visualTree.CloneTree(rootVisualElement);
             BindUI(rootVisualElement);
         }
 
-        private void ApplyStyleSheets(VisualElement root)
+        protected override void OnGUICreated(VisualElement root)
         {
-            var sheet = EditorAssetLoader.LoadAssetAtPath<StyleSheet>(WindowUssPaths);
-            if (sheet != null)
-            {
-                root.styleSheets.Add(sheet);
-            }
-            else
-            {
-                UnityMcpPlugin.Instance.LogWarn("Failed to load USS from paths: {paths}",
-                    typeof(UpdatePopupWindow), string.Join(", ", WindowUssPaths));
-            }
+            BindUI(root);
         }
 
         private void BindUI(VisualElement root)
@@ -95,42 +93,44 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             // Set icon
             var iconContainer = root.Q<VisualElement>("icon-container");
             if (iconContainer == null)
-                throw new System.InvalidOperationException("icon-container VisualElement not found in UXML");
+                throw new InvalidOperationException("icon-container VisualElement not found in UXML");
+
             var icon = EditorAssetLoader.LoadAssetAtPath<Texture2D>(LogoIconPaths);
             if (icon == null)
-                throw new System.InvalidOperationException("Logo icon not found in specified paths");
+                throw new InvalidOperationException("Logo icon not found in specified paths");
+
             iconContainer.style.backgroundImage = new StyleBackground(icon);
 
             // Set version labels
             var currentVersionLabel = root.Q<Label>("current-version-value");
             if (currentVersionLabel == null)
-                throw new System.InvalidOperationException("current-version-value Label not found in UXML");
+                throw new InvalidOperationException("current-version-value Label not found in UXML");
             currentVersionLabel.text = currentVersion;
 
             var latestVersionLabel = root.Q<Label>("latest-version-value");
             if (latestVersionLabel == null)
-                throw new System.InvalidOperationException("latest-version-value Label not found in UXML");
+                throw new InvalidOperationException("latest-version-value Label not found in UXML");
             latestVersionLabel.text = latestVersion;
 
             // Bind buttons
             var installUpdateButton = root.Q<Button>("btn-install-update");
             if (installUpdateButton == null)
-                throw new System.InvalidOperationException("btn-install-update Button not found in UXML");
+                throw new InvalidOperationException("btn-install-update Button not found in UXML");
             installUpdateButton.clicked += OnInstallUpdateClicked;
 
             var viewReleasesButton = root.Q<Button>("btn-view-releases");
             if (viewReleasesButton == null)
-                throw new System.InvalidOperationException("btn-view-releases Button not found in UXML");
+                throw new InvalidOperationException("btn-view-releases Button not found in UXML");
             viewReleasesButton.clicked += OnViewReleasesClicked;
 
             var skipVersionButton = root.Q<Button>("btn-skip-version");
             if (skipVersionButton == null)
-                throw new System.InvalidOperationException("btn-skip-version Button not found in UXML");
+                throw new InvalidOperationException("btn-skip-version Button not found in UXML");
             skipVersionButton.clicked += OnSkipVersionClicked;
 
             var doNotShowAgainButton = root.Q<Button>("btn-do-not-show-again");
             if (doNotShowAgainButton == null)
-                throw new System.InvalidOperationException("btn-do-not-show-again Button not found in UXML");
+                throw new InvalidOperationException("btn-do-not-show-again Button not found in UXML");
             doNotShowAgainButton.clicked += OnDoNotShowAgainClicked;
         }
 
@@ -145,7 +145,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             // Disable the button to prevent multiple clicks
             var installButton = rootVisualElement.Q<Button>("btn-install-update");
             if (installButton == null)
-                throw new System.InvalidOperationException("btn-install-update Button not found in UXML");
+                throw new InvalidOperationException("btn-install-update Button not found in UXML");
             installButton.SetEnabled(false);
             installButton.text = "Installing...";
         }
