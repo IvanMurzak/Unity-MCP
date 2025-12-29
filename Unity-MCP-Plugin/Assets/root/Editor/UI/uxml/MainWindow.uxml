@@ -67,8 +67,14 @@
                     <ui:Label text="Found an issue?" class="section-desc" style="flex-grow: 1;" />
                 </ui:VisualElement>
                 <ui:VisualElement class="row-left-align">
-                    <ui:Button name="btnDiscordHelp" text="Help" class="btn-secondary" />
-                    <ui:Button name="btnGitHubIssue" text="Bug Report" class="btn-secondary" />
+                    <ui:Button name="btnDiscordHelp" class="btn-secondary btn-with-icon">
+                        <ui:VisualElement class="btn-icon" style="background-image: url(&quot;project://database/Assets/root/Editor/Gizmos/discord_icon.png?fileID=2800000&amp;guid=1a4755306bd049c428c148531a7a4a69&amp;type=3#discord_icon&quot;);" />
+                        <ui:Label text="Help" class="btn-label" />
+                    </ui:Button>
+                    <ui:Button name="btnGitHubIssue" class="btn-secondary btn-with-icon">
+                        <ui:VisualElement class="btn-icon" style="background-image: url(&quot;project://database/Assets/root/Editor/Gizmos/github_icon.png?fileID=2800000&amp;guid=7522ca9ccc114a143892ec69f63bc3ec&amp;type=3#github_icon&quot;);" />
+                        <ui:Label text="Bug Report" class="btn-label" />
+                    </ui:Button>
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement class="divider" />

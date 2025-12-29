@@ -115,3 +115,24 @@
 .btn-accept:hover {
     transition-duration: 200ms;
 }
+
+/* Button with Icon */
+.btn-with-icon {
+    flex-direction: row;
+    align-items: center;
+    padding: 4px 10px 4px 6px;
+}
+
+.btn-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    margin-right: 6px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.btn-label {
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0;
+}
