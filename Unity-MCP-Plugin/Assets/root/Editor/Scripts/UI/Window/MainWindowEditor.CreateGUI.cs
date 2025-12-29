@@ -12,6 +12,7 @@
 using System;
 using System.Linq;
 using com.IvanMurzak.McpPlugin.Common;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using Microsoft.AspNetCore.SignalR.Client;
 using R3;
@@ -24,8 +25,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
     public partial class MainWindowEditor : EditorWindow
     {
         // Template paths for both local development and UPM package environments
-        const string WindowUxmlPathPackage = "Packages/com.ivanmurzak.unity.mcp/Editor/UI/uxml/AiConnectorWindow.uxml";
-        const string WindowUxmlPathLocal = "Assets/root/Editor/UI/uxml/AiConnectorWindow.uxml";
+
+        public static readonly string[] WindowUxmlPath = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/AiConnectorWindow.uxml");
 
         const string USS_IndicatorClass_Connected = "status-indicator-circle-online";
         const string USS_IndicatorClass_Connecting = "status-indicator-circle-connecting";
@@ -41,18 +42,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             rootVisualElement.Clear();
 
             // Try to load the template from both possible paths (UPM package or local development)
-            var templateControlPanel = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(WindowUxmlPathPackage);
+            var templateControlPanel = EditorAssetLoader.LoadAssetAtPath<VisualTreeAsset>(WindowUxmlPath);
             if (templateControlPanel == null)
             {
-                // Fallback to local development path
-                templateControlPanel = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(WindowUxmlPathLocal);
-            }
-
-            if (templateControlPanel == null)
-            {
-                Debug.LogError($"Failed to load AiConnectorWindow from either path:\n" +
-                              $"- Package: {WindowUxmlPathPackage}\n" +
-                              $"- Local: {WindowUxmlPathLocal}");
+                Debug.LogError("AiConnectorWindow template not found in specified paths. Please ensure the template file exists.");
                 return;
             }
 
@@ -263,14 +256,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 McpToolsWindow.ShowWindow();
             });
 
-            var toolsStatusLabel = root.Query<Label>("toolsStatusLabel").First();
+            var toolsCountLabel = root.Query<Label>("toolsCountLabel").First();
 
             McpPlugin.McpPlugin.DoAlways(plugin =>
             {
                 var toolManager = plugin.McpManager.ToolManager;
                 if (toolManager == null)
                 {
-                    toolsStatusLabel.text = "Total tools (0), active tools (0), disabled tools (0)";
+                    toolsCountLabel.text = "0 / 0 tools";
                     return;
                 }
 
@@ -279,8 +272,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     var allTools = toolManager.GetAllTools();
                     var total = allTools.Count();
                     var active = allTools.Count(t => toolManager.IsToolEnabled(t.Name));
-                    var disabled = total - active;
-                    toolsStatusLabel.text = $"Total tools ({total}), active tools ({active}), disabled tools ({disabled})";
+                    toolsCountLabel.text = $"{active} / {total} tools";
                 }
 
                 UpdateStats();

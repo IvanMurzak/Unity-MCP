@@ -4,16 +4,15 @@
         <ui:VisualElement class="container" style="min-width: 320px;">
             <ui:Box name="contHeader" style="background-color: rgba(222, 222, 222, 0); flex-direction: row; flex-shrink: 0;">
                 <ui:VisualElement style="flex-grow: 1; background-color: rgba(0, 0, 0, 0);">
-                    <ui:Label text="AI Game Developer" name="labelSettings" class="Header" />
-                    <ui:VisualElement name="divider" class="Divider" />
                     <ui:EnumField label="Log Level" name="dropdownLogLevel" type="com.IvanMurzak.Unity.MCP.Runtime.Utils.LogLevel, com.IvanMurzak.Unity.MCP.Runtime" value="Warning" class="ContentItem" style="align-self: flex-start;" />
                     <ui:IntegerField label="Timeout (ms)" name="inputTimeoutMs" value="10000" class="ContentItem" style="align-self: flex-start;" />
                     <ui:TextField picking-mode="Ignore" label="Version" value="0.0.0" readonly="true" name="currentVersion" focusable="false" class="ContentItem transparent-text-field" style="align-self: flex-start;" />
                 </ui:VisualElement>
-                <ui:VisualElement name="imgLogoPivot" class="AnimatedSelectable" style="flex-grow: 0; height: 90px; width: 90px; right: 0; margin-left: 15px; flex-shrink: 0; margin-right: -8px; margin-top: 10px; flex-direction: row;">
+                <ui:VisualElement name="imgLogoPivot" class="AnimatedSelectable" style="flex-grow: 0; height: 60px; width: 60px; right: 0; margin-left: 15px; flex-shrink: 0; margin-right: 0px; margin-top: 2px; flex-direction: row;">
                     <ui:VisualElement name="imgLogo" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); background-image: url(&quot;project://database/Assets/root/Editor/Gizmos/logo_512.png?fileID=2800000&amp;guid=bbb0f64bd8f15164781e01168cd6fa4f&amp;type=3#logo_512&quot;); -unity-background-scale-mode: stretch-to-fill; align-self: stretch;" />
                 </ui:VisualElement>
             </ui:Box>
+            <ui:VisualElement name="divider" class="Divider" />
             <ui:Label text="Connect to MCP server" class="Header" />
             <ui:TextField picking-mode="Ignore" label="Server URL" value="http://localhost:8080" name="InputServerURL" tooltip="Connection URL to an MCP server. Default value: http://localhost:8080" class="ContentItem" />
             <ui:Foldout text="Information" value="false">
@@ -24,15 +23,17 @@
                 <ui:Label text="Disconnected" name="connectionStatusText" style="flex-grow: 1;" />
                 <ui:Button name="btnConnectOrDisconnect" text="Connect" class="Button-Primary" />
             </ui:VisualElement>
-            <ui:VisualElement name="divider" class="Divider" style="flex-grow: 1;" />
+            <ui:VisualElement name="divider" class="Divider" />
             <ui:VisualElement name="ToolsConfigurationSection" class="row">
                 <ui:VisualElement>
-                    <ui:Label text="Tools Configuration" class="Header" />
-                    <ui:Label name="toolsStatusLabel" text="Total tools (0), active tools (0), disabled tools (0)" class="section-desc" />
+                    <ui:Label name="toolsCountLabel" text="49 / 49 tools" class="Header" />
+                    <ui:Foldout text="Review and manage MCP tools" value="false">
+                        <ui:Label name="toolsStatusLabel" text="Active tools spend AI context. You want to keep the context consumption smaller, because LLMs work better when there is more free context. Consider disabling the tools you don't need." class="section-desc" />
+                    </ui:Foldout>
                 </ui:VisualElement>
                 <ui:Button name="btnOpenTools" text="Open" class="Button-Primary" />
             </ui:VisualElement>
-            <ui:VisualElement name="divider" class="Divider" style="flex-grow: 1;" />
+            <ui:VisualElement name="divider" class="Divider" />
             <ui:Label text="Configure MCP Client" class="Header" />
             <ui:Label text="At least one client should be configured.&#10;Some clients need restart after configuration." class="section-desc" />
             <ui:VisualElement name="ConfigureClientsContainer" />
@@ -41,7 +42,7 @@
                 <ui:Label text="Copy paste the json into your MCP Client to configure it." name="Label" class="section-desc" />
                 <ui:TextField name="rawJsonConfiguration" multiline="true" readonly="true" selectOnFocus="true" value="This is a multi-line, read-only, selectable text box.&#10;You can copy from here." style="margin-top: 4px; margin-right: 0; margin-left: 0; margin-bottom: 4px;" />
             </ui:VisualElement>
-            <ui:VisualElement name="divider" class="Divider" style="flex-grow: 1;" />
+            <ui:VisualElement name="divider" class="Divider" />
         </ui:VisualElement>
     </ui:ScrollView>
 </ui:UXML>
