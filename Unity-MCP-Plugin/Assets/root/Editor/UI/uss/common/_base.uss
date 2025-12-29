@@ -43,6 +43,13 @@
     justify-content: flex-start;
 }
 
+.row-bottom-align {
+    flex-direction: row;
+    margin-top: 4px;
+    align-items: flex-end;
+    justify-content: space-between;
+}
+
 /* Frame/Group containers */
 .frame-group {
     background-color: rgba(48, 48, 48, 0.4);
