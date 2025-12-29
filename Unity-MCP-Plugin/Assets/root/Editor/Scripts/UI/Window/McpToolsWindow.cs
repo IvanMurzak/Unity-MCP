@@ -19,8 +19,6 @@ using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using Extensions.Unity.PlayerPrefsEx;
 using Microsoft.Extensions.Logging;
-using UnityEditor;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
