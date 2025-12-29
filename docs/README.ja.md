@@ -37,6 +37,8 @@
 
 [![インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download_ja.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.34.0/AI-Game-Dev-Installer.unitypackage)
 
+![AIゲーム開発者 窓](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/ai-game-developer-windows.png?raw=true)
+
 ### ツール
 
 <details>

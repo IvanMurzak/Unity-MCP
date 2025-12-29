@@ -37,6 +37,8 @@ A diferencia de otras herramientas, este plugin funciona **dentro de tu juego co
 
 [![DESCARGAR INSTALADOR](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download_es.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.34.0/AI-Game-Dev-Installer.unitypackage)
 
+![Desarrollador de juegos con IA Ventanas](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/ai-game-developer-windows.png?raw=true)
+
 ### Herramientas
 
 <details>
