@@ -110,6 +110,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         {
             return items.Where(t =>
                 t.Name.Contains(filterText, StringComparison.OrdinalIgnoreCase) ||
+                (t.Title?.Contains(filterText, StringComparison.OrdinalIgnoreCase) == true) ||
                 (t.Description?.Contains(filterText, StringComparison.OrdinalIgnoreCase) == true) ||
                 (t.Uri?.Contains(filterText, StringComparison.OrdinalIgnoreCase) == true));
         }
@@ -117,6 +118,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public class ResourceViewModel : IMcpItemViewModel
         {
             public string Name { get; set; }
+            public string? Title { get; set; }
             public string? Description { get; set; }
             public string? Uri { get; set; }
             public string? MimeType { get; set; }
