@@ -16,17 +16,17 @@ using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using Microsoft.AspNetCore.SignalR.Client;
 using R3;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
 {
-    public partial class MainWindowEditor : EditorWindow
+    public partial class MainWindowEditor
     {
         // Template paths for both local development and UPM package environments
 
-        public static readonly string[] WindowUxmlPath = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/AiConnectorWindow.uxml");
+        private static readonly string[] _windowUxmlPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/MainWindow.uxml");
+        private static readonly string[] _windowUssPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uss/MainWindow.uss");
 
         const string USS_IndicatorClass_Connected = "status-indicator-circle-online";
         const string USS_IndicatorClass_Connecting = "status-indicator-circle-connecting";
@@ -36,21 +36,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         const string ServerButtonText_Disconnect = "Disconnect";
         const string ServerButtonText_Stop = "Stop";
 
-        public void CreateGUI()
+        protected override void OnGUICreated(VisualElement root)
         {
             _disposables.Clear();
-            rootVisualElement.Clear();
-
-            // Try to load the template from both possible paths (UPM package or local development)
-            var templateControlPanel = EditorAssetLoader.LoadAssetAtPath<VisualTreeAsset>(WindowUxmlPath);
-            if (templateControlPanel == null)
-            {
-                Debug.LogError("AiConnectorWindow template not found in specified paths. Please ensure the template file exists.");
-                return;
-            }
-
-            var root = templateControlPanel.Instantiate();
-            rootVisualElement.Add(root);
 
             // Settings
             // -----------------------------------------------------------------

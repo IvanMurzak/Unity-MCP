@@ -20,7 +20,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 {
     using Consts = McpPlugin.Common.Consts;
 
-    public partial class MainWindowEditor : EditorWindow
+    public partial class MainWindowEditor
     {
         // Template paths for both local development and UPM package environments
 
