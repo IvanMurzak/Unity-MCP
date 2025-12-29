@@ -44,6 +44,16 @@
                 <ui:Button name="btnOpenPrompts" text="Open" class="Button-Primary" />
             </ui:VisualElement>
             <ui:VisualElement name="divider" class="Divider" />
+            <ui:VisualElement name="ResourcesConfigurationSection" class="row">
+                <ui:VisualElement>
+                    <ui:Label name="resourcesCountLabel" text="0 / 0 resources" class="Header" />
+                    <ui:Foldout text="Review and manage MCP resources" value="false">
+                        <ui:Label name="resourcesStatusLabel" text="Active resources spend AI context. You want to keep the context consumption smaller, because LLMs work better when there is more free context. Consider disabling the resources you don't need." class="section-desc" />
+                    </ui:Foldout>
+                </ui:VisualElement>
+                <ui:Button name="btnOpenResources" text="Open" class="Button-Primary" />
+            </ui:VisualElement>
+            <ui:VisualElement name="divider" class="Divider" />
             <ui:Label text="Configure MCP Client" class="Header" />
             <ui:Label text="At least one client should be configured.&#10;Some clients need restart after configuration." class="section-desc" />
             <ui:VisualElement name="ConfigureClientsContainer" />

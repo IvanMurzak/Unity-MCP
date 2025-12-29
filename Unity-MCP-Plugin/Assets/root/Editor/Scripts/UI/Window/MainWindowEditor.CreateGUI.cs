@@ -318,6 +318,41 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     .AddTo(_disposables);
             }).AddTo(_disposables);
 
+            // Resources Configuration
+            // -----------------------------------------------------------------
+            var btnOpenResources = root.Query<Button>("btnOpenResources").First();
+            btnOpenResources.RegisterCallback<ClickEvent>(evt =>
+            {
+                McpResourcesWindow.ShowWindow();
+            });
+
+            var resourcesCountLabel = root.Query<Label>("resourcesCountLabel").First();
+
+            McpPlugin.McpPlugin.DoAlways(plugin =>
+            {
+                var resourceManager = plugin.McpManager.ResourceManager;
+                if (resourceManager == null)
+                {
+                    resourcesCountLabel.text = "0 / 0 resources";
+                    return;
+                }
+
+                void UpdateStats()
+                {
+                    var allResources = resourceManager.GetAllResources();
+                    var total = allResources.Count();
+                    var active = allResources.Count(r => resourceManager.IsResourceEnabled(r.Name));
+                    resourcesCountLabel.text = $"{active} / {total} resources";
+                }
+
+                UpdateStats();
+
+                resourceManager.OnResourcesUpdated
+                    .ObserveOnCurrentSynchronizationContext()
+                    .Subscribe(_ => UpdateStats())
+                    .AddTo(_disposables);
+            }).AddTo(_disposables);
+
             // Configure MCP Client
             // -----------------------------------------------------------------
 
