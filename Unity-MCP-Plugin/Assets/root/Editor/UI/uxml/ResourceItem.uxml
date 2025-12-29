@@ -4,7 +4,6 @@
         <ui:VisualElement class="item-header">
             <ui:VisualElement class="item-title-container">
                 <ui:Label name="item-title" text="Resource title, could be multiple lines long" class="item-title" />
-                <ui:Label name="item-id" text="resource-id-single-line" class="item-id" />
                 <ui:Label name="item-uri" text="resource://uri/path" class="item-uri" />
                 <ui:Label name="item-mimetype" text="MimeType: application/json" class="item-mimetype" />
             </ui:VisualElement>

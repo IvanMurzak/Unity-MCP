@@ -247,11 +247,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             var titleLabel = element.Q<Label>("item-title");
             if (titleLabel != null)
-                titleLabel.text = viewModel.Title ?? viewModel.Name;
-
-            var idLabel = element.Q<Label>("item-id");
-            if (idLabel != null)
-                idLabel.text = viewModel.Name;
+                titleLabel.text = viewModel.Name;
 
             var toggle = element.Q<Toggle>("item-toggle");
             if (toggle != null)
@@ -334,7 +330,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
     public interface IMcpItemViewModel
     {
         string Name { get; }
-        string? Title { get; }
         string? Description { get; }
         bool IsEnabled { get; set; }
     }
