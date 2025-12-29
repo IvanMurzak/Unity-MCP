@@ -28,6 +28,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         private static readonly string[] _windowUxmlPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/MainWindow.uxml");
         private static readonly string[] _windowUssPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uss/MainWindow.uss");
 
+        // Icon paths for social buttons
+        private static readonly string[] _discordIconPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/Gizmos/discord_icon.png");
+        private static readonly string[] _githubIconPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/Gizmos/github_icon.png");
+        private static readonly string[] _starIconPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/Gizmos/star_icon.png");
+
         const string USS_IndicatorClass_Connected = "status-indicator-circle-online";
         const string USS_IndicatorClass_Connecting = "status-indicator-circle-connecting";
         const string USS_IndicatorClass_Disconnected = "status-indicator-circle-disconnected";
@@ -359,19 +364,32 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             // Social buttons
             // -----------------------------------------------------------------
 
+            var discordIcon = EditorAssetLoader.LoadAssetAtPath<Texture2D>(_discordIconPaths);
+            var githubIcon = EditorAssetLoader.LoadAssetAtPath<Texture2D>(_githubIconPaths);
+            var starIcon = EditorAssetLoader.LoadAssetAtPath<Texture2D>(_starIconPaths);
+
             var btnGitHubStar = root.Query<Button>("btnGitHubStar").First();
+            var btnGitHubStarIcon = root.Query<VisualElement>("btnGitHubStarIcon").First();
+            if (starIcon != null)
+                btnGitHubStarIcon.style.backgroundImage = starIcon;
             btnGitHubStar.RegisterCallback<ClickEvent>(evt =>
             {
                 Application.OpenURL("https://github.com/IvanMurzak/Unity-MCP");
             });
 
             var btnGitHubIssue = root.Query<Button>("btnGitHubIssue").First();
+            var btnGitHubIssueIcon = root.Query<VisualElement>("btnGitHubIssueIcon").First();
+            if (githubIcon != null)
+                btnGitHubIssueIcon.style.backgroundImage = githubIcon;
             btnGitHubIssue.RegisterCallback<ClickEvent>(evt =>
             {
                 Application.OpenURL("https://github.com/IvanMurzak/Unity-MCP/issues");
             });
 
             var btnDiscordHelp = root.Query<Button>("btnDiscordHelp").First();
+            var btnDiscordHelpIcon = root.Query<VisualElement>("btnDiscordHelpIcon").First();
+            if (discordIcon != null)
+                btnDiscordHelpIcon.style.backgroundImage = discordIcon;
             btnDiscordHelp.RegisterCallback<ClickEvent>(evt =>
             {
                 Application.OpenURL("https://discord.gg/cfbdMZX99G");

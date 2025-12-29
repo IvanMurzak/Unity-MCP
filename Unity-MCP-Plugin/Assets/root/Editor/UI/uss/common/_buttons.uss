@@ -136,3 +136,42 @@
     margin: 0;
     padding: 0;
 }
+
+/* Premium/Golden Button */
+.btn-golden {
+    background-color: rgb(45, 40, 25);
+    border-color: rgb(180, 150, 60);
+    border-width: 1px;
+    color: rgb(255, 215, 100);
+}
+
+.btn-golden:hover {
+    background-color: rgb(60, 52, 30);
+    border-color: rgb(220, 180, 80);
+    color: rgb(255, 225, 130);
+}
+
+.btn-golden:active {
+    background-color: rgb(80, 68, 35);
+    border-color: rgb(255, 200, 100);
+    color: rgb(255, 235, 150);
+}
+
+.btn-golden .btn-label {
+    color: rgb(255, 215, 100);
+}
+
+.btn-golden:hover .btn-label {
+    color: rgb(255, 225, 130);
+}
+
+.btn-golden:active .btn-label {
+    color: rgb(255, 235, 150);
+}
+
+/* Floating/Absolute positioned button */
+.btn-floating {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+}

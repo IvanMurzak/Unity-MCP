@@ -40,6 +40,11 @@
     white-space: normal;
 }
 
+.section-text {
+    color: rgb(255, 255, 255);
+    white-space: normal;
+}
+
 /* Window title */
 .window-title {
     font-size: 20px;
