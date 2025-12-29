@@ -1,5 +1,4 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/root/Editor/UI/uss/AiConnectorWindow.uss?fileID=7433441132597879392&amp;guid=c469a790f6006d54fa1d7bce6ec00d7c&amp;type=3#AiConnectorWindow" />
     <ui:ScrollView>
         <ui:VisualElement class="container" style="min-width: 320px;">
             <ui:Box name="contHeader" style="background-color: rgba(222, 222, 222, 0); flex-direction: row; flex-shrink: 0;">

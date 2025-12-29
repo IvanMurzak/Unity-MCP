@@ -1,5 +1,4 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/root/Editor/UI/uss/McpResourcesWindow.uss?fileID=7433441132597879392&amp;guid=525911ffb58076f44a1788589abac01d&amp;type=3#McpResourcesWindow" />
     <ui:VisualElement class="item-container">
         <ui:VisualElement class="item-header">
             <ui:VisualElement class="item-title-container">
