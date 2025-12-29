@@ -72,8 +72,8 @@
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement class="divider" />
-            <ui:VisualElement class="row-bottom-align">
-                <ui:Label text="Thanks for using &lt;b&gt;&lt;color=red&gt;AI&lt;/color&gt; Game Developer&lt;/b&gt;.&#10;If you like it, please give the project&#10;a star on GitHub.&#10;&#10;Sincerely,&#10;Ivan Murzak" class="section-desc" />
+            <ui:VisualElement>
+                <ui:Label text="Thanks for using &lt;b&gt;&lt;color=red&gt;AI&lt;/color&gt; Game Developer&lt;/b&gt;. If you like it, please give the project a star on GitHub.&#10;&#10;Sincerely,&#10;Ivan Murzak" class="section-desc" />
                 <ui:Button name="btnGitHubStar" text="GitHub Star" class="btn-secondary" />
             </ui:VisualElement>
         </ui:VisualElement>

@@ -355,6 +355,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             var rawJsonField = root.Query<TextField>("rawJsonConfiguration").First();
             rawJsonField.value = Startup.Server.RawJsonConfiguration(UnityMcpPlugin.Port, "mcpServers", UnityMcpPlugin.TimeoutMs).ToString();
+
+            // Social buttons
+            // -----------------------------------------------------------------
+
+            var btnGitHubStar = root.Query<Button>("btnGitHubStar").First();
+            btnGitHubStar.RegisterCallback<ClickEvent>(evt =>
+            {
+                Application.OpenURL("https://github.com/IvanMurzak/Unity-MCP");
+            });
+
+            var btnGitHubIssue = root.Query<Button>("btnGitHubIssue").First();
+            btnGitHubIssue.RegisterCallback<ClickEvent>(evt =>
+            {
+                Application.OpenURL("https://github.com/IvanMurzak/Unity-MCP/issues");
+            });
+
+            var btnDiscordHelp = root.Query<Button>("btnDiscordHelp").First();
+            btnDiscordHelp.RegisterCallback<ClickEvent>(evt =>
+            {
+                Application.OpenURL("https://discord.gg/cfbdMZX99G");
+            });
         }
     }
 }
