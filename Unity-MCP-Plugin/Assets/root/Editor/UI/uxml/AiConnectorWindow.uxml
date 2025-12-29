@@ -27,7 +27,7 @@
             <ui:VisualElement name="ToolsConfigurationSection">
                 <ui:VisualElement class="row-top">
                     <ui:Label name="toolsCountLabel" text="0 / 0 tools" class="Header" />
-                    <ui:Button name="btnOpenTools" text="Open" class="Button-Primary" />
+                    <ui:Button name="btnOpenTools" text="Open" class="btn-secondary" />
                 </ui:VisualElement>
                 <ui:Foldout text="Information" value="false" class="base-foldout">
                     <ui:Label name="toolsStatusLabel" text="AI uses tools to achieve user's request. This is the main AI's instrument for doing everything.&#10;&#10;Active tools spend AI context. You want to keep the context consumption smaller, because AI works better when there is more free context. Consider disabling the tools you don't need." class="section-desc" />
@@ -37,7 +37,7 @@
             <ui:VisualElement name="PromptsConfigurationSection">
                 <ui:VisualElement class="row-top">
                     <ui:Label name="promptsCountLabel" text="0 / 0 prompts" class="Header" />
-                    <ui:Button name="btnOpenPrompts" text="Open" class="Button-Primary" />
+                    <ui:Button name="btnOpenPrompts" text="Open" class="btn-secondary" />
                 </ui:VisualElement>
                 <ui:Foldout text="Information" value="false" class="base-foldout">
                     <ui:Label name="promptsStatusLabel" text="Prompt is a command that user may use in MCP client. For example '/createGameObject'. The command may receive input arguments. The result of the command execution is the Prompt text message which injects into AI context and tells AI what to do.&#10;&#10;Prompt doesn't spent context memory. It only spends context when injected by a user action." class="section-desc" />
@@ -47,7 +47,7 @@
             <ui:VisualElement name="ResourcesConfigurationSection">
                 <ui:VisualElement class="row-top">
                     <ui:Label name="resourcesCountLabel" text="0 / 0 resources" class="Header" />
-                    <ui:Button name="btnOpenResources" text="Open" class="Button-Primary" />
+                    <ui:Button name="btnOpenResources" text="Open" class="btn-secondary" />
                 </ui:VisualElement>
                 <ui:Foldout text="Information" value="false" class="base-foldout">
                     <ui:Label name="resourcesStatusLabel" text="Resources provide read-only data that AI can access to understand your Unity project. They expose information like scene hierarchy, asset metadata, project settings, and more.&#10;&#10;Unlike tools which perform actions, resources give AI contextual awareness without modifying anything. Resources are fetched on-demand when AI needs specific information." class="section-desc" />

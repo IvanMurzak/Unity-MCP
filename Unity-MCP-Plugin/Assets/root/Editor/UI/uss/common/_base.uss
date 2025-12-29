@@ -27,6 +27,7 @@
 
 .row-top {
     flex-direction: row;
+    margin-top: 4px;
     align-items: flex-start;
     justify-content: space-between;
 }
