@@ -338,8 +338,12 @@ jobs:
 
   publish_discord:
     runs-on: ubuntu-latest
-    needs: release-unity-plugin
-    if: needs.release-unity-plugin.outputs.success == 'true'
+    needs: [release-unity-plugin, publish-unity-installer, publish-mcp-server, deploy]
+    if: |
+      always() &&
+      needs.release-unity-plugin.result == 'success' &&
+      needs.publish-unity-installer.result == 'success' &&
+      needs.publish-mcp-server.result == 'success'
     steps:
       - name: Send Release Notes to Discord
         env:
