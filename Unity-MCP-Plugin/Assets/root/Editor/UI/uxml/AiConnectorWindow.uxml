@@ -34,6 +34,16 @@
                 <ui:Button name="btnOpenTools" text="Open" class="Button-Primary" />
             </ui:VisualElement>
             <ui:VisualElement name="divider" class="Divider" />
+            <ui:VisualElement name="PromptsConfigurationSection" class="row">
+                <ui:VisualElement>
+                    <ui:Label name="promptsCountLabel" text="0 / 0 prompts" class="Header" />
+                    <ui:Foldout text="Review and manage MCP prompts" value="false">
+                        <ui:Label name="promptsStatusLabel" text="Active prompts spend AI context. You want to keep the context consumption smaller, because LLMs work better when there is more free context. Consider disabling the prompts you don't need." class="section-desc" />
+                    </ui:Foldout>
+                </ui:VisualElement>
+                <ui:Button name="btnOpenPrompts" text="Open" class="Button-Primary" />
+            </ui:VisualElement>
+            <ui:VisualElement name="divider" class="Divider" />
             <ui:Label text="Configure MCP Client" class="Header" />
             <ui:Label text="At least one client should be configured.&#10;Some clients need restart after configuration." class="section-desc" />
             <ui:VisualElement name="ConfigureClientsContainer" />

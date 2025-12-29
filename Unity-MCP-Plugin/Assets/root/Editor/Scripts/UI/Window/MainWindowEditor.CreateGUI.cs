@@ -283,6 +283,41 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     .AddTo(_disposables);
             }).AddTo(_disposables);
 
+            // Prompts Configuration
+            // -----------------------------------------------------------------
+            var btnOpenPrompts = root.Query<Button>("btnOpenPrompts").First();
+            btnOpenPrompts.RegisterCallback<ClickEvent>(evt =>
+            {
+                McpPromptsWindow.ShowWindow();
+            });
+
+            var promptsCountLabel = root.Query<Label>("promptsCountLabel").First();
+
+            McpPlugin.McpPlugin.DoAlways(plugin =>
+            {
+                var promptManager = plugin.McpManager.PromptManager;
+                if (promptManager == null)
+                {
+                    promptsCountLabel.text = "0 / 0 prompts";
+                    return;
+                }
+
+                void UpdateStats()
+                {
+                    var allPrompts = promptManager.GetAllPrompts();
+                    var total = allPrompts.Count();
+                    var active = allPrompts.Count(p => promptManager.IsPromptEnabled(p.Name));
+                    promptsCountLabel.text = $"{active} / {total} prompts";
+                }
+
+                UpdateStats();
+
+                promptManager.OnPromptsUpdated
+                    .ObserveOnCurrentSynchronizationContext()
+                    .Subscribe(_ => UpdateStats())
+                    .AddTo(_disposables);
+            }).AddTo(_disposables);
+
             // Configure MCP Client
             // -----------------------------------------------------------------
 
