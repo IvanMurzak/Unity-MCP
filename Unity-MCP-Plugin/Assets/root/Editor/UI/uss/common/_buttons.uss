@@ -3,7 +3,7 @@
    ========================================================================== */
 
 /* Primary Button */
-.Button-Primary,
+.btn-primary,
 .btn-primary {
     background-color: rgb(175, 232, 230);
     transition-duration: 200ms;
@@ -36,13 +36,13 @@
     transition-duration: 50ms;
 }
 
-.Button-Primary:hover,
+.btn-primary:hover,
 .btn-primary:hover {
     background-color: rgb(118, 231, 227);
     transition-duration: 200ms;
 }
 
-.Button-Primary:active,
+.btn-primary:active,
 .btn-primary:active {
     background-color: rgb(250, 255, 234);
     transition-duration: 50ms;
@@ -96,22 +96,22 @@
 }
 
 /* Alert Button */
-.Button-Alert {
+.btn-alert {
     background-color: rgb(88, 44, 44);
     transition-duration: 200ms;
 }
 
-.Button-Alert:hover {
+.btn-alert:hover {
     background-color: rgb(255, 110, 110);
     transition-duration: 200ms;
     color: black;
 }
 
 /* Accept Button */
-.Button-Accept {
+.btn-accept {
     transition-duration: 200ms;
 }
 
-.Button-Accept:hover {
+.btn-accept:hover {
     transition-duration: 200ms;
 }

@@ -36,8 +36,15 @@
     margin-right: 8px;
 }
 
+.row-left-align {
+    flex-direction: row;
+    margin-top: 4px;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+
 /* Frame/Group containers */
-.Frame-Group {
+.frame-group {
     background-color: rgba(48, 48, 48, 0.4);
     border-radius: 16px;
     padding: 8px;
@@ -47,8 +54,8 @@
     margin-right: -8px;
 }
 
-/* Divider */
-.Divider {
+/* divider */
+.divider {
     width: auto;
     height: 1px;
     max-height: 1px;
