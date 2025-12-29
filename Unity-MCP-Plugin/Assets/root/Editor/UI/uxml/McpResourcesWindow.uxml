@@ -3,7 +3,7 @@
     <ui:VisualElement class="root-container" style="min-width: 320px;">
         <ui:VisualElement class="header-container">
             <ui:Label text="MCP Resources" class="header-title" />
-            <ui:Label text="See and control all MCP resources. Disable not needed resources for saving LLM context." class="header-description" />
+            <ui:Label text="See and control all MCP resources. Disable not needed resources." class="header-description" />
             <ui:VisualElement class="filter-row">
                 <ui:Label text="Filter:" class="filter-label" />
                 <ui:TextField name="filter-textfield" class="filter-textfield" />
