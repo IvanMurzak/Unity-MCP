@@ -1,181 +1,104 @@
-# AI Game Developer — *Unity MCP*
+# Default MCP Tools
 
-[![MCP](https://badge.mcpx.dev 'MCP Server')](https://modelcontextprotocol.io/introduction) [![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server) [![Unity Editor](https://img.shields.io/badge/Editor-X?style=flat&logo=unity&labelColor=333A41&color=49BC5C 'Unity Editor supported')](https://unity.com/releases/editor/archive) [![Unity Runtime](https://img.shields.io/badge/Runtime-X?style=flat&logo=unity&labelColor=333A41&color=49BC5C 'Unity Runtime supported')](https://unity.com/releases/editor/archive) [![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&labelColor=333A41 'OpenUPM package')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/) [![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg 'Tests Passed')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml) [![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&labelColor=333A41)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE) [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
+[![MCP](https://badge.mcpx.dev 'MCP Server')](https://modelcontextprotocol.io/introduction)
+[![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&labelColor=333A41 'OpenUPM package')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
+[![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
+[![Unity Editor](https://img.shields.io/badge/Editor-X?style=flat&logo=unity&labelColor=333A41&color=49BC5C 'Unity Editor supported')](https://unity.com/releases/editor/archive)
+[![Unity Runtime](https://img.shields.io/badge/Runtime-X?style=flat&logo=unity&labelColor=333A41&color=49BC5C 'Unity Runtime supported')](https://unity.com/releases/editor/archive)
+[![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg 'Tests Passed')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)</br>
+[![Discord](https://img.shields.io/badge/Discord-Join-7289da?logo=discord&logoColor=white&labelColor=333A41 'Join')](https://discord.gg/cfbdMZX99G)
+[![Stars](https://img.shields.io/github/stars/IvanMurzak/Unity-MCP 'Stars')](https://github.com/IvanMurzak/Unity-MCP/stargazers)
+[![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&labelColor=333A41)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
+[![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
-## AI Tools
+Unity-MCP comes with a comprehensive suite of built-in tools that allow AI models to interact with the Unity Editor and Runtime.
 
-Unity-MCP supports a wide range of tools. Each tool is a small connector between LLM and Unity Engine. You may create your own `tools` by using API, take a look at [add custom tool](#add-custom-tool).
+> **Note**: Tool names below are the *Titles* displayed in AI clients. Internal IDs are in kebab-case (e.g., `assets-create-folder`).
 
-## Add custom `tool`
+## 📂 Asset Management
+Manage files, folders, and project resources.
 
-> ⚠️ It only works with MCP client that supports dynamic tool list update.
+| Tool | ID | Description |
+| :--- | :--- | :--- |
+| **Assets / Create Folder** | `assets-create-folder` | Create new directories (supports nested paths). |
+| **Assets / Create** | `assets-create` | Create a new Unity Asset. |
+| **Assets / Delete** | `assets-delete` | Delete a specific asset or file. |
+| **Assets / Find** | `assets-find` | Find assets using search filters (e.g., `t:Texture`). |
+| **Assets / Copy** | `assets-copy` | Duplicate an asset. |
+| **Assets / Move** | `assets-move` | Move or rename an asset. |
+| **Assets / Get Data** | `assets-get-data` | Retrieve metadata or content of an asset. |
+| **Assets / Refresh** | `assets-refresh` | Force an Asset Database refresh. |
 
-Unity-MCP is designed to support custom `tool` development by project owner. MCP server takes data from Unity plugin and exposes it to a Client. So anyone in the MCP communication chain would receive the information about a new `tool`. Which LLM may decide to call at some point.
-
-To add a custom `tool` you need:
-
-1. To have a class with attribute `McpPluginToolType`.
-2. To have a method in the class with attribute `McpPluginTool`.
-3. [optional] Add `Description` attribute to each method argument to let LLM to understand it.
-4. [optional] Use `string? optional = null` properties with `?` and default value to mark them as `optional` for LLM.
-
-> Take a look that the line `MainThread.Instance.Run(() =>` it allows to run the code in Main thread which is needed to interact with Unity API. If you don't need it and running the tool in background thread is fine for the tool, don't use Main thread for efficiency purpose.
-
-```csharp
-[McpPluginToolType]
-public class Tool_GameObject
-{
-    [McpPluginTool
-    (
-        "MyCustomTask",
-        Title = "Create a new GameObject"
-    )]
-    [Description("Explain here to LLM what is this, when it should be called.")]
-    public string CustomTask
-    (
-        [Description("Explain to LLM what is this.")]
-        string inputData
-    )
-    {
-        // do anything in background thread
-
-        return MainThread.Instance.Run(() =>
-        {
-            // do something in main thread if needed
-
-            return $"[Success] Operation completed.";
-        });
-    }
-}
-```
-
-## Default tools
-
-Here is the list of default AI tools. All of them are available after installation Unity-MCP into your project.
-
-> **Legend:**
-> ✅ = Implemented & available, 🔲 = Planned / Not yet implemented
-
-<table>
-<tr>
-<td valign="top">
-
-### GameObject
-
-- ✅ Create
-- ✅ Destroy
-- ✅ Find
-- ✅ Modify (tag, layer, name, static)
-- ✅ Set parent
-- ✅ Duplicate
-
-##### GameObject.Components
-
-- ✅ Add Component
-- ✅ Get Components
-- ✅ Modify Component
-- - ✅ `Field` set value
-- - ✅ `Property` set value
-- - ✅ `Reference` link set
-- ✅ Destroy Component
-- 🔲 Remove missing components
-
-### Editor
-
-- ✅ State (Playmode)
-  - ✅ Get
-  - ✅ Set
-- ✅ Get Windows
-- ✅ Layer
-  - ✅ Get All
-  - ✅ Add
-  - ✅ Remove
-- ✅ Tag
-  - ✅ Get All
-  - ✅ Add
-  - ✅ Remove
-- ✅ Execute `MenuItem`
-- ✅ Run Tests (see note in [running play mode tests](#running-playmode-tests))
-
-#### Editor.Selection
-
-- ✅ Get selection
-- ✅ Set selection
+### Materials & Shaders
+| Tool | ID | Description |
+| :--- | :--- | :--- |
+| **Assets / Material / Create** | `assets-material-create` | Create a new Material asset. |
+| **Assets / Shader / List All** | `assets-shader-list-all` | List all available shaders in the project. |
 
 ### Prefabs
+| Tool | ID | Description |
+| :--- | :--- | :--- |
+| **Assets / Prefab / Instantiate** | `assets-prefab-instantiate` | Spawn a prefab into the active scene. |
+| **Assets / Prefab / Create** | `assets-prefab-create` | Create a prefab from a scene object. |
+| **Assets / Prefab / Open** | `assets-prefab-open` | Open Prefab Mode. |
+| **Assets / Prefab / Close** | `assets-prefab-close` | Exit Prefab Mode. |
+| **Assets / Prefab / Save** | `assets-prefab-save` | Save changes in Prefab Mode. |
 
-- ✅ Instantiate
-- 🔲 Create
-- ✅ Open
-- ✅ Modify (GameObject.Modify)
-- ✅ Save
-- ✅ Close
+## 🎮 GameObject
+Manage scene objects and hierarchy.
 
-### Package
+| Tool | ID | Description |
+| :--- | :--- | :--- |
+| **GameObject / Create** | `gameobject-create` | Create a new GameObject (Empty or Primitive). |
+| **GameObject / Destroy** | `gameobject-destroy` | Remove a GameObject. |
+| **GameObject / Duplicate** | `gameobject-duplicate` | Clone a GameObject. |
+| **GameObject / Find** | `gameobject-find` | Find objects by Name, Tag, or Type. |
+| **GameObject / Modify** | `gameobject-modify` | Update Transform, Name, Tag, Layer, Active state. |
+| **GameObject / Set Parent** | `gameobject-set-parent` | Change hierarchy parent. |
 
-- 🔲 Get installed
-- 🔲 Install
-- 🔲 Remove
-- 🔲 Update
+### Components
+| Tool | ID | Description |
+| :--- | :--- | :--- |
+| **Component / Add** | `gameobject-component-add` | Add a component (e.g., `Rigidbody`). |
+| **Component / Destroy** | `gameobject-component-destroy` | Remove a component. |
+| **Component / Get** | `gameobject-component-get` | Get details of a component. |
+| **Component / Modify** | `gameobject-component-modify` | Set fields, properties, or object references. |
+| **Component / List** | `component-list` | List available Component types. |
 
-</td>
-<td valign="top">
+## 🎬 Scene Management
+| Tool | ID | Description |
+| :--- | :--- | :--- |
+| **Scene / Create** | `scene-create` | Create a new Scene asset. |
+| **Scene / Open** | `scene-open` | Open a scene in the Editor. |
+| **Scene / Save** | `scene-save` | Save the current scene. |
+| **Scene / Unload** | `scene-unload` | Unload an additive scene. |
+| **Scene / Set Active** | `scene-set-active` | Set the active scene. |
+| **Scene / Get Data** | `scene-get-data` | Get list of root objects in a scene. |
+| **Scene / List Opened** | `scene-list-opened` | List currently open scenes. |
 
-### Assets
+## 📝 Scripting
+| Tool | ID | Description |
+| :--- | :--- | :--- |
+| **Script / Create** | `script-date-or-create` | Create or update a C# script file. |
+| **Script / Read** | `script-read` | Read the content of a `.cs` file. |
+| **Script / Delete** | `script-delete` | Delete a script file. |
+| **Script / Execute** | `script-execute` | Compile and run C# code snippet dynamically. |
 
-- ✅ Create
-- ✅ Find
-- ✅ Refresh
-- ✅ Read
-- ✅ Modify
-- ✅ Rename
-- ✅ Delete
-- ✅ Move
-- ✅ Create folder
+## 📦 Package Manager
+| Tool | ID | Description |
+| :--- | :--- | :--- |
+| **Package / List** | `package-list` | List installed packages. |
+| **Package / Add** | `package-add` | Install package (Registry, Git, Local). |
+| **Package / Remove** | `package-remove` | Uninstall a package. |
+| **Package / Search** | `package-search` | Search Unity Registry. |
 
-### Scene
-
-- ✅ Create
-- ✅ Save
-- ✅ Load
-- ✅ Unload
-- ✅ Get Loaded
-- ✅ Get hierarchy
-- 🔲 Search (editor)
-- 🔲 Raycast (understand volume)
-
-### Materials
-
-- ✅ Create
-- ✅ Modify (Assets.Modify)
-- ✅ Read (Assets.Read)
-- ✅ Assign to a Component on a GameObject
-
-### Shader
-
-- ✅ List All
-
-### Scripts
-
-- ✅ Read
-- ✅ Update or Create
-- ✅ Delete
-
-### Scriptable Object
-
-- ✅ Create
-- ✅ Read
-- ✅ Modify
-- ✅ Remove
-
-### Debug
-
-- ✅ Read logs (console)
-
-### Component
-
-- ✅ Get All
-
-</td>
-</tr>
-</table>
+## 💡 Advanced & Editor
+| Tool | ID | Description |
+| :--- | :--- | :--- |
+| **Console / Get Logs** | `console-get-logs` | Retrieve Unity Console logs. |
+| **Editor / State / Get** | `editor-application-get-state` | Check Play/Pause/Edit mode status. |
+| **Editor / State / Set** | `editor-application-set-state` | Set Play/Pause status. |
+| **Editor / Selection / Get** | `editor-selection-get` | Get current selection. |
+| **Editor / Selection / Set** | `editor-selection-set` | Set current selection. |
+| **Reflection / Method Find** | `reflection-method-find` | Find any C# method (public/private). |
+| **Reflection / Method Call** | `reflection-method-call` | Execute any found method. |

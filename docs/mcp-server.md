@@ -1,5 +1,4 @@
-<div align="center">
-  <h1>Unity MCP server</h1>
+# Unity MCP Server
 
 [![MCP](https://badge.mcpx.dev 'MCP Server')](https://modelcontextprotocol.io/introduction)
 [![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&labelColor=333A41 'OpenUPM package')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
@@ -12,190 +11,55 @@
 [![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&labelColor=333A41)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
-  Model Context Protocol implementation for Unity Editor and for games made with Unity.
+The **MCP Server** acts as the bridge between the **AI Client** (Claude, Cursor, etc.) and the **Unity Editor/Game**.
+
+<div align="center">
+
+`AI Client` ↔️ **`MCP Server`** ↔️ `Unity Plugin`
 
 </div>
 
 ## Topology
 
-- **Client** is the MCP client, such as VS Code, Cursor, Claude Desktop, Claude Code etc.
-- **Server** is the MCP server, this is Unity-MCP server implementation which works closely in pair with Unity MCP Plugin
-- **Plugin** is the Unity-MCP Plugin, this is deeply connected with Unity Editor and runtime game build SDK, that exposes API for the Server and lets the AI magic to happen. It utilizes advanced reflection by using [ReflectorNet](https://github.com/IvanMurzak/ReflectorNet)
+1.  **Client Connection**: The AI Client connects to the Server using either `stdio` (standard input/output pipe) or `http` (SSE/Post).
+2.  **Plugin Connection**: The Unity Plugin connects to the Server via TCP/WebSockets on a specified port (default: `8080`).
 
-### Connection chain
+## Deployment Options
 
-**Client** <-> **Server** <-> **Plugin** (Unity Editor / Game Build)
+### 1. Local Automatic (Recommended)
+The **Unity Plugin** automatically downloads and runs the appropriate server binary for your OS. No manual setup required. Configuration is done via the Unity Editor window.
 
----
+### 2. Docker
+See **[Docker Deployment](DOCKER_DEPLOYMENT.md)**. Best for cloud hosting or isolated environments.
 
-### Variables
+### 3. Manual Binary
+You can run the server manually if you need advanced control or debugging.
 
-Doesn't matter what launch option you choose, all of them support custom configuration using both Environment Variables and Command Line Arguments. It would work with default values, if you just need to launch it, don't waste your time for the variables. Just make sure Unity Plugin also has default values, especially the `--port`, they should be equal.
-
-| Environment Variable        | Command Line Args     | Description                                                                 |
-|-----------------------------|-----------------------|-----------------------------------------------------------------------------|
-| `UNITY_MCP_PORT`            | `--port`              | **Client** -> **Server** <- **Plugin** connection port (default: 8080)      |
-| `UNITY_MCP_PLUGIN_TIMEOUT`  | `--plugin-timeout`    | **Plugin** -> **Server** connection timeout (ms) (default: 10000)           |
-| `UNITY_MCP_CLIENT_TRANSPORT`| `--client-transport`  | **Client** -> **Server** transport type: `stdio` or `http` (default: `http`) |
-
----
-
-## Launch
-
-Unity-MCP server is developed with idea of flexibility in mind, that is why it has many launch options.
-
-### Option: Using Docker (recommended)
-
-#### Default launch
-
-The default the transport method is `http`. The port `8080` should be forwarded. It will be used for http transport and for **plugin** <-> **server** communication
+Download from **[Releases](https://github.com/IvanMurzak/Unity-MCP/releases)**.
 
 ```bash
-docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server
-```
+# Basic run (HTTP mode)
+./unity-mcp-server --port 8080
 
-MCP client config:
-
-```json
-{
-  "mcpServers": {
-    "Unity-MCP": {
-      "url": "http://localhost:8080"
-    }
-  }
-}
-```
-
-#### Use STDIO
-
-The `8080` port is not needed for STDIO, because it uses the STDIO to communicate with **Client**. It is a good setup for using in a client with automatic installation and launching. Because this docker command loads the image from docker hub and launches immediately.
-
-```bash
-docker run -t -e UNITY_MCP_CLIENT_TRANSPORT=stdio -p 8080:8080 ivanmurzakdev/unity-mcp-server
-```
-
-MCP client config:
-
-```json
-{
-  "mcpServers": {
-    "Unity-MCP": {
-      "command": "docker",
-      "args": [
-        "run",
-        "-t",
-        "-e",
-        "UNITY_MCP_CLIENT_TRANSPORT=stdio",
-        "-p",
-        "8080:8080",
-        "ivanmurzakdev/unity-mcp-server"
-      ]
-    }
-  }
-}
-```
-
-#### Custom port
-
-```bash
-docker run -e UNITY_MCP_PORT=123 -p 123:123 ivanmurzakdev/unity-mcp-server
-```
-
-MCP client config:
-
-```json
-{
-  "mcpServers": {
-    "Unity-MCP": {
-      "url": "http://localhost:123"
-    }
-  }
-}
-```
-
-Port forwarding is need for the launch with docker `-p 123:123`.
-
----
-
-### Option: Using binary file
-
-Download binary from the [GitHub releases page](https://github.com/IvanMurzak/Unity-MCP/releases). Unpack the zip archive and use command line to simply launch binary of the server for your target operation system and CPU architecture.
-
-#### Default launch (STDIO)
-
-```bash
+# STDIO mode (for piping)
 ./unity-mcp-server --client-transport stdio
 ```
 
-MCP client config:
+## CLI Arguments
 
-> Replace `<project>` with your Unity project path.
+The server executable accepts the following arguments:
 
-```json
-{
-  "mcpServers": {
-    "Unity-MCP": {
-      "command": "<project>/Library/mcp-server/win-x64/unity-mcp-server.exe",
-      "args": [
-        "--client-transport=stdio"
-      ]
-    }
-  }
-}
-```
+| Argument | Description | Default |
+| :--- | :--- | :--- |
+| `--port` | Port for the Unity Plugin connection. | `8080` |
+| `--client-transport` | Protocol for AI Client connection (`http`, `stdio`). | `http` |
+| `--plugin-timeout` | Timeout in ms for plugin responses. | `10000` |
 
-#### Launch STDIO (Local)
+> **Note**: These can also be set via Environment Variables (e.g., `UNITY_MCP_PORT`).
 
-Launch server with STDIO transport type for local usage on the same machine with Unity Editor.
+## Architecture
 
-```bash
-./unity-mcp-server --port 8080 --plugin-timeout 10000 --client-transport stdio
-```
-
-MCP client config:
-
-> Replace `<project>` with your Unity project path.
-
-```json
-{
-  "mcpServers": {
-    "Unity-MCP": {
-      "command": "<project>/Library/mcp-server/win-x64/unity-mcp-server.exe",
-      "args": [
-        "--port=8080",
-        "--plugin-timeout=10000",
-        "--client-transport=stdio"
-      ]
-    }
-  }
-}
-```
-
-#### Launch HTTP(S) (Local OR Remote)
-
-Launch server with HTTP transport type for local OR remote usage using HTTP(S) url.
-
-```bash
-./unity-mcp-server --port 8080 --plugin-timeout 10000 --client-transport http
-```
-
-MCP client config:
-
-> Replace `<project>` with your Unity project path.
-
-```json
-{
-  "mcpServers": {
-    "Unity-MCP": {
-      "command": "<project>/Library/mcp-server/win-x64/unity-mcp-server.exe",
-      "args": [
-        "--port=8080",
-        "--plugin-timeout=10000",
-        "--client-transport=http"
-      ]
-    }
-  }
-}
-```
-
----
+The server is built on **.NET 9**, utilizing:
+- **Model Context Protocol SDK** for AI communication.
+- **ASP.NET Core** for HTTP/WebSockets.
+- **ReflectorNet** for dynamic assembly analysis (used by the plugin).
