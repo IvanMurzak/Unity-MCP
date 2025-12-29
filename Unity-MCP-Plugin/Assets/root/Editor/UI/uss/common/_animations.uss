@@ -3,23 +3,23 @@
    ========================================================================== */
 
 /* Animated Selectable (logo, icons) */
-.AnimatedSelectable {
+.animated-selectable {
     transition-duration: 500ms;
     transition-timing-function: ease-in-out-cubic;
 }
 
-.AnimatedSelectable:hover {
+.animated-selectable:hover {
     scale: 0.9 0.9;
     rotate: 0;
 }
 
 /* Scale on Hover */
-.ScaleX2OnHover {
+.scale-x2-on-hover {
     transition-duration: 0ms;
     scale: 1 1;
 }
 
-.ScaleX2OnHover:hover {
+.scale-x2-on-hover:hover {
     transition-duration: 200ms;
     transition-timing-function: ease-out-cubic;
     scale: 2 2;

@@ -1,68 +1,90 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/root/Editor/UI/uss/AiConnectorWindow.uss?fileID=7433441132597879392&amp;guid=c469a790f6006d54fa1d7bce6ec00d7c&amp;type=3#AiConnectorWindow" />
     <ui:ScrollView>
         <ui:VisualElement class="container" style="min-width: 320px;">
             <ui:Box name="contHeader" style="background-color: rgba(222, 222, 222, 0); flex-direction: row; flex-shrink: 0;">
                 <ui:VisualElement style="flex-grow: 1; background-color: rgba(0, 0, 0, 0);">
-                    <ui:EnumField label="Log Level" name="dropdownLogLevel" type="com.IvanMurzak.Unity.MCP.Runtime.Utils.LogLevel, com.IvanMurzak.Unity.MCP.Runtime" value="Warning" class="ContentItem" style="align-self: flex-start;" />
-                    <ui:IntegerField label="Timeout (ms)" name="inputTimeoutMs" value="10000" class="ContentItem" style="align-self: flex-start;" />
-                    <ui:TextField picking-mode="Ignore" label="Version" value="0.0.0" readonly="true" name="currentVersion" focusable="false" class="ContentItem transparent-text-field" style="align-self: flex-start;" />
+                    <ui:EnumField label="Log Level" name="dropdownLogLevel" type="com.IvanMurzak.Unity.MCP.Runtime.Utils.LogLevel, com.IvanMurzak.Unity.MCP.Runtime" value="Warning" class="content-item" style="align-self: flex-start;" />
+                    <ui:IntegerField label="Timeout (ms)" name="inputTimeoutMs" value="10000" class="content-item" style="align-self: flex-start;" />
+                    <ui:TextField picking-mode="Ignore" label="Version" value="0.0.0" readonly="true" name="currentVersion" focusable="false" class="content-item transparent-text-field" style="align-self: flex-start;" />
                 </ui:VisualElement>
-                <ui:VisualElement name="imgLogoPivot" class="AnimatedSelectable" style="flex-grow: 0; height: 60px; width: 60px; right: 0; margin-left: 15px; flex-shrink: 0; margin-right: 0px; margin-top: 2px; flex-direction: row;">
+                <ui:VisualElement name="imgLogoPivot" class="animated-selectable" style="flex-grow: 0; height: 60px; width: 60px; right: 0; margin-left: 15px; flex-shrink: 0; margin-right: 0px; margin-top: 2px; flex-direction: row;">
                     <ui:VisualElement name="imgLogo" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); background-image: url(&quot;project://database/Assets/root/Editor/Gizmos/logo_512.png?fileID=2800000&amp;guid=bbb0f64bd8f15164781e01168cd6fa4f&amp;type=3#logo_512&quot;); -unity-background-scale-mode: stretch-to-fill; align-self: stretch;" />
                 </ui:VisualElement>
             </ui:Box>
-            <ui:VisualElement name="divider" class="Divider" />
-            <ui:Label text="Connect to MCP server" class="Header" />
-            <ui:TextField picking-mode="Ignore" label="Server URL" value="http://localhost:8080" name="InputServerURL" tooltip="Connection URL to an MCP server. Default value: http://localhost:8080" class="ContentItem" />
+            <ui:VisualElement class="divider" />
+            <ui:Label text="Connect to MCP server" class="header" />
+            <ui:TextField picking-mode="Ignore" label="Server URL" value="http://localhost:8080" name="InputServerURL" tooltip="Connection URL to an MCP server. Default value: http://localhost:8080" class="content-item" />
             <ui:Foldout text="Information" value="false" class="base-foldout">
                 <ui:Label text="Usually the server is hosted locally at:&#10;http://localhost:8080&#10;&#10;But feel free to connect to remote MCP server if needed. The connection under the hood is established using SignalR and supports wide range of features." class="section-desc" />
             </ui:Foldout>
             <ui:VisualElement name="ServerConnectionInfo" class="row">
                 <ui:VisualElement name="connectionStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
                 <ui:Label text="Disconnected" name="connectionStatusText" style="flex-grow: 1;" />
-                <ui:Button name="btnConnectOrDisconnect" text="Connect" class="Button-Primary" />
+                <ui:Button name="btnConnectOrDisconnect" text="Connect" class="btn-primary" />
             </ui:VisualElement>
-            <ui:VisualElement name="divider" class="Divider" />
+            <ui:VisualElement class="divider" />
             <ui:VisualElement name="ToolsConfigurationSection">
                 <ui:VisualElement class="row-top">
-                    <ui:Label name="toolsCountLabel" text="0 / 0 tools" class="Header" />
+                    <ui:Label name="toolsCountLabel" text="0 / 0 tools" class="header" />
                     <ui:Button name="btnOpenTools" text="Open" class="btn-secondary" />
                 </ui:VisualElement>
                 <ui:Foldout text="Information" value="false" class="base-foldout">
                     <ui:Label name="toolsStatusLabel" text="AI uses tools to achieve user's request. This is the main AI's instrument for doing everything.&#10;&#10;Active tools spend AI context. You want to keep the context consumption smaller, because AI works better when there is more free context. Consider disabling the tools you don't need." class="section-desc" />
                 </ui:Foldout>
             </ui:VisualElement>
-            <ui:VisualElement name="divider" class="Divider" />
+            <ui:VisualElement class="divider" />
             <ui:VisualElement name="PromptsConfigurationSection">
                 <ui:VisualElement class="row-top">
-                    <ui:Label name="promptsCountLabel" text="0 / 0 prompts" class="Header" />
+                    <ui:Label name="promptsCountLabel" text="0 / 0 prompts" class="header" />
                     <ui:Button name="btnOpenPrompts" text="Open" class="btn-secondary" />
                 </ui:VisualElement>
                 <ui:Foldout text="Information" value="false" class="base-foldout">
                     <ui:Label name="promptsStatusLabel" text="Prompt is a command that user may use in MCP client. For example '/createGameObject'. The command may receive input arguments. The result of the command execution is the Prompt text message which injects into AI context and tells AI what to do.&#10;&#10;Prompt doesn't spent context memory. It only spends context when injected by a user action." class="section-desc" />
                 </ui:Foldout>
             </ui:VisualElement>
-            <ui:VisualElement name="divider" class="Divider" />
+            <ui:VisualElement class="divider" />
             <ui:VisualElement name="ResourcesConfigurationSection">
                 <ui:VisualElement class="row-top">
-                    <ui:Label name="resourcesCountLabel" text="0 / 0 resources" class="Header" />
+                    <ui:Label name="resourcesCountLabel" text="0 / 0 resources" class="header" />
                     <ui:Button name="btnOpenResources" text="Open" class="btn-secondary" />
                 </ui:VisualElement>
                 <ui:Foldout text="Information" value="false" class="base-foldout">
                     <ui:Label name="resourcesStatusLabel" text="Resources provide read-only data that AI can access to understand your Unity project. They expose information like scene hierarchy, asset metadata, project settings, and more.&#10;&#10;Unlike tools which perform actions, resources give AI contextual awareness without modifying anything. Resources are fetched on-demand when AI needs specific information." class="section-desc" />
                 </ui:Foldout>
             </ui:VisualElement>
-            <ui:VisualElement name="divider" class="Divider" />
-            <ui:Label text="Configure MCP Client" class="Header" />
+            <ui:VisualElement class="divider" />
+            <ui:Label text="Configure MCP Client" class="header" />
             <ui:Label text="At least one client should be configured.&#10;Some clients need restart after configuration." class="section-desc" />
             <ui:VisualElement name="ConfigureClientsContainer" />
-            <ui:VisualElement name="ConfigureClient-Custom" class="Frame-Group" style="flex-grow: 1;">
+            <ui:VisualElement name="ConfigureClient-Custom" class="frame-group" style="flex-grow: 1;">
                 <ui:Label text="Manual configuration" class="section-title" />
                 <ui:Label text="Copy paste the json into your MCP Client to configure it." name="Label" class="section-desc" />
                 <ui:TextField name="rawJsonConfiguration" multiline="true" readonly="true" selectOnFocus="true" value="This is a multi-line, read-only, selectable text box.&#10;You can copy from here." style="margin-top: 4px; margin-right: 0; margin-left: 0; margin-bottom: 4px;" />
             </ui:VisualElement>
-            <ui:VisualElement name="divider" class="Divider" />
+            <ui:VisualElement class="divider" />
+            <ui:VisualElement>
+                <ui:VisualElement>
+                    <ui:Label text="Found an issue?" class="section-text" style="flex-grow: 1;" />
+                </ui:VisualElement>
+                <ui:VisualElement class="row-left-align">
+                    <ui:Button name="btnDiscordHelp" class="btn-secondary btn-with-icon">
+                        <ui:VisualElement name="btnDiscordHelpIcon" class="btn-icon" />
+                        <ui:Label text="Help / Talk" class="btn-label" />
+                    </ui:Button>
+                    <ui:Button name="btnGitHubIssue" class="btn-secondary btn-with-icon">
+                        <ui:VisualElement name="btnGitHubIssueIcon" class="btn-icon" />
+                        <ui:Label text="Bug Report" class="btn-label" />
+                    </ui:Button>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:VisualElement class="divider" />
+            <ui:VisualElement>
+                <ui:Label text="Thanks for using &lt;b&gt;&lt;color=red&gt;AI&lt;/color&gt; Game Developer&lt;/b&gt;. If you like it, please give the project a star on GitHub.&#10;&#10;Sincerely,&#10;Ivan Murzak" class="section-text" />
+                <ui:Button name="btnGitHubStar" class="btn-secondary btn-with-icon btn-golden btn-floating">
+                    <ui:VisualElement name="btnGitHubStarIcon" class="btn-icon" />
+                    <ui:Label text="GitHub Star" class="btn-label" />
+                </ui:Button>
+            </ui:VisualElement>
         </ui:VisualElement>
     </ui:ScrollView>
 </ui:UXML>

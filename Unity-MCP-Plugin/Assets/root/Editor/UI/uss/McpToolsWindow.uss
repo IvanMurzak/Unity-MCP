@@ -1,12 +1,6 @@
 /* ==========================================================================
    MCP Tools Window Styles
-   Imports common styles - no tool-specific overrides needed
+   Imports common list window styles - no tool-specific overrides needed
    ========================================================================== */
 
-@import url("common/_base.uss");
-@import url("common/_typography.uss");
-@import url("common/_buttons.uss");
-@import url("common/_forms.uss");
-@import url("common/_list-view.uss");
-@import url("common/_toggle-switch.uss");
-@import url("common/_foldout.uss");
+@import url("common/_mcp-list-window.uss");

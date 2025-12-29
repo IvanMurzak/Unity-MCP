@@ -1,26 +1,16 @@
 /* ==========================================================================
    MCP Resources Window Styles
-   Imports common styles and adds resource-specific customizations
+   Imports common list window styles and adds resource-specific customizations
    ========================================================================== */
 
-@import url("common/_base.uss");
-@import url("common/_typography.uss");
-@import url("common/_buttons.uss");
-@import url("common/_forms.uss");
-@import url("common/_list-view.uss");
-@import url("common/_toggle-switch.uss");
-@import url("common/_foldout.uss");
+@import url("common/_mcp-list-window.uss");
 
-/* Resource-specific: URI label */
+/* Resource-specific: URI label color */
 .item-uri {
-    font-size: 12px;
     color: #9ACD32;
-    -unity-font-style: italic;
 }
 
-/* Resource-specific: MIME type label */
+/* Resource-specific: MIME type label color */
 .item-mimetype {
-    font-size: 12px;
     color: #DDA0DD;
-    -unity-font-style: italic;
 }

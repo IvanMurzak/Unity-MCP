@@ -30,12 +30,12 @@
 }
 
 /* Content Item (form fields) */
-.ContentItem {
+.content-item {
     padding-left: 0;
     padding-right: 0;
 }
 
-.ContentItem .unity-label {
+.content-item .unity-label {
     width: 85px;
     min-width: 65px;
     max-width: 85px;
@@ -44,11 +44,11 @@
     padding-left: -10px;
 }
 
-.ContentItem .unity-enum-field {
+.content-item .unity-enum-field {
     width: 80px;
 }
 
-.ContentItem .unity-integer-field__input {
+.content-item .unity-integer-field__input {
     width: 65px;
 }
 

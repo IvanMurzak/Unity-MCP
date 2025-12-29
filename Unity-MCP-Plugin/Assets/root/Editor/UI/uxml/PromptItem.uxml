@@ -1,11 +1,10 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
-    <Style src="project://database/Assets/root/Editor/UI/uss/McpPromptsWindow.uss?fileID=7433441132597879392&amp;guid=525911ffb58076f44a1788589abac01d&amp;type=3#McpPromptsWindow" />
     <ui:VisualElement class="item-container">
         <ui:VisualElement class="item-header">
             <ui:VisualElement class="item-title-container">
                 <ui:Label name="item-title" text="Prompt title, could be multiple lines long" class="item-title" />
                 <ui:Label name="item-id" text="prompt-id-single-line" class="item-id" />
-                <ui:Label name="item-role" text="Role: User" class="item-role" />
+                <ui:Label name="item-role" text="Role: User" class="item-metadata item-role" />
             </ui:VisualElement>
             <ui:Toggle name="item-toggle" class="item-switch" />
         </ui:VisualElement>

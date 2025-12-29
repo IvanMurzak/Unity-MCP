@@ -1,5 +1,4 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <Style src="project://database/Assets/root/Editor/UI/uss/UpdatePopupWindow.uss?fileID=7433441132597879392&amp;guid=5bd367a2ccc1cbd4898560f06f04c22f&amp;type=3#UpdatePopupWindow" />
     <ui:VisualElement class="popup-container">
         <ui:Label text="Update Available" name="title" class="popup-title" />
         <ui:VisualElement name="icon-container" class="icon-container" />

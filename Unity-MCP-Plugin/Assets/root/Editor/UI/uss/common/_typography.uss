@@ -20,7 +20,7 @@
 }
 
 /* Section Headers */
-.Header {
+.header {
     font-size: 20px;
     padding-top: 0px;
     padding-left: 0px;
@@ -37,6 +37,11 @@
 .section-desc {
     color: rgb(135, 135, 135);
     margin-bottom: 8px;
+    white-space: normal;
+}
+
+.section-text {
+    color: rgb(255, 255, 255);
     white-space: normal;
 }
 

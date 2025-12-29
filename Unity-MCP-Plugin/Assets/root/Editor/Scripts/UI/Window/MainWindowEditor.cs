@@ -9,7 +9,6 @@
 */
 
 #nullable enable
-using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using R3;
 using UnityEditor;
@@ -17,16 +16,18 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
 {
-    public partial class MainWindowEditor : EditorWindow
+    public partial class MainWindowEditor : McpWindowBase
     {
         readonly CompositeDisposable _disposables = new();
 
+        protected override string WindowTitle => "Game Developer";
+        protected override string[] WindowUxmlPaths => _windowUxmlPaths;
+        protected override string[] WindowUssPaths => _windowUssPaths;
+
         public static MainWindowEditor ShowWindow()
         {
-            var window = GetWindow<MainWindowEditor>("AI Game Developer");
-            var icon = EditorAssetLoader.LoadAssetAtPath<Texture>(EditorAssetLoader.PackageLogoIcon);
-            if (icon != null)
-                window.titleContent = new GUIContent("Game Developer", icon);
+            var window = GetWindow<MainWindowEditor>("Game Developer");
+            window.SetupWindowWithIcon();
             window.Focus();
 
             return window;
@@ -52,8 +53,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         private void OnChanged(UnityMcpPlugin.UnityConnectionConfig data) => Repaint();
 
-        private void OnEnable()
+        protected override void OnEnable()
         {
+            base.OnEnable();
             _disposables.Add(UnityMcpPlugin.SubscribeOnChanged(OnChanged));
         }
         private void OnDisable()

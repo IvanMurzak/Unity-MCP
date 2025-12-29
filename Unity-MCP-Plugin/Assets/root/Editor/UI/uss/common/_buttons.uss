@@ -3,7 +3,7 @@
    ========================================================================== */
 
 /* Primary Button */
-.Button-Primary,
+.btn-primary,
 .btn-primary {
     background-color: rgb(175, 232, 230);
     transition-duration: 200ms;
@@ -36,13 +36,13 @@
     transition-duration: 50ms;
 }
 
-.Button-Primary:hover,
+.btn-primary:hover,
 .btn-primary:hover {
     background-color: rgb(118, 231, 227);
     transition-duration: 200ms;
 }
 
-.Button-Primary:active,
+.btn-primary:active,
 .btn-primary:active {
     background-color: rgb(250, 255, 234);
     transition-duration: 50ms;
@@ -96,22 +96,82 @@
 }
 
 /* Alert Button */
-.Button-Alert {
+.btn-alert {
     background-color: rgb(88, 44, 44);
     transition-duration: 200ms;
 }
 
-.Button-Alert:hover {
+.btn-alert:hover {
     background-color: rgb(255, 110, 110);
     transition-duration: 200ms;
     color: black;
 }
 
 /* Accept Button */
-.Button-Accept {
+.btn-accept {
     transition-duration: 200ms;
 }
 
-.Button-Accept:hover {
+.btn-accept:hover {
     transition-duration: 200ms;
+}
+
+/* Button with Icon */
+.btn-with-icon {
+    flex-direction: row;
+    align-items: center;
+    padding: 4px 10px 4px 6px;
+}
+
+.btn-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    margin-right: 6px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.btn-label {
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0;
+}
+
+/* Premium/Golden Button */
+.btn-golden {
+    background-color: rgb(45, 40, 25);
+    border-color: rgb(180, 150, 60);
+    border-width: 1px;
+    color: rgb(255, 215, 100);
+}
+
+.btn-golden:hover {
+    background-color: rgb(60, 52, 30);
+    border-color: rgb(220, 180, 80);
+    color: rgb(255, 225, 130);
+}
+
+.btn-golden:active {
+    background-color: rgb(80, 68, 35);
+    border-color: rgb(255, 200, 100);
+    color: rgb(255, 235, 150);
+}
+
+.btn-golden .btn-label {
+    color: rgb(255, 215, 100);
+}
+
+.btn-golden:hover .btn-label {
+    color: rgb(255, 225, 130);
+}
+
+.btn-golden:active .btn-label {
+    color: rgb(255, 235, 150);
+}
+
+/* Floating/Absolute positioned button */
+.btn-floating {
+    position: absolute;
+    right: 0;
+    bottom: 0;
 }

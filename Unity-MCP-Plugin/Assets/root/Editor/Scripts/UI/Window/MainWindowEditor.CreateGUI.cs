@@ -16,17 +16,22 @@ using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using Microsoft.AspNetCore.SignalR.Client;
 using R3;
-using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
 {
-    public partial class MainWindowEditor : EditorWindow
+    public partial class MainWindowEditor
     {
         // Template paths for both local development and UPM package environments
 
-        public static readonly string[] WindowUxmlPath = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/AiConnectorWindow.uxml");
+        private static readonly string[] _windowUxmlPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/MainWindow.uxml");
+        private static readonly string[] _windowUssPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uss/MainWindow.uss");
+
+        // Icon paths for social buttons
+        private static readonly string[] _discordIconPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/Gizmos/discord_icon.png");
+        private static readonly string[] _githubIconPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/Gizmos/github_icon.png");
+        private static readonly string[] _starIconPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/Gizmos/star_icon.png");
 
         const string USS_IndicatorClass_Connected = "status-indicator-circle-online";
         const string USS_IndicatorClass_Connecting = "status-indicator-circle-connecting";
@@ -36,21 +41,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         const string ServerButtonText_Disconnect = "Disconnect";
         const string ServerButtonText_Stop = "Stop";
 
-        public void CreateGUI()
+        // Social links
+        const string URL_GitHub = "https://github.com/IvanMurzak/Unity-MCP";
+        const string URL_GitHubIssues = "https://github.com/IvanMurzak/Unity-MCP/issues";
+        const string URL_Discord = "https://discord.gg/cfbdMZX99G";
+
+        protected override void OnGUICreated(VisualElement root)
         {
             _disposables.Clear();
-            rootVisualElement.Clear();
-
-            // Try to load the template from both possible paths (UPM package or local development)
-            var templateControlPanel = EditorAssetLoader.LoadAssetAtPath<VisualTreeAsset>(WindowUxmlPath);
-            if (templateControlPanel == null)
-            {
-                Debug.LogError("AiConnectorWindow template not found in specified paths. Please ensure the template file exists.");
-                return;
-            }
-
-            var root = templateControlPanel.Instantiate();
-            rootVisualElement.Add(root);
 
             // Settings
             // -----------------------------------------------------------------
@@ -367,6 +365,49 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             var rawJsonField = root.Query<TextField>("rawJsonConfiguration").First();
             rawJsonField.value = Startup.Server.RawJsonConfiguration(UnityMcpPlugin.Port, "mcpServers", UnityMcpPlugin.TimeoutMs).ToString();
+
+            // Foldout animations
+            // -----------------------------------------------------------------
+            root.Query<Foldout>().ForEach(foldout =>
+            {
+                foldout.RegisterValueChangedCallback(evt =>
+                {
+                    UpdateFoldoutState(foldout, evt.newValue);
+                });
+                UpdateFoldoutState(foldout, foldout.value);
+            });
+
+            // Social buttons
+            // -----------------------------------------------------------------
+
+            var discordIcon = EditorAssetLoader.LoadAssetAtPath<Texture2D>(_discordIconPaths);
+            var githubIcon = EditorAssetLoader.LoadAssetAtPath<Texture2D>(_githubIconPaths);
+            var starIcon = EditorAssetLoader.LoadAssetAtPath<Texture2D>(_starIconPaths);
+
+            SetupSocialButton(root, "btnGitHubStar", "btnGitHubStarIcon", starIcon, URL_GitHub, "Star on GitHub");
+            SetupSocialButton(root, "btnGitHubIssue", "btnGitHubIssueIcon", githubIcon, URL_GitHubIssues, "Report an issue on GitHub");
+            SetupSocialButton(root, "btnDiscordHelp", "btnDiscordHelpIcon", discordIcon, URL_Discord, "Get help on Discord");
+        }
+
+        private static void SetupSocialButton(VisualElement root, string buttonName, string iconName, Texture2D? icon, string url, string tooltip)
+        {
+            var button = root.Query<Button>(buttonName).First();
+            if (button == null)
+                return;
+
+            var iconElement = root.Query<VisualElement>(iconName).First();
+            if (iconElement != null && icon != null)
+            {
+                iconElement.style.backgroundImage = icon;
+            }
+            else if (iconElement != null)
+            {
+                // Hide icon element if icon failed to load
+                iconElement.style.display = DisplayStyle.None;
+            }
+
+            button.tooltip = tooltip;
+            button.RegisterCallback<ClickEvent>(evt => Application.OpenURL(url));
         }
     }
 }

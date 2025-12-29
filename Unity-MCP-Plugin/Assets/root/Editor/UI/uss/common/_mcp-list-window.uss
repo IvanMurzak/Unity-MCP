@@ -1,0 +1,18 @@
+/* ==========================================================================
+   MCP List Window Common Imports
+   Shared imports for Tools, Prompts, and Resources windows
+   ========================================================================== */
+
+@import url("_base.uss");
+@import url("_typography.uss");
+@import url("_buttons.uss");
+@import url("_forms.uss");
+@import url("_list-view.uss");
+@import url("_toggle-switch.uss");
+@import url("_foldout.uss");
+
+/* Common item metadata styles (role, uri, mimetype, etc.) */
+.item-metadata {
+    font-size: 12px;
+    -unity-font-style: italic;
+}
