@@ -361,6 +361,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             var rawJsonField = root.Query<TextField>("rawJsonConfiguration").First();
             rawJsonField.value = Startup.Server.RawJsonConfiguration(UnityMcpPlugin.Port, "mcpServers", UnityMcpPlugin.TimeoutMs).ToString();
 
+            // Foldout animations
+            // -----------------------------------------------------------------
+            root.Query<Foldout>().ForEach(foldout =>
+            {
+                foldout.RegisterValueChangedCallback(evt =>
+                {
+                    UpdateFoldoutState(foldout, evt.newValue);
+                });
+                UpdateFoldoutState(foldout, foldout.value);
+            });
+
             // Social buttons
             // -----------------------------------------------------------------
 
