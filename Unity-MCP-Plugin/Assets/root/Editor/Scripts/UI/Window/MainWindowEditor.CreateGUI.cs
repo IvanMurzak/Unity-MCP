@@ -41,6 +41,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         const string ServerButtonText_Disconnect = "Disconnect";
         const string ServerButtonText_Stop = "Stop";
 
+        // Social links
+        const string URL_GitHub = "https://github.com/IvanMurzak/Unity-MCP";
+        const string URL_GitHubIssues = "https://github.com/IvanMurzak/Unity-MCP/issues";
+        const string URL_Discord = "https://discord.gg/cfbdMZX99G";
+
         protected override void OnGUICreated(VisualElement root)
         {
             _disposables.Clear();
@@ -379,32 +384,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             var githubIcon = EditorAssetLoader.LoadAssetAtPath<Texture2D>(_githubIconPaths);
             var starIcon = EditorAssetLoader.LoadAssetAtPath<Texture2D>(_starIconPaths);
 
-            var btnGitHubStar = root.Query<Button>("btnGitHubStar").First();
-            var btnGitHubStarIcon = root.Query<VisualElement>("btnGitHubStarIcon").First();
-            if (starIcon != null)
-                btnGitHubStarIcon.style.backgroundImage = starIcon;
-            btnGitHubStar.RegisterCallback<ClickEvent>(evt =>
-            {
-                Application.OpenURL("https://github.com/IvanMurzak/Unity-MCP");
-            });
+            SetupSocialButton(root, "btnGitHubStar", "btnGitHubStarIcon", starIcon, URL_GitHub, "Star on GitHub");
+            SetupSocialButton(root, "btnGitHubIssue", "btnGitHubIssueIcon", githubIcon, URL_GitHubIssues, "Report an issue on GitHub");
+            SetupSocialButton(root, "btnDiscordHelp", "btnDiscordHelpIcon", discordIcon, URL_Discord, "Get help on Discord");
+        }
 
-            var btnGitHubIssue = root.Query<Button>("btnGitHubIssue").First();
-            var btnGitHubIssueIcon = root.Query<VisualElement>("btnGitHubIssueIcon").First();
-            if (githubIcon != null)
-                btnGitHubIssueIcon.style.backgroundImage = githubIcon;
-            btnGitHubIssue.RegisterCallback<ClickEvent>(evt =>
-            {
-                Application.OpenURL("https://github.com/IvanMurzak/Unity-MCP/issues");
-            });
+        private static void SetupSocialButton(VisualElement root, string buttonName, string iconName, Texture2D? icon, string url, string tooltip)
+        {
+            var button = root.Query<Button>(buttonName).First();
+            if (button == null)
+                return;
 
-            var btnDiscordHelp = root.Query<Button>("btnDiscordHelp").First();
-            var btnDiscordHelpIcon = root.Query<VisualElement>("btnDiscordHelpIcon").First();
-            if (discordIcon != null)
-                btnDiscordHelpIcon.style.backgroundImage = discordIcon;
-            btnDiscordHelp.RegisterCallback<ClickEvent>(evt =>
+            var iconElement = root.Query<VisualElement>(iconName).First();
+            if (iconElement != null && icon != null)
             {
-                Application.OpenURL("https://discord.gg/cfbdMZX99G");
-            });
+                iconElement.style.backgroundImage = icon;
+            }
+            else if (iconElement != null)
+            {
+                // Hide icon element if icon failed to load
+                iconElement.style.display = DisplayStyle.None;
+            }
+
+            button.tooltip = tooltip;
+            button.RegisterCallback<ClickEvent>(evt => Application.OpenURL(url));
         }
     }
 }
