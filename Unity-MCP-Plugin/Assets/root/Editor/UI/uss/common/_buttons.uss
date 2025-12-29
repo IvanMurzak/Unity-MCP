@@ -11,7 +11,7 @@
     border-radius: 8px;
     border-width: 0;
     color: black;
-    font-size: 14px;
+    font-size: 12px;
 }
 
 /* Primary Button Bold */

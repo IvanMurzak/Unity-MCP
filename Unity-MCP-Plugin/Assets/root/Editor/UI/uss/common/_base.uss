@@ -16,11 +16,22 @@
 .row {
     flex-direction: row;
     margin-bottom: 4px;
+    margin-top: 10px;
     align-items: center;
     justify-content: space-between;
 }
 
 .row > * {
+    margin-right: 8px;
+}
+
+.row-top {
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+}
+
+.row-top > * {
     margin-right: 8px;
 }
 

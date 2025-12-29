@@ -22,8 +22,8 @@
 /* Section Headers */
 .Header {
     font-size: 20px;
-    padding-top: 10px;
-    padding-left: 0;
+    padding-top: 0px;
+    padding-left: 0px;
     -unity-font-style: bold;
 }
 
