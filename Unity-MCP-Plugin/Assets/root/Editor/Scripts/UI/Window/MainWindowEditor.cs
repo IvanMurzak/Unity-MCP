@@ -9,7 +9,6 @@
 */
 
 #nullable enable
-using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using R3;
 using UnityEditor;
@@ -21,13 +20,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
     {
         readonly CompositeDisposable _disposables = new();
 
-        protected override string WindowTitle => "AI Game Developer";
+        protected override string WindowTitle => "Game Developer";
         protected override string[] WindowUxmlPaths => _windowUxmlPaths;
         protected override string[] WindowUssPaths => _windowUssPaths;
 
         public static MainWindowEditor ShowWindow()
         {
-            var window = GetWindow<MainWindowEditor>("AI Game Developer");
+            var window = GetWindow<MainWindowEditor>("Game Developer");
             window.SetupWindowWithIcon();
             window.Focus();
 
