@@ -6,6 +6,7 @@ using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Text;
+using System.Threading.Tasks;
 using Debug = UnityEngine.Debug;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
@@ -40,13 +41,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
                 if (input != null)
                 {
-                    process.StandardInput.Write(input);
+                    var inputBytes = Encoding.UTF8.GetBytes(input);
+                    process.StandardInput.BaseStream.Write(inputBytes, 0, inputBytes.Length);
+                    process.StandardInput.Flush();
                     process.StandardInput.Close();
+                    Array.Clear(inputBytes, 0, inputBytes.Length);
                 }
 
-                var output = process.StandardOutput.ReadToEnd();
-                var error = process.StandardError.ReadToEnd();
+                var outputTask = process.StandardOutput.ReadToEndAsync();
+                var errorTask = process.StandardError.ReadToEndAsync();
                 process.WaitForExit();
+                Task.WaitAll(outputTask, errorTask);
+                var output = outputTask.Result;
+                var error = errorTask.Result;
 
                 if (process.ExitCode != 0)
                 {
