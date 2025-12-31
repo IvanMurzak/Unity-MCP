@@ -25,8 +25,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             if (!TryGetPlatformName(out var platformName, out var warning))
             {
-                Debug.LogWarning(warning);
-                return;
+                Assert.Inconclusive(warning);
             }
 
             RunRoundTrip(platformName);

@@ -3,7 +3,7 @@
 #nullable enable
 
 using System;
-using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Text;
 using Debug = UnityEngine.Debug;
 
@@ -11,6 +11,40 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
     public static partial class SecureKeyStore
     {
+        private const int ErrSecDuplicateItem = -25299;
+        private const int ErrSecItemNotFound = -25300;
+
+        [DllImport("/System/Library/Frameworks/Security.framework/Security")]
+        private static extern int SecKeychainFindGenericPassword(
+            IntPtr keychainOrArray,
+            uint serviceNameLength,
+            string serviceName,
+            uint accountNameLength,
+            string accountName,
+            out uint passwordLength,
+            out IntPtr passwordData,
+            out IntPtr itemRef);
+
+        [DllImport("/System/Library/Frameworks/Security.framework/Security")]
+        private static extern int SecKeychainAddGenericPassword(
+            IntPtr keychain,
+            uint serviceNameLength,
+            string serviceName,
+            uint accountNameLength,
+            string accountName,
+            uint passwordLength,
+            byte[] passwordData,
+            out IntPtr itemRef);
+
+        [DllImport("/System/Library/Frameworks/Security.framework/Security")]
+        private static extern int SecKeychainItemDelete(IntPtr itemRef);
+
+        [DllImport("/System/Library/Frameworks/Security.framework/Security")]
+        private static extern int SecKeychainItemFreeContent(IntPtr attrList, IntPtr data);
+
+        [DllImport("/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation")]
+        private static extern void CFRelease(IntPtr cf);
+
         private static string BuildTargetName(string key)
         {
             return key;
@@ -18,103 +52,115 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
         private static string? Read(string targetName)
         {
-            return RunSecretCommand("security",
-                new[] { "find-generic-password", "-a", targetName, "-s", ServiceName, "-w" },
-                null,
-                ignoreNotFound: true);
+            var serviceLength = (uint)Encoding.UTF8.GetByteCount(ServiceName);
+            var accountLength = (uint)Encoding.UTF8.GetByteCount(targetName);
+
+            var result = SecKeychainFindGenericPassword(
+                IntPtr.Zero,
+                serviceLength,
+                ServiceName,
+                accountLength,
+                targetName,
+                out var passwordLength,
+                out var passwordData,
+                out var itemRef);
+
+            try
+            {
+                if (result != 0)
+                {
+                    if (result != ErrSecItemNotFound)
+                        Debug.LogWarning($"[Warning] Keychain read failed for {targetName} (error {result}).");
+                    return null;
+                }
+
+                if (passwordData == IntPtr.Zero || passwordLength == 0)
+                    return null;
+
+                var bytes = new byte[passwordLength];
+                Marshal.Copy(passwordData, bytes, 0, bytes.Length);
+                var value = Encoding.UTF8.GetString(bytes);
+                Array.Clear(bytes, 0, bytes.Length);
+                return string.IsNullOrWhiteSpace(value) ? null : value;
+            }
+            finally
+            {
+                if (passwordData != IntPtr.Zero)
+                    SecKeychainItemFreeContent(IntPtr.Zero, passwordData);
+
+                if (itemRef != IntPtr.Zero)
+                    CFRelease(itemRef);
+            }
         }
 
         private static void Write(string targetName, string value)
         {
-            RunSecretCommand("security",
-                new[] { "add-generic-password", "-a", targetName, "-s", ServiceName, "-w", value, "-U" },
-                null,
-                ignoreNotFound: false);
+            DeleteInternal(targetName);
+
+            var serviceLength = (uint)Encoding.UTF8.GetByteCount(ServiceName);
+            var accountLength = (uint)Encoding.UTF8.GetByteCount(targetName);
+            var passwordBytes = Encoding.UTF8.GetBytes(value);
+
+            try
+            {
+                var result = SecKeychainAddGenericPassword(
+                    IntPtr.Zero,
+                    serviceLength,
+                    ServiceName,
+                    accountLength,
+                    targetName,
+                    (uint)passwordBytes.Length,
+                    passwordBytes,
+                    out var itemRef);
+
+                if (itemRef != IntPtr.Zero)
+                    CFRelease(itemRef);
+
+                if (result != 0 && result != ErrSecDuplicateItem)
+                    Debug.LogWarning($"[Warning] Keychain write failed for {targetName} (error {result}).");
+            }
+            finally
+            {
+                Array.Clear(passwordBytes, 0, passwordBytes.Length);
+            }
         }
 
         private static void DeleteInternal(string targetName)
         {
-            RunSecretCommand("security",
-                new[] { "delete-generic-password", "-a", targetName, "-s", ServiceName },
-                null,
-                ignoreNotFound: true);
-        }
+            var serviceLength = (uint)Encoding.UTF8.GetByteCount(ServiceName);
+            var accountLength = (uint)Encoding.UTF8.GetByteCount(targetName);
 
-        private static string? RunSecretCommand(
-            string fileName,
-            string[] args,
-            string? input,
-            bool ignoreNotFound)
-        {
+            var result = SecKeychainFindGenericPassword(
+                IntPtr.Zero,
+                serviceLength,
+                ServiceName,
+                accountLength,
+                targetName,
+                out var passwordLength,
+                out var passwordData,
+                out var itemRef);
+
             try
             {
-                var startInfo = new ProcessStartInfo
+                if (result != 0)
                 {
-                    FileName = fileName,
-                    Arguments = BuildArguments(args),
-                    UseShellExecute = false,
-                    RedirectStandardOutput = true,
-                    RedirectStandardError = true,
-                    RedirectStandardInput = input != null,
-                    CreateNoWindow = true
-                };
-
-                using var process = Process.Start(startInfo);
-                if (process == null)
-                    return null;
-
-                if (input != null)
-                {
-                    process.StandardInput.Write(input);
-                    process.StandardInput.Close();
+                    if (result != ErrSecItemNotFound)
+                        Debug.LogWarning($"[Warning] Keychain lookup failed for {targetName} (error {result}).");
+                    return;
                 }
 
-                var output = process.StandardOutput.ReadToEnd();
-                var error = process.StandardError.ReadToEnd();
-                process.WaitForExit();
-
-                if (process.ExitCode != 0)
-                {
-                    if (!ignoreNotFound && !string.IsNullOrWhiteSpace(error))
-                        Debug.LogWarning($"[Warning] Secret store command failed: {error.Trim()}");
-                    return null;
-                }
-
-                return string.IsNullOrWhiteSpace(output) ? null : output.Trim();
+                var deleteResult = SecKeychainItemDelete(itemRef);
+                if (deleteResult != 0 && deleteResult != ErrSecItemNotFound)
+                    Debug.LogWarning($"[Warning] Keychain delete failed for {targetName} (error {deleteResult}).");
             }
-            catch (Exception ex)
+            finally
             {
-                Debug.LogWarning($"[Warning] Secret store command failed: {ex.GetBaseException().Message}");
-                return null;
+                if (passwordData != IntPtr.Zero)
+                    SecKeychainItemFreeContent(IntPtr.Zero, passwordData);
+
+                if (itemRef != IntPtr.Zero)
+                    CFRelease(itemRef);
             }
-        }
-
-        private static string BuildArguments(string[] args)
-        {
-            if (args.Length == 0)
-                return string.Empty;
-
-            var builder = new StringBuilder();
-            for (var i = 0; i < args.Length; i++)
-            {
-                if (i > 0)
-                    builder.Append(' ');
-
-                builder.Append(QuoteArgument(args[i]));
-            }
-
-            return builder.ToString();
-        }
-
-        private static string QuoteArgument(string arg)
-        {
-            if (string.IsNullOrEmpty(arg))
-                return "\"\"";
-
-            if (arg.IndexOfAny(new[] { ' ', '"', '\'' }) >= 0)
-                return "\"" + arg.Replace("\"", "\\\"") + "\"";
-
-            return arg;
         }
     }
 }

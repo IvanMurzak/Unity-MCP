@@ -86,7 +86,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 if (inMemoryStore == null || !inMemoryStore.TryGetValue(targetName, out var bytes))
                     return null;
 
-                return bytes.Length == 0 ? null : Encoding.UTF8.GetString(bytes);
+                if (bytes.Length == 0)
+                    return null;
+
+                var value = Encoding.UTF8.GetString(bytes);
+                Array.Clear(bytes, 0, bytes.Length);
+                inMemoryStore[targetName] = Encoding.UTF8.GetBytes(value);
+                return value;
             }
         }
 

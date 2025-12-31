@@ -110,6 +110,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
             finally
             {
+                Array.Clear(valueBytes, 0, valueBytes.Length);
                 Marshal.FreeHGlobal(valuePtr);
             }
         }
