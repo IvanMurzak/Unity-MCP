@@ -24,7 +24,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
             _shaderName = shaderName ?? throw new ArgumentNullException(nameof(shaderName));
 
             if (!materialName.EndsWith(".mat", StringComparison.OrdinalIgnoreCase))
-                throw new ArgumentException("Material name should not contain a file extension.", nameof(materialName));
+                throw new ArgumentException("Material name should include a .mat file extension.", nameof(materialName));
 
             SetAction(() =>
             {
