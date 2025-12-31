@@ -11,7 +11,7 @@ using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Runtime.InteropServices.ComTypes;
 using System.Text;
-using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
 {
