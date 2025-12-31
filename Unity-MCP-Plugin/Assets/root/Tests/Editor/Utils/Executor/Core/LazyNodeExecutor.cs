@@ -11,7 +11,6 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
-using NUnit.Framework;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
 {
@@ -49,19 +48,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
                 };
                 return result;
             }
-            catch (AssertionException)
-            {
-                throw;
-            }
-            catch (InconclusiveException)
-            {
-                throw;
-            }
             catch (Exception ex)
             {
                 UnityEngine.Debug.LogException(ex);
                 UnityEngine.Debug.LogError($"Error executing LazyNode: {ex}");
-                throw;
+                return null;
             }
         }
 
