@@ -1,53 +1,91 @@
 # Docker Deployment
 
-The Unity-MCP-Server is automatically built and deployed as a Docker image when a new release is created.
+[![MCP](https://badge.mcpx.dev 'MCP Server')](https://modelcontextprotocol.io/introduction)
+[![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&labelColor=333A41 'OpenUPM package')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
+[![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
+[![Unity Editor](https://img.shields.io/badge/Editor-X?style=flat&logo=unity&labelColor=333A41&color=49BC5C 'Unity Editor supported')](https://unity.com/releases/editor/archive)
+[![Unity Runtime](https://img.shields.io/badge/Runtime-X?style=flat&logo=unity&labelColor=333A41&color=49BC5C 'Unity Runtime supported')](https://unity.com/releases/editor/archive)
+[![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg 'Tests Passed')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)</br>
+[![Discord](https://img.shields.io/badge/Discord-Join-7289da?logo=discord&logoColor=white&labelColor=333A41 'Join')](https://discord.gg/cfbdMZX99G)
+[![Stars](https://img.shields.io/github/stars/IvanMurzak/Unity-MCP 'Stars')](https://github.com/IvanMurzak/Unity-MCP/stargazers)
+[![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&labelColor=333A41)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
+[![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
-## Docker Hub Repository
+The Unity-MCP Server is available as a lightweight Docker container, ideal for cloud deployments or isolating the AI server environment.
 
-- **Repository**: `ivanmurzakdev/unity-mcp-server`
-- **Tags**: 
-  - Version-specific: `ivanmurzakdev/unity-mcp-server:X.Y.Z` (e.g., `0.17.1`)
-  - Latest: `ivanmurzakdev/unity-mcp-server:latest`
+- **Image**: `ivanmurzakdev/unity-mcp-server`
+- **Tags**: `latest`, `X.Y.Z` (e.g., `0.35.0`)
+- **Architectures**: `linux/amd64`, `linux/arm64` (Apple Silicon compatible)
 
-## Deployment Process
+## 🚀 Quick Start
 
-The Docker image is built and pushed automatically by the `release.yml` GitHub Actions workflow when:
+Run the server on port `8080`:
 
-1. Code is pushed to the `main` branch
-2. All Unity tests pass successfully  
-3. A new version tag is created based on the `package.json` version
-
-## Multi-Platform Support
-
-The Docker images are built for multiple architectures:
-- `linux/amd64` (Intel/AMD 64-bit)
-- `linux/arm64` (ARM 64-bit, including Apple Silicon)
-
-## Required Secrets
-
-The deployment requires the following GitHub repository secrets:
-- `DOCKER_USERNAME`: Docker Hub username
-- `DOCKER_PASSWORD`: Docker Hub password or access token
-
-## Usage
-
-### Pull and Run Latest Version
 ```bash
-docker pull ivanmurzakdev/unity-mcp-server:latest
 docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server:latest
 ```
 
-### Pull and Run Specific Version
+## ⚙️ Configuration
+
+The server can be configured using environment variables.
+
+| Variable | Default | Description |
+| :--- | :--- | :--- |
+| `UNITY_MCP_PORT` | `8080` | The port the server listens on for Plugin connections. |
+| `UNITY_MCP_CLIENT_TRANSPORT` | `http` | Transport for the Client connection (`http` or `stdio`). |
+| `UNITY_MCP_PLUGIN_TIMEOUT` | `10000` | Connection timeout in milliseconds. |
+
+### Example: Custom Port
+
+Run on port `9090`:
+
 ```bash
-docker pull ivanmurzakdev/unity-mcp-server:0.17.1
-docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server:0.17.1
+docker run \
+  -e UNITY_MCP_PORT=9090 \
+  -p 9090:9090 \
+  ivanmurzakdev/unity-mcp-server:latest
 ```
 
-## Technical Details
+### Example: STDIO Mode
+STDIO mode is used when the MCP Client manages the Docker process directly.
 
-- **Base Image**: `mcr.microsoft.com/dotnet/aspnet:9.0`
-- **Build Image**: `mcr.microsoft.com/dotnet/sdk:9.0`
-- **Exposed Port**: 8080
-- **Framework**: .NET 9.0
+```bash
+docker run -i \
+  -e UNITY_MCP_CLIENT_TRANSPORT=stdio \
+  -p 8080:8080 \
+  ivanmurzakdev/unity-mcp-server:latest
+```
 
-The Docker image is built using multi-stage builds to optimize size and security.
+## 💻 Client Configuration
+
+To use the Dockerized server with your AI Client (e.g., Claude):
+
+### HTTP Mode (Recommended for Remote/Cloud)
+```json
+{
+  "mcpServers": {
+    "Unity-MCP": {
+      "url": "http://localhost:8080"
+    }
+  }
+}
+```
+
+### STDIO Mode (Managed by Client)
+```json
+{
+  "mcpServers": {
+    "Unity-MCP": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-i",
+        "--rm",
+        "-e", "UNITY_MCP_CLIENT_TRANSPORT=stdio",
+        "-p", "8080:8080",
+        "ivanmurzakdev/unity-mcp-server:latest"
+      ]
+    }
+  }
+}
+```
