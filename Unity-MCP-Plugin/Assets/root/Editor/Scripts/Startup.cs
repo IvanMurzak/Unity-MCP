@@ -38,6 +38,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             API.Tool_Tests.Init();
             UpdateChecker.Init();
             PackageUtils.Init();
+#if UNITY_EDITOR_LINUX
+            LinuxSecretStoreSetup.Init();
+#endif
         }
     }
 }

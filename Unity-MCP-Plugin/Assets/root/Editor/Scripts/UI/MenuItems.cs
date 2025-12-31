@@ -38,6 +38,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         [MenuItem("Tools/AI Game Developer/Open Server Log errors", priority = 1003)]
         public static void OpenServerLogErrors() => OpenFile(Startup.Server.ExecutableFolderPath + "/logs/server-log-error.txt");
 
+#if UNITY_EDITOR_LINUX
+        [MenuItem("Tools/AI Game Developer/Setup Linux Credential Store", priority = 1004)]
+        public static void SetupLinuxCredentialStore() => LinuxSecretStoreSetup.CheckFromMenu();
+#endif
+
         [MenuItem("Tools/AI Game Developer/Debug/Show Update Popup", priority = 2000)]
         public static void ShowUpdatePopup() => UpdatePopupWindow.ShowWindow(UnityMcpPlugin.Version, "99.99.99");
 
