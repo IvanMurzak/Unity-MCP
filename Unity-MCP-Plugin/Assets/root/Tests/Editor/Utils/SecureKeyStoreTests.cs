@@ -43,9 +43,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 SecureKeyStore.Set(key, value);
 
                 var read = SecureKeyStore.Get(key);
-                if (string.IsNullOrWhiteSpace(read))
-                    WarnInconclusive($"SMOKE: {platformName} secure store unavailable or blocked. Run with appropriate OS access to validate SecureKeyStore.");
-
+                Assert.IsFalse(string.IsNullOrWhiteSpace(read), $"Expected {platformName} secure store to return a value.");
                 Assert.AreEqual(value, read);
 
                 SecureKeyStore.Set(key, null);
