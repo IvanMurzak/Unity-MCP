@@ -1,7 +1,7 @@
 #nullable enable
 
 using System;
-using com.IvanMurzak.Unity.MCP.Runtime.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -21,33 +21,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         [Test]
-        public void RoundTrip_Windows()
+        public void RoundTrip_CurrentPlatform()
         {
-#if UNITY_EDITOR_WIN
-            RunRoundTrip("Windows Credential Manager");
-#else
-            WarnInconclusive("SMOKE: SecureKeyStore Windows test skipped. Run on Windows to validate Credential Manager integration.");
-#endif
-        }
+            if (!TryGetPlatformName(out var platformName, out var warning))
+            {
+                Debug.LogWarning(warning);
+                return;
+            }
 
-        [Test]
-        public void RoundTrip_Mac()
-        {
-#if UNITY_EDITOR_OSX
-            RunRoundTrip("macOS Keychain");
-#else
-            WarnInconclusive("SMOKE: SecureKeyStore macOS test skipped. Run on macOS to validate Keychain integration.");
-#endif
-        }
-
-        [Test]
-        public void RoundTrip_Linux()
-        {
-#if UNITY_EDITOR_LINUX
-            RunRoundTrip("Linux Secret Service");
-#else
-            WarnInconclusive("SMOKE: SecureKeyStore Linux test skipped. Run on Linux with secret-tool to validate Secret Service integration.");
-#endif
+            RunRoundTrip(platformName);
         }
 
         static void RunRoundTrip(string platformName)
@@ -76,10 +58,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             }
         }
 
-        static void WarnInconclusive(string message)
+        static bool TryGetPlatformName(out string platformName, out string warning)
         {
-            Debug.LogWarning(message);
-            Assert.Inconclusive(message);
+            switch (Application.platform)
+            {
+                case RuntimePlatform.WindowsEditor:
+                    platformName = "Windows Credential Manager";
+                    warning = string.Empty;
+                    return true;
+                case RuntimePlatform.OSXEditor:
+                    platformName = "macOS Keychain";
+                    warning = string.Empty;
+                    return true;
+                case RuntimePlatform.LinuxEditor:
+                    platformName = "Linux Secret Service";
+                    warning = string.Empty;
+                    return true;
+                default:
+                    platformName = string.Empty;
+                    warning = $"SMOKE: SecureKeyStore test skipped on {Application.platform}. Run on Windows/macOS/Linux to validate OS credential manager integration.";
+                    return false;
+            }
         }
     }
 }
