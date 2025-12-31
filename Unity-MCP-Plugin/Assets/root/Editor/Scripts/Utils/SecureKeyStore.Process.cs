@@ -35,7 +35,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 using var process = Process.Start(startInfo);
                 if (process == null)
                 {
-                    Debug.LogWarning($"[Warning] Secret store command '{fileName}' failed to start.");
+                    Debug.LogError($"Secret store command '{fileName}' failed to start.");
                     return null;
                 }
 
@@ -62,9 +62,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                     if (!ignoreNotFound)
                     {
                         var message = string.IsNullOrWhiteSpace(error)
-                            ? $"[Warning] Secret store command '{fileName}' failed with exit code {process.ExitCode}."
-                            : $"[Warning] Secret store command '{fileName}' failed with exit code {process.ExitCode}: {error.Trim()}";
-                        Debug.LogWarning(message);
+                            ? $"Secret store command '{fileName}' failed with exit code {process.ExitCode}."
+                            : $"Secret store command '{fileName}' failed with exit code {process.ExitCode}: {error.Trim()}";
+                        Debug.LogError(message);
                     }
 
                     return null;
@@ -77,11 +77,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 var root = ex.GetBaseException();
                 if (root is Win32Exception win32Ex && win32Ex.NativeErrorCode == 2)
                 {
-                    Debug.LogWarning($"[Warning] Secret store command '{fileName}' not found. Install the required tool to enable secure storage.");
+                    Debug.LogError($"Secret store command '{fileName}' not found. Install the required tool to enable secure storage.");
                 }
                 else
                 {
-                    Debug.LogWarning($"[Warning] Secret store command '{fileName}' failed: {root.GetType().Name} {root.Message}");
+                    Debug.LogError($"Secret store command '{fileName}' failed: {root.GetType().Name} {root.Message}");
                 }
 
                 return null;

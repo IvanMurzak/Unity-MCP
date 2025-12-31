@@ -4,9 +4,9 @@
 
 using System;
 using System.Runtime.InteropServices;
-using FILETIME = System.Runtime.InteropServices.ComTypes.FILETIME;
 using System.Text;
 using Debug = UnityEngine.Debug;
+using FILETIME = System.Runtime.InteropServices.ComTypes.FILETIME;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
@@ -56,7 +56,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             {
                 var error = Marshal.GetLastWin32Error();
                 if (error != ErrorNotFound)
-                    Debug.LogWarning($"[Warning] Credential read failed for {targetName} (error {error}).");
+                    Debug.LogError($"Credential read failed for {targetName} (error {error}).");
                 return null;
             }
 
@@ -105,7 +105,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 if (!CredWrite(ref credential, 0))
                 {
                     var error = Marshal.GetLastWin32Error();
-                    Debug.LogWarning($"[Warning] Credential write failed for {targetName} (error {error}).");
+                    Debug.LogError($"Credential write failed for {targetName} (error {error}).");
                 }
             }
             finally
@@ -125,7 +125,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             {
                 var error = Marshal.GetLastWin32Error();
                 if (error != ErrorNotFound)
-                    Debug.LogWarning($"[Warning] Credential delete failed for {targetName} (error {error}).");
+                    Debug.LogError($"Credential delete failed for {targetName} (error {error}).");
             }
         }
     }

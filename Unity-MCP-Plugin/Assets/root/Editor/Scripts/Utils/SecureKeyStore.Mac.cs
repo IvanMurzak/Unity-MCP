@@ -77,7 +77,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 if (result != 0)
                 {
                     if (result != ErrSecItemNotFound)
-                        Debug.LogWarning($"[Warning] Keychain read failed for {targetName} (error {result}).");
+                        Debug.LogError($"Keychain read failed for {targetName} (error {result}).");
                     return null;
                 }
 
@@ -129,13 +129,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                         passwordBytes);
 
                     if (modifyResult != 0)
-                        Debug.LogWarning($"[Warning] Keychain update failed for {targetName} (error {modifyResult}).");
+                        Debug.LogError($"Keychain update failed for {targetName} (error {modifyResult}).");
 
                     return;
                 }
 
                 if (lookupResult != 0 && lookupResult != ErrSecItemNotFound)
-                    Debug.LogWarning($"[Warning] Keychain lookup failed for {targetName} (error {lookupResult}).");
+                    Debug.LogError($"Keychain lookup failed for {targetName} (error {lookupResult}).");
 
                 var addResult = SecKeychainAddGenericPassword(
                     IntPtr.Zero,
@@ -151,7 +151,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                     CFRelease(addItemRef);
 
                 if (addResult != 0 && addResult != ErrSecDuplicateItem)
-                    Debug.LogWarning($"[Warning] Keychain write failed for {targetName} (error {addResult}).");
+                    Debug.LogError($"Keychain write failed for {targetName} (error {addResult}).");
             }
             finally
             {
@@ -185,13 +185,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 if (result != 0)
                 {
                     if (result != ErrSecItemNotFound)
-                        Debug.LogWarning($"[Warning] Keychain lookup failed for {targetName} (error {result}).");
+                        Debug.LogError($"Keychain lookup failed for {targetName} (error {result}).");
                     return;
                 }
 
                 var deleteResult = SecKeychainItemDelete(itemRef);
                 if (deleteResult != 0 && deleteResult != ErrSecItemNotFound)
-                    Debug.LogWarning($"[Warning] Keychain delete failed for {targetName} (error {deleteResult}).");
+                    Debug.LogError($"Keychain delete failed for {targetName} (error {deleteResult}).");
             }
             finally
             {
