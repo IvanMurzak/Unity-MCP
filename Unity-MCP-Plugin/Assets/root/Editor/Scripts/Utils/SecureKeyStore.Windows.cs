@@ -111,7 +111,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             finally
             {
                 Array.Clear(valueBytes, 0, valueBytes.Length);
-                Marshal.FreeHGlobal(valuePtr);
+                if (valuePtr != IntPtr.Zero)
+                {
+                    Marshal.Copy(valueBytes, 0, valuePtr, valueBytes.Length);
+                    Marshal.FreeHGlobal(valuePtr);
+                }
             }
         }
 

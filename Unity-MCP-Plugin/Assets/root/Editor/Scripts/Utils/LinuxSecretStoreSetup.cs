@@ -191,45 +191,44 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
         private static async Task<int> RunShellCommandAsync(string command)
         {
-            return await Task.Run(() =>
+            try
             {
-                try
+                var startInfo = new ProcessStartInfo
                 {
-                    var startInfo = new ProcessStartInfo
-                    {
-                        FileName = "/bin/bash",
-                        Arguments = "-lc " + QuoteForShell(command),
-                        UseShellExecute = false,
-                        RedirectStandardOutput = true,
-                        RedirectStandardError = true,
-                        CreateNoWindow = true
-                    };
+                    FileName = "/bin/bash",
+                    Arguments = "-lc " + QuoteForShell(command),
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true
+                };
 
-                    using var process = Process.Start(startInfo);
-                    if (process == null)
-                        return -1;
-
-                    var outputTask = process.StandardOutput.ReadToEndAsync();
-                    var errorTask = process.StandardError.ReadToEndAsync();
-                    process.WaitForExit();
-                    Task.WaitAll(outputTask, errorTask);
-                    var output = outputTask.Result;
-                    var error = errorTask.Result;
-
-                    if (!string.IsNullOrWhiteSpace(output))
-                        Debug.Log(output.Trim());
-
-                    if (!string.IsNullOrWhiteSpace(error))
-                        Debug.LogWarning(error.Trim());
-
-                    return process.ExitCode;
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogWarning($"[Warning] Linux package install failed: {ex.GetBaseException().Message}");
+                using var process = Process.Start(startInfo);
+                if (process == null)
                     return -1;
-                }
-            });
+
+                var outputTask = process.StandardOutput.ReadToEndAsync();
+                var errorTask = process.StandardError.ReadToEndAsync();
+                var waitTask = Task.Run(() => process.WaitForExit());
+
+                await Task.WhenAll(outputTask, errorTask, waitTask);
+
+                var output = await outputTask;
+                var error = await errorTask;
+
+                if (!string.IsNullOrWhiteSpace(output))
+                    Debug.Log(output.Trim());
+
+                if (!string.IsNullOrWhiteSpace(error))
+                    Debug.LogWarning(error.Trim());
+
+                return process.ExitCode;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[Warning] Linux package install failed: {ex.GetBaseException().Message}");
+                return -1;
+            }
         }
 
         private static bool IsRootUser()
@@ -259,6 +258,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             return null;
         }
 
+        // Bash-safe quoting for "bash -lc" command strings (not ProcessStartInfo arguments).
         private static string QuoteForShell(string value)
         {
             if (string.IsNullOrEmpty(value))

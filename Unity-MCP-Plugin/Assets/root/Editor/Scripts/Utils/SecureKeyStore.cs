@@ -9,6 +9,7 @@ See the LICENSE file in the project root for more information.
 using System;
 using System.Collections.Generic;
 using System.Text;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
@@ -89,10 +90,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 if (bytes.Length == 0)
                     return null;
 
-                var value = Encoding.UTF8.GetString(bytes);
-                Array.Clear(bytes, 0, bytes.Length);
-                inMemoryStore[targetName] = Encoding.UTF8.GetBytes(value);
-                return value;
+                var copy = new byte[bytes.Length];
+                Buffer.BlockCopy(bytes, 0, copy, 0, bytes.Length);
+                var value = Encoding.UTF8.GetString(copy);
+                Array.Clear(copy, 0, copy.Length);
+                return string.IsNullOrWhiteSpace(value) ? null : value;
             }
         }
 
@@ -125,29 +127,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             if (Application.isBatchMode)
                 return true;
 
-            return IsCiEnvironment();
+            return EnvironmentUtils.IsCi();
         }
 
-        static bool IsCiEnvironment()
+        internal static void SetInMemoryForTests(string key, string value)
         {
-            return HasEnvFlag("CI")
-                || HasEnvFlag("GITHUB_ACTIONS")
-                || HasEnvFlag("TF_BUILD")
-                || HasEnvFlag("BUILD_BUILDID")
-                || HasEnvFlag("JENKINS_URL")
-                || HasEnvFlag("TEAMCITY_VERSION")
-                || HasEnvFlag("GITLAB_CI");
+            if (string.IsNullOrWhiteSpace(key))
+                return;
+
+            SetInMemory(BuildTargetName(key), value);
         }
 
-        static bool HasEnvFlag(string name)
+        internal static string? GetInMemoryForTests(string key)
         {
-            var value = Environment.GetEnvironmentVariable(name);
-            if (string.IsNullOrWhiteSpace(value))
-                return false;
+            if (string.IsNullOrWhiteSpace(key))
+                return null;
 
-            return string.Equals(value, "1", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(value, "true", StringComparison.OrdinalIgnoreCase)
-                || string.Equals(value, "yes", StringComparison.OrdinalIgnoreCase);
+            return GetInMemory(BuildTargetName(key));
+        }
+
+        internal static void DeleteInMemoryForTests(string key)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+                return;
+
+            DeleteInMemory(BuildTargetName(key));
         }
     }
 }

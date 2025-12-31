@@ -31,6 +31,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             RunRoundTrip(platformName);
         }
 
+        [Test]
+        public void InMemoryStore_RoundTrip()
+        {
+            var key = $"unity-mcp-inmemory-{Guid.NewGuid():N}";
+            const string value = "inmemory-test";
+
+            try
+            {
+                SecureKeyStore.SetInMemoryForTests(key, value);
+                var read = SecureKeyStore.GetInMemoryForTests(key);
+                Assert.AreEqual(value, read);
+
+                SecureKeyStore.DeleteInMemoryForTests(key);
+                Assert.IsNull(SecureKeyStore.GetInMemoryForTests(key));
+            }
+            finally
+            {
+                Assert.DoesNotThrow(() => SecureKeyStore.DeleteInMemoryForTests(key));
+            }
+        }
+
         static void RunRoundTrip(string platformName)
         {
             var key = $"unity-mcp-test-{Guid.NewGuid():N}";
@@ -51,7 +72,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             }
             finally
             {
-                SecureKeyStore.Delete(key);
+                Assert.DoesNotThrow(() => SecureKeyStore.Delete(key));
             }
         }
 

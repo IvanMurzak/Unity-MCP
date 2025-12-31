@@ -41,7 +41,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
                 if (input != null)
                 {
+                    // Best-effort clearing; the caller string may still be alive in managed memory.
                     var inputBytes = Encoding.UTF8.GetBytes(input);
+                    input = null;
                     process.StandardInput.BaseStream.Write(inputBytes, 0, inputBytes.Length);
                     process.StandardInput.Flush();
                     process.StandardInput.Close();
@@ -51,7 +53,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 var outputTask = process.StandardOutput.ReadToEndAsync();
                 var errorTask = process.StandardError.ReadToEndAsync();
                 process.WaitForExit();
-                Task.WaitAll(outputTask, errorTask);
+                Task.WhenAll(outputTask, errorTask).GetAwaiter().GetResult();
                 var output = outputTask.Result;
                 var error = errorTask.Result;
 
@@ -103,6 +105,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             return builder.ToString();
         }
 
+        // Quote arguments for ProcessStartInfo.Arguments (not shell expansion).
         private static string QuoteArgument(string arg)
         {
             if (string.IsNullOrEmpty(arg))

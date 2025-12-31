@@ -37,6 +37,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             out IntPtr itemRef);
 
         [DllImport("/System/Library/Frameworks/Security.framework/Security")]
+        private static extern int SecKeychainItemModifyAttributesAndData(
+            IntPtr itemRef,
+            IntPtr attrList,
+            uint dataLength,
+            byte[] data);
+
+        [DllImport("/System/Library/Frameworks/Security.framework/Security")]
         private static extern int SecKeychainItemDelete(IntPtr itemRef);
 
         [DllImport("/System/Library/Frameworks/Security.framework/Security")]
@@ -95,15 +102,42 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
         private static void Write(string targetName, string value)
         {
-            DeleteInternal(targetName);
-
             var serviceLength = (uint)Encoding.UTF8.GetByteCount(ServiceName);
             var accountLength = (uint)Encoding.UTF8.GetByteCount(targetName);
             var passwordBytes = Encoding.UTF8.GetBytes(value);
+            IntPtr itemRef = IntPtr.Zero;
+            IntPtr passwordData = IntPtr.Zero;
 
             try
             {
-                var result = SecKeychainAddGenericPassword(
+                var lookupResult = SecKeychainFindGenericPassword(
+                    IntPtr.Zero,
+                    serviceLength,
+                    ServiceName,
+                    accountLength,
+                    targetName,
+                    out var passwordLength,
+                    out passwordData,
+                    out itemRef);
+
+                if (lookupResult == 0 && itemRef != IntPtr.Zero)
+                {
+                    var modifyResult = SecKeychainItemModifyAttributesAndData(
+                        itemRef,
+                        IntPtr.Zero,
+                        (uint)passwordBytes.Length,
+                        passwordBytes);
+
+                    if (modifyResult != 0)
+                        Debug.LogWarning($"[Warning] Keychain update failed for {targetName} (error {modifyResult}).");
+
+                    return;
+                }
+
+                if (lookupResult != 0 && lookupResult != ErrSecItemNotFound)
+                    Debug.LogWarning($"[Warning] Keychain lookup failed for {targetName} (error {lookupResult}).");
+
+                var addResult = SecKeychainAddGenericPassword(
                     IntPtr.Zero,
                     serviceLength,
                     ServiceName,
@@ -111,16 +145,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                     targetName,
                     (uint)passwordBytes.Length,
                     passwordBytes,
-                    out var itemRef);
+                    out var addItemRef);
+
+                if (addItemRef != IntPtr.Zero)
+                    CFRelease(addItemRef);
+
+                if (addResult != 0 && addResult != ErrSecDuplicateItem)
+                    Debug.LogWarning($"[Warning] Keychain write failed for {targetName} (error {addResult}).");
+            }
+            finally
+            {
+                if (passwordData != IntPtr.Zero)
+                    SecKeychainItemFreeContent(IntPtr.Zero, passwordData);
 
                 if (itemRef != IntPtr.Zero)
                     CFRelease(itemRef);
 
-                if (result != 0 && result != ErrSecDuplicateItem)
-                    Debug.LogWarning($"[Warning] Keychain write failed for {targetName} (error {result}).");
-            }
-            finally
-            {
                 Array.Clear(passwordBytes, 0, passwordBytes.Length);
             }
         }
