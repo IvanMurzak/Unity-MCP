@@ -11,13 +11,14 @@ using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using Extensions.Unity.PlayerPrefsEx;
 using UnityEditor;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
     public static class LinuxSecretStoreSetup
     {
         private const string SecretToolName = "secret-tool";
-        private static readonly PlayerPrefsBool DoNotAskAgain = new("Unity-MCP.LinuxSecretStore.DoNotAskAgain");
+        private static PlayerPrefsBool DoNotAskAgain = new("Unity-MCP.LinuxSecretStore.DoNotAskAgain");
         private static bool promptShownThisSession;
 
         public static void Init()
