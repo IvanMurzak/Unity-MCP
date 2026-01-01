@@ -14,7 +14,6 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
-using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
@@ -33,7 +32,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
         static readonly object InMemoryLock = new();
         static Dictionary<string, byte[]>? inMemoryStore;
-        static readonly bool UseInMemoryStore = IsHeadlessEnvironment();
+        static readonly bool UseInMemoryStore = ShouldUseInMemoryStore();
 
         public static string? Get(string key)
         {
@@ -126,9 +125,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
         }
 
-        static bool IsHeadlessEnvironment()
+        static bool ShouldUseInMemoryStore()
         {
-            return Application.isBatchMode;
+            var flag = Environment.GetEnvironmentVariable("UNITY_MCP_USE_IN_MEMORY_KEYSTORE");
+            if (string.IsNullOrWhiteSpace(flag))
+                return false;
+
+            return string.Equals(flag, "1", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(flag, "true", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(flag, "yes", StringComparison.OrdinalIgnoreCase);
         }
 
         internal static void SetInMemoryForTests(string key, string value)
