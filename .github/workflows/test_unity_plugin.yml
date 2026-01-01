@@ -78,6 +78,19 @@ jobs:
         run: echo "image=unityci/editor:ubuntu-${{ inputs.unityVersion }}-${{ matrix.platform }}-3" >> $GITHUB_OUTPUT
         shell: bash
 
+      - name: Install libsecret tools in Unity image
+        id: custom_image_with_secret
+        run: |
+          base_image="${{ steps.custom_image.outputs.image }}"
+          derived_image="${base_image}-libsecret"
+          docker pull "$base_image"
+          docker run --name unity-libsecret -d "$base_image" sleep infinity
+          docker exec unity-libsecret bash -lc "apt-get update && apt-get install -y libsecret-tools"
+          docker commit unity-libsecret "$derived_image"
+          docker rm -f unity-libsecret
+          echo "image=$derived_image" >> $GITHUB_OUTPUT
+        shell: bash
+
       - uses: game-ci/unity-test-runner@v4
         id: tests
         env:
@@ -88,7 +101,7 @@ jobs:
           projectPath:    ${{ inputs.projectPath }}
           unityVersion:   ${{ inputs.unityVersion }}
           testMode:       ${{ inputs.testMode }}
-          customImage:    ${{ steps.custom_image.outputs.image }}
+          customImage:    ${{ steps.custom_image_with_secret.outputs.image }}
           githubToken:    ${{ secrets.GITHUB_TOKEN }}
           checkName:      ${{ inputs.unityVersion }} ${{ inputs.testMode }} ${{ matrix.platform }} Test Results
           artifactsPath:  artifacts-${{ inputs.unityVersion }}-${{ inputs.testMode }}-${{ matrix.platform }}
