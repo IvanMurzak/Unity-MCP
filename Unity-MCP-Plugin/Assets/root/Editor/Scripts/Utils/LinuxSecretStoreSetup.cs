@@ -18,6 +18,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
     public static class LinuxSecretStoreSetup
     {
         private const string SecretToolName = "secret-tool";
+        private const string DbusLaunchName = "dbus-launch";
         private static PlayerPrefsBool DoNotAskAgain = new("Unity-MCP.LinuxSecretStore.DoNotAskAgain");
         private static bool promptShownThisSession;
 
@@ -51,14 +52,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
             promptShownThisSession = true;
 
-            if (IsSecretToolAvailable())
+            if (IsSecretStoreReady())
             {
                 if (showSuccess)
-                    EditorUtility.DisplayDialog("AI Game Developer", "Linux credential store is ready. 'secret-tool' is available.", "OK");
+                    EditorUtility.DisplayDialog("AI Game Developer", "Linux credential store is ready. 'secret-tool' and 'dbus-launch' are available.", "OK");
                 return;
             }
 
-            var message = "Linux credential storage requires the 'secret-tool' utility (libsecret).\n\nInstall it now?";
+            var message = "Linux credential storage requires 'secret-tool' (libsecret) and 'dbus-launch' (dbus-x11).\n\nInstall them now?";
             var choice = EditorUtility.DisplayDialogComplex(
                 "AI Game Developer",
                 message,
@@ -76,6 +77,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 return;
 
             _ = InstallPackagesAsync();
+        }
+
+        private static bool IsSecretStoreReady()
+        {
+            return IsSecretToolAvailable() && IsDbusLaunchAvailable();
         }
 
         private static bool IsSecretToolAvailable()
@@ -99,6 +105,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             return false;
         }
 
+        private static bool IsDbusLaunchAvailable()
+        {
+            if (FindExecutableInPath(DbusLaunchName) != null)
+                return true;
+
+            var commonPaths = new[]
+            {
+                "/usr/bin/dbus-launch",
+                "/usr/local/bin/dbus-launch",
+                "/bin/dbus-launch"
+            };
+
+            foreach (var path in commonPaths)
+            {
+                if (File.Exists(path))
+                    return true;
+            }
+
+            return false;
+        }
+
         private static async Task InstallPackagesAsync()
         {
             if (!TryBuildInstallCommand(out var installCommand, out var manualCommand))
@@ -107,15 +134,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 {
                     EditorUtility.DisplayDialog(
                         "AI Game Developer",
-                        "No supported package manager was detected. Please install 'secret-tool' (libsecret) manually.",
+                        "No supported package manager was detected. Please install 'secret-tool' and 'dbus-launch' manually.",
                         "OK");
-                    Debug.LogWarning("Install 'secret-tool' manually. Example command:\n" + manualCommand);
+                    Debug.LogWarning("Install 'secret-tool' and 'dbus-launch' manually. Example command:\n" + manualCommand);
                 };
                 return;
             }
 
             var exitCode = await RunShellCommandAsync(installCommand);
-            var installed = IsSecretToolAvailable();
+            var installed = IsSecretStoreReady();
 
             EditorApplication.delayCall += () =>
             {
@@ -123,14 +150,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 {
                     EditorUtility.DisplayDialog(
                         "AI Game Developer",
-                        "'secret-tool' was installed successfully.",
+                        "'secret-tool' and 'dbus-launch' were installed successfully.",
                         "OK");
                 }
                 else
                 {
                     EditorUtility.DisplayDialog(
                         "AI Game Developer",
-                        "Install did not complete successfully. Please install 'secret-tool' manually.",
+                        "Install did not complete successfully. Please install 'secret-tool' and 'dbus-launch' manually.",
                         "OK");
                     Debug.LogWarning("Manual install command:\n" + manualCommand);
                 }
@@ -140,7 +167,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         private static bool TryBuildInstallCommand(out string installCommand, out string manualCommand)
         {
             installCommand = string.Empty;
-            manualCommand = "Install 'secret-tool' (libsecret) using your distro package manager.";
+            manualCommand = "Install 'secret-tool' (libsecret) and 'dbus-launch' (dbus-x11) using your distro package manager.";
 
             var baseCommand = BuildBaseInstallCommand();
             if (string.IsNullOrWhiteSpace(baseCommand))
@@ -172,19 +199,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         private static string BuildBaseInstallCommand()
         {
             if (FindExecutableInPath("apt-get") != null)
-                return "apt-get update && apt-get install -y libsecret-tools";
+                return "apt-get update && apt-get install -y libsecret-tools dbus-x11";
 
             if (FindExecutableInPath("dnf") != null)
-                return "dnf install -y libsecret";
+                return "dnf install -y libsecret dbus-x11";
 
             if (FindExecutableInPath("yum") != null)
-                return "yum install -y libsecret";
+                return "yum install -y libsecret dbus-x11";
 
             if (FindExecutableInPath("pacman") != null)
-                return "pacman -Sy --noconfirm libsecret";
+                return "pacman -Sy --noconfirm libsecret dbus";
 
             if (FindExecutableInPath("zypper") != null)
-                return "zypper install -y libsecret-tools";
+                return "zypper install -y libsecret-tools dbus-1-x11";
 
             return string.Empty;
         }
