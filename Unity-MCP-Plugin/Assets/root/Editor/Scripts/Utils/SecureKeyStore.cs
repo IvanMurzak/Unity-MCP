@@ -128,10 +128,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
         static bool IsHeadlessEnvironment()
         {
-            if (Application.isBatchMode)
-                return true;
-
-            return EnvironmentUtils.IsCi();
+            return Application.isBatchMode;
         }
 
         internal static void SetInMemoryForTests(string key, string value)
