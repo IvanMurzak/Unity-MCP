@@ -1,6 +1,7 @@
 #nullable enable
 
 using System;
+using System.Diagnostics;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using NUnit.Framework;
 using UnityEngine;
@@ -90,12 +91,67 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     return true;
                 case RuntimePlatform.LinuxEditor:
                     platformName = "Linux Secret Service";
+                    if (!IsLinuxSecretServiceAvailable(out warning))
+                        return false;
                     warning = string.Empty;
                     return true;
                 default:
                     platformName = string.Empty;
                     warning = $"SMOKE: SecureKeyStore test skipped on {Application.platform}. Run on Windows/macOS/Linux to validate OS credential manager integration.";
                     return false;
+            }
+        }
+
+        static bool IsLinuxSecretServiceAvailable(out string warning)
+        {
+            warning = string.Empty;
+
+            try
+            {
+                var startInfo = new ProcessStartInfo
+                {
+                    FileName = "secret-tool",
+                    Arguments = "lookup service com.ivanmurzak.unity.mcp account unity-mcp-test",
+                    UseShellExecute = false,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    CreateNoWindow = true
+                };
+
+                using var process = Process.Start(startInfo);
+                if (process == null)
+                {
+                    warning = "Linux Secret Service unavailable: failed to start secret-tool.";
+                    return false;
+                }
+
+                var output = process.StandardOutput.ReadToEnd();
+                var error = process.StandardError.ReadToEnd();
+                process.WaitForExit();
+
+                if (!string.IsNullOrWhiteSpace(error))
+                {
+                    var trimmedError = error.Trim();
+                    if (trimmedError.Contains("org.freedesktop.secrets", StringComparison.OrdinalIgnoreCase))
+                    {
+                        warning = $"Linux Secret Service unavailable: {trimmedError}";
+                        return false;
+                    }
+
+                    if (trimmedError.Contains("not found", StringComparison.OrdinalIgnoreCase))
+                    {
+                        warning = $"Linux Secret Service unavailable: {trimmedError}";
+                        return false;
+                    }
+                }
+
+                _ = output;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                warning = $"Linux Secret Service unavailable: {ex.GetBaseException().Message}";
+                return false;
             }
         }
     }
