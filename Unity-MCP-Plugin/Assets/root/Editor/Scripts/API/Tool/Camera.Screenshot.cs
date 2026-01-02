@@ -92,7 +92,7 @@ Returns the image directly for visual inspection by the LLM.")]
             var pngBytes = tex.EncodeToPNG();
             Object.DestroyImmediate(tex);
 
-            return ResponseCallTool.Image(pngBytes, Consts.MimeType.ImagePng,
+            return ResponseCallTool.Image(pngBytes, com.IvanMurzak.McpPlugin.Common.Consts.MimeType.ImagePng,
                 $"Screenshot from camera '{camera.name}' ({width}x{height})");
         });
     }
