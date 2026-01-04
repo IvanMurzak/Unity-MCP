@@ -1,7 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="True">
     <ui:VisualElement class="container" style="min-width: 320px; flex-grow: 1;">
         <ui:Foldout text="Information" value="false" class="base-foldout">
-            <ui:Label text="Test object serialization using the &lt;b&gt;&lt;color=red&gt;AI&lt;/color&gt; Game Developer&lt;/b&gt; and &lt;b&gt;ReflectorNet&lt;/b&gt;.&#10;&#10;If you need to see detailed logs change the &lt;b&gt;Log Level&lt;/b&gt; in the &lt;b&gt;&lt;color=red&gt;AI&lt;/color&gt; Game Developer&lt;/b&gt; window." class="section-desc" />
+            <ui:Label text="This window helps debug how Unity objects are serialized to JSON for AI consumption.&#10;&#10;&lt;b&gt;ReflectorNet&lt;/b&gt; converts Unity objects (GameObjects, Components, Assets, ScriptableObjects) into structured JSON that AI can understand and work with.&#10;&#10;&lt;b&gt;Target&lt;/b&gt;: Drag any Unity object to test its serialization.&#10;&lt;b&gt;Recursive&lt;/b&gt;: When enabled, serializes child objects and nested references. Disable for a shallow view.&#10;&#10;Use this tool to diagnose serialization issues when AI tools report errors or unexpected data.&#10;&#10;For detailed logs, set &lt;b&gt;Log Level&lt;/b&gt; to Debug in the &lt;b&gt;&lt;color=red&gt;AI&lt;/color&gt; Game Developer&lt;/b&gt; window." class="section-desc" />
         </ui:Foldout>
 
         <ui:VisualElement class="divider" />
