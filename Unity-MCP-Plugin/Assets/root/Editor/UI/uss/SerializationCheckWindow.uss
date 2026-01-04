@@ -12,7 +12,6 @@
 .output-scroll-view {
     background-color: rgba(0, 0, 0, 0.2);
     border-radius: 8px;
-    padding: 8px;
     margin-top: 4px;
 }
 
@@ -20,6 +19,7 @@
     flex-grow: 1;
     white-space: normal;
     -unity-text-align: upper-left;
+    padding: 8px;
 }
 
 .output-field #unity-text-input {
