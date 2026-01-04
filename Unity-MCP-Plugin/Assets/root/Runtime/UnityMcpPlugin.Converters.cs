@@ -11,6 +11,7 @@
 #nullable enable
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Converter;
+using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.JsonConverters;
 using com.IvanMurzak.Unity.MCP.Reflection.Converter;
 
@@ -60,6 +61,26 @@ namespace com.IvanMurzak.Unity.MCP
             reflector.Converters.Add(new UnityEngine_Material_ReflectionConverter());
             reflector.Converters.Add(new UnityEngine_Texture_ReflectionConverter());
             reflector.Converters.Add(new UnityEngine_Sprite_ReflectionConverter());
+            reflector.Converters.Add(new UnityEngine_TextAsset_ReflectionConverter());
+
+            // Blacklist types
+            // ---------------------------------------------------------
+#if UNITY_2023_1_OR_NEWER
+            reflector.Converters.BlacklistType(typeof(UnityEngine.LowLevelPhysics.GeometryHolder));
+#endif
+            // Redundant text data
+            reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.Glyph));
+            reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.GlyphRect));
+            reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.GlyphMetrics));
+
+            // TextMeshPro types
+            var tmpTextElementType = TypeUtils.GetType("TMPro.TMP_TextElement");
+            if (tmpTextElementType != null)
+                reflector.Converters.BlacklistType(tmpTextElementType);
+
+            var tmpFontFeatureTableType = TypeUtils.GetType("TMPro.TMP_FontFeatureTable");
+            if (tmpFontFeatureTableType != null)
+                reflector.Converters.BlacklistType(tmpFontFeatureTableType);
 
             // Json Converters
             // ---------------------------------------------------------
@@ -84,12 +105,6 @@ namespace com.IvanMurzak.Unity.MCP
             reflector.JsonSerializer.AddConverter(new AssetObjectRefConverter());
             reflector.JsonSerializer.AddConverter(new GameObjectRefConverter());
             reflector.JsonSerializer.AddConverter(new ComponentRefConverter());
-
-            // Blacklist types
-            // ---------------------------------------------------------
-#if UNITY_2023_1_OR_NEWER
-            reflector.Converters.BlacklistType(typeof(UnityEngine.LowLevelPhysics.GeometryHolder));
-#endif
 
             return reflector;
         }
