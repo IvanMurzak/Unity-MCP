@@ -387,6 +387,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             SetupSocialButton(root, "btnGitHubStar", "btnGitHubStarIcon", starIcon, URL_GitHub, "Star on GitHub");
             SetupSocialButton(root, "btnGitHubIssue", "btnGitHubIssueIcon", githubIcon, URL_GitHubIssues, "Report an issue on GitHub");
             SetupSocialButton(root, "btnDiscordHelp", "btnDiscordHelpIcon", discordIcon, URL_Discord, "Get help on Discord");
+
+            // Debug buttons
+            // -----------------------------------------------------------------
+            var btnCheckSerialization = root.Query<Button>("btnCheckSerialization").First();
+            if (btnCheckSerialization != null)
+            {
+                btnCheckSerialization.tooltip = "Open Serialization Check window";
+                btnCheckSerialization.RegisterCallback<ClickEvent>(evt => SerializationCheckWindow.ShowWindow());
+            }
         }
 
         private static void SetupSocialButton(VisualElement root, string buttonName, string iconName, Texture2D? icon, string url, string tooltip)
