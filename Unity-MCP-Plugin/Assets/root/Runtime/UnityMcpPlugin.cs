@@ -11,6 +11,7 @@
 #nullable enable
 
 using System;
+using com.IvanMurzak.ReflectorNet;
 using R3;
 
 namespace com.IvanMurzak.Unity.MCP
@@ -23,6 +24,7 @@ namespace com.IvanMurzak.Unity.MCP
 
         public UnityLogCollector? LogCollector { get; protected set; } = null;
 
+        public Reflector? Reflector => McpPluginInstance?.McpManager.Reflector;
         public McpPlugin.IToolManager? Tools => McpPluginInstance?.McpManager.ToolManager;
         public McpPlugin.IPromptManager? Prompts => McpPluginInstance?.McpManager.PromptManager;
         public McpPlugin.IResourceManager? Resources => McpPluginInstance?.McpManager.ResourceManager;

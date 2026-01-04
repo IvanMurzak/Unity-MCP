@@ -1,0 +1,40 @@
+/* ==========================================================================
+   Serialization Check Window Styles
+   Imports common styles and adds window-specific customizations
+   ========================================================================== */
+
+@import url("common/_base.uss");
+@import url("common/_typography.uss");
+@import url("common/_buttons.uss");
+@import url("common/_forms.uss");
+
+/* Output Section */
+.output-scroll-view {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 8px;
+    margin-top: 4px;
+}
+
+.output-field {
+    flex-grow: 1;
+    white-space: normal;
+    -unity-text-align: upper-left;
+}
+
+.output-field #unity-text-input {
+    background-color: transparent;
+    border-width: 0;
+    padding: 0;
+    white-space: normal;
+    -unity-text-align: upper-left;
+    color: rgb(180, 180, 180);
+    font-size: 12px;
+}
+
+.output-field .unity-text-field__input {
+    background-color: transparent;
+    border-width: 0;
+    padding: 0;
+    white-space: normal;
+}

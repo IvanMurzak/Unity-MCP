@@ -48,6 +48,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             Debug.Log("Update preferences have been reset.");
         }
 
+        [MenuItem("Tools/AI Game Developer/Debug/Serialization Check", priority = 2002)]
+        public static void ShowSerializationCheck() => SerializationCheckWindow.ShowWindow();
+
         static void OpenFile(string path)
         {
             if (!File.Exists(path))
