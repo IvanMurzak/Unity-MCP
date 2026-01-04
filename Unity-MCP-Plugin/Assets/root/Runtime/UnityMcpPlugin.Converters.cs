@@ -69,6 +69,15 @@ namespace com.IvanMurzak.Unity.MCP
             reflector.Converters.BlacklistType(typeof(UnityEngine.LowLevelPhysics.GeometryHolder));
 #endif
             // Redundant text data
+            reflector.Converters.BlacklistType(typeof(UnityEngine.Font));
+            reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.Text.TextElement));
+            reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.Text.FontFeatureTable));
+            reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.Text.SpriteGlyph));
+            reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.Text.TextFontWeight));
+            reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.Text.Character));
+            reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.Text.SpriteCharacter));
+            reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.Text.SpriteGlyph));
+            reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.Text.TextShaderUtilities));
             reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.Glyph));
             reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.GlyphRect));
             reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.GlyphMetrics));
@@ -82,8 +91,26 @@ namespace com.IvanMurzak.Unity.MCP
             if (tmpFontFeatureTableType != null)
                 reflector.Converters.BlacklistType(tmpFontFeatureTableType);
 
+            var tmpFontWeightPairType = TypeUtils.GetType("TMPro.TMP_FontWeightPair");
+            if (tmpFontWeightPairType != null)
+                reflector.Converters.BlacklistType(tmpFontWeightPairType);
+
+            var tmpFontAssetCreationSettingsType = TypeUtils.GetType("TMPro.FontAssetCreationSettings");
+            if (tmpFontAssetCreationSettingsType != null)
+                reflector.Converters.BlacklistType(tmpFontAssetCreationSettingsType);
+
+            var tmpFaceInfo_LegacyType = TypeUtils.GetType("TMPro.FaceInfo_Legacy");
+            if (tmpFaceInfo_LegacyType != null)
+                reflector.Converters.BlacklistType(tmpFaceInfo_LegacyType);
+
+            var tmpTMP_CharacterType = TypeUtils.GetType("TMPro.TMP_Character");
+            if (tmpTMP_CharacterType != null)
+                reflector.Converters.BlacklistType(tmpTMP_CharacterType);
+
             // Json Converters
             // ---------------------------------------------------------
+
+            reflector.JsonSerializer.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
 
             // Unity types
             reflector.JsonSerializer.AddConverter(new Color32Converter());
