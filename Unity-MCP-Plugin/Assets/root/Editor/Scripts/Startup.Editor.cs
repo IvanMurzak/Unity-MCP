@@ -36,6 +36,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 UnityMcpPlugin.Instance.DisconnectImmediate();
                 UnityMcpPlugin.Instance.LogCollector?.Save();
                 UnityMcpPlugin.Instance.LogCollector?.Dispose();
+                UnityMcpPlugin.Instance.LogCollector = null;
             }
             else
             {
@@ -50,6 +51,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 UnityMcpPlugin.Instance.DisconnectImmediate();
                 UnityMcpPlugin.Instance.LogCollector?.Save();
                 UnityMcpPlugin.Instance.LogCollector?.Dispose();
+                UnityMcpPlugin.Instance.LogCollector = null;
             }
             else
             {
@@ -64,6 +66,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 UnityMcpPlugin.Instance.DisconnectImmediate();
                 UnityMcpPlugin.Instance.LogCollector?.Save();
                 UnityMcpPlugin.Instance.LogCollector?.Dispose();
+                UnityMcpPlugin.Instance.LogCollector = null;
             }
             else
             {

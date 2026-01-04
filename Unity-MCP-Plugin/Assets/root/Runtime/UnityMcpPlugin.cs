@@ -22,7 +22,7 @@ namespace com.IvanMurzak.Unity.MCP
 
         protected readonly CompositeDisposable _disposables = new();
 
-        public UnityLogCollector? LogCollector { get; protected set; } = null;
+        public UnityLogCollector? LogCollector { get; set; } = null;
 
         public Reflector? Reflector => McpPluginInstance?.McpManager.Reflector;
         public McpPlugin.IToolManager? Tools => McpPluginInstance?.McpManager.ToolManager;
