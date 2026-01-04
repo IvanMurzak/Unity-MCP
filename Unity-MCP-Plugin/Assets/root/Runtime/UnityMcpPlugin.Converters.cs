@@ -110,8 +110,6 @@ namespace com.IvanMurzak.Unity.MCP
             // Json Converters
             // ---------------------------------------------------------
 
-            reflector.JsonSerializer.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.Preserve;
-
             // Unity types
             reflector.JsonSerializer.AddConverter(new Color32Converter());
             reflector.JsonSerializer.AddConverter(new ColorConverter());
