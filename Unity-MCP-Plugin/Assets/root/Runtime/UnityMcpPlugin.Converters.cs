@@ -83,77 +83,13 @@ namespace com.IvanMurzak.Unity.MCP
             if (tmpFontFeatureTableType != null)
                 reflector.Converters.BlacklistType(tmpFontFeatureTableType); // Heavy font data
 
-            // var tmpFontWeightPairType = TypeUtils.GetType("TMPro.TMP_FontWeightPair");
-            // if (tmpFontWeightPairType != null)
-            //     reflector.Converters.BlacklistType(tmpFontWeightPairType); // Heavy font data
+            var tmpFontWeightPairType = TypeUtils.GetType("TMPro.TMP_FontWeightPair");
+            if (tmpFontWeightPairType != null)
+                reflector.Converters.BlacklistType(tmpFontWeightPairType); // Heavy font data
 
-            // var tmpFontAssetCreationSettingsType = TypeUtils.GetType("TMPro.FontAssetCreationSettings");
-            // if (tmpFontAssetCreationSettingsType != null)
-            //     reflector.Converters.BlacklistType(tmpFontAssetCreationSettingsType); // Heavy font data
-
-            // var tmpFaceInfo_LegacyType = TypeUtils.GetType("TMPro.FaceInfo_Legacy");
-            // if (tmpFaceInfo_LegacyType != null)
-            //     reflector.Converters.BlacklistType(tmpFaceInfo_LegacyType); // Heavy font data
-
-            // var tmpTMP_CharacterType = TypeUtils.GetType("TMPro.TMP_Character");
-            // if (tmpTMP_CharacterType != null)
-            //     reflector.Converters.BlacklistType(tmpTMP_CharacterType); // Heavy text data
-
-            // var tmpFontAssetType = TypeUtils.GetType("TMPro.TMP_FontAsset");
-            // if (tmpFontAssetType != null)
-            //     reflector.Converters.BlacklistType(tmpFontAssetType); // Circular references in fallback tables
-
-            // var tmpTextInfoType = TypeUtils.GetType("TMPro.TMP_TextInfo");
-            // if (tmpTextInfoType != null)
-            //     reflector.Converters.BlacklistType(tmpTextInfoType); // Heavy text data
-
-            // var tmpTMP_SpriteAnimatorType = TypeUtils.GetType("TMPro.TMP_SpriteAnimator");
-            // if (tmpTMP_SpriteAnimatorType != null)
-            //     reflector.Converters.BlacklistType(tmpTMP_SpriteAnimatorType); // Heavy text data
-
-            // var tmpSpriteAssetType = TypeUtils.GetType("TMPro.TMP_SpriteAsset");
-            // if (tmpSpriteAssetType != null)
-            //     reflector.Converters.BlacklistType(tmpSpriteAssetType); // Circular references in fallback tables
-
-            // var tmpSpriteCharacterType = TypeUtils.GetType("TMPro.TMP_SpriteCharacter");
-            // if (tmpSpriteCharacterType != null)
-            //     reflector.Converters.BlacklistType(tmpSpriteCharacterType); // Heavy sprite data
-
-            // var tmpSpriteGlyphType = TypeUtils.GetType("TMPro.TMP_SpriteGlyph");
-            // if (tmpSpriteGlyphType != null)
-            //     reflector.Converters.BlacklistType(tmpSpriteGlyphType); // Heavy sprite data
-
-            // var tmpTMP_SpriteType = TypeUtils.GetType("TMPro.TMP_Sprite");
-            // if (tmpTMP_SpriteType != null)
-            //     reflector.Converters.BlacklistType(tmpTMP_SpriteType); // Heavy sprite data
-
-            // var tmpTMP_GlyphType = TypeUtils.GetType("TMPro.TMP_Glyph");
-            // if (tmpTMP_GlyphType != null)
-            //     reflector.Converters.BlacklistType(tmpTMP_GlyphType); // Heavy font data
-
-            // var tmpKerningTableType = TypeUtils.GetType("TMPro.KerningTable");
-            // if (tmpKerningTableType != null)
-            //     reflector.Converters.BlacklistType(tmpKerningTableType); // Heavy font data
-
-            // var tmpKerningPairType = TypeUtils.GetType("TMPro.KerningPair");
-            // if (tmpKerningPairType != null)
-            //     reflector.Converters.BlacklistType(tmpKerningPairType); // Heavy font data
-
-            // var tmpColorGradientType = TypeUtils.GetType("TMPro.TMP_ColorGradient");
-            // if (tmpColorGradientType != null)
-            //     reflector.Converters.BlacklistType(tmpColorGradientType); // Heavy asset data
-
-            // var tmpStyleSheetType = TypeUtils.GetType("TMPro.TMP_StyleSheet");
-            // if (tmpStyleSheetType != null)
-            //     reflector.Converters.BlacklistType(tmpStyleSheetType); // Heavy asset data
-
-            // var tmpStyleType = TypeUtils.GetType("TMPro.TMP_Style");
-            // if (tmpStyleType != null)
-            //     reflector.Converters.BlacklistType(tmpStyleType); // Heavy asset data
-
-            // var tmpSettingsType = TypeUtils.GetType("TMPro.TMP_Settings");
-            // if (tmpSettingsType != null)
-            //     reflector.Converters.BlacklistType(tmpSettingsType); // Contains global fallback lists
+            var tmpFaceInfo_LegacyType = TypeUtils.GetType("TMPro.FaceInfo_Legacy");
+            if (tmpFaceInfo_LegacyType != null)
+                reflector.Converters.BlacklistType(tmpFaceInfo_LegacyType); // Heavy font data
 
             // Json Converters
             // ---------------------------------------------------------
