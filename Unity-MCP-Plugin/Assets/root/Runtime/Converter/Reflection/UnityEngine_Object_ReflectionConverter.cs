@@ -29,7 +29,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
     public class UnityEngine_Object_ReflectionConverter : UnityEngine_Object_ReflectionConverter<UnityEngine.Object> { }
     public partial class UnityEngine_Object_ReflectionConverter<T> : UnityGenericReflectionConverter<T> where T : UnityEngine.Object
     {
-        public override bool AllowCascadePropertiesConversion => false;
+        public override bool AllowCascadePropertiesConversion => true;
         public override bool AllowSetValue => true;
 
         protected virtual IEnumerable<string> RestrictedInValuePropertyNames(Reflector reflector, JsonElement valueJsonElement) => new[]
@@ -106,7 +106,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             Reflector reflector,
             ref object? obj,
             SerializedMember data,
-            Type? fallbackType = null,
+            Type type,
             int depth = 0,
             Logs? logs = null,
             BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
@@ -119,7 +119,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 reflector: reflector,
                 obj: ref obj,
                 data: data,
-                fallbackType: fallbackType,
+                type: type,
                 depth: depth,
                 logs: logs,
                 flags: flags,
@@ -131,7 +131,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 reflector: reflector,
                 obj: ref obj,
                 data: data,
-                fallbackType: fallbackType,
+                type: type,
                 depth: depth,
                 logs: logs,
                 flags: flags,
@@ -142,7 +142,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             Reflector reflector,
             ref object? obj,
             SerializedMember data,
-            Type? fallbackType = null,
+            Type type,
             int depth = 0,
             Logs? logs = null,
             BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,

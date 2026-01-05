@@ -19,7 +19,13 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
     public partial class UnityGenericNoPropertiesReflectionConverter<T> : UnityGenericReflectionConverter<T>
     {
-        public override IEnumerable<PropertyInfo>? GetSerializableProperties(Reflector reflector, Type objType, BindingFlags flags, ILogger? logger = null)
-            => null;
+        protected override IEnumerable<PropertyInfo>? GetSerializablePropertiesInternal(
+            Reflector reflector,
+            Type objType,
+            BindingFlags flags,
+            ILogger? logger = null)
+        {
+            return null;
+        }
     }
 }
