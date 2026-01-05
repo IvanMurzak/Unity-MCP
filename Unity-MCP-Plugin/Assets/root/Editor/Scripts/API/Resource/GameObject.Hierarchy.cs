@@ -56,7 +56,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         fallbackType: typeof(GameObject),
                         recursive: false,
                         logger: UnityLoggerFactory.LoggerFactory.CreateLogger<Resource_GameObject>()
-                    ).ToJson(reflector)
+                    ).ToJson(reflector) ?? string.Empty
                 ).MakeArray();
             });
         }
