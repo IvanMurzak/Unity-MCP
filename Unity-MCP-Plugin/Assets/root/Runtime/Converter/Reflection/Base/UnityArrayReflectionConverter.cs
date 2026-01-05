@@ -22,7 +22,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
     public partial class UnityArrayReflectionConverter : ArrayReflectionConverter
     {
-        public override IEnumerable<FieldInfo>? GetSerializableFields(Reflector reflector, Type objType, BindingFlags flags, ILogger? logger = null)
+        protected override IEnumerable<FieldInfo>? GetSerializableFieldsInternal(Reflector reflector, Type objType, BindingFlags flags, ILogger? logger = null)
         {
             return objType.GetFields(flags)
                 .Where(field => field.GetCustomAttribute<ObsoleteAttribute>() == null)

@@ -9,23 +9,19 @@
 */
 
 #nullable enable
-using System;
+
 using System.Collections.Generic;
-using System.Reflection;
-using com.IvanMurzak.ReflectorNet;
-using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
-    public partial class UnityGenericNoPropertiesReflectionConverter<T> : UnityGenericReflectionConverter<T>
+    public partial class UnityEngine_TextAsset_ReflectionConverter : UnityEngine_Asset_ReflectionConverter<UnityEngine.TextAsset>
     {
-        protected override IEnumerable<PropertyInfo>? GetSerializablePropertiesInternal(
-            Reflector reflector,
-            Type objType,
-            BindingFlags flags,
-            ILogger? logger = null)
+        protected override IEnumerable<string> GetIgnoredProperties()
         {
-            return null;
+            foreach (var property in base.GetIgnoredProperties())
+                yield return property;
+
+            yield return nameof(UnityEngine.TextAsset.bytes);
         }
     }
 }
