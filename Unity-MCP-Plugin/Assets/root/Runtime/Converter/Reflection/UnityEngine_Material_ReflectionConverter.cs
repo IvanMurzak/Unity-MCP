@@ -151,15 +151,14 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                     UnityEngine.Rendering.ShaderPropertyType.Color => typeof(Color),
                     UnityEngine.Rendering.ShaderPropertyType.Vector => typeof(Vector4),
                     UnityEngine.Rendering.ShaderPropertyType.Texture => typeof(Texture),
-                    _ => throw new NotSupportedException($"Unsupported shader property type: '{shader.GetPropertyType(i)}'."
-                        + " Supported types are: Int, Float, Range, Color, Vector, Texture.")
+                    _ => null
                 };
                 if (propType == null)
                 {
                     if (logger?.IsEnabled(LogLevel.Warning) == true)
                         logger.LogWarning($"{padding}Material property '{propName}' has unsupported type '{shader.GetPropertyType(i)}'.");
 
-                    logs?.Warning($"Material property '{propName}' has unsupported type '{shader.GetPropertyType(i)}'.", depth);
+                    logs?.Warning($"Material property '{propName}' has unsupported type '{shader.GetPropertyType(i)}'. Supported types: Int, Float, Range, Color, Vector, Texture", depth);
 
                     continue;
                 }
