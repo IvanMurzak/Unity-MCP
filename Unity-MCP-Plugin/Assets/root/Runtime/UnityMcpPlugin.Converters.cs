@@ -22,6 +22,7 @@ namespace com.IvanMurzak.Unity.MCP
         static Reflector CreateDefaultReflector()
         {
             var reflector = new Reflector();
+            reflector.JsonSerializerOptions.NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals;
 
             // Remove converters that are not needed in Unity
             reflector.Converters.Remove<GenericReflectionConverter<object>>();
@@ -95,19 +96,19 @@ namespace com.IvanMurzak.Unity.MCP
             // ---------------------------------------------------------
 
             // Unity types
-            reflector.JsonSerializer.AddConverter(new Color32Converter());
-            reflector.JsonSerializer.AddConverter(new ColorConverter());
-            reflector.JsonSerializer.AddConverter(new Matrix4x4Converter());
-            reflector.JsonSerializer.AddConverter(new QuaternionConverter());
-            reflector.JsonSerializer.AddConverter(new Vector2Converter());
-            reflector.JsonSerializer.AddConverter(new Vector2IntConverter());
-            reflector.JsonSerializer.AddConverter(new Vector3Converter());
-            reflector.JsonSerializer.AddConverter(new Vector3IntConverter());
-            reflector.JsonSerializer.AddConverter(new Vector4Converter());
-            reflector.JsonSerializer.AddConverter(new BoundsConverter());
-            reflector.JsonSerializer.AddConverter(new BoundsIntConverter());
-            reflector.JsonSerializer.AddConverter(new RectConverter());
-            reflector.JsonSerializer.AddConverter(new RectIntConverter());
+            reflector.JsonSerializerOptions.Converters.Insert(0, new Color32Converter());
+            reflector.JsonSerializerOptions.Converters.Insert(0, new ColorConverter());
+            reflector.JsonSerializerOptions.Converters.Insert(0, new Matrix4x4Converter());
+            reflector.JsonSerializerOptions.Converters.Insert(0, new QuaternionConverter());
+            reflector.JsonSerializerOptions.Converters.Insert(0, new Vector2Converter());
+            reflector.JsonSerializerOptions.Converters.Insert(0, new Vector2IntConverter());
+            reflector.JsonSerializerOptions.Converters.Insert(0, new Vector3Converter());
+            reflector.JsonSerializerOptions.Converters.Insert(0, new Vector3IntConverter());
+            reflector.JsonSerializerOptions.Converters.Insert(0, new Vector4Converter());
+            reflector.JsonSerializerOptions.Converters.Insert(0, new BoundsConverter());
+            reflector.JsonSerializerOptions.Converters.Insert(0, new BoundsIntConverter());
+            reflector.JsonSerializerOptions.Converters.Insert(0, new RectConverter());
+            reflector.JsonSerializerOptions.Converters.Insert(0, new RectIntConverter());
 
             // Reference types
             reflector.JsonSerializer.AddConverter(new ObjectRefConverter());

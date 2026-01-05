@@ -56,10 +56,10 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
                     switch (propertyName)
                     {
                         case "x":
-                            x = reader.GetSingle();
+                            x = ReadFloat(ref reader, options);
                             break;
                         case "y":
-                            y = reader.GetSingle();
+                            y = ReadFloat(ref reader, options);
                             break;
                         default:
                             throw new JsonException($"Unexpected property name: {propertyName}. "
@@ -71,12 +71,40 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
             throw new JsonException();
         }
 
+        private float ReadFloat(ref Utf8JsonReader reader, JsonSerializerOptions options)
+        {
+            if (reader.TokenType == JsonTokenType.String)
+            {
+                if ((options.NumberHandling & System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals) != 0)
+                {
+                    var s = reader.GetString();
+                    if (s == "NaN") return float.NaN;
+                    if (s == "Infinity") return float.PositiveInfinity;
+                    if (s == "-Infinity") return float.NegativeInfinity;
+                }
+            }
+            return reader.GetSingle();
+        }
+
         public override void Write(Utf8JsonWriter writer, Vector2 value, JsonSerializerOptions options)
         {
             writer.WriteStartObject();
-            writer.WriteNumber("x", value.x);
-            writer.WriteNumber("y", value.y);
+            WriteFloat(writer, "x", value.x, options);
+            WriteFloat(writer, "y", value.y, options);
             writer.WriteEndObject();
+        }
+
+        private void WriteFloat(Utf8JsonWriter writer, string propertyName, float value, JsonSerializerOptions options)
+        {
+            if (float.IsNaN(value) || float.IsInfinity(value))
+            {
+                if ((options.NumberHandling & System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals) != 0)
+                {
+                    writer.WriteString(propertyName, value.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                    return;
+                }
+            }
+            writer.WriteNumber(propertyName, value);
         }
     }
 }

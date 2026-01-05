@@ -68,19 +68,42 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
             {
                 if (reader.TokenType == JsonTokenType.EndObject)
                     return new Matrix4x4(
-                        new Vector4(elements[0], elements[1], elements[2], elements[3]),
-                        new Vector4(elements[4], elements[5], elements[6], elements[7]),
-                        new Vector4(elements[8], elements[9], elements[10], elements[11]),
-                        new Vector4(elements[12], elements[13], elements[14], elements[15])
+                        new Vector4(elements[0], elements[4], elements[8], elements[12]),
+                        new Vector4(elements[1], elements[5], elements[9], elements[13]),
+                        new Vector4(elements[2], elements[6], elements[10], elements[14]),
+                        new Vector4(elements[3], elements[7], elements[11], elements[15])
                     );
 
-                if (reader.TokenType == JsonTokenType.Number)
+                if (reader.TokenType == JsonTokenType.PropertyName)
                 {
-                    elements[index++] = reader.GetSingle();
+                    // We ignore property name and assume order or just read value next
+                    // But wait, the original code ignored PropertyName token and just looked for Number.
+                    // If we have PropertyName, the next token is the value.
+                    continue;
+                }
+
+                if (reader.TokenType == JsonTokenType.Number || reader.TokenType == JsonTokenType.String)
+                {
+                    elements[index++] = ReadFloat(ref reader, options);
                 }
             }
 
             throw new JsonException();
+        }
+
+        private float ReadFloat(ref Utf8JsonReader reader, JsonSerializerOptions options)
+        {
+            if (reader.TokenType == JsonTokenType.String)
+            {
+                if ((options.NumberHandling & System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals) != 0)
+                {
+                    var s = reader.GetString();
+                    if (s == "NaN") return float.NaN;
+                    if (s == "Infinity") return float.PositiveInfinity;
+                    if (s == "-Infinity") return float.NegativeInfinity;
+                }
+            }
+            return reader.GetSingle();
         }
 
         public override void Write(Utf8JsonWriter writer, Matrix4x4 value, JsonSerializerOptions options)
@@ -90,10 +113,23 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
             {
                 for (int j = 0; j < 4; j++)
                 {
-                    writer.WriteNumber($"m{i}{j}", value[i, j]);
+                    WriteFloat(writer, $"m{i}{j}", value[i, j], options);
                 }
             }
             writer.WriteEndObject();
+        }
+
+        private void WriteFloat(Utf8JsonWriter writer, string propertyName, float value, JsonSerializerOptions options)
+        {
+            if (float.IsNaN(value) || float.IsInfinity(value))
+            {
+                if ((options.NumberHandling & System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals) != 0)
+                {
+                    writer.WriteString(propertyName, value.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                    return;
+                }
+            }
+            writer.WriteNumber(propertyName, value);
         }
     }
 }

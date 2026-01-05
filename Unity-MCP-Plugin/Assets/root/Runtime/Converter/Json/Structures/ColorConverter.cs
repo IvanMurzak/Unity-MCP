@@ -78,16 +78,16 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
                     switch (propertyName)
                     {
                         case "r":
-                            r = reader.GetSingle();
+                            r = ReadFloat(ref reader, options);
                             break;
                         case "g":
-                            g = reader.GetSingle();
+                            g = ReadFloat(ref reader, options);
                             break;
                         case "b":
-                            b = reader.GetSingle();
+                            b = ReadFloat(ref reader, options);
                             break;
                         case "a":
-                            a = reader.GetSingle();
+                            a = ReadFloat(ref reader, options);
                             break;
                         default:
                             throw new JsonException($"Unexpected property name: {propertyName}. "
@@ -99,14 +99,42 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
             throw new JsonException("Expected end of object token.");
         }
 
+        private float ReadFloat(ref Utf8JsonReader reader, JsonSerializerOptions options)
+        {
+            if (reader.TokenType == JsonTokenType.String)
+            {
+                if ((options.NumberHandling & System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals) != 0)
+                {
+                    var s = reader.GetString();
+                    if (s == "NaN") return float.NaN;
+                    if (s == "Infinity") return float.PositiveInfinity;
+                    if (s == "-Infinity") return float.NegativeInfinity;
+                }
+            }
+            return reader.GetSingle();
+        }
+
         public override void Write(Utf8JsonWriter writer, Color value, JsonSerializerOptions options)
         {
             writer.WriteStartObject();
-            writer.WriteNumber("r", value.r);
-            writer.WriteNumber("g", value.g);
-            writer.WriteNumber("b", value.b);
-            writer.WriteNumber("a", value.a);
+            WriteFloat(writer, "r", value.r, options);
+            WriteFloat(writer, "g", value.g, options);
+            WriteFloat(writer, "b", value.b, options);
+            WriteFloat(writer, "a", value.a, options);
             writer.WriteEndObject();
+        }
+
+        private void WriteFloat(Utf8JsonWriter writer, string propertyName, float value, JsonSerializerOptions options)
+        {
+            if (float.IsNaN(value) || float.IsInfinity(value))
+            {
+                if ((options.NumberHandling & System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals) != 0)
+                {
+                    writer.WriteString(propertyName, value.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                    return;
+                }
+            }
+            writer.WriteNumber(propertyName, value);
         }
     }
 }
