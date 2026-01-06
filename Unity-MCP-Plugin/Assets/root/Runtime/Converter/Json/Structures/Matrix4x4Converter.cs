@@ -20,6 +20,15 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
 {
     public class Matrix4x4Converter : JsonSchemaConverter<Matrix4x4>, IJsonSchemaConverter
     {
+        // Pre-computed property names to avoid string allocations in the Write loop
+        private static readonly string[] MatrixPropertyNames =
+        {
+            "m00", "m01", "m02", "m03",
+            "m10", "m11", "m12", "m13",
+            "m20", "m21", "m22", "m23",
+            "m30", "m31", "m32", "m33"
+        };
+
         public override JsonNode GetSchema() => new JsonObject
         {
             [JsonSchema.Type] = JsonSchema.Object,
@@ -85,22 +94,22 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
 
                     switch (propertyName)
                     {
-                        case "m00": m00 = ReadFloat(ref reader, options); break;
-                        case "m01": m01 = ReadFloat(ref reader, options); break;
-                        case "m02": m02 = ReadFloat(ref reader, options); break;
-                        case "m03": m03 = ReadFloat(ref reader, options); break;
-                        case "m10": m10 = ReadFloat(ref reader, options); break;
-                        case "m11": m11 = ReadFloat(ref reader, options); break;
-                        case "m12": m12 = ReadFloat(ref reader, options); break;
-                        case "m13": m13 = ReadFloat(ref reader, options); break;
-                        case "m20": m20 = ReadFloat(ref reader, options); break;
-                        case "m21": m21 = ReadFloat(ref reader, options); break;
-                        case "m22": m22 = ReadFloat(ref reader, options); break;
-                        case "m23": m23 = ReadFloat(ref reader, options); break;
-                        case "m30": m30 = ReadFloat(ref reader, options); break;
-                        case "m31": m31 = ReadFloat(ref reader, options); break;
-                        case "m32": m32 = ReadFloat(ref reader, options); break;
-                        case "m33": m33 = ReadFloat(ref reader, options); break;
+                        case "m00": m00 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m01": m01 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m02": m02 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m03": m03 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m10": m10 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m11": m11 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m12": m12 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m13": m13 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m20": m20 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m21": m21 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m22": m22 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m23": m23 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m30": m30 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m31": m31 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m32": m32 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m33": m33 = JsonFloatHelper.ReadFloat(ref reader, options); break;
                         default:
                             throw new JsonException($"Unexpected property name: {propertyName}.");
                     }
@@ -110,46 +119,16 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
             throw new JsonException("Expected end of object token.");
         }
 
-        private float ReadFloat(ref Utf8JsonReader reader, JsonSerializerOptions options)
-        {
-            if (reader.TokenType == JsonTokenType.String)
-            {
-                if ((options.NumberHandling & System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals) != 0)
-                {
-                    var s = reader.GetString();
-                    if (s == "NaN") return float.NaN;
-                    if (s == "Infinity") return float.PositiveInfinity;
-                    if (s == "-Infinity") return float.NegativeInfinity;
-                }
-            }
-            return reader.GetSingle();
-        }
-
         public override void Write(Utf8JsonWriter writer, Matrix4x4 value, JsonSerializerOptions options)
         {
             writer.WriteStartObject();
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 16; i++)
             {
-                for (int j = 0; j < 4; j++)
-                {
-                    WriteFloat(writer, $"m{i}{j}", value[i, j], options);
-                }
+                int row = i / 4;
+                int col = i % 4;
+                JsonFloatHelper.WriteFloat(writer, MatrixPropertyNames[i], value[row, col], options);
             }
             writer.WriteEndObject();
         }
-
-        private void WriteFloat(Utf8JsonWriter writer, string propertyName, float value, JsonSerializerOptions options)
-        {
-            if (float.IsNaN(value) || float.IsInfinity(value))
-            {
-                if ((options.NumberHandling & System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals) != 0)
-                {
-                    writer.WriteString(propertyName, value.ToString(System.Globalization.CultureInfo.InvariantCulture));
-                    return;
-                }
-            }
-            writer.WriteNumber(propertyName, value);
-        }
     }
 }
-
