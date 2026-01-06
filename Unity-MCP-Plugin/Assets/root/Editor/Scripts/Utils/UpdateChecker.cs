@@ -69,7 +69,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         public static bool IsDoNotShowAgain
         {
             get => DoNotShowAgain.Value;
-            set => DoNotShowAgain.Value = value;
+            set
+            {
+                DoNotShowAgain.Value = value;
+                PlayerPrefsEx.Save();
+            }
         }
 
         /// <summary>
@@ -129,6 +133,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         public static void SkipVersion(string version)
         {
             SkippedVersion.Value = version;
+            PlayerPrefsEx.Save();
         }
 
         /// <summary>
@@ -139,6 +144,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             DoNotShowAgain.Value = false;
             NextCheckTime.Value = string.Empty;
             SkippedVersion.Value = string.Empty;
+            PlayerPrefsEx.Save();
         }
 
         /// <summary>
@@ -204,6 +210,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 if (!forceCheck)
                 {
                     NextCheckTime.Value = DateTime.UtcNow.AddHours(1).ToString("O");
+                    PlayerPrefsEx.Save();
                 }
                 isChecking = false;
             }
