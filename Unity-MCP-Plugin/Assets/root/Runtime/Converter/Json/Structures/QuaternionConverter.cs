@@ -41,7 +41,7 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
         public override Quaternion Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             if (reader.TokenType != JsonTokenType.StartObject)
-                throw new JsonException();
+                throw new JsonException("Expected start of object token.");
 
             float x = 0, y = 0, z = 0, w = 1;
 
@@ -58,16 +58,16 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
                     switch (propertyName)
                     {
                         case "x":
-                            x = reader.GetSingle();
+                            x = JsonFloatHelper.ReadFloat(ref reader, options);
                             break;
                         case "y":
-                            y = reader.GetSingle();
+                            y = JsonFloatHelper.ReadFloat(ref reader, options);
                             break;
                         case "z":
-                            z = reader.GetSingle();
+                            z = JsonFloatHelper.ReadFloat(ref reader, options);
                             break;
                         case "w":
-                            w = reader.GetSingle();
+                            w = JsonFloatHelper.ReadFloat(ref reader, options);
                             break;
                         default:
                             throw new JsonException($"Unexpected property name: {propertyName}. "
@@ -76,18 +76,17 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
                 }
             }
 
-            throw new JsonException();
+            throw new JsonException("Expected end of object token.");
         }
 
         public override void Write(Utf8JsonWriter writer, Quaternion value, JsonSerializerOptions options)
         {
             writer.WriteStartObject();
-            writer.WriteNumber("x", value.x);
-            writer.WriteNumber("y", value.y);
-            writer.WriteNumber("z", value.z);
-            writer.WriteNumber("w", value.w);
+            JsonFloatHelper.WriteFloat(writer, "x", value.x, options);
+            JsonFloatHelper.WriteFloat(writer, "y", value.y, options);
+            JsonFloatHelper.WriteFloat(writer, "z", value.z, options);
+            JsonFloatHelper.WriteFloat(writer, "w", value.w, options);
             writer.WriteEndObject();
         }
     }
 }
-

@@ -77,10 +77,10 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
                     switch (propertyName)
                     {
                         case "center":
-                            center = ReadVector3(ref reader);
+                            center = JsonFloatHelper.ReadVector3(ref reader, options);
                             break;
                         case "size":
-                            size = ReadVector3(ref reader);
+                            size = JsonFloatHelper.ReadVector3(ref reader, options);
                             break;
                         default:
                             throw new JsonException($"Unexpected property name: {propertyName}. "
@@ -97,60 +97,12 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
             writer.WriteStartObject();
 
             writer.WritePropertyName("center");
-            WriteVector3(writer, value.center);
+            JsonFloatHelper.WriteVector3(writer, value.center, options);
 
             writer.WritePropertyName("size");
-            WriteVector3(writer, value.size);
+            JsonFloatHelper.WriteVector3(writer, value.size, options);
 
-            writer.WriteEndObject();
-        }
-
-        private Vector3 ReadVector3(ref Utf8JsonReader reader)
-        {
-            if (reader.TokenType != JsonTokenType.StartObject)
-                throw new JsonException("Expected start of object token for Vector3.");
-
-            float x = 0, y = 0, z = 0;
-
-            while (reader.Read())
-            {
-                if (reader.TokenType == JsonTokenType.EndObject)
-                    return new Vector3(x, y, z);
-
-                if (reader.TokenType == JsonTokenType.PropertyName)
-                {
-                    var propertyName = reader.GetString();
-                    reader.Read();
-
-                    switch (propertyName)
-                    {
-                        case "x":
-                            x = reader.GetSingle();
-                            break;
-                        case "y":
-                            y = reader.GetSingle();
-                            break;
-                        case "z":
-                            z = reader.GetSingle();
-                            break;
-                        default:
-                            throw new JsonException($"Unexpected property name: {propertyName}. "
-                                + "Expected 'x', 'y', or 'z'.");
-                    }
-                }
-            }
-
-            throw new JsonException("Expected end of object token for Vector3.");
-        }
-
-        private void WriteVector3(Utf8JsonWriter writer, Vector3 value)
-        {
-            writer.WriteStartObject();
-            writer.WriteNumber("x", value.x);
-            writer.WriteNumber("y", value.y);
-            writer.WriteNumber("z", value.z);
             writer.WriteEndObject();
         }
     }
 }
-

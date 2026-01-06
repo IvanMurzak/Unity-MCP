@@ -39,7 +39,7 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
         public override Vector2 Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             if (reader.TokenType != JsonTokenType.StartObject)
-                throw new JsonException();
+                throw new JsonException("Expected start of object token.");
 
             float x = 0, y = 0;
 
@@ -56,10 +56,10 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
                     switch (propertyName)
                     {
                         case "x":
-                            x = reader.GetSingle();
+                            x = JsonFloatHelper.ReadFloat(ref reader, options);
                             break;
                         case "y":
-                            y = reader.GetSingle();
+                            y = JsonFloatHelper.ReadFloat(ref reader, options);
                             break;
                         default:
                             throw new JsonException($"Unexpected property name: {propertyName}. "
@@ -68,16 +68,15 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
                 }
             }
 
-            throw new JsonException();
+            throw new JsonException("Expected end of object token.");
         }
 
         public override void Write(Utf8JsonWriter writer, Vector2 value, JsonSerializerOptions options)
         {
             writer.WriteStartObject();
-            writer.WriteNumber("x", value.x);
-            writer.WriteNumber("y", value.y);
+            JsonFloatHelper.WriteFloat(writer, "x", value.x, options);
+            JsonFloatHelper.WriteFloat(writer, "y", value.y, options);
             writer.WriteEndObject();
         }
     }
 }
-

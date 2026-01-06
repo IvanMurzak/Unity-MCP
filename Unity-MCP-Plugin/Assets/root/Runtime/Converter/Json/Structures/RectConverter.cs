@@ -58,16 +58,16 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
                     switch (propertyName)
                     {
                         case "x":
-                            x = reader.GetSingle();
+                            x = JsonFloatHelper.ReadFloat(ref reader, options);
                             break;
                         case "y":
-                            y = reader.GetSingle();
+                            y = JsonFloatHelper.ReadFloat(ref reader, options);
                             break;
                         case "width":
-                            width = reader.GetSingle();
+                            width = JsonFloatHelper.ReadFloat(ref reader, options);
                             break;
                         case "height":
-                            height = reader.GetSingle();
+                            height = JsonFloatHelper.ReadFloat(ref reader, options);
                             break;
                         default:
                             throw new JsonException($"Unexpected property name: {propertyName}. "
@@ -82,12 +82,11 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
         public override void Write(Utf8JsonWriter writer, Rect value, JsonSerializerOptions options)
         {
             writer.WriteStartObject();
-            writer.WriteNumber("x", value.x);
-            writer.WriteNumber("y", value.y);
-            writer.WriteNumber("width", value.width);
-            writer.WriteNumber("height", value.height);
+            JsonFloatHelper.WriteFloat(writer, "x", value.x, options);
+            JsonFloatHelper.WriteFloat(writer, "y", value.y, options);
+            JsonFloatHelper.WriteFloat(writer, "width", value.width, options);
+            JsonFloatHelper.WriteFloat(writer, "height", value.height, options);
             writer.WriteEndObject();
         }
     }
 }
-

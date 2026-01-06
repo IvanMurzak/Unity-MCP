@@ -20,6 +20,15 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
 {
     public class Matrix4x4Converter : JsonSchemaConverter<Matrix4x4>, IJsonSchemaConverter
     {
+        // Pre-computed property names to avoid string allocations in the Write loop
+        private static readonly string[] MatrixPropertyNames =
+        {
+            "m00", "m01", "m02", "m03",
+            "m10", "m11", "m12", "m13",
+            "m20", "m21", "m22", "m23",
+            "m30", "m31", "m32", "m33"
+        };
+
         public override JsonNode GetSchema() => new JsonObject
         {
             [JsonSchema.Type] = JsonSchema.Object,
@@ -59,42 +68,67 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
         public override Matrix4x4 Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             if (reader.TokenType != JsonTokenType.StartObject)
-                throw new JsonException();
+                throw new JsonException("Expected start of object token.");
 
-            float[] elements = new float[16];
-            int index = 0;
+            float m00 = 0, m01 = 0, m02 = 0, m03 = 0;
+            float m10 = 0, m11 = 0, m12 = 0, m13 = 0;
+            float m20 = 0, m21 = 0, m22 = 0, m23 = 0;
+            float m30 = 0, m31 = 0, m32 = 0, m33 = 0;
 
             while (reader.Read())
             {
                 if (reader.TokenType == JsonTokenType.EndObject)
-                    return new Matrix4x4(
-                        new Vector4(elements[0], elements[1], elements[2], elements[3]),
-                        new Vector4(elements[4], elements[5], elements[6], elements[7]),
-                        new Vector4(elements[8], elements[9], elements[10], elements[11]),
-                        new Vector4(elements[12], elements[13], elements[14], elements[15])
-                    );
-
-                if (reader.TokenType == JsonTokenType.Number)
                 {
-                    elements[index++] = reader.GetSingle();
+                    var m = new Matrix4x4();
+                    m.m00 = m00; m.m01 = m01; m.m02 = m02; m.m03 = m03;
+                    m.m10 = m10; m.m11 = m11; m.m12 = m12; m.m13 = m13;
+                    m.m20 = m20; m.m21 = m21; m.m22 = m22; m.m23 = m23;
+                    m.m30 = m30; m.m31 = m31; m.m32 = m32; m.m33 = m33;
+                    return m;
+                }
+
+                if (reader.TokenType == JsonTokenType.PropertyName)
+                {
+                    var propertyName = reader.GetString();
+                    reader.Read();
+
+                    switch (propertyName)
+                    {
+                        case "m00": m00 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m01": m01 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m02": m02 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m03": m03 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m10": m10 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m11": m11 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m12": m12 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m13": m13 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m20": m20 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m21": m21 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m22": m22 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m23": m23 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m30": m30 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m31": m31 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m32": m32 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        case "m33": m33 = JsonFloatHelper.ReadFloat(ref reader, options); break;
+                        default:
+                            throw new JsonException($"Unexpected property name: {propertyName}.");
+                    }
                 }
             }
 
-            throw new JsonException();
+            throw new JsonException("Expected end of object token.");
         }
 
         public override void Write(Utf8JsonWriter writer, Matrix4x4 value, JsonSerializerOptions options)
         {
             writer.WriteStartObject();
-            for (int i = 0; i < 4; i++)
+            for (int i = 0; i < 16; i++)
             {
-                for (int j = 0; j < 4; j++)
-                {
-                    writer.WriteNumber($"m{i}{j}", value[i, j]);
-                }
+                int row = i / 4;
+                int col = i % 4;
+                JsonFloatHelper.WriteFloat(writer, MatrixPropertyNames[i], value[row, col], options);
             }
             writer.WriteEndObject();
         }
     }
 }
-

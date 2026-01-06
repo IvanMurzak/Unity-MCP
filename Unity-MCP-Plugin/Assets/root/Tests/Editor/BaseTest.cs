@@ -75,7 +75,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsFalse(result.Message!.Contains("[Error]"), $"Tool call failed with error: {result.Message}");
             Assert.IsNotNull(result.Value, $"Tool call returned null value");
             Assert.IsFalse(result.Value!.Status == ResponseStatus.Error, $"Tool call failed");
-            Assert.IsFalse(jsonResult.Contains("[Error]"), $"Tool call failed with error in JSON: {jsonResult}");
+            Assert.IsFalse(jsonResult!.Contains("[Error]"), $"Tool call failed with error in JSON: {jsonResult}");
             Assert.IsFalse(jsonResult.Contains("[Warning]"), $"Tool call contains warnings in JSON: {jsonResult}");
 
             return result;
