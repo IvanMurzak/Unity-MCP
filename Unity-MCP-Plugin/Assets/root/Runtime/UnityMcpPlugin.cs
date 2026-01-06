@@ -89,6 +89,13 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
+        public void DisposeLogCollector()
+        {
+            LogCollector?.Save();
+            LogCollector?.Dispose();
+            LogCollector = null;
+        }
+
         public void Dispose()
         {
             _disposables.Dispose();

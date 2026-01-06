@@ -34,8 +34,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 UnityMcpPlugin.Instance.LogInfo("{method} triggered", typeof(Startup), nameof(OnApplicationUnloading));
                 UnityMcpPlugin.Instance.DisconnectImmediate();
-                UnityMcpPlugin.Instance.LogCollector?.Save();
-                UnityMcpPlugin.Instance.LogCollector?.Dispose();
+                UnityMcpPlugin.Instance.DisposeLogCollector();
             }
             else
             {
@@ -48,8 +47,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 UnityMcpPlugin.Instance.LogInfo("{method} triggered", typeof(Startup), nameof(OnApplicationQuitting));
                 UnityMcpPlugin.Instance.DisconnectImmediate();
-                UnityMcpPlugin.Instance.LogCollector?.Save();
-                UnityMcpPlugin.Instance.LogCollector?.Dispose();
+                UnityMcpPlugin.Instance.DisposeLogCollector();
             }
             else
             {
@@ -62,8 +60,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 UnityMcpPlugin.Instance.LogInfo("{method} triggered", typeof(Startup), nameof(OnBeforeAssemblyReload));
                 UnityMcpPlugin.Instance.DisconnectImmediate();
-                UnityMcpPlugin.Instance.LogCollector?.Save();
-                UnityMcpPlugin.Instance.LogCollector?.Dispose();
+                UnityMcpPlugin.Instance.DisposeLogCollector();
             }
             else
             {
