@@ -59,36 +59,55 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
         public override Matrix4x4 Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             if (reader.TokenType != JsonTokenType.StartObject)
-                throw new JsonException();
+                throw new JsonException("Expected start of object token.");
 
-            float[] elements = new float[16];
-            int index = 0;
+            float m00 = 0, m01 = 0, m02 = 0, m03 = 0;
+            float m10 = 0, m11 = 0, m12 = 0, m13 = 0;
+            float m20 = 0, m21 = 0, m22 = 0, m23 = 0;
+            float m30 = 0, m31 = 0, m32 = 0, m33 = 0;
 
             while (reader.Read())
             {
                 if (reader.TokenType == JsonTokenType.EndObject)
-                    return new Matrix4x4(
-                        new Vector4(elements[0], elements[4], elements[8], elements[12]),
-                        new Vector4(elements[1], elements[5], elements[9], elements[13]),
-                        new Vector4(elements[2], elements[6], elements[10], elements[14]),
-                        new Vector4(elements[3], elements[7], elements[11], elements[15])
-                    );
+                {
+                    var m = new Matrix4x4();
+                    m.m00 = m00; m.m01 = m01; m.m02 = m02; m.m03 = m03;
+                    m.m10 = m10; m.m11 = m11; m.m12 = m12; m.m13 = m13;
+                    m.m20 = m20; m.m21 = m21; m.m22 = m22; m.m23 = m23;
+                    m.m30 = m30; m.m31 = m31; m.m32 = m32; m.m33 = m33;
+                    return m;
+                }
 
                 if (reader.TokenType == JsonTokenType.PropertyName)
                 {
-                    // We ignore property name and assume order or just read value next
-                    // But wait, the original code ignored PropertyName token and just looked for Number.
-                    // If we have PropertyName, the next token is the value.
-                    continue;
-                }
+                    var propertyName = reader.GetString();
+                    reader.Read();
 
-                if (reader.TokenType == JsonTokenType.Number || reader.TokenType == JsonTokenType.String)
-                {
-                    elements[index++] = ReadFloat(ref reader, options);
+                    switch (propertyName)
+                    {
+                        case "m00": m00 = ReadFloat(ref reader, options); break;
+                        case "m01": m01 = ReadFloat(ref reader, options); break;
+                        case "m02": m02 = ReadFloat(ref reader, options); break;
+                        case "m03": m03 = ReadFloat(ref reader, options); break;
+                        case "m10": m10 = ReadFloat(ref reader, options); break;
+                        case "m11": m11 = ReadFloat(ref reader, options); break;
+                        case "m12": m12 = ReadFloat(ref reader, options); break;
+                        case "m13": m13 = ReadFloat(ref reader, options); break;
+                        case "m20": m20 = ReadFloat(ref reader, options); break;
+                        case "m21": m21 = ReadFloat(ref reader, options); break;
+                        case "m22": m22 = ReadFloat(ref reader, options); break;
+                        case "m23": m23 = ReadFloat(ref reader, options); break;
+                        case "m30": m30 = ReadFloat(ref reader, options); break;
+                        case "m31": m31 = ReadFloat(ref reader, options); break;
+                        case "m32": m32 = ReadFloat(ref reader, options); break;
+                        case "m33": m33 = ReadFloat(ref reader, options); break;
+                        default:
+                            throw new JsonException($"Unexpected property name: {propertyName}.");
+                    }
                 }
             }
 
-            throw new JsonException();
+            throw new JsonException("Expected end of object token.");
         }
 
         private float ReadFloat(ref Utf8JsonReader reader, JsonSerializerOptions options)

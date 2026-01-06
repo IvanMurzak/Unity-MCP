@@ -41,7 +41,7 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
         public override Quaternion Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             if (reader.TokenType != JsonTokenType.StartObject)
-                throw new JsonException();
+                throw new JsonException("Expected start of object token.");
 
             float x = 0, y = 0, z = 0, w = 1;
 
@@ -76,7 +76,7 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
                 }
             }
 
-            throw new JsonException();
+            throw new JsonException("Expected end of object token.");
         }
 
         private float ReadFloat(ref Utf8JsonReader reader, JsonSerializerOptions options)

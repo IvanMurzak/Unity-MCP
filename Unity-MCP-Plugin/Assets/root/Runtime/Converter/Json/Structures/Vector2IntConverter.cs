@@ -39,7 +39,7 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
         public override Vector2Int Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             if (reader.TokenType != JsonTokenType.StartObject)
-                throw new JsonException();
+                throw new JsonException("Expected start of object token.");
 
             int x = 0, y = 0;
 
@@ -68,7 +68,7 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
                 }
             }
 
-            throw new JsonException();
+            throw new JsonException("Expected end of object token.");
         }
 
         public override void Write(Utf8JsonWriter writer, Vector2Int value, JsonSerializerOptions options)

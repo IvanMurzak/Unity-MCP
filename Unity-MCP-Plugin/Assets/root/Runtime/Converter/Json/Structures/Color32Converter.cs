@@ -61,7 +61,7 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
         public override Color32 Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
             if (reader.TokenType != JsonTokenType.StartObject)
-                throw new JsonException();
+                throw new JsonException("Expected start of object token.");
 
             byte r = 0, g = 0, b = 0, a = 255;
 
@@ -96,7 +96,7 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
                 }
             }
 
-            throw new JsonException();
+            throw new JsonException("Expected end of object token.");
         }
 
         public override void Write(Utf8JsonWriter writer, Color32 value, JsonSerializerOptions options)
