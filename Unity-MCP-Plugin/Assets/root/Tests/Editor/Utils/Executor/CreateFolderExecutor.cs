@@ -10,8 +10,10 @@
 
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using UnityEditor;
 using UnityEngine;
 
@@ -75,13 +77,145 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
             if (firstCreatedFolderIndex < 0)
                 return;
 
+            var foldersToDelete = new List<string>();
             for (int i = _folders.Length - 1; i >= firstCreatedFolderIndex; i--)
-            {
-                var folderPath = string.Join("/", _folders.Take(i + 1));
-                Debug.Log($"Deleting folder: {folderPath}");
-                AssetDatabase.DeleteAsset(folderPath);
-                AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-            }
+                foldersToDelete.Add(string.Join("/", _folders.Take(i + 1)));
+
+            TryDeleteFolders(foldersToDelete, attempt: 0, notBefore: EditorApplication.timeSinceStartup);
         }
+
+        void ScheduleFolderCleanup(List<string> foldersToDelete, int attempt, double notBefore)
+        {
+            EditorApplication.delayCall += () => TryDeleteFolders(foldersToDelete, attempt, notBefore);
+        }
+
+        void TryDeleteFolders(List<string> foldersToDelete, int attempt, double notBefore)
+        {
+            const int MaxCleanupAttempts = 180;
+
+            if (EditorApplication.timeSinceStartup < notBefore)
+            {
+                if (attempt < MaxCleanupAttempts)
+                    ScheduleFolderCleanup(foldersToDelete, attempt + 1, notBefore);
+                return;
+            }
+
+            if (EditorApplication.isCompiling || EditorApplication.isUpdating)
+            {
+                if (attempt < MaxCleanupAttempts)
+                    ScheduleFolderCleanup(foldersToDelete, attempt + 1, EditorApplication.timeSinceStartup + 1.0d);
+                return;
+            }
+
+            if (HasActiveGenerationUnderFolders(foldersToDelete))
+            {
+                if (attempt < MaxCleanupAttempts)
+                    ScheduleFolderCleanup(foldersToDelete, attempt + 1, EditorApplication.timeSinceStartup + 1.0d);
+                return;
+            }
+
+            var needsRetry = false;
+            AssetDatabase.ReleaseCachedFileHandles();
+
+            foreach (var folderPath in foldersToDelete)
+            {
+                if (!AssetDatabase.IsValidFolder(folderPath))
+                    continue;
+
+                Debug.Log($"Deleting folder: {folderPath}");
+                if (!AssetDatabase.DeleteAsset(folderPath) && AssetDatabase.IsValidFolder(folderPath))
+                    needsRetry = true;
+            }
+
+            if (needsRetry && attempt < MaxCleanupAttempts)
+                ScheduleFolderCleanup(foldersToDelete, attempt + 1, EditorApplication.timeSinceStartup + 1.0d);
+        }
+
+        static bool HasActiveGenerationUnderFolders(List<string> foldersToDelete)
+        {
+            foreach (var folder in foldersToDelete)
+            {
+                if (HasActiveGenerationInFolder(folder))
+                    return true;
+            }
+
+            return false;
+        }
+
+        static bool HasActiveGenerationInFolder(string folderPath)
+        {
+            if (string.IsNullOrWhiteSpace(folderPath))
+                return false;
+
+            var prefix = folderPath.EndsWith("/", StringComparison.Ordinal)
+                ? folderPath
+                : folderPath + "/";
+
+            return HasActiveGeneration(
+                       "com.IvanMurzak.Unity.MCP.Composer.ComposerGenerationHistory",
+                       prefix)
+                   || HasActiveGeneration(
+                       "com.IvanMurzak.Unity.MCP.Texture.TextureGenerationHistory",
+                       prefix);
+        }
+
+        static bool HasActiveGeneration(string historyTypeName, string assetPathPrefix)
+        {
+            var historyType = FindType(historyTypeName);
+            if (historyType == null)
+                return false;
+
+            var entriesProperty = historyType.GetProperty(
+                "Entries",
+                BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic);
+            var entries = entriesProperty?.GetValue(null) as System.Collections.IEnumerable;
+            if (entries == null)
+                return false;
+
+            foreach (var entry in entries)
+            {
+                if (entry == null)
+                    continue;
+
+                var entryType = entry.GetType();
+                var assetPathField = entryType.GetField("assetPath");
+                var assetPath = assetPathField?.GetValue(entry) as string;
+                if (string.IsNullOrWhiteSpace(assetPath)
+                    || !assetPath.StartsWith(assetPathPrefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    continue;
+                }
+
+                var stateField = entryType.GetField("state");
+                var stateValue = stateField?.GetValue(entry);
+                if (stateValue == null)
+                    continue;
+
+                if (string.Equals(stateValue.ToString(), "Generating", StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            return false;
+        }
+
+        static Type? FindType(string fullName)
+        {
+            var type = Type.GetType(fullName);
+            if (type != null)
+                return type;
+
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                if (assembly == null)
+                    continue;
+
+                type = assembly.GetType(fullName);
+                if (type != null)
+                    return type;
+            }
+
+            return null;
+        }
+
     }
 }
