@@ -26,25 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var serializedValue = reflector.JsonSerializer.Serialize(sourceValue);
             var deserializedValue = reflector.JsonSerializer.Deserialize<T>(serializedValue);
 
-            bool areEqual = false;
-            // if (sourceValue is Vector2 v2Source && deserializedValue is Vector2 v2Dest)
-            // {
-            //     areEqual = CompareFloats(v2Source.x, v2Dest.x) && CompareFloats(v2Source.y, v2Dest.y);
-            // }
-            // else if (sourceValue is Vector3 v3Source && deserializedValue is Vector3 v3Dest)
-            // {
-            //     areEqual = CompareFloats(v3Source.x, v3Dest.x) && CompareFloats(v3Source.y, v3Dest.y) && CompareFloats(v3Source.z, v3Dest.z);
-            // }
-            // else if (sourceValue is Vector4 v4Source && deserializedValue is Vector4 v4Dest)
-            // {
-            //     areEqual = CompareFloats(v4Source.x, v4Dest.x) && CompareFloats(v4Source.y, v4Dest.y) && CompareFloats(v4Source.z, v4Dest.z) && CompareFloats(v4Source.w, v4Dest.w);
-            // }
-            // else
-            {
-                areEqual = sourceValue!.Equals(deserializedValue);
-            }
-
-
+            var areEqual = sourceValue!.Equals(deserializedValue);
 
             Assert.IsTrue(areEqual, $"Serialized and deserialized values do not match for type '{typeof(T).Name}'.\n" +
                 $"Source: {sourceValue}\n" +
