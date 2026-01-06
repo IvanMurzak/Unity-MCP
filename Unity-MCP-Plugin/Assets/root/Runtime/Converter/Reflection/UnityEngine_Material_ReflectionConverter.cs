@@ -151,9 +151,17 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                     UnityEngine.Rendering.ShaderPropertyType.Color => typeof(Color),
                     UnityEngine.Rendering.ShaderPropertyType.Vector => typeof(Vector4),
                     UnityEngine.Rendering.ShaderPropertyType.Texture => typeof(Texture),
-                    _ => throw new NotSupportedException($"Unsupported shader property type: '{shader.GetPropertyType(i)}'."
-                        + " Supported types are: Int, Float, Range, Color, Vector, Texture.")
+                    _ => null
                 };
+                if (propType == null)
+                {
+                    if (logger?.IsEnabled(LogLevel.Warning) == true)
+                        logger.LogWarning($"{padding}Material property '{propName}' has unsupported type '{shader.GetPropertyType(i)}'.");
+
+                    logs?.Warning($"Material property '{propName}' has unsupported type '{shader.GetPropertyType(i)}'. Supported types: Int, Float, Range, Color, Vector, Texture", depth);
+
+                    continue;
+                }
                 var propValue = shader.GetPropertyType(i) switch
                 {
                     UnityEngine.Rendering.ShaderPropertyType.Int => material.GetInt(propName) as object,
@@ -167,15 +175,6 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                     _ => throw new NotSupportedException($"Unsupported shader property type: '{shader.GetPropertyType(i)}'."
                         + " Supported types are: Int, Float, Range, Color, Vector, Texture.")
                 };
-                if (propType == null)
-                {
-                    if (logger?.IsEnabled(LogLevel.Warning) == true)
-                        logger.LogWarning($"{padding}Material property '{propName}' has unsupported type '{shader.GetPropertyType(i)}'.");
-
-                    logs?.Warning($"Material property '{propName}' has unsupported type '{shader.GetPropertyType(i)}'.", depth);
-
-                    continue;
-                }
                 properties.Add(SerializedMember.FromValue(reflector, propType, propValue, name: propName));
             }
 
@@ -196,7 +195,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             Reflector reflector,
             ref object? obj,
             SerializedMember data,
-            Type? fallbackType = null,
+            Type type,
             int depth = 0,
             Logs? logs = null,
             BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
@@ -207,7 +206,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 reflector: reflector,
                 obj: ref obj,
                 data: data,
-                fallbackType: fallbackType,
+                type: type,
                 depth: depth,
                 logs: logs,
                 flags: flags,
@@ -239,7 +238,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                         reflector: reflector,
                         obj: ref obj,
                         data: data,
-                        fallbackType: fallbackType,
+                        type: type,
                         depth: depth,
                         logs: logs,
                         flags: flags,
@@ -258,7 +257,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                     reflector: reflector,
                     obj: ref newMaterial,
                     data: data,
-                    fallbackType: fallbackType,
+                    type: type,
                     depth: depth,
                     logs: logs,
                     flags: flags,
@@ -273,7 +272,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 reflector: reflector,
                 obj: ref obj,
                 data: data,
-                fallbackType: fallbackType,
+                type: type,
                 depth: depth,
                 logs: logs,
                 flags: flags,

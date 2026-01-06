@@ -8,6 +8,7 @@
 [![Unity Runtime](https://img.shields.io/badge/Runtime-X?style=flat&logo=unity&labelColor=333A41&color=49BC5C 'Unity Runtime supported')](https://unity.com/releases/editor/archive)
 [![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg 'Tests Passed')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)</br>
 [![Discord](https://img.shields.io/badge/Discord-Join-7289da?logo=discord&logoColor=white&labelColor=333A41 'Join')](https://discord.gg/cfbdMZX99G)
+[![openupm](https://img.shields.io/badge/dynamic/json?labelColor=333A41&label=downloads&query=%24.downloads&suffix=%2Fmonth&url=https%3A%2F%2Fpackage.openupm.com%2Fdownloads%2Fpoint%2Flast-month%2Fcom.ivanmurzak.unity.mcp)](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
 [![Stars](https://img.shields.io/github/stars/IvanMurzak/Unity-MCP 'Stars')](https://github.com/IvanMurzak/Unity-MCP/stargazers)
 [![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&labelColor=333A41)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
@@ -35,7 +36,7 @@ A diferencia de otras herramientas, este plugin funciona **dentro de tu juego co
 - ✔️ **Conjunto de herramientas rico** - Amplio rango de [Herramientas MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md) por defecto
 - ✔️ **Extensible** - Crea [herramientas MCP personalizadas en el código de tu proyecto](#agregar-herramienta-mcp-personalizada)
 
-[![DESCARGAR INSTALADOR](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download_es.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.35.2/AI-Game-Dev-Installer.unitypackage)
+[![DESCARGAR INSTALADOR](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download_es.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.36.0/AI-Game-Dev-Installer.unitypackage)
 
 ![Desarrollador de juegos con IA Ventanas](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/ai-game-developer-windows.png?raw=true)
 
@@ -250,7 +251,7 @@ A diferencia de otras herramientas, este plugin funciona **dentro de tu juego co
 
 ### Opción 1 - Instalador
 
-- **[⬇️ Descargar Instalador](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.35.2/AI-Game-Dev-Installer.unitypackage)**
+- **[⬇️ Descargar Instalador](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.36.0/AI-Game-Dev-Installer.unitypackage)**
 - **📂 Importar instalador al proyecto Unity**
   > - Puedes hacer doble clic en el archivo - Unity lo abrirá automáticamente
   > - O: Abre Unity Editor primero, luego haz clic en `Assets/Import Package/Custom Package`, y elige el archivo

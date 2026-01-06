@@ -11,18 +11,20 @@
 #nullable enable
 
 using System;
+using com.IvanMurzak.ReflectorNet;
 using R3;
 
 namespace com.IvanMurzak.Unity.MCP
 {
     public partial class UnityMcpPlugin : IDisposable
     {
-        public const string Version = "0.35.2";
+        public const string Version = "0.36.0";
 
         protected readonly CompositeDisposable _disposables = new();
 
         public UnityLogCollector? LogCollector { get; set; } = null;
 
+        public Reflector? Reflector => McpPluginInstance?.McpManager.Reflector;
         public McpPlugin.IToolManager? Tools => McpPluginInstance?.McpManager.ToolManager;
         public McpPlugin.IPromptManager? Prompts => McpPluginInstance?.McpManager.PromptManager;
         public McpPlugin.IResourceManager? Resources => McpPluginInstance?.McpManager.ResourceManager;

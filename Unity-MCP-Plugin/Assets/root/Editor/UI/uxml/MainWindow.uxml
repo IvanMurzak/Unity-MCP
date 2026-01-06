@@ -75,6 +75,7 @@
                         <ui:VisualElement name="btnGitHubIssueIcon" class="btn-icon" />
                         <ui:Label text="Bug Report" class="btn-label" />
                     </ui:Button>
+                    <ui:Button name="btnCheckSerialization" text="Check" class="btn-secondary" />
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement class="divider" />

@@ -8,6 +8,7 @@
 [![Unity Runtime](https://img.shields.io/badge/Runtime-X?style=flat&logo=unity&labelColor=333A41&color=49BC5C 'Unity Runtime supported')](https://unity.com/releases/editor/archive)
 [![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg 'Tests Passed')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)</br>
 [![Discord](https://img.shields.io/badge/Discord-Join-7289da?logo=discord&logoColor=white&labelColor=333A41 'Join')](https://discord.gg/cfbdMZX99G)
+[![openupm](https://img.shields.io/badge/dynamic/json?labelColor=333A41&label=downloads&query=%24.downloads&suffix=%2Fmonth&url=https%3A%2F%2Fpackage.openupm.com%2Fdownloads%2Fpoint%2Flast-month%2Fcom.ivanmurzak.unity.mcp)](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
 [![Stars](https://img.shields.io/github/stars/IvanMurzak/Unity-MCP 'Stars')](https://github.com/IvanMurzak/Unity-MCP/stargazers)
 [![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&labelColor=333A41)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
@@ -35,7 +36,7 @@
 - ✔️ **丰富工具集** - 广泛的默认[MCP工具](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)
 - ✔️ **可扩展** - 在您的项目代码中创建[自定义MCP工具](#添加自定义mcp工具)
 
-[![下载安装程序](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download_zh-CN.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.35.2/AI-Game-Dev-Installer.unitypackage)
+[![下载安装程序](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download_zh-CN.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.36.0/AI-Game-Dev-Installer.unitypackage)
 
 ![AI 游戏开发者 窗户](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/ai-game-developer-windows.png?raw=true)
 
@@ -250,7 +251,7 @@
 
 ### 选项1 - 安装程序
 
-- **[⬇️ 下载安装程序](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.35.2/AI-Game-Dev-Installer.unitypackage)**
+- **[⬇️ 下载安装程序](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.36.0/AI-Game-Dev-Installer.unitypackage)**
 - **📂 将安装程序导入Unity项目**
   > - 您可以双击文件 - Unity会自动打开它
   > - 或者：先打开Unity编辑器，然后点击 `Assets/Import Package/Custom Package`，选择文件

@@ -28,7 +28,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
         //     Reflector reflector,
         //     ref object? obj,
         //     SerializedMember data,
-        //     Type? dataType = null,
+        //     Type type,
         //     int depth = 0,
         //     Logs? logs = null,
         //     BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,

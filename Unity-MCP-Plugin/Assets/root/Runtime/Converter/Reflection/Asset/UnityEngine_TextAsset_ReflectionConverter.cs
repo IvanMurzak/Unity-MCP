@@ -7,22 +7,21 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
-using UnityEditor;
 
-namespace com.IvanMurzak.Unity.MCP.Installer
+using System.Collections.Generic;
+
+namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
-    [InitializeOnLoad]
-    public static partial class Installer
+    public partial class UnityEngine_TextAsset_ReflectionConverter : UnityEngine_Asset_ReflectionConverter<UnityEngine.TextAsset>
     {
-        public const string PackageId = "com.ivanmurzak.unity.mcp";
-        public const string Version = "0.36.0";
-
-        static Installer()
+        protected override IEnumerable<string> GetIgnoredProperties()
         {
-#if !IVAN_MURZAK_INSTALLER_PROJECT
-            AddScopedRegistryIfNeeded(ManifestPath);
-#endif
+            foreach (var property in base.GetIgnoredProperties())
+                yield return property;
+
+            yield return nameof(UnityEngine.TextAsset.bytes);
         }
     }
 }
