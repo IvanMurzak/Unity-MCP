@@ -26,7 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
             var serializedValue = sourceValue.ToJson(reflector);
-            var deserializedValue = reflector.JsonSerializer.Deserialize<T>(serializedValue);
+            var deserializedValue = reflector.JsonSerializer.Deserialize<T>(serializedValue!);
 
             var areEqual = reflector.AreEqual(sourceValue, deserializedValue);
             Assert.IsTrue(areEqual, $"Serialized and deserialized values do not match for type '{typeof(T).GetTypeId()}'");

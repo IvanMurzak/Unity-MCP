@@ -21,44 +21,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     {
         static void ValidateType<T>(T sourceValue)
         {
-            var options = new System.Text.Json.JsonSerializerOptions();
-            options.NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals;
+            var reflector = UnityMcpPlugin.Instance.McpPluginInstance!.McpManager.Reflector;
 
-            // Add converters manually
-            options.Converters.Add(new com.IvanMurzak.Unity.MCP.JsonConverters.Vector2Converter());
-            options.Converters.Add(new com.IvanMurzak.Unity.MCP.JsonConverters.Vector2IntConverter());
-            options.Converters.Add(new com.IvanMurzak.Unity.MCP.JsonConverters.Vector3Converter());
-            options.Converters.Add(new com.IvanMurzak.Unity.MCP.JsonConverters.Vector3IntConverter());
-            options.Converters.Add(new com.IvanMurzak.Unity.MCP.JsonConverters.Vector4Converter());
-            options.Converters.Add(new com.IvanMurzak.Unity.MCP.JsonConverters.QuaternionConverter());
-            options.Converters.Add(new com.IvanMurzak.Unity.MCP.JsonConverters.Matrix4x4Converter());
-            options.Converters.Add(new com.IvanMurzak.Unity.MCP.JsonConverters.BoundsConverter());
-            options.Converters.Add(new com.IvanMurzak.Unity.MCP.JsonConverters.BoundsIntConverter());
-            options.Converters.Add(new com.IvanMurzak.Unity.MCP.JsonConverters.RectConverter());
-            options.Converters.Add(new com.IvanMurzak.Unity.MCP.JsonConverters.RectIntConverter());
-            options.Converters.Add(new com.IvanMurzak.Unity.MCP.JsonConverters.ColorConverter());
-            options.Converters.Add(new com.IvanMurzak.Unity.MCP.JsonConverters.Color32Converter());
-
-            var serializedValue = System.Text.Json.JsonSerializer.Serialize(sourceValue, options);
-            var deserializedValue = System.Text.Json.JsonSerializer.Deserialize<T>(serializedValue, options);
+            var serializedValue = reflector.JsonSerializer.Serialize(sourceValue);
+            var deserializedValue = reflector.JsonSerializer.Deserialize<T>(serializedValue);
 
             bool areEqual = false;
-            if (sourceValue is Vector2 v2Source && deserializedValue is Vector2 v2Dest)
+            // if (sourceValue is Vector2 v2Source && deserializedValue is Vector2 v2Dest)
+            // {
+            //     areEqual = CompareFloats(v2Source.x, v2Dest.x) && CompareFloats(v2Source.y, v2Dest.y);
+            // }
+            // else if (sourceValue is Vector3 v3Source && deserializedValue is Vector3 v3Dest)
+            // {
+            //     areEqual = CompareFloats(v3Source.x, v3Dest.x) && CompareFloats(v3Source.y, v3Dest.y) && CompareFloats(v3Source.z, v3Dest.z);
+            // }
+            // else if (sourceValue is Vector4 v4Source && deserializedValue is Vector4 v4Dest)
+            // {
+            //     areEqual = CompareFloats(v4Source.x, v4Dest.x) && CompareFloats(v4Source.y, v4Dest.y) && CompareFloats(v4Source.z, v4Dest.z) && CompareFloats(v4Source.w, v4Dest.w);
+            // }
+            // else
             {
-                areEqual = CompareFloats(v2Source.x, v2Dest.x) && CompareFloats(v2Source.y, v2Dest.y);
+                areEqual = sourceValue!.Equals(deserializedValue);
             }
-            else if (sourceValue is Vector3 v3Source && deserializedValue is Vector3 v3Dest)
-            {
-                areEqual = CompareFloats(v3Source.x, v3Dest.x) && CompareFloats(v3Source.y, v3Dest.y) && CompareFloats(v3Source.z, v3Dest.z);
-            }
-            else if (sourceValue is Vector4 v4Source && deserializedValue is Vector4 v4Dest)
-            {
-                areEqual = CompareFloats(v4Source.x, v4Dest.x) && CompareFloats(v4Source.y, v4Dest.y) && CompareFloats(v4Source.z, v4Dest.z) && CompareFloats(v4Source.w, v4Dest.w);
-            }
-            else
-            {
-                areEqual = sourceValue.Equals(deserializedValue);
-            }
+
+
 
             Assert.IsTrue(areEqual, $"Serialized and deserialized values do not match for type '{typeof(T).Name}'.\n" +
                 $"Source: {sourceValue}\n" +
