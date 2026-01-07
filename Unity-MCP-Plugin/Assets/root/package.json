@@ -17,7 +17,7 @@
     "dependencies": {
         "com.unity.test-framework": "1.1.33",
         "com.unity.modules.uielements": "1.0.0",
-        "extensions.unity.playerprefsex": "2.1.1",
+        "extensions.unity.playerprefsex": "2.1.2",
         "org.nuget.microsoft.bcl.memory": "10.0.1",
         "org.nuget.microsoft.aspnetcore.signalr.client": "10.0.1",
         "org.nuget.microsoft.aspnetcore.signalr.protocols.json": "10.0.1",

@@ -4,7 +4,7 @@
     "com.unity.postprocessing": "3.5.1",
     "com.unity.render-pipelines.universal": "17.3.0",
     "com.unity.test-framework": "1.1.33",
-    "extensions.unity.playerprefsex": "2.1.1",
+    "extensions.unity.playerprefsex": "2.1.2",
     "org.nuget.microsoft.aspnetcore.signalr.client": "10.0.1",
     "org.nuget.microsoft.aspnetcore.signalr.protocols.json": "10.0.1",
     "org.nuget.microsoft.bcl.memory": "10.0.1",
