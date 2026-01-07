@@ -1,6 +1,6 @@
 {
     "name": "com.IvanMurzak.Unity.MCP.Tests",
-    "rootNamespace": "com.IvanMurzak.Unity.MCP.Tests",
+    "rootNamespace": "",
     "references": [
         "UnityEngine.TestRunner",
         "com.IvanMurzak.Unity.MCP.Runtime",
@@ -21,8 +21,10 @@
         "McpPlugin.Common.dll",
         "R3.dll"
     ],
-    "autoReferenced": false,
-    "defineConstraints": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
     "versionDefines": [],
     "noEngineReferences": false
 }
