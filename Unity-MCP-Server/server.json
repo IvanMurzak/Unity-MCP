@@ -35,7 +35,7 @@
         },
         {
           "name": "MCP_PLUGIN_CLIENT_TRANSPORT",
-          "description": "Client -> Server transport type: stdio or http (default: http)",
+          "description": "Client -> Server transport type: stdio or streamableHttp (default: stdio)",
           "format": "string",
           "default": "stdio",
           "enum": [

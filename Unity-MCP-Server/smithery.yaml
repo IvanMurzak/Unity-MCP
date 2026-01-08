@@ -20,7 +20,7 @@ startCommand:
     properties:
       MCP_PLUGIN_CLIENT_TRANSPORT:
         type: string
-        description: "http or stdio transport options"
+        description: "streamableHttp or stdio transport options"
         default: "stdio"
       # MCP_PLUGIN_PORT:
       #   type: integer
