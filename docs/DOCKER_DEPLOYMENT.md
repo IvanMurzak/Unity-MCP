@@ -64,7 +64,7 @@ To use the Dockerized server with your AI Client (e.g., Claude):
 ```json
 {
   "mcpServers": {
-    "ai-game-developer: {
+    "ai-game-developer": {
       "url": "http://localhost:8080"
     }
   }
@@ -75,7 +75,7 @@ To use the Dockerized server with your AI Client (e.g., Claude):
 ```json
 {
   "mcpServers": {
-    "ai-game-developer: {
+    "ai-game-developer": {
       "command": "docker",
       "args": [
         "run",

@@ -539,7 +539,7 @@ docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server
 ```json
 {
   "mcpServers": {
-    "ai-game-developer: {
+    "ai-game-developer": {
       "url": "http://localhost:8080"
     }
   }
@@ -564,7 +564,7 @@ docker run -t -e MCP_PLUGIN_CLIENT_TRANSPORT=stdio -p 8080:8080 ivanmurzakdev/un
 ```json
 {
   "mcpServers": {
-    "ai-game-developer: {
+    "ai-game-developer": {
       "command": "docker",
       "args": [
         "run",
@@ -594,7 +594,7 @@ docker run -e MCP_PLUGIN_PORT=123 -p 123:123 ivanmurzakdev/unity-mcp-server
 ```json
 {
   "mcpServers": {
-    "ai-game-developer: {
+    "ai-game-developer": {
       "url": "http://localhost:123"
     }
   }
@@ -620,7 +620,7 @@ You may launch Unity `MCP Server` directly from a binary file. You would need to
 ```json
 {
   "mcpServers": {
-    "ai-game-developer: {
+    "ai-game-developer": {
       "command": "<project>/Library/mcp-server/win-x64/unity-mcp-server.exe",
       "args": [
         "--port=8080",

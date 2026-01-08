@@ -24,7 +24,7 @@ Add the following configuration to your Claude Desktop config file:
 ```json
 {
   "mcpServers": {
-    "ai-game-developer: {
+    "ai-game-developer": {
       "command": "unity-mcp-server",
       "env": {
         "MCP_PLUGIN_CLIENT_TRANSPORT": "stdio",
@@ -42,7 +42,7 @@ If using a VS Code MCP extension, add this to your VS Code settings.json:
 ```json
 {
   "servers": {
-    "ai-game-developer: {
+    "ai-game-developer": {
       "command": "unity-mcp-server",
       "env": {
         "MCP_PLUGIN_CLIENT_TRANSPORT": "stdio",
