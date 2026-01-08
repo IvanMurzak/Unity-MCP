@@ -16,7 +16,7 @@ namespace com.IvanMurzak.Unity.MCP.Installer
     public static partial class Installer
     {
         public const string PackageId = "com.ivanmurzak.unity.mcp";
-        public const string Version = "0.36.3";
+        public const string Version = "0.37.0";
 
         static Installer()
         {
