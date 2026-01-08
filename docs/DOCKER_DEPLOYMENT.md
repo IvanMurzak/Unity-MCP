@@ -12,13 +12,13 @@
 [![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&labelColor=333A41)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
-![Docker Launch](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/docker-launch.gif?raw=true)
-
 The Unity-MCP Server is available as a lightweight Docker container, ideal for cloud deployments or isolating the AI server environment.
 
 - **Image**: `ivanmurzakdev/unity-mcp-server`
 - **Tags**: `latest`, `X.Y.Z` (e.g., `0.35.0`)
 - **Architectures**: `linux/amd64`, `linux/arm64` (Apple Silicon compatible)
+
+![Docker Launch](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/docker-launch.gif?raw=true)
 
 ## 🚀 Quick Start
 
