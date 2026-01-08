@@ -254,7 +254,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 var configureResult = config.Configure();
 
-                statusText.text = configureResult ? "Configured" : "Not Configured";
+                statusText.text = configureResult ? "Configured (stdio)" : "Not Configured";
 
                 statusCircle.RemoveFromClassList(USS_IndicatorClass_Connected);
                 statusCircle.RemoveFromClassList(USS_IndicatorClass_Connecting);
