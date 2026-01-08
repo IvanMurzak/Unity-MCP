@@ -31,7 +31,7 @@ First it looks for the opened Prefab, if any Prefab is opened it looks only ther
 If no opened Prefab it looks into current active scene.
 Returns GameObject information and its children.
 Also, it returns Components preview just for the target GameObject.")]
-        public GameObjectData Find
+        public GameObjectData? Find
         (
             GameObjectRef gameObjectRef,
             [Description("Include serialized data of the GameObject and its components.")]
@@ -53,7 +53,7 @@ Also, it returns Components preview just for the target GameObject.")]
                     throw new System.Exception(error);
 
                 if (go == null)
-                    throw new System.Exception("GameObject not found after successful search.");
+                    return null;
 
                 return go.ToGameObjectData(
                     reflector: McpPlugin.McpPlugin.Instance!.McpManager.Reflector,

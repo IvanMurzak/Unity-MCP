@@ -26,6 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
         protected readonly Vector3? _scale;
         protected readonly bool _isLocalSpace;
         protected readonly int _primitiveType;
+        protected readonly bool _isActive;
 
         public GameObjectRef? GameObjectRef { get; protected set; }
         public GameObject? GameObject { get; protected set; }
@@ -37,7 +38,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
             Vector3? rotation = null,
             Vector3? scale = null,
             bool isLocalSpace = false,
-            int primitiveType = -1) : base()
+            int primitiveType = -1,
+            bool isActive = true) : base()
         {
             _name = name ?? throw new ArgumentNullException(nameof(name));
             _parentGameObjectRef = parentGameObjectRef;
@@ -46,6 +48,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
             _scale = scale;
             _isLocalSpace = isLocalSpace;
             _primitiveType = primitiveType;
+            _isActive = isActive;
 
             SetAction(() =>
             {
@@ -100,6 +103,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
                     GameObject.transform.eulerAngles = rot;
                     GameObject.transform.localScale = scl;
                 }
+
+                // Set active state
+                GameObject.SetActive(_isActive);
 
                 // Create GameObjectRef
                 GameObjectRef = new GameObjectRef(GameObject.GetInstanceID());

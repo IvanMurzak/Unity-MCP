@@ -32,7 +32,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Script / Execute"
         )]
         [Description("Compiles and executes C# code dynamically using Roslyn. The provided code must define a class with a static method to execute.")]
-        public static SerializedMember Execute
+        public static SerializedMember? Execute
         (
             [Description(@"C# code that compiles and executes immediately. It won't be stored as a script in the project. It is temporary one shot C# code execution using Roslyn.
 IMPORTANT: The code must define a class (e.g., 'public class Script') with a static method (e.g., 'public static object Main()').
@@ -63,6 +63,8 @@ Do NOT use top-level statements or code outside a class. Top-level statements ar
 
             return MainThread.Instance.Run(() =>
             {
+                var logger = UnityLoggerFactory.LoggerFactory.CreateLogger("Tool_Script.Execute");
+
                 // Compile C# code using Roslyn and execute it immediately
                 if (!ExecuteCSharpCode(
                     className: className,
@@ -71,17 +73,20 @@ Do NOT use top-level statements or code outside a class. Top-level statements ar
                     parameters: parameters,
                     returnValue: out var result,
                     error: out var error,
-                    logger: UnityLoggerFactory.LoggerFactory.CreateLogger("Tool_Script.Execute")))
+                    logger: logger))
                 {
                     throw new Exception(error);
                 }
+
+                if (result is null)
+                    return null;
 
                 if (result is SerializedMember serializedResult)
                     return serializedResult;
 
                 return McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Serialize(
                     obj: result,
-                    logger: UnityLoggerFactory.LoggerFactory.CreateLogger("Tool_Script.Execute"));
+                    logger: logger);
             });
         }
         static bool ExecuteCSharpCode(
