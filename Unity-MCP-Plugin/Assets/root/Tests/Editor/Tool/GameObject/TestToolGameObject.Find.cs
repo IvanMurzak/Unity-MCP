@@ -15,6 +15,7 @@ using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Tests.Utils;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -154,6 +155,215 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         ResponseData<ResponseCallTool> FindByJson(string json) => RunTool("gameobject-find", json);
+
+        [Test]
+        public void FindByInstanceId_ActiveGameObject()
+        {
+            var gameObjectEx = new CreateGameObjectExecutor(GO_ParentName, isActive: true);
+
+            gameObjectEx
+                .AddChild(() =>
+                {
+                    Assert.IsNotNull(gameObjectEx.GameObject, "GameObject should be created");
+                    Assert.IsTrue(gameObjectEx.GameObject!.activeSelf, "GameObject should be active");
+                })
+                .AddChild(new DynamicCallToolExecutor(
+                    toolMethod: typeof(Tool_GameObject).GetMethod(nameof(Tool_GameObject.Find)),
+                    jsonProvider: () => $@"{{
+                        ""gameObjectRef"": {{
+                            ""instanceID"": {gameObjectEx.GameObject!.GetInstanceID()}
+                        }}
+                    }}"))
+                .AddChild(new ValidateToolResultExecutor())
+                .Execute();
+        }
+
+        [Test]
+        public void FindByInstanceId_InactiveGameObject()
+        {
+            var gameObjectEx = new CreateGameObjectExecutor(GO_ParentName, isActive: false);
+
+            gameObjectEx
+                .AddChild(() =>
+                {
+                    Assert.IsNotNull(gameObjectEx.GameObject, "GameObject should be created");
+                    Assert.IsFalse(gameObjectEx.GameObject!.activeSelf, "GameObject should be inactive");
+                })
+                .AddChild(new DynamicCallToolExecutor(
+                    toolMethod: typeof(Tool_GameObject).GetMethod(nameof(Tool_GameObject.Find)),
+                    jsonProvider: () => $@"{{
+                        ""gameObjectRef"": {{
+                            ""instanceID"": {gameObjectEx.GameObject!.GetInstanceID()}
+                        }}
+                    }}"))
+                .AddChild(new ValidateToolResultExecutor())
+                .Execute();
+        }
+
+        [Test]
+        public void FindByName_ActiveGameObject()
+        {
+            var gameObjectEx = new CreateGameObjectExecutor(GO_ParentName, isActive: true);
+
+            gameObjectEx
+                .AddChild(() =>
+                {
+                    Assert.IsNotNull(gameObjectEx.GameObject, "GameObject should be created");
+                    Assert.IsTrue(gameObjectEx.GameObject!.activeSelf, "GameObject should be active");
+                })
+                .AddChild(new DynamicCallToolExecutor(
+                    toolMethod: typeof(Tool_GameObject).GetMethod(nameof(Tool_GameObject.Find)),
+                    jsonProvider: () => $@"{{
+                        ""gameObjectRef"": {{
+                            ""name"": ""{GO_ParentName}""
+                        }}
+                    }}"))
+                .AddChild(new ValidateToolResultExecutor())
+                .Execute();
+        }
+
+        [Test]
+        public void FindByName_InactiveGameObject()
+        {
+            var gameObjectEx = new CreateGameObjectExecutor(GO_ParentName, isActive: false);
+
+            gameObjectEx
+                .AddChild(() =>
+                {
+                    Assert.IsNotNull(gameObjectEx.GameObject, "GameObject should be created");
+                    Assert.IsFalse(gameObjectEx.GameObject!.activeSelf, "GameObject should be inactive");
+                })
+                .AddChild(new DynamicCallToolExecutor(
+                    toolMethod: typeof(Tool_GameObject).GetMethod(nameof(Tool_GameObject.Find)),
+                    jsonProvider: () => $@"{{
+                        ""gameObjectRef"": {{
+                            ""name"": ""{GO_ParentName}""
+                        }}
+                    }}"))
+                .AddChild(new ValidateToolResultExecutor())
+                .Execute();
+        }
+
+        [Test]
+        public void FindByPath_ActiveGameObject_NestedHierarchy()
+        {
+            GameObject? child1 = null;
+            GameObject? child2 = null;
+            var rootEx = new CreateGameObjectExecutor(GO_ParentName, isActive: true);
+
+            rootEx
+                .AddChild(() =>
+                {
+                    Assert.IsNotNull(rootEx.GameObject, "Root GameObject should be created");
+                    Assert.IsTrue(rootEx.GameObject!.activeSelf, "Root GameObject should be active");
+
+                    // Create nested hierarchy: root -> child1 -> child2
+                    child1 = new GameObject(GO_Child1Name);
+                    child1.transform.SetParent(rootEx.GameObject.transform);
+
+                    child2 = new GameObject(GO_Child2Name);
+                    child2.transform.SetParent(child1.transform);
+                    child2.SetActive(true);
+
+                    Assert.IsTrue(child2.activeSelf, "Child2 GameObject should be active");
+                })
+                .AddChild(new DynamicCallToolExecutor(
+                    toolMethod: typeof(Tool_GameObject).GetMethod(nameof(Tool_GameObject.Find)),
+                    jsonProvider: () => $@"{{
+                        ""gameObjectRef"": {{
+                            ""path"": ""{GO_ParentName}/{GO_Child1Name}/{GO_Child2Name}""
+                        }}
+                    }}"))
+                .AddChild(new ValidateToolResultExecutor())
+                .Execute();
+        }
+
+        [Test]
+        public void FindByPath_InactiveGameObject_NestedHierarchy()
+        {
+            GameObject? child1 = null;
+            GameObject? child2 = null;
+            var rootEx = new CreateGameObjectExecutor(GO_ParentName, isActive: true);
+
+            rootEx
+                .AddChild(() =>
+                {
+                    Assert.IsNotNull(rootEx.GameObject, "Root GameObject should be created");
+
+                    // Create nested hierarchy: root -> child1 -> child2 (inactive)
+                    child1 = new GameObject(GO_Child1Name);
+                    child1.transform.SetParent(rootEx.GameObject!.transform);
+
+                    child2 = new GameObject(GO_Child2Name);
+                    child2.transform.SetParent(child1.transform);
+                    child2.SetActive(false);
+
+                    Assert.IsFalse(child2.activeSelf, "Child2 GameObject should be inactive");
+                })
+                .AddChild(new DynamicCallToolExecutor(
+                    toolMethod: typeof(Tool_GameObject).GetMethod(nameof(Tool_GameObject.Find)),
+                    jsonProvider: () => $@"{{
+                        ""gameObjectRef"": {{
+                            ""path"": ""{GO_ParentName}/{GO_Child1Name}/{GO_Child2Name}""
+                        }}
+                    }}"))
+                .AddChild(new ValidateToolResultExecutor())
+                .Execute();
+        }
+
+        [Test]
+        public void FindByInstanceId_NonExistent_ThrowsException()
+        {
+            var nonExistentInstanceId = 999999999;
+
+            var ex = Assert.Throws<System.Exception>(() =>
+            {
+                new Tool_GameObject().Find(
+                    gameObjectRef: new GameObjectRef
+                    {
+                        InstanceID = nonExistentInstanceId
+                    });
+            });
+
+            Assert.IsNotNull(ex);
+            Assert.IsTrue(ex.Message.Contains("Not found"), $"Exception message should contain 'Not found'. Actual: {ex.Message}");
+        }
+
+        [Test]
+        public void FindByName_NonExistent_ThrowsException()
+        {
+            var nonExistentName = "NonExistentGameObject_12345";
+
+            var ex = Assert.Throws<System.Exception>(() =>
+            {
+                new Tool_GameObject().Find(
+                    gameObjectRef: new GameObjectRef
+                    {
+                        Name = nonExistentName
+                    });
+            });
+
+            Assert.IsNotNull(ex);
+            Assert.IsTrue(ex.Message.Contains("Not found"), $"Exception message should contain 'Not found'. Actual: {ex.Message}");
+        }
+
+        [Test]
+        public void FindByPath_NonExistent_ThrowsException()
+        {
+            var nonExistentPath = "NonExistent/Path/To/GameObject";
+
+            var ex = Assert.Throws<System.Exception>(() =>
+            {
+                new Tool_GameObject().Find(
+                    gameObjectRef: new GameObjectRef
+                    {
+                        Path = nonExistentPath
+                    });
+            });
+
+            Assert.IsNotNull(ex);
+            Assert.IsTrue(ex.Message.Contains("Not found"), $"Exception message should contain 'Not found'. Actual: {ex.Message}");
+        }
 
         [Test]
         public void FindByJson_HierarchyDepth_0_DeepSerialization_False()

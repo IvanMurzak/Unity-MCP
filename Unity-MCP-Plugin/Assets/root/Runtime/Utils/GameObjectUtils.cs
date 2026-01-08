@@ -68,7 +68,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
             // Find by 'name'. Priority: 3.
             else if (!string.IsNullOrEmpty(name))
             {
-                go = GameObject.Find(name);
+                go = FindByName(name);
                 if (go == null)
                 {
                     error = $"Not found GameObject with name '{name}'";
@@ -129,6 +129,58 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
 
                 return currentGameObject;
             }
+        }
+
+        public static GameObject? FindByName(string? name, GameObject? root = null)
+        {
+            if (string.IsNullOrEmpty(name))
+                return null;
+
+            // If root is null, search in the active scene's root GameObjects
+            if (root == null)
+            {
+                var rootGos = FindRootGameObjects();
+                if (rootGos == null)
+                    return null;
+
+                foreach (var rootGo in rootGos)
+                {
+                    // Check if root matches
+                    if (rootGo.name == name)
+                        return rootGo;
+
+                    // Search recursively in children
+                    var found = FindByNameRecursive(rootGo, name);
+                    if (found != null)
+                        return found;
+                }
+
+                return null;
+            }
+            else
+            {
+                // Check if root matches
+                if (root.name == name)
+                    return root;
+
+                // Search recursively in children
+                return FindByNameRecursive(root, name);
+            }
+        }
+
+        private static GameObject? FindByNameRecursive(GameObject parent, string name)
+        {
+            foreach (Transform child in parent.transform)
+            {
+                if (child.name == name)
+                    return child.gameObject;
+
+                var found = FindByNameRecursive(child.gameObject, name);
+                if (found != null)
+                    return found;
+            }
+
+            return null;
         }
         public static GameObject? FindChildByName(this GameObject parent, string name)
         {
