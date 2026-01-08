@@ -50,9 +50,9 @@ namespace com.IvanMurzak.Unity.MCP.Server
                 var consoleWriteLine = dataArguments.ClientTransport switch
                 {
                     Consts.MCP.Server.TransportMethod.stdio => (Action<string>)(message => { /* ignore console output */ }),
-                    Consts.MCP.Server.TransportMethod.http => (Action<string>)(message => Console.WriteLine(message)),
+                    Consts.MCP.Server.TransportMethod.streamableHttp => (Action<string>)(message => Console.WriteLine(message)),
                     _ => throw new ArgumentException($"Unsupported transport method: {dataArguments.ClientTransport}. " +
-                        $"Supported methods are: {Consts.MCP.Server.TransportMethod.stdio}, {Consts.MCP.Server.TransportMethod.http}")
+                        $"Supported methods are: {Consts.MCP.Server.TransportMethod.stdio}, {Consts.MCP.Server.TransportMethod.streamableHttp}")
                 };
 
                 consoleWriteLine("Location: " + Environment.CurrentDirectory);
@@ -88,7 +88,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
                 app.UseMcpPluginServer(dataArguments);
 
                 // Setup MCP client -------------------------------------------------
-                if (dataArguments.ClientTransport == Consts.MCP.Server.TransportMethod.http)
+                if (dataArguments.ClientTransport == Consts.MCP.Server.TransportMethod.streamableHttp)
                 {
                     // Add a GET /help endpoint for informational message
                     app.MapGet("/help", () =>
