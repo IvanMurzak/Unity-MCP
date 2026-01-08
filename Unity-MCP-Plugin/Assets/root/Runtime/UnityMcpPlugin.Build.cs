@@ -10,7 +10,9 @@
 
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.Unity.MCP.Utils;
@@ -95,12 +97,39 @@ namespace com.IvanMurzak.Unity.MCP
             return new UnityLoggerProvider();
         }
 
+        /// <summary>
+        /// Filters assemblies to only include those that can successfully load their types.
+        /// This prevents ReflectionTypeLoadException from assemblies with missing dependencies.
+        /// </summary>
+        protected virtual IEnumerable<Assembly> GetSafeAssemblies()
+        {
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                if (assembly.IsDynamic)
+                    continue;
+
+                try
+                {
+                    assembly.GetTypes();
+                    yield return assembly;
+                }
+                catch (ReflectionTypeLoadException)
+                {
+                    _logger.LogWarning("Skipping assembly with missing dependencies: {assembly}", assembly.GetName().Name);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning("Skipping assembly {assembly}: {error}", assembly.GetName().Name, ex.Message);
+                }
+            }
+        }
+
         protected virtual IMcpPlugin BuildMcpPlugin(McpPlugin.Common.Version version, Reflector reflector, ILoggerProvider? loggerProvider = null)
         {
             _logger.LogTrace("{method} called.",
                 nameof(BuildMcpPlugin));
 
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            var assemblies = GetSafeAssemblies().ToArray();
             var mcpPlugin = new McpPluginBuilder(version, loggerProvider)
                 .WithConfig(config =>
                 {
