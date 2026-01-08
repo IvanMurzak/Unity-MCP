@@ -312,6 +312,60 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         [Test]
+        public void FindByInstanceId_NonExistent_ThrowsException()
+        {
+            var nonExistentInstanceId = 999999999;
+
+            var ex = Assert.Throws<System.Exception>(() =>
+            {
+                new Tool_GameObject().Find(
+                    gameObjectRef: new GameObjectRef
+                    {
+                        InstanceID = nonExistentInstanceId
+                    });
+            });
+
+            Assert.IsNotNull(ex);
+            Assert.IsTrue(ex.Message.Contains("Not found"), $"Exception message should contain 'Not found'. Actual: {ex.Message}");
+        }
+
+        [Test]
+        public void FindByName_NonExistent_ThrowsException()
+        {
+            var nonExistentName = "NonExistentGameObject_12345";
+
+            var ex = Assert.Throws<System.Exception>(() =>
+            {
+                new Tool_GameObject().Find(
+                    gameObjectRef: new GameObjectRef
+                    {
+                        Name = nonExistentName
+                    });
+            });
+
+            Assert.IsNotNull(ex);
+            Assert.IsTrue(ex.Message.Contains("Not found"), $"Exception message should contain 'Not found'. Actual: {ex.Message}");
+        }
+
+        [Test]
+        public void FindByPath_NonExistent_ThrowsException()
+        {
+            var nonExistentPath = "NonExistent/Path/To/GameObject";
+
+            var ex = Assert.Throws<System.Exception>(() =>
+            {
+                new Tool_GameObject().Find(
+                    gameObjectRef: new GameObjectRef
+                    {
+                        Path = nonExistentPath
+                    });
+            });
+
+            Assert.IsNotNull(ex);
+            Assert.IsTrue(ex.Message.Contains("Not found"), $"Exception message should contain 'Not found'. Actual: {ex.Message}");
+        }
+
+        [Test]
         public void FindByJson_HierarchyDepth_0_DeepSerialization_False()
         {
             var go = new GameObject(GO_ParentName);
