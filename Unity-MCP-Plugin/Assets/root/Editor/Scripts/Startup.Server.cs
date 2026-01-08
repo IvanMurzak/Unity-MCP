@@ -104,7 +104,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             // ------------------------------------------------------------------------------------------------------------------------------------
 
-            public static JsonNode RawJsonConfiguration(
+            public static JsonNode RawJsonConfigurationStdio(
                 int port,
                 string bodyPath = "mcpServers",
                 int timeoutMs = Consts.Hub.DefaultTimeoutMs)
@@ -116,6 +116,32 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     port: port,
                     timeoutMs: timeoutMs
                 );
+            }
+
+            public static JsonNode RawJsonConfigurationHttp(
+                string url,
+                string bodyPath = "mcpServers")
+            {
+                return new JsonObject()
+                {
+                    [bodyPath] = new JsonObject()
+                    {
+                        [Utils.ClientConfig.DefaultMcpServerName] = new JsonObject
+                        {
+                            ["url"] = url,
+                            ["type"] = "streamableHttp"
+                        }
+                    }
+                };
+            }
+
+            public static string DockerRunCommand()
+            {
+                var dockerPortMapping = $"-p {UnityMcpPlugin.Port}:{UnityMcpPlugin.Port}";
+                var dockerEnvVars = $"-e MCP_PLUGIN_CLIENT_TRANSPORT=streamableHttp -e MCP_PLUGIN_PORT={UnityMcpPlugin.Port} -e MCP_PLUGIN_CLIENT_TIMEOUT={UnityMcpPlugin.TimeoutMs}";
+                var dockerContainer = $"--name unity-mcp-server-{UnityMcpPlugin.Port}";
+                var dockerImage = $"ivanmurzakdev/unity-mcp-server:{UnityMcpPlugin.Version}";
+                return $"docker run -d {dockerPortMapping} {dockerEnvVars} {dockerContainer} {dockerImage}";
             }
 
             public static string ExecutableZipUrl

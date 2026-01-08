@@ -45,7 +45,7 @@ AI helper which does wide range of tasks in Unity Editor and even in a running g
 
 - ✅ Chat with AI like with a human
 - ✅ Local and Remote usage supported
-- ✅ `STDIO` and `HTTP` protocols supported
+- ✅ `stdio` and `streamableHttp` protocols supported
 - ✅ Wide range of default [AI tools](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/ai-tools.md)
 - ✅ Use `Description` attribute in C# code to provide detailed information for `class`, `field`, `property` or `method`.
 - ✅ Customizable reflection convertors, inspired by `System.Text.Json` convertors
@@ -228,7 +228,7 @@ The system is extensible: you can define custom `tool`s directly in your Unity p
 
 # Advanced MCP server setup
 
-Unity-MCP server supports many different launch options and docker docker deployment. Both transport protocol are supported `http` and `stdio`. [Read more...](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md)
+Unity-MCP server supports many different launch options and docker docker deployment. Both transport protocol are supported `streamableHttp` and `stdio`. [Read more...](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md)
 
 # Add custom `tool`
 

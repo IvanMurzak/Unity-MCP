@@ -25,11 +25,11 @@ Required to install [Unity MCP Plugin](https://github.com/IvanMurzak/Unity-MCP) 
 
 Doesn't matter what launch option you choose, all of them support custom configuration using both Environment Variables and Command Line Arguments. It would work with default values, if you just need to launch it, don't waste your time for the variables. Just make sure Unity Plugin also has default values, especially the `--port`, they should be equal.
 
-| Environment Variable        | Command Line Args     | Description                                                                 |
-|-----------------------------|-----------------------|-----------------------------------------------------------------------------|
-| `UNITY_MCP_PORT`            | `--port`              | **Client** -> **Server** <- **Plugin** connection port (default: 8080)      |
-| `UNITY_MCP_PLUGIN_TIMEOUT`  | `--plugin-timeout`    | **Plugin** -> **Server** connection timeout (ms) (default: 10000)           |
-| `UNITY_MCP_CLIENT_TRANSPORT`| `--client-transport`  | **Client** -> **Server** transport type: `stdio` or `http` (default: `http`) |
+| Environment Variable         | Command Line Args    | Description                                                                  |
+| ---------------------------- | -------------------- | ---------------------------------------------------------------------------- |
+| `MCP_PLUGIN_PORT`            | `--port`             | **Client** -> **Server** <- **Plugin** connection port (default: 8080)       |
+| `MCP_PLUGIN_CLIENT_TIMEOUT`   | `--plugin-timeout`   | **Plugin** -> **Server** connection timeout (ms) (default: 10000)            |
+| `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport` | **Client** -> **Server** transport type: `stdio` or `streamableHttp` (default: `streamableHttp`) |
 
 ---
 
@@ -41,7 +41,7 @@ Unity-MCP server is developed with idea of flexibility in mind, that is why it h
 
 #### Default launch
 
-The default the transport method is `http`. The port `8080` should be forwarded. It will be used for http transport and for **plugin** <-> **server** communication
+The default the transport method is `streamableHttp`. The port `8080` should be forwarded. It will be used for http transport and for **plugin** <-> **server** communication
 
 ```bash
 docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server
@@ -52,7 +52,7 @@ MCP client config:
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer": {
       "url": "http://localhost:8080"
     }
   }
@@ -64,7 +64,7 @@ MCP client config:
 The `8080` port is not needed for STDIO, because it uses the STDIO to communicate with **Client**. It is a good setup for using in a client with automatic installation and launching. Because this docker command loads the image from docker hub and launches immediately.
 
 ```bash
-docker run -t -e UNITY_MCP_CLIENT_TRANSPORT=stdio -p 8080:8080 ivanmurzakdev/unity-mcp-server
+docker run -t -e MCP_PLUGIN_CLIENT_TRANSPORT=stdio -p 8080:8080 ivanmurzakdev/unity-mcp-server
 ```
 
 MCP client config:
@@ -72,13 +72,13 @@ MCP client config:
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer": {
       "command": "docker",
       "args": [
         "run",
         "-t",
         "-e",
-        "UNITY_MCP_CLIENT_TRANSPORT=stdio",
+        "MCP_PLUGIN_CLIENT_TRANSPORT=stdio",
         "-p",
         "8080:8080",
         "ivanmurzakdev/unity-mcp-server"
@@ -91,7 +91,7 @@ MCP client config:
 #### Custom port
 
 ```bash
-docker run -e UNITY_MCP_PORT=123 -p 123:123 ivanmurzakdev/unity-mcp-server
+docker run -e MCP_PLUGIN_PORT=123 -p 123:123 ivanmurzakdev/unity-mcp-server
 ```
 
 MCP client config:
@@ -99,8 +99,9 @@ MCP client config:
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
-      "url": "http://localhost:123"
+    "ai-game-developer": {
+      "url": "http://localhost:123",
+      "type": "streamableHttp"
     }
   }
 }
@@ -125,7 +126,7 @@ MCP client config:
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer": {
       "command": "C:/Projects/Unity/Unity-MCP/Unity-MCP-Plugin/Library/mcp-server/win-x64/unity-mcp-server.exe",
       "args": [
         "--client-transport=stdio"
@@ -148,7 +149,7 @@ MCP client config:
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer": {
       "command": "C:/Projects/Unity/Unity-MCP/Unity-MCP-Plugin/Library/mcp-server/win-x64/unity-mcp-server.exe",
       "args": [
         "--port=8080",
@@ -165,7 +166,7 @@ MCP client config:
 Launch server with HTTP transport type for local OR remote usage using HTTP(S) url.
 
 ```bash
-./unity-mcp-server --port 8080 --plugin-timeout 10000 --client-transport http
+./unity-mcp-server --port 8080 --plugin-timeout 10000 --client-transport streamableHttp
 ```
 
 MCP client config:
@@ -173,12 +174,12 @@ MCP client config:
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer": {
       "command": "C:/Projects/Unity/Unity-MCP/Unity-MCP-Plugin/Library/mcp-server/win-x64/unity-mcp-server.exe",
       "args": [
         "--port=8080",
         "--plugin-timeout=10000",
-        "--client-transport=http"
+        "--client-transport=streamableHttp"
       ]
     }
   }

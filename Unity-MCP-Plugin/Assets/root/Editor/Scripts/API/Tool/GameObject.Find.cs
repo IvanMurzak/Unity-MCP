@@ -35,15 +35,15 @@ Also, it returns Components preview just for the target GameObject.")]
         (
             GameObjectRef gameObjectRef,
             [Description("Include serialized data of the GameObject and its components.")]
-            bool includeData = true,
+            bool includeData = false,
             [Description("Include bounds of the GameObject.")]
-            bool includeBounds = true,
+            bool includeBounds = false,
             [Description("Include hierarchy metadata.")]
-            bool includeHierarchy = true,
+            bool includeHierarchy = false,
             [Description("Determines the depth of the hierarchy to include. 0 - means only the target GameObject. 1 - means to include one layer below.")]
             int hierarchyDepth = 0,
             [Description("Performs deep serialization including all nested objects. Otherwise, only serializes top-level properties.")]
-            bool deepSerialization = true
+            bool deepSerialization = false
         )
         {
             return MainThread.Instance.Run(() =>

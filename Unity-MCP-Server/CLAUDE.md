@@ -25,14 +25,14 @@ dotnet run -- --client-transport stdio --port 8080
 
 #### HTTP Transport (for web-based clients)
 ```bash
-dotnet run -- --client-transport http --port 8080 --port 8080
+dotnet run -- --client-transport streamableHttp --port 8080 --port 8080
 ```
 
 ### Configuration
 Key command-line arguments and environment variables:
-- `UNITY_MCP_PORT` / `--port`: Client & Plugin connection port (default: 8080)
-- `UNITY_MCP_PLUGIN_TIMEOUT` / `--plugin-timeout`: Plugin connection timeout (default: 10000ms)
-- `UNITY_MCP_CLIENT_TRANSPORT` / `--client-transport`: Transport type: `stdio` or `http`
+- `MCP_PLUGIN_PORT` / `--port`: Client & Plugin connection port (default: 8080)
+- `MCP_PLUGIN_CLIENT_TIMEOUT` / `--plugin-timeout`: Plugin connection timeout (default: 10000ms)
+- `MCP_PLUGIN_CLIENT_TRANSPORT` / `--client-transport`: Transport type: `stdio` or `streamableHttp`
 
 ## Architecture Overview
 

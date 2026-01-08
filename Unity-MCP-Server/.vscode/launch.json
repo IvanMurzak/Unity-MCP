@@ -13,7 +13,7 @@
             "args": [
                 "--port=55123",
                 "--plugin-timeout=30000",
-                "--client-transport=http"
+                "--client-transport=streamableHttp"
             ]
         },
         {
@@ -25,7 +25,7 @@
             "args": [
                 "--port=59479",
                 "--plugin-timeout=30000",
-                "--client-transport=http"
+                "--client-transport=streamableHttp"
             ]
         },
         {
@@ -37,7 +37,7 @@
             "args": [
                 "--port=9090",
                 "--plugin-timeout=30000",
-                "--client-transport=http"
+                "--client-transport=streamableHttp"
             ]
         },
         {

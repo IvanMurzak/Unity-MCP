@@ -77,8 +77,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 UnityMcpPlugin.TimeoutMs = newValue;
 
                 // Update the raw JSON configuration display
-                var rawJsonField = root.Query<TextField>("rawJsonConfiguration").First();
-                rawJsonField.value = Startup.Server.RawJsonConfiguration(UnityMcpPlugin.Port, "mcpServers", UnityMcpPlugin.TimeoutMs).ToString();
+                var rawJsonField = root.Query<TextField>("rawJsonConfigurationStdio").First();
+                rawJsonField.value = Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, "mcpServers", UnityMcpPlugin.TimeoutMs).ToString();
 
                 SaveChanges($"[AI Game Developer] Timeout Changed: {newValue} ms");
                 UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
@@ -363,8 +363,58 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             // Provide raw json configuration
             // -----------------------------------------------------------------
 
-            var rawJsonField = root.Query<TextField>("rawJsonConfiguration").First();
-            rawJsonField.value = Startup.Server.RawJsonConfiguration(UnityMcpPlugin.Port, "mcpServers", UnityMcpPlugin.TimeoutMs).ToString();
+            var toggleOptionStdio = root.Query<Toggle>("toggleOptionStdio").First();
+            var toggleOptionHttp = root.Query<Toggle>("toggleOptionHttp").First();
+
+            var containerStdio = root.Query<VisualElement>("containerStdio").First();
+            var containerHttp = root.Query<VisualElement>("containerHttp").First();
+
+            var rawJsonFieldStdio = root.Query<TextField>("rawJsonConfigurationStdio").First();
+            var rawJsonFieldHttp = root.Query<TextField>("rawJsonConfigurationHttp").First();
+            var dockerCommand = root.Query<TextField>("dockerCommand").First();
+
+            rawJsonFieldStdio.value = Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, "mcpServers", UnityMcpPlugin.TimeoutMs).ToString();
+            rawJsonFieldHttp.value = Startup.Server.RawJsonConfigurationHttp(UnityMcpPlugin.Host, "mcpServers").ToString();
+            dockerCommand.value = Startup.Server.DockerRunCommand();
+
+            void UpdateConfigurationVisibility(bool isStdioSelected)
+            {
+                containerStdio.style.display = isStdioSelected ? DisplayStyle.Flex : DisplayStyle.None;
+                containerHttp.style.display = isStdioSelected ? DisplayStyle.None : DisplayStyle.Flex;
+            }
+
+            // Initialize with STDIO selected by default
+            toggleOptionStdio.value = true;
+            toggleOptionHttp.value = false;
+            UpdateConfigurationVisibility(true);
+
+            toggleOptionStdio.RegisterValueChangedCallback(evt =>
+            {
+                if (evt.newValue)
+                {
+                    toggleOptionHttp.SetValueWithoutNotify(false);
+                    UpdateConfigurationVisibility(true);
+                }
+                else if (!toggleOptionHttp.value)
+                {
+                    // Prevent both toggles from being unchecked
+                    toggleOptionStdio.SetValueWithoutNotify(true);
+                }
+            });
+
+            toggleOptionHttp.RegisterValueChangedCallback(evt =>
+            {
+                if (evt.newValue)
+                {
+                    toggleOptionStdio.SetValueWithoutNotify(false);
+                    UpdateConfigurationVisibility(false);
+                }
+                else if (!toggleOptionStdio.value)
+                {
+                    // Prevent both toggles from being unchecked
+                    toggleOptionHttp.SetValueWithoutNotify(true);
+                }
+            });
 
             // Foldout animations
             // -----------------------------------------------------------------
