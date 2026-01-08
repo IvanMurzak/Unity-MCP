@@ -29,11 +29,11 @@ docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server:latest
 
 The server can be configured using environment variables.
 
-| Variable | Default | Description |
-| :--- | :--- | :--- |
-| `UNITY_MCP_PORT` | `8080` | The port the server listens on for Plugin connections. |
-| `UNITY_MCP_CLIENT_TRANSPORT` | `http` | Transport for the Client connection (`http` or `stdio`). |
-| `UNITY_MCP_PLUGIN_TIMEOUT` | `10000` | Connection timeout in milliseconds. |
+| Variable                     | Default | Description                                              |
+| :--------------------------- | :------ | :------------------------------------------------------- |
+| `MCP_PLUGIN_PORT`            | `8080`  | The port the server listens on for Plugin connections.   |
+| `MCP_PLUGIN_CLIENT_TRANSPORT` | `http`  | Transport for the Client connection (`http` or `stdio`). |
+| `MCP_PLUGIN_CLIENT_TIMEOUT`   | `10000` | Connection timeout in milliseconds.                      |
 
 ### Example: Custom Port
 
@@ -41,7 +41,7 @@ Run on port `9090`:
 
 ```bash
 docker run \
-  -e UNITY_MCP_PORT=9090 \
+  -e MCP_PLUGIN_PORT=9090 \
   -p 9090:9090 \
   ivanmurzakdev/unity-mcp-server:latest
 ```
@@ -51,7 +51,7 @@ STDIO mode is used when the MCP Client manages the Docker process directly.
 
 ```bash
 docker run -i \
-  -e UNITY_MCP_CLIENT_TRANSPORT=stdio \
+  -e MCP_PLUGIN_CLIENT_TRANSPORT=stdio \
   -p 8080:8080 \
   ivanmurzakdev/unity-mcp-server:latest
 ```
@@ -81,7 +81,7 @@ To use the Dockerized server with your AI Client (e.g., Claude):
         "run",
         "-i",
         "--rm",
-        "-e", "UNITY_MCP_CLIENT_TRANSPORT=stdio",
+        "-e", "MCP_PLUGIN_CLIENT_TRANSPORT=stdio",
         "-p", "8080:8080",
         "ivanmurzakdev/unity-mcp-server:latest"
       ]

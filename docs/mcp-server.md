@@ -49,13 +49,13 @@ Download from **[Releases](https://github.com/IvanMurzak/Unity-MCP/releases)**.
 
 The server executable accepts the following arguments:
 
-| Argument | Description | Default |
-| :--- | :--- | :--- |
-| `--port` | Port for the Unity Plugin connection. | `8080` |
-| `--client-transport` | Protocol for AI Client connection (`http`, `stdio`). | `http` |
-| `--plugin-timeout` | Timeout in ms for plugin responses. | `10000` |
+| Argument             | Description                                          | Default |
+| :------------------- | :--------------------------------------------------- | :------ |
+| `--port`             | Port for the Unity Plugin connection.                | `8080`  |
+| `--client-transport` | Protocol for AI Client connection (`http`, `stdio`). | `http`  |
+| `--plugin-timeout`   | Timeout in ms for plugin responses.                  | `10000` |
 
-> **Note**: These can also be set via Environment Variables (e.g., `UNITY_MCP_PORT`).
+> **Note**: These can also be set via Environment Variables (e.g., `MCP_PLUGIN_PORT`).
 
 ## Architecture
 

@@ -2,46 +2,45 @@
 #                              https://smithery.ai/docs/build/deployments/custom-container
 runtime: "container"
 build:
-  dockerfile: "Dockerfile"           # Path to your Dockerfile
-  dockerBuildPath: "."               # Docker build context
+  dockerfile: "Dockerfile" # Path to your Dockerfile
+  dockerBuildPath: "." # Docker build context
 ports:
-  - 8080:8080                        # Forward Unity plugin port
+  - 8080:8080 # Forward Unity plugin port
 env:
-  UNITY_MCP_CLIENT_TRANSPORT: stdio
-  UNITY_MCP_PORT: 8080               # Unity plugin port
-  UNITY_MCP_PLUGIN_TIMEOUT: 30000    # Unity plugin timeout
+  MCP_PLUGIN_CLIENT_TRANSPORT: stdio
+  MCP_PLUGIN_PORT: 8080 # Unity plugin port
+  MCP_PLUGIN_CLIENT_TIMEOUT: 30000 # Unity plugin timeout
 startCommand:
   type: stdio
   configSchema:
     type: object
     required:
-      - UNITY_MCP_CLIENT_TRANSPORT
-      - UNITY_MCP_PLUGIN_TIMEOUT
+      - MCP_PLUGIN_CLIENT_TRANSPORT
+      - MCP_PLUGIN_CLIENT_TIMEOUT
     properties:
-      UNITY_MCP_CLIENT_TRANSPORT:
+      MCP_PLUGIN_CLIENT_TRANSPORT:
         type: string
         description: "http or stdio transport options"
         default: "stdio"
-      # UNITY_MCP_PORT:
+      # MCP_PLUGIN_PORT:
       #   type: integer
       #   description: "The port for the Unity plugin"
       #   default: 8080
-      UNITY_MCP_PLUGIN_TIMEOUT:
+      MCP_PLUGIN_CLIENT_TIMEOUT:
         type: integer
         description: "The timeout for the Unity plugin"
         default: 30000
-  commandFunction:
-    |-
+  commandFunction: |-
     (config) => ({
       command: 'dotnet',
       args: ['unity-mcp-server.dll'],
       env: {
-        UNITY_MCP_PORT: config.PORT,
-        UNITY_MCP_CLIENT_TRANSPORT: config.UNITY_MCP_CLIENT_TRANSPORT,
-        UNITY_MCP_PLUGIN_TIMEOUT: config.UNITY_MCP_PLUGIN_TIMEOUT
+        MCP_PLUGIN_PORT: config.PORT,
+        MCP_PLUGIN_CLIENT_TRANSPORT: config.MCP_PLUGIN_CLIENT_TRANSPORT,
+        MCP_PLUGIN_CLIENT_TIMEOUT: config.MCP_PLUGIN_CLIENT_TIMEOUT
       }
     })
   exampleConfig:
-    UNITY_MCP_CLIENT_TRANSPORT: "stdio"
-    # UNITY_MCP_PORT: 8080
-    UNITY_MCP_PLUGIN_TIMEOUT: 30000
+    MCP_PLUGIN_CLIENT_TRANSPORT: "stdio"
+    # MCP_PLUGIN_PORT: 8080
+    MCP_PLUGIN_CLIENT_TIMEOUT: 30000

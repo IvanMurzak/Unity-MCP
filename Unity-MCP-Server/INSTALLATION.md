@@ -27,9 +27,9 @@ Add the following configuration to your Claude Desktop config file:
     "unity-mcp-server": {
       "command": "unity-mcp-server",
       "env": {
-        "UNITY_MCP_CLIENT_TRANSPORT": "stdio",
-        "UNITY_MCP_PORT": "8080",
-        "UNITY_MCP_PLUGIN_TIMEOUT": "10000"
+        "MCP_PLUGIN_CLIENT_TRANSPORT": "stdio",
+        "MCP_PLUGIN_PORT": "8080",
+        "MCP_PLUGIN_CLIENT_TIMEOUT": "10000"
       }
     }
   }
@@ -45,9 +45,9 @@ If using a VS Code MCP extension, add this to your VS Code settings.json:
     "unity-mcp-server": {
       "command": "unity-mcp-server",
       "env": {
-        "UNITY_MCP_CLIENT_TRANSPORT": "stdio",
-        "UNITY_MCP_PORT": "8080",
-        "UNITY_MCP_PLUGIN_TIMEOUT": "10000"
+        "MCP_PLUGIN_CLIENT_TRANSPORT": "stdio",
+        "MCP_PLUGIN_PORT": "8080",
+        "MCP_PLUGIN_CLIENT_TIMEOUT": "10000"
       }
     }
   }
@@ -62,9 +62,9 @@ If using a VS Code MCP extension, add this to your VS Code settings.json:
 - `--plugin-timeout`: Plugin connection timeout in milliseconds (default: 10000)
 
 ### Environment Variables
-- `UNITY_MCP_CLIENT_TRANSPORT`: Transport type
-- `UNITY_MCP_PORT`: Plugin port
-- `UNITY_MCP_PLUGIN_TIMEOUT`: Plugin timeout
+- `MCP_PLUGIN_CLIENT_TRANSPORT`: Transport type
+- `MCP_PLUGIN_PORT`: Plugin port
+- `MCP_PLUGIN_CLIENT_TIMEOUT`: Plugin timeout
 
 ## Usage
 
