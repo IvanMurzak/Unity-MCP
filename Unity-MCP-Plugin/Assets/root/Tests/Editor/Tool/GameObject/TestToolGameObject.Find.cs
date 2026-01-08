@@ -13,9 +13,9 @@ using System.Text.Json;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.API;
+using com.IvanMurzak.Unity.MCP.Editor.Tests.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
-using com.IvanMurzak.Unity.MCP.Editor.Tests.Utils;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -34,7 +34,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 gameObjectRef: new GameObjectRef
                 {
                     InstanceID = child!.GetInstanceID()
-                });
+                },
+                includeHierarchy: true);
 
             Assert.IsNotNull(response);
             Assert.IsNotNull(response!.Hierarchy);
@@ -113,6 +114,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 {
                     InstanceID = go.GetInstanceID()
                 },
+                includeData: true,
                 deepSerialization: false);
 
             Assert.IsNotNull(response);
