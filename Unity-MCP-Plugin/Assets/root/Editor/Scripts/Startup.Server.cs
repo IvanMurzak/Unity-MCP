@@ -138,7 +138,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             public static string DockerRunCommand()
             {
                 var dockerImage = $"ivanmurzakdev/unity-mcp-server:{UnityMcpPlugin.Version}";
-                return $"docker run -d -p {UnityMcpPlugin.Port}:{UnityMcpPlugin.Port} --name unity-mcp-server-{UnityMcpPlugin.Version} {dockerImage}";
+                return $"docker run -d -p {UnityMcpPlugin.Port}:{UnityMcpPlugin.Port} --name unity-mcp-server-{UnityMcpPlugin.Port} {dockerImage}";
             }
 
             public static string ExecutableZipUrl
