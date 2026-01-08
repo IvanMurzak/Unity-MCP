@@ -247,7 +247,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 ? USS_IndicatorClass_Connected
                 : USS_IndicatorClass_Disconnected);
 
-            statusText.text = isConfiguredResult ? "Configured" : "Not Configured";
+            statusText.text = isConfiguredResult ? "Configured (stdio)" : "Not Configured";
             btnConfigure.text = isConfiguredResult ? "Reconfigure" : "Configure";
 
             btnConfigure.RegisterCallback<ClickEvent>(evt =>

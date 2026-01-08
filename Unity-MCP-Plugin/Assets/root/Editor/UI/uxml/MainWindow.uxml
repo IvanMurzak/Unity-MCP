@@ -58,8 +58,22 @@
             <ui:VisualElement name="ConfigureClientsContainer" />
             <ui:VisualElement name="ConfigureClient-Custom" class="frame-group" style="flex-grow: 1;">
                 <ui:Label text="Manual configuration" class="section-title" />
-                <ui:Label text="Copy paste the json into your MCP Client to configure it." name="Label" class="section-desc" />
-                <ui:TextField name="rawJsonConfiguration" multiline="true" readonly="true" selectOnFocus="true" value="This is a multi-line, read-only, selectable text box.&#10;You can copy from here." style="margin-top: 4px; margin-right: 0; margin-left: 0; margin-bottom: 4px;" />
+                <ui:VisualElement style="flex-direction: row; margin-top: 4px;">
+                    <ui:Toggle name="toggleOptionStdio" label="STDIO" class="toggle-text-button" />
+                    <ui:Toggle name="toggleOptionHttp" label="HTTP" class="toggle-text-button" />
+                </ui:VisualElement>
+                <ui:VisualElement name="containerStdio">
+                    <ui:Label text="Copy paste the json into your MCP Client to configure it." class="section-desc" style="margin-top: 4px;" />
+                    <ui:TextField name="rawJsonConfigurationStdio" multiline="true" readonly="true" selectOnFocus="true" value="..." style="margin-right: 0; margin-left: 0; margin-bottom: 4px;" />
+                </ui:VisualElement>
+                <ui:VisualElement name="containerHttp">
+                    <ui:Label text="Copy paste the json into your MCP Client to configure it." class="section-desc" style="margin-top: 4px;" />
+                    <ui:TextField name="rawJsonConfigurationHttp" multiline="true" readonly="true" selectOnFocus="true" value="..." style="margin-right: 0; margin-left: 0; margin-bottom: 4px;" />
+
+                    <ui:Label text="Start the MCP server using Docker." class="section-desc" style="margin-top: 4px;" />
+                    <ui:TextField name="dockerCommand" multiline="true" readonly="true" selectOnFocus="true" value="..." style="margin-right: 0; margin-left: 0; margin-bottom: 4px;" />
+                </ui:VisualElement>
+
             </ui:VisualElement>
             <ui:VisualElement class="divider" />
             <ui:VisualElement>

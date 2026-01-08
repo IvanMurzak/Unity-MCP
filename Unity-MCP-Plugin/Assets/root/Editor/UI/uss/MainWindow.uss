@@ -10,3 +10,67 @@
 @import url("common/_status-indicators.uss");
 @import url("common/_animations.uss");
 @import url("common/_foldout.uss");
+
+/* ==========================================================================
+   Toggle Text Button - Toggles styled as text buttons
+   ========================================================================== */
+
+.toggle-text-button {
+    flex-direction: row-reverse;
+    flex-grow: 0;
+    flex-shrink: 0;
+    margin: 2px 2px;
+}
+
+.toggle-text-button > .unity-toggle__input {
+    display: none;
+    width: 0;
+    height: 0;
+    min-width: 0;
+    min-height: 0;
+    max-width: 0;
+    max-height: 0;
+    padding: 0;
+    margin: 0;
+    border-width: 0;
+}
+
+.toggle-text-button .unity-toggle__checkmark {
+    display: none;
+    width: 0;
+    height: 0;
+    min-width: 0;
+    min-height: 0;
+    max-width: 0;
+    max-height: 0;
+    padding: 0;
+    margin: 0;
+    border-width: 0;
+}
+
+.toggle-text-button > .unity-label {
+    color: rgb(140, 140, 140);
+    font-size: 12px;
+    padding: 4px 8px;
+    margin: 0;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.05);
+    transition-duration: 200ms;
+    -unity-text-align: middle-left;
+}
+
+.toggle-text-button:hover > .unity-label {
+    color: rgb(180, 180, 180);
+    background-color: rgba(255, 255, 255, 0.1);
+    transition-duration: 200ms;
+}
+
+.toggle-text-button:checked > .unity-label {
+    color: rgb(175, 232, 230);
+    background-color: rgba(175, 232, 230, 0.1);
+}
+
+.toggle-text-button:checked:hover > .unity-label {
+    color: rgb(200, 245, 243);
+    background-color: rgba(190, 232, 230, 0.1);
+}

@@ -48,7 +48,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                     // Create the file if it doesn't exist
                     File.WriteAllText(
                         path: configPath,
-                        contents: Startup.Server.RawJsonConfiguration(UnityMcpPlugin.Port, bodyPath, UnityMcpPlugin.TimeoutMs).ToString());
+                        contents: Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, bodyPath, UnityMcpPlugin.TimeoutMs).ToString());
                     return true;
                 }
 
@@ -66,7 +66,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 {
                     File.WriteAllText(
                         path: configPath,
-                        contents: Startup.Server.RawJsonConfiguration(UnityMcpPlugin.Port, bodyPath, UnityMcpPlugin.TimeoutMs).ToString());
+                        contents: Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, bodyPath, UnityMcpPlugin.TimeoutMs).ToString());
                     return true;
                 }
 
@@ -74,7 +74,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 var pathSegments = Consts.MCP.Server.BodyPathSegments(bodyPath);
 
                 // Generate the configuration to inject
-                var injectObj = Startup.Server.RawJsonConfiguration(UnityMcpPlugin.Port, pathSegments.Last(), UnityMcpPlugin.TimeoutMs);
+                var injectObj = Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, pathSegments.Last(), UnityMcpPlugin.TimeoutMs);
                 if (injectObj == null)
                     throw new Exception("Injected config is not a valid JSON object.");
 
