@@ -218,8 +218,8 @@
 - [Unity `MCP 服务器` 设置](#unity-mcp-服务器-设置)
   - [变量](#变量)
   - [Docker 📦](#docker-)
-    - [`HTTP` 传输](#http-传输)
-    - [`STDIO` 传输](#stdio-传输)
+    - [`streamableHttp` 传输](#streamablehttp-传输)
+    - [`stdio` 传输](#stdio-传输)
     - [自定义 `端口`](#自定义-端口)
   - [二进制可执行文件](#二进制可执行文件)
 - [工作原理](#工作原理)
@@ -505,7 +505,7 @@ public static class ChessGameAI
 
 # Unity `MCP 服务器` 设置
 
-**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** 服务器支持许多不同的启动选项和Docker部署。支持两种传输协议：`http` 和 `stdio`。如果您需要自定义或将Unity MCP服务器部署到云端，这一节适合您。[阅读更多...](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md)
+**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** 服务器支持许多不同的启动选项和Docker部署。支持两种传输协议：`streamableHttp` 和 `stdio`。如果您需要自定义或将Unity MCP服务器部署到云端，这一节适合您。[阅读更多...](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md)
 
 ## 变量
 
@@ -515,7 +515,7 @@ public static class ChessGameAI
 | ---------------------------- | -------------------- | -------------------------------------------------------------------- |
 | `MCP_PLUGIN_PORT`            | `--port`             | **客户端** -> **服务器** <- **插件** 连接端口（默认：8080）          |
 | `MCP_PLUGIN_CLIENT_TIMEOUT`   | `--plugin-timeout`   | **插件** -> **服务器** 连接超时（毫秒）（默认：10000）               |
-| `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport` | **客户端** -> **服务器** 传输类型：`stdio` 或 `http`（默认：`http`） |
+| `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport` | **客户端** -> **服务器** 传输类型：`stdio` 或 `streamableHttp`（默认：`streamableHttp`） |
 
 > 命令行参数还支持单个 `-` 前缀的选项（`-port`）和完全没有前缀的选项（`port`）。
 
@@ -525,7 +525,7 @@ public static class ChessGameAI
 
 确保已安装Docker。如果您使用Windows操作系统，请确保已启动Docker Desktop。
 
-### `HTTP` 传输
+### `streamableHttp` 传输
 
 ```bash
 docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server
@@ -537,7 +537,7 @@ docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer: {
       "url": "http://localhost:8080"
     }
   }
@@ -548,7 +548,7 @@ docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server
 
 </details>
 
-### `STDIO` 传输
+### `stdio` 传输
 
 要使用此变体，`MCP 客户端` 应该在docker中启动 `MCP 服务器`。这可以通过修改的 `MCP 客户端` 配置来实现。
 
@@ -562,7 +562,7 @@ docker run -t -e MCP_PLUGIN_CLIENT_TRANSPORT=stdio -p 8080:8080 ivanmurzakdev/un
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer: {
       "command": "docker",
       "args": [
         "run",
@@ -592,7 +592,7 @@ docker run -e MCP_PLUGIN_PORT=123 -p 123:123 ivanmurzakdev/unity-mcp-server
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer: {
       "url": "http://localhost:123"
     }
   }
@@ -618,7 +618,7 @@ docker run -e MCP_PLUGIN_PORT=123 -p 123:123 ivanmurzakdev/unity-mcp-server
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer: {
       "command": "<project>/Library/mcp-server/win-x64/unity-mcp-server.exe",
       "args": [
         "--port=8080",

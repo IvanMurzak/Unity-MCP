@@ -218,8 +218,8 @@
 - [Unity `MCPサーバー` セットアップ](#unity-mcpサーバー-セットアップ)
   - [変数](#変数)
   - [Docker 📦](#docker-)
-    - [`HTTP` トランスポート](#http-トランスポート)
-    - [`STDIO` トランスポート](#stdio-トランスポート)
+    - [`streamableHttp` トランスポート](#streamablehttp-トランスポート)
+    - [`stdio` トランスポート](#stdio-トランスポート)
     - [カスタム`ポート`](#カスタムポート)
   - [バイナリ実行ファイル](#バイナリ実行ファイル)
 - [動作原理](#動作原理)
@@ -505,7 +505,7 @@ public static class ChessGameAI
 
 # Unity `MCPサーバー` セットアップ
 
-**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)**サーバーは多くの異なる起動オプションとDockerデプロイメントをサポートします。両方のトランスポートプロトコルがサポートされています：`http`と`stdio`。Unity MCPサーバーをカスタマイズまたはクラウドにデプロイする必要がある場合、このセクションが適しています。[詳細を読む...](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md)
+**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)**サーバーは多くの異なる起動オプションとDockerデプロイメントをサポートします。両方のトランスポートプロトコルがサポートされています：`streamableHttp`と`stdio`。Unity MCPサーバーをカスタマイズまたはクラウドにデプロイする必要がある場合、このセクションが適しています。[詳細を読む...](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md)
 
 ## 変数
 
@@ -515,7 +515,7 @@ public static class ChessGameAI
 | ---------------------------- | -------------------- | ------------------------------------------------------------------------------------------------ |
 | `MCP_PLUGIN_PORT`            | `--port`             | **クライアント** -> **サーバー** <- **プラグイン** 接続ポート（デフォルト：8080）                |
 | `MCP_PLUGIN_CLIENT_TIMEOUT`   | `--plugin-timeout`   | **プラグイン** -> **サーバー** 接続タイムアウト（ms）（デフォルト：10000）                       |
-| `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport` | **クライアント** -> **サーバー** トランスポートタイプ：`stdio`または`http`（デフォルト：`http`） |
+| `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport` | **クライアント** -> **サーバー** トランスポートタイプ：`stdio`または`streamableHttp`（デフォルト：`streamableHttp`） |
 
 > コマンドライン引数は単一の`-`プレフィックス（`-port`）オプションと、プレフィックスなしのオプション（`port`）もサポートします。
 
@@ -525,7 +525,7 @@ public static class ChessGameAI
 
 Dockerがインストールされていることを確認してください。Windowsオペレーティングシステムを使用している場合は、Docker Desktopが起動していることを確認してください。
 
-### `HTTP` トランスポート
+### `streamableHttp` トランスポート
 
 ```bash
 docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server
@@ -537,7 +537,7 @@ docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer: {
       "url": "http://localhost:8080"
     }
   }
@@ -548,7 +548,7 @@ docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server
 
 </details>
 
-### `STDIO` トランスポート
+### `stdio` トランスポート
 
 この方法を使用するには、`MCPクライアント`がdocker内で`MCPサーバー`を起動する必要があります。これは修正された`MCPクライアント`設定を通じて実現できます。
 
@@ -562,7 +562,7 @@ docker run -t -e MCP_PLUGIN_CLIENT_TRANSPORT=stdio -p 8080:8080 ivanmurzakdev/un
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer: {
       "command": "docker",
       "args": [
         "run",
@@ -592,7 +592,7 @@ docker run -e MCP_PLUGIN_PORT=123 -p 123:123 ivanmurzakdev/unity-mcp-server
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer: {
       "url": "http://localhost:123"
     }
   }
@@ -618,7 +618,7 @@ docker run -e MCP_PLUGIN_PORT=123 -p 123:123 ivanmurzakdev/unity-mcp-server
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer: {
       "command": "<project>/Library/mcp-server/win-x64/unity-mcp-server.exe",
       "args": [
         "--port=8080",

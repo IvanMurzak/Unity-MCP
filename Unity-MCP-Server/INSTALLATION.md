@@ -24,7 +24,7 @@ Add the following configuration to your Claude Desktop config file:
 ```json
 {
   "mcpServers": {
-    "unity-mcp-server": {
+    "ai-game-developer: {
       "command": "unity-mcp-server",
       "env": {
         "MCP_PLUGIN_CLIENT_TRANSPORT": "stdio",
@@ -42,7 +42,7 @@ If using a VS Code MCP extension, add this to your VS Code settings.json:
 ```json
 {
   "servers": {
-    "unity-mcp-server": {
+    "ai-game-developer: {
       "command": "unity-mcp-server",
       "env": {
         "MCP_PLUGIN_CLIENT_TRANSPORT": "stdio",
@@ -57,7 +57,7 @@ If using a VS Code MCP extension, add this to your VS Code settings.json:
 ## Configuration Options
 
 ### Command Line Arguments
-- `--client-transport`: Transport method (`stdio` or `http`)
+- `--client-transport`: Transport method (`stdio` or `streamableHttp`)
 - `--port`: Unity Plugin connection port (default: 8080)
 - `--plugin-timeout`: Plugin connection timeout in milliseconds (default: 10000)
 

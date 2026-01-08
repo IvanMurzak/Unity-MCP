@@ -218,8 +218,8 @@ A diferencia de otras herramientas, este plugin funciona **dentro de tu juego co
 - [Configuración del `Servidor MCP` Unity](#configuración-del-servidor-mcp-unity)
   - [Variables](#variables)
   - [Docker 📦](#docker-)
-    - [Transporte `HTTP`](#transporte-http)
-    - [Transporte `STDIO`](#transporte-stdio)
+    - [Transporte `streamableHttp`](#transporte-streamablehttp)
+    - [Transporte `stdio`](#transporte-stdio)
     - [`Puerto` personalizado](#puerto-personalizado)
   - [Ejecutable binario](#ejecutable-binario)
 - [Cómo funciona](#cómo-funciona)
@@ -505,7 +505,7 @@ Hay muchos casos de uso, imaginemos que estás trabajando en un juego de ajedrez
 
 # Configuración del `Servidor MCP` Unity
 
-**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** Server soporta muchas opciones de lanzamiento diferentes y despliegue Docker. Ambos protocolos de transporte son soportados: `http` y `stdio`. Si necesitas personalizar o desplegar Unity MCP Server a la nube, esta sección es para ti. [Leer más...](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md)
+**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** Server soporta muchas opciones de lanzamiento diferentes y despliegue Docker. Ambos protocolos de transporte son soportados: `streamableHttp` y `stdio`. Si necesitas personalizar o desplegar Unity MCP Server a la nube, esta sección es para ti. [Leer más...](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md)
 
 ## Variables
 
@@ -515,7 +515,7 @@ No importa qué opción de lanzamiento elijas, todas soportan configuración per
 | ---------------------------- | ------------------------- | -------------------------------------------------------------------------------------- |
 | `MCP_PLUGIN_PORT`            | `--port`                  | Puerto de conexión **Cliente** -> **Servidor** <- **Plugin** (por defecto: 8080)       |
 | `MCP_PLUGIN_CLIENT_TIMEOUT`   | `--plugin-timeout`        | Tiempo de espera de conexión **Plugin** -> **Servidor** (ms) (por defecto: 10000)      |
-| `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport`      | Tipo de transporte **Cliente** -> **Servidor**: `stdio` o `http` (por defecto: `http`) |
+| `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport`      | Tipo de transporte **Cliente** -> **Servidor**: `stdio` o `streamableHttp` (por defecto: `streamableHttp`) |
 
 > Los args de línea de comandos también soportan la opción con un solo prefijo `-` (`-port`) y una opción sin prefijo en absoluto (`port`).
 
@@ -525,7 +525,7 @@ No importa qué opción de lanzamiento elijas, todas soportan configuración per
 
 Asegúrate de que Docker esté instalado. Y por favor asegúrate de que Docker Desktop esté lanzado si estás en sistema operativo Windows.
 
-### Transporte `HTTP`
+### Transporte `streamableHttp`
 
 ```bash
 docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server
@@ -537,7 +537,7 @@ docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer: {
       "url": "http://localhost:8080"
     }
   }
@@ -548,7 +548,7 @@ docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server
 
 </details>
 
-### Transporte `STDIO`
+### Transporte `stdio`
 
 Para usar esta variante, el `Cliente MCP` debería lanzar el `Servidor MCP` en docker. Esto es posible a través de la configuración modificada del `Cliente MCP`.
 
@@ -562,7 +562,7 @@ docker run -t -e MCP_PLUGIN_CLIENT_TRANSPORT=stdio -p 8080:8080 ivanmurzakdev/un
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer: {
       "command": "docker",
       "args": [
         "run",
@@ -592,7 +592,7 @@ docker run -e MCP_PLUGIN_PORT=123 -p 123:123 ivanmurzakdev/unity-mcp-server
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer: {
       "url": "http://localhost:123"
     }
   }
@@ -618,7 +618,7 @@ Puedes lanzar Unity `Servidor MCP` directamente desde un archivo binario. Necesi
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer: {
       "command": "<project>/Library/mcp-server/win-x64/unity-mcp-server.exe",
       "args": [
         "--port=8080",

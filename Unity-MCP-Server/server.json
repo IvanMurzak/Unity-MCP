@@ -39,7 +39,7 @@
           "format": "string",
           "default": "stdio",
           "enum": [
-            "http",
+            "streamableHttp",
             "stdio"
           ],
           "is_required": false,

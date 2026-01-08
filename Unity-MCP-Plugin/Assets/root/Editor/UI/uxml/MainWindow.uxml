@@ -60,7 +60,7 @@
                 <ui:Label text="Manual configuration" class="section-title" />
                 <ui:VisualElement style="flex-direction: row; margin-top: 4px;">
                     <ui:Toggle name="toggleOptionStdio" label="STDIO" class="toggle-text-button" />
-                    <ui:Toggle name="toggleOptionHttp" label="HTTP" class="toggle-text-button" />
+                    <ui:Toggle name="toggleOptionHttp" label="Streamable HTTP" class="toggle-text-button" />
                 </ui:VisualElement>
                 <ui:VisualElement name="containerStdio">
                     <ui:Label text="Copy paste the json into your MCP Client to configure it." class="section-desc" style="margin-top: 4px;" />

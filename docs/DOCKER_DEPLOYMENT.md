@@ -32,7 +32,7 @@ The server can be configured using environment variables.
 | Variable                     | Default | Description                                              |
 | :--------------------------- | :------ | :------------------------------------------------------- |
 | `MCP_PLUGIN_PORT`            | `8080`  | The port the server listens on for Plugin connections.   |
-| `MCP_PLUGIN_CLIENT_TRANSPORT` | `http`  | Transport for the Client connection (`http` or `stdio`). |
+| `MCP_PLUGIN_CLIENT_TRANSPORT` | `streamableHttp`  | Transport for the Client connection (`streamableHttp` or `stdio`). |
 | `MCP_PLUGIN_CLIENT_TIMEOUT`   | `10000` | Connection timeout in milliseconds.                      |
 
 ### Example: Custom Port
@@ -64,7 +64,7 @@ To use the Dockerized server with your AI Client (e.g., Claude):
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer: {
       "url": "http://localhost:8080"
     }
   }
@@ -75,7 +75,7 @@ To use the Dockerized server with your AI Client (e.g., Claude):
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer: {
       "command": "docker",
       "args": [
         "run",

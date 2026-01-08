@@ -218,8 +218,8 @@ Unlike other tools, this plugin works **inside your compiled game**, allowing fo
 - [Unity `MCP Server` setup](#unity-mcp-server-setup)
   - [Variables](#variables)
   - [Docker 📦](#docker-)
-    - [`HTTP` Transport](#http-transport)
-    - [`STDIO` Transport](#stdio-transport)
+    - [`streamableHttp` Transport](#streamablehttp-transport)
+    - [`stdio` Transport](#stdio-transport)
     - [Custom `port`](#custom-port)
   - [Binary executable](#binary-executable)
 - [How Unity MCP Architecture Works](#how-unity-mcp-architecture-works)
@@ -505,7 +505,7 @@ There are many use cases, lets imagine you are working on a Chess game with bot.
 
 # Unity `MCP Server` setup
 
-**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** Server supports many different launch options and Docker deployment. Both transport protocols are supported: `http` and `stdio`. If you need to customize or deploy Unity MCP Server to a cloud, this section is for you. [Read more...](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md)
+**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** Server supports many different launch options and Docker deployment. Both transport protocols are supported: `streamableHttp` and `stdio`. If you need to customize or deploy Unity MCP Server to a cloud, this section is for you. [Read more...](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md)
 
 ## Variables
 
@@ -515,7 +515,7 @@ Doesn't matter what launch option you choose, all of them support custom configu
 | ---------------------------- | -------------------- | ---------------------------------------------------------------------------- |
 | `MCP_PLUGIN_PORT`            | `--port`             | **Client** -> **Server** <- **Plugin** connection port (default: 8080)       |
 | `MCP_PLUGIN_CLIENT_TIMEOUT`   | `--plugin-timeout`   | **Plugin** -> **Server** connection timeout (ms) (default: 10000)            |
-| `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport` | **Client** -> **Server** transport type: `stdio` or `http` (default: `http`) |
+| `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport` | **Client** -> **Server** transport type: `stdio` or `streamableHttp` (default: `streamableHttp`) |
 
 > Command line args support also the option with a single `-` prefix (`-port`) and an option without prefix at all (`port`).
 
@@ -525,7 +525,7 @@ Doesn't matter what launch option you choose, all of them support custom configu
 
 Make sure Docker is installed. And please make sure Docker Desktop is launched if you are at Windows operation system.
 
-### `HTTP` Transport
+### `streamableHttp` Transport
 
 ```bash
 docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server
@@ -537,7 +537,7 @@ docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer: {
       "url": "http://localhost:8080"
     }
   }
@@ -548,7 +548,7 @@ docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server
 
 </details>
 
-### `STDIO` Transport
+### `stdio` Transport
 
 For using this variant, `MCP Client` should launch the `MCP Server` in the docker. It is achievable through the modified `MCP Client` configuration.
 
@@ -562,7 +562,7 @@ docker run -t -e MCP_PLUGIN_CLIENT_TRANSPORT=stdio -p 8080:8080 ivanmurzakdev/un
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer: {
       "command": "docker",
       "args": [
         "run",
@@ -592,7 +592,7 @@ docker run -e MCP_PLUGIN_PORT=123 -p 123:123 ivanmurzakdev/unity-mcp-server
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer: {
       "url": "http://localhost:123"
     }
   }
@@ -618,7 +618,7 @@ You may launch Unity `MCP Server` directly from a binary file. You would need to
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer: {
       "command": "<project>/Library/mcp-server/win-x64/unity-mcp-server.exe",
       "args": [
         "--port=8080",

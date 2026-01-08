@@ -21,7 +21,7 @@ The **MCP Server** acts as the bridge between the **AI Client** (Claude, Cursor,
 
 ## Topology
 
-1.  **Client Connection**: The AI Client connects to the Server using either `stdio` (standard input/output pipe) or `http` (SSE/Post).
+1.  **Client Connection**: The AI Client connects to the Server using either `stdio` (standard input/output pipe) or `streamableHttp`.
 2.  **Plugin Connection**: The Unity Plugin connects to the Server via TCP/WebSockets on a specified port (default: `8080`).
 
 ## Deployment Options
@@ -52,7 +52,7 @@ The server executable accepts the following arguments:
 | Argument             | Description                                          | Default |
 | :------------------- | :--------------------------------------------------- | :------ |
 | `--port`             | Port for the Unity Plugin connection.                | `8080`  |
-| `--client-transport` | Protocol for AI Client connection (`http`, `stdio`). | `http`  |
+| `--client-transport` | Protocol for AI Client connection (`streamableHttp`, `stdio`). | `streamableHttp`  |
 | `--plugin-timeout`   | Timeout in ms for plugin responses.                  | `10000` |
 
 > **Note**: These can also be set via Environment Variables (e.g., `MCP_PLUGIN_PORT`).
