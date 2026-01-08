@@ -52,7 +52,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 gameObjectRef: new GameObjectRef
                 {
                     Path = $"{GO_ParentName}/{GO_Child1Name}"
-                });
+                },
+                includeHierarchy: true);
 
             Assert.IsNotNull(response);
             Assert.IsNotNull(response!.Hierarchy);
@@ -69,7 +70,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 gameObjectRef: new GameObjectRef
                 {
                     Name = GO_Child1Name
-                });
+                },
+                includeHierarchy: true);
 
             Assert.IsNotNull(response);
             Assert.IsNotNull(response!.Hierarchy);
@@ -91,6 +93,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 {
                     InstanceID = go.GetInstanceID()
                 },
+                includeHierarchy: true,
                 hierarchyDepth: 1,
                 deepSerialization: true);
 
@@ -129,7 +132,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             var reflector = UnityMcpPlugin.Instance.McpPluginInstance!.McpManager.Reflector;
             var go = new GameObject(GO_ParentName);
-            go.AddComponent<SolarSystem>();
+            var ss = go.AddComponent<SolarSystem>();
+            ss.planets = new SolarSystem.PlanetData[] {
+                new SolarSystem.PlanetData {
+                     planet = new GameObject("Planet1"),
+                     orbitRadius = 555f
+                }
+            };
 
             // Get deep serialization result
             var deepResponse = new Tool_GameObject().Find(
@@ -137,6 +146,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 {
                     InstanceID = go.GetInstanceID()
                 },
+                includeData: true,
                 deepSerialization: true);
 
             var deepJsonString = reflector.JsonSerializer.Serialize(reflector.Serialize(deepResponse));
@@ -147,6 +157,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 {
                     InstanceID = go.GetInstanceID()
                 },
+                includeData: true,
                 deepSerialization: false);
 
             var shallowJsonString = reflector.JsonSerializer.Serialize(reflector.Serialize(shallowResponse));
