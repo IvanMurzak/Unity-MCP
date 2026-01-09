@@ -13,14 +13,14 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.ReflectorNet.Utils;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     [McpPluginToolType]
     public partial class Tool_Component
     {
-        public static IEnumerable<Type> AllComponentTypes => AppDomain.CurrentDomain.GetAssemblies()
-            .SelectMany(assembly => assembly.GetTypes())
+        public static IEnumerable<Type> AllComponentTypes => TypeUtils.AllTypes
             .Where(type => typeof(UnityEngine.Component).IsAssignableFrom(type) && !type.IsAbstract);
 
         public static class Error
