@@ -13,6 +13,7 @@ using System;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet;
+using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.Extensions.Logging;
 using R3;
@@ -100,7 +101,7 @@ namespace com.IvanMurzak.Unity.MCP
             _logger.LogTrace("{method} called.",
                 nameof(BuildMcpPlugin));
 
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+            var assemblies = AssemblyUtils.AllAssemblies;
             var mcpPlugin = new McpPluginBuilder(version, loggerProvider)
                 .WithConfig(config =>
                 {

@@ -120,7 +120,7 @@ Do NOT use top-level statements or code outside a class. Top-level statements ar
             var compilation = CSharpCompilation.Create(
                 assemblyName: "DynamicAssembly",
                 syntaxTrees: new[] { CSharpSyntaxTree.ParseText(code) },
-                references: AppDomain.CurrentDomain.GetAssemblies()
+                references: AssemblyUtils.AllAssemblies
                     .Where(a => !a.IsDynamic) // Exclude dynamic assemblies
                     .Where(a => !string.IsNullOrEmpty(a.Location))
                     .Select(a => MetadataReference.CreateFromFile(a.Location))
