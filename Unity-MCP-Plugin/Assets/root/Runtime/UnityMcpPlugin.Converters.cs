@@ -82,25 +82,26 @@ namespace com.IvanMurzak.Unity.MCP
             BlacklistType("TMPro.FaceInfo_Legacy"); // Heavy font data
 
             // Redundant RenderPipeline data
-            BlacklistType("UnityEngine.Rendering.RTHandle"); // Heavy RenderPipeline data
+            BlacklistType("UnityEngine.Rendering.RTHandle"); // Can't be utilized
+            BlacklistType("UnityEngine.Experimental.Rendering.RTHandle"); // Can't be utilized
 
             // Json Converters
             // ---------------------------------------------------------
 
             // Unity types
-            reflector.JsonSerializerOptions.Converters.Insert(0, new Color32Converter());
-            reflector.JsonSerializerOptions.Converters.Insert(0, new ColorConverter());
-            reflector.JsonSerializerOptions.Converters.Insert(0, new Matrix4x4Converter());
-            reflector.JsonSerializerOptions.Converters.Insert(0, new QuaternionConverter());
-            reflector.JsonSerializerOptions.Converters.Insert(0, new Vector2Converter());
-            reflector.JsonSerializerOptions.Converters.Insert(0, new Vector2IntConverter());
-            reflector.JsonSerializerOptions.Converters.Insert(0, new Vector3Converter());
-            reflector.JsonSerializerOptions.Converters.Insert(0, new Vector3IntConverter());
-            reflector.JsonSerializerOptions.Converters.Insert(0, new Vector4Converter());
-            reflector.JsonSerializerOptions.Converters.Insert(0, new BoundsConverter());
-            reflector.JsonSerializerOptions.Converters.Insert(0, new BoundsIntConverter());
-            reflector.JsonSerializerOptions.Converters.Insert(0, new RectConverter());
-            reflector.JsonSerializerOptions.Converters.Insert(0, new RectIntConverter());
+            reflector.JsonSerializer.AddConverter(new Color32Converter());
+            reflector.JsonSerializer.AddConverter(new ColorConverter());
+            reflector.JsonSerializer.AddConverter(new Matrix4x4Converter());
+            reflector.JsonSerializer.AddConverter(new QuaternionConverter());
+            reflector.JsonSerializer.AddConverter(new Vector2Converter());
+            reflector.JsonSerializer.AddConverter(new Vector2IntConverter());
+            reflector.JsonSerializer.AddConverter(new Vector3Converter());
+            reflector.JsonSerializer.AddConverter(new Vector3IntConverter());
+            reflector.JsonSerializer.AddConverter(new Vector4Converter());
+            reflector.JsonSerializer.AddConverter(new BoundsConverter());
+            reflector.JsonSerializer.AddConverter(new BoundsIntConverter());
+            reflector.JsonSerializer.AddConverter(new RectConverter());
+            reflector.JsonSerializer.AddConverter(new RectIntConverter());
 
             // Reference types
             reflector.JsonSerializer.AddConverter(new ObjectRefConverter());
