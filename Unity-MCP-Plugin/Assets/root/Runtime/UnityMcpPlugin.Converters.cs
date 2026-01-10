@@ -11,7 +11,6 @@
 #nullable enable
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Converter;
-using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.JsonConverters;
 using com.IvanMurzak.Unity.MCP.Reflection.Converter;
 
