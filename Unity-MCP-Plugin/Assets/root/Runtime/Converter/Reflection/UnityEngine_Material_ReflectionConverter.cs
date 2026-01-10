@@ -159,6 +159,22 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 
                     continue;
                 }
+
+                if (reflector.Converters.IsTypeBlacklisted(propType))
+                {
+                    if (logger?.IsEnabled(LogLevel.Trace) == true)
+                        logger.LogTrace($"{padding}Skipping blacklisted property '{propName}' of type '{propType}'.");
+                    continue;
+                }
+
+                // if (propType == typeof(Color))
+                // {
+                //      // logger?.LogWarning($"[DEBUG] Property {propName} is Color. IsBlacklisted: {reflector.Converters.IsTypeBlacklisted(propType)}");
+                //      // We can't easily access logger if it's ILogger interface without extension methods sometimes, but here it is ILogger.
+                //      // But let's use standard Debug.Log to be sure it appears in Unity logs.
+                //      Debug.Log($"[DEBUG_MCP] Property {propName} is Color. IsBlacklisted: {reflector.Converters.IsTypeBlacklisted(propType)}");
+                // }
+
                 var propValue = shader.GetPropertyType(i) switch
                 {
                     UnityEngine.Rendering.ShaderPropertyType.Int => material.GetInt(propName) as object,
