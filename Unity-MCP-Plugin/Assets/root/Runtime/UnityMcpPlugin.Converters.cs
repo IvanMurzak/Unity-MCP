@@ -11,7 +11,6 @@
 #nullable enable
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Converter;
-using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.JsonConverters;
 using com.IvanMurzak.Unity.MCP.Reflection.Converter;
 
@@ -19,7 +18,7 @@ namespace com.IvanMurzak.Unity.MCP
 {
     public partial class UnityMcpPlugin
     {
-        static Reflector CreateDefaultReflector()
+        public Reflector CreateDefaultReflector()
         {
             var reflector = new Reflector();
             reflector.JsonSerializerOptions.NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals;
@@ -76,39 +75,32 @@ namespace com.IvanMurzak.Unity.MCP
             reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.GlyphMetrics));
 
             // Redundant TextMeshPro data
-            var tmpTextElementType = TypeUtils.GetType("TMPro.TMP_TextElement");
-            if (tmpTextElementType != null)
-                reflector.Converters.BlacklistType(tmpTextElementType); // Heavy text data
+            reflector.Converters.BlacklistType("TMPro.TMP_TextElement"); // Heavy text data
+            reflector.Converters.BlacklistType("TMPro.TMP_FontFeatureTable"); // Heavy font data
+            reflector.Converters.BlacklistType("TMPro.TMP_FontWeightPair"); // Heavy font data
+            reflector.Converters.BlacklistType("TMPro.FaceInfo_Legacy"); // Heavy font data
 
-            var tmpFontFeatureTableType = TypeUtils.GetType("TMPro.TMP_FontFeatureTable");
-            if (tmpFontFeatureTableType != null)
-                reflector.Converters.BlacklistType(tmpFontFeatureTableType); // Heavy font data
-
-            var tmpFontWeightPairType = TypeUtils.GetType("TMPro.TMP_FontWeightPair");
-            if (tmpFontWeightPairType != null)
-                reflector.Converters.BlacklistType(tmpFontWeightPairType); // Heavy font data
-
-            var tmpFaceInfo_LegacyType = TypeUtils.GetType("TMPro.FaceInfo_Legacy");
-            if (tmpFaceInfo_LegacyType != null)
-                reflector.Converters.BlacklistType(tmpFaceInfo_LegacyType); // Heavy font data
+            // Redundant RenderPipeline data
+            reflector.Converters.BlacklistType("UnityEngine.Rendering.RTHandle"); // Can't be utilized
+            reflector.Converters.BlacklistType("UnityEngine.Experimental.Rendering.RTHandle"); // Can't be utilized
 
             // Json Converters
             // ---------------------------------------------------------
 
             // Unity types
-            reflector.JsonSerializerOptions.Converters.Insert(0, new Color32Converter());
-            reflector.JsonSerializerOptions.Converters.Insert(0, new ColorConverter());
-            reflector.JsonSerializerOptions.Converters.Insert(0, new Matrix4x4Converter());
-            reflector.JsonSerializerOptions.Converters.Insert(0, new QuaternionConverter());
-            reflector.JsonSerializerOptions.Converters.Insert(0, new Vector2Converter());
-            reflector.JsonSerializerOptions.Converters.Insert(0, new Vector2IntConverter());
-            reflector.JsonSerializerOptions.Converters.Insert(0, new Vector3Converter());
-            reflector.JsonSerializerOptions.Converters.Insert(0, new Vector3IntConverter());
-            reflector.JsonSerializerOptions.Converters.Insert(0, new Vector4Converter());
-            reflector.JsonSerializerOptions.Converters.Insert(0, new BoundsConverter());
-            reflector.JsonSerializerOptions.Converters.Insert(0, new BoundsIntConverter());
-            reflector.JsonSerializerOptions.Converters.Insert(0, new RectConverter());
-            reflector.JsonSerializerOptions.Converters.Insert(0, new RectIntConverter());
+            reflector.JsonSerializer.AddConverter(new Color32Converter());
+            reflector.JsonSerializer.AddConverter(new ColorConverter());
+            reflector.JsonSerializer.AddConverter(new Matrix4x4Converter());
+            reflector.JsonSerializer.AddConverter(new QuaternionConverter());
+            reflector.JsonSerializer.AddConverter(new Vector2Converter());
+            reflector.JsonSerializer.AddConverter(new Vector2IntConverter());
+            reflector.JsonSerializer.AddConverter(new Vector3Converter());
+            reflector.JsonSerializer.AddConverter(new Vector3IntConverter());
+            reflector.JsonSerializer.AddConverter(new Vector4Converter());
+            reflector.JsonSerializer.AddConverter(new BoundsConverter());
+            reflector.JsonSerializer.AddConverter(new BoundsIntConverter());
+            reflector.JsonSerializer.AddConverter(new RectConverter());
+            reflector.JsonSerializer.AddConverter(new RectIntConverter());
 
             // Reference types
             reflector.JsonSerializer.AddConverter(new ObjectRefConverter());
