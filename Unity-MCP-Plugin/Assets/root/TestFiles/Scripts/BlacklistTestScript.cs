@@ -8,6 +8,7 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 
+#nullable enable
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.TestFiles
@@ -19,7 +20,7 @@ namespace com.IvanMurzak.Unity.MCP.TestFiles
     public class BlacklistedType
     {
         public int value;
-        public string name;
+        public string? name;
     }
 
     /// <summary>
@@ -40,7 +41,7 @@ namespace com.IvanMurzak.Unity.MCP.TestFiles
     {
         // Non-blacklisted fields (should be serialized)
         public int normalIntField;
-        public string normalStringField;
+        public string? normalStringField;
         public Vector3 normalVectorField;
 
         // Fields of types that will be blacklisted (should NOT be serialized when blacklisted)
@@ -48,6 +49,6 @@ namespace com.IvanMurzak.Unity.MCP.TestFiles
         public BlacklistedStruct blacklistedStructField;
 
         // Property of blacklisted type (should NOT be serialized when blacklisted)
-        public BlacklistedType BlacklistedTypeProperty { get; set; }
+        public BlacklistedType? BlacklistedTypeProperty { get; set; }
     }
 }

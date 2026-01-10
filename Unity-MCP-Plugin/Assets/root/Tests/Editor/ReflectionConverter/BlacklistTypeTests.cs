@@ -13,6 +13,7 @@ using System.Collections;
 using System.Linq;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
+using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.Tests.Utils;
 using com.IvanMurzak.Unity.MCP.TestFiles;
 using NUnit.Framework;
@@ -284,11 +285,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 {
                     if (member.fields != null)
                     {
+                        var colorTypeId = TypeUtils.GetTypeId<UnityEngine.Color>();
                         foreach (var field in member.fields)
                         {
                             // Check that no field is of Color type
-                            var isColorType = field.typeName?.Contains("Color") == true &&
-                                              field.typeName?.Contains("UnityEngine") == true;
+                            var isColorType = field.typeName == colorTypeId;
                             Assert.IsFalse(isColorType,
                                 $"Field '{path}.{field.name}' of type '{field.typeName}' should not be serialized when Color is blacklisted.");
 
@@ -358,6 +359,56 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Also verify the JSON string does not contain the blacklisted field name
             Assert.IsFalse(json.Contains("blacklistedTypeField"), "JSON should not contain 'blacklistedTypeField'.");
             Assert.IsFalse(json.Contains("HiddenByName"), "JSON should not contain values from blacklisted types.");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Serialize_Component_WithBlacklistedType_Property_ShouldNotContainBlacklistedProperty()
+        {
+            // Arrange
+            var reflector = CreateTestReflector();
+
+            // Blacklist the test type
+            reflector.Converters.BlacklistType(typeof(BlacklistedType));
+
+            // Create a GameObject with the test component
+            var go = new GameObject("TestGameObject_BlacklistProperty");
+            var component = go.AddComponent<BlacklistTestScript>();
+
+            // Set values on the component
+            component.normalIntField = 55;
+            component.BlacklistedTypeProperty = new BlacklistedType { value = 300, name = "PropertyShouldNotAppear" };
+
+            yield return null;
+
+            // Act
+            var serialized = reflector.Serialize(
+                component,
+                recursive: true,
+                logger: _logger);
+
+            var json = serialized.ToJson(reflector) ?? string.Empty;
+            Debug.Log($"[BlacklistTypeTests] Serialized component with blacklisted property:\n{json}");
+
+            // Assert
+            Assert.IsNotNull(serialized, "Serialized result should not be null.");
+            Assert.IsNotNull(serialized.fields, "Serialized fields should not be null.");
+
+            // Verify normal field is present
+            Assert.IsTrue(serialized.fields.Any(f => f.name == nameof(BlacklistTestScript.normalIntField)),
+                "Normal int field should be serialized.");
+
+            // Verify blacklisted property is NOT present in props
+            if (serialized.props != null)
+            {
+                var blacklistedPropertyExists = serialized.props.Any(p => p.name == nameof(BlacklistTestScript.BlacklistedTypeProperty));
+                Assert.IsFalse(blacklistedPropertyExists, "Blacklisted type property should NOT be serialized.");
+            }
+
+            // Also verify the JSON string does not contain the blacklisted property name or value
+            Assert.IsFalse(json.Contains("BlacklistedTypeProperty"), "JSON should not contain 'BlacklistedTypeProperty'.");
+            Assert.IsFalse(json.Contains("PropertyShouldNotAppear"), "JSON should not contain the value from blacklisted type property.");
 
             yield return null;
         }
