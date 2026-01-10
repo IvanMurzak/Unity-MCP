@@ -254,6 +254,91 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 McpStatusChecksWindow.ShowWindow();
             });
 
+            var statusChecksLabel = root.Query<Label>("statusChecksLabel").First();
+
+            // Update status checks count
+            void UpdateStatusChecksCount()
+            {
+                if (statusChecksLabel == null)
+                    return;
+
+                var passedCount = 0;
+                var totalCount = 7;
+
+                // Check 1: MCP Client configured
+                try
+                {
+                    var claudeDesktopPath = System.IO.Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                        "Claude", "claude_desktop_config.json");
+                    var cursorPath = System.IO.Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        ".cursor", "mcp.json");
+                    if ((System.IO.File.Exists(claudeDesktopPath) && Utils.JsonClientConfig.IsMcpClientConfigured(claudeDesktopPath)) ||
+                        (System.IO.File.Exists(cursorPath) && Utils.JsonClientConfig.IsMcpClientConfigured(cursorPath)))
+                        passedCount++;
+                }
+                catch { /* Ignore */ }
+
+                // Check 2: Unity connected
+                if (UnityMcpPlugin.IsConnected.CurrentValue)
+                    passedCount++;
+
+                // Check 3: Version handshake (if connected)
+                if (UnityMcpPlugin.IsConnected.CurrentValue)
+                    passedCount++;
+
+                // Check 4: Server to client (pending, doesn't count as passed)
+                // Check 5: Client location (if config exists)
+                try
+                {
+                    var claudeDesktopPath = System.IO.Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                        "Claude", "claude_desktop_config.json");
+                    if (System.IO.File.Exists(claudeDesktopPath) && UnityMcpPlugin.IsConnected.CurrentValue)
+                        passedCount++;
+                }
+                catch { /* Ignore */ }
+
+                // Check 6: Enabled tools
+                var mcpPlugin = UnityMcpPlugin.Instance.McpPluginInstance;
+                var toolManager = mcpPlugin?.McpManager.ToolManager;
+                if (toolManager != null)
+                {
+                    var allTools = toolManager.GetAllTools();
+                    var enabledCount = allTools.Count(t => toolManager.IsToolEnabled(t.Name));
+                    if (enabledCount > 0)
+                        passedCount++;
+                }
+
+                // Check 7: Tool executed (pending, doesn't count as passed)
+
+                statusChecksLabel.text = $"Status Checks ({passedCount}/{totalCount})";
+            }
+
+            // Initial update
+            UpdateStatusChecksCount();
+
+            // Subscribe to connection state changes
+            UnityMcpPlugin.ConnectionState
+                .ThrottleLast(TimeSpan.FromMilliseconds(100))
+                .ObserveOnCurrentSynchronizationContext()
+                .Subscribe(_ => UpdateStatusChecksCount())
+                .AddTo(_disposables);
+
+            // Subscribe to tool manager updates
+            McpPlugin.McpPlugin.DoAlways(plugin =>
+            {
+                var tm = plugin.McpManager.ToolManager;
+                if (tm != null)
+                {
+                    tm.OnToolsUpdated
+                        .ObserveOnCurrentSynchronizationContext()
+                        .Subscribe(_ => UpdateStatusChecksCount())
+                        .AddTo(_disposables);
+                }
+            }).AddTo(_disposables);
+
             // Tools Configuration
             // -----------------------------------------------------------------
             var btnOpenTools = root.Query<Button>("btnOpenTools").First();
