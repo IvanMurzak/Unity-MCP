@@ -159,6 +159,14 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 
                     continue;
                 }
+
+                if (reflector.Converters.IsTypeBlacklisted(propType))
+                {
+                    if (logger?.IsEnabled(LogLevel.Trace) == true)
+                        logger.LogTrace($"{padding}Skipping blacklisted property '{propName}' of type '{propType}'.");
+                    continue;
+                }
+
                 var propValue = shader.GetPropertyType(i) switch
                 {
                     UnityEngine.Rendering.ShaderPropertyType.Int => material.GetInt(propName) as object,
