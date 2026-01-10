@@ -1,0 +1,85 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement class="root-container status-checks-root">
+        <ui:VisualElement class="header-container">
+            <ui:Label text="MCP Tool Status Checks" class="header-title" />
+            <ui:VisualElement class="info-row">
+                <ui:Label text="ⓘ" class="info-symbol" />
+                <ui:Label text="Tap on any status item below to expand it for more details and troubleshooting instructions." class="header-description" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        
+        <ui:ScrollView class="status-items-container">
+            <!-- Example Status Items -->
+            <ui:VisualElement class="status-card success">
+                <ui:VisualElement class="status-icon-container success-icon">
+                    <ui:Label text="✔" class="status-icon-text" />
+                </ui:VisualElement>
+                <ui:VisualElement class="status-content">
+                    <ui:Label text="MCP Client configured" class="status-title" />
+                    <ui:Label text="3 active" class="status-subtitle" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement class="status-card error">
+                <ui:VisualElement class="error-accent" />
+                <ui:VisualElement class="status-icon-container error-icon">
+                    <ui:Label text="✖" class="status-icon-text" />
+                </ui:VisualElement>
+                <ui:VisualElement class="status-content">
+                    <ui:Label text="Unity connected to MCP Server" class="status-title" />
+                    <ui:Label text="To pass this check, click Connect in the main window." class="status-subtitle error-text" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement class="status-card success">
+                <ui:VisualElement class="status-icon-container success-icon">
+                    <ui:Label text="✔" class="status-icon-text" />
+                </ui:VisualElement>
+                <ui:VisualElement class="status-content">
+                    <ui:Label text="Version handshake status" class="status-title" />
+                    <ui:Label text="Server matches Client v1.2.4" class="status-subtitle" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            
+            <ui:VisualElement class="status-card success">
+                <ui:VisualElement class="status-icon-container success-icon">
+                    <ui:Label text="✔" class="status-icon-text" />
+                </ui:VisualElement>
+                <ui:VisualElement class="status-content">
+                    <ui:Label text="MCP Server connected to MCP Client" class="status-title" />
+                    <ui:Label text="Claude Desktop" class="status-subtitle" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement class="status-card success">
+                <ui:VisualElement class="status-icon-container success-icon">
+                    <ui:Label text="✔" class="status-icon-text" />
+                </ui:VisualElement>
+                <ui:VisualElement class="status-content">
+                    <ui:Label text="MCP Client location match" class="status-title" />
+                    <ui:Label text="/usr/local/bin/mcp-tool-unity" class="status-subtitle" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement class="status-card success">
+                <ui:VisualElement class="status-icon-container success-icon">
+                    <ui:Label text="✔" class="status-icon-text" />
+                </ui:VisualElement>
+                <ui:VisualElement class="status-content">
+                    <ui:Label text="MCP Plugin has at least 1 enabled tool" class="status-title" />
+                    <ui:Label text="Toolchain initialized" class="status-subtitle" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+
+            <ui:VisualElement class="status-card success">
+                <ui:VisualElement class="status-icon-container success-icon">
+                    <ui:Label text="✔" class="status-icon-text" />
+                </ui:VisualElement>
+                <ui:VisualElement class="status-content">
+                    <ui:Label text="MCP Tool executed" class="status-title" />
+                    <ui:Label text="14 executed" class="status-subtitle" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:ScrollView>
+    </ui:VisualElement>
+</ui:UXML>

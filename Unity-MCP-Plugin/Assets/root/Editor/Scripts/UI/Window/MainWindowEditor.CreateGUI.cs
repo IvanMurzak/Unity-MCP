@@ -246,6 +246,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 }
             }));
 
+            // Status Checks
+            // -----------------------------------------------------------------
+            var btnOpenStatusChecks = root.Query<Button>("btnOpenStatusChecks").First();
+            btnOpenStatusChecks.RegisterCallback<ClickEvent>(evt =>
+            {
+                McpStatusChecksWindow.ShowWindow();
+            });
+
             // Tools Configuration
             // -----------------------------------------------------------------
             var btnOpenTools = root.Query<Button>("btnOpenTools").First();

@@ -22,6 +22,15 @@
                 <ui:Label text="Disconnected" name="connectionStatusText" style="flex-grow: 1;" />
                 <ui:Button name="btnConnectOrDisconnect" text="Connect" class="btn-primary" />
             </ui:VisualElement>
+            <ui:VisualElement name="StatusChecksSection">
+                <ui:VisualElement class="row-top">
+                    <ui:Label text="Status Checks" class="header" />
+                    <ui:Button name="btnOpenStatusChecks" text="Open" class="btn-secondary" />
+                </ui:VisualElement>
+                <ui:Foldout text="Information" value="false" class="base-foldout">
+                    <ui:Label text="Check if everything is configured correctly. Run diagnostics for connection, version, and tools." class="section-desc" />
+                </ui:Foldout>
+            </ui:VisualElement>
             <ui:VisualElement class="divider" />
             <ui:VisualElement name="ToolsConfigurationSection">
                 <ui:VisualElement class="row-top">
