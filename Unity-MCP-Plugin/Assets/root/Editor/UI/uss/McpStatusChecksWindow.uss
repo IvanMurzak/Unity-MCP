@@ -1,7 +1,7 @@
 /* MCP Status Checks Window - Premium Avant-Garde UI */
 
 .status-checks-root {
-    background-color: #101622;
+    background-color: #383838;
     padding: 20px;
     flex-grow: 1;
 }
@@ -130,3 +130,16 @@
     color: #f87171;
     -unity-font-style: normal;
 }
+
+.pending-icon {
+    background-color: rgba(148, 163, 184, 0.15);
+}
+
+.pending-icon .status-icon-text {
+    color: #94a3b8;
+}
+
+.status-card.pending {
+    border-color: rgba(148, 163, 184, 0.1);
+}
+
