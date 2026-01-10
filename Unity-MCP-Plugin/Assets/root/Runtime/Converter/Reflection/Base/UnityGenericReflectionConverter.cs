@@ -120,7 +120,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             {
                 if (logger?.IsEnabled(LogLevel.Error) == true)
                     logger.LogError("{padding}obj is null in TryPopulateField for '{field}'", padding, fieldValue.name);
-                logs?.Error($"obj is null in TryPopulateField for {fieldValue.name}", depth);
+                logs?.Error($"obj is null in TryPopulateField for '{fieldValue.name}'", depth);
                 return false;
             }
 
@@ -129,7 +129,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             {
                 if (logger?.IsEnabled(LogLevel.Error) == true)
                     logger.LogError("{padding}Field '{field}' not found on '{type}'", padding, fieldValue.name, objType.GetTypeId());
-                logs?.Error($"Field '{fieldValue.name}' not found on {objType.GetTypeId()}", depth);
+                logs?.Error($"Field '{fieldValue.name}' not found on '{objType.GetTypeId()}'", depth);
                 return false;
             }
 
@@ -172,7 +172,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             {
                 if (logger?.IsEnabled(LogLevel.Error) == true)
                     logger.LogError("{padding}Property '{property}' not found or not writable on '{type}'", padding, member.name, objType.GetTypeId());
-                logs?.Error($"Property '{member.name}' not found or not writable on {objType.GetTypeId()}", depth);
+                logs?.Error($"Property '{member.name}' not found or not writable on '{objType.GetTypeId()}'", depth);
                 return false;
             }
 
