@@ -19,7 +19,7 @@ namespace com.IvanMurzak.Unity.MCP
 {
     public partial class UnityMcpPlugin
     {
-        Reflector CreateDefaultReflector()
+        public Reflector CreateDefaultReflector()
         {
             var reflector = new Reflector();
             reflector.JsonSerializerOptions.NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals;
@@ -67,23 +67,23 @@ namespace com.IvanMurzak.Unity.MCP
             // Blacklist types
             // ---------------------------------------------------------
 #if UNITY_2023_1_OR_NEWER
-            BlacklistType(typeof(UnityEngine.LowLevelPhysics.GeometryHolder));
+            reflector.Converters.BlacklistType(typeof(UnityEngine.LowLevelPhysics.GeometryHolder));
 #endif
             // Redundant text data
-            BlacklistType(typeof(UnityEngine.TextCore.Text.FontFeatureTable));
-            BlacklistType(typeof(UnityEngine.TextCore.Glyph));
-            BlacklistType(typeof(UnityEngine.TextCore.GlyphRect));
-            BlacklistType(typeof(UnityEngine.TextCore.GlyphMetrics));
+            reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.Text.FontFeatureTable));
+            reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.Glyph));
+            reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.GlyphRect));
+            reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.GlyphMetrics));
 
             // Redundant TextMeshPro data
-            BlacklistType("TMPro.TMP_TextElement"); // Heavy text data
-            BlacklistType("TMPro.TMP_FontFeatureTable"); // Heavy font data
-            BlacklistType("TMPro.TMP_FontWeightPair"); // Heavy font data
-            BlacklistType("TMPro.FaceInfo_Legacy"); // Heavy font data
+            reflector.Converters.BlacklistType("TMPro.TMP_TextElement"); // Heavy text data
+            reflector.Converters.BlacklistType("TMPro.TMP_FontFeatureTable"); // Heavy font data
+            reflector.Converters.BlacklistType("TMPro.TMP_FontWeightPair"); // Heavy font data
+            reflector.Converters.BlacklistType("TMPro.FaceInfo_Legacy"); // Heavy font data
 
             // Redundant RenderPipeline data
-            BlacklistType("UnityEngine.Rendering.RTHandle"); // Can't be utilized
-            BlacklistType("UnityEngine.Experimental.Rendering.RTHandle"); // Can't be utilized
+            reflector.Converters.BlacklistType("UnityEngine.Rendering.RTHandle"); // Can't be utilized
+            reflector.Converters.BlacklistType("UnityEngine.Experimental.Rendering.RTHandle"); // Can't be utilized
 
             // Json Converters
             // ---------------------------------------------------------
@@ -110,56 +110,6 @@ namespace com.IvanMurzak.Unity.MCP
             reflector.JsonSerializer.AddConverter(new ComponentRefConverter());
 
             return reflector;
-        }
-
-        /// <summary>
-        /// Adds a type to the blacklist, preventing it from being serialized by the reflection system.
-        /// Blacklisted types are skipped during serialization to avoid heavy or redundant data.
-        /// </summary>
-        /// <param name="fullTypeName">The fully qualified type name (e.g., "TMPro.TMP_TextElement").</param>
-        /// <returns>The current instance for method chaining.</returns>
-        public UnityMcpPlugin BlacklistType(string fullTypeName)
-        {
-            var type = TypeUtils.GetType(fullTypeName);
-            if (type != null)
-                Reflector?.Converters.BlacklistType(type);
-            return this;
-        }
-
-        /// <summary>
-        /// Adds a type to the blacklist, preventing it from being serialized by the reflection system.
-        /// Blacklisted types are skipped during serialization to avoid heavy or redundant data.
-        /// </summary>
-        /// <param name="type">The type to blacklist.</param>
-        /// <returns>The current instance for method chaining.</returns>
-        public UnityMcpPlugin BlacklistType(System.Type type)
-        {
-            Reflector?.Converters.BlacklistType(type);
-            return this;
-        }
-
-        /// <summary>
-        /// Removes a type from the blacklist, allowing it to be serialized by the reflection system again.
-        /// </summary>
-        /// <param name="fullTypeName">The fully qualified type name (e.g., "TMPro.TMP_TextElement").</param>
-        /// <returns>The current instance for method chaining.</returns>
-        public UnityMcpPlugin RemoveBlacklistedType(string fullTypeName)
-        {
-            var type = TypeUtils.GetType(fullTypeName);
-            if (type != null)
-                Reflector?.Converters.RemoveBlacklistedType(type);
-            return this;
-        }
-
-        /// <summary>
-        /// Removes a type from the blacklist, allowing it to be serialized by the reflection system again.
-        /// </summary>
-        /// <param name="type">The type to remove from the blacklist.</param>
-        /// <returns>The current instance for method chaining.</returns>
-        public UnityMcpPlugin RemoveBlacklistedType(System.Type type)
-        {
-            Reflector?.Converters.RemoveBlacklistedType(type);
-            return this;
         }
     }
 }

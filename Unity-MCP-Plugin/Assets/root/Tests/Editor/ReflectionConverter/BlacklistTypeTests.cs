@@ -40,27 +40,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         /// </summary>
         private Reflector CreateTestReflector()
         {
-            var reflector = new Reflector();
-            reflector.JsonSerializerOptions.NumberHandling =
-                System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals;
-
-            // Remove default converters and add Unity-specific ones
-            reflector.Converters.Remove<GenericReflectionConverter<object>>();
-            reflector.Converters.Remove<ArrayReflectionConverter>();
-            reflector.Converters.Add(new UnityGenericReflectionConverter<object>());
-            reflector.Converters.Add(new UnityArrayReflectionConverter());
-
-            // Add Unity struct converters
-            reflector.Converters.Add(new UnityEngine_Vector3_ReflectionConverter());
-            reflector.Converters.Add(new UnityEngine_Color_ReflectionConverter());
-
-            // Add Unity object converters
-            reflector.Converters.Add(new UnityEngine_Object_ReflectionConverter());
-            reflector.Converters.Add(new UnityEngine_GameObject_ReflectionConverter());
-            reflector.Converters.Add(new UnityEngine_Component_ReflectionConverter());
-            reflector.Converters.Add(new UnityEngine_Material_ReflectionConverter());
-
-            return reflector;
+            return UnityMcpPlugin.Instance.CreateDefaultReflector();
         }
 
         [UnityTest]
