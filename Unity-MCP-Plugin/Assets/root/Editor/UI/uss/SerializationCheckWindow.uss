@@ -17,10 +17,7 @@
 .btn-copy {
     position: absolute;
     bottom: 8px;
-    right: 8px;
-    padding: 4px 12px;
-    margin-right: 12px;
-    font-size: 11px;
+    right: 20px;
 }
 
 /* Output List */
@@ -33,10 +30,6 @@
     background-color: rgba(0, 0, 0, 0.2);
     border-radius: 8px;
     padding: 0px;
-}
-
-.json-text-list .unity-scroll-view__content-container {
-    padding: 8px 0;
 }
 
 .json-text-list .unity-list-view__item {
