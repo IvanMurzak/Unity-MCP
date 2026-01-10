@@ -107,7 +107,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 
         protected override bool TryPopulateField(
             Reflector reflector,
-            ref object? obj,
+            ref object obj,
             Type objType,
             SerializedMember fieldValue,
             int depth = 0,
@@ -118,16 +118,18 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             var padding = StringUtils.GetPadding(depth);
             if (obj == null)
             {
-                logger?.LogError("{padding}obj is null in TryPopulateField for {field}", padding, fieldValue.name);
-                logs?.Error($"obj is null in TryPopulateField for {fieldValue.name}", depth);
+                if (logger?.IsEnabled(LogLevel.Error) == true)
+                    logger.LogError("{padding}obj is null in TryPopulateField for '{field}'", padding, fieldValue.name);
+                logs?.Error($"obj is null in TryPopulateField for '{fieldValue.name}'", depth);
                 return false;
             }
 
             var field = objType.GetField(fieldValue.name, flags);
             if (field == null)
             {
-                logger?.LogError("{padding}Field {field} not found on {type}", padding, fieldValue.name, objType.GetTypeId());
-                logs?.Error($"Field {fieldValue.name} not found on {objType.GetTypeId()}", depth);
+                if (logger?.IsEnabled(LogLevel.Error) == true)
+                    logger.LogError("{padding}Field '{field}' not found on '{type}'", padding, fieldValue.name, objType.GetTypeId());
+                logs?.Error($"Field '{fieldValue.name}' not found on '{objType.GetTypeId()}'", depth);
                 return false;
             }
 
@@ -139,7 +141,8 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             }
             catch (Exception e)
             {
-                logger?.LogError(e, "{padding}Failed to set field {field}", padding, fieldValue.name);
+                if (logger?.IsEnabled(LogLevel.Error) == true)
+                    logger.LogError(e, "{padding}Failed to set field {field}", padding, fieldValue.name);
                 logs?.Error($"Failed to set field {fieldValue.name}: {e.Message}", depth);
                 return false;
             }
@@ -147,7 +150,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 
         protected override bool TryPopulateProperty(
             Reflector reflector,
-            ref object? obj,
+            ref object obj,
             Type objType,
             SerializedMember member,
             int depth = 0,
@@ -158,7 +161,8 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             var padding = StringUtils.GetPadding(depth);
             if (obj == null)
             {
-                logger?.LogError("{padding}obj is null in TryPopulateProperty for '{property}'", padding, member.name);
+                if (logger?.IsEnabled(LogLevel.Error) == true)
+                    logger.LogError("{padding}obj is null in TryPopulateProperty for '{property}'", padding, member.name);
                 logs?.Error($"obj is null in TryPopulateProperty for '{member.name}'", depth);
                 return false;
             }
@@ -166,8 +170,9 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             var property = objType.GetProperty(member.name, flags);
             if (property == null || !property.CanWrite)
             {
-                logger?.LogError("{padding}Property '{property}' not found or not writable on '{type}'", padding, member.name, objType.GetTypeId());
-                logs?.Error($"Property '{member.name}' not found or not writable on {objType.GetTypeId()}", depth);
+                if (logger?.IsEnabled(LogLevel.Error) == true)
+                    logger.LogError("{padding}Property '{property}' not found or not writable on '{type}'", padding, member.name, objType.GetTypeId());
+                logs?.Error($"Property '{member.name}' not found or not writable on '{objType.GetTypeId()}'", depth);
                 return false;
             }
 
@@ -179,7 +184,8 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             }
             catch (Exception e)
             {
-                logger?.LogError(e, "{padding}Failed to set property '{property}'", padding, member.name);
+                if (logger?.IsEnabled(LogLevel.Error) == true)
+                    logger.LogError(e, "{padding}Failed to set property '{property}'", padding, member.name);
                 logs?.Error($"Failed to set property '{member.name}': {e.Message}", depth);
                 return false;
             }

@@ -67,7 +67,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             SerializationContext? context = null)
         {
             if (obj == null)
-                return SerializedMember.FromValue(reflector, type, value: null, name: name);
+                return SerializedMember.Null(type, name);
 
             var unityObject = obj as UnityEngine.GameObject;
             if (recursive)
@@ -196,7 +196,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 
         protected override bool TryPopulateField(
             Reflector reflector,
-            ref object? obj,
+            ref object obj,
             Type objType,
             SerializedMember fieldValue,
             int depth = 0,
@@ -253,7 +253,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 {
                     return base.TryPopulateField(
                         reflector,
-                        obj: ref obj,
+                        obj: ref obj!,
                         objType: objType,
                         fieldValue: fieldValue,
                         depth: depth,

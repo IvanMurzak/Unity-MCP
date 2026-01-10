@@ -59,13 +59,13 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             // UnityEngine.Debug.LogWarning($"Serialize: {name}, Type: {(obj?.GetType() ?? type).GetTypeId()}, Obj is null? {obj == null}.\nPath: {context?.BuildCurrentPath()}");
 
             if (obj == null)
-                return SerializedMember.FromValue(reflector, type, value: null, name: name);
+                return SerializedMember.Null(type, name);
 
             var unityObject = obj as T;
             if (unityObject == null)
             {
                 // UnityEngine.Object is destroyed but reference is not null
-                return SerializedMember.FromValue(reflector, type, value: null, name: name);
+                return SerializedMember.Null(type, name);
             }
 
             if (!type.IsClass && !type.IsInterface)
