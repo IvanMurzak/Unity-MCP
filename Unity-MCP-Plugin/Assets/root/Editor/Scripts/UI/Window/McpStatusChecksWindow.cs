@@ -257,31 +257,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         private List<string> GetConfiguredClientNames()
         {
-            var clients = new List<string>();
-
-            try
+            var configuredClients = MainWindowEditor.GetConfiguredClients();
+            var names = new List<string>();
+            foreach (var client in configuredClients)
             {
-                var claudeDesktopPath = System.IO.Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "Claude", "claude_desktop_config.json");
-                if (System.IO.File.Exists(claudeDesktopPath) &&
-                    JsonClientConfig.IsMcpClientConfigured(claudeDesktopPath))
-                    clients.Add("Claude Desktop");
+                names.Add(client.Name);
             }
-            catch { /* Ignore */ }
-
-            try
-            {
-                var cursorPath = System.IO.Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                    ".cursor", "mcp.json");
-                if (System.IO.File.Exists(cursorPath) &&
-                    JsonClientConfig.IsMcpClientConfigured(cursorPath))
-                    clients.Add("Cursor");
-            }
-            catch { /* Ignore */ }
-
-            return clients;
+            return names;
         }
 
         private StatusCheckItem GetUnityConnectedCheck()
@@ -396,31 +378,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         private StatusCheckItem GetClientLocationCheck()
         {
             var unityProjectPath = Environment.CurrentDirectory;
-
-            // Stub: Would need to parse client config to get actual path
             var isConnected = UnityMcpPlugin.IsConnected.CurrentValue;
+            var configuredClients = GetConfiguredClientNames();
 
-            try
+            if (configuredClients.Count > 0)
             {
-                var claudeDesktopPath = System.IO.Path.Combine(
-                    Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                    "Claude", "claude_desktop_config.json");
-
-                if (System.IO.File.Exists(claudeDesktopPath))
-                {
-                    return new StatusCheckItem(
-                        id: "client-location",
-                        title: "MCP Client location match",
-                        subtitle: $"Unity: {unityProjectPath}",
-                        description: $"Unity project path: {unityProjectPath}\n\n" +
-                            "Make sure your MCP client is running in the same directory. " +
-                            "Each Unity project generates a unique port based on its folder path, " +
-                            "so the client must be launched from the correct location.",
-                        status: isConnected ? CheckStatus.Success : CheckStatus.Pending
-                    );
-                }
+                var clientList = string.Join(", ", configuredClients);
+                return new StatusCheckItem(
+                    id: "client-location",
+                    title: "MCP Client location match",
+                    subtitle: $"Unity: {unityProjectPath}",
+                    description: $"Unity project path: {unityProjectPath}\n\n" +
+                        $"Configured clients: {clientList}\n\n" +
+                        "Make sure your MCP client is running in the same directory. " +
+                        "Each Unity project generates a unique port based on its folder path, " +
+                        "so the client must be launched from the correct location.",
+                    status: isConnected ? CheckStatus.Success : CheckStatus.Pending
+                );
             }
-            catch { /* Ignore */ }
 
             return new StatusCheckItem(
                 id: "client-location",

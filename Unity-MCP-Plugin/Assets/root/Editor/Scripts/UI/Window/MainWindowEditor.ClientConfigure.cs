@@ -10,6 +10,7 @@
 
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.IO;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEditor;
@@ -108,6 +109,206 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             };
 
             ConfigureClientsFromArray(root, clientConfigs);
+        }
+
+        /// <summary>
+        /// Returns all client configurations for the current platform.
+        /// </summary>
+        public static ClientConfig[] GetAllClientConfigs()
+        {
+#if UNITY_EDITOR_WIN
+            return GetClientConfigsWindows();
+#elif UNITY_EDITOR_OSX || UNITY_EDITOR_LINUX
+            return GetClientConfigsMacAndLinux();
+#else
+            return GetClientConfigsWindows();
+#endif
+        }
+
+        /// <summary>
+        /// Returns a list of configured clients (where IsConfigured() returns true).
+        /// </summary>
+        public static List<ClientConfig> GetConfiguredClients()
+        {
+            var allConfigs = GetAllClientConfigs();
+            var configured = new List<ClientConfig>();
+            foreach (var config in allConfigs)
+            {
+                try
+                {
+                    if (config.IsConfigured())
+                        configured.Add(config);
+                }
+                catch { /* Ignore */ }
+            }
+            return configured;
+        }
+
+        private static string GetProjectRootPath()
+        {
+            return Application.dataPath.EndsWith("/Assets")
+                ? Application.dataPath.Substring(0, Application.dataPath.Length - "/Assets".Length)
+                : Application.dataPath;
+        }
+
+        private static ClientConfig[] GetClientConfigsWindows()
+        {
+            var projectRootPath = GetProjectRootPath();
+            return new ClientConfig[]
+            {
+                new JsonClientConfig(
+                    name: "Claude Code",
+                    configPath: Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        ".claude.json"
+                    ),
+                    bodyPath: $"projects{Consts.MCP.Server.BodyPathDelimiter}"
+                        + $"{projectRootPath}{Consts.MCP.Server.BodyPathDelimiter}"
+                        + Consts.MCP.Server.DefaultBodyPath
+                ),
+                new JsonClientConfig(
+                    name: "Claude Desktop",
+                    configPath: Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                        "Claude",
+                        "claude_desktop_config.json"
+                    ),
+                    bodyPath: Consts.MCP.Server.DefaultBodyPath
+                ),
+                new JsonClientConfig(
+                    name: "Visual Studio Code (Copilot)",
+                    configPath: Path.Combine(
+                        ".vscode",
+                        "mcp.json"
+                    ),
+                    bodyPath: "servers"
+                ),
+                new JsonClientConfig(
+                    name: "Visual Studio (Copilot)",
+                    configPath: Path.Combine(
+                        ".vs",
+                        "mcp.json"
+                    ),
+                    bodyPath: "servers"
+                ),
+                new JsonClientConfig(
+                    name: "Cursor",
+                    configPath: Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        ".cursor",
+                        "mcp.json"
+                    ),
+                    bodyPath: Consts.MCP.Server.DefaultBodyPath
+                ),
+                new JsonClientConfig(
+                    name: "Gemini",
+                    configPath: Path.Combine(
+                        ".gemini",
+                        "settings.json"
+                    ),
+                    bodyPath: Consts.MCP.Server.DefaultBodyPath
+                ),
+                new JsonClientConfig(
+                    name: "Antigravity (Gemini)",
+                    configPath: Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        ".gemini",
+                        "antigravity",
+                        "mcp_config.json"
+                    ),
+                    bodyPath: Consts.MCP.Server.DefaultBodyPath
+                ),
+                new TomlClientConfig(
+                    name: "Codex",
+                    configPath: Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        ".codex",
+                        "config.toml"
+                    ),
+                    bodyPath: "mcp_servers"
+                )
+            };
+        }
+
+        private static ClientConfig[] GetClientConfigsMacAndLinux()
+        {
+            var projectRootPath = GetProjectRootPath();
+            return new ClientConfig[]
+            {
+                new JsonClientConfig(
+                    name: "Claude Code",
+                    configPath: Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        ".claude.json"
+                    ),
+                    bodyPath: $"projects{Consts.MCP.Server.BodyPathDelimiter}"
+                        + $"{projectRootPath}{Consts.MCP.Server.BodyPathDelimiter}"
+                        + Consts.MCP.Server.DefaultBodyPath
+                ),
+                new JsonClientConfig(
+                    name: "Claude Desktop",
+                    configPath: Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        "Library",
+                        "Application Support",
+                        "Claude",
+                        "claude_desktop_config.json"
+                    ),
+                    bodyPath: Consts.MCP.Server.DefaultBodyPath
+                ),
+                new JsonClientConfig(
+                    name: "Visual Studio Code (Copilot)",
+                    configPath: Path.Combine(
+                        ".vscode",
+                        "mcp.json"
+                    ),
+                    bodyPath: "servers"
+                ),
+                new JsonClientConfig(
+                    name: "Visual Studio (Copilot)",
+                    configPath: Path.Combine(
+                        ".vs",
+                        "mcp.json"
+                    ),
+                    bodyPath: "servers"
+                ),
+                new JsonClientConfig(
+                    name: "Cursor",
+                    configPath: Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        ".cursor",
+                        "mcp.json"
+                    ),
+                    bodyPath: Consts.MCP.Server.DefaultBodyPath
+                ),
+                new JsonClientConfig(
+                    name: "Gemini",
+                    configPath: Path.Combine(
+                        ".gemini",
+                        "settings.json"
+                    ),
+                    bodyPath: Consts.MCP.Server.DefaultBodyPath
+                ),
+                new JsonClientConfig(
+                    name: "Antigravity (Gemini)",
+                    configPath: Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        ".gemini",
+                        "antigravity",
+                        "mcp_config.json"
+                    ),
+                    bodyPath: Consts.MCP.Server.DefaultBodyPath
+                ),
+                new TomlClientConfig(
+                    name: "Codex",
+                    configPath: Path.Combine(
+                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                        ".codex",
+                        "config.toml"
+                    ),
+                    bodyPath: "mcp_servers"
+                )
+            };
         }
 
         void ConfigureClientsMacAndLinux(VisualElement root)

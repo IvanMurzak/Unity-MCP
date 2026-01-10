@@ -266,19 +266,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 var totalCount = 7;
 
                 // Check 1: MCP Client configured
-                try
-                {
-                    var claudeDesktopPath = System.IO.Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                        "Claude", "claude_desktop_config.json");
-                    var cursorPath = System.IO.Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                        ".cursor", "mcp.json");
-                    if ((System.IO.File.Exists(claudeDesktopPath) && Utils.JsonClientConfig.IsMcpClientConfigured(claudeDesktopPath)) ||
-                        (System.IO.File.Exists(cursorPath) && Utils.JsonClientConfig.IsMcpClientConfigured(cursorPath)))
-                        passedCount++;
-                }
-                catch { /* Ignore */ }
+                if (GetConfiguredClients().Count > 0)
+                    passedCount++;
 
                 // Check 2: Unity connected
                 if (UnityMcpPlugin.IsConnected.CurrentValue)
@@ -289,16 +278,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     passedCount++;
 
                 // Check 4: Server to client (pending, doesn't count as passed)
-                // Check 5: Client location (if config exists)
-                try
-                {
-                    var claudeDesktopPath = System.IO.Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                        "Claude", "claude_desktop_config.json");
-                    if (System.IO.File.Exists(claudeDesktopPath) && UnityMcpPlugin.IsConnected.CurrentValue)
-                        passedCount++;
-                }
-                catch { /* Ignore */ }
+                // Check 5: Client location (if config exists and connected)
+                if (GetConfiguredClients().Count > 0 && UnityMcpPlugin.IsConnected.CurrentValue)
+                    passedCount++;
 
                 // Check 6: Enabled tools
                 var mcpPlugin = UnityMcpPlugin.Instance.McpPluginInstance;
