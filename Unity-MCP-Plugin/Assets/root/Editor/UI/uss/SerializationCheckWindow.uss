@@ -8,33 +8,40 @@
 @import url("common/_buttons.uss");
 @import url("common/_forms.uss");
 
-/* Output Section */
-.output-scroll-view {
+/* JSON Container */
+.json-container {
+    flex-grow: 1;
+    position: relative;
+}
+
+.btn-copy {
+    position: absolute;
+    bottom: 8px;
+    right: 20px;
+}
+
+/* Output List */
+.json-text-list {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     background-color: rgba(0, 0, 0, 0.2);
     border-radius: 8px;
-    margin-top: 4px;
+    padding: 0px;
 }
 
-.output-field {
-    flex-grow: 1;
-    white-space: normal;
-    -unity-text-align: upper-left;
-    padding: 8px;
-}
-
-.output-field #unity-text-input {
+.json-text-list .unity-list-view__item {
     background-color: transparent;
     border-width: 0;
-    padding: 0;
-    white-space: normal;
-    -unity-text-align: upper-left;
-    color: rgb(180, 180, 180);
+    padding: 0 8px;
+    margin: 0;
+}
+
+.json-text-line {
     font-size: 12px;
-}
-
-.output-field .unity-text-field__input {
-    background-color: transparent;
-    border-width: 0;
-    padding: 0;
     white-space: normal;
+    padding: 0;
+    margin: 0;
 }

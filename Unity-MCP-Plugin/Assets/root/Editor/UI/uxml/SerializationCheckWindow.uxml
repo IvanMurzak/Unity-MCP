@@ -16,9 +16,10 @@
 
         <ui:VisualElement class="divider" />
 
-        <ui:Label text="Output" class="header" />
-        <ui:ScrollView class="output-scroll-view" style="flex-grow: 1;">
-            <ui:TextField name="output-field" multiline="true" readonly="true" class="output-field" />
-        </ui:ScrollView>
+        <ui:Label text="Output" name="output-header" class="header" />
+        <ui:VisualElement class="json-container">
+            <ui:ListView name="output-list" class="json-text-list" />
+            <ui:Button text="Copy" name="btn-copy" class="btn-secondary btn-copy" />
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

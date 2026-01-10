@@ -11,11 +11,14 @@
 #nullable enable
 
 using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using com.IvanMurzak.McpPlugin.Common.Utils;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.Extensions.Logging;
+using UnityEditor;
 using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -37,7 +40,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         private ObjectField? targetField;
         private Toggle? recursiveToggle;
         private Button? serializeButton;
-        private TextField? outputField;
+        private Button? copyButton;
+        private Label? outputHeader;
+        private ListView? outputList;
+        private readonly List<string> outputLines = new();
+        private string fullOutputText = string.Empty;
 
         public static void ShowWindow()
         {
@@ -71,15 +78,41 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 throw new InvalidOperationException("btn-serialize Button not found in UXML");
             serializeButton.clicked += OnSerializeClicked;
 
-            // Bind output field
-            outputField = root.Q<TextField>("output-field");
-            if (outputField == null)
-                throw new InvalidOperationException("output-field TextField not found in UXML");
+            // Bind copy button
+            copyButton = root.Q<Button>("btn-copy");
+            if (copyButton == null)
+                throw new InvalidOperationException("btn-copy Button not found in UXML");
+            copyButton.clicked += OnCopyClicked;
+
+            // Bind output header
+            outputHeader = root.Q<Label>("output-header");
+            if (outputHeader == null)
+                throw new InvalidOperationException("output-header Label not found in UXML");
+
+            // Bind output list
+            outputList = root.Q<ListView>("output-list");
+            if (outputList == null)
+                throw new InvalidOperationException("output-list ListView not found in UXML");
+
+            outputList.itemsSource = outputLines;
+            outputList.virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight;
+            outputList.makeItem = () =>
+            {
+                var label = new Label();
+                label.AddToClassList("json-text-line");
+                return label;
+            };
+            outputList.bindItem = (element, index) =>
+            {
+                if (element is Label label && index < outputLines.Count)
+                    label.text = outputLines[index];
+            };
+            outputList.selectionType = SelectionType.None;
         }
 
         private void OnSerializeClicked()
         {
-            if (targetField == null || recursiveToggle == null || outputField == null)
+            if (targetField == null || recursiveToggle == null || outputList == null || outputHeader == null)
                 return;
 
             var target = targetField.value;
@@ -92,6 +125,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
                 logger.LogInformation($"Serializing target '{target?.name}' of type '{target?.GetType().GetTypeId()}' with recursive={recursive}");
 
+                var stopwatch = Stopwatch.StartNew();
+
                 var serialized = reflector.Serialize(
                     obj: target,
                     fallbackType: null,
@@ -101,14 +136,46 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     logger: logger);
 
                 var json = serialized.ToPrettyJson();
+
+                stopwatch.Stop();
+
                 logger.LogInformation(json);
 
-                outputField.value = json;
+                outputHeader.text = $"Output ({stopwatch.ElapsedMilliseconds}ms)";
+                SetOutput(json);
             }
             catch (Exception ex)
             {
-                outputField.value = $"Error: {ex.Message}\n\n{ex.StackTrace}";
+                outputHeader.text = "Output";
+                SetOutput($"Error: {ex.Message}\n\n{ex.StackTrace}");
                 Logger.LogError(ex, "Failed to serialize target");
+            }
+        }
+
+        private void SetOutput(string text)
+        {
+            fullOutputText = text;
+            outputLines.Clear();
+            outputLines.AddRange(text.Split('\n'));
+            outputList?.RefreshItems();
+        }
+
+        private void OnCopyClicked()
+        {
+            EditorGUIUtility.systemCopyBuffer = fullOutputText;
+
+            if (copyButton != null)
+            {
+                var originalText = copyButton.text;
+                copyButton.text = "Copied!";
+
+                copyButton.schedule.Execute(() =>
+                {
+                    if (copyButton != null)
+                    {
+                        copyButton.text = originalText;
+                    }
+                }).ExecuteLater(1500);
             }
         }
 
@@ -116,6 +183,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         {
             if (serializeButton != null)
                 serializeButton.clicked -= OnSerializeClicked;
+            if (copyButton != null)
+                copyButton.clicked -= OnCopyClicked;
         }
     }
 }
