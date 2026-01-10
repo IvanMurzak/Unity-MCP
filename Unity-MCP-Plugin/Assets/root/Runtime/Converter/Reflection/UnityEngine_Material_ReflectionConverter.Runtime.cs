@@ -27,7 +27,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
     {
         protected override bool TryPopulateProperty(
             Reflector reflector,
-            ref object? obj,
+            ref object obj,
             Type objType,
             SerializedMember propertyValue,
             int depth = 0,

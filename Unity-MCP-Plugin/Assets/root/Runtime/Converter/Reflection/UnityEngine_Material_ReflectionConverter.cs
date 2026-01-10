@@ -121,20 +121,17 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             SerializationContext? context = null)
         {
             if (obj == null)
-                return SerializedMember.FromValue(reflector, type, value: null, name: name);
+                return SerializedMember.Null(type, name);
 
             var padding = StringUtils.GetPadding(depth);
 
             var material = obj as Material;
             if (material == null)
             {
-                if (logger?.IsEnabled(LogLevel.Error) == true)
-                    logger.LogError($"{padding}[Error] Object is not a Material. The type is {obj.GetType().GetTypeId()}. Converter: {GetType().GetTypeShortName()}");
-
-                logs?.Error($"Object is not a Material. The type is {obj.GetType().GetTypeId()}. Converter: {GetType().GetTypeShortName()}", depth);
-
-                return SerializedMember.FromValue(reflector, type, value: null, name: name);
+                // UnityEngine.Material is destroyed but reference is not null
+                return SerializedMember.Null(type, name);
             }
+
             var shader = material.shader;
             int propertyCount = shader.GetPropertyCount();
 
@@ -281,7 +278,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 
         protected override bool TryPopulateField(
             Reflector reflector,
-            ref object? obj,
+            ref object obj,
             Type objType,
             SerializedMember fieldValue,
             int depth = 0,
@@ -297,10 +294,11 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             var material = obj as Material;
             if (material == null)
             {
+                // UnityEngine.Material is destroyed but reference is not null
                 if (logger?.IsEnabled(LogLevel.Error) == true)
-                    logger.LogError($"{padding}[Error] Object is not a Material. Converter: {GetType().GetTypeShortName()}");
+                    logger.LogError($"{padding}UnityEngine.Material is destroyed but reference is not null. Converter: {GetType().GetTypeShortName()}");
 
-                logs?.Error($"Object is not a Material. Converter: {GetType().GetTypeShortName()}", depth);
+                logs?.Error($"UnityEngine.Material is destroyed but reference is not null. Converter: {GetType().GetTypeShortName()}", depth);
 
                 return false;
             }
