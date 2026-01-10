@@ -43,7 +43,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         private Button? copyButton;
         private Label? outputHeader;
         private ListView? outputList;
-        private List<string> outputLines = new();
+        private readonly List<string> outputLines = new();
         private string fullOutputText = string.Empty;
 
         public static void ShowWindow()
@@ -163,6 +163,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         private void OnCopyClicked()
         {
             EditorGUIUtility.systemCopyBuffer = fullOutputText;
+
+            if (copyButton != null)
+            {
+                var originalText = copyButton.text;
+                copyButton.text = "Copied!";
+
+                copyButton.schedule.Execute(() =>
+                {
+                    if (copyButton != null)
+                    {
+                        copyButton.text = originalText;
+                    }
+                }).ExecuteLater(1500);
+            }
         }
 
         private void OnDestroy()
