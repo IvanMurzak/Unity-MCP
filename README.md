@@ -313,7 +313,9 @@ If automatic configuration doesn't work for you for any reason, use the JSON fro
 | Linux arm64         | `"<unityProjectPath>/Library/mcp-server/linux-arm64/unity-mcp-server" port=<port> client-transport=stdio`   |
 
 **2. Replace `<unityProjectPath>` with the full path to Unity project**
+
 **3. Replace `<port>` with your port from AI Game Developer configuration**
+
 **4. Add MCP server using command line**
 
 </details>
