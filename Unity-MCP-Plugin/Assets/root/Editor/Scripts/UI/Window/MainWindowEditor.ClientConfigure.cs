@@ -10,6 +10,7 @@
 
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.IO;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEditor;
@@ -26,13 +27,56 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         public static readonly string[] ClientConfigPanelTemplatePath = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/ClientConfigPanel.uxml");
 
-        string ProjectRootPath => Application.dataPath.EndsWith("/Assets")
+        // Returns project root path (parent of Assets folder). Needed for MCP client configs to identify which Unity project they're running in.
+        static string ProjectRootPath => Application.dataPath.EndsWith("/Assets")
             ? Application.dataPath.Substring(0, Application.dataPath.Length - "/Assets".Length)
             : Application.dataPath;
 
         void ConfigureClientsWindows(VisualElement root)
         {
-            var clientConfigs = new ClientConfig[]
+            ConfigureClientsFromArray(root, GetClientConfigsWindows());
+        }
+
+        /// <summary>
+        /// Returns all client configurations for the current platform.
+        /// </summary>
+        public static ClientConfig[] GetAllClientConfigs()
+        {
+#if UNITY_EDITOR_WIN
+            return GetClientConfigsWindows();
+#elif UNITY_EDITOR_OSX || UNITY_EDITOR_LINUX
+            return GetClientConfigsMacAndLinux();
+#else
+            return GetClientConfigsWindows();
+#endif
+        }
+
+        /// <summary>
+        /// Returns a list of configured clients (where IsConfigured() returns true).
+        /// </summary>
+        public static List<ClientConfig> GetConfiguredClients()
+        {
+            var allConfigs = GetAllClientConfigs();
+            var configured = new List<ClientConfig>();
+            foreach (var config in allConfigs)
+            {
+                try
+                {
+                    if (config.IsConfigured())
+                        configured.Add(config);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"Failed to check if client '{config.Name}' is configured: {ex.Message}");
+                }
+            }
+            return configured;
+        }
+
+        private static ClientConfig[] GetClientConfigsWindows()
+        {
+            var projectRootPath = ProjectRootPath;
+            return new ClientConfig[]
             {
                 new JsonClientConfig(
                     name: "Claude Code",
@@ -41,7 +85,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         ".claude.json"
                     ),
                     bodyPath: $"projects{Consts.MCP.Server.BodyPathDelimiter}"
-                        + $"{ProjectRootPath}{Consts.MCP.Server.BodyPathDelimiter}"
+                        + $"{projectRootPath}{Consts.MCP.Server.BodyPathDelimiter}"
                         + Consts.MCP.Server.DefaultBodyPath
                 ),
                 new JsonClientConfig(
@@ -106,13 +150,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     bodyPath: "mcp_servers"
                 )
             };
-
-            ConfigureClientsFromArray(root, clientConfigs);
         }
 
-        void ConfigureClientsMacAndLinux(VisualElement root)
+        private static ClientConfig[] GetClientConfigsMacAndLinux()
         {
-            var clientConfigs = new ClientConfig[]
+            var projectRootPath = ProjectRootPath;
+            return new ClientConfig[]
             {
                 new JsonClientConfig(
                     name: "Claude Code",
@@ -121,7 +164,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         ".claude.json"
                     ),
                     bodyPath: $"projects{Consts.MCP.Server.BodyPathDelimiter}"
-                        + $"{ProjectRootPath}{Consts.MCP.Server.BodyPathDelimiter}"
+                        + $"{projectRootPath}{Consts.MCP.Server.BodyPathDelimiter}"
                         + Consts.MCP.Server.DefaultBodyPath
                 ),
                 new JsonClientConfig(
@@ -188,8 +231,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     bodyPath: "mcp_servers"
                 )
             };
+        }
 
-            ConfigureClientsFromArray(root, clientConfigs);
+        void ConfigureClientsMacAndLinux(VisualElement root)
+        {
+            ConfigureClientsFromArray(root, GetClientConfigsMacAndLinux());
         }
 
         static void ConfigureClientsFromArray(VisualElement root, ClientConfig[] clientConfigs)

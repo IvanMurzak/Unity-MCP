@@ -1,0 +1,29 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement class="root-container status-checks-root">
+        
+        <!-- Mini View (collapsed) -->
+        <ui:VisualElement name="mini-view-container" class="mini-view-container">
+            <ui:Label name="mini-label" text="Status (0/7)" class="mini-label" />
+            <ui:VisualElement name="mini-dots" class="mini-dots" />
+            <ui:Label text="▼" class="mini-expand-icon" />
+        </ui:VisualElement>
+        
+        <!-- Full View (expanded) -->
+        <ui:VisualElement name="full-view-container" class="full-view-container">
+            <ui:VisualElement class="header-container">
+                <ui:VisualElement class="header-row">
+                    <ui:Label text="MCP Status Checks" class="header-title" />
+                    <ui:Label name="stats-label" text="(0/7)" class="stats-label" />
+                </ui:VisualElement>
+                <ui:Label text="Verify your MCP integration is working correctly. Click on any item for details." class="header-description" />
+            </ui:VisualElement>
+            
+            <ui:ScrollView class="status-scroll-view">
+                <ui:VisualElement class="status-items-container">
+                    <!-- Status cards are generated dynamically by McpStatusChecksWindow.cs -->
+                </ui:VisualElement>
+            </ui:ScrollView>
+        </ui:VisualElement>
+        
+    </ui:VisualElement>
+</ui:UXML>
