@@ -321,7 +321,7 @@ If automatic configuration doesn't work for you for any reason, use the JSON fro
 </details>
 
 <details>
-  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/gemini-64.png?raw=true" width="16" height="16" alt="Gemini"> Gemini</summary>
+  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/gemini-64.png?raw=true" width="16" height="16" alt="Gemini CLI"> Gemini CLI</summary>
 
   ```bash
   gemini mcp add ai-game-developer <command>
@@ -330,7 +330,7 @@ If automatic configuration doesn't work for you for any reason, use the JSON fro
 </details>
 
 <details>
-  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/claude-64.png?raw=true" width="16" height="16" alt="Gemini"> Claude Code</summary>
+  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/claude-64.png?raw=true" width="16" height="16" alt="Claude Code CLI"> Claude Code CLI</summary>
 
   ```bash
   claude mcp add ai-game-developer <command>
@@ -339,7 +339,7 @@ If automatic configuration doesn't work for you for any reason, use the JSON fro
 </details>
 
 <details>
-  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/github-copilot-64.png?raw=true" width="16" height="16" alt="Gemini"> GitHub Copilot CLI</summary>
+  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/github-copilot-64.png?raw=true" width="16" height="16" alt="GitHub Copilot CLI"> GitHub Copilot CLI</summary>
 
   ```bash
   copilot
