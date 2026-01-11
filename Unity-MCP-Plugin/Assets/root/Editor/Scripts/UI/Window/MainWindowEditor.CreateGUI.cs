@@ -256,56 +256,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             var statusChecksLabel = root.Query<Label>("statusChecksLabel").First();
 
-            // Update status checks count
-            void UpdateStatusChecksCount()
-            {
-                if (statusChecksLabel == null)
-                    return;
-
-                var passedCount = 0;
-                var totalCount = 7;
-
-                // Check 1: MCP Client configured
-                if (GetConfiguredClients().Count > 0)
-                    passedCount++;
-
-                // Check 2: Unity connected
-                if (UnityMcpPlugin.IsConnected.CurrentValue)
-                    passedCount++;
-
-                // Check 3: Version handshake (if connected)
-                if (UnityMcpPlugin.IsConnected.CurrentValue)
-                    passedCount++;
-
-                // Check 4: Server to client (pending, doesn't count as passed)
-                // Check 5: Client location (if config exists and connected)
-                if (GetConfiguredClients().Count > 0 && UnityMcpPlugin.IsConnected.CurrentValue)
-                    passedCount++;
-
-                // Check 6: Enabled tools
-                var mcpPlugin = UnityMcpPlugin.Instance.McpPluginInstance;
-                var toolManager = mcpPlugin?.McpManager.ToolManager;
-                if (toolManager != null)
-                {
-                    var allTools = toolManager.GetAllTools();
-                    var enabledCount = allTools.Count(t => toolManager.IsToolEnabled(t.Name));
-                    if (enabledCount > 0)
-                        passedCount++;
-                }
-
-                // Check 7: Tool executed (pending, doesn't count as passed)
-
-                statusChecksLabel.text = $"Status Checks ({passedCount}/{totalCount})";
-            }
-
             // Initial update
-            UpdateStatusChecksCount();
+            UpdateStatusChecksCount(statusChecksLabel);
 
             // Subscribe to connection state changes
             UnityMcpPlugin.ConnectionState
                 .ThrottleLast(TimeSpan.FromMilliseconds(100))
                 .ObserveOnCurrentSynchronizationContext()
-                .Subscribe(_ => UpdateStatusChecksCount())
+                .Subscribe(_ => UpdateStatusChecksCount(statusChecksLabel))
                 .AddTo(_disposables);
 
             // Subscribe to tool manager updates
@@ -316,7 +274,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 {
                     tm.OnToolsUpdated
                         .ObserveOnCurrentSynchronizationContext()
-                        .Subscribe(_ => UpdateStatusChecksCount())
+                        .Subscribe(_ => UpdateStatusChecksCount(statusChecksLabel))
                         .AddTo(_disposables);
                 }
             }).AddTo(_disposables);
@@ -542,6 +500,50 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             button.tooltip = tooltip;
             button.RegisterCallback<ClickEvent>(evt => Application.OpenURL(url));
+        }
+
+        private static void UpdateStatusChecksCount(Label statusChecksLabel)
+        {
+            if (statusChecksLabel == null)
+                return;
+
+            var passedCount = 0;
+            var totalCount = 7;
+
+            var configuredClients = GetConfiguredClients();
+            var isConnected = UnityMcpPlugin.IsConnected.CurrentValue;
+
+            // Check 1: MCP Client configured
+            if (configuredClients.Count > 0)
+                passedCount++;
+
+            // Check 2: Unity connected
+            if (isConnected)
+                passedCount++;
+
+            // Check 3: Version handshake (if connected)
+            if (isConnected)
+                passedCount++;
+
+            // Check 4: Server to client (pending, doesn't count as passed)
+            // Check 5: Client location (if config exists and connected)
+            if (configuredClients.Count > 0 && isConnected)
+                passedCount++;
+
+            // Check 6: Enabled tools
+            var mcpPlugin = UnityMcpPlugin.Instance.McpPluginInstance;
+            var toolManager = mcpPlugin?.McpManager.ToolManager;
+            if (toolManager != null)
+            {
+                var allTools = toolManager.GetAllTools();
+                var enabledCount = allTools.Count(t => toolManager.IsToolEnabled(t.Name));
+                if (enabledCount > 0)
+                    passedCount++;
+            }
+
+            // Check 7: Tool executed (pending, doesn't count as passed)
+
+            statusChecksLabel.text = $"Status Checks ({passedCount}/{totalCount})";
         }
     }
 }

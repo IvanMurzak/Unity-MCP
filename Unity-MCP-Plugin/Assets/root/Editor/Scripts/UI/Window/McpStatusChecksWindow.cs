@@ -13,6 +13,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
@@ -477,7 +478,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         /// </summary>
         public static void NotifyToolExecuted()
         {
-            _toolExecutionCount++;
+            Interlocked.Increment(ref _toolExecutionCount);
         }
 
         private VisualElement CreateStatusCard(StatusCheckItem item)
