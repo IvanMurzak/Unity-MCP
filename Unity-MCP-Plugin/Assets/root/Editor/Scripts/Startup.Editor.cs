@@ -40,7 +40,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         /// </summary>
         /// <param name="callerName">Name of the calling method for logging.</param>
         /// <param name="onlyIfConnected">If true, only disconnects when in Connected state.
-        /// This prevents issues when cancelling in-progress connection attempts during assembly reload.</param>
+        /// This prevents issues when cancelling in-progress connection attempts during assembly reload.
+        /// Note: Log collector disposal always occurs regardless of this flag.</param>
         static void TryDisconnectAndCleanup(string callerName, bool onlyIfConnected = false)
         {
             if (!UnityMcpPlugin.HasInstance)
@@ -57,23 +58,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 var connectionState = UnityMcpPlugin.ConnectionState.CurrentValue;
 
-                // When onlyIfConnected is true, skip disconnect and cleanup unless we have an established connection.
+                // When onlyIfConnected is true, skip disconnect unless we have an established connection.
                 // This prevents hanging when cancelling in-progress connection attempts (Connecting/Reconnecting states).
                 if (onlyIfConnected && connectionState != HubConnectionState.Connected)
                 {
                     _logger.LogTrace("Skipping {method} - not connected (state: {state})",
                         nameof(plugin.DisconnectImmediate), connectionState);
-                    return;
                 }
-
-                try
+                else
                 {
-                    plugin.DisconnectImmediate();
-                }
-                catch (System.Exception e)
-                {
-                    _logger.LogWarning(e, "{class} {method}: Exception during disconnect (non-blocking): {message}",
-                        nameof(Startup), callerName, e.Message);
+                    try
+                    {
+                        plugin.DisconnectImmediate();
+                    }
+                    catch (System.Exception e)
+                    {
+                        _logger.LogWarning(e, "{class} {method}: Exception during disconnect (non-blocking): {message}",
+                            nameof(Startup), callerName, e.Message);
+                    }
                 }
             }
 
