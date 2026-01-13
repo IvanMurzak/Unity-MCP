@@ -73,12 +73,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 }
                 catch (System.Exception e)
                 {
-                    _logger.LogWarning("{class} {method}: Exception during disconnect (non-blocking): {message}",
+                    _logger.LogWarning(e, "{class} {method}: Exception during disconnect (non-blocking): {message}",
                         nameof(Startup), callerName, e.Message);
                 }
             }
 
-            plugin.DisposeLogCollector();
+            try
+            {
+                plugin.DisposeLogCollector();
+            }
+            catch (System.Exception e)
+            {
+                _logger.LogWarning(e, "{class} {method}: Exception during log collector disposal (non-blocking): {message}",
+                    nameof(Startup), callerName, e.Message);
+            }
         }
         static void OnAfterAssemblyReload()
         {
