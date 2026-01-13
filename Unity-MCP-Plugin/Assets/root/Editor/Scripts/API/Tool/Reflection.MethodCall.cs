@@ -10,7 +10,6 @@
 
 #nullable enable
 using System;
-using System.Collections.Immutable;
 using System.ComponentModel;
 using System.Linq;
 using System.Reflection;
@@ -131,7 +130,7 @@ Required:
             {
                 var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
-                var dictInputParameters = inputParameters?.ToImmutableDictionary(
+                var dictInputParameters = inputParameters?.ToDictionary(
                     keySelector: p => p.name ?? throw new InvalidOperationException($"Input parameter name is null. Please specify 'name' property for each input parameter."),
                     elementSelector: p => reflector.Deserialize(p, logger: McpPlugin.McpPlugin.Instance.Logger)
                 );

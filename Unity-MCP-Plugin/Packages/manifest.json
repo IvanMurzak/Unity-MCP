@@ -76,7 +76,6 @@
         "org.nuget.microsoft.extensions.primitives",
         "org.nuget.r3",
         "org.nuget.system.buffers",
-        "org.nuget.system.collections.immutable",
         "org.nuget.system.componentmodel.annotations",
         "org.nuget.system.diagnostics.diagnosticsource",
         "org.nuget.system.diagnostics.eventlog",
