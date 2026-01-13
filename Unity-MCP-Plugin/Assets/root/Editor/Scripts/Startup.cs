@@ -21,7 +21,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
     [InitializeOnLoad]
     public static partial class Startup
     {
-        static ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger(nameof(Startup));
+        static readonly ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger(nameof(Startup));
 
         static Startup()
         {

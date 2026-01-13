@@ -53,7 +53,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             _logger.LogInformation("{method} triggered", callerName);
 
             var plugin = UnityMcpPlugin.Instance;
-
             if (plugin.HasMcpPluginInstance)
             {
                 var connectionState = UnityMcpPlugin.ConnectionState.CurrentValue;
