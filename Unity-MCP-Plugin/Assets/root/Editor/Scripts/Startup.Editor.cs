@@ -32,19 +32,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         }
         static void OnApplicationUnloading() => TryDisconnectAndCleanup(nameof(OnApplicationUnloading));
         static void OnApplicationQuitting() => TryDisconnectAndCleanup(nameof(OnApplicationQuitting));
-        static void OnBeforeAssemblyReload() => TryDisconnectAndCleanup(nameof(OnBeforeAssemblyReload), skipIfDisconnected: true);
+        static void OnBeforeAssemblyReload() => TryDisconnectAndCleanup(nameof(OnBeforeAssemblyReload), onlyIfConnected: true);
 
         /// <summary>
         /// Safely disconnects and cleans up the MCP plugin instance.
         /// Catches exceptions to prevent blocking Unity's shutdown/reload process.
         /// </summary>
         /// <param name="callerName">Name of the calling method for logging.</param>
-        /// <param name="skipIfDisconnected">If true, skips disconnect when already in Disconnected state.</param>
-        static void TryDisconnectAndCleanup(string callerName, bool skipIfDisconnected = false)
+        /// <param name="onlyIfConnected">If true, only disconnects when in Connected state.
+        /// This prevents issues when cancelling in-progress connection attempts during assembly reload.</param>
+        static void TryDisconnectAndCleanup(string callerName, bool onlyIfConnected = false)
         {
             if (!UnityMcpPlugin.HasInstance)
             {
-                _logger.LogDebug("{class} {method} triggered: No UnityMcpPlugin instance to disconnect", nameof(Startup), callerName);
+                _logger.LogDebug("{class} {method} triggered: No UnityMcpPlugin instance to disconnect",
+                    nameof(Startup), callerName);
                 return;
             }
 
@@ -52,9 +54,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             if (UnityMcpPlugin.Instance.HasMcpPluginInstance)
             {
-                if (skipIfDisconnected && UnityMcpPlugin.ConnectionState.CurrentValue == HubConnectionState.Disconnected)
+                var connectionState = UnityMcpPlugin.ConnectionState.CurrentValue;
+
+                // When onlyIfConnected is true, skip disconnect unless we have an established connection.
+                // This prevents hanging when cancelling in-progress connection attempts (Connecting/Reconnecting states).
+                if (onlyIfConnected && connectionState != HubConnectionState.Connected)
                 {
-                    _logger.LogTrace("Already disconnected, skipping DisconnectImmediate");
+                    _logger.LogTrace("Skipping {method} - not connected (state: {state})",
+                        nameof(UnityMcpPlugin.Instance.DisconnectImmediate), connectionState);
                 }
                 else
                 {
@@ -64,7 +71,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     }
                     catch (System.Exception e)
                     {
-                        _logger.LogWarning("{class} {method}: Exception during disconnect (non-blocking): {message}", nameof(Startup), callerName, e.Message);
+                        _logger.LogWarning("{class} {method}: Exception during disconnect (non-blocking): {message}",
+                            nameof(Startup), callerName, e.Message);
                     }
                 }
             }
@@ -89,7 +97,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         {
             if (!UnityMcpPlugin.HasInstance)
             {
-                _logger.LogWarning("{class} {method} triggered: No UnityMcpPlugin instance available. State: {state}", nameof(Startup), nameof(OnPlayModeStateChanged), state);
+                _logger.LogWarning("{class} {method} triggered: No UnityMcpPlugin instance available. State: {state}",
+                    nameof(Startup), nameof(OnPlayModeStateChanged), state);
                 return;
             }
 
