@@ -11,14 +11,18 @@
 #nullable enable
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
+using com.IvanMurzak.Unity.MCP.Utils;
 using UnityEditor;
 using UnityEngine;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
 {
     [InitializeOnLoad]
     public static partial class Startup
     {
+        static ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger(nameof(Startup));
+
         static Startup()
         {
             UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();

@@ -14,7 +14,6 @@ using System;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.Extensions.Logging;
-using R3;
 
 namespace com.IvanMurzak.Unity.MCP
 {
