@@ -11,21 +11,29 @@
 #nullable enable
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
+using com.IvanMurzak.Unity.MCP.Utils;
 using UnityEditor;
 using UnityEngine;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
 {
     [InitializeOnLoad]
     public static partial class Startup
     {
+        static readonly ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger(nameof(Startup));
+
         static Startup()
         {
             UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
             UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
 
+            // Defer connection to avoid blocking during domain reload.
+            // Starting async SignalR connections during [InitializeOnLoad] can cause
+            // Unity to freeze because async continuations may run on the main thread
+            // while it's still processing the domain reload.
             if (!EnvironmentUtils.IsCi())
-                UnityMcpPlugin.ConnectIfNeeded();
+                EditorApplication.delayCall += () => UnityMcpPlugin.ConnectIfNeeded();
 
             Server.DownloadServerBinaryIfNeeded();
 

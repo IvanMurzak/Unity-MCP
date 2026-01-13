@@ -10,6 +10,8 @@
 
 #nullable enable
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
+using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.Logging;
 using UnityEditor;
 using UnityEngine;
 
@@ -28,51 +30,71 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             // Handle Play mode state changes to ensure reconnection after exiting Play mode
             EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
         }
-        static void OnApplicationUnloading()
+        static void OnApplicationUnloading() => TryDisconnectAndCleanup(nameof(OnApplicationUnloading));
+        static void OnApplicationQuitting() => TryDisconnectAndCleanup(nameof(OnApplicationQuitting));
+        static void OnBeforeAssemblyReload() => TryDisconnectAndCleanup(nameof(OnBeforeAssemblyReload), onlyIfConnected: true);
+
+        /// <summary>
+        /// Safely disconnects and cleans up the MCP plugin instance.
+        /// Catches exceptions to prevent blocking Unity's shutdown/reload process.
+        /// </summary>
+        /// <param name="callerName">Name of the calling method for logging.</param>
+        /// <param name="onlyIfConnected">If true, only disconnects when in Connected state.
+        /// This prevents issues when cancelling in-progress connection attempts during assembly reload.
+        /// Note: Log collector disposal always occurs regardless of this flag.</param>
+        static void TryDisconnectAndCleanup(string callerName, bool onlyIfConnected = false)
         {
-            if (UnityMcpPlugin.HasInstance)
+            if (!UnityMcpPlugin.HasInstance)
             {
-                UnityMcpPlugin.Instance.LogInfo("{method} triggered", typeof(Startup), nameof(OnApplicationUnloading));
-                UnityMcpPlugin.Instance.DisconnectImmediate();
-                UnityMcpPlugin.Instance.DisposeLogCollector();
+                _logger.LogDebug("{class} {method} triggered: No UnityMcpPlugin instance to disconnect",
+                    nameof(Startup), callerName);
+                return;
             }
-            else
+
+            _logger.LogInformation("{method} triggered", callerName);
+
+            var plugin = UnityMcpPlugin.Instance;
+            if (plugin.HasMcpPluginInstance)
             {
-                Debug.Log($"{nameof(Startup)} {nameof(OnApplicationUnloading)} triggered: No UnityMcpPlugin instance to disconnect.");
+                var connectionState = UnityMcpPlugin.ConnectionState.CurrentValue;
+
+                // When onlyIfConnected is true, skip disconnect unless we have an established connection.
+                // This prevents hanging when cancelling in-progress connection attempts (Connecting/Reconnecting states).
+                if (onlyIfConnected && connectionState != HubConnectionState.Connected)
+                {
+                    _logger.LogTrace("Skipping {method} - not connected (state: {state})",
+                        nameof(plugin.DisconnectImmediate), connectionState);
+                }
+                else
+                {
+                    try
+                    {
+                        plugin.DisconnectImmediate();
+                    }
+                    catch (System.Exception e)
+                    {
+                        _logger.LogWarning(e, "{class} {method}: Exception during disconnect (non-blocking): {message}",
+                            nameof(Startup), callerName, e.Message);
+                    }
+                }
             }
-        }
-        static void OnApplicationQuitting()
-        {
-            if (UnityMcpPlugin.HasInstance)
+
+            try
             {
-                UnityMcpPlugin.Instance.LogInfo("{method} triggered", typeof(Startup), nameof(OnApplicationQuitting));
-                UnityMcpPlugin.Instance.DisconnectImmediate();
-                UnityMcpPlugin.Instance.DisposeLogCollector();
+                plugin.DisposeLogCollector();
             }
-            else
+            catch (System.Exception e)
             {
-                Debug.Log($"{nameof(Startup)} {nameof(OnApplicationQuitting)} triggered: No UnityMcpPlugin instance to disconnect.");
-            }
-        }
-        static void OnBeforeAssemblyReload()
-        {
-            if (UnityMcpPlugin.HasInstance)
-            {
-                UnityMcpPlugin.Instance.LogInfo("{method} triggered", typeof(Startup), nameof(OnBeforeAssemblyReload));
-                UnityMcpPlugin.Instance.DisconnectImmediate();
-                UnityMcpPlugin.Instance.DisposeLogCollector();
-            }
-            else
-            {
-                Debug.Log($"{nameof(Startup)} {nameof(OnBeforeAssemblyReload)} triggered: No UnityMcpPlugin instance to disconnect.");
+                _logger.LogWarning(e, "{class} {method}: Exception during log collector disposal (non-blocking): {message}",
+                    nameof(Startup), callerName, e.Message);
             }
         }
         static void OnAfterAssemblyReload()
         {
             var connectionAllowed = EnvironmentUtils.IsCi() == false;
 
-            UnityMcpPlugin.Instance.LogInfo($"{nameof(OnAfterAssemblyReload)} triggered - BuildAndStart with {nameof(connectionAllowed)}: {connectionAllowed}",
-                typeof(Startup));
+            _logger.LogInformation("{method} triggered - BuildAndStart with connectionAllowed: {connectionAllowed}",
+                nameof(OnAfterAssemblyReload), connectionAllowed);
 
             UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
             UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
@@ -84,37 +106,41 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         static void OnPlayModeStateChanged(PlayModeStateChange state)
         {
             if (!UnityMcpPlugin.HasInstance)
-                Debug.LogWarning($"{nameof(Startup)} {nameof(OnPlayModeStateChanged)} triggered: No UnityMcpPlugin instance available. State: {state}.");
+            {
+                _logger.LogDebug("{class} {method} triggered: No UnityMcpPlugin instance available. State: {state}",
+                    nameof(Startup), nameof(OnPlayModeStateChanged), state);
+                return;
+            }
 
             // Log Play mode state changes for debugging
-            UnityMcpPlugin.Instance.LogInfo($"Play mode state changed: {state}", typeof(Startup));
+            _logger.LogInformation("Play mode state changed: {state}", state);
 
             switch (state)
             {
                 case PlayModeStateChange.ExitingPlayMode:
                     // Unity is about to exit Play mode - connection may be lost
                     // The OnBeforeReload will handle disconnection if domain reload occurs
-                    UnityMcpPlugin.Instance.LogTrace($"Exiting Play mode - connection may be affected by domain reload", typeof(Startup));
+                    _logger.LogTrace("Exiting Play mode - connection may be affected by domain reload");
                     break;
 
                 case PlayModeStateChange.EnteredEditMode:
                     // Unity has returned to Edit mode - ensure connection is re-established
                     // if the configuration expects it to be connected
-                    UnityMcpPlugin.Instance.LogTrace($"Entered Edit mode - KeepConnected: {UnityMcpPlugin.KeepConnected}, IsCi: {EnvironmentUtils.IsCi()}.",
-                        typeof(Startup));
+                    _logger.LogTrace("Entered Edit mode - KeepConnected: {keepConnected}, IsCi: {isCi}",
+                        UnityMcpPlugin.KeepConnected, EnvironmentUtils.IsCi());
 
                     if (EnvironmentUtils.IsCi())
                     {
-                        UnityMcpPlugin.Instance.LogTrace($"Skipping reconnection in CI environment.", typeof(Startup));
+                        _logger.LogTrace("Skipping reconnection in CI environment");
                         break;
                     }
 
-                    UnityMcpPlugin.Instance.LogTrace($"Scheduling reconnection after Play mode exit.", typeof(Startup));
+                    _logger.LogTrace("Scheduling reconnection after Play mode exit");
 
                     // Small delay to ensure Unity is fully settled in Edit mode
                     EditorApplication.delayCall += () =>
                     {
-                        UnityMcpPlugin.Instance.LogTrace($"Initiating delayed reconnection after Play mode exit.", typeof(Startup));
+                        _logger.LogTrace("Initiating delayed reconnection after Play mode exit");
 
                         UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
                         UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
@@ -123,7 +149,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
                     // No delay, immediate reconnection for the case if Unity Editor in background
                     // (has no focus)
-                    UnityMcpPlugin.Instance.LogTrace($"Initiating reconnection after Play mode exit.", typeof(Startup));
+                    _logger.LogTrace("Initiating reconnection after Play mode exit");
 
                     UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
                     UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
@@ -131,11 +157,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     break;
 
                 case PlayModeStateChange.ExitingEditMode:
-                    UnityMcpPlugin.Instance.LogTrace($"Exiting Edit mode to enter Play mode.", typeof(Startup));
+                    _logger.LogTrace("Exiting Edit mode to enter Play mode");
                     break;
 
                 case PlayModeStateChange.EnteredPlayMode:
-                    UnityMcpPlugin.Instance.LogTrace($"Entered Play mode.", typeof(Startup));
+                    _logger.LogTrace("Entered Play mode");
                     break;
             }
         }
