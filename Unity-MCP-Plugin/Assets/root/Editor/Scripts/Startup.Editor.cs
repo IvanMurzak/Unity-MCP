@@ -52,32 +52,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             _logger.LogInformation("{method} triggered", callerName);
 
-            if (UnityMcpPlugin.Instance.HasMcpPluginInstance)
+            var plugin = UnityMcpPlugin.Instance;
+
+            if (plugin.HasMcpPluginInstance)
             {
                 var connectionState = UnityMcpPlugin.ConnectionState.CurrentValue;
 
-                // When onlyIfConnected is true, skip disconnect unless we have an established connection.
+                // When onlyIfConnected is true, skip disconnect and cleanup unless we have an established connection.
                 // This prevents hanging when cancelling in-progress connection attempts (Connecting/Reconnecting states).
                 if (onlyIfConnected && connectionState != HubConnectionState.Connected)
                 {
                     _logger.LogTrace("Skipping {method} - not connected (state: {state})",
-                        nameof(UnityMcpPlugin.Instance.DisconnectImmediate), connectionState);
+                        nameof(plugin.DisconnectImmediate), connectionState);
+                    return;
                 }
-                else
+
+                try
                 {
-                    try
-                    {
-                        UnityMcpPlugin.Instance.DisconnectImmediate();
-                    }
-                    catch (System.Exception e)
-                    {
-                        _logger.LogWarning("{class} {method}: Exception during disconnect (non-blocking): {message}",
-                            nameof(Startup), callerName, e.Message);
-                    }
+                    plugin.DisconnectImmediate();
+                }
+                catch (System.Exception e)
+                {
+                    _logger.LogWarning("{class} {method}: Exception during disconnect (non-blocking): {message}",
+                        nameof(Startup), callerName, e.Message);
                 }
             }
 
-            UnityMcpPlugin.Instance.DisposeLogCollector();
+            plugin.DisposeLogCollector();
         }
         static void OnAfterAssemblyReload()
         {
@@ -97,7 +98,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         {
             if (!UnityMcpPlugin.HasInstance)
             {
-                _logger.LogWarning("{class} {method} triggered: No UnityMcpPlugin instance available. State: {state}",
+                _logger.LogDebug("{class} {method} triggered: No UnityMcpPlugin instance available. State: {state}",
                     nameof(Startup), nameof(OnPlayModeStateChanged), state);
                 return;
             }
