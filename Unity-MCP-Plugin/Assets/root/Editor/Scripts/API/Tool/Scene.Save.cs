@@ -37,9 +37,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         {
             MainThread.Instance.Run(() =>
             {
-                if (string.IsNullOrEmpty(path))
-                    throw new System.Exception(Error.ScenePathIsEmpty());
-
                 var scene = string.IsNullOrEmpty(openedSceneName)
                     ? SceneUtils.GetActiveScene()
                     : SceneUtils.GetAllOpenedScenes()
