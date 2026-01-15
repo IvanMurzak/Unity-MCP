@@ -129,8 +129,8 @@ namespace com.IvanMurzak.Unity.MCP
             .Select(x => x == HubConnectionState.Connected)
             .ToReadOnlyReactiveProperty(false);
 
-        static readonly Subject<Unit> _onToolExecuted = new();
-        public static IObservable<Unit> OnToolExecuted => _onToolExecuted;
+        static readonly R3.Subject<Unit> _onToolExecuted = new();
+        public static R3.IObservable<Unit> OnToolExecuted => _onToolExecuted;
 
         public static async Task NotifyToolRequestCompleted(RequestToolCompletedData request, CancellationToken cancellationToken = default)
         {
