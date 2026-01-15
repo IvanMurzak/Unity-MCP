@@ -76,7 +76,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     InstanceID = child.GetInstanceID()
                 },
                 includeHierarchy: true,
-                deepSerialization: true);
+                includeComponents: true);
 
             Assert.IsNotNull(response);
             Assert.IsNotNull(response!.Hierarchy);

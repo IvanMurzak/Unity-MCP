@@ -26,7 +26,6 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
             Reflector reflector,
             bool includeRootGameObjects = false,
             int includeChildrenDepth = 0,
-            bool deepSerialization = false,
             bool includeBounds = false,
             bool includeData = false,
             ILogger? logger = null)
@@ -38,10 +37,10 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
                     .Select(go => go.ToGameObjectData(
                         reflector: reflector,
                         includeData: includeData,
+                        includeComponents: false,
                         includeBounds: includeBounds,
                         includeHierarchy: includeChildrenDepth > 0,
                         hierarchyDepth: includeChildrenDepth,
-                        deepSerialization: deepSerialization,
                         logger: logger
                     ))
                     .ToList();

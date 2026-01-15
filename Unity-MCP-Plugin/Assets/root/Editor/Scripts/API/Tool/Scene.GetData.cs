@@ -57,7 +57,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     reflector: McpPlugin.McpPlugin.Instance!.McpManager.Reflector,
                     includeRootGameObjects: includeRootGameObjects,
                     includeChildrenDepth: includeChildrenDepth,
-                    deepSerialization: deepSerialization,
                     includeBounds: includeBounds,
                     includeData: includeData,
                     logger: UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_Scene>()

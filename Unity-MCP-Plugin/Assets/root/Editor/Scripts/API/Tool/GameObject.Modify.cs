@@ -9,8 +9,8 @@
 */
 
 #nullable enable
+using System;
 using System.ComponentModel;
-using System.Text;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
@@ -19,7 +19,6 @@ using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.Extensions.Logging;
-using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -32,7 +31,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         )]
         [Description(@"Modify GameObjects and/or attached component's field and properties in opened Prefab or in a Scene.
 You can modify multiple GameObjects at once. Just provide the same number of GameObject references and SerializedMember objects.")]
-        public string Modify
+        public Logs? Modify
         (
             GameObjectRefList gameObjectRefs,
             [Description("Each item in the array represents a GameObject modification of the 'gameObjectRefs' at the same index.\n" +
@@ -48,17 +47,16 @@ You can modify multiple GameObjects at once. Just provide the same number of Gam
             return MainThread.Instance.Run(() =>
             {
                 if (gameObjectRefs.Count == 0)
-                    return "[Error] No GameObject references provided. Please provide at least one GameObject reference.";
+                    throw new Exception("No GameObject references provided. Please provide at least one GameObject reference.");
 
                 if (gameObjectDiffs.Count != gameObjectRefs.Count)
-                    return $"[Error] The number of {nameof(gameObjectDiffs)} and {nameof(gameObjectRefs)} should be the same. " +
-                        $"{nameof(gameObjectDiffs)}: {gameObjectDiffs.Count}, {nameof(gameObjectRefs)}: {gameObjectRefs.Count}";
+                    throw new Exception($"The number of {nameof(gameObjectDiffs)} and {nameof(gameObjectRefs)} should be the same. " +
+                        $"{nameof(gameObjectDiffs)}: {gameObjectDiffs.Count}, {nameof(gameObjectRefs)}: {gameObjectRefs.Count}");
 
                 var logs = new Logs();
 
                 for (int i = 0; i < gameObjectRefs.Count; i++)
                 {
-
                     var go = gameObjectRefs[i].FindGameObject(out var error);
                     if (error != null)
                     {
@@ -70,22 +68,10 @@ You can modify multiple GameObjects at once. Just provide the same number of Gam
                         logs.Error($"GameObject by {nameof(gameObjectRefs)}[{i}] not found.");
                         continue;
                     }
+
                     var objToModify = (object)go;
 
-                    // LLM may mistakenly provide "typeName" as a Component type when it should be a GameObject.
-                    // It is fine, lets handle it gracefully.
-                    var type = TypeUtils.GetType(gameObjectDiffs[i].typeName);
-                    if (type != null && typeof(UnityEngine.Component).IsAssignableFrom(type))
-                    {
-                        var component = go.GetComponent(type);
-                        if (component == null)
-                        {
-                            logs.Error($"Component '{type.GetTypeId()}' not found on GameObject '{go.name.ValueOrNull()}'.");
-                            continue;
-                        }
-                        // Switch to the component type for modification.
-                        objToModify = component;
-                    }
+                    var modified = false;
 
                     var success = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.TryPopulate(
                         ref objToModify,
@@ -93,7 +79,7 @@ You can modify multiple GameObjects at once. Just provide the same number of Gam
                         logs: logs,
                         logger: UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_GameObject>());
 
-                    if (success)
+                    if (modified)
                         UnityEditor.EditorUtility.SetDirty(go);
                 }
 
@@ -102,7 +88,7 @@ You can modify multiple GameObjects at once. Just provide the same number of Gam
                 if (logs.Count == 0)
                     logs.Warning("No modifications were made.");
 
-                return logs.ToString();
+                return logs;
             });
         }
     }
