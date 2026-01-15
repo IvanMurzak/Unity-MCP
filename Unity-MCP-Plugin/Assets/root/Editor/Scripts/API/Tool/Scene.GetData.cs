@@ -37,8 +37,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             bool includeRootGameObjects = false,
             [Description("Determines the depth of the hierarchy to include.")]
             int includeChildrenDepth = 3,
-            [Description("If true, performs deep serialization of GameObjects.")]
-            bool deepSerialization = false,
             [Description("If true, includes bounding box information for GameObjects.")]
             bool includeBounds = false,
             [Description("If true, includes component data for GameObjects.")]
