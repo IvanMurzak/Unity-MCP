@@ -46,6 +46,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (save)
                 PrefabUtility.SaveAsPrefabAsset(prefabGo, assetPath);
 
+            prefabStage.ClearDirtiness();
+
             StageUtility.GoBackToPreviousStage();
 
             UnityEditor.EditorApplication.RepaintHierarchyWindow();
