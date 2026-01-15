@@ -39,6 +39,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             var goName = prefabGo.name;
 
             PrefabUtility.SaveAsPrefabAsset(prefabGo, assetPath);
+            prefabStage.ClearDirtiness();
 
             UnityEditor.EditorApplication.RepaintHierarchyWindow();
             UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
