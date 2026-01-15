@@ -19,12 +19,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Scene
     {
+        public const string SceneListOpenedToolId = "scene-list-opened";
         [McpPluginTool
         (
-            "scene-list-opened",
+            SceneListOpenedToolId,
             Title = "Scene / List Opened"
         )]
-        [Description("Returns the list of currently opened scenes in Unity Editor.")]
+        [Description("Returns the list of currently opened scenes in Unity Editor. " +
+            "Use '" + SceneGetDataToolId + "' tool to get detailed information about a specific scene.")]
         public SceneDataShallow[] ListOpened()
         {
             return MainThread.Instance.Run(() =>

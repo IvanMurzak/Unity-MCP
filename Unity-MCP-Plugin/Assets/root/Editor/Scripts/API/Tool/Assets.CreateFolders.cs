@@ -19,17 +19,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Assets
     {
+        public const string AssetsCreateFolderToolId = "assets-create-folder";
         [McpPluginTool
         (
-            "assets-create-folder",
+            AssetsCreateFolderToolId,
             Title = "Assets / Create Folder"
         )]
-        [Description(@"Creates a new folder, in the specified parent folder.
-The parent folder string must start with the ""Assets"" folder, and all folders within the parent folder string must already exist.
-For example, when specifying ""AssetsParentFolder1Parentfolder2/"", the new folder will be created in ""ParentFolder2"" only if ParentFolder1 and ParentFolder2 already exist.
-Use it to organize scripts and assets in the project. Does AssetDatabase.Refresh() at the end.
-
-The GUID of the newly created folder, if the folder was created successfully. Otherwise returns an empty string.")]
+        [Description("Creates a new folder in the specified parent folder. " +
+            "The parent folder string must start with the 'Assets' folder, and all folders within the parent folder string must already exist. " +
+            "For example, when specifying 'Assets/ParentFolder1/ParentFolder2/', the new folder will be created in 'ParentFolder2' only if ParentFolder1 and ParentFolder2 already exist. " +
+            "Use it to organize scripts and assets in the project. " +
+            "Does AssetDatabase.Refresh() at the end. " +
+            "Returns the GUID of the newly created folder, if successful.")]
         public CreateFolderResponse CreateFolders
         (
             [Description("The paths for the folders to create.")]

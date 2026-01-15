@@ -21,22 +21,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Package
     {
+        public const string PackageAddToolId = "package-add";
         [McpPluginTool
         (
-            "package-add",
+            PackageAddToolId,
             Title = "Package Manager / Add"
         )]
-        [Description(@"Install a package from the Unity Package Manager registry, Git URL, or local path.
-This operation modifies the project's manifest.json and triggers package resolution.
-Note: Package installation may trigger a domain reload. The result will be sent after the reload completes.")]
+        [Description("Install a package from the Unity Package Manager registry, Git URL, or local path. " +
+            "This operation modifies the project's manifest.json and triggers package resolution. " +
+            "Note: Package installation may trigger a domain reload. The result will be sent after the reload completes. " +
+            "Use '" + PackageSearchToolId + "' tool to search for packages and '" + PackageListToolId + "' to list installed packages.")]
         public static ResponseCallTool Add
         (
-            [Description(@"The package ID to install. Formats:
-- Package ID: 'com.unity.textmeshpro' (installs latest compatible version)
-- Package ID with version: 'com.unity.textmeshpro@3.0.6'
-- Git URL: 'https://github.com/user/repo.git'
-- Git URL with branch/tag: 'https://github.com/user/repo.git#v1.0.0'
-- Local path: 'file:../MyPackage'")]
+            [Description("The package ID to install. " +
+                "Formats: Package ID 'com.unity.textmeshpro' (installs latest compatible version), " +
+                "Package ID with version 'com.unity.textmeshpro@3.0.6', " +
+                "Git URL 'https://github.com/user/repo.git', " +
+                "Git URL with branch/tag 'https://github.com/user/repo.git#v1.0.0', " +
+                "Local path 'file:../MyPackage'.")]
             string packageId,
             [RequestID]
             string? requestId = null

@@ -19,12 +19,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Scene
     {
+        public const string SceneSaveToolId = "scene-save";
         [McpPluginTool
         (
-            "scene-save",
+            SceneSaveToolId,
             Title = "Scene / Save"
         )]
-        [Description("Save Opened scene to the asset file.")]
+        [Description("Save Opened scene to the asset file. " +
+            "Use '" + SceneListOpenedToolId + "' tool to get the list of all opened scenes.")]
         public void Save
         (
             [Description("Name of the opened scene that should be saved. Could be empty if need to save the current active scene.")]

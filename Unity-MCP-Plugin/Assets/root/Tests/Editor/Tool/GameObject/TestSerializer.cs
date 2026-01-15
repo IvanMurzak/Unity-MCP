@@ -243,16 +243,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Debug.Log($"[{nameof(TestSerializer)}] Serialized GameObject with null collider list:\n{json}");
 
             // Validate that the serialization completed without errors
-            Assert.IsNotNull(serialized, "Serialized result should not be null.");
-            Assert.IsNotNull(serialized.fields, "Serialized fields should not be null.");
-
-            // Validate that the component was serialized
-            var componentField = serialized.fields.FirstOrDefault(f => f.typeName?.Contains("ColliderListTestScript") == true);
-            Assert.IsNotNull(componentField, "Component field should be serialized.");
+            Assert.IsNotNull(serializedComponent, "Serialized component result should not be null.");
+            Assert.IsNotNull(serializedComponent.fields, "Serialized component fields should not be null.");
 
             // Validate that the colliderList field exists in the component
-            Assert.IsNotNull(componentField!.fields, "Component fields should not be null.");
-            var colliderListField = componentField.fields.FirstOrDefault(f => f.name == "colliderList");
+            var colliderListField = serializedComponent.fields.FirstOrDefault(f => f.name == "colliderList");
             Assert.IsNotNull(colliderListField, "colliderList field should be serialized.");
 
             var deserializedColliderList = reflector.Deserialize(
@@ -318,16 +313,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Debug.Log($"[{nameof(TestSerializer)}] Serialized GameObject with destroyed collider list:\n{json}");
 
             // Validate that the serialization completed without errors
-            Assert.IsNotNull(serialized, "Serialized result should not be null.");
-            Assert.IsNotNull(serialized.fields, "Serialized fields should not be null.");
-
-            // Validate that the component was serialized
-            var componentField = serialized.fields.FirstOrDefault(f => f.typeName?.Contains("ColliderListTestScript") == true);
-            Assert.IsNotNull(componentField, "Component field should be serialized.");
+            Assert.IsNotNull(serializedComponent, "Serialized component result should not be null.");
+            Assert.IsNotNull(serializedComponent.fields, "Serialized component fields should not be null.");
 
             // Validate that the colliderList field exists in the component
-            Assert.IsNotNull(componentField!.fields, "Component fields should not be null.");
-            var colliderListField = componentField.fields.FirstOrDefault(f => f.name == "colliderList");
+            var colliderListField = serializedComponent.fields.FirstOrDefault(f => f.name == "colliderList");
             Assert.IsNotNull(colliderListField, "colliderList field should be serialized.");
 
             var deserializedColliderList = reflector.Deserialize(

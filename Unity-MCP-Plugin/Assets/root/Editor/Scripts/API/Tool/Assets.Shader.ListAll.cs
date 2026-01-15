@@ -20,12 +20,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Assets_Shader
     {
+        public const string AssetsShaderListAllToolId = "assets-shader-list-all";
         [McpPluginTool
         (
-            "assets-shader-list-all",
+            AssetsShaderListAllToolId,
             Title = "Assets / List Shaders"
         )]
-        [Description(@"List all available shaders in the project assets and packages. Returns their names.")]
+        [Description("List all available shaders in the project assets and packages. " +
+            "Returns their names. " +
+            "Use this to find a shader name for '" + Tool_Assets.AssetsMaterialCreateToolId + "' tool.")]
         public string[] ListAll() => MainThread.Instance.Run(() =>
         {
             return ShaderUtils.GetAllShaders()
