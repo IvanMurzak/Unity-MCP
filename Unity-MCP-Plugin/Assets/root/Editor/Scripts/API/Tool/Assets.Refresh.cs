@@ -18,9 +18,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Assets
     {
+        public const string AssetsRefreshToolId = "assets-refresh";
         [McpPluginTool
         (
-            "assets-refresh",
+            AssetsRefreshToolId,
             Title = "Assets / Refresh"
         )]
         [Description(@"Refreshes the AssetDatabase. Use it if any new files were added or updated in the project outside of Unity API.

@@ -82,9 +82,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             }
         }
 
+        public const string PackageListToolId = "package-list";
         [McpPluginTool
         (
-            "package-list",
+            PackageListToolId,
             Title = "Package Manager / List Installed"
         )]
         [Description(@"List all packages installed in the Unity project (UPM packages).

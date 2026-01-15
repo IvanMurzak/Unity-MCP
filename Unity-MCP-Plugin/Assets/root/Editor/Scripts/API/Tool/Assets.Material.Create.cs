@@ -21,9 +21,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Assets
     {
+        public const string AssetsMaterialCreateToolId = "assets-material-create";
         [McpPluginTool
         (
-            "assets-material-create",
+            AssetsMaterialCreateToolId,
             Title = "Assets / Create Material"
         )]
         [Description(@"Create new material asset with default parameters. Creates folders recursively if they do not exist. Provide proper 'shaderName', to find the shader, use 'Shader.Find' method.")]

@@ -19,9 +19,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Assets
     {
+        public const string AssetsMoveToolId = "assets-move";
         [McpPluginTool
         (
-            "assets-move",
+            AssetsMoveToolId,
             Title = "Assets / Move"
         )]
         [Description(@"Move the assets at paths in the project. Should be used for asset rename. Does AssetDatabase.Refresh() at the end.")]

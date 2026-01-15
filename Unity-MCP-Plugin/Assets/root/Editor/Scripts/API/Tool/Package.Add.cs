@@ -21,9 +21,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Package
     {
+        public const string PackageAddToolId = "package-add";
         [McpPluginTool
         (
-            "package-add",
+            PackageAddToolId,
             Title = "Package Manager / Add"
         )]
         [Description(@"Install a package from the Unity Package Manager registry, Git URL, or local path.

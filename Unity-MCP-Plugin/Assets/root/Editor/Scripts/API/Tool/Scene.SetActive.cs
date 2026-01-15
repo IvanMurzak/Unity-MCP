@@ -20,9 +20,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Scene
     {
+        public const string SceneSetActiveToolId = "scene-set-active";
         [McpPluginTool
         (
-            "scene-set-active",
+            SceneSetActiveToolId,
             Title = "Scene / Set Active"
         )]
         [Description("Set the specified opened scene as the active scene.")]

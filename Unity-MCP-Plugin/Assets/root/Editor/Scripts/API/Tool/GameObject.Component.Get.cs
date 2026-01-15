@@ -26,14 +26,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_GameObject
     {
+        public const string GameObjectComponentGetToolId = "gameobject-component-get";
         [McpPluginTool
         (
-            "gameobject-component-get",
+            GameObjectComponentGetToolId,
             Title = "GameObject / Component / Get"
         )]
-        [Description(@"Get detailed information about a specific Component on a GameObject.
-Returns component type, enabled state, and optionally serialized fields and properties.
-Use this to inspect component data before modifying it.")]
+        [Description("Get detailed information about a specific Component on a GameObject. " +
+        "Returns component type, enabled state, and optionally serialized fields and properties. " +
+        "Use this to inspect component data before modifying it." +
+        "Use '" + GameObjectFindToolId + "' tool to get the list of all components on the gameObject.")]
         public GetComponentResponse GetComponent
         (
             GameObjectRef gameObjectRef,

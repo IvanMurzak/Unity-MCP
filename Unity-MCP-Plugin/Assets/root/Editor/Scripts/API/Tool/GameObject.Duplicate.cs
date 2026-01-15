@@ -24,9 +24,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_GameObject
     {
+        public const string GameObjectDuplicateToolId = "gameobject-duplicate";
         [McpPluginTool
         (
-            "gameobject-duplicate",
+            GameObjectDuplicateToolId,
             Title = "GameObject / Duplicate"
         )]
         [Description(@"Duplicate GameObjects in opened Prefab or in a Scene.")]

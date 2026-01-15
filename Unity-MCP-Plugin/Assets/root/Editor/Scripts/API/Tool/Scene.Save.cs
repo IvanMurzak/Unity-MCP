@@ -19,9 +19,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Scene
     {
+        public const string SceneSaveToolId = "scene-save";
         [McpPluginTool
         (
-            "scene-save",
+            SceneSaveToolId,
             Title = "Scene / Save"
         )]
         [Description("Save Opened scene to the asset file.")]

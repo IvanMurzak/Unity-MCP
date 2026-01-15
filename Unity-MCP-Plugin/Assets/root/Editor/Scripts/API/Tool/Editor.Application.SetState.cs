@@ -20,9 +20,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Editor
     {
+        public const string EditorApplicationSetStateToolId = "editor-application-set-state";
         [McpPluginTool
         (
-            "editor-application-set-state",
+            EditorApplicationSetStateToolId,
             Title = "Editor / Application / Set State"
         )]
         [Description("Control the Unity Editor application state. You can start, stop, or pause the 'playmode'.")]

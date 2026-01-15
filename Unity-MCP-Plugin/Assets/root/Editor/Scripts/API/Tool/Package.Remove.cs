@@ -22,9 +22,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Package
     {
+        public const string PackageRemoveToolId = "package-remove";
         [McpPluginTool
         (
-            "package-remove",
+            PackageRemoveToolId,
             Title = "Package Manager / Remove"
         )]
         [Description(@"Remove (uninstall) a package from the Unity project.

@@ -24,14 +24,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_GameObject
     {
+        public const string GameObjectComponentModifyToolId = "gameobject-component-modify";
         [McpPluginTool
         (
-            "gameobject-component-modify",
+            GameObjectComponentModifyToolId,
             Title = "GameObject / Component / Modify"
         )]
-        [Description(@"Modify a specific Component on a GameObject in opened Prefab or in a Scene.
-Allows direct modification of component fields and properties without wrapping in GameObject structure.
-Use 'gameobject-component-get' first to inspect the component structure before modifying.")]
+        [Description("Modify a specific Component on a GameObject in opened Prefab or in a Scene. " +
+"Allows direct modification of component fields and properties without wrapping in GameObject structure. " +
+"Use '" + GameObjectComponentGetToolId + "' first to inspect the component structure before modifying.")]
         public ModifyComponentResponse ModifyComponent
         (
             GameObjectRef gameObjectRef,

@@ -18,9 +18,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public static partial class Tool_Script
     {
+        public const string ScriptReadToolId = "script-read";
         [McpPluginTool
         (
-            "script-read",
+            ScriptReadToolId,
             Title = "Script / Read"
         )]
         [Description("Reads the content of a script file and returns it as a string.")]

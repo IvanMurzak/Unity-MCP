@@ -47,9 +47,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             public List<string> AvailableVersions { get; set; } = new();
         }
 
+        public const string PackageSearchToolId = "package-search";
         [McpPluginTool
         (
-            "package-search",
+            PackageSearchToolId,
             Title = "Package Manager / Search"
         )]
         [Description(@"Search for packages in both Unity Package Manager registry and installed packages.

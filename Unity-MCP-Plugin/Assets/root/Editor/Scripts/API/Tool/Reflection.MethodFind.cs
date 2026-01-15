@@ -20,9 +20,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Reflection
     {
+        public const string ReflectionMethodFindToolId = "reflection-method-find";
         [McpPluginTool
         (
-            "reflection-method-find",
+            ReflectionMethodFindToolId,
             Title = "Method C# / Find"
         )]
         [Description(@"Find method in the project using C# Reflection.

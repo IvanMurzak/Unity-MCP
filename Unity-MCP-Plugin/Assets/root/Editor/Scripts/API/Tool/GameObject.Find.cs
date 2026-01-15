@@ -21,9 +21,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_GameObject
     {
+        public const string GameObjectFindToolId = "gameobject-find";
         [McpPluginTool
         (
-            "gameobject-find",
+            GameObjectFindToolId,
             Title = "GameObject / Find"
         )]
         [Description(@"Finds specific GameObject by provided information in opened Prefab or in a Scene.

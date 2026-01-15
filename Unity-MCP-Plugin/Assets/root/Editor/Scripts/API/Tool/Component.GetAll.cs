@@ -20,9 +20,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Component
     {
+        public const string ComponentListToolId = "component-list";
         [McpPluginTool
         (
-            "component-list",
+            ComponentListToolId,
             Title = "Components / List"
         )]
         [Description("List C# class names extended from UnityEngine.Component.")]

@@ -20,9 +20,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Assets_Prefab
     {
+        public const string AssetsPrefabInstantiateToolId = "assets-prefab-instantiate";
         [McpPluginTool
         (
-            "assets-prefab-instantiate",
+            AssetsPrefabInstantiateToolId,
             Title = "Assets / Prefab / Instantiate"
         )]
         [Description("Instantiates prefab in the current active scene.")]

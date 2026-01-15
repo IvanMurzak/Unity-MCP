@@ -18,9 +18,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Scene
     {
+        public const string SceneCreateToolId = "scene-create";
         [McpPluginTool
         (
-            "scene-create",
+            SceneCreateToolId,
             Title = "Scene / Create"
         )]
         [Description("Create new scene in the project assets.")]

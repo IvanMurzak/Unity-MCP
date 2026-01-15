@@ -20,9 +20,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Assets
     {
+        public const string AssetsFindToolId = "assets-find";
         [McpPluginTool
         (
-            "assets-find",
+            AssetsFindToolId,
             Title = "Assets / Find"
         )]
         [Description(@"Search the asset database using the search filter string.

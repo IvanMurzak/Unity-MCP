@@ -23,9 +23,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Reflection
     {
+        public const string ReflectionMethodCallToolId = "reflection-method-call";
         [McpPluginTool
         (
-            "reflection-method-call",
+            ReflectionMethodCallToolId,
             Title = "Method C# / Call"
         )]
         [Description(@"Call C# method. Any method could be called, even private methods.

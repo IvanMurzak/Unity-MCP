@@ -20,9 +20,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Scene
     {
+        public const string SceneUnloadToolId = "scene-unload";
         [McpPluginTool
         (
-            "scene-unload",
+            SceneUnloadToolId,
             Title = "Scene / Unload"
         )]
         [Description("Unload scene from the Opened scenes in Unity Editor.")]

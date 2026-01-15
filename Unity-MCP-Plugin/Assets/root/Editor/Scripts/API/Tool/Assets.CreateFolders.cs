@@ -19,9 +19,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Assets
     {
+        public const string AssetsCreateFolderToolId = "assets-create-folder";
         [McpPluginTool
         (
-            "assets-create-folder",
+            AssetsCreateFolderToolId,
             Title = "Assets / Create Folder"
         )]
         [Description(@"Creates a new folder, in the specified parent folder.

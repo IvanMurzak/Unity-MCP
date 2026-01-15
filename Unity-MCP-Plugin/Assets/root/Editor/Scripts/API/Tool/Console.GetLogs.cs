@@ -18,9 +18,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Console
     {
+        public const string ConsoleGetLogsToolId = "console-get-logs";
         [McpPluginTool
         (
-            "console-get-logs",
+            ConsoleGetLogsToolId,
             Title = "Console / Get Logs"
         )]
         [Description("Retrieves Unity Editor logs.")]

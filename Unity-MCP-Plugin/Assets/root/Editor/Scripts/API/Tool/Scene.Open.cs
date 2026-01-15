@@ -20,9 +20,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Scene
     {
+        public const string SceneOpenToolId = "scene-open";
         [McpPluginTool
         (
-            "scene-open",
+            SceneOpenToolId,
             Title = "Scene / Open"
         )]
         [Description("Open scene from the project asset file.")]

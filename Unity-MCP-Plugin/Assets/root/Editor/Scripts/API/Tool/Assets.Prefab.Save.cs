@@ -19,9 +19,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Assets_Prefab
     {
+        public const string AssetsPrefabSaveToolId = "assets-prefab-save";
         [McpPluginTool
         (
-            "assets-prefab-save",
+            AssetsPrefabSaveToolId,
             Title = "Assets / Prefab / Save"
         )]
         [Description("Save a prefab. Use it when you are in prefab editing mode in Unity Editor.")]

@@ -20,9 +20,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Assets
     {
+        public const string AssetsCopyToolId = "assets-copy";
         [McpPluginTool
         (
-            "assets-copy",
+            AssetsCopyToolId,
             Title = "Assets / Copy"
         )]
         [Description(@"Copy the asset at path and stores it at newPath. Does AssetDatabase.Refresh() at the end.")]
