@@ -30,14 +30,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             GameObjectModifyToolId,
             Title = "GameObject / Modify"
         )]
-        [Description("Modify GameObjects and/or attached component's field and properties in opened Prefab or in a Scene. " +
+        [Description("Modify GameObject fields and properties in opened Prefab or in a Scene. " +
             "You can modify multiple GameObjects at once. Just provide the same number of GameObject references and SerializedMember objects.")]
         public Logs? Modify
         (
             GameObjectRefList gameObjectRefs,
             [Description("Each item in the array represents a GameObject modification of the 'gameObjectRefs' at the same index. " +
                 "Usually a GameObject is a container for components. Each component may have fields and properties for modification. " +
-                "If you need to modify components of a gameObject, please use '" + GameObjectComponentModifyToolId + "' tool. " +
+                "If you need to modify components of a GameObject, please use '" + GameObjectComponentModifyToolId + "' tool. " +
                 "Ignore values that should not be modified. " +
                 "Any unknown or wrong located fields and properties will be ignored. " +
                 "Check the result of this command to see what was changed. The ignored fields and properties will be listed.")]
