@@ -47,23 +47,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             public List<string> AvailableVersions { get; set; } = new();
         }
 
+        public const string PackageSearchToolId = "package-search";
         [McpPluginTool
         (
-            "package-search",
+            PackageSearchToolId,
             Title = "Package Manager / Search"
         )]
-        [Description(@"Search for packages in both Unity Package Manager registry and installed packages.
-Use this to find packages by name before installing them. Returns available versions and installation status.
-Searches both the Unity registry and locally installed packages (including Git, local, and embedded sources).
-Results are prioritized: exact name match, exact display name match, name substring, display name substring, description substring.
-Note: Online mode fetches exact matches from live registry, then supplements with cached substring matches.")]
+        [Description("Search for packages in both Unity Package Manager registry and installed packages. " +
+            "Use this to find packages by name before installing them. Returns available versions and installation status. " +
+            "Searches both the Unity registry and locally installed packages (including Git, local, and embedded sources). " +
+            "Results are prioritized: exact name match, exact display name match, name substring, display name substring, description substring. " +
+            "Note: Online mode fetches exact matches from live registry, then supplements with cached substring matches.")]
         public async Task<List<PackageSearchResult>> Search
         (
-            [Description(@"The package id, name, or description. Can be:
-- Full package id: 'com.unity.textmeshpro'
-- Full package name: 'TextMesh Pro'
-- Partial name: 'TextMesh' (will search in Unity registry and installed packages)
-- Description keyword: 'rendering' (searches in package descriptions)")]
+            [Description("The package id, name, or description. " +
+                "Can be: Full package id 'com.unity.textmeshpro', " +
+                "Full package name 'TextMesh Pro', " +
+                "Partial name 'TextMesh' (will search in Unity registry and installed packages), " +
+                "Description keyword 'rendering' (searches in package descriptions).")]
             string query,
             [Description("Maximum number of results to return. Default: 10")]
             int maxResults = 10,

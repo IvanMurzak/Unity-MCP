@@ -22,14 +22,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Assets_Prefab
     {
+        public const string AssetsPrefabOpenToolId = "assets-prefab-open";
         [McpPluginTool
         (
-            "assets-prefab-open",
+            AssetsPrefabOpenToolId,
             Title = "Assets / Prefab / Open"
         )]
-        [Description(@"Open prefab edit mode for a specific GameObject. In the Edit mode you can modify the prefab.
-The modification will be applied to the all instances of the prefab across the project.
-Note: Please 'Close' the prefab later to exit prefab editing mode.")]
+        [Description("Open prefab edit mode for a specific GameObject. " +
+            "In the Edit mode you can modify the prefab. " +
+            "The modification will be applied to all instances of the prefab across the project. " +
+            "Note: Please use '" + AssetsPrefabCloseToolId + "' tool later to exit prefab editing mode.")]
         public string Open
         (
             [Description("GameObject that represents prefab instance of an original prefab GameObject.")]

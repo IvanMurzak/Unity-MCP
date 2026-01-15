@@ -94,8 +94,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     InstanceID = go.GetInstanceID()
                 },
                 includeHierarchy: true,
-                hierarchyDepth: 1,
-                deepSerialization: true);
+                includeComponents: true,
+                hierarchyDepth: 1);
 
             Assert.IsNotNull(response);
             Assert.IsNotNull(response!.Hierarchy);
@@ -118,7 +118,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     InstanceID = go.GetInstanceID()
                 },
                 includeData: true,
-                deepSerialization: false);
+                includeComponents: false);
 
             Assert.IsNotNull(response);
             Assert.IsNotNull(response!.Data);
@@ -147,7 +147,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     InstanceID = go.GetInstanceID()
                 },
                 includeData: true,
-                deepSerialization: true);
+                includeComponents: true);
 
             var deepJsonString = reflector.JsonSerializer.Serialize(reflector.Serialize(deepResponse));
 
@@ -158,7 +158,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     InstanceID = go.GetInstanceID()
                 },
                 includeData: true,
-                deepSerialization: false);
+                includeComponents: false);
 
             var shallowJsonString = reflector.JsonSerializer.Serialize(reflector.Serialize(shallowResponse));
 

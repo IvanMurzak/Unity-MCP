@@ -20,9 +20,9 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
         public bool IsDirty { get; set; }
         public bool IsSubScene { get; set; } = false;
 
-        [Description(@"Whether this is a valid Scene. A Scene may be invalid if, for example, you tried
-to open a Scene that does not exist. In this case, the Scene returned from EditorSceneManager.OpenScene
-would return False for IsValid.")]
+        [Description("Whether this is a valid Scene. " +
+            "A Scene may be invalid if, for example, you tried to open a Scene that does not exist. " +
+            "In this case, the Scene returned from EditorSceneManager.OpenScene would return False for IsValid.")]
         public bool IsValid { get; set; } = true;
         public int RootCount { get; set; } = 0;
 

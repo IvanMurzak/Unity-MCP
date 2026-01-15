@@ -10,6 +10,7 @@
 
 #nullable enable
 using System.ComponentModel;
+using System.Linq;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
@@ -21,22 +22,28 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
     public class GameObjectData
     {
         public GameObjectRef? Reference { get; set; }
-        [Description("Serialized data of the GameObject and its components.")]
-        public SerializedMember? Data { get; set; }
+
+        [Description("GameObject editable data (tag, layer, etc).")]
+        public SerializedMember? Data { get; set; } = null;
+
         [Description("Bounds of the GameObject.")]
         public Bounds? Bounds { get; set; }
+
         [Description("Hierarchy metadata of the GameObject.")]
         public GameObjectMetadata? Hierarchy { get; set; } = null;
+
+        [Description("Attached components shallow data of the GameObject (Read-only, use Component modification tool for modification).")]
+        public ComponentDataShallow[]? Components { get; set; } = null;
 
         public GameObjectData() { }
         public GameObjectData(
             Reflector reflector,
             GameObject go,
             bool includeData = false,
+            bool includeComponents = false,
             bool includeBounds = false,
             bool includeHierarchy = false,
             int hierarchyDepth = 0,
-            bool deepSerialization = false,
             ILogger? logger = null)
         {
             Reference = new GameObjectRef(go);
@@ -45,10 +52,17 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
             {
                 Data = reflector.Serialize(
                     obj: go,
+                    fallbackType: typeof(GameObject),
                     name: go.name,
-                    recursive: deepSerialization,
-                    logger: logger
-                );
+                    recursive: true,
+                    logger: logger);
+            }
+
+            if (includeComponents)
+            {
+                Components = go.GetComponents<UnityEngine.Component>()
+                    .Select(c => new ComponentDataShallow(c))
+                    .ToArray();
             }
 
             if (includeBounds)
@@ -65,20 +79,20 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
             this GameObject go,
             Reflector reflector,
             bool includeData = false,
+            bool includeComponents = false,
             bool includeBounds = false,
             bool includeHierarchy = false,
             int hierarchyDepth = 0,
-            bool deepSerialization = false,
             ILogger? logger = null)
         {
             return new GameObjectData(
                 reflector: reflector,
                 go: go,
                 includeData: includeData,
+                includeComponents: includeComponents,
                 includeBounds: includeBounds,
                 includeHierarchy: includeHierarchy,
                 hierarchyDepth: hierarchyDepth,
-                deepSerialization: deepSerialization,
                 logger: logger
             );
         }

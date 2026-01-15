@@ -28,13 +28,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public static partial class Tool_Tests
     {
+        public const string TestsRunToolId = "tests-run";
         [McpPluginTool
         (
-            "tests-run",
+            TestsRunToolId,
             Title = "Test Runner / Run Unity Tests"
         )]
-        [Description(@"Execute Unity tests and return detailed results. Supports filtering by test mode, assembly, namespace, class, and method.
-Be default recommended to use 'EditMode' for faster iteration during development.")]
+        [Description("Execute Unity tests and return detailed results. " +
+            "Supports filtering by test mode, assembly, namespace, class, and method. " +
+            "Recommended to use '" + nameof(TestMode.EditMode) + "' for faster iteration during development.")]
         public static async Task<ResponseCallValueTool<TestRunResponse>> Run
         (
             [Description("Test mode to run. Options: '" + nameof(TestMode.EditMode) + "', '" + nameof(TestMode.PlayMode) + "'. Default: '" + nameof(TestMode.EditMode) + "'")]
@@ -57,7 +59,7 @@ Be default recommended to use 'EditMode' for faster iteration during development
 
             [Description("Include console logs in the test results (default: false).")]
             bool includeLogs = false,
-            [Description("Log type filter for console logs. Options: '" + nameof(LogType.Log) + "', '" + nameof(LogType.Warning) + "', '" + nameof(LogType.Assert) + "', '" + nameof(LogType.Error) + "', '" + nameof(LogType.Exception) + "'. (default: Warning)")]
+            [Description("Log type filter for console logs. Options: '" + nameof(LogType.Log) + "', '" + nameof(LogType.Warning) + "', '" + nameof(LogType.Assert) + "', '" + nameof(LogType.Error) + "', '" + nameof(LogType.Exception) + "'. (default: '" + nameof(LogType.Warning) + "')")]
             LogType logType = LogType.Warning,
             [Description("Include stack traces for console logs in the test results (default: false). This is huge amount of data, use only if really needed.")]
             bool includeLogsStacktrace = false,

@@ -20,12 +20,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Editor_Selection
     {
+        public const string EditorSelectionGetToolId = "editor-selection-get";
         [McpPluginTool
         (
-            "editor-selection-get",
+            EditorSelectionGetToolId,
             Title = "Editor / Selection / Get"
         )]
-        [Description(@"Get information about the current Selection in the Unity Editor.")]
+        [Description("Get information about the current Selection in the Unity Editor. " +
+            "Use '" + EditorSelectionSetToolId + "' tool to set the selection.")]
         public SelectionData Get(
             bool includeGameObjects = false,
             bool includeTransforms = false,

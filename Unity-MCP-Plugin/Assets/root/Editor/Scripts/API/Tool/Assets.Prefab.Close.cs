@@ -19,12 +19,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Assets_Prefab
     {
+        public const string AssetsPrefabCloseToolId = "assets-prefab-close";
         [McpPluginTool
         (
-            "assets-prefab-close",
+            AssetsPrefabCloseToolId,
             Title = "Assets / Prefab / Close"
         )]
-        [Description("Close currently opened prefab. Use it when you are in prefab editing mode in Unity Editor.")]
+        [Description("Close currently opened prefab. " +
+            "Use it when you are in prefab editing mode in Unity Editor. " +
+            "Use '" + AssetsPrefabOpenToolId + "' tool to open a prefab first.")]
         public string Close
         (
             [Description("True to save prefab. False to discard changes.")]
@@ -45,6 +48,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             if (save)
                 PrefabUtility.SaveAsPrefabAsset(prefabGo, assetPath);
+
+            prefabStage.ClearDirtiness();
 
             StageUtility.GoBackToPreviousStage();
 

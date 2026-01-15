@@ -21,12 +21,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_GameObject
     {
+        public const string GameObjectComponentDestroyToolId = "gameobject-component-destroy";
         [McpPluginTool
         (
-            "gameobject-component-destroy",
+            GameObjectComponentDestroyToolId,
             Title = "GameObject / Component / Destroy"
         )]
-        [Description("Destroy one or many components from target GameObject. Can't destroy missed components.")]
+        [Description("Destroy one or many components from target GameObject. Can't destroy missed components. " +
+            "Use '" + GameObjectFindToolId + "' tool to find the target GameObject and '" + GameObjectComponentGetToolId + "' to get component details first.")]
         public DestroyComponentsResponse DestroyComponents
         (
             GameObjectRef gameObjectRef,

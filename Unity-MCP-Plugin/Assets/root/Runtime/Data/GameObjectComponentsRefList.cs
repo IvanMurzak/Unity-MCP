@@ -15,7 +15,8 @@ using System.ComponentModel;
 namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
     [System.Serializable]
-    [Description(@"GameObject references array. Used to specify GameObjects in opened Prefab or in the active Scene.")]
+    [Description("GameObject references array. " +
+        "Used to specify GameObjects in opened Prefab or in the active Scene.")]
     public class GameObjectComponentsRefList : List<GameObjectComponentsRef>
     {
         public GameObjectComponentsRefList() { }

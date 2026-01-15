@@ -9,38 +9,36 @@
 */
 
 #nullable enable
+using System;
 using System.ComponentModel;
-using System.Text;
 using com.IvanMurzak.McpPlugin;
-using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.Extensions.Logging;
-using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_GameObject
     {
+        public const string GameObjectModifyToolId = "gameobject-modify";
         [McpPluginTool
         (
-            "gameobject-modify",
+            GameObjectModifyToolId,
             Title = "GameObject / Modify"
         )]
-        [Description(@"Modify GameObjects and/or attached component's field and properties in opened Prefab or in a Scene.
-You can modify multiple GameObjects at once. Just provide the same number of GameObject references and SerializedMember objects.")]
-        public string Modify
+        [Description("Modify GameObject fields and properties in opened Prefab or in a Scene. " +
+            "You can modify multiple GameObjects at once. Just provide the same number of GameObject references and SerializedMember objects.")]
+        public Logs? Modify
         (
             GameObjectRefList gameObjectRefs,
-            [Description("Each item in the array represents a GameObject modification of the 'gameObjectRefs' at the same index.\n" +
-                "Usually a GameObject is a container for components. Each component may have fields and properties for modification.\n" +
-                "If you need to modify components of a gameObject, please use '" + nameof(SerializedMember.fields) + "' to wrap a component into it. " +
-                "Each component needs to have '" + nameof(SerializedMember.typeName) + "' and '" + nameof(SerializedMember.name) + "' or 'value." + ObjectRef.ObjectRefProperty.InstanceID + "' fields to identify the exact modification target.\n" +
-                "Ignore values that should not be modified.\n" +
-                "Any unknown or wrong located fields and properties will be ignored.\n" +
+            [Description("Each item in the array represents a GameObject modification of the 'gameObjectRefs' at the same index. " +
+                "Usually a GameObject is a container for components. Each component may have fields and properties for modification. " +
+                "If you need to modify components of a GameObject, please use '" + GameObjectComponentModifyToolId + "' tool. " +
+                "Ignore values that should not be modified. " +
+                "Any unknown or wrong located fields and properties will be ignored. " +
                 "Check the result of this command to see what was changed. The ignored fields and properties will be listed.")]
             SerializedMemberList gameObjectDiffs
         )
@@ -48,17 +46,16 @@ You can modify multiple GameObjects at once. Just provide the same number of Gam
             return MainThread.Instance.Run(() =>
             {
                 if (gameObjectRefs.Count == 0)
-                    return "[Error] No GameObject references provided. Please provide at least one GameObject reference.";
+                    throw new Exception("No GameObject references provided. Please provide at least one GameObject reference.");
 
                 if (gameObjectDiffs.Count != gameObjectRefs.Count)
-                    return $"[Error] The number of {nameof(gameObjectDiffs)} and {nameof(gameObjectRefs)} should be the same. " +
-                        $"{nameof(gameObjectDiffs)}: {gameObjectDiffs.Count}, {nameof(gameObjectRefs)}: {gameObjectRefs.Count}";
+                    throw new Exception($"The number of {nameof(gameObjectDiffs)} and {nameof(gameObjectRefs)} should be the same. " +
+                        $"{nameof(gameObjectDiffs)}: {gameObjectDiffs.Count}, {nameof(gameObjectRefs)}: {gameObjectRefs.Count}");
 
                 var logs = new Logs();
 
                 for (int i = 0; i < gameObjectRefs.Count; i++)
                 {
-
                     var go = gameObjectRefs[i].FindGameObject(out var error);
                     if (error != null)
                     {
@@ -70,30 +67,16 @@ You can modify multiple GameObjects at once. Just provide the same number of Gam
                         logs.Error($"GameObject by {nameof(gameObjectRefs)}[{i}] not found.");
                         continue;
                     }
+
                     var objToModify = (object)go;
 
-                    // LLM may mistakenly provide "typeName" as a Component type when it should be a GameObject.
-                    // It is fine, lets handle it gracefully.
-                    var type = TypeUtils.GetType(gameObjectDiffs[i].typeName);
-                    if (type != null && typeof(UnityEngine.Component).IsAssignableFrom(type))
-                    {
-                        var component = go.GetComponent(type);
-                        if (component == null)
-                        {
-                            logs.Error($"Component '{type.GetTypeId()}' not found on GameObject '{go.name.ValueOrNull()}'.");
-                            continue;
-                        }
-                        // Switch to the component type for modification.
-                        objToModify = component;
-                    }
-
-                    var success = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.TryPopulate(
+                    var modified = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.TryPopulate(
                         ref objToModify,
                         data: gameObjectDiffs[i],
                         logs: logs,
                         logger: UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_GameObject>());
 
-                    if (success)
+                    if (modified)
                         UnityEditor.EditorUtility.SetDirty(go);
                 }
 
@@ -102,7 +85,7 @@ You can modify multiple GameObjects at once. Just provide the same number of Gam
                 if (logs.Count == 0)
                     logs.Warning("No modifications were made.");
 
-                return logs.ToString();
+                return logs;
             });
         }
     }

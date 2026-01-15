@@ -19,12 +19,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Assets
     {
+        public const string AssetsDeleteToolId = "assets-delete";
         [McpPluginTool
         (
-            "assets-delete",
+            AssetsDeleteToolId,
             Title = "Assets / Delete"
         )]
-        [Description(@"Delete the assets at paths from the project. Does AssetDatabase.Refresh() at the end.")]
+        [Description("Delete the assets at paths from the project. " +
+            "Does AssetDatabase.Refresh() at the end. " +
+            "Use '" + AssetsFindToolId + "' tool to find assets before deleting.")]
         public DeleteAssetsResponse Delete
         (
             [Description("The paths of the assets")]

@@ -17,7 +17,8 @@ using com.IvanMurzak.ReflectorNet;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
-    [Description(@"Component reference. Used to find a Component at GameObject.")]
+    [Description("Component reference. " +
+        "Used to find a Component at GameObject.")]
     public class ComponentRef : ObjectRef
     {
         public static partial class ComponentRefProperty

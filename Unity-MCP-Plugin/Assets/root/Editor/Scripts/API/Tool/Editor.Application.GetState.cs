@@ -17,13 +17,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Editor
     {
+        public const string EditorApplicationGetStateToolId = "editor-application-get-state";
         [McpPluginTool
         (
-            "editor-application-get-state",
+            EditorApplicationGetStateToolId,
             Title = "Editor / Application / Get State"
         )]
-        [Description(@"Returns available information about 'UnityEditor.EditorApplication'.
-Use it to get information about the current state of the Unity Editor application. Such as: playmode, paused state, compilation state, etc.")]
+        [Description("Returns available information about 'UnityEditor.EditorApplication'. " +
+            "Use it to get information about the current state of the Unity Editor application. " +
+            "Such as: playmode, paused state, compilation state, etc.")]
         public EditorStatsData? GetApplicationState()
         {
             return MainThread.Instance.Run(() =>

@@ -20,12 +20,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_GameObject
     {
+        public const string GameObjectDestroyToolId = "gameobject-destroy";
         [McpPluginTool
         (
-            "gameobject-destroy",
+            GameObjectDestroyToolId,
             Title = "GameObject / Destroy"
         )]
-        [Description(@"Destroy GameObject and all nested GameObjects recursively in opened Prefab or in a Scene.")]
+        [Description("Destroy GameObject and all nested GameObjects recursively in opened Prefab or in a Scene. " +
+            "Use '" + GameObjectFindToolId + "' tool to find the target GameObject first.")]
         public void Destroy(GameObjectRef gameObjectRef)
         {
             MainThread.Instance.Run(() =>

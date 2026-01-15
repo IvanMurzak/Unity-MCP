@@ -24,7 +24,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 => "[Error] Script path is empty. Please provide a valid path. Sample: \"Assets/Scripts/MyScript.cs\".";
         }
 
-        [Description(@"Available information about 'UnityEditor.EditorApplication'.")]
+        [Description("Available information about 'UnityEditor.EditorApplication'.")]
         public class EditorStatsData
         {
             [Description("Whether the Editor is in Play mode.")]

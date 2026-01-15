@@ -26,17 +26,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public static partial class Tool_Script
     {
+        public const string ScriptExecuteToolId = "script-execute";
         [McpPluginTool
         (
-            "script-execute",
+            ScriptExecuteToolId,
             Title = "Script / Execute"
         )]
         [Description("Compiles and executes C# code dynamically using Roslyn. The provided code must define a class with a static method to execute.")]
         public static SerializedMember? Execute
         (
-            [Description(@"C# code that compiles and executes immediately. It won't be stored as a script in the project. It is temporary one shot C# code execution using Roslyn.
-IMPORTANT: The code must define a class (e.g., 'public class Script') with a static method (e.g., 'public static object Main()').
-Do NOT use top-level statements or code outside a class. Top-level statements are not supported and will cause compilation errors.")]
+            [Description("C# code that compiles and executes immediately. It won't be stored as a script in the project. " +
+                "It is temporary one shot C# code execution using Roslyn. " +
+                "IMPORTANT: The code must define a class (e.g., 'public class Script') with a static method (e.g., 'public static object Main()'). " +
+                "Do NOT use top-level statements or code outside a class. Top-level statements are not supported and will cause compilation errors.")]
             string csharpCode,
             [Description("The name of the class containing the method to execute.")]
             string className = "Script",

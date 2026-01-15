@@ -16,7 +16,8 @@ using com.IvanMurzak.ReflectorNet.Model;
 namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
     [System.Serializable]
-    [Description(@"GameObject reference. Used to find GameObject in opened Prefab or in a Scene.")]
+    [Description("GameObject reference. " +
+        "Used to find GameObject in opened Prefab or in a Scene.")]
     public class GameObjectComponentsRef : GameObjectRef
     {
         [JsonInclude, JsonPropertyName("components")]

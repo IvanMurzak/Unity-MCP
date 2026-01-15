@@ -18,7 +18,7 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
-    [Description(@"Find GameObject in opened Prefab or in the active Scene.")]
+    [Description("Find GameObject in opened Prefab or in the active Scene.")]
     public class GameObjectRef : AssetObjectRef
     {
         public static partial class GameObjectRefProperty

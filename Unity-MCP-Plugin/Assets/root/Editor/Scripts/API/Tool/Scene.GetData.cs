@@ -21,12 +21,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Scene
     {
+        public const string SceneGetDataToolId = "scene-get-data";
         [McpPluginTool
         (
-            "scene-get-data",
+            SceneGetDataToolId,
             Title = "Scene / Get Data"
         )]
-        [Description("This tool retrieves the list of root GameObjects in the specified scene.")]
+        [Description("This tool retrieves the list of root GameObjects in the specified scene. " +
+            "Use '" + SceneListOpenedToolId + "' tool to get the list of all opened scenes.")]
         public SceneData GetData
         (
             [Description("Name of the opened scene. If empty or null, the active scene will be used.")]
@@ -35,8 +37,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             bool includeRootGameObjects = false,
             [Description("Determines the depth of the hierarchy to include.")]
             int includeChildrenDepth = 3,
-            [Description("If true, performs deep serialization of GameObjects.")]
-            bool deepSerialization = false,
             [Description("If true, includes bounding box information for GameObjects.")]
             bool includeBounds = false,
             [Description("If true, includes component data for GameObjects.")]
@@ -57,7 +57,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     reflector: McpPlugin.McpPlugin.Instance!.McpManager.Reflector,
                     includeRootGameObjects: includeRootGameObjects,
                     includeChildrenDepth: includeChildrenDepth,
-                    deepSerialization: deepSerialization,
                     includeBounds: includeBounds,
                     includeData: includeData,
                     logger: UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_Scene>()
