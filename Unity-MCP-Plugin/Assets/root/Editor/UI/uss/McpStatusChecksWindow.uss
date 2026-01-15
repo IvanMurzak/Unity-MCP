@@ -180,6 +180,9 @@
 .status-icon-text {
     font-size: 16px;
     -unity-font-style: bold;
+    padding: 0;
+    margin: 0;
+    -unity-text-align: middle-center;
 }
 
 .success-icon .status-icon-text {

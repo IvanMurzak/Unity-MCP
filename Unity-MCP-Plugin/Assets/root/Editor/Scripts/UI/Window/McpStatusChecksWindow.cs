@@ -42,8 +42,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         private VisualElement? _fullViewContainer;
         private bool _isExpanded = true;
 
-        // Track tool execution count (resets on domain reload)
-        private static int _toolExecutionCount = 0;
+        // Track tool execution count with persistence
+        private static readonly string _toolExecutionCountKey = "McpStatusChecksWindow.ToolExecutionCount";
+        private static readonly ReactiveProperty<int> _toolExecutionCount = new(GetSavedToolExecutionCount());
 
         /// <summary>
         /// Status of a single check item.
@@ -164,6 +165,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         .Subscribe(_ => RefreshAllChecks())
                         .AddTo(_disposables);
                 }
+            }).AddTo(_disposables);
+
+            // Subscribe to tool execution events
+            UnityMcpPlugin.OnToolExecuted
+                .ThrottleLast(TimeSpan.FromMilliseconds(100))
+                .ObserveOnCurrentSynchronizationContext()
+                .Subscribe(_ =>
+                {
+                    _toolExecutionCount.Value++;
+                    SaveToolExecutionCount();
+                })
+                .AddTo(_disposables);
+
+            // Subscribe to tool execution counter changes
+            _toolExecutionCount
+                .ThrottleLast(TimeSpan.FromMilliseconds(100))
+                .ObserveOnCurrentSynchronizationContext()
+                .Subscribe(_ => RefreshAllChecks())
+                .AddTo(_disposables);
+        }
             }).AddTo(_disposables);
         }
 
@@ -478,7 +499,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         /// </summary>
         public static void NotifyToolExecuted()
         {
-            Interlocked.Increment(ref _toolExecutionCount);
+            _toolExecutionCount.Value++;
+            SaveToolExecutionCount();
+        }
+
+        private static int GetSavedToolExecutionCount()
+        {
+            return EditorPrefs.GetInt(_toolExecutionCountKey, 0);
+        }
+
+        private static void SaveToolExecutionCount()
+        {
+            EditorPrefs.SetInt(_toolExecutionCountKey, _toolExecutionCount.Value);
+            EditorPrefs.Save();
         }
 
         private VisualElement CreateStatusCard(StatusCheckItem item)

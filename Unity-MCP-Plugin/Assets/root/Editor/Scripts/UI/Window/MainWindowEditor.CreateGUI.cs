@@ -521,8 +521,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             if (isConnected)
                 passedCount++;
 
-            // Check 3: Version handshake (if connected)
-            if (isConnected)
+            // Check 3: Version handshake (if connected and compatible)
+            var mcpPlugin = UnityMcpPlugin.Instance.McpPluginInstance;
+            if (isConnected && mcpPlugin != null && mcpPlugin.VersionHandshakeStatus?.Compatible == true)
                 passedCount++;
 
             // Check 4: Server to client (pending, doesn't count as passed)
@@ -531,7 +532,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 passedCount++;
 
             // Check 6: Enabled tools
-            var mcpPlugin = UnityMcpPlugin.Instance.McpPluginInstance;
             var toolManager = mcpPlugin?.McpManager.ToolManager;
             if (toolManager != null)
             {

@@ -129,6 +129,9 @@ namespace com.IvanMurzak.Unity.MCP
             .Select(x => x == HubConnectionState.Connected)
             .ToReadOnlyReactiveProperty(false);
 
+        static readonly Subject<Unit> _onToolExecuted = new();
+        public static IObservable<Unit> OnToolExecuted => _onToolExecuted;
+
         public static async Task NotifyToolRequestCompleted(RequestToolCompletedData request, CancellationToken cancellationToken = default)
         {
             var mcpPlugin = Instance.McpPluginInstance ?? throw new InvalidOperationException($"{nameof(Instance.McpPluginInstance)} is null");
@@ -160,6 +163,8 @@ namespace com.IvanMurzak.Unity.MCP
             }
 
             await mcpPlugin.RemoteMcpManagerHub.NotifyToolRequestCompleted(request);
+
+            _onToolExecuted.OnNext(Unit.Default);
         }
 
         public static IDisposable SubscribeOnChanged(Action<UnityConnectionConfig> action, bool invokeImmediately = true)
