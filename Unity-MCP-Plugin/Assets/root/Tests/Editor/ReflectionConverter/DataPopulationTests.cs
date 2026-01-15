@@ -85,7 +85,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             // Chain creation
             var modifyEx = new DynamicCallToolExecutor(
-                typeof(Tool_GameObject).GetMethod(nameof(Tool_GameObject.Modify)),
+                typeof(Tool_GameObject).GetMethod(nameof(Tool_GameObject.ModifyComponent)),
                 () =>
                 {
                     var plugin = UnityMcpPlugin.Instance;
@@ -110,55 +110,47 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     var goRef = new ObjectRef(targetGoEx.GameObject!.GetInstanceID());
                     var spriteRef = new AssetObjectRef() { AssetPath = spriteEx.AssetPath };
 
-                    var goModification = SerializedMember.FromValue(
-                        reflector: reflector,
-                        name: "TargetGO",
-                        type: typeof(GameObject),
-                        value: new GameObjectRef(targetGoEx.GameObject!.GetInstanceID())
-                    );
-
-                    var componentModification = SerializedMember.FromValue(
+                    var componentDiff = SerializedMember.FromValue(
                         reflector: reflector,
                         name: "DataFieldPopulationTestScript",
                         type: typeof(DataFieldPopulationTestScript),
-                        value: new ComponentRef(addCompEx.Component!.GetInstanceID())
+                        value: null
                     );
 
-                    componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "spriteField", type: typeof(Sprite), value: spriteRef));
-                    componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "materialField", type: typeof(Material), value: matRef));
-                    componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "gameObjectField", type: typeof(GameObject), value: goRef));
-                    componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "textureField", type: typeof(Texture2D), value: texRef));
-                    componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "scriptableObjectField", type: typeof(DataFieldPopulationTestScriptableObject), value: soRef));
-                    componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "prefabField", type: typeof(GameObject), value: prefabRef));
-                    componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "intField", type: typeof(int), value: 42));
-                    componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "stringField", type: typeof(string), value: "Hello World"));
+                    componentDiff.AddField(SerializedMember.FromValue(reflector: reflector, name: "spriteField", type: typeof(Sprite), value: spriteRef));
+                    componentDiff.AddField(SerializedMember.FromValue(reflector: reflector, name: "materialField", type: typeof(Material), value: matRef));
+                    componentDiff.AddField(SerializedMember.FromValue(reflector: reflector, name: "gameObjectField", type: typeof(GameObject), value: goRef));
+                    componentDiff.AddField(SerializedMember.FromValue(reflector: reflector, name: "textureField", type: typeof(Texture2D), value: texRef));
+                    componentDiff.AddField(SerializedMember.FromValue(reflector: reflector, name: "scriptableObjectField", type: typeof(DataFieldPopulationTestScriptableObject), value: soRef));
+                    componentDiff.AddField(SerializedMember.FromValue(reflector: reflector, name: "prefabField", type: typeof(GameObject), value: prefabRef));
+                    componentDiff.AddField(SerializedMember.FromValue(reflector: reflector, name: "intField", type: typeof(int), value: 42));
+                    componentDiff.AddField(SerializedMember.FromValue(reflector: reflector, name: "stringField", type: typeof(string), value: "Hello World"));
 
                     var matRefArrayItem = new AssetObjectRef(materialEx.AssetPath!);
                     var goRefArrayItem = new ObjectRef(targetGoEx.GameObject!.GetInstanceID());
                     var prefabRefArrayItem = new AssetObjectRef(prefabEx.AssetPath!);
 
-                    componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "materialArray", type: typeof(Material[]), value: new object[] { matRefArrayItem, matRefArrayItem }));
-                    componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "gameObjectArray", type: typeof(GameObject[]), value: new object[] { goRefArrayItem, prefabRefArrayItem }));
+                    componentDiff.AddField(SerializedMember.FromValue(reflector: reflector, name: "materialArray", type: typeof(Material[]), value: new object[] { matRefArrayItem, matRefArrayItem }));
+                    componentDiff.AddField(SerializedMember.FromValue(reflector: reflector, name: "gameObjectArray", type: typeof(GameObject[]), value: new object[] { goRefArrayItem, prefabRefArrayItem }));
 
-                    componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "materialList", type: typeof(List<Material>), value: new object[] { matRefArrayItem, matRefArrayItem }));
-                    componentModification.AddField(SerializedMember.FromValue(reflector: reflector, name: "gameObjectList", type: typeof(List<GameObject>), value: new object[] { goRefArrayItem, prefabRefArrayItem }));
-
-                    goModification.AddField(componentModification);
-
-                    var gameObjectDiffs = new SerializedMemberList { goModification };
+                    componentDiff.AddField(SerializedMember.FromValue(reflector: reflector, name: "materialList", type: typeof(List<Material>), value: new object[] { matRefArrayItem, matRefArrayItem }));
+                    componentDiff.AddField(SerializedMember.FromValue(reflector: reflector, name: "gameObjectList", type: typeof(List<GameObject>), value: new object[] { goRefArrayItem, prefabRefArrayItem }));
 
                     var options = new System.Text.Json.JsonSerializerOptions { WriteIndented = true };
-                    var gameObjectRefsJson = System.Text.Json.JsonSerializer.Serialize(new GameObjectRef[] { targetGoRef }, options);
-                    var gameObjectDiffsJson = System.Text.Json.JsonSerializer.Serialize(gameObjectDiffs, options);
+                    var gameObjectRefJson = System.Text.Json.JsonSerializer.Serialize(targetGoRef, options);
+                    var componentRefJson = System.Text.Json.JsonSerializer.Serialize(new ComponentRef(addCompEx.Component!.GetInstanceID()), options);
+                    var componentDiffJson = System.Text.Json.JsonSerializer.Serialize(componentDiff, options);
 
                     var json = JsonTestUtils.Fill(@"{
-                            ""gameObjectRefs"": {gameObjectRefs},
-                            ""gameObjectDiffs"": {gameObjectDiffs}
+                            ""gameObjectRef"": {gameObjectRef},
+                            ""componentRef"": {componentRef},
+                            ""componentDiff"": {componentDiff}
                         }",
                         new Dictionary<string, object?>
                         {
-                            { "{gameObjectRefs}", gameObjectRefsJson },
-                            { "{gameObjectDiffs}", gameObjectDiffsJson }
+                            { "{gameObjectRef}", gameObjectRefJson },
+                            { "{componentRef}", componentRefJson },
+                            { "{componentDiff}", componentDiffJson }
                         });
 
                     Debug.Log($"[DataPopulationTests] JSON Input: {json}");
