@@ -26,7 +26,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             SceneSetActiveToolId,
             Title = "Scene / Set Active"
         )]
-        [Description("Set the specified opened scene as the active scene.")]
+        [Description("Set the specified opened scene as the active scene. " +
+            "Use '" + SceneListOpenedToolId + "' tool to get the list of all opened scenes.")]
         public SceneDataShallow[] SetActive(AssetObjectRef sceneRef)
         {
             return MainThread.Instance.Run(() =>

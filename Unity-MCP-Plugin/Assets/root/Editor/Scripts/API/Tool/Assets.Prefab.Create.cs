@@ -28,7 +28,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             AssetsPrefabCreateToolId,
             Title = "Assets / Prefab / Create"
         )]
-        [Description("Create a prefab from a GameObject in the current active scene. The prefab will be saved in the project assets at the specified path.")]
+        [Description("Create a prefab from a GameObject in the current active scene. " +
+            "The prefab will be saved in the project assets at the specified path. " +
+            "Use '" + Tool_GameObject.GameObjectFindToolId + "' tool to find the target GameObject first.")]
         public string Create
         (
             [Description("Prefab asset path. Should be in the format 'Assets/Path/To/Prefab.prefab'.")]

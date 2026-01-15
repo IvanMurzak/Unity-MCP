@@ -26,7 +26,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ComponentListToolId,
             Title = "Components / List"
         )]
-        [Description("List C# class names extended from UnityEngine.Component.")]
+        [Description("List C# class names extended from UnityEngine.Component. " +
+            "Use this to find component type names for '" + Tool_GameObject.GameObjectComponentAddToolId + "' tool.")]
         public string[] List
         (
             [Description("Substring for searching components. Could be empty.")]

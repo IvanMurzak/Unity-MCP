@@ -25,7 +25,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             AssetsMoveToolId,
             Title = "Assets / Move"
         )]
-        [Description(@"Move the assets at paths in the project. Should be used for asset rename. Does AssetDatabase.Refresh() at the end.")]
+        [Description("Move the assets at paths in the project. " +
+            "Should be used for asset rename. " +
+            "Does AssetDatabase.Refresh() at the end. " +
+            "Use '" + AssetsFindToolId + "' tool to find assets before moving.")]
         public string Move
         (
             [Description("The paths of the assets to move.")]

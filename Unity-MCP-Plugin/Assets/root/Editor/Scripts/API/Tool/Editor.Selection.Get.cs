@@ -26,7 +26,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             EditorSelectionGetToolId,
             Title = "Editor / Selection / Get"
         )]
-        [Description(@"Get information about the current Selection in the Unity Editor.")]
+        [Description("Get information about the current Selection in the Unity Editor. " +
+            "Use '" + EditorSelectionSetToolId + "' tool to set the selection.")]
         public SelectionData Get(
             bool includeGameObjects = false,
             bool includeTransforms = false,

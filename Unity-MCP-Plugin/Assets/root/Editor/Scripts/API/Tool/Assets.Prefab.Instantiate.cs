@@ -26,7 +26,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             AssetsPrefabInstantiateToolId,
             Title = "Assets / Prefab / Instantiate"
         )]
-        [Description("Instantiates prefab in the current active scene.")]
+        [Description("Instantiates prefab in the current active scene. " +
+            "Use '" + Tool_Assets.AssetsFindToolId + "' tool to find prefab assets in the project.")]
         public string Instantiate
         (
             [Description("Prefab asset path.")]

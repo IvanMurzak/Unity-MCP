@@ -13,7 +13,8 @@ using System.ComponentModel;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
-    [Description(@"Scene reference. Used to find a Scene.")]
+    [Description("Scene reference. " +
+        "Used to find a Scene.")]
     public class SceneRef : ObjectRef
     {
         public string Path { get; set; } = string.Empty;

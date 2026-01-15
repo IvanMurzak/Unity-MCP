@@ -26,13 +26,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             SceneOpenToolId,
             Title = "Scene / Open"
         )]
-        [Description("Open scene from the project asset file.")]
+        [Description("Open scene from the project asset file. " +
+            "Use '" + Tool_Assets.AssetsFindToolId + "' tool to find the scene asset first.")]
         public SceneDataShallow[] Open
         (
             AssetObjectRef sceneRef,
-            [Description(@"Open scene mode.
-Single: closes the current scenes and opens a new one.
-Additive: keeps the current scene and opens additional one.")]
+            [Description("Open scene mode. " +
+                "Single: closes the current scenes and opens a new one. " +
+                "Additive: keeps the current scene and opens additional one.")]
             UnityEditor.SceneManagement.OpenSceneMode loadSceneMode = UnityEditor.SceneManagement.OpenSceneMode.Single
         )
         {

@@ -28,7 +28,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ScriptUpdateOrCreateToolId,
             Title = "Script / Update or Create"
         )]
-        [Description("Updates or creates script file with the provided C# code. Does AssetDatabase.Refresh() at the end. Provides compilation error details if the code has syntax errors.")]
+        [Description("Updates or creates script file with the provided C# code. " +
+            "Does AssetDatabase.Refresh() at the end. " +
+            "Provides compilation error details if the code has syntax errors. " +
+            "Use '" + ScriptReadToolId + "' tool to read existing script files first.")]
         public static ResponseCallTool UpdateOrCreate
         (
             [Description("The path to the file. Sample: \"Assets/Scripts/MyScript.cs\".")]

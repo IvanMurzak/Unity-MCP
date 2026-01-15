@@ -25,7 +25,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             AssetsDeleteToolId,
             Title = "Assets / Delete"
         )]
-        [Description(@"Delete the assets at paths from the project. Does AssetDatabase.Refresh() at the end.")]
+        [Description("Delete the assets at paths from the project. " +
+            "Does AssetDatabase.Refresh() at the end. " +
+            "Use '" + AssetsFindToolId + "' tool to find assets before deleting.")]
         public DeleteAssetsResponse Delete
         (
             [Description("The paths of the assets")]

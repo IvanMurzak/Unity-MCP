@@ -26,7 +26,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             SceneUnloadToolId,
             Title = "Scene / Unload"
         )]
-        [Description("Unload scene from the Opened scenes in Unity Editor.")]
+        [Description("Unload scene from the Opened scenes in Unity Editor. " +
+            "Use '" + SceneListOpenedToolId + "' tool to get the list of all opened scenes.")]
         public Task<string> Unload
         (
             [Description("Name of the loaded scene.")]

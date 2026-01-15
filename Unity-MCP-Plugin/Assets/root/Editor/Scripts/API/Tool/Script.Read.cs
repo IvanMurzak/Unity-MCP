@@ -24,7 +24,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ScriptReadToolId,
             Title = "Script / Read"
         )]
-        [Description("Reads the content of a script file and returns it as a string.")]
+        [Description("Reads the content of a script file and returns it as a string. " +
+            "Use '" + ScriptUpdateOrCreateToolId + "' tool to update or create script files.")]
         public static string Read
         (
             [Description("The path to the file. Sample: \"Assets/Scripts/MyScript.cs\".")]

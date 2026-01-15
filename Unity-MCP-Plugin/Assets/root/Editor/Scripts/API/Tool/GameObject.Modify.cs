@@ -30,8 +30,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             GameObjectModifyToolId,
             Title = "GameObject / Modify"
         )]
-        [Description(@"Modify GameObjects and/or attached component's field and properties in opened Prefab or in a Scene.
-You can modify multiple GameObjects at once. Just provide the same number of GameObject references and SerializedMember objects.")]
+        [Description("Modify GameObjects and/or attached component's field and properties in opened Prefab or in a Scene. " +
+            "You can modify multiple GameObjects at once. Just provide the same number of GameObject references and SerializedMember objects.")]
         public Logs? Modify
         (
             GameObjectRefList gameObjectRefs,

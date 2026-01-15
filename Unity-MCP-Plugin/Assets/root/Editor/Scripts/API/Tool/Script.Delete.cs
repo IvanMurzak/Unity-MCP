@@ -29,7 +29,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ScriptDeleteToolId,
             Title = "Script / Delete"
         )]
-        [Description("Delete the script file(s). Does AssetDatabase.Refresh() and waits for Unity compilation to complete before reporting results.")]
+        [Description("Delete the script file(s). " +
+            "Does AssetDatabase.Refresh() and waits for Unity compilation to complete before reporting results. " +
+            "Use '" + ScriptReadToolId + "' tool to read existing script files first.")]
         public static ResponseCallTool Delete
         (
             [Description("File paths to the files. Sample: \"Assets/Scripts/MyScript.cs\".")]

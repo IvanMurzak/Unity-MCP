@@ -29,8 +29,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             GameObjectCreateToolId,
             Title = "GameObject / Create"
         )]
-        [Description(@"Create a new GameObject in opened Prefab or in a Scene.
-if needed - provide proper 'position', 'rotation' and 'scale' to reduce amount of operations.")]
+        [Description("Create a new GameObject in opened Prefab or in a Scene. " +
+            "If needed - provide proper 'position', 'rotation' and 'scale' to reduce amount of operations.")]
         public GameObjectRef Create
         (
             [Description("Name of the new GameObject.")]

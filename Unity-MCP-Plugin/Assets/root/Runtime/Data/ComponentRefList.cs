@@ -14,7 +14,8 @@ using System.ComponentModel;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
-    [Description(@"Component reference array. Used to find Component at GameObject.")]
+    [Description("Component reference array. " +
+        "Used to find Component at GameObject.")]
     public class ComponentRefList : List<ComponentRef>
     {
         public ComponentRefList() { }

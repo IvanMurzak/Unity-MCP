@@ -26,7 +26,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             AssetsShaderListAllToolId,
             Title = "Assets / List Shaders"
         )]
-        [Description(@"List all available shaders in the project assets and packages. Returns their names.")]
+        [Description("List all available shaders in the project assets and packages. " +
+            "Returns their names. " +
+            "Use this to find a shader name for '" + Tool_Assets.AssetsMaterialCreateToolId + "' tool.")]
         public string[] ListAll() => MainThread.Instance.Run(() =>
         {
             return ShaderUtils.GetAllShaders()

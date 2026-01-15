@@ -25,7 +25,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             AssetsPrefabCloseToolId,
             Title = "Assets / Prefab / Close"
         )]
-        [Description("Close currently opened prefab. Use it when you are in prefab editing mode in Unity Editor.")]
+        [Description("Close currently opened prefab. " +
+            "Use it when you are in prefab editing mode in Unity Editor. " +
+            "Use '" + AssetsPrefabOpenToolId + "' tool to open a prefab first.")]
         public string Close
         (
             [Description("True to save prefab. False to discard changes.")]

@@ -24,9 +24,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             AssetsRefreshToolId,
             Title = "Assets / Refresh"
         )]
-        [Description(@"Refreshes the AssetDatabase. Use it if any new files were added or updated in the project outside of Unity API.
-Don't need to call it for Scripts manipulations.
-It also triggers scripts recompilation if any changes in '.cs' files.")]
+        [Description("Refreshes the AssetDatabase. " +
+            "Use it if any new files were added or updated in the project outside of Unity API. " +
+            "Don't need to call it for Scripts manipulations. " +
+            "It also triggers scripts recompilation if any changes in '.cs' files.")]
         public void Refresh(ImportAssetOptions? options = ImportAssetOptions.ForceSynchronousImport)
         {
             MainThread.Instance.Run(() =>

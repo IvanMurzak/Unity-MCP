@@ -28,10 +28,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             PackageRemoveToolId,
             Title = "Package Manager / Remove"
         )]
-        [Description(@"Remove (uninstall) a package from the Unity project.
-This removes the package from the project's manifest.json and triggers package resolution.
-Note: Built-in packages and packages that are dependencies of other installed packages cannot be removed.
-Note: Package removal may trigger a domain reload. The result will be sent after the reload completes.")]
+        [Description("Remove (uninstall) a package from the Unity project. " +
+            "This removes the package from the project's manifest.json and triggers package resolution. " +
+            "Note: Built-in packages and packages that are dependencies of other installed packages cannot be removed. " +
+            "Note: Package removal may trigger a domain reload. The result will be sent after the reload completes. " +
+            "Use '" + PackageListToolId + "' tool to list installed packages first.")]
         public static ResponseCallTool Remove
         (
             [Description("The ID of the package to remove. Example: 'com.unity.textmeshpro'. Do not include version number.")]

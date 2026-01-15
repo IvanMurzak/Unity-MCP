@@ -28,7 +28,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             GameObjectComponentAddToolId,
             Title = "GameObject / Component / Add"
         )]
-        [Description("Add Component to GameObject in opened Prefab or in a Scene.")]
+        [Description("Add Component to GameObject in opened Prefab or in a Scene. " +
+            "Use '" + GameObjectFindToolId + "' tool to find the target GameObject first.")]
         public AddComponentResponse AddComponent
         (
             [Description("Full name of the Component. It should include full namespace path and the class name.")]

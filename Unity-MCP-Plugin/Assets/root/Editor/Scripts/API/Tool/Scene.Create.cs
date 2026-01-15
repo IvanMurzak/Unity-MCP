@@ -24,7 +24,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             SceneCreateToolId,
             Title = "Scene / Create"
         )]
-        [Description("Create new scene in the project assets.")]
+        [Description("Create new scene in the project assets. " +
+            "Use '" + SceneListOpenedToolId + "' tool to list all opened scenes after creation.")]
         public SceneDataShallow Create
         (
             [Description("Path to the scene file. Should end with \".unity\" extension.")]

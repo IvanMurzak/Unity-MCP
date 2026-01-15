@@ -27,7 +27,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             SceneGetDataToolId,
             Title = "Scene / Get Data"
         )]
-        [Description("This tool retrieves the list of root GameObjects in the specified scene.")]
+        [Description("This tool retrieves the list of root GameObjects in the specified scene. " +
+            "Use '" + SceneListOpenedToolId + "' tool to get the list of all opened scenes.")]
         public SceneData GetData
         (
             [Description("Name of the opened scene. If empty or null, the active scene will be used.")]

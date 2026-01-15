@@ -28,7 +28,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             AssetsGetDataToolId,
             Title = "Assets / Get Data"
         )]
-        [Description(@"Get asset data from the asset file in the Unity project. It includes all serializable fields and properties of the asset.")]
+        [Description("Get asset data from the asset file in the Unity project. " +
+            "It includes all serializable fields and properties of the asset. " +
+            "Use '" + AssetsFindToolId + "' tool to find asset before using this tool.")]
         public SerializedMember GetData(AssetObjectRef assetRef)
         {
             return MainThread.Instance.Run(() =>

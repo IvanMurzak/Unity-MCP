@@ -23,8 +23,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             EditorApplicationGetStateToolId,
             Title = "Editor / Application / Get State"
         )]
-        [Description(@"Returns available information about 'UnityEditor.EditorApplication'.
-Use it to get information about the current state of the Unity Editor application. Such as: playmode, paused state, compilation state, etc.")]
+        [Description("Returns available information about 'UnityEditor.EditorApplication'. " +
+            "Use it to get information about the current state of the Unity Editor application. " +
+            "Such as: playmode, paused state, compilation state, etc.")]
         public EditorStatsData? GetApplicationState()
         {
             return MainThread.Instance.Run(() =>

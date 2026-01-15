@@ -88,9 +88,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             PackageListToolId,
             Title = "Package Manager / List Installed"
         )]
-        [Description(@"List all packages installed in the Unity project (UPM packages).
-Returns information about each installed package including name, version, source, and description.
-Use this to check which packages are currently installed before adding or removing packages.")]
+        [Description("List all packages installed in the Unity project (UPM packages). " +
+            "Returns information about each installed package including name, version, source, and description. " +
+            "Use this to check which packages are currently installed before adding or removing packages.")]
         public async Task<List<PackageData>> List
         (
             [Description("Filter packages by source.")]

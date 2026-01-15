@@ -16,7 +16,9 @@ using System.Text.Json.Serialization;
 namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
     [System.Serializable]
-    [Description("Reference to UnityEngine.Object instance. It could be GameObject, Component, Asset, etc. Anything extended from UnityEngine.Object.")]
+    [Description("Reference to UnityEngine.Object instance. " +
+        "It could be GameObject, Component, Asset, etc. " +
+        "Anything extended from UnityEngine.Object.")]
     public class ObjectRef
     {
         public static partial class ObjectRefProperty
