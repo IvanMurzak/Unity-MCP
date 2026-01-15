@@ -130,7 +130,7 @@ namespace com.IvanMurzak.Unity.MCP
             .ToReadOnlyReactiveProperty(false);
 
         static readonly R3.Subject<Unit> _onToolExecuted = new();
-        public static R3.IObservable<Unit> OnToolExecuted => _onToolExecuted;
+        public static Observable<Unit> OnToolExecuted => _onToolExecuted;
 
         public static async Task NotifyToolRequestCompleted(RequestToolCompletedData request, CancellationToken cancellationToken = default)
         {
