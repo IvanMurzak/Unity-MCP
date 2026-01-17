@@ -75,9 +75,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (obj.name.Contains(name, StringComparison.OrdinalIgnoreCase))
                 return 1; // Partial match - medium priority
 
-            if (nameWords.Length > 0 && nameWords.Any(word =>
-                obj.name.Contains(word, StringComparison.OrdinalIgnoreCase)))
-                return 2; // Word match - low priority
+            if (nameWords.Length > 0)
+            {
+                var matchedWords = nameWords.Count(word =>
+                    obj.name.Contains(word, StringComparison.OrdinalIgnoreCase));
+
+                if (matchedWords == nameWords.Length)
+                    return 2; // All words match - higher word match priority
+
+                if (matchedWords > 0)
+                    return 3; // Some words match - lower word match priority
+            }
 
             return -1; // No match
         }
