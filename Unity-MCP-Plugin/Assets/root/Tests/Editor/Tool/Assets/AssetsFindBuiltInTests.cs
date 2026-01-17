@@ -486,9 +486,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 var assetName = System.IO.Path.GetFileNameWithoutExtension(result.AssetPath);
                 if (assetName == null) continue;
 
-                bool isExact = assetName.Equals(searchName, System.StringComparison.OrdinalIgnoreCase);
-                bool isPartial = !isExact && assetName.Contains(searchName, System.StringComparison.OrdinalIgnoreCase);
-                bool isWordOnly = !isExact && !isPartial;
+                var isExact = assetName.Equals(searchName, System.StringComparison.OrdinalIgnoreCase);
+                var isPartial = !isExact && assetName.Contains(searchName, System.StringComparison.OrdinalIgnoreCase);
 
                 if (isExact)
                 {
