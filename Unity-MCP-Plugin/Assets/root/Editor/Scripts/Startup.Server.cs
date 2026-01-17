@@ -170,6 +170,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 if (Directory.Exists(ExecutableFolderRootPath))
                 {
+                    // Intentional infinite loop:
+                    // - Deletion can fail while the MCP server binaries are in use (e.g., server still running).
+                    // - The retry/exit behavior is fully controlled by the user via the dialog below.
+                    // - We do not impose a fixed maximum retry count so the user can take as long as needed
+                    //   to shut down their MCP client and release file locks before trying again.
+                    // - The loop terminates when the user selects "Skip", at which point the exception is rethrown.
                     while (true)
                     {
                         try
