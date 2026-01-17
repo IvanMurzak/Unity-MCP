@@ -320,7 +320,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 if (isExactMatch)
                 {
                     Assert.IsFalse(foundPartialMatch,
-                        $"Exact match '{assetName}' found after partial match - ordering is wrong");
+                        $"Exact match '{assetName}' found after partial match - ordering is wrong. AssetPath: {result.AssetPath}");
                 }
                 else if (isPartialMatch)
                 {
