@@ -184,6 +184,7 @@
 #### 追加ツール
 
 - [アニメーション (Animation)](https://github.com/IvanMurzak/Unity-AI-Animation/)
+- [ParticleSystem](https://github.com/IvanMurzak/Unity-AI-ParticleSystem/)
 - [ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)
 
 ### 安定性ステータス

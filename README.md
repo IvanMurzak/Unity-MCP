@@ -184,6 +184,7 @@ Unlike other tools, this plugin works **inside your compiled game**, allowing fo
 #### Additional tools
 
 - [Animation](https://github.com/IvanMurzak/Unity-AI-Animation/)
+- [ParticleSystem](https://github.com/IvanMurzak/Unity-AI-ParticleSystem/)
 - [ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)
 
 ### Stability status

@@ -184,6 +184,7 @@
 #### 附加工具
 
 - [动画 (Animation)](https://github.com/IvanMurzak/Unity-AI-Animation/)
+- [ParticleSystem](https://github.com/IvanMurzak/Unity-AI-ParticleSystem/)
 - [ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)
 
 ### 稳定性状态

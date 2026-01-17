@@ -184,6 +184,7 @@ A diferencia de otras herramientas, este plugin funciona **dentro de tu juego co
 #### Herramientas adicionales
 
 - [Animation](https://github.com/IvanMurzak/Unity-AI-Animation/)
+- [ParticleSystem](https://github.com/IvanMurzak/Unity-AI-ParticleSystem/)
 - [ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)
 
 ### Estado de estabilidad
