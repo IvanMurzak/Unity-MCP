@@ -125,10 +125,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 // Fonts
                 ".ttf" or ".otf" or ".fontsettings" => obj is Font,
 
-                // Physics
-                ".physicmaterial" => obj is PhysicMaterial,
-                ".physicsmaterial2d" => obj is PhysicsMaterial2D,
-
                 // Meshes (built-in primitives)
                 ".fbx" or ".obj" or ".dae" or ".3ds" or ".blend" => obj is Mesh,
 
@@ -160,8 +156,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 Shader => ".shader",
                 ComputeShader => ".compute",
                 AnimationClip => ".anim",
-                PhysicMaterial => ".physicmaterial",
-                PhysicsMaterial2D => ".physicsmaterial2d",
                 GUISkin => ".guiskin",
                 Flare => ".flare",
                 // Types with multiple possible extensions (Sprite, Texture2D, Cubemap,
