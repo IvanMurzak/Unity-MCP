@@ -46,12 +46,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (maxResults <= 0)
                 throw new ArgumentException($"{nameof(maxResults)} must be greater than zero.");
 
+            var nameWords = string.IsNullOrEmpty(name)
+                ? Array.Empty<string>()
+                : name!.Split(new[] { ' ', '_', '-', '.' }, StringSplitOptions.RemoveEmptyEntries);
+
             return MainThread.Instance.Run(() =>
             {
-                var nameWords = string.IsNullOrEmpty(name)
-                    ? Array.Empty<string>()
-                    : name!.Split(new[] { ' ', '_', '-', '.' }, StringSplitOptions.RemoveEmptyEntries);
-
                 return BuiltInAssetCache.GetAllAssets()
                     .Where(obj => obj != null && !string.IsNullOrEmpty(obj.name))
                     .Where(obj => type == null || type.IsAssignableFrom(obj.GetType()))
