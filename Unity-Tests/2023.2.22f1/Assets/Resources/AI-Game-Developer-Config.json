@@ -18,6 +18,10 @@
       "enabled": true
     },
     {
+      "name": "assets-find-built-in",
+      "enabled": true
+    },
+    {
       "name": "assets-get-data",
       "enabled": true
     },
@@ -123,6 +127,22 @@
     },
     {
       "name": "gameobject-set-parent",
+      "enabled": true
+    },
+    {
+      "name": "package-add",
+      "enabled": true
+    },
+    {
+      "name": "package-list",
+      "enabled": true
+    },
+    {
+      "name": "package-remove",
+      "enabled": true
+    },
+    {
+      "name": "package-search",
       "enabled": true
     },
     {
@@ -370,11 +390,11 @@
   ],
   "resources": [
     {
-      "name": "GameObject_CurrentScene",
+      "name": "GameObject from Current Scene by Path",
       "enabled": true
     }
   ],
   "host": "http://localhost:52966",
   "timeoutMs": 10000,
-  "keepConnected": true
+  "keepConnected": false
 }
