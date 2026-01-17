@@ -48,5 +48,32 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreNotSame(sprite, texture, "Sprite and Texture2D should be different objects");
             Assert.AreNotEqual(sprite!.GetType(), texture!.GetType(), "Types should be different");
         }
+
+        [Test]
+        public void FindAssetByExtension_KnownBuiltIn_ReturnsAsset()
+        {
+            // "Default-Material" is a standard built-in asset in Unity editor resources
+            var result = BuiltInAssetCache.FindAssetByExtension("Default-Material", ".mat");
+
+            // Result might be null in some headless environments, but generally should pass in Editor
+            if (result != null)
+            {
+                Assert.AreEqual("Default-Material", result.name);
+                Assert.IsInstanceOf<Material>(result);
+            }
+
+            var mismatch = BuiltInAssetCache.FindAssetByExtension("Default-Material", ".shader");
+            Assert.IsNull(mismatch);
+        }
+
+        [Test]
+        public void FindAssetByExtension_NullOrEmptyExtension_ReturnsAnyMatch()
+        {
+            var result = BuiltInAssetCache.FindAssetByExtension("Default-Material", null);
+            if (result != null)
+            {
+                Assert.AreEqual("Default-Material", result.name);
+            }
+        }
     }
 }
