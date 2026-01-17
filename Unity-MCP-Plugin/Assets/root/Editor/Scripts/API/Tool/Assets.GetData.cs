@@ -13,6 +13,7 @@ using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using com.IvanMurzak.Unity.MCP.Utils;
@@ -44,28 +45,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 UnityEngine.Object? asset = null;
 
-                // Built-in assets fallback
+                // Built-in assets fallback (uses cached assets to avoid repeated expensive LoadAllAssetsAtPath calls)
                 if (!string.IsNullOrEmpty(assetRef.AssetPath) && assetRef.AssetPath!.StartsWith(ExtensionsRuntimeObject.UnityEditorBuiltInResourcesPath))
                 {
-                    var all = AssetDatabase.LoadAllAssetsAtPath(ExtensionsRuntimeObject.UnityEditorBuiltInResourcesPath);
                     var targetName = System.IO.Path.GetFileNameWithoutExtension(assetRef.AssetPath);
-                    foreach (var obj in all)
-                    {
-                        if (obj != null && obj.name == targetName)
-                        {
-                            var ext = System.IO.Path.GetExtension(assetRef.AssetPath);
-                            if (!string.IsNullOrEmpty(ext))
-                            {
-                                if (ext == ".mat" && !(obj is UnityEngine.Material)) continue;
-                                if (ext == ".shader" && !(obj is UnityEngine.Shader)) continue;
-                                if (ext == ".compute" && !(obj is UnityEngine.ComputeShader)) continue;
-                                if (ext == ".anim" && !(obj is UnityEngine.AnimationClip)) continue;
-                                if (ext == ".wav" && !(obj is UnityEngine.AudioClip)) continue;
-                            }
-                            asset = obj;
-                            break;
-                        }
-                    }
+                    var ext = System.IO.Path.GetExtension(assetRef.AssetPath);
+                    asset = BuiltInAssetCache.FindAssetByExtension(targetName, ext);
                 }
                 else
                 {

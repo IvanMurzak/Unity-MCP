@@ -9,13 +9,16 @@
 */
 
 #nullable enable
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
-using UnityEditor;
+using UnityObject = UnityEngine.Object;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -35,77 +38,66 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             [Description("The name of the asset to filter by.")]
             string? name = null,
             [Description("The type of the asset to filter by.")]
-            System.Type? type = null,
+            Type? type = null,
             [Description("Maximum number of assets to return. If the number of found assets exceeds this limit, the result will be truncated.")]
             int maxResults = 10
         )
         {
             if (maxResults <= 0)
-                throw new System.ArgumentException($"{nameof(maxResults)} must be greater than zero.");
+                throw new ArgumentException($"{nameof(maxResults)} must be greater than zero.");
 
             return MainThread.Instance.Run(() =>
             {
-                var response = new List<AssetObjectRef>();
+                var nameWords = string.IsNullOrEmpty(name)
+                    ? Array.Empty<string>()
+                    : name!.Split(new[] { ' ', '_', '-', '.' }, StringSplitOptions.RemoveEmptyEntries);
 
-                var all = AssetDatabase.LoadAllAssetsAtPath(ExtensionsRuntimeObject.UnityEditorBuiltInResourcesPath);
-                foreach (var obj in all)
-                {
-                    if (response.Count >= maxResults)
-                        break;
-
-                    if (obj == null)
-                        continue;
-
-                    if (string.IsNullOrEmpty(obj.name))
-                        continue;
-
-                    if (type != null && obj.GetType() != type && !obj.GetType().IsSubclassOf(type))
-                        continue;
-
-                    if (!string.IsNullOrWhiteSpace(name))
-                    {
-                        var words = name!.Split(new[] { ' ' }, System.StringSplitOptions.RemoveEmptyEntries);
-                        var match = false;
-                        foreach (var word in words)
-                        {
-                            if (obj.name.IndexOf(word, System.StringComparison.OrdinalIgnoreCase) >= 0)
-                            {
-                                match = true;
-                                break;
-                            }
-                        }
-
-                        if (!match)
-                            continue;
-                    }
-
-                    var assetObjRef = new AssetObjectRef(obj);
-
-                    // Unity built-in assets do not have GUIDs
-                    assetObjRef.AssetGuid = null;
-
-                    // Distinguish built-in assets: if the path doesn't end with the asset name, append it.
-                    // This handles cases where multiple built-in assets map to "Resources/unity_builtin_extra".
-                    if (!string.IsNullOrEmpty(assetObjRef.AssetPath) && !assetObjRef.AssetPath!.EndsWith("/" + obj.name))
-                    {
-                        var extension = obj switch
-                        {
-                            UnityEngine.Material => ".mat",
-                            UnityEngine.Shader => ".shader",
-                            UnityEngine.ComputeShader => ".compute",
-                            UnityEngine.AnimationClip => ".anim",
-                            UnityEngine.AudioClip => ".wav",
-                            _ => string.Empty
-                        };
-
-                        assetObjRef.AssetPath = $"{assetObjRef.AssetPath}/{obj.name}{extension}";
-                    }
-
-                    response.Add(assetObjRef);
-                }
-
-                return response;
+                return BuiltInAssetCache.GetAllAssets()
+                    .Where(obj => obj != null && !string.IsNullOrEmpty(obj.name))
+                    .Where(obj => type == null || type.IsAssignableFrom(obj.GetType()))
+                    .Select(obj => (obj, priority: GetMatchPriority(obj, name, nameWords)))
+                    .Where(x => x.priority >= 0)
+                    .OrderBy(x => x.priority)
+                    .Take(maxResults)
+                    .Select(x => ToAssetObjectRef(x.obj))
+                    .ToList();
             });
+        }
+
+        private static int GetMatchPriority(UnityObject obj, string? name, string[] nameWords)
+        {
+            if (string.IsNullOrEmpty(name))
+                return 0; // No name filter, all items have same priority
+
+            if (obj.name.Equals(name, StringComparison.OrdinalIgnoreCase))
+                return 0; // Exact match - top priority
+
+            if (obj.name.Contains(name, StringComparison.OrdinalIgnoreCase))
+                return 1; // Partial match - medium priority
+
+            if (nameWords.Length > 0 && nameWords.Any(word =>
+                obj.name.Contains(word, StringComparison.OrdinalIgnoreCase)))
+                return 2; // Word match - low priority
+
+            return -1; // No match
+        }
+
+        private static AssetObjectRef ToAssetObjectRef(UnityObject obj)
+        {
+            var assetObjRef = new AssetObjectRef(obj)
+            {
+                AssetGuid = null // Unity built-in assets do not have GUIDs
+            };
+
+            // Distinguish built-in assets: if the path doesn't end with the asset name, append it.
+            // This handles cases where multiple built-in assets map to "Resources/unity_builtin_extra".
+            if (!string.IsNullOrEmpty(assetObjRef.AssetPath) && !assetObjRef.AssetPath!.EndsWith("/" + obj.name))
+            {
+                var extension = BuiltInAssetCache.GetExtensionForAsset(obj);
+                assetObjRef.AssetPath = $"{assetObjRef.AssetPath}/{obj.name}{extension}";
+            }
+
+            return assetObjRef;
         }
     }
 }
