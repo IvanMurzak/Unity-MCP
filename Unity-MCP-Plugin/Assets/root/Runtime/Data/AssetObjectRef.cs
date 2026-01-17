@@ -15,6 +15,7 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
+using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 
@@ -82,7 +83,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
                 if (!obj.IsAsset())
                 {
                     if (throwIfNotAnAsset)
-                        throw new ArgumentException($"Provided object (InstanceID={obj.GetInstanceID()}) is not an asset.");
+                        throw new ArgumentException($"Provided object (InstanceID={obj.GetInstanceID()}) is not an asset. Type: {obj.GetType().GetTypeId()}");
                     return;
                 }
                 AssetType = obj.GetType();
