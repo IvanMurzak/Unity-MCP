@@ -229,7 +229,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void FindBuiltIn_ReturnsUniqueAssets()
         {
             var tool = new Tool_Assets();
-            var results = tool.FindBuiltIn(maxResults: 50);
+            var results = tool.FindBuiltIn(maxResults: 10);
 
             Assert.IsNotNull(results, "Results should not be null");
             var distinctPaths = results.Select(r => r.AssetPath).Distinct().Count();

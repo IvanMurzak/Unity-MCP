@@ -55,30 +55,43 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 return BuiltInAssetCache.GetAllAssets()
                     .Where(obj => obj != null && !string.IsNullOrEmpty(obj.name))
                     .Where(obj => type == null || type.IsAssignableFrom(obj.GetType()))
-                    .Select(obj => (obj, priority: GetMatchPriority(obj, name, nameWords)))
+                    .Select(obj => ToAssetObjectRef(obj))
+                    .Select(assetRef => (assetRef, priority: GetMatchPriority(assetRef, name, nameWords)))
                     .Where(x => x.priority >= 0)
                     .OrderBy(x => x.priority)
+                    .ThenBy(x => GetAssetFileName(x.assetRef)) // Secondary sort for consistent ordering
                     .Take(maxResults)
-                    .Select(x => ToAssetObjectRef(x.obj))
+                    .Select(x => x.assetRef)
                     .ToList();
             });
         }
 
-        private static int GetMatchPriority(UnityObject obj, string? name, string[] nameWords)
+        private static string? GetAssetFileName(AssetObjectRef assetRef)
+        {
+            if (string.IsNullOrEmpty(assetRef.AssetPath))
+                return null;
+            return System.IO.Path.GetFileNameWithoutExtension(assetRef.AssetPath);
+        }
+
+        private static int GetMatchPriority(AssetObjectRef assetRef, string? name, string[] nameWords)
         {
             if (string.IsNullOrEmpty(name))
                 return 0; // No name filter, all items have same priority
 
-            if (obj.name.Equals(name, StringComparison.OrdinalIgnoreCase))
+            var assetName = GetAssetFileName(assetRef);
+            if (string.IsNullOrEmpty(assetName))
+                return -1; // No valid asset name
+
+            if (assetName!.Equals(name, StringComparison.OrdinalIgnoreCase))
                 return 0; // Exact match - top priority
 
-            if (obj.name.Contains(name, StringComparison.OrdinalIgnoreCase))
+            if (assetName.Contains(name!, StringComparison.OrdinalIgnoreCase))
                 return 1; // Partial match - medium priority
 
             if (nameWords.Length > 0)
             {
                 var matchedWords = nameWords.Count(word =>
-                    obj.name.Contains(word, StringComparison.OrdinalIgnoreCase));
+                    assetName.Contains(word, StringComparison.OrdinalIgnoreCase));
 
                 if (matchedWords == nameWords.Length)
                     return 2; // All words match - higher word match priority
