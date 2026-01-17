@@ -85,37 +85,87 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 if (string.IsNullOrEmpty(extension))
                     return obj;
 
-                // Match extension to type
-                var matches = extension switch
-                {
-                    ".mat" => obj is Material,
-                    ".shader" => obj is Shader,
-                    ".compute" => obj is ComputeShader,
-                    ".anim" => obj is AnimationClip,
-                    ".wav" => obj is AudioClip,
-                    _ => true // Unknown extension, accept any type
-                };
-
-                if (matches)
+                if (MatchesExtension(obj, extension!))
                     return obj;
             }
             return null;
         }
 
         /// <summary>
+        /// Checks if a Unity object matches the expected type for a given file extension.
+        /// </summary>
+        /// <param name="obj">The Unity object to check.</param>
+        /// <param name="extension">File extension like ".mat", ".shader", etc.</param>
+        /// <returns>True if the object type matches the extension, false otherwise.</returns>
+        public static bool MatchesExtension(UnityEngine.Object obj, string extension)
+        {
+            // Normalize extension to lowercase for case-insensitive matching
+            var ext = extension.ToLowerInvariant();
+
+            return ext switch
+            {
+                // Materials
+                ".mat" => obj is Material,
+
+                // Shaders
+                ".shader" => obj is Shader,
+                ".compute" => obj is ComputeShader,
+
+                // Textures & Sprites (same source formats can be either)
+                ".png" or ".jpg" or ".jpeg" or ".tga" or ".psd" or ".tif" or ".tiff" or ".gif" or ".bmp"
+                    => obj is Texture2D or Sprite,
+                ".hdr" or ".exr" => obj is Texture2D or Cubemap,
+
+                // Audio
+                ".wav" or ".mp3" or ".ogg" or ".aif" or ".aiff" => obj is AudioClip,
+
+                // Animation
+                ".anim" => obj is AnimationClip,
+
+                // Fonts
+                ".ttf" or ".otf" or ".fontsettings" => obj is Font,
+
+                // Physics
+                ".physicmaterial" => obj is PhysicMaterial,
+                ".physicsmaterial2d" => obj is PhysicsMaterial2D,
+
+                // Meshes (built-in primitives)
+                ".fbx" or ".obj" or ".dae" or ".3ds" or ".blend" => obj is Mesh,
+
+                // GUI
+                ".guiskin" => obj is GUISkin,
+
+                // Flare
+                ".flare" => obj is Flare,
+
+                // Unknown extension - accept any type
+                _ => true
+            };
+        }
+
+        /// <summary>
         /// Gets the file extension for a built-in asset based on its type.
+        /// Only returns extensions for types with unambiguous mappings.
+        /// Types like Sprite, Texture2D, AudioClip, Mesh, Font can have multiple
+        /// possible extensions, so they return empty string.
         /// </summary>
         /// <param name="obj">The Unity object to get the extension for.</param>
-        /// <returns>File extension like ".mat", ".shader", etc., or empty string for unknown types.</returns>
+        /// <returns>File extension like ".mat", ".shader", etc., or empty string for ambiguous/unknown types.</returns>
         public static string GetExtensionForAsset(UnityEngine.Object obj)
         {
+            // Only return extensions for types with unique/unambiguous mappings
             return obj switch
             {
                 Material => ".mat",
                 Shader => ".shader",
                 ComputeShader => ".compute",
                 AnimationClip => ".anim",
-                AudioClip => ".wav",
+                PhysicMaterial => ".physicmaterial",
+                PhysicsMaterial2D => ".physicsmaterial2d",
+                GUISkin => ".guiskin",
+                Flare => ".flare",
+                // Types with multiple possible extensions (Sprite, Texture2D, Cubemap,
+                // AudioClip, Mesh, Font) - cannot determine without file system access
                 _ => string.Empty
             };
         }
