@@ -47,5 +47,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             UpdateChecker.Init();
             PackageUtils.Init();
         }
+        public static void Init()
+        {
+            // Intentionally left blank.
+            // This method is used to force the static constructor to run.
+            Debug.Log("com.IvanMurzak.Unity.MCP.Editor.Startup.Init");
+        }
     }
 }
