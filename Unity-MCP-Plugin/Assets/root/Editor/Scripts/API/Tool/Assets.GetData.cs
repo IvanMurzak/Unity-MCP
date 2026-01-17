@@ -13,7 +13,9 @@ using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.Extensions.Logging;
 using UnityEditor;
@@ -40,12 +42,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 if (string.IsNullOrEmpty(assetRef.AssetPath))
                     assetRef.AssetPath = AssetDatabase.GUIDToAssetPath(assetRef.AssetGuid);
-                if (string.IsNullOrEmpty(assetRef.AssetGuid))
-                    assetRef.AssetGuid = AssetDatabase.AssetPathToGUID(assetRef.AssetPath);
 
-                var asset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(assetRef.AssetPath);
+                UnityEngine.Object? asset = null;
+
+                // Built-in assets fallback (uses cached assets to avoid repeated expensive LoadAllAssetsAtPath calls)
+                if (!string.IsNullOrEmpty(assetRef.AssetPath) && assetRef.AssetPath!.StartsWith(ExtensionsRuntimeObject.UnityEditorBuiltInResourcesPath))
+                {
+                    var targetName = System.IO.Path.GetFileNameWithoutExtension(assetRef.AssetPath);
+                    var ext = System.IO.Path.GetExtension(assetRef.AssetPath);
+                    asset = BuiltInAssetCache.FindAssetByExtension(targetName, ext);
+                }
+                else
+                {
+                    if (string.IsNullOrEmpty(assetRef.AssetGuid))
+                        assetRef.AssetGuid = AssetDatabase.AssetPathToGUID(assetRef.AssetPath);
+
+                    asset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(assetRef.AssetPath);
+                }
+
                 if (asset == null)
-                    throw new System.Exception(Error.NotFoundAsset(assetRef.AssetPath!, assetRef.AssetGuid!));
+                    throw new System.Exception(Error.NotFoundAsset(assetRef.AssetPath!, assetRef.AssetGuid ?? "N/A"));
 
                 var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
