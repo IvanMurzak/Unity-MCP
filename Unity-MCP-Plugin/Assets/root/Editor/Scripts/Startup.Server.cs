@@ -170,8 +170,34 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 if (Directory.Exists(ExecutableFolderRootPath))
                 {
-                    Directory.Delete(ExecutableFolderRootPath, recursive: true);
-                    Debug.Log($"Deleted existing MCP server folder: <color=orange>{ExecutableFolderRootPath}</color>");
+                    while (true)
+                    {
+                        try
+                        {
+                            Directory.Delete(ExecutableFolderRootPath, recursive: true);
+                            Debug.Log($"Deleted existing MCP server folder: <color=orange>{ExecutableFolderRootPath}</color>");
+                            return;
+                        }
+                        catch (Exception ex)
+                        {
+                            var retry = UnityEditor.EditorUtility.DisplayDialog(
+                                "Failed to Delete MCP Server Binaries",
+                                $"The current unity-mcp-server binaries can't be deleted. " +
+                                $"This is very likely because the MCP server is currently running.\n\n" +
+                                $"Please close your MCP client to make sure the server is not running, then click \"Retry\".\n\n" +
+                                $"Path: {ExecutableFolderRootPath}\n\n" +
+                                $"Error: {ex.Message}",
+                                "Retry",
+                                "Skip"
+                            );
+
+                            if (!retry)
+                            {
+                                throw;
+                            }
+                            // If retry is true, loop continues and tries again
+                        }
+                    }
                 }
             }
 
