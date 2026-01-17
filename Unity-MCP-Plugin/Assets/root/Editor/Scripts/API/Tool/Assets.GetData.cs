@@ -40,12 +40,42 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 if (string.IsNullOrEmpty(assetRef.AssetPath))
                     assetRef.AssetPath = AssetDatabase.GUIDToAssetPath(assetRef.AssetGuid);
-                if (string.IsNullOrEmpty(assetRef.AssetGuid))
-                    assetRef.AssetGuid = AssetDatabase.AssetPathToGUID(assetRef.AssetPath);
 
-                var asset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(assetRef.AssetPath);
+                UnityEngine.Object? asset = null;
+
+                // Built-in assets fallback
+                if (!string.IsNullOrEmpty(assetRef.AssetPath) && assetRef.AssetPath!.StartsWith(com.IvanMurzak.Unity.MCP.Runtime.Extensions.ExtensionsRuntimeObject.UnityEditorBuildInResourcesPath))
+                {
+                    var all = AssetDatabase.LoadAllAssetsAtPath(com.IvanMurzak.Unity.MCP.Runtime.Extensions.ExtensionsRuntimeObject.UnityEditorBuildInResourcesPath);
+                    var targetName = System.IO.Path.GetFileNameWithoutExtension(assetRef.AssetPath);
+                    foreach (var obj in all)
+                    {
+                        if (obj != null && obj.name == targetName)
+                        {
+                            var ext = System.IO.Path.GetExtension(assetRef.AssetPath);
+                            if (!string.IsNullOrEmpty(ext))
+                            {
+                                if (ext == ".mat" && !(obj is UnityEngine.Material)) continue;
+                                if (ext == ".shader" && !(obj is UnityEngine.Shader)) continue;
+                                if (ext == ".compute" && !(obj is UnityEngine.ComputeShader)) continue;
+                                if (ext == ".anim" && !(obj is UnityEngine.AnimationClip)) continue;
+                                if (ext == ".wav" && !(obj is UnityEngine.AudioClip)) continue;
+                            }
+                            asset = obj;
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                    if (string.IsNullOrEmpty(assetRef.AssetGuid))
+                        assetRef.AssetGuid = AssetDatabase.AssetPathToGUID(assetRef.AssetPath);
+
+                    asset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(assetRef.AssetPath);
+                }
+
                 if (asset == null)
-                    throw new System.Exception(Error.NotFoundAsset(assetRef.AssetPath!, assetRef.AssetGuid!));
+                    throw new System.Exception(Error.NotFoundAsset(assetRef.AssetPath!, assetRef.AssetGuid ?? "N/A"));
 
                 var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
