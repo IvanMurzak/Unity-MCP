@@ -14,7 +14,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
 {
     public static class ExtensionsRuntimeObject
     {
-        public const string UnityEditorBuildInResourcesPath = "Resources/unity_builtin_extra";
+        public const string UnityEditorBuiltInResourcesPath = "Resources/unity_builtin_extra";
 
         /// <summary>
         /// Checks if the given UnityEngine.Object is an asset stored on disk.
@@ -31,7 +31,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
                 return false; // not stored on disk
 
             var path = UnityEditor.AssetDatabase.GetAssetPath(obj);
-            return !string.IsNullOrEmpty(path) && (path.StartsWith("Assets/") || path.StartsWith("Packages/") || path.StartsWith(UnityEditorBuildInResourcesPath));
+            return !string.IsNullOrEmpty(path) && (path.StartsWith("Assets/") || path.StartsWith("Packages/") || path.StartsWith(UnityEditorBuiltInResourcesPath));
 #else
             return false;
 #endif

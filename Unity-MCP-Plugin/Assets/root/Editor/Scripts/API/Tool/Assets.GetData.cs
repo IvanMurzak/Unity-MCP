@@ -14,6 +14,7 @@ using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.Extensions.Logging;
 using UnityEditor;
@@ -44,9 +45,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 UnityEngine.Object? asset = null;
 
                 // Built-in assets fallback
-                if (!string.IsNullOrEmpty(assetRef.AssetPath) && assetRef.AssetPath!.StartsWith(com.IvanMurzak.Unity.MCP.Runtime.Extensions.ExtensionsRuntimeObject.UnityEditorBuildInResourcesPath))
+                if (!string.IsNullOrEmpty(assetRef.AssetPath) && assetRef.AssetPath!.StartsWith(ExtensionsRuntimeObject.UnityEditorBuiltInResourcesPath))
                 {
-                    var all = AssetDatabase.LoadAllAssetsAtPath(com.IvanMurzak.Unity.MCP.Runtime.Extensions.ExtensionsRuntimeObject.UnityEditorBuildInResourcesPath);
+                    var all = AssetDatabase.LoadAllAssetsAtPath(ExtensionsRuntimeObject.UnityEditorBuiltInResourcesPath);
                     var targetName = System.IO.Path.GetFileNameWithoutExtension(assetRef.AssetPath);
                     foreach (var obj in all)
                     {

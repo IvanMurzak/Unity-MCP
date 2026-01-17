@@ -21,16 +21,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Assets
     {
-        public const string AssetsFindBuildInToolId = "assets-find-build-in";
+        public const string AssetsFindBuiltInToolId = "assets-find-built-in";
         [McpPluginTool
         (
-            AssetsFindBuildInToolId,
-            Title = "Assets / Find (Build-in)"
+            AssetsFindBuiltInToolId,
+            Title = "Assets / Find (Built-in)"
         )]
-        [Description("Search the build-in assets of the Unity Editor located in the built-in resources: " +
-            ExtensionsRuntimeObject.UnityEditorBuildInResourcesPath + ". " +
+        [Description("Search the built-in assets of the Unity Editor located in the built-in resources: " +
+            ExtensionsRuntimeObject.UnityEditorBuiltInResourcesPath + ". " +
             "Doesn't support GUIDs since built-in assets do not have them.")]
-        public List<AssetObjectRef> FindBuildIn
+        public List<AssetObjectRef> FindBuiltIn
         (
             [Description("The name of the asset to filter by.")]
             string? name = null,
@@ -47,7 +47,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             {
                 var response = new List<AssetObjectRef>();
 
-                var all = AssetDatabase.LoadAllAssetsAtPath(ExtensionsRuntimeObject.UnityEditorBuildInResourcesPath);
+                var all = AssetDatabase.LoadAllAssetsAtPath(ExtensionsRuntimeObject.UnityEditorBuiltInResourcesPath);
                 foreach (var obj in all)
                 {
                     if (response.Count >= maxResults)
