@@ -45,7 +45,7 @@ namespace com.IvanMurzak.Unity.MCP.TestFiles
         public Vector3 normalVectorField;
 
         // Fields of types that will be blacklisted (should NOT be serialized when blacklisted)
-        public BlacklistedType blacklistedTypeField;
+        public BlacklistedType blacklistedTypeField = null!;
         public BlacklistedStruct blacklistedStructField;
 
         // Property of blacklisted type (should NOT be serialized when blacklisted)
