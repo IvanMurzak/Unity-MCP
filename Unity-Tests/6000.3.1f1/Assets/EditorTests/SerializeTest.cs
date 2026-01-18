@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using com.IvanMurzak.ReflectorNet;
+using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.Unity.MCP.TestFiles;
 using NUnit.Framework;
 using UnityEditor;
@@ -143,6 +144,74 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             UnityEngine.Object.DestroyImmediate(goBox);
 
             yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Serialize_BoxCollider_ShouldNotContainMaterialField()
+        {
+            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+
+            // Create a GameObject and add BoxCollider component
+            var go = new GameObject("TestGameObject_BoxCollider");
+            var boxCollider = go.AddComponent<BoxCollider>();
+
+            EditorUtility.SetDirty(go);
+            EditorUtility.SetDirty(boxCollider);
+
+            // Wait for initialization
+            yield return null;
+            yield return null;
+            yield return null;
+
+            // Serialize the BoxCollider component
+            var serialized = reflector.Serialize(
+                boxCollider,
+                recursive: true,
+                logger: _logger);
+
+            var json = serialized.ToJson(reflector);
+            Debug.Log($"[{nameof(SerializeTest)}] Serialized BoxCollider:\n{json}");
+
+            // Validate that the serialization completed without errors
+            Assert.IsNotNull(serialized, "Serialized result should not be null.");
+            Assert.IsNotNull(serialized.fields, "Serialized fields should not be null.");
+
+            // Check that no field with name "material" exists (should be ignored by custom reflection converter)
+            var materialField = FindMemberByName(serialized.fields, "material");
+            Assert.IsNull(materialField, "Field 'material' should not exist in serialized BoxCollider (should be ignored by custom reflection converter).");
+
+            // Check that no property with name "material" exists (should be ignored by custom reflection converter)
+            var materialProperty = FindMemberByName(serialized.props, "material");
+            Assert.IsNull(materialProperty, "Property 'material' should not exist in serialized BoxCollider (should be ignored by custom reflection converter).");
+
+            // Cleanup
+            UnityEngine.Object.DestroyImmediate(go);
+
+            yield return null;
+        }
+
+        private SerializedMember FindMemberByName(IEnumerable<SerializedMember> members, string name)
+        {
+            if (members == null)
+                return null;
+
+            foreach (var member in members)
+            {
+                if (member.name == name)
+                    return member;
+
+                // Recursively check nested fields
+                var nestedInFields = FindMemberByName(member.fields, name);
+                if (nestedInFields != null)
+                    return nestedInFields;
+
+                // Recursively check nested props
+                var nestedInProps = FindMemberByName(member.props, name);
+                if (nestedInProps != null)
+                    return nestedInProps;
+            }
+
+            return null;
         }
     }
 }

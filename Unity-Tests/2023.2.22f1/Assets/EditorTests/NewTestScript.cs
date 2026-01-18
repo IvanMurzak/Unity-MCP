@@ -1,25 +1,26 @@
 using System.Collections;
-using System.Collections.Generic;
 using NUnit.Framework;
-using UnityEngine;
 using UnityEngine.TestTools;
 
-public class NewTestScript
+namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
-    // A Test behaves as an ordinary method
-    [Test]
-    public void NewTestScriptSimplePasses()
+    public class NewTestScript
     {
-        // Use the Assert class to test conditions
-    }
+        // A Test behaves as an ordinary method
+        [Test]
+        public void NewTestScriptSimplePasses()
+        {
+            // Use the Assert class to test conditions
+        }
 
-    // A UnityTest behaves like a coroutine in Play Mode. In Edit Mode you can use
-    // `yield return null;` to skip a frame.
-    [UnityTest]
-    public IEnumerator NewTestScriptWithEnumeratorPasses()
-    {
-        // Use the Assert class to test conditions.
-        // Use yield to skip a frame.
-        yield return null;
+        // A UnityTest behaves like a coroutine in Play Mode. In Edit Mode you can use
+        // `yield return null;` to skip a frame.
+        [UnityTest]
+        public IEnumerator NewTestScriptWithEnumeratorPasses()
+        {
+            // Use the Assert class to test conditions.
+            // Use yield to skip a frame.
+            yield return null;
+        }
     }
 }

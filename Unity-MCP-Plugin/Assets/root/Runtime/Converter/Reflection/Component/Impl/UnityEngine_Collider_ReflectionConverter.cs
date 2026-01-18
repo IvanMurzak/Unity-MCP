@@ -18,7 +18,10 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
         public UnityEngine_Collider_ReflectionConverter(UnityEngine_GenericComponent_ReflectionConverter<UnityEngine.Component> backingConverter)
             : base(
                 targetTypeName: "UnityEngine.Collider",
-                ignoredProperties: null,
+                ignoredProperties: new string[]
+                {
+                    "material" // nameof(UnityEngine.Collider.material)
+                },
                 ignoredFields: new string[]
                 {
                     "material" // nameof(UnityEngine.Collider.material)
