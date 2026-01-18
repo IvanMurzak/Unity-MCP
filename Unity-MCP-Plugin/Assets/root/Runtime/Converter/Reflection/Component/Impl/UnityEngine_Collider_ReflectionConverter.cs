@@ -13,7 +13,7 @@ using com.IvanMurzak.ReflectorNet.Converter;
 
 namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
-    public partial class UnityEngine_Collider_ReflectionConverter : LazyReflectionConverter
+    public partial class UnityEngine_Collider_ReflectionConverter : LazyGenericReflectionConverter<UnityEngine.Component>
     {
         public UnityEngine_Collider_ReflectionConverter(UnityEngine_GenericComponent_ReflectionConverter<UnityEngine.Component> backingConverter)
             : base(
