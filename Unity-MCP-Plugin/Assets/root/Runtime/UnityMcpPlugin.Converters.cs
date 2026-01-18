@@ -51,11 +51,12 @@ namespace com.IvanMurzak.Unity.MCP
             reflector.Converters.Add(new UnityEngine_GameObject_ReflectionConverter());
 
             // Components
-            reflector.Converters.Add(new UnityEngine_Component_ReflectionConverter());
+            var componentConverter = new UnityEngine_Component_ReflectionConverter();
+            reflector.Converters.Add(componentConverter);
             reflector.Converters.Add(new UnityEngine_Transform_ReflectionConverter());
             reflector.Converters.Add(new UnityEngine_Renderer_ReflectionConverter());
             reflector.Converters.Add(new UnityEngine_MeshFilter_ReflectionConverter());
-            reflector.Converters.Add(new UnityEngine_Collider_ReflectionConverter());
+            reflector.Converters.Add(new UnityEngine_Collider_ReflectionConverter(componentConverter));
 
             // Assets
             reflector.Converters.Add(new UnityEngine_Material_ReflectionConverter());
