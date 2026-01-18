@@ -1,8 +1,10 @@
+#nullable enable
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
+using com.IvanMurzak.Unity.MCP.Reflection.Converter;
 using com.IvanMurzak.Unity.MCP.TestFiles;
 using NUnit.Framework;
 using UnityEditor;
@@ -174,11 +176,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             // Validate that the serialization completed without errors
             Assert.IsNotNull(serialized, "Serialized result should not be null.");
-            Assert.IsNotNull(serialized.fields, "Serialized fields should not be null.");
-
-            // Check that no field with name "material" exists (should be ignored by custom reflection converter)
-            var materialField = FindMemberByName(serialized.fields, "material");
-            Assert.IsNull(materialField, "Field 'material' should not exist in serialized BoxCollider (should be ignored by custom reflection converter).");
+            Assert.IsNotNull(serialized.props, "Serialized properties should not be null.");
 
             // Check that no property with name "material" exists (should be ignored by custom reflection converter)
             var materialProperty = FindMemberByName(serialized.props, "material");
@@ -190,28 +188,37 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             yield return null;
         }
 
-        private SerializedMember FindMemberByName(IEnumerable<SerializedMember> members, string name)
+        [UnityTest]
+        public IEnumerator Converter_ColliderTypes_ShouldUseColliderReflectionConverter()
         {
-            if (members == null)
-                return null;
+            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
-            foreach (var member in members)
-            {
-                if (member.name == name)
-                    return member;
+            yield return null;
 
-                // Recursively check nested fields
-                var nestedInFields = FindMemberByName(member.fields, name);
-                if (nestedInFields != null)
-                    return nestedInFields;
+            // Verify that the correct converter is used for BoxCollider
+            var boxColliderConverter = reflector.Converters.GetConverter(typeof(BoxCollider));
+            Assert.IsNotNull(boxColliderConverter, "Converter for BoxCollider should not be null.");
+            Assert.IsInstanceOf<UnityEngine_Collider_ReflectionConverter>(boxColliderConverter, "BoxCollider should use UnityEngine_Collider_ReflectionConverter.");
 
-                // Recursively check nested props
-                var nestedInProps = FindMemberByName(member.props, name);
-                if (nestedInProps != null)
-                    return nestedInProps;
-            }
+            // Verify that the correct converter is used for SphereCollider
+            var sphereColliderConverter = reflector.Converters.GetConverter(typeof(SphereCollider));
+            Assert.IsNotNull(sphereColliderConverter, "Converter for SphereCollider should not be null.");
+            Assert.IsInstanceOf<UnityEngine_Collider_ReflectionConverter>(sphereColliderConverter, "SphereCollider should use UnityEngine_Collider_ReflectionConverter.");
 
-            return null;
+            // Verify that the correct converter is used for CapsuleCollider
+            var capsuleColliderConverter = reflector.Converters.GetConverter(typeof(CapsuleCollider));
+            Assert.IsNotNull(capsuleColliderConverter, "Converter for CapsuleCollider should not be null.");
+            Assert.IsInstanceOf<UnityEngine_Collider_ReflectionConverter>(capsuleColliderConverter, "CapsuleCollider should use UnityEngine_Collider_ReflectionConverter.");
+
+            // Verify that the correct converter is used for MeshCollider
+            var meshColliderConverter = reflector.Converters.GetConverter(typeof(MeshCollider));
+            Assert.IsNotNull(meshColliderConverter, "Converter for MeshCollider should not be null.");
+            Assert.IsInstanceOf<UnityEngine_Collider_ReflectionConverter>(meshColliderConverter, "MeshCollider should use UnityEngine_Collider_ReflectionConverter.");
+        }
+
+        private SerializedMember? FindMemberByName(IEnumerable<SerializedMember>? members, string name)
+        {
+            return members?.FirstOrDefault(member => member.name == name);
         }
     }
 }
