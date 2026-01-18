@@ -9,18 +9,23 @@
 */
 
 #nullable enable
-using System.Collections.Generic;
+using com.IvanMurzak.ReflectorNet.Converter;
 
 namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
-    public partial class UnityEngine_Collider_ReflectionConverter : UnityEngine_GenericComponent_ReflectionConverter<UnityEngine.Collider>
+    public partial class UnityEngine_Collider_ReflectionConverter : LazyReflectionConverter
     {
-        protected override IEnumerable<string> GetIgnoredProperties()
+        public UnityEngine_Collider_ReflectionConverter(UnityEngine_GenericComponent_ReflectionConverter<UnityEngine.Component> backingConverter)
+            : base(
+                targetTypeName: "UnityEngine.Collider",
+                ignoredProperties: null,
+                ignoredFields: new string[]
+                {
+                    "material" // nameof(UnityEngine.Collider.material)
+                },
+                backingConverter: backingConverter)
         {
-            foreach (var property in base.GetIgnoredProperties())
-                yield return property;
-
-            yield return nameof(UnityEngine.Collider.material);
+            // empty
         }
     }
 }

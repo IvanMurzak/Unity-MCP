@@ -3,7 +3,10 @@
     "rootNamespace": "",
     "references": [
         "UnityEngine.TestRunner",
-        "UnityEditor.TestRunner"
+        "com.IvanMurzak.Unity.MCP.Runtime",
+        "com.IvanMurzak.Unity.MCP.Tests",
+        "com.IvanMurzak.Unity.MCP.TestFiles",
+        "TestFiles"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
@@ -12,7 +15,7 @@
     "precompiledReferences": [
         "nunit.framework.dll"
     ],
-    "autoReferenced": false,
+    "autoReferenced": true,
     "defineConstraints": [
         "UNITY_INCLUDE_TESTS"
     ],
