@@ -66,6 +66,9 @@ namespace com.IvanMurzak.Unity.MCP
 
             // Blacklist types
             // ---------------------------------------------------------
+            reflector.Converters.BlacklistType(typeof(System.Span<>));
+            reflector.Converters.BlacklistType(typeof(System.ReadOnlySpan<>));
+
 #if UNITY_2023_1_OR_NEWER
             reflector.Converters.BlacklistType(typeof(UnityEngine.LowLevelPhysics.GeometryHolder));
 #endif
@@ -84,6 +87,9 @@ namespace com.IvanMurzak.Unity.MCP
             // Redundant RenderPipeline data
             reflector.Converters.BlacklistType("UnityEngine.Rendering.RTHandle"); // Can't be utilized
             reflector.Converters.BlacklistType("UnityEngine.Experimental.Rendering.RTHandle"); // Can't be utilized
+
+            // Photon IL-weaved types
+            reflector.Converters.BlacklistType("Fusion.NetworkBehaviourBuffer");
 
             // Json Converters
             // ---------------------------------------------------------
