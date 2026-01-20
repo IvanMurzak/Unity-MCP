@@ -74,7 +74,8 @@ namespace com.IvanMurzak.Unity.MCP
             reflector.Converters.BlacklistType(typeof(System.MulticastDelegate));
             reflector.Converters.BlacklistType(typeof(System.IntPtr));
             reflector.Converters.BlacklistType(typeof(System.UIntPtr));
-            reflector.Converters.BlacklistType(typeof(System.Reflection.MemberInfo));
+            reflector.Converters.BlacklistType(typeof(System.Reflection.FieldInfo));
+            reflector.Converters.BlacklistType(typeof(System.Reflection.PropertyInfo));
             reflector.Converters.BlacklistType(typeof(System.Threading.CancellationToken));
             reflector.Converters.BlacklistType(typeof(System.Span<>));
             reflector.Converters.BlacklistType(typeof(System.ReadOnlySpan<>));
