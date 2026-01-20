@@ -91,6 +91,9 @@ namespace com.IvanMurzak.Unity.MCP
             // Photon IL-weaved types
             reflector.Converters.BlacklistType("Fusion.NetworkBehaviourBuffer");
 
+            // Addressable
+            reflector.Converters.BlacklistType("UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle");
+
             // Json Converters
             // ---------------------------------------------------------
 
