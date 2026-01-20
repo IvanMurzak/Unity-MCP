@@ -10,20 +10,6 @@
 
 #nullable enable
 
-using System;
-
-/*
-┌──────────────────────────────────────────────────────────────────┐
-│  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
-│  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
-│  Copyright (c) 2025 Ivan Murzak                                  │
-│  Licensed under the Apache License, Version 2.0.                 │
-│  See the LICENSE file in the project root for more information.  │
-└──────────────────────────────────────────────────────────────────┘
-*/
-
-#nullable enable
-
 using System.Collections.Generic;
 
 namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
@@ -35,8 +21,6 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             foreach (var property in base.GetIgnoredProperties())
                 yield return property;
 
-            // yield return nameof(UnityEngine.Transform.childCount);
-            // yield return nameof(UnityEngine.Transform.parent);
             yield return "parentInternal";
         }
     }
