@@ -53,7 +53,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             {
                 return new SerializedMember()
                 {
-                    name = name ?? unityObject?.name,
+                    name = name ?? unityObject.name,
                     typeName = type.GetTypeId(),
                     fields = SerializeFields(
                         reflector,
@@ -80,7 +80,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                     reflector: reflector,
                     type: type,
                     value: objectRef,
-                    name: name ?? unityObject?.name);
+                    name: name ?? unityObject.name);
             }
         }
     }
