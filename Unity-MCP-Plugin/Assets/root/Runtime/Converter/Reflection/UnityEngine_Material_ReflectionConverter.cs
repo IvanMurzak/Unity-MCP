@@ -132,6 +132,17 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 return SerializedMember.Null(type, name);
             }
 
+            if (depth >= 1 || !recursive)
+            {
+                return SerializedMember.FromValue(
+                    reflector: reflector,
+                    type: type,
+                    value: material.IsAsset()
+                        ? new AssetObjectRef(material)
+                        : new ObjectRef(material),
+                    name: name ?? material.name);
+            }
+
             var shader = material.shader;
             int propertyCount = shader.GetPropertyCount();
 

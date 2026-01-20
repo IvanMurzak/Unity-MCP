@@ -56,7 +56,15 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 return SerializedMember.Null(type, name);
 
             var unityObject = obj as UnityEngine.GameObject;
-            if (recursive)
+            if (unityObject == null)
+            {
+                // UnityEngine.Object is destroyed but reference is not null
+                return SerializedMember.Null(type, name);
+            }
+
+            var objectRef = new GameObjectRef(unityObject?.GetInstanceID() ?? 0);
+
+            if (recursive && depth < 1)
             {
                 return new SerializedMember()
                 {
@@ -66,7 +74,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                         reflector,
                         obj: obj,
                         flags: flags,
-                        depth: depth,
+                        depth: depth + 1,
                         logs: logs,
                         logger: logger,
                         context: context),
@@ -74,16 +82,19 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                         reflector,
                         obj: obj,
                         flags: flags,
-                        depth: depth,
+                        depth: depth + 1,
                         logs: logs,
                         logger: logger,
                         context: context)
-                }.SetValue(reflector, new GameObjectRef(unityObject?.GetInstanceID() ?? 0));
+                }.SetValue(reflector, objectRef);
             }
             else
             {
-                var objectRef = new GameObjectRef(unityObject?.GetInstanceID() ?? 0);
-                return SerializedMember.FromValue(reflector, type, objectRef, name);
+                return SerializedMember.FromValue(
+                    reflector: reflector,
+                    type: type,
+                    value: objectRef,
+                    name: name ?? unityObject?.name);
             }
         }
 

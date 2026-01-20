@@ -66,6 +66,16 @@ namespace com.IvanMurzak.Unity.MCP
 
             // Blacklist types
             // ---------------------------------------------------------
+
+            // System types
+            reflector.Converters.BlacklistType(typeof(System.Delegate));
+            reflector.Converters.BlacklistType(typeof(System.EventHandler));
+            reflector.Converters.BlacklistType(typeof(System.EventHandler<>));
+            reflector.Converters.BlacklistType(typeof(System.MulticastDelegate));
+            reflector.Converters.BlacklistType(typeof(System.IntPtr));
+            reflector.Converters.BlacklistType(typeof(System.UIntPtr));
+            reflector.Converters.BlacklistType(typeof(System.Reflection.MemberInfo));
+            reflector.Converters.BlacklistType(typeof(System.Threading.CancellationToken));
             reflector.Converters.BlacklistType(typeof(System.Span<>));
             reflector.Converters.BlacklistType(typeof(System.ReadOnlySpan<>));
 
@@ -79,6 +89,7 @@ namespace com.IvanMurzak.Unity.MCP
             reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.GlyphMetrics));
 
             // Redundant TextMeshPro data
+            reflector.Converters.BlacklistType("TMPro.TMP_TextInfo"); // Heavy text data
             reflector.Converters.BlacklistType("TMPro.TMP_TextElement"); // Heavy text data
             reflector.Converters.BlacklistType("TMPro.TMP_FontFeatureTable"); // Heavy font data
             reflector.Converters.BlacklistType("TMPro.TMP_FontWeightPair"); // Heavy font data
