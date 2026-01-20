@@ -10,6 +10,7 @@
 
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
@@ -90,83 +91,74 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             if (node == null)
                 return true;
 
-            foreach (var knownField in GetKnownSerializableFields(reflector, obj))
+            foreach (var (knownField, value) in GetExistingProperties(node, GetKnownSerializableFields(reflector, obj)))
             {
-                if (node.TryGetPropertyValue(knownField, out var value) && value != null)
+                if (logger?.IsEnabled(LogLevel.Warning) == true)
+                    logger.LogWarning($"{StringUtils.GetPadding(depth)}'{knownField}' should be moved from '{SerializedMember.ValueName}'. Fixing the hierarchy automatically.");
+
+                logs?.Warning($"'{knownField}' should be moved from '{SerializedMember.ValueName}'. Fixing the hierarchy automatically.", depth);
+
+                // handle known field
+                data.fields ??= new SerializedMemberList();
+                data.fields.Add(SerializedMember.FromValue(reflector, name: knownField, value: value));
+                node.Remove(knownField);
+            }
+            foreach (var (knownProperty, value) in GetExistingProperties(node, GetKnownSerializableProperties(reflector, obj)))
+            {
+                if (logger?.IsEnabled(LogLevel.Warning) == true)
+                    logger.LogWarning($"{StringUtils.GetPadding(depth)}'{knownProperty}' should be moved from '{SerializedMember.ValueName}'. Fixing the hierarchy automatically.");
+
+                logs?.Warning($"'{knownProperty}' should be moved from '{SerializedMember.ValueName}'. Fixing the hierarchy automatically.", depth);
+
+                // handle known property
+                data.props ??= new SerializedMemberList();
+                data.props.Add(SerializedMember.FromValue(reflector, name: knownProperty, value: value));
+                node.Remove(knownProperty);
+            }
+
+            foreach (var (restrictedPropertyName, restrictedValue) in GetExistingProperties(node, RestrictedInValuePropertyNames(reflector, data.valueJsonElement.Value)))
+            {
+                if (restrictedPropertyName == nameof(SerializedMember.fields))
                 {
                     if (logger?.IsEnabled(LogLevel.Warning) == true)
-                        logger.LogWarning($"{StringUtils.GetPadding(depth)}'{knownField}' should be moved from '{SerializedMember.ValueName}'. Fixing the hierarchy automatically.");
+                        logger.LogWarning($"{StringUtils.GetPadding(depth)}'{restrictedPropertyName}' should be moved from '{SerializedMember.ValueName}'. Fixing the hierarchy automatically.");
 
-                    logs?.Warning($"'{knownField}' should be moved from '{SerializedMember.ValueName}'. Fixing the hierarchy automatically.", depth);
+                    logs?.Warning($"'{restrictedPropertyName}' should be moved from '{SerializedMember.ValueName}'. Fixing the hierarchy automatically.", depth);
 
-                    // handle known field
+                    // handle 'fields' property
                     data.fields ??= new SerializedMemberList();
-                    data.fields.Add(SerializedMember.FromValue(reflector, name: knownField, value: value));
-                    node.Remove(knownField);
+                    data.fields.AddRange(restrictedValue.Deserialize<SerializedMemberList>(reflector.JsonSerializerOptions));
+                    node.Remove(restrictedPropertyName);
                 }
-            }
-            foreach (var knownProperty in GetKnownSerializableProperties(reflector, obj))
-            {
-                if (node.TryGetPropertyValue(knownProperty, out var value) && value != null)
+                else if (restrictedPropertyName == nameof(SerializedMember.props))
                 {
                     if (logger?.IsEnabled(LogLevel.Warning) == true)
-                        logger.LogWarning($"{StringUtils.GetPadding(depth)}'{knownProperty}' should be moved from '{SerializedMember.ValueName}'. Fixing the hierarchy automatically.");
+                        logger.LogWarning($"{StringUtils.GetPadding(depth)}'{restrictedPropertyName}' should be moved from '{SerializedMember.ValueName}'. Fixing the hierarchy automatically.");
 
-                    logs?.Warning($"'{knownProperty}' should be moved from '{SerializedMember.ValueName}'. Fixing the hierarchy automatically.", depth);
+                    logs?.Warning($"'{restrictedPropertyName}' should be moved from '{SerializedMember.ValueName}'. Fixing the hierarchy automatically.", depth);
 
-                    // handle known property
+                    // handle 'props' property
                     data.props ??= new SerializedMemberList();
-                    data.props.Add(SerializedMember.FromValue(reflector, name: knownProperty, value: value));
-                    node.Remove(knownProperty);
+                    data.props.AddRange(restrictedValue.Deserialize<SerializedMemberList>(reflector.JsonSerializerOptions));
+                    node.Remove(restrictedPropertyName);
                 }
-            }
-
-            foreach (var restrictedPropertyName in RestrictedInValuePropertyNames(reflector, data.valueJsonElement.Value))
-            {
-                if (node.TryGetPropertyValue(restrictedPropertyName, out var restrictedValue) && restrictedValue != null)
+                else
                 {
-                    if (restrictedPropertyName == nameof(SerializedMember.fields))
-                    {
-                        if (logger?.IsEnabled(LogLevel.Warning) == true)
-                            logger.LogWarning($"{StringUtils.GetPadding(depth)}'{restrictedPropertyName}' should be moved from '{SerializedMember.ValueName}'. Fixing the hierarchy automatically.");
+                    // // Need to take list of serializable Fields for the specific object
+                    // // if the `restrictedPropertyName` is a field, move into `fields`
+                    // // if the `restrictedPropertyName` is a property, move into `props`
+                    // // if none of the conditions matches
+                    // data.fields ??= new SerializedMemberList();
+                    // data.fields.Add(SerializedMember.FromValue(reflector, name: restrictedPropertyName, value: restrictedValue));
+                    // node.Remove(restrictedPropertyName);
 
-                        logs?.Warning($"'{restrictedPropertyName}' should be moved from '{SerializedMember.ValueName}'. Fixing the hierarchy automatically.", depth);
+                    if (logger?.IsEnabled(LogLevel.Error) == true)
+                        logger.LogError($"{StringUtils.GetPadding(depth)}Restricted property '{restrictedPropertyName}' found in '{SerializedMember.ValueName}'.");
 
-                        // handle 'fields' property
-                        data.fields ??= new SerializedMemberList();
-                        data.fields.AddRange(restrictedValue.Deserialize<SerializedMemberList>(reflector.JsonSerializerOptions));
-                        node.Remove(restrictedPropertyName);
-                    }
-                    else if (restrictedPropertyName == nameof(SerializedMember.props))
-                    {
-                        if (logger?.IsEnabled(LogLevel.Warning) == true)
-                            logger.LogWarning($"{StringUtils.GetPadding(depth)}'{restrictedPropertyName}' should be moved from '{SerializedMember.ValueName}'. Fixing the hierarchy automatically.");
+                    logs?.Error($"Restricted property '{restrictedPropertyName}' found in '{SerializedMember.ValueName}'.", depth);
 
-                        logs?.Warning($"'{restrictedPropertyName}' should be moved from '{SerializedMember.ValueName}'. Fixing the hierarchy automatically.", depth);
-
-                        // handle 'props' property
-                        data.props ??= new SerializedMemberList();
-                        data.props.AddRange(restrictedValue.Deserialize<SerializedMemberList>(reflector.JsonSerializerOptions));
-                        node.Remove(restrictedPropertyName);
-                    }
-                    else
-                    {
-                        // // Need to take list of serializable Fields for the specific object
-                        // // if the `restrictedPropertyName` is a field, move into `fields`
-                        // // if the `restrictedPropertyName` is a property, move into `props`
-                        // // if none of the conditions matches
-                        // data.fields ??= new SerializedMemberList();
-                        // data.fields.Add(SerializedMember.FromValue(reflector, name: restrictedPropertyName, value: restrictedValue));
-                        // node.Remove(restrictedPropertyName);
-
-                        if (logger?.IsEnabled(LogLevel.Error) == true)
-                            logger.LogError($"{StringUtils.GetPadding(depth)}Restricted property '{restrictedPropertyName}' found in '{SerializedMember.ValueName}'.");
-
-                        logs?.Error($"Restricted property '{restrictedPropertyName}' found in '{SerializedMember.ValueName}'.", depth);
-
-                        // If we found another restricted property, we need to stop processing
-                        return false;
-                    }
+                    // If we found another restricted property, we need to stop processing
+                    return false;
                 }
             }
 
@@ -216,6 +208,15 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 logs?.Error($"Failed to set value for type '{type.GetTypeId()}'. Converter: {GetType().GetTypeShortName()}. Exception: {ex.Message}", depth);
 
                 return false;
+            }
+        }
+
+        private static IEnumerable<(string name, JsonNode value)> GetExistingProperties(JsonObject node, IEnumerable<string> names)
+        {
+            foreach (var name in names)
+            {
+                if (node.TryGetPropertyValue(name, out var value) && value != null)
+                    yield return (name, value);
             }
         }
     }
