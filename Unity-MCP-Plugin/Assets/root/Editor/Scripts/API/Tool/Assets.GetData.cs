@@ -38,7 +38,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (assetRef == null)
                 throw new ArgumentNullException(nameof(assetRef));
 
-            if (assetRef.IsValid(out var error) == false)
+            if (!assetRef.IsValid(out var error))
                 throw new ArgumentException(error, nameof(assetRef));
 
             return MainThread.Instance.Run(() =>
