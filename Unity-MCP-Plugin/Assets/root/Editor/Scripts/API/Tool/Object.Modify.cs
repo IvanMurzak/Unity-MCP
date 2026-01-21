@@ -42,14 +42,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             SerializedMember objectDiff
         )
         {
+            if (objectRef == null)
+                throw new ArgumentNullException(nameof(objectRef));
+
             if (!objectRef.IsValid(out var error))
                 throw new ArgumentException(error, nameof(objectRef));
+
+            if (objectDiff == null)
+                throw new ArgumentNullException(nameof(objectDiff), "No object data provided to modify.");
 
             return MainThread.Instance.Run(() =>
             {
                 var obj = objectRef.FindObject();
                 if (obj == null)
-                    throw new Exception("Not found UnityEngine.Object with provided data.");
+                    throw new Exception($"Not found UnityEngine.Object with provided data for reference: {objectRef}.");
 
                 var logs = new Logs();
                 var objToModify = (object)obj;
