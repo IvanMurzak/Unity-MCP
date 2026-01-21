@@ -29,7 +29,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ObjectGetDataToolId,
             Title = "Object / Get Data"
         )]
-        [Description("Get data of the specified Unity Object.")]
+        [Description("Get data of the specified Unity Object. " +
+            "Returns serialized data of the object including its properties and fields. " +
+            "If need to modify the data use '" + ObjectModifyToolId + "' tool.")]
         public SerializedMember? GetData
         (
             ObjectRef objectRef
