@@ -64,7 +64,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
             }
 
             var isValid = base.IsValid(out error);
-            if (isValid == false)
+            if (!isValid)
             {
                 error = $"At least one of the following properties must be set to a valid value: '{GameObjectRefProperty.Path}', '{GameObjectRefProperty.Name}', '{AssetObjectRefProperty.AssetPath}', '{AssetObjectRefProperty.AssetGuid}', '{ObjectRefProperty.InstanceID}'.";
                 return false;

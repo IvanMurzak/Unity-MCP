@@ -42,7 +42,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             SerializedMember objectDiff
         )
         {
-            if (objectRef.IsValid(out var error) == false)
+            if (!objectRef.IsValid(out var error))
                 throw new ArgumentException(error, nameof(objectRef));
 
             return MainThread.Instance.Run(() =>

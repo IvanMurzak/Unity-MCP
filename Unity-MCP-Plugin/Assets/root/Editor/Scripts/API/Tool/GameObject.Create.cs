@@ -54,7 +54,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             return MainThread.Instance.Run(() =>
             {
                 var parentGo = default(GameObject);
-                if (parentGameObjectRef?.IsValid(out var parentGameObjectValidationError) == false)
+                if (parentGameObjectRef?.IsValid(out _) == true)
                 {
                     parentGo = parentGameObjectRef.FindGameObject(out var error);
                     if (error != null)
