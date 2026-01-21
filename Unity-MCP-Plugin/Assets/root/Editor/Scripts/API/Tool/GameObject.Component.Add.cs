@@ -107,8 +107,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
         public class AddComponentResponse
         {
+            [Description("List of successfully added components.")]
             public List<ComponentDataShallow> AddedComponents { get; set; } = new List<ComponentDataShallow>();
+
+            [Description("List of success messages for added components.")]
             public List<string>? Messages { get; set; }
+
+            [Description("List of errors encountered during component addition.")]
             public List<string>? Errors { get; set; }
         }
     }

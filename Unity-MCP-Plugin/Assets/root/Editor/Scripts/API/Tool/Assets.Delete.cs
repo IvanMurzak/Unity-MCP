@@ -13,6 +13,8 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Utils;
+using Microsoft.Extensions.Logging;
 using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -36,8 +38,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         {
             return MainThread.Instance.Run(() =>
             {
+                var logger = UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_Assets>();
+
                 if (paths.Length == 0)
                     throw new System.Exception(Error.SourcePathsArrayIsEmpty());
+
+                logger.LogInformation("Deleting {Count} asset(s): {Paths}", paths.Length, string.Join(", ", paths));
 
                 var response = new DeleteAssetsResponse();
                 var outFailedPaths = new List<string>();
@@ -47,7 +53,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 {
                     response.Errors ??= new();
                     foreach (var failedPath in outFailedPaths)
+                    {
+                        logger.LogWarning("Failed to delete asset at '{Path}'", failedPath);
                         response.Errors.Add($"Failed to delete asset at {failedPath}.");
+                    }
                 }
 
                 // Add successfully deleted paths
@@ -55,6 +64,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 {
                     if (!outFailedPaths.Contains(path))
                     {
+                        logger.LogInformation("Successfully deleted asset at '{Path}'", path);
                         response.DeletedPaths ??= new();
                         response.DeletedPaths.Add(path);
                     }

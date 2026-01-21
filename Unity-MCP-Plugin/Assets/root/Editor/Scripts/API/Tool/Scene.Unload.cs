@@ -17,6 +17,8 @@ using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
+using com.IvanMurzak.Unity.MCP.Utils;
+using Microsoft.Extensions.Logging;
 using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -39,6 +41,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         {
             return MainThread.Instance.Run(async () =>
             {
+                var logger = UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_Scene>();
+
                 if (string.IsNullOrEmpty(name))
                     throw new ArgumentException(Error.SceneNameIsEmpty(), nameof(name));
 
@@ -48,12 +52,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 if (!scene.IsValid())
                     throw new ArgumentException(Error.NotFoundSceneWithName(name), nameof(name));
 
+                var scenePath = scene.path;
+                logger.LogInformation("Unloading scene '{Name}' at path '{Path}'", name, scenePath);
+
                 var asyncOperation = UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync(scene);
 
                 while (!asyncOperation.isDone)
                     await Task.Yield();
 
-                var sceneAsset = AssetDatabase.LoadAssetAtPath<SceneAsset>(scene.path);
+                logger.LogInformation("Successfully unloaded scene '{Name}'", name);
+
+                var sceneAsset = AssetDatabase.LoadAssetAtPath<SceneAsset>(scenePath);
 
                 return new UnloadSceneResult
                 {
