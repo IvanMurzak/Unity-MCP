@@ -46,16 +46,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 foreach (var input in inputs)
                 {
-                    var guid = AssetDatabase.CreateFolder(input.parentFolderPath, input.newFolderName);
+                    var guid = AssetDatabase.CreateFolder(input.ParentFolderPath, input.NewFolderName);
                     if (!string.IsNullOrEmpty(guid))
                     {
-                        response.createdFolderGuids ??= new();
-                        response.createdFolderGuids.Add(guid);
+                        response.CreatedFolderGuids ??= new();
+                        response.CreatedFolderGuids.Add(guid);
                     }
                     else
                     {
-                        response.errors ??= new();
-                        response.errors.Add($"Failed to create folder '{input.newFolderName}' in '{input.parentFolderPath}'.");
+                        response.Errors ??= new();
+                        response.Errors.Add($"Failed to create folder '{input.NewFolderName}' in '{input.ParentFolderPath}'.");
                     }
                 }
 
@@ -70,13 +70,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
         public class CreateFolderInput
         {
-            public string parentFolderPath = string.Empty;
-            public string newFolderName = string.Empty;
+            [Description("The parent folder path where the new folder will be created.")]
+            public string ParentFolderPath { get; set; } = string.Empty;
+            [Description("The name of the new folder to create.")]
+            public string NewFolderName { get; set; } = string.Empty;
         }
         public class CreateFolderResponse
         {
-            public List<string>? createdFolderGuids;
-            public List<string>? errors;
+            [Description("List of GUIDs of created folders.")]
+            public List<string>? CreatedFolderGuids { get; set; }
+            [Description("List of errors encountered during folder creation.")]
+            public List<string>? Errors { get; set; }
         }
     }
 }

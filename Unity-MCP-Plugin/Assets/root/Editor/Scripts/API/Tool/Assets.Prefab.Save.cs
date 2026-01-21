@@ -9,9 +9,11 @@
 */
 
 #nullable enable
+using System;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 
@@ -28,15 +30,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [Description("Save a prefab. " +
             "Use it when you are in prefab editing mode in Unity Editor. " +
             "Use '" + AssetsPrefabOpenToolId + "' tool to open a prefab first.")]
-        public string Save() => MainThread.Instance.Run(() =>
+        public AssetObjectRef Save() => MainThread.Instance.Run(() =>
         {
             var prefabStage = PrefabStageUtility.GetCurrentPrefabStage();
             if (prefabStage == null)
-                return Error.PrefabStageIsNotOpened();
+                throw new InvalidOperationException(Error.PrefabStageIsNotOpened());
 
             var prefabGo = prefabStage.prefabContentsRoot;
             if (prefabGo == null)
-                return Error.PrefabStageIsNotOpened();
+                throw new InvalidOperationException(Error.PrefabStageIsNotOpened());
 
             var assetPath = prefabStage.assetPath;
             var goName = prefabGo.name;
@@ -47,8 +49,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             UnityEditor.EditorApplication.RepaintHierarchyWindow();
             UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
-            return @$"[Success] Prefab at asset path '{assetPath}' saved. " +
-                   $"Prefab with GameObject.name '{goName}'.";
+            var assetPrefab = AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>(assetPath);
+            return new AssetObjectRef(assetPrefab);
         });
     }
 }

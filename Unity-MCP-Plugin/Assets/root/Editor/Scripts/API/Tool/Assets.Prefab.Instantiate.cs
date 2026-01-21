@@ -9,9 +9,11 @@
 */
 
 #nullable enable
+using System;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEditor;
 using UnityEngine;
@@ -28,7 +30,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         )]
         [Description("Instantiates prefab in the current active scene. " +
             "Use '" + Tool_Assets.AssetsFindToolId + "' tool to find prefab assets in the project.")]
-        public string Instantiate
+        public GameObjectRef Instantiate
         (
             [Description("Prefab asset path.")]
             string prefabAssetPath,
@@ -43,41 +45,43 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             [Description("World or Local space of transform.")]
             bool isLocalSpace = false
         )
-        => MainThread.Instance.Run(() =>
         {
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabAssetPath);
-            if (prefab == null)
-                return Error.NotFoundPrefabAtPath(prefabAssetPath);
-
-            var parentGo = default(GameObject);
-            if (StringUtils.Path_ParseParent(gameObjectPath, out var parentPath, out var name))
+            return MainThread.Instance.Run(() =>
             {
-                parentGo = GameObjectUtils.FindByPath(parentPath);
-                if (parentGo == null)
-                    return Tool_GameObject.Error.NotFoundGameObjectAtPath(parentPath!);
-            }
+                var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabAssetPath);
+                if (prefab == null)
+                    throw new ArgumentException(Error.NotFoundPrefabAtPath(prefabAssetPath), nameof(prefabAssetPath));
 
-            position ??= Vector3.zero;
-            rotation ??= Vector3.zero;
-            scale ??= Vector3.one;
+                var parentGo = default(GameObject);
+                if (StringUtils.Path_ParseParent(gameObjectPath, out var parentPath, out var name))
+                {
+                    parentGo = GameObjectUtils.FindByPath(parentPath);
+                    if (parentGo == null)
+                        throw new ArgumentException(Tool_GameObject.Error.NotFoundGameObjectAtPath(parentPath!), nameof(gameObjectPath));
+                }
 
-            var go = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
-            if (go == null)
-                return $"[Error] Failed to instantiate prefab from path '{prefabAssetPath}'.";
+                position ??= Vector3.zero;
+                rotation ??= Vector3.zero;
+                scale ??= Vector3.one;
 
-            go.name = name ?? prefab.name;
-            if (parentGo != null)
-                go.transform.SetParent(parentGo.transform, false);
-            go.SetTransform(position, rotation, scale, isLocalSpace);
+                var go = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
+                if (go == null)
+                    throw new Exception($"[Error] Failed to instantiate prefab from path '{prefabAssetPath}'.");
 
-            var bounds = go.CalculateBounds();
+                go.name = name ?? prefab.name;
+                if (parentGo != null)
+                    go.transform.SetParent(parentGo.transform, false);
+                go.SetTransform(position, rotation, scale, isLocalSpace);
 
-            EditorUtility.SetDirty(go);
-            UnityEditor.EditorApplication.RepaintProjectWindow();
-            UnityEditor.EditorApplication.RepaintHierarchyWindow();
-            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                var bounds = go.CalculateBounds();
 
-            return $"[Success] Prefab successfully instantiated.\n{go.Print()}";
-        });
+                EditorUtility.SetDirty(go);
+                UnityEditor.EditorApplication.RepaintProjectWindow();
+                UnityEditor.EditorApplication.RepaintHierarchyWindow();
+                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+
+                return new GameObjectRef(go);
+            });
+        }
     }
 }

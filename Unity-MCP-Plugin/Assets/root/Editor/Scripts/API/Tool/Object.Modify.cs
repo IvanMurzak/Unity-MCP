@@ -77,8 +77,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 return new ModifyObjectResponse(success, logs)
                 {
-                    reference = objectRef,
-                    data = data
+                    Reference = objectRef,
+                    Data = data
                 };
             });
         }
@@ -86,21 +86,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         public class ModifyObjectResponse
         {
             [Description("Whether the modification was successful.")]
-            public bool success;
+            public bool Success { get; set; } = false;
 
             [Description("Reference to the modified object.")]
-            public ObjectRef? reference;
+            public ObjectRef? Reference { get; set; }
 
             [Description("Updated object data after modification.")]
-            public SerializedMember? data;
+            public SerializedMember? Data { get; set; }
 
             [Description("Log of modifications made and any warnings/errors encountered.")]
-            public string[]? logs;
+            public string[]? Logs { get; set; }
 
             public ModifyObjectResponse(bool success, Logs logs)
             {
-                this.success = success;
-                this.logs = logs
+                Success = success;
+                Logs = logs
                     .Select(log => log.ToString())
                     .ToArray();
             }

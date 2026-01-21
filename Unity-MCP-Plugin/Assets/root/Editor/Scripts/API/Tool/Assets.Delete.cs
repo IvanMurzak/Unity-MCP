@@ -45,9 +45,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 if (!success)
                 {
-                    response.errors ??= new();
+                    response.Errors ??= new();
                     foreach (var failedPath in outFailedPaths)
-                        response.errors.Add($"Failed to delete asset at {failedPath}.");
+                        response.Errors.Add($"Failed to delete asset at {failedPath}.");
                 }
 
                 // Add successfully deleted paths
@@ -55,8 +55,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 {
                     if (!outFailedPaths.Contains(path))
                     {
-                        response.deletedPaths ??= new();
-                        response.deletedPaths.Add(path);
+                        response.DeletedPaths ??= new();
+                        response.DeletedPaths.Add(path);
                     }
                 }
 
@@ -71,8 +71,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
         public class DeleteAssetsResponse
         {
-            public List<string>? deletedPaths;
-            public List<string>? errors;
+            [Description("List of paths of deleted assets.")]
+            public List<string>? DeletedPaths { get; set; }
+            [Description("List of errors encountered during delete operations.")]
+            public List<string>? Errors { get; set; }
         }
     }
 }
