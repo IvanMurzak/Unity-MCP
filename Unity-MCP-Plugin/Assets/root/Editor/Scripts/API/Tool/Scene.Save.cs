@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System;
 using System.ComponentModel;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
@@ -43,17 +44,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         .FirstOrDefault(scene => scene.name == openedSceneName);
 
                 if (!scene.IsValid())
-                    throw new System.Exception(Error.NotFoundSceneWithName(openedSceneName));
+                    throw new Exception(Error.NotFoundSceneWithName(openedSceneName));
 
                 if (string.IsNullOrEmpty(path))
                     path = scene.path;
 
-                if (path!.EndsWith(".unity") == false)
-                    throw new System.Exception(Error.FilePathMustEndsWithUnity());
+                if (string.IsNullOrEmpty(path))
+                    throw new Exception($"Scene '{scene.name}' has no path. Please provide a path to save the scene.");
+
+                if (!path!.EndsWith(".unity"))
+                    throw new Exception(Error.FilePathMustEndsWithUnity());
 
                 bool saved = UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene, path);
                 if (!saved)
-                    throw new System.Exception($"Failed to save scene at '{path}'.\n{OpenedScenesText}");
+                    throw new Exception($"Failed to save scene at '{path}'.\n{OpenedScenesText}");
 
                 UnityEditor.EditorApplication.RepaintHierarchyWindow();
                 UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
