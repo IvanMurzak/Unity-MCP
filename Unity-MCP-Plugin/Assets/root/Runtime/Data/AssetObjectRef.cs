@@ -114,7 +114,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
                 return true;
             }
 
-            error = $"Neither '{nameof(InstanceID)}', '{nameof(AssetPath)}' nor '{nameof(AssetGuid)}' is provided.";
+            error = $"Neither '{AssetObjectRefProperty.All.JoinEnclose()}' is provided.";
             return false;
         }
 

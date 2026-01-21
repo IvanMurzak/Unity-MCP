@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text.Json.Serialization;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEngine;
 
@@ -66,7 +67,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
             var isValid = base.IsValid(out error);
             if (!isValid)
             {
-                error = $"At least one of the following properties must be set to a valid value: '{GameObjectRefProperty.Path}', '{GameObjectRefProperty.Name}', '{AssetObjectRefProperty.AssetPath}', '{AssetObjectRefProperty.AssetGuid}', '{ObjectRefProperty.InstanceID}'.";
+                error = $"At least one of the following properties must be set to a valid value: '{GameObjectRefProperty.All.JoinEnclose()}'.";
                 return false;
             }
             return true;

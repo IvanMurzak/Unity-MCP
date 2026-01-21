@@ -129,6 +129,7 @@ namespace com.IvanMurzak.Unity.MCP
             reflector.JsonSerializer.AddConverter(new AssetObjectRefConverter());
             reflector.JsonSerializer.AddConverter(new GameObjectRefConverter());
             reflector.JsonSerializer.AddConverter(new ComponentRefConverter());
+            reflector.JsonSerializer.AddConverter(new SceneRefConverter());
 
             return reflector;
         }
