@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Model;
@@ -34,17 +35,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ObjectRef objectRef
         )
         {
+            if (objectRef.IsValid(out var error) == false)
+                throw new ArgumentException(error, nameof(objectRef));
+
             return MainThread.Instance.Run(() =>
             {
                 var obj = objectRef.FindObject();
                 if (obj == null)
-                    return null;
+                    throw new Exception("Not found UnityEngine.Object with provided data.");
 
                 return McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Serialize(
                     obj,
-                    name: obj?.name,
+                    name: obj.name,
                     recursive: true,
-                    flags: System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance,
                     logger: UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_Object>()
                 );
             });

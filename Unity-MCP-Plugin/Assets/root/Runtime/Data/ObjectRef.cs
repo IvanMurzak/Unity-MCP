@@ -38,6 +38,19 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
             InstanceID = obj?.GetInstanceID() ?? 0;
         }
 
+        public virtual bool IsValid() => IsValid(out var error);
+        public virtual bool IsValid(out string? error)
+        {
+            if (InstanceID != 0)
+            {
+                error = null;
+                return true;
+            }
+
+            error = $"'{nameof(InstanceID)}' is '0', this is invalid value for any UnityEngine.Object.";
+            return false;
+        }
+
         public override string ToString()
         {
             return $"ObjectRef {ObjectRefProperty.InstanceID}='{InstanceID}'";

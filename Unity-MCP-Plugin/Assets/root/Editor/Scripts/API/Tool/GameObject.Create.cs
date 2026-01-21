@@ -48,17 +48,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             PrimitiveType? primitiveType = null
         )
         {
+            if (string.IsNullOrEmpty(name))
+                throw new ArgumentException("Name cannot be null or empty.", nameof(name));
+
             return MainThread.Instance.Run(() =>
             {
-                if (string.IsNullOrEmpty(name))
-                    throw new ArgumentException(Error.GameObjectNameIsEmpty());
-
                 var parentGo = default(GameObject);
-                if (parentGameObjectRef?.IsValid ?? false)
+                if (parentGameObjectRef?.IsValid(out var parentGameObjectValidationError) == false)
                 {
                     parentGo = parentGameObjectRef.FindGameObject(out var error);
                     if (error != null)
-                        throw new Exception(error);
+                        throw new ArgumentException(error, nameof(parentGameObjectRef));
                 }
 
                 position ??= Vector3.zero;

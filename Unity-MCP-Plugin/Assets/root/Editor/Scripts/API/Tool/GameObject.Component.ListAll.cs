@@ -11,29 +11,44 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Utils;
+using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
-    [McpPluginToolType]
-    public partial class Tool_Component
+    public partial class Tool_GameObject
     {
         public static IEnumerable<Type> AllComponentTypes => TypeUtils.AllTypes
             .Where(type => typeof(UnityEngine.Component).IsAssignableFrom(type) && !type.IsAbstract);
 
-        public static class Error
+        public const string ComponentListToolId = "gameobject-component-list-all";
+        [McpPluginTool
+        (
+            ComponentListToolId,
+            Title = "GameObject / Component / List All"
+        )]
+        [Description("List C# class names extended from UnityEngine.Component. " +
+            "Use this to find component type names for '" + GameObjectComponentAddToolId + "' tool.")]
+        public string[] ListAll
+        (
+            [Description("Substring for searching components. Could be empty.")]
+            string? search = null
+        )
         {
-            static string ComponentsPrinted => string.Join("\n", AllComponentTypes.Select(type => type.FullName));
+            var componentTypes = AllComponentTypes
+                .Select(type => type.GetTypeId());
 
-            public static string ComponentTypeIsEmpty()
-                => "[Error] Component type is empty. Available components:\n" + ComponentsPrinted;
-            public static string NotFoundComponentType(string typeName)
-                => $"[Error] Component type '{typeName}' not found. Available components:\n" + ComponentsPrinted;
+            if (!string.IsNullOrEmpty(search))
+            {
+                componentTypes = componentTypes
+                    .Where(typeName => typeName != null && typeName.Contains(search, StringComparison.OrdinalIgnoreCase));
+            }
 
-            public static string TypeMustBeComponent(string typeName)
-                => $"[Error] Type '{typeName}' is not a component. Available components:\n" + ComponentsPrinted;
+            return componentTypes.ToArray();
         }
     }
 }

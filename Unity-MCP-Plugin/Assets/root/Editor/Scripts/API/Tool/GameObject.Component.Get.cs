@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Runtime.InteropServices;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
@@ -50,15 +51,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         {
             return MainThread.Instance.Run(() =>
             {
+                if (!gameObjectRef.IsValid(out var gameObjectValidationError))
+                    throw new ArgumentException(gameObjectValidationError, nameof(gameObjectRef));
+
+                if (!componentRef.IsValid(out var componentValidationError))
+                    throw new ArgumentException(componentValidationError, nameof(componentRef));
+
                 var go = gameObjectRef.FindGameObject(out var error);
                 if (error != null)
                     throw new Exception(error);
 
                 if (go == null)
                     throw new Exception("GameObject not found.");
-
-                if (!componentRef.IsValid)
-                    throw new Exception("ComponentRef is not valid. Provide instanceID, index, or typeName.");
 
                 var allComponents = go.GetComponents<UnityEngine.Component>();
                 UnityEngine.Component? targetComponent = null;

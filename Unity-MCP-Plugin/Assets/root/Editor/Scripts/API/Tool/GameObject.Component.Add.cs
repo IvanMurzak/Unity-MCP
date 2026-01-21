@@ -29,7 +29,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "GameObject / Component / Add"
         )]
         [Description("Add Component to GameObject in opened Prefab or in a Scene. " +
-            "Use '" + GameObjectFindToolId + "' tool to find the target GameObject first.")]
+            "Use '" + GameObjectFindToolId + "' tool to find the target GameObject first. " +
+            "Use '" + ComponentListToolId + "' tool to find the component type names to add.")]
         public AddComponentResponse AddComponent
         (
             [Description("Full name of the Component. It should include full namespace path and the class name.")]
@@ -37,6 +38,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             GameObjectRef gameObjectRef
         )
         {
+            if (gameObjectRef == null)
+                throw new ArgumentNullException(nameof(gameObjectRef), "No GameObject reference provided.");
+
+            if (!gameObjectRef.IsValid(out var gameObjectValidationError))
+                throw new ArgumentException(gameObjectValidationError, nameof(gameObjectRef));
+
             return MainThread.Instance.Run(() =>
             {
                 var go = gameObjectRef.FindGameObject(out var error);
@@ -47,10 +54,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     throw new Exception("GameObject not found.");
 
                 if (componentNames == null)
-                    throw new Exception("No component names provided.");
+                    throw new ArgumentNullException(nameof(componentNames), "No component names provided.");
 
                 if (componentNames.Length == 0)
-                    throw new Exception("No component names provided.");
+                    throw new ArgumentException("No component names provided.", nameof(componentNames));
 
                 var response = new AddComponentResponse();
 
@@ -60,11 +67,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     if (type == null)
                     {
                         // try to find component with exact class name without namespace
-                        type = Tool_Component.AllComponentTypes.FirstOrDefault(t => t.Name == componentName);
+                        type = AllComponentTypes.FirstOrDefault(t => t.Name == componentName);
                         if (type == null)
                         {
                             response.Errors ??= new List<string>();
-                            response.Errors.Add(Tool_Component.Error.NotFoundComponentType(componentName));
+                            response.Errors.Add($"[Error] Type '{componentName}' not found.");
                             continue;
                         }
                     }
@@ -73,12 +80,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     if (!typeof(UnityEngine.Component).IsAssignableFrom(type))
                     {
                         response.Errors ??= new List<string>();
-                        response.Errors.Add(Tool_Component.Error.TypeMustBeComponent(componentName));
+                        response.Errors.Add($"[Error] Type '{componentName}' is not a subclass of UnityEngine.Component.");
                         continue;
                     }
 
                     var newComponent = go.AddComponent(type);
-
                     if (newComponent == null)
                     {
                         response.Errors ??= new List<string>();
