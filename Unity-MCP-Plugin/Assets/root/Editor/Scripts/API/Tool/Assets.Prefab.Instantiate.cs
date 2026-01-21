@@ -13,6 +13,7 @@ using System;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEditor;
@@ -76,9 +77,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 var bounds = go.CalculateBounds();
 
                 EditorUtility.SetDirty(go);
-                UnityEditor.EditorApplication.RepaintProjectWindow();
-                UnityEditor.EditorApplication.RepaintHierarchyWindow();
-                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                EditorUtils.RepaintAllEditorWindows();
 
                 return new GameObjectRef(go);
             });

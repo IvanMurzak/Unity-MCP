@@ -13,6 +13,7 @@ using System;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using com.IvanMurzak.Unity.MCP.Utils;
@@ -62,8 +63,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 EditorUtility.SetDirty(go);
 
-                UnityEditor.EditorApplication.RepaintHierarchyWindow();
-                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                EditorUtils.RepaintAllEditorWindows();
 
                 var result = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Serialize(
                     prefabGo,

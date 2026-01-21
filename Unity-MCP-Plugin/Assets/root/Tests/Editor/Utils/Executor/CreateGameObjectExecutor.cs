@@ -10,6 +10,7 @@
 
 #nullable enable
 using System;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using UnityEditor;
@@ -111,7 +112,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
                 GameObjectRef = new GameObjectRef(GameObject.GetInstanceID());
 
                 EditorUtility.SetDirty(GameObject);
-                EditorApplication.RepaintHierarchyWindow();
+                EditorUtils.RepaintAllEditorWindows();
 
                 Debug.Log($"Created GameObject: {_name} (InstanceID: {GameObject.GetInstanceID()})");
 

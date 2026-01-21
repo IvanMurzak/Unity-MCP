@@ -14,6 +14,7 @@ using System.ComponentModel;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -59,8 +60,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 if (!saved)
                     throw new Exception($"Failed to save scene at '{path}'.\n{OpenedScenesText}");
 
-                UnityEditor.EditorApplication.RepaintHierarchyWindow();
-                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                EditorUtils.RepaintAllEditorWindows();
             });
         }
     }

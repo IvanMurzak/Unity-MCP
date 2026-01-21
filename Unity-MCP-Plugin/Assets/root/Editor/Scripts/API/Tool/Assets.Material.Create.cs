@@ -14,6 +14,7 @@ using System.ComponentModel;
 using System.IO;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.Extensions.Logging;
@@ -69,14 +70,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
 
-                var result = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Serialize(
-                    material,
-                    name: material.name,
-                    logger: UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_Assets>()
-                );
-                UnityEditor.EditorApplication.RepaintProjectWindow();
-                UnityEditor.EditorApplication.RepaintHierarchyWindow();
-                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                EditorUtils.RepaintAllEditorWindows();
 
                 return new AssetObjectRef(material);
             });

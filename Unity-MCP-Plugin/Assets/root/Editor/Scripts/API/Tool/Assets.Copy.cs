@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using UnityEditor;
 
@@ -72,9 +73,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 }
 
                 AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-                UnityEditor.EditorApplication.RepaintProjectWindow();
-                UnityEditor.EditorApplication.RepaintHierarchyWindow();
-                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                EditorUtils.RepaintAllEditorWindows();
 
                 return response;
             });

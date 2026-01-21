@@ -13,6 +13,7 @@ using System;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -46,8 +47,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             PrefabUtility.SaveAsPrefabAsset(prefabGo, assetPath);
             prefabStage.ClearDirtiness();
 
-            UnityEditor.EditorApplication.RepaintHierarchyWindow();
-            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+            EditorUtils.RepaintAllEditorWindows();
 
             var assetPrefab = AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>(assetPath);
             return new AssetObjectRef(assetPrefab);

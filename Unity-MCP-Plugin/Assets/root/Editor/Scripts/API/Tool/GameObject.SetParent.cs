@@ -13,6 +13,7 @@ using System.ComponentModel;
 using System.Text;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using UnityEditor.SceneManagement;
@@ -79,9 +80,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 if (changedCount > 0)
                 {
                     EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
-                    UnityEditor.EditorApplication.RepaintProjectWindow();
-                    UnityEditor.EditorApplication.RepaintHierarchyWindow();
-                    UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                    EditorUtils.RepaintAllEditorWindows();
                 }
 
                 return stringBuilder.ToString();
