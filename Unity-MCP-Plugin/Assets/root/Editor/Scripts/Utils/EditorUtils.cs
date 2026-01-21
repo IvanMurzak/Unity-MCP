@@ -13,10 +13,13 @@
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
     /// <summary>
-    /// Utility class for loading Unity Editor assets with fallback paths.
+    /// Utility class for Unity Editor operations.
     /// </summary>
     public static class EditorUtils
     {
+        /// <summary>
+        /// Repaints all editor windows including Project, Hierarchy, Animation, and all views.
+        /// </summary>
         public static void RepaintAllEditorWindows()
         {
             UnityEditor.EditorApplication.RepaintProjectWindow();

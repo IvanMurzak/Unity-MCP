@@ -149,7 +149,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var serializedGo = reflector.Serialize(go, recursive: false, logger: _logger);
             var serializedType = reflector.Serialize(typeof(UnityEngine.Transform), logger: _logger);
 
+            var deserializedType = reflector.Deserialize<System.Type>(serializedType, logger: _logger); // Test deserialization of System.Type
+            Assert.AreEqual(typeof(UnityEngine.Transform), deserializedType, "Deserialized type should be UnityEngine.Transform.");
+
             UnityEngine.Debug.Log($"Serialized GameObject: {serializedGo.ToPrettyJson()}");
+            UnityEngine.Debug.Log($"Serialized Type: {serializedType.ToPrettyJson()}");
 
             var result = new Tool_Reflection().MethodCall(
                 filter: methodRef,

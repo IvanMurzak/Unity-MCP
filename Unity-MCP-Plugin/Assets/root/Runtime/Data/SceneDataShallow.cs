@@ -23,7 +23,8 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
         [Description("Whether this is a valid Scene. " +
             "A Scene may be invalid if, for example, you tried to open a Scene that does not exist. " +
             "In this case, the Scene returned from EditorSceneManager.OpenScene would return False for IsValid.")]
-        public bool IsValid { get; set; } = true;
+        public bool IsValidScene { get; set; } = true;
+
         public int RootCount { get; set; } = 0;
 
         public SceneDataShallow() { }
@@ -34,7 +35,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
             this.IsDirty = scene.isDirty;
             this.IsSubScene = scene.isSubScene;
             this.RootCount = scene.rootCount;
-            this.IsValid = scene.IsValid();
+            this.IsValidScene = scene.IsValid();
         }
     }
 
@@ -51,7 +52,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
                 BuildIndex = scene.buildIndex,
                 RootCount = scene.rootCount,
                 IsSubScene = scene.isSubScene,
-                IsValid = scene.IsValid()
+                IsValidScene = scene.IsValid()
             };
             return sceneData;
         }

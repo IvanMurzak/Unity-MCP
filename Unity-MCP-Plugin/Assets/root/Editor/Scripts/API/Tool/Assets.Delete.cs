@@ -13,6 +13,9 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
+using com.IvanMurzak.Unity.MCP.Utils;
+using Microsoft.Extensions.Logging;
 using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -36,8 +39,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         {
             return MainThread.Instance.Run(() =>
             {
+                var logger = UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_Assets>();
+
                 if (paths.Length == 0)
                     throw new System.Exception(Error.SourcePathsArrayIsEmpty());
+
+                logger.LogInformation("Deleting {Count} asset(s): {Paths}", paths.Length, string.Join(", ", paths));
 
                 var response = new DeleteAssetsResponse();
                 var outFailedPaths = new List<string>();
@@ -45,9 +52,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 if (!success)
                 {
-                    response.errors ??= new();
+                    response.Errors ??= new();
                     foreach (var failedPath in outFailedPaths)
-                        response.errors.Add($"Failed to delete asset at {failedPath}.");
+                    {
+                        logger.LogWarning("Failed to delete asset at '{Path}'", failedPath);
+                        response.Errors.Add($"Failed to delete asset at {failedPath}.");
+                    }
                 }
 
                 // Add successfully deleted paths
@@ -55,15 +65,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 {
                     if (!outFailedPaths.Contains(path))
                     {
-                        response.deletedPaths ??= new();
-                        response.deletedPaths.Add(path);
+                        logger.LogInformation("Successfully deleted asset at '{Path}'", path);
+                        response.DeletedPaths ??= new();
+                        response.DeletedPaths.Add(path);
                     }
                 }
 
                 AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-                UnityEditor.EditorApplication.RepaintProjectWindow();
-                UnityEditor.EditorApplication.RepaintHierarchyWindow();
-                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                EditorUtils.RepaintAllEditorWindows();
 
                 return response;
             });
@@ -71,8 +80,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
         public class DeleteAssetsResponse
         {
-            public List<string>? deletedPaths;
-            public List<string>? errors;
+            [Description("List of paths of deleted assets.")]
+            public List<string>? DeletedPaths { get; set; }
+            [Description("List of errors encountered during delete operations.")]
+            public List<string>? Errors { get; set; }
         }
     }
 }

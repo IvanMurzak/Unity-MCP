@@ -9,10 +9,13 @@
 */
 
 #nullable enable
+using System;
 using System.ComponentModel;
+using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using com.IvanMurzak.Unity.MCP.Utils;
@@ -32,24 +35,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [Description("Modify asset file in the project. " +
             "Use '" + AssetsGetDataToolId + "' tool first to inspect the asset structure before modifying. " +
             "Not allowed to modify asset file in 'Packages/' folder. Please modify it in 'Assets/' folder.")]
-        public string Modify
+        public string[] Modify
         (
             AssetObjectRef assetRef,
             [Description("The asset content. It overrides the existing asset content.")]
             SerializedMember content
         )
         {
+            if (assetRef == null)
+                throw new ArgumentNullException(nameof(assetRef));
+
+            if (!assetRef.IsValid(out var assetValidationError))
+                throw new ArgumentException(assetValidationError, nameof(assetRef));
+
+            if (assetRef.AssetPath?.StartsWith("Packages/") == true)
+                throw new ArgumentException($"Not allowed to modify asset in '/Packages' folder. Please modify it in '/Assets' folder. Path: '{assetRef.AssetPath}'.", nameof(assetRef));
+
+            if (assetRef.AssetPath?.StartsWith(ExtensionsRuntimeObject.UnityEditorBuiltInResourcesPath) == true)
+                throw new ArgumentException($"Not allowed to modify built-in asset. Path: '{assetRef.AssetPath}'.", nameof(assetRef));
+
             return MainThread.Instance.Run(() =>
             {
-                if (assetRef?.IsValid == false)
-                    return $"[Error] Invalid asset reference.";
-
-                if (assetRef?.AssetPath?.StartsWith("Packages/") == true)
-                    return Error.NotAllowedToModifyAssetInPackages(assetRef.AssetPath);
-
                 var asset = assetRef.FindAssetObject(); // AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(assetPath);
                 if (asset == null)
-                    return $"[Error] Asset not found using the reference:\n{assetRef}";
+                    throw new Exception($"Asset not found using the reference:\n{assetRef}");
 
                 // Fixing instanceID - inject expected instance ID into the valueJsonElement
                 content.valueJsonElement.SetProperty(ObjectRef.ObjectRefProperty.InstanceID, asset.GetInstanceID());
@@ -69,17 +78,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 // AssetDatabase.CreateAsset(asset, assetPath);
                 AssetDatabase.SaveAssets();
                 AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-                UnityEditor.EditorApplication.RepaintProjectWindow();
-                UnityEditor.EditorApplication.RepaintHierarchyWindow();
-                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                EditorUtils.RepaintAllEditorWindows();
 
-                return logs.ToString();
-
-                //             var instanceID = asset.GetInstanceID();
-                //             return @$"[Success] Loaded asset.
-                // # Asset path: {assetPath}
-                // # Asset GUID: {assetGuid}
-                // # Asset instanceID: {instanceID}";
+                return logs
+                    .Select(log => log.ToString())
+                    .ToArray();
             });
         }
     }

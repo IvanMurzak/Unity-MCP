@@ -10,6 +10,7 @@
 
 #nullable enable
 using System;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using UnityEditor;
@@ -56,7 +57,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
 
                 // Find parent if provided
                 GameObject? parentGo = null;
-                if (_parentGameObjectRef?.IsValid ?? false)
+                if (_parentGameObjectRef?.IsValid(out _) == true)
                 {
                     parentGo = _parentGameObjectRef.FindGameObject(out var error);
                     if (error != null)
@@ -111,7 +112,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
                 GameObjectRef = new GameObjectRef(GameObject.GetInstanceID());
 
                 EditorUtility.SetDirty(GameObject);
-                EditorApplication.RepaintHierarchyWindow();
+                EditorUtils.RepaintAllEditorWindows();
 
                 Debug.Log($"Created GameObject: {_name} (InstanceID: {GameObject.GetInstanceID()})");
 

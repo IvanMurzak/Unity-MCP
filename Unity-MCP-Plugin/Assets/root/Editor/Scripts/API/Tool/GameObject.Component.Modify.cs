@@ -45,15 +45,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         {
             return MainThread.Instance.Run(() =>
             {
+                if (!gameObjectRef.IsValid(out var gameObjectValidationError))
+                    throw new ArgumentException(gameObjectValidationError, nameof(gameObjectRef));
+
+                if (!componentRef.IsValid(out var componentValidationError))
+                    throw new ArgumentException(componentValidationError, nameof(componentRef));
+
                 var go = gameObjectRef.FindGameObject(out var error);
                 if (error != null)
                     throw new Exception(error);
 
                 if (go == null)
                     throw new Exception("GameObject not found.");
-
-                if (!componentRef.IsValid)
-                    throw new Exception("ComponentRef is not valid. Provide instanceID, index, or typeName.");
 
                 var allComponents = go.GetComponents<UnityEngine.Component>();
                 UnityEngine.Component? targetComponent = null;
@@ -74,8 +77,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 var response = new ModifyComponentResponse
                 {
-                    reference = new ComponentRef(targetComponent),
-                    index = targetIndex
+                    Reference = new ComponentRef(targetComponent),
+                    Index = targetIndex
                 };
 
                 var logs = new Logs();
@@ -91,17 +94,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 {
                     UnityEditor.EditorUtility.SetDirty(go);
                     UnityEditor.EditorUtility.SetDirty(targetComponent);
-                    response.success = true;
+                    response.Success = true;
                 }
 
                 UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
-                response.logs = logs
+                response.Logs = logs
                     .Select(log => log.ToString())
                     .ToArray();
 
                 // Return updated component data
-                response.component = new ComponentDataShallow(targetComponent);
+                response.Component = new ComponentDataShallow(targetComponent);
 
                 return response;
             });
@@ -110,19 +113,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         public class ModifyComponentResponse
         {
             [Description("Whether the modification was successful.")]
-            public bool success;
+            public bool Success { get; set; } = false;
 
             [Description("Reference to the modified component.")]
-            public ComponentRef? reference;
+            public ComponentRef? Reference { get; set; }
 
             [Description("Index of the component in the GameObject's component list.")]
-            public int index;
+            public int Index { get; set; }
 
             [Description("Updated component information after modification.")]
-            public ComponentDataShallow? component;
-
+            public ComponentDataShallow? Component { get; set; }
             [Description("Log of modifications made and any warnings/errors encountered.")]
-            public string[]? logs;
+            public string[]? Logs { get; set; }
         }
     }
 }

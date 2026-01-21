@@ -40,19 +40,25 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
         [Description("Component type full name. Sample 'UnityEngine.Transform'. If the gameObject has two components of the same type, the output component is unpredictable. Priority: 3. Default value is null.")]
         public string? TypeName { get; set; } = null;
 
-        [JsonIgnore]
-        public bool IsValid
+        public override bool IsValid(out string? error)
         {
-            get
+            if (InstanceID != 0)
             {
-                if (InstanceID != 0)
-                    return true;
-                if (Index >= 0)
-                    return true;
-                if (!string.IsNullOrEmpty(TypeName))
-                    return true;
-                return false;
+                error = null;
+                return true;
             }
+            if (Index >= 0)
+            {
+                error = null;
+                return true;
+            }
+            if (!string.IsNullOrEmpty(TypeName))
+            {
+                error = null;
+                return true;
+            }
+            error = $"Invalid ComponentRef: '{ObjectRefProperty.InstanceID}' is 0, '{ComponentRefProperty.Index}' is less than 0, and '{ComponentRefProperty.TypeName}' is null or empty.";
+            return false;
         }
 
         public ComponentRef() { }

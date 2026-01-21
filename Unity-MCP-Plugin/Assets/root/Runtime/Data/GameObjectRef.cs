@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text.Json.Serialization;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEngine;
 
@@ -50,18 +51,26 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
         [Description("Name of a GameObject in hierarchy. Priority: 3.")]
         public string? Name { get; set; } = null;
 
-        [JsonIgnore]
-        public override bool IsValid
+        public override bool IsValid(out string? error)
         {
-            get
+            if (!string.IsNullOrEmpty(Path))
             {
-                if (!string.IsNullOrEmpty(Path))
-                    return true;
-                if (!string.IsNullOrEmpty(Name))
-                    return true;
-
-                return base.IsValid;
+                error = null;
+                return true;
             }
+            if (!string.IsNullOrEmpty(Name))
+            {
+                error = null;
+                return true;
+            }
+
+            var isValid = base.IsValid(out error);
+            if (!isValid)
+            {
+                error = $"At least one of the following properties must be set to a valid value: '{GameObjectRefProperty.All.JoinEnclose()}'.";
+                return false;
+            }
+            return true;
         }
 
         public GameObjectRef() { }

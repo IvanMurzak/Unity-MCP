@@ -61,10 +61,8 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 #if UNITY_EDITOR
         public AssetObjectRef(string assetPath) : this(
             UnityEditor.AssetDatabase.LoadAssetAtPath(
-                assetPath,
-                UnityEditor.AssetDatabase.GetMainAssetTypeAtPath(
-                    assetPath)
-                ?? throw new ArgumentException($"Cannot determine asset type at path '{assetPath}'."))
+                assetPath: assetPath,
+                type: UnityEditor.AssetDatabase.GetMainAssetTypeAtPath(assetPath) ?? throw new ArgumentException($"Cannot determine asset type at path '{assetPath}'."))
             ?? throw new ArgumentException($"No asset found at path '{assetPath}'."))
         {
             // empty
@@ -95,23 +93,29 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 #endif
         }
 
-        [JsonIgnore]
-        public virtual bool IsValid
+        public override bool IsValid(out string? error)
         {
-            get
+            if (InstanceID != 0)
             {
-                if (InstanceID != 0)
-                    return true;
-
-                if (!StringUtils.IsNullOrEmpty(AssetPath)
-                    && (AssetPath!.StartsWith("Assets/") || AssetPath.StartsWith("Packages/")))
-                    return true;
-
-                if (!StringUtils.IsNullOrEmpty(AssetGuid))
-                    return true;
-
-                return false;
+                error = null;
+                return true;
             }
+
+            if (!StringUtils.IsNullOrEmpty(AssetPath)
+                && (AssetPath!.StartsWith("Assets/") || AssetPath.StartsWith("Packages/") || AssetPath.StartsWith(ExtensionsRuntimeObject.UnityEditorBuiltInResourcesPath)))
+            {
+                error = null;
+                return true;
+            }
+
+            if (!StringUtils.IsNullOrEmpty(AssetGuid))
+            {
+                error = null;
+                return true;
+            }
+
+            error = $"Neither '{AssetObjectRefProperty.All.JoinEnclose()}' is provided.";
+            return false;
         }
 
         public override string ToString()

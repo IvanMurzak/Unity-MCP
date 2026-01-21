@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -37,13 +38,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         )
         {
             if (string.IsNullOrEmpty(filePath))
-                return Error.ScriptPathIsEmpty();
+                throw new ArgumentException(Error.ScriptPathIsEmpty(), nameof(filePath));
 
             if (!filePath.EndsWith(".cs"))
-                return Error.FilePathMustEndsWithCs();
+                throw new ArgumentException(Error.FilePathMustEndsWithCs(), nameof(filePath));
 
-            if (File.Exists(filePath) == false)
-                return Error.ScriptFileNotFound(filePath);
+            if (!File.Exists(filePath))
+                throw new FileNotFoundException(Error.ScriptFileNotFound(filePath), filePath);
 
             var lines = File.ReadAllLines(filePath);
 

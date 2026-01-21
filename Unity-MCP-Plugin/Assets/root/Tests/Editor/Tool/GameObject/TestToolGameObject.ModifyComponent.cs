@@ -54,7 +54,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
           componentRef: new ComponentRef(child!.transform.GetInstanceID()),
           componentDiff: componentDiff);
 
-      Assert.IsTrue(result.success, "Modification should be successful");
+      Assert.IsTrue(result.Success, "Modification should be successful");
 
       Assert.AreEqual(child!.transform.position, newPosition, "Position should be changed");
 
@@ -95,7 +95,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
           componentRef: new ComponentRef(component.GetInstanceID()),
           componentDiff: componentDiff);
 
-      Assert.IsTrue(response.success, "Modification should be successful");
+      Assert.IsTrue(response.Success, "Modification should be successful");
 
       Assert.AreEqual(sharedMaterial.GetInstanceID(), component.sharedMaterial.GetInstanceID(), "Materials InstanceIDs should be the same.");
       yield return null;
