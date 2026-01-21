@@ -30,7 +30,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
 
                 GameObject? sourceGo = null;
 
-                if (_sourceGameObjectRef?.IsValid(out var _) == true)
+                if (_sourceGameObjectRef?.IsValid(out _) == true)
                 {
                     sourceGo = _sourceGameObjectRef.FindGameObject(out var error);
                     if (error != null) Debug.LogError(error);

@@ -56,7 +56,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
 
                 // Find parent if provided
                 GameObject? parentGo = null;
-                if (_parentGameObjectRef?.IsValid(out var _) == true)
+                if (_parentGameObjectRef?.IsValid(out _) == true)
                 {
                     parentGo = _parentGameObjectRef.FindGameObject(out var error);
                     if (error != null)
