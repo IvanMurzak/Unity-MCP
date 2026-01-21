@@ -51,14 +51,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 for (int i = 0; i < sourcePaths.Length; i++)
                 {
                     var error = AssetDatabase.MoveAsset(sourcePaths[i], destinationPaths[i]);
-                    if (string.IsNullOrEmpty(error))
-                    {
-                        logs[i] = $"[Success] Moved asset from {sourcePaths[i]} to {destinationPaths[i]}.";
-                    }
-                    else
-                    {
-                        logs[i] = $"[Error] Failed to move asset from {sourcePaths[i]} to {destinationPaths[i]}: {error}.";
-                    }
+                    logs[i] = string.IsNullOrEmpty(error)
+                        ? $"[Success] Moved asset from {sourcePaths[i]} to {destinationPaths[i]}."
+                        : $"[Error] Failed to move asset from {sourcePaths[i]} to {destinationPaths[i]}: {error}.";
                 }
                 AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
                 EditorUtils.RepaintAllEditorWindows();

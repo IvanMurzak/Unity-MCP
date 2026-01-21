@@ -25,6 +25,11 @@ using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
+    /// <summary>
+    /// Reflection converter for UnityEngine.GameObject
+    /// IMPORTANT: it implements custom depth handling to avoid heavy serialization of Unity objects.
+    /// As a result it only serializes a GameObject at depth == 0
+    /// </summary>
     public partial class UnityEngine_GameObject_ReflectionConverter : UnityGenericReflectionConverter<UnityEngine.GameObject>
     {
         public override bool AllowSetValue => false;
@@ -64,31 +69,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 
             var objectRef = new GameObjectRef(unityObject.GetInstanceID());
 
-            if (recursive && depth < 1)
-            {
-                return new SerializedMember()
-                {
-                    name = name ?? unityObject.name,
-                    typeName = type.GetTypeId(),
-                    fields = SerializeFields(
-                        reflector,
-                        obj: obj,
-                        flags: flags,
-                        depth: depth + 1,
-                        logs: logs,
-                        logger: logger,
-                        context: context),
-                    props = SerializeProperties(
-                        reflector,
-                        obj: obj,
-                        flags: flags,
-                        depth: depth + 1,
-                        logs: logs,
-                        logger: logger,
-                        context: context)
-                }.SetValue(reflector, objectRef);
-            }
-            else
+            if (depth >= 1 || !recursive)
             {
                 return SerializedMember.FromValue(
                     reflector: reflector,
@@ -96,6 +77,28 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                     value: objectRef,
                     name: name ?? unityObject.name);
             }
+
+            return new SerializedMember()
+            {
+                name = name ?? unityObject.name,
+                typeName = type.GetTypeId(),
+                fields = SerializeFields(
+                    reflector,
+                    obj: obj,
+                    flags: flags,
+                    depth: depth + 1,
+                    logs: logs,
+                    logger: logger,
+                    context: context),
+                props = SerializeProperties(
+                    reflector,
+                    obj: obj,
+                    flags: flags,
+                    depth: depth + 1,
+                    logs: logs,
+                    logger: logger,
+                    context: context)
+            }.SetValue(reflector, objectRef);
         }
 
         protected override bool SetValue(

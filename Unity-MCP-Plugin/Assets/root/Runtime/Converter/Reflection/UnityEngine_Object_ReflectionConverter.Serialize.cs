@@ -14,12 +14,15 @@ using System.Reflection;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
-using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
-using Microsoft.Extensions.Logging;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
+    /// <summary>
+    /// Reflection converter for UnityEngine.Object
+    /// IMPORTANT: it implements custom depth handling to avoid heavy serialization of Unity objects.
+    /// As a result it only serializes a UnityEngine.Object at depth == 0
+    /// </summary>
     public partial class UnityEngine_Object_ReflectionConverter<T>
     {
         protected override SerializedMember InternalSerialize(
@@ -49,31 +52,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             if (!type.IsClass && !type.IsInterface)
                 throw new ArgumentException($"Unsupported type: '{type.GetTypeId()}'. Converter: {GetType().GetTypeShortName()}");
 
-            if (recursive && depth < 1)
-            {
-                return new SerializedMember()
-                {
-                    name = name ?? unityObject.name,
-                    typeName = type.GetTypeId(),
-                    fields = SerializeFields(
-                        reflector,
-                        obj: obj,
-                        flags: flags,
-                        depth: depth + 1,
-                        logs: logs,
-                        logger: logger,
-                        context: context),
-                    props = SerializeProperties(
-                        reflector,
-                        obj: obj,
-                        flags: flags,
-                        depth: depth + 1,
-                        logs: logs,
-                        logger: logger,
-                        context: context)
-                }.SetValue(reflector, new ObjectRef(unityObject));
-            }
-            else
+            if (depth >= 1 || !recursive)
             {
                 var objectRef = new ObjectRef(unityObject);
                 return SerializedMember.FromValue(
@@ -82,6 +61,28 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                     value: objectRef,
                     name: name ?? unityObject.name);
             }
+
+            return new SerializedMember()
+            {
+                name = name ?? unityObject.name,
+                typeName = type.GetTypeId(),
+                fields = SerializeFields(
+                    reflector,
+                    obj: obj,
+                    flags: flags,
+                    depth: depth + 1,
+                    logs: logs,
+                    logger: logger,
+                    context: context),
+                props = SerializeProperties(
+                    reflector,
+                    obj: obj,
+                    flags: flags,
+                    depth: depth + 1,
+                    logs: logs,
+                    logger: logger,
+                    context: context)
+            }.SetValue(reflector, new ObjectRef(unityObject));
         }
     }
 }

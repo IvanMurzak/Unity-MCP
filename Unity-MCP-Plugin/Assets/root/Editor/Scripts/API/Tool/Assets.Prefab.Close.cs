@@ -48,7 +48,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     throw new InvalidOperationException(Error.PrefabStageIsNotOpened());
 
                 var assetPath = prefabStage.assetPath;
-                var goName = prefabGo.name;
 
                 if (save)
                     PrefabUtility.SaveAsPrefabAsset(prefabGo, assetPath);

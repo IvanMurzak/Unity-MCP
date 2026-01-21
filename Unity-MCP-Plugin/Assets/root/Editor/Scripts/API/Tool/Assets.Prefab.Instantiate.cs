@@ -74,8 +74,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     go.transform.SetParent(parentGo.transform, false);
                 go.SetTransform(position, rotation, scale, isLocalSpace);
 
-                var bounds = go.CalculateBounds();
-
                 EditorUtility.SetDirty(go);
                 EditorUtils.RepaintAllEditorWindows();
 

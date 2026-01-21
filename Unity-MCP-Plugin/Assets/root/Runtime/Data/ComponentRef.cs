@@ -57,7 +57,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
                 error = null;
                 return true;
             }
-            error = $"Invalid ComponentRef: '{nameof(InstanceID)}' is 0, '{nameof(Index)}' is less than 0, and '{nameof(TypeName)}' is null or empty.";
+            error = $"Invalid ComponentRef: '{ObjectRefProperty.InstanceID}' is 0, '{ComponentRefProperty.Index}' is less than 0, and '{ComponentRefProperty.TypeName}' is null or empty.";
             return false;
         }
 

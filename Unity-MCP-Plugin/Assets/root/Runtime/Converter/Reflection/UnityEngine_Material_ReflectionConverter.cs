@@ -26,6 +26,11 @@ using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
+    /// <summary>
+    /// Reflection converter for UnityEngine.Material
+    /// IMPORTANT: it implements custom depth handling to avoid heavy serialization of Unity objects.
+    /// As a result it only serializes a Material at depth == 0
+    /// </summary>
     public partial class UnityEngine_Material_ReflectionConverter : UnityEngine_Object_ReflectionConverter<Material>
     {
         const string FieldShader = "shader";

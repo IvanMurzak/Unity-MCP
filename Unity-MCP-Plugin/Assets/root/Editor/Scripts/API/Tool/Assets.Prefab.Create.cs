@@ -65,12 +65,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 EditorUtils.RepaintAllEditorWindows();
 
-                var result = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Serialize(
-                    prefabGo,
-                    recursive: false,
-                    logger: UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_Assets_Prefab>()
-                );
-
                 var assetPrefab = AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>(prefabAssetPath);
                 return new AssetObjectRef(assetPrefab);
             });
