@@ -36,6 +36,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ComponentRefList destroyComponentRefs
         )
         {
+            if (gameObjectRef == null)
+                throw new ArgumentNullException(nameof(gameObjectRef));
+
+            if (!gameObjectRef.IsValid(out var gameObjectValidationError))
+                throw new ArgumentException(gameObjectValidationError, nameof(gameObjectRef));
+
+            if (destroyComponentRefs == null)
+                throw new ArgumentNullException(nameof(destroyComponentRefs));
+
+            if (destroyComponentRefs.Count == 0)
+                throw new ArgumentException("No components provided to destroy.", nameof(destroyComponentRefs));
+
             return MainThread.Instance.Run(() =>
             {
                 var go = gameObjectRef.FindGameObject(out var error);
