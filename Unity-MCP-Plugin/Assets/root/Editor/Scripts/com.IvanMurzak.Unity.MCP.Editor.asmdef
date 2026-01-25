@@ -3,15 +3,30 @@
     "rootNamespace": "com.IvanMurzak.Unity.MCP.Editor",
     "references": [
         "com.IvanMurzak.Unity.MCP.Runtime",
-        "Extensions.Unity.PlayerPrefsEx"
+        "Extensions.Unity.PlayerPrefsEx",
+        "Microsoft.CodeAnalysis.Analyzers_Unity"
     ],
     "includePlatforms": [
         "Editor"
     ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
-    "overrideReferences": false,
-    "precompiledReferences": [],
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "ReflectorNet.dll",
+        "McpPlugin.dll",
+        "McpPlugin.Common.dll",
+        "R3.dll",
+        "Microsoft.Extensions.Diagnostics.dll",
+        "Microsoft.Extensions.Logging.Abstractions.dll",
+        "Microsoft.Extensions.Logging.dll",
+        "Microsoft.CodeAnalysis.CSharp.dll",
+        "Microsoft.AspNetCore.SignalR.Client.dll",
+        "Microsoft.CodeAnalysis.dll",
+        "Microsoft.AspNetCore.SignalR.Client.Core.dll",
+        "System.Collections.Immutable.dll",
+        "System.Text.Json.dll"
+    ],
     "autoReferenced": true,
     "defineConstraints": [],
     "versionDefines": [],
