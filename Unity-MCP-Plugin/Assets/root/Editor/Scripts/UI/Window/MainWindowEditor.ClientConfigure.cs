@@ -11,7 +11,9 @@
 #nullable enable
 using System;
 using System.IO;
+using System.Linq;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
+using Extensions.Unity.PlayerPrefsEx;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -23,8 +25,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
     public partial class MainWindowEditor
     {
         // Template paths for both local development and UPM package environments
-
         public static readonly string[] ClientConfigPanelTemplatePath = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/ClientConfigPanel.uxml");
+
+        // PlayerPrefs key for storing selected MCP client
+        private const string PlayerPrefsKey_SelectedMcpClient = "Unity_MCP_SelectedMcpClient";
+        private static PlayerPrefsString _selectedMcpClientPref = new(PlayerPrefsKey_SelectedMcpClient);
 
         string ProjectRootPath => Application.dataPath.EndsWith("/Assets")
             ? Application.dataPath.Substring(0, Application.dataPath.Length - "/Assets".Length)
@@ -87,7 +92,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     bodyPath: Consts.MCP.Server.DefaultBodyPath
                 ),
                 new JsonClientConfig(
-                    name: "Antigravity (Gemini)",
+                    name: "Antigravity",
                     configPath: Path.Combine(
                         Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                         ".gemini",
@@ -107,7 +112,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 )
             };
 
-            ConfigureClientsFromArray(root, clientConfigs);
+            ConfigureClientsWithDropdown(root, clientConfigs);
         }
 
         void ConfigureClientsMacAndLinux(VisualElement root)
@@ -169,7 +174,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     bodyPath: Consts.MCP.Server.DefaultBodyPath
                 ),
                 new JsonClientConfig(
-                    name: "Antigravity (Gemini)",
+                    name: "Antigravity",
                     configPath: Path.Combine(
                         Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                         ".gemini",
@@ -189,11 +194,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 )
             };
 
-            ConfigureClientsFromArray(root, clientConfigs);
+            ConfigureClientsWithDropdown(root, clientConfigs);
         }
 
-        static void ConfigureClientsFromArray(VisualElement root, ClientConfig[] clientConfigs)
+        void ConfigureClientsWithDropdown(VisualElement root, ClientConfig[] clientConfigs)
         {
+            // Get the dropdown element
+            var dropdown = root.Query<DropdownField>("mcpClientDropdown").First();
+            if (dropdown == null)
+            {
+                Debug.LogError("mcpClientDropdown not found in UXML. Please ensure the dropdown element exists.");
+                return;
+            }
+
             // Get the container where client panels will be added
             var container = root.Query<VisualElement>("ConfigureClientsContainer").First();
             if (container == null)
@@ -202,40 +215,80 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 return;
             }
 
-            // Try to load the template from both possible paths (UPM package or local development)
-            var clientConfigPanelTemplate = EditorAssetLoader.LoadAssetAtPath<VisualTreeAsset>(ClientConfigPanelTemplatePath);
-            if (clientConfigPanelTemplate == null)
+            // Get client names from registry
+            var clientNames = McpClientConfiguratorRegistry.GetClientNames();
+            dropdown.choices = clientNames;
+
+            // Load saved selection from PlayerPrefs
+            var savedClientId = _selectedMcpClientPref.Value;
+            var selectedIndex = 0;
+
+            if (!string.IsNullOrEmpty(savedClientId))
             {
-                Debug.LogError("ClientConfigPanel template not found in specified paths. Please ensure the template file exists.");
-                return;
+                selectedIndex = McpClientConfiguratorRegistry.GetIndexByClientId(savedClientId);
+                if (selectedIndex < 0) selectedIndex = 0;
             }
 
-            // Clear any existing dynamic panels
+            // Set initial dropdown value without triggering callback
+            if (clientNames.Count > 0)
+            {
+                dropdown.SetValueWithoutNotify(clientNames[selectedIndex]);
+            }
+
+            // Load initial UI for selected client
+            LoadClientUI(container, clientConfigs, selectedIndex);
+
+            // Register callback for dropdown changes
+            dropdown.RegisterValueChangedCallback(evt =>
+            {
+                var newIndex = clientNames.IndexOf(evt.newValue);
+                if (newIndex < 0) return;
+
+                // Save selection to PlayerPrefs
+                var configurator = McpClientConfiguratorRegistry.All[newIndex];
+                _selectedMcpClientPref.Value = configurator.ClientId;
+
+                // Load UI for the newly selected client
+                LoadClientUI(container, clientConfigs, newIndex);
+            });
+        }
+
+        void LoadClientUI(VisualElement container, ClientConfig[] clientConfigs, int selectedIndex)
+        {
+            // Clear any existing content
             container.Clear();
 
-            // Clone and configure a panel for each client
-            foreach (var config in clientConfigs)
+            if (selectedIndex < 0 || selectedIndex >= McpClientConfiguratorRegistry.All.Count)
+                return;
+
+            var configurator = McpClientConfiguratorRegistry.All[selectedIndex];
+
+            // Load client-specific configuration UI from the configurator (now includes config panel)
+            var clientSpecificUI = configurator.CreateUI(container);
+            if (clientSpecificUI == null)
+                return;
+
+            container.Add(clientSpecificUI);
+
+            // Find matching ClientConfig for this configurator and configure the embedded panel
+            var clientConfig = clientConfigs.FirstOrDefault(c => c.Name == configurator.ClientName);
+            if (clientConfig != null)
             {
-                // Clone the template using Unity's built-in method
-                var panel = clientConfigPanelTemplate.CloneTree();
-
-                // Configure the panel with the client's configuration
-                ConfigureClient(panel, config);
-
-                // Add the configured panel to the container
-                container.Add(panel);
+                ConfigureClientPanel(clientSpecificUI, clientConfig);
             }
         }
 
-        static void ConfigureClient(VisualElement root, ClientConfig config)
+        static void ConfigureClientPanel(VisualElement root, ClientConfig config)
         {
-            var statusCircle = root.Q<VisualElement>("configureStatusCircle") ?? throw new NullReferenceException("Status circle element not found in the template.");
-            var statusText = root.Q<Label>("configureStatusText") ?? throw new NullReferenceException("Status text element not found in the template.");
-            var btnConfigure = root.Q<Button>("btnConfigure") ?? throw new NullReferenceException("Configure button element not found in the template.");
+            var statusCircle = root.Q<VisualElement>("configureStatusCircle");
+            var statusText = root.Q<Label>("configureStatusText");
+            var btnConfigure = root.Q<Button>("btnConfigure");
 
-            // Update the client name
-            var clientNameLabel = root.Q<Label>("clientNameLabel") ?? throw new NullReferenceException("Client name label element not found in the template.");
-            clientNameLabel.text = config.Name;
+            if (statusCircle == null || statusText == null || btnConfigure == null)
+            {
+                Debug.LogWarning($"Config panel elements not found in client UI for {config.Name}.");
+                return;
+            }
 
             var isConfiguredResult = config.IsConfigured();
 

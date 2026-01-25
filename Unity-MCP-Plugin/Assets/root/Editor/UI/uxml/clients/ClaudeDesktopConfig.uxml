@@ -1,0 +1,25 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement class="frame-group" style="flex-grow: 1;">
+        <ui:Label text="Claude Desktop Configuration" class="section-title" />
+        <ui:Label text="Claude Desktop is Anthropic's desktop application for AI conversations." class="section-desc" style="margin-top: 4px;" />
+
+        <ui:Foldout text="Configuration Steps" value="true" class="base-foldout">
+            <ui:Label text="1. Install Claude Desktop from Anthropic's website&#10;2. The configuration file is located at:&#10;   Windows: %APPDATA%\Claude\claude_desktop_config.json&#10;   macOS: ~/Library/Application Support/Claude/claude_desktop_config.json&#10;3. Click 'Configure' to automatically add the MCP server configuration&#10;4. Restart Claude Desktop to apply changes" class="section-desc" style="white-space: normal;" />
+        </ui:Foldout>
+
+        <ui:Foldout text="Manual Configuration" value="false" class="base-foldout">
+            <ui:Label text="Add the following to your claude_desktop_config.json file under the 'mcpServers' section:" class="section-desc" />
+            <ui:TextField name="configSnippet" multiline="true" readonly="true" selectOnFocus="true" class="config-snippet" />
+        </ui:Foldout>
+
+        <ui:Foldout text="Troubleshooting" value="false" class="base-foldout">
+            <ui:Label text="- Ensure Claude Desktop is installed&#10;- Check that the configuration directory exists&#10;- Create the config file if it doesn't exist&#10;- Verify JSON syntax is valid after manual edits&#10;- Completely quit and restart Claude Desktop after changes" class="section-desc" style="white-space: normal;" />
+        </ui:Foldout>
+
+        <ui:VisualElement class="row" style="margin-top: 8px;">
+            <ui:VisualElement name="configureStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
+            <ui:Label text="Not configured" name="configureStatusText" style="flex-grow: 1;" />
+            <ui:Button name="btnConfigure" text="Configure" class="btn-primary" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

@@ -55,6 +55,7 @@
             <ui:VisualElement class="divider" />
             <ui:Label text="Configure MCP Client" class="header" />
             <ui:Label text="At least one client should be configured.&#10;Some clients need restart after configuration." class="section-desc" />
+            <ui:DropdownField name="mcpClientDropdown" label="MCP Client" class="content-item" />
             <ui:VisualElement name="ConfigureClientsContainer" />
             <ui:VisualElement name="ConfigureClient-Custom" class="frame-group" style="flex-grow: 1;">
                 <ui:Label text="Manual configuration" class="section-title" />

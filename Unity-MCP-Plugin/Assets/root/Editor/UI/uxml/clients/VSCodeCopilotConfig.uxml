@@ -1,0 +1,25 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement class="frame-group" style="flex-grow: 1;">
+        <ui:Label text="Visual Studio Code (Copilot) Configuration" class="section-title" />
+        <ui:Label text="Configure MCP for GitHub Copilot in Visual Studio Code." class="section-desc" style="margin-top: 4px;" />
+
+        <ui:Foldout text="Configuration Steps" value="true" class="base-foldout">
+            <ui:Label text="1. Install Visual Studio Code and GitHub Copilot extension&#10;2. The configuration file should be placed at:&#10;   .vscode/mcp.json (in your project root)&#10;3. Click 'Configure' to automatically create/update the configuration&#10;4. Reload VS Code window to apply changes" class="section-desc" style="white-space: normal;" />
+        </ui:Foldout>
+
+        <ui:Foldout text="Manual Configuration" value="false" class="base-foldout">
+            <ui:Label text="Create or update .vscode/mcp.json in your project with the following content under the 'servers' section:" class="section-desc" />
+            <ui:TextField name="configSnippet" multiline="true" readonly="true" selectOnFocus="true" class="config-snippet" />
+        </ui:Foldout>
+
+        <ui:Foldout text="Troubleshooting" value="false" class="base-foldout">
+            <ui:Label text="- Ensure GitHub Copilot extension is installed and active&#10;- Check that .vscode folder exists in project root&#10;- Verify JSON syntax is valid&#10;- Use Command Palette > 'Developer: Reload Window' after changes&#10;- Check Copilot extension settings for MCP support" class="section-desc" style="white-space: normal;" />
+        </ui:Foldout>
+
+        <ui:VisualElement class="row" style="margin-top: 8px;">
+            <ui:VisualElement name="configureStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
+            <ui:Label text="Not configured" name="configureStatusText" style="flex-grow: 1;" />
+            <ui:Button name="btnConfigure" text="Configure" class="btn-primary" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

@@ -1,0 +1,25 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement class="frame-group" style="flex-grow: 1;">
+        <ui:Label text="Cursor Configuration" class="section-title" />
+        <ui:Label text="Cursor is an AI-powered code editor built for pair programming." class="section-desc" style="margin-top: 4px;" />
+
+        <ui:Foldout text="Configuration Steps" value="true" class="base-foldout">
+            <ui:Label text="1. Install Cursor from cursor.sh&#10;2. The configuration file is located at:&#10;   ~/.cursor/mcp.json&#10;3. Click 'Configure' to automatically add the MCP server configuration&#10;4. Restart Cursor to apply changes" class="section-desc" style="white-space: normal;" />
+        </ui:Foldout>
+
+        <ui:Foldout text="Manual Configuration" value="false" class="base-foldout">
+            <ui:Label text="Add the following to your ~/.cursor/mcp.json file under the 'mcpServers' section:" class="section-desc" />
+            <ui:TextField name="configSnippet" multiline="true" readonly="true" selectOnFocus="true" class="config-snippet" />
+        </ui:Foldout>
+
+        <ui:Foldout text="Troubleshooting" value="false" class="base-foldout">
+            <ui:Label text="- Ensure Cursor is installed&#10;- Check that the ~/.cursor directory exists&#10;- Create the mcp.json file if it doesn't exist&#10;- Verify JSON syntax is valid after manual edits&#10;- Completely quit and restart Cursor after changes" class="section-desc" style="white-space: normal;" />
+        </ui:Foldout>
+
+        <ui:VisualElement class="row" style="margin-top: 8px;">
+            <ui:VisualElement name="configureStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
+            <ui:Label text="Not configured" name="configureStatusText" style="flex-grow: 1;" />
+            <ui:Button name="btnConfigure" text="Configure" class="btn-primary" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
