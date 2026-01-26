@@ -13,6 +13,7 @@ using System;
 using System.IO;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
@@ -53,12 +54,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         protected override void OnUICreated(VisualElement root)
         {
-            base.OnUICreated(root);
+            var textFieldGoToFolder = root.Q<TextField>("terminalGoToFolder");
+            var textFieldConfigureClaudeCode = root.Q<TextField>("terminalConfigureClaudeCode");
 
-            root.Q<TextField>("terminalGoToFolder").value = $"cd \"{ProjectRootPath}\"";
+            if (textFieldGoToFolder == null)
+            {
+                Debug.LogWarning("TextField 'terminalGoToFolder' not found in Claude Code configurator UI.");
+                return;
+            }
+
+            if (textFieldConfigureClaudeCode == null)
+            {
+                Debug.LogWarning("TextField 'terminalConfigureClaudeCode' not found in Claude Code configurator UI.");
+                return;
+            }
 
             var addMcpServerCommand = $"claude mcp add {AiAgentConfig.DefaultMcpServerName} \"{Startup.Server.ExecutableFullPath}\" port={UnityMcpPlugin.Port} client-transport=stdio";
-            root.Q<TextField>("terminalConfigureClaudeCode").value = addMcpServerCommand;
+
+            textFieldGoToFolder.value = $"cd \"{ProjectRootPath}\"";
+            textFieldConfigureClaudeCode.value = addMcpServerCommand;
+
+            base.OnUICreated(root);
         }
     }
 }

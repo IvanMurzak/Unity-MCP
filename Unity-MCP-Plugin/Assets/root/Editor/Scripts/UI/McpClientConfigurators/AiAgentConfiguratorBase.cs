@@ -161,7 +161,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             if (statusCircle == null || statusText == null || btnConfigure == null)
             {
-                Debug.LogWarning($"Config panel elements not found in client UI for {ClientConfig.Name}.");
+                Debug.LogWarning($"Config panel UI elements not found for {ClientConfig.Name}.");
                 return;
             }
 
