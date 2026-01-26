@@ -2,7 +2,7 @@
     <ui:VisualElement class="frame-group" style="flex-grow: 1;">
         <ui:Label text="Claude Code" class="section-title" />
         <ui:Label name="downloadLink" text="Download" class="section-desc link-label" />
-        <ui:Label text="Claude Code is a CLI tool by Anthropic for AI-assisted development." class="section-desc" />
+        <!-- <ui:Label text="Claude Code is a CLI tool by Anthropic for AI-assisted development." class="section-desc" /> -->
 
         <ui:VisualElement class="row" style="margin-top: 0px;">
             <ui:VisualElement name="configureStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
@@ -20,7 +20,11 @@
         </ui:Foldout>
 
         <ui:Foldout text="Troubleshooting" value="false" class="title-foldout">
-            <ui:Label text="- Ensure Claude Code CLI is installed and accessible from terminal&#10;- Check that the configuration file path exists&#10;- Verify JSON syntax is valid after manual edits&#10;- Restart Claude Code after configuration changes" class="section-desc" />
+            <ui:Label text="- Ensure Claude Code CLI is installed and accessible from terminal" class="section-desc" />
+            <ui:Label text="- Ensure Claude Code CLI is started in the same folder where Unity project is located. This folder must contains Assets folder inside" class="section-desc" />
+            <ui:Label text="- Ensure Claude Code is configured with the same port as it is in Unity right now" class="section-desc" />
+            <ui:Label text="- Check that the configuration file .claude.json exists" class="section-desc" />
+            <ui:Label text="- Restart Claude Code after configuration changes" class="section-desc" />
         </ui:Foldout>
     </ui:VisualElement>
 </ui:UXML>
