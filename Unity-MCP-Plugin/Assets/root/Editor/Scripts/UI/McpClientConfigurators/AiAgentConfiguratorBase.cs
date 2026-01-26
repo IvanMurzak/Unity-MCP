@@ -44,6 +44,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         protected abstract string[] UxmlPaths { get; }
 
         /// <summary>
+        /// Gets the icon file name for this agent (e.g., "claude-64.png").
+        /// Return null if no icon should be displayed.
+        /// </summary>
+        protected abstract string? IconFileName { get; }
+
+        /// <summary>
+        /// Gets the icon paths for this agent.
+        /// </summary>
+        protected string[]? IconPaths => IconFileName != null
+            ? EditorAssetLoader.GetEditorAssetPaths($"Editor/Gizmos/ai-agents/{IconFileName}")
+            : null;
+
+        /// <summary>
         /// Gets the agent configuration for the current platform.
         /// </summary>
         public AiAgentConfig ClientConfig
@@ -109,7 +122,35 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             if (downloadLink != null)
                 downloadLink.RegisterCallback<ClickEvent>(evt => Application.OpenURL(DownloadUrl));
 
+            SetAgentIcon(root);
             CreateConfigureStatusIndicator(root);
+        }
+
+        /// <summary>
+        /// Sets the agent icon on the agentIcon element.
+        /// </summary>
+        /// <param name="root">The root visual element containing the agentIcon element.</param>
+        protected virtual void SetAgentIcon(VisualElement root)
+        {
+            var agentIcon = root.Q<VisualElement>("agentIcon");
+            if (agentIcon == null)
+                return;
+
+            if (IconPaths == null)
+            {
+                agentIcon.style.display = DisplayStyle.None;
+                return;
+            }
+
+            var icon = EditorAssetLoader.LoadAssetAtPath<Texture2D>(IconPaths);
+            if (icon != null)
+            {
+                agentIcon.style.backgroundImage = new StyleBackground(icon);
+            }
+            else
+            {
+                agentIcon.style.display = DisplayStyle.None;
+            }
         }
 
         protected virtual void CreateConfigureStatusIndicator(VisualElement root)

@@ -24,6 +24,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public override string DownloadUrl => "https://visualstudio.microsoft.com/downloads/";
 
         protected override string[] UxmlPaths => EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/agents/VisualStudioCopilotConfig.uxml");
+        protected override string? IconFileName => "visual-studio-64.png";
 
         protected override AiAgentConfig CreateConfigWindows() => new JsonAiAgentConfig(
             name: AgentName,

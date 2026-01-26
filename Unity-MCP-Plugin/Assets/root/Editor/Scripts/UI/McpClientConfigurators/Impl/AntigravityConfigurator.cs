@@ -26,6 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public override string DownloadUrl => "https://antigravity.google/download";
 
         protected override string[] UxmlPaths => EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/agents/AntigravityConfig.uxml");
+        protected override string? IconFileName => "antigravity-64.png";
 
         protected override AiAgentConfig CreateConfigWindows() => new JsonAiAgentConfig(
             name: AgentName,

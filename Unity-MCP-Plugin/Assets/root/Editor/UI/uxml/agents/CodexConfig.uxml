@@ -1,7 +1,12 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <ui:VisualElement class="frame-group" style="flex-grow: 1;">
-        <ui:Label text="Codex" class="section-title" />
-        <ui:Label name="downloadLink" text="Download" class="section-desc link-label" />
+        <ui:VisualElement style="flex-direction: row; align-items: center;">
+            <ui:VisualElement name="agentIcon" class="agent-icon" />
+            <ui:VisualElement style="flex-grow: 1;">
+                <ui:Label text="Codex" class="section-title" />
+                <ui:Label name="downloadLink" text="Download" class="section-desc link-label" />
+            </ui:VisualElement>
+        </ui:VisualElement>
         <ui:Label text="Configure MCP for OpenAI Codex CLI." class="section-desc" style="margin-top: 4px;" />
 
         <ui:VisualElement class="row" style="margin-top: 0px;">

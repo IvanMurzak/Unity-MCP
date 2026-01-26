@@ -26,6 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public override string DownloadUrl => "https://code.claude.com/docs/en/desktop";
 
         protected override string[] UxmlPaths => EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/agents/ClaudeDesktopConfig.uxml");
+        protected override string? IconFileName => "claude-64.png";
 
         protected override AiAgentConfig CreateConfigWindows() => new JsonAiAgentConfig(
             name: AgentName,

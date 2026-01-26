@@ -27,6 +27,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public override string DownloadUrl => "https://docs.anthropic.com/en/docs/claude-code/overview";
 
         protected override string[] UxmlPaths => EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/agents/ClaudeCodeConfig.uxml");
+        protected override string? IconFileName => "claude-64.png";
 
         protected override AiAgentConfig CreateConfigWindows() => new JsonAiAgentConfig(
             name: AgentName,

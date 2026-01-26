@@ -25,6 +25,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public override string DownloadUrl => "https://geminicli.com/docs/get-started/installation/";
 
         protected override string[] UxmlPaths => EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/agents/GeminiConfig.uxml");
+        protected override string? IconFileName => "gemini-64.png";
 
         protected override AiAgentConfig CreateConfigWindows() => new JsonAiAgentConfig(
             name: AgentName,
