@@ -21,11 +21,16 @@ using UnityEngine;
 namespace com.IvanMurzak.Unity.MCP
 {
     using ILogger = Microsoft.Extensions.Logging.ILogger;
+
+    /// <summary>
+    /// A file-based log storage that uses the base class's lock-free ConcurrentQueue for buffering.
+    /// Append operations are lock-free and safe to call from any thread (including Unity's log callback threads).
+    /// This class extends the base with optional flush threshold support.
+    /// </summary>
     public class BufferedFileLogStorage : FileLogStorage
     {
         protected readonly int _flushEntriesThreshold;
-        protected readonly LogEntry[] _logEntriesBuffer;
-        protected int _logEntriesBufferLength;
+        private int _appendsSinceLastFlush;
 
         public BufferedFileLogStorage(
             ILogger? logger = null,
@@ -41,8 +46,30 @@ namespace com.IvanMurzak.Unity.MCP
                 throw new ArgumentOutOfRangeException(nameof(flushEntriesThreshold), "Flush entries threshold must be greater than zero.");
 
             _flushEntriesThreshold = flushEntriesThreshold;
-            _logEntriesBuffer = new LogEntry[flushEntriesThreshold];
-            _logEntriesBufferLength = 0;
+            _appendsSinceLastFlush = 0;
+        }
+
+        /// <summary>
+        /// Appends log entries using lock-free ConcurrentQueue from base class.
+        /// Triggers an async flush when threshold is reached.
+        /// </summary>
+        public override void Append(params LogEntry[] entries)
+        {
+            base.Append(entries);
+
+            // Track appends and trigger async flush when threshold is reached
+            // Using Interlocked for thread-safe increment
+            var count = System.Threading.Interlocked.Add(ref _appendsSinceLastFlush, entries.Length);
+            if (count >= _flushEntriesThreshold)
+            {
+                System.Threading.Interlocked.Exchange(ref _appendsSinceLastFlush, 0);
+                // Fire-and-forget async flush - don't block the calling thread
+                _ = Task.Run(() =>
+                {
+                    try { Flush(); }
+                    catch { /* Ignore flush errors in background */ }
+                });
+            }
         }
 
         public override void Flush()
@@ -54,32 +81,20 @@ namespace com.IvanMurzak.Unity.MCP
                 return;
             }
 
-            // Use timeout to prevent deadlock during domain reload.
-            // If lock cannot be acquired quickly, skip flush rather than freeze Unity.
-            if (!_fileLock.Wait(TimeSpan.FromMilliseconds(100)))
-            {
-                _logger.LogWarning("{method} could not acquire lock within 100ms timeout. " +
-                    "Skipping flush to prevent domain reload freeze.", nameof(Flush));
-                return;
-            }
-
+            _fileLock.Wait();
             try
             {
-                // Flush buffered entries to file
-                if (_logEntriesBufferLength > 0)
-                {
-                    var entriesToFlush = new LogEntry[_logEntriesBufferLength];
-                    Array.Copy(_logEntriesBuffer, entriesToFlush, _logEntriesBufferLength);
-                    base.AppendInternal(entriesToFlush);
-                    _logEntriesBufferLength = 0;
-                }
+                // Flush all pending entries from the concurrent queue
+                FlushPendingEntries();
                 fileWriteStream?.Flush();
+                System.Threading.Interlocked.Exchange(ref _appendsSinceLastFlush, 0);
             }
             finally
             {
                 _fileLock.Release();
             }
         }
+
         public override async Task FlushAsync()
         {
             if (_isDisposed.Value)
@@ -88,50 +103,19 @@ namespace com.IvanMurzak.Unity.MCP
                     nameof(FlushAsync));
                 return;
             }
+
             await _fileLock.WaitAsync();
             try
             {
-                // Flush buffered entries to file
-                if (_logEntriesBufferLength > 0)
-                {
-                    var entriesToFlush = new LogEntry[_logEntriesBufferLength];
-                    Array.Copy(_logEntriesBuffer, entriesToFlush, _logEntriesBufferLength);
-                    base.AppendInternal(entriesToFlush);
-                    _logEntriesBufferLength = 0;
-                }
-
+                // Flush all pending entries from the concurrent queue
+                FlushPendingEntries();
                 if (fileWriteStream != null)
                     await fileWriteStream.FlushAsync();
+                System.Threading.Interlocked.Exchange(ref _appendsSinceLastFlush, 0);
             }
             finally
             {
                 _fileLock.Release();
-            }
-        }
-
-        protected override void AppendInternal(params LogEntry[] entries)
-        {
-            if (_isDisposed.Value)
-            {
-                _logger.LogWarning("{method} called but already disposed, ignored.",
-                    nameof(AppendInternal));
-                return;
-            }
-            if (_logEntriesBufferLength >= _flushEntriesThreshold)
-            {
-                base.AppendInternal(_logEntriesBuffer);
-                _logEntriesBufferLength = 0;
-            }
-            foreach (var entry in entries)
-            {
-                _logEntriesBuffer[_logEntriesBufferLength] = entry;
-                _logEntriesBufferLength++;
-
-                if (_logEntriesBufferLength >= _flushEntriesThreshold)
-                {
-                    base.AppendInternal(_logEntriesBuffer);
-                    _logEntriesBufferLength = 0;
-                }
             }
         }
 
@@ -147,20 +131,16 @@ namespace com.IvanMurzak.Unity.MCP
                 return;
             }
 
-            // Use timeout to prevent deadlock during domain reload.
-            if (!_fileLock.Wait(TimeSpan.FromMilliseconds(100)))
-            {
-                _logger.LogWarning("{method} could not acquire lock within 100ms timeout. " +
-                    "Skipping clear to prevent domain reload freeze.", nameof(Clear));
-                return;
-            }
-
+            _fileLock.Wait();
             try
             {
+                // Clear pending entries without writing them
+                while (_pendingEntries.TryDequeue(out _)) { }
+
                 fileWriteStream?.Close();
                 fileWriteStream?.Dispose();
                 fileWriteStream = null;
-                _logEntriesBufferLength = 0;
+                System.Threading.Interlocked.Exchange(ref _appendsSinceLastFlush, 0);
 
                 if (File.Exists(filePath))
                     File.Delete(filePath);
@@ -187,14 +167,7 @@ namespace com.IvanMurzak.Unity.MCP
                 return Array.Empty<LogEntry>();
             }
 
-            // Use timeout to prevent deadlock during domain reload.
-            if (!_fileLock.Wait(TimeSpan.FromMilliseconds(100)))
-            {
-                _logger.LogWarning("{method} could not acquire lock within 100ms timeout. " +
-                    "Returning empty result to prevent domain reload freeze.", nameof(Query));
-                return Array.Empty<LogEntry>();
-            }
-
+            _fileLock.Wait();
             try
             {
                 return QueryInternal(maxEntries, logTypeFilter, includeStackTrace, lastMinutes);
@@ -213,22 +186,21 @@ namespace com.IvanMurzak.Unity.MCP
         {
             var result = new List<LogEntry>();
             var cutoffTime = lastMinutes > 0
-                ? System.DateTime.Now.AddMinutes(-lastMinutes)
-                : System.DateTime.MinValue;
+                ? DateTime.Now.AddMinutes(-lastMinutes)
+                : DateTime.MinValue;
 
-            // 1. Get from buffer (Newest are at the end of buffer)
-            for (int i = _logEntriesBufferLength - 1; i >= 0; i--)
+            // 1. Get from pending queue (newest entries not yet flushed to file)
+            // Convert to array to get a snapshot of pending entries
+            var pendingArray = _pendingEntries.ToArray();
+            for (int i = pendingArray.Length - 1; i >= 0; i--)
             {
-                var entry = _logEntriesBuffer[i];
+                var entry = pendingArray[i];
                 if (logTypeFilter.HasValue && entry.LogType != logTypeFilter.Value)
                     continue;
 
-                if (lastMinutes > 0)
+                if (lastMinutes > 0 && entry.Timestamp < cutoffTime)
                 {
-                    if (entry.Timestamp < cutoffTime)
-                    {
-                        return result.AsEnumerable().Reverse().ToArray();
-                    }
+                    return result.AsEnumerable().Reverse().ToArray();
                 }
 
                 result.Add(entry);

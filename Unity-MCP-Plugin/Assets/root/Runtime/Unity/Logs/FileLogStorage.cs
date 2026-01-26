@@ -10,6 +10,7 @@
 
 #nullable enable
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -40,6 +41,13 @@ namespace com.IvanMurzak.Unity.MCP
         protected readonly int _fileBufferSize;
         protected readonly long _maxFileSizeBytes;
         protected readonly ThreadSafeBool _isDisposed = new(false);
+
+        /// <summary>
+        /// Lock-free queue for pending log entries. Append operations add to this queue
+        /// without acquiring any locks, preventing deadlocks during domain reload.
+        /// Only Flush operations drain this queue while holding the file lock.
+        /// </summary>
+        protected readonly ConcurrentQueue<LogEntry> _pendingEntries = new();
 
         protected string fileName;
         protected string filePath;
@@ -141,23 +149,46 @@ namespace com.IvanMurzak.Unity.MCP
                 return;
             }
 
-            // Use timeout to prevent deadlock during domain reload.
-            // If lock cannot be acquired quickly, skip flush rather than freeze Unity.
-            if (!_fileLock.Wait(TimeSpan.FromMilliseconds(100)))
-            {
-                _logger.LogWarning("{method} could not acquire lock within 100ms timeout. " +
-                    "Skipping flush to prevent domain reload freeze.", nameof(Flush));
-                return;
-            }
-
+            _fileLock.Wait();
             try
             {
+                FlushPendingEntries();
                 fileWriteStream?.Flush();
             }
             finally
             {
                 _fileLock.Release();
             }
+        }
+
+        /// <summary>
+        /// Drains the pending entries queue and writes them to the file.
+        /// Must be called while holding the file lock.
+        /// </summary>
+        protected virtual void FlushPendingEntries()
+        {
+            while (_pendingEntries.TryDequeue(out var entry))
+            {
+                WriteEntryToFile(entry);
+            }
+        }
+
+        /// <summary>
+        /// Writes a single log entry to the file stream.
+        /// Must be called while holding the file lock.
+        /// </summary>
+        protected virtual void WriteEntryToFile(LogEntry entry)
+        {
+            fileWriteStream ??= CreateWriteStream(_requestedFileName, out fileName, out filePath);
+
+            // Check if file size limit reached and reset if needed
+            if (fileWriteStream.Length >= _maxFileSizeBytes)
+            {
+                ResetLogFile();
+            }
+
+            System.Text.Json.JsonSerializer.Serialize(fileWriteStream, entry, _jsonOptions);
+            fileWriteStream.WriteByte((byte)'\n');
         }
         public virtual async Task FlushAsync()
         {
@@ -170,6 +201,7 @@ namespace com.IvanMurzak.Unity.MCP
             await _fileLock.WaitAsync();
             try
             {
+                FlushPendingEntries();
                 if (fileWriteStream != null)
                     await fileWriteStream.FlushAsync();
             }
@@ -179,6 +211,10 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
+        /// <summary>
+        /// Appends log entries asynchronously. This is a lock-free operation that adds entries
+        /// to a concurrent queue. Entries are written to file during the next Flush operation.
+        /// </summary>
         public virtual Task AppendAsync(params LogEntry[] entries)
         {
             if (_isDisposed.Value)
@@ -187,47 +223,42 @@ namespace com.IvanMurzak.Unity.MCP
                     nameof(AppendAsync));
                 return Task.CompletedTask;
             }
-            return Task.Run(async () =>
+
+            // Lock-free: just add to the concurrent queue
+            foreach (var entry in entries)
             {
-                await _fileLock.WaitAsync();
-                try
-                {
-                    AppendInternal(entries);
-                }
-                finally
-                {
-                    _fileLock.Release();
-                }
-            });
+                _pendingEntries.Enqueue(entry);
+            }
+
+            return Task.CompletedTask;
         }
 
+        /// <summary>
+        /// Appends log entries synchronously. This is a lock-free operation that adds entries
+        /// to a concurrent queue. Entries are written to file during the next Flush operation.
+        /// This method is safe to call from any thread, including Unity's log callback threads.
+        /// </summary>
         public virtual void Append(params LogEntry[] entries)
         {
             if (_isDisposed.Value)
             {
-                _logger.LogWarning("{method} called but already disposed, ignored.",
-                    nameof(Append));
+                // Silently ignore - don't log during disposal to prevent recursion
                 return;
             }
 
-            // Use timeout to prevent deadlock during domain reload.
-            if (!_fileLock.Wait(TimeSpan.FromMilliseconds(100)))
+            // Lock-free: just add to the concurrent queue
+            // This ensures background threads (like Unity's log callback) never hold locks
+            // that could cause deadlocks during domain reload.
+            foreach (var entry in entries)
             {
-                _logger.LogWarning("{method} could not acquire lock within 100ms timeout. " +
-                    "Skipping append to prevent domain reload freeze.", nameof(Append));
-                return;
-            }
-
-            try
-            {
-                AppendInternal(entries);
-            }
-            finally
-            {
-                _fileLock.Release();
+                _pendingEntries.Enqueue(entry);
             }
         }
 
+        /// <summary>
+        /// Writes log entries directly to file. Must be called while holding the file lock.
+        /// Used internally and by derived classes for batch writes.
+        /// </summary>
         protected virtual void AppendInternal(params LogEntry[] entries)
         {
             if (_isDisposed.Value)
@@ -236,20 +267,12 @@ namespace com.IvanMurzak.Unity.MCP
                     nameof(AppendInternal));
                 return;
             }
-            fileWriteStream ??= CreateWriteStream(_requestedFileName, out fileName, out filePath);
-
-            // Check if file size limit reached and reset if needed
-            if (fileWriteStream.Length >= _maxFileSizeBytes)
-            {
-                ResetLogFile();
-            }
 
             foreach (var entry in entries)
             {
-                System.Text.Json.JsonSerializer.Serialize(fileWriteStream, entry, _jsonOptions);
-                fileWriteStream.WriteByte((byte)'\n');
+                WriteEntryToFile(entry);
             }
-            fileWriteStream.Flush();
+            fileWriteStream?.Flush();
         }
 
         /// <summary>
@@ -290,16 +313,12 @@ namespace com.IvanMurzak.Unity.MCP
                 return;
             }
 
-            // Use timeout to prevent deadlock during domain reload.
-            if (!_fileLock.Wait(TimeSpan.FromMilliseconds(100)))
-            {
-                _logger.LogWarning("{method} could not acquire lock within 100ms timeout. " +
-                    "Skipping clear to prevent domain reload freeze.", nameof(Clear));
-                return;
-            }
-
+            _fileLock.Wait();
             try
             {
+                // Clear pending entries without writing them
+                while (_pendingEntries.TryDequeue(out _)) { }
+
                 fileWriteStream?.Dispose();
                 fileWriteStream = null;
 
@@ -343,16 +362,13 @@ namespace com.IvanMurzak.Unity.MCP
                 return Array.Empty<LogEntry>();
             }
 
-            // Use timeout to prevent deadlock during domain reload.
-            if (!_fileLock.Wait(TimeSpan.FromMilliseconds(100)))
-            {
-                _logger.LogWarning("{method} could not acquire lock within 100ms timeout. " +
-                    "Returning empty result to prevent domain reload freeze.", nameof(Query));
-                return Array.Empty<LogEntry>();
-            }
-
+            _fileLock.Wait();
             try
             {
+                // Flush pending entries first to ensure we query all data
+                FlushPendingEntries();
+                fileWriteStream?.Flush();
+
                 return QueryInternal(maxEntries, logTypeFilter, includeStackTrace, lastMinutes);
             }
             finally
