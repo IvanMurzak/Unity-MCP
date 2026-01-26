@@ -9,6 +9,8 @@
 */
 
 #nullable enable
+using System;
+using System.IO;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
@@ -16,11 +18,32 @@ namespace com.IvanMurzak.Unity.MCP.Editor
     /// <summary>
     /// Configurator for Codex MCP client.
     /// </summary>
-    public class CodexConfigurator : McpClientConfiguratorBase
+    public class CodexConfigurator : AiAgentConfiguratorBase
     {
-        public override string ClientName => "Codex";
-        public override string ClientId => "codex";
+        public override string AgentName => "Codex";
+        public override string AgentId => "codex";
+        public override string DownloadUrl => "https://openai.com/codex/";
 
         protected override string[] UxmlPaths => EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/clients/CodexConfig.uxml");
+
+        protected override AiAgentConfig CreateConfigWindows() => new TomlAiAgentConfig(
+            name: AgentName,
+            configPath: Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".codex",
+                "config.toml"
+            ),
+            bodyPath: "mcp_servers"
+        );
+
+        protected override AiAgentConfig CreateConfigMacLinux() => new TomlAiAgentConfig(
+            name: AgentName,
+            configPath: Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".codex",
+                "config.toml"
+            ),
+            bodyPath: "mcp_servers"
+        );
     }
 }

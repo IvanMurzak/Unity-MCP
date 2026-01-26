@@ -9,6 +9,9 @@
 */
 
 #nullable enable
+using System;
+using System.IO;
+using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
@@ -16,11 +19,34 @@ namespace com.IvanMurzak.Unity.MCP.Editor
     /// <summary>
     /// Configurator for Claude Code MCP client.
     /// </summary>
-    public class ClaudeCodeConfigurator : McpClientConfiguratorBase
+    public class ClaudeCodeConfigurator : AiAgentConfiguratorBase
     {
-        public override string ClientName => "Claude Code";
-        public override string ClientId => "claude-code";
+        public override string AgentName => "Claude Code";
+        public override string AgentId => "claude-code";
+        public override string DownloadUrl => "https://docs.anthropic.com/en/docs/claude-code/overview";
 
         protected override string[] UxmlPaths => EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/clients/ClaudeCodeConfig.uxml");
+
+        protected override AiAgentConfig CreateConfigWindows() => new JsonAiAgentConfig(
+            name: AgentName,
+            configPath: Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".claude.json"
+            ),
+            bodyPath: $"projects{Consts.MCP.Server.BodyPathDelimiter}"
+                + $"{ProjectRootPath}{Consts.MCP.Server.BodyPathDelimiter}"
+                + Consts.MCP.Server.DefaultBodyPath
+        );
+
+        protected override AiAgentConfig CreateConfigMacLinux() => new JsonAiAgentConfig(
+            name: AgentName,
+            configPath: Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".claude.json"
+            ),
+            bodyPath: $"projects{Consts.MCP.Server.BodyPathDelimiter}"
+                + $"{ProjectRootPath}{Consts.MCP.Server.BodyPathDelimiter}"
+                + Consts.MCP.Server.DefaultBodyPath
+        );
     }
 }

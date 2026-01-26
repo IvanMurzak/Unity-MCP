@@ -9,6 +9,9 @@
 */
 
 #nullable enable
+using System;
+using System.IO;
+using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
@@ -16,11 +19,34 @@ namespace com.IvanMurzak.Unity.MCP.Editor
     /// <summary>
     /// Configurator for Antigravity MCP client.
     /// </summary>
-    public class AntigravityConfigurator : McpClientConfiguratorBase
+    public class AntigravityConfigurator : AiAgentConfiguratorBase
     {
-        public override string ClientName => "Antigravity";
-        public override string ClientId => "antigravity";
+        public override string AgentName => "Antigravity";
+        public override string AgentId => "antigravity";
+        public override string DownloadUrl => "https://antigravity.google/download";
 
         protected override string[] UxmlPaths => EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/clients/AntigravityConfig.uxml");
+
+        protected override AiAgentConfig CreateConfigWindows() => new JsonAiAgentConfig(
+            name: AgentName,
+            configPath: Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".gemini",
+                "antigravity",
+                "mcp_config.json"
+            ),
+            bodyPath: Consts.MCP.Server.DefaultBodyPath
+        );
+
+        protected override AiAgentConfig CreateConfigMacLinux() => new JsonAiAgentConfig(
+            name: AgentName,
+            configPath: Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".gemini",
+                "antigravity",
+                "mcp_config.json"
+            ),
+            bodyPath: Consts.MCP.Server.DefaultBodyPath
+        );
     }
 }

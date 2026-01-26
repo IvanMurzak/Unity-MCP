@@ -19,9 +19,9 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
-    public class TomlClientConfig : ClientConfig
+    public class TomlAiAgentConfig : AiAgentConfig
     {
-        public TomlClientConfig(string name, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
+        public TomlAiAgentConfig(string name, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
             : base(name, configPath, bodyPath)
         {
         }

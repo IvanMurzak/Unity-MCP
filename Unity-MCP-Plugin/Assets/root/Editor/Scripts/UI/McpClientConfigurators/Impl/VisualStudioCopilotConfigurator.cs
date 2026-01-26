@@ -9,18 +9,32 @@
 */
 
 #nullable enable
+using System.IO;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
 {
     /// <summary>
-    /// Configurator for Visual Studio (Copilot) MCP client.
+    /// Configurator for Visual Studio (Copilot) AI Agent.
     /// </summary>
-    public class VisualStudioCopilotConfigurator : McpClientConfiguratorBase
+    public class VisualStudioCopilotConfigurator : AiAgentConfiguratorBase
     {
-        public override string ClientName => "Visual Studio (Copilot)";
-        public override string ClientId => "vs-copilot";
+        public override string AgentName => "Visual Studio (Copilot)";
+        public override string AgentId => "vs-copilot";
+        public override string DownloadUrl => "https://visualstudio.microsoft.com/downloads/";
 
         protected override string[] UxmlPaths => EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/clients/VisualStudioCopilotConfig.uxml");
+
+        protected override AiAgentConfig CreateConfigWindows() => new JsonAiAgentConfig(
+            name: AgentName,
+            configPath: Path.Combine(".vs", "mcp.json"),
+            bodyPath: "servers"
+        );
+
+        protected override AiAgentConfig CreateConfigMacLinux() => new JsonAiAgentConfig(
+            name: AgentName,
+            configPath: Path.Combine(".vs", "mcp.json"),
+            bodyPath: "servers"
+        );
     }
 }

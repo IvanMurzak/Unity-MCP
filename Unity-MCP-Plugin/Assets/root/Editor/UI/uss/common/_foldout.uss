@@ -2,8 +2,9 @@
    Foldout Styles - Animated expandable sections
    ========================================================================== */
 
-/* Common Foldout Base - shared by base-foldout and item-foldout */
+/* Common Foldout Base - shared by base-foldout, title-foldout and item-foldout */
 .base-foldout,
+.title-foldout,
 .item-foldout {
     margin-left: -4px;
     padding-left: 0px;
@@ -11,6 +12,7 @@
 
 /* Foldout Content Animation - shared expanded state */
 .base-foldout .unity-foldout__content,
+.title-foldout .unity-foldout__content,
 .item-foldout .unity-foldout__content {
     display: flex !important;
     overflow: hidden;
@@ -23,6 +25,7 @@
 
 /* Collapsed State - shared */
 .base-foldout.collapsed .unity-foldout__content,
+.title-foldout.collapsed .unity-foldout__content,
 .item-foldout.collapsed .unity-foldout__content {
     max-height: 0;
     opacity: 0;
@@ -37,6 +40,12 @@
 
 /* Item Foldout specific - bold text */
 .item-foldout .unity-foldout__text {
+    font-size: 13px;
+    -unity-font-style: bold;
+}
+
+/* Title Foldout specific - larger font for section headers */
+.title-foldout .unity-foldout__text {
     font-size: 13px;
     -unity-font-style: bold;
 }

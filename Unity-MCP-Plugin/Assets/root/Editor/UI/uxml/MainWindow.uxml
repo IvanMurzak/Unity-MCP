@@ -12,7 +12,11 @@
                 </ui:VisualElement>
             </ui:Box>
             <ui:VisualElement class="divider" />
-            <ui:Label text="Connect to MCP server" class="header" />
+            <ui:Label text="AI agent" class="header" />
+            <ui:DropdownField name="aiAgentDropdown" label="Choose" class="content-item" />
+            <ui:VisualElement name="ConfigureAgentsContainer" />
+            <ui:VisualElement class="divider" />
+            <ui:Label text="Connect" class="header" />
             <ui:TextField picking-mode="Ignore" label="Server URL" value="http://localhost:8080" name="InputServerURL" tooltip="Connection URL to an MCP server. Default value: http://localhost:8080" class="content-item" />
             <ui:Foldout text="Information" value="false" class="base-foldout">
                 <ui:Label text="Usually the server is hosted locally at:&#10;http://localhost:8080&#10;&#10;But feel free to connect to remote MCP server if needed. The connection under the hood is established using SignalR and supports wide range of features." class="section-desc" />
@@ -51,30 +55,6 @@
                 <ui:Foldout text="Information" value="false" class="base-foldout">
                     <ui:Label name="resourcesStatusLabel" text="Resources provide read-only data that AI can access to understand your Unity project. They expose information like scene hierarchy, asset metadata, project settings, and more.&#10;&#10;Unlike tools which perform actions, resources give AI contextual awareness without modifying anything. Resources are fetched on-demand when AI needs specific information." class="section-desc" />
                 </ui:Foldout>
-            </ui:VisualElement>
-            <ui:VisualElement class="divider" />
-            <ui:Label text="Configure MCP Client" class="header" />
-            <ui:Label text="At least one client should be configured.&#10;Some clients need restart after configuration." class="section-desc" />
-            <ui:DropdownField name="mcpClientDropdown" label="MCP Client" class="content-item" />
-            <ui:VisualElement name="ConfigureClientsContainer" />
-            <ui:VisualElement name="ConfigureClient-Custom" class="frame-group" style="flex-grow: 1;">
-                <ui:Label text="Manual configuration" class="section-title" />
-                <ui:VisualElement style="flex-direction: row; margin-top: 4px;">
-                    <ui:Toggle name="toggleOptionStdio" label="STDIO" class="toggle-text-button" />
-                    <ui:Toggle name="toggleOptionHttp" label="Streamable HTTP" class="toggle-text-button" />
-                </ui:VisualElement>
-                <ui:VisualElement name="containerStdio">
-                    <ui:Label text="Copy paste the json into your MCP Client to configure it." class="section-desc" style="margin-top: 4px;" />
-                    <ui:TextField name="rawJsonConfigurationStdio" multiline="true" readonly="true" selectOnFocus="true" value="..." style="margin-right: 0; margin-left: 0; margin-bottom: 4px;" />
-                </ui:VisualElement>
-                <ui:VisualElement name="containerHttp">
-                    <ui:Label text="Copy paste the json into your MCP Client to configure it." class="section-desc" style="margin-top: 4px;" />
-                    <ui:TextField name="rawJsonConfigurationHttp" multiline="true" readonly="true" selectOnFocus="true" value="..." style="margin-right: 0; margin-left: 0; margin-bottom: 4px;" />
-
-                    <ui:Label text="Start the MCP server using Docker." class="section-desc" style="margin-top: 4px;" />
-                    <ui:TextField name="dockerCommand" multiline="true" readonly="true" selectOnFocus="true" value="..." style="margin-right: 0; margin-left: 0; margin-bottom: 4px;" />
-                </ui:VisualElement>
-
             </ui:VisualElement>
             <ui:VisualElement class="divider" />
             <ui:VisualElement>

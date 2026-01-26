@@ -134,3 +134,9 @@
     margin-left: 15px;
     margin-bottom: 8px;
 }
+
+/* Link label - clickable text styled as a hyperlink */
+.link-label {
+    color: #4FC3F7;
+    cursor: link;
+}

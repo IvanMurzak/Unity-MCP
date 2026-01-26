@@ -52,7 +52,7 @@
 
 /* Frame/Group containers */
 .frame-group {
-    background-color: rgba(48, 48, 48, 0.4);
+    background-color: rgba(20, 40, 69, 0.2);
     border-radius: 16px;
     padding: 8px;
     margin-top: 8px;
@@ -105,3 +105,4 @@
     width: 100%;
     max-width: 280px;
 }
+

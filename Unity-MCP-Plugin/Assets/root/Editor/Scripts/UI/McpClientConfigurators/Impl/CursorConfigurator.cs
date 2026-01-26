@@ -9,6 +9,9 @@
 */
 
 #nullable enable
+using System;
+using System.IO;
+using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
@@ -16,11 +19,32 @@ namespace com.IvanMurzak.Unity.MCP.Editor
     /// <summary>
     /// Configurator for Cursor MCP client.
     /// </summary>
-    public class CursorConfigurator : McpClientConfiguratorBase
+    public class CursorConfigurator : AiAgentConfiguratorBase
     {
-        public override string ClientName => "Cursor";
-        public override string ClientId => "cursor";
+        public override string AgentName => "Cursor";
+        public override string AgentId => "cursor";
+        public override string DownloadUrl => "https://cursor.com/download";
 
         protected override string[] UxmlPaths => EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/clients/CursorConfig.uxml");
+
+        protected override AiAgentConfig CreateConfigWindows() => new JsonAiAgentConfig(
+            name: AgentName,
+            configPath: Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".cursor",
+                "mcp.json"
+            ),
+            bodyPath: Consts.MCP.Server.DefaultBodyPath
+        );
+
+        protected override AiAgentConfig CreateConfigMacLinux() => new JsonAiAgentConfig(
+            name: AgentName,
+            configPath: Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".cursor",
+                "mcp.json"
+            ),
+            bodyPath: Consts.MCP.Server.DefaultBodyPath
+        );
     }
 }

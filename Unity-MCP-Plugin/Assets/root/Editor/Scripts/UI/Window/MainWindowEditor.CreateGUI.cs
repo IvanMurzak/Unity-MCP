@@ -33,9 +33,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         private static readonly string[] _githubIconPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/Gizmos/github_icon.png");
         private static readonly string[] _starIconPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/Gizmos/star_icon.png");
 
-        const string USS_IndicatorClass_Connected = "status-indicator-circle-online";
-        const string USS_IndicatorClass_Connecting = "status-indicator-circle-connecting";
-        const string USS_IndicatorClass_Disconnected = "status-indicator-circle-disconnected";
+        public const string USS_IndicatorClass_Connected = "status-indicator-circle-online";
+        public const string USS_IndicatorClass_Connecting = "status-indicator-circle-connecting";
+        public const string USS_IndicatorClass_Disconnected = "status-indicator-circle-disconnected";
 
         const string ServerButtonText_Connect = "Connect";
         const string ServerButtonText_Disconnect = "Disconnect";
@@ -64,7 +64,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             var inputTimeoutMs = root.Query<IntegerField>("inputTimeoutMs").First();
             inputTimeoutMs.value = UnityMcpPlugin.TimeoutMs;
-            inputTimeoutMs.tooltip = $"Timeout for MCP tool execution in milliseconds.\n\nMost tools only need a few seconds.\n\nSet this higher than your longest test execution time.\n\nImportant: Also update the '{Consts.MCP.Server.Args.PluginTimeout}' argument in your MCP client configuration to match this value so your MCP client doesn't timeout before the tool completes.";
+            inputTimeoutMs.tooltip = $"Timeout for MCP tool execution in milliseconds.\n\nMost tools only need a few seconds.\n\nSet this higher than your longest test execution time.\n\nImportant: Also update the '{Consts.MCP.Server.Args.PluginTimeout}' argument in your AI agent configuration to match this value so your AI agent doesn't timeout before the tool completes.";
             inputTimeoutMs.RegisterCallback<FocusOutEvent>(evt =>
             {
                 var newValue = Mathf.Max(1000, inputTimeoutMs.value);
@@ -351,70 +351,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     .AddTo(_disposables);
             }).AddTo(_disposables);
 
-            // Configure MCP Client
+            // Configure AI Agent
             // -----------------------------------------------------------------
 
-#if UNITY_EDITOR_WIN
-            ConfigureClientsWindows(root);
-#elif UNITY_EDITOR_OSX || UNITY_EDITOR_LINUX
-            ConfigureClientsMacAndLinux(root);
-#endif
-
-            // Provide raw json configuration
-            // -----------------------------------------------------------------
-
-            var toggleOptionStdio = root.Query<Toggle>("toggleOptionStdio").First();
-            var toggleOptionHttp = root.Query<Toggle>("toggleOptionHttp").First();
-
-            var containerStdio = root.Query<VisualElement>("containerStdio").First();
-            var containerHttp = root.Query<VisualElement>("containerHttp").First();
-
-            var rawJsonFieldStdio = root.Query<TextField>("rawJsonConfigurationStdio").First();
-            var rawJsonFieldHttp = root.Query<TextField>("rawJsonConfigurationHttp").First();
-            var dockerCommand = root.Query<TextField>("dockerCommand").First();
-
-            rawJsonFieldStdio.value = Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, "mcpServers", UnityMcpPlugin.TimeoutMs).ToString();
-            rawJsonFieldHttp.value = Startup.Server.RawJsonConfigurationHttp(UnityMcpPlugin.Host, "mcpServers").ToString();
-            dockerCommand.value = Startup.Server.DockerRunCommand();
-
-            void UpdateConfigurationVisibility(bool isStdioSelected)
-            {
-                containerStdio.style.display = isStdioSelected ? DisplayStyle.Flex : DisplayStyle.None;
-                containerHttp.style.display = isStdioSelected ? DisplayStyle.None : DisplayStyle.Flex;
-            }
-
-            // Initialize with STDIO selected by default
-            toggleOptionStdio.value = true;
-            toggleOptionHttp.value = false;
-            UpdateConfigurationVisibility(true);
-
-            toggleOptionStdio.RegisterValueChangedCallback(evt =>
-            {
-                if (evt.newValue)
-                {
-                    toggleOptionHttp.SetValueWithoutNotify(false);
-                    UpdateConfigurationVisibility(true);
-                }
-                else if (!toggleOptionHttp.value)
-                {
-                    // Prevent both toggles from being unchecked
-                    toggleOptionStdio.SetValueWithoutNotify(true);
-                }
-            });
-
-            toggleOptionHttp.RegisterValueChangedCallback(evt =>
-            {
-                if (evt.newValue)
-                {
-                    toggleOptionStdio.SetValueWithoutNotify(false);
-                    UpdateConfigurationVisibility(false);
-                }
-                else if (!toggleOptionStdio.value)
-                {
-                    // Prevent both toggles from being unchecked
-                    toggleOptionHttp.SetValueWithoutNotify(true);
-                }
-            });
+            ConfigureAgents(root);
 
             // Foldout animations
             // -----------------------------------------------------------------

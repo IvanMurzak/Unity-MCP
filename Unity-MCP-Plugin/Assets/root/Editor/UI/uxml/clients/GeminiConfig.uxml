@@ -1,25 +1,24 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <ui:VisualElement class="frame-group" style="flex-grow: 1;">
-        <ui:Label text="Gemini Configuration" class="section-title" />
-        <ui:Label text="Configure MCP for Google Gemini AI assistant." class="section-desc" style="margin-top: 4px;" />
+        <ui:Label text="Gemini" class="section-title" />
+        <ui:Label name="downloadLink" text="Download" class="section-desc link-label" />
+        <ui:Label text="Gemini CLI is Google's AI agent that operates locally on your machine." class="section-desc" style="margin-top: 4px;" />
 
-        <ui:Foldout text="Configuration Steps" value="true" class="base-foldout">
-            <ui:Label text="1. Ensure Gemini CLI or integration is installed&#10;2. The configuration file should be placed at:&#10;   .gemini/settings.json (in your project root)&#10;3. Click 'Configure' to automatically create/update the configuration&#10;4. Restart Gemini integration to apply changes" class="section-desc" style="white-space: normal;" />
-        </ui:Foldout>
-
-        <ui:Foldout text="Manual Configuration" value="false" class="base-foldout">
-            <ui:Label text="Create or update .gemini/settings.json in your project with the following content under the 'mcpServers' section:" class="section-desc" />
-            <ui:TextField name="configSnippet" multiline="true" readonly="true" selectOnFocus="true" class="config-snippet" />
-        </ui:Foldout>
-
-        <ui:Foldout text="Troubleshooting" value="false" class="base-foldout">
-            <ui:Label text="- Ensure Gemini integration is properly set up&#10;- Check that .gemini folder exists in project root&#10;- Verify JSON syntax is valid&#10;- Restart any Gemini services after changes" class="section-desc" style="white-space: normal;" />
-        </ui:Foldout>
-
-        <ui:VisualElement class="row" style="margin-top: 8px;">
+        <ui:VisualElement class="row" style="margin-top: 0px;">
             <ui:VisualElement name="configureStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
             <ui:Label text="Not configured" name="configureStatusText" style="flex-grow: 1;" />
             <ui:Button name="btnConfigure" text="Configure" class="btn-primary" />
         </ui:VisualElement>
+
+        <ui:Foldout text="Manual Configuration Steps" value="false" class="title-foldout" style="margin-top: 8px;">
+            <ui:Label text="1. Open a terminal and run the following command to be in the folder of the Unity project" class="section-desc" />
+            <ui:TextField name="terminalGoToFolder" multiline="true" readonly="true" selectOnFocus="true" class="config-snippet" style="margin-bottom: 8px;" />
+            <ui:Label text="2. Run the following command in the folder of the Unity project to configure Claude Code" class="section-desc" />
+            <ui:TextField name="terminalConfigureClaudeCode" multiline="true" readonly="true" selectOnFocus="true" class="config-snippet" style="margin-bottom: 8px;" />
+        </ui:Foldout>
+
+        <ui:Foldout text="Troubleshooting" value="false" class="title-foldout">
+            <ui:Label text="- Ensure Claude Code CLI is installed and accessible from terminal&#10;- Check that the configuration file path exists&#10;- Verify JSON syntax is valid after manual edits&#10;- Restart Claude Code after configuration changes" class="section-desc" />
+        </ui:Foldout>
     </ui:VisualElement>
 </ui:UXML>

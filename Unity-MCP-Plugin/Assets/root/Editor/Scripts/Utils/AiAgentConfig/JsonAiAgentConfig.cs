@@ -19,9 +19,9 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
-    public class JsonClientConfig : ClientConfig
+    public class JsonAiAgentConfig : AiAgentConfig
     {
-        public JsonClientConfig(string name, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
+        public JsonAiAgentConfig(string name, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
             : base(name, configPath, bodyPath)
         {
         }

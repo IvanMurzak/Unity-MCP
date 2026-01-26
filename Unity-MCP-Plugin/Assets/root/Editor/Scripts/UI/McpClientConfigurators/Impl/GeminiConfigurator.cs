@@ -9,6 +9,8 @@
 */
 
 #nullable enable
+using System.IO;
+using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
@@ -16,11 +18,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor
     /// <summary>
     /// Configurator for Gemini MCP client.
     /// </summary>
-    public class GeminiConfigurator : McpClientConfiguratorBase
+    public class GeminiConfigurator : AiAgentConfiguratorBase
     {
-        public override string ClientName => "Gemini";
-        public override string ClientId => "gemini";
+        public override string AgentName => "Gemini";
+        public override string AgentId => "gemini";
+        public override string DownloadUrl => "https://geminicli.com/docs/get-started/installation/";
 
         protected override string[] UxmlPaths => EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/clients/GeminiConfig.uxml");
+
+        protected override AiAgentConfig CreateConfigWindows() => new JsonAiAgentConfig(
+            name: AgentName,
+            configPath: Path.Combine(".gemini", "settings.json"),
+            bodyPath: Consts.MCP.Server.DefaultBodyPath
+        );
+
+        protected override AiAgentConfig CreateConfigMacLinux() => new JsonAiAgentConfig(
+            name: AgentName,
+            configPath: Path.Combine(".gemini", "settings.json"),
+            bodyPath: Consts.MCP.Server.DefaultBodyPath
+        );
     }
 }
