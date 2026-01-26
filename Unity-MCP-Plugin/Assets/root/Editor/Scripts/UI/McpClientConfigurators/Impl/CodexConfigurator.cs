@@ -24,7 +24,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public override string AgentId => "codex";
         public override string DownloadUrl => "https://openai.com/codex/";
 
-        protected override string[] UxmlPaths => EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/clients/CodexConfig.uxml");
+        protected override string[] UxmlPaths => EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/agents/CodexConfig.uxml");
 
         protected override AiAgentConfig CreateConfigWindows() => new TomlAiAgentConfig(
             name: AgentName,

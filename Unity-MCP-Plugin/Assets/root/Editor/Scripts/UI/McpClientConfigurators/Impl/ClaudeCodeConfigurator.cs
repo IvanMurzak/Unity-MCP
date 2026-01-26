@@ -13,11 +13,12 @@ using System;
 using System.IO;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
+using UnityEngine.UIElements;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
 {
     /// <summary>
-    /// Configurator for Claude Code MCP client.
+    /// Configurator for Claude Code AI agent.
     /// </summary>
     public class ClaudeCodeConfigurator : AiAgentConfiguratorBase
     {
@@ -25,7 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public override string AgentId => "claude-code";
         public override string DownloadUrl => "https://docs.anthropic.com/en/docs/claude-code/overview";
 
-        protected override string[] UxmlPaths => EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/clients/ClaudeCodeConfig.uxml");
+        protected override string[] UxmlPaths => EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/agents/ClaudeCodeConfig.uxml");
 
         protected override AiAgentConfig CreateConfigWindows() => new JsonAiAgentConfig(
             name: AgentName,
@@ -48,5 +49,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 + $"{ProjectRootPath}{Consts.MCP.Server.BodyPathDelimiter}"
                 + Consts.MCP.Server.DefaultBodyPath
         );
+
+        protected override void OnUICreated(VisualElement root)
+        {
+            base.OnUICreated(root);
+
+            root.Q<TextField>("terminalGoToFolder").value = $"cd \"{ProjectRootPath}\"";
+
+            var addMcpServerCommand = $"claude mcp add {AiAgentConfig.DefaultMcpServerName} \"{Startup.Server.ExecutableFullPath}\" port={UnityMcpPlugin.Port} client-transport=stdio";
+            root.Q<TextField>("terminalConfigureClaudeCode").value = addMcpServerCommand;
+        }
     }
 }

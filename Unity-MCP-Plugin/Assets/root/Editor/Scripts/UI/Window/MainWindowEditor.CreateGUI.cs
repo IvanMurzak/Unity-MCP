@@ -356,17 +356,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             ConfigureAgents(root);
 
-            // Foldout animations
-            // -----------------------------------------------------------------
-            root.Query<Foldout>().ForEach(foldout =>
-            {
-                foldout.RegisterValueChangedCallback(evt =>
-                {
-                    UpdateFoldoutState(foldout, evt.newValue);
-                });
-                UpdateFoldoutState(foldout, foldout.value);
-            });
-
             // Social buttons
             // -----------------------------------------------------------------
 
@@ -386,6 +375,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 btnCheckSerialization.tooltip = "Open Serialization Check window";
                 btnCheckSerialization.RegisterCallback<ClickEvent>(evt => SerializationCheckWindow.ShowWindow());
             }
+
+            // Foldout animations
+            // -----------------------------------------------------------------
+            EnableSmoothFoldoutTransitions(root);
         }
 
         private static void SetupSocialButton(VisualElement root, string buttonName, string iconName, Texture2D? icon, string url, string tooltip)

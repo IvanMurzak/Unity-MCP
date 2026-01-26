@@ -23,7 +23,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public override string AgentId => "other-custom";
         public override string DownloadUrl => "NA";
 
-        protected override string[] UxmlPaths => EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/clients/CustomConfig.uxml");
+        protected override string[] UxmlPaths => EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/agents/CustomConfig.uxml");
 
         protected override void CreateConfigureStatusIndicator(VisualElement root)
         {

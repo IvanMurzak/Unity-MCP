@@ -25,7 +25,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public override string AgentId => "cursor";
         public override string DownloadUrl => "https://cursor.com/download";
 
-        protected override string[] UxmlPaths => EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/clients/CursorConfig.uxml");
+        protected override string[] UxmlPaths => EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/agents/CursorConfig.uxml");
 
         protected override AiAgentConfig CreateConfigWindows() => new JsonAiAgentConfig(
             name: AgentName,

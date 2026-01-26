@@ -25,7 +25,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public override string AgentId => "antigravity";
         public override string DownloadUrl => "https://antigravity.google/download";
 
-        protected override string[] UxmlPaths => EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/clients/AntigravityConfig.uxml");
+        protected override string[] UxmlPaths => EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/agents/AntigravityConfig.uxml");
 
         protected override AiAgentConfig CreateConfigWindows() => new JsonAiAgentConfig(
             name: AgentName,

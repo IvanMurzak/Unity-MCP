@@ -95,6 +95,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             var element = template.CloneTree();
             OnUICreated(element);
+            McpWindowBase.EnableSmoothFoldoutTransitions(element);
             return element;
         }
 
