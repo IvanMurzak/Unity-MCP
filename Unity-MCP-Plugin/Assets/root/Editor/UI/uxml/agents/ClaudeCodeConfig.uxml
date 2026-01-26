@@ -15,6 +15,8 @@
             <ui:TextField name="terminalGoToFolder" multiline="true" readonly="true" selectOnFocus="true" class="config-snippet" style="margin-bottom: 8px;" />
             <ui:Label text="2. Run the following command in the folder of the Unity project to configure Claude Code" class="section-desc" />
             <ui:TextField name="terminalConfigureClaudeCode" multiline="true" readonly="true" selectOnFocus="true" class="config-snippet" style="margin-bottom: 8px;" />
+            <ui:Label text="3. Start Claude Code" class="section-desc" />
+            <ui:TextField value="claude" multiline="true" readonly="true" selectOnFocus="true" class="config-snippet" style="margin-bottom: 8px;" />
         </ui:Foldout>
 
         <ui:Foldout text="Troubleshooting" value="false" class="title-foldout">
