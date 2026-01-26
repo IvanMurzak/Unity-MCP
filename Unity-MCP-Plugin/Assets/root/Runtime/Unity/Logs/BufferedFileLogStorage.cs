@@ -53,7 +53,16 @@ namespace com.IvanMurzak.Unity.MCP
                     nameof(Flush));
                 return;
             }
-            _fileLock.Wait();
+
+            // Use timeout to prevent deadlock during domain reload.
+            // If lock cannot be acquired quickly, skip flush rather than freeze Unity.
+            if (!_fileLock.Wait(TimeSpan.FromMilliseconds(100)))
+            {
+                _logger.LogWarning("{method} could not acquire lock within 100ms timeout. " +
+                    "Skipping flush to prevent domain reload freeze.", nameof(Flush));
+                return;
+            }
+
             try
             {
                 // Flush buffered entries to file
@@ -137,7 +146,15 @@ namespace com.IvanMurzak.Unity.MCP
                     nameof(Clear));
                 return;
             }
-            _fileLock.Wait();
+
+            // Use timeout to prevent deadlock during domain reload.
+            if (!_fileLock.Wait(TimeSpan.FromMilliseconds(100)))
+            {
+                _logger.LogWarning("{method} could not acquire lock within 100ms timeout. " +
+                    "Skipping clear to prevent domain reload freeze.", nameof(Clear));
+                return;
+            }
+
             try
             {
                 fileWriteStream?.Close();
@@ -169,7 +186,15 @@ namespace com.IvanMurzak.Unity.MCP
                     nameof(Query));
                 return Array.Empty<LogEntry>();
             }
-            _fileLock.Wait();
+
+            // Use timeout to prevent deadlock during domain reload.
+            if (!_fileLock.Wait(TimeSpan.FromMilliseconds(100)))
+            {
+                _logger.LogWarning("{method} could not acquire lock within 100ms timeout. " +
+                    "Returning empty result to prevent domain reload freeze.", nameof(Query));
+                return Array.Empty<LogEntry>();
+            }
+
             try
             {
                 return QueryInternal(maxEntries, logTypeFilter, includeStackTrace, lastMinutes);
