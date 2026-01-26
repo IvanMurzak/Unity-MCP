@@ -11,6 +11,7 @@
 #nullable enable
 using System.IO;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
+using UnityEngine.UIElements;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
 {
@@ -37,5 +38,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             configPath: Path.Combine(".vscode", "mcp.json"),
             bodyPath: "servers"
         );
+
+        protected override void OnUICreated(VisualElement root)
+        {
+            var textFieldJsonConfig = root.Q<TextField>("jsonConfig");
+            textFieldJsonConfig.value = Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, "servers", UnityMcpPlugin.TimeoutMs).ToString();
+
+            base.OnUICreated(root);
+        }
     }
 }

@@ -13,6 +13,7 @@ using System;
 using System.IO;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
+using UnityEngine.UIElements;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
 {
@@ -49,5 +50,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             ),
             bodyPath: Consts.MCP.Server.DefaultBodyPath
         );
+
+        protected override void OnUICreated(VisualElement root)
+        {
+            var textFieldJsonConfig = root.Q<TextField>("jsonConfig");
+            textFieldJsonConfig.value = Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, "mcpServers", UnityMcpPlugin.TimeoutMs).ToString();
+
+            base.OnUICreated(root);
+        }
     }
 }
