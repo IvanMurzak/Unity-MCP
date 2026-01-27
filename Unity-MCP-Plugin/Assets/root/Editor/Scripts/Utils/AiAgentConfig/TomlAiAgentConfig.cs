@@ -45,8 +45,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 var commandPath = Startup.Server.ExecutableFullPath.Replace('\\', '/');
                 var args = new[]
                 {
-                    $"port={UnityMcpPlugin.Port}",
-                    $"plugin-timeout={UnityMcpPlugin.TimeoutMs}",
+                    $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
+                    $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
                     $"client-transport=stdio"
                 };
 
@@ -277,9 +277,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                     foundTimeout = true;
 
                 // Check named format
-                else if (arg.StartsWith("port=") && arg["port=".Length..] == targetPort)
+                else if (arg.StartsWith($"{Consts.MCP.Server.Args.Port}=") && arg[(Consts.MCP.Server.Args.Port.Length + 1)..] == targetPort)
                     foundPort = true;
-                else if (arg.StartsWith("plugin-timeout=") && arg["plugin-timeout=".Length..] == targetTimeout)
+                else if (arg.StartsWith($"{Consts.MCP.Server.Args.PluginTimeout}=") && arg[(Consts.MCP.Server.Args.PluginTimeout.Length + 1)..] == targetTimeout)
                     foundTimeout = true;
             }
 
