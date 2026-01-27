@@ -15,7 +15,6 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.ReflectorNet;
@@ -36,7 +35,7 @@ namespace com.IvanMurzak.Unity.MCP
         protected readonly string _directoryPath;
         protected readonly string _requestedFileName;
         protected readonly JsonSerializerOptions _jsonOptions;
-        protected readonly SemaphoreSlim _fileLock = new(1, 1);
+        protected readonly object _fileMutex = new();
         protected readonly int _fileBufferSize;
         protected readonly long _maxFileSizeBytes;
         protected readonly ThreadSafeBool _isDisposed = new(false);
@@ -140,34 +139,32 @@ namespace com.IvanMurzak.Unity.MCP
                     nameof(Flush));
                 return;
             }
-            _fileLock.Wait();
-            try
+            lock (_fileMutex)
             {
                 fileWriteStream?.Flush();
             }
-            finally
-            {
-                _fileLock.Release();
-            }
         }
-        public virtual async Task FlushAsync()
+        public virtual Task FlushAsync()
         {
             if (_isDisposed.Value)
             {
                 _logger.LogWarning("{method} called but already disposed, ignored.",
                     nameof(FlushAsync));
-                return;
+                return Task.CompletedTask;
             }
-            await _fileLock.WaitAsync();
-            try
+            return Task.Run(() =>
             {
-                if (fileWriteStream != null)
-                    await fileWriteStream.FlushAsync();
-            }
-            finally
-            {
-                _fileLock.Release();
-            }
+                if (_isDisposed.Value)
+                {
+                    _logger.LogWarning("{method} called but already disposed, ignored.",
+                        nameof(FlushAsync));
+                    return;
+                }
+                lock (_fileMutex)
+                {
+                    fileWriteStream?.Flush();
+                }
+            });
         }
 
         public virtual Task AppendAsync(params LogEntry[] entries)
@@ -178,16 +175,17 @@ namespace com.IvanMurzak.Unity.MCP
                     nameof(AppendAsync));
                 return Task.CompletedTask;
             }
-            return Task.Run(async () =>
+            return Task.Run(() =>
             {
-                await _fileLock.WaitAsync();
-                try
+                if (_isDisposed.Value)
+                {
+                    _logger.LogWarning("{method} called but already disposed, ignored.",
+                        nameof(AppendAsync));
+                    return;
+                }
+                lock (_fileMutex)
                 {
                     AppendInternal(entries);
-                }
-                finally
-                {
-                    _fileLock.Release();
                 }
             });
         }
@@ -200,14 +198,9 @@ namespace com.IvanMurzak.Unity.MCP
                     nameof(Append));
                 return;
             }
-            _fileLock.Wait();
-            try
+            lock (_fileMutex)
             {
                 AppendInternal(entries);
-            }
-            finally
-            {
-                _fileLock.Release();
             }
         }
 
@@ -272,8 +265,7 @@ namespace com.IvanMurzak.Unity.MCP
                     nameof(Clear));
                 return;
             }
-            _fileLock.Wait();
-            try
+            lock (_fileMutex)
             {
                 fileWriteStream?.Dispose();
                 fileWriteStream = null;
@@ -283,10 +275,6 @@ namespace com.IvanMurzak.Unity.MCP
 
                 if (File.Exists(filePath))
                     _logger.LogError("Failed to delete cache file: {file}", filePath);
-            }
-            finally
-            {
-                _fileLock.Release();
             }
         }
 
@@ -317,14 +305,9 @@ namespace com.IvanMurzak.Unity.MCP
                     nameof(Query));
                 return Array.Empty<LogEntry>();
             }
-            _fileLock.Wait();
-            try
+            lock (_fileMutex)
             {
                 return QueryInternal(maxEntries, logTypeFilter, includeStackTrace, lastMinutes);
-            }
-            finally
-            {
-                _fileLock.Release();
             }
         }
 
@@ -459,8 +442,6 @@ namespace com.IvanMurzak.Unity.MCP
                 fileWriteStream?.Dispose();
                 fileWriteStream = null;
             }
-
-            _fileLock.Dispose();
 
             GC.SuppressFinalize(this);
         }
