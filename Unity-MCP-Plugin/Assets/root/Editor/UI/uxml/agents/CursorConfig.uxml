@@ -19,7 +19,7 @@
         </ui:VisualElement>
 
         <ui:Foldout text="Manual Configuration Steps" value="false" class="title-foldout" style="margin-top: 8px;">
-            <ui:Label text="1. Open or create file '%User%/.cursor/mcp.json' in folder of Unity project (this folder must contain 'Assets' folder inside)." class="section-desc" />
+            <ui:Label text="1. Open or create file '%User%/.cursor/mcp.json'" class="section-desc" />
             <ui:Label text="2. Copy and paste the configuration json into the file." class="section-desc" />
             <ui:TextField name="jsonConfig" multiline="true" readonly="true" selectOnFocus="true" class="config-snippet" style="margin-bottom: 8px;" />
         </ui:Foldout>
