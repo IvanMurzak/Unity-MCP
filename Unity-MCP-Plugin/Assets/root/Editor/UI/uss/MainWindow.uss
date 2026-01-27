@@ -74,3 +74,17 @@
     color: rgb(200, 245, 243);
     background-color: rgba(190, 232, 230, 0.1);
 }
+
+/* ==========================================================================
+   Agent Icon - Icon displayed next to agent name in configuration panels
+   ========================================================================== */
+
+.agent-icon {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    margin-right: 8px;
+    margin-bottom: 6px;
+    flex-shrink: 0;
+}

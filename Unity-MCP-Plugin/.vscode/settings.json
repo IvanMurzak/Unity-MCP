@@ -71,6 +71,7 @@
         "aspnetcore",
         "Cdecl",
         "codeanalysis",
+        "configurators",
         "Cooldown",
         "Dbug",
         "dependencyinjection",

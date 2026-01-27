@@ -1,0 +1,19 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement name="ConfigureClient-Custom" class="frame-group" style="flex-grow: 1;">
+        <ui:Label text="Manual configuration" class="section-title" />
+        <ui:VisualElement style="flex-direction: row; margin-top: 4px;">
+            <ui:Toggle name="toggleOptionStdio" label="STDIO" class="toggle-text-button" />
+            <ui:Toggle name="toggleOptionHttp" label="Streamable HTTP" class="toggle-text-button" />
+        </ui:VisualElement>
+        <ui:VisualElement name="containerStdio">
+            <ui:Label text="Copy paste the json into your MCP Client to configure it." class="section-desc" style="margin-top: 4px;" />
+            <ui:TextField name="rawJsonConfigurationStdio" multiline="true" readonly="true" selectOnFocus="true" value="..." class="config-snippet" />
+        </ui:VisualElement>
+        <ui:VisualElement name="containerHttp">
+            <ui:Label text="Copy paste the json into your MCP Client to configure it." class="section-desc" style="margin-top: 4px;" />
+            <ui:TextField name="rawJsonConfigurationHttp" multiline="true" readonly="true" selectOnFocus="true" value="..." class="config-snippet" />
+            <ui:Label text="Start the MCP server using Docker." class="section-desc" style="margin-top: 4px;" />
+            <ui:TextField name="dockerCommand" multiline="true" readonly="true" selectOnFocus="true" value="..." class="config-snippet" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

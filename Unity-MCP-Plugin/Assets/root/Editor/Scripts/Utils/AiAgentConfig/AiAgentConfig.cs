@@ -13,7 +13,7 @@ using com.IvanMurzak.McpPlugin.Common;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
-    public abstract class ClientConfig
+    public abstract class AiAgentConfig
     {
         public static readonly string[] DeprecatedMcpServerNames = { "Unity-MCP" };
         public const string DefaultMcpServerName = "ai-game-developer";
@@ -21,8 +21,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         public string Name { get; set; }
         public string ConfigPath { get; set; }
         public string BodyPath { get; set; }
+        public abstract string ExpectedFileContent { get; }
 
-        public ClientConfig(string name, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
+        public AiAgentConfig(string name, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
         {
             Name = name;
             ConfigPath = configPath;

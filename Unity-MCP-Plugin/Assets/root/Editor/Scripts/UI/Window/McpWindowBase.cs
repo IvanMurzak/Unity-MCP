@@ -83,12 +83,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             }
         }
 
-        protected void UpdateFoldoutState(Foldout foldout, bool expanded)
-        {
-            foldout.EnableInClassList("expanded", expanded);
-            foldout.EnableInClassList("collapsed", !expanded);
-        }
-
         protected void UpdateItemClasses(VisualElement? itemContainer, bool isEnabled)
         {
             if (itemContainer == null)
@@ -96,6 +90,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             itemContainer.EnableInClassList("enabled", isEnabled);
             itemContainer.EnableInClassList("disabled", !isEnabled);
+        }
+
+        public static void UpdateFoldoutState(Foldout foldout, bool expanded)
+        {
+            foldout.EnableInClassList("expanded", expanded);
+            foldout.EnableInClassList("collapsed", !expanded);
+        }
+
+        public static void EnableSmoothFoldoutTransitions(VisualElement root)
+        {
+            root.Query<Foldout>().ForEach(foldout =>
+            {
+                foldout.RegisterValueChangedCallback(evt =>
+                {
+                    UpdateFoldoutState(foldout, evt.newValue);
+                });
+                UpdateFoldoutState(foldout, foldout.value);
+            });
         }
     }
 }

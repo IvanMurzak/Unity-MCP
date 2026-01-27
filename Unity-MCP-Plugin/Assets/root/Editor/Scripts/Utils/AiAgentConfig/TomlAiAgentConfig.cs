@@ -19,17 +19,20 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
-    public class TomlClientConfig : ClientConfig
+    public class TomlAiAgentConfig : AiAgentConfig
     {
-        public TomlClientConfig(string name, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
+        public override string ExpectedFileContent => Startup.Server.RawTomlConfigurationStdio(BodyPath).ToString();
+
+        public TomlAiAgentConfig(string name, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
             : base(name, configPath, bodyPath)
         {
+            // empty
         }
 
-        public override bool Configure() => ConfigureTomlMcpClient(ConfigPath, Consts.MCP.Server.DefaultServerName, BodyPath);
-        public override bool IsConfigured() => IsMcpClientConfigured(ConfigPath, Consts.MCP.Server.DefaultServerName, BodyPath);
+        public override bool Configure() => ConfigureTomlMcpClient(ConfigPath, DefaultMcpServerName, BodyPath);
+        public override bool IsConfigured() => IsMcpClientConfigured(ConfigPath, DefaultMcpServerName, BodyPath);
 
-        public static bool ConfigureTomlMcpClient(string configPath, string serverName = Consts.MCP.Server.DefaultServerName, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
+        public static bool ConfigureTomlMcpClient(string configPath, string serverName = DefaultMcpServerName, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
         {
             if (string.IsNullOrEmpty(configPath))
                 return false;
@@ -42,9 +45,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 var commandPath = Startup.Server.ExecutableFullPath.Replace('\\', '/');
                 var args = new[]
                 {
-                    $"--port={UnityMcpPlugin.Port}",
-                    $"--plugin-timeout={UnityMcpPlugin.TimeoutMs}",
-                    $"--client-transport=stdio"
+                    $"port={UnityMcpPlugin.Port}",
+                    $"plugin-timeout={UnityMcpPlugin.TimeoutMs}",
+                    $"client-transport=stdio"
                 };
 
                 if (!File.Exists(configPath))
@@ -105,7 +108,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
         }
 
-        public static bool IsMcpClientConfigured(string configPath, string serverName = Consts.MCP.Server.DefaultServerName, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
+        public static bool IsMcpClientConfigured(string configPath, string serverName = DefaultMcpServerName, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
         {
             if (string.IsNullOrEmpty(configPath) || !File.Exists(configPath))
                 return false;
@@ -274,15 +277,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                     foundTimeout = true;
 
                 // Check named format
-                else if (arg.StartsWith($"{Consts.MCP.Server.Args.Port}=") && arg[(Consts.MCP.Server.Args.Port.Length + 1)..] == targetPort)
+                else if (arg.StartsWith("port=") && arg["port=".Length..] == targetPort)
                     foundPort = true;
-                else if (arg.StartsWith($"{Consts.MCP.Server.Args.PluginTimeout}=") && arg[(Consts.MCP.Server.Args.PluginTimeout.Length + 1)..] == targetTimeout)
+                else if (arg.StartsWith("plugin-timeout=") && arg["plugin-timeout=".Length..] == targetTimeout)
                     foundTimeout = true;
             }
 
             return foundPort && foundTimeout;
         }
-        private static string GenerateTomlSection(string sectionName, string command, string[] args)
+        public static string GenerateTomlSection(string sectionName, string command, string[] args)
         {
             var sb = new StringBuilder();
             sb.AppendLine($"[{sectionName}]");
