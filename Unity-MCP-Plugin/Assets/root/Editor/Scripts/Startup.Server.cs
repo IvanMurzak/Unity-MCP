@@ -146,7 +146,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 {
                     $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
                     $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-                    $"client-transport=stdio"
+                    $"{Consts.MCP.Server.Args.ClientTransportMethod}=stdio"
                 });
             }
 

@@ -118,7 +118,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     hasPortArg = true;
                 if (arg?.StartsWith($"{Consts.MCP.Server.Args.PluginTimeout}=") == true)
                     hasTimeoutArg = true;
-                if (arg?.Contains("client-transport=stdio") == true)
+                if (arg?.Contains($"{Consts.MCP.Server.Args.ClientTransportMethod}=stdio") == true)
                     hasTransportArg = true;
             }
 

@@ -49,6 +49,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
         }
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="JsonCommandAiAgentConfig"/> class.
+        /// </summary>
+        /// <param name="name">The display name of the AI agent.</param>
+        /// <param name="configPath">The path to the configuration file.</param>
+        /// <param name="bodyPath">The JSON path to the MCP servers section.</param>
         public JsonCommandAiAgentConfig(string name, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
             : base(name, configPath, bodyPath)
         {
@@ -81,7 +87,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 Startup.Server.ExecutableFullPath.Replace('\\', '/'),
                 $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
                 $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-                $"client-transport=stdio"
+                $"{Consts.MCP.Server.Args.ClientTransportMethod}=stdio"
             };
         }
 
