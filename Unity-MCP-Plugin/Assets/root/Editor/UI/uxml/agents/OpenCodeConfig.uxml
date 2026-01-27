@@ -12,31 +12,28 @@
             </ui:VisualElement>
         </ui:VisualElement>
 
-        <ui:Label text="Configure MCP for Open Code CLI." class="section-desc" style="margin-top: 4px;" />
-
         <ui:VisualElement class="row" style="margin-top: 0px;">
             <ui:VisualElement name="configureStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
             <ui:Label text="Not configured" name="configureStatusText" style="flex-grow: 1;" />
             <ui:Button name="btnConfigure" text="Configure" class="btn-primary" />
         </ui:VisualElement>
 
-        <ui:Foldout text="Manual Configuration Steps - Option 1" value="false" class="title-foldout" style="margin-top: 8px;">
+        <ui:Foldout text="Start Open Code CLI" value="false" class="title-foldout" style="margin-top: 8px;">
             <ui:Label text="1. Open a terminal and run the following command to be in the folder of the Unity project" class="section-desc" />
             <ui:TextField name="terminalGoToFolder" multiline="true" readonly="true" selectOnFocus="true" class="config-snippet" style="margin-bottom: 8px;" />
-            <ui:Label text="2. Run the following command in the folder of the Unity project to configure Open Code" class="section-desc" />
-            <ui:TextField name="terminalConfigureOpenCode" multiline="true" readonly="true" selectOnFocus="true" class="config-snippet" style="margin-bottom: 8px;" />
-            <ui:Label text="3. Start Open Code" class="section-desc" />
+            <ui:Label text="2. Start Open Code" class="section-desc" />
             <ui:TextField value="opencode" multiline="true" readonly="true" selectOnFocus="true" class="config-snippet" style="margin-bottom: 8px;" />
         </ui:Foldout>
 
-        <ui:Foldout text="Manual Configuration Steps - Option 2" value="false" class="title-foldout">
-            <ui:Label text="1. Open or create file '%User%/.opencode/config.toml'" class="section-desc" />
-            <ui:Label text="2. Copy and paste the configuration TOML into the file." class="section-desc" />
-            <ui:TextField name="tomlConfig" multiline="true" readonly="true" selectOnFocus="true" class="config-snippet" style="margin-bottom: 8px;" />
+        <ui:Foldout text="Manual Configuration Steps - Option 2" value="false" class="title-foldout" style="margin-top: 8px;">
+            <ui:Label text="1. Open or create file 'opencode.json' in the project root folder (the folder must contain the Assets folder inside)" class="section-desc" />
+            <ui:Label text="2. Copy and paste the configuration JSON into the file." class="section-desc" />
+            <ui:TextField name="jsonConfig" multiline="true" readonly="true" selectOnFocus="true" class="config-snippet" style="margin-bottom: 8px;" />
         </ui:Foldout>
 
         <ui:Foldout text="Troubleshooting" value="false" class="title-foldout">
             <ui:Label text="- Ensure Open Code CLI is installed and accessible from terminal" class="section-desc" />
+            <ui:Label text="- Ensure Open Code CLI is launched from the project root folder (the folder must contain the Assets folder inside)" class="section-desc" />
         </ui:Foldout>
     </ui:VisualElement>
 </ui:UXML>

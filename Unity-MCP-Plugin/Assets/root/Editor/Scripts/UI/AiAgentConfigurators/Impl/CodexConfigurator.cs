@@ -58,7 +58,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             textFieldGoToFolder.value = $"cd \"{ProjectRootPath}\"";
             textFieldConfigureCodex.value = addMcpServerCommand;
-            textFieldTomlConfig.value = Startup.Server.RawTomlConfigurationStdio("mcp_servers").ToString();
+            textFieldTomlConfig.value = ClientConfig.ExpectedFileContent;
 
             base.OnUICreated(root);
         }

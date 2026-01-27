@@ -26,14 +26,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public override string DownloadUrl => "https://opencode.ai/download";
 
         protected override string[] UxmlPaths => EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/agents/OpenCodeConfig.uxml");
-        protected override string? IconFileName => "opencode-64.png";
-        protected override AiAgentConfig CreateConfigWindows() => new JsonAiAgentConfig(
+        protected override string? IconFileName => "open-code-64.png";
+        protected override AiAgentConfig CreateConfigWindows() => new JsonCommandAiAgentConfig(
             name: AgentName,
             configPath: Path.Combine("opencode.json"),
             bodyPath: "mcp"
         );
 
-        protected override AiAgentConfig CreateConfigMacLinux() => new JsonAiAgentConfig(
+        protected override AiAgentConfig CreateConfigMacLinux() => new JsonCommandAiAgentConfig(
             name: AgentName,
             configPath: Path.Combine("opencode.json"),
             bodyPath: "mcp"
@@ -42,14 +42,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         protected override void OnUICreated(VisualElement root)
         {
             var textFieldGoToFolder = root.Q<TextField>("terminalGoToFolder") ?? throw new NullReferenceException("TextField 'terminalGoToFolder' not found in UI.");
-            var textFieldConfigureOpenCode = root.Q<TextField>("terminalConfigureOpenCode") ?? throw new NullReferenceException("TextField 'terminalConfigureOpenCode' not found in UI.");
-            var textFieldTomlConfig = root.Q<TextField>("tomlConfig") ?? throw new NullReferenceException("TextField 'tomlConfig' not found in UI.");
-
-            var addMcpServerCommand = $"opencode mcp add {AiAgentConfig.DefaultMcpServerName} \"{Startup.Server.ExecutableFullPath}\" port={UnityMcpPlugin.Port} plugin-timeout={UnityMcpPlugin.TimeoutMs} client-transport=stdio";
+            var textFieldJsonConfig = root.Q<TextField>("jsonConfig") ?? throw new NullReferenceException("TextField 'jsonConfig' not found in UI.");
 
             textFieldGoToFolder.value = $"cd \"{ProjectRootPath}\"";
-            textFieldConfigureOpenCode.value = addMcpServerCommand;
-            textFieldTomlConfig.value = Startup.Server.RawTomlConfigurationStdio("mcp_servers").ToString();
+            textFieldJsonConfig.value = ClientConfig.ExpectedFileContent;
 
             base.OnUICreated(root);
         }

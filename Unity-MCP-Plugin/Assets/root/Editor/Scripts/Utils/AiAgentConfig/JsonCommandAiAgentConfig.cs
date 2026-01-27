@@ -19,6 +19,11 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
+    /// <summary>
+    /// Configuration for AI agents that use command array format where all arguments
+    /// are included in the "command" array instead of a separate "args" array.
+    /// Format: { "command": ["executable", "arg1", "arg2", ...] }
+    /// </summary>
     public class JsonCommandAiAgentConfig : JsonAiAgentConfig
     {
         public override string ExpectedFileContent
@@ -30,18 +35,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 // Start with the innermost content
                 var innerContent = new JsonObject
                 {
-                    [DefaultMcpServerName] = new JsonObject
-                    {
-                        ["type"] = "local",
-                        ["enabled"] = "true",
-                        ["command"] = new JsonArray
-                        {
-                            Startup.Server.ExecutableFullPath.Replace('\\', '/'),
-                            $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
-                            $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-                            $"client-transport=stdio"
-                        }
-                    }
+                    [DefaultMcpServerName] = CreateServerConfigObject()
                 };
 
                 // Build nested structure from innermost to outermost
@@ -61,18 +55,50 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             // empty
         }
 
-        public override bool Configure() => ConfigureJsonMcpClient(ConfigPath, BodyPath);
-        public override bool IsConfigured() => IsMcpClientConfigured(ConfigPath, BodyPath);
+        public override bool Configure() => ConfigureCommandArrayMcpClient(ConfigPath, BodyPath);
+        public override bool IsConfigured() => IsCommandArrayMcpClientConfigured(ConfigPath, BodyPath);
 
-        public static bool ConfigureJsonMcpClient(string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
+        /// <summary>
+        /// Creates the server configuration object with command array format.
+        /// </summary>
+        private JsonObject CreateServerConfigObject()
+        {
+            return new JsonObject
+            {
+                ["type"] = "local",
+                ["enabled"] = true,
+                ["command"] = CreateCommandArray()
+            };
+        }
+
+        /// <summary>
+        /// Creates the command array containing executable path and all arguments.
+        /// </summary>
+        private static JsonArray CreateCommandArray()
+        {
+            return new JsonArray
+            {
+                Startup.Server.ExecutableFullPath.Replace('\\', '/'),
+                $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
+                $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+                $"client-transport=stdio"
+            };
+        }
+
+        /// <summary>
+        /// Configures the MCP client using command array format.
+        /// </summary>
+        private bool ConfigureCommandArrayMcpClient(string configPath, string bodyPath)
         {
             if (string.IsNullOrEmpty(configPath))
                 return false;
 
-            Debug.Log($"{Consts.Log.Tag} Configuring MCP client with path: {configPath} and bodyPath: {bodyPath}");
+            Debug.Log($"{Consts.Log.Tag} Configuring MCP client (command array format) with path: {configPath} and bodyPath: {bodyPath}");
 
             try
             {
+                var pathSegments = Consts.MCP.Server.BodyPathSegments(bodyPath);
+
                 if (!File.Exists(configPath))
                 {
                     // Create all necessary directories
@@ -80,10 +106,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                     if (!string.IsNullOrEmpty(directory))
                         Directory.CreateDirectory(directory);
 
-                    // Create the file if it doesn't exist
-                    File.WriteAllText(
-                        path: configPath,
-                        contents: Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, bodyPath, UnityMcpPlugin.TimeoutMs).ToString());
+                    // Create the file with the expected content
+                    File.WriteAllText(configPath, ExpectedFileContent);
                     return true;
                 }
 
@@ -92,75 +116,48 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
                 try
                 {
-                    // Parse the existing config as JsonObject
                     rootObj = JsonNode.Parse(json)?.AsObject();
                     if (rootObj == null)
                         throw new Exception("Config file is not a valid JSON object.");
                 }
                 catch
                 {
-                    File.WriteAllText(
-                        path: configPath,
-                        contents: Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, bodyPath, UnityMcpPlugin.TimeoutMs).ToString());
+                    File.WriteAllText(configPath, ExpectedFileContent);
                     return true;
                 }
-
-                // Get path segments and navigate to the injection target
-                var pathSegments = Consts.MCP.Server.BodyPathSegments(bodyPath);
-
-                // Generate the configuration to inject
-                var injectObj = Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, pathSegments.Last(), UnityMcpPlugin.TimeoutMs);
-                if (injectObj == null)
-                    throw new Exception("Injected config is not a valid JSON object.");
-
-                var injectMcpServers = injectObj[pathSegments.Last()]?.AsObject();
-                if (injectMcpServers == null)
-                    throw new Exception($"Missing '{pathSegments.Last()}' object in inject config.");
 
                 // Navigate to or create the target location in the existing JSON
                 var targetObj = EnsureJsonPathExists(rootObj, pathSegments);
 
-                // Removing is not needed because we check all MCP servers for command match. Let's keep it commented just in case.
-                // foreach (var deprecatedName in DeprecatedMcpServerNames)
-                //     targetObj.Remove(deprecatedName);
-
-                // Find all command values in injectMcpServers for duplicate removal
-                var injectCommands = injectMcpServers
-                    .Select(kv => kv.Value?["command"]?.GetValue<string>())
-                    .Where(cmd => !string.IsNullOrEmpty(cmd))
-                    .ToHashSet();
-
-                // Remove any entry in targetObj with a matching command
+                // Find and remove entries with matching executable in command array
                 var keysToRemove = targetObj
-                    .Where(kv => injectCommands.Contains(kv.Value?["command"]?.GetValue<string>()))
+                    .Where(kv => IsCommandArrayExecutableMatch(kv.Value))
                     .Select(kv => kv.Key)
                     .ToList();
 
                 foreach (var key in keysToRemove)
                     targetObj.Remove(key);
 
-                // Merge/overwrite entries from injectMcpServers
-                foreach (var kv in injectMcpServers)
-                {
-                    // Clone the value to avoid parent conflict
-                    targetObj[kv.Key] = kv.Value?.ToJsonString() is string jsonStr
-                        ? JsonNode.Parse(jsonStr)
-                        : null;
-                }
+                // Add the new configuration
+                targetObj[DefaultMcpServerName] = CreateServerConfigObject();
 
                 // Write back to file
                 File.WriteAllText(configPath, rootObj.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
 
-                return IsMcpClientConfigured(configPath, bodyPath);
+                return IsCommandArrayMcpClientConfigured(configPath, bodyPath);
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Error reading config file: {ex.Message}");
+                Debug.LogError($"Error configuring MCP client: {ex.Message}");
                 Debug.LogException(ex);
                 return false;
             }
         }
-        public static bool IsMcpClientConfigured(string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
+
+        /// <summary>
+        /// Checks if the MCP client is configured using command array format.
+        /// </summary>
+        private bool IsCommandArrayMcpClientConfigured(string configPath, string bodyPath)
         {
             if (string.IsNullOrEmpty(configPath) || !File.Exists(configPath))
                 return false;
@@ -177,20 +174,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                     return false;
 
                 var pathSegments = Consts.MCP.Server.BodyPathSegments(bodyPath);
-
-                // Navigate to the target location using bodyPath segments
                 var targetObj = NavigateToJsonPath(rootObj, pathSegments);
                 if (targetObj == null)
                     return false;
 
                 foreach (var kv in targetObj)
                 {
-                    var command = kv.Value?["command"]?.GetValue<string>();
-                    if (string.IsNullOrEmpty(command) || !IsCommandMatch(command!))
+                    var commandArray = kv.Value?["command"]?.AsArray();
+                    if (commandArray == null || commandArray.Count == 0)
                         continue;
 
-                    var args = kv.Value?["args"]?.AsArray();
-                    return DoArgumentsMatch(args);
+                    // Check if first element is the executable
+                    var executableInConfig = commandArray[0]?.GetValue<string>();
+                    if (string.IsNullOrEmpty(executableInConfig) || !IsCommandMatch(executableInConfig!))
+                        continue;
+
+                    // Check if arguments are present in the command array
+                    return DoCommandArrayArgumentsMatch(commandArray);
                 }
 
                 return false;
@@ -203,87 +203,49 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
         }
 
-        static bool IsCommandMatch(string command)
+        /// <summary>
+        /// Checks if the command array contains the expected arguments.
+        /// </summary>
+        private static bool DoCommandArrayArgumentsMatch(JsonArray commandArray)
         {
-            // Normalize both paths for comparison
-            try
-            {
-                var normalizedCommand = Path.GetFullPath(command.Replace('/', Path.DirectorySeparatorChar));
-                var normalizedTarget = Path.GetFullPath(Startup.Server.ExecutableFullPath.Replace('/', Path.DirectorySeparatorChar));
-                return string.Equals(normalizedCommand, normalizedTarget, StringComparison.OrdinalIgnoreCase);
-            }
-            catch
-            {
-                // If normalization fails, fallback to string comparison
-                return string.Equals(command, Startup.Server.ExecutableFullPath, StringComparison.OrdinalIgnoreCase);
-            }
-        }
-
-        static bool DoArgumentsMatch(JsonArray? args)
-        {
-            if (args == null)
-                return false;
-
             var targetPort = UnityMcpPlugin.Port.ToString();
             var targetTimeout = UnityMcpPlugin.TimeoutMs.ToString();
 
             var foundPort = false;
             var foundTimeout = false;
 
-            // Check for both positional and named argument formats
-            for (int i = 0; i < args.Count; i++)
+            // Skip first element (executable), check remaining for arguments
+            for (int i = 1; i < commandArray.Count; i++)
             {
-                var arg = args[i]?.GetValue<string>();
+                var arg = commandArray[i]?.GetValue<string>();
                 if (string.IsNullOrEmpty(arg))
                     continue;
 
-                // Check positional format
-                if (i == 0 && arg == targetPort)
+                if (arg!.StartsWith($"{Consts.MCP.Server.Args.Port}=") &&
+                    arg[(Consts.MCP.Server.Args.Port.Length + 1)..] == targetPort)
                     foundPort = true;
-                else if (i == 1 && arg == targetTimeout)
+                else if (arg!.StartsWith($"{Consts.MCP.Server.Args.PluginTimeout}=") &&
+                    arg[(Consts.MCP.Server.Args.PluginTimeout.Length + 1)..] == targetTimeout)
                     foundTimeout = true;
-                else if (arg!.StartsWith($"{Consts.MCP.Server.Args.PluginTimeout}=") && arg.Substring(Consts.MCP.Server.Args.PluginTimeout.Length + 1) == targetTimeout)
-                    foundTimeout = true;
-                else if (arg!.StartsWith($"{Consts.MCP.Server.Args.Port}=") && arg[(Consts.MCP.Server.Args.Port.Length + 1)..] == targetPort)
-                    foundPort = true;
             }
 
             return foundPort && foundTimeout;
         }
 
-        static JsonObject? NavigateToJsonPath(JsonObject rootObj, string[] pathSegments)
+        /// <summary>
+        /// Checks if a server entry's command array first element matches the expected executable path.
+        /// </summary>
+        private static bool IsCommandArrayExecutableMatch(JsonNode? serverEntry)
         {
-            JsonObject? current = rootObj;
+            var commandArray = serverEntry?["command"]?.AsArray();
+            if (commandArray == null || commandArray.Count == 0)
+                return false;
 
-            foreach (var segment in pathSegments)
-            {
-                if (current == null)
-                    return null;
+            var firstElement = commandArray[0]?.GetValue<string>();
+            if (string.IsNullOrEmpty(firstElement))
+                return false;
 
-                current = current[segment]?.AsObject();
-            }
-
-            return current;
-        }
-        static JsonObject EnsureJsonPathExists(JsonObject rootObj, string[] pathSegments)
-        {
-            JsonObject current = rootObj;
-
-            foreach (var segment in pathSegments)
-            {
-                if (current[segment]?.AsObject() is JsonObject existingObj)
-                {
-                    current = existingObj;
-                }
-                else
-                {
-                    var newObj = new JsonObject();
-                    current[segment] = newObj;
-                    current = newObj;
-                }
-            }
-
-            return current;
+            return IsCommandMatch(firstElement!);
         }
     }
 }
