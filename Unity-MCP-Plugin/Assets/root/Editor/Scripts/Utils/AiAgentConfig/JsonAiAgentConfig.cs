@@ -171,7 +171,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
         }
 
-        static bool IsCommandMatch(string command)
+        protected static bool IsCommandMatch(string command)
         {
             // Normalize both paths for comparison
             try
@@ -187,7 +187,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
         }
 
-        static bool DoArgumentsMatch(JsonArray? args)
+        protected static bool DoArgumentsMatch(JsonArray? args)
         {
             if (args == null)
                 return false;
@@ -219,7 +219,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             return foundPort && foundTimeout;
         }
 
-        static JsonObject? NavigateToJsonPath(JsonObject rootObj, string[] pathSegments)
+        protected static JsonObject? NavigateToJsonPath(JsonObject rootObj, string[] pathSegments)
         {
             JsonObject? current = rootObj;
 
@@ -233,7 +233,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
             return current;
         }
-        static JsonObject EnsureJsonPathExists(JsonObject rootObj, string[] pathSegments)
+        protected static JsonObject EnsureJsonPathExists(JsonObject rootObj, string[] pathSegments)
         {
             JsonObject current = rootObj;
 

@@ -44,10 +44,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         protected override void OnUICreated(VisualElement root)
         {
             var textFieldJsonConfig = root.Q<TextField>("jsonConfig") ?? throw new NullReferenceException("TextField 'jsonConfig' not found in UI.");
-            textFieldJsonConfig.value = Startup.Server.RawJsonConfigurationStdio(
-                port: UnityMcpPlugin.Port,
-                bodyPath: "servers",
-                timeoutMs: UnityMcpPlugin.TimeoutMs).ToString();
+            textFieldJsonConfig.value = ClientConfig.ExpectedFileContent;
 
             base.OnUICreated(root);
         }

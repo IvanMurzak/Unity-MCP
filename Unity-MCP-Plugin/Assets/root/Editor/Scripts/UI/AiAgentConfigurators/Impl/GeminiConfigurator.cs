@@ -51,10 +51,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             textFieldGoToFolder.value = $"cd \"{ProjectRootPath}\"";
             textFieldConfigureGemini.value = addMcpServerCommand;
-            textFieldJsonConfig.value = Startup.Server.RawJsonConfigurationStdio(
-                port: UnityMcpPlugin.Port,
-                bodyPath: Consts.MCP.Server.DefaultBodyPath,
-                timeoutMs: UnityMcpPlugin.TimeoutMs).ToString();
+            textFieldJsonConfig.value = ClientConfig.ExpectedFileContent;
 
             base.OnUICreated(root);
         }

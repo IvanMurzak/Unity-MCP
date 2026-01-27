@@ -29,6 +29,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             new CursorConfigurator(),
             new GeminiConfigurator(),
             new AntigravityConfigurator(),
+            new OpenCodeConfigurator(),
             new CodexConfigurator(),
             new CustomConfigurator()
         };
