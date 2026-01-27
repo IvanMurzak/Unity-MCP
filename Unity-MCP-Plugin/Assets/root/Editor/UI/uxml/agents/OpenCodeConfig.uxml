@@ -25,7 +25,7 @@
             <ui:TextField value="opencode" multiline="true" readonly="true" selectOnFocus="true" class="config-snippet" style="margin-bottom: 8px;" />
         </ui:Foldout>
 
-        <ui:Foldout text="Manual Configuration Steps - Option 2" value="false" class="title-foldout" style="margin-top: 8px;">
+        <ui:Foldout text="Manual Configuration Steps" value="false" class="title-foldout" style="margin-top: 8px;">
             <ui:Label text="1. Open or create file 'opencode.json' in the project root folder (the folder must contain the Assets folder inside)" class="section-desc" />
             <ui:Label text="2. Copy and paste the configuration JSON into the file." class="section-desc" />
             <ui:TextField name="jsonConfig" multiline="true" readonly="true" selectOnFocus="true" class="config-snippet" style="margin-bottom: 8px;" />
