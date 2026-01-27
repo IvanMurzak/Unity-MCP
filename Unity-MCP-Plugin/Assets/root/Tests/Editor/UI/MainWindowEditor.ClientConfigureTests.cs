@@ -248,7 +248,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     Assert.IsNotNull(args, "Args should exist for Unity-MCP server");
 
                     var portArg = args!.ToString();
-                    Assert.IsTrue(portArg.Contains($"--port={UnityMcpPlugin.Port}"),
+                    Assert.IsTrue(portArg.Contains($"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}"),
                         $"Should contain current port, but got: {portArg}");
                     break;
                 }
