@@ -12,11 +12,12 @@
 using System;
 using System.IO;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
+using UnityEngine.UIElements;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
 {
     /// <summary>
-    /// Configurator for Codex MCP client.
+    /// Configurator for Codex AI agent.
     /// </summary>
     public class CodexConfigurator : AiAgentConfiguratorBase
     {
@@ -46,5 +47,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             ),
             bodyPath: "mcp_servers"
         );
+
+        protected override void OnUICreated(VisualElement root)
+        {
+            var textFieldGoToFolder = root.Q<TextField>("terminalGoToFolder") ?? throw new NullReferenceException("TextField 'terminalGoToFolder' not found in UI.");
+            var textFieldConfigureCodex = root.Q<TextField>("terminalConfigureCodex") ?? throw new NullReferenceException("TextField 'terminalConfigureCodex' not found in UI.");
+            var textFieldTomlConfig = root.Q<TextField>("tomlConfig") ?? throw new NullReferenceException("TextField 'tomlConfig' not found in UI.");
+
+            var addMcpServerCommand = $"codex mcp add {AiAgentConfig.DefaultMcpServerName} \"{Startup.Server.ExecutableFullPath}\" port={UnityMcpPlugin.Port} plugin-timeout={UnityMcpPlugin.TimeoutMs} client-transport=stdio";
+
+            textFieldGoToFolder.value = $"cd \"{ProjectRootPath}\"";
+            textFieldConfigureCodex.value = addMcpServerCommand;
+            textFieldTomlConfig.value = Startup.Server.RawTomlConfigurationStdio("mcp_servers").ToString();
+
+            base.OnUICreated(root);
+        }
     }
 }

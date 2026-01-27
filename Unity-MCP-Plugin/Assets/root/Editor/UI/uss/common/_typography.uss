@@ -140,3 +140,15 @@
     color: #4FC3F7;
     cursor: link;
 }
+
+/* Link separator - divider between inline links */
+.link-separator {
+    margin-left: 4px;
+    margin-right: 4px;
+    opacity: 0.5;
+}
+
+/* Alert label - red text for warnings/alerts */
+.alert-label {
+    color: #FF6B6B;
+}

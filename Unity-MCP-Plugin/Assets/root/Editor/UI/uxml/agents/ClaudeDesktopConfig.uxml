@@ -4,10 +4,15 @@
             <ui:VisualElement name="agentIcon" class="agent-icon" />
             <ui:VisualElement style="flex-grow: 1;">
                 <ui:Label text="Claude Desktop" class="section-title" />
-                <ui:Label name="downloadLink" text="Download" class="section-desc link-label" />
+                <ui:VisualElement style="flex-direction: row; align-items: center;">
+                    <ui:Label name="downloadLink" text="Download" class="section-desc link-label" />
+                    <ui:Label name="tutorialSeparator" text="•" class="section-desc link-separator" />
+                    <ui:Label name="tutorialLink" text="YouTube Tutorial" class="section-desc link-label" />
+                </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
-        <ui:Label text="Claude Desktop is Anthropic's desktop application for AI conversations." class="section-desc" style="margin-top: 4px;" />
+
+        <!-- <ui:Label text="Claude Desktop is Anthropic's desktop application for AI conversations." class="section-desc" style="margin-top: 4px;" /> -->
 
         <ui:VisualElement class="row" style="margin-top: 0px;">
             <ui:VisualElement name="configureStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
@@ -15,7 +20,8 @@
             <ui:Button name="btnConfigure" text="Configure" class="btn-primary" />
         </ui:VisualElement>
 
-        <ui:Label text="IMPORTANT: Claude Desktop app restart is required each time after Unity launch with active connecting." class="section-desc" />
+        <ui:Label text="IMPORTANT: Highly recommended to use Claude Code instead, they share the same subscription plan." class="section-desc" />
+        <ui:Label text="Claude Desktop app is finicky, requires restart each time after Unity launched with active connecting." class="section-desc" />
 
         <ui:Foldout text="Manual Configuration Steps" value="false" class="title-foldout" style="margin-top: 8px;">
             <ui:Label text="1. Open the file 'claude_desktop_config.json'." class="section-desc" />

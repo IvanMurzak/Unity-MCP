@@ -4,9 +4,14 @@
             <ui:VisualElement name="agentIcon" class="agent-icon" />
             <ui:VisualElement style="flex-grow: 1;">
                 <ui:Label text="Codex" class="section-title" />
-                <ui:Label name="downloadLink" text="Download" class="section-desc link-label" />
+                <ui:VisualElement style="flex-direction: row; align-items: center;">
+                    <ui:Label name="downloadLink" text="Download" class="section-desc link-label" />
+                    <ui:Label name="tutorialSeparator" text="•" class="section-desc link-separator" />
+                    <ui:Label name="tutorialLink" text="YouTube Tutorial" class="section-desc link-label" />
+                </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
+
         <ui:Label text="Configure MCP for OpenAI Codex CLI." class="section-desc" style="margin-top: 4px;" />
 
         <ui:VisualElement class="row" style="margin-top: 0px;">
@@ -15,15 +20,25 @@
             <ui:Button name="btnConfigure" text="Configure" class="btn-primary" />
         </ui:VisualElement>
 
-        <ui:Foldout text="Manual Configuration Steps" value="false" class="title-foldout" style="margin-top: 8px;">
+        <ui:Label text="Codex is wrapped into a virtual machine, it can't access Unity via TCP connection which is required. There is a complex workaround using WSL. To avoid unnecessary complexity it is recommended to use Claude Code instead." class="section-desc alert-label" />
+
+        <ui:Foldout text="Manual Configuration Steps - Option 1" value="false" class="title-foldout" style="margin-top: 8px;">
             <ui:Label text="1. Open a terminal and run the following command to be in the folder of the Unity project" class="section-desc" />
             <ui:TextField name="terminalGoToFolder" multiline="true" readonly="true" selectOnFocus="true" class="config-snippet" style="margin-bottom: 8px;" />
-            <ui:Label text="2. Run the following command in the folder of the Unity project to configure Claude Code" class="section-desc" />
-            <ui:TextField name="terminalConfigureClaudeCode" multiline="true" readonly="true" selectOnFocus="true" class="config-snippet" style="margin-bottom: 8px;" />
+            <ui:Label text="2. Run the following command in the folder of the Unity project to configure Codex" class="section-desc" />
+            <ui:TextField name="terminalConfigureCodex" multiline="true" readonly="true" selectOnFocus="true" class="config-snippet" style="margin-bottom: 8px;" />
+            <ui:Label text="3. Start Codex" class="section-desc" />
+            <ui:TextField value="codex" multiline="true" readonly="true" selectOnFocus="true" class="config-snippet" style="margin-bottom: 8px;" />
+        </ui:Foldout>
+
+        <ui:Foldout text="Manual Configuration Steps - Option 2" value="false" class="title-foldout">
+            <ui:Label text="1. Open or create file '%User%/.codex/config.toml'" class="section-desc" />
+            <ui:Label text="2. Copy and paste the configuration json into the file." class="section-desc" />
+            <ui:TextField name="tomlConfig" multiline="true" readonly="true" selectOnFocus="true" class="config-snippet" style="margin-bottom: 8px;" />
         </ui:Foldout>
 
         <ui:Foldout text="Troubleshooting" value="false" class="title-foldout">
-            <ui:Label text="- Ensure Claude Code CLI is installed and accessible from terminal&#10;- Check that the configuration file path exists&#10;- Verify JSON syntax is valid after manual edits&#10;- Restart Claude Code after configuration changes" class="section-desc" />
+            <ui:Label text="- Ensure Codex CLI is installed and accessible from terminal" class="section-desc" />
         </ui:Foldout>
     </ui:VisualElement>
 </ui:UXML>

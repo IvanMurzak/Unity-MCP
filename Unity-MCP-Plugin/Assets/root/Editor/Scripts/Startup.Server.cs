@@ -111,7 +111,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 return Consts.MCP.Server.Config(
                     executablePath: ExecutableFullPath.Replace('\\', '/'),
-                    serverName: Utils.AiAgentConfig.DefaultMcpServerName,
+                    serverName: AiAgentConfig.DefaultMcpServerName,
                     bodyPath: bodyPath,
                     port: port,
                     timeoutMs: timeoutMs
@@ -126,7 +126,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 {
                     [bodyPath] = new JsonObject()
                     {
-                        [Utils.AiAgentConfig.DefaultMcpServerName] = new JsonObject
+                        [AiAgentConfig.DefaultMcpServerName] = new JsonObject
                         {
                             ["url"] = url,
                             ["type"] = "streamableHttp"
@@ -134,6 +134,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     }
                 };
             }
+
+            // ------------------------------------------------------------------------------------------------------------------------------------
+
+            public static string RawTomlConfigurationStdio(string bodyPath = "mcp_servers")
+            {
+                return TomlAiAgentConfig.GenerateTomlSection(
+                    sectionName: $"{bodyPath}.{AiAgentConfig.DefaultMcpServerName}",
+                    command: ExecutableFullPath.Replace('\\', '/'),
+                    args: new[]
+                {
+                    $"--port={UnityMcpPlugin.Port}",
+                    $"--plugin-timeout={UnityMcpPlugin.TimeoutMs}",
+                    $"--client-transport=stdio"
+                });
+            }
+
+            // ------------------------------------------------------------------------------------------------------------------------------------
 
             public static string DockerRunCommand()
             {

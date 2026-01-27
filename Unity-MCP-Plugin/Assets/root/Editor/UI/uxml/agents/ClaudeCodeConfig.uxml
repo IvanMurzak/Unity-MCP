@@ -4,10 +4,13 @@
             <ui:VisualElement name="agentIcon" class="agent-icon" />
             <ui:VisualElement style="flex-grow: 1;">
                 <ui:Label text="Claude Code" class="section-title" />
-                <ui:Label name="downloadLink" text="Download" class="section-desc link-label" />
+                <ui:VisualElement style="flex-direction: row; align-items: center;">
+                    <ui:Label name="downloadLink" text="Download" class="section-desc link-label" />
+                    <ui:Label name="tutorialSeparator" text="•" class="section-desc link-separator" />
+                    <ui:Label name="tutorialLink" text="YouTube Tutorial" class="section-desc link-label" />
+                </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
-        <!-- <ui:Label text="Claude Code is a CLI tool by Anthropic for AI-assisted development." class="section-desc" /> -->
 
         <ui:VisualElement class="row" style="margin-top: 0px;">
             <ui:VisualElement name="configureStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />

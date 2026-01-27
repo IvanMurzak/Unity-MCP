@@ -16,8 +16,8 @@ using UnityEngine.UIElements;
 namespace com.IvanMurzak.Unity.MCP.Editor
 {
     /// <summary>
-    /// Base class for MCP client configurator UI components.
-    /// Each MCP client has its own configurator that provides specific configuration instructions.
+    /// Base class for AI agent configurator UI components.
+    /// Each AI agent has its own configurator that provides specific configuration instructions.
     /// </summary>
     public abstract class AiAgentConfiguratorBase
     {
@@ -37,6 +37,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         /// The download URL for the AI agent.
         /// </summary>
         public abstract string DownloadUrl { get; }
+
+        /// <summary>
+        /// The tutorial URL for configuring the AI agent.
+        /// </summary>
+        public virtual string TutorialUrl => string.Empty;
 
         /// <summary>
         /// Gets the UXML template paths for this agent's configuration UI.
@@ -121,6 +126,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             var downloadLink = root.Q<Label>("downloadLink");
             if (downloadLink != null)
                 downloadLink.RegisterCallback<ClickEvent>(evt => Application.OpenURL(DownloadUrl));
+
+            var tutorialLink = root.Q<Label>("tutorialLink");
+            if (tutorialLink != null)
+            {
+                if (TutorialUrl == string.Empty)
+                {
+                    tutorialLink.style.display = DisplayStyle.None;
+                    var tutorialSeparator = root.Q<Label>("tutorialSeparator");
+                    if (tutorialSeparator != null)
+                        tutorialSeparator.style.display = DisplayStyle.None;
+                }
+                else
+                {
+                    tutorialLink.RegisterCallback<ClickEvent>(evt => Application.OpenURL(TutorialUrl));
+                }
+            }
 
             SetAgentIcon(root);
             CreateConfigureStatusIndicator(root);

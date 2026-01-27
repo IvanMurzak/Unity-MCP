@@ -26,6 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public override string AgentName => "Claude Code";
         public override string AgentId => "claude-code";
         public override string DownloadUrl => "https://docs.anthropic.com/en/docs/claude-code/overview";
+        public override string TutorialUrl => "https://www.youtube.com/watch?v=xUYV2yxsaLs";
 
         protected override string[] UxmlPaths => EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/agents/ClaudeCodeConfig.uxml");
         protected override string? IconFileName => "claude-64.png";
@@ -54,22 +55,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         protected override void OnUICreated(VisualElement root)
         {
-            var textFieldGoToFolder = root.Q<TextField>("terminalGoToFolder");
-            var textFieldConfigureClaudeCode = root.Q<TextField>("terminalConfigureClaudeCode");
+            var textFieldGoToFolder = root.Q<TextField>("terminalGoToFolder") ?? throw new NullReferenceException("TextField 'terminalGoToFolder' not found in UI.");
+            var textFieldConfigureClaudeCode = root.Q<TextField>("terminalConfigureClaudeCode") ?? throw new NullReferenceException("TextField 'terminalConfigureClaudeCode' not found in UI.");
 
-            if (textFieldGoToFolder == null)
-            {
-                Debug.LogWarning("TextField 'terminalGoToFolder' not found in Claude Code configurator UI.");
-                return;
-            }
-
-            if (textFieldConfigureClaudeCode == null)
-            {
-                Debug.LogWarning("TextField 'terminalConfigureClaudeCode' not found in Claude Code configurator UI.");
-                return;
-            }
-
-            var addMcpServerCommand = $"claude mcp add {AiAgentConfig.DefaultMcpServerName} \"{Startup.Server.ExecutableFullPath}\" port={UnityMcpPlugin.Port} client-transport=stdio";
+            var addMcpServerCommand = $"claude mcp add {AiAgentConfig.DefaultMcpServerName} \"{Startup.Server.ExecutableFullPath}\" port={UnityMcpPlugin.Port} plugin-timeout={UnityMcpPlugin.TimeoutMs} client-transport=stdio";
 
             textFieldGoToFolder.value = $"cd \"{ProjectRootPath}\"";
             textFieldConfigureClaudeCode.value = addMcpServerCommand;

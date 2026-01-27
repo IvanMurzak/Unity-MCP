@@ -21,6 +21,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         public string Name { get; set; }
         public string ConfigPath { get; set; }
         public string BodyPath { get; set; }
+        public abstract string ExpectedFileContent { get; }
 
         public AiAgentConfig(string name, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
         {

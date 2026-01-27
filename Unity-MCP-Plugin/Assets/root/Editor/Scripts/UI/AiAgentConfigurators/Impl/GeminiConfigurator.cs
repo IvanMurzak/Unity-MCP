@@ -9,14 +9,16 @@
 */
 
 #nullable enable
+using System;
 using System.IO;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
+using UnityEngine.UIElements;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
 {
     /// <summary>
-    /// Configurator for Gemini MCP client.
+    /// Configurator for Gemini AI agent.
     /// </summary>
     public class GeminiConfigurator : AiAgentConfiguratorBase
     {
@@ -38,5 +40,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             configPath: Path.Combine(".gemini", "settings.json"),
             bodyPath: Consts.MCP.Server.DefaultBodyPath
         );
+
+        protected override void OnUICreated(VisualElement root)
+        {
+            var textFieldGoToFolder = root.Q<TextField>("terminalGoToFolder") ?? throw new NullReferenceException("TextField 'terminalGoToFolder' not found in UI.");
+            var textFieldConfigureGemini = root.Q<TextField>("terminalConfigureGemini") ?? throw new NullReferenceException("TextField 'terminalConfigureGemini' not found in UI.");
+            var textFieldJsonConfig = root.Q<TextField>("jsonConfig") ?? throw new NullReferenceException("TextField 'jsonConfig' not found in UI.");
+
+            var addMcpServerCommand = $"gemini mcp add {AiAgentConfig.DefaultMcpServerName} \"{Startup.Server.ExecutableFullPath}\" port={UnityMcpPlugin.Port} plugin-timeout={UnityMcpPlugin.TimeoutMs} client-transport=stdio";
+
+            textFieldGoToFolder.value = $"cd \"{ProjectRootPath}\"";
+            textFieldConfigureGemini.value = addMcpServerCommand;
+            textFieldJsonConfig.value = Startup.Server.RawJsonConfigurationStdio(
+                port: UnityMcpPlugin.Port,
+                bodyPath: Consts.MCP.Server.DefaultBodyPath,
+                timeoutMs: UnityMcpPlugin.TimeoutMs).ToString();
+
+            base.OnUICreated(root);
+        }
     }
 }

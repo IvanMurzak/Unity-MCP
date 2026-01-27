@@ -13,28 +13,28 @@ using System;
 using System.IO;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
+using UnityEngine.UIElements;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
 {
     /// <summary>
-    /// Configurator for Antigravity MCP client.
+    /// Configurator for Claude Desktop AI agent.
     /// </summary>
-    public class AntigravityConfigurator : AiAgentConfiguratorBase
+    public class ClaudeDesktopConfigurator : AiAgentConfiguratorBase
     {
-        public override string AgentName => "Antigravity";
-        public override string AgentId => "antigravity";
-        public override string DownloadUrl => "https://antigravity.google/download";
+        public override string AgentName => "Claude Desktop";
+        public override string AgentId => "claude-desktop";
+        public override string DownloadUrl => "https://code.claude.com/docs/en/desktop";
 
-        protected override string[] UxmlPaths => EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/agents/AntigravityConfig.uxml");
-        protected override string? IconFileName => "antigravity-64.png";
+        protected override string[] UxmlPaths => EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/agents/ClaudeDesktopConfig.uxml");
+        protected override string? IconFileName => "claude-64.png";
 
         protected override AiAgentConfig CreateConfigWindows() => new JsonAiAgentConfig(
             name: AgentName,
             configPath: Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                ".gemini",
-                "antigravity",
-                "mcp_config.json"
+                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+                "Claude",
+                "claude_desktop_config.json"
             ),
             bodyPath: Consts.MCP.Server.DefaultBodyPath
         );
@@ -43,11 +43,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             name: AgentName,
             configPath: Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                ".gemini",
-                "antigravity",
-                "mcp_config.json"
+                "Library",
+                "Application Support",
+                "Claude",
+                "claude_desktop_config.json"
             ),
             bodyPath: Consts.MCP.Server.DefaultBodyPath
         );
+
+        protected override void OnUICreated(VisualElement root)
+        {
+            var textFieldJsonConfig = root.Q<TextField>("jsonConfig") ?? throw new NullReferenceException("TextField 'jsonConfig' not found in UI.");
+            textFieldJsonConfig.value = Startup.Server.RawJsonConfigurationStdio(
+                port: UnityMcpPlugin.Port,
+                bodyPath: Consts.MCP.Server.DefaultBodyPath,
+                timeoutMs: UnityMcpPlugin.TimeoutMs).ToString();
+
+            base.OnUICreated(root);
+        }
     }
 }
