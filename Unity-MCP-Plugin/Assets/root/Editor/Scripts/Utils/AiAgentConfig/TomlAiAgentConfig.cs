@@ -45,9 +45,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 var commandPath = Startup.Server.ExecutableFullPath.Replace('\\', '/');
                 var args = new[]
                 {
-                    $"port={UnityMcpPlugin.Port}",
-                    $"plugin-timeout={UnityMcpPlugin.TimeoutMs}",
-                    $"client-transport=stdio"
+                    $"--port={UnityMcpPlugin.Port}",
+                    $"--plugin-timeout={UnityMcpPlugin.TimeoutMs}",
+                    $"--client-transport=stdio"
                 };
 
                 if (!File.Exists(configPath))
