@@ -144,9 +144,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     command: ExecutableFullPath.Replace('\\', '/'),
                     args: new[]
                 {
-                    $"--port={UnityMcpPlugin.Port}",
-                    $"--plugin-timeout={UnityMcpPlugin.TimeoutMs}",
-                    $"--client-transport=stdio"
+                    $"port={UnityMcpPlugin.Port}",
+                    $"plugin-timeout={UnityMcpPlugin.TimeoutMs}",
+                    $"client-transport=stdio"
                 });
             }
 
