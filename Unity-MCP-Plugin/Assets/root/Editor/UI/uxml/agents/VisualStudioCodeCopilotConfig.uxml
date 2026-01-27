@@ -12,7 +12,7 @@
             </ui:VisualElement>
         </ui:VisualElement>
 
-        <ui:Label text="Configure MCP for GitHub Copilot in Visual Studio Code." class="section-desc" style="margin-top: 4px;" />
+        <ui:Label text="VS Code has integration of GitHub Copilot that operates as AI agent in the IDE." class="section-desc" style="margin-top: 4px;" />
 
         <ui:VisualElement class="row" style="margin-top: 0px;">
             <ui:VisualElement name="configureStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
