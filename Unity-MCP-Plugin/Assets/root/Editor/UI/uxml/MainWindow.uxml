@@ -21,10 +21,39 @@
             <ui:Foldout text="Information" value="false" class="base-foldout">
                 <ui:Label text="Usually the server is hosted locally at:&#10;http://localhost:8080&#10;&#10;But feel free to connect to remote MCP server if needed. The connection under the hood is established using SignalR and supports wide range of features." class="section-desc" />
             </ui:Foldout>
-            <ui:VisualElement name="ServerConnectionInfo" class="row">
-                <ui:VisualElement name="connectionStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
-                <ui:Label text="Disconnected" name="connectionStatusText" style="flex-grow: 1;" />
-                <ui:Button name="btnConnectOrDisconnect" text="Connect" class="btn-primary" />
+            <!-- Connection Timeline -->
+            <ui:VisualElement name="ConnectionTimeline" class="connection-timeline">
+                <!-- Point 1: Unity -->
+                <ui:VisualElement name="TimelinePointUnity" class="timeline-point">
+                    <ui:VisualElement class="timeline-indicator">
+                        <ui:VisualElement name="connectionStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
+                        <ui:VisualElement class="timeline-line" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="timeline-content">
+                        <ui:Label text="Unity" name="connectionStatusText" class="timeline-label" />
+                        <ui:Button name="btnConnectOrDisconnect" text="Connect" class="btn-primary timeline-btn" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <!-- Point 2: MCP Server -->
+                <ui:VisualElement name="TimelinePointMcpServer" class="timeline-point">
+                    <ui:VisualElement class="timeline-indicator">
+                        <ui:VisualElement name="mcpServerStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
+                        <ui:VisualElement class="timeline-line" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="timeline-content">
+                        <ui:Label text="MCP server" class="timeline-label" />
+                        <ui:Button name="btnStartStopServer" text="Start" class="btn-secondary timeline-btn" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <!-- Point 3: AI Agent -->
+                <ui:VisualElement name="TimelinePointAiAgent" class="timeline-point timeline-point-last">
+                    <ui:VisualElement class="timeline-indicator">
+                        <ui:VisualElement name="aiAgentStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="timeline-content">
+                        <ui:Label text="AI agent" name="aiAgentLabel" class="timeline-label" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement class="divider" />
             <ui:VisualElement name="ToolsConfigurationSection">

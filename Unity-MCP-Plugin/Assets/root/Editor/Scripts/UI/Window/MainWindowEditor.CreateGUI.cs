@@ -110,12 +110,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             });
 
             var btnConnectOrDisconnect = root.Query<Button>("btnConnectOrDisconnect").First();
-            var connectionStatusCircle = root
-                .Query<VisualElement>("ServerConnectionInfo").First()
-                .Query<VisualElement>("connectionStatusCircle").First();
-            var connectionStatusText = root
-                .Query<VisualElement>("ServerConnectionInfo").First()
-                .Query<Label>("connectionStatusText").First();
+            var connectionStatusCircle = root.Query<VisualElement>("connectionStatusCircle").First();
+            var connectionStatusText = root.Query<Label>("connectionStatusText").First();
 
             McpPlugin.McpPlugin.DoAlways(plugin =>
             {
@@ -154,7 +150,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         inputFieldHost.RemoveFromClassList("disabled-text-field");
                     }
 
-                    connectionStatusText.text = connectionState switch
+                    connectionStatusText.text = "Unity: " + connectionState switch
                     {
                         HubConnectionState.Connected => keepConnected
                             ? "Connected"
