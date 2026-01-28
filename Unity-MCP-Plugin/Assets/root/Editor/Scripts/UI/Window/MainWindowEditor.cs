@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System.Collections.Generic;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using R3;
 using UnityEditor;
@@ -36,6 +37,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         public void Invalidate() => CreateGUI();
         void OnValidate() => UnityMcpPlugin.Instance.Validate();
+
+        /// <summary>
+        /// Gets a list of configured AI agent names.
+        /// </summary>
+        /// <returns>A list of agent names that are currently configured.</returns>
+        public static List<string> GetConfiguredClients()
+        {
+            var configuredClients = new List<string>();
+            foreach (var configurator in AiAgentConfiguratorRegistry.All)
+            {
+                if (configurator.ClientConfig.IsConfigured())
+                {
+                    configuredClients.Add(configurator.AgentName);
+                }
+            }
+            return configuredClients;
+        }
 
         private void SaveChanges(string message)
         {
