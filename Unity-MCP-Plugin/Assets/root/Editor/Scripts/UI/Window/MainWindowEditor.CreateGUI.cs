@@ -443,7 +443,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             var passedCount = 0;
             var totalCount = 7;
 
-            var configuredClients = GetConfiguredClients();
+            var configuredClients = MainWindowEditor.GetConfiguredClients();
             var isConnected = UnityMcpPlugin.IsConnected.CurrentValue;
 
             // Check 1: MCP Client configured
