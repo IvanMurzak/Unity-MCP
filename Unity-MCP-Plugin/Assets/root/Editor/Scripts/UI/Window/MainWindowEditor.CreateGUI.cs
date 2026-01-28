@@ -242,6 +242,49 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 }
             }));
 
+            // MCP Server
+            // -----------------------------------------------------------------
+            var btnStartStopServer = root.Query<Button>("btnStartStopServer").First();
+            var mcpServerStatusCircle = root.Query<VisualElement>("mcpServerStatusCircle").First();
+
+            if (btnStartStopServer != null && mcpServerStatusCircle != null)
+            {
+                McpServerManager.ServerStatus
+                    .ObserveOnCurrentSynchronizationContext()
+                    .Subscribe(status =>
+                    {
+                        btnStartStopServer.text = status switch
+                        {
+                            McpServerStatus.Running => "Stop",
+                            McpServerStatus.Starting => "Starting...",
+                            McpServerStatus.Stopping => "Stopping...",
+                            McpServerStatus.Stopped => "Start",
+                            _ => "Start"
+                        };
+
+                        btnStartStopServer.SetEnabled(status == McpServerStatus.Running || status == McpServerStatus.Stopped);
+
+                        mcpServerStatusCircle.RemoveFromClassList(USS_IndicatorClass_Connected);
+                        mcpServerStatusCircle.RemoveFromClassList(USS_IndicatorClass_Connecting);
+                        mcpServerStatusCircle.RemoveFromClassList(USS_IndicatorClass_Disconnected);
+
+                        mcpServerStatusCircle.AddToClassList(status switch
+                        {
+                            McpServerStatus.Running => USS_IndicatorClass_Connected,
+                            McpServerStatus.Starting => USS_IndicatorClass_Connecting,
+                            McpServerStatus.Stopping => USS_IndicatorClass_Connecting,
+                            McpServerStatus.Stopped => USS_IndicatorClass_Disconnected,
+                            _ => USS_IndicatorClass_Disconnected
+                        });
+                    })
+                    .AddTo(_disposables);
+
+                btnStartStopServer.RegisterCallback<ClickEvent>(evt =>
+                {
+                    McpServerManager.ToggleServer();
+                });
+            }
+
             // Tools Configuration
             // -----------------------------------------------------------------
             var btnOpenTools = root.Query<Button>("btnOpenTools").First();
