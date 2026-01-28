@@ -43,26 +43,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
               reflector: reflector,
               name: nameof(child.transform),
               type: typeof(Transform),
-              value: new ComponentRef(child.transform.GetInstanceID()))
+              value: new ComponentRef(child!.transform.GetInstanceID()))
           .AddProperty(SerializedMember.FromValue(
               reflector: reflector,
               name: nameof(child.transform.position),
               value: newPosition));
 
       var result = new Tool_GameObject().ModifyComponent(
-          gameObjectRef: new GameObjectRef(child.GetInstanceID()),
-          componentRef: new ComponentRef(child.transform.GetInstanceID()),
+          gameObjectRef: new GameObjectRef(child!.GetInstanceID()),
+          componentRef: new ComponentRef(child!.transform.GetInstanceID()),
           componentDiff: componentDiff);
 
-      Assert.IsTrue(result.success, "Modification should be successful");
+      Assert.IsTrue(result.Success, "Modification should be successful");
 
-      Assert.AreEqual(child.transform.position, newPosition, "Position should be changed");
+      Assert.AreEqual(child!.transform.position, newPosition, "Position should be changed");
 
       int? dataInstanceID = componentDiff.TryGetInstanceID(out var tempDataInstanceId)
           ? tempDataInstanceId
           : null;
 
-      Assert.AreEqual(child.transform.GetInstanceID(), dataInstanceID, "InstanceID should be the same");
+      Assert.AreEqual(child!.transform.GetInstanceID(), dataInstanceID, "InstanceID should be the same");
       yield return null;
     }
     [UnityTest]
@@ -95,7 +95,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
           componentRef: new ComponentRef(component.GetInstanceID()),
           componentDiff: componentDiff);
 
-      Assert.IsTrue(response.success, "Modification should be successful");
+      Assert.IsTrue(response.Success, "Modification should be successful");
 
       Assert.AreEqual(sharedMaterial.GetInstanceID(), component.sharedMaterial.GetInstanceID(), "Materials InstanceIDs should be the same.");
       yield return null;

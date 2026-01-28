@@ -32,7 +32,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             TestsRunToolId,
-            Title = "Test Runner / Run Unity Tests"
+            Title = "Tests / Run"
         )]
         [Description("Execute Unity tests and return detailed results. " +
             "Supports filtering by test mode, assembly, namespace, class, and method. " +

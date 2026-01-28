@@ -51,11 +51,12 @@ namespace com.IvanMurzak.Unity.MCP
             reflector.Converters.Add(new UnityEngine_GameObject_ReflectionConverter());
 
             // Components
-            reflector.Converters.Add(new UnityEngine_Component_ReflectionConverter());
+            var componentConverter = new UnityEngine_Component_ReflectionConverter();
+            reflector.Converters.Add(componentConverter);
             reflector.Converters.Add(new UnityEngine_Transform_ReflectionConverter());
             reflector.Converters.Add(new UnityEngine_Renderer_ReflectionConverter());
             reflector.Converters.Add(new UnityEngine_MeshFilter_ReflectionConverter());
-            reflector.Converters.Add(new UnityEngine_Collider_ReflectionConverter());
+            reflector.Converters.Add(new UnityEngine_Collider_ReflectionConverter(componentConverter));
 
             // Assets
             reflector.Converters.Add(new UnityEngine_Material_ReflectionConverter());
@@ -65,6 +66,20 @@ namespace com.IvanMurzak.Unity.MCP
 
             // Blacklist types
             // ---------------------------------------------------------
+
+            // System types
+            reflector.Converters.BlacklistType(typeof(System.Delegate));
+            reflector.Converters.BlacklistType(typeof(System.EventHandler));
+            reflector.Converters.BlacklistType(typeof(System.EventHandler<>));
+            reflector.Converters.BlacklistType(typeof(System.MulticastDelegate));
+            reflector.Converters.BlacklistType(typeof(System.IntPtr));
+            reflector.Converters.BlacklistType(typeof(System.UIntPtr));
+            reflector.Converters.BlacklistType(typeof(System.Reflection.FieldInfo));
+            reflector.Converters.BlacklistType(typeof(System.Reflection.PropertyInfo));
+            reflector.Converters.BlacklistType(typeof(System.Threading.CancellationToken));
+            reflector.Converters.BlacklistType(typeof(System.Span<>));
+            reflector.Converters.BlacklistType(typeof(System.ReadOnlySpan<>));
+
 #if UNITY_2023_1_OR_NEWER
             reflector.Converters.BlacklistType(typeof(UnityEngine.LowLevelPhysics.GeometryHolder));
 #endif
@@ -75,6 +90,7 @@ namespace com.IvanMurzak.Unity.MCP
             reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.GlyphMetrics));
 
             // Redundant TextMeshPro data
+            reflector.Converters.BlacklistType("TMPro.TMP_TextInfo"); // Heavy text data
             reflector.Converters.BlacklistType("TMPro.TMP_TextElement"); // Heavy text data
             reflector.Converters.BlacklistType("TMPro.TMP_FontFeatureTable"); // Heavy font data
             reflector.Converters.BlacklistType("TMPro.TMP_FontWeightPair"); // Heavy font data
@@ -83,6 +99,12 @@ namespace com.IvanMurzak.Unity.MCP
             // Redundant RenderPipeline data
             reflector.Converters.BlacklistType("UnityEngine.Rendering.RTHandle"); // Can't be utilized
             reflector.Converters.BlacklistType("UnityEngine.Experimental.Rendering.RTHandle"); // Can't be utilized
+
+            // Photon IL-weaved types
+            reflector.Converters.BlacklistType("Fusion.NetworkBehaviourBuffer");
+
+            // Addressables
+            reflector.Converters.BlacklistType("UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle");
 
             // Json Converters
             // ---------------------------------------------------------
@@ -107,6 +129,7 @@ namespace com.IvanMurzak.Unity.MCP
             reflector.JsonSerializer.AddConverter(new AssetObjectRefConverter());
             reflector.JsonSerializer.AddConverter(new GameObjectRefConverter());
             reflector.JsonSerializer.AddConverter(new ComponentRefConverter());
+            reflector.JsonSerializer.AddConverter(new SceneRefConverter());
 
             return reflector;
         }

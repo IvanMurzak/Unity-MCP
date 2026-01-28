@@ -40,39 +40,39 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             {
                 var response = new SelectionData()
                 {
-                    activeGameObject = Selection.activeGameObject != null
+                    ActiveGameObject = Selection.activeGameObject != null
                         ? new GameObjectRef(Selection.activeGameObject)
                         : null,
 #if UNITY_6000_3_OR_NEWER
-                    activeInstanceID = (int)Selection.activeEntityId
+                    ActiveInstanceID = (int)Selection.activeEntityId
 #else
-                    activeInstanceID = Selection.activeInstanceID
+                    ActiveInstanceID = Selection.activeInstanceID
 #endif
                 };
 
                 if (includeGameObjects)
-                    response.gameObjects = Selection.gameObjects?.Select(go => new GameObjectRef(go)).ToArray();
+                    response.GameObjects = Selection.gameObjects?.Select(go => new GameObjectRef(go)).ToArray();
 
                 if (includeTransforms)
-                    response.transforms = Selection.transforms?.Select(t => new ComponentRef(t)).ToArray();
+                    response.Transforms = Selection.transforms?.Select(t => new ComponentRef(t)).ToArray();
 
                 if (includeInstanceIDs)
 #if UNITY_6000_3_OR_NEWER
-                    response.instanceIDs = Selection.entityIds.Select(x => (int)x).ToArray();
+                    response.InstanceIDs = Selection.entityIds.Select(x => (int)x).ToArray();
 #else
-                    response.instanceIDs = Selection.instanceIDs;
+                    response.InstanceIDs = Selection.instanceIDs;
 #endif
 
                 if (includeAssetGUIDs)
-                    response.assetGUIDs = Selection.assetGUIDs;
+                    response.AssetGUIDs = Selection.assetGUIDs;
 
                 if (includeActiveObject)
-                    response.activeObject = Selection.activeObject != null
+                    response.ActiveObject = Selection.activeObject != null
                         ? new ObjectRef(Selection.activeObject)
                         : null;
 
                 if (includeActiveTransform)
-                    response.activeTransform = Selection.activeTransform != null
+                    response.ActiveTransform = Selection.activeTransform != null
                         ? new ComponentRef(Selection.activeTransform)
                         : null;
 

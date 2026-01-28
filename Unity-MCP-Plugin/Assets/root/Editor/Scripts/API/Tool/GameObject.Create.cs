@@ -13,6 +13,7 @@ using System;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
@@ -48,17 +49,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             PrimitiveType? primitiveType = null
         )
         {
+            if (string.IsNullOrEmpty(name))
+                throw new ArgumentException("Name cannot be null or empty.", nameof(name));
+
             return MainThread.Instance.Run(() =>
             {
-                if (string.IsNullOrEmpty(name))
-                    throw new ArgumentException(Error.GameObjectNameIsEmpty());
-
                 var parentGo = default(GameObject);
-                if (parentGameObjectRef?.IsValid ?? false)
+                if (parentGameObjectRef?.IsValid(out _) == true)
                 {
                     parentGo = parentGameObjectRef.FindGameObject(out var error);
                     if (error != null)
-                        throw new Exception(error);
+                        throw new ArgumentException(error, nameof(parentGameObjectRef));
                 }
 
                 position ??= Vector3.zero;
@@ -83,8 +84,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     isLocalSpace: isLocalSpace);
 
                 EditorUtility.SetDirty(go);
-                UnityEditor.EditorApplication.RepaintHierarchyWindow();
-                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                EditorUtils.RepaintAllEditorWindows();
 
                 return new GameObjectRef(go);
             });

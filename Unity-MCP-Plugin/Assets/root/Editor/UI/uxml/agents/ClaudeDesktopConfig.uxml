@@ -1,0 +1,38 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement class="frame-group" style="flex-grow: 1;">
+        <ui:VisualElement style="flex-direction: row; align-items: center;">
+            <ui:VisualElement name="agentIcon" class="agent-icon" />
+            <ui:VisualElement style="flex-grow: 1;">
+                <ui:Label text="Claude Desktop" class="section-title" />
+                <ui:VisualElement style="flex-direction: row; align-items: center;">
+                    <ui:Label name="downloadLink" text="Download" class="section-desc link-label" />
+                    <ui:Label name="tutorialSeparator" text="•" class="section-desc link-separator" />
+                    <ui:Label name="tutorialLink" text="YouTube Tutorial" class="section-desc link-label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- <ui:Label text="Claude Desktop is Anthropic's desktop application for AI conversations." class="section-desc" style="margin-top: 4px;" /> -->
+
+        <ui:VisualElement class="row" style="margin-top: 0px;">
+            <ui:VisualElement name="configureStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
+            <ui:Label text="Not configured" name="configureStatusText" style="flex-grow: 1;" />
+            <ui:Button name="btnConfigure" text="Configure" class="btn-primary" />
+        </ui:VisualElement>
+
+        <ui:Label text="IMPORTANT: Highly recommended to use Claude Code instead, they share the same subscription plan." class="section-desc" />
+        <ui:Label text="Claude Desktop app is finicky, requires restart each time after Unity launched with active connecting." class="section-desc" />
+
+        <ui:Foldout text="Manual Configuration Steps" value="false" class="title-foldout" style="margin-top: 8px;">
+            <ui:Label text="1. Open the file 'claude_desktop_config.json'." class="section-desc" />
+            <ui:Label text="2. Copy and paste the configuration json into the file." class="section-desc" />
+            <ui:TextField name="jsonConfig" multiline="true" readonly="true" selectOnFocus="true" class="config-snippet" style="margin-bottom: 8px;" />
+            <ui:Label text="3. Restart Claude Desktop. You may need to click 'Quit' in apps tray, because simple window close is not enough." class="section-desc" />
+        </ui:Foldout>
+
+        <ui:Foldout text="Troubleshooting" value="false" class="title-foldout">
+            <ui:Label text="Claude Desktop has problems with runtime updates of MCP tools. It may not recognize them. That is why need to let Claude Desktop read MCP tools at the start of Claude Desktop app." class="section-desc" />
+            <ui:Label text="- Start Unity first and the connection status should be 'Connecting...'" class="section-desc" />
+        </ui:Foldout>
+    </ui:VisualElement>
+</ui:UXML>

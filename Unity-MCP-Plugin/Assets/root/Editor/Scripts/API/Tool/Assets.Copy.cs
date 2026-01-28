@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using UnityEditor;
 
@@ -54,27 +55,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                     if (string.IsNullOrEmpty(sourcePath) || string.IsNullOrEmpty(destinationPath))
                     {
-                        response.errors ??= new();
-                        response.errors.Add(Error.SourceOrDestinationPathIsEmpty());
+                        response.Errors ??= new();
+                        response.Errors.Add(Error.SourceOrDestinationPathIsEmpty());
                         continue;
                     }
                     if (!AssetDatabase.CopyAsset(sourcePath, destinationPath))
                     {
-                        response.errors ??= new();
-                        response.errors.Add($"[Error] Failed to copy asset from {sourcePath} to {destinationPath}.");
+                        response.Errors ??= new();
+                        response.Errors.Add($"[Error] Failed to copy asset from {sourcePath} to {destinationPath}.");
                         continue;
                     }
                     var newAssetType = AssetDatabase.GetMainAssetTypeAtPath(destinationPath);
                     var newAsset = AssetDatabase.LoadAssetAtPath(destinationPath, newAssetType);
 
-                    response.copiedAssets ??= new();
-                    response.copiedAssets.Add(new AssetObjectRef(newAsset));
+                    response.CopiedAssets ??= new();
+                    response.CopiedAssets.Add(new AssetObjectRef(newAsset));
                 }
 
                 AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-                UnityEditor.EditorApplication.RepaintProjectWindow();
-                UnityEditor.EditorApplication.RepaintHierarchyWindow();
-                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                EditorUtils.RepaintAllEditorWindows();
 
                 return response;
             });
@@ -82,8 +81,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
         public class CopyAssetsResponse
         {
-            public List<AssetObjectRef>? copiedAssets;
-            public List<string>? errors;
+            [Description("List of copied assets.")]
+            public List<AssetObjectRef>? CopiedAssets { get; set; }
+            [Description("List of errors encountered during copy operations.")]
+            public List<string>? Errors { get; set; }
         }
     }
 }

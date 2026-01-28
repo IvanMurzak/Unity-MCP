@@ -9,14 +9,16 @@
 */
 
 #nullable enable
+using System;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.Extensions.Logging;
-using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -33,24 +35,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "Use '" + AssetsFindToolId + "' tool to find asset before using this tool.")]
         public SerializedMember GetData(AssetObjectRef assetRef)
         {
+            if (assetRef == null)
+                throw new ArgumentNullException(nameof(assetRef));
+
+            if (!assetRef.IsValid(out var error))
+                throw new ArgumentException(error, nameof(assetRef));
+
             return MainThread.Instance.Run(() =>
             {
-                if (string.IsNullOrEmpty(assetRef.AssetPath) && string.IsNullOrEmpty(assetRef.AssetGuid))
-                    throw new System.Exception(Error.NeitherProvided_AssetPath_AssetGuid());
-
-                if (string.IsNullOrEmpty(assetRef.AssetPath))
-                    assetRef.AssetPath = AssetDatabase.GUIDToAssetPath(assetRef.AssetGuid);
-                if (string.IsNullOrEmpty(assetRef.AssetGuid))
-                    assetRef.AssetGuid = AssetDatabase.AssetPathToGUID(assetRef.AssetPath);
-
-                var asset = AssetDatabase.LoadAssetAtPath<UnityEngine.Object>(assetRef.AssetPath);
+                var asset = assetRef.FindAssetObject();
                 if (asset == null)
-                    throw new System.Exception(Error.NotFoundAsset(assetRef.AssetPath!, assetRef.AssetGuid!));
+                {
+                    // Built-in assets fallback (uses cached assets to avoid repeated expensive LoadAllAssetsAtPath calls)
+                    if (!string.IsNullOrEmpty(assetRef.AssetPath) && assetRef.AssetPath!.StartsWith(ExtensionsRuntimeObject.UnityEditorBuiltInResourcesPath))
+                    {
+                        var targetName = System.IO.Path.GetFileNameWithoutExtension(assetRef.AssetPath);
+                        var ext = System.IO.Path.GetExtension(assetRef.AssetPath);
+                        asset = BuiltInAssetCache.FindAssetByExtension(targetName, ext);
+                    }
+                }
+
+                if (asset == null)
+                    throw new Exception(Error.NotFoundAsset(assetRef.AssetPath!, assetRef.AssetGuid ?? "N/A"));
 
                 var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
                 return reflector.Serialize(
-                    asset,
+                    obj: asset,
                     name: asset.name,
                     recursive: true,
                     logger: UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_Assets>()

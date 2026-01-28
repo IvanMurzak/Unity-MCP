@@ -25,6 +25,11 @@ using LogLevel = Microsoft.Extensions.Logging.LogLevel;
 
 namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
+    /// <summary>
+    /// Reflection converter for UnityEngine.GameObject
+    /// IMPORTANT: it implements custom depth handling to avoid heavy serialization of Unity objects.
+    /// As a result it only serializes a GameObject at depth == 0
+    /// </summary>
     public partial class UnityEngine_GameObject_ReflectionConverter : UnityGenericReflectionConverter<UnityEngine.GameObject>
     {
         public override bool AllowSetValue => false;
@@ -56,35 +61,44 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 return SerializedMember.Null(type, name);
 
             var unityObject = obj as UnityEngine.GameObject;
-            if (recursive)
+            if (unityObject == null)
             {
-                return new SerializedMember()
-                {
-                    name = name ?? unityObject?.name,
-                    typeName = type.GetTypeId(),
-                    fields = SerializeFields(
-                        reflector,
-                        obj: obj,
-                        flags: flags,
-                        depth: depth,
-                        logs: logs,
-                        logger: logger,
-                        context: context),
-                    props = SerializeProperties(
-                        reflector,
-                        obj: obj,
-                        flags: flags,
-                        depth: depth,
-                        logs: logs,
-                        logger: logger,
-                        context: context)
-                }.SetValue(reflector, new GameObjectRef(unityObject?.GetInstanceID() ?? 0));
+                // UnityEngine.Object is destroyed but reference is not null
+                return SerializedMember.Null(type, name);
             }
-            else
+
+            var objectRef = new GameObjectRef(unityObject.GetInstanceID());
+
+            if (depth >= 1 || !recursive)
             {
-                var objectRef = new GameObjectRef(unityObject?.GetInstanceID() ?? 0);
-                return SerializedMember.FromValue(reflector, type, objectRef, name);
+                return SerializedMember.FromValue(
+                    reflector: reflector,
+                    type: type,
+                    value: objectRef,
+                    name: name ?? unityObject.name);
             }
+
+            return new SerializedMember()
+            {
+                name = name ?? unityObject.name,
+                typeName = type.GetTypeId(),
+                fields = SerializeFields(
+                    reflector,
+                    obj: obj,
+                    flags: flags,
+                    depth: depth + 1,
+                    logs: logs,
+                    logger: logger,
+                    context: context),
+                props = SerializeProperties(
+                    reflector,
+                    obj: obj,
+                    flags: flags,
+                    depth: depth + 1,
+                    logs: logs,
+                    logger: logger,
+                    context: context)
+            }.SetValue(reflector, objectRef);
         }
 
         protected override bool SetValue(

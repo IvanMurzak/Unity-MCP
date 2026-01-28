@@ -25,12 +25,12 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         {
             if (gameObjectRef == null)
             {
-                error = "GameObjectRef is null.";
+                error = $"{nameof(gameObjectRef)} is null.";
                 return null;
             }
-            if (!gameObjectRef.IsValid)
+            if (!gameObjectRef.IsValid(out var validationError))
             {
-                error = "GameObjectRef is not valid. At least one of the properties should be set.";
+                error = validationError;
                 return null;
             }
             return FindBy(

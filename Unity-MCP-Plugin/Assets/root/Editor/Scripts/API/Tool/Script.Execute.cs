@@ -32,7 +32,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ScriptExecuteToolId,
             Title = "Script / Execute"
         )]
-        [Description("Compiles and executes C# code dynamically using Roslyn. The provided code must define a class with a static method to execute.")]
+        [Description("Compiles and executes C# code dynamically using Roslyn. " +
+            "The provided code must define a class with a static method to execute.")]
         public static SerializedMember? Execute
         (
             [Description("C# code that compiles and executes immediately. It won't be stored as a script in the project. " +

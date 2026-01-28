@@ -1,0 +1,43 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement class="frame-group" style="flex-grow: 1;">
+        <ui:VisualElement style="flex-direction: row; align-items: center;">
+            <ui:VisualElement name="agentIcon" class="agent-icon" />
+            <ui:VisualElement style="flex-grow: 1;">
+                <ui:Label text="Gemini" class="section-title" />
+                <ui:VisualElement style="flex-direction: row; align-items: center;">
+                    <ui:Label name="downloadLink" text="Download" class="section-desc link-label" />
+                    <ui:Label name="tutorialSeparator" text="•" class="section-desc link-separator" />
+                    <ui:Label name="tutorialLink" text="YouTube Tutorial" class="section-desc link-label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- <ui:Label text="Gemini CLI is Google's AI agent that operates locally on your machine." class="section-desc" style="margin-top: 4px;" /> -->
+
+        <ui:VisualElement class="row" style="margin-top: 0px;">
+            <ui:VisualElement name="configureStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
+            <ui:Label text="Not configured" name="configureStatusText" style="flex-grow: 1;" />
+            <ui:Button name="btnConfigure" text="Configure" class="btn-primary" />
+        </ui:VisualElement>
+
+        <ui:Foldout text="Manual Configuration Steps - Option 1" value="false" class="title-foldout" style="margin-top: 8px;">
+            <ui:Label text="1. Open a terminal and run the following command to be in the folder of the Unity project" class="section-desc" />
+            <ui:TextField name="terminalGoToFolder" multiline="true" readonly="true" selectOnFocus="true" class="config-snippet" style="margin-bottom: 8px;" />
+            <ui:Label text="2. Run the following command in the folder of the Unity project to configure Gemini" class="section-desc" />
+            <ui:TextField name="terminalConfigureGemini" multiline="true" readonly="true" selectOnFocus="true" class="config-snippet" style="margin-bottom: 8px;" />
+            <ui:Label text="3. Start Gemini" class="section-desc" />
+            <ui:TextField value="gemini" multiline="true" readonly="true" selectOnFocus="true" class="config-snippet" style="margin-bottom: 8px;" />
+        </ui:Foldout>
+
+        <ui:Foldout text="Manual Configuration Steps - Option 2" value="false" class="title-foldout">
+            <ui:Label text="1. Open or create file '.gemini/settings.json'" class="section-desc" />
+            <ui:Label text="2. Copy and paste the configuration json into the file." class="section-desc" />
+            <ui:TextField name="jsonConfig" multiline="true" readonly="true" selectOnFocus="true" class="config-snippet" style="margin-bottom: 8px;" />
+        </ui:Foldout>
+
+        <ui:Foldout text="Troubleshooting" value="false" class="title-foldout">
+            <ui:Label text="- Ensure Gemini CLI is installed and accessible from terminal" class="section-desc" />
+            <ui:Label text="- Ensure MCP configuration file doesn't have syntax errors" class="section-desc" />
+        </ui:Foldout>
+    </ui:VisualElement>
+</ui:UXML>

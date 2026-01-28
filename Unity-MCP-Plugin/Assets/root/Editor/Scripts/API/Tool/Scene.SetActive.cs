@@ -13,6 +13,7 @@ using System.ComponentModel;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 
@@ -59,8 +60,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 if (!success)
                     throw new System.Exception($"Failed to set active scene to '{scene.name}'.");
 
-                UnityEditor.EditorApplication.RepaintHierarchyWindow();
-                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                EditorUtils.RepaintAllEditorWindows();
 
                 return OpenedScenes
                     .Select(scene => scene.ToSceneDataShallow())

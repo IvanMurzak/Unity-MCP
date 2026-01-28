@@ -9,12 +9,17 @@
 */
 
 #nullable enable
+using System;
 using System.ComponentModel;
 using System.Linq;
 using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
+using com.IvanMurzak.Unity.MCP.Utils;
+using Microsoft.Extensions.Logging;
+using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -28,28 +33,53 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         )]
         [Description("Unload scene from the Opened scenes in Unity Editor. " +
             "Use '" + SceneListOpenedToolId + "' tool to get the list of all opened scenes.")]
-        public Task<string> Unload
+        public Task<UnloadSceneResult> Unload
         (
             [Description("Name of the loaded scene.")]
             string name
         )
-        => MainThread.Instance.Run(async () =>
         {
-            if (string.IsNullOrEmpty(name))
-                return Error.SceneNameIsEmpty();
+            return MainThread.Instance.Run(async () =>
+            {
+                var logger = UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_Scene>();
 
-            var scene = SceneUtils.GetAllOpenedScenes()
-                .FirstOrDefault(scene => scene.name == name);
+                if (string.IsNullOrEmpty(name))
+                    throw new ArgumentException(Error.SceneNameIsEmpty(), nameof(name));
 
-            if (!scene.IsValid())
-                return Error.NotFoundSceneWithName(name);
+                var scene = SceneUtils.GetAllOpenedScenes()
+                    .FirstOrDefault(scene => scene.name == name);
 
-            var asyncOperation = UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync(scene);
+                if (!scene.IsValid())
+                    throw new ArgumentException(Error.NotFoundSceneWithName(name), nameof(name));
 
-            while (!asyncOperation.isDone)
-                await Task.Yield();
+                var scenePath = scene.path;
+                logger.LogInformation("Unloading scene '{Name}' at path '{Path}'", name, scenePath);
 
-            return $"[Success] Scene '{name}' unloaded.\n{OpenedScenesText}";
-        });
+                var asyncOperation = UnityEngine.SceneManagement.SceneManager.UnloadSceneAsync(scene);
+
+                while (!asyncOperation.isDone)
+                    await Task.Yield();
+
+                logger.LogInformation("Successfully unloaded scene '{Name}'", name);
+
+                var sceneAsset = AssetDatabase.LoadAssetAtPath<SceneAsset>(scenePath);
+
+                return new UnloadSceneResult
+                {
+                    Name = name,
+                    AssetObjectRef = sceneAsset == null
+                        ? null
+                        : new AssetObjectRef(sceneAsset)
+                };
+            });
+        }
+
+        public class UnloadSceneResult
+        {
+            [Description("Name of the unloaded scene.")]
+            public string? Name { get; set; }
+            [Description("Reference to the unloaded scene asset.")]
+            public AssetObjectRef? AssetObjectRef { get; set; } = null!;
+        }
     }
 }

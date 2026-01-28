@@ -36,7 +36,7 @@ Unlike other tools, this plugin works **inside your compiled game**, allowing fo
 - ✔️ **Rich toolset** - Wide range of default [MCP Tools](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)
 - ✔️ **Extensible** - Create [custom MCP Tools in your project code](#add-custom-mcp-tool)
 
-[![DOWNLOAD INSTALLER](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.39.0/AI-Game-Dev-Installer.unitypackage)
+[![DOWNLOAD INSTALLER](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.43.1/AI-Game-Dev-Installer.unitypackage)
 
 ![AI Game Developer Windows](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/ai-game-developer-windows.png?raw=true)
 
@@ -184,6 +184,7 @@ Unlike other tools, this plugin works **inside your compiled game**, allowing fo
 #### Additional tools
 
 - [Animation](https://github.com/IvanMurzak/Unity-AI-Animation/)
+- [ParticleSystem](https://github.com/IvanMurzak/Unity-AI-ParticleSystem/)
 - [ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)
 
 ### Stability status
@@ -251,7 +252,7 @@ Unlike other tools, this plugin works **inside your compiled game**, allowing fo
 
 ### Option 1 - Installer
 
-- **[⬇️ Download Installer](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.39.0/AI-Game-Dev-Installer.unitypackage)**
+- **[⬇️ Download Installer](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.43.1/AI-Game-Dev-Installer.unitypackage)**
 - **📂 Import installer into Unity project**
   > - You can double-click on the file - Unity will open it automatically
   > - OR: Open Unity Editor first, then click on `Assets/Import Package/Custom Package`, and choose the file
@@ -511,13 +512,13 @@ There are many use cases, lets imagine you are working on a Chess game with bot.
 
 ## Variables
 
-Doesn't matter what launch option you choose, all of them support custom configuration using both Environment Variables and Command Line Arguments. It would work with default values, if you just need to launch it, don't waste your time for the variables. Just make sure Unity Plugin also has default values, especially the `--port`, they should be equal.
+Doesn't matter what launch option you choose, all of them support custom configuration using both Environment Variables and Command Line Arguments. It would work with default values, if you just need to launch it, don't waste your time for the variables. Just make sure Unity Plugin also has default values, especially the `port`, they should be equal.
 
 | Environment Variable         | Command Line Args    | Description                                                                  |
 | ---------------------------- | -------------------- | ---------------------------------------------------------------------------- |
-| `MCP_PLUGIN_PORT`            | `--port`             | **Client** -> **Server** <- **Plugin** connection port (default: 8080)       |
-| `MCP_PLUGIN_CLIENT_TIMEOUT`   | `--plugin-timeout`   | **Plugin** -> **Server** connection timeout (ms) (default: 10000)            |
-| `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport` | **Client** -> **Server** transport type: `stdio` or `streamableHttp` (default: `streamableHttp`) |
+| `MCP_PLUGIN_PORT`            | `port`             | **Client** -> **Server** <- **Plugin** connection port (default: 8080)       |
+| `MCP_PLUGIN_CLIENT_TIMEOUT`   | `plugin-timeout`   | **Plugin** -> **Server** connection timeout (ms) (default: 10000)            |
+| `MCP_PLUGIN_CLIENT_TRANSPORT` | `client-transport` | **Client** -> **Server** transport type: `stdio` or `streamableHttp` (default: `streamableHttp`) |
 
 > Command line args support also the option with a single `-` prefix (`-port`) and an option without prefix at all (`port`).
 
@@ -609,7 +610,7 @@ docker run -e MCP_PLUGIN_PORT=123 -p 123:123 ivanmurzakdev/unity-mcp-server
 You may launch Unity `MCP Server` directly from a binary file. You would need to have a binary compiled specifically for your CPU architecture. Check [GitHub Release Page](https://github.com/IvanMurzak/Unity-MCP/releases), it contains pre-compiled binaries for all CPU architectures.
 
 ```bash
-./unity-mcp-server --port 8080 --plugin-timeout 10000 --client-transport stdio
+./unity-mcp-server port=8080 plugin-timeout=10000 client-transport=stdio
 ```
 
 <details>
@@ -623,9 +624,9 @@ You may launch Unity `MCP Server` directly from a binary file. You would need to
     "ai-game-developer": {
       "command": "<project>/Library/mcp-server/win-x64/unity-mcp-server.exe",
       "args": [
-        "--port=8080",
-        "--plugin-timeout=10000",
-        "--client-transport=stdio"
+        "port=8080",
+        "plugin-timeout=10000",
+        "client-transport=stdio"
       ]
     }
   }

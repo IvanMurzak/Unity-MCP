@@ -111,7 +111,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 return Consts.MCP.Server.Config(
                     executablePath: ExecutableFullPath.Replace('\\', '/'),
-                    serverName: Utils.ClientConfig.DefaultMcpServerName,
+                    serverName: AiAgentConfig.DefaultMcpServerName,
                     bodyPath: bodyPath,
                     port: port,
                     timeoutMs: timeoutMs
@@ -126,7 +126,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 {
                     [bodyPath] = new JsonObject()
                     {
-                        [Utils.ClientConfig.DefaultMcpServerName] = new JsonObject
+                        [AiAgentConfig.DefaultMcpServerName] = new JsonObject
                         {
                             ["url"] = url,
                             ["type"] = "streamableHttp"
@@ -134,6 +134,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     }
                 };
             }
+
+            // ------------------------------------------------------------------------------------------------------------------------------------
+
+            public static string RawTomlConfigurationStdio(string bodyPath = "mcp_servers")
+            {
+                return TomlAiAgentConfig.GenerateTomlSection(
+                    sectionName: $"{bodyPath}.{AiAgentConfig.DefaultMcpServerName}",
+                    command: ExecutableFullPath.Replace('\\', '/'),
+                    args: new[]
+                {
+                    $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
+                    $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+                    $"{Consts.MCP.Server.Args.ClientTransportMethod}=stdio"
+                });
+            }
+
+            // ------------------------------------------------------------------------------------------------------------------------------------
 
             public static string DockerRunCommand()
             {
@@ -170,8 +187,40 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 if (Directory.Exists(ExecutableFolderRootPath))
                 {
-                    Directory.Delete(ExecutableFolderRootPath, recursive: true);
-                    Debug.Log($"Deleted existing MCP server folder: <color=orange>{ExecutableFolderRootPath}</color>");
+                    // Intentional infinite loop:
+                    // - Deletion can fail while the MCP server binaries are in use (e.g., server still running).
+                    // - The retry/exit behavior is fully controlled by the user via the dialog below.
+                    // - We do not impose a fixed maximum retry count so the user can take as long as needed
+                    //   to shut down their MCP client and release file locks before trying again.
+                    // - The loop terminates when the user selects "Skip", at which point the exception is rethrown.
+                    while (true)
+                    {
+                        try
+                        {
+                            Directory.Delete(ExecutableFolderRootPath, recursive: true);
+                            Debug.Log($"Deleted existing MCP server folder: <color=orange>{ExecutableFolderRootPath}</color>");
+                            return;
+                        }
+                        catch (Exception ex)
+                        {
+                            var retry = UnityEditor.EditorUtility.DisplayDialog(
+                                "Failed to Delete MCP Server Binaries",
+                                $"The current unity-mcp-server binaries can't be deleted. " +
+                                $"This is very likely because the MCP server is currently running.\n\n" +
+                                $"Please close your MCP client to make sure the server is not running, then click \"Retry\".\n\n" +
+                                $"Path: {ExecutableFolderRootPath}\n\n" +
+                                $"Error: {ex.Message}",
+                                "Retry",
+                                "Skip"
+                            );
+
+                            if (!retry)
+                            {
+                                throw;
+                            }
+                            // If retry is true, loop continues and tries again
+                        }
+                    }
                 }
             }
 

@@ -50,15 +50,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         {
             return MainThread.Instance.Run(() =>
             {
+                if (!gameObjectRef.IsValid(out var gameObjectValidationError))
+                    throw new ArgumentException(gameObjectValidationError, nameof(gameObjectRef));
+
+                if (!componentRef.IsValid(out var componentValidationError))
+                    throw new ArgumentException(componentValidationError, nameof(componentRef));
+
                 var go = gameObjectRef.FindGameObject(out var error);
                 if (error != null)
                     throw new Exception(error);
 
                 if (go == null)
                     throw new Exception("GameObject not found.");
-
-                if (!componentRef.IsValid)
-                    throw new Exception("ComponentRef is not valid. Provide instanceID, index, or typeName.");
 
                 var allComponents = go.GetComponents<UnityEngine.Component>();
                 UnityEngine.Component? targetComponent = null;
@@ -79,9 +82,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 var response = new GetComponentResponse
                 {
-                    reference = new ComponentRef(targetComponent),
-                    index = targetIndex,
-                    component = new ComponentDataShallow(targetComponent)
+                    Reference = new ComponentRef(targetComponent),
+                    Index = targetIndex,
+                    Component = new ComponentDataShallow(targetComponent)
                 };
 
                 var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
@@ -98,14 +101,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                     if (includeFields && serialized?.fields != null)
                     {
-                        response.fields = serialized.fields
+                        response.Fields = serialized.fields
                             .Where(f => f != null)
                             .ToList();
                     }
 
                     if (includeProperties && serialized?.props != null)
                     {
-                        response.properties = serialized.props
+                        response.Properties = serialized.props
                             .Where(p => p != null)
                             .ToList();
                     }
@@ -118,19 +121,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         public class GetComponentResponse
         {
             [Description("Reference to the component for future operations.")]
-            public ComponentRef? reference;
+            public ComponentRef? Reference { get; set; }
 
             [Description("Index of the component in the GameObject's component list.")]
-            public int index;
+            public int Index { get; set; }
 
             [Description("Basic component information (type, enabled state).")]
-            public ComponentDataShallow? component;
+            public ComponentDataShallow? Component { get; set; }
 
             [Description("Serialized fields of the component.")]
-            public List<SerializedMember>? fields;
+            public List<SerializedMember>? Fields { get; set; }
 
             [Description("Serialized properties of the component.")]
-            public List<SerializedMember>? properties;
+            public List<SerializedMember>? Properties { get; set; }
         }
     }
 }

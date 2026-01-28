@@ -9,7 +9,7 @@
 */
 
 #nullable enable
-using System.Collections.Generic;
+using System;
 using System.ComponentModel;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
@@ -35,14 +35,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ComponentRefList destroyComponentRefs
         )
         {
+            if (gameObjectRef == null)
+                throw new ArgumentNullException(nameof(gameObjectRef));
+
+            if (!gameObjectRef.IsValid(out var gameObjectValidationError))
+                throw new ArgumentException(gameObjectValidationError, nameof(gameObjectRef));
+
+            if (destroyComponentRefs == null)
+                throw new ArgumentNullException(nameof(destroyComponentRefs));
+
+            if (destroyComponentRefs.Count == 0)
+                throw new ArgumentException("No components provided to destroy.", nameof(destroyComponentRefs));
+
             return MainThread.Instance.Run(() =>
             {
                 var go = gameObjectRef.FindGameObject(out var error);
                 if (error != null)
-                    throw new System.Exception(error);
+                    throw new Exception(error);
 
                 if (go == null)
-                    throw new System.Exception($"GameObject by {nameof(gameObjectRef)} not found.");
+                    throw new Exception($"GameObject by {nameof(gameObjectRef)} not found.");
 
                 var destroyCounter = 0;
 
@@ -52,14 +64,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 foreach (var component in allComponents)
                 {
+                    if (component == null)
+                        continue; // Skip null/missing script components
+
                     if (destroyComponentRefs.Any(cr => cr.Matches(component)))
                     {
-                        if (component == null)
-                        {
-                            response.Errors ??= new List<string>();
-                            response.Errors.Add($"Component instanceID='0' is null. Skipping destruction.");
-                            continue; // Skip null components
-                        }
                         var destroyedComponentRef = new ComponentRef(component);
                         UnityEngine.Object.DestroyImmediate(component);
                         destroyCounter++;
@@ -69,7 +78,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 }
 
                 if (destroyCounter == 0)
-                    throw new System.Exception(Error.NotFoundComponents(destroyComponentRefs, allComponents));
+                    throw new Exception(Error.NotFoundComponents(destroyComponentRefs, allComponents));
 
                 UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
@@ -79,8 +88,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
         public class DestroyComponentsResponse
         {
+            [Description("List of destroyed components.")]
             public ComponentRefList? DestroyedComponents { get; set; }
-            public List<string>? Errors { get; set; }
         }
     }
 }

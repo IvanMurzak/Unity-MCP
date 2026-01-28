@@ -53,8 +53,7 @@ namespace com.IvanMurzak.Unity.MCP
                     nameof(Flush));
                 return;
             }
-            _fileLock.Wait();
-            try
+            lock (_fileMutex)
             {
                 // Flush buffered entries to file
                 if (_logEntriesBufferLength > 0)
@@ -66,21 +65,16 @@ namespace com.IvanMurzak.Unity.MCP
                 }
                 fileWriteStream?.Flush();
             }
-            finally
-            {
-                _fileLock.Release();
-            }
         }
-        public override async Task FlushAsync()
+        public override Task FlushAsync()
         {
             if (_isDisposed.Value)
             {
                 _logger.LogWarning("{method} called but already disposed, ignored.",
                     nameof(FlushAsync));
-                return;
+                return Task.CompletedTask;
             }
-            await _fileLock.WaitAsync();
-            try
+            lock (_fileMutex)
             {
                 // Flush buffered entries to file
                 if (_logEntriesBufferLength > 0)
@@ -90,14 +84,9 @@ namespace com.IvanMurzak.Unity.MCP
                     base.AppendInternal(entriesToFlush);
                     _logEntriesBufferLength = 0;
                 }
-
-                if (fileWriteStream != null)
-                    await fileWriteStream.FlushAsync();
+                fileWriteStream?.Flush();
             }
-            finally
-            {
-                _fileLock.Release();
-            }
+            return Task.CompletedTask;
         }
 
         protected override void AppendInternal(params LogEntry[] entries)
@@ -137,8 +126,7 @@ namespace com.IvanMurzak.Unity.MCP
                     nameof(Clear));
                 return;
             }
-            _fileLock.Wait();
-            try
+            lock (_fileMutex)
             {
                 fileWriteStream?.Close();
                 fileWriteStream?.Dispose();
@@ -150,10 +138,6 @@ namespace com.IvanMurzak.Unity.MCP
 
                 if (File.Exists(filePath))
                     _logger.LogError("Failed to delete cache file: {file}", filePath);
-            }
-            finally
-            {
-                _fileLock.Release();
             }
         }
 
@@ -169,14 +153,9 @@ namespace com.IvanMurzak.Unity.MCP
                     nameof(Query));
                 return Array.Empty<LogEntry>();
             }
-            _fileLock.Wait();
-            try
+            lock (_fileMutex)
             {
                 return QueryInternal(maxEntries, logTypeFilter, includeStackTrace, lastMinutes);
-            }
-            finally
-            {
-                _fileLock.Release();
             }
         }
 

@@ -82,6 +82,21 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             ILogger? logger = null)
         {
             var originalObj = obj;
+
+            // For value types (structs) without an explicit value, preserve the original to allow partial updates.
+            // This prevents resetting structs to default values when only nested fields are specified.
+            if (type.IsValueType && !type.IsPrimitive && !type.IsEnum && originalObj != null)
+            {
+                var hasExplicitValue = value.HasValue &&
+                    value.Value.ValueKind != System.Text.Json.JsonValueKind.Undefined;
+                if (!hasExplicitValue)
+                {
+                    // No explicit value provided - keep the original struct value
+                    // so that nested field updates can modify individual members
+                    return true;
+                }
+            }
+
             var result = base.SetValue(
                 reflector: reflector,
                 obj: ref obj,
@@ -135,7 +150,42 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 
             try
             {
-                var value = reflector.Deserialize(fieldValue, field.FieldType, depth: depth + 1, logs: logs, logger: logger);
+                // For value types (structs) with nested fields/props, we need to:
+                // 1. Get the existing value to preserve unspecified members
+                // 2. Call TryPopulate on it to modify only the specified members
+                // 3. Write the modified value back to the parent object
+                // This prevents losing existing values when doing partial updates on structs.
+                var fieldType = field.FieldType;
+                var hasNestedMembers = (fieldValue.fields != null && fieldValue.fields.Count > 0) ||
+                                       (fieldValue.props != null && fieldValue.props.Count > 0);
+
+                if (fieldType.IsValueType && !fieldType.IsPrimitive && !fieldType.IsEnum && hasNestedMembers)
+                {
+                    // Get existing struct value (boxed)
+                    var existingValue = field.GetValue(obj);
+                    if (existingValue != null)
+                    {
+                        // Populate the existing struct with only the specified members
+                        var success = reflector.TryPopulate(
+                            ref existingValue,
+                            data: fieldValue,
+                            depth: depth + 1,
+                            logs: logs,
+                            flags: flags,
+                            logger: logger);
+
+                        if (success)
+                        {
+                            // Write the modified struct back to the parent object
+                            field.SetValue(obj, existingValue);
+                            return true;
+                        }
+                        return false;
+                    }
+                }
+
+                // For reference types, primitives, enums, or full replacements, use standard deserialization
+                var value = reflector.Deserialize(fieldValue, fieldType, depth: depth + 1, logs: logs, logger: logger);
                 field.SetValue(obj, value);
                 return true;
             }
@@ -178,7 +228,42 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 
             try
             {
-                var value = reflector.Deserialize(member, property.PropertyType, depth: depth + 1, logs: logs, logger: logger);
+                // For value types (structs) with nested fields/props, we need to:
+                // 1. Get the existing value to preserve unspecified members
+                // 2. Call TryPopulate on it to modify only the specified members
+                // 3. Write the modified value back to the parent object
+                // This prevents losing existing values when doing partial updates on structs.
+                var propertyType = property.PropertyType;
+                var hasNestedMembers = (member.fields != null && member.fields.Count > 0) ||
+                                       (member.props != null && member.props.Count > 0);
+
+                if (propertyType.IsValueType && !propertyType.IsPrimitive && !propertyType.IsEnum && hasNestedMembers && property.CanRead)
+                {
+                    // Get existing struct value (boxed)
+                    var existingValue = property.GetValue(obj);
+                    if (existingValue != null)
+                    {
+                        // Populate the existing struct with only the specified members
+                        var success = reflector.TryPopulate(
+                            ref existingValue,
+                            data: member,
+                            depth: depth + 1,
+                            logs: logs,
+                            flags: flags,
+                            logger: logger);
+
+                        if (success)
+                        {
+                            // Write the modified struct back to the parent object
+                            property.SetValue(obj, existingValue);
+                            return true;
+                        }
+                        return false;
+                    }
+                }
+
+                // For reference types, primitives, enums, or full replacements, use standard deserialization
+                var value = reflector.Deserialize(member, propertyType, depth: depth + 1, logs: logs, logger: logger);
                 property.SetValue(obj, value);
                 return true;
             }

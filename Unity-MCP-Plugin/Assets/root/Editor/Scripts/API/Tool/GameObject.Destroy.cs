@@ -13,8 +13,12 @@ using System;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
+using com.IvanMurzak.Unity.MCP.Utils;
+using Microsoft.Extensions.Logging;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -28,18 +32,55 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         )]
         [Description("Destroy GameObject and all nested GameObjects recursively in opened Prefab or in a Scene. " +
             "Use '" + GameObjectFindToolId + "' tool to find the target GameObject first.")]
-        public void Destroy(GameObjectRef gameObjectRef)
+        public DestroyGameObjectResult Destroy(GameObjectRef gameObjectRef)
         {
-            MainThread.Instance.Run(() =>
+            if (gameObjectRef == null)
+                throw new ArgumentNullException(nameof(gameObjectRef), "No GameObject reference provided.");
+
+            if (!gameObjectRef.IsValid(out var gameObjectValidationError))
+                throw new ArgumentException(gameObjectValidationError, nameof(gameObjectRef));
+
+            return MainThread.Instance.Run(() =>
             {
+                var logger = UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_GameObject>();
+
                 var go = gameObjectRef.FindGameObject(out var error);
                 if (error != null)
                     throw new Exception(error);
 
+                var destroyedName = go!.name;
+                var destroyedPath = go.GetPath();
+                var destroyedInstanceId = go.GetInstanceID();
+
+                logger.LogInformation("Destroying GameObject '{Name}' (InstanceID: {InstanceId}) at path '{Path}'",
+                    destroyedName, destroyedInstanceId, destroyedPath);
+
                 UnityEngine.Object.DestroyImmediate(go);
-                UnityEditor.EditorApplication.RepaintHierarchyWindow();
-                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+
+                logger.LogInformation("Successfully destroyed GameObject '{Name}' (InstanceID: {InstanceId})",
+                    destroyedName, destroyedInstanceId);
+
+                EditorUtils.RepaintAllEditorWindows();
+
+                return new DestroyGameObjectResult
+                {
+                    DestroyedName = destroyedName,
+                    DestroyedPath = destroyedPath,
+                    DestroyedInstanceId = destroyedInstanceId
+                };
             });
+        }
+
+        public class DestroyGameObjectResult
+        {
+            [Description("Name of the destroyed GameObject.")]
+            public string? DestroyedName { get; set; }
+
+            [Description("Hierarchy path of the destroyed GameObject.")]
+            public string? DestroyedPath { get; set; }
+
+            [Description("Instance ID of the destroyed GameObject.")]
+            public int DestroyedInstanceId { get; set; }
         }
     }
 }

@@ -9,9 +9,11 @@
 */
 
 #nullable enable
+using System;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using com.IvanMurzak.Unity.MCP.Utils;
@@ -31,7 +33,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [Description("Create a prefab from a GameObject in the current active scene. " +
             "The prefab will be saved in the project assets at the specified path. " +
             "Use '" + Tool_GameObject.GameObjectFindToolId + "' tool to find the target GameObject first.")]
-        public string Create
+        public AssetObjectRef Create
         (
             [Description("Prefab asset path. Should be in the format 'Assets/Path/To/Prefab.prefab'.")]
             string prefabAssetPath,
@@ -39,38 +41,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             [Description("If true, the prefab will replace the GameObject in the scene.")]
             bool replaceGameObjectWithPrefab = true
         )
-        => MainThread.Instance.Run(() =>
         {
-            if (string.IsNullOrEmpty(prefabAssetPath))
-                return Error.PrefabPathIsEmpty();
+            return MainThread.Instance.Run(() =>
+            {
+                if (string.IsNullOrEmpty(prefabAssetPath))
+                    throw new ArgumentException(Error.PrefabPathIsEmpty(), nameof(prefabAssetPath));
 
-            if (!prefabAssetPath.EndsWith(".prefab"))
-                return Error.PrefabPathIsInvalid(prefabAssetPath);
+                if (!prefabAssetPath.EndsWith(".prefab"))
+                    throw new ArgumentException(Error.PrefabPathIsInvalid(prefabAssetPath), nameof(prefabAssetPath));
 
-            var go = gameObjectRef.FindGameObject(out var error);
-            if (go == null)
-                return $"[Error] {error}";
+                var go = gameObjectRef.FindGameObject(out var error);
+                if (go == null)
+                    throw new ArgumentException(error, nameof(gameObjectRef));
 
-            var prefabGo = replaceGameObjectWithPrefab
-                ? PrefabUtility.SaveAsPrefabAsset(go, prefabAssetPath)
-                : PrefabUtility.SaveAsPrefabAssetAndConnect(go, prefabAssetPath, InteractionMode.UserAction, out _);
+                var prefabGo = replaceGameObjectWithPrefab
+                    ? PrefabUtility.SaveAsPrefabAsset(go, prefabAssetPath)
+                    : PrefabUtility.SaveAsPrefabAssetAndConnect(go, prefabAssetPath, InteractionMode.UserAction, out _);
 
-            if (prefabGo == null)
-                return Error.NotFoundPrefabAtPath(prefabAssetPath);
+                if (prefabGo == null)
+                    throw new Exception(Error.NotFoundPrefabAtPath(prefabAssetPath));
 
-            EditorUtility.SetDirty(go);
+                EditorUtility.SetDirty(go);
 
-            UnityEditor.EditorApplication.RepaintHierarchyWindow();
-            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                EditorUtils.RepaintAllEditorWindows();
 
-            var result = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Serialize(
-                prefabGo,
-                recursive: false,
-                logger: UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_Assets_Prefab>()
-            );
-
-            return $"[Success] Prefab '{prefabAssetPath}' created from GameObject '{go.name}' (InstanceID: {go.GetInstanceID()}).\n" +
-                   $"Prefab GameObject:\n{result}";
-        });
+                var assetPrefab = AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>(prefabAssetPath);
+                return new AssetObjectRef(assetPrefab);
+            });
+        }
     }
 }

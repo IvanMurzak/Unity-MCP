@@ -9,10 +9,11 @@
 */
 
 #nullable enable
+using System;
 using System.ComponentModel;
-using System.Text;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -29,40 +30,35 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "Should be used for asset rename. " +
             "Does AssetDatabase.Refresh() at the end. " +
             "Use '" + AssetsFindToolId + "' tool to find assets before moving.")]
-        public string Move
+        public string[] Move
         (
             [Description("The paths of the assets to move.")]
             string[] sourcePaths,
             [Description("The paths of moved assets.")]
             string[] destinationPaths
         )
-        => MainThread.Instance.Run(() =>
         {
-            if (sourcePaths.Length == 0)
-                return Error.SourcePathsArrayIsEmpty();
-
-            if (sourcePaths.Length != destinationPaths.Length)
-                return Error.SourceAndDestinationPathsArrayMustBeOfTheSameLength();
-
-            var stringBuilder = new StringBuilder();
-
-            for (int i = 0; i < sourcePaths.Length; i++)
+            return MainThread.Instance.Run(() =>
             {
-                var error = AssetDatabase.MoveAsset(sourcePaths[i], destinationPaths[i]);
-                if (string.IsNullOrEmpty(error))
+                if (sourcePaths.Length == 0)
+                    throw new ArgumentException(Error.SourcePathsArrayIsEmpty(), nameof(sourcePaths));
+
+                if (sourcePaths.Length != destinationPaths.Length)
+                    throw new ArgumentException(Error.SourceAndDestinationPathsArrayMustBeOfTheSameLength());
+
+                var logs = new string[sourcePaths.Length];
+
+                for (int i = 0; i < sourcePaths.Length; i++)
                 {
-                    stringBuilder.AppendLine($"[Success] Moved asset from {sourcePaths[i]} to {destinationPaths[i]}.");
+                    var error = AssetDatabase.MoveAsset(sourcePaths[i], destinationPaths[i]);
+                    logs[i] = string.IsNullOrEmpty(error)
+                        ? $"[Success] Moved asset from {sourcePaths[i]} to {destinationPaths[i]}."
+                        : $"[Error] Failed to move asset from {sourcePaths[i]} to {destinationPaths[i]}: {error}.";
                 }
-                else
-                {
-                    stringBuilder.AppendLine($"[Error] Failed to move asset from {sourcePaths[i]} to {destinationPaths[i]}: {error}.");
-                }
-            }
-            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-            UnityEditor.EditorApplication.RepaintProjectWindow();
-            UnityEditor.EditorApplication.RepaintHierarchyWindow();
-            UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
-            return stringBuilder.ToString();
-        });
+                AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+                EditorUtils.RepaintAllEditorWindows();
+                return logs;
+            });
+        }
     }
 }

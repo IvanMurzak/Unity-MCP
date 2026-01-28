@@ -89,3 +89,10 @@
     white-space: normal;
     color: #B0B0B0;
 }
+
+/* Config snippet - readonly text fields for configuration display */
+.config-snippet {
+    margin-right: 0;
+    margin-left: 0;
+    margin-bottom: 4px;
+}
