@@ -12,6 +12,7 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.Extensions.Logging;
 using R3;
@@ -255,7 +256,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             var timeout = UnityMcpPlugin.TimeoutMs;
 
             // Arguments format: port=XXXXX plugin-timeout=XXXXX client-transport=streamableHttp
-            return $"port={port} plugin-timeout={timeout} client-transport=streamableHttp";
+            return $"{Consts.MCP.Server.Args.Port}={port} {Consts.MCP.Server.Args.PluginTimeout}={timeout} {Consts.MCP.Server.Args.ClientTransportMethod}=streamableHttp";
         }
 
         static void OnProcessExited(object? sender, EventArgs e)

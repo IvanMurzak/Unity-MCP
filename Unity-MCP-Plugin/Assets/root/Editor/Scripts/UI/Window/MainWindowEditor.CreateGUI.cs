@@ -244,8 +244,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             // MCP Server
             // -----------------------------------------------------------------
-            var btnStartStopServer = root.Query<Button>("btnStartStopServer").First();
-            var mcpServerStatusCircle = root.Query<VisualElement>("mcpServerStatusCircle").First();
+            var btnStartStopServer = root.Q<Button>("btnStartStopServer");
+            var mcpServerStatusCircle = root.Q<VisualElement>("mcpServerStatusCircle");
 
             if (btnStartStopServer != null && mcpServerStatusCircle != null)
             {
@@ -283,6 +283,46 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 {
                     McpServerManager.ToggleServer();
                 });
+            }
+
+            // AI agent
+            // -----------------------------------------------------------------
+            var labelAiAgentStatus = root.Q<Label>("aiAgentLabel");
+
+            var mcpPluginInstance = UnityMcpPlugin.Instance.McpPluginInstance;
+            if (mcpPluginInstance != null)
+            {
+                mcpPluginInstance.McpManager.OnClientConnected
+                    .ObserveOnCurrentSynchronizationContext()
+                    .Subscribe(data =>
+                    {
+                        labelAiAgentStatus.text = $"AI Agent: {data.ClientName} (v{data.ClientVersion})";
+                    })
+                    .AddTo(_disposables);
+
+                mcpPluginInstance.McpManager.OnClientDisconnected
+                    .ObserveOnCurrentSynchronizationContext()
+                    .Subscribe(data =>
+                    {
+                        labelAiAgentStatus.text = $"AI Agent";
+                    })
+                    .AddTo(_disposables);
+
+                mcpPluginInstance.RemoteMcpManagerHub?.GetMcpClientData()
+                    .ContinueWith(task =>
+                    {
+                        if (task.IsCompletedSuccessfully)
+                        {
+                            var data = task.Result;
+                            labelAiAgentStatus.text = data.ClientName == null
+                                ? "AI Agent: Not connected"
+                                : $"AI Agent: {data.ClientName} (v{data.ClientVersion})";
+                        }
+                        else
+                        {
+                            labelAiAgentStatus.text = "AI Agent: Not found";
+                        }
+                    });
             }
 
             // Tools Configuration
