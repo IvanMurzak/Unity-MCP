@@ -78,6 +78,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                             // Re-attach exit handler
                             process.EnableRaisingEvents = true;
                             process.Exited += OnProcessExited;
+
+                            // Schedule verification check to detect if process crashes shortly after reconnection
+                            ScheduleStartupVerification(savedPid);
                             return;
                         }
                     }
@@ -161,6 +164,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
                     _serverStatus.Value = McpServerStatus.Running;
                     _logger.LogInformation("MCP server started successfully (PID: {pid})", _serverProcess.Id);
+
+                    // Schedule a delayed check to verify the process is still running
+                    // This catches early crashes that might not trigger the Exited event reliably
+                    ScheduleStartupVerification(_serverProcess.Id);
 
                     return true;
                 }
@@ -257,6 +264,75 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             // Arguments format: port=XXXXX plugin-timeout=XXXXX client-transport=streamableHttp
             return $"{Consts.MCP.Server.Args.Port}={port} {Consts.MCP.Server.Args.PluginTimeout}={timeout} {Consts.MCP.Server.Args.ClientTransportMethod}=streamableHttp";
+        }
+
+        /// <summary>
+        /// Schedules a verification check 5 seconds after startup to detect early crashes.
+        /// If the process has exited and no longer exists, the status is set to Stopped.
+        /// </summary>
+        static void ScheduleStartupVerification(int processId)
+        {
+            var startTime = DateTime.UtcNow;
+            const double verificationDelaySeconds = 5.0;
+
+            void CheckProcess()
+            {
+                var elapsed = DateTime.UtcNow - startTime;
+
+                // If we haven't reached 5 seconds yet, schedule another check
+                if (elapsed.TotalSeconds < verificationDelaySeconds)
+                {
+                    EditorApplication.delayCall += CheckProcess;
+                    return;
+                }
+
+                lock (_processMutex)
+                {
+                    // Only check if we're still supposed to be running
+                    if (_serverStatus.CurrentValue != McpServerStatus.Running)
+                        return;
+
+                    // Verify the process still exists
+                    if (!IsProcessRunning(processId))
+                    {
+                        _logger.LogError("MCP server process (PID: {pid}) exited unexpectedly within {seconds:F1} seconds after launch", processId, elapsed.TotalSeconds);
+                        CleanupProcess();
+                    }
+                }
+            }
+
+            EditorApplication.delayCall += CheckProcess;
+        }
+
+        /// <summary>
+        /// Checks if a process with the given ID is still running and is the MCP server.
+        /// </summary>
+        static bool IsProcessRunning(int processId)
+        {
+            try
+            {
+                var process = Process.GetProcessById(processId);
+                if (process == null || process.HasExited)
+                    return false;
+
+                var processName = process.ProcessName.ToLowerInvariant();
+                return processName.Contains("unity-mcp-server");
+            }
+            catch (ArgumentException)
+            {
+                // Process with this ID does not exist
+                return false;
+            }
+            catch (InvalidOperationException)
+            {
+                // Process has exited
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug("Error checking process status: {message}", ex.Message);
+                return false;
+            }
         }
 
         static void OnProcessExited(object? sender, EventArgs e)

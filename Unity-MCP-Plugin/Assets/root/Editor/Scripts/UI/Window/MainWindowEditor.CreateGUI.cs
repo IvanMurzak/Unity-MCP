@@ -114,6 +114,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             var connectionStatusCircle = root.Query<VisualElement>("connectionStatusCircle").First();
             var connectionStatusText = root.Query<Label>("connectionStatusText").First();
 
+            // AI agent status circle (queried early so Unity connection handler can update it)
+            var labelAiAgentStatus = root.Q<Label>("aiAgentLabel");
+            var aiAgentStatusCircle = root.Q<VisualElement>("aiAgentStatusCircle");
+
+            void SetAiAgentStatusCircle(bool isConnected)
+            {
+                if (aiAgentStatusCircle == null) return;
+
+                aiAgentStatusCircle.RemoveFromClassList(USS_IndicatorClass_Connected);
+                aiAgentStatusCircle.RemoveFromClassList(USS_IndicatorClass_Connecting);
+                aiAgentStatusCircle.RemoveFromClassList(USS_IndicatorClass_Disconnected);
+                aiAgentStatusCircle.AddToClassList(isConnected ? USS_IndicatorClass_Connected : USS_IndicatorClass_Disconnected);
+            }
+
+            void SetAiAgentLabel(string text)
+            {
+                if (labelAiAgentStatus == null) return;
+                labelAiAgentStatus.text = text;
+            }
+
             McpPlugin.McpPlugin.DoAlways(plugin =>
             {
                 Observable.CombineLatest(
@@ -205,6 +225,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                             : USS_IndicatorClass_Disconnected,
                         _ => throw new ArgumentOutOfRangeException(nameof(connectionState), connectionState, null)
                     });
+
+                    // When Unity disconnects, AI agent is also disconnected
+                    var isUnityConnected = connectionState == HubConnectionState.Connected && keepConnected;
+                    if (!isUnityConnected)
+                    {
+                        SetAiAgentStatusCircle(false);
+                        SetAiAgentLabel("AI Agent");
+                    }
                 })
                 .AddTo(_disposables);
             }).AddTo(_disposables);
@@ -288,19 +316,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             // AI agent
             // -----------------------------------------------------------------
-            var labelAiAgentStatus = root.Q<Label>("aiAgentLabel");
-            var aiAgentStatusCircle = root.Q<VisualElement>("aiAgentStatusCircle");
-
-            void SetAiAgentStatusCircle(bool isConnected)
-            {
-                if (aiAgentStatusCircle == null) return;
-
-                aiAgentStatusCircle.RemoveFromClassList(USS_IndicatorClass_Connected);
-                aiAgentStatusCircle.RemoveFromClassList(USS_IndicatorClass_Connecting);
-                aiAgentStatusCircle.RemoveFromClassList(USS_IndicatorClass_Disconnected);
-                aiAgentStatusCircle.AddToClassList(isConnected ? USS_IndicatorClass_Connected : USS_IndicatorClass_Disconnected);
-            }
-
             var mcpPluginInstance = UnityMcpPlugin.Instance.McpPluginInstance;
             if (mcpPluginInstance != null)
             {
