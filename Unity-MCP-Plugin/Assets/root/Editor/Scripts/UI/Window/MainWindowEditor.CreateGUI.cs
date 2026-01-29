@@ -13,11 +13,12 @@ using System;
 using System.Linq;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
-using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.Logging;
 using R3;
 using UnityEngine;
 using UnityEngine.UIElements;
+using LogLevel = com.IvanMurzak.Unity.MCP.Runtime.Utils.LogLevel;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
 {
@@ -288,6 +289,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             // AI agent
             // -----------------------------------------------------------------
             var labelAiAgentStatus = root.Q<Label>("aiAgentLabel");
+            var aiAgentStatusCircle = root.Q<VisualElement>("aiAgentStatusCircle");
+
+            void SetAiAgentStatusCircle(bool isConnected)
+            {
+                if (aiAgentStatusCircle == null) return;
+
+                aiAgentStatusCircle.RemoveFromClassList(USS_IndicatorClass_Connected);
+                aiAgentStatusCircle.RemoveFromClassList(USS_IndicatorClass_Connecting);
+                aiAgentStatusCircle.RemoveFromClassList(USS_IndicatorClass_Disconnected);
+                aiAgentStatusCircle.AddToClassList(isConnected ? USS_IndicatorClass_Connected : USS_IndicatorClass_Disconnected);
+            }
 
             var mcpPluginInstance = UnityMcpPlugin.Instance.McpPluginInstance;
             if (mcpPluginInstance != null)
@@ -296,7 +308,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     .ObserveOnCurrentSynchronizationContext()
                     .Subscribe(data =>
                     {
+                        Logger.LogInformation("AI Agent connected: {clientName} v{clientVersion}", data.ClientName, data.ClientVersion);
                         labelAiAgentStatus.text = $"AI Agent: {data.ClientName} (v{data.ClientVersion})";
+                        SetAiAgentStatusCircle(true);
                     })
                     .AddTo(_disposables);
 
@@ -304,7 +318,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     .ObserveOnCurrentSynchronizationContext()
                     .Subscribe(data =>
                     {
+                        Logger.LogInformation("AI Agent disconnected");
                         labelAiAgentStatus.text = $"AI Agent";
+                        SetAiAgentStatusCircle(false);
                     })
                     .AddTo(_disposables);
 
@@ -314,13 +330,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         if (task.IsCompletedSuccessfully)
                         {
                             var data = task.Result;
-                            labelAiAgentStatus.text = data.ClientName == null
-                                ? "AI Agent: Not connected"
-                                : $"AI Agent: {data.ClientName} (v{data.ClientVersion})";
+                            var isConnected = data.ClientName != null;
+                            labelAiAgentStatus.text = isConnected
+                                ? $"AI Agent: {data.ClientName} (v{data.ClientVersion})"
+                                : "AI Agent: Not connected";
+                            SetAiAgentStatusCircle(isConnected);
                         }
                         else
                         {
                             labelAiAgentStatus.text = "AI Agent: Not found";
+                            SetAiAgentStatusCircle(false);
                         }
                     });
             }
