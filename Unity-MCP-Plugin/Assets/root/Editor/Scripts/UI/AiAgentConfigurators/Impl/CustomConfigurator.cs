@@ -33,12 +33,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         protected override AiAgentConfig CreateConfigMacLinux()
         {
-            throw new System.NotImplementedException();
+            return new ManualAiAgentConfig(AgentName);
         }
 
         protected override AiAgentConfig CreateConfigWindows()
         {
-            throw new System.NotImplementedException();
+            return new ManualAiAgentConfig(AgentName);
         }
 
         protected override void OnUICreated(VisualElement root)
