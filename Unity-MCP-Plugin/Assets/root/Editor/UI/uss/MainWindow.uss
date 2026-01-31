@@ -103,7 +103,6 @@
 .timeline-point {
     flex-direction: row;
     align-items: stretch;
-    min-height: 40px;
 }
 
 .timeline-indicator {

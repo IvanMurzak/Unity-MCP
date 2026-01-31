@@ -1,6 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <ui:ScrollView>
         <ui:VisualElement class="container" style="min-width: 320px;">
+            <!-- Header Section -->
             <ui:Box name="contHeader" style="background-color: rgba(222, 222, 222, 0); flex-direction: row; flex-shrink: 0;">
                 <ui:VisualElement style="flex-grow: 1; background-color: rgba(0, 0, 0, 0);">
                     <ui:EnumField label="Log Level" name="dropdownLogLevel" type="com.IvanMurzak.Unity.MCP.Runtime.Utils.LogLevel, com.IvanMurzak.Unity.MCP.Runtime" value="Warning" class="content-item" style="align-self: flex-start;" />
@@ -12,10 +13,7 @@
                 </ui:VisualElement>
             </ui:Box>
             <ui:VisualElement class="divider" />
-            <ui:Label text="AI agent" class="header" />
-            <ui:DropdownField name="aiAgentDropdown" label="Choose" class="content-item" />
-            <ui:VisualElement name="ConfigureAgentsContainer" />
-            <ui:VisualElement class="divider" />
+            <!-- Connection Section ============================== -->
             <ui:Label text="Connect" class="header" />
             <ui:TextField picking-mode="Ignore" label="Server URL" value="http://localhost:8080" name="InputServerURL" tooltip="Connection URL to an MCP server. Default value: http://localhost:8080" class="content-item" />
             <ui:Foldout text="Information" value="false" class="base-foldout">
@@ -56,6 +54,13 @@
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement class="divider" />
+            <!-- AI Agent Section ============================== -->
+            <ui:Label text="AI agent" class="header" />
+            <ui:DropdownField name="aiAgentDropdown" label="Choose" class="content-item" />
+            <ui:VisualElement name="ConfigureAgentsContainer" />
+            <ui:VisualElement class="divider" />
+            <!-- MCP features section ============================== -->
+            <!-- Tools Configuration Section -->
             <ui:VisualElement name="ToolsConfigurationSection">
                 <ui:VisualElement class="row-top">
                     <ui:Label name="toolsCountLabel" text="0 / 0 tools" class="header" />
@@ -66,6 +71,7 @@
                 </ui:Foldout>
             </ui:VisualElement>
             <ui:VisualElement class="divider" />
+            <!-- Prompts Configuration Section -->
             <ui:VisualElement name="PromptsConfigurationSection">
                 <ui:VisualElement class="row-top">
                     <ui:Label name="promptsCountLabel" text="0 / 0 prompts" class="header" />
@@ -76,6 +82,7 @@
                 </ui:Foldout>
             </ui:VisualElement>
             <ui:VisualElement class="divider" />
+            <!-- Resources Configuration Section -->
             <ui:VisualElement name="ResourcesConfigurationSection">
                 <ui:VisualElement class="row-top">
                     <ui:Label name="resourcesCountLabel" text="0 / 0 resources" class="header" />
@@ -86,6 +93,7 @@
                 </ui:Foldout>
             </ui:VisualElement>
             <ui:VisualElement class="divider" />
+            <!-- Support Section ============================== -->
             <ui:VisualElement>
                 <ui:VisualElement>
                     <ui:Label text="Found an issue?" class="section-text" style="flex-grow: 1;" />
@@ -103,6 +111,7 @@
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement class="divider" />
+            <!-- Thanks Section ============================== -->
             <ui:VisualElement>
                 <ui:Label text="Thanks for using &lt;b&gt;&lt;color=red&gt;AI&lt;/color&gt; Game Developer&lt;/b&gt;. If you like it, please give the project a star on GitHub.&#10;&#10;Sincerely,&#10;Ivan Murzak" class="section-text" />
                 <ui:Button name="btnGitHubStar" class="btn-secondary btn-with-icon btn-golden btn-floating">
