@@ -113,7 +113,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         #endregion
 
-        #region Section Setup Methods
+        #region Header
 
         private void SetupSettingsSection(VisualElement root)
         {
@@ -144,11 +144,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 rawJsonField.value = Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, "mcpServers", UnityMcpPlugin.TimeoutMs).ToString();
 
                 SaveChanges($"[AI Game Developer] Timeout Changed: {newValue} ms");
-                RebuildAndReconnect();
+                UnityBuildAndConnect();
             });
 
             root.Q<TextField>("currentVersion").value = UnityMcpPlugin.Version;
         }
+
+        #endregion
+
+        #region Connection
 
         private void SetupConnectionSection(VisualElement root)
         {
@@ -172,7 +176,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 Invalidate();
 
                 UnityMcpPlugin.Instance.DisposeMcpPluginInstance();
-                RebuildAndReconnect();
+                UnityBuildAndConnect();
             });
 
             McpPlugin.McpPlugin.DoAlways(plugin =>
@@ -218,9 +222,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 UnityMcpPlugin.KeepConnected = true;
                 UnityMcpPlugin.Instance.Save();
-                UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
-                UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
-                UnityMcpPlugin.ConnectIfNeeded();
+                UnityBuildAndConnect();
             }
             else
             {
@@ -230,6 +232,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     _ = UnityMcpPlugin.Instance.Disconnect();
             }
         }
+
+        #endregion
+
+        #region MCP Server
 
         private void SetupMcpServerSection(VisualElement root)
         {
@@ -284,6 +290,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             McpServerStatus.External => USS_External,
             _ => USS_Disconnected
         };
+
+        #endregion
+
+        #region AI Agent
 
         private void SetupAiAgentSection(VisualElement root)
         {
@@ -341,6 +351,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     };
                 });
         }
+
+        #endregion
+
+        #region MCP Tools, Prompts, Resources
 
         private void SetupToolsSection(VisualElement root)
         {
@@ -420,6 +434,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             }).AddTo(_disposables);
         }
 
+        #endregion
+
+        #region Social and Debug Buttons
+
         private void SetupSocialButtons(VisualElement root)
         {
             var discordIcon = EditorAssetLoader.LoadAssetAtPath<Texture2D>(_discordIconPaths);
@@ -458,13 +476,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 btnCheckSerialization.tooltip = "Open Serialization Check window";
                 btnCheckSerialization.RegisterCallback<ClickEvent>(evt => SerializationCheckWindow.ShowWindow());
             }
-        }
-
-        private static void RebuildAndReconnect()
-        {
-            UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
-            UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
-            UnityMcpPlugin.ConnectIfNeeded();
         }
 
         #endregion
