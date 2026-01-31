@@ -39,7 +39,7 @@
                         <ui:VisualElement class="timeline-line" />
                     </ui:VisualElement>
                     <ui:VisualElement class="timeline-content">
-                        <ui:Label text="MCP server" class="timeline-label" />
+                        <ui:Label text="MCP Server" name="mcpServerLabel" class="timeline-label" />
                         <ui:Button name="btnStartStopServer" text="Start" class="btn-secondary timeline-btn" />
                     </ui:VisualElement>
                 </ui:VisualElement>

@@ -27,7 +27,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         Stopped,
         Starting,
         Running,
-        Stopping
+        Stopping,
+        External
     }
 
     /// <summary>

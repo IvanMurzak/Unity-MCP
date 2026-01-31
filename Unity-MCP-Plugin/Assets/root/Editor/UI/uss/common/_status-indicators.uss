@@ -26,6 +26,13 @@
     background-color: rgb(220, 76, 9);
 }
 
+/* External Server Status - Green ring only (no fill) */
+.status-indicator-circle-external {
+    border-color: rgb(111, 226, 101);
+    border-width: 2px;
+    background-color: transparent;
+}
+
 /* Logo image */
 .logo-img {
     width: 32px;

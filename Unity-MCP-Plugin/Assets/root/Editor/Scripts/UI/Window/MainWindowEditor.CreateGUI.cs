@@ -37,6 +37,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public const string USS_IndicatorClass_Connected = "status-indicator-circle-online";
         public const string USS_IndicatorClass_Connecting = "status-indicator-circle-connecting";
         public const string USS_IndicatorClass_Disconnected = "status-indicator-circle-disconnected";
+        public const string USS_IndicatorClass_External = "status-indicator-circle-external";
 
         const string ServerButtonText_Connect = "Connect";
         const string ServerButtonText_Disconnect = "Disconnect";
@@ -274,34 +275,60 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             // -----------------------------------------------------------------
             var btnStartStopServer = root.Q<Button>("btnStartStopServer");
             var mcpServerStatusCircle = root.Q<VisualElement>("mcpServerStatusCircle");
+            var mcpServerLabel = root.Q<Label>("mcpServerLabel");
 
-            if (btnStartStopServer != null && mcpServerStatusCircle != null)
+            if (btnStartStopServer != null && mcpServerStatusCircle != null && mcpServerLabel != null)
             {
-                McpServerManager.ServerStatus
-                    .ObserveOnCurrentSynchronizationContext()
-                    .Subscribe(status =>
+                // Combine server status with Unity connection state to detect external server
+                Observable.CombineLatest(
+                    McpServerManager.ServerStatus,
+                    UnityMcpPlugin.IsConnected,
+                    (serverStatus, isUnityConnected) =>
                     {
-                        btnStartStopServer.text = status switch
+                        // If Unity is connected but we didn't start the server, it's external
+                        if (isUnityConnected && serverStatus == McpServerStatus.Stopped)
+                            return McpServerStatus.External;
+                        return serverStatus;
+                    })
+                    .ObserveOnCurrentSynchronizationContext()
+                    .Subscribe(effectiveStatus =>
+                    {
+                        btnStartStopServer.text = effectiveStatus switch
                         {
                             McpServerStatus.Running => "Stop",
                             McpServerStatus.Starting => "Starting...",
                             McpServerStatus.Stopping => "Stopping...",
                             McpServerStatus.Stopped => "Start",
+                            McpServerStatus.External => "External",
                             _ => "Start"
                         };
 
-                        btnStartStopServer.SetEnabled(status == McpServerStatus.Running || status == McpServerStatus.Stopped);
+                        // Disable button for external server (we can't control it)
+                        btnStartStopServer.SetEnabled(effectiveStatus == McpServerStatus.Running || effectiveStatus == McpServerStatus.Stopped);
+
+                        // Update label text
+                        mcpServerLabel.text = effectiveStatus switch
+                        {
+                            McpServerStatus.Running => "MCP Server: Running",
+                            McpServerStatus.Starting => "MCP Server: Starting...",
+                            McpServerStatus.Stopping => "MCP Server: Stopping...",
+                            McpServerStatus.External => "MCP Server: External",
+                            McpServerStatus.Stopped => "MCP Server",
+                            _ => "MCP Server"
+                        };
 
                         mcpServerStatusCircle.RemoveFromClassList(USS_IndicatorClass_Connected);
                         mcpServerStatusCircle.RemoveFromClassList(USS_IndicatorClass_Connecting);
                         mcpServerStatusCircle.RemoveFromClassList(USS_IndicatorClass_Disconnected);
+                        mcpServerStatusCircle.RemoveFromClassList(USS_IndicatorClass_External);
 
-                        mcpServerStatusCircle.AddToClassList(status switch
+                        mcpServerStatusCircle.AddToClassList(effectiveStatus switch
                         {
                             McpServerStatus.Running => USS_IndicatorClass_Connected,
                             McpServerStatus.Starting => USS_IndicatorClass_Connecting,
                             McpServerStatus.Stopping => USS_IndicatorClass_Connecting,
                             McpServerStatus.Stopped => USS_IndicatorClass_Disconnected,
+                            McpServerStatus.External => USS_IndicatorClass_External,
                             _ => USS_IndicatorClass_Disconnected
                         });
                     })
@@ -315,6 +342,32 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             // AI agent
             // -----------------------------------------------------------------
+            void FetchAiAgentData()
+            {
+                var pluginInstance = UnityMcpPlugin.Instance.McpPluginInstance;
+                pluginInstance?.RemoteMcpManagerHub?.GetMcpClientData()
+                    .ContinueWith(task =>
+                    {
+                        UnityEditor.EditorApplication.delayCall += () =>
+                        {
+                            if (task.IsCompletedSuccessfully)
+                            {
+                                var data = task.Result;
+                                var isConnected = data.ClientName != null;
+                                SetAiAgentLabel(isConnected
+                                    ? $"AI Agent: {data.ClientName} ({data.ClientVersion})"
+                                    : "AI Agent: Not connected");
+                                SetAiAgentStatusCircle(isConnected);
+                            }
+                            else
+                            {
+                                SetAiAgentLabel("AI Agent: Not found");
+                                SetAiAgentStatusCircle(false);
+                            }
+                        };
+                    });
+            }
+
             var mcpPluginInstance = UnityMcpPlugin.Instance.McpPluginInstance;
             if (mcpPluginInstance != null)
             {
@@ -338,28 +391,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     })
                     .AddTo(_disposables);
 
-                mcpPluginInstance.RemoteMcpManagerHub?.GetMcpClientData()
-                    .ContinueWith(task =>
-                    {
-                        UnityEditor.EditorApplication.delayCall += () =>
-                        {
-                            if (task.IsCompletedSuccessfully)
-                            {
-                                var data = task.Result;
-                                var isConnected = data.ClientName != null;
-                                SetAiAgentLabel(isConnected
-                                    ? $"AI Agent: {data.ClientName} ({data.ClientVersion})"
-                                    : "AI Agent: Not connected");
-                                SetAiAgentStatusCircle(isConnected);
-                            }
-                            else
-                            {
-                                SetAiAgentLabel("AI Agent: Not found");
-                                SetAiAgentStatusCircle(false);
-                            }
-                        };
-                    });
+                // Fetch initial AI agent data
+                FetchAiAgentData();
             }
+
+            // Re-fetch AI agent data when Unity reconnects
+            UnityMcpPlugin.IsConnected
+                .Where(isConnected => isConnected)
+                .ObserveOnCurrentSynchronizationContext()
+                .Subscribe(_ => FetchAiAgentData())
+                .AddTo(_disposables);
 
             // Tools Configuration
             // -----------------------------------------------------------------
