@@ -120,17 +120,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             void SetAiAgentStatusCircle(bool isConnected)
             {
-                if (aiAgentStatusCircle == null) return;
-
                 aiAgentStatusCircle.RemoveFromClassList(USS_IndicatorClass_Connected);
                 aiAgentStatusCircle.RemoveFromClassList(USS_IndicatorClass_Connecting);
                 aiAgentStatusCircle.RemoveFromClassList(USS_IndicatorClass_Disconnected);
-                aiAgentStatusCircle.AddToClassList(isConnected ? USS_IndicatorClass_Connected : USS_IndicatorClass_Disconnected);
+                aiAgentStatusCircle.AddToClassList(isConnected
+                    ? USS_IndicatorClass_Connected
+                    : USS_IndicatorClass_Disconnected);
             }
 
             void SetAiAgentLabel(string text)
             {
-                if (labelAiAgentStatus == null) return;
                 labelAiAgentStatus.text = text;
             }
 
@@ -324,7 +323,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     .Subscribe(data =>
                     {
                         Logger.LogInformation("AI Agent connected: {clientName} v{clientVersion}", data.ClientName, data.ClientVersion);
-                        labelAiAgentStatus.text = $"AI Agent: {data.ClientName} (v{data.ClientVersion})";
+                        SetAiAgentLabel($"AI Agent: {data.ClientName} (v{data.ClientVersion})");
                         SetAiAgentStatusCircle(true);
                     })
                     .AddTo(_disposables);
@@ -334,7 +333,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     .Subscribe(data =>
                     {
                         Logger.LogInformation("AI Agent disconnected");
-                        labelAiAgentStatus.text = $"AI Agent";
+                        SetAiAgentLabel("AI Agent");
                         SetAiAgentStatusCircle(false);
                     })
                     .AddTo(_disposables);
@@ -342,20 +341,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 mcpPluginInstance.RemoteMcpManagerHub?.GetMcpClientData()
                     .ContinueWith(task =>
                     {
-                        if (task.IsCompletedSuccessfully)
+                        UnityEditor.EditorApplication.delayCall += () =>
                         {
-                            var data = task.Result;
-                            var isConnected = data.ClientName != null;
-                            labelAiAgentStatus.text = isConnected
-                                ? $"AI Agent: {data.ClientName} (v{data.ClientVersion})"
-                                : "AI Agent: Not connected";
-                            SetAiAgentStatusCircle(isConnected);
-                        }
-                        else
-                        {
-                            labelAiAgentStatus.text = "AI Agent: Not found";
-                            SetAiAgentStatusCircle(false);
-                        }
+                            if (task.IsCompletedSuccessfully)
+                            {
+                                var data = task.Result;
+                                var isConnected = data.ClientName != null;
+                                SetAiAgentLabel(isConnected
+                                    ? $"AI Agent: {data.ClientName} (v{data.ClientVersion})"
+                                    : "AI Agent: Not connected");
+                                SetAiAgentStatusCircle(isConnected);
+                            }
+                            else
+                            {
+                                SetAiAgentLabel("AI Agent: Not found");
+                                SetAiAgentStatusCircle(false);
+                            }
+                        };
                     });
             }
 

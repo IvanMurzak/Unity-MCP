@@ -14,7 +14,7 @@
             </ui:Box>
             <ui:VisualElement class="divider" />
             <!-- Connection Section ============================== -->
-            <ui:Label text="Connect" class="header" />
+            <ui:Label text="Connection" class="header" />
             <ui:TextField picking-mode="Ignore" label="Server URL" value="http://localhost:8080" name="InputServerURL" tooltip="Connection URL to an MCP server. Default value: http://localhost:8080" class="content-item" />
             <ui:Foldout text="Information" value="false" class="base-foldout">
                 <ui:Label text="Usually the server is hosted locally at:&#10;http://localhost:8080&#10;&#10;But feel free to connect to remote MCP server if needed. The connection under the hood is established using SignalR and supports wide range of features." class="section-desc" />
