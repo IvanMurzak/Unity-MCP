@@ -65,11 +65,15 @@ namespace com.IvanMurzak.Unity.MCP
                 if (mcpPluginInstance != null)
                     return this; // already built
 
+                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
                 mcpPluginInstance = BuildMcpPlugin(
                     version: BuildVersion(),
                     reflector: CreateDefaultReflector(),
                     loggerProvider: BuildLoggerProvider()
                 );
+                stopwatch.Stop();
+                _logger.LogDebug("MCP Plugin built in {elapsedMilliseconds} ms.",
+                    stopwatch.ElapsedMilliseconds);
 
                 ApplyConfigToMcpPlugin(mcpPluginInstance);
 
@@ -102,7 +106,7 @@ namespace com.IvanMurzak.Unity.MCP
                 nameof(BuildMcpPlugin));
 
             var assemblies = AssemblyUtils.AllAssemblies;
-            var mcpPlugin = new McpPluginBuilder(version, loggerProvider)
+            var mcpPluginBuilder = new McpPluginBuilder(version, loggerProvider)
                 .WithConfig(config =>
                 {
                     _logger.LogInformation("AI Game Developer server host: {host}", Host);
@@ -116,10 +120,27 @@ namespace com.IvanMurzak.Unity.MCP
                     if (loggerProvider != null)
                         loggingBuilder.AddProvider(loggerProvider);
                 })
+                .IgnoreAssemblies(
+                    "mscorlib",
+                    "Mono.Security",
+                    "netstandard",
+                    "nunit.framework",
+                    "System",
+                    "UnityEngine",
+                    "UnityEditor",
+                    "Unity.",
+                    "Microsoft",
+                    "R3",
+                    "McpPlugin",
+                    "ReflectorNet",
+                    "com.IvanMurzak.Unity.MCP.TestFiles",
+                    "com.IvanMurzak.Unity.MCP.Editor.Tests",
+                    "com.IvanMurzak.Unity.MCP.Tests")
                 .WithToolsFromAssembly(assemblies)
                 .WithPromptsFromAssembly(assemblies)
-                .WithResourcesFromAssembly(assemblies)
-                .Build(reflector);
+                .WithResourcesFromAssembly(assemblies);
+
+            var mcpPlugin = mcpPluginBuilder.Build(reflector);
 
             _logger.LogTrace("{method} completed.",
                 nameof(BuildMcpPlugin));
