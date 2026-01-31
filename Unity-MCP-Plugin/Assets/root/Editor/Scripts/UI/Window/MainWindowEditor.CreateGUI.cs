@@ -322,8 +322,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     .ObserveOnCurrentSynchronizationContext()
                     .Subscribe(data =>
                     {
-                        Logger.LogInformation("AI Agent connected: {clientName} v{clientVersion}", data.ClientName, data.ClientVersion);
-                        SetAiAgentLabel($"AI Agent: {data.ClientName} (v{data.ClientVersion})");
+                        Logger.LogInformation("AI Agent connected: {clientName} {clientVersion}", data.ClientName, data.ClientVersion);
+                        SetAiAgentLabel($"AI Agent: {data.ClientName} ({data.ClientVersion})");
                         SetAiAgentStatusCircle(true);
                     })
                     .AddTo(_disposables);
@@ -348,7 +348,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                                 var data = task.Result;
                                 var isConnected = data.ClientName != null;
                                 SetAiAgentLabel(isConnected
-                                    ? $"AI Agent: {data.ClientName} (v{data.ClientVersion})"
+                                    ? $"AI Agent: {data.ClientName} ({data.ClientVersion})"
                                     : "AI Agent: Not connected");
                                 SetAiAgentStatusCircle(isConnected);
                             }
