@@ -31,12 +31,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         private static readonly string[] _githubIconPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/Gizmos/github_icon.png");
         private static readonly string[] _starIconPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/Gizmos/star_icon.png");
 
-        private const string USS_Connected = "status-indicator-circle-online";
-        private const string USS_Connecting = "status-indicator-circle-connecting";
-        private const string USS_Disconnected = "status-indicator-circle-disconnected";
-        private const string USS_External = "status-indicator-circle-external";
+        public const string USS_Connected = "status-indicator-circle-online";
+        public const string USS_Connecting = "status-indicator-circle-connecting";
+        public const string USS_Disconnected = "status-indicator-circle-disconnected";
+        public const string USS_External = "status-indicator-circle-external";
 
-        private static readonly string[] AllStatusClasses = { USS_Connected, USS_Connecting, USS_Disconnected, USS_External };
+        private static readonly string[] AllStatusClasses =
+        {
+            USS_Connected,
+            USS_Connecting,
+            USS_Disconnected,
+            USS_External
+        };
 
         private const string ServerButtonText_Connect = "Connect";
         private const string ServerButtonText_Disconnect = "Disconnect";
@@ -199,7 +205,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             var isReadOnly = keepConnected || state != HubConnectionState.Disconnected;
             field.isReadOnly = isReadOnly;
             field.tooltip = keepConnected
-                ? "Editable only when disconnected from the MCP Server."
+                ? "Editable only when Unity disconnected from the MCP Server."
                 : $"The server URL. http://localhost:{UnityMcpPlugin.GeneratePortFromDirectory()}";
 
             field.EnableInClassList("disabled-text-field", isReadOnly);
