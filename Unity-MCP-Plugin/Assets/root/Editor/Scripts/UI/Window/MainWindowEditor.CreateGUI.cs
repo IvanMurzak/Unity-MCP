@@ -330,8 +330,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         private void FetchAiAgentData()
         {
-            var pluginInstance = UnityMcpPlugin.Instance.McpPluginInstance;
-            pluginInstance?.RemoteMcpManagerHub?.GetMcpClientData()
+            UnityMcpPlugin.Instance.McpPluginInstance?.RemoteMcpManagerHub?.GetMcpClientData()
                 .ContinueWith(task =>
                 {
                     UnityEditor.EditorApplication.delayCall += () =>
@@ -339,8 +338,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         if (task.IsCompletedSuccessfully)
                         {
                             var data = task.Result;
-                            var isConnected = data.ClientName != null;
-                            SetAiAgentStatus(isConnected, isConnected
+                            SetAiAgentStatus(data.IsConnected, data.IsConnected
                                 ? $"AI Agent: {data.ClientName} ({data.ClientVersion})"
                                 : "AI Agent: Not connected");
                         }
