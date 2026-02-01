@@ -45,6 +45,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         // Track tool execution count for current session
         private static readonly ReactiveProperty<int> _toolExecutionCount = new(0);
+        private static readonly CompositeDisposable _staticDisposables = new();
+
+        static McpStatusChecksWindow()
+        {
+            // Static subscription to track tool executions even when window is closed
+            UnityMcpPlugin.OnToolExecuted
+                .Subscribe(_ => _toolExecutionCount.Value++)
+                .AddTo(_staticDisposables);
+        }
 
         /// <summary>
         /// Status of a single check item.
@@ -167,17 +176,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 }
             }).AddTo(_disposables);
 
-            // Subscribe to tool execution events
-            UnityMcpPlugin.OnToolExecuted
-                .ThrottleLast(TimeSpan.FromMilliseconds(100))
-                .ObserveOnCurrentSynchronizationContext()
-                .Subscribe(_ =>
-                {
-                    _toolExecutionCount.Value++;
-                })
-                .AddTo(_disposables);
-
-            // Subscribe to tool execution counter changes
+            // Subscribe to tool execution counter changes to refresh UI
             _toolExecutionCount
                 .ThrottleLast(TimeSpan.FromMilliseconds(100))
                 .ObserveOnCurrentSynchronizationContext()
@@ -324,7 +323,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         private StatusCheckItem GetVersionHandshakeCheck()
         {
-            var version = UnityMcpPlugin.Version;
+            var pluginVersion = UnityMcpPlugin.Version;
+            var clientApiVersion = McpPlugin.Common.Consts.ApiVersion;
             var isConnected = UnityMcpPlugin.IsConnected.CurrentValue;
 
             if (isConnected && UnityMcpPlugin.Instance.McpPluginInstance != null)
@@ -342,16 +342,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     );
                 }
 
-                // Parse versions for strict Major.Minor check
-                var pluginVersionParsed = System.Version.TryParse(version, out var pVer);
-                var serverVersionParsed = System.Version.TryParse(handshake.ServerVersion, out var sVer);
+                // Compare API versions for compatibility (this is what matters for protocol compatibility)
+                var clientApiParsed = System.Version.TryParse(clientApiVersion, out var cApiVer);
+                var serverApiParsed = System.Version.TryParse(handshake.ApiVersion, out var sApiVer);
 
                 bool isCompatible = handshake.Compatible;
 
-                // Extra strict check for Major.Minor if parsing succeeded
-                if (pluginVersionParsed && serverVersionParsed)
+                // Extra strict check for Major.Minor of API versions if parsing succeeded
+                if (clientApiParsed && serverApiParsed)
                 {
-                    if (pVer.Major != sVer.Major || pVer.Minor != sVer.Minor)
+                    if (cApiVer.Major != sApiVer.Major || cApiVer.Minor != sApiVer.Minor)
                     {
                         isCompatible = false;
                     }
@@ -362,8 +362,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     return new StatusCheckItem(
                         id: "version-handshake",
                         title: "Version handshake status",
-                        subtitle: $"Plugin v{version}, Server v{handshake.ServerVersion}",
-                        description: $"Plugin and Server versions are compatible.\n\nPlugin version: {version}\nServer version: {handshake.ServerVersion}\nAPI version: {handshake.ApiVersion}",
+                        subtitle: $"API v{clientApiVersion} ✓ Compatible",
+                        description: $"Plugin and Server API versions are compatible.\n\n" +
+                            $"Plugin version: {pluginVersion}\n" +
+                            $"Client API version: {clientApiVersion}\n" +
+                            $"Server API version: {handshake.ApiVersion}\n" +
+                            $"Server version: {handshake.ServerVersion}",
                         status: CheckStatus.Success
                     );
                 }
@@ -372,8 +376,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     return new StatusCheckItem(
                         id: "version-handshake",
                         title: "Version handshake status",
-                        subtitle: $"Incompatible: v{version} vs v{handshake.ServerVersion}",
-                        description: $"Version mismatch detected!\n\nPlugin version: {version}\nServer version: {handshake.ServerVersion}\n\nMajor and Minor versions MUST match (e.g. 2.0.x is compatible with 2.0.y).\n{handshake.Message}",
+                        subtitle: $"Incompatible: API v{clientApiVersion} vs v{handshake.ApiVersion}",
+                        description: $"API version mismatch detected!\n\n" +
+                            $"Plugin version: {pluginVersion}\n" +
+                            $"Client API version: {clientApiVersion}\n" +
+                            $"Server API version: {handshake.ApiVersion}\n" +
+                            $"Server version: {handshake.ServerVersion}\n\n" +
+                            $"Major and Minor API versions MUST match (e.g. API 1.0.x is compatible with API 1.0.y).\n{handshake.Message}",
                         status: CheckStatus.Error
                     );
                 }
@@ -395,23 +404,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         private StatusCheckItem GetServerToClientCheck()
         {
             var isConnected = UnityMcpPlugin.IsConnected.CurrentValue;
+            var mcpPlugin = UnityMcpPlugin.Instance.McpPluginInstance;
+            var handshake = mcpPlugin?.VersionHandshakeStatus;
 
-            if (isConnected)
-            {
-                return new StatusCheckItem(
-                   id: "server-to-client",
-                   title: "MCP Server connected to MCP Client",
-                   subtitle: "Waiting for external client...",
-                   description: "The Unity MCP Server is running.\n\n" +
-                       "To verify this connection:\n" +
-                       "1. Open your MCP Client (Claude Desktop, Cursor, etc.)\n" +
-                       "2. Ensure it is configured to connect to this project's MCP server\n" +
-                       "3. When the client sends a request (like listing tools), this connection is active.\n" +
-                       "(Note: Future updates will show active client count here)",
-                   status: CheckStatus.Pending
-               );
-            }
-            else
+            if (!isConnected)
             {
                 return new StatusCheckItem(
                     id: "server-to-client",
@@ -422,55 +418,109 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     status: CheckStatus.Error
                 );
             }
+
+            // Check if we have received a handshake response from the server
+            // This indicates an external MCP client has connected and the server responded
+            if (handshake != null)
+            {
+                return new StatusCheckItem(
+                   id: "server-to-client",
+                   title: "MCP Server connected to MCP Client",
+                   subtitle: "Connected ✓",
+                   description: "The MCP Server has successfully connected to an external MCP Client.\n\n" +
+                       $"Server version: {handshake.ServerVersion}\n" +
+                       $"API version: {handshake.ApiVersion}",
+                   status: CheckStatus.Success
+               );
+            }
+            else
+            {
+                return new StatusCheckItem(
+                   id: "server-to-client",
+                   title: "MCP Server connected to MCP Client",
+                   subtitle: "Waiting for external client...",
+                   description: "The Unity MCP Server is running, but no external MCP Client has connected yet.\n\n" +
+                       "To complete this connection:\n" +
+                       "1. Open your MCP Client (Claude Desktop, Cursor, etc.)\n" +
+                       "2. Ensure it is configured to connect to this project's MCP server\n" +
+                       "3. Send any request (like listing tools) to establish the connection",
+                   status: CheckStatus.Pending
+               );
+            }
         }
 
         private StatusCheckItem GetClientLocationCheck()
         {
             var mcpPlugin = UnityMcpPlugin.Instance.McpPluginInstance;
-            var serverBaseDir = mcpPlugin?.CurrentBaseDirectory ?? string.Empty;
+            var serverBasePath = mcpPlugin?.CurrentBaseDirectory ?? string.Empty;
 
-            var currentDir = Environment.CurrentDirectory;
+            var unityProjectDir = Environment.CurrentDirectory;
+            var expectedServerPath = System.IO.Path.Combine(unityProjectDir, "Library", "mcp-server");
             var configuredClients = GetConfiguredClientNames();
+            var isConnected = UnityMcpPlugin.IsConnected.CurrentValue;
 
-            // Normalize paths for comparison
-            var normServerDir = System.IO.Path.GetFullPath(serverBaseDir).TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
-            var normCurrentDir = System.IO.Path.GetFullPath(currentDir).TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
-
-            bool isLocationMatch = string.Equals(normServerDir, normCurrentDir, StringComparison.OrdinalIgnoreCase);
-
-            if (configuredClients.Count > 0)
+            // If not connected or no handshake, we can't get the server path
+            if (!isConnected || string.IsNullOrEmpty(serverBasePath))
             {
-                if (isLocationMatch)
-                {
-                    return new StatusCheckItem(
-                       id: "client-location",
-                       title: "MCP Client location match",
-                       subtitle: $"Match: {serverBaseDir}",
-                       description: $"Server execution directory matches Unity project directory.\n\nServer: {serverBaseDir}\nUnity: {currentDir}\n\nThis ensures the MCP server is operating on the correct files.",
-                       status: CheckStatus.Success
-                   );
-                }
-                else
+                if (configuredClients.Count == 0)
                 {
                     return new StatusCheckItem(
                         id: "client-location",
                         title: "MCP Client location match",
-                        subtitle: "Path mismatch detected",
-                        description: $"Server directory DOES NOT match Unity project directory!\n\nServer: {serverBaseDir}\nUnity: {currentDir}\n\nThis usually happens if the server was launched from a different location or the project path changed.",
+                        subtitle: "No client config found",
+                        description: "Could not find any MCP client configuration.\n\n" +
+                            $"Unity project path: {unityProjectDir}\n\n" +
+                            "Configure an MCP client first using the 'Configure' button in the main MCP window.",
                         status: CheckStatus.Error
                     );
                 }
+
+                return new StatusCheckItem(
+                    id: "client-location",
+                    title: "MCP Client location match",
+                    subtitle: "Connect to verify location",
+                    description: "Cannot verify server location until connected to the MCP Server.\n\n" +
+                        $"Unity project path: {unityProjectDir}\n" +
+                        $"Expected server path: {expectedServerPath}",
+                    status: CheckStatus.Pending
+                );
             }
 
-            return new StatusCheckItem(
-                id: "client-location",
-                title: "MCP Client location match",
-                subtitle: "No client config found",
-                description: "Could not find any MCP client configuration.\n\n" +
-                    $"Unity project path: {currentDir}\n\n" +
-                    "Configure an MCP client first using the 'Configure' button in the main MCP window.",
-                status: CheckStatus.Error
-            );
+            // Normalize paths for comparison
+            var normServerPath = System.IO.Path.GetFullPath(serverBasePath).TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
+            var normExpectedPath = System.IO.Path.GetFullPath(expectedServerPath).TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
+            var normProjectPath = System.IO.Path.GetFullPath(unityProjectDir).TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
+
+            // Check if server is running from within the project's Library/mcp-server folder
+            bool isLocationMatch = normServerPath.StartsWith(normProjectPath, StringComparison.OrdinalIgnoreCase);
+
+            if (isLocationMatch)
+            {
+                return new StatusCheckItem(
+                   id: "client-location",
+                   title: "MCP Client location match",
+                   subtitle: "Location verified ✓",
+                   description: $"Server is running from the correct project location.\n\n" +
+                       $"Server path: {serverBasePath}\n" +
+                       $"Unity project: {unityProjectDir}\n\n" +
+                       "This ensures the MCP server is operating on the correct files.",
+                   status: CheckStatus.Success
+               );
+            }
+            else
+            {
+                return new StatusCheckItem(
+                    id: "client-location",
+                    title: "MCP Client location match",
+                    subtitle: "Path mismatch detected",
+                    description: $"Server is NOT running from this Unity project!\n\n" +
+                        $"Server path: {serverBasePath}\n" +
+                        $"Unity project: {unityProjectDir}\n" +
+                        $"Expected: {expectedServerPath}\n\n" +
+                        "This usually happens if the MCP client was configured for a different project.",
+                    status: CheckStatus.Error
+                );
+            }
         }
 
         private StatusCheckItem GetEnabledToolsCheck()
@@ -522,16 +572,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         private StatusCheckItem GetToolExecutedCheck()
         {
-            // This is always gray/optional - just an indicator
-            return new StatusCheckItem(
-                id: "tool-executed",
-                title: "MCP Tool executed",
-                subtitle: _toolExecutionCount.Value > 0 ? $"{_toolExecutionCount.Value} executed this session" : "No tools executed yet",
-                description: _toolExecutionCount.Value > 0
-                    ? $"MCP tools have been executed {_toolExecutionCount.Value} times this session. This confirms that the connection is working correctly."
-                    : "No MCP tools have been executed yet this session. This counter increments each time an MCP client successfully calls a tool.",
-                status: CheckStatus.Pending // Always pending/gray - optional indicator
-            );
+            var count = _toolExecutionCount.Value;
+
+            if (count > 0)
+            {
+                return new StatusCheckItem(
+                    id: "tool-executed",
+                    title: "MCP Tool executed",
+                    subtitle: $"{count} executed this session ✓",
+                    description: $"MCP tools have been executed {count} times this session. This confirms that the connection is working correctly.",
+                    status: CheckStatus.Success
+                );
+            }
+            else
+            {
+                return new StatusCheckItem(
+                    id: "tool-executed",
+                    title: "MCP Tool executed",
+                    subtitle: "No tools executed yet",
+                    description: "No MCP tools have been executed yet this session. This counter increments each time an MCP client successfully calls a tool.",
+                    status: CheckStatus.Pending
+                );
+            }
         }
 
         #endregion

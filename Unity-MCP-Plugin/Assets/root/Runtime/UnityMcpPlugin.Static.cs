@@ -132,6 +132,15 @@ namespace com.IvanMurzak.Unity.MCP
         static readonly R3.Subject<Unit> _onToolExecuted = new();
         public static Observable<Unit> OnToolExecuted => _onToolExecuted;
 
+        /// <summary>
+        /// Manually triggers the OnToolExecuted event.
+        /// Use this for synchronous tools that don't use NotifyToolRequestCompleted but want to be counted.
+        /// </summary>
+        public static void NotifyToolExecuted()
+        {
+            _onToolExecuted.OnNext(Unit.Default);
+        }
+
         public static async Task NotifyToolRequestCompleted(RequestToolCompletedData request, CancellationToken cancellationToken = default)
         {
             var mcpPlugin = Instance.McpPluginInstance ?? throw new InvalidOperationException($"{nameof(Instance.McpPluginInstance)} is null");

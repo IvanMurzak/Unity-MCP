@@ -84,6 +84,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     isLocalSpace: isLocalSpace);
 
                 EditorUtility.SetDirty(go);
+                UnityMcpPlugin.NotifyToolExecuted();
                 EditorUtils.RepaintAllEditorWindows();
 
                 return new GameObjectRef(go);
