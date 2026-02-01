@@ -38,6 +38,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
     [InitializeOnLoad]
     public static class McpServerManager
     {
+        const string ProcessIdKey = "McpServerManager_ProcessId";
+
         static readonly ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger(typeof(McpServerManager));
         static readonly ReactiveProperty<McpServerStatus> _serverStatus = new(McpServerStatus.Stopped);
         static readonly object _processMutex = new();
@@ -61,7 +63,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         {
             // Try to find an existing server process by checking if our tracked PID is still running
             // This helps maintain state across domain reloads
-            var savedPid = EditorPrefs.GetInt("McpServerManager_ProcessId", -1);
+            var savedPid = EditorPrefs.GetInt(ProcessIdKey, -1);
             if (savedPid > 0)
             {
                 try
@@ -92,7 +94,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 }
 
                 // Clear stale PID
-                EditorPrefs.DeleteKey("McpServerManager_ProcessId");
+                EditorPrefs.DeleteKey(ProcessIdKey);
             }
         }
 
@@ -161,7 +163,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     _serverProcess.BeginErrorReadLine();
 
                     // Save PID for reconnection after domain reload
-                    EditorPrefs.SetInt("McpServerManager_ProcessId", _serverProcess.Id);
+                    EditorPrefs.SetInt(ProcessIdKey, _serverProcess.Id);
 
                     _serverStatus.Value = McpServerStatus.Running;
                     _logger.LogInformation("MCP server started successfully (PID: {pid})", _serverProcess.Id);
@@ -195,7 +197,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 if (_serverProcess == null)
                 {
                     _serverStatus.Value = McpServerStatus.Stopped;
-                    EditorPrefs.DeleteKey("McpServerManager_ProcessId");
+                    EditorPrefs.DeleteKey(ProcessIdKey);
                     return true;
                 }
 
@@ -371,7 +373,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     _serverProcess = null;
                 }
 
-                EditorPrefs.DeleteKey("McpServerManager_ProcessId");
+                EditorPrefs.DeleteKey(ProcessIdKey);
                 _serverStatus.Value = McpServerStatus.Stopped;
             }
         }
