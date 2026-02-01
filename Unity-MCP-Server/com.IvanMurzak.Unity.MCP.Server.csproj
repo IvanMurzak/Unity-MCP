@@ -36,9 +36,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="./../../../dotnet/MCP-Plugin-dotnet/McpPlugin.Server/McpPlugin.Server.csproj" />
+    <!-- <ProjectReference Include="./../../../dotnet/MCP-Plugin-dotnet/McpPlugin.Server/McpPlugin.Server.csproj" /> -->
     <PackageReference Include="com.IvanMurzak.ReflectorNet" Version="3.12.0" />
-    <!-- <PackageReference Include="com.IvanMurzak.McpPlugin.Server" Version="2.5.0" /> -->
+    <PackageReference Include="com.IvanMurzak.McpPlugin.Server" Version="2.6.0" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.1" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.1" />
     <PackageReference Include="NLog.Web.AspNetCore" Version="6.1.0" />

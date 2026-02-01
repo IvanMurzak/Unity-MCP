@@ -11,7 +11,9 @@
 #nullable enable
 using System;
 using System.Linq;
-using com.IvanMurzak.McpPlugin.Common;
+using com.IvanMurzak.McpPlugin.Common.Model;
+using com.IvanMurzak.McpPlugin.Common.Utils;
+using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
@@ -19,6 +21,7 @@ using R3;
 using UnityEngine;
 using UnityEngine.UIElements;
 using LogLevel = com.IvanMurzak.Unity.MCP.Runtime.Utils.LogLevel;
+using TransportMethod = com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server.TransportMethod;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
 {
@@ -54,6 +57,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         private Label? _labelAiAgentStatus;
         private VisualElement? _aiAgentStatusCircle;
+
+        private DateTime _setMcpServerDataTime;
+        private DateTime _setAiAgentDataTime;
 
         protected override void OnGUICreated(VisualElement root)
         {
@@ -104,11 +110,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         private void SetAiAgentStatus(bool isConnected, string? label = null)
         {
-            if (_aiAgentStatusCircle != null)
-                SetStatusIndicator(_aiAgentStatusCircle, isConnected ? USS_Connected : USS_Disconnected);
+            _setAiAgentDataTime = DateTime.UtcNow;
 
-            if (_labelAiAgentStatus != null)
-                _labelAiAgentStatus.text = label ?? "AI Agent";
+            if (_aiAgentStatusCircle == null)
+                throw new InvalidOperationException($"{nameof(_aiAgentStatusCircle)} is not initialized.");
+            if (_labelAiAgentStatus == null)
+                throw new InvalidOperationException($"{nameof(_labelAiAgentStatus)} is not initialized.");
+
+            SetStatusIndicator(_aiAgentStatusCircle, isConnected ? USS_Connected : USS_Disconnected);
+            _labelAiAgentStatus.text = label ?? "AI agent";
         }
 
         #endregion
@@ -128,7 +138,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             var inputTimeoutMs = root.Q<IntegerField>("inputTimeoutMs");
             inputTimeoutMs.value = UnityMcpPlugin.TimeoutMs;
-            inputTimeoutMs.tooltip = $"Timeout for MCP tool execution in milliseconds.\n\nMost tools only need a few seconds.\n\nSet this higher than your longest test execution time.\n\nImportant: Also update the '{Consts.MCP.Server.Args.PluginTimeout}' argument in your AI agent configuration to match this value so your AI agent doesn't timeout before the tool completes.";
+            inputTimeoutMs.tooltip = $"Timeout for MCP tool execution in milliseconds.\n\nMost tools only need a few seconds.\n\nSet this higher than your longest test execution time.\n\nImportant: Also update the '{McpPlugin.Common.Consts.MCP.Server.Args.PluginTimeout}' argument in your AI agent configuration to match this value so your AI agent doesn't timeout before the tool completes.";
             inputTimeoutMs.RegisterCallback<FocusOutEvent>(evt =>
             {
                 var newValue = Mathf.Max(1000, inputTimeoutMs.value);
@@ -255,14 +265,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 .ObserveOnCurrentSynchronizationContext()
                 .Subscribe(status =>
                 {
-                    btnStartStop.text = GetServerButtonText(status);
-                    btnStartStop.SetEnabled(status == McpServerStatus.Running || status == McpServerStatus.Stopped);
-                    statusLabel.text = GetServerLabelText(status);
-                    SetStatusIndicator(statusCircle, GetServerStatusClass(status));
+                    FetchMcpServerData(status, btnStartStop, statusCircle, statusLabel);
+                    if (!UnityMcpPlugin.IsConnected.CurrentValue && status == McpServerStatus.Stopped)
+                        SetMcpServerData(null, status, btnStartStop, statusCircle, statusLabel);
                 })
                 .AddTo(_disposables);
 
-            btnStartStop.RegisterCallback<ClickEvent>(evt => McpServerManager.ToggleServer());
+            btnStartStop.RegisterCallback<ClickEvent>(evt => HandleServerButton());
         }
 
         private static string GetServerButtonText(McpServerStatus status) => status switch
@@ -274,14 +283,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             _ => "Start"
         };
 
-        private static string GetServerLabelText(McpServerStatus status) => status switch
+        private static string GetServerLabelText(McpServerStatus status, McpServerData? data)
         {
-            McpServerStatus.Running => "MCP Server: Running",
-            McpServerStatus.Starting => "MCP Server: Starting...",
-            McpServerStatus.Stopping => "MCP Server: Stopping...",
-            McpServerStatus.External => "MCP Server: External",
-            _ => "MCP Server"
-        };
+            var postfix = data?.ServerTransport switch
+            {
+                TransportMethod.stdio => " (stdio)",
+                TransportMethod.streamableHttp => " (http)",
+                _ => string.Empty
+            };
+            return status switch
+            {
+                McpServerStatus.Running => "MCP server: Running (http)",
+                McpServerStatus.Starting => "MCP server: Starting..." + postfix,
+                McpServerStatus.Stopping => "MCP server: Stopping..." + postfix,
+                McpServerStatus.External => "MCP server: External" + postfix,
+                _ => "MCP server"
+            };
+        }
 
         private static string GetServerStatusClass(McpServerStatus status) => status switch
         {
@@ -290,6 +308,64 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             McpServerStatus.External => USS_External,
             _ => USS_Disconnected
         };
+
+        private static void HandleServerButton()
+        {
+            if (McpServerManager.IsRunning)
+            {
+                // User is stopping the server - remember not to auto-start
+                UnityMcpPlugin.KeepServerRunning = false;
+                UnityMcpPlugin.Instance.Save();
+                McpServerManager.StopServer();
+            }
+            else
+            {
+                // User is starting the server - remember to auto-start
+                UnityMcpPlugin.KeepServerRunning = true;
+                UnityMcpPlugin.Instance.Save();
+                McpServerManager.StartServer();
+            }
+        }
+
+        private void SetMcpServerData(McpServerData? data, McpServerStatus status, Button btnStartStop, VisualElement statusCircle, Label statusLabel)
+        {
+            _setMcpServerDataTime = DateTime.UtcNow;
+            if (Logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Trace))
+                Logger.LogTrace("Setting MCP server data: {status}, Data: {data}", status, data?.ToPrettyJson() ?? "null");
+
+            btnStartStop.text = GetServerButtonText(status);
+            btnStartStop.SetEnabled(status == McpServerStatus.Running || status == McpServerStatus.Stopped);
+            statusLabel.text = GetServerLabelText(status, data);
+            SetStatusIndicator(statusCircle, GetServerStatusClass(status));
+        }
+
+        private void FetchMcpServerData(McpServerStatus status, Button btnStartStop, VisualElement statusCircle, Label statusLabel)
+        {
+            var fetchTime = DateTime.UtcNow;
+            UnityMcpPlugin.Instance.McpPluginInstance?.RemoteMcpManagerHub
+                ?.GetMcpServerData()
+                ?.ContinueWith(task =>
+                {
+                    if (_setMcpServerDataTime > fetchTime)
+                    {
+                        Logger.LogWarning("Skipping MCP server data update because a newer update was applied at {time}",
+                            _setMcpServerDataTime);
+                        return;
+                    }
+                    MainThread.Instance.Run(() =>
+                    {
+                        if (task.IsCompletedSuccessfully)
+                        {
+                            var data = task.Result;
+                            SetMcpServerData(data, status, btnStartStop, statusCircle, statusLabel);
+                        }
+                        else
+                        {
+                            SetMcpServerData(null, status, btnStartStop, statusCircle, statusLabel);
+                        }
+                    });
+                });
+        }
 
         #endregion
 
@@ -304,8 +380,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     .ObserveOnCurrentSynchronizationContext()
                     .Subscribe(data =>
                     {
-                        Logger.LogInformation("AI Agent connected: {clientName} {clientVersion}", data.ClientName, data.ClientVersion);
-                        SetAiAgentStatus(true, $"AI Agent: {data.ClientName} ({data.ClientVersion})");
+                        Logger.LogInformation("On AI agent connected: {clientName} {clientVersion}", data.ClientName, data.ClientVersion);
+                        if (Logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Trace))
+                            Logger.LogTrace("AI Agent Data: {data}", data.ToPrettyJson());
+
+                        SetAiAgentStatus(data.IsConnected, $"AI agent: {data.ClientName} ({data.ClientVersion})");
                     })
                     .AddTo(_disposables);
 
@@ -313,7 +392,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     .ObserveOnCurrentSynchronizationContext()
                     .Subscribe(_ =>
                     {
-                        Logger.LogInformation("AI Agent disconnected");
+                        Logger.LogInformation("On AI agent disconnected");
                         SetAiAgentStatus(false);
                     })
                     .AddTo(_disposables);
@@ -326,27 +405,43 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 .ObserveOnCurrentSynchronizationContext()
                 .Subscribe(_ => FetchAiAgentData())
                 .AddTo(_disposables);
+
+            // Periodic refresh, ideally it must be removed,
+            // but for now MCP server fails to deliver client disconnect event.
+            // Observable.Interval(TimeSpan.FromSeconds(10))
+            //     .Where(_ => UnityMcpPlugin.IsConnected.CurrentValue)
+            //     .ObserveOnCurrentSynchronizationContext()
+            //     .Subscribe(_ => FetchAiAgentData())
+            //     .AddTo(_disposables);
         }
 
         private void FetchAiAgentData()
         {
-            UnityMcpPlugin.Instance.McpPluginInstance?.RemoteMcpManagerHub?.GetMcpClientData()
-                .ContinueWith(task =>
+            var fetchTime = DateTime.UtcNow;
+            UnityMcpPlugin.Instance.McpPluginInstance?.RemoteMcpManagerHub
+                ?.GetMcpClientData()
+                ?.ContinueWith(task =>
                 {
-                    UnityEditor.EditorApplication.delayCall += () =>
+                    if (_setAiAgentDataTime > fetchTime)
+                    {
+                        Logger.LogWarning("Skipping AI agent data update because a newer update was applied at {time}",
+                            _setAiAgentDataTime);
+                        return;
+                    }
+                    MainThread.Instance.Run(() =>
                     {
                         if (task.IsCompletedSuccessfully)
                         {
                             var data = task.Result;
                             SetAiAgentStatus(data.IsConnected, data.IsConnected
-                                ? $"AI Agent: {data.ClientName} ({data.ClientVersion})"
-                                : "AI Agent: Not connected");
+                                ? $"AI agent: {data.ClientName} ({data.ClientVersion})"
+                                : "AI agent");
                         }
                         else
                         {
-                            SetAiAgentStatus(false, "AI Agent: Not found");
+                            SetAiAgentStatus(false, "AI agent: Not found");
                         }
-                    };
+                    });
                 });
         }
 

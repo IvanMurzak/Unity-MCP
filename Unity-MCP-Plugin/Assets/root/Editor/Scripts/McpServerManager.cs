@@ -383,5 +383,70 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             else
                 StartServer();
         }
+
+        /// <summary>
+        /// Starts the MCP server if KeepServerRunning is enabled and no external server is detected.
+        /// This method is called during Unity Editor startup to auto-start the server based on user preference.
+        /// </summary>
+        /// <returns>True if the server was started or is already running, false otherwise.</returns>
+        public static bool StartServerIfNeeded()
+        {
+            // Check if user wants the server to keep running
+            if (!UnityMcpPlugin.KeepServerRunning)
+            {
+                _logger.LogDebug("StartServerIfNeeded: KeepServerRunning is false, skipping auto-start");
+                return false;
+            }
+
+            // Check if server is already running (either local or detected from previous session)
+            if (_serverStatus.CurrentValue == McpServerStatus.Running ||
+                _serverStatus.CurrentValue == McpServerStatus.Starting)
+            {
+                _logger.LogDebug("StartServerIfNeeded: Server is already running or starting");
+                return true;
+            }
+
+            // Check if an external server is available on the port
+            if (IsExternalServerAvailable())
+            {
+                _logger.LogInformation("StartServerIfNeeded: External MCP server detected on port {port}, skipping local server start", UnityMcpPlugin.Port);
+                return false;
+            }
+
+            // Start the local server
+            _logger.LogInformation("StartServerIfNeeded: Starting local MCP server (KeepServerRunning=true)");
+            return StartServer();
+        }
+
+        /// <summary>
+        /// Checks if an external MCP server is already listening on the configured port.
+        /// Uses a quick TCP connection attempt to detect if the port is in use.
+        /// </summary>
+        /// <returns>True if an external server is detected, false otherwise.</returns>
+        public static bool IsExternalServerAvailable()
+        {
+            try
+            {
+                var port = UnityMcpPlugin.Port;
+                using var client = new System.Net.Sockets.TcpClient();
+
+                // Try to connect with a short timeout
+                var connectTask = client.ConnectAsync("localhost", port);
+                var completed = connectTask.Wait(500); // 500ms timeout
+
+                if (completed && client.Connected)
+                {
+                    _logger.LogDebug("IsExternalServerAvailable: Port {port} is in use by another process", port);
+                    return true;
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug("IsExternalServerAvailable: No server detected on port {port} ({message})", UnityMcpPlugin.Port, ex.Message);
+                return false;
+            }
+        }
     }
 }
