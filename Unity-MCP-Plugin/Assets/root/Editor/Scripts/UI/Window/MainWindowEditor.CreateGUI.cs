@@ -249,25 +249,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         private void SetupMcpServerSection(VisualElement root)
         {
-            var btnStartStop = root.Q<Button>("btnStartStopServer");
-            var statusCircle = root.Q<VisualElement>("mcpServerStatusCircle");
-            var statusLabel = root.Q<Label>("mcpServerLabel");
-
-            if (btnStartStop == null || statusCircle == null || statusLabel == null)
-                return;
+            var btnStartStop = root.Q<Button>("btnStartStopServer") ?? throw new InvalidOperationException("MCP Server start/stop button not found.");
+            var statusCircle = root.Q<VisualElement>("mcpServerStatusCircle") ?? throw new InvalidOperationException("MCP Server status circle not found.");
+            var statusLabel = root.Q<Label>("mcpServerLabel") ?? throw new InvalidOperationException("MCP Server status label not found.");
 
             Observable.CombineLatest(
-                McpServerManager.ServerStatus,
-                UnityMcpPlugin.IsConnected,
-                (status, isConnected) => isConnected && status is McpServerStatus.Stopped && !UnityMcpPlugin.KeepServerRunning
-                    ? McpServerStatus.External
-                    : status)
+                    source1: McpServerManager.ServerStatus,
+                    source2: UnityMcpPlugin.IsConnected,
+                    resultSelector: CombineMcpServerStatus)
                 .ThrottleLast(TimeSpan.FromMilliseconds(50))
                 .ObserveOnCurrentSynchronizationContext()
                 .Subscribe(status => FetchMcpServerData(status, btnStartStop, statusCircle, statusLabel))
                 .AddTo(_disposables);
 
             btnStartStop.RegisterCallback<ClickEvent>(evt => HandleServerButton(btnStartStop, statusLabel));
+        }
+
+        private McpServerStatus CombineMcpServerStatus(McpServerStatus status, bool isConnected)
+        {
+            if (isConnected)
+            {
+                if (status != McpServerStatus.Running)
+                    return McpServerStatus.External;
+            }
+            return status;
         }
 
         private static string GetServerButtonText(McpServerStatus status) => status switch
