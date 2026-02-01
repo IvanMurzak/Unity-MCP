@@ -95,8 +95,8 @@
 
 .connection-timeline {
     flex-direction: column;
-    margin-top: 12px;
-    margin-bottom: 8px;
+    margin-top: 0;
+    margin-bottom: 0;
     padding-left: 4px;
 }
 
