@@ -68,7 +68,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
                 // Setup MCP Plugin ---------------------------------------------------------------
 
                 builder.Services
-                    .WithMcpServer(dataArguments.ClientTransport, logger)
+                    .WithMcpServer(dataArguments, logger)
                     .WithMcpPluginServer(dataArguments);
 
                 // builder.WebHost.UseUrls(Consts.Hub.DefaultEndpoint);

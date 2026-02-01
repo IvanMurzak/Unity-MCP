@@ -188,13 +188,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             var isConfiguredResult = ClientConfig.IsConfigured();
 
-            statusCircle.RemoveFromClassList(MainWindowEditor.USS_IndicatorClass_Connected);
-            statusCircle.RemoveFromClassList(MainWindowEditor.USS_IndicatorClass_Connecting);
-            statusCircle.RemoveFromClassList(MainWindowEditor.USS_IndicatorClass_Disconnected);
+            statusCircle.RemoveFromClassList(MainWindowEditor.USS_Connected);
+            statusCircle.RemoveFromClassList(MainWindowEditor.USS_Connecting);
+            statusCircle.RemoveFromClassList(MainWindowEditor.USS_Disconnected);
 
             statusCircle.AddToClassList(isConfiguredResult
-                ? MainWindowEditor.USS_IndicatorClass_Connected
-                : MainWindowEditor.USS_IndicatorClass_Disconnected);
+                ? MainWindowEditor.USS_Connected
+                : MainWindowEditor.USS_Disconnected);
             statusText.text = isConfiguredResult ? "Configured (stdio)" : "Not Configured";
             btnConfigure.text = isConfiguredResult ? "Reconfigure" : "Configure";
 
@@ -204,13 +204,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
                 statusText.text = configureResult ? "Configured (stdio)" : "Not Configured";
 
-                statusCircle.RemoveFromClassList(MainWindowEditor.USS_IndicatorClass_Connected);
-                statusCircle.RemoveFromClassList(MainWindowEditor.USS_IndicatorClass_Connecting);
-                statusCircle.RemoveFromClassList(MainWindowEditor.USS_IndicatorClass_Disconnected);
+                statusCircle.RemoveFromClassList(MainWindowEditor.USS_Connected);
+                statusCircle.RemoveFromClassList(MainWindowEditor.USS_Connecting);
+                statusCircle.RemoveFromClassList(MainWindowEditor.USS_Disconnected);
 
                 statusCircle.AddToClassList(configureResult
-                    ? MainWindowEditor.USS_IndicatorClass_Connected
-                    : MainWindowEditor.USS_IndicatorClass_Disconnected);
+                    ? MainWindowEditor.USS_Connected
+                    : MainWindowEditor.USS_Disconnected);
 
                 btnConfigure.text = configureResult ? "Reconfigure" : "Configure";
             });

@@ -102,6 +102,15 @@ namespace com.IvanMurzak.Unity.MCP
                 NotifyChanged(Instance.unityConnectionConfig);
             }
         }
+        public static bool KeepServerRunning
+        {
+            get => Instance.unityConnectionConfig.KeepServerRunning;
+            set
+            {
+                Instance.unityConnectionConfig.KeepServerRunning = value;
+                NotifyChanged(Instance.unityConnectionConfig);
+            }
+        }
         public static int TimeoutMs
         {
             get => Instance.unityConnectionConfig.TimeoutMs;

@@ -62,5 +62,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         {
             _disposables.Clear();
         }
+
+        private static void UnityBuildAndConnect()
+        {
+            UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
+            UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
+            UnityMcpPlugin.ConnectIfNeeded();
+        }
     }
 }

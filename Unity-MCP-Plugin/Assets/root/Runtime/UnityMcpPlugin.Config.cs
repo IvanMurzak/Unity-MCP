@@ -31,6 +31,7 @@ namespace com.IvanMurzak.Unity.MCP
             public static List<McpFeature> DefaultResources => new();
 
             public LogLevel LogLevel { get; set; } = LogLevel.Warning;
+            public bool KeepServerRunning { get; set; } = false;
             public List<McpFeature> Tools { get; set; } = new();
             public List<McpFeature> Prompts { get; set; } = new();
             public List<McpFeature> Resources { get; set; } = new();
@@ -44,6 +45,7 @@ namespace com.IvanMurzak.Unity.MCP
             {
                 Host = DefaultHost;
                 KeepConnected = true;
+                KeepServerRunning = false;
                 LogLevel = LogLevel.Warning;
                 TimeoutMs = Consts.Hub.DefaultTimeoutMs;
                 Tools = DefaultTools;
