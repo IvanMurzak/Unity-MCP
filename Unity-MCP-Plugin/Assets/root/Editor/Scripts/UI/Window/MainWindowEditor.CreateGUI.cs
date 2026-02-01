@@ -259,19 +259,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             Observable.CombineLatest(
                 McpServerManager.ServerStatus,
                 UnityMcpPlugin.IsConnected,
-                (status, isConnected) => isConnected && status == McpServerStatus.Stopped
+                (status, isConnected) => isConnected && status is McpServerStatus.Stopped && !UnityMcpPlugin.KeepServerRunning
                     ? McpServerStatus.External
                     : status)
+                .ThrottleLast(TimeSpan.FromMilliseconds(50))
                 .ObserveOnCurrentSynchronizationContext()
-                .Subscribe(status =>
-                {
-                    FetchMcpServerData(status, btnStartStop, statusCircle, statusLabel);
-                    if (!UnityMcpPlugin.IsConnected.CurrentValue && status == McpServerStatus.Stopped)
-                        SetMcpServerData(null, status, btnStartStop, statusCircle, statusLabel);
-                })
+                .Subscribe(status => FetchMcpServerData(status, btnStartStop, statusCircle, statusLabel))
                 .AddTo(_disposables);
 
-            btnStartStop.RegisterCallback<ClickEvent>(evt => HandleServerButton());
+            btnStartStop.RegisterCallback<ClickEvent>(evt => HandleServerButton(btnStartStop, statusLabel));
         }
 
         private static string GetServerButtonText(McpServerStatus status) => status switch
@@ -283,23 +279,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             _ => "Start"
         };
 
-        private static string GetServerLabelText(McpServerStatus status, McpServerData? data)
+        private static string GetServerLabelText(McpServerStatus status, McpServerData? data) => status switch
         {
-            var postfix = data?.ServerTransport switch
+            McpServerStatus.Running => "MCP server: Running (http)",
+            McpServerStatus.Starting => "MCP server: Starting... (http)",
+            McpServerStatus.Stopping => "MCP server: Stopping... (http)",
+            McpServerStatus.External => "MCP server: External" + data?.ServerTransport switch
             {
                 TransportMethod.stdio => " (stdio)",
                 TransportMethod.streamableHttp => " (http)",
                 _ => string.Empty
-            };
-            return status switch
-            {
-                McpServerStatus.Running => "MCP server: Running (http)",
-                McpServerStatus.Starting => "MCP server: Starting..." + postfix,
-                McpServerStatus.Stopping => "MCP server: Stopping..." + postfix,
-                McpServerStatus.External => "MCP server: External" + postfix,
-                _ => "MCP server"
-            };
-        }
+            },
+            _ => "MCP server"
+        };
 
         private static string GetServerStatusClass(McpServerStatus status) => status switch
         {
@@ -309,21 +301,35 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             _ => USS_Disconnected
         };
 
-        private static void HandleServerButton()
+        private static void HandleServerButton(Button btnStartStop, Label statusLabel)
         {
-            if (McpServerManager.IsRunning)
+            // Disable button immediately to prevent double-clicks
+            btnStartStop.SetEnabled(false);
+
+            try
             {
-                // User is stopping the server - remember not to auto-start
-                UnityMcpPlugin.KeepServerRunning = false;
-                UnityMcpPlugin.Instance.Save();
-                McpServerManager.StopServer();
+                if (McpServerManager.IsRunning)
+                {
+                    // User is stopping the server - remember not to auto-start
+                    UnityMcpPlugin.KeepServerRunning = false;
+                    UnityMcpPlugin.Instance.Save();
+                    statusLabel.text = "MCP server: Stopping...";
+                    McpServerManager.StopServer();
+                }
+                else
+                {
+                    // User is starting the server - remember to auto-start
+                    UnityMcpPlugin.KeepServerRunning = true;
+                    UnityMcpPlugin.Instance.Save();
+                    statusLabel.text = "MCP server: Starting...";
+                    McpServerManager.StartServer();
+                }
             }
-            else
+            catch
             {
-                // User is starting the server - remember to auto-start
-                UnityMcpPlugin.KeepServerRunning = true;
-                UnityMcpPlugin.Instance.Save();
-                McpServerManager.StartServer();
+                // Re-enable button on exception to avoid infinite lock
+                btnStartStop.SetEnabled(true);
+                throw;
             }
         }
 
@@ -341,6 +347,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         private void FetchMcpServerData(McpServerStatus status, Button btnStartStop, VisualElement statusCircle, Label statusLabel)
         {
+            // Update UI immediately with current status
+            SetMcpServerData(null, status, btnStartStop, statusCircle, statusLabel);
+
+            // Then try to fetch additional data asynchronously
             var fetchTime = DateTime.UtcNow;
             UnityMcpPlugin.Instance.McpPluginInstance?.RemoteMcpManagerHub
                 ?.GetMcpServerData()
@@ -358,10 +368,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         {
                             var data = task.Result;
                             SetMcpServerData(data, status, btnStartStop, statusCircle, statusLabel);
-                        }
-                        else
-                        {
-                            SetMcpServerData(null, status, btnStartStop, statusCircle, statusLabel);
                         }
                     });
                 });
