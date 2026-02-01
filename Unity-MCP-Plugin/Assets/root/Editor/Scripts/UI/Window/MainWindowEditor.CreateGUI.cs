@@ -416,14 +416,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 .ObserveOnCurrentSynchronizationContext()
                 .Subscribe(_ => FetchAiAgentData())
                 .AddTo(_disposables);
-
-            // Periodic refresh, ideally it must be removed,
-            // but for now MCP server fails to deliver client disconnect event.
-            // Observable.Interval(TimeSpan.FromSeconds(10))
-            //     .Where(_ => UnityMcpPlugin.IsConnected.CurrentValue)
-            //     .ObserveOnCurrentSynchronizationContext()
-            //     .Subscribe(_ => FetchAiAgentData())
-            //     .AddTo(_disposables);
         }
 
         private void FetchAiAgentData()
