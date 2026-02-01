@@ -12,11 +12,12 @@
 using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
-using com.IvanMurzak.McpPlugin.Common;
+using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.Extensions.Logging;
 using R3;
 using UnityEditor;
+using McpConsts = com.IvanMurzak.McpPlugin.Common.Consts;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
 {
@@ -39,6 +40,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
     public static class McpServerManager
     {
         const string ProcessIdKey = "McpServerManager_ProcessId";
+        const string McpServerProcessName = "unity-mcp-server";
 
         static readonly ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger(typeof(McpServerManager));
         static readonly ReactiveProperty<McpServerStatus> _serverStatus = new(McpServerStatus.Stopped);
@@ -72,7 +74,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     if (process != null && !process.HasExited)
                     {
                         var processName = process.ProcessName.ToLowerInvariant();
-                        if (processName.Contains("unity-mcp-server"))
+                        if (processName.Contains(McpServerProcessName))
                         {
                             _serverProcess = process;
                             _serverStatus.Value = McpServerStatus.Running;
@@ -165,11 +167,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     // Save PID for reconnection after domain reload
                     EditorPrefs.SetInt(ProcessIdKey, _serverProcess.Id);
 
-                    _serverStatus.Value = McpServerStatus.Running;
-                    _logger.LogInformation("MCP server started successfully (PID: {pid})", _serverProcess.Id);
+                    // Keep status as Starting - it will be set to Running after verification
+                    _logger.LogInformation("MCP server process started (PID: {pid}), awaiting verification...", _serverProcess.Id);
 
                     // Schedule a delayed check to verify the process is still running
                     // This catches early crashes that might not trigger the Exited event reliably
+                    // Status will be set to Running only after successful verification
                     ScheduleStartupVerification(_serverProcess.Id);
 
                     return true;
@@ -230,9 +233,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                                 });
                                 killProcess?.WaitForExit(1000);
                             }
-                            catch
+                            catch (Exception ex)
                             {
                                 // Fallback to Kill() if SIGTERM fails
+                                _logger.LogDebug("SIGTERM failed, falling back to Kill(): {message}", ex.Message);
                                 _serverProcess.Kill();
                             }
                         }
@@ -266,11 +270,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             var timeout = UnityMcpPlugin.TimeoutMs;
 
             // Arguments format: port=XXXXX plugin-timeout=XXXXX client-transport=streamableHttp
-            return $"{Consts.MCP.Server.Args.Port}={port} {Consts.MCP.Server.Args.PluginTimeout}={timeout} {Consts.MCP.Server.Args.ClientTransportMethod}=streamableHttp";
+            return $"{McpConsts.MCP.Server.Args.Port}={port} {McpConsts.MCP.Server.Args.PluginTimeout}={timeout} {McpConsts.MCP.Server.Args.ClientTransportMethod}=streamableHttp";
         }
 
         /// <summary>
         /// Schedules a verification check 5 seconds after startup to detect early crashes.
+        /// If the process is still running after verification, the status is set to Running.
         /// If the process has exited and no longer exists, the status is set to Stopped.
         /// </summary>
         static void ScheduleStartupVerification(int processId)
@@ -291,12 +296,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
                 lock (_processMutex)
                 {
-                    // Only check if we're still supposed to be running
-                    if (_serverStatus.CurrentValue != McpServerStatus.Running)
+                    // Only check if we're still in Starting state (not stopped/stopping by user)
+                    if (_serverStatus.CurrentValue != McpServerStatus.Starting)
                         return;
 
                     // Verify the process still exists
-                    if (!IsProcessRunning(processId))
+                    if (IsProcessRunning(processId))
+                    {
+                        // Process verified successfully - now we can set status to Running
+                        _serverStatus.Value = McpServerStatus.Running;
+                        _logger.LogInformation("MCP server verified and running (PID: {pid})", processId);
+                    }
+                    else
                     {
                         _logger.LogError("MCP server process (PID: {pid}) exited unexpectedly within {seconds:F1} seconds after launch", processId, elapsed.TotalSeconds);
                         CleanupProcess();
@@ -319,7 +330,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     return false;
 
                 var processName = process.ProcessName.ToLowerInvariant();
-                return processName.Contains("unity-mcp-server");
+                return processName.Contains(McpServerProcessName);
             }
             catch (ArgumentException)
             {
@@ -341,7 +352,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         static void OnProcessExited(object? sender, EventArgs e)
         {
             _logger.LogInformation("MCP server process exited");
-            CleanupProcess();
+            // Marshal to main thread since this event is raised from a thread pool thread
+            // and CleanupProcess modifies reactive properties that may be observed on the main thread
+            MainThread.Instance.Run(CleanupProcess);
         }
 
         static void OnOutputDataReceived(object sender, DataReceivedEventArgs e)
@@ -424,6 +437,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         /// Checks if an external MCP server is already listening on the configured port.
         /// Uses a quick TCP connection attempt to detect if the port is in use.
         /// </summary>
+        /// <remarks>
+        /// Note: This method only checks if any TCP listener is on the port, not specifically
+        /// an MCP server. This could produce false positives if another service uses the same port.
+        /// For more accurate detection, consider implementing an MCP-specific health check endpoint.
+        /// </remarks>
         /// <returns>True if an external server is detected, false otherwise.</returns>
         public static bool IsExternalServerAvailable()
         {

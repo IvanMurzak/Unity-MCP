@@ -113,9 +113,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             _setAiAgentDataTime = DateTime.UtcNow;
 
             if (_aiAgentStatusCircle == null)
-                throw new InvalidOperationException($"{nameof(_aiAgentStatusCircle)} is not initialized.");
+            {
+                Logger.LogError("{field} is not initialized, cannot update AI agent status", nameof(_aiAgentStatusCircle));
+                return;
+            }
             if (_labelAiAgentStatus == null)
-                throw new InvalidOperationException($"{nameof(_labelAiAgentStatus)} is not initialized.");
+            {
+                Logger.LogError("{field} is not initialized, cannot update AI agent status", nameof(_labelAiAgentStatus));
+                return;
+            }
 
             SetStatusIndicator(_aiAgentStatusCircle, isConnected ? USS_Connected : USS_Disconnected);
             _labelAiAgentStatus.text = label ?? "AI agent";
@@ -356,26 +362,49 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             SetMcpServerData(null, status, btnStartStop, statusCircle, statusLabel);
 
             // Then try to fetch additional data asynchronously
+            var mcpPluginInstance = UnityMcpPlugin.Instance.McpPluginInstance;
+            if (mcpPluginInstance == null)
+            {
+                Logger.LogDebug("Cannot fetch MCP server data: McpPluginInstance is null");
+                return;
+            }
+
+            var remoteMcpManagerHub = mcpPluginInstance.RemoteMcpManagerHub;
+            if (remoteMcpManagerHub == null)
+            {
+                Logger.LogDebug("Cannot fetch MCP server data: RemoteMcpManagerHub is null");
+                return;
+            }
+
             var fetchTime = DateTime.UtcNow;
-            UnityMcpPlugin.Instance.McpPluginInstance?.RemoteMcpManagerHub
-                ?.GetMcpServerData()
-                ?.ContinueWith(task =>
+            var task = remoteMcpManagerHub.GetMcpServerData();
+            if (task == null)
+            {
+                Logger.LogDebug("Cannot fetch MCP server data: GetMcpServerData returned null");
+                return;
+            }
+
+            task.ContinueWith(t =>
+            {
+                if (_setMcpServerDataTime > fetchTime)
                 {
-                    if (_setMcpServerDataTime > fetchTime)
+                    Logger.LogWarning("Skipping MCP server data update because a newer update was applied at {time}",
+                        _setMcpServerDataTime);
+                    return;
+                }
+                MainThread.Instance.Run(() =>
+                {
+                    if (t.IsCompletedSuccessfully)
                     {
-                        Logger.LogWarning("Skipping MCP server data update because a newer update was applied at {time}",
-                            _setMcpServerDataTime);
-                        return;
+                        var data = t.Result;
+                        SetMcpServerData(data, status, btnStartStop, statusCircle, statusLabel);
                     }
-                    MainThread.Instance.Run(() =>
+                    else if (t.IsFaulted)
                     {
-                        if (task.IsCompletedSuccessfully)
-                        {
-                            var data = task.Result;
-                            SetMcpServerData(data, status, btnStartStop, statusCircle, statusLabel);
-                        }
-                    });
+                        Logger.LogDebug("Failed to fetch MCP server data: {error}", t.Exception?.Message ?? "Unknown error");
+                    }
                 });
+            });
         }
 
         #endregion
@@ -420,32 +449,56 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         private void FetchAiAgentData()
         {
+            var mcpPluginInstance = UnityMcpPlugin.Instance.McpPluginInstance;
+            if (mcpPluginInstance == null)
+            {
+                Logger.LogDebug("Cannot fetch AI agent data: McpPluginInstance is null");
+                return;
+            }
+
+            var remoteMcpManagerHub = mcpPluginInstance.RemoteMcpManagerHub;
+            if (remoteMcpManagerHub == null)
+            {
+                Logger.LogDebug("Cannot fetch AI agent data: RemoteMcpManagerHub is null");
+                return;
+            }
+
             var fetchTime = DateTime.UtcNow;
-            UnityMcpPlugin.Instance.McpPluginInstance?.RemoteMcpManagerHub
-                ?.GetMcpClientData()
-                ?.ContinueWith(task =>
+            var task = remoteMcpManagerHub.GetMcpClientData();
+            if (task == null)
+            {
+                Logger.LogDebug("Cannot fetch AI agent data: GetMcpClientData returned null");
+                return;
+            }
+
+            task.ContinueWith(t =>
+            {
+                if (_setAiAgentDataTime > fetchTime)
                 {
-                    if (_setAiAgentDataTime > fetchTime)
+                    Logger.LogWarning("Skipping AI agent data update because a newer update was applied at {time}",
+                        _setAiAgentDataTime);
+                    return;
+                }
+                MainThread.Instance.Run(() =>
+                {
+                    if (t.IsCompletedSuccessfully)
                     {
-                        Logger.LogWarning("Skipping AI agent data update because a newer update was applied at {time}",
-                            _setAiAgentDataTime);
-                        return;
+                        var data = t.Result;
+                        SetAiAgentStatus(data.IsConnected, data.IsConnected
+                            ? $"AI agent: {data.ClientName} ({data.ClientVersion})"
+                            : "AI agent");
                     }
-                    MainThread.Instance.Run(() =>
+                    else if (t.IsFaulted)
                     {
-                        if (task.IsCompletedSuccessfully)
-                        {
-                            var data = task.Result;
-                            SetAiAgentStatus(data.IsConnected, data.IsConnected
-                                ? $"AI agent: {data.ClientName} ({data.ClientVersion})"
-                                : "AI agent");
-                        }
-                        else
-                        {
-                            SetAiAgentStatus(false, "AI agent: Not found");
-                        }
-                    });
+                        Logger.LogDebug("Failed to fetch AI agent data: {error}", t.Exception?.Message ?? "Unknown error");
+                        SetAiAgentStatus(false);
+                    }
+                    else
+                    {
+                        SetAiAgentStatus(false, "AI agent: Not found");
+                    }
                 });
+            });
         }
 
         #endregion
