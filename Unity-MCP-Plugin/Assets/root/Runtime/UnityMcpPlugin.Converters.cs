@@ -13,6 +13,7 @@ using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Converter;
 using com.IvanMurzak.Unity.MCP.JsonConverters;
 using com.IvanMurzak.Unity.MCP.Reflection.Converter;
+using Microsoft.Extensions.Logging;
 
 namespace com.IvanMurzak.Unity.MCP
 {
@@ -20,6 +21,8 @@ namespace com.IvanMurzak.Unity.MCP
     {
         public Reflector CreateDefaultReflector()
         {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
             var reflector = new Reflector();
             reflector.JsonSerializerOptions.NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals;
 
@@ -90,21 +93,35 @@ namespace com.IvanMurzak.Unity.MCP
             reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.GlyphMetrics));
 
             // Redundant TextMeshPro data
-            reflector.Converters.BlacklistType("TMPro.TMP_TextInfo"); // Heavy text data
-            reflector.Converters.BlacklistType("TMPro.TMP_TextElement"); // Heavy text data
-            reflector.Converters.BlacklistType("TMPro.TMP_FontFeatureTable"); // Heavy font data
-            reflector.Converters.BlacklistType("TMPro.TMP_FontWeightPair"); // Heavy font data
-            reflector.Converters.BlacklistType("TMPro.FaceInfo_Legacy"); // Heavy font data
+            reflector.Converters.BlacklistTypesInAssembly(
+                assemblyNamePrefix: "Unity.TextMeshPro",
+                typeFullNames: new[]
+                {
+                    "TMPro.TMP_TextInfo",         // Heavy text data
+                    "TMPro.TMP_TextElement",      // Heavy text data
+                    "TMPro.TMP_FontFeatureTable", // Heavy font data
+                    "TMPro.TMP_FontWeightPair",   // Heavy font data
+                    "TMPro.FaceInfo_Legacy"       // Heavy font data
+                }
+            );
 
             // Redundant RenderPipeline data
-            reflector.Converters.BlacklistType("UnityEngine.Rendering.RTHandle"); // Can't be utilized
-            reflector.Converters.BlacklistType("UnityEngine.Experimental.Rendering.RTHandle"); // Can't be utilized
+            reflector.Converters.BlacklistTypeInAssembly(
+                assemblyNamePrefix: "Unity.RenderPipelines.Core.Runtime",
+                typeFullName: "UnityEngine.Rendering.RTHandle" // Can't be utilized
+            );
 
             // Photon IL-weaved types
-            reflector.Converters.BlacklistType("Fusion.NetworkBehaviourBuffer");
+            reflector.Converters.BlacklistTypeInAssembly(
+                assemblyNamePrefix: "Fusion.Runtime",
+                typeFullName: "Fusion.NetworkBehaviourBuffer"
+            );
 
             // Addressables
-            reflector.Converters.BlacklistType("UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle");
+            reflector.Converters.BlacklistTypeInAssembly(
+                assemblyNamePrefix: "Unity.ResourceManager",
+                typeFullName: "UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle"
+            );
 
             // Json Converters
             // ---------------------------------------------------------
@@ -130,6 +147,10 @@ namespace com.IvanMurzak.Unity.MCP
             reflector.JsonSerializer.AddConverter(new GameObjectRefConverter());
             reflector.JsonSerializer.AddConverter(new ComponentRefConverter());
             reflector.JsonSerializer.AddConverter(new SceneRefConverter());
+
+            stopwatch.Stop();
+            _logger.LogDebug("Created default reflector in {elapsedMilliseconds} ms.",
+                stopwatch.ElapsedMilliseconds);
 
             return reflector;
         }
