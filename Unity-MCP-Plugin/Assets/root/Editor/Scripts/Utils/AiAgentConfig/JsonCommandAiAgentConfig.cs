@@ -128,7 +128,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogWarning($"{Consts.Log.Tag} Failed to parse config file as JSON. Reason: {ex.Message}.");
+                    Debug.LogError($"{Consts.Log.Tag} Failed to parse config file as JSON. Reason: {ex.Message}.");
                     Debug.LogException(ex);
                     File.WriteAllText(configPath, ExpectedFileContent);
                     return true;
@@ -205,7 +205,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Error reading config file: {ex.Message}");
+                Debug.LogError($"{Consts.Log.Tag} Error reading config file: {ex.Message}");
                 Debug.LogException(ex);
                 return false;
             }

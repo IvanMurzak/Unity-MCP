@@ -67,7 +67,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogWarning($"{Consts.Log.Tag} Failed to parse config file as JSON. Reason: {ex.Message}.");
+                    Debug.LogError($"{Consts.Log.Tag} Failed to parse config file as JSON. Reason: {ex.Message}.");
                     Debug.LogException(ex);
                     File.WriteAllText(
                         path: configPath,
