@@ -126,10 +126,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                     if (rootObj == null)
                         throw new Exception("Config file is not a valid JSON object.");
                 }
-                catch (Exception ex)
+                catch
                 {
-                    Debug.LogError($"{Consts.Log.Tag} Failed to parse config file as JSON. Reason: {ex.Message}.");
-                    Debug.LogException(ex);
                     File.WriteAllText(configPath, ExpectedFileContent);
                     return true;
                 }
@@ -156,7 +154,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
             catch (Exception ex)
             {
-                Debug.LogError($"{Consts.Log.Tag} Error configuring MCP client: {ex.Message}");
+                Debug.LogError($"Error configuring MCP client: {ex.Message}");
                 Debug.LogException(ex);
                 return false;
             }
@@ -205,7 +203,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
             catch (Exception ex)
             {
-                Debug.LogError($"{Consts.Log.Tag} Error reading config file: {ex.Message}");
+                Debug.LogError($"Error reading config file: {ex.Message}");
                 Debug.LogException(ex);
                 return false;
             }

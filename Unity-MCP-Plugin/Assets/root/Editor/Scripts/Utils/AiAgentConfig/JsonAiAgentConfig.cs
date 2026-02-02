@@ -65,10 +65,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                     if (rootObj == null)
                         throw new Exception("Config file is not a valid JSON object.");
                 }
-                catch (Exception ex)
+                catch
                 {
-                    Debug.LogError($"{Consts.Log.Tag} Failed to parse config file as JSON. Reason: {ex.Message}.");
-                    Debug.LogException(ex);
                     File.WriteAllText(
                         path: configPath,
                         contents: Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, bodyPath, UnityMcpPlugin.TimeoutMs).ToString());
@@ -125,7 +123,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
             catch (Exception ex)
             {
-                Debug.LogError($"{Consts.Log.Tag} Error reading config file: {ex.Message}");
+                Debug.LogError($"Error reading config file: {ex.Message}");
                 Debug.LogException(ex);
                 return false;
             }
@@ -167,7 +165,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
             catch (Exception ex)
             {
-                Debug.LogError($"{Consts.Log.Tag} Error reading config file: {ex.Message}");
+                Debug.LogError($"Error reading config file: {ex.Message}");
                 Debug.LogException(ex);
                 return false;
             }
@@ -182,10 +180,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 var normalizedTarget = Path.GetFullPath(Startup.Server.ExecutableFullPath.Replace('/', Path.DirectorySeparatorChar));
                 return string.Equals(normalizedCommand, normalizedTarget, StringComparison.OrdinalIgnoreCase);
             }
-            catch (Exception ex)
+            catch
             {
-                Debug.LogError($"{Consts.Log.Tag} Failed to normalize command path for comparison. Reason: {ex.Message}.");
-                Debug.LogException(ex);
+                // If normalization fails, fallback to string comparison
                 return string.Equals(command, Startup.Server.ExecutableFullPath, StringComparison.OrdinalIgnoreCase);
             }
         }

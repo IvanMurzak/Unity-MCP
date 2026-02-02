@@ -721,8 +721,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var config = new JsonCommandAiAgentConfig("Test", tempConfigPath, bodyPath);
 
             // Expect error and exception logs when trying to parse command as array (it's a string in traditional format)
-            LogAssert.Expect(LogType.Error, new Regex(".*Error reading config file.*"));
-            LogAssert.Expect(LogType.Exception, new Regex(".*InvalidOperationException.*"));
+            LogAssert.Expect(LogType.Error, new Regex("Error reading config file.*"));
+            LogAssert.Expect(LogType.Exception, new Regex("InvalidOperationException.*"));
 
             // Act
             var isConfigured = config.IsConfigured();
