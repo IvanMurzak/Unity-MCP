@@ -59,6 +59,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 #endif
 
                 Unsupported.DuplicateGameObjectsUsingPasteboard();
+                UnityMcpPlugin.NotifyToolExecuted();
                 UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
                 var modifiedScenes = Selection.gameObjects

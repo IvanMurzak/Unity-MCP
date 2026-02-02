@@ -53,6 +53,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 if (!saved)
                     throw new System.Exception($"Failed to save scene at '{path}'.\n{OpenedScenesText}");
 
+                UnityMcpPlugin.NotifyToolExecuted();
                 EditorUtils.RepaintAllEditorWindows();
 
                 return scene.ToSceneDataShallow();

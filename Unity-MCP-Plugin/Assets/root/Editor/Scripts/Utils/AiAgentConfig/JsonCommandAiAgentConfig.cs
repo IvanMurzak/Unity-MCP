@@ -126,8 +126,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                     if (rootObj == null)
                         throw new Exception("Config file is not a valid JSON object.");
                 }
-                catch
+                catch (Exception ex)
                 {
+                    Debug.LogWarning($"{Consts.Log.Tag} Failed to parse config file as JSON. Reason: {ex.Message}.");
+                    Debug.LogException(ex);
                     File.WriteAllText(configPath, ExpectedFileContent);
                     return true;
                 }

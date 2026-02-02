@@ -46,6 +46,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         // Track tool execution count for current session
         private static readonly ReactiveProperty<int> _toolExecutionCount = new(0);
         private static readonly CompositeDisposable _staticDisposables = new();
+        internal static int ToolExecutionCount => _toolExecutionCount.Value;
 
         static McpStatusChecksWindow()
         {
@@ -239,26 +240,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         private List<StatusCheckItem> GatherStatusChecks()
         {
+            var checkResults = McpStatusCheckEvaluator.EvaluateAllChecks();
             var checks = new List<StatusCheckItem>
             {
-                GetMcpClientConfiguredCheck(),
-                GetUnityConnectedCheck(),
-                GetVersionHandshakeCheck(),
-                GetServerToClientCheck(),
-                GetClientLocationCheck(),
-                GetEnabledToolsCheck(),
-                GetToolExecutedCheck()
+                GetMcpClientConfiguredCheck(checkResults[0]),
+                GetUnityConnectedCheck(checkResults[1]),
+                GetVersionHandshakeCheck(checkResults[2]),
+                GetServerToClientCheck(checkResults[3]),
+                GetClientLocationCheck(checkResults[4]),
+                GetEnabledToolsCheck(checkResults[5]),
+                GetToolExecutedCheck(checkResults[6])
             };
             return checks;
         }
 
         #region Status Check Methods
 
-        private StatusCheckItem GetMcpClientConfiguredCheck()
+        private StatusCheckItem GetMcpClientConfiguredCheck(McpStatusCheckEvaluator.CheckResult checkResult)
         {
             var configuredClients = GetConfiguredClientNames();
             var count = configuredClients.Count;
-            var isConfigured = count > 0;
+            var isConfigured = checkResult.IsPassed;
 
             var clientList = isConfigured ? string.Join(", ", configuredClients) : "";
 
@@ -278,10 +280,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             return MainWindowEditor.GetConfiguredClients();
         }
 
-        private StatusCheckItem GetUnityConnectedCheck()
+        private StatusCheckItem GetUnityConnectedCheck(McpStatusCheckEvaluator.CheckResult checkResult)
         {
             var connectionState = UnityMcpPlugin.ConnectionState.CurrentValue;
-            var isConnected = connectionState == HubConnectionState.Connected;
+            var isConnected = checkResult.IsPassed;
             var keepConnected = UnityMcpPlugin.KeepConnected;
             var version = UnityMcpPlugin.Version;
 
@@ -321,7 +323,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             }
         }
 
-        private StatusCheckItem GetVersionHandshakeCheck()
+        private StatusCheckItem GetVersionHandshakeCheck(McpStatusCheckEvaluator.CheckResult checkResult)
         {
             var pluginVersion = UnityMcpPlugin.Version;
             var clientApiVersion = McpPlugin.Common.Consts.ApiVersion;
@@ -401,7 +403,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             }
         }
 
-        private StatusCheckItem GetServerToClientCheck()
+        private StatusCheckItem GetServerToClientCheck(McpStatusCheckEvaluator.CheckResult checkResult)
         {
             var isConnected = UnityMcpPlugin.IsConnected.CurrentValue;
             var mcpPlugin = UnityMcpPlugin.Instance.McpPluginInstance;
@@ -449,7 +451,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             }
         }
 
-        private StatusCheckItem GetClientLocationCheck()
+        private StatusCheckItem GetClientLocationCheck(McpStatusCheckEvaluator.CheckResult checkResult)
         {
             var mcpPlugin = UnityMcpPlugin.Instance.McpPluginInstance;
             var serverBasePath = mcpPlugin?.CurrentBaseDirectory ?? string.Empty;
@@ -523,7 +525,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             }
         }
 
-        private StatusCheckItem GetEnabledToolsCheck()
+        private StatusCheckItem GetEnabledToolsCheck(McpStatusCheckEvaluator.CheckResult checkResult)
         {
             var mcpPlugin = UnityMcpPlugin.Instance.McpPluginInstance;
             var toolManager = mcpPlugin?.McpManager.ToolManager;
@@ -570,7 +572,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             }
         }
 
-        private StatusCheckItem GetToolExecutedCheck()
+        private StatusCheckItem GetToolExecutedCheck(McpStatusCheckEvaluator.CheckResult checkResult)
         {
             var count = _toolExecutionCount.Value;
 

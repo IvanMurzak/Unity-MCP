@@ -39,6 +39,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 Selection.objects = objects;
 
+                UnityMcpPlugin.NotifyToolExecuted();
                 UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
                 return SelectionData.FromSelection();

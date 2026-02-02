@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System;
 using System.Text.Json;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
@@ -435,7 +436,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     contentToDeserialize = resultProp.GetRawText();
                 }
             }
-            catch { }
+            catch (Exception ex) { }
 
             var options = new JsonSerializerOptions
             {

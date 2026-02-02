@@ -75,6 +75,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 go.SetTransform(position, rotation, scale, isLocalSpace);
 
                 EditorUtility.SetDirty(go);
+                UnityMcpPlugin.NotifyToolExecuted();
                 EditorUtils.RepaintAllEditorWindows();
 
                 return new GameObjectRef(go);

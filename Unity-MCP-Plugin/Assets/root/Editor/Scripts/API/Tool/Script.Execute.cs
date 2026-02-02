@@ -81,6 +81,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     throw new Exception(error);
                 }
 
+                UnityMcpPlugin.NotifyToolExecuted();
+
                 if (result is null)
                     return null;
 

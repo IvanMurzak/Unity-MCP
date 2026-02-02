@@ -80,6 +80,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 if (changedCount > 0)
                 {
                     EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
+                    UnityMcpPlugin.NotifyToolExecuted();
                     EditorUtils.RepaintAllEditorWindows();
                 }
 

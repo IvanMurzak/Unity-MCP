@@ -72,6 +72,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 }
 
                 AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+                UnityMcpPlugin.NotifyToolExecuted();
                 EditorUtils.RepaintAllEditorWindows();
 
                 return response;

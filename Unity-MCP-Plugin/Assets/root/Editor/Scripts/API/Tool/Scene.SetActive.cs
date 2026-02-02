@@ -60,6 +60,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 if (!success)
                     throw new System.Exception($"Failed to set active scene to '{scene.name}'.");
 
+                UnityMcpPlugin.NotifyToolExecuted();
                 EditorUtils.RepaintAllEditorWindows();
 
                 return OpenedScenes

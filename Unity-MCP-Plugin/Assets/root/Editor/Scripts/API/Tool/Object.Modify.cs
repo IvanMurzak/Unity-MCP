@@ -71,6 +71,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     UnityEditor.EditorUtility.SetDirty(obj);
                 }
 
+                UnityMcpPlugin.NotifyToolExecuted();
                 UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
                 // Return updated object data

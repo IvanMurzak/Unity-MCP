@@ -99,6 +99,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 }
 
                 UnityEditor.EditorUtility.SetDirty(go);
+                UnityMcpPlugin.NotifyToolExecuted();
                 UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
                 return response;

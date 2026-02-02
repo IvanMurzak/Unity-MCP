@@ -62,6 +62,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 logger.LogInformation("Successfully unloaded scene '{Name}'", name);
 
+                UnityMcpPlugin.NotifyToolExecuted();
+
                 var sceneAsset = AssetDatabase.LoadAssetAtPath<SceneAsset>(scenePath);
 
                 return new UnloadSceneResult

@@ -245,9 +245,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 var normalizedTarget = Path.GetFullPath(Startup.Server.ExecutableFullPath.Replace('/', Path.DirectorySeparatorChar));
                 return string.Equals(normalizedCommand, normalizedTarget, StringComparison.OrdinalIgnoreCase);
             }
-            catch
+            catch (Exception ex)
             {
-                // If normalization fails, fallback to string comparison
+                Debug.LogWarning($"{Consts.Log.Tag} Failed to normalize command path for comparison. Reason: {ex.Message}.");
+                Debug.LogException(ex);
                 return string.Equals(command, Startup.Server.ExecutableFullPath, StringComparison.OrdinalIgnoreCase);
             }
         }

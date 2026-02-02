@@ -63,6 +63,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 EditorUtility.SetDirty(go);
 
+                UnityMcpPlugin.NotifyToolExecuted();
                 EditorUtils.RepaintAllEditorWindows();
 
                 var assetPrefab = AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>(prefabAssetPath);

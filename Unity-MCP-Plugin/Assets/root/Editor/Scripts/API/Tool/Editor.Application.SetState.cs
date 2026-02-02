@@ -47,6 +47,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 EditorApplication.isPlaying = isPlaying;
                 EditorApplication.isPaused = isPaused;
 
+                UnityMcpPlugin.NotifyToolExecuted();
                 return EditorStatsData.FromEditor();
             });
         }

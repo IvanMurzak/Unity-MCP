@@ -97,6 +97,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     response.Success = true;
                 }
 
+                UnityMcpPlugin.NotifyToolExecuted();
                 UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
                 response.Logs = logs
