@@ -156,7 +156,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
             catch (Exception ex)
             {
-                Debug.LogError($"Error configuring MCP client: {ex.Message}");
+                Debug.LogError($"{Consts.Log.Tag} Error configuring MCP client: {ex.Message}");
                 Debug.LogException(ex);
                 return false;
             }
