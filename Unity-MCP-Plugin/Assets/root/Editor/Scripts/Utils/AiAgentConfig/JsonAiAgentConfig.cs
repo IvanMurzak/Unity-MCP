@@ -184,7 +184,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"{Consts.Log.Tag} Failed to normalize command path for comparison. Reason: {ex.Message}.");
+                Debug.LogError($"{Consts.Log.Tag} Failed to normalize command path for comparison. Reason: {ex.Message}.");
                 Debug.LogException(ex);
                 return string.Equals(command, Startup.Server.ExecutableFullPath, StringComparison.OrdinalIgnoreCase);
             }
