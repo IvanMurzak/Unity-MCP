@@ -20,24 +20,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
     /// </summary>
     public static class AiAgentConfiguratorRegistry
     {
-        private static readonly List<AiAgentConfiguratorBase> _configurators = new()
+        private static readonly List<AiAgentConfigurator> _configurators = new()
         {
-            new ClaudeCodeConfigurator(),
-            new ClaudeDesktopConfigurator(),
-            new VisualStudioCodeCopilotConfigurator(),
-            new VisualStudioCopilotConfigurator(),
-            new CursorConfigurator(),
-            new GeminiConfigurator(),
-            new AntigravityConfigurator(),
-            new OpenCodeConfigurator(),
-            new CodexConfigurator(),
-            new CustomConfigurator()
+            new ClaudeCodeConfigurator2()
+            // new ClaudeCodeConfigurator(),
+            // new ClaudeDesktopConfigurator(),
+            // new VisualStudioCodeCopilotConfigurator(),
+            // new VisualStudioCopilotConfigurator(),
+            // new CursorConfigurator(),
+            // new GeminiConfigurator(),
+            // new AntigravityConfigurator(),
+            // new OpenCodeConfigurator(),
+            // new CodexConfigurator(),
+            // new CustomConfigurator()
         };
 
         /// <summary>
         /// Gets all registered configurators.
         /// </summary>
-        public static IReadOnlyList<AiAgentConfiguratorBase> All => _configurators;
+        public static IReadOnlyList<AiAgentConfigurator> All => _configurators;
 
         /// <summary>
         /// Gets all agent names for use in dropdown.
@@ -54,7 +55,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         /// </summary>
         /// <param name="agentId">The agent ID to search for.</param>
         /// <returns>The configurator if found, null otherwise.</returns>
-        public static AiAgentConfiguratorBase? GetByAgentId(string? agentId)
+        public static AiAgentConfigurator? GetByAgentId(string? agentId)
         {
             if (string.IsNullOrEmpty(agentId))
                 return null;
@@ -67,7 +68,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         /// </summary>
         /// <param name="agentName">The agent name to search for.</param>
         /// <returns>The configurator if found, null otherwise.</returns>
-        public static AiAgentConfiguratorBase? GetByAgentName(string? agentName)
+        public static AiAgentConfigurator? GetByAgentName(string? agentName)
         {
             if (string.IsNullOrEmpty(agentName))
                 return null;

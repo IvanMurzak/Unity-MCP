@@ -17,7 +17,7 @@
         <ui:VisualElement name="containerUnderHeader" />
 
         <!-- Transport mode toggle -->
-        <ui:Label text="Manual configuration" class="section-title" />
+        <!-- <ui:Label text="Manual configuration" class="section-title" /> -->
         <ui:VisualElement style="flex-direction: row; margin-top: 4px;">
             <ui:Toggle name="toggleOptionHttp" label="Streamable HTTP" class="toggle-text-button" />
             <ui:Toggle name="toggleOptionStdio" label="STDIO" class="toggle-text-button" />
@@ -29,26 +29,5 @@
         <!-- Transport mode container: STDIO -->
         <ui:VisualElement name="containerStdio" />
 
-        <!-- Template elements -->
-        <ui:VisualElement class="row" style="display: none;">
-            <!-- Template Label -->
-            <ui:Label name="templateLabelDescription" class="section-desc" style="margin-top: 4px;" />
-            <ui:Label name="templateWarningLabel" class="section-desc alert-label" />
-            <ui:Label name="templateAlertLabel" class="section-desc alert-label" />
-
-            <!-- Template TextField -->
-            <ui:TextField name="templateTextFieldReadOnly" multiline="true" readonly="true" selectOnFocus="true" value="..." class="config-snippet" />
-
-            <!-- Template Foldout -->
-            <ui:Foldout name="templateFoldoutFirst" value="false" class="title-foldout" style="margin-top: 8px;" />
-            <ui:Foldout name="templateFoldout" value="false" class="title-foldout" />
-
-            <!-- Configuration Status -->
-            <ui:VisualElement name="templateConfigurationStatus" class="row" style="margin-top: 0px;">
-                <ui:VisualElement name="configureStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
-                <ui:Label text="Not configured" name="configureStatusText" style="flex-grow: 1;" />
-                <ui:Button name="btnConfigure" text="Configure" class="btn-primary" />
-            </ui:VisualElement>
-        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

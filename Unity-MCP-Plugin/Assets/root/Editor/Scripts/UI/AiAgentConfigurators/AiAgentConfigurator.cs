@@ -13,6 +13,7 @@ using System;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEngine;
 using UnityEngine.UIElements;
+using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
@@ -24,8 +25,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
     {
         #region Properties
 
-        private AiAgentConfig? _clientConfigStdio;
-        private AiAgentConfig? _clientConfigHttp;
+        private AiAgentConfig? _configStdio;
+        private AiAgentConfig? _configHttp;
 
         /// <summary>
         /// The display name of the AI agent.
@@ -54,6 +55,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected abstract string? IconFileName { get; }
 
         protected VisualElement? Root { get; private set; }
+        protected VisualElement? ContainerUnderHeader { get; private set; }
+        protected VisualElement? ContainerHttp { get; private set; }
+        protected VisualElement? ContainerStdio { get; private set; }
+        protected Toggle? ToggleOptionHttp { get; private set; }
+        protected Toggle? ToggleOptionStdio { get; private set; }
 
         /// <summary>
         /// Gets the icon paths for this agent.
@@ -65,38 +71,38 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         /// <summary>
         /// Gets the agent configuration for the current platform.
         /// </summary>
-        public AiAgentConfig ClientConfigStdio
+        public AiAgentConfig ConfigStdio
         {
             get
             {
-                if (_clientConfigStdio == null)
+                if (_configStdio == null)
                 {
 #if UNITY_EDITOR_WIN
-                    _clientConfigStdio = CreateConfigStdioWindows();
+                    _configStdio = CreateConfigStdioWindows();
 #else
-                    _clientConfigStdio = CreateConfigMacLinux();
+                    _configStdio = CreateConfigStdioMacLinux();
 #endif
                 }
-                return _clientConfigStdio;
+                return _configStdio;
             }
         }
 
         /// <summary>
         /// Gets the agent configuration for the current platform.
         /// </summary>
-        public AiAgentConfig ClientConfigHttp
+        public AiAgentConfig ConfigHttp
         {
             get
             {
-                if (_clientConfigHttp == null)
+                if (_configHttp == null)
                 {
 #if UNITY_EDITOR_WIN
-                    _clientConfigHttp = CreateConfigHttpWindows();
+                    _configHttp = CreateConfigHttpWindows();
 #else
-                    _clientConfigHttp = CreateConfigHttpMacLinux();
+                    _configHttp = CreateConfigHttpMacLinux();
 #endif
                 }
-                return _clientConfigHttp;
+                return _configHttp;
             }
         }
 
@@ -135,29 +141,49 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         #region UI Templates
 
-        protected Label TemplateLabelDescription() => new UITemplate<Label>("TemplateLabelDescription").Value;
-        protected Label TemplateWarningLabel() => new UITemplate<Label>("TemplateWarningLabel").Value;
-        protected Label TemplateAlertLabel() => new UITemplate<Label>("TemplateAlertLabel").Value;
-        protected TextField TemplateTextFieldReadOnly() => new UITemplate<TextField>("TemplateTextFieldReadOnly").Value;
-        protected Foldout TemplateFoldoutFirst() => new UITemplate<Foldout>("TemplateFoldoutFirst").Value;
-        protected Foldout TemplateFoldout() => new UITemplate<Foldout>("TemplateFoldout").Value;
-        protected ConfigurationElements TemplateConfigurationElements() => new ConfigurationElements();
-
-        public class ConfigurationElements
+        protected Label TemplateLabelDescription(string? text = null)
         {
-            public VisualElement Root { get; }
-            public VisualElement StatusCircle { get; }
-            public Label StatusText { get; }
-            public Button BtnConfigure { get; }
-
-            public ConfigurationElements()
-            {
-                Root = new UITemplate<VisualElement>("Editor/UI/uxml/agents/elements/TemplateConfigureStatus.uxml").Value;
-                StatusCircle = Root.Q<VisualElement>("configureStatusCircle") ?? throw new NullReferenceException("VisualElement 'configureStatusCircle' not found in UI.");
-                StatusText = Root.Q<Label>("configureStatusText") ?? throw new NullReferenceException("Label 'configureStatusText' not found in UI.");
-                BtnConfigure = Root.Q<Button>("btnConfigure") ?? throw new NullReferenceException("Button 'btnConfigure' not found in UI.");
-            }
+            var result = new UITemplate<Label>("Editor/UI/uxml/agents/elements/TemplateLabelDescription.uxml").Value;
+            if (text != null)
+                result.text = text;
+            return result;
         }
+        protected Label TemplateWarningLabel(string? text = null)
+        {
+            var result = new UITemplate<Label>("Editor/UI/uxml/agents/elements/TemplateWarningLabel.uxml").Value;
+            if (text != null)
+                result.text = text;
+            return result;
+        }
+        protected Label TemplateAlertLabel(string? text = null)
+        {
+            var result = new UITemplate<Label>("Editor/UI/uxml/agents/elements/TemplateAlertLabel.uxml").Value;
+            if (text != null)
+                result.text = text;
+            return result;
+        }
+        protected TextField TemplateTextFieldReadOnly(string? value = null)
+        {
+            var result = new UITemplate<TextField>("Editor/UI/uxml/agents/elements/TemplateTextFieldReadOnly.uxml").Value;
+            if (value != null)
+                result.value = value;
+            return result;
+        }
+        protected Foldout TemplateFoldoutFirst(string? text = null)
+        {
+            var result = new UITemplate<Foldout>("Editor/UI/uxml/agents/elements/TemplateFoldoutFirst.uxml").Value;
+            if (text != null)
+                result.text = text;
+            return result;
+        }
+        protected Foldout TemplateFoldout(string? text = null)
+        {
+            var result = new UITemplate<Foldout>("Editor/UI/uxml/agents/elements/TemplateFoldout.uxml").Value;
+            if (text != null)
+                result.text = text;
+            return result;
+        }
+        protected ConfigurationElements TemplateConfigurationElements(AiAgentConfig config, TransportMethod transportMode) => new ConfigurationElements(config, transportMode);
 
         #endregion
 
@@ -170,10 +196,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         /// <returns>The created visual element, or null if the template couldn't be loaded.</returns>
         public virtual VisualElement? CreateUI(VisualElement container)
         {
-            var paths = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/agents/AiAgentTemplateConfigure.uxml");
-            var template = EditorAssetLoader.LoadAssetAtPath<VisualTreeAsset>(paths) ?? throw new NullReferenceException("Failed to load UXML template for AiAgentTemplateConfigure.");
-            var root = template.CloneTree();
+            var root = new UITemplate<VisualElement>("Editor/UI/uxml/agents/AiAgentTemplateConfig.uxml").Value;
+
             Root = root;
+            ContainerUnderHeader = root.Q<VisualElement>("containerUnderHeader") ?? throw new NullReferenceException("VisualElement 'containerUnderHeader' not found in UI.");
+            ContainerHttp = root.Q<VisualElement>("containerHttp") ?? throw new NullReferenceException("VisualElement 'containerHttp' not found in UI.");
+            ContainerStdio = root.Q<VisualElement>("containerStdio") ?? throw new NullReferenceException("VisualElement 'containerStdio' not found in UI.");
+            ToggleOptionHttp = root.Q<Toggle>("toggleOptionHttp") ?? throw new NullReferenceException("Toggle 'toggleOptionHttp' not found in UI.");
+            ToggleOptionStdio = root.Q<Toggle>("toggleOptionStdio") ?? throw new NullReferenceException("Toggle 'toggleOptionStdio' not found in UI.");
+
             OnUICreated(root);
             McpWindowBase.EnableSmoothFoldoutTransitions(root);
             return root;
@@ -253,38 +284,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected virtual AiAgentConfigurator SetConfigureStatusIndicator()
         {
             ThrowIfRootNotSet();
-            var statusCircle = Root!.Q<VisualElement>("configureStatusCircle") ?? throw new NullReferenceException("VisualElement 'configureStatusCircle' not found in UI.");
-            var statusText = Root!.Q<Label>("configureStatusText") ?? throw new NullReferenceException("Label 'configureStatusText' not found in UI.");
-            var btnConfigure = Root!.Q<Button>("btnConfigure") ?? throw new NullReferenceException("Button 'btnConfigure' not found in UI.");
 
-            var isConfiguredResult = ClientConfigStdio.IsConfigured();
+            ContainerStdio!.Add(TemplateConfigurationElements(ConfigStdio, TransportMethod.stdio).Root);
+            ContainerHttp!.Add(TemplateConfigurationElements(ConfigHttp, TransportMethod.streamableHttp).Root);
 
-            statusCircle.RemoveFromClassList(MainWindowEditor.USS_Connected);
-            statusCircle.RemoveFromClassList(MainWindowEditor.USS_Connecting);
-            statusCircle.RemoveFromClassList(MainWindowEditor.USS_Disconnected);
-
-            statusCircle.AddToClassList(isConfiguredResult
-                ? MainWindowEditor.USS_Connected
-                : MainWindowEditor.USS_Disconnected);
-            statusText.text = isConfiguredResult ? "Configured (stdio)" : "Not Configured";
-            btnConfigure.text = isConfiguredResult ? "Reconfigure" : "Configure";
-
-            btnConfigure.RegisterCallback<ClickEvent>(evt =>
-            {
-                var configureResult = ClientConfigStdio.Configure();
-
-                statusText.text = configureResult ? "Configured (stdio)" : "Not Configured";
-
-                statusCircle.RemoveFromClassList(MainWindowEditor.USS_Connected);
-                statusCircle.RemoveFromClassList(MainWindowEditor.USS_Connecting);
-                statusCircle.RemoveFromClassList(MainWindowEditor.USS_Disconnected);
-
-                statusCircle.AddToClassList(configureResult
-                    ? MainWindowEditor.USS_Connected
-                    : MainWindowEditor.USS_Disconnected);
-
-                btnConfigure.text = configureResult ? "Reconfigure" : "Configure";
-            });
             return this;
         }
 

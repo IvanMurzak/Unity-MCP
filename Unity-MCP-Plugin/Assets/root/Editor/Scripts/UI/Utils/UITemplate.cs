@@ -24,7 +24,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var paths = EditorAssetLoader.GetEditorAssetPaths(templatePath);
             var template = EditorAssetLoader.LoadAssetAtPath<VisualTreeAsset>(paths) ?? throw new NullReferenceException($"Failed to load UXML template at path: {templatePath}");
             var root = template.CloneTree();
-            Value = root as T ?? throw new InvalidCastException($"Root element is not of type {typeof(T).Name}");
+            Value = root.Q<T>() ?? throw new InvalidCastException($"Root element is not of type {typeof(T).Name}");
         }
     }
 }
