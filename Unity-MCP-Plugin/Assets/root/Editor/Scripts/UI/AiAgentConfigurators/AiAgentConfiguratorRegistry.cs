@@ -12,7 +12,7 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace com.IvanMurzak.Unity.MCP.Editor
+namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
     /// <summary>
     /// Registry for all AI agent configurators.

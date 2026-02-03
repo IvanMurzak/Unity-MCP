@@ -9,11 +9,10 @@
 */
 
 #nullable enable
-using System;
 using System.Collections;
 using System.IO;
-using System.Text.Json;
 using System.Text.Json.Nodes;
+using com.IvanMurzak.Unity.MCP.Editor.UI;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using NUnit.Framework;
 using UnityEngine;

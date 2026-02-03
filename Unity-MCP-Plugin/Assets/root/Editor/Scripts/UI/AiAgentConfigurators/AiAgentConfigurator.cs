@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -19,9 +20,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
     /// Base class for AI agent configurator UI components.
     /// Each AI agent has its own configurator that provides specific configuration instructions.
     /// </summary>
-    public abstract class AiAgentConfiguratorBase
+    public abstract class AiAgentConfigurator
     {
-        private AiAgentConfig? _clientConfig;
+        #region Properties
+
+        private AiAgentConfig? _clientConfigStdio;
+        private AiAgentConfig? _clientConfigHttp;
 
         /// <summary>
         /// The display name of the AI agent.
@@ -44,15 +48,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public virtual string TutorialUrl => string.Empty;
 
         /// <summary>
-        /// Gets the UXML template paths for this agent's configuration UI.
-        /// </summary>
-        protected abstract string[] UxmlPaths { get; }
-
-        /// <summary>
         /// Gets the icon file name for this agent (e.g., "claude-64.png").
         /// Return null if no icon should be displayed.
         /// </summary>
         protected abstract string? IconFileName { get; }
+
+        protected VisualElement? Root { get; private set; }
 
         /// <summary>
         /// Gets the icon paths for this agent.
@@ -64,19 +65,38 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         /// <summary>
         /// Gets the agent configuration for the current platform.
         /// </summary>
-        public AiAgentConfig ClientConfig
+        public AiAgentConfig ClientConfigStdio
         {
             get
             {
-                if (_clientConfig == null)
+                if (_clientConfigStdio == null)
                 {
 #if UNITY_EDITOR_WIN
-                    _clientConfig = CreateConfigWindows();
+                    _clientConfigStdio = CreateConfigStdioWindows();
 #else
-                    _clientConfig = CreateConfigMacLinux();
+                    _clientConfigStdio = CreateConfigMacLinux();
 #endif
                 }
-                return _clientConfig;
+                return _clientConfigStdio;
+            }
+        }
+
+        /// <summary>
+        /// Gets the agent configuration for the current platform.
+        /// </summary>
+        public AiAgentConfig ClientConfigHttp
+        {
+            get
+            {
+                if (_clientConfigHttp == null)
+                {
+#if UNITY_EDITOR_WIN
+                    _clientConfigHttp = CreateConfigHttpWindows();
+#else
+                    _clientConfigHttp = CreateConfigHttpMacLinux();
+#endif
+                }
+                return _clientConfigHttp;
             }
         }
 
@@ -87,15 +107,61 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             ? Application.dataPath.Substring(0, Application.dataPath.Length - "/Assets".Length)
             : Application.dataPath;
 
-        /// <summary>
-        /// Creates the client configuration for Windows platform.
-        /// </summary>
-        protected abstract AiAgentConfig CreateConfigWindows();
+        #endregion
+
+        #region Abstract
 
         /// <summary>
-        /// Creates the client configuration for Mac and Linux platforms.
+        /// Creates the AI agent STDIO configuration for Windows platform.
         /// </summary>
-        protected abstract AiAgentConfig CreateConfigMacLinux();
+        protected abstract AiAgentConfig CreateConfigStdioWindows();
+
+        /// <summary>
+        /// Creates the AI agent STDIO configuration for Mac and Linux platforms.
+        /// </summary>
+        protected abstract AiAgentConfig CreateConfigStdioMacLinux();
+
+        /// <summary>
+        /// Creates the AI agent HTTP configuration for Windows platform.
+        /// </summary>
+        protected abstract AiAgentConfig CreateConfigHttpWindows();
+
+        /// <summary>
+        /// Creates the AI agent HTTP configuration for Mac and Linux platforms.
+        /// </summary>
+        protected abstract AiAgentConfig CreateConfigHttpMacLinux();
+
+        #endregion
+
+        #region UI Templates
+
+        protected Label TemplateLabelDescription() => new UITemplate<Label>("TemplateLabelDescription").Value;
+        protected Label TemplateWarningLabel() => new UITemplate<Label>("TemplateWarningLabel").Value;
+        protected Label TemplateAlertLabel() => new UITemplate<Label>("TemplateAlertLabel").Value;
+        protected TextField TemplateTextFieldReadOnly() => new UITemplate<TextField>("TemplateTextFieldReadOnly").Value;
+        protected Foldout TemplateFoldoutFirst() => new UITemplate<Foldout>("TemplateFoldoutFirst").Value;
+        protected Foldout TemplateFoldout() => new UITemplate<Foldout>("TemplateFoldout").Value;
+        protected ConfigurationElements TemplateConfigurationElements() => new ConfigurationElements();
+
+        public class ConfigurationElements
+        {
+            public VisualElement Root { get; }
+            public VisualElement StatusCircle { get; }
+            public Label StatusText { get; }
+            public Button BtnConfigure { get; }
+
+            public ConfigurationElements()
+            {
+                Root = new UITemplate<VisualElement>("Editor/UI/uxml/agents/elements/TemplateConfigureStatus.uxml").Value;
+                StatusCircle = Root.Q<VisualElement>("configureStatusCircle") ?? throw new NullReferenceException("VisualElement 'configureStatusCircle' not found in UI.");
+                StatusText = Root.Q<Label>("configureStatusText") ?? throw new NullReferenceException("Label 'configureStatusText' not found in UI.");
+                BtnConfigure = Root.Q<Button>("btnConfigure") ?? throw new NullReferenceException("Button 'btnConfigure' not found in UI.");
+            }
+        }
+
+        #endregion
+
+        #region UI Creation
 
         /// <summary>
         /// Creates and returns the visual element containing the configuration UI for this client.
@@ -104,17 +170,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         /// <returns>The created visual element, or null if the template couldn't be loaded.</returns>
         public virtual VisualElement? CreateUI(VisualElement container)
         {
-            var template = EditorAssetLoader.LoadAssetAtPath<VisualTreeAsset>(UxmlPaths);
-            if (template == null)
-            {
-                UnityEngine.Debug.LogError($"Failed to load UXML template for {AgentName} configurator.");
-                return null;
-            }
-
-            var element = template.CloneTree();
-            OnUICreated(element);
-            McpWindowBase.EnableSmoothFoldoutTransitions(element);
-            return element;
+            var paths = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/agents/AiAgentTemplateConfigure.uxml");
+            var template = EditorAssetLoader.LoadAssetAtPath<VisualTreeAsset>(paths) ?? throw new NullReferenceException("Failed to load UXML template for AiAgentTemplateConfigure.");
+            var root = template.CloneTree();
+            Root = root;
+            OnUICreated(root);
+            McpWindowBase.EnableSmoothFoldoutTransitions(root);
+            return root;
         }
 
         /// <summary>
@@ -123,17 +185,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         /// <param name="root">The root visual element of the created UI.</param>
         protected virtual void OnUICreated(VisualElement root)
         {
-            var downloadLink = root.Q<Label>("downloadLink");
+            SetAgentIcon();
+            SetAgentDownloadUrl(DownloadUrl);
+            SetTutorialUrl(TutorialUrl);
+            SetConfigureStatusIndicator();
+        }
+
+        protected virtual AiAgentConfigurator SetAgentDownloadUrl(string url)
+        {
+            ThrowIfRootNotSet();
+            var downloadLink = Root!.Q<Label>("downloadLink");
             if (downloadLink != null)
                 downloadLink.RegisterCallback<ClickEvent>(evt => Application.OpenURL(DownloadUrl));
+            return this;
+        }
 
-            var tutorialLink = root.Q<Label>("tutorialLink");
+        protected virtual AiAgentConfigurator SetTutorialUrl(string url, string label = "YouTube")
+        {
+            ThrowIfRootNotSet();
+            var tutorialLink = Root!.Q<Label>("tutorialLink");
             if (tutorialLink != null)
             {
+                tutorialLink.text = label;
+
                 if (TutorialUrl == string.Empty)
                 {
                     tutorialLink.style.display = DisplayStyle.None;
-                    var tutorialSeparator = root.Q<Label>("tutorialSeparator");
+                    var tutorialSeparator = Root!.Q<Label>("tutorialSeparator");
                     if (tutorialSeparator != null)
                         tutorialSeparator.style.display = DisplayStyle.None;
                 }
@@ -142,25 +220,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     tutorialLink.RegisterCallback<ClickEvent>(evt => Application.OpenURL(TutorialUrl));
                 }
             }
-
-            SetAgentIcon(root);
-            CreateConfigureStatusIndicator(root);
+            return this;
         }
 
         /// <summary>
         /// Sets the agent icon on the agentIcon element.
         /// </summary>
         /// <param name="root">The root visual element containing the agentIcon element.</param>
-        protected virtual void SetAgentIcon(VisualElement root)
+        protected virtual AiAgentConfigurator SetAgentIcon()
         {
-            var agentIcon = root.Q<VisualElement>("agentIcon");
-            if (agentIcon == null)
-                return;
+            ThrowIfRootNotSet();
+            var agentIcon = Root!.Q<VisualElement>("agentIcon") ?? throw new NullReferenceException("VisualElement 'agentIcon' not found in UI.");
 
             if (IconPaths == null)
             {
                 agentIcon.style.display = DisplayStyle.None;
-                return;
+                return this;
             }
 
             var icon = EditorAssetLoader.LoadAssetAtPath<Texture2D>(IconPaths);
@@ -172,21 +247,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             {
                 agentIcon.style.display = DisplayStyle.None;
             }
+            return this;
         }
 
-        protected virtual void CreateConfigureStatusIndicator(VisualElement root)
+        protected virtual AiAgentConfigurator SetConfigureStatusIndicator()
         {
-            var statusCircle = root.Q<VisualElement>("configureStatusCircle");
-            var statusText = root.Q<Label>("configureStatusText");
-            var btnConfigure = root.Q<Button>("btnConfigure");
+            ThrowIfRootNotSet();
+            var statusCircle = Root!.Q<VisualElement>("configureStatusCircle") ?? throw new NullReferenceException("VisualElement 'configureStatusCircle' not found in UI.");
+            var statusText = Root!.Q<Label>("configureStatusText") ?? throw new NullReferenceException("Label 'configureStatusText' not found in UI.");
+            var btnConfigure = Root!.Q<Button>("btnConfigure") ?? throw new NullReferenceException("Button 'btnConfigure' not found in UI.");
 
-            if (statusCircle == null || statusText == null || btnConfigure == null)
-            {
-                Debug.LogWarning($"Config panel UI elements not found for {ClientConfig.Name}.");
-                return;
-            }
-
-            var isConfiguredResult = ClientConfig.IsConfigured();
+            var isConfiguredResult = ClientConfigStdio.IsConfigured();
 
             statusCircle.RemoveFromClassList(MainWindowEditor.USS_Connected);
             statusCircle.RemoveFromClassList(MainWindowEditor.USS_Connecting);
@@ -200,7 +271,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             btnConfigure.RegisterCallback<ClickEvent>(evt =>
             {
-                var configureResult = ClientConfig.Configure();
+                var configureResult = ClientConfigStdio.Configure();
 
                 statusText.text = configureResult ? "Configured (stdio)" : "Not Configured";
 
@@ -214,6 +285,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
                 btnConfigure.text = configureResult ? "Reconfigure" : "Configure";
             });
+            return this;
         }
+
+        #endregion
+
+        #region Helpers
+
+        protected void ThrowIfRootNotSet()
+        {
+            if (Root == null)
+                throw new InvalidOperationException("Root visual element is not set. Ensure CreateUI has been called.");
+        }
+
+        #endregion
     }
 }
