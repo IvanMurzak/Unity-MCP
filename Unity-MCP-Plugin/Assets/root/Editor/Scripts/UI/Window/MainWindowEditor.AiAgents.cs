@@ -21,6 +21,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         private const string PlayerPrefsKey_SelectedAiAgent = "Unity_MCP_SelectedAiAgent";
         private static PlayerPrefsString _selectedAiAgentPref = new(PlayerPrefsKey_SelectedAiAgent);
 
+        private AiAgentConfigurator? _currentAiAgentConfigurator;
+
         void ConfigureAgents(VisualElement root)
         {
             // Get the dropdown element
@@ -86,6 +88,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 return;
 
             var configurator = AiAgentConfiguratorRegistry.All[selectedIndex];
+            _currentAiAgentConfigurator = configurator;
 
             // Load agent-specific configuration UI from the configurator
             // The configurator now contains its own AiAgentConfig via the AiAgentConfig property

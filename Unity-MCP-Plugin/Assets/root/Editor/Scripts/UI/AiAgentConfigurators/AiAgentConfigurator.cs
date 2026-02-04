@@ -202,8 +202,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             ContainerUnderHeader = root.Q<VisualElement>("containerUnderHeader") ?? throw new NullReferenceException("VisualElement 'containerUnderHeader' not found in UI.");
             ContainerHttp = root.Q<VisualElement>("containerHttp") ?? throw new NullReferenceException("VisualElement 'containerHttp' not found in UI.");
             ContainerStdio = root.Q<VisualElement>("containerStdio") ?? throw new NullReferenceException("VisualElement 'containerStdio' not found in UI.");
-            ToggleOptionHttp = root.Q<Toggle>("toggleOptionHttp") ?? throw new NullReferenceException("Toggle 'toggleOptionHttp' not found in UI.");
-            ToggleOptionStdio = root.Q<Toggle>("toggleOptionStdio") ?? throw new NullReferenceException("Toggle 'toggleOptionStdio' not found in UI.");
 
             OnUICreated(root);
             McpWindowBase.EnableSmoothFoldoutTransitions(root);
@@ -220,6 +218,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             SetAgentDownloadUrl(DownloadUrl);
             SetTutorialUrl(TutorialUrl);
             SetConfigureStatusIndicator();
+            SetTransportMethod(TransportMethod.streamableHttp);
         }
 
         protected virtual AiAgentConfigurator SetAgentDownloadUrl(string url)
@@ -287,6 +286,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             ContainerStdio!.Add(TemplateConfigurationElements(ConfigStdio, TransportMethod.stdio).Root);
             ContainerHttp!.Add(TemplateConfigurationElements(ConfigHttp, TransportMethod.streamableHttp).Root);
+
+            return this;
+        }
+
+        public virtual AiAgentConfigurator SetTransportMethod(TransportMethod transportMethod)
+        {
+            ThrowIfRootNotSet();
+
+            ContainerStdio!.style.display = transportMethod == TransportMethod.stdio
+                ? DisplayStyle.Flex
+                : DisplayStyle.None;
+
+            ContainerHttp!.style.display = transportMethod == TransportMethod.streamableHttp
+                ? DisplayStyle.Flex
+                : DisplayStyle.None;
 
             return this;
         }

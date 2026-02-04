@@ -16,13 +16,6 @@
         <!-- Under header container -->
         <ui:VisualElement name="containerUnderHeader" />
 
-        <!-- Transport mode toggle -->
-        <!-- <ui:Label text="Manual configuration" class="section-title" /> -->
-        <ui:VisualElement style="flex-direction: row; margin-top: 4px;">
-            <ui:Toggle name="toggleOptionHttp" label="Streamable HTTP" class="toggle-text-button" />
-            <ui:Toggle name="toggleOptionStdio" label="STDIO" class="toggle-text-button" />
-        </ui:VisualElement>
-
         <!-- Transport mode container: HTTP -->
         <ui:VisualElement name="containerHttp" />
 

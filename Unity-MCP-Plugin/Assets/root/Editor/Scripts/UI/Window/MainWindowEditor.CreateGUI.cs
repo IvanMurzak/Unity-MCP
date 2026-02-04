@@ -445,6 +445,42 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 .ObserveOnCurrentSynchronizationContext()
                 .Subscribe(_ => FetchAiAgentData())
                 .AddTo(_disposables);
+
+            var toggleOptionHttp = root.Q<Toggle>("toggleOptionHttp") ?? throw new NullReferenceException("Toggle 'toggleOptionHttp' not found in UI.");
+            var toggleOptionStdio = root.Q<Toggle>("toggleOptionStdio") ?? throw new NullReferenceException("Toggle 'toggleOptionStdio' not found in UI.");
+
+            // Initialize with HTTP selected by default
+            toggleOptionStdio.value = false;
+            toggleOptionHttp.value = true;
+            _currentAiAgentConfigurator?.SetTransportMethod(TransportMethod.streamableHttp);
+
+            toggleOptionStdio.RegisterValueChangedCallback(evt =>
+            {
+                if (evt.newValue)
+                {
+                    toggleOptionHttp.SetValueWithoutNotify(false);
+                    _currentAiAgentConfigurator?.SetTransportMethod(TransportMethod.stdio);
+                }
+                else if (!toggleOptionHttp.value)
+                {
+                    // Prevent both toggles from being unchecked
+                    toggleOptionStdio.SetValueWithoutNotify(true);
+                }
+            });
+
+            toggleOptionHttp.RegisterValueChangedCallback(evt =>
+            {
+                if (evt.newValue)
+                {
+                    toggleOptionStdio.SetValueWithoutNotify(false);
+                    _currentAiAgentConfigurator?.SetTransportMethod(TransportMethod.streamableHttp);
+                }
+                else if (!toggleOptionStdio.value)
+                {
+                    // Prevent both toggles from being unchecked
+                    toggleOptionHttp.SetValueWithoutNotify(true);
+                }
+            });
         }
 
         private void FetchAiAgentData()
@@ -503,7 +539,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         #endregion
 
-        #region MCP Tools, Prompts, Resources
+        #region MCP Features
 
         private void SetupToolsSection(VisualElement root)
         {
