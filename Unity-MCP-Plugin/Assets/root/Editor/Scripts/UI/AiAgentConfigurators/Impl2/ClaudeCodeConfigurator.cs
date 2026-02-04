@@ -13,9 +13,7 @@ using System;
 using System.IO;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
-using UnityEngine;
 using UnityEngine.UIElements;
-using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
@@ -83,20 +81,41 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             var manualStepsContainer = TemplateFoldoutFirst("Manual Configuration Steps");
 
-            var addMcpServerCommand = $"claude mcp add {AiAgentConfig.DefaultMcpServerName} \"{Startup.Server.ExecutableFullPath}\" port={UnityMcpPlugin.Port} plugin-timeout={UnityMcpPlugin.TimeoutMs} client-transport=stdio";
+            var addMcpServerCommandStdio = $"claude mcp add {AiAgentConfig.DefaultMcpServerName} \"{Startup.Server.ExecutableFullPath}\" port={UnityMcpPlugin.Port} plugin-timeout={UnityMcpPlugin.TimeoutMs} client-transport=stdio";
 
             manualStepsContainer!.Add(TemplateLabelDescription("1. Open a terminal and run the following command to be in the folder of the Unity project"));
             manualStepsContainer!.Add(TemplateTextFieldReadOnly($"cd \"{ProjectRootPath}\""));
             manualStepsContainer!.Add(TemplateLabelDescription("2. Run the following command in the folder of the Unity project to configure Claude Code"));
-            manualStepsContainer!.Add(TemplateTextFieldReadOnly(addMcpServerCommand));
+            manualStepsContainer!.Add(TemplateTextFieldReadOnly(addMcpServerCommandStdio));
             manualStepsContainer!.Add(TemplateLabelDescription("3. Start Claude Code"));
             manualStepsContainer!.Add(TemplateTextFieldReadOnly("claude"));
 
             ContainerStdio!.Add(manualStepsContainer);
 
+            var troubleshootingContainerStdio = TemplateFoldout("Troubleshooting");
+
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Ensure Claude Code CLI is installed and accessible from terminal"));
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Ensure Claude Code CLI is started in the same folder where Unity project is located. This folder must contains Assets folder inside"));
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Ensure Claude Code is configured with the same port as it is in Unity right now"));
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Check that the configuration file .claude.json exists"));
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Restart Claude Code after configuration changes"));
+
+            ContainerStdio!.Add(troubleshootingContainerStdio);
+
             // HTTP Configuration
 
-            // TODO: implement
+            var manualStepsContainerHttp = TemplateFoldoutFirst("Manual Configuration Steps");
+
+            var addMcpServerCommandHttp = $"claude mcp add --transport http {AiAgentConfig.DefaultMcpServerName} {UnityMcpPlugin.Host}";
+
+            manualStepsContainerHttp!.Add(TemplateLabelDescription("1. Open a terminal and run the following command to be in the folder of the Unity project"));
+            manualStepsContainerHttp!.Add(TemplateTextFieldReadOnly($"cd \"{ProjectRootPath}\""));
+            manualStepsContainerHttp!.Add(TemplateLabelDescription("2. Run the following command in the folder of the Unity project to configure Claude Code"));
+            manualStepsContainerHttp!.Add(TemplateTextFieldReadOnly(addMcpServerCommandHttp));
+            manualStepsContainerHttp!.Add(TemplateLabelDescription("3. Start Claude Code"));
+            manualStepsContainerHttp!.Add(TemplateTextFieldReadOnly("claude"));
+
+            ContainerHttp!.Add(manualStepsContainerHttp);
         }
     }
 }
