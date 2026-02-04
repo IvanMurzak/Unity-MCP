@@ -21,45 +21,101 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
     /// <summary>
     /// Configurator for Antigravity AI agent.
     /// </summary>
-    public class AntigravityConfigurator : AiAgentConfiguratorBase
+    public class AntigravityConfigurator : AiAgentConfigurator
     {
         public override string AgentName => "Antigravity";
         public override string AgentId => "antigravity";
         public override string DownloadUrl => "https://antigravity.google/download";
 
-        protected override string[] UxmlPaths => EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/agents/AntigravityConfig.uxml");
         protected override string? IconFileName => "antigravity-64.png";
 
-        protected override AiAgentConfig CreateConfigWindows() => new JsonAiAgentConfig(
+        protected override AiAgentConfig CreateConfigStdioWindows() => new JsonAiAgentConfig(
             name: AgentName,
-            transportMethod: TransportMethod.stdio,
             configPath: Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                 ".gemini",
                 "antigravity",
                 "mcp_config.json"
             ),
+            transportMethod: TransportMethod.stdio,
+            transportMethodValue: "stdio",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
         );
 
-        protected override AiAgentConfig CreateConfigMacLinux() => new JsonAiAgentConfig(
+        protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
-            transportMethod: TransportMethod.stdio,
             configPath: Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                 ".gemini",
                 "antigravity",
                 "mcp_config.json"
             ),
+            transportMethod: TransportMethod.stdio,
+            transportMethodValue: "stdio",
+            bodyPath: Consts.MCP.Server.DefaultBodyPath
+        );
+
+        protected override AiAgentConfig CreateConfigHttpWindows() => new JsonAiAgentConfig(
+            name: AgentName,
+            configPath: Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".gemini",
+                "antigravity",
+                "mcp_config.json"
+            ),
+            transportMethod: TransportMethod.streamableHttp,
+            transportMethodValue: "http",
+            bodyPath: Consts.MCP.Server.DefaultBodyPath
+        );
+
+        protected override AiAgentConfig CreateConfigHttpMacLinux() => new JsonAiAgentConfig(
+            name: AgentName,
+            configPath: Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".gemini",
+                "antigravity",
+                "mcp_config.json"
+            ),
+            transportMethod: TransportMethod.streamableHttp,
+            transportMethodValue: "http",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
         );
 
         protected override void OnUICreated(VisualElement root)
         {
-            var textFieldJsonConfig = root.Q<TextField>("jsonConfig") ?? throw new NullReferenceException("TextField 'jsonConfig' not found in UI.");
-            textFieldJsonConfig.value = ClientConfig.ExpectedFileContent;
-
             base.OnUICreated(root);
+
+            // STDIO Configuration
+
+            var manualStepsContainer = TemplateFoldoutFirst("Manual Configuration Steps");
+
+            manualStepsContainer!.Add(TemplateLabelDescription("1. Open or create file '%User%/.gemini/antigravity/mcp_config.json'"));
+            manualStepsContainer!.Add(TemplateLabelDescription("2. Copy and paste the configuration json into the file."));
+            manualStepsContainer!.Add(TemplateTextFieldReadOnly(ConfigStdio.ExpectedFileContent));
+
+            ContainerStdio!.Add(manualStepsContainer);
+
+            var troubleshootingContainerStdio = TemplateFoldout("Troubleshooting");
+
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Ensure MCP configuration file doesn't have syntax errors"));
+
+            ContainerStdio!.Add(troubleshootingContainerStdio);
+
+            // HTTP Configuration
+
+            var manualStepsContainerHttp = TemplateFoldoutFirst("Manual Configuration Steps");
+
+            manualStepsContainerHttp!.Add(TemplateLabelDescription("1. Open or create file '%User%/.gemini/antigravity/mcp_config.json'"));
+            manualStepsContainerHttp!.Add(TemplateLabelDescription("2. Copy and paste the configuration json into the file."));
+            manualStepsContainerHttp!.Add(TemplateTextFieldReadOnly(ConfigHttp.ExpectedFileContent));
+
+            ContainerHttp!.Add(manualStepsContainerHttp);
+
+            var troubleshootingContainerHttp = TemplateFoldout("Troubleshooting");
+
+            troubleshootingContainerHttp.Add(TemplateLabelDescription("- Ensure MCP configuration file doesn't have syntax errors"));
+
+            ContainerHttp!.Add(troubleshootingContainerHttp);
         }
     }
 }
