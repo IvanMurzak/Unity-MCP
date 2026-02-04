@@ -58,7 +58,6 @@
             <ui:VisualElement class="row" style="margin-top: 0;">
                 <ui:Label text="AI agent" class="header" />
                 <!-- Transport mode toggle -->
-                <!-- <ui:Label text="Manual configuration" class="section-title" /> -->
                 <ui:VisualElement style="flex-direction: row; margin-top: 4px;">
                     <ui:Toggle name="toggleOptionHttp" label="http" class="toggle-text-button" tooltip="Configure AI agent to communicate over HTTP (RECOMMENDED)" />
                     <ui:Toggle name="toggleOptionStdio" label="stdio" class="toggle-text-button" tooltip="Configure AI agent to communicate over STDIO (NOT RECOMMENDED)" />
