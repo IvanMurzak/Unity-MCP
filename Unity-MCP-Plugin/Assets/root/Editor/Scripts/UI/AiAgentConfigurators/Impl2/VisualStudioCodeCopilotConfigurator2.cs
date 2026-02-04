@@ -30,33 +30,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigStdioWindows() => new JsonAiAgentConfig(
             name: AgentName,
+            configPath: Path.Combine(".vscode", "mcp.json"),
             transportMethod: TransportMethod.stdio,
             transportMethodValue: "stdio",
-            configPath: Path.Combine(".vscode", "mcp.json"),
             bodyPath: "servers"
         );
 
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
+            configPath: Path.Combine(".vscode", "mcp.json"),
             transportMethod: TransportMethod.stdio,
             transportMethodValue: "stdio",
-            configPath: Path.Combine(".vscode", "mcp.json"),
             bodyPath: "servers"
         );
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new JsonAiAgentConfig(
             name: AgentName,
+            configPath: Path.Combine(".vscode", "mcp.json"),
             transportMethod: TransportMethod.streamableHttp,
             transportMethodValue: "http",
-            configPath: Path.Combine(".vscode", "mcp.json"),
             bodyPath: "servers"
         );
 
         protected override AiAgentConfig CreateConfigHttpMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
+            configPath: Path.Combine(".vscode", "mcp.json"),
             transportMethod: TransportMethod.streamableHttp,
             transportMethodValue: "http",
-            configPath: Path.Combine(".vscode", "mcp.json"),
             bodyPath: "servers"
         );
 

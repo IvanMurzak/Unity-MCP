@@ -105,6 +105,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             // ------------------------------------------------------------------------------------------------------------------------------------
 
+            /// <summary>
+            /// Generates a JSON configuration for stdio transport.
+            /// <code>
+            /// {
+            ///   "mcpServers": {
+            ///     "Unity ProjectName": {
+            ///       "type": "...",    // optional, only if provided
+            ///       "command": "path/to/unity-mcp-server",
+            ///       "args": ["port=...", "plugin-timeout=...", "client-transport=stdio"]
+            ///     }
+            ///   }
+            /// }
+            /// </code>
+            /// </summary>
             public static JsonNode RawJsonConfigurationStdio(
                 int port,
                 string bodyPath = "mcpServers",
@@ -114,23 +128,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 var pathSegments = Consts.MCP.Server.BodyPathSegments(bodyPath);
 
                 // Build innermost content first
-                var innerContent = new JsonObject
+                var serverConfig = new JsonObject();
+
+                if (type != null)
+                    serverConfig["type"] = type;
+
+                serverConfig["command"] = ExecutableFullPath.Replace('\\', '/');
+                serverConfig["args"] = new JsonArray
                 {
-                    [AiAgentConfig.DefaultMcpServerName] = new JsonObject
-                    {
-                        ["type"] = type,
-                        ["command"] = ExecutableFullPath.Replace('\\', '/'),
-                        ["args"] = new JsonArray
-                        {
-                            string.Format("{0}={1}", "port", port),
-                            string.Format("{0}={1}", "plugin-timeout", timeoutMs),
-                            string.Format("{0}={1}", "client-transport", TransportMethod.stdio)
-                        }
-                    }
+                    $"{Consts.MCP.Server.Args.Port}={port}",
+                    $"{Consts.MCP.Server.Args.PluginTimeout}={timeoutMs}",
+                    $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
                 };
 
-                if (type == null)
-                    innerContent.Remove("type");
+                var innerContent = new JsonObject
+                {
+                    [AiAgentConfig.DefaultMcpServerName] = serverConfig
+                };
 
                 // Build nested structure from innermost to outermost
                 var result = innerContent;
@@ -142,6 +156,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 return result;
             }
 
+            /// <summary>
+            /// Generates a JSON configuration for HTTP transport.
+            /// <code>
+            /// {
+            ///   "mcpServers": {
+            ///     "Unity ProjectName": {
+            ///       "type": "...",  // optional, only if provided
+            ///       "url": "http://localhost:port/sse"
+            ///     }
+            ///   }
+            /// }
+            /// </code>
+            /// </summary>
             public static JsonNode RawJsonConfigurationHttp(
                 string url,
                 string bodyPath = "mcpServers",
@@ -150,17 +177,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 var pathSegments = Consts.MCP.Server.BodyPathSegments(bodyPath);
 
                 // Build innermost content first
+                var serverConfig = new JsonObject();
+
+                if (type != null)
+                    serverConfig["type"] = type;
+
+                serverConfig["url"] = url;
+
                 var innerContent = new JsonObject
                 {
-                    [AiAgentConfig.DefaultMcpServerName] = new JsonObject
-                    {
-                        ["url"] = url,
-                        ["type"] = type
-                    }
+                    [AiAgentConfig.DefaultMcpServerName] = serverConfig
                 };
-
-                if (type == null)
-                    innerContent.Remove("type");
 
                 // Build nested structure from innermost to outermost
                 var result = innerContent;
@@ -174,9 +201,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             // ------------------------------------------------------------------------------------------------------------------------------------
 
-            public static string RawTomlConfigurationStdio(
-                string bodyPath = "mcp_servers",
-                string? type = null)
+            public static string RawTomlConfigurationStdio(string bodyPath = "mcp_servers")
             {
                 return TomlAiAgentConfig.GenerateTomlSection(
                     sectionName: $"{bodyPath}.{AiAgentConfig.DefaultMcpServerName}",
@@ -185,7 +210,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 {
                     $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
                     $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-                    $"{Consts.MCP.Server.Args.ClientTransportMethod}={type}"
+                    $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
                 });
             }
 

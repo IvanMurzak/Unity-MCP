@@ -30,29 +30,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigStdioWindows() => new JsonAiAgentConfig(
             name: AgentName,
-            transportMethod: TransportMethod.stdio,
             configPath: Path.Combine(".gemini", "settings.json"),
+            transportMethod: TransportMethod.stdio,
+            transportMethodValue: "stdio",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
         );
 
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
-            transportMethod: TransportMethod.stdio,
             configPath: Path.Combine(".gemini", "settings.json"),
+            transportMethod: TransportMethod.stdio,
+            transportMethodValue: "stdio",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
         );
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new JsonAiAgentConfig(
             name: AgentName,
-            transportMethod: TransportMethod.streamableHttp,
             configPath: Path.Combine(".gemini", "settings.json"),
+            transportMethod: TransportMethod.streamableHttp,
+            transportMethodValue: "http",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
         );
 
         protected override AiAgentConfig CreateConfigHttpMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
-            transportMethod: TransportMethod.streamableHttp,
             configPath: Path.Combine(".gemini", "settings.json"),
+            transportMethod: TransportMethod.streamableHttp,
+            transportMethodValue: "http",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
         );
 

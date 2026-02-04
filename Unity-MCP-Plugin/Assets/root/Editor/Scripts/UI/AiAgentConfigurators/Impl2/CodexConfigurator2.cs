@@ -30,45 +30,49 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigStdioWindows() => new TomlAiAgentConfig(
             name: AgentName,
-            transportMethod: TransportMethod.stdio,
             configPath: Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                 ".codex",
                 "config.toml"
             ),
+            transportMethod: TransportMethod.stdio,
+            transportMethodValue: "stdio",
             bodyPath: "mcp_servers"
         );
 
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new TomlAiAgentConfig(
             name: AgentName,
-            transportMethod: TransportMethod.stdio,
             configPath: Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                 ".codex",
                 "config.toml"
             ),
+            transportMethod: TransportMethod.stdio,
+            transportMethodValue: "stdio",
             bodyPath: "mcp_servers"
         );
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new TomlAiAgentConfig(
             name: AgentName,
-            transportMethod: TransportMethod.streamableHttp,
             configPath: Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                 ".codex",
                 "config.toml"
             ),
+            transportMethod: TransportMethod.streamableHttp,
+            transportMethodValue: "http",
             bodyPath: "mcp_servers"
         );
 
         protected override AiAgentConfig CreateConfigHttpMacLinux() => new TomlAiAgentConfig(
             name: AgentName,
-            transportMethod: TransportMethod.streamableHttp,
             configPath: Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                 ".codex",
                 "config.toml"
             ),
+            transportMethod: TransportMethod.streamableHttp,
+            transportMethodValue: "http",
             bodyPath: "mcp_servers"
         );
 
