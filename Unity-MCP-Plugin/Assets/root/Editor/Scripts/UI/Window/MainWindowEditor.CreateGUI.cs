@@ -459,6 +459,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             toggleOptionStdio.RegisterValueChangedCallback(evt =>
             {
+                containerMcpServer.SetEnabled((TransportMethod)selectedTransportMethodPref.Value == TransportMethod.streamableHttp);
+
                 if (evt.newValue)
                 {
                     selectedTransportMethodPref.Value = (int)TransportMethod.stdio;
@@ -478,12 +480,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     // Prevent both toggles from being unchecked
                     toggleOptionStdio.SetValueWithoutNotify(true);
                 }
-
-                containerMcpServer.SetEnabled((TransportMethod)selectedTransportMethodPref.Value == TransportMethod.streamableHttp);
             });
 
             toggleOptionHttp.RegisterValueChangedCallback(evt =>
             {
+                containerMcpServer.SetEnabled((TransportMethod)selectedTransportMethodPref.Value == TransportMethod.streamableHttp);
+
                 if (evt.newValue)
                 {
                     selectedTransportMethodPref.Value = (int)TransportMethod.streamableHttp;
@@ -495,8 +497,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     // Prevent both toggles from being unchecked
                     toggleOptionHttp.SetValueWithoutNotify(true);
                 }
-
-                containerMcpServer.SetEnabled((TransportMethod)selectedTransportMethodPref.Value == TransportMethod.streamableHttp);
             });
         }
 
