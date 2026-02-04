@@ -23,14 +23,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
     public class JsonAiAgentConfig : AiAgentConfig
     {
         public override string ExpectedFileContent => TransportMethod == TransportMethod.streamableHttp
-            ? Startup.Server.RawJsonConfigurationHttp(McpServerUrl, BodyPath).ToString()
+            ? Startup.Server.RawJsonConfigurationHttp(UnityMcpPlugin.Host, BodyPath).ToString()
             : Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, BodyPath, UnityMcpPlugin.TimeoutMs).ToString();
-
-        /// <summary>
-        /// Gets the MCP server URL for HTTP transport.
-        /// Uses the configured host URL from UnityMcpPlugin.Host.
-        /// </summary>
-        public static string McpServerUrl => UnityMcpPlugin.Host;
 
         public JsonAiAgentConfig(string name, TransportMethod transportMethod, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
             : base(name, transportMethod, configPath, bodyPath)
@@ -52,7 +46,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             {
                 // Generate the appropriate configuration based on transport method
                 var rawConfig = transportMethod == TransportMethod.streamableHttp
-                    ? Startup.Server.RawJsonConfigurationHttp(McpServerUrl, bodyPath)
+                    ? Startup.Server.RawJsonConfigurationHttp(UnityMcpPlugin.Host, bodyPath)
                     : Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, bodyPath, UnityMcpPlugin.TimeoutMs);
 
                 if (!File.Exists(configPath))
@@ -88,7 +82,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
                 // Generate the configuration to inject using the last segment as bodyPath
                 var injectObj = transportMethod == TransportMethod.streamableHttp
-                    ? Startup.Server.RawJsonConfigurationHttp(McpServerUrl, pathSegments.Last())
+                    ? Startup.Server.RawJsonConfigurationHttp(UnityMcpPlugin.Host, pathSegments.Last())
                     : Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, pathSegments.Last(), UnityMcpPlugin.TimeoutMs);
 
                 if (injectObj == null)
@@ -282,7 +276,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             try
             {
                 var configUri = new Uri(url.TrimEnd('/'), UriKind.Absolute);
-                var expectedUri = new Uri(McpServerUrl.TrimEnd('/'), UriKind.Absolute);
+                var expectedUri = new Uri(UnityMcpPlugin.Host.TrimEnd('/'), UriKind.Absolute);
 
                 // Compare host, port, and path
                 return string.Equals(configUri.Host, expectedUri.Host, StringComparison.OrdinalIgnoreCase)
@@ -292,7 +286,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             catch
             {
                 // If URI parsing fails, fallback to string comparison
-                return string.Equals(url.TrimEnd('/'), McpServerUrl.TrimEnd('/'), StringComparison.OrdinalIgnoreCase);
+                return string.Equals(url.TrimEnd('/'), UnityMcpPlugin.Host.TrimEnd('/'), StringComparison.OrdinalIgnoreCase);
             }
         }
 
