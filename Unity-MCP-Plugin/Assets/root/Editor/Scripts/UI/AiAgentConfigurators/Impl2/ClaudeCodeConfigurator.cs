@@ -116,6 +116,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             manualStepsContainerHttp!.Add(TemplateTextFieldReadOnly("claude"));
 
             ContainerHttp!.Add(manualStepsContainerHttp);
+
+            var troubleshootingContainerHttp = TemplateFoldout("Troubleshooting");
+
+            troubleshootingContainerHttp.Add(TemplateLabelDescription("- Ensure Claude Code CLI is installed and accessible from terminal"));
+            troubleshootingContainerHttp.Add(TemplateLabelDescription("- Ensure Claude Code CLI is started in the same folder where Unity project is located. This folder must contains Assets folder inside"));
+            troubleshootingContainerHttp.Add(TemplateLabelDescription("- Ensure Claude Code is configured with the same port as it is in Unity right now"));
+            troubleshootingContainerHttp.Add(TemplateLabelDescription("- Check that the configuration file .claude.json exists"));
+            troubleshootingContainerHttp.Add(TemplateLabelDescription("- Restart Claude Code after configuration changes"));
+
+            ContainerHttp!.Add(troubleshootingContainerHttp);
         }
     }
 }
