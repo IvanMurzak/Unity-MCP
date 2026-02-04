@@ -120,7 +120,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             public static JsonNode RawJsonConfigurationHttp(
                 string url,
-                string bodyPath = "mcpServers")
+                string bodyPath = "mcpServers",
+                string type = "http")
             {
                 var pathSegments = Consts.MCP.Server.BodyPathSegments(bodyPath);
 
@@ -130,7 +131,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     [AiAgentConfig.DefaultMcpServerName] = new JsonObject
                     {
                         ["url"] = url,
-                        ["type"] = "streamableHttp"
+                        ["type"] = type
                     }
                 };
 

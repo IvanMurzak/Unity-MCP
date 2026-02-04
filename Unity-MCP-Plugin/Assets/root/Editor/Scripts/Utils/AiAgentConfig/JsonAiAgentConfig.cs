@@ -27,7 +27,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             : Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, BodyPath, UnityMcpPlugin.TimeoutMs).ToString();
 
         /// <summary>
-        /// Gets the MCP server URL for streamableHttp transport.
+        /// Gets the MCP server URL for HTTP transport.
         /// Uses the configured host URL from UnityMcpPlugin.Host.
         /// </summary>
         public static string McpServerUrl => UnityMcpPlugin.Host;
@@ -103,7 +103,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
                 // Find entries to remove based on transport method
                 // For stdio: remove entries with matching command
-                // For streamableHttp: remove entries with matching url
+                // For http: remove entries with matching url
                 // Also remove entries with properties from the other transport method
                 var keysToRemove = targetObj
                     .Where(kv =>
@@ -115,7 +115,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                         if (!string.IsNullOrEmpty(command) && IsCommandMatch(command!))
                             return true;
 
-                        // Remove if url matches (for streamableHttp detection)
+                        // Remove if url matches (for http detection)
                         if (!string.IsNullOrEmpty(url) && IsUrlMatch(url!))
                             return true;
 
@@ -175,8 +175,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 {
                     if (transportMethod == TransportMethod.streamableHttp)
                     {
-                        // For streamableHttp: check url and type, ensure no command/args
-                        if (!IsStreamableHttpConfigValid(kv.Value))
+                        // For http: check url and type, ensure no command/args
+                        if (!IsHttpConfigValid(kv.Value))
                             continue;
                         return true;
                     }
@@ -200,11 +200,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         }
 
         /// <summary>
-        /// Validates that a server entry is correctly configured for streamableHttp transport.
-        /// Must have: type="streamableHttp", url matching expected
+        /// Validates that a server entry is correctly configured for HTTP transport.
+        /// Must have: type="http", url matching expected
         /// Must NOT have: command, args
         /// </summary>
-        protected static bool IsStreamableHttpConfigValid(JsonNode? serverEntry)
+        protected static bool IsHttpConfigValid(JsonNode? serverEntry)
         {
             if (serverEntry == null)
                 return false;
@@ -218,7 +218,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             if (string.IsNullOrEmpty(url) || !IsUrlMatch(url!))
                 return false;
 
-            if (type != "streamableHttp")
+            if (type != "http")
                 return false;
 
             // Must NOT have stdio properties
@@ -250,7 +250,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             if (!DoArgumentsMatch(args))
                 return false;
 
-            // Must NOT have streamableHttp properties
+            // Must NOT have HTTP properties
             if (url != null)
                 return false;
 
