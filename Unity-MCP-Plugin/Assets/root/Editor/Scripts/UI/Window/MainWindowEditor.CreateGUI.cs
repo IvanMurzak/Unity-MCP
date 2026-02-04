@@ -447,6 +447,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 .AddTo(_disposables);
 
             var containerMcpServer = root.Q<VisualElement>("TimelinePointMcpServer") ?? throw new InvalidOperationException("TimelinePointMcpServer element not found.");
+            var btnStartStopMcpServer = root.Q<Button>("btnStartStopServer") ?? throw new InvalidOperationException("MCP Server start/stop button not found.");
+
             var toggleOptionHttp = root.Q<Toggle>("toggleOptionHttp") ?? throw new NullReferenceException("Toggle 'toggleOptionHttp' not found in UI.");
             var toggleOptionStdio = root.Q<Toggle>("toggleOptionStdio") ?? throw new NullReferenceException("Toggle 'toggleOptionStdio' not found in UI.");
 
@@ -455,12 +457,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             toggleOptionHttp.value = selectedTransportMethodPref.Value == (int)TransportMethod.streamableHttp;
             currentAiAgentConfigurator?.SetTransportMethod((TransportMethod)selectedTransportMethodPref.Value);
 
-            containerMcpServer.SetEnabled((TransportMethod)selectedTransportMethodPref.Value == TransportMethod.streamableHttp);
+            void UpdateMcpServerState()
+            {
+                var transportMethod = (TransportMethod)selectedTransportMethodPref.Value;
+                containerMcpServer.SetEnabled(transportMethod == TransportMethod.streamableHttp);
+                btnStartStopMcpServer.tooltip = transportMethod == TransportMethod.streamableHttp
+                    ? "Start or stop the local MCP server."
+                    : "Local MCP server is disabled in STDIO mode. AI agent will launch its own MCP server instance.";
+            }
+            UpdateMcpServerState();
 
             toggleOptionStdio.RegisterValueChangedCallback(evt =>
             {
-                containerMcpServer.SetEnabled((TransportMethod)selectedTransportMethodPref.Value == TransportMethod.streamableHttp);
-
                 if (evt.newValue)
                 {
                     selectedTransportMethodPref.Value = (int)TransportMethod.stdio;
@@ -480,12 +488,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     // Prevent both toggles from being unchecked
                     toggleOptionStdio.SetValueWithoutNotify(true);
                 }
+                UpdateMcpServerState();
             });
 
             toggleOptionHttp.RegisterValueChangedCallback(evt =>
             {
-                containerMcpServer.SetEnabled((TransportMethod)selectedTransportMethodPref.Value == TransportMethod.streamableHttp);
-
                 if (evt.newValue)
                 {
                     selectedTransportMethodPref.Value = (int)TransportMethod.streamableHttp;
@@ -497,6 +504,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     // Prevent both toggles from being unchecked
                     toggleOptionHttp.SetValueWithoutNotify(true);
                 }
+                UpdateMcpServerState();
             });
         }
 
