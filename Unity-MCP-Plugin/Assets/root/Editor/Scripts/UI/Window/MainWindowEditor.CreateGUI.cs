@@ -446,40 +446,57 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 .Subscribe(_ => FetchAiAgentData())
                 .AddTo(_disposables);
 
+            var containerMcpServer = root.Q<VisualElement>("TimelinePointMcpServer") ?? throw new InvalidOperationException("TimelinePointMcpServer element not found.");
             var toggleOptionHttp = root.Q<Toggle>("toggleOptionHttp") ?? throw new NullReferenceException("Toggle 'toggleOptionHttp' not found in UI.");
             var toggleOptionStdio = root.Q<Toggle>("toggleOptionStdio") ?? throw new NullReferenceException("Toggle 'toggleOptionStdio' not found in UI.");
 
             // Initialize with HTTP selected by default
-            toggleOptionStdio.value = false;
-            toggleOptionHttp.value = true;
-            _currentAiAgentConfigurator?.SetTransportMethod(TransportMethod.streamableHttp);
+            toggleOptionStdio.value = selectedTransportMethodPref.Value == (int)TransportMethod.stdio;
+            toggleOptionHttp.value = selectedTransportMethodPref.Value == (int)TransportMethod.streamableHttp;
+            currentAiAgentConfigurator?.SetTransportMethod((TransportMethod)selectedTransportMethodPref.Value);
+
+            containerMcpServer.SetEnabled((TransportMethod)selectedTransportMethodPref.Value == TransportMethod.streamableHttp);
 
             toggleOptionStdio.RegisterValueChangedCallback(evt =>
             {
                 if (evt.newValue)
                 {
+                    selectedTransportMethodPref.Value = (int)TransportMethod.stdio;
                     toggleOptionHttp.SetValueWithoutNotify(false);
-                    _currentAiAgentConfigurator?.SetTransportMethod(TransportMethod.stdio);
+                    currentAiAgentConfigurator?.SetTransportMethod(TransportMethod.stdio);
+
+                    // Stop MCP server if running to switch to stdio mode
+                    if (McpServerManager.IsRunning)
+                    {
+                        UnityMcpPlugin.KeepServerRunning = false;
+                        UnityMcpPlugin.Instance.Save();
+                        McpServerManager.StopServer();
+                    }
                 }
                 else if (!toggleOptionHttp.value)
                 {
                     // Prevent both toggles from being unchecked
                     toggleOptionStdio.SetValueWithoutNotify(true);
                 }
+
+                containerMcpServer.SetEnabled((TransportMethod)selectedTransportMethodPref.Value == TransportMethod.streamableHttp);
             });
 
             toggleOptionHttp.RegisterValueChangedCallback(evt =>
             {
                 if (evt.newValue)
                 {
+                    selectedTransportMethodPref.Value = (int)TransportMethod.streamableHttp;
                     toggleOptionStdio.SetValueWithoutNotify(false);
-                    _currentAiAgentConfigurator?.SetTransportMethod(TransportMethod.streamableHttp);
+                    currentAiAgentConfigurator?.SetTransportMethod(TransportMethod.streamableHttp);
                 }
                 else if (!toggleOptionStdio.value)
                 {
                     // Prevent both toggles from being unchecked
                     toggleOptionHttp.SetValueWithoutNotify(true);
                 }
+
+                containerMcpServer.SetEnabled((TransportMethod)selectedTransportMethodPref.Value == TransportMethod.streamableHttp);
             });
         }
 
