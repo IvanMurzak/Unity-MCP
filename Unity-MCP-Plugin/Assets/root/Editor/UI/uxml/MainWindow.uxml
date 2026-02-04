@@ -60,8 +60,8 @@
                 <!-- Transport mode toggle -->
                 <!-- <ui:Label text="Manual configuration" class="section-title" /> -->
                 <ui:VisualElement style="flex-direction: row; margin-top: 4px;">
-                    <ui:Toggle name="toggleOptionHttp" label="http" class="toggle-text-button" />
-                    <ui:Toggle name="toggleOptionStdio" label="stdio" class="toggle-text-button" />
+                    <ui:Toggle name="toggleOptionHttp" label="http" class="toggle-text-button" tooltip="Configure AI agent to communicate over HTTP (RECOMMENDED)" />
+                    <ui:Toggle name="toggleOptionStdio" label="stdio" class="toggle-text-button" tooltip="Configure AI agent to communicate over STDIO (NOT RECOMMENDED)" />
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:DropdownField name="aiAgentDropdown" label="Choose" class="content-item" />
