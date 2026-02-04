@@ -31,6 +31,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected override AiAgentConfig CreateConfigStdioWindows() => new JsonAiAgentConfig(
             name: AgentName,
             transportMethod: TransportMethod.stdio,
+            transportMethodValue: "stdio",
             configPath: Path.Combine(".vs", "mcp.json"),
             bodyPath: "servers"
         );
@@ -38,6 +39,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
             transportMethod: TransportMethod.stdio,
+            transportMethodValue: "stdio",
             configPath: Path.Combine(".vs", "mcp.json"),
             bodyPath: "servers"
         );
@@ -45,6 +47,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected override AiAgentConfig CreateConfigHttpWindows() => new JsonAiAgentConfig(
             name: AgentName,
             transportMethod: TransportMethod.streamableHttp,
+            transportMethodValue: "http",
             configPath: Path.Combine(".vs", "mcp.json"),
             bodyPath: "servers"
         );
@@ -52,6 +55,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected override AiAgentConfig CreateConfigHttpMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
             transportMethod: TransportMethod.streamableHttp,
+            transportMethodValue: "http",
             configPath: Path.Combine(".vs", "mcp.json"),
             bodyPath: "servers"
         );
@@ -61,17 +65,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             base.OnUICreated(root);
 
             ContainerUnderHeader!.Add(TemplateLabelDescription("Visual Studio has integration of GitHub Copilot that operates as AI agent in the IDE."));
-            ContainerUnderHeader!.Add(TemplateLabelDescription("Visual Studio starts MCP server after the first prompt."));
 
             // STDIO Configuration
 
-            var manualStepsContainer = TemplateFoldoutFirst("Manual Configuration Steps");
+            ContainerStdio!.Add(TemplateLabelDescription("Visual Studio starts MCP server after the first prompt."));
 
-            manualStepsContainer!.Add(TemplateLabelDescription("1. Open or create file '.vs/mcp.json' in folder of Unity project (this folder must contain 'Assets' folder inside)."));
-            manualStepsContainer!.Add(TemplateLabelDescription("2. Copy and paste the configuration json into the file."));
-            manualStepsContainer!.Add(TemplateTextFieldReadOnly(ConfigStdio.ExpectedFileContent));
+            var manualStepsContainerStdio = TemplateFoldoutFirst("Manual Configuration Steps");
 
-            ContainerStdio!.Add(manualStepsContainer);
+            manualStepsContainerStdio!.Add(TemplateLabelDescription("1. Open or create file '.vs/mcp.json' in folder of Unity project (this folder must contain 'Assets' folder inside)."));
+            manualStepsContainerStdio!.Add(TemplateLabelDescription("2. Copy and paste the configuration json into the file."));
+            manualStepsContainerStdio!.Add(TemplateTextFieldReadOnly(ConfigStdio.ExpectedFileContent));
+
+            ContainerStdio!.Add(manualStepsContainerStdio);
 
             var troubleshootingContainerStdio = TemplateFoldout("Troubleshooting");
 

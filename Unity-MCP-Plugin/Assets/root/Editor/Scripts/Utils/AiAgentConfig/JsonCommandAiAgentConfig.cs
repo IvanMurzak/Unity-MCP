@@ -56,8 +56,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// <param name="name">The display name of the AI agent.</param>
         /// <param name="configPath">The path to the configuration file.</param>
         /// <param name="bodyPath">The JSON path to the MCP servers section.</param>
-        public JsonCommandAiAgentConfig(string name, TransportMethod transportMethod, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
-            : base(name, transportMethod, configPath, bodyPath)
+        public JsonCommandAiAgentConfig(
+            string name,
+            string configPath,
+            TransportMethod transportMethod,
+            string? transportMethodValue = null,
+            string bodyPath = Consts.MCP.Server.DefaultBodyPath)
+            : base(
+                name: name,
+                transportMethod: transportMethod,
+                transportMethodValue: transportMethodValue,
+                configPath: configPath,
+                bodyPath: bodyPath)
         {
             // empty
         }

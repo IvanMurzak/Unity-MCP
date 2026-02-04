@@ -23,19 +23,49 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
     public class JsonAiAgentConfig : AiAgentConfig
     {
         public override string ExpectedFileContent => TransportMethod == TransportMethod.streamableHttp
-            ? Startup.Server.RawJsonConfigurationHttp(UnityMcpPlugin.Host, BodyPath, type: McpServerHttpType).ToString()
-            : Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, BodyPath, UnityMcpPlugin.TimeoutMs, type: McpServerStdioType).ToString();
+            ? Startup.Server.RawJsonConfigurationHttp(
+                url: UnityMcpPlugin.Host,
+                bodyPath: BodyPath,
+                type: _transportMethodValue).ToString()
+            : Startup.Server.RawJsonConfigurationStdio(
+                port: UnityMcpPlugin.Port,
+                bodyPath: BodyPath,
+                timeoutMs: UnityMcpPlugin.TimeoutMs,
+                type: _transportMethodValue).ToString();
 
-        public JsonAiAgentConfig(string name, TransportMethod transportMethod, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
-            : base(name, transportMethod, configPath, bodyPath)
+        public JsonAiAgentConfig(
+            string name,
+            string configPath,
+            TransportMethod transportMethod,
+            string? transportMethodValue = null,
+            string bodyPath = Consts.MCP.Server.DefaultBodyPath)
+            : base(
+                name: name,
+                transportMethod: transportMethod,
+                transportMethodValue: transportMethodValue,
+                configPath: configPath,
+                bodyPath: bodyPath)
         {
             // empty
         }
 
-        public override bool Configure() => ConfigureJsonMcpClient(ConfigPath, BodyPath, TransportMethod);
-        public override bool IsConfigured() => IsMcpClientConfigured(ConfigPath, BodyPath, TransportMethod);
+        public override bool Configure() => ConfigureJsonMcpClient(
+            configPath: ConfigPath,
+            bodyPath: BodyPath,
+            transportMethod: TransportMethod,
+            typeValue: _transportMethodValue);
 
-        public static bool ConfigureJsonMcpClient(string configPath, string bodyPath, TransportMethod transportMethod)
+        public override bool IsConfigured() => IsMcpClientConfigured(
+            configPath: ConfigPath,
+            bodyPath: BodyPath,
+            transportMethod: TransportMethod,
+            typeValue: _transportMethodValue);
+
+        public static bool ConfigureJsonMcpClient(
+            string configPath,
+            string bodyPath,
+            TransportMethod transportMethod,
+            string? typeValue = null)
         {
             if (string.IsNullOrEmpty(configPath))
                 return false;
@@ -44,10 +74,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
             try
             {
+                // typeValue ??= $"{transportMethod}";
+
                 // Generate the appropriate configuration based on transport method
                 var rawConfig = transportMethod == TransportMethod.streamableHttp
-                    ? Startup.Server.RawJsonConfigurationHttp(UnityMcpPlugin.Host, bodyPath)
-                    : Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, bodyPath, UnityMcpPlugin.TimeoutMs);
+                    ? Startup.Server.RawJsonConfigurationHttp(
+                        url: UnityMcpPlugin.Host,
+                        bodyPath: bodyPath,
+                        type: typeValue)
+                    : Startup.Server.RawJsonConfigurationStdio(
+                        port: UnityMcpPlugin.Port,
+                        bodyPath: bodyPath,
+                        timeoutMs: UnityMcpPlugin.TimeoutMs,
+                        type: typeValue);
 
                 if (!File.Exists(configPath))
                 {
@@ -82,8 +121,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
                 // Generate the configuration to inject using the last segment as bodyPath
                 var injectObj = transportMethod == TransportMethod.streamableHttp
-                    ? Startup.Server.RawJsonConfigurationHttp(UnityMcpPlugin.Host, pathSegments.Last())
-                    : Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, pathSegments.Last(), UnityMcpPlugin.TimeoutMs);
+                    ? Startup.Server.RawJsonConfigurationHttp(
+                        url: UnityMcpPlugin.Host,
+                        bodyPath: pathSegments.Last(),
+                        type: typeValue)
+                    : Startup.Server.RawJsonConfigurationStdio(
+                        port: UnityMcpPlugin.Port,
+                        bodyPath: pathSegments.Last(),
+                        timeoutMs: UnityMcpPlugin.TimeoutMs,
+                        type: typeValue);
 
                 if (injectObj == null)
                     throw new Exception("Injected config is not a valid JSON object.");
@@ -133,7 +179,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 // Write back to file
                 File.WriteAllText(configPath, rootObj.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
 
-                return IsMcpClientConfigured(configPath, bodyPath, transportMethod);
+                return IsMcpClientConfigured(
+                    configPath: configPath,
+                    bodyPath: bodyPath,
+                    transportMethod: transportMethod,
+                    typeValue: typeValue);
             }
             catch (Exception ex)
             {
@@ -142,7 +192,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 return false;
             }
         }
-        public static bool IsMcpClientConfigured(string configPath, string bodyPath, TransportMethod transportMethod)
+        public static bool IsMcpClientConfigured(
+            string configPath,
+            string bodyPath,
+            TransportMethod transportMethod,
+            string? typeValue = null)
         {
             if (string.IsNullOrEmpty(configPath) || !File.Exists(configPath))
                 return false;
@@ -170,14 +224,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                     if (transportMethod == TransportMethod.streamableHttp)
                     {
                         // For http: check url and type, ensure no command/args
-                        if (!IsHttpConfigValid(kv.Value))
+                        if (!IsHttpConfigValid(kv.Value, typeValue))
                             continue;
                         return true;
                     }
                     else
                     {
                         // For stdio: check command and args, ensure no url
-                        if (!IsStdioConfigValid(kv.Value))
+                        if (!IsStdioConfigValid(kv.Value, typeValue))
                             continue;
                         return true;
                     }
@@ -198,7 +252,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// Must have: type="http", url matching expected
         /// Must NOT have: command, args
         /// </summary>
-        protected static bool IsHttpConfigValid(JsonNode? serverEntry)
+        protected static bool IsHttpConfigValid(JsonNode? serverEntry, string? typeValue = null)
         {
             if (serverEntry == null)
                 return false;
@@ -212,7 +266,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             if (string.IsNullOrEmpty(url) || !IsUrlMatch(url!))
                 return false;
 
-            if (type != "http")
+            if (type != typeValue)
                 return false;
 
             // Must NOT have stdio properties
@@ -227,14 +281,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// Must have: command matching expected, args with correct port/timeout
         /// Must NOT have: url
         /// </summary>
-        protected static bool IsStdioConfigValid(JsonNode? serverEntry)
+        protected static bool IsStdioConfigValid(JsonNode? serverEntry, string? typeValue = null)
         {
             if (serverEntry == null)
                 return false;
 
+            var type = serverEntry["type"]?.GetValue<string>();
             var command = serverEntry["command"]?.GetValue<string>();
             var args = serverEntry["args"]?.AsArray();
             var url = serverEntry["url"];
+
+            if (type != typeValue)
+                return false;
 
             // Must have correct command
             if (string.IsNullOrEmpty(command) || !IsCommandMatch(command!))

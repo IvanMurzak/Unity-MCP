@@ -19,8 +19,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         public static readonly string[] DeprecatedMcpServerNames = { "Unity-MCP" };
         public const string DefaultMcpServerName = "ai-game-developer";
 
-        protected virtual string McpServerHttpType => "http";
-        protected virtual string McpServerStdioType => "stdio";
+        protected readonly string? _transportMethodValue;
 
         public string Name { get; set; }
         public string ConfigPath { get; set; }
@@ -28,12 +27,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         public TransportMethod TransportMethod { get; }
         public abstract string ExpectedFileContent { get; }
 
-        public AiAgentConfig(string name, TransportMethod transportMethod, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
+        public AiAgentConfig(
+            string name,
+            string configPath,
+            TransportMethod transportMethod,
+            string? transportMethodValue = null,
+            string bodyPath = Consts.MCP.Server.DefaultBodyPath)
         {
             Name = name;
             ConfigPath = configPath;
             BodyPath = bodyPath;
             TransportMethod = transportMethod;
+            _transportMethodValue = transportMethodValue;
         }
 
         public abstract bool Configure();

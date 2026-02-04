@@ -109,7 +109,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 int port,
                 string bodyPath = "mcpServers",
                 int timeoutMs = Consts.Hub.DefaultTimeoutMs,
-                string type = "stdio")
+                string? type = null)
             {
                 var pathSegments = Consts.MCP.Server.BodyPathSegments(bodyPath);
 
@@ -129,6 +129,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     }
                 };
 
+                if (type == null)
+                    innerContent.Remove("type");
+
                 // Build nested structure from innermost to outermost
                 var result = innerContent;
                 for (int i = pathSegments.Length - 1; i >= 0; i--)
@@ -142,7 +145,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             public static JsonNode RawJsonConfigurationHttp(
                 string url,
                 string bodyPath = "mcpServers",
-                string type = "http")
+                string? type = null)
             {
                 var pathSegments = Consts.MCP.Server.BodyPathSegments(bodyPath);
 
@@ -156,6 +159,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     }
                 };
 
+                if (type == null)
+                    innerContent.Remove("type");
+
                 // Build nested structure from innermost to outermost
                 var result = innerContent;
                 for (int i = pathSegments.Length - 1; i >= 0; i--)
@@ -168,7 +174,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             // ------------------------------------------------------------------------------------------------------------------------------------
 
-            public static string RawTomlConfigurationStdio(string bodyPath = "mcp_servers", string type = "stdio")
+            public static string RawTomlConfigurationStdio(
+                string bodyPath = "mcp_servers",
+                string? type = null)
             {
                 return TomlAiAgentConfig.GenerateTomlSection(
                     sectionName: $"{bodyPath}.{AiAgentConfig.DefaultMcpServerName}",

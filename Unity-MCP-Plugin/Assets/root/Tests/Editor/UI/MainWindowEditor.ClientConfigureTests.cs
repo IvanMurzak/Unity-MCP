@@ -266,7 +266,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             File.WriteAllText(tempConfigPath, "{}");
 
             // Act
-            var result = JsonAiAgentConfig.ConfigureJsonMcpClient(tempConfigPath, bodyPath, Consts.MCP.Server.TransportMethod.stdio);
+            var result = JsonAiAgentConfig.ConfigureJsonMcpClient(
+                configPath: tempConfigPath,
+                bodyPath: bodyPath,
+                transportMethod: Consts.MCP.Server.TransportMethod.stdio);
 
             // Assert
             Assert.IsTrue(result, "ConfigureMcpClient should return true");
@@ -327,10 +330,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = $"projects{Consts.MCP.Server.BodyPathDelimiter}myProject{Consts.MCP.Server.BodyPathDelimiter}mcpServers";
-            JsonAiAgentConfig.ConfigureJsonMcpClient(tempConfigPath, bodyPath, Consts.MCP.Server.TransportMethod.stdio);
+            JsonAiAgentConfig.ConfigureJsonMcpClient(
+                configPath: tempConfigPath,
+                bodyPath: bodyPath,
+                transportMethod: Consts.MCP.Server.TransportMethod.stdio);
+            //typeValue: "stdio");
 
             // Act
-            var isConfigured = JsonAiAgentConfig.IsMcpClientConfigured(tempConfigPath, bodyPath, Consts.MCP.Server.TransportMethod.stdio);
+            var isConfigured = JsonAiAgentConfig.IsMcpClientConfigured(
+                configPath: tempConfigPath,
+                bodyPath: bodyPath,
+                transportMethod: Consts.MCP.Server.TransportMethod.stdio);
+            //typeValue: "stdio");
 
             // Assert
             Assert.IsTrue(isConfigured, "Should detect that client is configured");

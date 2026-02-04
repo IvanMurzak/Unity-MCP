@@ -29,29 +29,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigStdioWindows() => new JsonCommandAiAgentConfig(
             name: AgentName,
-            transportMethod: TransportMethod.stdio,
             configPath: Path.Combine("opencode.json"),
+            transportMethod: TransportMethod.stdio,
+            transportMethodValue: "local",
             bodyPath: "mcp"
         );
 
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonCommandAiAgentConfig(
             name: AgentName,
-            transportMethod: TransportMethod.stdio,
             configPath: Path.Combine("opencode.json"),
+            transportMethod: TransportMethod.stdio,
+            transportMethodValue: "local",
             bodyPath: "mcp"
         );
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new JsonCommandAiAgentConfig(
             name: AgentName,
-            transportMethod: TransportMethod.streamableHttp,
             configPath: Path.Combine("opencode.json"),
+            transportMethod: TransportMethod.streamableHttp,
+            transportMethodValue: "http",
             bodyPath: "mcp"
         );
 
         protected override AiAgentConfig CreateConfigHttpMacLinux() => new JsonCommandAiAgentConfig(
             name: AgentName,
-            transportMethod: TransportMethod.streamableHttp,
             configPath: Path.Combine("opencode.json"),
+            transportMethod: TransportMethod.streamableHttp,
+            transportMethodValue: "http",
             bodyPath: "mcp"
         );
 
