@@ -11,6 +11,7 @@
 #nullable enable
 using System;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
+using R3;
 using UnityEngine.UIElements;
 using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
@@ -23,46 +24,57 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public Label StatusText { get; }
         public Button BtnConfigure { get; }
 
+        private readonly Subject<bool> onConfigured = new();
+        public Observable<bool> OnConfigured => onConfigured;
+
+        private readonly AiAgentConfig _config;
+        private readonly TransportMethod _transportMode;
+
         public ConfigurationElements(AiAgentConfig config, TransportMethod transportMode)
         {
+            _config = config;
+            _transportMode = transportMode;
+
             Root = new UITemplate<VisualElement>("Editor/UI/uxml/agents/elements/TemplateConfigureStatus.uxml").Value;
             StatusCircle = Root.Q<VisualElement>("configureStatusCircle") ?? throw new NullReferenceException("VisualElement 'configureStatusCircle' not found in UI.");
             StatusText = Root.Q<Label>("configureStatusText") ?? throw new NullReferenceException("Label 'configureStatusText' not found in UI.");
             BtnConfigure = Root.Q<Button>("btnConfigure") ?? throw new NullReferenceException("Button 'btnConfigure' not found in UI.");
 
-            var isConfiguredResult = config.IsConfigured();
-            var transportText = transportMode switch
+            UpdateStatus();
+
+            BtnConfigure.RegisterCallback<ClickEvent>(evt =>
+            {
+                var result = _config.Configure();
+                UpdateStatus(result);
+                onConfigured.OnNext(result);
+            });
+        }
+
+        public void UpdateStatus(bool? isConfigured = null)
+        {
+            var isConfiguredValue = isConfigured ?? _config.IsConfigured();
+            var transportText = _transportMode switch
             {
                 TransportMethod.stdio => "stdio",
                 TransportMethod.streamableHttp => "http",
                 _ => "unknown"
             };
 
+            StatusText.text = isConfiguredValue ? $"Configured ({transportText})" : "Not Configured";
+
             StatusCircle.RemoveFromClassList(MainWindowEditor.USS_Connected);
             StatusCircle.RemoveFromClassList(MainWindowEditor.USS_Connecting);
             StatusCircle.RemoveFromClassList(MainWindowEditor.USS_Disconnected);
-
-            StatusCircle.AddToClassList(isConfiguredResult
+            StatusCircle.AddToClassList(isConfiguredValue
                 ? MainWindowEditor.USS_Connected
                 : MainWindowEditor.USS_Disconnected);
-            StatusText.text = isConfiguredResult ? $"Configured ({transportText})" : "Not Configured";
-            BtnConfigure.text = isConfiguredResult ? "Reconfigure" : "Configure";
 
-            BtnConfigure.RegisterCallback<ClickEvent>(evt =>
-            {
-                var configureResult = config.Configure();
+            BtnConfigure.text = isConfiguredValue ? "Reconfigure" : "Configure";
+        }
 
-                StatusText.text = configureResult ? $"Configured ({transportText})" : "Not Configured";
-
-                StatusCircle.RemoveFromClassList(MainWindowEditor.USS_Connected);
-                StatusCircle.RemoveFromClassList(MainWindowEditor.USS_Connecting);
-                StatusCircle.RemoveFromClassList(MainWindowEditor.USS_Disconnected);
-                StatusCircle.AddToClassList(configureResult
-                    ? MainWindowEditor.USS_Connected
-                    : MainWindowEditor.USS_Disconnected);
-
-                BtnConfigure.text = configureResult ? "Reconfigure" : "Configure";
-            });
+        ~ConfigurationElements()
+        {
+            onConfigured.OnCompleted();
         }
     }
 }

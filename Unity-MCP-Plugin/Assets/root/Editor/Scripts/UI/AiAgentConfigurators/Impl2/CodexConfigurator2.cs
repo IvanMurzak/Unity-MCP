@@ -1,0 +1,141 @@
+/*
+┌──────────────────────────────────────────────────────────────────┐
+│  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
+│  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
+│  Copyright (c) 2025 Ivan Murzak                                  │
+│  Licensed under the Apache License, Version 2.0.                 │
+│  See the LICENSE file in the project root for more information.  │
+└──────────────────────────────────────────────────────────────────┘
+*/
+
+#nullable enable
+using System;
+using System.IO;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
+using UnityEngine.UIElements;
+using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
+
+namespace com.IvanMurzak.Unity.MCP.Editor.UI
+{
+    /// <summary>
+    /// Configurator for Codex AI agent.
+    /// </summary>
+    public class CodexConfigurator2 : AiAgentConfigurator
+    {
+        public override string AgentName => "Codex";
+        public override string AgentId => "codex";
+        public override string DownloadUrl => "https://openai.com/codex/";
+
+        protected override string? IconFileName => "codex-64.png";
+
+        protected override AiAgentConfig CreateConfigStdioWindows() => new TomlAiAgentConfig(
+            name: AgentName,
+            transportMethod: TransportMethod.stdio,
+            configPath: Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".codex",
+                "config.toml"
+            ),
+            bodyPath: "mcp_servers"
+        );
+
+        protected override AiAgentConfig CreateConfigStdioMacLinux() => new TomlAiAgentConfig(
+            name: AgentName,
+            transportMethod: TransportMethod.stdio,
+            configPath: Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".codex",
+                "config.toml"
+            ),
+            bodyPath: "mcp_servers"
+        );
+
+        protected override AiAgentConfig CreateConfigHttpWindows() => new TomlAiAgentConfig(
+            name: AgentName,
+            transportMethod: TransportMethod.streamableHttp,
+            configPath: Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".codex",
+                "config.toml"
+            ),
+            bodyPath: "mcp_servers"
+        );
+
+        protected override AiAgentConfig CreateConfigHttpMacLinux() => new TomlAiAgentConfig(
+            name: AgentName,
+            transportMethod: TransportMethod.streamableHttp,
+            configPath: Path.Combine(
+                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+                ".codex",
+                "config.toml"
+            ),
+            bodyPath: "mcp_servers"
+        );
+
+        protected override void OnUICreated(VisualElement root)
+        {
+            base.OnUICreated(root);
+
+            var addMcpServerCommandStdio = $"codex mcp add {AiAgentConfig.DefaultMcpServerName} \"{Startup.Server.ExecutableFullPath}\" port={UnityMcpPlugin.Port} plugin-timeout={UnityMcpPlugin.TimeoutMs} client-transport=stdio";
+            var addMcpServerCommandHttp = $"codex mcp add --transport http {AiAgentConfig.DefaultMcpServerName} {UnityMcpPlugin.Host}";
+
+            // Common description and alert
+            ContainerUnderHeader!.Add(TemplateLabelDescription("Configure MCP for OpenAI Codex CLI."));
+            ContainerUnderHeader!.Add(TemplateAlertLabel("Codex is wrapped into a virtual machine, it can't access Unity via TCP connection which is required. There is a complex workaround using WSL. To avoid unnecessary complexity it is recommended to use Claude Code instead."));
+
+            // STDIO Configuration
+
+            var manualStepsOption1 = TemplateFoldoutFirst("Manual Configuration Steps - Option 1");
+
+            manualStepsOption1!.Add(TemplateLabelDescription("1. Open a terminal and run the following command to be in the folder of the Unity project"));
+            manualStepsOption1!.Add(TemplateTextFieldReadOnly($"cd \"{ProjectRootPath}\""));
+            manualStepsOption1!.Add(TemplateLabelDescription("2. Run the following command in the folder of the Unity project to configure Codex"));
+            manualStepsOption1!.Add(TemplateTextFieldReadOnly(addMcpServerCommandStdio));
+            manualStepsOption1!.Add(TemplateLabelDescription("3. Start Codex"));
+            manualStepsOption1!.Add(TemplateTextFieldReadOnly("codex"));
+
+            ContainerStdio!.Add(manualStepsOption1);
+
+            var manualStepsOption2 = TemplateFoldout("Manual Configuration Steps - Option 2");
+
+            manualStepsOption2!.Add(TemplateLabelDescription("1. Open or create file '%User%/.codex/config.toml'"));
+            manualStepsOption2!.Add(TemplateLabelDescription("2. Copy and paste the configuration TOML into the file."));
+            manualStepsOption2!.Add(TemplateTextFieldReadOnly(ConfigStdio.ExpectedFileContent));
+
+            ContainerStdio!.Add(manualStepsOption2);
+
+            var troubleshootingContainerStdio = TemplateFoldout("Troubleshooting");
+
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Ensure Codex CLI is installed and accessible from terminal"));
+
+            ContainerStdio!.Add(troubleshootingContainerStdio);
+
+            // HTTP Configuration
+
+            var manualStepsOption1Http = TemplateFoldoutFirst("Manual Configuration Steps - Option 1");
+
+            manualStepsOption1Http!.Add(TemplateLabelDescription("1. Open a terminal and run the following command to be in the folder of the Unity project"));
+            manualStepsOption1Http!.Add(TemplateTextFieldReadOnly($"cd \"{ProjectRootPath}\""));
+            manualStepsOption1Http!.Add(TemplateLabelDescription("2. Run the following command in the folder of the Unity project to configure Codex"));
+            manualStepsOption1Http!.Add(TemplateTextFieldReadOnly(addMcpServerCommandHttp));
+            manualStepsOption1Http!.Add(TemplateLabelDescription("3. Start Codex"));
+            manualStepsOption1Http!.Add(TemplateTextFieldReadOnly("codex"));
+
+            ContainerHttp!.Add(manualStepsOption1Http);
+
+            var manualStepsOption2Http = TemplateFoldout("Manual Configuration Steps - Option 2");
+
+            manualStepsOption2Http!.Add(TemplateLabelDescription("1. Open or create file '%User%/.codex/config.toml'"));
+            manualStepsOption2Http!.Add(TemplateLabelDescription("2. Copy and paste the configuration TOML into the file."));
+            manualStepsOption2Http!.Add(TemplateTextFieldReadOnly(ConfigHttp.ExpectedFileContent));
+
+            ContainerHttp!.Add(manualStepsOption2Http);
+
+            var troubleshootingContainerHttp = TemplateFoldout("Troubleshooting");
+
+            troubleshootingContainerHttp.Add(TemplateLabelDescription("- Ensure Codex CLI is installed and accessible from terminal"));
+
+            ContainerHttp!.Add(troubleshootingContainerHttp);
+        }
+    }
+}

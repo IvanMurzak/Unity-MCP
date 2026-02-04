@@ -22,17 +22,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
     {
         private static readonly List<AiAgentConfigurator> _configurators = new()
         {
-            new ClaudeCodeConfigurator2()
-            // new ClaudeCodeConfigurator(),
-            // new ClaudeDesktopConfigurator(),
-            // new VisualStudioCodeCopilotConfigurator(),
-            // new VisualStudioCopilotConfigurator(),
-            // new CursorConfigurator(),
-            // new GeminiConfigurator(),
-            // new AntigravityConfigurator(),
-            // new OpenCodeConfigurator(),
-            // new CodexConfigurator(),
-            // new CustomConfigurator()
+            new ClaudeCodeConfigurator2(),
+            new ClaudeDesktopConfigurator2(),
+            new VisualStudioCodeCopilotConfigurator2(),
+            new VisualStudioCopilotConfigurator2(),
+            new CursorConfigurator2(),
+            new GeminiConfigurator2(),
+            new AntigravityConfigurator2(),
+            new OpenCodeConfigurator2(),
+            new CodexConfigurator2(),
+            new CustomConfigurator2()
         };
 
         /// <summary>

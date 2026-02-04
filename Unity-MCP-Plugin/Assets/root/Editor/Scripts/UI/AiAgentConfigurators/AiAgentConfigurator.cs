@@ -11,6 +11,7 @@
 #nullable enable
 using System;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
+using R3;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
@@ -284,8 +285,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         {
             ThrowIfRootNotSet();
 
-            ContainerStdio!.Add(TemplateConfigurationElements(ConfigStdio, TransportMethod.stdio).Root);
-            ContainerHttp!.Add(TemplateConfigurationElements(ConfigHttp, TransportMethod.streamableHttp).Root);
+            var configElementStdio = TemplateConfigurationElements(ConfigStdio, TransportMethod.stdio); ;
+            var configElementHttp = TemplateConfigurationElements(ConfigHttp, TransportMethod.streamableHttp);
+
+            configElementStdio.OnConfigured.Subscribe(_ => configElementHttp.UpdateStatus());
+            configElementHttp.OnConfigured.Subscribe(_ => configElementStdio.UpdateStatus());
+
+            ContainerStdio!.Add(configElementStdio.Root);
+            ContainerHttp!.Add(configElementHttp.Root);
 
             return this;
         }
@@ -298,7 +305,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 ? DisplayStyle.Flex
                 : DisplayStyle.None;
 
-            ContainerHttp!.style.display = transportMethod == TransportMethod.streamableHttp
+            ContainerHttp!.style.display = transportMethod != TransportMethod.stdio
                 ? DisplayStyle.Flex
                 : DisplayStyle.None;
 
