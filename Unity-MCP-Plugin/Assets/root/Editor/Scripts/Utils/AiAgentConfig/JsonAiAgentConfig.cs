@@ -16,6 +16,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using com.IvanMurzak.McpPlugin.Common;
 using UnityEngine;
+using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
@@ -23,8 +24,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
     {
         public override string ExpectedFileContent => Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, BodyPath, UnityMcpPlugin.TimeoutMs).ToString();
 
-        public JsonAiAgentConfig(string name, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
-            : base(name, configPath, bodyPath)
+        public JsonAiAgentConfig(string name, TransportMethod transportMethod, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
+            : base(name, transportMethod, configPath, bodyPath)
         {
             // empty
         }

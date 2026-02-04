@@ -49,7 +49,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = "mcpServers";
-            var config = new JsonCommandAiAgentConfig("Test", tempConfigPath, bodyPath);
+            var config = new JsonCommandAiAgentConfig("Test", Consts.MCP.Server.TransportMethod.stdio, tempConfigPath, bodyPath);
 
             // Act
             var result = config.Configure();
@@ -91,7 +91,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = "mcpServers";
-            var config = new JsonCommandAiAgentConfig("Test", tempConfigPath, bodyPath);
+            var config = new JsonCommandAiAgentConfig("Test", Consts.MCP.Server.TransportMethod.stdio, tempConfigPath, bodyPath);
 
             // Act
             var result = config.Configure();
@@ -134,7 +134,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = $"projects{Consts.MCP.Server.BodyPathDelimiter}myProject{Consts.MCP.Server.BodyPathDelimiter}mcpServers";
-            var config = new JsonCommandAiAgentConfig("Test", tempConfigPath, bodyPath);
+            var config = new JsonCommandAiAgentConfig("Test", Consts.MCP.Server.TransportMethod.stdio, tempConfigPath, bodyPath);
 
             // Act
             var result = config.Configure();
@@ -173,7 +173,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = $"level1{Consts.MCP.Server.BodyPathDelimiter}level2{Consts.MCP.Server.BodyPathDelimiter}level3{Consts.MCP.Server.BodyPathDelimiter}mcpServers";
-            var config = new JsonCommandAiAgentConfig("Test", tempConfigPath, bodyPath);
+            var config = new JsonCommandAiAgentConfig("Test", Consts.MCP.Server.TransportMethod.stdio, tempConfigPath, bodyPath);
 
             // Act
             var result = config.Configure();
@@ -220,7 +220,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }
             }";
             File.WriteAllText(tempConfigPath, existingJson);
-            var config = new JsonCommandAiAgentConfig("Test", tempConfigPath, bodyPath);
+            var config = new JsonCommandAiAgentConfig("Test", Consts.MCP.Server.TransportMethod.stdio, tempConfigPath, bodyPath);
 
             // Act
             var result = config.Configure();
@@ -268,7 +268,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }
             }";
             File.WriteAllText(tempConfigPath, existingJson);
-            var config = new JsonCommandAiAgentConfig("Test", tempConfigPath, bodyPath);
+            var config = new JsonCommandAiAgentConfig("Test", Consts.MCP.Server.TransportMethod.stdio, tempConfigPath, bodyPath);
 
             // Act
             var result = config.Configure();
@@ -317,7 +317,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }}
             }}";
             File.WriteAllText(tempConfigPath, existingJson);
-            var config = new JsonCommandAiAgentConfig("Test", tempConfigPath, bodyPath);
+            var config = new JsonCommandAiAgentConfig("Test", Consts.MCP.Server.TransportMethod.stdio, tempConfigPath, bodyPath);
 
             // Act
             var result = config.Configure();
@@ -374,7 +374,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var bodyPath = "mcpServers";
             File.WriteAllText(tempConfigPath, "{}");
-            var config = new JsonCommandAiAgentConfig("Test", tempConfigPath, bodyPath);
+            var config = new JsonCommandAiAgentConfig("Test", Consts.MCP.Server.TransportMethod.stdio, tempConfigPath, bodyPath);
 
             // Act
             var result = config.Configure();
@@ -401,7 +401,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var bodyPath = "mcpServers";
             File.WriteAllText(tempConfigPath, "{ invalid json }");
-            var config = new JsonCommandAiAgentConfig("Test", tempConfigPath, bodyPath);
+            var config = new JsonCommandAiAgentConfig("Test", Consts.MCP.Server.TransportMethod.stdio, tempConfigPath, bodyPath);
 
             // Act
             var result = config.Configure();
@@ -427,7 +427,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = "mcpServers";
-            var config = new JsonCommandAiAgentConfig("Test", tempConfigPath, bodyPath);
+            var config = new JsonCommandAiAgentConfig("Test", Consts.MCP.Server.TransportMethod.stdio, tempConfigPath, bodyPath);
             config.Configure();
 
             // Act
@@ -444,7 +444,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = $"projects{Consts.MCP.Server.BodyPathDelimiter}myProject{Consts.MCP.Server.BodyPathDelimiter}mcpServers";
-            var config = new JsonCommandAiAgentConfig("Test", tempConfigPath, bodyPath);
+            var config = new JsonCommandAiAgentConfig("Test", Consts.MCP.Server.TransportMethod.stdio, tempConfigPath, bodyPath);
             config.Configure();
 
             // Act
@@ -462,10 +462,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var configuredBodyPath = "mcpServers";
             var queryBodyPath = $"nonExistent{Consts.MCP.Server.BodyPathDelimiter}path{Consts.MCP.Server.BodyPathDelimiter}mcpServers";
-            var configureConfig = new JsonCommandAiAgentConfig("Test", tempConfigPath, configuredBodyPath);
+            var configureConfig = new JsonCommandAiAgentConfig("Test", Consts.MCP.Server.TransportMethod.stdio, tempConfigPath, configuredBodyPath);
             configureConfig.Configure();
 
-            var queryConfig = new JsonCommandAiAgentConfig("Test", tempConfigPath, queryBodyPath);
+            var queryConfig = new JsonCommandAiAgentConfig("Test", Consts.MCP.Server.TransportMethod.stdio, tempConfigPath, queryBodyPath);
 
             // Act
             var isConfigured = queryConfig.IsConfigured();
@@ -481,7 +481,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var nonExistentPath = Path.Combine(Path.GetTempPath(), "non_existent_config.json");
-            var config = new JsonCommandAiAgentConfig("Test", nonExistentPath, "mcpServers");
+            var config = new JsonCommandAiAgentConfig("Test", Consts.MCP.Server.TransportMethod.stdio, nonExistentPath, "mcpServers");
 
             // Act
             var isConfigured = config.IsConfigured();
@@ -497,7 +497,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             File.WriteAllText(tempConfigPath, "");
-            var config = new JsonCommandAiAgentConfig("Test", tempConfigPath, "mcpServers");
+            var config = new JsonCommandAiAgentConfig("Test", Consts.MCP.Server.TransportMethod.stdio, tempConfigPath, "mcpServers");
 
             // Act
             var isConfigured = config.IsConfigured();
@@ -523,7 +523,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }}
             }}";
             File.WriteAllText(tempConfigPath, wrongExecutableJson);
-            var config = new JsonCommandAiAgentConfig("Test", tempConfigPath, bodyPath);
+            var config = new JsonCommandAiAgentConfig("Test", Consts.MCP.Server.TransportMethod.stdio, tempConfigPath, bodyPath);
 
             // Act
             var isConfigured = config.IsConfigured();
@@ -550,7 +550,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }}
             }}";
             File.WriteAllText(tempConfigPath, missingPortJson);
-            var config = new JsonCommandAiAgentConfig("Test", tempConfigPath, bodyPath);
+            var config = new JsonCommandAiAgentConfig("Test", Consts.MCP.Server.TransportMethod.stdio, tempConfigPath, bodyPath);
 
             // Act
             var isConfigured = config.IsConfigured();
@@ -577,7 +577,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }}
             }}";
             File.WriteAllText(tempConfigPath, missingTimeoutJson);
-            var config = new JsonCommandAiAgentConfig("Test", tempConfigPath, bodyPath);
+            var config = new JsonCommandAiAgentConfig("Test", Consts.MCP.Server.TransportMethod.stdio, tempConfigPath, bodyPath);
 
             // Act
             var isConfigured = config.IsConfigured();
@@ -604,7 +604,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }}
             }}";
             File.WriteAllText(tempConfigPath, wrongPortJson);
-            var config = new JsonCommandAiAgentConfig("Test", tempConfigPath, bodyPath);
+            var config = new JsonCommandAiAgentConfig("Test", Consts.MCP.Server.TransportMethod.stdio, tempConfigPath, bodyPath);
 
             // Act
             var isConfigured = config.IsConfigured();
@@ -624,7 +624,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = "mcpServers";
-            var config = new JsonCommandAiAgentConfig("Test", tempConfigPath, bodyPath);
+            var config = new JsonCommandAiAgentConfig("Test", Consts.MCP.Server.TransportMethod.stdio, tempConfigPath, bodyPath);
 
             // Act
             var content = config.ExpectedFileContent;
@@ -647,7 +647,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = $"level1{Consts.MCP.Server.BodyPathDelimiter}level2{Consts.MCP.Server.BodyPathDelimiter}mcpServers";
-            var config = new JsonCommandAiAgentConfig("Test", tempConfigPath, bodyPath);
+            var config = new JsonCommandAiAgentConfig("Test", Consts.MCP.Server.TransportMethod.stdio, tempConfigPath, bodyPath);
 
             // Act
             var content = config.ExpectedFileContent;
@@ -675,7 +675,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange - using default body path (empty string would use DefaultBodyPath)
             var bodyPath = Consts.MCP.Server.DefaultBodyPath;
-            var config = new JsonCommandAiAgentConfig("Test", tempConfigPath, bodyPath);
+            var config = new JsonCommandAiAgentConfig("Test", Consts.MCP.Server.TransportMethod.stdio, tempConfigPath, bodyPath);
 
             // Act
             var result = config.Configure();
@@ -691,7 +691,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public IEnumerator Configure_EmptyConfigPath_ReturnsFalse()
         {
             // Arrange
-            var config = new JsonCommandAiAgentConfig("Test", "", "mcpServers");
+            var config = new JsonCommandAiAgentConfig("Test", Consts.MCP.Server.TransportMethod.stdio, "", "mcpServers");
 
             // Act
             var result = config.Configure();
@@ -718,7 +718,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }}
             }}";
             File.WriteAllText(tempConfigPath, traditionalFormatJson);
-            var config = new JsonCommandAiAgentConfig("Test", tempConfigPath, bodyPath);
+            var config = new JsonCommandAiAgentConfig("Test", Consts.MCP.Server.TransportMethod.stdio, tempConfigPath, bodyPath);
 
             // Expect error and exception logs when trying to parse command as array (it's a string in traditional format)
             LogAssert.Expect(LogType.Error, new Regex("Error reading config file.*"));
@@ -740,7 +740,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = "mcpServers";
-            var config = new JsonCommandAiAgentConfig("Test", tempConfigPath, bodyPath);
+            var config = new JsonCommandAiAgentConfig("Test", Consts.MCP.Server.TransportMethod.stdio, tempConfigPath, bodyPath);
 
             // Act - configure twice
             var result1 = config.Configure();

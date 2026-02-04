@@ -10,6 +10,7 @@
 
 #nullable enable
 using com.IvanMurzak.McpPlugin.Common;
+using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
@@ -21,13 +22,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         public string Name { get; set; }
         public string ConfigPath { get; set; }
         public string BodyPath { get; set; }
+        public TransportMethod TransportMethod { get; }
         public abstract string ExpectedFileContent { get; }
 
-        public AiAgentConfig(string name, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
+        public AiAgentConfig(string name, TransportMethod transportMethod, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
         {
             Name = name;
             ConfigPath = configPath;
             BodyPath = bodyPath;
+            TransportMethod = transportMethod;
         }
 
         public abstract bool Configure();

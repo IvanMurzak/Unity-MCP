@@ -13,6 +13,7 @@ using System;
 using System.IO;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEngine.UIElements;
+using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
@@ -29,12 +30,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected override string? IconFileName => "open-code-64.png";
         protected override AiAgentConfig CreateConfigWindows() => new JsonCommandAiAgentConfig(
             name: AgentName,
+            transportMethod: TransportMethod.stdio,
             configPath: Path.Combine("opencode.json"),
             bodyPath: "mcp"
         );
 
         protected override AiAgentConfig CreateConfigMacLinux() => new JsonCommandAiAgentConfig(
             name: AgentName,
+            transportMethod: TransportMethod.stdio,
             configPath: Path.Combine("opencode.json"),
             bodyPath: "mcp"
         );

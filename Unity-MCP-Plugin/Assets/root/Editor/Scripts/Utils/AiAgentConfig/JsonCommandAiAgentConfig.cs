@@ -16,6 +16,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using com.IvanMurzak.McpPlugin.Common;
 using UnityEngine;
+using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
@@ -55,8 +56,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// <param name="name">The display name of the AI agent.</param>
         /// <param name="configPath">The path to the configuration file.</param>
         /// <param name="bodyPath">The JSON path to the MCP servers section.</param>
-        public JsonCommandAiAgentConfig(string name, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
-            : base(name, configPath, bodyPath)
+        public JsonCommandAiAgentConfig(string name, TransportMethod transportMethod, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
+            : base(name, transportMethod, configPath, bodyPath)
         {
             // empty
         }

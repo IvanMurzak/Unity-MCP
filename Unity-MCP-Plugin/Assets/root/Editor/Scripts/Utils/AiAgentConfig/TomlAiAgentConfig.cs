@@ -16,6 +16,7 @@ using System.Linq;
 using System.Text;
 using com.IvanMurzak.McpPlugin.Common;
 using UnityEngine;
+using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
@@ -23,8 +24,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
     {
         public override string ExpectedFileContent => Startup.Server.RawTomlConfigurationStdio(BodyPath).ToString();
 
-        public TomlAiAgentConfig(string name, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
-            : base(name, configPath, bodyPath)
+        public TomlAiAgentConfig(string name, TransportMethod transportMethod, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
+            : base(name, transportMethod, configPath, bodyPath)
         {
             // empty
         }
