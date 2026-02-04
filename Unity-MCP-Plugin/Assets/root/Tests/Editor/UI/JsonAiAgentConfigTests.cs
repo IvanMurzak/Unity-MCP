@@ -182,7 +182,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             var url = serverEntry!["url"]?.GetValue<string>();
             Assert.IsNotNull(url, "url should not be null");
-            Assert.AreEqual(JsonAiAgentConfig.McpServerUrl, url, "url should match McpServerUrl");
+            Assert.AreEqual(UnityMcpPlugin.Host, url, "url should match McpServerUrl");
 
             yield return null;
         }
@@ -458,7 +458,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange - create config with both streamableHttp and command properties (invalid state)
             var bodyPath = "mcpServers";
-            var url = JsonAiAgentConfig.McpServerUrl;
+            var url = UnityMcpPlugin.Host;
             var mixedJson = $@"{{
                 ""mcpServers"": {{
                     ""{AiAgentConfig.DefaultMcpServerName}"": {{
@@ -485,7 +485,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange - create config with both streamableHttp and args properties (invalid state)
             var bodyPath = "mcpServers";
-            var url = JsonAiAgentConfig.McpServerUrl;
+            var url = UnityMcpPlugin.Host;
             var mixedJson = $@"{{
                 ""mcpServers"": {{
                     ""{AiAgentConfig.DefaultMcpServerName}"": {{
@@ -536,7 +536,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = "mcpServers";
-            var url = JsonAiAgentConfig.McpServerUrl;
+            var url = UnityMcpPlugin.Host;
             var wrongTypeJson = $@"{{
                 ""mcpServers"": {{
                     ""{AiAgentConfig.DefaultMcpServerName}"": {{

@@ -23,8 +23,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
     public class JsonAiAgentConfig : AiAgentConfig
     {
         public override string ExpectedFileContent => TransportMethod == TransportMethod.streamableHttp
-            ? Startup.Server.RawJsonConfigurationHttp(UnityMcpPlugin.Host, BodyPath).ToString()
-            : Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, BodyPath, UnityMcpPlugin.TimeoutMs).ToString();
+            ? Startup.Server.RawJsonConfigurationHttp(UnityMcpPlugin.Host, BodyPath, type: McpServerHttpType).ToString()
+            : Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, BodyPath, UnityMcpPlugin.TimeoutMs, type: McpServerStdioType).ToString();
 
         public JsonAiAgentConfig(string name, TransportMethod transportMethod, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
             : base(name, transportMethod, configPath, bodyPath)
