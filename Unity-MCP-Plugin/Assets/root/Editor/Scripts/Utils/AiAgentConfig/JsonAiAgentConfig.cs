@@ -22,7 +22,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
     public class JsonAiAgentConfig : AiAgentConfig
     {
-        public override string ExpectedFileContent => Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, BodyPath, UnityMcpPlugin.TimeoutMs).ToString();
+        public override string ExpectedFileContent => TransportMethod == TransportMethod.streamableHttp
+            ? Startup.Server.RawJsonConfigurationHttp(McpServerUrl, BodyPath).ToString()
+            : Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, BodyPath, UnityMcpPlugin.TimeoutMs).ToString();
+
+        /// <summary>
+        /// Gets the MCP server URL for streamableHttp transport.
+        /// Uses the configured host URL from UnityMcpPlugin.Host.
+        /// </summary>
+        public static string McpServerUrl => UnityMcpPlugin.Host;
 
         public JsonAiAgentConfig(string name, TransportMethod transportMethod, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
             : base(name, transportMethod, configPath, bodyPath)
@@ -30,18 +38,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             // empty
         }
 
-        public override bool Configure() => ConfigureJsonMcpClient(ConfigPath, BodyPath);
-        public override bool IsConfigured() => IsMcpClientConfigured(ConfigPath, BodyPath);
+        public override bool Configure() => ConfigureJsonMcpClient(ConfigPath, BodyPath, TransportMethod);
+        public override bool IsConfigured() => IsMcpClientConfigured(ConfigPath, BodyPath, TransportMethod);
 
-        public static bool ConfigureJsonMcpClient(string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
+        public static bool ConfigureJsonMcpClient(string configPath, string bodyPath, TransportMethod transportMethod)
         {
             if (string.IsNullOrEmpty(configPath))
                 return false;
 
-            Debug.Log($"{Consts.Log.Tag} Configuring MCP client with path: {configPath} and bodyPath: {bodyPath}");
+            Debug.Log($"{Consts.Log.Tag} Configuring MCP client with path: {configPath}, bodyPath: {bodyPath}, transport: {transportMethod}");
 
             try
             {
+                // Generate the appropriate configuration based on transport method
+                var rawConfig = transportMethod == TransportMethod.streamableHttp
+                    ? Startup.Server.RawJsonConfigurationHttp(McpServerUrl, bodyPath)
+                    : Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, bodyPath, UnityMcpPlugin.TimeoutMs);
+
                 if (!File.Exists(configPath))
                 {
                     // Create all necessary directories
@@ -50,9 +63,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                         Directory.CreateDirectory(directory);
 
                     // Create the file if it doesn't exist
-                    File.WriteAllText(
-                        path: configPath,
-                        contents: Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, bodyPath, UnityMcpPlugin.TimeoutMs).ToString());
+                    File.WriteAllText(path: configPath, contents: rawConfig.ToString());
                     return true;
                 }
 
@@ -68,17 +79,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 }
                 catch
                 {
-                    File.WriteAllText(
-                        path: configPath,
-                        contents: Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, bodyPath, UnityMcpPlugin.TimeoutMs).ToString());
+                    File.WriteAllText(path: configPath, contents: rawConfig.ToString());
                     return true;
                 }
 
                 // Get path segments and navigate to the injection target
                 var pathSegments = Consts.MCP.Server.BodyPathSegments(bodyPath);
 
-                // Generate the configuration to inject
-                var injectObj = Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, pathSegments.Last(), UnityMcpPlugin.TimeoutMs);
+                // Generate the configuration to inject using the last segment as bodyPath
+                var injectObj = transportMethod == TransportMethod.streamableHttp
+                    ? Startup.Server.RawJsonConfigurationHttp(McpServerUrl, pathSegments.Last())
+                    : Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, pathSegments.Last(), UnityMcpPlugin.TimeoutMs);
+
                 if (injectObj == null)
                     throw new Exception("Injected config is not a valid JSON object.");
 
@@ -89,19 +101,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 // Navigate to or create the target location in the existing JSON
                 var targetObj = EnsureJsonPathExists(rootObj, pathSegments);
 
-                // Removing is not needed because we check all MCP servers for command match. Let's keep it commented just in case.
-                // foreach (var deprecatedName in DeprecatedMcpServerNames)
-                //     targetObj.Remove(deprecatedName);
-
-                // Find all command values in injectMcpServers for duplicate removal
-                var injectCommands = injectMcpServers
-                    .Select(kv => kv.Value?["command"]?.GetValue<string>())
-                    .Where(cmd => !string.IsNullOrEmpty(cmd))
-                    .ToHashSet();
-
-                // Remove any entry in targetObj with a matching command
+                // Find entries to remove based on transport method
+                // For stdio: remove entries with matching command
+                // For streamableHttp: remove entries with matching url
+                // Also remove entries with properties from the other transport method
                 var keysToRemove = targetObj
-                    .Where(kv => injectCommands.Contains(kv.Value?["command"]?.GetValue<string>()))
+                    .Where(kv =>
+                    {
+                        var command = kv.Value?["command"]?.GetValue<string>();
+                        var url = kv.Value?["url"]?.GetValue<string>();
+
+                        // Remove if command matches (for stdio detection)
+                        if (!string.IsNullOrEmpty(command) && IsCommandMatch(command!))
+                            return true;
+
+                        // Remove if url matches (for streamableHttp detection)
+                        if (!string.IsNullOrEmpty(url) && IsUrlMatch(url!))
+                            return true;
+
+                        return false;
+                    })
                     .Select(kv => kv.Key)
                     .ToList();
 
@@ -120,7 +139,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 // Write back to file
                 File.WriteAllText(configPath, rootObj.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
 
-                return IsMcpClientConfigured(configPath, bodyPath);
+                return IsMcpClientConfigured(configPath, bodyPath, transportMethod);
             }
             catch (Exception ex)
             {
@@ -129,7 +148,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 return false;
             }
         }
-        public static bool IsMcpClientConfigured(string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
+        public static bool IsMcpClientConfigured(string configPath, string bodyPath, TransportMethod transportMethod)
         {
             if (string.IsNullOrEmpty(configPath) || !File.Exists(configPath))
                 return false;
@@ -154,12 +173,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
                 foreach (var kv in targetObj)
                 {
-                    var command = kv.Value?["command"]?.GetValue<string>();
-                    if (string.IsNullOrEmpty(command) || !IsCommandMatch(command!))
-                        continue;
-
-                    var args = kv.Value?["args"]?.AsArray();
-                    return DoArgumentsMatch(args);
+                    if (transportMethod == TransportMethod.streamableHttp)
+                    {
+                        // For streamableHttp: check url and type, ensure no command/args
+                        if (!IsStreamableHttpConfigValid(kv.Value))
+                            continue;
+                        return true;
+                    }
+                    else
+                    {
+                        // For stdio: check command and args, ensure no url
+                        if (!IsStdioConfigValid(kv.Value))
+                            continue;
+                        return true;
+                    }
                 }
 
                 return false;
@@ -170,6 +197,64 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 Debug.LogException(ex);
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Validates that a server entry is correctly configured for streamableHttp transport.
+        /// Must have: type="streamableHttp", url matching expected
+        /// Must NOT have: command, args
+        /// </summary>
+        protected static bool IsStreamableHttpConfigValid(JsonNode? serverEntry)
+        {
+            if (serverEntry == null)
+                return false;
+
+            var url = serverEntry["url"]?.GetValue<string>();
+            var type = serverEntry["type"]?.GetValue<string>();
+            var command = serverEntry["command"];
+            var args = serverEntry["args"];
+
+            // Must have correct url and type
+            if (string.IsNullOrEmpty(url) || !IsUrlMatch(url!))
+                return false;
+
+            if (type != "streamableHttp")
+                return false;
+
+            // Must NOT have stdio properties
+            if (command != null || args != null)
+                return false;
+
+            return true;
+        }
+
+        /// <summary>
+        /// Validates that a server entry is correctly configured for stdio transport.
+        /// Must have: command matching expected, args with correct port/timeout
+        /// Must NOT have: url
+        /// </summary>
+        protected static bool IsStdioConfigValid(JsonNode? serverEntry)
+        {
+            if (serverEntry == null)
+                return false;
+
+            var command = serverEntry["command"]?.GetValue<string>();
+            var args = serverEntry["args"]?.AsArray();
+            var url = serverEntry["url"];
+
+            // Must have correct command
+            if (string.IsNullOrEmpty(command) || !IsCommandMatch(command!))
+                return false;
+
+            // Must have correct args
+            if (!DoArgumentsMatch(args))
+                return false;
+
+            // Must NOT have streamableHttp properties
+            if (url != null)
+                return false;
+
+            return true;
         }
 
         protected static bool IsCommandMatch(string command)
@@ -185,6 +270,29 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             {
                 // If normalization fails, fallback to string comparison
                 return string.Equals(command, Startup.Server.ExecutableFullPath, StringComparison.OrdinalIgnoreCase);
+            }
+        }
+
+        /// <summary>
+        /// Checks if the URL in the config matches the expected MCP server URL.
+        /// Compares normalized URLs to handle trailing slashes and case differences.
+        /// </summary>
+        protected static bool IsUrlMatch(string url)
+        {
+            try
+            {
+                var configUri = new Uri(url.TrimEnd('/'), UriKind.Absolute);
+                var expectedUri = new Uri(McpServerUrl.TrimEnd('/'), UriKind.Absolute);
+
+                // Compare host, port, and path
+                return string.Equals(configUri.Host, expectedUri.Host, StringComparison.OrdinalIgnoreCase)
+                    && configUri.Port == expectedUri.Port
+                    && string.Equals(configUri.AbsolutePath.TrimEnd('/'), expectedUri.AbsolutePath.TrimEnd('/'), StringComparison.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                // If URI parsing fails, fallback to string comparison
+                return string.Equals(url.TrimEnd('/'), McpServerUrl.TrimEnd('/'), StringComparison.OrdinalIgnoreCase);
             }
         }
 

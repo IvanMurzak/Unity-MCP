@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
+using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
 namespace com.IvanMurzak.Unity.MCP
 {
@@ -32,6 +33,7 @@ namespace com.IvanMurzak.Unity.MCP
 
             public LogLevel LogLevel { get; set; } = LogLevel.Warning;
             public bool KeepServerRunning { get; set; } = false;
+            public TransportMethod TransportMethod { get; set; } = TransportMethod.streamableHttp;
             public List<McpFeature> Tools { get; set; } = new();
             public List<McpFeature> Prompts { get; set; } = new();
             public List<McpFeature> Resources { get; set; } = new();
@@ -46,6 +48,7 @@ namespace com.IvanMurzak.Unity.MCP
                 Host = DefaultHost;
                 KeepConnected = true;
                 KeepServerRunning = false;
+                TransportMethod = TransportMethod.streamableHttp;
                 LogLevel = LogLevel.Warning;
                 TimeoutMs = Consts.Hub.DefaultTimeoutMs;
                 Tools = DefaultTools;

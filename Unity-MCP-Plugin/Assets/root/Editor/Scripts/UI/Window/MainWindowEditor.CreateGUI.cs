@@ -453,15 +453,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var toggleOptionStdio = root.Q<Toggle>("toggleOptionStdio") ?? throw new NullReferenceException("Toggle 'toggleOptionStdio' not found in UI.");
 
             // Initialize with HTTP selected by default
-            toggleOptionStdio.value = selectedTransportMethodPref.Value == (int)TransportMethod.stdio;
-            toggleOptionHttp.value = selectedTransportMethodPref.Value == (int)TransportMethod.streamableHttp;
-            currentAiAgentConfigurator?.SetTransportMethod((TransportMethod)selectedTransportMethodPref.Value);
+            toggleOptionStdio.value = UnityMcpPlugin.TransportMethod == TransportMethod.stdio;
+            toggleOptionHttp.value = UnityMcpPlugin.TransportMethod != TransportMethod.stdio;
+            currentAiAgentConfigurator?.SetTransportMethod(UnityMcpPlugin.TransportMethod);
 
             void UpdateMcpServerState()
             {
-                var transportMethod = (TransportMethod)selectedTransportMethodPref.Value;
-                containerMcpServer.SetEnabled(transportMethod == TransportMethod.streamableHttp);
-                btnStartStopMcpServer.tooltip = transportMethod == TransportMethod.streamableHttp
+                var transportMethod = UnityMcpPlugin.TransportMethod;
+                containerMcpServer.SetEnabled(UnityMcpPlugin.TransportMethod != TransportMethod.stdio);
+                btnStartStopMcpServer.tooltip = UnityMcpPlugin.TransportMethod != TransportMethod.stdio
                     ? "Start or stop the local MCP server."
                     : "Local MCP server is disabled in STDIO mode. AI agent will launch its own MCP server instance.";
             }
@@ -471,7 +471,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             {
                 if (evt.newValue)
                 {
-                    selectedTransportMethodPref.Value = (int)TransportMethod.stdio;
+                    UnityMcpPlugin.TransportMethod = TransportMethod.stdio;
+                    UnityMcpPlugin.Instance.Save();
                     toggleOptionHttp.SetValueWithoutNotify(false);
                     currentAiAgentConfigurator?.SetTransportMethod(TransportMethod.stdio);
 
@@ -495,7 +496,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             {
                 if (evt.newValue)
                 {
-                    selectedTransportMethodPref.Value = (int)TransportMethod.streamableHttp;
+                    UnityMcpPlugin.TransportMethod = TransportMethod.streamableHttp;
+                    UnityMcpPlugin.Instance.Save();
                     toggleOptionStdio.SetValueWithoutNotify(false);
                     currentAiAgentConfigurator?.SetTransportMethod(TransportMethod.streamableHttp);
                 }

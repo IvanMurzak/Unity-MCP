@@ -122,17 +122,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 string url,
                 string bodyPath = "mcpServers")
             {
-                return new JsonObject()
+                var pathSegments = Consts.MCP.Server.BodyPathSegments(bodyPath);
+
+                // Build innermost content first
+                JsonObject innerContent = new JsonObject
                 {
-                    [bodyPath] = new JsonObject()
+                    [AiAgentConfig.DefaultMcpServerName] = new JsonObject
                     {
-                        [AiAgentConfig.DefaultMcpServerName] = new JsonObject
-                        {
-                            ["url"] = url,
-                            ["type"] = "streamableHttp"
-                        }
+                        ["url"] = url,
+                        ["type"] = "streamableHttp"
                     }
                 };
+
+                // Build nested structure from innermost to outermost
+                var result = innerContent;
+                for (int i = pathSegments.Length - 1; i >= 0; i--)
+                {
+                    result = new JsonObject { [pathSegments[i]] = result };
+                }
+
+                return result;
             }
 
             // ------------------------------------------------------------------------------------------------------------------------------------

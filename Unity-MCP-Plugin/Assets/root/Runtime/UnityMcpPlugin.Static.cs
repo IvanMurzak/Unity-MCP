@@ -22,6 +22,7 @@ using R3;
 
 namespace com.IvanMurzak.Unity.MCP
 {
+    using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
     using ILogger = Microsoft.Extensions.Logging.ILogger;
     using LogLevel = com.IvanMurzak.Unity.MCP.Runtime.Utils.LogLevel;
     using MicrosoftLogLevel = Microsoft.Extensions.Logging.LogLevel;
@@ -108,6 +109,15 @@ namespace com.IvanMurzak.Unity.MCP
             set
             {
                 Instance.unityConnectionConfig.KeepServerRunning = value;
+                NotifyChanged(Instance.unityConnectionConfig);
+            }
+        }
+        public static TransportMethod TransportMethod
+        {
+            get => Instance.unityConnectionConfig.TransportMethod;
+            set
+            {
+                Instance.unityConnectionConfig.TransportMethod = value;
                 NotifyChanged(Instance.unityConnectionConfig);
             }
         }

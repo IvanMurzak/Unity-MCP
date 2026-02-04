@@ -218,7 +218,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             SetAgentDownloadUrl(DownloadUrl);
             SetTutorialUrl(TutorialUrl);
             SetConfigureStatusIndicator();
-            SetTransportMethod(TransportMethod.streamableHttp);
+            SetTransportMethod(UnityMcpPlugin.TransportMethod);
         }
 
         protected virtual AiAgentConfigurator SetAgentDownloadUrl(string url)

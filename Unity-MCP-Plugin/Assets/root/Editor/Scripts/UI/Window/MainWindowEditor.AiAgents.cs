@@ -12,14 +12,12 @@
 using Extensions.Unity.PlayerPrefsEx;
 using UnityEngine;
 using UnityEngine.UIElements;
-using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
     public partial class MainWindowEditor
     {
         private static PlayerPrefsString selectedAiAgentId = new("Unity_MCP_SelectedAiAgent");
-        private static PlayerPrefsInt selectedTransportMethodPref = new("Unity_MCP_SelectedTransportMethod", (int)TransportMethod.streamableHttp);
 
         private AiAgentConfigurator? currentAiAgentConfigurator;
 
