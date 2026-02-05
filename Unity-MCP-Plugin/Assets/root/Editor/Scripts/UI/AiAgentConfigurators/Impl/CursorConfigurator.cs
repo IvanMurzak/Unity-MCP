@@ -11,6 +11,7 @@
 #nullable enable
 using System;
 using System.IO;
+using System.Text.Json.Nodes;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEngine.UIElements;
@@ -40,7 +41,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             transportMethod: TransportMethod.stdio,
             transportMethodValue: "stdio",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
-        );
+        )
+        .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
+        .SetProperty("command", JsonValue.Create(Startup.Server.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true)
+        .SetProperty("args", new JsonArray {
+            $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
+            $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+            $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+        }, requiredForConfiguration: true)
+        .SetPropertyToRemove("url");
 
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
@@ -52,7 +61,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             transportMethod: TransportMethod.stdio,
             transportMethodValue: "stdio",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
-        );
+        )
+        .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
+        .SetProperty("command", JsonValue.Create(Startup.Server.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true)
+        .SetProperty("args", new JsonArray {
+            $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
+            $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+            $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+        }, requiredForConfiguration: true)
+        .SetPropertyToRemove("url");
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new JsonAiAgentConfig(
             name: AgentName,
@@ -64,7 +81,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             transportMethod: TransportMethod.streamableHttp,
             transportMethodValue: "http",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
-        );
+        )
+        .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
+        .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true)
+        .SetPropertyToRemove("command")
+        .SetPropertyToRemove("args");
 
         protected override AiAgentConfig CreateConfigHttpMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
@@ -76,7 +97,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             transportMethod: TransportMethod.streamableHttp,
             transportMethodValue: "http",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
-        );
+        )
+        .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
+        .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true)
+        .SetPropertyToRemove("command")
+        .SetPropertyToRemove("args");
 
         protected override void OnUICreated(VisualElement root)
         {

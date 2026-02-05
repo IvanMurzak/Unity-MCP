@@ -42,6 +42,38 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             yield return base.TearDown();
         }
 
+        private JsonAiAgentConfig CreateStdioConfig(string configPath, string bodyPath = "mcpServers")
+        {
+            return new JsonAiAgentConfig(
+                name: "Test",
+                configPath: configPath,
+                transportMethod: TransportMethod.stdio,
+                transportMethodValue: $"{TransportMethod.stdio}",
+                bodyPath: bodyPath)
+            .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
+            .SetProperty("command", JsonValue.Create(Startup.Server.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true)
+            .SetProperty("args", new JsonArray {
+                $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
+                $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+                $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+            }, requiredForConfiguration: true)
+            .SetPropertyToRemove("url");
+        }
+
+        private JsonAiAgentConfig CreateHttpConfig(string configPath, string bodyPath = "mcpServers")
+        {
+            return new JsonAiAgentConfig(
+                name: "Test",
+                configPath: configPath,
+                transportMethod: TransportMethod.streamableHttp,
+                transportMethodValue: $"{TransportMethod.streamableHttp}",
+                bodyPath: bodyPath)
+            .SetProperty("type", JsonValue.Create($"{TransportMethod.streamableHttp}"), requiredForConfiguration: true)
+            .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true)
+            .SetPropertyToRemove("command")
+            .SetPropertyToRemove("args");
+        }
+
         #region Configure - Stdio Transport
 
         [UnityTest]
@@ -49,12 +81,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = "mcpServers";
-            var config = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.stdio,
-                transportMethodValue: $"{TransportMethod.stdio}",
-                bodyPath: bodyPath);
+            var config = CreateStdioConfig(tempConfigPath, bodyPath);
 
             // Act
             var result = config.Configure();
@@ -90,12 +117,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = "mcpServers";
-            var config = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.stdio,
-                transportMethodValue: $"{TransportMethod.stdio}",
-                bodyPath: bodyPath);
+            var config = CreateStdioConfig(tempConfigPath, bodyPath);
 
             // Act
             var result = config.Configure();
@@ -141,12 +163,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = "mcpServers";
-            var config = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.streamableHttp,
-                transportMethodValue: $"{TransportMethod.streamableHttp}",
-                bodyPath: bodyPath);
+            var config = CreateHttpConfig(tempConfigPath, bodyPath);
 
             // Act
             var result = config.Configure();
@@ -183,12 +200,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = "mcpServers";
-            var config = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.streamableHttp,
-                transportMethodValue: $"{TransportMethod.streamableHttp}",
-                bodyPath: bodyPath);
+            var config = CreateHttpConfig(tempConfigPath, bodyPath);
 
             // Act
             var result = config.Configure();
@@ -212,12 +224,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = $"projects{Consts.MCP.Server.BodyPathDelimiter}myProject{Consts.MCP.Server.BodyPathDelimiter}mcpServers";
-            var config = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.streamableHttp,
-                transportMethodValue: $"{TransportMethod.streamableHttp}",
-                bodyPath: bodyPath);
+            var config = CreateHttpConfig(tempConfigPath, bodyPath);
 
             // Act
             var result = config.Configure();
@@ -252,12 +259,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange - first configure with stdio
             var bodyPath = "mcpServers";
-            var stdioConfig = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.stdio,
-                transportMethodValue: $"{TransportMethod.stdio}",
-                bodyPath: bodyPath);
+            var stdioConfig = CreateStdioConfig(tempConfigPath, bodyPath);
             stdioConfig.Configure();
 
             // Verify stdio properties exist
@@ -268,12 +270,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNotNull(serverEntry1["args"], "args should exist after stdio configure");
 
             // Act - configure with http
-            var httpConfig = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.streamableHttp,
-                transportMethodValue: $"{TransportMethod.streamableHttp}",
-                bodyPath: bodyPath);
+            var httpConfig = CreateHttpConfig(tempConfigPath, bodyPath);
             var result = httpConfig.Configure();
 
             // Assert
@@ -299,12 +296,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange - first configure with http
             var bodyPath = "mcpServers";
-            var httpConfig = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.streamableHttp,
-                transportMethodValue: $"{TransportMethod.streamableHttp}",
-                bodyPath: bodyPath);
+            var httpConfig = CreateHttpConfig(tempConfigPath, bodyPath);
             httpConfig.Configure();
 
             // Verify http properties exist
@@ -314,12 +306,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNotNull(serverEntry1!["url"], "url should exist after http configure");
 
             // Act - configure with stdio
-            var stdioConfig = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.stdio,
-                transportMethodValue: $"{TransportMethod.stdio}",
-                bodyPath: bodyPath);
+            var stdioConfig = CreateStdioConfig(tempConfigPath, bodyPath);
             var result = stdioConfig.Configure();
 
             // Assert
@@ -355,21 +342,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             File.WriteAllText(tempConfigPath, existingJson);
 
             // Configure with stdio first
-            var stdioConfig = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.stdio,
-                transportMethodValue: $"{TransportMethod.stdio}",
-                bodyPath: bodyPath);
+            var stdioConfig = CreateStdioConfig(tempConfigPath, bodyPath);
             stdioConfig.Configure();
 
             // Act - switch to http
-            var httpConfig = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.streamableHttp,
-                transportMethodValue: $"{TransportMethod.streamableHttp}",
-                bodyPath: bodyPath);
+            var httpConfig = CreateHttpConfig(tempConfigPath, bodyPath);
             var result = httpConfig.Configure();
 
             // Assert
@@ -398,12 +375,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = "mcpServers";
-            var config = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.stdio,
-                transportMethodValue: $"{TransportMethod.stdio}",
-                bodyPath: bodyPath);
+            var config = CreateStdioConfig(tempConfigPath, bodyPath);
             config.Configure();
 
             // Act
@@ -431,12 +403,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }}
             }}";
             File.WriteAllText(tempConfigPath, mixedJson);
-            var config = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.stdio,
-                transportMethodValue: $"{TransportMethod.stdio}",
-                bodyPath: bodyPath);
+            var config = CreateStdioConfig(tempConfigPath, bodyPath);
 
             // Act
             var isConfigured = config.IsConfigured();
@@ -460,12 +427,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }}
             }}";
             File.WriteAllText(tempConfigPath, missingCommandJson);
-            var config = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.stdio,
-                transportMethodValue: $"{TransportMethod.stdio}",
-                bodyPath: bodyPath);
+            var config = CreateStdioConfig(tempConfigPath, bodyPath);
 
             // Act
             var isConfigured = config.IsConfigured();
@@ -491,12 +453,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }}
             }}";
             File.WriteAllText(tempConfigPath, wrongPortJson);
-            var config = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.stdio,
-                transportMethodValue: $"{TransportMethod.stdio}",
-                bodyPath: bodyPath);
+            var config = CreateStdioConfig(tempConfigPath, bodyPath);
 
             // Act
             var isConfigured = config.IsConfigured();
@@ -516,12 +473,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = "mcpServers";
-            var config = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.streamableHttp,
-                transportMethodValue: $"{TransportMethod.streamableHttp}",
-                bodyPath: bodyPath);
+            var config = CreateHttpConfig(tempConfigPath, bodyPath);
             config.Configure();
 
             // Act
@@ -549,12 +501,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }}
             }}";
             File.WriteAllText(tempConfigPath, mixedJson);
-            var config = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.streamableHttp,
-                transportMethodValue: $"{TransportMethod.streamableHttp}",
-                bodyPath: bodyPath);
+            var config = CreateHttpConfig(tempConfigPath, bodyPath);
 
             // Act
             var isConfigured = config.IsConfigured();
@@ -581,12 +528,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }}
             }}";
             File.WriteAllText(tempConfigPath, mixedJson);
-            var config = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.streamableHttp,
-                transportMethodValue: $"{TransportMethod.streamableHttp}",
-                bodyPath: bodyPath);
+            var config = CreateHttpConfig(tempConfigPath, bodyPath);
 
             // Act
             var isConfigured = config.IsConfigured();
@@ -610,12 +552,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }}
             }}";
             File.WriteAllText(tempConfigPath, missingUrlJson);
-            var config = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.streamableHttp,
-                transportMethodValue: $"{TransportMethod.streamableHttp}",
-                bodyPath: bodyPath);
+            var config = CreateHttpConfig(tempConfigPath, bodyPath);
 
             // Act
             var isConfigured = config.IsConfigured();
@@ -641,12 +578,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }}
             }}";
             File.WriteAllText(tempConfigPath, wrongTypeJson);
-            var config = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.streamableHttp,
-                transportMethodValue: $"{TransportMethod.streamableHttp}",
-                bodyPath: bodyPath);
+            var config = CreateHttpConfig(tempConfigPath, bodyPath);
 
             // Act
             var isConfigured = config.IsConfigured();
@@ -671,12 +603,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }}
             }}";
             File.WriteAllText(tempConfigPath, wrongUrlJson);
-            var config = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.streamableHttp,
-                transportMethodValue: $"{TransportMethod.streamableHttp}",
-                bodyPath: bodyPath);
+            var config = CreateHttpConfig(tempConfigPath, bodyPath);
 
             // Act
             var isConfigured = config.IsConfigured();
@@ -696,21 +623,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange - configure with http
             var bodyPath = "mcpServers";
-            var httpConfig = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.streamableHttp,
-                transportMethodValue: $"{TransportMethod.streamableHttp}",
-                bodyPath: bodyPath);
+            var httpConfig = CreateHttpConfig(tempConfigPath, bodyPath);
             httpConfig.Configure();
 
             // Check with stdio transport
-            var stdioConfig = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.stdio,
-                transportMethodValue: $"{TransportMethod.stdio}",
-                bodyPath: bodyPath);
+            var stdioConfig = CreateStdioConfig(tempConfigPath, bodyPath);
 
             // Act
             var isConfigured = stdioConfig.IsConfigured();
@@ -726,21 +643,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange - configure with stdio
             var bodyPath = "mcpServers";
-            var stdioConfig = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.stdio,
-                transportMethodValue: $"{TransportMethod.stdio}",
-                bodyPath: bodyPath);
+            var stdioConfig = CreateStdioConfig(tempConfigPath, bodyPath);
             stdioConfig.Configure();
 
             // Check with streamableHttp transport
-            var httpConfig = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.streamableHttp,
-                transportMethodValue: $"{TransportMethod.streamableHttp}",
-                bodyPath: bodyPath);
+            var httpConfig = CreateHttpConfig(tempConfigPath, bodyPath);
 
             // Act
             var isConfigured = httpConfig.IsConfigured();
@@ -760,12 +667,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = "mcpServers";
-            var config = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.stdio,
-                transportMethodValue: $"{TransportMethod.stdio}",
-                bodyPath: bodyPath);
+            var config = CreateStdioConfig(tempConfigPath, bodyPath);
 
             // Act
             var content = config.ExpectedFileContent;
@@ -789,12 +691,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = "mcpServers";
-            var config = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.streamableHttp,
-                transportMethodValue: $"{TransportMethod.streamableHttp}",
-                bodyPath: bodyPath);
+            var config = CreateHttpConfig(tempConfigPath, bodyPath);
 
             // Act
             var content = config.ExpectedFileContent;
@@ -823,18 +720,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var nonExistentPath = Path.Combine(Path.GetTempPath(), "non_existent_config_12345.json");
-            var stdioConfig = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: nonExistentPath,
-                transportMethod: TransportMethod.stdio,
-                transportMethodValue: $"{TransportMethod.stdio}",
-                bodyPath: "mcpServers");
-            var httpConfig = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: nonExistentPath,
-                transportMethod: TransportMethod.streamableHttp,
-                transportMethodValue: $"{TransportMethod.streamableHttp}",
-                bodyPath: "mcpServers");
+            var stdioConfig = CreateStdioConfig(nonExistentPath);
+            var httpConfig = CreateHttpConfig(nonExistentPath);
 
             // Act & Assert
             Assert.IsFalse(stdioConfig.IsConfigured(), "stdio: Should return false for non-existent file");
@@ -848,18 +735,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             File.WriteAllText(tempConfigPath, "");
-            var stdioConfig = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.stdio,
-                transportMethodValue: $"{TransportMethod.stdio}",
-                bodyPath: "mcpServers");
-            var httpConfig = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.streamableHttp,
-                transportMethodValue: $"{TransportMethod.streamableHttp}",
-                bodyPath: "mcpServers");
+            var stdioConfig = CreateStdioConfig(tempConfigPath);
+            var httpConfig = CreateHttpConfig(tempConfigPath);
 
             // Act & Assert
             Assert.IsFalse(stdioConfig.IsConfigured(), "stdio: Should return false for empty file");
@@ -872,18 +749,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public IEnumerator Configure_EmptyConfigPath_ReturnsFalse()
         {
             // Arrange
-            var stdioConfig = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: "",
-                transportMethod: TransportMethod.stdio,
-                transportMethodValue: $"{TransportMethod.stdio}",
-                bodyPath: "mcpServers");
-            var httpConfig = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: "",
-                transportMethod: TransportMethod.streamableHttp,
-                transportMethodValue: $"{TransportMethod.streamableHttp}",
-                bodyPath: "mcpServers");
+            var stdioConfig = CreateStdioConfig("");
+            var httpConfig = CreateHttpConfig("");
 
             // Act & Assert
             Assert.IsFalse(stdioConfig.Configure(), "stdio: Configure should return false for empty config path");
@@ -897,12 +764,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = "mcpServers";
-            var config = new JsonAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: TransportMethod.streamableHttp,
-                transportMethodValue: $"{TransportMethod.streamableHttp}",
-                bodyPath: bodyPath);
+            var config = CreateHttpConfig(tempConfigPath, bodyPath);
 
             // Act - configure twice
             var result1 = config.Configure();
