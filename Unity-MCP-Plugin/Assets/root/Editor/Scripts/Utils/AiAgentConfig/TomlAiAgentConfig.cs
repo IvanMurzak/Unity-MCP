@@ -22,7 +22,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
     public class TomlAiAgentConfig : AiAgentConfig
     {
-        public override string ExpectedFileContent => Startup.Server.RawTomlConfigurationStdio(BodyPath).ToString();
+        private readonly Dictionary<string, (object value, bool required)> _properties = new();
+        private readonly HashSet<string> _propertiesToRemove = new();
+
+        public override string ExpectedFileContent
+        {
+            get
+            {
+                var sectionName = $"{BodyPath}.{DefaultMcpServerName}";
+                var sb = new StringBuilder();
+                sb.AppendLine($"[{sectionName}]");
+                foreach (var prop in _properties)
+                {
+                    sb.AppendLine(FormatTomlProperty(prop.Key, prop.Value.value));
+                }
+                return sb.ToString();
+            }
+        }
 
         public TomlAiAgentConfig(
             string name,
@@ -40,76 +56,97 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             // empty
         }
 
-        public override bool Configure() => ConfigureTomlMcpClient(ConfigPath, DefaultMcpServerName, BodyPath);
-        public override bool IsConfigured() => IsMcpClientConfigured(ConfigPath, DefaultMcpServerName, BodyPath);
-
-        public static bool ConfigureTomlMcpClient(string configPath, string serverName = DefaultMcpServerName, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
+        public TomlAiAgentConfig SetProperty(string key, string value, bool requiredForConfiguration = false)
         {
-            if (string.IsNullOrEmpty(configPath))
+            _properties[key] = (value, requiredForConfiguration);
+            return this;
+        }
+
+        public TomlAiAgentConfig SetProperty(string key, string[] values, bool requiredForConfiguration = false)
+        {
+            _properties[key] = (values, requiredForConfiguration);
+            return this;
+        }
+
+        public TomlAiAgentConfig SetPropertyToRemove(string key)
+        {
+            _propertiesToRemove.Add(key);
+            return this;
+        }
+
+        public override bool Configure()
+        {
+            if (string.IsNullOrEmpty(ConfigPath))
                 return false;
 
-            Debug.Log($"{Consts.Log.Tag} Configuring MCP client TOML with path: {configPath} and bodyPath: {bodyPath}");
+            Debug.Log($"{Consts.Log.Tag} Configuring MCP client TOML with path: {ConfigPath} and bodyPath: {BodyPath}");
 
             try
             {
-                var sectionName = $"{bodyPath}.{serverName}";
-                var commandPath = Startup.Server.ExecutableFullPath.Replace('\\', '/');
-                var args = new[]
-                {
-                    $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
-                    $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-                    $"{Consts.MCP.Server.Args.ClientTransportMethod}=stdio"
-                };
+                var sectionName = $"{BodyPath}.{DefaultMcpServerName}";
 
-                if (!File.Exists(configPath))
+                if (!File.Exists(ConfigPath))
                 {
                     // Create all necessary directories
-                    var directory = Path.GetDirectoryName(configPath);
+                    var directory = Path.GetDirectoryName(ConfigPath);
                     if (!string.IsNullOrEmpty(directory))
                         Directory.CreateDirectory(directory);
 
-                    // Create new TOML file with Unity-MCP configuration
-                    var tomlContent = GenerateTomlSection(sectionName, commandPath, args);
-                    File.WriteAllText(configPath, tomlContent);
-                    Debug.Log($"{Consts.Log.Tag} Created new TOML config file");
+                    File.WriteAllText(ConfigPath, ExpectedFileContent);
                     return true;
                 }
 
                 // Read existing TOML file
-                var lines = File.ReadAllLines(configPath).ToList();
+                var lines = File.ReadAllLines(ConfigPath).ToList();
 
-                // Find or update the Unity-MCP section
+                // Remove deprecated sections
+                foreach (var deprecatedName in DeprecatedMcpServerNames)
+                {
+                    var deprecatedSection = $"{BodyPath}.{deprecatedName}";
+                    var deprecatedIndex = FindTomlSection(lines, deprecatedSection);
+                    if (deprecatedIndex >= 0)
+                    {
+                        var deprecatedEnd = FindSectionEnd(lines, deprecatedIndex);
+                        lines.RemoveRange(deprecatedIndex, deprecatedEnd - deprecatedIndex);
+                    }
+                }
+
                 var sectionIndex = FindTomlSection(lines, sectionName);
                 if (sectionIndex >= 0)
                 {
-                    // Section exists - update it
+                    // Section exists - merge properties
                     var sectionEndIndex = FindSectionEnd(lines, sectionIndex);
+                    var existingProps = ParseSectionProperties(lines, sectionIndex + 1, sectionEndIndex);
 
-                    // Remove old section
+                    // Remove specified properties
+                    foreach (var key in _propertiesToRemove)
+                        existingProps.Remove(key);
+
+                    // Set/overwrite properties from _properties
+                    foreach (var prop in _properties)
+                        existingProps[prop.Key] = prop.Value.value;
+
+                    // Remove old section lines
                     lines.RemoveRange(sectionIndex, sectionEndIndex - sectionIndex);
 
-                    // Insert updated section at the same position
-                    var newSection = GenerateTomlSection(sectionName, commandPath, args);
+                    // Generate new section from merged properties
+                    var newSection = GenerateTomlSectionFromDict(sectionName, existingProps);
                     lines.Insert(sectionIndex, newSection.TrimEnd());
-
-                    Debug.Log($"{Consts.Log.Tag} Updated existing TOML section [{sectionName}]");
                 }
                 else
                 {
-                    // Section doesn't exist - add it
-                    // Add blank line if file is not empty and doesn't end with a blank line
+                    // Section doesn't exist - append
                     if (lines.Count > 0 && !string.IsNullOrWhiteSpace(lines[^1]))
                         lines.Add("");
 
-                    lines.Add(GenerateTomlSection(sectionName, commandPath, args).TrimEnd());
-
-                    Debug.Log($"{Consts.Log.Tag} Added new TOML section [{sectionName}]");
+                    var propsDict = _properties.ToDictionary(p => p.Key, p => p.Value.value);
+                    lines.Add(GenerateTomlSectionFromDict(sectionName, propsDict).TrimEnd());
                 }
 
                 // Write back to file
-                File.WriteAllText(configPath, string.Join(Environment.NewLine, lines));
+                File.WriteAllText(ConfigPath, string.Join(Environment.NewLine, lines));
 
-                return IsMcpClientConfigured(configPath, serverName, bodyPath);
+                return IsConfigured();
             }
             catch (Exception ex)
             {
@@ -119,50 +156,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
         }
 
-        public static bool IsMcpClientConfigured(string configPath, string serverName = DefaultMcpServerName, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
+        public override bool IsConfigured()
         {
-            if (string.IsNullOrEmpty(configPath) || !File.Exists(configPath))
+            if (string.IsNullOrEmpty(ConfigPath) || !File.Exists(ConfigPath))
                 return false;
 
             try
             {
-                var sectionName = $"{bodyPath}.{serverName}";
-                var lines = File.ReadAllLines(configPath);
-
-                // Find the section
-                var sectionIndex = FindTomlSection(lines.ToList(), sectionName);
+                var lines = File.ReadAllLines(ConfigPath).ToList();
+                var sectionName = $"{BodyPath}.{DefaultMcpServerName}";
+                var sectionIndex = FindTomlSection(lines, sectionName);
                 if (sectionIndex < 0)
                     return false;
 
-                // Parse the section to extract command and args
-                var sectionEndIndex = FindSectionEnd(lines.ToList(), sectionIndex);
-                string? command = null;
-                List<string> args = new();
+                var sectionEndIndex = FindSectionEnd(lines, sectionIndex);
+                var existingProps = ParseSectionProperties(lines, sectionIndex + 1, sectionEndIndex);
 
-                for (int i = sectionIndex + 1; i < sectionEndIndex; i++)
-                {
-                    var line = lines[i].Trim();
-                    if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#"))
-                        continue;
-
-                    // Parse command line
-                    if (line.StartsWith("command"))
-                    {
-                        command = ParseTomlStringValue(line);
-                    }
-                    // Parse args array
-                    else if (line.StartsWith("args"))
-                    {
-                        args = ParseTomlArrayValue(line);
-                    }
-                }
-
-                // Validate command matches
-                if (command == null || !IsCommandMatch(command))
-                    return false;
-
-                // Validate arguments match
-                return DoArgumentsMatch(args);
+                return AreRequiredPropertiesMatching(existingProps) && !HasPropertiesToRemove(existingProps);
             }
             catch (Exception ex)
             {
@@ -172,9 +182,102 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
         }
 
+        private bool AreRequiredPropertiesMatching(Dictionary<string, object> existingProps)
+        {
+            foreach (var prop in _properties)
+            {
+                if (!prop.Value.required)
+                    continue;
+
+                if (!existingProps.TryGetValue(prop.Key, out var existingValue))
+                    return false;
+
+                if (!ValuesMatch(prop.Value.value, existingValue))
+                    return false;
+            }
+
+            return true;
+        }
+
+        private bool HasPropertiesToRemove(Dictionary<string, object> existingProps)
+        {
+            if (_propertiesToRemove.Count == 0)
+                return false;
+
+            return _propertiesToRemove.Any(key => existingProps.ContainsKey(key));
+        }
+
+        private static bool ValuesMatch(object expected, object actual)
+        {
+            return (expected, actual) switch
+            {
+                (string e, string a) => e == a,
+                (string[] e, string[] a) => e.Length == a.Length && e.Zip(a, (x, y) => x == y).All(match => match),
+                _ => false
+            };
+        }
+
+        private static string GenerateTomlSectionFromDict(string sectionName, Dictionary<string, object> properties)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine($"[{sectionName}]");
+            foreach (var prop in properties)
+            {
+                sb.AppendLine(FormatTomlProperty(prop.Key, prop.Value));
+            }
+            return sb.ToString();
+        }
+
+        private static string FormatTomlProperty(string key, object value)
+        {
+            return value switch
+            {
+                string s => $"{key} = \"{EscapeTomlString(s)}\"",
+                string[] arr => $"{key} = [{string.Join(",", arr.Select(v => $"\"{EscapeTomlString(v)}\""))}]",
+                _ => throw new InvalidOperationException($"Unsupported TOML value type: {value.GetType()}")
+            };
+        }
+
+        private static Dictionary<string, object> ParseSectionProperties(List<string> lines, int startIndex, int endIndex)
+        {
+            var props = new Dictionary<string, object>();
+            for (int i = startIndex; i < endIndex; i++)
+            {
+                var line = lines[i].Trim();
+                if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#"))
+                    continue;
+
+                var parts = line.Split('=', 2);
+                if (parts.Length != 2)
+                    continue;
+
+                var key = parts[0].Trim();
+                var rawValue = parts[1].Trim();
+
+                if (rawValue.StartsWith("["))
+                {
+                    // Array value
+                    props[key] = ParseTomlArrayValue(line).ToArray();
+                }
+                else
+                {
+                    // String value
+                    var stringValue = ParseTomlStringValue(line);
+                    if (stringValue != null)
+                        props[key] = stringValue;
+                }
+            }
+            return props;
+        }
+
+        private static string EscapeTomlString(string value)
+        {
+            return value.Replace("\\", "\\\\").Replace("\"", "\\\"");
+        }
+
         private static string? ParseTomlStringValue(string line)
         {
-            // Parse: command = "value"
+            // Parse: key = "value"
             var parts = line.Split('=', 2);
             if (parts.Length != 2)
                 return null;
@@ -230,9 +333,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                         if (inQuote)
                         {
                             // End of quoted string
-                            var value = currentValue.ToString();
-                            value = value.Replace("\\\"", "\"").Replace("\\\\", "\\");
-                            result.Add(value);
+                            var parsedValue = currentValue.ToString();
+                            parsedValue = parsedValue.Replace("\\\"", "\"").Replace("\\\\", "\\");
+                            result.Add(parsedValue);
                             currentValue.Clear();
                         }
                         inQuote = !inQuote;
@@ -245,79 +348,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
 
             return result;
-        }
-
-        private static bool IsCommandMatch(string command)
-        {
-            // Normalize both paths for comparison
-            try
-            {
-                var normalizedCommand = Path.GetFullPath(command.Replace('/', Path.DirectorySeparatorChar));
-                var normalizedTarget = Path.GetFullPath(Startup.Server.ExecutableFullPath.Replace('/', Path.DirectorySeparatorChar));
-                return string.Equals(normalizedCommand, normalizedTarget, StringComparison.OrdinalIgnoreCase);
-            }
-            catch
-            {
-                // If normalization fails, fallback to string comparison
-                return string.Equals(command, Startup.Server.ExecutableFullPath, StringComparison.OrdinalIgnoreCase);
-            }
-        }
-
-        private static bool DoArgumentsMatch(List<string> args)
-        {
-            if (args == null || args.Count == 0)
-                return false;
-
-            var targetPort = UnityMcpPlugin.Port.ToString();
-            var targetTimeout = UnityMcpPlugin.TimeoutMs.ToString();
-
-            var foundPort = false;
-            var foundTimeout = false;
-
-            // Check for both positional and named argument formats
-            for (int i = 0; i < args.Count; i++)
-            {
-                var arg = args[i];
-                if (string.IsNullOrEmpty(arg))
-                    continue;
-
-                // Check positional format
-                if (i == 0 && arg == targetPort)
-                    foundPort = true;
-                else if (i == 1 && arg == targetTimeout)
-                    foundTimeout = true;
-
-                // Check named format
-                else if (arg.StartsWith($"{Consts.MCP.Server.Args.Port}=") && arg[(Consts.MCP.Server.Args.Port.Length + 1)..] == targetPort)
-                    foundPort = true;
-                else if (arg.StartsWith($"{Consts.MCP.Server.Args.PluginTimeout}=") && arg[(Consts.MCP.Server.Args.PluginTimeout.Length + 1)..] == targetTimeout)
-                    foundTimeout = true;
-            }
-
-            return foundPort && foundTimeout;
-        }
-        public static string GenerateTomlSection(string sectionName, string command, string[] args)
-        {
-            var sb = new StringBuilder();
-            sb.AppendLine($"[{sectionName}]");
-            sb.AppendLine($"command = \"{EscapeTomlString(command)}\"");
-
-            // Format args as TOML array
-            sb.Append("args = [");
-            for (int i = 0; i < args.Length; i++)
-            {
-                sb.Append($"\"{EscapeTomlString(args[i])}\"");
-                if (i < args.Length - 1)
-                    sb.Append(",");
-            }
-            sb.AppendLine("]");
-
-            return sb.ToString();
-        }
-
-        private static string EscapeTomlString(string value)
-        {
-            return value.Replace("\\", "\\\\").Replace("\"", "\\\"");
         }
 
         private static int FindTomlSection(List<string> lines, string sectionName)

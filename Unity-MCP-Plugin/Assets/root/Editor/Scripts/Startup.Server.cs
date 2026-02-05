@@ -201,21 +201,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             // ------------------------------------------------------------------------------------------------------------------------------------
 
-            public static string RawTomlConfigurationStdio(string bodyPath = "mcp_servers")
-            {
-                return TomlAiAgentConfig.GenerateTomlSection(
-                    sectionName: $"{bodyPath}.{AiAgentConfig.DefaultMcpServerName}",
-                    command: ExecutableFullPath.Replace('\\', '/'),
-                    args: new[]
-                {
-                    $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
-                    $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-                    $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
-                });
-            }
-
-            // ------------------------------------------------------------------------------------------------------------------------------------
-
             public static string DockerRunCommand()
             {
                 var dockerPortMapping = $"-p {UnityMcpPlugin.Port}:{UnityMcpPlugin.Port}";

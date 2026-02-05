@@ -11,6 +11,7 @@
 #nullable enable
 using System;
 using System.IO;
+using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEngine.UIElements;
 using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
@@ -38,7 +39,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             transportMethod: TransportMethod.stdio,
             transportMethodValue: "stdio",
             bodyPath: "mcp_servers"
-        );
+        )
+        .SetProperty("command", Startup.Server.ExecutableFullPath.Replace('\\', '/'), requiredForConfiguration: true)
+        .SetProperty("args", new[] {
+            $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
+            $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+            $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+        }, requiredForConfiguration: true)
+        .SetPropertyToRemove("url");
 
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new TomlAiAgentConfig(
             name: AgentName,
@@ -50,7 +58,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             transportMethod: TransportMethod.stdio,
             transportMethodValue: "stdio",
             bodyPath: "mcp_servers"
-        );
+        )
+        .SetProperty("command", Startup.Server.ExecutableFullPath.Replace('\\', '/'), requiredForConfiguration: true)
+        .SetProperty("args", new[] {
+            $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
+            $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+            $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+        }, requiredForConfiguration: true)
+        .SetPropertyToRemove("url");
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new TomlAiAgentConfig(
             name: AgentName,
@@ -62,7 +77,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             transportMethod: TransportMethod.streamableHttp,
             transportMethodValue: "http",
             bodyPath: "mcp_servers"
-        );
+        )
+        .SetProperty("url", UnityMcpPlugin.Host, requiredForConfiguration: true)
+        .SetPropertyToRemove("command")
+        .SetPropertyToRemove("args");
 
         protected override AiAgentConfig CreateConfigHttpMacLinux() => new TomlAiAgentConfig(
             name: AgentName,
@@ -74,7 +92,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             transportMethod: TransportMethod.streamableHttp,
             transportMethodValue: "http",
             bodyPath: "mcp_servers"
-        );
+        )
+        .SetProperty("url", UnityMcpPlugin.Host, requiredForConfiguration: true)
+        .SetPropertyToRemove("command")
+        .SetPropertyToRemove("args");
 
         protected override void OnUICreated(VisualElement root)
         {
