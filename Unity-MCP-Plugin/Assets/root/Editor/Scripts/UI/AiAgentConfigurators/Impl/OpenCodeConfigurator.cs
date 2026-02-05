@@ -10,6 +10,8 @@
 
 #nullable enable
 using System.IO;
+using System.Text.Json.Nodes;
+using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEngine.UIElements;
 using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
@@ -27,37 +29,65 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override string? IconFileName => "open-code-64.png";
 
-        protected override AiAgentConfig CreateConfigStdioWindows() => new JsonCommandAiAgentConfig(
+        protected override AiAgentConfig CreateConfigStdioWindows() => new JsonAiAgentConfig(
             name: AgentName,
             configPath: Path.Combine("opencode.json"),
             transportMethod: TransportMethod.stdio,
             transportMethodValue: "local",
             bodyPath: "mcp"
-        );
+        )
+        .SetProperty("type", JsonValue.Create("local"), requiredForConfiguration: true)
+        .SetProperty("enabled", JsonValue.Create(true), requiredForConfiguration: true)
+        .SetProperty("command", new JsonArray {
+            Startup.Server.ExecutableFullPath.Replace('\\', '/'),
+            $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
+            $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+            $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+        }, requiredForConfiguration: true)
+        .SetPropertyToRemove("url")
+        .SetPropertyToRemove("args");
 
-        protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonCommandAiAgentConfig(
+        protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
             configPath: Path.Combine("opencode.json"),
             transportMethod: TransportMethod.stdio,
             transportMethodValue: "local",
             bodyPath: "mcp"
-        );
+        )
+        .SetProperty("type", JsonValue.Create("local"), requiredForConfiguration: true)
+        .SetProperty("enabled", JsonValue.Create(true), requiredForConfiguration: true)
+        .SetProperty("command", new JsonArray {
+            Startup.Server.ExecutableFullPath.Replace('\\', '/'),
+            $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
+            $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+            $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+        }, requiredForConfiguration: true)
+        .SetPropertyToRemove("url")
+        .SetPropertyToRemove("args");
 
-        protected override AiAgentConfig CreateConfigHttpWindows() => new JsonCommandAiAgentConfig(
+        protected override AiAgentConfig CreateConfigHttpWindows() => new JsonAiAgentConfig(
             name: AgentName,
             configPath: Path.Combine("opencode.json"),
             transportMethod: TransportMethod.streamableHttp,
             transportMethodValue: "http",
             bodyPath: "mcp"
-        );
+        )
+        .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
+        .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true)
+        .SetPropertyToRemove("command")
+        .SetPropertyToRemove("args");
 
-        protected override AiAgentConfig CreateConfigHttpMacLinux() => new JsonCommandAiAgentConfig(
+        protected override AiAgentConfig CreateConfigHttpMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
             configPath: Path.Combine("opencode.json"),
             transportMethod: TransportMethod.streamableHttp,
             transportMethodValue: "http",
             bodyPath: "mcp"
-        );
+        )
+        .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
+        .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true)
+        .SetPropertyToRemove("command")
+        .SetPropertyToRemove("args");
 
         protected override void OnUICreated(VisualElement root)
         {

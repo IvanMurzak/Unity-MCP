@@ -12,15 +12,15 @@
 using System.Collections;
 using System.IO;
 using System.Text.Json.Nodes;
-using System.Text.RegularExpressions;
+using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using NUnit.Framework;
-using UnityEngine;
 using UnityEngine.TestTools;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
     using Consts = McpPlugin.Common.Consts;
+    using TransportMethod = Consts.MCP.Server.TransportMethod;
 
     public class JsonCommandAiAgentConfigTests : BaseTest
     {
@@ -42,6 +42,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             yield return base.TearDown();
         }
 
+        private JsonAiAgentConfig CreateCommandArrayConfig(string configPath, string bodyPath = "mcpServers")
+        {
+            return new JsonAiAgentConfig(
+                name: "Test",
+                configPath: configPath,
+                transportMethod: TransportMethod.stdio,
+                transportMethodValue: "local",
+                bodyPath: bodyPath)
+            .SetProperty("type", JsonValue.Create("local"), requiredForConfiguration: true)
+            .SetProperty("enabled", JsonValue.Create(true), requiredForConfiguration: true)
+            .SetProperty("command", new JsonArray {
+                Startup.Server.ExecutableFullPath.Replace('\\', '/'),
+                $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
+                $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+                $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+            }, requiredForConfiguration: true)
+            .SetPropertyToRemove("url")
+            .SetPropertyToRemove("args");
+        }
+
         #region Configure - Command Array Format
 
         [UnityTest]
@@ -49,12 +69,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = "mcpServers";
-            var config = new JsonCommandAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: Consts.MCP.Server.TransportMethod.stdio,
-                transportMethodValue: "local",
-                bodyPath: bodyPath);
+            var config = CreateCommandArrayConfig(tempConfigPath, bodyPath);
 
             // Act
             var result = config.Configure();
@@ -96,12 +111,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = "mcpServers";
-            var config = new JsonCommandAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: Consts.MCP.Server.TransportMethod.stdio,
-                transportMethodValue: "local",
-                bodyPath: bodyPath);
+            var config = CreateCommandArrayConfig(tempConfigPath, bodyPath);
 
             // Act
             var result = config.Configure();
@@ -144,12 +154,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = $"projects{Consts.MCP.Server.BodyPathDelimiter}myProject{Consts.MCP.Server.BodyPathDelimiter}mcpServers";
-            var config = new JsonCommandAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: Consts.MCP.Server.TransportMethod.stdio,
-                transportMethodValue: "local",
-                bodyPath: bodyPath);
+            var config = CreateCommandArrayConfig(tempConfigPath, bodyPath);
 
             // Act
             var result = config.Configure();
@@ -188,12 +193,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = $"level1{Consts.MCP.Server.BodyPathDelimiter}level2{Consts.MCP.Server.BodyPathDelimiter}level3{Consts.MCP.Server.BodyPathDelimiter}mcpServers";
-            var config = new JsonCommandAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: Consts.MCP.Server.TransportMethod.stdio,
-                transportMethodValue: "local",
-                bodyPath: bodyPath);
+            var config = CreateCommandArrayConfig(tempConfigPath, bodyPath);
 
             // Act
             var result = config.Configure();
@@ -240,12 +240,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }
             }";
             File.WriteAllText(tempConfigPath, existingJson);
-            var config = new JsonCommandAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: Consts.MCP.Server.TransportMethod.stdio,
-                transportMethodValue: "local",
-                bodyPath: bodyPath);
+            var config = CreateCommandArrayConfig(tempConfigPath, bodyPath);
 
             // Act
             var result = config.Configure();
@@ -293,12 +288,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }
             }";
             File.WriteAllText(tempConfigPath, existingJson);
-            var config = new JsonCommandAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: Consts.MCP.Server.TransportMethod.stdio,
-                transportMethodValue: "local",
-                bodyPath: bodyPath);
+            var config = CreateCommandArrayConfig(tempConfigPath, bodyPath);
 
             // Act
             var result = config.Configure();
@@ -347,12 +337,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }}
             }}";
             File.WriteAllText(tempConfigPath, existingJson);
-            var config = new JsonCommandAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: Consts.MCP.Server.TransportMethod.stdio,
-                transportMethodValue: "local",
-                bodyPath: bodyPath);
+            var config = CreateCommandArrayConfig(tempConfigPath, bodyPath);
 
             // Act
             var result = config.Configure();
@@ -369,36 +354,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNotNull(mcpServers, "mcpServers should exist");
             Assert.IsNotNull(mcpServers!["otherServer"], "Other server should be preserved");
 
-            // Check that the duplicate was replaced with new configuration
-            var hasUnityMcpServer = false;
-            foreach (var kv in mcpServers)
-            {
-                var commandArray = kv.Value?["command"]?.AsArray();
-                if (commandArray == null || commandArray.Count == 0)
-                    continue;
+            // Check that our server entry exists with the correct configuration
+            var serverEntry = mcpServers[AiAgentConfig.DefaultMcpServerName]?.AsObject();
+            Assert.IsNotNull(serverEntry, "Server entry should exist under DefaultMcpServerName");
 
-                var command = commandArray[0]?.GetValue<string>();
-                if (command == duplicateCommand)
-                {
-                    hasUnityMcpServer = true;
+            var commandArray = serverEntry!["command"]?.AsArray();
+            Assert.IsNotNull(commandArray, "Command array should exist");
+            Assert.Greater(commandArray!.Count, 0, "Command array should have elements");
 
-                    var portArgFound = false;
-                    for (int i = 1; i < commandArray.Count; i++)
-                    {
-                        var arg = commandArray[i]?.GetValue<string>();
-                        if (arg?.Contains($"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}") == true)
-                        {
-                            portArgFound = true;
-                            break;
-                        }
-                    }
+            var executable = commandArray[0]?.GetValue<string>();
+            Assert.AreEqual(duplicateCommand, executable, "Executable should match");
 
-                    Assert.IsTrue(portArgFound, "Should contain current port argument");
-                    break;
-                }
-            }
-
-            Assert.IsTrue(hasUnityMcpServer, "Should have Unity-MCP server with correct command");
+            var argsStr = commandArray.ToString();
+            Assert.IsTrue(argsStr.Contains($"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}"),
+                $"Should contain current port, but got: {argsStr}");
 
             yield return null;
         }
@@ -409,12 +378,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var bodyPath = "mcpServers";
             File.WriteAllText(tempConfigPath, "{}");
-            var config = new JsonCommandAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: Consts.MCP.Server.TransportMethod.stdio,
-                transportMethodValue: "local",
-                bodyPath: bodyPath);
+            var config = CreateCommandArrayConfig(tempConfigPath, bodyPath);
 
             // Act
             var result = config.Configure();
@@ -441,12 +405,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var bodyPath = "mcpServers";
             File.WriteAllText(tempConfigPath, "{ invalid json }");
-            var config = new JsonCommandAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: Consts.MCP.Server.TransportMethod.stdio,
-                transportMethodValue: "local",
-                bodyPath: bodyPath);
+            var config = CreateCommandArrayConfig(tempConfigPath, bodyPath);
 
             // Act
             var result = config.Configure();
@@ -472,12 +431,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = "mcpServers";
-            var config = new JsonCommandAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: Consts.MCP.Server.TransportMethod.stdio,
-                transportMethodValue: "local",
-                bodyPath: bodyPath);
+            var config = CreateCommandArrayConfig(tempConfigPath, bodyPath);
             config.Configure();
 
             // Act
@@ -494,12 +448,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = $"projects{Consts.MCP.Server.BodyPathDelimiter}myProject{Consts.MCP.Server.BodyPathDelimiter}mcpServers";
-            var config = new JsonCommandAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: Consts.MCP.Server.TransportMethod.stdio,
-                transportMethodValue: "local",
-                bodyPath: bodyPath);
+            var config = CreateCommandArrayConfig(tempConfigPath, bodyPath);
             config.Configure();
 
             // Act
@@ -517,20 +466,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var configuredBodyPath = "mcpServers";
             var queryBodyPath = $"nonExistent{Consts.MCP.Server.BodyPathDelimiter}path{Consts.MCP.Server.BodyPathDelimiter}mcpServers";
-            var configureConfig = new JsonCommandAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: Consts.MCP.Server.TransportMethod.stdio,
-                transportMethodValue: "local",
-                bodyPath: configuredBodyPath);
+            var configureConfig = CreateCommandArrayConfig(tempConfigPath, configuredBodyPath);
             configureConfig.Configure();
 
-            var queryConfig = new JsonCommandAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: Consts.MCP.Server.TransportMethod.stdio,
-                transportMethodValue: "local",
-                bodyPath: queryBodyPath);
+            var queryConfig = CreateCommandArrayConfig(tempConfigPath, queryBodyPath);
 
             // Act
             var isConfigured = queryConfig.IsConfigured();
@@ -546,12 +485,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var nonExistentPath = Path.Combine(Path.GetTempPath(), "non_existent_config.json");
-            var config = new JsonCommandAiAgentConfig(
-                name: "Test",
-                configPath: nonExistentPath,
-                transportMethod: Consts.MCP.Server.TransportMethod.stdio,
-                transportMethodValue: "local",
-                bodyPath: "mcpServers");
+            var config = CreateCommandArrayConfig(nonExistentPath);
 
             // Act
             var isConfigured = config.IsConfigured();
@@ -567,12 +501,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             File.WriteAllText(tempConfigPath, "");
-            var config = new JsonCommandAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: Consts.MCP.Server.TransportMethod.stdio,
-                transportMethodValue: "local",
-                bodyPath: "mcpServers");
+            var config = CreateCommandArrayConfig(tempConfigPath);
 
             // Act
             var isConfigured = config.IsConfigured();
@@ -584,11 +513,38 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         [UnityTest]
-        public IEnumerator IsConfigured_WrongExecutable_ReturnsFalse()
+        public IEnumerator IsConfigured_WrongType_ReturnsFalse()
         {
             // Arrange
             var bodyPath = "mcpServers";
-            var wrongExecutableJson = $@"{{
+            var executable = Startup.Server.ExecutableFullPath.Replace('\\', '/');
+            var wrongTypeJson = $@"{{
+                ""mcpServers"": {{
+                    ""{AiAgentConfig.DefaultMcpServerName}"": {{
+                        ""command"": [""{executable}"", ""{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}"", ""{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}"", ""{Consts.MCP.Server.Args.ClientTransportMethod}=stdio""],
+                        ""type"": ""wrong-type"",
+                        ""enabled"": true
+                    }}
+                }}
+            }}";
+            File.WriteAllText(tempConfigPath, wrongTypeJson);
+            var config = CreateCommandArrayConfig(tempConfigPath, bodyPath);
+
+            // Act
+            var isConfigured = config.IsConfigured();
+
+            // Assert
+            Assert.IsFalse(isConfigured, "Should return false when type doesn't match");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator IsConfigured_WrongCommandArray_ReturnsFalse()
+        {
+            // Arrange
+            var bodyPath = "mcpServers";
+            var wrongCommandJson = $@"{{
                 ""mcpServers"": {{
                     ""{AiAgentConfig.DefaultMcpServerName}"": {{
                         ""command"": [""wrong-executable"", ""{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}"", ""{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}""],
@@ -597,115 +553,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     }}
                 }}
             }}";
-            File.WriteAllText(tempConfigPath, wrongExecutableJson);
-            var config = new JsonCommandAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: Consts.MCP.Server.TransportMethod.stdio,
-                transportMethodValue: "local",
-                bodyPath: bodyPath);
+            File.WriteAllText(tempConfigPath, wrongCommandJson);
+            var config = CreateCommandArrayConfig(tempConfigPath, bodyPath);
 
             // Act
             var isConfigured = config.IsConfigured();
 
             // Assert
-            Assert.IsFalse(isConfigured, "Should return false when executable doesn't match");
-
-            yield return null;
-        }
-
-        [UnityTest]
-        public IEnumerator IsConfigured_MissingPortArgument_ReturnsFalse()
-        {
-            // Arrange
-            var bodyPath = "mcpServers";
-            var executable = Startup.Server.ExecutableFullPath.Replace('\\', '/');
-            var missingPortJson = $@"{{
-                ""mcpServers"": {{
-                    ""{AiAgentConfig.DefaultMcpServerName}"": {{
-                        ""command"": [""{executable}"", ""{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}""],
-                        ""type"": ""local"",
-                        ""enabled"": true
-                    }}
-                }}
-            }}";
-            File.WriteAllText(tempConfigPath, missingPortJson);
-            var config = new JsonCommandAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: Consts.MCP.Server.TransportMethod.stdio,
-                transportMethodValue: "local",
-                bodyPath: bodyPath);
-
-            // Act
-            var isConfigured = config.IsConfigured();
-
-            // Assert
-            Assert.IsFalse(isConfigured, "Should return false when port argument is missing");
-
-            yield return null;
-        }
-
-        [UnityTest]
-        public IEnumerator IsConfigured_MissingTimeoutArgument_ReturnsFalse()
-        {
-            // Arrange
-            var bodyPath = "mcpServers";
-            var executable = Startup.Server.ExecutableFullPath.Replace('\\', '/');
-            var missingTimeoutJson = $@"{{
-                ""mcpServers"": {{
-                    ""{AiAgentConfig.DefaultMcpServerName}"": {{
-                        ""command"": [""{executable}"", ""{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}""],
-                        ""type"": ""local"",
-                        ""enabled"": true
-                    }}
-                }}
-            }}";
-            File.WriteAllText(tempConfigPath, missingTimeoutJson);
-            var config = new JsonCommandAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: Consts.MCP.Server.TransportMethod.stdio,
-                transportMethodValue: "local",
-                bodyPath: bodyPath);
-
-            // Act
-            var isConfigured = config.IsConfigured();
-
-            // Assert
-            Assert.IsFalse(isConfigured, "Should return false when timeout argument is missing");
-
-            yield return null;
-        }
-
-        [UnityTest]
-        public IEnumerator IsConfigured_WrongPortValue_ReturnsFalse()
-        {
-            // Arrange
-            var bodyPath = "mcpServers";
-            var executable = Startup.Server.ExecutableFullPath.Replace('\\', '/');
-            var wrongPortJson = $@"{{
-                ""mcpServers"": {{
-                    ""{AiAgentConfig.DefaultMcpServerName}"": {{
-                        ""command"": [""{executable}"", ""{Consts.MCP.Server.Args.Port}=99999"", ""{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}""],
-                        ""type"": ""local"",
-                        ""enabled"": true
-                    }}
-                }}
-            }}";
-            File.WriteAllText(tempConfigPath, wrongPortJson);
-            var config = new JsonCommandAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: Consts.MCP.Server.TransportMethod.stdio,
-                transportMethodValue: "local",
-                bodyPath: bodyPath);
-
-            // Act
-            var isConfigured = config.IsConfigured();
-
-            // Assert
-            Assert.IsFalse(isConfigured, "Should return false when port value doesn't match");
+            Assert.IsFalse(isConfigured, "Should return false when command array doesn't match");
 
             yield return null;
         }
@@ -719,12 +574,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = "mcpServers";
-            var config = new JsonCommandAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: Consts.MCP.Server.TransportMethod.stdio,
-                transportMethodValue: "local",
-                bodyPath: bodyPath);
+            var config = CreateCommandArrayConfig(tempConfigPath, bodyPath);
 
             // Act
             var content = config.ExpectedFileContent;
@@ -747,12 +597,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = $"level1{Consts.MCP.Server.BodyPathDelimiter}level2{Consts.MCP.Server.BodyPathDelimiter}mcpServers";
-            var config = new JsonCommandAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: Consts.MCP.Server.TransportMethod.stdio,
-                transportMethodValue: "local",
-                bodyPath: bodyPath);
+            var config = CreateCommandArrayConfig(tempConfigPath, bodyPath);
 
             // Act
             var content = config.ExpectedFileContent;
@@ -778,14 +623,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator Configure_EmptyBodyPath_HandlesGracefully()
         {
-            // Arrange - using default body path (empty string would use DefaultBodyPath)
+            // Arrange - using default body path
             var bodyPath = Consts.MCP.Server.DefaultBodyPath;
-            var config = new JsonCommandAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: Consts.MCP.Server.TransportMethod.stdio,
-                transportMethodValue: "local",
-                bodyPath: bodyPath);
+            var config = CreateCommandArrayConfig(tempConfigPath, bodyPath);
 
             // Act
             var result = config.Configure();
@@ -801,12 +641,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public IEnumerator Configure_EmptyConfigPath_ReturnsFalse()
         {
             // Arrange
-            var config = new JsonCommandAiAgentConfig(
+            var config = new JsonAiAgentConfig(
                 name: "Test",
                 configPath: "",
-                transportMethod: Consts.MCP.Server.TransportMethod.stdio,
+                transportMethod: TransportMethod.stdio,
                 transportMethodValue: "local",
-                bodyPath: "mcpServers");
+                bodyPath: "mcpServers")
+            .SetProperty("type", JsonValue.Create("local"), requiredForConfiguration: true)
+            .SetProperty("enabled", JsonValue.Create(true), requiredForConfiguration: true)
+            .SetProperty("command", new JsonArray {
+                Startup.Server.ExecutableFullPath.Replace('\\', '/'),
+                $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
+                $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+                $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+            }, requiredForConfiguration: true);
 
             // Act
             var result = config.Configure();
@@ -818,54 +666,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         [UnityTest]
-        public IEnumerator IsConfigured_TraditionalArgsFormat_ReturnsFalse()
-        {
-            // Arrange - write traditional format (command + args separate)
-            var bodyPath = "mcpServers";
-            var executable = Startup.Server.ExecutableFullPath.Replace('\\', '/');
-            var traditionalFormatJson = $@"{{
-                ""mcpServers"": {{
-                    ""{AiAgentConfig.DefaultMcpServerName}"": {{
-                        ""command"": ""{executable}"",
-                        ""args"": [""{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}"", ""{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}""],
-                        ""type"": ""stdio""
-                    }}
-                }}
-            }}";
-            File.WriteAllText(tempConfigPath, traditionalFormatJson);
-            var config = new JsonCommandAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: Consts.MCP.Server.TransportMethod.stdio,
-                transportMethodValue: "local",
-                bodyPath: bodyPath);
-
-            // Expect error and exception logs when trying to parse command as array (it's a string in traditional format)
-            LogAssert.Expect(LogType.Error, new Regex("Error reading config file.*"));
-            LogAssert.Expect(LogType.Exception, new Regex("InvalidOperationException.*"));
-
-            // Act
-            var isConfigured = config.IsConfigured();
-
-            // Assert
-            // Traditional format should NOT be detected as configured by JsonCommandAiAgentConfig
-            // because it expects command array format
-            Assert.IsFalse(isConfigured, "Should return false for traditional args format (command as string, not array)");
-
-            yield return null;
-        }
-
-        [UnityTest]
         public IEnumerator Configure_MultipleCalls_UpdatesConfiguration()
         {
             // Arrange
             var bodyPath = "mcpServers";
-            var config = new JsonCommandAiAgentConfig(
-                name: "Test",
-                configPath: tempConfigPath,
-                transportMethod: Consts.MCP.Server.TransportMethod.stdio,
-                transportMethodValue: "local",
-                bodyPath: bodyPath);
+            var config = CreateCommandArrayConfig(tempConfigPath, bodyPath);
 
             // Act - configure twice
             var result1 = config.Configure();
@@ -876,24 +681,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsTrue(result2, "Second configure should return true");
             Assert.IsTrue(config.IsConfigured(), "Should be configured after multiple calls");
 
-            // Verify there's only one server entry (not duplicated)
+            // Verify there's only one server entry under DefaultMcpServerName (not duplicated)
             var json = File.ReadAllText(tempConfigPath);
             var rootObj = JsonNode.Parse(json)?.AsObject();
             var mcpServers = rootObj!["mcpServers"]?.AsObject();
 
-            var matchingServerCount = 0;
-            foreach (var kv in mcpServers!)
-            {
-                var commandArray = kv.Value?["command"]?.AsArray();
-                if (commandArray != null && commandArray.Count > 0)
-                {
-                    var executable = commandArray[0]?.GetValue<string>();
-                    if (executable?.Contains("unity-mcp-server") == true)
-                        matchingServerCount++;
-                }
-            }
-
-            Assert.AreEqual(1, matchingServerCount, "Should have exactly one Unity-MCP server entry after multiple configures");
+            Assert.AreEqual(1, mcpServers!.Count, "Should have exactly one server entry after multiple configures");
+            Assert.IsNotNull(mcpServers[AiAgentConfig.DefaultMcpServerName], "Server entry should exist under DefaultMcpServerName");
 
             yield return null;
         }

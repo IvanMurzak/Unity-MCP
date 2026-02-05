@@ -253,23 +253,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             return false;
         }
 
-        protected static bool IsCommandMatch(string command)
-        {
-            // Normalize both paths for comparison
-            try
-            {
-                var normalizedCommand = Path.GetFullPath(command.Replace('/', Path.DirectorySeparatorChar));
-                var normalizedTarget = Path.GetFullPath(Startup.Server.ExecutableFullPath.Replace('/', Path.DirectorySeparatorChar));
-                return string.Equals(normalizedCommand, normalizedTarget, StringComparison.OrdinalIgnoreCase);
-            }
-            catch
-            {
-                // If normalization fails, fallback to string comparison
-                return string.Equals(command, Startup.Server.ExecutableFullPath, StringComparison.OrdinalIgnoreCase);
-            }
-        }
-
-        protected static JsonObject? NavigateToJsonPath(JsonObject rootObj, string[] pathSegments)
+        private static JsonObject? NavigateToJsonPath(JsonObject rootObj, string[] pathSegments)
         {
             JsonObject? current = rootObj;
 
@@ -284,7 +268,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             return current;
         }
 
-        protected static JsonObject EnsureJsonPathExists(JsonObject rootObj, string[] pathSegments)
+        private static JsonObject EnsureJsonPathExists(JsonObject rootObj, string[] pathSegments)
         {
             JsonObject current = rootObj;
 
