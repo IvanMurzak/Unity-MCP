@@ -163,7 +163,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             ///   "mcpServers": {
             ///     "Unity ProjectName": {
             ///       "type": "...",  // optional, only if provided
-            ///       "url": "http://localhost:port/sse"
+            ///       "url": "http://localhost:port"
             ///     }
             ///   }
             /// }
