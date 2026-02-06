@@ -107,8 +107,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     "remove",
                     expectedResult: true
                 );
-
-                UnityMcpPlugin.NotifyToolExecuted();
             });
 
             return ResponseCallTool.Processing($"Removing package '{cleanPackageId}'. Waiting for package resolution and potential domain reload...").SetRequestID(requestId);

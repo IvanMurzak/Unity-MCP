@@ -57,11 +57,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 UnityEngine.Object.DestroyImmediate(go);
 
-                logger.LogInformation("Successfully destroyed GameObject '{Name}' (InstanceID: {InstanceId})",
-                    destroyedName, destroyedInstanceId);
+                 logger.LogInformation("Successfully destroyed GameObject '{Name}' (InstanceID: {InstanceId})",
+                     destroyedName, destroyedInstanceId);
 
-                UnityMcpPlugin.NotifyToolExecuted();
-                EditorUtils.RepaintAllEditorWindows();
+                 EditorUtils.RepaintAllEditorWindows();
 
                 return new DestroyGameObjectResult
                 {

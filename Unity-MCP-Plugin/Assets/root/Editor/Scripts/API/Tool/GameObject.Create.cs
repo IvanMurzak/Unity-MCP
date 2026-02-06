@@ -81,11 +81,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     position: position,
                     rotation: rotation,
                     scale: scale,
-                    isLocalSpace: isLocalSpace);
+                     isLocalSpace: isLocalSpace);
 
-                EditorUtility.SetDirty(go);
-                UnityMcpPlugin.NotifyToolExecuted();
-                EditorUtils.RepaintAllEditorWindows();
+                 EditorUtility.SetDirty(go);
+                 EditorUtils.RepaintAllEditorWindows();
 
                 return new GameObjectRef(go);
             });

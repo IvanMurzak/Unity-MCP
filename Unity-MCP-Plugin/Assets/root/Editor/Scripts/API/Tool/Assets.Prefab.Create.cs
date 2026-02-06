@@ -58,13 +58,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     ? PrefabUtility.SaveAsPrefabAsset(go, prefabAssetPath)
                     : PrefabUtility.SaveAsPrefabAssetAndConnect(go, prefabAssetPath, InteractionMode.UserAction, out _);
 
-                if (prefabGo == null)
-                    throw new Exception(Error.NotFoundPrefabAtPath(prefabAssetPath));
+                 if (prefabGo == null)
+                     throw new Exception(Error.NotFoundPrefabAtPath(prefabAssetPath));
 
-                EditorUtility.SetDirty(go);
+                 EditorUtility.SetDirty(go);
 
-                UnityMcpPlugin.NotifyToolExecuted();
-                EditorUtils.RepaintAllEditorWindows();
+                 EditorUtils.RepaintAllEditorWindows();
 
                 var assetPrefab = AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>(prefabAssetPath);
                 return new AssetObjectRef(assetPrefab);

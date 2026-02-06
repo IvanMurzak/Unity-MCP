@@ -177,10 +177,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             };
 
             if (executeInMainThread)
-                return MainThread.Instance.Run(() => { var result = action(); UnityMcpPlugin.NotifyToolExecuted(); return result; });
+                return MainThread.Instance.Run(() => { var result = action(); return result; });
 
             var result = action();
-            UnityMcpPlugin.NotifyToolExecuted();
             return result;
         }
     }

@@ -90,15 +90,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     logs: logs,
                     logger: UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_GameObject>());
 
-                if (success)
-                {
-                    UnityEditor.EditorUtility.SetDirty(go);
-                    UnityEditor.EditorUtility.SetDirty(targetComponent);
-                    response.Success = true;
-                }
+                 if (success)
+                 {
+                     UnityEditor.EditorUtility.SetDirty(go);
+                     UnityEditor.EditorUtility.SetDirty(targetComponent);
+                     response.Success = true;
+                 }
 
-                UnityMcpPlugin.NotifyToolExecuted();
-                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                 UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
                 response.Logs = logs
                     .Select(log => log.ToString())

@@ -129,17 +129,7 @@ namespace com.IvanMurzak.Unity.MCP
             .Select(x => x == HubConnectionState.Connected)
             .ToReadOnlyReactiveProperty(false);
 
-        static readonly R3.Subject<Unit> _onToolExecuted = new();
-        public static Observable<Unit> OnToolExecuted => _onToolExecuted;
 
-        /// <summary>
-        /// Manually triggers the OnToolExecuted event.
-        /// Use this for synchronous tools that don't use NotifyToolRequestCompleted but want to be counted.
-        /// </summary>
-        public static void NotifyToolExecuted()
-        {
-            _onToolExecuted.OnNext(Unit.Default);
-        }
 
         public static async Task NotifyToolRequestCompleted(RequestToolCompletedData request, CancellationToken cancellationToken = default)
         {

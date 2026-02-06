@@ -600,14 +600,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         #endregion
 
-        /// <summary>
-        /// Call this method to increment the tool execution counter.
-        /// Should be called after a tool is successfully executed.
-        /// </summary>
-        public static void NotifyToolExecuted()
-        {
-            _toolExecutionCount.Value++;
-        }
+
 
 
 

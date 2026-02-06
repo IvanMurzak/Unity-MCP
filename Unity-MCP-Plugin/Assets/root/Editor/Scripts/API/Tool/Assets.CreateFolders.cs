@@ -57,12 +57,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     {
                         response.Errors ??= new();
                         response.Errors.Add($"Failed to create folder '{input.NewFolderName}' in '{input.ParentFolderPath}'.");
-                    }
-                }
+                     }
+                 }
 
-                AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-                UnityMcpPlugin.NotifyToolExecuted();
-                EditorUtils.RepaintAllEditorWindows();
+                 AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+                 EditorUtils.RepaintAllEditorWindows();
 
                 return response;
             });

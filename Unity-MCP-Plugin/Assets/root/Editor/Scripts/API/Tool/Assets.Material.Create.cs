@@ -66,12 +66,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
                 }
 
-                AssetDatabase.CreateAsset(material, assetPath);
-                AssetDatabase.SaveAssets();
-                AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+                 AssetDatabase.CreateAsset(material, assetPath);
+                 AssetDatabase.SaveAssets();
+                 AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
 
-                UnityMcpPlugin.NotifyToolExecuted();
-                EditorUtils.RepaintAllEditorWindows();
+                 EditorUtils.RepaintAllEditorWindows();
 
                 return new AssetObjectRef(material);
             });

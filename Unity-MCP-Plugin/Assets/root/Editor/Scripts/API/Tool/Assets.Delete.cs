@@ -68,12 +68,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         logger.LogInformation("Successfully deleted asset at '{Path}'", path);
                         response.DeletedPaths ??= new();
                         response.DeletedPaths.Add(path);
-                    }
-                }
+                     }
+                 }
 
-                AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-                UnityMcpPlugin.NotifyToolExecuted();
-                EditorUtils.RepaintAllEditorWindows();
+                 AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+                 EditorUtils.RepaintAllEditorWindows();
 
                 return response;
             });
