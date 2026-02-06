@@ -33,57 +33,42 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigStdioWindows() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                ".claude.json"
-            ),
+            configPath: Path.Combine(".mcp.json"),
             transportMethod: TransportMethod.stdio,
             transportMethodValue: "stdio",
-            bodyPath: $"projects{Consts.MCP.Server.BodyPathDelimiter}"
-                + $"{ProjectRootPath}{Consts.MCP.Server.BodyPathDelimiter}"
-                + Consts.MCP.Server.DefaultBodyPath
+            bodyPath: "mcpServers"
         )
-        .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
         .SetProperty("command", JsonValue.Create(Startup.Server.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true)
         .SetProperty("args", new JsonArray {
             $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
             $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
             $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
         }, requiredForConfiguration: true)
+        .SetPropertyToRemove("type")
         .SetPropertyToRemove("url");
 
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                ".claude.json"
-            ),
+            configPath: Path.Combine(".mcp.json"),
             transportMethod: TransportMethod.stdio,
             transportMethodValue: "stdio",
-            bodyPath: $"projects{Consts.MCP.Server.BodyPathDelimiter}"
-                + $"{ProjectRootPath}{Consts.MCP.Server.BodyPathDelimiter}"
-                + Consts.MCP.Server.DefaultBodyPath
+            bodyPath: "mcpServers"
         )
-        .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
         .SetProperty("command", JsonValue.Create(Startup.Server.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true)
         .SetProperty("args", new JsonArray {
             $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
             $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
             $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
         }, requiredForConfiguration: true)
+        .SetPropertyToRemove("type")
         .SetPropertyToRemove("url");
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                ".claude.json"
-            ),
+            configPath: Path.Combine(".mcp.json"),
             transportMethod: TransportMethod.streamableHttp,
             transportMethodValue: "http",
-            bodyPath: $"projects{Consts.MCP.Server.BodyPathDelimiter}"
-                + $"{ProjectRootPath}{Consts.MCP.Server.BodyPathDelimiter}"
-                + Consts.MCP.Server.DefaultBodyPath
+            bodyPath: "mcpServers"
         )
         .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
         .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true)
@@ -92,15 +77,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigHttpMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                ".claude.json"
-            ),
+            configPath: Path.Combine(".mcp.json"),
             transportMethod: TransportMethod.streamableHttp,
             transportMethodValue: "http",
-            bodyPath: $"projects{Consts.MCP.Server.BodyPathDelimiter}"
-                + $"{ProjectRootPath}{Consts.MCP.Server.BodyPathDelimiter}"
-                + Consts.MCP.Server.DefaultBodyPath
+            bodyPath: "mcpServers"
         )
         .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
         .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true)
