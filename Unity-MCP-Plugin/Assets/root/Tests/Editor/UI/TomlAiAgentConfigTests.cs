@@ -388,6 +388,96 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
         #endregion
 
+        #region CodexConfigurator-like setup with boolean and integer properties
+
+        /// <summary>
+        /// Helper method that replicates the exact CodexConfigurator setup
+        /// </summary>
+        private TomlAiAgentConfig CreateCodexLikeConfig(string configPath, string bodyPath = "mcp_servers")
+        {
+            return new TomlAiAgentConfig(
+                name: "Codex",
+                configPath: configPath,
+                bodyPath: bodyPath)
+            .SetProperty("enabled", true, requiredForConfiguration: true) // Codex requires an "enabled" property
+            .SetProperty("command", Startup.Server.ExecutableFullPath.Replace('\\', '/'), requiredForConfiguration: true)
+            .SetProperty("args", new[] {
+                $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
+                $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+                $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+            }, requiredForConfiguration: true)
+            .SetProperty("tool_timeout_sec", 300, requiredForConfiguration: false) // Optional: Set a longer tool timeout for Codex
+            .SetPropertyToRemove("url")
+            .SetPropertyToRemove("type");
+        }
+
+        [UnityTest]
+        public IEnumerator Configure_CodexLikeConfig_IsConfiguredReturnsTrue()
+        {
+            // Arrange
+            if (File.Exists(tempConfigPath))
+                File.Delete(tempConfigPath);
+            var config = CreateCodexLikeConfig(tempConfigPath);
+
+            // Act
+            var configureResult = config.Configure();
+            var isConfigured = config.IsConfigured();
+
+            // Assert
+            Assert.IsTrue(configureResult, "Configure should return true");
+            Assert.IsTrue(isConfigured, "IsConfigured should return true after Configure with boolean and integer properties");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Configure_WithBooleanProperty_IsConfiguredReturnsTrue()
+        {
+            // Arrange
+            if (File.Exists(tempConfigPath))
+                File.Delete(tempConfigPath);
+            var config = new TomlAiAgentConfig(
+                name: "Test",
+                configPath: tempConfigPath,
+                bodyPath: "mcp_servers")
+            .SetProperty("enabled", true, requiredForConfiguration: true);
+
+            // Act
+            var configureResult = config.Configure();
+            var isConfigured = config.IsConfigured();
+
+            // Assert
+            Assert.IsTrue(configureResult, "Configure should return true");
+            Assert.IsTrue(isConfigured, "IsConfigured should return true for boolean property");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Configure_WithIntegerProperty_IsConfiguredReturnsTrue()
+        {
+            // Arrange
+            if (File.Exists(tempConfigPath))
+                File.Delete(tempConfigPath);
+            var config = new TomlAiAgentConfig(
+                name: "Test",
+                configPath: tempConfigPath,
+                bodyPath: "mcp_servers")
+            .SetProperty("timeout", 300, requiredForConfiguration: true);
+
+            // Act
+            var configureResult = config.Configure();
+            var isConfigured = config.IsConfigured();
+
+            // Assert
+            Assert.IsTrue(configureResult, "Configure should return true");
+            Assert.IsTrue(isConfigured, "IsConfigured should return true for integer property");
+
+            yield return null;
+        }
+
+        #endregion
+
         #region ExpectedFileContent
 
         [UnityTest]

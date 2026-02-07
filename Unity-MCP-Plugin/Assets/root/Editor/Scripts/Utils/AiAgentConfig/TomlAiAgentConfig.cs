@@ -209,6 +209,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             {
                 (string e, string a) => e == a,
                 (string[] e, string[] a) => e.Length == a.Length && e.Zip(a, (x, y) => x == y).All(match => match),
+                (bool e, bool a) => e == a,
+                (int e, int a) => e == a,
                 _ => false
             };
         }
@@ -258,6 +260,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 {
                     // Array value
                     props[key] = ParseTomlArrayValue(line).ToArray();
+                }
+                else if (rawValue == "true" || rawValue == "false")
+                {
+                    // Boolean value
+                    props[key] = rawValue == "true";
+                }
+                else if (int.TryParse(rawValue, out var intValue))
+                {
+                    // Integer value
+                    props[key] = intValue;
                 }
                 else
                 {

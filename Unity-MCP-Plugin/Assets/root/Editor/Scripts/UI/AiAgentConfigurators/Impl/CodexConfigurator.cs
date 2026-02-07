@@ -120,7 +120,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             var manualStepsOption2 = TemplateFoldout("Manual Configuration Steps - Option 2");
 
-            manualStepsOption2!.Add(TemplateLabelDescription("1. Open or create file '%User%/.codex/config.toml'"));
+            manualStepsOption2!.Add(TemplateLabelDescription("1. Open or create file '.codex/config.toml'"));
             manualStepsOption2!.Add(TemplateLabelDescription("2. Copy and paste the configuration TOML into the file."));
             manualStepsOption2!.Add(TemplateTextFieldReadOnly(ConfigStdio.ExpectedFileContent));
 
@@ -147,7 +147,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             var manualStepsOption2Http = TemplateFoldout("Manual Configuration Steps - Option 2");
 
-            manualStepsOption2Http!.Add(TemplateLabelDescription("1. Open or create file '%User%/.codex/config.toml'"));
+            manualStepsOption2Http!.Add(TemplateLabelDescription("1. Open or create file '.codex/config.toml'"));
             manualStepsOption2Http!.Add(TemplateLabelDescription("2. Copy and paste the configuration TOML into the file."));
             manualStepsOption2Http!.Add(TemplateTextFieldReadOnly(ConfigHttp.ExpectedFileContent));
 
