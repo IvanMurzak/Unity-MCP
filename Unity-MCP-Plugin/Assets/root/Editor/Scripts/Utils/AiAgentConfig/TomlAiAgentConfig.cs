@@ -210,7 +210,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 (string e, string a) => e == a,
                 (string[] e, string[] a) => e.Length == a.Length && e.Zip(a, (x, y) => x == y).All(match => match),
                 (bool e, bool a) => e == a,
+                (bool[] e, bool[] a) => e.Length == a.Length && e.Zip(a, (x, y) => x == y).All(match => match),
                 (int e, int a) => e == a,
+                (int[] e, int[] a) => e.Length == a.Length && e.Zip(a, (x, y) => x == y).All(match => match),
                 _ => false
             };
         }
@@ -258,8 +260,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
                 if (rawValue.StartsWith("["))
                 {
-                    // Array value
-                    props[key] = ParseTomlArrayValue(line).ToArray();
+                    // Array value - parse with type detection
+                    props[key] = ParseTypedTomlArrayValue(rawValue);
                 }
                 else if (rawValue == "true" || rawValue == "false")
                 {
@@ -306,60 +308,111 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             return value;
         }
 
-        private static List<string> ParseTomlArrayValue(string line)
+        private static object ParseTypedTomlArrayValue(string rawValue)
         {
-            // Parse: args = ["value1","value2","value3"]
-            var result = new List<string>();
-            var parts = line.Split('=', 2);
-            if (parts.Length != 2)
-                return result;
-
-            var arrayContent = parts[1].Trim();
             // Remove array brackets
-            if (arrayContent.StartsWith("[") && arrayContent.EndsWith("]"))
+            if (!rawValue.StartsWith("[") || !rawValue.EndsWith("]"))
+                return Array.Empty<string>();
+
+            var arrayContent = rawValue[1..^1].Trim();
+            if (string.IsNullOrEmpty(arrayContent))
+                return Array.Empty<string>();
+
+            // Detect array element type by looking at the first element
+            if (arrayContent.StartsWith("\""))
             {
-                arrayContent = arrayContent[1..^1];
+                // String array
+                return ParseTomlStringArrayContent(arrayContent);
+            }
+            else if (arrayContent.StartsWith("true", StringComparison.Ordinal) ||
+                     arrayContent.StartsWith("false", StringComparison.Ordinal))
+            {
+                // Boolean array
+                return ParseTomlBoolArrayContent(arrayContent);
+            }
+            else if (char.IsDigit(arrayContent[0]) || arrayContent[0] == '-')
+            {
+                // Integer array
+                return ParseTomlIntArrayContent(arrayContent);
+            }
 
-                // Simple parsing - split by comma and extract quoted strings
-                var inQuote = false;
-                var escaped = false;
-                var currentValue = new StringBuilder();
+            // Fallback to string array
+            return ParseTomlStringArrayContent(arrayContent);
+        }
 
-                foreach (var ch in arrayContent)
+        private static string[] ParseTomlStringArrayContent(string arrayContent)
+        {
+            var result = new List<string>();
+            var inQuote = false;
+            var escaped = false;
+            var currentValue = new StringBuilder();
+
+            foreach (var ch in arrayContent)
+            {
+                if (escaped)
                 {
-                    if (escaped)
-                    {
-                        currentValue.Append(ch);
-                        escaped = false;
-                        continue;
-                    }
+                    currentValue.Append(ch);
+                    escaped = false;
+                    continue;
+                }
 
-                    if (ch == '\\')
-                    {
-                        escaped = true;
-                        continue;
-                    }
+                if (ch == '\\')
+                {
+                    escaped = true;
+                    continue;
+                }
 
-                    if (ch == '"')
+                if (ch == '"')
+                {
+                    if (inQuote)
                     {
-                        if (inQuote)
-                        {
-                            // End of quoted string
-                            var parsedValue = currentValue.ToString();
-                            parsedValue = parsedValue.Replace("\\\"", "\"").Replace("\\\\", "\\");
-                            result.Add(parsedValue);
-                            currentValue.Clear();
-                        }
-                        inQuote = !inQuote;
+                        // End of quoted string
+                        var parsedValue = currentValue.ToString();
+                        parsedValue = parsedValue.Replace("\\\"", "\"").Replace("\\\\", "\\");
+                        result.Add(parsedValue);
+                        currentValue.Clear();
                     }
-                    else if (inQuote)
-                    {
-                        currentValue.Append(ch);
-                    }
+                    inQuote = !inQuote;
+                }
+                else if (inQuote)
+                {
+                    currentValue.Append(ch);
                 }
             }
 
-            return result;
+            return result.ToArray();
+        }
+
+        private static bool[] ParseTomlBoolArrayContent(string arrayContent)
+        {
+            var elements = arrayContent.Split(',');
+            var result = new List<bool>();
+
+            foreach (var element in elements)
+            {
+                var trimmed = element.Trim();
+                if (trimmed == "true")
+                    result.Add(true);
+                else if (trimmed == "false")
+                    result.Add(false);
+            }
+
+            return result.ToArray();
+        }
+
+        private static int[] ParseTomlIntArrayContent(string arrayContent)
+        {
+            var elements = arrayContent.Split(',');
+            var result = new List<int>();
+
+            foreach (var element in elements)
+            {
+                var trimmed = element.Trim();
+                if (int.TryParse(trimmed, out var intValue))
+                    result.Add(intValue);
+            }
+
+            return result.ToArray();
         }
 
         private static int FindTomlSection(List<string> lines, string sectionName)

@@ -531,5 +531,300 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         #endregion
+
+        #region Typed Array Parsing
+
+        [UnityTest]
+        public IEnumerator Configure_WithIntArray_IsConfiguredReturnsTrue()
+        {
+            // Arrange
+            if (File.Exists(tempConfigPath))
+                File.Delete(tempConfigPath);
+            var config = new TomlAiAgentConfig(
+                name: "Test",
+                configPath: tempConfigPath,
+                bodyPath: "mcp_servers")
+            .SetProperty("ports", new[] { 8080, 8081, 8082 }, requiredForConfiguration: true);
+
+            // Act
+            var configureResult = config.Configure();
+            var isConfigured = config.IsConfigured();
+
+            // Assert
+            Assert.IsTrue(configureResult, "Configure should return true");
+            Assert.IsTrue(isConfigured, "IsConfigured should return true for int[] property");
+
+            var content = File.ReadAllText(tempConfigPath);
+            Assert.IsTrue(content.Contains("ports = [8080,8081,8082]"), "Should contain correct int array format");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Configure_WithBoolArray_IsConfiguredReturnsTrue()
+        {
+            // Arrange
+            if (File.Exists(tempConfigPath))
+                File.Delete(tempConfigPath);
+            var config = new TomlAiAgentConfig(
+                name: "Test",
+                configPath: tempConfigPath,
+                bodyPath: "mcp_servers")
+            .SetProperty("flags", new[] { true, false, true }, requiredForConfiguration: true);
+
+            // Act
+            var configureResult = config.Configure();
+            var isConfigured = config.IsConfigured();
+
+            // Assert
+            Assert.IsTrue(configureResult, "Configure should return true");
+            Assert.IsTrue(isConfigured, "IsConfigured should return true for bool[] property");
+
+            var content = File.ReadAllText(tempConfigPath);
+            Assert.IsTrue(content.Contains("flags = [true,false,true]"), "Should contain correct bool array format");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Configure_WithStringArray_IsConfiguredReturnsTrue()
+        {
+            // Arrange
+            if (File.Exists(tempConfigPath))
+                File.Delete(tempConfigPath);
+            var config = new TomlAiAgentConfig(
+                name: "Test",
+                configPath: tempConfigPath,
+                bodyPath: "mcp_servers")
+            .SetProperty("names", new[] { "alpha", "beta", "gamma" }, requiredForConfiguration: true);
+
+            // Act
+            var configureResult = config.Configure();
+            var isConfigured = config.IsConfigured();
+
+            // Assert
+            Assert.IsTrue(configureResult, "Configure should return true");
+            Assert.IsTrue(isConfigured, "IsConfigured should return true for string[] property");
+
+            var content = File.ReadAllText(tempConfigPath);
+            Assert.IsTrue(content.Contains("names = [\"alpha\",\"beta\",\"gamma\"]"), "Should contain correct string array format");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator IsConfigured_ExistingIntArray_MatchesCorrectly()
+        {
+            // Arrange - manually write a TOML file with int array
+            var sectionName = $"mcp_servers.{AiAgentConfig.DefaultMcpServerName}";
+            var toml = $"[{sectionName}]\nports = [8080, 8081, 8082]\n";
+            File.WriteAllText(tempConfigPath, toml);
+
+            var config = new TomlAiAgentConfig(
+                name: "Test",
+                configPath: tempConfigPath,
+                bodyPath: "mcp_servers")
+            .SetProperty("ports", new[] { 8080, 8081, 8082 }, requiredForConfiguration: true);
+
+            // Act
+            var isConfigured = config.IsConfigured();
+
+            // Assert
+            Assert.IsTrue(isConfigured, "Should correctly parse and match int[] from existing TOML");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator IsConfigured_ExistingBoolArray_MatchesCorrectly()
+        {
+            // Arrange - manually write a TOML file with bool array
+            var sectionName = $"mcp_servers.{AiAgentConfig.DefaultMcpServerName}";
+            var toml = $"[{sectionName}]\nflags = [true, false, true]\n";
+            File.WriteAllText(tempConfigPath, toml);
+
+            var config = new TomlAiAgentConfig(
+                name: "Test",
+                configPath: tempConfigPath,
+                bodyPath: "mcp_servers")
+            .SetProperty("flags", new[] { true, false, true }, requiredForConfiguration: true);
+
+            // Act
+            var isConfigured = config.IsConfigured();
+
+            // Assert
+            Assert.IsTrue(isConfigured, "Should correctly parse and match bool[] from existing TOML");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator IsConfigured_ExistingStringArray_MatchesCorrectly()
+        {
+            // Arrange - manually write a TOML file with string array
+            var sectionName = $"mcp_servers.{AiAgentConfig.DefaultMcpServerName}";
+            var toml = $"[{sectionName}]\nnames = [\"alpha\", \"beta\", \"gamma\"]\n";
+            File.WriteAllText(tempConfigPath, toml);
+
+            var config = new TomlAiAgentConfig(
+                name: "Test",
+                configPath: tempConfigPath,
+                bodyPath: "mcp_servers")
+            .SetProperty("names", new[] { "alpha", "beta", "gamma" }, requiredForConfiguration: true);
+
+            // Act
+            var isConfigured = config.IsConfigured();
+
+            // Assert
+            Assert.IsTrue(isConfigured, "Should correctly parse and match string[] from existing TOML");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator IsConfigured_MismatchedIntArray_ReturnsFalse()
+        {
+            // Arrange - manually write a TOML file with different int array values
+            var sectionName = $"mcp_servers.{AiAgentConfig.DefaultMcpServerName}";
+            var toml = $"[{sectionName}]\nports = [9000, 9001]\n";
+            File.WriteAllText(tempConfigPath, toml);
+
+            var config = new TomlAiAgentConfig(
+                name: "Test",
+                configPath: tempConfigPath,
+                bodyPath: "mcp_servers")
+            .SetProperty("ports", new[] { 8080, 8081, 8082 }, requiredForConfiguration: true);
+
+            // Act
+            var isConfigured = config.IsConfigured();
+
+            // Assert
+            Assert.IsFalse(isConfigured, "Should return false when int[] values don't match");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator IsConfigured_MismatchedBoolArray_ReturnsFalse()
+        {
+            // Arrange - manually write a TOML file with different bool array values
+            var sectionName = $"mcp_servers.{AiAgentConfig.DefaultMcpServerName}";
+            var toml = $"[{sectionName}]\nflags = [false, false]\n";
+            File.WriteAllText(tempConfigPath, toml);
+
+            var config = new TomlAiAgentConfig(
+                name: "Test",
+                configPath: tempConfigPath,
+                bodyPath: "mcp_servers")
+            .SetProperty("flags", new[] { true, false, true }, requiredForConfiguration: true);
+
+            // Act
+            var isConfigured = config.IsConfigured();
+
+            // Assert
+            Assert.IsFalse(isConfigured, "Should return false when bool[] values don't match");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Configure_ExistingFileWithIntArray_MergesCorrectly()
+        {
+            // Arrange - existing file with an int array property
+            var sectionName = $"mcp_servers.{AiAgentConfig.DefaultMcpServerName}";
+            var existingToml = $"[{sectionName}]\nports = [1, 2, 3]\ncustom_prop = \"keep\"\n";
+            File.WriteAllText(tempConfigPath, existingToml);
+
+            var config = new TomlAiAgentConfig(
+                name: "Test",
+                configPath: tempConfigPath,
+                bodyPath: "mcp_servers")
+            .SetProperty("ports", new[] { 8080, 8081 }, requiredForConfiguration: true);
+
+            // Act
+            config.Configure();
+
+            // Assert
+            var content = File.ReadAllText(tempConfigPath);
+            Assert.IsTrue(content.Contains("ports = [8080,8081]"), "Should overwrite int array");
+            Assert.IsTrue(content.Contains("custom_prop = \"keep\""), "Should preserve other properties");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Configure_EmptyArray_HandledCorrectly()
+        {
+            // Arrange - existing file with empty array
+            var sectionName = $"mcp_servers.{AiAgentConfig.DefaultMcpServerName}";
+            var existingToml = $"[{sectionName}]\nempty = []\n";
+            File.WriteAllText(tempConfigPath, existingToml);
+
+            var config = new TomlAiAgentConfig(
+                name: "Test",
+                configPath: tempConfigPath,
+                bodyPath: "mcp_servers")
+            .SetProperty("value", 42, requiredForConfiguration: true);
+
+            // Act
+            config.Configure();
+            var isConfigured = config.IsConfigured();
+
+            // Assert
+            Assert.IsTrue(isConfigured, "Should handle empty arrays in existing file");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Configure_NegativeIntArray_HandledCorrectly()
+        {
+            // Arrange
+            if (File.Exists(tempConfigPath))
+                File.Delete(tempConfigPath);
+            var config = new TomlAiAgentConfig(
+                name: "Test",
+                configPath: tempConfigPath,
+                bodyPath: "mcp_servers")
+            .SetProperty("offsets", new[] { -10, 0, 10 }, requiredForConfiguration: true);
+
+            // Act
+            var configureResult = config.Configure();
+            var isConfigured = config.IsConfigured();
+
+            // Assert
+            Assert.IsTrue(configureResult, "Configure should return true");
+            Assert.IsTrue(isConfigured, "IsConfigured should return true for int[] with negative values");
+
+            var content = File.ReadAllText(tempConfigPath);
+            Assert.IsTrue(content.Contains("offsets = [-10,0,10]"), "Should contain correct int array with negative values");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator IsConfigured_ExistingNegativeIntArray_MatchesCorrectly()
+        {
+            // Arrange - manually write a TOML file with negative int array
+            var sectionName = $"mcp_servers.{AiAgentConfig.DefaultMcpServerName}";
+            var toml = $"[{sectionName}]\noffsets = [-10, 0, 10]\n";
+            File.WriteAllText(tempConfigPath, toml);
+
+            var config = new TomlAiAgentConfig(
+                name: "Test",
+                configPath: tempConfigPath,
+                bodyPath: "mcp_servers")
+            .SetProperty("offsets", new[] { -10, 0, 10 }, requiredForConfiguration: true);
+
+            // Act
+            var isConfigured = config.IsConfigured();
+
+            // Assert
+            Assert.IsTrue(isConfigured, "Should correctly parse and match int[] with negative values from existing TOML");
+
+            yield return null;
+        }
+
+        #endregion
     }
 }
