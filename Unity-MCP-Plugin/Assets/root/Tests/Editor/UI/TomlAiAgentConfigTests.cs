@@ -1160,5 +1160,99 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         #endregion
+
+        #region ValueComparisonMode - Path and URL Normalization
+
+        [UnityTest]
+        public IEnumerator IsConfigured_PathComparison_BackslashEqualsForwardSlash()
+        {
+            // Arrange - write config with backslashes, register with forward slashes
+            var bodyPath = "mcp_servers";
+            var sectionName = $"{bodyPath}.{AiAgentConfig.DefaultMcpServerName}";
+
+            File.WriteAllText(tempConfigPath, $"[{sectionName}]\ncommand = \"C:\\\\Users\\\\test\\\\app.exe\"\n");
+
+            var config = new TomlAiAgentConfig("Test", tempConfigPath, bodyPath)
+                .SetProperty("command", "C:/Users/test/app.exe", requiredForConfiguration: true, comparison: ValueComparisonMode.Path);
+
+            // Act & Assert
+            Assert.IsTrue(config.IsConfigured(), "IsConfigured should return true when paths differ only in separator style");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator IsConfigured_PathComparison_TrailingSlashIgnored()
+        {
+            // Arrange
+            var bodyPath = "mcp_servers";
+            var sectionName = $"{bodyPath}.{AiAgentConfig.DefaultMcpServerName}";
+
+            File.WriteAllText(tempConfigPath, $"[{sectionName}]\ncommand = \"C:/Users/test/app/\"\n");
+
+            var config = new TomlAiAgentConfig("Test", tempConfigPath, bodyPath)
+                .SetProperty("command", "C:/Users/test/app", requiredForConfiguration: true, comparison: ValueComparisonMode.Path);
+
+            // Act & Assert
+            Assert.IsTrue(config.IsConfigured(), "IsConfigured should return true when paths differ only by trailing slash");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator IsConfigured_UrlComparison_TrailingSlashIgnored()
+        {
+            // Arrange
+            var bodyPath = "mcp_servers";
+            var sectionName = $"{bodyPath}.{AiAgentConfig.DefaultMcpServerName}";
+
+            File.WriteAllText(tempConfigPath, $"[{sectionName}]\nurl = \"http://localhost:5000/mcp/\"\n");
+
+            var config = new TomlAiAgentConfig("Test", tempConfigPath, bodyPath)
+                .SetProperty("url", "http://localhost:5000/mcp", requiredForConfiguration: true, comparison: ValueComparisonMode.Url);
+
+            // Act & Assert
+            Assert.IsTrue(config.IsConfigured(), "IsConfigured should return true when URLs differ only by trailing slash");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator IsConfigured_UrlComparison_SchemeCaseInsensitive()
+        {
+            // Arrange
+            var bodyPath = "mcp_servers";
+            var sectionName = $"{bodyPath}.{AiAgentConfig.DefaultMcpServerName}";
+
+            File.WriteAllText(tempConfigPath, $"[{sectionName}]\nurl = \"HTTP://LOCALHOST:5000/mcp\"\n");
+
+            var config = new TomlAiAgentConfig("Test", tempConfigPath, bodyPath)
+                .SetProperty("url", "http://localhost:5000/mcp", requiredForConfiguration: true, comparison: ValueComparisonMode.Url);
+
+            // Act & Assert
+            Assert.IsTrue(config.IsConfigured(), "IsConfigured should return true when URLs differ only in scheme/host casing");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator IsConfigured_ExactComparison_RejectsDifferentPaths()
+        {
+            // Arrange - without ValueComparisonMode.Path, backslash vs forward slash should NOT match
+            var bodyPath = "mcp_servers";
+            var sectionName = $"{bodyPath}.{AiAgentConfig.DefaultMcpServerName}";
+
+            File.WriteAllText(tempConfigPath, $"[{sectionName}]\ncommand = \"C:\\\\Users\\\\test\\\\app.exe\"\n");
+
+            var config = new TomlAiAgentConfig("Test", tempConfigPath, bodyPath)
+                .SetProperty("command", "C:/Users/test/app.exe", requiredForConfiguration: true);
+
+            // Act & Assert
+            Assert.IsFalse(config.IsConfigured(), "IsConfigured should return false with Exact comparison when paths have different separators");
+
+            yield return null;
+        }
+
+        #endregion
     }
 }

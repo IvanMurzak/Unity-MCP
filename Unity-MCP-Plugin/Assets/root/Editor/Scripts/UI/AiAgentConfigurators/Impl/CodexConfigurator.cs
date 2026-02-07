@@ -37,7 +37,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             bodyPath: "mcp_servers"
         )
         .SetProperty("enabled", true, requiredForConfiguration: true) // Codex requires an "enabled" property
-        .SetProperty("command", Startup.Server.ExecutableFullPath.Replace('\\', '/'), requiredForConfiguration: true)
+        .SetProperty("command", Startup.Server.ExecutableFullPath.Replace('\\', '/'), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
         .SetProperty("args", new[] {
             $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
             $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
@@ -57,7 +57,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             bodyPath: "mcp_servers"
         )
         .SetProperty("enabled", true, requiredForConfiguration: true) // Codex requires an "enabled" property
-        .SetProperty("command", Startup.Server.ExecutableFullPath.Replace('\\', '/'), requiredForConfiguration: true)
+        .SetProperty("command", Startup.Server.ExecutableFullPath.Replace('\\', '/'), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
         .SetProperty("args", new[] {
             $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
             $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
@@ -77,7 +77,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             bodyPath: "mcp_servers"
         )
         .SetProperty("enabled", true, requiredForConfiguration: true) // Codex requires an "enabled" property
-        .SetProperty("url", UnityMcpPlugin.Host, requiredForConfiguration: true)
+        .SetProperty("url", UnityMcpPlugin.Host, requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
         .SetProperty("tool_timeout_sec", 300, requiredForConfiguration: false) // Optional: Set a longer tool timeout for Codex
         .SetPropertyToRemove("command")
         .SetPropertyToRemove("args")
@@ -92,7 +92,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             bodyPath: "mcp_servers"
         )
         .SetProperty("enabled", true, requiredForConfiguration: true) // Codex requires an "enabled" property
-        .SetProperty("url", UnityMcpPlugin.Host, requiredForConfiguration: true)
+        .SetProperty("url", UnityMcpPlugin.Host, requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
         .SetProperty("tool_timeout_sec", 300, requiredForConfiguration: false) // Optional: Set a longer tool timeout for Codex
         .SetPropertyToRemove("command")
         .SetPropertyToRemove("args")

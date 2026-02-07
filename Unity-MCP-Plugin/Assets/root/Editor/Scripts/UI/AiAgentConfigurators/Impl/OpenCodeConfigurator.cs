@@ -68,7 +68,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         )
         .SetProperty("type", JsonValue.Create("remote"), requiredForConfiguration: true)
         .SetProperty("enabled", JsonValue.Create(true), requiredForConfiguration: true)
-        .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true)
+        .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
         .SetPropertyToRemove("command")
         .SetPropertyToRemove("args");
 
@@ -79,7 +79,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         )
         .SetProperty("type", JsonValue.Create("remote"), requiredForConfiguration: true)
         .SetProperty("enabled", JsonValue.Create(true), requiredForConfiguration: true)
-        .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true)
+        .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
         .SetPropertyToRemove("command")
         .SetPropertyToRemove("args");
 

@@ -16,13 +16,12 @@ using System.Linq;
 using System.Text;
 using com.IvanMurzak.McpPlugin.Common;
 using UnityEngine;
-using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
     public class TomlAiAgentConfig : AiAgentConfig
     {
-        private readonly Dictionary<string, (object value, bool required)> _properties = new();
+        private readonly Dictionary<string, (object value, bool required, ValueComparisonMode comparison)> _properties = new();
         private readonly HashSet<string> _propertiesToRemove = new();
 
         /// <summary>
@@ -62,15 +61,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             // empty
         }
 
-        public TomlAiAgentConfig SetProperty(string key, object value, bool requiredForConfiguration = false)
+        public TomlAiAgentConfig SetProperty(string key, object value, bool requiredForConfiguration = false, ValueComparisonMode comparison = ValueComparisonMode.Exact)
         {
-            _properties[key] = (value, requiredForConfiguration);
+            _properties[key] = (value, requiredForConfiguration, comparison);
             return this;
         }
 
-        public TomlAiAgentConfig SetProperty(string key, object[] values, bool requiredForConfiguration = false)
+        public TomlAiAgentConfig SetProperty(string key, object[] values, bool requiredForConfiguration = false, ValueComparisonMode comparison = ValueComparisonMode.Exact)
         {
-            _properties[key] = (values, requiredForConfiguration);
+            _properties[key] = (values, requiredForConfiguration, comparison);
             return this;
         }
 
@@ -207,7 +206,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 if (!existingProps.TryGetValue(prop.Key, out var existingValue))
                     return false;
 
-                if (!ValuesMatch(prop.Value.value, existingValue))
+                if (!ValuesMatch(prop.Value.comparison, prop.Value.value, existingValue))
                     return false;
             }
 
@@ -222,11 +221,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             return _propertiesToRemove.Any(key => existingProps.ContainsKey(key));
         }
 
-        private static bool ValuesMatch(object expected, object actual)
+        private static bool ValuesMatch(ValueComparisonMode comparison, object expected, object actual)
         {
             return (expected, actual) switch
             {
-                (string e, string a) => e == a,
+                (string e, string a) => AreStringValuesEquivalent(comparison, e, a),
                 (string[] e, string[] a) => e.Length == a.Length && e.Zip(a, (x, y) => x == y).All(match => match),
                 (bool e, bool a) => e == a,
                 (bool[] e, bool[] a) => e.Length == a.Length && e.Zip(a, (x, y) => x == y).All(match => match),
@@ -234,6 +233,35 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 (int[] e, int[] a) => e.Length == a.Length && e.Zip(a, (x, y) => x == y).All(match => match),
                 _ => false
             };
+        }
+
+        private static bool AreStringValuesEquivalent(ValueComparisonMode comparison, string expected, string actual)
+        {
+            if (comparison == ValueComparisonMode.Path)
+                return NormalizePath(expected) == NormalizePath(actual);
+
+            if (comparison == ValueComparisonMode.Url)
+                return string.Equals(NormalizeUrl(expected), NormalizeUrl(actual), StringComparison.OrdinalIgnoreCase);
+
+            return expected == actual;
+        }
+
+        /// <summary>Normalizes a file path by unifying separators.</summary>
+        private static string NormalizePath(string path)
+        {
+            return path.Replace('\\', '/').TrimEnd('/');
+        }
+
+        /// <summary>Normalizes a URL by lowercasing scheme+host and trimming trailing slashes.</summary>
+        private static string NormalizeUrl(string url)
+        {
+            if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            {
+                var authority = uri.GetLeftPart(UriPartial.Authority).ToLowerInvariant();
+                var pathPart = uri.AbsolutePath.TrimEnd('/');
+                return authority + pathPart + uri.Query;
+            }
+            return url.TrimEnd('/');
         }
 
         private static string GenerateTomlSectionFromDict(string sectionName, Dictionary<string, object> properties)
@@ -452,7 +480,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             // Collect identity values we're about to write
             var ourIdentityValues = _identityKeys
                 .Where(key => _properties.TryGetValue(key, out var prop) && prop.value is string)
-                .ToDictionary(key => key, key => (string)_properties[key].value);
+                .ToDictionary(key => key, key => ((string)_properties[key].value, _properties[key].comparison));
 
             if (ourIdentityValues.Count == 0)
                 return;
@@ -480,7 +508,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 {
                     if (props.TryGetValue(identity.Key, out var existingValue)
                         && existingValue is string existingStr
-                        && existingStr == identity.Value)
+                        && AreStringValuesEquivalent(identity.Value.comparison, identity.Value.Item1, existingStr))
                     {
                         sectionsToRemove.Add((i, sectionEnd));
                         break;

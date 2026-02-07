@@ -14,6 +14,8 @@ using com.IvanMurzak.McpPlugin.Common;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
+    public enum ValueComparisonMode { Exact, Path, Url }
+
     public abstract class AiAgentConfig
     {
         public static readonly string[] DeprecatedMcpServerNames = { "Unity-MCP" };

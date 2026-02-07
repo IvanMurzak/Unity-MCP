@@ -17,13 +17,12 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using com.IvanMurzak.McpPlugin.Common;
 using UnityEngine;
-using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
     public class JsonAiAgentConfig : AiAgentConfig
     {
-        private readonly Dictionary<string, (JsonNode value, bool required)> _properties = new();
+        private readonly Dictionary<string, (JsonNode value, bool required, ValueComparisonMode comparison)> _properties = new();
         private readonly HashSet<string> _propertiesToRemove = new();
 
         public override string ExpectedFileContent
@@ -61,9 +60,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             // empty
         }
 
-        public JsonAiAgentConfig SetProperty(string key, JsonNode value, bool requiredForConfiguration = false)
+        public JsonAiAgentConfig SetProperty(string key, JsonNode value, bool requiredForConfiguration = false, ValueComparisonMode comparison = ValueComparisonMode.Exact)
         {
-            _properties[key] = (value, requiredForConfiguration);
+            _properties[key] = (value, requiredForConfiguration, comparison);
             return this;
         }
 
@@ -229,13 +228,59 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 if (existingValue == null)
                     return false;
 
-                var expectedJson = prop.Value.value.ToJsonString();
-                var actualJson = existingValue.ToJsonString();
-                if (expectedJson != actualJson)
+                if (!AreJsonValuesEquivalent(prop.Value.comparison, prop.Value.value, existingValue))
                     return false;
             }
 
             return true;
+        }
+
+        private static bool AreJsonValuesEquivalent(ValueComparisonMode comparison, JsonNode expected, JsonNode actual)
+        {
+            if (comparison == ValueComparisonMode.Path
+                && TryGetStringValue(expected, out var expectedPath)
+                && TryGetStringValue(actual, out var actualPath))
+            {
+                return NormalizePath(expectedPath) == NormalizePath(actualPath);
+            }
+
+            if (comparison == ValueComparisonMode.Url
+                && TryGetStringValue(expected, out var expectedUrl)
+                && TryGetStringValue(actual, out var actualUrl))
+            {
+                return string.Equals(NormalizeUrl(expectedUrl), NormalizeUrl(actualUrl), StringComparison.OrdinalIgnoreCase);
+            }
+
+            return expected.ToJsonString() == actual.ToJsonString();
+        }
+
+        private static bool TryGetStringValue(JsonNode node, out string value)
+        {
+            if (node is JsonValue jsonValue && jsonValue.TryGetValue<string>(out var str) && str != null)
+            {
+                value = str;
+                return true;
+            }
+            value = default!;
+            return false;
+        }
+
+        /// <summary>Normalizes a file path by unifying separators.</summary>
+        private static string NormalizePath(string path)
+        {
+            return path.Replace('\\', '/').TrimEnd('/');
+        }
+
+        /// <summary>Normalizes a URL by lowercasing scheme+host and trimming trailing slashes.</summary>
+        private static string NormalizeUrl(string url)
+        {
+            if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            {
+                var authority = uri.GetLeftPart(UriPartial.Authority).ToLowerInvariant();
+                var pathPart = uri.AbsolutePath.TrimEnd('/');
+                return authority + pathPart + uri.Query;
+            }
+            return url.TrimEnd('/');
         }
 
         private bool HasPropertiesToRemove(JsonNode? serverEntry)
@@ -274,11 +319,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         private void RemoveDuplicateServerEntries(JsonObject targetObj)
         {
             // Collect identity values we're about to write
-            var ourIdentityValues = new Dictionary<string, string>();
+            var ourIdentityValues = new Dictionary<string, (JsonNode value, ValueComparisonMode comparison)>();
             foreach (var identityKey in _identityKeys)
             {
                 if (_properties.TryGetValue(identityKey, out var prop))
-                    ourIdentityValues[identityKey] = prop.value.ToJsonString();
+                    ourIdentityValues[identityKey] = (prop.value, prop.comparison);
             }
 
             if (ourIdentityValues.Count == 0)
@@ -298,7 +343,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 foreach (var identity in ourIdentityValues)
                 {
                     var existingValue = entry[identity.Key];
-                    if (existingValue != null && existingValue.ToJsonString() == identity.Value)
+                    if (existingValue != null && AreJsonValuesEquivalent(identity.Value.comparison, identity.Value.value, existingValue))
                     {
                         keysToRemove.Add(kv.Key);
                         break;

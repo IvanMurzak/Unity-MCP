@@ -42,7 +42,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         )
         .AddIdentityKey("serverUrl")
         .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
-        .SetProperty("command", JsonValue.Create(Startup.Server.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true)
+        .SetProperty("command", JsonValue.Create(Startup.Server.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
         .SetProperty("args", new JsonArray {
             $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
             $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
@@ -64,7 +64,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         )
         .AddIdentityKey("serverUrl")
         .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
-        .SetProperty("command", JsonValue.Create(Startup.Server.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true)
+        .SetProperty("command", JsonValue.Create(Startup.Server.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
         .SetProperty("args", new JsonArray {
             $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
             $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
@@ -86,7 +86,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         )
         .AddIdentityKey("serverUrl")
         .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
-        .SetProperty("serverUrl", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true)
+        .SetProperty("serverUrl", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
         .SetPropertyToRemove("command")
         .SetPropertyToRemove("args")
         .SetPropertyToRemove("url")
@@ -104,7 +104,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         )
         .AddIdentityKey("serverUrl")
         .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
-        .SetProperty("serverUrl", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true)
+        .SetProperty("serverUrl", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
         .SetPropertyToRemove("command")
         .SetPropertyToRemove("args")
         .SetPropertyToRemove("url")

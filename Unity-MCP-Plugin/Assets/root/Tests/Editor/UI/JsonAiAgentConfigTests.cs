@@ -1151,5 +1151,126 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         #endregion
+
+        #region ValueComparisonMode - Path and URL Normalization
+
+        [UnityTest]
+        public IEnumerator IsConfigured_PathComparison_BackslashEqualsForwardSlash()
+        {
+            // Arrange - write config with backslashes for the command path
+            var bodyPath = "mcpServers";
+            var backslashPath = "C:\\Users\\test\\app.exe";
+            var forwardSlashPath = "C:/Users/test/app.exe";
+
+            File.WriteAllText(tempConfigPath, $@"{{
+  ""{bodyPath}"": {{
+    ""{AiAgentConfig.DefaultMcpServerName}"": {{
+      ""command"": ""{backslashPath.Replace("\\", "\\\\")}""
+    }}
+  }}
+}}");
+
+            var config = new JsonAiAgentConfig("Test", tempConfigPath, bodyPath)
+                .SetProperty("command", JsonValue.Create(forwardSlashPath), requiredForConfiguration: true, comparison: ValueComparisonMode.Path);
+
+            // Act & Assert
+            Assert.IsTrue(config.IsConfigured(), "IsConfigured should return true when paths differ only in separator style");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator IsConfigured_PathComparison_TrailingSlashIgnored()
+        {
+            // Arrange
+            var bodyPath = "mcpServers";
+
+            File.WriteAllText(tempConfigPath, $@"{{
+  ""{bodyPath}"": {{
+    ""{AiAgentConfig.DefaultMcpServerName}"": {{
+      ""command"": ""C:/Users/test/app/""
+    }}
+  }}
+}}");
+
+            var config = new JsonAiAgentConfig("Test", tempConfigPath, bodyPath)
+                .SetProperty("command", JsonValue.Create("C:/Users/test/app"), requiredForConfiguration: true, comparison: ValueComparisonMode.Path);
+
+            // Act & Assert
+            Assert.IsTrue(config.IsConfigured(), "IsConfigured should return true when paths differ only by trailing slash");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator IsConfigured_UrlComparison_TrailingSlashIgnored()
+        {
+            // Arrange
+            var bodyPath = "mcpServers";
+
+            File.WriteAllText(tempConfigPath, $@"{{
+  ""{bodyPath}"": {{
+    ""{AiAgentConfig.DefaultMcpServerName}"": {{
+      ""url"": ""http://localhost:5000/mcp/""
+    }}
+  }}
+}}");
+
+            var config = new JsonAiAgentConfig("Test", tempConfigPath, bodyPath)
+                .SetProperty("url", JsonValue.Create("http://localhost:5000/mcp"), requiredForConfiguration: true, comparison: ValueComparisonMode.Url);
+
+            // Act & Assert
+            Assert.IsTrue(config.IsConfigured(), "IsConfigured should return true when URLs differ only by trailing slash");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator IsConfigured_UrlComparison_SchemeCaseInsensitive()
+        {
+            // Arrange
+            var bodyPath = "mcpServers";
+
+            File.WriteAllText(tempConfigPath, $@"{{
+  ""{bodyPath}"": {{
+    ""{AiAgentConfig.DefaultMcpServerName}"": {{
+      ""url"": ""HTTP://LOCALHOST:5000/mcp""
+    }}
+  }}
+}}");
+
+            var config = new JsonAiAgentConfig("Test", tempConfigPath, bodyPath)
+                .SetProperty("url", JsonValue.Create("http://localhost:5000/mcp"), requiredForConfiguration: true, comparison: ValueComparisonMode.Url);
+
+            // Act & Assert
+            Assert.IsTrue(config.IsConfigured(), "IsConfigured should return true when URLs differ only in scheme/host casing");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator IsConfigured_ExactComparison_RejectsDifferentPaths()
+        {
+            // Arrange - without ValueComparisonMode.Path, backslash vs forward slash should NOT match
+            var bodyPath = "mcpServers";
+
+            File.WriteAllText(tempConfigPath, $@"{{
+  ""{bodyPath}"": {{
+    ""{AiAgentConfig.DefaultMcpServerName}"": {{
+      ""command"": ""C:\\Users\\test\\app.exe""
+    }}
+  }}
+}}");
+
+            var config = new JsonAiAgentConfig("Test", tempConfigPath, bodyPath)
+                .SetProperty("command", JsonValue.Create("C:/Users/test/app.exe"), requiredForConfiguration: true);
+
+            // Act & Assert
+            Assert.IsFalse(config.IsConfigured(), "IsConfigured should return false with Exact comparison when paths have different separators");
+
+            yield return null;
+        }
+
+        #endregion
     }
 }
