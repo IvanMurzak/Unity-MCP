@@ -308,8 +308,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
                 if (rawValue.StartsWith("["))
                 {
-                    // Array value - parse with type detection
-                    props[key] = ParseTypedTomlArrayValue(rawValue);
+                    // Array value - strip inline comment then parse with type detection
+                    var arrayValue = StripArrayInlineComment(rawValue);
+                    props[key] = ParseTypedTomlArrayValue(arrayValue);
                 }
                 else if (rawValue.StartsWith("\""))
                 {
@@ -343,6 +344,53 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         {
             var idx = value.IndexOf('#');
             return idx >= 0 ? value[..idx].TrimEnd() : value;
+        }
+
+        /// <summary>
+        /// Strips an inline comment from a TOML array value while respecting quoted strings.
+        /// For example, <c>["a", "b"] # comment</c> becomes <c>["a", "b"]</c>.
+        /// </summary>
+        private static string StripArrayInlineComment(string value)
+        {
+            var depth = 0;
+            var inQuote = false;
+            var escaped = false;
+
+            for (int i = 0; i < value.Length; i++)
+            {
+                var ch = value[i];
+
+                if (escaped)
+                {
+                    escaped = false;
+                    continue;
+                }
+
+                if (ch == '\\' && inQuote)
+                {
+                    escaped = true;
+                    continue;
+                }
+
+                if (ch == '"')
+                {
+                    inQuote = !inQuote;
+                    continue;
+                }
+
+                if (inQuote)
+                    continue;
+
+                if (ch == '[') depth++;
+                else if (ch == ']')
+                {
+                    depth--;
+                    if (depth == 0)
+                        return value[..(i + 1)];
+                }
+            }
+
+            return value;
         }
 
         private static string? ParseTomlStringValue(string line)

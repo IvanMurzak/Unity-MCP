@@ -1140,6 +1140,112 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         [UnityTest]
+        public IEnumerator Configure_ExistingSection_InlineCommentOnStringArray()
+        {
+            // Arrange
+            var sectionName = $"mcp_servers.{AiAgentConfig.DefaultMcpServerName}";
+            var existingToml = $"[{sectionName}]\ncommand = \"old-command\"\nnames = [\"alpha\", \"beta\"] # some list\n";
+            File.WriteAllText(tempConfigPath, existingToml);
+            var config = CreateStdioConfig(tempConfigPath);
+
+            // Act
+            config.Configure();
+
+            // Assert
+            var content = File.ReadAllText(tempConfigPath);
+            Assert.IsTrue(content.Contains("names = [\"alpha\",\"beta\"]"), "String array should be preserved after stripping inline comment");
+            Assert.IsFalse(content.Contains("# some list"), "Inline comment should be stripped");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Configure_ExistingSection_InlineCommentOnIntArray()
+        {
+            // Arrange
+            var sectionName = $"mcp_servers.{AiAgentConfig.DefaultMcpServerName}";
+            var existingToml = $"[{sectionName}]\ncommand = \"old-command\"\nports = [8080, 8081] # default ports\n";
+            File.WriteAllText(tempConfigPath, existingToml);
+            var config = CreateStdioConfig(tempConfigPath);
+
+            // Act
+            config.Configure();
+
+            // Assert
+            var content = File.ReadAllText(tempConfigPath);
+            Assert.IsTrue(content.Contains("ports = [8080,8081]"), "Int array should be preserved after stripping inline comment");
+            Assert.IsFalse(content.Contains("# default ports"), "Inline comment should be stripped");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Configure_ExistingSection_InlineCommentOnBoolArray()
+        {
+            // Arrange
+            var sectionName = $"mcp_servers.{AiAgentConfig.DefaultMcpServerName}";
+            var existingToml = $"[{sectionName}]\ncommand = \"old-command\"\nflags = [true, false] # feature flags\n";
+            File.WriteAllText(tempConfigPath, existingToml);
+            var config = CreateStdioConfig(tempConfigPath);
+
+            // Act
+            config.Configure();
+
+            // Assert
+            var content = File.ReadAllText(tempConfigPath);
+            Assert.IsTrue(content.Contains("flags = [true,false]"), "Bool array should be preserved after stripping inline comment");
+            Assert.IsFalse(content.Contains("# feature flags"), "Inline comment should be stripped");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator IsConfigured_StringArrayWithInlineComment_MatchesCorrectly()
+        {
+            // Arrange - manually write TOML with inline comment on a required string array
+            var sectionName = $"mcp_servers.{AiAgentConfig.DefaultMcpServerName}";
+            var toml = $"[{sectionName}]\nnames = [\"alpha\", \"beta\"] # a comment\n";
+            File.WriteAllText(tempConfigPath, toml);
+
+            var config = new TomlAiAgentConfig(
+                name: "Test",
+                configPath: tempConfigPath,
+                bodyPath: "mcp_servers")
+            .SetProperty("names", new[] { "alpha", "beta" }, requiredForConfiguration: true);
+
+            // Act
+            var isConfigured = config.IsConfigured();
+
+            // Assert
+            Assert.IsTrue(isConfigured, "IsConfigured should return true for string array with inline comment");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator IsConfigured_StringArrayWithHashInsideQuotes_MatchesCorrectly()
+        {
+            // Arrange - string array where a value contains a # character
+            var sectionName = $"mcp_servers.{AiAgentConfig.DefaultMcpServerName}";
+            var toml = $"[{sectionName}]\ntags = [\"C#\", \"F#\"] # languages\n";
+            File.WriteAllText(tempConfigPath, toml);
+
+            var config = new TomlAiAgentConfig(
+                name: "Test",
+                configPath: tempConfigPath,
+                bodyPath: "mcp_servers")
+            .SetProperty("tags", new[] { "C#", "F#" }, requiredForConfiguration: true);
+
+            // Act
+            var isConfigured = config.IsConfigured();
+
+            // Assert
+            Assert.IsTrue(isConfigured, "IsConfigured should handle # inside quoted strings correctly");
+
+            yield return null;
+        }
+
+        [UnityTest]
         public IEnumerator IsConfigured_WithInlineComments_ReturnsTrue()
         {
             // Arrange
