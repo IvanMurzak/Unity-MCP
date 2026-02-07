@@ -226,7 +226,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             return (expected, actual) switch
             {
                 (string e, string a) => AreStringValuesEquivalent(comparison, e, a),
-                (string[] e, string[] a) => e.Length == a.Length && e.Zip(a, (x, y) => x == y).All(match => match),
+                (string[] e, string[] a) => e.Length == a.Length && e.Zip(a, (x, y) => AreStringValuesEquivalent(comparison, x, y)).All(match => match),
                 (bool e, bool a) => e == a,
                 (bool[] e, bool[] a) => e.Length == a.Length && e.Zip(a, (x, y) => x == y).All(match => match),
                 (int e, int a) => e == a,
