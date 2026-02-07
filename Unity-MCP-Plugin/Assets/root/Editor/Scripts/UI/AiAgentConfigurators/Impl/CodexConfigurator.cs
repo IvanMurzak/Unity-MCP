@@ -103,7 +103,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             base.OnUICreated(root);
 
             var addMcpServerCommandStdio = $"codex mcp add {AiAgentConfig.DefaultMcpServerName} \"{Startup.Server.ExecutableFullPath}\" port={UnityMcpPlugin.Port} plugin-timeout={UnityMcpPlugin.TimeoutMs} client-transport=stdio";
-            var addMcpServerCommandHttp = $"codex mcp add --transport http {AiAgentConfig.DefaultMcpServerName} {UnityMcpPlugin.Host}";
+            var addMcpServerCommandHttp = $"codex mcp add {AiAgentConfig.DefaultMcpServerName} --url {UnityMcpPlugin.Host}";
 
             // STDIO Configuration
 
