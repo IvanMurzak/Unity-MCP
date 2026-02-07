@@ -83,10 +83,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             base.OnUICreated(root);
 
             ContainerUnderHeader!.Add(TemplateLabelDescription("VS Code has integration of GitHub Copilot that operates as AI agent in the IDE."));
+            ContainerUnderHeader!.Add(TemplateWarningLabel("IMPORTANT: Need to start 'ai-game-developer' MCP server manually in Visual Studio Code each time after Visual Studio Code restart."));
 
             // STDIO Configuration
-
-            ContainerStdio!.Add(TemplateWarningLabel("IMPORTANT: Need to start 'ai-game-developer' MCP server manually in Visual Studio Code each time after Visual Studio Code restart."));
 
             var manualStepsContainer = TemplateFoldoutFirst("Manual Configuration Steps");
 
