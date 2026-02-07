@@ -93,7 +93,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             manualStepsOption1!.Add(TemplateLabelDescription("2. Run the following command in the folder of the Unity project to configure Gemini"));
             manualStepsOption1!.Add(TemplateTextFieldReadOnly(addMcpServerCommandStdio));
             manualStepsOption1!.Add(TemplateLabelDescription("3. Start Gemini"));
-            manualStepsOption1!.Add(TemplateTextFieldReadOnly("gemini"));
+            manualStepsOption1!.Add(TemplateTextFieldReadOnly("gemini --debug"));
+
+            ContainerStdio!.Add(TemplateWarningLabel("REQUIRED: Use --debug flag when starting Gemini is important, it helps MCP server to work properly with Gemini in stdio transport mode."));
 
             ContainerStdio!.Add(manualStepsOption1);
 
@@ -108,6 +110,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var troubleshootingContainerStdio = TemplateFoldout("Troubleshooting");
 
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Ensure Gemini CLI is installed and accessible from terminal"));
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Start Gemini with --debug flag, it helps MCP server to work properly with Gemini in stdio transport mode."));
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Ensure MCP configuration file doesn't have syntax errors"));
 
             ContainerStdio!.Add(troubleshootingContainerStdio);
@@ -121,7 +124,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             manualStepsOption1Http!.Add(TemplateLabelDescription("2. Run the following command in the folder of the Unity project to configure Gemini"));
             manualStepsOption1Http!.Add(TemplateTextFieldReadOnly(addMcpServerCommandHttp));
             manualStepsOption1Http!.Add(TemplateLabelDescription("3. Start Gemini"));
-            manualStepsOption1Http!.Add(TemplateTextFieldReadOnly("gemini"));
+            manualStepsOption1Http!.Add(TemplateTextFieldReadOnly("gemini --debug"));
 
             ContainerHttp!.Add(manualStepsOption1Http);
 
