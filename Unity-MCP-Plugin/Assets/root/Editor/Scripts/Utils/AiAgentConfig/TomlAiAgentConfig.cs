@@ -450,12 +450,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         private void RemoveDuplicateServerSections(List<string> lines, string ownSectionName)
         {
             // Collect identity values we're about to write
-            var ourIdentityValues = new Dictionary<string, string>();
-            foreach (var identityKey in _identityKeys)
-            {
-                if (_properties.TryGetValue(identityKey, out var prop) && prop.value is string strValue)
-                    ourIdentityValues[identityKey] = strValue;
-            }
+            var ourIdentityValues = _identityKeys
+                .Where(key => _properties.TryGetValue(key, out var prop) && prop.value is string)
+                .ToDictionary(key => key, key => (string)_properties[key].value);
 
             if (ourIdentityValues.Count == 0)
                 return;

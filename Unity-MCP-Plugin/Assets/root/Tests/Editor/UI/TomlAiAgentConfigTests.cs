@@ -11,6 +11,7 @@
 #nullable enable
 using System.Collections;
 using System.IO;
+using System.Linq;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using NUnit.Framework;
@@ -846,13 +847,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var lines = content.Split('\n');
 
             // Assert - find property lines (skip section header, skip empty)
-            var propLines = new System.Collections.Generic.List<string>();
-            foreach (var line in lines)
-            {
-                var trimmed = line.Trim();
-                if (!string.IsNullOrEmpty(trimmed) && !trimmed.StartsWith("[") && trimmed.Contains(" = "))
-                    propLines.Add(trimmed);
-            }
+            var propLines = lines
+                .Select(line => line.Trim())
+                .Where(t => !string.IsNullOrEmpty(t) && !t.StartsWith("[") && t.Contains(" = "))
+                .ToList();
 
             Assert.AreEqual(3, propLines.Count, "Should have 3 properties");
             Assert.IsTrue(propLines[0].StartsWith("alpha"), "First property should be 'alpha'");
