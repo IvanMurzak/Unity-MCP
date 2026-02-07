@@ -826,5 +826,107 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         #endregion
+
+        #region Deterministic Property Order
+
+        [UnityTest]
+        public IEnumerator ExpectedFileContent_PropertiesInAlphabeticalOrder()
+        {
+            // Arrange - add properties in reverse alphabetical order
+            var config = new TomlAiAgentConfig(
+                name: "Test",
+                configPath: tempConfigPath,
+                bodyPath: "mcp_servers")
+            .SetProperty("zebra", "last")
+            .SetProperty("alpha", "first")
+            .SetProperty("middle", "mid");
+
+            // Act
+            var content = config.ExpectedFileContent;
+            var lines = content.Split('\n');
+
+            // Assert - find property lines (skip section header, skip empty)
+            var propLines = new System.Collections.Generic.List<string>();
+            foreach (var line in lines)
+            {
+                var trimmed = line.Trim();
+                if (!string.IsNullOrEmpty(trimmed) && !trimmed.StartsWith("[") && trimmed.Contains(" = "))
+                    propLines.Add(trimmed);
+            }
+
+            Assert.AreEqual(3, propLines.Count, "Should have 3 properties");
+            Assert.IsTrue(propLines[0].StartsWith("alpha"), "First property should be 'alpha'");
+            Assert.IsTrue(propLines[1].StartsWith("middle"), "Second property should be 'middle'");
+            Assert.IsTrue(propLines[2].StartsWith("zebra"), "Third property should be 'zebra'");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Configure_NewFile_PropertiesInAlphabeticalOrder()
+        {
+            // Arrange - add properties in reverse alphabetical order
+            if (File.Exists(tempConfigPath))
+                File.Delete(tempConfigPath);
+            var config = new TomlAiAgentConfig(
+                name: "Test",
+                configPath: tempConfigPath,
+                bodyPath: "mcp_servers")
+            .SetProperty("zebra", "last")
+            .SetProperty("alpha", "first")
+            .SetProperty("middle", "mid");
+
+            // Act
+            config.Configure();
+
+            // Assert
+            var content = File.ReadAllText(tempConfigPath);
+            var alphaIdx = content.IndexOf("alpha = ");
+            var middleIdx = content.IndexOf("middle = ");
+            var zebraIdx = content.IndexOf("zebra = ");
+
+            Assert.IsTrue(alphaIdx >= 0, "Should contain alpha");
+            Assert.IsTrue(middleIdx >= 0, "Should contain middle");
+            Assert.IsTrue(zebraIdx >= 0, "Should contain zebra");
+            Assert.IsTrue(alphaIdx < middleIdx, "alpha should appear before middle");
+            Assert.IsTrue(middleIdx < zebraIdx, "middle should appear before zebra");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Configure_ExistingSection_MergedPropertiesInAlphabeticalOrder()
+        {
+            // Arrange - existing file with a section, then configure with new properties in reverse order
+            var sectionName = $"mcp_servers.{AiAgentConfig.DefaultMcpServerName}";
+            var existingToml = $"[{sectionName}]\nexisting = \"value\"\n";
+            File.WriteAllText(tempConfigPath, existingToml);
+
+            var config = new TomlAiAgentConfig(
+                name: "Test",
+                configPath: tempConfigPath,
+                bodyPath: "mcp_servers")
+            .SetProperty("zebra", "last")
+            .SetProperty("alpha", "first");
+
+            // Act
+            config.Configure();
+
+            // Assert
+            var content = File.ReadAllText(tempConfigPath);
+            var alphaIdx = content.IndexOf("alpha = ");
+            var existingIdx = content.IndexOf("existing = ");
+            var zebraIdx = content.IndexOf("zebra = ");
+
+            Assert.IsTrue(alphaIdx >= 0, "Should contain alpha");
+            Assert.IsTrue(existingIdx >= 0, "Should contain existing");
+            Assert.IsTrue(zebraIdx >= 0, "Should contain zebra");
+            Assert.IsTrue(alphaIdx < existingIdx, "alpha should appear before existing");
+            Assert.IsTrue(existingIdx < zebraIdx, "existing should appear before zebra");
+
+            yield return null;
+        }
+
+        #endregion
     }
 }

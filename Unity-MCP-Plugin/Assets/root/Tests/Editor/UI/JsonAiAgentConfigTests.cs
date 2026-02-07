@@ -790,5 +790,200 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         #endregion
+
+        #region IsConfigured - Scoped to DefaultMcpServerName
+
+        [UnityTest]
+        public IEnumerator IsConfigured_OtherServerMatches_ButDefaultMissing_ReturnsFalse()
+        {
+            // Arrange - another server entry has matching properties, but DefaultMcpServerName doesn't exist
+            var bodyPath = "mcpServers";
+            var executable = Startup.Server.ExecutableFullPath.Replace('\\', '/');
+            var json = $@"{{
+                ""mcpServers"": {{
+                    ""otherServer"": {{
+                        ""type"": ""stdio"",
+                        ""command"": ""{executable}"",
+                        ""args"": [""{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}"", ""{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}"", ""{Consts.MCP.Server.Args.ClientTransportMethod}=stdio""]
+                    }}
+                }}
+            }}";
+            File.WriteAllText(tempConfigPath, json);
+            var config = CreateStdioConfig(tempConfigPath, bodyPath);
+
+            // Act
+            var isConfigured = config.IsConfigured();
+
+            // Assert
+            Assert.IsFalse(isConfigured, "Should return false when only a different server name matches, not DefaultMcpServerName");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator IsConfigured_OtherServerMatches_DefaultHasWrongValues_ReturnsFalse()
+        {
+            // Arrange - another server matches, but the DefaultMcpServerName entry has wrong values
+            var bodyPath = "mcpServers";
+            var executable = Startup.Server.ExecutableFullPath.Replace('\\', '/');
+            var json = $@"{{
+                ""mcpServers"": {{
+                    ""otherServer"": {{
+                        ""type"": ""stdio"",
+                        ""command"": ""{executable}"",
+                        ""args"": [""{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}"", ""{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}"", ""{Consts.MCP.Server.Args.ClientTransportMethod}=stdio""]
+                    }},
+                    ""{AiAgentConfig.DefaultMcpServerName}"": {{
+                        ""type"": ""stdio"",
+                        ""command"": ""wrong-command"",
+                        ""args"": [""wrong-arg""]
+                    }}
+                }}
+            }}";
+            File.WriteAllText(tempConfigPath, json);
+            var config = CreateStdioConfig(tempConfigPath, bodyPath);
+
+            // Act
+            var isConfigured = config.IsConfigured();
+
+            // Assert
+            Assert.IsFalse(isConfigured, "Should return false when DefaultMcpServerName has wrong values, even if another server matches");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator IsConfigured_Http_OtherServerMatches_ButDefaultMissing_ReturnsFalse()
+        {
+            // Arrange - another server entry has matching http properties, but DefaultMcpServerName doesn't exist
+            var bodyPath = "mcpServers";
+            var url = UnityMcpPlugin.Host;
+            var json = $@"{{
+                ""mcpServers"": {{
+                    ""otherServer"": {{
+                        ""type"": ""{TransportMethod.streamableHttp}"",
+                        ""url"": ""{url}""
+                    }}
+                }}
+            }}";
+            File.WriteAllText(tempConfigPath, json);
+            var config = CreateHttpConfig(tempConfigPath, bodyPath);
+
+            // Act
+            var isConfigured = config.IsConfigured();
+
+            // Assert
+            Assert.IsFalse(isConfigured, "Should return false when only a different server name matches for http, not DefaultMcpServerName");
+
+            yield return null;
+        }
+
+        #endregion
+
+        #region Deterministic Property Order
+
+        [UnityTest]
+        public IEnumerator ExpectedFileContent_PropertiesInAlphabeticalOrder()
+        {
+            // Arrange - add properties in reverse alphabetical order
+            var config = new JsonAiAgentConfig(
+                name: "Test",
+                configPath: tempConfigPath,
+                bodyPath: "mcpServers")
+            .SetProperty("zebra", JsonValue.Create("last"))
+            .SetProperty("alpha", JsonValue.Create("first"))
+            .SetProperty("middle", JsonValue.Create("mid"));
+
+            // Act
+            var content = config.ExpectedFileContent;
+            var rootObj = JsonNode.Parse(content)?.AsObject();
+            var serverEntry = rootObj!["mcpServers"]?[AiAgentConfig.DefaultMcpServerName]?.AsObject();
+
+            // Assert - properties should appear in sorted order
+            var keys = new System.Collections.Generic.List<string>();
+            foreach (var kv in serverEntry!)
+                keys.Add(kv.Key);
+
+            Assert.AreEqual("alpha", keys[0], "First property should be 'alpha'");
+            Assert.AreEqual("middle", keys[1], "Second property should be 'middle'");
+            Assert.AreEqual("zebra", keys[2], "Third property should be 'zebra'");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Configure_PropertiesInAlphabeticalOrder()
+        {
+            // Arrange - add properties in reverse alphabetical order
+            if (File.Exists(tempConfigPath))
+                File.Delete(tempConfigPath);
+            var config = new JsonAiAgentConfig(
+                name: "Test",
+                configPath: tempConfigPath,
+                bodyPath: "mcpServers")
+            .SetProperty("zebra", JsonValue.Create("last"))
+            .SetProperty("alpha", JsonValue.Create("first"))
+            .SetProperty("middle", JsonValue.Create("mid"));
+
+            // Act
+            config.Configure();
+
+            // Assert
+            var content = File.ReadAllText(tempConfigPath);
+            var rootObj = JsonNode.Parse(content)?.AsObject();
+            var serverEntry = rootObj!["mcpServers"]?[AiAgentConfig.DefaultMcpServerName]?.AsObject();
+
+            var keys = new System.Collections.Generic.List<string>();
+            foreach (var kv in serverEntry!)
+                keys.Add(kv.Key);
+
+            Assert.AreEqual("alpha", keys[0], "First property should be 'alpha'");
+            Assert.AreEqual("middle", keys[1], "Second property should be 'middle'");
+            Assert.AreEqual("zebra", keys[2], "Third property should be 'zebra'");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Configure_ExistingFile_MergedPropertiesInAlphabeticalOrder()
+        {
+            // Arrange - existing file with a server entry, then configure with new properties in reverse order
+            var existingJson = $@"{{
+                ""mcpServers"": {{
+                    ""{AiAgentConfig.DefaultMcpServerName}"": {{
+                        ""existing"": ""value""
+                    }}
+                }}
+            }}";
+            File.WriteAllText(tempConfigPath, existingJson);
+
+            var config = new JsonAiAgentConfig(
+                name: "Test",
+                configPath: tempConfigPath,
+                bodyPath: "mcpServers")
+            .SetProperty("zebra", JsonValue.Create("last"))
+            .SetProperty("alpha", JsonValue.Create("first"));
+
+            // Act
+            config.Configure();
+
+            // Assert
+            var content = File.ReadAllText(tempConfigPath);
+            var rootObj = JsonNode.Parse(content)?.AsObject();
+            var serverEntry = rootObj!["mcpServers"]?[AiAgentConfig.DefaultMcpServerName]?.AsObject();
+
+            var keys = new System.Collections.Generic.List<string>();
+            foreach (var kv in serverEntry!)
+                keys.Add(kv.Key);
+
+            // "existing" was already there, new props should be sorted among themselves
+            var alphaIdx = keys.IndexOf("alpha");
+            var zebraIdx = keys.IndexOf("zebra");
+            Assert.IsTrue(alphaIdx < zebraIdx, "alpha should appear before zebra in the output");
+
+            yield return null;
+        }
+
+        #endregion
     }
 }

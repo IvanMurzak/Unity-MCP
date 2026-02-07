@@ -12,6 +12,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using com.IvanMurzak.McpPlugin.Common;
@@ -133,13 +134,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 foreach (var key in _propertiesToRemove)
                     serverEntry.Remove(key);
 
-                // Set properties on the entry
-                foreach (var prop in _properties)
+                // Set properties on the entry (sorted for deterministic output)
+                foreach (var key in _properties.Keys.OrderBy(k => k, StringComparer.Ordinal))
                 {
-                    var clonedValue = prop.Value.value.ToJsonString() is string jsonStr
+                    var clonedValue = _properties[key].value.ToJsonString() is string jsonStr
                         ? JsonNode.Parse(jsonStr)
                         : null;
-                    serverEntry[prop.Key] = clonedValue;
+                    serverEntry[key] = clonedValue;
                 }
 
                 // Write back to file
@@ -178,18 +179,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 if (targetObj == null)
                     return false;
 
-                foreach (var kv in targetObj)
-                {
-                    if (!AreRequiredPropertiesMatching(kv.Value))
-                        continue;
+                var serverEntry = targetObj[DefaultMcpServerName];
+                if (serverEntry == null)
+                    return false;
 
-                    if (HasPropertiesToRemove(kv.Value))
-                        continue;
-
-                    return true;
-                }
-
-                return false;
+                return AreRequiredPropertiesMatching(serverEntry) && !HasPropertiesToRemove(serverEntry);
             }
             catch (Exception ex)
             {
@@ -202,12 +196,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         private JsonObject BuildServerEntry()
         {
             var obj = new JsonObject();
-            foreach (var prop in _properties)
+            foreach (var key in _properties.Keys.OrderBy(k => k, StringComparer.Ordinal))
             {
-                var clonedValue = prop.Value.value.ToJsonString() is string jsonStr
+                var clonedValue = _properties[key].value.ToJsonString() is string jsonStr
                     ? JsonNode.Parse(jsonStr)
                     : null;
-                obj[prop.Key] = clonedValue;
+                obj[key] = clonedValue;
             }
             return obj;
         }

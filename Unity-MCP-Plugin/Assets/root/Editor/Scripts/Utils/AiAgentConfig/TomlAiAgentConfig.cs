@@ -32,9 +32,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 var sectionName = $"{BodyPath}.{DefaultMcpServerName}";
                 var sb = new StringBuilder();
                 sb.AppendLine($"[{sectionName}]");
-                foreach (var prop in _properties)
+                foreach (var key in _properties.Keys.OrderBy(k => k, StringComparer.Ordinal))
                 {
-                    sb.AppendLine(FormatTomlProperty(prop.Key, prop.Value.value));
+                    sb.AppendLine(FormatTomlProperty(key, _properties[key].value));
                 }
                 return sb.ToString();
             }
@@ -221,9 +221,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         {
             var sb = new StringBuilder();
             sb.AppendLine($"[{sectionName}]");
-            foreach (var prop in properties)
+            foreach (var key in properties.Keys.OrderBy(k => k, StringComparer.Ordinal))
             {
-                sb.AppendLine(FormatTomlProperty(prop.Key, prop.Value));
+                sb.AppendLine(FormatTomlProperty(key, properties[key]));
             }
             return sb.ToString();
         }
