@@ -386,7 +386,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             if (string.IsNullOrEmpty(arrayContent))
                 return Array.Empty<string>();
 
-            // Detect array element type by looking at the first element
+            // Detect array element type by looking at the first element.
+            // Typed parsers return null when any element is invalid;
+            // fall back to RawTomlValue to preserve the original text.
             if (arrayContent.StartsWith("\""))
             {
                 // String array
@@ -396,12 +398,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                      arrayContent.StartsWith("false", StringComparison.Ordinal))
             {
                 // Boolean array
-                return ParseTomlBoolArrayContent(arrayContent);
+                return ParseTomlBoolArrayContent(arrayContent) ?? (object)new RawTomlValue(rawValue);
             }
             else if (char.IsDigit(arrayContent[0]) || arrayContent[0] == '-')
             {
                 // Integer array
-                return ParseTomlIntArrayContent(arrayContent);
+                return ParseTomlIntArrayContent(arrayContent) ?? (object)new RawTomlValue(rawValue);
             }
 
             // Fallback to string array
@@ -451,24 +453,40 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             return result.ToArray();
         }
 
-        private static bool[] ParseTomlBoolArrayContent(string arrayContent)
+        /// <summary>
+        /// Parses a comma-separated list of boolean literals.
+        /// Returns null if any element is not a valid boolean, so the caller
+        /// can fall back to preserving the raw value.
+        /// </summary>
+        private static bool[]? ParseTomlBoolArrayContent(string arrayContent)
         {
             var elements = arrayContent.Split(',');
-            return elements
-                .Select(e => e.Trim().ToLowerInvariant())
-                .Where(t => t == "true" || t == "false")
-                .Select(t => t == "true")
-                .ToArray();
+            var result = new bool[elements.Length];
+            for (int i = 0; i < elements.Length; i++)
+            {
+                var trimmed = elements[i].Trim().ToLowerInvariant();
+                if (trimmed == "true") result[i] = true;
+                else if (trimmed == "false") result[i] = false;
+                else return null;
+            }
+            return result;
         }
 
-        private static int[] ParseTomlIntArrayContent(string arrayContent)
+        /// <summary>
+        /// Parses a comma-separated list of integer literals.
+        /// Returns null if any element is not a valid integer, so the caller
+        /// can fall back to preserving the raw value.
+        /// </summary>
+        private static int[]? ParseTomlIntArrayContent(string arrayContent)
         {
             var elements = arrayContent.Split(',');
-            return elements
-                .Select(e => e.Trim())
-                .Where(t => int.TryParse(t, out _))
-                .Select(t => int.Parse(t))
-                .ToArray();
+            var result = new int[elements.Length];
+            for (int i = 0; i < elements.Length; i++)
+            {
+                if (!int.TryParse(elements[i].Trim(), out result[i]))
+                    return null;
+            }
+            return result;
         }
 
         /// <summary>

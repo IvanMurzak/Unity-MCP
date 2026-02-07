@@ -22,7 +22,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     using Consts = McpPlugin.Common.Consts;
     using TransportMethod = Consts.MCP.Server.TransportMethod;
 
-    public class JsonCommandAiAgentConfigTests : BaseTest
+    public class JsonAiAgentConfigCommandArrayTests : BaseTest
     {
         private string tempConfigPath = null!;
 
