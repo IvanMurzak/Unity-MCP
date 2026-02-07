@@ -1036,5 +1036,131 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         #endregion
+
+        #region Inline Comments and Unknown Types
+
+        [UnityTest]
+        public IEnumerator Configure_ExistingSection_PreservesFloatValue()
+        {
+            // Arrange
+            var sectionName = $"mcp_servers.{AiAgentConfig.DefaultMcpServerName}";
+            var existingToml = $"[{sectionName}]\ncommand = \"old-command\"\ntimeout = 1.5\n";
+            File.WriteAllText(tempConfigPath, existingToml);
+            var config = CreateStdioConfig(tempConfigPath);
+
+            // Act
+            config.Configure();
+
+            // Assert
+            var content = File.ReadAllText(tempConfigPath);
+            Assert.IsTrue(content.Contains("timeout = 1.5"), "Float value should be preserved verbatim");
+            Assert.IsFalse(content.Contains("timeout = \"1.5\""), "Float value should not become a quoted string");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Configure_ExistingSection_PreservesDateValue()
+        {
+            // Arrange
+            var sectionName = $"mcp_servers.{AiAgentConfig.DefaultMcpServerName}";
+            var existingToml = $"[{sectionName}]\ncommand = \"old-command\"\ncreated = 2024-01-01\n";
+            File.WriteAllText(tempConfigPath, existingToml);
+            var config = CreateStdioConfig(tempConfigPath);
+
+            // Act
+            config.Configure();
+
+            // Assert
+            var content = File.ReadAllText(tempConfigPath);
+            Assert.IsTrue(content.Contains("created = 2024-01-01"), "Date value should be preserved verbatim");
+            Assert.IsFalse(content.Contains("created = \"2024-01-01\""), "Date value should not become a quoted string");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Configure_ExistingSection_InlineCommentOnInt()
+        {
+            // Arrange
+            var sectionName = $"mcp_servers.{AiAgentConfig.DefaultMcpServerName}";
+            var existingToml = $"[{sectionName}]\ncommand = \"old-command\"\nport = 8080 # default port\n";
+            File.WriteAllText(tempConfigPath, existingToml);
+            var config = CreateStdioConfig(tempConfigPath);
+
+            // Act
+            config.Configure();
+
+            // Assert
+            var content = File.ReadAllText(tempConfigPath);
+            Assert.IsTrue(content.Contains("port = 8080"), "Int value should be preserved after stripping inline comment");
+            Assert.IsFalse(content.Contains("# default port"), "Inline comment should be stripped");
+            Assert.IsFalse(content.Contains("port = \""), "Int should not become a quoted string");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Configure_ExistingSection_InlineCommentOnBool()
+        {
+            // Arrange
+            var sectionName = $"mcp_servers.{AiAgentConfig.DefaultMcpServerName}";
+            var existingToml = $"[{sectionName}]\ncommand = \"old-command\"\nenabled = true # some flag\n";
+            File.WriteAllText(tempConfigPath, existingToml);
+            var config = CreateStdioConfig(tempConfigPath);
+
+            // Act
+            config.Configure();
+
+            // Assert
+            var content = File.ReadAllText(tempConfigPath);
+            Assert.IsTrue(content.Contains("enabled = true"), "Bool value should be preserved after stripping inline comment");
+            Assert.IsFalse(content.Contains("# some flag"), "Inline comment should be stripped");
+            Assert.IsFalse(content.Contains("enabled = \""), "Bool should not become a quoted string");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Configure_ExistingSection_InlineCommentOnQuotedString()
+        {
+            // Arrange
+            var sectionName = $"mcp_servers.{AiAgentConfig.DefaultMcpServerName}";
+            var existingToml = $"[{sectionName}]\ncommand = \"old-command\"\nname = \"hello\" # some note\n";
+            File.WriteAllText(tempConfigPath, existingToml);
+            var config = CreateStdioConfig(tempConfigPath);
+
+            // Act
+            config.Configure();
+
+            // Assert
+            var content = File.ReadAllText(tempConfigPath);
+            Assert.IsTrue(content.Contains("name = \"hello\""), "Quoted string should be preserved after stripping inline comment");
+            Assert.IsFalse(content.Contains("# some note"), "Inline comment should be stripped");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator IsConfigured_WithInlineComments_ReturnsTrue()
+        {
+            // Arrange
+            var config = CreateStdioConfig(tempConfigPath);
+
+            // First configure normally
+            config.Configure();
+
+            // Now manually add an inline comment to the command line
+            var content = File.ReadAllText(tempConfigPath);
+            content = content.Replace("\nargs = [", " # path to executable\nargs = [");
+            File.WriteAllText(tempConfigPath, content);
+
+            // Act & Assert
+            Assert.IsTrue(config.IsConfigured(), "IsConfigured should return true even with inline comments on required properties");
+
+            yield return null;
+        }
+
+        #endregion
     }
 }

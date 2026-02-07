@@ -25,6 +25,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         private readonly Dictionary<string, (object value, bool required)> _properties = new();
         private readonly HashSet<string> _propertiesToRemove = new();
 
+        /// <summary>
+        /// Wraps a raw TOML value string for types not explicitly supported by the parser
+        /// (e.g., floats, dates). The value is written back verbatim during serialization.
+        /// </summary>
+        private sealed class RawTomlValue
+        {
+            public string Value { get; }
+            public RawTomlValue(string value) => Value = value;
+        }
+
         public override string ExpectedFileContent
         {
             get
@@ -247,6 +257,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 int[] arr => $"{key} = [{string.Join(",", arr)}]",
                 bool b => $"{key} = {b.ToString().ToLower()}",
                 bool[] arr => $"{key} = [{string.Join(",", arr.Select(v => v.ToString().ToLower()))}]",
+                RawTomlValue raw => $"{key} = {raw.Value}",
                 _ => throw new InvalidOperationException($"Unsupported TOML value type: {value.GetType()}")
             };
         }
@@ -272,22 +283,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                     // Array value - parse with type detection
                     props[key] = ParseTypedTomlArrayValue(rawValue);
                 }
-                else if (rawValue == "true" || rawValue == "false")
+                else if (rawValue.StartsWith("\""))
                 {
-                    // Boolean value
-                    props[key] = rawValue == "true";
-                }
-                else if (int.TryParse(rawValue, out var intValue))
-                {
-                    // Integer value
-                    props[key] = intValue;
-                }
-                else
-                {
-                    // String value
+                    // Quoted string value
                     var stringValue = ParseTomlStringValue(line);
                     if (stringValue != null)
                         props[key] = stringValue;
+                }
+                else
+                {
+                    // Non-string, non-array scalar - strip inline comment first
+                    var scalarValue = StripInlineComment(rawValue);
+
+                    if (scalarValue == "true" || scalarValue == "false")
+                        props[key] = scalarValue == "true";
+                    else if (int.TryParse(scalarValue, out var intValue))
+                        props[key] = intValue;
+                    else if (scalarValue.Length > 0)
+                        props[key] = new RawTomlValue(scalarValue);
                 }
             }
             return props;
@@ -298,22 +311,40 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             return value.Replace("\\", "\\\\").Replace("\"", "\\\"");
         }
 
+        private static string StripInlineComment(string value)
+        {
+            var idx = value.IndexOf('#');
+            return idx >= 0 ? value[..idx].TrimEnd() : value;
+        }
+
         private static string? ParseTomlStringValue(string line)
         {
-            // Parse: key = "value"
+            // Parse: key = "value" or key = "value" # comment
             var parts = line.Split('=', 2);
             if (parts.Length != 2)
                 return null;
 
             var value = parts[1].Trim();
-            // Remove quotes
-            if (value.StartsWith("\"") && value.EndsWith("\""))
+            if (!value.StartsWith("\""))
+                return value;
+
+            // Scan for closing quote, handling escape sequences
+            for (int i = 1; i < value.Length; i++)
             {
-                value = value[1..^1];
-                // Unescape
-                value = value.Replace("\\\"", "\"").Replace("\\\\", "\\");
+                if (value[i] == '\\')
+                {
+                    i++; // Skip escaped character
+                    continue;
+                }
+                if (value[i] == '"')
+                {
+                    // Found closing quote - extract and unescape
+                    var inner = value[1..i];
+                    return inner.Replace("\\\"", "\"").Replace("\\\\", "\\");
+                }
             }
 
+            // No closing quote found - return raw value as fallback
             return value;
         }
 
@@ -395,33 +426,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         private static bool[] ParseTomlBoolArrayContent(string arrayContent)
         {
             var elements = arrayContent.Split(',');
-            var result = new List<bool>();
-
-            foreach (var element in elements)
-            {
-                var trimmed = element.Trim();
-                if (trimmed == "true")
-                    result.Add(true);
-                else if (trimmed == "false")
-                    result.Add(false);
-            }
-
-            return result.ToArray();
+            return elements
+                .Select(e => e.Trim().ToLowerInvariant())
+                .Where(t => t == "true" || t == "false")
+                .Select(t => t == "true")
+                .ToArray();
         }
 
         private static int[] ParseTomlIntArrayContent(string arrayContent)
         {
             var elements = arrayContent.Split(',');
-            var result = new List<int>();
-
-            foreach (var element in elements)
-            {
-                var trimmed = element.Trim();
-                if (int.TryParse(trimmed, out var intValue))
-                    result.Add(intValue);
-            }
-
-            return result.ToArray();
+            return elements
+                .Select(e => e.Trim())
+                .Where(t => int.TryParse(t, out _))
+                .Select(t => int.Parse(t))
+                .ToArray();
         }
 
         /// <summary>
