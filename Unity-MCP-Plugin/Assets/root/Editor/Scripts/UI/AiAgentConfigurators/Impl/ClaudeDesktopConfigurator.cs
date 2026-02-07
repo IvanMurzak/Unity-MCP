@@ -126,28 +126,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             var troubleshootingContainerStdio = TemplateFoldout("Troubleshooting");
 
-            troubleshootingContainerStdio.Add(TemplateLabelDescription("Claude Desktop has problems with runtime updates of MCP tools. It may not recognize them. That is why need to let Claude Desktop read MCP tools at the start of Claude Desktop app."));
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Claude Desktop has problems with MCP server launch, instead of a single instance is starts two. If you really need to use Claude Desktop, you would need to 'kill' one of the instances by randomly choosing. This is so finicky, please consider to switch to Claude Code(!!!)."));
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Claude Desktop has problems with runtime updates of MCP tools. It may not recognize them. That is why need to let Claude Desktop read MCP tools at the start of Claude Desktop app."));
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Start Unity first and the connection status should be 'Connecting...'"));
 
             ContainerStdio!.Add(troubleshootingContainerStdio);
 
             // HTTP Configuration
 
-            var manualStepsContainerHttp = TemplateFoldoutFirst("Manual Configuration Steps");
-
-            manualStepsContainerHttp!.Add(TemplateLabelDescription("1. Open the file 'claude_desktop_config.json'."));
-            manualStepsContainerHttp!.Add(TemplateLabelDescription("2. Copy and paste the configuration json into the file."));
-            manualStepsContainerHttp!.Add(TemplateTextFieldReadOnly(ConfigHttp.ExpectedFileContent));
-            manualStepsContainerHttp!.Add(TemplateLabelDescription("3. Restart Claude Desktop. You may need to click 'Quit' in apps tray, because simple window close is not enough."));
-
-            ContainerHttp!.Add(manualStepsContainerHttp);
-
-            var troubleshootingContainerHttp = TemplateFoldout("Troubleshooting");
-
-            troubleshootingContainerHttp.Add(TemplateLabelDescription("Claude Desktop has problems with runtime updates of MCP tools. It may not recognize them. That is why need to let Claude Desktop read MCP tools at the start of Claude Desktop app."));
-            troubleshootingContainerHttp.Add(TemplateLabelDescription("- Start Unity first and the connection status should be 'Connecting...'"));
-
-            ContainerHttp!.Add(troubleshootingContainerHttp);
+            ContainerHttp!.Clear();
+            ContainerHttp!.Add(TemplateAlertLabel("CRITICAL: Claude Desktop does not support HTTP transport, only STDIO."));
         }
     }
 }
