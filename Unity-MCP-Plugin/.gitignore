@@ -64,3 +64,6 @@ kernelsCache/*
 
 # OpenCode config files
 opencode.json
+
+# Codex
+.codex
