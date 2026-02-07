@@ -62,8 +62,9 @@ UserSettings/Layouts/*
 # Unity Render cache
 kernelsCache/*
 
-# OpenCode config files
-opencode.json
 
-# Codex
+# AI agents
+opencode.json
 .codex
+.cursor
+.vscode/mcp.json
