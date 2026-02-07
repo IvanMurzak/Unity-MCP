@@ -43,26 +43,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         public TomlAiAgentConfig(
             string name,
             string configPath,
-            TransportMethod transportMethod,
-            string? transportMethodValue = null,
             string bodyPath = Consts.MCP.Server.DefaultBodyPath)
             : base(
                 name: name,
                 configPath: configPath,
-                transportMethod: transportMethod,
-                transportMethodValue: transportMethodValue,
                 bodyPath: bodyPath)
         {
             // empty
         }
 
-        public TomlAiAgentConfig SetProperty(string key, string value, bool requiredForConfiguration = false)
+        public TomlAiAgentConfig SetProperty(string key, object value, bool requiredForConfiguration = false)
         {
             _properties[key] = (value, requiredForConfiguration);
             return this;
         }
 
-        public TomlAiAgentConfig SetProperty(string key, string[] values, bool requiredForConfiguration = false)
+        public TomlAiAgentConfig SetProperty(string key, object[] values, bool requiredForConfiguration = false)
         {
             _properties[key] = (values, requiredForConfiguration);
             return this;
@@ -234,6 +230,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             {
                 string s => $"{key} = \"{EscapeTomlString(s)}\"",
                 string[] arr => $"{key} = [{string.Join(",", arr.Select(v => $"\"{EscapeTomlString(v)}\""))}]",
+                int i => $"{key} = {i}",
+                int[] arr => $"{key} = [{string.Join(",", arr)}]",
+                bool b => $"{key} = {b.ToString().ToLower()}",
+                bool[] arr => $"{key} = [{string.Join(",", arr.Select(v => v.ToString().ToLower()))}]",
                 _ => throw new InvalidOperationException($"Unsupported TOML value type: {value.GetType()}")
             };
         }

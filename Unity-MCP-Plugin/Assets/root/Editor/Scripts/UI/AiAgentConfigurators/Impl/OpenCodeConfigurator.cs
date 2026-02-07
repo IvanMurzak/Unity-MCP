@@ -32,8 +32,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected override AiAgentConfig CreateConfigStdioWindows() => new JsonAiAgentConfig(
             name: AgentName,
             configPath: Path.Combine("opencode.json"),
-            transportMethod: TransportMethod.stdio,
-            transportMethodValue: "local",
             bodyPath: "mcp"
         )
         .SetProperty("type", JsonValue.Create("local"), requiredForConfiguration: true)
@@ -50,8 +48,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
             configPath: Path.Combine("opencode.json"),
-            transportMethod: TransportMethod.stdio,
-            transportMethodValue: "local",
             bodyPath: "mcp"
         )
         .SetProperty("type", JsonValue.Create("local"), requiredForConfiguration: true)
@@ -68,8 +64,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected override AiAgentConfig CreateConfigHttpWindows() => new JsonAiAgentConfig(
             name: AgentName,
             configPath: Path.Combine("opencode.json"),
-            transportMethod: TransportMethod.streamableHttp,
-            transportMethodValue: "http",
             bodyPath: "mcp"
         )
         .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
@@ -80,8 +74,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected override AiAgentConfig CreateConfigHttpMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
             configPath: Path.Combine("opencode.json"),
-            transportMethod: TransportMethod.streamableHttp,
-            transportMethodValue: "http",
             bodyPath: "mcp"
         )
         .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)

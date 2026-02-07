@@ -9,7 +9,6 @@
 */
 
 #nullable enable
-using System;
 using System.IO;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
@@ -32,70 +31,72 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected override AiAgentConfig CreateConfigStdioWindows() => new TomlAiAgentConfig(
             name: AgentName,
             configPath: Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                 ".codex",
                 "config.toml"
             ),
-            transportMethod: TransportMethod.stdio,
-            transportMethodValue: "stdio",
             bodyPath: "mcp_servers"
         )
+        .SetProperty("enabled", true, requiredForConfiguration: true) // Codex requires an "enabled" property
         .SetProperty("command", Startup.Server.ExecutableFullPath.Replace('\\', '/'), requiredForConfiguration: true)
         .SetProperty("args", new[] {
             $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
             $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
             $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
         }, requiredForConfiguration: true)
-        .SetPropertyToRemove("url");
+        .SetProperty("tool_timeout_sec", 300, requiredForConfiguration: false) // Optional: Set a longer tool timeout for Codex
+        .SetPropertyToRemove("url")
+        .SetPropertyToRemove("type");
+
 
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new TomlAiAgentConfig(
             name: AgentName,
             configPath: Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                 ".codex",
                 "config.toml"
             ),
-            transportMethod: TransportMethod.stdio,
-            transportMethodValue: "stdio",
             bodyPath: "mcp_servers"
         )
+        .SetProperty("enabled", true, requiredForConfiguration: true) // Codex requires an "enabled" property
         .SetProperty("command", Startup.Server.ExecutableFullPath.Replace('\\', '/'), requiredForConfiguration: true)
         .SetProperty("args", new[] {
             $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
             $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
             $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
         }, requiredForConfiguration: true)
-        .SetPropertyToRemove("url");
+        .SetProperty("tool_timeout_sec", 300, requiredForConfiguration: false) // Optional: Set a longer tool timeout for Codex
+        .SetPropertyToRemove("url")
+        .SetPropertyToRemove("type");
+
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new TomlAiAgentConfig(
             name: AgentName,
             configPath: Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                 ".codex",
                 "config.toml"
             ),
-            transportMethod: TransportMethod.streamableHttp,
-            transportMethodValue: "http",
             bodyPath: "mcp_servers"
         )
+        .SetProperty("enabled", true, requiredForConfiguration: true) // Codex requires an "enabled" property
         .SetProperty("url", UnityMcpPlugin.Host, requiredForConfiguration: true)
+        .SetProperty("tool_timeout_sec", 300, requiredForConfiguration: false) // Optional: Set a longer tool timeout for Codex
         .SetPropertyToRemove("command")
-        .SetPropertyToRemove("args");
+        .SetPropertyToRemove("args")
+        .SetPropertyToRemove("type");
 
         protected override AiAgentConfig CreateConfigHttpMacLinux() => new TomlAiAgentConfig(
             name: AgentName,
             configPath: Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
                 ".codex",
                 "config.toml"
             ),
-            transportMethod: TransportMethod.streamableHttp,
-            transportMethodValue: "http",
             bodyPath: "mcp_servers"
         )
+        .SetProperty("enabled", true, requiredForConfiguration: true) // Codex requires an "enabled" property
         .SetProperty("url", UnityMcpPlugin.Host, requiredForConfiguration: true)
+        .SetProperty("tool_timeout_sec", 300, requiredForConfiguration: false) // Optional: Set a longer tool timeout for Codex
         .SetPropertyToRemove("command")
-        .SetPropertyToRemove("args");
+        .SetPropertyToRemove("args")
+        .SetPropertyToRemove("type");
 
         protected override void OnUICreated(VisualElement root)
         {
@@ -103,10 +104,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             var addMcpServerCommandStdio = $"codex mcp add {AiAgentConfig.DefaultMcpServerName} \"{Startup.Server.ExecutableFullPath}\" port={UnityMcpPlugin.Port} plugin-timeout={UnityMcpPlugin.TimeoutMs} client-transport=stdio";
             var addMcpServerCommandHttp = $"codex mcp add --transport http {AiAgentConfig.DefaultMcpServerName} {UnityMcpPlugin.Host}";
-
-            // Common description and alert
-            ContainerUnderHeader!.Add(TemplateLabelDescription("Configure MCP for OpenAI Codex CLI."));
-            ContainerUnderHeader!.Add(TemplateAlertLabel("Codex is wrapped into a virtual machine, it can't access Unity via TCP connection which is required. There is a complex workaround using WSL. To avoid unnecessary complexity it is recommended to use Claude Code instead."));
 
             // STDIO Configuration
 

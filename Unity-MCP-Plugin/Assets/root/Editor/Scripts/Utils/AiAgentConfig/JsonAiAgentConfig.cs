@@ -10,8 +10,8 @@
 
 #nullable enable
 using System;
-using System.IO;
 using System.Collections.Generic;
+using System.IO;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using com.IvanMurzak.McpPlugin.Common;
@@ -51,13 +51,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         public JsonAiAgentConfig(
             string name,
             string configPath,
-            TransportMethod transportMethod,
-            string? transportMethodValue = null,
             string bodyPath = Consts.MCP.Server.DefaultBodyPath)
             : base(
                 name: name,
-                transportMethod: transportMethod,
-                transportMethodValue: transportMethodValue,
                 configPath: configPath,
                 bodyPath: bodyPath)
         {

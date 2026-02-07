@@ -47,8 +47,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             return new JsonAiAgentConfig(
                 name: "Test",
                 configPath: configPath,
-                transportMethod: TransportMethod.stdio,
-                transportMethodValue: "local",
                 bodyPath: bodyPath)
             .SetProperty("type", JsonValue.Create("local"), requiredForConfiguration: true)
             .SetProperty("enabled", JsonValue.Create(true), requiredForConfiguration: true)
@@ -644,8 +642,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var config = new JsonAiAgentConfig(
                 name: "Test",
                 configPath: "",
-                transportMethod: TransportMethod.stdio,
-                transportMethodValue: "local",
                 bodyPath: "mcpServers")
             .SetProperty("type", JsonValue.Create("local"), requiredForConfiguration: true)
             .SetProperty("enabled", JsonValue.Create(true), requiredForConfiguration: true)

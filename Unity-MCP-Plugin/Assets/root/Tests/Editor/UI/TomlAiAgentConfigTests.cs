@@ -46,8 +46,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             return new TomlAiAgentConfig(
                 name: "Test",
                 configPath: configPath,
-                transportMethod: TransportMethod.stdio,
-                transportMethodValue: "stdio",
                 bodyPath: bodyPath)
             .SetProperty("command", Startup.Server.ExecutableFullPath.Replace('\\', '/'), requiredForConfiguration: true)
             .SetProperty("args", new[] {
@@ -63,8 +61,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             return new TomlAiAgentConfig(
                 name: "Test",
                 configPath: configPath,
-                transportMethod: TransportMethod.streamableHttp,
-                transportMethodValue: "http",
                 bodyPath: bodyPath)
             .SetProperty("url", UnityMcpPlugin.Host, requiredForConfiguration: true)
             .SetPropertyToRemove("command")
@@ -235,8 +231,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var config = new TomlAiAgentConfig(
                 name: "Test",
                 configPath: "",
-                transportMethod: TransportMethod.stdio,
-                transportMethodValue: "stdio",
                 bodyPath: "mcp_servers")
             .SetProperty("command", "some-command", requiredForConfiguration: true);
 

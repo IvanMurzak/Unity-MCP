@@ -38,8 +38,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 "antigravity",
                 "mcp_config.json"
             ),
-            transportMethod: TransportMethod.stdio,
-            transportMethodValue: "stdio",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
         )
         .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
@@ -61,8 +59,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 "antigravity",
                 "mcp_config.json"
             ),
-            transportMethod: TransportMethod.stdio,
-            transportMethodValue: "stdio",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
         )
         .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
@@ -84,8 +80,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 "antigravity",
                 "mcp_config.json"
             ),
-            transportMethod: TransportMethod.streamableHttp,
-            transportMethodValue: "http",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
         )
         .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
@@ -103,8 +97,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 "antigravity",
                 "mcp_config.json"
             ),
-            transportMethod: TransportMethod.streamableHttp,
-            transportMethodValue: "http",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
         )
         .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)

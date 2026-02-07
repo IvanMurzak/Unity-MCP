@@ -37,8 +37,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 "Claude",
                 "claude_desktop_config.json"
             ),
-            transportMethod: TransportMethod.stdio,
-            transportMethodValue: "stdio",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
@@ -59,8 +57,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 "Claude",
                 "claude_desktop_config.json"
             ),
-            transportMethod: TransportMethod.stdio,
-            transportMethodValue: "stdio",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
@@ -79,8 +75,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 "Claude",
                 "claude_desktop_config.json"
             ),
-            transportMethod: TransportMethod.streamableHttp,
-            transportMethodValue: "http",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
@@ -97,8 +91,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 "Claude",
                 "claude_desktop_config.json"
             ),
-            transportMethod: TransportMethod.streamableHttp,
-            transportMethodValue: "http",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)

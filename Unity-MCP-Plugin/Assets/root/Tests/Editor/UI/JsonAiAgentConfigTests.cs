@@ -47,8 +47,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             return new JsonAiAgentConfig(
                 name: "Test",
                 configPath: configPath,
-                transportMethod: TransportMethod.stdio,
-                transportMethodValue: $"{TransportMethod.stdio}",
                 bodyPath: bodyPath)
             .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
             .SetProperty("command", JsonValue.Create(Startup.Server.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true)
@@ -65,8 +63,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             return new JsonAiAgentConfig(
                 name: "Test",
                 configPath: configPath,
-                transportMethod: TransportMethod.streamableHttp,
-                transportMethodValue: $"{TransportMethod.streamableHttp}",
                 bodyPath: bodyPath)
             .SetProperty("type", JsonValue.Create($"{TransportMethod.streamableHttp}"), requiredForConfiguration: true)
             .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true)

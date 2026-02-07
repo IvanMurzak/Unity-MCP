@@ -10,7 +10,6 @@
 
 #nullable enable
 using com.IvanMurzak.McpPlugin.Common;
-using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
@@ -19,26 +18,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         public static readonly string[] DeprecatedMcpServerNames = { "Unity-MCP" };
         public const string DefaultMcpServerName = "ai-game-developer";
 
-        protected readonly string? _transportMethodValue;
 
         public string Name { get; set; }
         public string ConfigPath { get; set; }
         public string BodyPath { get; set; }
-        public TransportMethod TransportMethod { get; }
         public abstract string ExpectedFileContent { get; }
 
         public AiAgentConfig(
             string name,
             string configPath,
-            TransportMethod transportMethod,
-            string? transportMethodValue = null,
             string bodyPath = Consts.MCP.Server.DefaultBodyPath)
         {
             Name = name;
             ConfigPath = configPath;
             BodyPath = bodyPath;
-            TransportMethod = transportMethod;
-            _transportMethodValue = transportMethodValue;
         }
 
         public abstract bool Configure();
