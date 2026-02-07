@@ -66,7 +66,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             configPath: Path.Combine("opencode.json"),
             bodyPath: "mcp"
         )
-        .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
+        .SetProperty("type", JsonValue.Create("remote"), requiredForConfiguration: true)
+        .SetProperty("enabled", JsonValue.Create(true), requiredForConfiguration: true)
         .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true)
         .SetPropertyToRemove("command")
         .SetPropertyToRemove("args");
@@ -76,7 +77,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             configPath: Path.Combine("opencode.json"),
             bodyPath: "mcp"
         )
-        .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
+        .SetProperty("type", JsonValue.Create("remote"), requiredForConfiguration: true)
+        .SetProperty("enabled", JsonValue.Create(true), requiredForConfiguration: true)
         .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true)
         .SetPropertyToRemove("command")
         .SetPropertyToRemove("args");
