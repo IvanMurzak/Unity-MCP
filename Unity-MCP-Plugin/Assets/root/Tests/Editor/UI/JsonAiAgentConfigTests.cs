@@ -985,5 +985,171 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         #endregion
+
+        #region Duplicate Server Entry Removal
+
+        [UnityTest]
+        public IEnumerator Configure_Stdio_RemovesDuplicateByCommand()
+        {
+            // Arrange - existing file with the same server under a custom name
+            var bodyPath = "mcpServers";
+            var executable = Startup.Server.ExecutableFullPath.Replace('\\', '/');
+            var existingJson = $@"{{
+                ""mcpServers"": {{
+                    ""my-custom-name"": {{
+                        ""type"": ""stdio"",
+                        ""command"": ""{executable}"",
+                        ""args"": [""--old-arg""]
+                    }}
+                }}
+            }}";
+            File.WriteAllText(tempConfigPath, existingJson);
+            var config = CreateStdioConfig(tempConfigPath, bodyPath);
+
+            // Act
+            config.Configure();
+
+            // Assert
+            var json = File.ReadAllText(tempConfigPath);
+            var rootObj = JsonNode.Parse(json)?.AsObject();
+            var mcpServers = rootObj!["mcpServers"]?.AsObject();
+
+            Assert.IsNull(mcpServers!["my-custom-name"], "Duplicate entry with same command should be removed");
+            Assert.IsNotNull(mcpServers[AiAgentConfig.DefaultMcpServerName], "Default entry should exist");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Configure_Http_RemovesDuplicateByUrl()
+        {
+            // Arrange - existing file with the same server under a custom name
+            var bodyPath = "mcpServers";
+            var url = UnityMcpPlugin.Host;
+            var existingJson = $@"{{
+                ""mcpServers"": {{
+                    ""my-custom-name"": {{
+                        ""type"": ""{TransportMethod.streamableHttp}"",
+                        ""url"": ""{url}""
+                    }}
+                }}
+            }}";
+            File.WriteAllText(tempConfigPath, existingJson);
+            var config = CreateHttpConfig(tempConfigPath, bodyPath);
+
+            // Act
+            config.Configure();
+
+            // Assert
+            var json = File.ReadAllText(tempConfigPath);
+            var rootObj = JsonNode.Parse(json)?.AsObject();
+            var mcpServers = rootObj!["mcpServers"]?.AsObject();
+
+            Assert.IsNull(mcpServers!["my-custom-name"], "Duplicate entry with same url should be removed");
+            Assert.IsNotNull(mcpServers[AiAgentConfig.DefaultMcpServerName], "Default entry should exist");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Configure_Http_RemovesDuplicateByServerUrl()
+        {
+            // Arrange - existing file with the same server under a custom name using serverUrl
+            var bodyPath = "mcpServers";
+            var url = UnityMcpPlugin.Host;
+            var existingJson = $@"{{
+                ""mcpServers"": {{
+                    ""my-custom-name"": {{
+                        ""serverUrl"": ""{url}""
+                    }}
+                }}
+            }}";
+            File.WriteAllText(tempConfigPath, existingJson);
+            var config = new JsonAiAgentConfig(
+                name: "Test",
+                configPath: tempConfigPath,
+                bodyPath: bodyPath)
+            .AddIdentityKey("serverUrl")
+            .SetProperty("serverUrl", JsonValue.Create(url), requiredForConfiguration: true)
+            .SetPropertyToRemove("command")
+            .SetPropertyToRemove("args")
+            .SetPropertyToRemove("url");
+
+            // Act
+            config.Configure();
+
+            // Assert
+            var json = File.ReadAllText(tempConfigPath);
+            var rootObj = JsonNode.Parse(json)?.AsObject();
+            var mcpServers = rootObj!["mcpServers"]?.AsObject();
+
+            Assert.IsNull(mcpServers!["my-custom-name"], "Duplicate entry with same serverUrl should be removed");
+            Assert.IsNotNull(mcpServers[AiAgentConfig.DefaultMcpServerName], "Default entry should exist");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Configure_Http_DefaultIdentityKeys_DoNotRemoveByServerUrl()
+        {
+            // Arrange - existing file with a server using serverUrl but config does NOT add serverUrl identity key
+            var bodyPath = "mcpServers";
+            var url = UnityMcpPlugin.Host;
+            var existingJson = $@"{{
+                ""mcpServers"": {{
+                    ""my-custom-name"": {{
+                        ""serverUrl"": ""{url}""
+                    }}
+                }}
+            }}";
+            File.WriteAllText(tempConfigPath, existingJson);
+            var config = CreateHttpConfig(tempConfigPath, bodyPath);
+
+            // Act
+            config.Configure();
+
+            // Assert - without adding serverUrl as identity key, the entry should be preserved
+            var json = File.ReadAllText(tempConfigPath);
+            var rootObj = JsonNode.Parse(json)?.AsObject();
+            var mcpServers = rootObj!["mcpServers"]?.AsObject();
+
+            Assert.IsNotNull(mcpServers!["my-custom-name"], "Entry with serverUrl should be preserved when serverUrl is not an identity key");
+            Assert.IsNotNull(mcpServers[AiAgentConfig.DefaultMcpServerName], "Default entry should exist");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Configure_PreservesUnrelatedServers()
+        {
+            // Arrange - existing file with a different server (different command)
+            var bodyPath = "mcpServers";
+            var existingJson = @"{
+                ""mcpServers"": {
+                    ""other-server"": {
+                        ""type"": ""stdio"",
+                        ""command"": ""completely-different-command"",
+                        ""args"": [""--some-arg""]
+                    }
+                }
+            }";
+            File.WriteAllText(tempConfigPath, existingJson);
+            var config = CreateStdioConfig(tempConfigPath, bodyPath);
+
+            // Act
+            config.Configure();
+
+            // Assert
+            var json = File.ReadAllText(tempConfigPath);
+            var rootObj = JsonNode.Parse(json)?.AsObject();
+            var mcpServers = rootObj!["mcpServers"]?.AsObject();
+
+            Assert.IsNotNull(mcpServers!["other-server"], "Unrelated server should be preserved");
+            Assert.IsNotNull(mcpServers[AiAgentConfig.DefaultMcpServerName], "Default entry should exist");
+
+            yield return null;
+        }
+
+        #endregion
     }
 }

@@ -928,5 +928,113 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         #endregion
+
+        #region Duplicate Server Section Removal
+
+        [UnityTest]
+        public IEnumerator Configure_Stdio_RemovesDuplicateByCommand()
+        {
+            // Arrange - existing file with the same server under a custom name
+            var executable = Startup.Server.ExecutableFullPath.Replace('\\', '/');
+            var existingToml = $"[mcp_servers.my-custom-name]\ncommand = \"{executable}\"\nargs = [\"--old-arg\"]\n";
+            File.WriteAllText(tempConfigPath, existingToml);
+            var config = CreateStdioConfig(tempConfigPath);
+
+            // Act
+            config.Configure();
+
+            // Assert
+            var content = File.ReadAllText(tempConfigPath);
+            Assert.IsFalse(content.Contains("[mcp_servers.my-custom-name]"), "Duplicate section with same command should be removed");
+            Assert.IsTrue(content.Contains($"[mcp_servers.{AiAgentConfig.DefaultMcpServerName}]"), "Default section should exist");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Configure_Http_RemovesDuplicateByUrl()
+        {
+            // Arrange - existing file with the same server under a custom name
+            var existingToml = $"[mcp_servers.my-custom-name]\nurl = \"{UnityMcpPlugin.Host}\"\n";
+            File.WriteAllText(tempConfigPath, existingToml);
+            var config = CreateHttpConfig(tempConfigPath);
+
+            // Act
+            config.Configure();
+
+            // Assert
+            var content = File.ReadAllText(tempConfigPath);
+            Assert.IsFalse(content.Contains("[mcp_servers.my-custom-name]"), "Duplicate section with same url should be removed");
+            Assert.IsTrue(content.Contains($"[mcp_servers.{AiAgentConfig.DefaultMcpServerName}]"), "Default section should exist");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Configure_Http_RemovesDuplicateByServerUrl()
+        {
+            // Arrange - existing file with the same server under a custom name using serverUrl
+            var existingToml = $"[mcp_servers.my-custom-name]\nserverUrl = \"{UnityMcpPlugin.Host}\"\n";
+            File.WriteAllText(tempConfigPath, existingToml);
+            var config = new TomlAiAgentConfig(
+                name: "Test",
+                configPath: tempConfigPath,
+                bodyPath: "mcp_servers")
+            .AddIdentityKey("serverUrl")
+            .SetProperty("serverUrl", UnityMcpPlugin.Host, requiredForConfiguration: true)
+            .SetPropertyToRemove("command")
+            .SetPropertyToRemove("args")
+            .SetPropertyToRemove("url");
+
+            // Act
+            config.Configure();
+
+            // Assert
+            var content = File.ReadAllText(tempConfigPath);
+            Assert.IsFalse(content.Contains("[mcp_servers.my-custom-name]"), "Duplicate section with same serverUrl should be removed");
+            Assert.IsTrue(content.Contains($"[mcp_servers.{AiAgentConfig.DefaultMcpServerName}]"), "Default section should exist");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Configure_Http_DefaultIdentityKeys_DoNotRemoveByServerUrl()
+        {
+            // Arrange - existing file with a server using serverUrl but config does NOT add serverUrl identity key
+            var existingToml = $"[mcp_servers.my-custom-name]\nserverUrl = \"{UnityMcpPlugin.Host}\"\n";
+            File.WriteAllText(tempConfigPath, existingToml);
+            var config = CreateHttpConfig(tempConfigPath);
+
+            // Act
+            config.Configure();
+
+            // Assert - without adding serverUrl as identity key, the entry should be preserved
+            var content = File.ReadAllText(tempConfigPath);
+            Assert.IsTrue(content.Contains("[mcp_servers.my-custom-name]"), "Entry with serverUrl should be preserved when serverUrl is not an identity key");
+            Assert.IsTrue(content.Contains($"[mcp_servers.{AiAgentConfig.DefaultMcpServerName}]"), "Default section should exist");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Configure_PreservesUnrelatedServers()
+        {
+            // Arrange - existing file with a different server (different command)
+            var existingToml = "[mcp_servers.other-server]\ncommand = \"completely-different-command\"\nargs = [\"--some-arg\"]\n";
+            File.WriteAllText(tempConfigPath, existingToml);
+            var config = CreateStdioConfig(tempConfigPath);
+
+            // Act
+            config.Configure();
+
+            // Assert
+            var content = File.ReadAllText(tempConfigPath);
+            Assert.IsTrue(content.Contains("[mcp_servers.other-server]"), "Unrelated server should be preserved");
+            Assert.IsTrue(content.Contains($"[mcp_servers.{AiAgentConfig.DefaultMcpServerName}]"), "Default section should exist");
+
+            yield return null;
+        }
+
+        #endregion
     }
 }

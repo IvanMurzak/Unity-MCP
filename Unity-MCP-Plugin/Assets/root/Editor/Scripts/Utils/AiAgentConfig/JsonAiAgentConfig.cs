@@ -73,6 +73,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             return this;
         }
 
+        public new JsonAiAgentConfig AddIdentityKey(string key)
+        {
+            base.AddIdentityKey(key);
+            return this;
+        }
+
         public override bool Configure()
         {
             if (string.IsNullOrEmpty(ConfigPath))
@@ -117,6 +123,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 // Remove deprecated server entries
                 foreach (var name in DeprecatedMcpServerNames)
                     targetObj.Remove(name);
+
+                // Remove duplicate entries that represent the same server under a different name
+                RemoveDuplicateServerEntries(targetObj);
 
                 // Get or create the server entry under DefaultMcpServerName
                 JsonObject serverEntry;
@@ -256,6 +265,49 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
 
             return current;
+        }
+
+        /// <summary>
+        /// Removes sibling server entries that represent the same server under a different name,
+        /// identified by matching identity key property values (e.g. "command", "url", "serverUrl").
+        /// </summary>
+        private void RemoveDuplicateServerEntries(JsonObject targetObj)
+        {
+            // Collect identity values we're about to write
+            var ourIdentityValues = new Dictionary<string, string>();
+            foreach (var identityKey in _identityKeys)
+            {
+                if (_properties.TryGetValue(identityKey, out var prop))
+                    ourIdentityValues[identityKey] = prop.value.ToJsonString();
+            }
+
+            if (ourIdentityValues.Count == 0)
+                return;
+
+            // Find sibling entries that share any identity value
+            var keysToRemove = new List<string>();
+            foreach (var kv in targetObj)
+            {
+                if (kv.Key == DefaultMcpServerName)
+                    continue;
+
+                var entry = kv.Value?.AsObject();
+                if (entry == null)
+                    continue;
+
+                foreach (var identity in ourIdentityValues)
+                {
+                    var existingValue = entry[identity.Key];
+                    if (existingValue != null && existingValue.ToJsonString() == identity.Value)
+                    {
+                        keysToRemove.Add(kv.Key);
+                        break;
+                    }
+                }
+            }
+
+            foreach (var key in keysToRemove)
+                targetObj.Remove(key);
         }
 
         private static JsonObject EnsureJsonPathExists(JsonObject rootObj, string[] pathSegments)

@@ -40,6 +40,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             ),
             bodyPath: Consts.MCP.Server.DefaultBodyPath
         )
+        .AddIdentityKey("serverUrl")
         .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
         .SetProperty("command", JsonValue.Create(Startup.Server.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true)
         .SetProperty("args", new JsonArray {
@@ -61,6 +62,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             ),
             bodyPath: Consts.MCP.Server.DefaultBodyPath
         )
+        .AddIdentityKey("serverUrl")
         .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
         .SetProperty("command", JsonValue.Create(Startup.Server.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true)
         .SetProperty("args", new JsonArray {
@@ -82,6 +84,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             ),
             bodyPath: Consts.MCP.Server.DefaultBodyPath
         )
+        .AddIdentityKey("serverUrl")
         .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
         .SetProperty("serverUrl", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true)
         .SetPropertyToRemove("command")
@@ -99,6 +102,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             ),
             bodyPath: Consts.MCP.Server.DefaultBodyPath
         )
+        .AddIdentityKey("serverUrl")
         .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
         .SetProperty("serverUrl", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true)
         .SetPropertyToRemove("command")

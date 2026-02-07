@@ -70,6 +70,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             return this;
         }
 
+        public new TomlAiAgentConfig AddIdentityKey(string key)
+        {
+            base.AddIdentityKey(key);
+            return this;
+        }
+
         public override bool Configure()
         {
             if (string.IsNullOrEmpty(ConfigPath))
@@ -106,6 +112,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                         lines.RemoveRange(deprecatedIndex, deprecatedEnd - deprecatedIndex);
                     }
                 }
+
+                // Remove duplicate sections that represent the same server under a different name
+                RemoveDuplicateServerSections(lines, sectionName);
 
                 var sectionIndex = FindTomlSection(lines, sectionName);
                 if (sectionIndex >= 0)
@@ -413,6 +422,62 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
 
             return result.ToArray();
+        }
+
+        /// <summary>
+        /// Removes sibling TOML sections that represent the same server under a different name,
+        /// identified by matching identity key property values (e.g. "command", "url", "serverUrl").
+        /// </summary>
+        private void RemoveDuplicateServerSections(List<string> lines, string ownSectionName)
+        {
+            // Collect identity values we're about to write
+            var ourIdentityValues = new Dictionary<string, string>();
+            foreach (var identityKey in _identityKeys)
+            {
+                if (_properties.TryGetValue(identityKey, out var prop) && prop.value is string strValue)
+                    ourIdentityValues[identityKey] = strValue;
+            }
+
+            if (ourIdentityValues.Count == 0)
+                return;
+
+            // Find all sibling sections under the same body path
+            var bodyPrefix = $"[{BodyPath}.";
+            var sectionsToRemove = new List<(int start, int end)>();
+
+            for (int i = 0; i < lines.Count; i++)
+            {
+                var trimmed = lines[i].Trim();
+                if (!trimmed.StartsWith(bodyPrefix) || !trimmed.EndsWith("]"))
+                    continue;
+
+                // Extract section name and skip our own section
+                var fullSectionName = trimmed[1..^1];
+                if (fullSectionName == ownSectionName)
+                    continue;
+
+                var sectionEnd = FindSectionEnd(lines, i);
+                var props = ParseSectionProperties(lines, i + 1, sectionEnd);
+
+                // Check if any identity property matches
+                foreach (var identity in ourIdentityValues)
+                {
+                    if (props.TryGetValue(identity.Key, out var existingValue)
+                        && existingValue is string existingStr
+                        && existingStr == identity.Value)
+                    {
+                        sectionsToRemove.Add((i, sectionEnd));
+                        break;
+                    }
+                }
+            }
+
+            // Remove from bottom to top to preserve indices
+            for (int i = sectionsToRemove.Count - 1; i >= 0; i--)
+            {
+                var (start, end) = sectionsToRemove[i];
+                lines.RemoveRange(start, end - start);
+            }
         }
 
         private static int FindTomlSection(List<string> lines, string sectionName)
