@@ -126,9 +126,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             var troubleshootingContainerStdio = TemplateFoldout("Troubleshooting");
 
-            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Claude Desktop has problems with MCP server launch, instead of a single instance is starts two. If you really need to use Claude Desktop, you would need to 'kill' one of the instances by randomly choosing. This is so finicky, please consider to switch to Claude Code(!!!)."));
-            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Claude Desktop has problems with runtime updates of MCP tools. It may not recognize them. That is why need to let Claude Desktop read MCP tools at the start of Claude Desktop app."));
-            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Start Unity first and the connection status should be 'Connecting...'"));
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Claude Desktop may launch two MCP server instances instead of one. If you must use Claude Desktop, manually terminate one of the instances. This behavior is unreliable — consider switching to Claude Code."));
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Claude Desktop may not detect runtime updates to MCP tools. Ensure Claude Desktop reads the MCP tools on startup."));
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Start Unity first; the connection status should read 'Connecting...'"));
 
             ContainerStdio!.Add(troubleshootingContainerStdio);
 
