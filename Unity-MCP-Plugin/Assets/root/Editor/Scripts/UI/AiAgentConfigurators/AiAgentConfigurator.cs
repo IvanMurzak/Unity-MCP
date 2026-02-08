@@ -28,6 +28,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private AiAgentConfig? _configStdio;
         private AiAgentConfig? _configHttp;
+        private ConfigurationElements? _configElementStdio;
+        private ConfigurationElements? _configElementHttp;
+        private IDisposable? _subscriptionStdio;
+        private IDisposable? _subscriptionHttp;
 
         /// <summary>
         /// The display name of the AI agent.
@@ -293,17 +297,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected virtual AiAgentConfigurator SetConfigureStatusIndicator()
         {
             ThrowIfRootNotSet();
+            DisposeConfigurationElements();
 
-            var configElementStdio = TemplateConfigurationElements(ConfigStdio, TransportMethod.stdio); ;
-            var configElementHttp = TemplateConfigurationElements(ConfigHttp, TransportMethod.streamableHttp);
+            _configElementStdio = TemplateConfigurationElements(ConfigStdio, TransportMethod.stdio);
+            _configElementHttp = TemplateConfigurationElements(ConfigHttp, TransportMethod.streamableHttp);
 
-            configElementStdio.OnConfigured.Subscribe(_ => configElementHttp.UpdateStatus());
-            configElementHttp.OnConfigured.Subscribe(_ => configElementStdio.UpdateStatus());
+            _subscriptionStdio = _configElementStdio.OnConfigured.Subscribe(_ => _configElementHttp.UpdateStatus());
+            _subscriptionHttp = _configElementHttp.OnConfigured.Subscribe(_ => _configElementStdio.UpdateStatus());
 
-            ContainerStdio!.Add(configElementStdio.Root);
-            ContainerHttp!.Add(configElementHttp.Root);
+            ContainerStdio!.Add(_configElementStdio.Root);
+            ContainerHttp!.Add(_configElementHttp.Root);
 
             return this;
+        }
+
+        protected void DisposeConfigurationElements()
+        {
+            _subscriptionStdio?.Dispose();
+            _subscriptionHttp?.Dispose();
+            _configElementStdio?.Dispose();
+            _configElementHttp?.Dispose();
+
+            _subscriptionStdio = null;
+            _subscriptionHttp = null;
+            _configElementStdio = null;
+            _configElementHttp = null;
         }
 
         public virtual AiAgentConfigurator SetTransportMethod(TransportMethod transportMethod)

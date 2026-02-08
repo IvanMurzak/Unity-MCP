@@ -17,7 +17,7 @@ using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
-    public class ConfigurationElements
+    public class ConfigurationElements : IDisposable
     {
         public VisualElement Root { get; }
         public VisualElement StatusCircle { get; }
@@ -29,6 +29,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private readonly AiAgentConfig _config;
         private readonly TransportMethod _transportMode;
+        private readonly EventCallback<ClickEvent> _clickCallback;
 
         public ConfigurationElements(AiAgentConfig config, TransportMethod transportMode)
         {
@@ -42,12 +43,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             UpdateStatus();
 
-            BtnConfigure.RegisterCallback<ClickEvent>(evt =>
+            _clickCallback = new EventCallback<ClickEvent>(evt =>
             {
                 var result = _config.Configure();
                 UpdateStatus(result);
                 onConfigured.OnNext(result);
             });
+            BtnConfigure.RegisterCallback(_clickCallback);
         }
 
         public void UpdateStatus(bool? isConfigured = null)
@@ -72,9 +74,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             BtnConfigure.text = isConfiguredValue ? "Reconfigure" : "Configure";
         }
 
-        ~ConfigurationElements()
+        public void Dispose()
         {
+            BtnConfigure.UnregisterCallback(_clickCallback);
             onConfigured.OnCompleted();
+            onConfigured.Dispose();
         }
     }
 }
