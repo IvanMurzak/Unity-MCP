@@ -283,14 +283,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             }
 
             var icon = EditorAssetLoader.LoadAssetAtPath<Texture2D>(IconPaths);
-            if (icon != null)
-            {
-                agentIcon.style.backgroundImage = new StyleBackground(icon);
-            }
-            else
-            {
-                agentIcon.style.display = DisplayStyle.None;
-            }
+
+            agentIcon.style.backgroundImage = icon == null ? null : new StyleBackground(icon);
+            agentIcon.style.display = icon == null ? DisplayStyle.None : DisplayStyle.Flex;
             return this;
         }
 
