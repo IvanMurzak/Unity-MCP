@@ -15,6 +15,7 @@ using System.IO.Compression;
 using System.Net;
 using System.Runtime.InteropServices;
 using System.Text.Json.Nodes;
+using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
@@ -238,10 +239,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 {
                     // Intentional infinite loop:
                     // - Deletion can fail while the MCP server binaries are in use (e.g., server still running).
+                    // - On the first failure, we automatically attempt to stop the server process via McpServerManager.
                     // - The retry/exit behavior is fully controlled by the user via the dialog below.
                     // - We do not impose a fixed maximum retry count so the user can take as long as needed
                     //   to shut down their MCP client and release file locks before trying again.
                     // - The loop terminates when the user selects "Skip", at which point the exception is rethrown.
+                    var silentRetries = 0;
                     while (true)
                     {
                         try
@@ -252,15 +255,46 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         }
                         catch (Exception ex)
                         {
+                            // First failure: try to stop the running server process that may be locking files
+                            if (silentRetries == 0)
+                            {
+                                silentRetries++;
+                                Debug.Log($"Failed to delete MCP server folder. Attempting to stop the server process...");
+                                try
+                                {
+                                    if (!McpServerManager.StopServer(force: true))
+                                    {
+                                        Debug.LogWarning($"No running MCP server process found to stop.");
+                                    }
+                                    else
+                                    {
+                                        Debug.Log($"Stop signal sent to MCP server process. Retrying deletion...");
+                                        Thread.Sleep(2000); // Wait a moment for the process to exit and release file locks
+                                    }
+                                }
+                                catch (Exception stopEx)
+                                {
+                                    Debug.LogWarning($"Failed to stop MCP server: {stopEx.Message}");
+                                }
+                                continue; // Retry deletion after stopping the server
+                            }
+
+                            // Second failure: retry once more silently (OS may need time to release file locks)
+                            if (silentRetries <= 1)
+                            {
+                                silentRetries++;
+                                continue;
+                            }
+
                             var retry = UnityEditor.EditorUtility.DisplayDialog(
-                                "Failed to Delete MCP Server Binaries",
-                                $"The current unity-mcp-server binaries can't be deleted. " +
-                                $"This is very likely because the MCP server is currently running.\n\n" +
-                                $"Please close your MCP client to make sure the server is not running, then click \"Retry\".\n\n" +
-                                $"Path: {ExecutableFolderRootPath}\n\n" +
-                                $"Error: {ex.Message}",
-                                "Retry",
-                                "Skip"
+                                title: "Failed to Delete MCP Server Binaries",
+                                message: $"The current unity-mcp-server binaries can't be deleted. " +
+                                    $"This is very likely because the MCP server is currently running.\n\n" +
+                                    $"Please close your MCP client to make sure the server is not running, then click \"Retry\".\n\n" +
+                                    $"Path: {ExecutableFolderRootPath}\n\n" +
+                                    $"Error: {ex.Message}",
+                                ok: "Retry",
+                                cancel: "Skip"
                             );
 
                             if (!retry)
@@ -294,6 +328,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
                 try
                 {
+                    var previousKeepServerRunning = UnityMcpPlugin.KeepServerRunning;
+
                     // Clear existed server folder
                     DeleteBinaryFolderIfExists();
 
@@ -334,7 +370,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
                     Debug.Log($"MCP server version file created at: <color=green><b>COMPLETED</b></color>");
 
-                    return IsBinaryExists() && IsVersionMatches();
+                    var binaryExists = IsBinaryExists();
+                    var versionMatches = IsVersionMatches();
+                    var success = binaryExists && versionMatches;
+
+                    if (success && previousKeepServerRunning)
+                    {
+                        if (!McpServerManager.StartServer())
+                            Debug.LogError($"Failed to start MCP server after updating binary. Please try starting the server manually.");
+                    }
+
+                    UnityEditor.EditorUtility.DisplayDialog(
+                        title: success
+                            ? "Server Binary Updated"
+                            : "Server Binary Update Failed",
+                        message: success
+                            ? "The MCP server binary was successfully downloaded and updated. \n\n" +
+                                "You may need to restart your AI agent to reconnect to the updated server."
+                            : "Failed to download and update the MCP server binary. Please check the logs for details.",
+                        ok: "OK");
+
+                    return success;
                 }
                 catch (Exception ex)
                 {
