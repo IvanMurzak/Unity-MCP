@@ -311,7 +311,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             return this;
         }
 
-        protected void DisposeConfigurationElements()
+        protected virtual void DisposeConfigurationElements()
         {
             _subscriptionStdio?.Dispose();
             _subscriptionHttp?.Dispose();
