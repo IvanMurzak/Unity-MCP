@@ -17,6 +17,7 @@ using System.Runtime.InteropServices;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
+using com.IvanMurzak.Unity.MCP.Editor.UI;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEngine;
@@ -224,16 +225,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 return File.Exists(ExecutableFullPath);
             }
 
-            public static bool IsVersionMatches()
+            public static string? GetBinaryVersion()
             {
                 if (!File.Exists(VersionFullPath))
-                    return false;
+                    return null;
 
-                var existingVersion = File.ReadAllText(VersionFullPath);
-                return existingVersion == UnityMcpPlugin.Version;
+                return File.ReadAllText(VersionFullPath);
             }
 
-            public static void DeleteBinaryFolderIfExists()
+            public static bool IsVersionMatches()
+            {
+                var binaryVersion = GetBinaryVersion();
+                if (binaryVersion == null)
+                    return false;
+
+                return binaryVersion == UnityMcpPlugin.Version;
+            }
+
+            public static bool DeleteBinaryFolderIfExists()
             {
                 if (Directory.Exists(ExecutableFolderRootPath))
                 {
@@ -251,7 +260,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         {
                             Directory.Delete(ExecutableFolderRootPath, recursive: true);
                             Debug.Log($"Deleted existing MCP server folder: <color=orange>{ExecutableFolderRootPath}</color>");
-                            return;
+                            return true;
                         }
                         catch (Exception ex)
                         {
@@ -305,6 +314,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         }
                     }
                 }
+                return false;
             }
 
             public static Task<bool> DownloadServerBinaryIfNeeded()
@@ -380,15 +390,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                             Debug.LogError($"Failed to start MCP server after updating binary. Please try starting the server manually.");
                     }
 
-                    UnityEditor.EditorUtility.DisplayDialog(
+                    NotificationPopupWindow.Show(
+                        height: 235,
+                        minHeight: 235,
                         title: success
                             ? "Server Binary Updated"
                             : "Server Binary Update Failed",
                         message: success
                             ? "The MCP server binary was successfully downloaded and updated. \n\n" +
+                                $"Version: {GetBinaryVersion()}\n\n" +
                                 "You may need to restart your AI agent to reconnect to the updated server."
-                            : "Failed to download and update the MCP server binary. Please check the logs for details.",
-                        ok: "OK");
+                            : "Failed to download and update the MCP server binary. Please check the logs for details.");
 
                     return success;
                 }

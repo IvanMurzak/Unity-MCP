@@ -30,7 +30,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public static Task DownloadServer() => Startup.Server.DownloadAndUnpackBinary();
 
         [MenuItem("Tools/AI Game Developer/Delete Server Binaries", priority = 1001)]
-        public static void DeleteServer() => Startup.Server.DeleteBinaryFolderIfExists();
+        public static void DeleteServer()
+        {
+            var result = Startup.Server.DeleteBinaryFolderIfExists();
+            if (result)
+            {
+                NotificationPopupWindow.Show(
+                    title: "MCP Server Binaries Deleted",
+                    message: "The MCP server binaries were successfully deleted. You can download them again from the Tools menu.",
+                    width: 350,
+                    minWidth: 350,
+                    height: 200,
+                    minHeight: 200);
+            }
+            else
+            {
+                NotificationPopupWindow.Show(
+                    title: "MCP Server Binaries Not Found",
+                    message: "No MCP server binaries were found to delete. They may have already been deleted or were never downloaded.",
+                    width: 350,
+                    minWidth: 350,
+                    height: 200,
+                    minHeight: 200);
+            }
+        }
 
         [MenuItem("Tools/AI Game Developer/Open Server Logs", priority = 1002)]
         public static void OpenServerLogs() => OpenFile(Startup.Server.ExecutableFolderPath + "/logs/server-log.txt");
