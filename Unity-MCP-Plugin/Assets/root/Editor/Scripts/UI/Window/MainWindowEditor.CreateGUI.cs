@@ -675,10 +675,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var iconElement = root.Q<VisualElement>(iconName);
             if (iconElement != null)
             {
-                if (icon != null)
-                    iconElement.style.backgroundImage = icon;
-                else
-                    iconElement.style.display = DisplayStyle.None;
+                iconElement.style.backgroundImage = icon;
+                iconElement.style.display = icon != null ? DisplayStyle.Flex : DisplayStyle.None;
             }
 
             button.tooltip = tooltip;
