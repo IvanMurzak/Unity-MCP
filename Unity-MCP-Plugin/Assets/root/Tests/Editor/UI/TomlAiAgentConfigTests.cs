@@ -1255,9 +1255,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             config.Configure();
 
             // Now manually add an inline comment to the command line
-            var content = File.ReadAllText(tempConfigPath);
-            content = content.Replace("\nargs = [", " # path to executable\nargs = [");
-            File.WriteAllText(tempConfigPath, content);
+            var lines = File.ReadAllLines(tempConfigPath);
+            for (int i = 0; i < lines.Length; i++)
+            {
+                if (lines[i].TrimStart().StartsWith("command ="))
+                {
+                    lines[i] += " # path to executable";
+                    break;
+                }
+            }
+            File.WriteAllLines(tempConfigPath, lines);
 
             // Act & Assert
             Assert.IsTrue(config.IsConfigured(), "IsConfigured should return true even with inline comments on required properties");
