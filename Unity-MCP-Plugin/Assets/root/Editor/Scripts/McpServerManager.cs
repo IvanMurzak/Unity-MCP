@@ -344,7 +344,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         }
                     }
                 }
-                catch (InvalidOperationException) { } // Process already exited or disposed
+                catch (InvalidOperationException ex)
+                {
+                    _logger.LogDebug("Process already exited or disposed while waiting for exit: {message}", ex.Message);
+                }
 
                 // Ensure cleanup on the main thread.
                 // Safe to call even if OnProcessExited already triggered cleanup.
@@ -353,46 +356,152 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         }
 
         /// <summary>
-        /// Kills any orphaned unity-mcp-server processes that may be holding the port.
-        /// This handles cases where the previous Unity session didn't clean up properly.
+        /// Kills an orphaned unity-mcp-server process that is occupying this project's port.
+        /// Only targets the specific process listening on <see cref="UnityMcpPlugin.Port"/>.
+        /// If the port owner cannot be determined, does nothing (fails safe).
         /// </summary>
         static void KillOrphanedServerProcesses()
         {
             try
             {
+                var port = UnityMcpPlugin.Port;
                 var currentPid = _serverProcess?.Id ?? -1;
-                var processes = Process.GetProcessesByName(McpServerProcessName);
 
-                foreach (var process in processes)
+                var listeningPid = GetPidListeningOnPort(port);
+
+                if (listeningPid <= 0)
                 {
-                    try
-                    {
-                        if (process.Id == currentPid || process.HasExited)
-                            continue;
+                    _logger.LogDebug("No process found listening on port {port}, port is available", port);
+                    return;
+                }
 
-                        _logger.LogWarning("Killing orphaned MCP server process (PID: {pid})", process.Id);
-                        process.Kill();
+                if (listeningPid == currentPid)
+                {
+                    _logger.LogDebug("Our own server process (PID: {pid}) is listening on port {port}", listeningPid, port);
+                    return;
+                }
 
-                        // Wait for the process to actually exit so the port is released
-                        if (!process.WaitForExit(3000))
-                            _logger.LogWarning("Orphaned MCP server process (PID: {pid}) did not exit within 3 seconds after kill", process.Id);
-                        else
-                            _logger.LogDebug("Orphaned MCP server process (PID: {pid}) exited successfully", process.Id);
-                    }
-                    catch (Exception ex)
+                try
+                {
+                    using var process = Process.GetProcessById(listeningPid);
+                    if (process == null || process.HasExited)
                     {
-                        _logger.LogDebug("Failed to kill orphaned process (PID: {pid}): {message}", process.Id, ex.Message);
+                        _logger.LogDebug("Process (PID: {pid}) on port {port} has already exited", listeningPid, port);
+                        return;
                     }
-                    finally
+
+                    var processName = process.ProcessName.ToLowerInvariant();
+                    if (!processName.Contains(McpServerProcessName))
                     {
-                        process.Dispose();
+                        _logger.LogWarning(
+                            "Port {port} is occupied by a non-MCP process '{processName}' (PID: {pid}). " +
+                            "The MCP server may fail to start. Please free the port or change the port in settings.",
+                            port, process.ProcessName, listeningPid);
+                        return;
                     }
+
+                    _logger.LogWarning("Killing orphaned MCP server process (PID: {pid}) occupying port {port}", listeningPid, port);
+                    process.Kill();
+
+                    if (!process.WaitForExit(3000))
+                        _logger.LogWarning("Orphaned MCP server process (PID: {pid}) did not exit within 3 seconds after kill", listeningPid);
+                    else
+                        _logger.LogDebug("Orphaned MCP server process (PID: {pid}) exited successfully", listeningPid);
+                }
+                catch (ArgumentException)
+                {
+                    _logger.LogDebug("Process (PID: {pid}) on port {port} no longer exists", listeningPid, port);
+                }
+                catch (InvalidOperationException)
+                {
+                    _logger.LogDebug("Process (PID: {pid}) on port {port} exited before it could be terminated", listeningPid, port);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug("Failed to kill orphaned process (PID: {pid}) on port {port}: {message}", listeningPid, port, ex.Message);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogDebug("Error searching for orphaned server processes: {message}", ex.Message);
+                _logger.LogDebug("Error in orphaned server process cleanup: {message}", ex.Message);
             }
+        }
+
+        /// <summary>
+        /// Returns the PID of the process listening on the specified TCP port,
+        /// or -1 if no process is found or the lookup fails.
+        /// </summary>
+        static int GetPidListeningOnPort(int port)
+        {
+            try
+            {
+                ProcessStartInfo startInfo;
+
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    startInfo = new ProcessStartInfo
+                    {
+                        FileName = "netstat",
+                        Arguments = "-ano -p tcp",
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                        RedirectStandardOutput = true
+                    };
+                }
+                else
+                {
+                    startInfo = new ProcessStartInfo
+                    {
+                        FileName = "lsof",
+                        Arguments = $"-ti tcp:{port} -sTCP:LISTEN",
+                        UseShellExecute = false,
+                        CreateNoWindow = true,
+                        RedirectStandardOutput = true,
+                        RedirectStandardError = true
+                    };
+                }
+
+                using var process = Process.Start(startInfo);
+                if (process == null) return -1;
+
+                var output = process.StandardOutput.ReadToEnd();
+                process.WaitForExit(5000);
+
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                {
+                    var portSuffix = $":{port}";
+                    foreach (var line in output.Split('\n'))
+                    {
+                        var trimmed = line.Trim();
+                        if (!trimmed.Contains("LISTENING"))
+                            continue;
+
+                        var parts = trimmed.Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                        if (parts.Length < 5)
+                            continue;
+
+                        var localAddress = parts[1];
+                        if (localAddress.EndsWith(portSuffix) && int.TryParse(parts[parts.Length - 1], out var pid))
+                            return pid;
+                    }
+                }
+                else
+                {
+                    var trimmed = output.Trim();
+                    if (string.IsNullOrEmpty(trimmed))
+                        return -1;
+
+                    var firstLine = trimmed.Split('\n')[0].Trim();
+                    if (int.TryParse(firstLine, out var pid))
+                        return pid;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug("Failed to determine PID listening on port {port}: {message}", port, ex.Message);
+            }
+
+            return -1;
         }
 
         static string BuildArguments()
