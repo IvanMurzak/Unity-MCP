@@ -459,7 +459,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             void UpdateMcpServerState()
             {
-                var transportMethod = UnityMcpPlugin.TransportMethod;
                 containerMcpServer.SetEnabled(UnityMcpPlugin.TransportMethod != TransportMethod.stdio);
                 btnStartStopMcpServer.tooltip = UnityMcpPlugin.TransportMethod != TransportMethod.stdio
                     ? "Start or stop the local MCP server."
