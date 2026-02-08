@@ -21,6 +21,7 @@ using McpConsts = com.IvanMurzak.McpPlugin.Common.Consts;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
 {
+    using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
     using ILogger = Microsoft.Extensions.Logging.ILogger;
 
     public enum McpServerStatus
@@ -268,9 +269,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         {
             var port = UnityMcpPlugin.Port;
             var timeout = UnityMcpPlugin.TimeoutMs;
+            var transportMethod = TransportMethod.streamableHttp; // always must be streamableHttp for launching the server.
 
-            // Arguments format: port=XXXXX plugin-timeout=XXXXX client-transport=streamableHttp
-            return $"{McpConsts.MCP.Server.Args.Port}={port} {McpConsts.MCP.Server.Args.PluginTimeout}={timeout} {McpConsts.MCP.Server.Args.ClientTransportMethod}=streamableHttp";
+            // Arguments format: port=XXXXX plugin-timeout=XXXXX client-transport=<TransportMethod>
+            return $"{McpConsts.MCP.Server.Args.Port}={port} {McpConsts.MCP.Server.Args.PluginTimeout}={timeout} {McpConsts.MCP.Server.Args.ClientTransportMethod}={transportMethod}";
         }
 
         /// <summary>
