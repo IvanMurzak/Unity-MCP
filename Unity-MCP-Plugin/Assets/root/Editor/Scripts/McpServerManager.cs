@@ -103,7 +103,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         static void OnEditorQuitting()
         {
-            StopServer();
+            StopServer(force: true);
         }
 
         public static bool StartServer()
@@ -111,9 +111,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             lock (_processMutex)
             {
                 if (_serverStatus.CurrentValue == McpServerStatus.Running ||
-                    _serverStatus.CurrentValue == McpServerStatus.Starting)
+                    _serverStatus.CurrentValue == McpServerStatus.Starting ||
+                    _serverStatus.CurrentValue == McpServerStatus.Stopping)
                 {
-                    _logger.LogWarning("MCP server is already running or starting");
+                    _logger.LogWarning("MCP server is already {status}", _serverStatus.CurrentValue);
                     return false;
                 }
 
@@ -124,6 +125,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 }
 
                 _serverStatus.Value = McpServerStatus.Starting;
+
+                // Kill any orphaned server processes to free the port
+                KillOrphanedServerProcesses();
 
                 try
                 {
@@ -187,7 +191,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             }
         }
 
-        public static bool StopServer()
+        /// <summary>
+        /// Stops the MCP server process.
+        /// By default, this method is non-blocking: it sends the kill/terminate signal
+        /// and lets the Exited event handler perform cleanup asynchronously.
+        /// When force is true (e.g., editor quitting), it blocks until the process exits.
+        /// </summary>
+        public static bool StopServer(bool force = false)
         {
             lock (_processMutex)
             {
@@ -213,47 +223,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
                     if (!_serverProcess.HasExited)
                     {
-                        // Try graceful shutdown first
-                        if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+                        SendTerminateSignal();
+                    }
+
+                    if (force)
+                    {
+                        // Synchronous path: block until exit (used during editor quitting)
+                        WaitForExitAndForceKillIfNeeded();
+                        CleanupProcess();
+                    }
+                    else
+                    {
+                        if (_serverProcess.HasExited)
                         {
-                            // On Windows, use taskkill for graceful termination
-                            _serverProcess.Kill();
+                            CleanupProcess();
                         }
                         else
                         {
-                            // On Unix-like systems, send SIGTERM first
-                            try
-                            {
-                                // Try to terminate gracefully using SIGTERM via kill command
-                                using var killProcess = Process.Start(new ProcessStartInfo
-                                {
-                                    FileName = "kill",
-                                    Arguments = $"-TERM {_serverProcess.Id}",
-                                    UseShellExecute = false,
-                                    CreateNoWindow = true
-                                });
-                                killProcess?.WaitForExit(1000);
-                            }
-                            catch (Exception ex)
-                            {
-                                // Fallback to Kill() if SIGTERM fails
-                                _logger.LogDebug("SIGTERM failed, falling back to Kill(): {message}", ex.Message);
-                                _serverProcess.Kill();
-                            }
-                        }
-
-                        // Wait for process to exit with timeout
-                        if (!_serverProcess.WaitForExit(5000))
-                        {
-                            // Force kill if it doesn't exit gracefully
-                            _logger.LogWarning("MCP server did not exit gracefully, forcing termination");
-                            _serverProcess.Kill();
-                            _serverProcess.WaitForExit(2000);
+                            // Non-blocking path: schedule background wait + force kill safety net.
+                            // CleanupProcess will be called by OnProcessExited or the background task.
+                            ScheduleForceKillIfNeeded();
                         }
                     }
 
-                    CleanupProcess();
-                    _logger.LogInformation("MCP server stopped successfully");
+                    _logger.LogInformation("MCP server stop initiated");
                     return true;
                 }
                 catch (Exception ex)
@@ -262,6 +255,134 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     CleanupProcess();
                     return false;
                 }
+            }
+        }
+
+        /// <summary>
+        /// Sends the platform-appropriate terminate signal without waiting for exit.
+        /// </summary>
+        static void SendTerminateSignal()
+        {
+            if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            {
+                _serverProcess!.Kill();
+            }
+            else
+            {
+                // On Unix-like systems, send SIGTERM for graceful shutdown
+                try
+                {
+                    using var killProcess = Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "kill",
+                        Arguments = $"-TERM {_serverProcess!.Id}",
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    });
+                    killProcess?.WaitForExit(1000);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug("SIGTERM failed, falling back to Kill(): {message}", ex.Message);
+                    _serverProcess!.Kill();
+                }
+            }
+        }
+
+        /// <summary>
+        /// Blocking wait for process exit, with force-kill fallback.
+        /// Used only during editor quitting to prevent orphaned processes.
+        /// </summary>
+        static void WaitForExitAndForceKillIfNeeded()
+        {
+            if (_serverProcess == null || _serverProcess.HasExited)
+                return;
+
+            if (!_serverProcess.WaitForExit(5000))
+            {
+                _logger.LogWarning("MCP server did not exit gracefully, forcing termination");
+                try
+                {
+                    _serverProcess.Kill();
+                    _serverProcess.WaitForExit(2000);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug("Force kill failed: {message}", ex.Message);
+                }
+            }
+        }
+
+        /// <summary>
+        /// Background safety net: waits for the process to exit and force-kills after timeout.
+        /// Calls CleanupProcess on the main thread when done.
+        /// </summary>
+        static void ScheduleForceKillIfNeeded()
+        {
+            var process = _serverProcess;
+            if (process == null)
+                return;
+
+            System.Threading.Tasks.Task.Run(() =>
+            {
+                try
+                {
+                    if (!process.HasExited && !process.WaitForExit(5000))
+                    {
+                        _logger.LogWarning("MCP server did not exit gracefully, forcing termination");
+                        try
+                        {
+                            process.Kill();
+                            process.WaitForExit(2000);
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogDebug("Force kill error: {message}", ex.Message);
+                        }
+                    }
+                }
+                catch (InvalidOperationException) { } // Process already exited or disposed
+
+                // Ensure cleanup on the main thread.
+                // Safe to call even if OnProcessExited already triggered cleanup.
+                MainThread.Instance.Run(CleanupProcess);
+            });
+        }
+
+        /// <summary>
+        /// Kills any orphaned unity-mcp-server processes that may be holding the port.
+        /// This handles cases where the previous Unity session didn't clean up properly.
+        /// </summary>
+        static void KillOrphanedServerProcesses()
+        {
+            try
+            {
+                var currentPid = _serverProcess?.Id ?? -1;
+                var processes = Process.GetProcessesByName(McpServerProcessName);
+
+                foreach (var process in processes)
+                {
+                    try
+                    {
+                        if (process.Id == currentPid || process.HasExited)
+                            continue;
+
+                        _logger.LogWarning("Killing orphaned MCP server process (PID: {pid})", process.Id);
+                        process.Kill();
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogDebug("Failed to kill orphaned process (PID: {pid}): {message}", process.Id, ex.Message);
+                    }
+                    finally
+                    {
+                        process.Dispose();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug("Error searching for orphaned server processes: {message}", ex.Message);
             }
         }
 
