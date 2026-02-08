@@ -105,7 +105,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Ensure Claude Code CLI is installed and accessible from terminal"));
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Ensure Claude Code CLI is started in the same folder where Unity project is located. This folder must contains Assets folder inside"));
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Ensure Claude Code is configured with the same port as it is in Unity right now"));
-            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Check that the configuration file .claude.json exists"));
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Check that the configuration file .mcp.json exists"));
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Restart Claude Code after configuration changes"));
 
             ContainerStdio!.Add(troubleshootingContainerStdio);
@@ -130,7 +130,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             troubleshootingContainerHttp.Add(TemplateLabelDescription("- Ensure Claude Code CLI is installed and accessible from terminal"));
             troubleshootingContainerHttp.Add(TemplateLabelDescription("- Ensure Claude Code CLI is started in the same folder where Unity project is located. This folder must contains Assets folder inside"));
             troubleshootingContainerHttp.Add(TemplateLabelDescription("- Ensure Claude Code is configured with the same port as it is in Unity right now"));
-            troubleshootingContainerHttp.Add(TemplateLabelDescription("- Check that the configuration file .claude.json exists"));
+            troubleshootingContainerHttp.Add(TemplateLabelDescription("- Check that the configuration file .mcp.json exists"));
             troubleshootingContainerHttp.Add(TemplateLabelDescription("- Restart Claude Code after configuration changes"));
 
             ContainerHttp!.Add(troubleshootingContainerHttp);
