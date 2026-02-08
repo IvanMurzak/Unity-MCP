@@ -153,8 +153,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         Utils.UnixUtils.Set0755(executablePath);
                     }
 
-                    _serverProcess = new Process { StartInfo = startInfo };
-                    _serverProcess.EnableRaisingEvents = true;
+                    _serverProcess = new Process
+                    {
+                        StartInfo = startInfo,
+                        EnableRaisingEvents = true
+                    };
                     _serverProcess.Exited += OnProcessExited;
                     _serverProcess.OutputDataReceived += OnOutputDataReceived;
                     _serverProcess.ErrorDataReceived += OnErrorDataReceived;
@@ -162,7 +165,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     if (!_serverProcess.Start())
                     {
                         _logger.LogError("Failed to start MCP server process");
-                        _serverStatus.Value = McpServerStatus.Stopped;
+                        CleanupProcess();
                         return false;
                     }
 
@@ -185,7 +188,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 catch (Exception ex)
                 {
                     _logger.LogError("Failed to start MCP server: {message}", ex.Message);
-                    _serverStatus.Value = McpServerStatus.Stopped;
+                    CleanupProcess();
                     return false;
                 }
             }
