@@ -404,15 +404,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         /// <summary>
         /// Starts the MCP server if KeepServerRunning is enabled and no external server is detected.
         /// This method is called during Unity Editor startup to auto-start the server based on user preference.
+        /// The external server check is performed asynchronously to avoid blocking the main thread.
         /// </summary>
-        /// <returns>True if the server was started or is already running, false otherwise.</returns>
-        public static bool StartServerIfNeeded()
+        public static void StartServerIfNeeded()
         {
             // Check if user wants the server to keep running
             if (!UnityMcpPlugin.KeepServerRunning)
             {
                 _logger.LogDebug("StartServerIfNeeded: KeepServerRunning is false, skipping auto-start");
-                return false;
+                return;
             }
 
             // Check if server is already running (either local or detected from previous session)
@@ -420,19 +420,54 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 _serverStatus.CurrentValue == McpServerStatus.Starting)
             {
                 _logger.LogDebug("StartServerIfNeeded: Server is already running or starting");
-                return true;
+                return;
             }
 
-            // Check if an external server is available on the port
-            if (IsExternalServerAvailable())
+            // Check if an external server is available on the port (non-blocking)
+            var port = UnityMcpPlugin.Port;
+            CheckExternalServerAsync(port, externalAvailable =>
             {
-                _logger.LogInformation("StartServerIfNeeded: External MCP server detected on port {port}, skipping local server start", UnityMcpPlugin.Port);
-                return false;
-            }
+                if (externalAvailable)
+                {
+                    _logger.LogInformation("StartServerIfNeeded: External MCP server detected on port {port}, skipping local server start", port);
+                    return;
+                }
 
-            // Start the local server
-            _logger.LogInformation("StartServerIfNeeded: Starting local MCP server (KeepServerRunning=true)");
-            return StartServer();
+                // Start the local server
+                _logger.LogInformation("StartServerIfNeeded: Starting local MCP server (KeepServerRunning=true)");
+                StartServer();
+            });
+        }
+
+        /// <summary>
+        /// Checks if an external server is listening on the given port on a background thread,
+        /// then invokes the callback on the main thread with the result.
+        /// </summary>
+        static void CheckExternalServerAsync(int port, Action<bool> onResult)
+        {
+            System.Threading.Tasks.Task.Run(() =>
+            {
+                var result = false;
+                try
+                {
+                    using var client = new System.Net.Sockets.TcpClient();
+                    var connectTask = client.ConnectAsync("localhost", port);
+                    var completed = connectTask.Wait(500); // 500ms timeout
+
+                    if (completed && client.Connected)
+                    {
+                        _logger.LogDebug("CheckExternalServerAsync: Port {port} is in use by another process", port);
+                        result = true;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogDebug("CheckExternalServerAsync: No server detected on port {port} ({message})", port, ex.Message);
+                }
+
+                // Marshal callback back to the main thread
+                EditorApplication.delayCall += () => onResult(result);
+            });
         }
 
         /// <summary>
