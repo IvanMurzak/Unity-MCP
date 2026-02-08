@@ -372,6 +372,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
                         _logger.LogWarning("Killing orphaned MCP server process (PID: {pid})", process.Id);
                         process.Kill();
+
+                        // Wait for the process to actually exit so the port is released
+                        if (!process.WaitForExit(3000))
+                            _logger.LogWarning("Orphaned MCP server process (PID: {pid}) did not exit within 3 seconds after kill", process.Id);
+                        else
+                            _logger.LogDebug("Orphaned MCP server process (PID: {pid}) exited successfully", process.Id);
                     }
                     catch (Exception ex)
                     {
@@ -411,37 +417,45 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             void CheckProcess()
             {
-                var elapsed = DateTime.UtcNow - startTime;
-
-                // If we haven't reached 5 seconds yet, schedule another check
-                if (elapsed.TotalSeconds < verificationDelaySeconds)
+                // If status is no longer Starting (e.g., OnProcessExited already cleaned up), unsubscribe
+                if (_serverStatus.CurrentValue != McpServerStatus.Starting)
                 {
-                    EditorApplication.delayCall += CheckProcess;
+                    EditorApplication.update -= CheckProcess;
                     return;
                 }
 
-                lock (_processMutex)
-                {
-                    // Only check if we're still in Starting state (not stopped/stopping by user)
-                    if (_serverStatus.CurrentValue != McpServerStatus.Starting)
-                        return;
+                var elapsed = DateTime.UtcNow - startTime;
 
-                    // Verify the process still exists
-                    if (IsProcessRunning(processId))
-                    {
-                        // Process verified successfully - now we can set status to Running
-                        _serverStatus.Value = McpServerStatus.Running;
-                        _logger.LogInformation("MCP server verified and running (PID: {pid})", processId);
-                    }
-                    else
-                    {
-                        _logger.LogError("MCP server process (PID: {pid}) exited unexpectedly within {seconds:F1} seconds after launch", processId, elapsed.TotalSeconds);
+                // If we haven't reached verification delay yet, wait for next frame
+                if (elapsed.TotalSeconds < verificationDelaySeconds)
+                    return;
+
+                // Detect early process exit before the verification delay
+                // This catches crashes that happen within the first few seconds (e.g., port already in use)
+                if (!IsProcessRunning(processId))
+                {
+                    _logger.LogError("MCP server process (PID: {pid}) exited early within {seconds:F1} seconds after launch",
+                        processId, elapsed.TotalSeconds);
+
+                    EditorApplication.update -= CheckProcess;
+                    if (_serverStatus.CurrentValue == McpServerStatus.Starting)
                         CleanupProcess();
-                    }
+                    return;
+                }
+
+                // Process is still running after the verification delay - mark as Running
+                _logger.LogDebug("MCP server process (PID: {pid}) is still running after {seconds:F1}s verification",
+                    processId, elapsed.TotalSeconds);
+
+                EditorApplication.update -= CheckProcess;
+                if (_serverStatus.CurrentValue == McpServerStatus.Starting)
+                {
+                    _serverStatus.Value = McpServerStatus.Running;
+                    _logger.LogInformation("MCP server verified and running (PID: {pid})", processId);
                 }
             }
 
-            EditorApplication.delayCall += CheckProcess;
+            EditorApplication.update += CheckProcess;
         }
 
         /// <summary>
@@ -501,15 +515,34 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         static void CleanupProcess()
         {
+            _logger.LogDebug("Cleaning up MCP server process resources");
             lock (_processMutex)
             {
-                if (_serverProcess != null)
+                var processToDispose = _serverProcess;
+                _serverProcess = null;
+
+                if (processToDispose != null)
                 {
-                    _serverProcess.Exited -= OnProcessExited;
-                    _serverProcess.OutputDataReceived -= OnOutputDataReceived;
-                    _serverProcess.ErrorDataReceived -= OnErrorDataReceived;
-                    _serverProcess.Dispose();
-                    _serverProcess = null;
+                    processToDispose.Exited -= OnProcessExited;
+                    processToDispose.OutputDataReceived -= OnOutputDataReceived;
+                    processToDispose.ErrorDataReceived -= OnErrorDataReceived;
+
+                    // Dispose on a background thread to prevent deadlock.
+                    // Process.Dispose() can hang on the main thread when redirected
+                    // stdout/stderr streams are active, even after CancelOutputRead/CancelErrorRead.
+                    System.Threading.Tasks.Task.Run(() =>
+                    {
+                        try
+                        {
+                            try { processToDispose.CancelOutputRead(); } catch { }
+                            try { processToDispose.CancelErrorRead(); } catch { }
+                            processToDispose.Dispose();
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogDebug("Error disposing MCP server process: {message}", ex.Message);
+                        }
+                    });
                 }
 
                 EditorPrefs.DeleteKey(ProcessIdKey);
