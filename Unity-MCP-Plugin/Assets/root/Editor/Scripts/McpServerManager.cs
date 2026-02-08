@@ -469,41 +469,5 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 EditorApplication.delayCall += () => onResult(result);
             });
         }
-
-        /// <summary>
-        /// Checks if an external MCP server is already listening on the configured port.
-        /// Uses a quick TCP connection attempt to detect if the port is in use.
-        /// </summary>
-        /// <remarks>
-        /// Note: This method only checks if any TCP listener is on the port, not specifically
-        /// an MCP server. This could produce false positives if another service uses the same port.
-        /// For more accurate detection, consider implementing an MCP-specific health check endpoint.
-        /// </remarks>
-        /// <returns>True if an external server is detected, false otherwise.</returns>
-        public static bool IsExternalServerAvailable()
-        {
-            try
-            {
-                var port = UnityMcpPlugin.Port;
-                using var client = new System.Net.Sockets.TcpClient();
-
-                // Try to connect with a short timeout
-                var connectTask = client.ConnectAsync("localhost", port);
-                var completed = connectTask.Wait(500); // 500ms timeout
-
-                if (completed && client.Connected)
-                {
-                    _logger.LogDebug("IsExternalServerAvailable: Port {port} is in use by another process", port);
-                    return true;
-                }
-
-                return false;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogDebug("IsExternalServerAvailable: No server detected on port {port} ({message})", UnityMcpPlugin.Port, ex.Message);
-                return false;
-            }
-        }
     }
 }
