@@ -18,7 +18,7 @@ using UnityEditor.PackageManager.Requests;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace com.IvanMurzak.Unity.MCP.Editor
+namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
     /// <summary>
     /// A popup window that notifies the user when a new version of AI Game Developer is available.

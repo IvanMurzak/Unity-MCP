@@ -11,95 +11,70 @@
 #nullable enable
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEngine.UIElements;
+using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
-namespace com.IvanMurzak.Unity.MCP.Editor
+namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
     /// <summary>
     /// Configurator for Custom MCP client.
     /// </summary>
-    public class CustomConfigurator : AiAgentConfiguratorBase
+    public class CustomConfigurator : AiAgentConfigurator
     {
         public override string AgentName => "Other - Custom";
         public override string AgentId => "other-custom";
         public override string DownloadUrl => "NA";
 
-        protected override string[] UxmlPaths => EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/agents/CustomConfig.uxml");
         protected override string? IconFileName => null;
 
-        protected override void CreateConfigureStatusIndicator(VisualElement root)
-        {
-            // empty
-        }
-
-        protected override AiAgentConfig CreateConfigMacLinux()
+        protected override AiAgentConfig CreateConfigStdioWindows()
         {
             throw new System.NotImplementedException();
         }
 
-        protected override AiAgentConfig CreateConfigWindows()
+        protected override AiAgentConfig CreateConfigStdioMacLinux()
         {
             throw new System.NotImplementedException();
+        }
+
+        protected override AiAgentConfig CreateConfigHttpWindows()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        protected override AiAgentConfig CreateConfigHttpMacLinux()
+        {
+            throw new System.NotImplementedException();
+        }
+
+        protected override AiAgentConfigurator SetConfigureStatusIndicator()
+        {
+            // Custom configurator doesn't have configure status indicator
+            return this;
         }
 
         protected override void OnUICreated(VisualElement root)
         {
-            base.OnUICreated(root);
+            SetAgentIcon();
+            SetTransportMethod(UnityMcpPlugin.TransportMethod);
 
-            // Provide raw json configuration
-            // -----------------------------------------------------------------
+            // STDIO Configuration
 
-            var toggleOptionStdio = root.Query<Toggle>("toggleOptionStdio").First();
-            var toggleOptionHttp = root.Query<Toggle>("toggleOptionHttp").First();
+            ContainerStdio!.Add(TemplateLabelDescription("Copy paste the json into your MCP Client to configure it."));
+            ContainerStdio!.Add(TemplateTextFieldReadOnly(Startup.Server.RawJsonConfigurationStdio(
+                port: UnityMcpPlugin.Port,
+                bodyPath: "mcpServers",
+                timeoutMs: UnityMcpPlugin.TimeoutMs,
+                type: "stdio").ToString()));
 
-            var containerStdio = root.Query<VisualElement>("containerStdio").First();
-            var containerHttp = root.Query<VisualElement>("containerHttp").First();
+            // HTTP Configuration
 
-            var rawJsonFieldStdio = root.Query<TextField>("rawJsonConfigurationStdio").First();
-            var rawJsonFieldHttp = root.Query<TextField>("rawJsonConfigurationHttp").First();
-            var dockerCommand = root.Query<TextField>("dockerCommand").First();
-
-            rawJsonFieldStdio.value = Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, "mcpServers", UnityMcpPlugin.TimeoutMs).ToString();
-            rawJsonFieldHttp.value = Startup.Server.RawJsonConfigurationHttp(UnityMcpPlugin.Host, "mcpServers").ToString();
-            dockerCommand.value = Startup.Server.DockerRunCommand();
-
-            void UpdateConfigurationVisibility(bool isStdioSelected)
-            {
-                containerStdio.style.display = isStdioSelected ? DisplayStyle.Flex : DisplayStyle.None;
-                containerHttp.style.display = isStdioSelected ? DisplayStyle.None : DisplayStyle.Flex;
-            }
-
-            // Initialize with STDIO selected by default
-            toggleOptionStdio.value = true;
-            toggleOptionHttp.value = false;
-            UpdateConfigurationVisibility(true);
-
-            toggleOptionStdio.RegisterValueChangedCallback(evt =>
-            {
-                if (evt.newValue)
-                {
-                    toggleOptionHttp.SetValueWithoutNotify(false);
-                    UpdateConfigurationVisibility(true);
-                }
-                else if (!toggleOptionHttp.value)
-                {
-                    // Prevent both toggles from being unchecked
-                    toggleOptionStdio.SetValueWithoutNotify(true);
-                }
-            });
-
-            toggleOptionHttp.RegisterValueChangedCallback(evt =>
-            {
-                if (evt.newValue)
-                {
-                    toggleOptionStdio.SetValueWithoutNotify(false);
-                    UpdateConfigurationVisibility(false);
-                }
-                else if (!toggleOptionStdio.value)
-                {
-                    // Prevent both toggles from being unchecked
-                    toggleOptionHttp.SetValueWithoutNotify(true);
-                }
-            });
+            ContainerHttp!.Add(TemplateLabelDescription("Copy paste the json into your MCP Client to configure it."));
+            ContainerHttp!.Add(TemplateTextFieldReadOnly(Startup.Server.RawJsonConfigurationHttp(
+                url: UnityMcpPlugin.Host,
+                bodyPath: "mcpServers",
+                type: null).ToString()));
+            ContainerHttp!.Add(TemplateLabelDescription("Start the MCP server using Docker."));
+            ContainerHttp!.Add(TemplateTextFieldReadOnly(Startup.Server.DockerRunCommand()));
         }
     }
 }

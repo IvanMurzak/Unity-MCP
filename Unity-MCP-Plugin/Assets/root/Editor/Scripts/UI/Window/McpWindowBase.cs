@@ -18,7 +18,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace com.IvanMurzak.Unity.MCP.Editor
+namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
     /// <summary>
     /// Base class for MCP Editor windows providing common UXML/USS loading functionality.

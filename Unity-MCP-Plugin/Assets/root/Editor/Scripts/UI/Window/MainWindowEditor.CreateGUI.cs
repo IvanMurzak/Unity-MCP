@@ -23,7 +23,7 @@ using UnityEngine.UIElements;
 using LogLevel = com.IvanMurzak.Unity.MCP.Runtime.Utils.LogLevel;
 using TransportMethod = com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server.TransportMethod;
 
-namespace com.IvanMurzak.Unity.MCP.Editor
+namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
     public partial class MainWindowEditor
     {
@@ -209,6 +209,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     UpdateHostFieldState(inputFieldHost, plugin.KeepConnected.CurrentValue, state);
                     statusText.text = "Unity: " + GetConnectionStatusText(state, keepConnected);
                     btnConnect.text = GetButtonText(state, keepConnected);
+                    var isConnect = btnConnect.text == ServerButtonText_Connect;
+                    btnConnect.EnableInClassList("btn-primary", isConnect);
+                    btnConnect.EnableInClassList("btn-secondary", !isConnect);
                     SetStatusIndicator(statusCircle, GetConnectionStatusClass(state, keepConnected));
 
                     if (!(state == HubConnectionState.Connected && keepConnected))
@@ -351,6 +354,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 Logger.LogTrace("Setting MCP server data: {status}, Data: {data}", status, data?.ToPrettyJson() ?? "null");
 
             btnStartStop.text = GetServerButtonText(status);
+            var isStart = status == McpServerStatus.Stopped;
+            btnStartStop.EnableInClassList("btn-primary", isStart);
+            btnStartStop.EnableInClassList("btn-secondary", !isStart);
             btnStartStop.SetEnabled(status == McpServerStatus.Running || status == McpServerStatus.Stopped);
             statusLabel.text = GetServerLabelText(status, data);
             SetStatusIndicator(statusCircle, GetServerStatusClass(status));
@@ -445,6 +451,68 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 .ObserveOnCurrentSynchronizationContext()
                 .Subscribe(_ => FetchAiAgentData())
                 .AddTo(_disposables);
+
+            var containerMcpServer = root.Q<VisualElement>("TimelinePointMcpServer") ?? throw new InvalidOperationException("TimelinePointMcpServer element not found.");
+            var btnStartStopMcpServer = root.Q<Button>("btnStartStopServer") ?? throw new InvalidOperationException("MCP Server start/stop button not found.");
+
+            var toggleOptionHttp = root.Q<Toggle>("toggleOptionHttp") ?? throw new NullReferenceException("Toggle 'toggleOptionHttp' not found in UI.");
+            var toggleOptionStdio = root.Q<Toggle>("toggleOptionStdio") ?? throw new NullReferenceException("Toggle 'toggleOptionStdio' not found in UI.");
+
+            // Initialize with HTTP selected by default
+            toggleOptionStdio.value = UnityMcpPlugin.TransportMethod == TransportMethod.stdio;
+            toggleOptionHttp.value = UnityMcpPlugin.TransportMethod != TransportMethod.stdio;
+            currentAiAgentConfigurator?.SetTransportMethod(UnityMcpPlugin.TransportMethod);
+
+            void UpdateMcpServerState()
+            {
+                containerMcpServer.SetEnabled(UnityMcpPlugin.TransportMethod != TransportMethod.stdio);
+                btnStartStopMcpServer.tooltip = UnityMcpPlugin.TransportMethod != TransportMethod.stdio
+                    ? "Start or stop the local MCP server."
+                    : "Local MCP server is disabled in STDIO mode. AI agent will launch its own MCP server instance.";
+            }
+            UpdateMcpServerState();
+
+            toggleOptionStdio.RegisterValueChangedCallback(evt =>
+            {
+                if (evt.newValue)
+                {
+                    UnityMcpPlugin.TransportMethod = TransportMethod.stdio;
+                    UnityMcpPlugin.Instance.Save();
+                    toggleOptionHttp.SetValueWithoutNotify(false);
+                    currentAiAgentConfigurator?.SetTransportMethod(TransportMethod.stdio);
+
+                    // Stop MCP server if running to switch to stdio mode
+                    if (McpServerManager.IsRunning)
+                    {
+                        UnityMcpPlugin.KeepServerRunning = false;
+                        UnityMcpPlugin.Instance.Save();
+                        McpServerManager.StopServer();
+                    }
+                }
+                else if (!toggleOptionHttp.value)
+                {
+                    // Prevent both toggles from being unchecked
+                    toggleOptionStdio.SetValueWithoutNotify(true);
+                }
+                UpdateMcpServerState();
+            });
+
+            toggleOptionHttp.RegisterValueChangedCallback(evt =>
+            {
+                if (evt.newValue)
+                {
+                    UnityMcpPlugin.TransportMethod = TransportMethod.streamableHttp;
+                    UnityMcpPlugin.Instance.Save();
+                    toggleOptionStdio.SetValueWithoutNotify(false);
+                    currentAiAgentConfigurator?.SetTransportMethod(TransportMethod.streamableHttp);
+                }
+                else if (!toggleOptionStdio.value)
+                {
+                    // Prevent both toggles from being unchecked
+                    toggleOptionHttp.SetValueWithoutNotify(true);
+                }
+                UpdateMcpServerState();
+            });
         }
 
         private void FetchAiAgentData()
@@ -503,7 +571,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         #endregion
 
-        #region MCP Tools, Prompts, Resources
+        #region MCP Features
 
         private void SetupToolsSection(VisualElement root)
         {

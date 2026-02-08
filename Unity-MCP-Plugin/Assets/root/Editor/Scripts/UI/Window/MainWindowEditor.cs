@@ -14,7 +14,7 @@ using R3;
 using UnityEditor;
 using UnityEngine;
 
-namespace com.IvanMurzak.Unity.MCP.Editor
+namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
     public partial class MainWindowEditor : McpWindowBase
     {

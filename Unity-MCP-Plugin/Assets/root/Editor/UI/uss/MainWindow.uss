@@ -20,6 +20,7 @@
     flex-grow: 0;
     flex-shrink: 0;
     margin: 2px 2px;
+    min-width: 40px;
 }
 
 .toggle-text-button > .unity-toggle__input {
@@ -54,6 +55,7 @@
     padding: 4px 8px;
     margin: 0;
     border-radius: 4px;
+    min-width: 40px;
     background-color: rgba(255, 255, 255, 0.05);
     transition-duration: 200ms;
     -unity-text-align: middle-left;

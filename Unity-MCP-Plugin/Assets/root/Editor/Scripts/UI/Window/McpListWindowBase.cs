@@ -18,7 +18,7 @@ using Microsoft.Extensions.Logging;
 using UnityEditor;
 using UnityEngine.UIElements;
 
-namespace com.IvanMurzak.Unity.MCP.Editor
+namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
     /// <summary>
     /// Filter type for MCP list windows (Tools, Prompts, Resources).

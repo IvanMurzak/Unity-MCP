@@ -55,7 +55,14 @@
             </ui:VisualElement>
             <ui:VisualElement class="divider" />
             <!-- AI Agent Section ============================== -->
-            <ui:Label text="AI agent" class="header" />
+            <ui:VisualElement class="row" style="margin-top: 0;">
+                <ui:Label text="AI agent" class="header" />
+                <!-- Transport mode toggle -->
+                <ui:VisualElement style="flex-direction: row; margin-top: 4px;">
+                    <ui:Toggle name="toggleOptionHttp" label="http" class="toggle-text-button" tooltip="Configure AI agent to communicate over HTTP (RECOMMENDED)" />
+                    <ui:Toggle name="toggleOptionStdio" label="stdio" class="toggle-text-button" tooltip="Configure AI agent to communicate over STDIO (NOT RECOMMENDED)" />
+                </ui:VisualElement>
+            </ui:VisualElement>
             <ui:DropdownField name="aiAgentDropdown" label="Choose" class="content-item" />
             <ui:VisualElement name="ConfigureAgentsContainer" />
             <ui:VisualElement class="divider" />

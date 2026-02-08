@@ -9,36 +9,22 @@
 */
 
 #nullable enable
-using Extensions.Unity.PlayerPrefsEx;
-using UnityEditor;
+using System;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
+using UnityEngine.UIElements;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
-    [InitializeOnLoad]
-    static class MainWindowInitializer
+    public class UITemplate<T> where T : VisualElement
     {
-        static PlayerPrefsBool isInitialized = new PlayerPrefsBool("Unity-MCP.MainWindow.Initialized");
+        public T Value { get; private set; }
 
-        static MainWindowInitializer()
+        public UITemplate(string templatePath)
         {
-            if (isInitialized.Value)
-                return;
-
-            EditorApplication.update += PerformInitialization;
-        }
-
-        static void PerformInitialization()
-        {
-            EditorApplication.update -= PerformInitialization;
-
-            if (isInitialized.Value)
-                return;
-
-            // Perform initialization
-            UnityMcpPlugin.InitSingletonIfNeeded();
-            MainWindowEditor.ShowWindow();
-
-            isInitialized.Value = true;
+            var paths = EditorAssetLoader.GetEditorAssetPaths(templatePath);
+            var template = EditorAssetLoader.LoadAssetAtPath<VisualTreeAsset>(paths) ?? throw new NullReferenceException($"Failed to load UXML template at path: {templatePath}");
+            var root = template.CloneTree();
+            Value = root.Q<T>() ?? throw new InvalidCastException($"Root element is not of type {typeof(T).Name}");
         }
     }
 }

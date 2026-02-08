@@ -22,6 +22,7 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
 {
+    using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
     using Consts = McpPlugin.Common.Consts;
 
     public static partial class Startup
@@ -104,50 +105,98 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             // ------------------------------------------------------------------------------------------------------------------------------------
 
+            /// <summary>
+            /// Generates a JSON configuration for stdio transport.
+            /// <code>
+            /// {
+            ///   "mcpServers": {
+            ///     "Unity ProjectName": {
+            ///       "type": "...",    // optional, only if provided
+            ///       "command": "path/to/unity-mcp-server",
+            ///       "args": ["port=...", "plugin-timeout=...", "client-transport=stdio"]
+            ///     }
+            ///   }
+            /// }
+            /// </code>
+            /// </summary>
             public static JsonNode RawJsonConfigurationStdio(
                 int port,
                 string bodyPath = "mcpServers",
-                int timeoutMs = Consts.Hub.DefaultTimeoutMs)
+                int timeoutMs = Consts.Hub.DefaultTimeoutMs,
+                string? type = null)
             {
-                return Consts.MCP.Server.Config(
-                    executablePath: ExecutableFullPath.Replace('\\', '/'),
-                    serverName: AiAgentConfig.DefaultMcpServerName,
-                    bodyPath: bodyPath,
-                    port: port,
-                    timeoutMs: timeoutMs
-                );
+                var pathSegments = Consts.MCP.Server.BodyPathSegments(bodyPath);
+
+                // Build innermost content first
+                var serverConfig = new JsonObject();
+
+                if (type != null)
+                    serverConfig["type"] = type;
+
+                serverConfig["command"] = ExecutableFullPath.Replace('\\', '/');
+                serverConfig["args"] = new JsonArray
+                {
+                    $"{Consts.MCP.Server.Args.Port}={port}",
+                    $"{Consts.MCP.Server.Args.PluginTimeout}={timeoutMs}",
+                    $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+                };
+
+                var innerContent = new JsonObject
+                {
+                    [AiAgentConfig.DefaultMcpServerName] = serverConfig
+                };
+
+                // Build nested structure from innermost to outermost
+                var result = innerContent;
+                for (int i = pathSegments.Length - 1; i >= 0; i--)
+                {
+                    result = new JsonObject { [pathSegments[i]] = result };
+                }
+
+                return result;
             }
 
+            /// <summary>
+            /// Generates a JSON configuration for HTTP transport.
+            /// <code>
+            /// {
+            ///   "mcpServers": {
+            ///     "Unity ProjectName": {
+            ///       "type": "...",  // optional, only if provided
+            ///       "url": "http://localhost:port"
+            ///     }
+            ///   }
+            /// }
+            /// </code>
+            /// </summary>
             public static JsonNode RawJsonConfigurationHttp(
                 string url,
-                string bodyPath = "mcpServers")
+                string bodyPath = "mcpServers",
+                string? type = null)
             {
-                return new JsonObject()
+                var pathSegments = Consts.MCP.Server.BodyPathSegments(bodyPath);
+
+                // Build innermost content first
+                var serverConfig = new JsonObject();
+
+                if (type != null)
+                    serverConfig["type"] = type;
+
+                serverConfig["url"] = url;
+
+                var innerContent = new JsonObject
                 {
-                    [bodyPath] = new JsonObject()
-                    {
-                        [AiAgentConfig.DefaultMcpServerName] = new JsonObject
-                        {
-                            ["url"] = url,
-                            ["type"] = "streamableHttp"
-                        }
-                    }
+                    [AiAgentConfig.DefaultMcpServerName] = serverConfig
                 };
-            }
 
-            // ------------------------------------------------------------------------------------------------------------------------------------
-
-            public static string RawTomlConfigurationStdio(string bodyPath = "mcp_servers")
-            {
-                return TomlAiAgentConfig.GenerateTomlSection(
-                    sectionName: $"{bodyPath}.{AiAgentConfig.DefaultMcpServerName}",
-                    command: ExecutableFullPath.Replace('\\', '/'),
-                    args: new[]
+                // Build nested structure from innermost to outermost
+                var result = innerContent;
+                for (int i = pathSegments.Length - 1; i >= 0; i--)
                 {
-                    $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
-                    $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-                    $"{Consts.MCP.Server.Args.ClientTransportMethod}=stdio"
-                });
+                    result = new JsonObject { [pathSegments[i]] = result };
+                }
+
+                return result;
             }
 
             // ------------------------------------------------------------------------------------------------------------------------------------
@@ -155,7 +204,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             public static string DockerRunCommand()
             {
                 var dockerPortMapping = $"-p {UnityMcpPlugin.Port}:{UnityMcpPlugin.Port}";
-                var dockerEnvVars = $"-e MCP_PLUGIN_CLIENT_TRANSPORT=streamableHttp -e MCP_PLUGIN_PORT={UnityMcpPlugin.Port} -e MCP_PLUGIN_CLIENT_TIMEOUT={UnityMcpPlugin.TimeoutMs}";
+                var dockerEnvVars = $"-e MCP_PLUGIN_CLIENT_TRANSPORT={TransportMethod.streamableHttp} -e MCP_PLUGIN_PORT={UnityMcpPlugin.Port} -e MCP_PLUGIN_CLIENT_TIMEOUT={UnityMcpPlugin.TimeoutMs}";
                 var dockerContainer = $"--name unity-mcp-server-{UnityMcpPlugin.Port}";
                 var dockerImage = $"ivanmurzakdev/unity-mcp-server:{UnityMcpPlugin.Version}";
                 return $"docker run -d {dockerPortMapping} {dockerEnvVars} {dockerContainer} {dockerImage}";
