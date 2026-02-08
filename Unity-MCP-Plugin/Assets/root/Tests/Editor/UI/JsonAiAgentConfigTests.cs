@@ -11,6 +11,7 @@
 #nullable enable
 using System.Collections;
 using System.IO;
+using System.Linq;
 using System.Text.Json.Nodes;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
@@ -776,13 +777,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var rootObj = JsonNode.Parse(json)?.AsObject();
             var mcpServers = rootObj!["mcpServers"]?.AsObject();
 
-            var matchingServerCount = 0;
-            foreach (var kv in mcpServers!)
-            {
-                var url = kv.Value?["url"]?.GetValue<string>();
-                if (!string.IsNullOrEmpty(url))
-                    matchingServerCount++;
-            }
+            var matchingServerCount = mcpServers!.Count(kv => !string.IsNullOrEmpty(kv.Value?["url"]?.GetValue<string>()));
 
             Assert.AreEqual(1, matchingServerCount, "Should have exactly one server entry with url after multiple configures");
 
