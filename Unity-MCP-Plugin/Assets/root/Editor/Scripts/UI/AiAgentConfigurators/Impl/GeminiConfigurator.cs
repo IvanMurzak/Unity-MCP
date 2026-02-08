@@ -10,6 +10,7 @@
 
 #nullable enable
 using System.IO;
+using System.Text.Json.Nodes;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEngine.UIElements;
@@ -31,34 +32,50 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected override AiAgentConfig CreateConfigStdioWindows() => new JsonAiAgentConfig(
             name: AgentName,
             configPath: Path.Combine(".gemini", "settings.json"),
-            transportMethod: TransportMethod.stdio,
-            transportMethodValue: "stdio",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
-        );
+        )
+        .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
+        .SetProperty("command", JsonValue.Create(Startup.Server.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
+        .SetProperty("args", new JsonArray {
+            $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
+            $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+            $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+        }, requiredForConfiguration: true)
+        .SetPropertyToRemove("url");
 
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
             configPath: Path.Combine(".gemini", "settings.json"),
-            transportMethod: TransportMethod.stdio,
-            transportMethodValue: "stdio",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
-        );
+        )
+        .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
+        .SetProperty("command", JsonValue.Create(Startup.Server.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
+        .SetProperty("args", new JsonArray {
+            $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
+            $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+            $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+        }, requiredForConfiguration: true)
+        .SetPropertyToRemove("url");
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new JsonAiAgentConfig(
             name: AgentName,
             configPath: Path.Combine(".gemini", "settings.json"),
-            transportMethod: TransportMethod.streamableHttp,
-            transportMethodValue: "http",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
-        );
+        )
+        .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
+        .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
+        .SetPropertyToRemove("command")
+        .SetPropertyToRemove("args");
 
         protected override AiAgentConfig CreateConfigHttpMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
             configPath: Path.Combine(".gemini", "settings.json"),
-            transportMethod: TransportMethod.streamableHttp,
-            transportMethodValue: "http",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
-        );
+        )
+        .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
+        .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
+        .SetPropertyToRemove("command")
+        .SetPropertyToRemove("args");
 
         protected override void OnUICreated(VisualElement root)
         {
@@ -76,7 +93,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             manualStepsOption1!.Add(TemplateLabelDescription("2. Run the following command in the folder of the Unity project to configure Gemini"));
             manualStepsOption1!.Add(TemplateTextFieldReadOnly(addMcpServerCommandStdio));
             manualStepsOption1!.Add(TemplateLabelDescription("3. Start Gemini"));
-            manualStepsOption1!.Add(TemplateTextFieldReadOnly("gemini"));
+            manualStepsOption1!.Add(TemplateTextFieldReadOnly("gemini --debug"));
+
+            ContainerStdio!.Add(TemplateWarningLabel("REQUIRED: Use --debug flag when starting Gemini is important, it helps MCP server to work properly with Gemini in stdio transport mode."));
 
             ContainerStdio!.Add(manualStepsOption1);
 
@@ -91,6 +110,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var troubleshootingContainerStdio = TemplateFoldout("Troubleshooting");
 
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Ensure Gemini CLI is installed and accessible from terminal"));
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Start Gemini with --debug flag, it helps MCP server to work properly with Gemini in stdio transport mode."));
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Ensure MCP configuration file doesn't have syntax errors"));
 
             ContainerStdio!.Add(troubleshootingContainerStdio);
@@ -104,7 +124,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             manualStepsOption1Http!.Add(TemplateLabelDescription("2. Run the following command in the folder of the Unity project to configure Gemini"));
             manualStepsOption1Http!.Add(TemplateTextFieldReadOnly(addMcpServerCommandHttp));
             manualStepsOption1Http!.Add(TemplateLabelDescription("3. Start Gemini"));
-            manualStepsOption1Http!.Add(TemplateTextFieldReadOnly("gemini"));
+            manualStepsOption1Http!.Add(TemplateTextFieldReadOnly("gemini --debug"));
 
             ContainerHttp!.Add(manualStepsOption1Http);
 

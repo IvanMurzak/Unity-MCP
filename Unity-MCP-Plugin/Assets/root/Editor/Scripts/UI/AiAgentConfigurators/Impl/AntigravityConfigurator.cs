@@ -11,6 +11,7 @@
 #nullable enable
 using System;
 using System.IO;
+using System.Text.Json.Nodes;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEngine.UIElements;
@@ -37,10 +38,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 "antigravity",
                 "mcp_config.json"
             ),
-            transportMethod: TransportMethod.stdio,
-            transportMethodValue: "stdio",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
-        );
+        )
+        .AddIdentityKey("serverUrl")
+        .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
+        .SetProperty("command", JsonValue.Create(Startup.Server.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
+        .SetProperty("args", new JsonArray {
+            $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
+            $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+            $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+        }, requiredForConfiguration: true)
+        .SetPropertyToRemove("url")
+        .SetPropertyToRemove("serverUrl")
+        .SetPropertyToRemove("type");
 
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
@@ -50,10 +60,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 "antigravity",
                 "mcp_config.json"
             ),
-            transportMethod: TransportMethod.stdio,
-            transportMethodValue: "stdio",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
-        );
+        )
+        .AddIdentityKey("serverUrl")
+        .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
+        .SetProperty("command", JsonValue.Create(Startup.Server.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
+        .SetProperty("args", new JsonArray {
+            $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
+            $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+            $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+        }, requiredForConfiguration: true)
+        .SetPropertyToRemove("url")
+        .SetPropertyToRemove("serverUrl")
+        .SetPropertyToRemove("type");
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new JsonAiAgentConfig(
             name: AgentName,
@@ -63,10 +82,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 "antigravity",
                 "mcp_config.json"
             ),
-            transportMethod: TransportMethod.streamableHttp,
-            transportMethodValue: "http",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
-        );
+        )
+        .AddIdentityKey("serverUrl")
+        .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
+        .SetProperty("serverUrl", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
+        .SetPropertyToRemove("command")
+        .SetPropertyToRemove("args")
+        .SetPropertyToRemove("url")
+        .SetPropertyToRemove("type");
 
         protected override AiAgentConfig CreateConfigHttpMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
@@ -76,10 +100,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 "antigravity",
                 "mcp_config.json"
             ),
-            transportMethod: TransportMethod.streamableHttp,
-            transportMethodValue: "http",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
-        );
+        )
+        .AddIdentityKey("serverUrl")
+        .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
+        .SetProperty("serverUrl", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
+        .SetPropertyToRemove("command")
+        .SetPropertyToRemove("args")
+        .SetPropertyToRemove("url")
+        .SetPropertyToRemove("type");
 
         protected override void OnUICreated(VisualElement root)
         {
@@ -98,6 +127,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var troubleshootingContainerStdio = TemplateFoldout("Troubleshooting");
 
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Ensure MCP configuration file doesn't have syntax errors"));
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Restart Antigravity after configuration changes"));
 
             ContainerStdio!.Add(troubleshootingContainerStdio);
 
@@ -114,6 +144,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var troubleshootingContainerHttp = TemplateFoldout("Troubleshooting");
 
             troubleshootingContainerHttp.Add(TemplateLabelDescription("- Ensure MCP configuration file doesn't have syntax errors"));
+            troubleshootingContainerHttp.Add(TemplateLabelDescription("- Restart Antigravity after configuration changes"));
 
             ContainerHttp!.Add(troubleshootingContainerHttp);
         }

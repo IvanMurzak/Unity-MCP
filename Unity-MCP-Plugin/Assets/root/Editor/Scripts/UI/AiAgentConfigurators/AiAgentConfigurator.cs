@@ -215,11 +215,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         /// <param name="root">The root visual element of the created UI.</param>
         protected virtual void OnUICreated(VisualElement root)
         {
+            SetAgentName(AgentName);
             SetAgentIcon();
             SetAgentDownloadUrl(DownloadUrl);
             SetTutorialUrl(TutorialUrl);
             SetConfigureStatusIndicator();
             SetTransportMethod(UnityMcpPlugin.TransportMethod);
+        }
+
+        protected virtual AiAgentConfigurator SetAgentName(string name)
+        {
+            ThrowIfRootNotSet();
+            var nameLabel = Root!.Q<Label>("agentName") ?? throw new NullReferenceException("Label 'agentName' not found in UI.");
+            nameLabel.text = name;
+            return this;
         }
 
         protected virtual AiAgentConfigurator SetAgentDownloadUrl(string url)

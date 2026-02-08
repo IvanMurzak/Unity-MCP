@@ -11,6 +11,7 @@
 #nullable enable
 using System;
 using System.IO;
+using System.Text.Json.Nodes;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEngine.UIElements;
@@ -36,10 +37,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 "Claude",
                 "claude_desktop_config.json"
             ),
-            transportMethod: TransportMethod.stdio,
-            transportMethodValue: "stdio",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
-        );
+        )
+        .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
+        .SetProperty("command", JsonValue.Create(Startup.Server.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
+        .SetProperty("args", new JsonArray {
+            $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
+            $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+            $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+        }, requiredForConfiguration: true)
+        .SetPropertyToRemove("url");
 
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
@@ -50,10 +57,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 "Claude",
                 "claude_desktop_config.json"
             ),
-            transportMethod: TransportMethod.stdio,
-            transportMethodValue: "stdio",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
-        );
+        )
+        .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
+        .SetProperty("command", JsonValue.Create(Startup.Server.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
+        .SetProperty("args", new JsonArray {
+            $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
+            $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+            $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+        }, requiredForConfiguration: true)
+        .SetPropertyToRemove("url");
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new JsonAiAgentConfig(
             name: AgentName,
@@ -62,10 +75,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 "Claude",
                 "claude_desktop_config.json"
             ),
-            transportMethod: TransportMethod.streamableHttp,
-            transportMethodValue: "http",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
-        );
+        )
+        .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
+        .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
+        .SetPropertyToRemove("command")
+        .SetPropertyToRemove("args");
 
         protected override AiAgentConfig CreateConfigHttpMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
@@ -76,10 +91,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 "Claude",
                 "claude_desktop_config.json"
             ),
-            transportMethod: TransportMethod.streamableHttp,
-            transportMethodValue: "http",
             bodyPath: Consts.MCP.Server.DefaultBodyPath
-        );
+        )
+        .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
+        .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
+        .SetPropertyToRemove("command")
+        .SetPropertyToRemove("args");
 
         protected override void OnUICreated(VisualElement root)
         {
@@ -101,28 +118,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             var troubleshootingContainerStdio = TemplateFoldout("Troubleshooting");
 
-            troubleshootingContainerStdio.Add(TemplateLabelDescription("Claude Desktop has problems with runtime updates of MCP tools. It may not recognize them. That is why need to let Claude Desktop read MCP tools at the start of Claude Desktop app."));
-            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Start Unity first and the connection status should be 'Connecting...'"));
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Claude Desktop may launch two MCP server instances instead of one. If you must use Claude Desktop, manually terminate one of the instances. This behavior is unreliable — consider switching to Claude Code."));
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Claude Desktop may not detect runtime updates to MCP tools. Ensure Claude Desktop reads the MCP tools on startup."));
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Start Unity first; the connection status should read 'Connecting...'"));
 
             ContainerStdio!.Add(troubleshootingContainerStdio);
 
             // HTTP Configuration
 
-            var manualStepsContainerHttp = TemplateFoldoutFirst("Manual Configuration Steps");
-
-            manualStepsContainerHttp!.Add(TemplateLabelDescription("1. Open the file 'claude_desktop_config.json'."));
-            manualStepsContainerHttp!.Add(TemplateLabelDescription("2. Copy and paste the configuration json into the file."));
-            manualStepsContainerHttp!.Add(TemplateTextFieldReadOnly(ConfigHttp.ExpectedFileContent));
-            manualStepsContainerHttp!.Add(TemplateLabelDescription("3. Restart Claude Desktop. You may need to click 'Quit' in apps tray, because simple window close is not enough."));
-
-            ContainerHttp!.Add(manualStepsContainerHttp);
-
-            var troubleshootingContainerHttp = TemplateFoldout("Troubleshooting");
-
-            troubleshootingContainerHttp.Add(TemplateLabelDescription("Claude Desktop has problems with runtime updates of MCP tools. It may not recognize them. That is why need to let Claude Desktop read MCP tools at the start of Claude Desktop app."));
-            troubleshootingContainerHttp.Add(TemplateLabelDescription("- Start Unity first and the connection status should be 'Connecting...'"));
-
-            ContainerHttp!.Add(troubleshootingContainerHttp);
+            ContainerHttp!.Clear();
+            ContainerHttp!.Add(TemplateAlertLabel("CRITICAL: Claude Desktop does not support HTTP transport, only STDIO."));
         }
     }
 }

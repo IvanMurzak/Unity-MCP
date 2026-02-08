@@ -12,6 +12,7 @@
 using System.Collections;
 using System.IO;
 using System.Text.Json.Nodes;
+using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.UI;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using NUnit.Framework;
@@ -21,6 +22,7 @@ using UnityEngine.TestTools;
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
     using Consts = McpPlugin.Common.Consts;
+    using TransportMethod = Consts.MCP.Server.TransportMethod;
 
     public class MainWindowEditorClientConfigureTests : BaseTest
     {
@@ -48,17 +50,34 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             yield return base.TearDown();
         }
 
+        private JsonAiAgentConfig CreateStdioConfig(string configPath, string bodyPath = "mcpServers")
+        {
+            return new JsonAiAgentConfig(
+                name: "Test",
+                configPath: configPath,
+                bodyPath: bodyPath)
+            .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
+            .SetProperty("command", JsonValue.Create(Startup.Server.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true)
+            .SetProperty("args", new JsonArray {
+                $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
+                $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+                $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+            }, requiredForConfiguration: true)
+            .SetPropertyToRemove("url");
+        }
+
         [UnityTest]
         public IEnumerator ConfigureMcpClient_SimpleBodyPath_CreatesCorrectStructure()
         {
             // Arrange
             var bodyPath = "mcpServers";
+            var config = CreateStdioConfig(tempConfigPath, bodyPath);
 
             // Act
-            var result = JsonAiAgentConfig.ConfigureJsonMcpClient(tempConfigPath, bodyPath, Consts.MCP.Server.TransportMethod.stdio);
+            var result = config.Configure();
 
             // Assert
-            Assert.IsTrue(result, "ConfigureMcpClient should return true");
+            Assert.IsTrue(result, "Configure should return true");
             Assert.IsTrue(File.Exists(tempConfigPath), "Config file should be created");
 
             var json = File.ReadAllText(tempConfigPath);
@@ -79,12 +98,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = $"projects{Consts.MCP.Server.BodyPathDelimiter}myProject{Consts.MCP.Server.BodyPathDelimiter}mcpServers";
+            var config = CreateStdioConfig(tempConfigPath, bodyPath);
 
             // Act
-            var result = JsonAiAgentConfig.ConfigureJsonMcpClient(tempConfigPath, bodyPath, Consts.MCP.Server.TransportMethod.stdio);
+            var result = config.Configure();
 
             // Assert
-            Assert.IsTrue(result, "ConfigureMcpClient should return true");
+            Assert.IsTrue(result, "Configure should return true");
             Assert.IsTrue(File.Exists(tempConfigPath), "Config file should be created");
 
             var json = File.ReadAllText(tempConfigPath);
@@ -123,12 +143,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }
             }";
             File.WriteAllText(tempConfigPath, existingJson);
+            var config = CreateStdioConfig(tempConfigPath, bodyPath);
 
             // Act
-            var result = JsonAiAgentConfig.ConfigureJsonMcpClient(tempConfigPath, bodyPath, Consts.MCP.Server.TransportMethod.stdio);
+            var result = config.Configure();
 
             // Assert
-            Assert.IsTrue(result, "ConfigureMcpClient should return true");
+            Assert.IsTrue(result, "Configure should return true");
 
             var json = File.ReadAllText(tempConfigPath);
             var rootObj = JsonNode.Parse(json)?.AsObject();
@@ -170,12 +191,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }
             }";
             File.WriteAllText(tempConfigPath, existingJson);
+            var config = CreateStdioConfig(tempConfigPath, bodyPath);
 
             // Act
-            var result = JsonAiAgentConfig.ConfigureJsonMcpClient(tempConfigPath, bodyPath, Consts.MCP.Server.TransportMethod.stdio);
+            var result = config.Configure();
 
             // Assert
-            Assert.IsTrue(result, "ConfigureMcpClient should return true");
+            Assert.IsTrue(result, "Configure should return true");
 
             var json = File.ReadAllText(tempConfigPath);
             var rootObj = JsonNode.Parse(json)?.AsObject();
@@ -219,12 +241,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }}
             }}";
             File.WriteAllText(tempConfigPath, existingJson);
+            var config = CreateStdioConfig(tempConfigPath, bodyPath);
 
             // Act
-            var result = JsonAiAgentConfig.ConfigureJsonMcpClient(tempConfigPath, bodyPath, Consts.MCP.Server.TransportMethod.stdio);
+            var result = config.Configure();
 
             // Assert
-            Assert.IsTrue(result, "ConfigureMcpClient should return true");
+            Assert.IsTrue(result, "Configure should return true");
 
             var json = File.ReadAllText(tempConfigPath);
             var rootObj = JsonNode.Parse(json)?.AsObject();
@@ -235,25 +258,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNotNull(mcpServers, "mcpServers should exist");
             Assert.IsNotNull(mcpServers!["otherServer"], "Other server should be preserved");
 
-            // Check that the duplicate was replaced with new configuration
-            var hasUnityMcpServer = false;
-            foreach (var kv in mcpServers)
-            {
-                var command = kv.Value?["command"]?.GetValue<string>();
-                if (command == duplicateCommand)
-                {
-                    hasUnityMcpServer = true;
-                    var args = kv.Value?["args"]?.AsArray();
-                    Assert.IsNotNull(args, "Args should exist for Unity-MCP server");
+            // Check that our server entry exists with the correct configuration
+            var serverEntry = mcpServers[AiAgentConfig.DefaultMcpServerName]?.AsObject();
+            Assert.IsNotNull(serverEntry, "Server entry should exist under DefaultMcpServerName");
 
-                    var portArg = args!.ToString();
-                    Assert.IsTrue(portArg.Contains($"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}"),
-                        $"Should contain current port, but got: {portArg}");
-                    break;
-                }
-            }
+            var command = serverEntry!["command"]?.GetValue<string>();
+            Assert.AreEqual(duplicateCommand, command, "Command should match");
 
-            Assert.IsTrue(hasUnityMcpServer, "Should have Unity-MCP server with correct command");
+            var args = serverEntry["args"]?.AsArray();
+            Assert.IsNotNull(args, "Args should exist for server");
+
+            var argsStr = args!.ToString();
+            Assert.IsTrue(argsStr.Contains($"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}"),
+                $"Should contain current port, but got: {argsStr}");
 
             yield return null;
         }
@@ -264,15 +281,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var bodyPath = "mcpServers";
             File.WriteAllText(tempConfigPath, "{}");
+            var config = CreateStdioConfig(tempConfigPath, bodyPath);
 
             // Act
-            var result = JsonAiAgentConfig.ConfigureJsonMcpClient(
-                configPath: tempConfigPath,
-                bodyPath: bodyPath,
-                transportMethod: Consts.MCP.Server.TransportMethod.stdio);
+            var result = config.Configure();
 
             // Assert
-            Assert.IsTrue(result, "ConfigureMcpClient should return true");
+            Assert.IsTrue(result, "Configure should return true");
 
             var json = File.ReadAllText(tempConfigPath);
             var rootObj = JsonNode.Parse(json)?.AsObject();
@@ -293,12 +308,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var bodyPath = "mcpServers";
             File.WriteAllText(tempConfigPath, "{ invalid json }");
+            var config = CreateStdioConfig(tempConfigPath, bodyPath);
 
             // Act
-            var result = JsonAiAgentConfig.ConfigureJsonMcpClient(tempConfigPath, bodyPath, Consts.MCP.Server.TransportMethod.stdio);
+            var result = config.Configure();
 
             // Assert
-            Assert.IsTrue(result, "ConfigureMcpClient should return true");
+            Assert.IsTrue(result, "Configure should return true");
 
             var json = File.ReadAllText(tempConfigPath);
             var rootObj = JsonNode.Parse(json)?.AsObject();
@@ -314,10 +330,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = "mcpServers";
-            JsonAiAgentConfig.ConfigureJsonMcpClient(tempConfigPath, bodyPath, Consts.MCP.Server.TransportMethod.stdio);
+            var config = CreateStdioConfig(tempConfigPath, bodyPath);
+            config.Configure();
 
             // Act
-            var isConfigured = JsonAiAgentConfig.IsMcpClientConfigured(tempConfigPath, bodyPath, Consts.MCP.Server.TransportMethod.stdio);
+            var isConfigured = config.IsConfigured();
 
             // Assert
             Assert.IsTrue(isConfigured, "Should detect that client is configured");
@@ -330,18 +347,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = $"projects{Consts.MCP.Server.BodyPathDelimiter}myProject{Consts.MCP.Server.BodyPathDelimiter}mcpServers";
-            JsonAiAgentConfig.ConfigureJsonMcpClient(
-                configPath: tempConfigPath,
-                bodyPath: bodyPath,
-                transportMethod: Consts.MCP.Server.TransportMethod.stdio);
-            //typeValue: "stdio");
+            var config = CreateStdioConfig(tempConfigPath, bodyPath);
+            config.Configure();
 
             // Act
-            var isConfigured = JsonAiAgentConfig.IsMcpClientConfigured(
-                configPath: tempConfigPath,
-                bodyPath: bodyPath,
-                transportMethod: Consts.MCP.Server.TransportMethod.stdio);
-            //typeValue: "stdio");
+            var isConfigured = config.IsConfigured();
 
             // Assert
             Assert.IsTrue(isConfigured, "Should detect that client is configured");
@@ -352,12 +362,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator IsMcpClientConfigured_NonExistentPath_ReturnsFalse()
         {
-            // Arrange
-            var bodyPath = $"nonExistent{Consts.MCP.Server.BodyPathDelimiter}path{Consts.MCP.Server.BodyPathDelimiter}mcpServers";
-            JsonAiAgentConfig.ConfigureJsonMcpClient(tempConfigPath, "mcpServers", Consts.MCP.Server.TransportMethod.stdio);
+            // Arrange - configure at "mcpServers" but check at a different path
+            var configBodyPath = "mcpServers";
+            var checkBodyPath = $"nonExistent{Consts.MCP.Server.BodyPathDelimiter}path{Consts.MCP.Server.BodyPathDelimiter}mcpServers";
+
+            var configInstance = CreateStdioConfig(tempConfigPath, configBodyPath);
+            configInstance.Configure();
+
+            var checkInstance = CreateStdioConfig(tempConfigPath, checkBodyPath);
 
             // Act
-            var isConfigured = JsonAiAgentConfig.IsMcpClientConfigured(tempConfigPath, bodyPath, Consts.MCP.Server.TransportMethod.stdio);
+            var isConfigured = checkInstance.IsConfigured();
 
             // Assert
             Assert.IsFalse(isConfigured, "Should return false for non-existent path");
@@ -370,12 +385,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = $"level1{Consts.MCP.Server.BodyPathDelimiter}level2{Consts.MCP.Server.BodyPathDelimiter}level3{Consts.MCP.Server.BodyPathDelimiter}mcpServers";
+            var config = CreateStdioConfig(tempConfigPath, bodyPath);
 
             // Act
-            var result = JsonAiAgentConfig.ConfigureJsonMcpClient(tempConfigPath, bodyPath, Consts.MCP.Server.TransportMethod.stdio);
+            var result = config.Configure();
 
             // Assert
-            Assert.IsTrue(result, "ConfigureMcpClient should return true");
+            Assert.IsTrue(result, "Configure should return true");
 
             var json = File.ReadAllText(tempConfigPath);
             var rootObj = JsonNode.Parse(json)?.AsObject();
