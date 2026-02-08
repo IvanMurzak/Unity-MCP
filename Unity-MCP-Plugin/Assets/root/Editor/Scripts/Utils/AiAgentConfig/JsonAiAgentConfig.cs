@@ -288,13 +288,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             if (serverEntry == null || _propertiesToRemove.Count == 0)
                 return false;
 
-            foreach (var key in _propertiesToRemove)
-            {
-                if (serverEntry[key] != null)
-                    return true;
-            }
-
-            return false;
+            return _propertiesToRemove.Any(key => serverEntry[key] != null);
         }
 
         private static JsonObject? NavigateToJsonPath(JsonObject rootObj, string[] pathSegments)
