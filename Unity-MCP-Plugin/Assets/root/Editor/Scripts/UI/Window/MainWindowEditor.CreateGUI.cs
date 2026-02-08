@@ -209,6 +209,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     UpdateHostFieldState(inputFieldHost, plugin.KeepConnected.CurrentValue, state);
                     statusText.text = "Unity: " + GetConnectionStatusText(state, keepConnected);
                     btnConnect.text = GetButtonText(state, keepConnected);
+                    var isConnect = btnConnect.text == ServerButtonText_Connect;
+                    btnConnect.EnableInClassList("btn-primary", isConnect);
+                    btnConnect.EnableInClassList("btn-secondary", !isConnect);
                     SetStatusIndicator(statusCircle, GetConnectionStatusClass(state, keepConnected));
 
                     if (!(state == HubConnectionState.Connected && keepConnected))
@@ -351,6 +354,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 Logger.LogTrace("Setting MCP server data: {status}, Data: {data}", status, data?.ToPrettyJson() ?? "null");
 
             btnStartStop.text = GetServerButtonText(status);
+            var isStart = status == McpServerStatus.Stopped;
+            btnStartStop.EnableInClassList("btn-primary", isStart);
+            btnStartStop.EnableInClassList("btn-secondary", !isStart);
             btnStartStop.SetEnabled(status == McpServerStatus.Running || status == McpServerStatus.Stopped);
             statusLabel.text = GetServerLabelText(status, data);
             SetStatusIndicator(statusCircle, GetServerStatusClass(status));

@@ -72,6 +72,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 : MainWindowEditor.USS_Disconnected);
 
             BtnConfigure.text = isConfiguredValue ? "Reconfigure" : "Configure";
+            BtnConfigure.EnableInClassList("btn-primary", !isConfiguredValue);
+            BtnConfigure.EnableInClassList("btn-secondary", isConfiguredValue);
         }
 
         public void Dispose()
