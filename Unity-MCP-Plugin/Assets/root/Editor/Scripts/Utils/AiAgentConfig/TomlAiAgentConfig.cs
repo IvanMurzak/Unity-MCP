@@ -570,16 +570,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 var props = ParseSectionProperties(lines, i + 1, sectionEnd);
 
                 // Check if any identity property matches
-                foreach (var identity in ourIdentityValues)
-                {
-                    if (props.TryGetValue(identity.Key, out var existingValue)
+                if (ourIdentityValues.Any(identity =>
+                        props.TryGetValue(identity.Key, out var existingValue)
                         && existingValue is string existingStr
-                        && AreStringValuesEquivalent(identity.Value.comparison, identity.Value.Item1, existingStr))
-                    {
-                        sectionsToRemove.Add((i, sectionEnd));
-                        break;
-                    }
-                }
+                        && AreStringValuesEquivalent(identity.Value.comparison, identity.Value.Item1, existingStr)))
+                    sectionsToRemove.Add((i, sectionEnd));
             }
 
             // Remove from bottom to top to preserve indices
