@@ -83,6 +83,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         {
             base.OnUICreated(root);
 
+            ContainerUnderHeader!.Add(TemplateWarningLabel("IMPORTANT: Consider to use Claude Code in a Terminal. Avoid using it as an extension to IDE (Visual Studio Code, etc). Claude Code as an extension is not stable with MCP server."));
+
             // STDIO Configuration
 
             var manualStepsContainer = TemplateFoldoutFirst("Manual Configuration Steps");
