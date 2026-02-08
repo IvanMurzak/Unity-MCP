@@ -276,11 +276,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private McpServerStatus CombineMcpServerStatus(McpServerStatus status, bool isConnected)
         {
-            if (isConnected)
-            {
-                if (status != McpServerStatus.Running)
-                    return McpServerStatus.External;
-            }
+            if (isConnected && status != McpServerStatus.Running)
+                return McpServerStatus.External;
+
             return status;
         }
 
