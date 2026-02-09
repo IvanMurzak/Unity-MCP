@@ -14,7 +14,7 @@ using R3;
 using UnityEditor;
 using UnityEngine;
 
-namespace com.IvanMurzak.Unity.MCP.Editor
+namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
     public partial class MainWindowEditor : McpWindowBase
     {
@@ -61,6 +61,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         private void OnDisable()
         {
             _disposables.Clear();
+        }
+
+        private static void UnityBuildAndConnect()
+        {
+            UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
+            UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
+            UnityMcpPlugin.ConnectIfNeeded();
         }
     }
 }

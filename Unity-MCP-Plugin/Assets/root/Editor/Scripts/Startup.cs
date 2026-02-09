@@ -35,7 +35,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             if (!EnvironmentUtils.IsCi())
                 EditorApplication.delayCall += () => UnityMcpPlugin.ConnectIfNeeded();
 
-            Server.DownloadServerBinaryIfNeeded();
+            McpServerManager.DownloadServerBinaryIfNeeded();
+
+            // Defer MCP server auto-start to avoid blocking during domain reload
+            // and to ensure configuration is fully loaded
+            if (!EnvironmentUtils.IsCi())
+                EditorApplication.delayCall += () => McpServerManager.StartServerIfNeeded();
 
             if (Application.dataPath.Contains(" "))
                 Debug.LogError("The project path contains spaces, which may cause issues during usage of AI Game Developer. Please consider the move the project to a folder without spaces.");

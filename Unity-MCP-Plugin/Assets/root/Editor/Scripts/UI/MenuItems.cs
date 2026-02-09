@@ -16,7 +16,7 @@ using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEditor;
 using UnityEngine;
 
-namespace com.IvanMurzak.Unity.MCP.Editor
+namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
     public static class MenuItems
     {
@@ -27,16 +27,41 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public static void CheckForUpdates() => _ = UpdateChecker.CheckForUpdatesAsync(forceCheck: true);
 
         [MenuItem("Tools/AI Game Developer/Download Server Binaries", priority = 1000)]
-        public static Task DownloadServer() => Startup.Server.DownloadAndUnpackBinary();
+        public static Task DownloadServer() => McpServerManager.DownloadAndUnpackBinary();
 
         [MenuItem("Tools/AI Game Developer/Delete Server Binaries", priority = 1001)]
-        public static void DeleteServer() => Startup.Server.DeleteBinaryFolderIfExists();
+        public static void DeleteServer()
+        {
+            var result = McpServerManager.DeleteBinaryFolderIfExists();
+            if (result)
+            {
+                NotificationPopupWindow.Show(
+                    windowTitle: "Success",
+                    title: "MCP Server Binaries Deleted",
+                    message: "The MCP server binaries were successfully deleted. You can download them again from the Tools menu.",
+                    width: 350,
+                    minWidth: 350,
+                    height: 200,
+                    minHeight: 200);
+            }
+            else
+            {
+                NotificationPopupWindow.Show(
+                    windowTitle: "Error",
+                    title: "MCP Server Binaries Not Found",
+                    message: "No MCP server binaries were found to delete. They may have already been deleted or were never downloaded.",
+                    width: 350,
+                    minWidth: 350,
+                    height: 200,
+                    minHeight: 200);
+            }
+        }
 
         [MenuItem("Tools/AI Game Developer/Open Server Logs", priority = 1002)]
-        public static void OpenServerLogs() => OpenFile(Startup.Server.ExecutableFolderPath + "/logs/server-log.txt");
+        public static void OpenServerLogs() => OpenFile(McpServerManager.ExecutableFolderPath + "/logs/server-log.txt");
 
         [MenuItem("Tools/AI Game Developer/Open Server Log errors", priority = 1003)]
-        public static void OpenServerLogErrors() => OpenFile(Startup.Server.ExecutableFolderPath + "/logs/server-log-error.txt");
+        public static void OpenServerLogErrors() => OpenFile(McpServerManager.ExecutableFolderPath + "/logs/server-log-error.txt");
 
         [MenuItem("Tools/AI Game Developer/Debug/Show Update Popup", priority = 2000)]
         public static void ShowUpdatePopup() => UpdatePopupWindow.ShowWindow(UnityMcpPlugin.Version, "99.99.99");

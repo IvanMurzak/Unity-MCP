@@ -18,7 +18,7 @@ using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace com.IvanMurzak.Unity.MCP.Editor
+namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
     /// <summary>
     /// Base class for MCP Editor windows providing common UXML/USS loading functionality.
@@ -36,11 +36,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             Logger = UnityLoggerFactory.LoggerFactory.CreateLogger(GetType().Name);
         }
 
-        protected void SetupWindowWithIcon()
+        protected void SetupWindowWithIcon(string? customTitle = null)
         {
             var icon = EditorAssetLoader.LoadAssetAtPath<Texture>(EditorAssetLoader.PackageLogoIcon);
             if (icon != null)
-                titleContent = new GUIContent(WindowTitle, icon);
+                titleContent = new GUIContent(customTitle ?? WindowTitle, icon);
         }
 
         public virtual void CreateGUI()

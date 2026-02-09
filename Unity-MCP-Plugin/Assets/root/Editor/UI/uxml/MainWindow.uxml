@@ -1,6 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
     <ui:ScrollView>
         <ui:VisualElement class="container" style="min-width: 320px;">
+            <!-- Header Section -->
             <ui:Box name="contHeader" style="background-color: rgba(222, 222, 222, 0); flex-direction: row; flex-shrink: 0;">
                 <ui:VisualElement style="flex-grow: 1; background-color: rgba(0, 0, 0, 0);">
                     <ui:EnumField label="Log Level" name="dropdownLogLevel" type="com.IvanMurzak.Unity.MCP.Runtime.Utils.LogLevel, com.IvanMurzak.Unity.MCP.Runtime" value="Warning" class="content-item" style="align-self: flex-start;" />
@@ -12,21 +13,61 @@
                 </ui:VisualElement>
             </ui:Box>
             <ui:VisualElement class="divider" />
-            <ui:Label text="AI agent" class="header" />
-            <ui:DropdownField name="aiAgentDropdown" label="Choose" class="content-item" />
-            <ui:VisualElement name="ConfigureAgentsContainer" />
-            <ui:VisualElement class="divider" />
-            <ui:Label text="Connect" class="header" />
+            <!-- Connection Section ============================== -->
+            <ui:Label text="Connection" class="header" />
             <ui:TextField picking-mode="Ignore" label="Server URL" value="http://localhost:8080" name="InputServerURL" tooltip="Connection URL to an MCP server. Default value: http://localhost:8080" class="content-item" />
             <ui:Foldout text="Information" value="false" class="base-foldout">
                 <ui:Label text="Usually the server is hosted locally at:&#10;http://localhost:8080&#10;&#10;But feel free to connect to remote MCP server if needed. The connection under the hood is established using SignalR and supports wide range of features." class="section-desc" />
             </ui:Foldout>
-            <ui:VisualElement name="ServerConnectionInfo" class="row">
-                <ui:VisualElement name="connectionStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
-                <ui:Label text="Disconnected" name="connectionStatusText" style="flex-grow: 1;" />
-                <ui:Button name="btnConnectOrDisconnect" text="Connect" class="btn-primary" />
+            <!-- Connection Timeline -->
+            <ui:VisualElement name="ConnectionTimeline" class="connection-timeline">
+                <!-- Point 1: Unity -->
+                <ui:VisualElement name="TimelinePointUnity" class="timeline-point">
+                    <ui:VisualElement class="timeline-indicator">
+                        <ui:VisualElement name="connectionStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
+                        <ui:VisualElement class="timeline-line" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="timeline-content">
+                        <ui:Label text="Unity" name="connectionStatusText" class="timeline-label" />
+                        <ui:Button name="btnConnectOrDisconnect" text="Connect" class="btn-primary timeline-btn" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <!-- Point 2: MCP Server -->
+                <ui:VisualElement name="TimelinePointMcpServer" class="timeline-point">
+                    <ui:VisualElement class="timeline-indicator">
+                        <ui:VisualElement name="mcpServerStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
+                        <ui:VisualElement class="timeline-line" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="timeline-content">
+                        <ui:Label text="MCP server" name="mcpServerLabel" class="timeline-label" />
+                        <ui:Button name="btnStartStopServer" text="Start" class="btn-secondary timeline-btn" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <!-- Point 3: AI Agent -->
+                <ui:VisualElement name="TimelinePointAiAgent" class="timeline-point timeline-point-last">
+                    <ui:VisualElement class="timeline-indicator">
+                        <ui:VisualElement name="aiAgentStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
+                    </ui:VisualElement>
+                    <ui:VisualElement class="timeline-content">
+                        <ui:Label text="AI agent" name="aiAgentLabel" class="timeline-label" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement class="divider" />
+            <!-- AI Agent Section ============================== -->
+            <ui:VisualElement class="row" style="margin-top: 0;">
+                <ui:Label text="AI agent" class="header" />
+                <!-- Transport mode toggle -->
+                <ui:VisualElement style="flex-direction: row; margin-top: 4px;">
+                    <ui:Toggle name="toggleOptionHttp" label="http" class="toggle-text-button" tooltip="Configure AI agent to communicate over HTTP (RECOMMENDED)" />
+                    <ui:Toggle name="toggleOptionStdio" label="stdio" class="toggle-text-button" tooltip="Configure AI agent to communicate over STDIO (NOT RECOMMENDED)" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:DropdownField name="aiAgentDropdown" label="Choose" class="content-item" />
+            <ui:VisualElement name="ConfigureAgentsContainer" />
+            <ui:VisualElement class="divider" />
+            <!-- MCP features section ============================== -->
+            <!-- Tools Configuration Section -->
             <ui:VisualElement name="ToolsConfigurationSection">
                 <ui:VisualElement class="row-top">
                     <ui:Label name="toolsCountLabel" text="0 / 0 tools" class="header" />
@@ -37,6 +78,7 @@
                 </ui:Foldout>
             </ui:VisualElement>
             <ui:VisualElement class="divider" />
+            <!-- Prompts Configuration Section -->
             <ui:VisualElement name="PromptsConfigurationSection">
                 <ui:VisualElement class="row-top">
                     <ui:Label name="promptsCountLabel" text="0 / 0 prompts" class="header" />
@@ -47,6 +89,7 @@
                 </ui:Foldout>
             </ui:VisualElement>
             <ui:VisualElement class="divider" />
+            <!-- Resources Configuration Section -->
             <ui:VisualElement name="ResourcesConfigurationSection">
                 <ui:VisualElement class="row-top">
                     <ui:Label name="resourcesCountLabel" text="0 / 0 resources" class="header" />
@@ -57,6 +100,7 @@
                 </ui:Foldout>
             </ui:VisualElement>
             <ui:VisualElement class="divider" />
+            <!-- Support Section ============================== -->
             <ui:VisualElement>
                 <ui:VisualElement>
                     <ui:Label text="Found an issue?" class="section-text" style="flex-grow: 1;" />
@@ -74,6 +118,7 @@
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement class="divider" />
+            <!-- Thanks Section ============================== -->
             <ui:VisualElement>
                 <ui:Label text="Thanks for using &lt;b&gt;&lt;color=red&gt;AI&lt;/color&gt; Game Developer&lt;/b&gt;. If you like it, please give the project a star on GitHub.&#10;&#10;Sincerely,&#10;Ivan Murzak" class="section-text" />
                 <ui:Button name="btnGitHubStar" class="btn-secondary btn-with-icon btn-golden btn-floating">

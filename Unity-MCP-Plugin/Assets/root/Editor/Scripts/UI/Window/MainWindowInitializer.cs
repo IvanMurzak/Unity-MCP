@@ -12,7 +12,7 @@
 using Extensions.Unity.PlayerPrefsEx;
 using UnityEditor;
 
-namespace com.IvanMurzak.Unity.MCP.Editor
+namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
     [InitializeOnLoad]
     static class MainWindowInitializer

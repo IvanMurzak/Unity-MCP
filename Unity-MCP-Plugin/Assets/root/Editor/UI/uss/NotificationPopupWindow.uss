@@ -1,0 +1,8 @@
+/* ==========================================================================
+   Notification Popup Window Styles
+   Imports common styles and adds popup-specific customizations
+   ========================================================================== */
+
+@import url("common/_base.uss");
+@import url("common/_typography.uss");
+@import url("common/_buttons.uss");

@@ -13,13 +13,13 @@ using Extensions.Unity.PlayerPrefsEx;
 using UnityEngine;
 using UnityEngine.UIElements;
 
-namespace com.IvanMurzak.Unity.MCP.Editor
+namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
     public partial class MainWindowEditor
     {
-        // PlayerPrefs key for storing selected AI agent
-        private const string PlayerPrefsKey_SelectedAiAgent = "Unity_MCP_SelectedAiAgent";
-        private static PlayerPrefsString _selectedAiAgentPref = new(PlayerPrefsKey_SelectedAiAgent);
+        private static PlayerPrefsString selectedAiAgentId = new("Unity_MCP_SelectedAiAgent");
+
+        private AiAgentConfigurator? currentAiAgentConfigurator;
 
         void ConfigureAgents(VisualElement root)
         {
@@ -44,7 +44,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             dropdown.choices = agentNames;
 
             // Load saved selection from PlayerPrefs
-            var savedAiAgentId = _selectedAiAgentPref.Value;
+            var savedAiAgentId = selectedAiAgentId.Value;
             var selectedIndex = 0;
 
             if (!string.IsNullOrEmpty(savedAiAgentId))
@@ -70,7 +70,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
                 // Save selection to PlayerPrefs
                 var configurator = AiAgentConfiguratorRegistry.All[newIndex];
-                _selectedAiAgentPref.Value = configurator.AgentId;
+                selectedAiAgentId.Value = configurator.AgentId;
 
                 // Load UI for the newly selected agent
                 LoadAgentUI(container, newIndex);
@@ -86,6 +86,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 return;
 
             var configurator = AiAgentConfiguratorRegistry.All[selectedIndex];
+            currentAiAgentConfigurator = configurator;
 
             // Load agent-specific configuration UI from the configurator
             // The configurator now contains its own AiAgentConfig via the AiAgentConfig property

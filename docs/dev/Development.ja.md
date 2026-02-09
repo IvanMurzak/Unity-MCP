@@ -167,7 +167,7 @@ Editorコンポーネントは、Unity Editorの統合を提供し、MCP機能(T
    - Editorライフサイクルイベント(アセンブリリロード、Playモード遷移)全体での接続の永続化を管理
    - ドメインリロードまたはPlayモード終了後の自動再接続
 
-2. **MCPサーバーバイナリ管理** ([Startup.Server.cs](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Startup.Server.cs))
+2. **MCPサーバーバイナリ管理** ([McpServerManager.cs](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/McpServerManager.cs))
    - GitHubリリースから`Unity-MCP-Server`実行可能ファイルをダウンロード・管理
    - クロスプラットフォームバイナリ選択(Windows/macOS/Linux、x86/x64/ARM/ARM64)
    - サーバーとプラグイン間のバージョン互換性の強制
