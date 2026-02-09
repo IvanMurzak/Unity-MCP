@@ -391,6 +391,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     }
 
                     NotificationPopupWindow.Show(
+                        windowTitle: success
+                            ? "Updated"
+                            : "Update Failed",
                         height: 235,
                         minHeight: 235,
                         title: success

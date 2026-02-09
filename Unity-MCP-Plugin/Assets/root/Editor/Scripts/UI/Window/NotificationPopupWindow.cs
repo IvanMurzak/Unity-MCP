@@ -21,6 +21,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
     /// <summary>
     /// A non-blocking popup window for displaying notification messages.
     /// Uses ShowUtility() so it floats above the editor without blocking interaction.
+    /// Serves as a base class for popup windows with customizable UXML/USS and UI binding.
     /// </summary>
     public class NotificationPopupWindow : McpWindowBase
     {
@@ -41,7 +42,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         string _title = "Notification";
         string _message = string.Empty;
 
+        protected static void CenterAndSizeWindow(EditorWindow window, float width, float height, float minWidth, float minHeight, float maxWidth, float maxHeight)
+        {
+            var mainWindowRect = EditorGUIUtility.GetMainWindowPosition();
+            var x = mainWindowRect.x + (mainWindowRect.width - width) / 2f;
+            var y = mainWindowRect.y + (mainWindowRect.height - height) / 2f;
+
+            window.minSize = new Vector2(minWidth, minHeight);
+            window.maxSize = new Vector2(maxWidth, maxHeight);
+            window.position = new Rect(x, y, width, height);
+        }
+
         public static void Show(
+            string windowTitle,
             string title,
             string message,
             float width = DefaultWidth,
@@ -51,19 +64,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             float maxWidth = DefaultMaxWidth,
             float maxHeight = DefaultMaxHeight)
         {
-            var window = GetWindow<NotificationPopupWindow>(utility: false, title: title, focus: true); // CreateInstance<NotificationPopupWindow>();
+            var window = GetWindow<NotificationPopupWindow>(utility: false, title: windowTitle, focus: true); // CreateInstance<NotificationPopupWindow>();
             window._title = title;
             window._message = message;
-            window.titleContent = new GUIContent(title);
+            window.titleContent = new GUIContent(windowTitle);
+            window.SetupWindowWithIcon(windowTitle);
 
-            // Center on main editor window
-            var mainWindowRect = EditorGUIUtility.GetMainWindowPosition();
-            var x = mainWindowRect.x + (mainWindowRect.width - width) / 2f;
-            var y = mainWindowRect.y + (mainWindowRect.height - height) / 2f;
-
-            window.minSize = new Vector2(minWidth, minHeight);
-            window.maxSize = new Vector2(maxWidth, maxHeight);
-            window.position = new Rect(x, y, width, height);
+            CenterAndSizeWindow(window, width, height, minWidth, minHeight, maxWidth, maxHeight);
 
             window.CreateGUI();
             window.ShowUtility();
@@ -82,7 +89,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             BindUI(rootVisualElement);
         }
 
-        void BindUI(VisualElement root)
+        protected virtual void BindUI(VisualElement root)
         {
             var titleLabel = root.Q<Label>("title");
             if (titleLabel != null)

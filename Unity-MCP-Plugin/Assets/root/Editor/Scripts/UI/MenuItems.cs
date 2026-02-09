@@ -36,6 +36,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             if (result)
             {
                 NotificationPopupWindow.Show(
+                    windowTitle: "Success",
                     title: "MCP Server Binaries Deleted",
                     message: "The MCP server binaries were successfully deleted. You can download them again from the Tools menu.",
                     width: 350,
@@ -46,6 +47,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             else
             {
                 NotificationPopupWindow.Show(
+                    windowTitle: "Error",
                     title: "MCP Server Binaries Not Found",
                     message: "No MCP server binaries were found to delete. They may have already been deleted or were never downloaded.",
                     width: 350,

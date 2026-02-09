@@ -23,7 +23,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
     /// <summary>
     /// A popup window that notifies the user when a new version of AI Game Developer is available.
     /// </summary>
-    public class UpdatePopupWindow : McpWindowBase
+    public class UpdatePopupWindow : NotificationPopupWindow
     {
         private static readonly string[] _windowUxmlPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/UpdatePopupWindow.uxml");
         private static readonly string[] _windowUssPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uss/UpdatePopupWindow.uss");
@@ -48,17 +48,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             window.currentVersion = currentVersion ?? "Unknown";
             window.latestVersion = latestVersion ?? "Unknown";
 
-            // Set window size and position (center on screen)
-            var windowWidth = 350;
-            var windowHeight = 450;
-
-            var mainWindowRect = EditorGUIUtility.GetMainWindowPosition();
-            var x = mainWindowRect.x + (mainWindowRect.width - windowWidth) / 2f;
-            var y = mainWindowRect.y + (mainWindowRect.height - windowHeight) / 2f;
-
-            window.minSize = new Vector2(windowWidth, windowHeight);
-            window.maxSize = new Vector2(windowWidth, windowHeight);
-            window.position = new Rect(x, y, windowWidth, windowHeight);
+            CenterAndSizeWindow(window, 350, 450, 350, 450, 350, 450);
 
             window.CreateGUI();
             window.Show();
@@ -67,28 +57,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             return window;
         }
 
-        public override void CreateGUI()
-        {
-            rootVisualElement.Clear();
-
-            // Apply style-sheet first
-            ApplyStyleSheets(rootVisualElement);
-
-            // Try to load UXML template
-            var visualTree = EditorAssetLoader.LoadAssetAtPath<VisualTreeAsset>(WindowUxmlPaths);
-            if (visualTree == null)
-                throw new InvalidOperationException("UXML template not found in specified paths");
-
-            visualTree.CloneTree(rootVisualElement);
-            BindUI(rootVisualElement);
-        }
-
-        protected override void OnGUICreated(VisualElement root)
-        {
-            BindUI(root);
-        }
-
-        private void BindUI(VisualElement root)
+        protected override void BindUI(VisualElement root)
         {
             // Set icon
             var iconContainer = root.Q<VisualElement>("icon-container");
@@ -146,6 +115,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var installButton = rootVisualElement.Q<Button>("btn-install-update");
             if (installButton == null)
                 throw new InvalidOperationException("btn-install-update Button not found in UXML");
+
             installButton.SetEnabled(false);
             installButton.text = "Installing...";
         }

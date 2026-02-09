@@ -36,11 +36,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             Logger = UnityLoggerFactory.LoggerFactory.CreateLogger(GetType().Name);
         }
 
-        protected void SetupWindowWithIcon()
+        protected void SetupWindowWithIcon(string? customTitle = null)
         {
             var icon = EditorAssetLoader.LoadAssetAtPath<Texture>(EditorAssetLoader.PackageLogoIcon);
             if (icon != null)
-                titleContent = new GUIContent(WindowTitle, icon);
+                titleContent = new GUIContent(customTitle ?? WindowTitle, icon);
         }
 
         public virtual void CreateGUI()
