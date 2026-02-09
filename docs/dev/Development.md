@@ -167,7 +167,7 @@ The Editor component provides Unity Editor integration, implementing MCP capabil
    - Manages connection persistence across Editor lifecycle events (assembly reload, play mode transitions)
    - Automatic reconnection after domain reload or Play mode exit
 
-2. **MCP Server Binary Management** ([Startup.Server.cs](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Startup.Server.cs))
+2. **MCP Server Binary Management** ([McpServerManager.cs](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/McpServerManager.cs))
    - Downloads and manages `Unity-MCP-Server` executable from GitHub releases
    - Cross-platform binary selection (Windows/macOS/Linux, x86/x64/ARM/ARM64)
    - Version compatibility enforcement between server and plugin

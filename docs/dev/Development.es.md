@@ -167,7 +167,7 @@ El componente Editor proporciona integración con Unity Editor, implementando ca
    - Gestiona persistencia de conexión a través de eventos del ciclo de vida del Editor (recarga de ensamblados, transiciones de modo Play)
    - Reconexión automática después de recarga de dominio o salida del modo Play
 
-2. **Gestión de binarios del servidor MCP** ([Startup.Server.cs](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Startup.Server.cs))
+2. **Gestión de binarios del servidor MCP** ([McpServerManager.cs](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/McpServerManager.cs))
    - Descarga y gestiona el ejecutable `Unity-MCP-Server` desde releases de GitHub
    - Selección de binarios multiplataforma (Windows/macOS/Linux, x86/x64/ARM/ARM64)
    - Aplicación de compatibilidad de versiones entre servidor y plugin
