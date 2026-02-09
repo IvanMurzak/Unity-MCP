@@ -30,7 +30,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override string[] WindowUxmlPaths => _windowUxmlPaths;
         protected override string[] WindowUssPaths => _windowUssPaths;
-        protected override string WindowTitle => _title;
+        protected override string WindowTitle => internalTitle;
 
         public const float DefaultWidth = 350;
         public const float DefaultHeight = 200;
@@ -39,10 +39,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public const float DefaultMaxWidth = 350;
         public const float DefaultMaxHeight = 300;
 
-        string _title = "Notification";
-        string _message = string.Empty;
+        private string internalTitle = string.Empty;
+        private string internalMessage = string.Empty;
 
-        protected static void CenterAndSizeWindow(EditorWindow window, float width, float height, float minWidth, float minHeight, float maxWidth, float maxHeight)
+        protected static void CenterAndSizeWindow(
+            EditorWindow window,
+            float width,
+            float height,
+            float minWidth,
+            float minHeight,
+            float maxWidth,
+            float maxHeight)
         {
             var mainWindowRect = EditorGUIUtility.GetMainWindowPosition();
             var x = mainWindowRect.x + (mainWindowRect.width - width) / 2f;
@@ -65,8 +72,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             float maxHeight = DefaultMaxHeight)
         {
             var window = GetWindow<NotificationPopupWindow>(utility: false, title: windowTitle, focus: true); // CreateInstance<NotificationPopupWindow>();
-            window._title = title;
-            window._message = message;
+            window.internalTitle = title;
+            window.internalMessage = message;
             window.titleContent = new GUIContent(windowTitle);
             window.SetupWindowWithIcon(windowTitle);
 
@@ -93,11 +100,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         {
             var titleLabel = root.Q<Label>("title");
             if (titleLabel != null)
-                titleLabel.text = _title;
+                titleLabel.text = internalTitle;
 
             var messageLabel = root.Q<Label>("message");
             if (messageLabel != null)
-                messageLabel.text = _message;
+                messageLabel.text = internalMessage;
 
             var okButton = root.Q<Button>("btn-ok");
             if (okButton != null)
