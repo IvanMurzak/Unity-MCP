@@ -34,9 +34,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         public const float DefaultWidth = 350;
         public const float DefaultHeight = 200;
-        public const float DefaultMinWidth = 300;
+        public const float DefaultMinWidth = 350;
         public const float DefaultMinHeight = 100;
-        public const float DefaultMaxWidth = 300;
+        public const float DefaultMaxWidth = 350;
         public const float DefaultMaxHeight = 300;
 
         string _title = "Notification";

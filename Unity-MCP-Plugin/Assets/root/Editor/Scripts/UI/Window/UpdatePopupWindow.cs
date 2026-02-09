@@ -48,7 +48,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             window.currentVersion = currentVersion ?? "Unknown";
             window.latestVersion = latestVersion ?? "Unknown";
 
-            CenterAndSizeWindow(window, 350, 450, 350, 450, 350, 450);
+            CenterAndSizeWindow(
+                window: window,
+                width: 350f,
+                height: 450f,
+                minWidth: 350f,
+                minHeight: 450f,
+                maxWidth: 350f,
+                maxHeight: 450f);
 
             window.CreateGUI();
             window.Show();
