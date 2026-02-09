@@ -48,7 +48,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 name: "Test",
                 configPath: configPath,
                 bodyPath: bodyPath)
-            .SetProperty("command", Startup.Server.ExecutableFullPath.Replace('\\', '/'), requiredForConfiguration: true)
+            .SetProperty("command", McpServerManager.ExecutableFullPath.Replace('\\', '/'), requiredForConfiguration: true)
             .SetProperty("args", new[] {
                 $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
                 $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
@@ -334,7 +334,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public IEnumerator IsConfigured_MissingArgs_ReturnsFalse()
         {
             // Arrange
-            var executable = Startup.Server.ExecutableFullPath.Replace('\\', '/');
+            var executable = McpServerManager.ExecutableFullPath.Replace('\\', '/');
             var sectionName = $"mcp_servers.{AiAgentConfig.DefaultMcpServerName}";
             var missingArgsToml = $"[{sectionName}]\ncommand = \"{executable}\"\n";
             File.WriteAllText(tempConfigPath, missingArgsToml);
@@ -353,7 +353,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public IEnumerator IsConfigured_HasPropertyToRemove_ReturnsFalse()
         {
             // Arrange - stdio config has SetPropertyToRemove("url"), so if url exists it should fail
-            var executable = Startup.Server.ExecutableFullPath.Replace('\\', '/');
+            var executable = McpServerManager.ExecutableFullPath.Replace('\\', '/');
             var sectionName = $"mcp_servers.{AiAgentConfig.DefaultMcpServerName}";
             var argsStr = $"\"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}\",\"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}\",\"{Consts.MCP.Server.Args.ClientTransportMethod}=stdio\"";
             var tomlWithUrl = $"[{sectionName}]\ncommand = \"{executable}\"\nargs = [{argsStr}]\nurl = \"http://some-url\"\n";
@@ -401,7 +401,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 configPath: configPath,
                 bodyPath: bodyPath)
             .SetProperty("enabled", true, requiredForConfiguration: true) // Codex requires an "enabled" property
-            .SetProperty("command", Startup.Server.ExecutableFullPath.Replace('\\', '/'), requiredForConfiguration: true)
+            .SetProperty("command", McpServerManager.ExecutableFullPath.Replace('\\', '/'), requiredForConfiguration: true)
             .SetProperty("args", new[] {
                 $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
                 $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
@@ -933,7 +933,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public IEnumerator Configure_Stdio_RemovesDuplicateByCommand()
         {
             // Arrange - existing file with the same server under a custom name
-            var executable = Startup.Server.ExecutableFullPath.Replace('\\', '/');
+            var executable = McpServerManager.ExecutableFullPath.Replace('\\', '/');
             var existingToml = $"[mcp_servers.my-custom-name]\ncommand = \"{executable}\"\nargs = [\"--old-arg\"]\n";
             File.WriteAllText(tempConfigPath, existingToml);
             var config = CreateStdioConfig(tempConfigPath);

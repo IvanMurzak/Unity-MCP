@@ -51,7 +51,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             .SetProperty("type", JsonValue.Create("local"), requiredForConfiguration: true)
             .SetProperty("enabled", JsonValue.Create(true), requiredForConfiguration: true)
             .SetProperty("command", new JsonArray {
-                Startup.Server.ExecutableFullPath.Replace('\\', '/'),
+                McpServerManager.ExecutableFullPath.Replace('\\', '/'),
                 $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
                 $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
                 $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
@@ -321,7 +321,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = "mcpServers";
-            var duplicateCommand = Startup.Server.ExecutableFullPath.Replace('\\', '/');
+            var duplicateCommand = McpServerManager.ExecutableFullPath.Replace('\\', '/');
             var existingJson = $@"{{
                 ""mcpServers"": {{
                     ""Unity-MCP-Duplicate"": {{
@@ -515,7 +515,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = "mcpServers";
-            var executable = Startup.Server.ExecutableFullPath.Replace('\\', '/');
+            var executable = McpServerManager.ExecutableFullPath.Replace('\\', '/');
             var wrongTypeJson = $@"{{
                 ""mcpServers"": {{
                     ""{AiAgentConfig.DefaultMcpServerName}"": {{
@@ -646,7 +646,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             .SetProperty("type", JsonValue.Create("local"), requiredForConfiguration: true)
             .SetProperty("enabled", JsonValue.Create(true), requiredForConfiguration: true)
             .SetProperty("command", new JsonArray {
-                Startup.Server.ExecutableFullPath.Replace('\\', '/'),
+                McpServerManager.ExecutableFullPath.Replace('\\', '/'),
                 $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
                 $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
                 $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"

@@ -27,12 +27,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public static void CheckForUpdates() => _ = UpdateChecker.CheckForUpdatesAsync(forceCheck: true);
 
         [MenuItem("Tools/AI Game Developer/Download Server Binaries", priority = 1000)]
-        public static Task DownloadServer() => Startup.Server.DownloadAndUnpackBinary();
+        public static Task DownloadServer() => McpServerManager.DownloadAndUnpackBinary();
 
         [MenuItem("Tools/AI Game Developer/Delete Server Binaries", priority = 1001)]
         public static void DeleteServer()
         {
-            var result = Startup.Server.DeleteBinaryFolderIfExists();
+            var result = McpServerManager.DeleteBinaryFolderIfExists();
             if (result)
             {
                 NotificationPopupWindow.Show(
@@ -58,10 +58,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         }
 
         [MenuItem("Tools/AI Game Developer/Open Server Logs", priority = 1002)]
-        public static void OpenServerLogs() => OpenFile(Startup.Server.ExecutableFolderPath + "/logs/server-log.txt");
+        public static void OpenServerLogs() => OpenFile(McpServerManager.ExecutableFolderPath + "/logs/server-log.txt");
 
         [MenuItem("Tools/AI Game Developer/Open Server Log errors", priority = 1003)]
-        public static void OpenServerLogErrors() => OpenFile(Startup.Server.ExecutableFolderPath + "/logs/server-log-error.txt");
+        public static void OpenServerLogErrors() => OpenFile(McpServerManager.ExecutableFolderPath + "/logs/server-log-error.txt");
 
         [MenuItem("Tools/AI Game Developer/Debug/Show Update Popup", priority = 2000)]
         public static void ShowUpdatePopup() => UpdatePopupWindow.ShowWindow(UnityMcpPlugin.Version, "99.99.99");

@@ -157,7 +157,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 UnityMcpPlugin.TimeoutMs = newValue;
 
                 var rawJsonField = root.Q<TextField>("rawJsonConfigurationStdio");
-                rawJsonField.value = Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, "mcpServers", UnityMcpPlugin.TimeoutMs).ToString();
+                rawJsonField.value = McpServerManager.RawJsonConfigurationStdio(UnityMcpPlugin.Port, "mcpServers", UnityMcpPlugin.TimeoutMs).ToString();
 
                 SaveChanges($"[AI Game Developer] Timeout Changed: {newValue} ms");
                 UnityBuildAndConnect();

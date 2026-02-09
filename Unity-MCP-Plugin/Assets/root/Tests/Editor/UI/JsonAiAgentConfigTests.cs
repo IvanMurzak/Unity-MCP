@@ -50,7 +50,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 configPath: configPath,
                 bodyPath: bodyPath)
             .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
-            .SetProperty("command", JsonValue.Create(Startup.Server.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true)
+            .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true)
             .SetProperty("args", new JsonArray {
                 $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
                 $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
@@ -389,7 +389,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange - create config with both stdio and url properties (invalid state)
             var bodyPath = "mcpServers";
-            var executable = Startup.Server.ExecutableFullPath.Replace('\\', '/');
+            var executable = McpServerManager.ExecutableFullPath.Replace('\\', '/');
             var mixedJson = $@"{{
                 ""mcpServers"": {{
                     ""{AiAgentConfig.DefaultMcpServerName}"": {{
@@ -440,7 +440,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = "mcpServers";
-            var executable = Startup.Server.ExecutableFullPath.Replace('\\', '/');
+            var executable = McpServerManager.ExecutableFullPath.Replace('\\', '/');
             var wrongPortJson = $@"{{
                 ""mcpServers"": {{
                     ""{AiAgentConfig.DefaultMcpServerName}"": {{
@@ -793,7 +793,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange - another server entry has matching properties, but DefaultMcpServerName doesn't exist
             var bodyPath = "mcpServers";
-            var executable = Startup.Server.ExecutableFullPath.Replace('\\', '/');
+            var executable = McpServerManager.ExecutableFullPath.Replace('\\', '/');
             var json = $@"{{
                 ""mcpServers"": {{
                     ""otherServer"": {{
@@ -820,7 +820,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange - another server matches, but the DefaultMcpServerName entry has wrong values
             var bodyPath = "mcpServers";
-            var executable = Startup.Server.ExecutableFullPath.Replace('\\', '/');
+            var executable = McpServerManager.ExecutableFullPath.Replace('\\', '/');
             var json = $@"{{
                 ""mcpServers"": {{
                     ""otherServer"": {{
@@ -988,7 +988,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange - existing file with the same server under a custom name
             var bodyPath = "mcpServers";
-            var executable = Startup.Server.ExecutableFullPath.Replace('\\', '/');
+            var executable = McpServerManager.ExecutableFullPath.Replace('\\', '/');
             var existingJson = $@"{{
                 ""mcpServers"": {{
                     ""my-custom-name"": {{

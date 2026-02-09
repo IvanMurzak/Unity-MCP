@@ -37,7 +37,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetProperty("type", JsonValue.Create("local"), requiredForConfiguration: true)
         .SetProperty("enabled", JsonValue.Create(true), requiredForConfiguration: true)
         .SetProperty("command", new JsonArray {
-            Startup.Server.ExecutableFullPath.Replace('\\', '/'),
+            McpServerManager.ExecutableFullPath.Replace('\\', '/'),
             $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
             $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
             $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
@@ -53,7 +53,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetProperty("type", JsonValue.Create("local"), requiredForConfiguration: true)
         .SetProperty("enabled", JsonValue.Create(true), requiredForConfiguration: true)
         .SetProperty("command", new JsonArray {
-            Startup.Server.ExecutableFullPath.Replace('\\', '/'),
+            McpServerManager.ExecutableFullPath.Replace('\\', '/'),
             $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
             $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
             $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"

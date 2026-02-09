@@ -60,7 +60,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             // STDIO Configuration
 
             ContainerStdio!.Add(TemplateLabelDescription("Copy paste the json into your MCP Client to configure it."));
-            ContainerStdio!.Add(TemplateTextFieldReadOnly(Startup.Server.RawJsonConfigurationStdio(
+            ContainerStdio!.Add(TemplateTextFieldReadOnly(McpServerManager.RawJsonConfigurationStdio(
                 port: UnityMcpPlugin.Port,
                 bodyPath: "mcpServers",
                 timeoutMs: UnityMcpPlugin.TimeoutMs,
@@ -69,12 +69,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             // HTTP Configuration
 
             ContainerHttp!.Add(TemplateLabelDescription("Copy paste the json into your MCP Client to configure it."));
-            ContainerHttp!.Add(TemplateTextFieldReadOnly(Startup.Server.RawJsonConfigurationHttp(
+            ContainerHttp!.Add(TemplateTextFieldReadOnly(McpServerManager.RawJsonConfigurationHttp(
                 url: UnityMcpPlugin.Host,
                 bodyPath: "mcpServers",
                 type: null).ToString()));
             ContainerHttp!.Add(TemplateLabelDescription("Start the MCP server using Docker."));
-            ContainerHttp!.Add(TemplateTextFieldReadOnly(Startup.Server.DockerRunCommand()));
+            ContainerHttp!.Add(TemplateTextFieldReadOnly(McpServerManager.DockerRunCommand()));
         }
     }
 }

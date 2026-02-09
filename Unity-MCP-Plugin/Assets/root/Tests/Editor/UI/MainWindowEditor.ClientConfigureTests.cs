@@ -57,7 +57,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 configPath: configPath,
                 bodyPath: bodyPath)
             .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
-            .SetProperty("command", JsonValue.Create(Startup.Server.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true)
+            .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true)
             .SetProperty("args", new JsonArray {
                 $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
                 $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
@@ -226,7 +226,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = "mcpServers";
-            var duplicateCommand = Startup.Server.ExecutableFullPath.Replace('\\', '/');
+            var duplicateCommand = McpServerManager.ExecutableFullPath.Replace('\\', '/');
             var existingJson = $@"{{
                 ""mcpServers"": {{
                     ""Unity-MCP-Duplicate"": {{
