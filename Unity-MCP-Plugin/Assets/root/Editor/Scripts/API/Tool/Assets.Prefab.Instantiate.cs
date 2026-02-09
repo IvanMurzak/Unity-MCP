@@ -72,10 +72,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 go.name = name ?? prefab.name;
                 if (parentGo != null)
                     go.transform.SetParent(parentGo.transform, false);
-                go.SetTransform(position, rotation, scale, isLocalSpace);
+                 go.SetTransform(position, rotation, scale, isLocalSpace);
 
-                EditorUtility.SetDirty(go);
-                EditorUtils.RepaintAllEditorWindows();
+                 EditorUtility.SetDirty(go);
+                 EditorUtils.RepaintAllEditorWindows();
 
                 return new GameObjectRef(go);
             });

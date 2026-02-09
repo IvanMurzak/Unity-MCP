@@ -35,11 +35,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             {
                 var objects = select.Select(o => o.FindObject()).ToArray();
                 if (objects.Any(o => o == null))
-                    throw new System.Exception("One or more objects could not be found. Please ensure all provided ObjectRefs are valid.");
+                     throw new System.Exception("One or more objects could not be found. Please ensure all provided ObjectRefs are valid.");
 
-                Selection.objects = objects;
+                 Selection.objects = objects;
 
-                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                 UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
                 return SelectionData.FromSelection();
             });

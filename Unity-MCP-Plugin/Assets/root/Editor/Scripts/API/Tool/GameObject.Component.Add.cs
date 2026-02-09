@@ -95,7 +95,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     response.Messages ??= new List<string>();
                     response.Messages.Add($"[Success] Added component '{componentName}'.");
 
-                    response.AddedComponents.Add(new ComponentDataShallow(newComponent));
+                     response.AddedComponents.Add(new ComponentDataShallow(newComponent));
                 }
 
                 UnityEditor.EditorUtility.SetDirty(go);

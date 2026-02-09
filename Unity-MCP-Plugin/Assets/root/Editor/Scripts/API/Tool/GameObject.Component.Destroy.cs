@@ -77,10 +77,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     }
                 }
 
-                if (destroyCounter == 0)
-                    throw new Exception(Error.NotFoundComponents(destroyComponentRefs, allComponents));
+                 if (destroyCounter == 0)
+                     throw new Exception(Error.NotFoundComponents(destroyComponentRefs, allComponents));
 
-                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+                 UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
                 return response;
             });

@@ -246,6 +246,39 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 }
             }));
 
+            // Status Checks
+            // -----------------------------------------------------------------
+            var btnOpenStatusChecks = root.Query<Button>("btnOpenStatusChecks").First();
+            btnOpenStatusChecks.RegisterCallback<ClickEvent>(evt =>
+            {
+                McpStatusChecksWindow.ShowWindow();
+            });
+
+            var statusChecksLabel = root.Query<Label>("statusChecksLabel").First();
+
+            // Initial update
+            UpdateStatusChecksCount(statusChecksLabel);
+
+            // Subscribe to connection state changes
+            UnityMcpPlugin.ConnectionState
+                .ThrottleLast(TimeSpan.FromMilliseconds(100))
+                .ObserveOnCurrentSynchronizationContext()
+                .Subscribe(_ => UpdateStatusChecksCount(statusChecksLabel))
+                .AddTo(_disposables);
+
+            // Subscribe to tool manager updates
+            McpPlugin.McpPlugin.DoAlways(plugin =>
+            {
+                var tm = plugin.McpManager.ToolManager;
+                if (tm != null)
+                {
+                    tm.OnToolsUpdated
+                        .ObserveOnCurrentSynchronizationContext()
+                        .Subscribe(_ => UpdateStatusChecksCount(statusChecksLabel))
+                        .AddTo(_disposables);
+                }
+            }).AddTo(_disposables);
+
             // Tools Configuration
             // -----------------------------------------------------------------
             var btnOpenTools = root.Query<Button>("btnOpenTools").First();
@@ -400,6 +433,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             button.tooltip = tooltip;
             button.RegisterCallback<ClickEvent>(evt => Application.OpenURL(url));
+        }
+
+        private static void UpdateStatusChecksCount(Label statusChecksLabel)
+        {
+            if (statusChecksLabel == null)
+                return;
+
+            var passedCount = McpStatusCheckEvaluator.GetPassedCount();
+            var totalCount = McpStatusCheckEvaluator.EvaluateAllChecks().Count;
+
+            statusChecksLabel.text = $"Status Checks ({passedCount}/{totalCount})";
         }
     }
 }

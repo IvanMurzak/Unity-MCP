@@ -76,9 +76,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     EditorUtility.SetDirty(asset);
 
                 // AssetDatabase.CreateAsset(asset, assetPath);
-                AssetDatabase.SaveAssets();
-                AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-                EditorUtils.RepaintAllEditorWindows();
+                 AssetDatabase.SaveAssets();
+                 AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+                 EditorUtils.RepaintAllEditorWindows();
 
                 return logs
                     .Select(log => log.ToString())

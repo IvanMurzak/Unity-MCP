@@ -129,6 +129,8 @@ namespace com.IvanMurzak.Unity.MCP
             .Select(x => x == HubConnectionState.Connected)
             .ToReadOnlyReactiveProperty(false);
 
+
+
         public static async Task NotifyToolRequestCompleted(RequestToolCompletedData request, CancellationToken cancellationToken = default)
         {
             var mcpPlugin = Instance.McpPluginInstance ?? throw new InvalidOperationException($"{nameof(Instance.McpPluginInstance)} is null");

@@ -69,11 +69,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     var newAsset = AssetDatabase.LoadAssetAtPath(destinationPath, newAssetType);
 
                     response.CopiedAssets ??= new();
-                    response.CopiedAssets.Add(new AssetObjectRef(newAsset));
-                }
+                     response.CopiedAssets.Add(new AssetObjectRef(newAsset));
+                 }
 
-                AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-                EditorUtils.RepaintAllEditorWindows();
+                 AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+                 EditorUtils.RepaintAllEditorWindows();
 
                 return response;
             });

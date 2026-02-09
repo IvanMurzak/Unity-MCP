@@ -58,7 +58,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 bool saved = UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene, path);
                 if (!saved)
-                    throw new Exception($"Failed to save scene at '{path}'.\n{OpenedScenesText}");
+                    throw new System.Exception($"Failed to save scene at '{path}'.\n{OpenedScenesText}");
 
                 EditorUtils.RepaintAllEditorWindows();
             });

@@ -44,10 +44,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             var assetPath = prefabStage.assetPath;
             var goName = prefabGo.name;
 
-            PrefabUtility.SaveAsPrefabAsset(prefabGo, assetPath);
-            prefabStage.ClearDirtiness();
+             PrefabUtility.SaveAsPrefabAsset(prefabGo, assetPath);
+             prefabStage.ClearDirtiness();
 
-            EditorUtils.RepaintAllEditorWindows();
+             EditorUtils.RepaintAllEditorWindows();
 
             var assetPrefab = AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>(assetPath);
             return new AssetObjectRef(assetPrefab);
