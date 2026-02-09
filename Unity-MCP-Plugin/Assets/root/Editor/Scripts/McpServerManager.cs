@@ -729,7 +729,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             if (process == null)
                 return;
 
-            System.Threading.Tasks.Task.Run(() =>
+            Task.Run(() =>
             {
                 try
                 {
@@ -838,22 +838,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         {
             try
             {
-                ProcessStartInfo startInfo;
-
-                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    startInfo = new ProcessStartInfo
+                var startInfo = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                    ? new ProcessStartInfo
                     {
                         FileName = "netstat",
                         Arguments = "-ano -p tcp",
                         UseShellExecute = false,
                         CreateNoWindow = true,
                         RedirectStandardOutput = true
-                    };
-                }
-                else
-                {
-                    startInfo = new ProcessStartInfo
+                    }
+                    : new ProcessStartInfo
                     {
                         FileName = "lsof",
                         Arguments = $"-ti tcp:{port} -sTCP:LISTEN",
@@ -862,7 +856,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         RedirectStandardOutput = true,
                         RedirectStandardError = true
                     };
-                }
 
                 using var process = Process.Start(startInfo);
                 if (process == null) return -1;
@@ -1042,7 +1035,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     // Dispose on a background thread to prevent deadlock.
                     // Process.Dispose() can hang on the main thread when redirected
                     // stdout/stderr streams are active, even after CancelOutputRead/CancelErrorRead.
-                    System.Threading.Tasks.Task.Run(() =>
+                    Task.Run(() =>
                     {
                         try
                         {
@@ -1114,7 +1107,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         /// </summary>
         static void CheckExternalServerAsync(int port, Action<bool> onResult)
         {
-            System.Threading.Tasks.Task.Run(() =>
+            Task.Run(() =>
             {
                 var result = false;
                 try
