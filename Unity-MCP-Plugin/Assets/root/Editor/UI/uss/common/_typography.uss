@@ -152,3 +152,8 @@
 .alert-label {
     color: #FF6B6B;
 }
+
+/* Warning label - orange text for warnings */
+.warning-label {
+    color: #ffbf6b;
+}

@@ -167,7 +167,7 @@ Editor 组件提供 Unity Editor 集成,实现 MCP 功能(Tools、Prompts、Reso
    - 管理 Editor 生命周期事件(程序集重新加载、播放模式转换)期间的连接持久性
    - 在域重新加载或退出播放模式后自动重新连接
 
-2. **MCP Server 二进制文件管理** ([Startup.Server.cs](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Startup.Server.cs))
+2. **MCP Server 二进制文件管理** ([McpServerManager.cs](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/McpServerManager.cs))
    - 从 GitHub releases 下载和管理 `Unity-MCP-Server` 可执行文件
    - 跨平台二进制文件选择(Windows/macOS/Linux, x86/x64/ARM/ARM64)
    - 强制执行服务器和插件之间的版本兼容性

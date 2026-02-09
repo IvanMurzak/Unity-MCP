@@ -10,6 +10,7 @@
 
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
@@ -21,105 +22,139 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
     public class JsonAiAgentConfig : AiAgentConfig
     {
-        public override string ExpectedFileContent => Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, BodyPath, UnityMcpPlugin.TimeoutMs).ToString();
+        private readonly Dictionary<string, (JsonNode value, bool required, ValueComparisonMode comparison)> _properties = new();
+        private readonly HashSet<string> _propertiesToRemove = new();
 
-        public JsonAiAgentConfig(string name, string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
-            : base(name, configPath, bodyPath)
+        public override string ExpectedFileContent
+        {
+            get
+            {
+                var serverConfig = BuildServerEntry();
+                var pathSegments = Consts.MCP.Server.BodyPathSegments(BodyPath);
+
+                var innerContent = new JsonObject
+                {
+                    [DefaultMcpServerName] = serverConfig
+                };
+
+                // Build nested structure from innermost to outermost
+                var result = innerContent;
+                for (int i = pathSegments.Length - 1; i >= 0; i--)
+                {
+                    result = new JsonObject { [pathSegments[i]] = result };
+                }
+
+                return result.ToString();
+            }
+        }
+
+        public JsonAiAgentConfig(
+            string name,
+            string configPath,
+            string bodyPath = Consts.MCP.Server.DefaultBodyPath)
+            : base(
+                name: name,
+                configPath: configPath,
+                bodyPath: bodyPath)
         {
             // empty
         }
 
-        public override bool Configure() => ConfigureJsonMcpClient(ConfigPath, BodyPath);
-        public override bool IsConfigured() => IsMcpClientConfigured(ConfigPath, BodyPath);
-
-        public static bool ConfigureJsonMcpClient(string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
+        public JsonAiAgentConfig SetProperty(string key, JsonNode value, bool requiredForConfiguration = false, ValueComparisonMode comparison = ValueComparisonMode.Exact)
         {
-            if (string.IsNullOrEmpty(configPath))
+            _properties[key] = (value, requiredForConfiguration, comparison);
+            return this;
+        }
+
+        public JsonAiAgentConfig SetPropertyToRemove(string key)
+        {
+            _propertiesToRemove.Add(key);
+            return this;
+        }
+
+        public new JsonAiAgentConfig AddIdentityKey(string key)
+        {
+            base.AddIdentityKey(key);
+            return this;
+        }
+
+        public override bool Configure()
+        {
+            if (string.IsNullOrEmpty(ConfigPath))
                 return false;
 
-            Debug.Log($"{Consts.Log.Tag} Configuring MCP client with path: {configPath} and bodyPath: {bodyPath}");
+            Debug.Log($"{Consts.Log.Tag} Configuring MCP client with path: {ConfigPath}, bodyPath: {BodyPath}");
 
             try
             {
-                if (!File.Exists(configPath))
+                if (!File.Exists(ConfigPath))
                 {
                     // Create all necessary directories
-                    var directory = Path.GetDirectoryName(configPath);
+                    var directory = Path.GetDirectoryName(ConfigPath);
                     if (!string.IsNullOrEmpty(directory))
                         Directory.CreateDirectory(directory);
 
-                    // Create the file if it doesn't exist
-                    File.WriteAllText(
-                        path: configPath,
-                        contents: Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, bodyPath, UnityMcpPlugin.TimeoutMs).ToString());
+                    // Create the file with expected content
+                    File.WriteAllText(path: ConfigPath, contents: ExpectedFileContent);
                     return true;
                 }
 
-                var json = File.ReadAllText(configPath);
+                var json = File.ReadAllText(ConfigPath);
                 JsonObject? rootObj = null;
 
                 try
                 {
-                    // Parse the existing config as JsonObject
                     rootObj = JsonNode.Parse(json)?.AsObject();
                     if (rootObj == null)
                         throw new Exception("Config file is not a valid JSON object.");
                 }
                 catch
                 {
-                    File.WriteAllText(
-                        path: configPath,
-                        contents: Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, bodyPath, UnityMcpPlugin.TimeoutMs).ToString());
+                    File.WriteAllText(path: ConfigPath, contents: ExpectedFileContent);
                     return true;
                 }
 
-                // Get path segments and navigate to the injection target
-                var pathSegments = Consts.MCP.Server.BodyPathSegments(bodyPath);
-
-                // Generate the configuration to inject
-                var injectObj = Startup.Server.RawJsonConfigurationStdio(UnityMcpPlugin.Port, pathSegments.Last(), UnityMcpPlugin.TimeoutMs);
-                if (injectObj == null)
-                    throw new Exception("Injected config is not a valid JSON object.");
-
-                var injectMcpServers = injectObj[pathSegments.Last()]?.AsObject();
-                if (injectMcpServers == null)
-                    throw new Exception($"Missing '{pathSegments.Last()}' object in inject config.");
+                var pathSegments = Consts.MCP.Server.BodyPathSegments(BodyPath);
 
                 // Navigate to or create the target location in the existing JSON
                 var targetObj = EnsureJsonPathExists(rootObj, pathSegments);
 
-                // Removing is not needed because we check all MCP servers for command match. Let's keep it commented just in case.
-                // foreach (var deprecatedName in DeprecatedMcpServerNames)
-                //     targetObj.Remove(deprecatedName);
+                // Remove deprecated server entries
+                foreach (var name in DeprecatedMcpServerNames)
+                    targetObj.Remove(name);
 
-                // Find all command values in injectMcpServers for duplicate removal
-                var injectCommands = injectMcpServers
-                    .Select(kv => kv.Value?["command"]?.GetValue<string>())
-                    .Where(cmd => !string.IsNullOrEmpty(cmd))
-                    .ToHashSet();
+                // Remove duplicate entries that represent the same server under a different name
+                RemoveDuplicateServerEntries(targetObj);
 
-                // Remove any entry in targetObj with a matching command
-                var keysToRemove = targetObj
-                    .Where(kv => injectCommands.Contains(kv.Value?["command"]?.GetValue<string>()))
-                    .Select(kv => kv.Key)
-                    .ToList();
-
-                foreach (var key in keysToRemove)
-                    targetObj.Remove(key);
-
-                // Merge/overwrite entries from injectMcpServers
-                foreach (var kv in injectMcpServers)
+                // Get or create the server entry under DefaultMcpServerName
+                JsonObject serverEntry;
+                if (targetObj[DefaultMcpServerName]?.AsObject() is JsonObject existingEntry)
                 {
-                    // Clone the value to avoid parent conflict
-                    targetObj[kv.Key] = kv.Value?.ToJsonString() is string jsonStr
+                    serverEntry = existingEntry;
+                }
+                else
+                {
+                    serverEntry = new JsonObject();
+                    targetObj[DefaultMcpServerName] = serverEntry;
+                }
+
+                // Remove specified properties from the entry
+                foreach (var key in _propertiesToRemove)
+                    serverEntry.Remove(key);
+
+                // Set properties on the entry (sorted for deterministic output)
+                foreach (var key in _properties.Keys.OrderBy(k => k, StringComparer.Ordinal))
+                {
+                    var clonedValue = _properties[key].value.ToJsonString() is string jsonStr
                         ? JsonNode.Parse(jsonStr)
                         : null;
+                    serverEntry[key] = clonedValue;
                 }
 
                 // Write back to file
-                File.WriteAllText(configPath, rootObj.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+                File.WriteAllText(ConfigPath, rootObj.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
 
-                return IsMcpClientConfigured(configPath, bodyPath);
+                return IsConfigured();
             }
             catch (Exception ex)
             {
@@ -128,14 +163,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 return false;
             }
         }
-        public static bool IsMcpClientConfigured(string configPath, string bodyPath = Consts.MCP.Server.DefaultBodyPath)
+
+        public override bool IsConfigured()
         {
-            if (string.IsNullOrEmpty(configPath) || !File.Exists(configPath))
+            if (string.IsNullOrEmpty(ConfigPath) || !File.Exists(ConfigPath))
                 return false;
 
             try
             {
-                var json = File.ReadAllText(configPath);
+                var json = File.ReadAllText(ConfigPath);
 
                 if (string.IsNullOrWhiteSpace(json))
                     return false;
@@ -144,24 +180,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 if (rootObj == null)
                     return false;
 
-                var pathSegments = Consts.MCP.Server.BodyPathSegments(bodyPath);
+                var pathSegments = Consts.MCP.Server.BodyPathSegments(BodyPath);
 
                 // Navigate to the target location using bodyPath segments
                 var targetObj = NavigateToJsonPath(rootObj, pathSegments);
                 if (targetObj == null)
                     return false;
 
-                foreach (var kv in targetObj)
-                {
-                    var command = kv.Value?["command"]?.GetValue<string>();
-                    if (string.IsNullOrEmpty(command) || !IsCommandMatch(command!))
-                        continue;
+                var serverEntry = targetObj[DefaultMcpServerName];
+                if (serverEntry == null)
+                    return false;
 
-                    var args = kv.Value?["args"]?.AsArray();
-                    return DoArgumentsMatch(args);
-                }
-
-                return false;
+                return AreRequiredPropertiesMatching(serverEntry) && !HasPropertiesToRemove(serverEntry);
             }
             catch (Exception ex)
             {
@@ -171,55 +201,97 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
         }
 
-        protected static bool IsCommandMatch(string command)
+        private JsonObject BuildServerEntry()
         {
-            // Normalize both paths for comparison
-            try
+            var obj = new JsonObject();
+            foreach (var key in _properties.Keys.OrderBy(k => k, StringComparer.Ordinal))
             {
-                var normalizedCommand = Path.GetFullPath(command.Replace('/', Path.DirectorySeparatorChar));
-                var normalizedTarget = Path.GetFullPath(Startup.Server.ExecutableFullPath.Replace('/', Path.DirectorySeparatorChar));
-                return string.Equals(normalizedCommand, normalizedTarget, StringComparison.OrdinalIgnoreCase);
+                var clonedValue = _properties[key].value.ToJsonString() is string jsonStr
+                    ? JsonNode.Parse(jsonStr)
+                    : null;
+                obj[key] = clonedValue;
             }
-            catch
-            {
-                // If normalization fails, fallback to string comparison
-                return string.Equals(command, Startup.Server.ExecutableFullPath, StringComparison.OrdinalIgnoreCase);
-            }
+            return obj;
         }
 
-        protected static bool DoArgumentsMatch(JsonArray? args)
+        private bool AreRequiredPropertiesMatching(JsonNode? serverEntry)
         {
-            if (args == null)
+            if (serverEntry == null)
                 return false;
 
-            var targetPort = UnityMcpPlugin.Port.ToString();
-            var targetTimeout = UnityMcpPlugin.TimeoutMs.ToString();
-
-            var foundPort = false;
-            var foundTimeout = false;
-
-            // Check for both positional and named argument formats
-            for (int i = 0; i < args.Count; i++)
+            foreach (var prop in _properties)
             {
-                var arg = args[i]?.GetValue<string>();
-                if (string.IsNullOrEmpty(arg))
+                if (!prop.Value.required)
                     continue;
 
-                // Check positional format
-                if (i == 0 && arg == targetPort)
-                    foundPort = true;
-                else if (i == 1 && arg == targetTimeout)
-                    foundTimeout = true;
-                else if (arg!.StartsWith($"{Consts.MCP.Server.Args.PluginTimeout}=") && arg.Substring(Consts.MCP.Server.Args.PluginTimeout.Length + 1) == targetTimeout)
-                    foundTimeout = true;
-                else if (arg!.StartsWith($"{Consts.MCP.Server.Args.Port}=") && arg[(Consts.MCP.Server.Args.Port.Length + 1)..] == targetPort)
-                    foundPort = true;
+                var existingValue = serverEntry[prop.Key];
+                if (existingValue == null)
+                    return false;
+
+                if (!AreJsonValuesEquivalent(prop.Value.comparison, prop.Value.value, existingValue))
+                    return false;
             }
 
-            return foundPort && foundTimeout;
+            return true;
         }
 
-        protected static JsonObject? NavigateToJsonPath(JsonObject rootObj, string[] pathSegments)
+        private static bool AreJsonValuesEquivalent(ValueComparisonMode comparison, JsonNode expected, JsonNode actual)
+        {
+            if (comparison == ValueComparisonMode.Path
+                && TryGetStringValue(expected, out var expectedPath)
+                && TryGetStringValue(actual, out var actualPath))
+            {
+                return NormalizePath(expectedPath) == NormalizePath(actualPath);
+            }
+
+            if (comparison == ValueComparisonMode.Url
+                && TryGetStringValue(expected, out var expectedUrl)
+                && TryGetStringValue(actual, out var actualUrl))
+            {
+                return string.Equals(NormalizeUrl(expectedUrl), NormalizeUrl(actualUrl), StringComparison.OrdinalIgnoreCase);
+            }
+
+            return expected.ToJsonString() == actual.ToJsonString();
+        }
+
+        private static bool TryGetStringValue(JsonNode node, out string value)
+        {
+            if (node is JsonValue jsonValue && jsonValue.TryGetValue<string>(out var str) && str != null)
+            {
+                value = str;
+                return true;
+            }
+            value = default!;
+            return false;
+        }
+
+        /// <summary>Normalizes a file path by unifying separators.</summary>
+        private static string NormalizePath(string path)
+        {
+            return path.Replace('\\', '/').TrimEnd('/');
+        }
+
+        /// <summary>Normalizes a URL by lowercasing scheme+host and trimming trailing slashes.</summary>
+        private static string NormalizeUrl(string url)
+        {
+            if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            {
+                var authority = uri.GetLeftPart(UriPartial.Authority).ToLowerInvariant();
+                var pathPart = uri.AbsolutePath.TrimEnd('/');
+                return authority + pathPart + uri.Query;
+            }
+            return url.TrimEnd('/');
+        }
+
+        private bool HasPropertiesToRemove(JsonNode? serverEntry)
+        {
+            if (serverEntry == null || _propertiesToRemove.Count == 0)
+                return false;
+
+            return _propertiesToRemove.Any(key => serverEntry[key] != null);
+        }
+
+        private static JsonObject? NavigateToJsonPath(JsonObject rootObj, string[] pathSegments)
         {
             JsonObject? current = rootObj;
 
@@ -233,7 +305,51 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
             return current;
         }
-        protected static JsonObject EnsureJsonPathExists(JsonObject rootObj, string[] pathSegments)
+
+        /// <summary>
+        /// Removes sibling server entries that represent the same server under a different name,
+        /// identified by matching identity key property values (e.g. "command", "url", "serverUrl").
+        /// </summary>
+        private void RemoveDuplicateServerEntries(JsonObject targetObj)
+        {
+            // Collect identity values we're about to write
+            var ourIdentityValues = new Dictionary<string, (JsonNode value, ValueComparisonMode comparison)>();
+            foreach (var identityKey in _identityKeys)
+            {
+                if (_properties.TryGetValue(identityKey, out var prop))
+                    ourIdentityValues[identityKey] = (prop.value, prop.comparison);
+            }
+
+            if (ourIdentityValues.Count == 0)
+                return;
+
+            // Find sibling entries that share any identity value
+            var keysToRemove = new List<string>();
+            foreach (var kv in targetObj)
+            {
+                if (kv.Key == DefaultMcpServerName)
+                    continue;
+
+                var entry = kv.Value?.AsObject();
+                if (entry == null)
+                    continue;
+
+                foreach (var identity in ourIdentityValues)
+                {
+                    var existingValue = entry[identity.Key];
+                    if (existingValue != null && AreJsonValuesEquivalent(identity.Value.comparison, identity.Value.value, existingValue))
+                    {
+                        keysToRemove.Add(kv.Key);
+                        break;
+                    }
+                }
+            }
+
+            foreach (var key in keysToRemove)
+                targetObj.Remove(key);
+        }
+
+        private static JsonObject EnsureJsonPathExists(JsonObject rootObj, string[] pathSegments)
         {
             JsonObject current = rootObj;
 

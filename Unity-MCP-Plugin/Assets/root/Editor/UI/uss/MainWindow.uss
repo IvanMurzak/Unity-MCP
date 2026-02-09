@@ -20,6 +20,7 @@
     flex-grow: 0;
     flex-shrink: 0;
     margin: 2px 2px;
+    min-width: 40px;
 }
 
 .toggle-text-button > .unity-toggle__input {
@@ -54,6 +55,7 @@
     padding: 4px 8px;
     margin: 0;
     border-radius: 4px;
+    min-width: 40px;
     background-color: rgba(255, 255, 255, 0.05);
     transition-duration: 200ms;
     -unity-text-align: middle-left;
@@ -87,4 +89,75 @@
     margin-right: 8px;
     margin-bottom: 6px;
     flex-shrink: 0;
+}
+
+/* ==========================================================================
+   Connection Timeline - Vertical TODO-like list with connected points
+   ========================================================================== */
+
+.connection-timeline {
+    flex-direction: column;
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-left: 4px;
+}
+
+.timeline-point {
+    flex-direction: row;
+    align-items: stretch;
+    min-height: 40px;
+}
+
+.timeline-indicator {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    margin-right: 4px;
+    position: relative;
+}
+
+.timeline-indicator > .status-indicator-circle {
+    flex-shrink: 0;
+    margin-right: 0;
+}
+
+.timeline-line {
+    position: absolute;
+    width: 2px;
+    top: 50%;
+    bottom: -10px;
+    left: 9px;
+    margin-top: 10px;
+    background-color: rgb(80, 80, 80);
+}
+
+.timeline-point-last .timeline-line {
+    display: none;
+}
+
+.timeline-content {
+    flex-direction: row;
+    flex-grow: 1;
+    align-items: center;
+    justify-content: space-between;
+    /* padding-bottom: 16px; */
+}
+
+.timeline-point-last .timeline-content {
+    padding-bottom: 0;
+}
+
+.timeline-label {
+    flex-grow: 1;
+    -unity-text-align: middle-left;
+    color: rgb(200, 200, 200);
+    font-size: 13px;
+}
+
+.timeline-btn {
+    flex-shrink: 0;
+    min-width: 60px;
+    margin-top: 0;
+    margin-bottom: 0;
 }

@@ -124,7 +124,7 @@ namespace com.IvanMurzak.Unity.MCP
                 if (assetFile != null)
                     UnityEditor.EditorUtility.SetDirty(assetFile);
                 else
-                    UnityEditor.AssetDatabase.Refresh(UnityEditor.ImportAssetOptions.ForceSynchronousImport);
+                    UnityEditor.AssetDatabase.ImportAsset(AssetsFilePath);
             }
             catch (Exception e)
             {

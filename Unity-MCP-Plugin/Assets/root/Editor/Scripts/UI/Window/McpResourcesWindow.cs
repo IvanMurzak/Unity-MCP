@@ -19,7 +19,7 @@ using Extensions.Unity.PlayerPrefsEx;
 using Microsoft.Extensions.Logging;
 using UnityEngine.UIElements;
 
-namespace com.IvanMurzak.Unity.MCP.Editor
+namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
     public class McpResourcesWindow : McpListWindowBase<McpResourcesWindow.ResourceViewModel>
     {
