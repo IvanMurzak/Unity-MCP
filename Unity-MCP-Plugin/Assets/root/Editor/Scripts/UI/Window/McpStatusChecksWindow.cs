@@ -13,7 +13,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -42,19 +41,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         private VisualElement? _miniViewContainer;
         private VisualElement? _fullViewContainer;
         private bool _isExpanded = true;
-
-        // Track tool execution count for current session
-        private static readonly ReactiveProperty<int> _toolExecutionCount = new(0);
-        private static readonly CompositeDisposable _staticDisposables = new();
-        internal static int ToolExecutionCount => _toolExecutionCount.Value;
-
-        static McpStatusChecksWindow()
-        {
-            // Static subscription to track tool executions even when window is closed
-            UnityMcpPlugin.OnToolExecuted
-                .Subscribe(_ => _toolExecutionCount.Value++)
-                .AddTo(_staticDisposables);
-        }
 
         /// <summary>
         /// Status of a single check item.
@@ -176,13 +162,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         .AddTo(_disposables);
                 }
             }).AddTo(_disposables);
-
-            // Subscribe to tool execution counter changes to refresh UI
-            _toolExecutionCount
-                .ThrottleLast(TimeSpan.FromMilliseconds(100))
-                .ObserveOnCurrentSynchronizationContext()
-                .Subscribe(_ => RefreshAllChecks())
-                .AddTo(_disposables);
         }
 
         private void RefreshAllChecks()
@@ -574,28 +553,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         private StatusCheckItem GetToolExecutedCheck(McpStatusCheckEvaluator.CheckResult checkResult)
         {
-            var count = _toolExecutionCount.Value;
-
-            if (count > 0)
-            {
-                return new StatusCheckItem(
-                    id: "tool-executed",
-                    title: "MCP Tool executed",
-                    subtitle: $"{count} executed this session ✓",
-                    description: $"MCP tools have been executed {count} times this session. This confirms that the connection is working correctly.",
-                    status: CheckStatus.Success
-                );
-            }
-            else
-            {
-                return new StatusCheckItem(
-                    id: "tool-executed",
-                    title: "MCP Tool executed",
-                    subtitle: "No tools executed yet",
-                    description: "No MCP tools have been executed yet this session. This counter increments each time an MCP client successfully calls a tool.",
-                    status: CheckStatus.Pending
-                );
-            }
+            // This check is currently disabled as the tool execution tracking
+            // functionality is being moved to the DLL plugin.
+            // It will be re-enabled once the plugin update is available.
+            return new StatusCheckItem(
+                id: "tool-executed",
+                title: "MCP Tool executed",
+                subtitle: "Tracking disabled (awaiting plugin update)",
+                description: "Tool execution tracking is temporarily disabled. This functionality will be available in the next plugin update.",
+                status: CheckStatus.Pending
+            );
         }
 
         #endregion

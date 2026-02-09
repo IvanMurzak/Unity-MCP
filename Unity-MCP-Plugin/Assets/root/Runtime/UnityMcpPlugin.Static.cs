@@ -162,8 +162,6 @@ namespace com.IvanMurzak.Unity.MCP
             }
 
             await mcpPlugin.RemoteMcpManagerHub.NotifyToolRequestCompleted(request);
-
-            _onToolExecuted.OnNext(Unit.Default);
         }
 
         public static IDisposable SubscribeOnChanged(Action<UnityConnectionConfig> action, bool invokeImmediately = true)

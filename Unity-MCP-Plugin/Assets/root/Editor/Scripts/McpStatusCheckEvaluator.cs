@@ -130,11 +130,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         private static CheckResult EvaluateToolExecutedCheck()
         {
-            var isPassed = McpStatusChecksWindow.ToolExecutionCount > 0;
-
+            // This check is currently disabled as the tool execution tracking
+            // functionality is being moved to the DLL plugin.
+            // It will be re-enabled once the plugin update is available.
             return new CheckResult
             {
-                IsPassed = isPassed,
+                IsPassed = false,
                 CanCountAsPassed = false
             };
         }
