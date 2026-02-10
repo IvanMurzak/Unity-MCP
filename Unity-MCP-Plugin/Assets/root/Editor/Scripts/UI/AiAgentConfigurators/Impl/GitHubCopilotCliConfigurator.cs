@@ -39,7 +39,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             ),
             bodyPath: Consts.MCP.Server.DefaultBodyPath
         )
-        .AddIdentityKey("url")
+        .AddIdentityKey("command")
         .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
         .SetProperty("args", new JsonArray {
             $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
@@ -59,7 +59,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             ),
             bodyPath: Consts.MCP.Server.DefaultBodyPath
         )
-        .AddIdentityKey("url")
+        .AddIdentityKey("command")
         .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
         .SetProperty("args", new JsonArray {
             $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
@@ -80,7 +80,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             bodyPath: Consts.MCP.Server.DefaultBodyPath
         )
         .AddIdentityKey("url")
-        .SetProperty("type", "http", requiredForConfiguration: true)
+        .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
         .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
         .SetProperty("tools", new JsonArray { "*" }, requiredForConfiguration: false)
         .SetPropertyToRemove("command")
@@ -96,7 +96,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             bodyPath: Consts.MCP.Server.DefaultBodyPath
         )
         .AddIdentityKey("url")
-        .SetProperty("type", "http", requiredForConfiguration: true)
+        .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
         .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
         .SetProperty("tools", new JsonArray { "*" }, requiredForConfiguration: false)
         .SetPropertyToRemove("command")
