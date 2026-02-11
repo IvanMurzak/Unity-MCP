@@ -582,11 +582,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             McpPlugin.McpPlugin.DoAlways(plugin =>
             {
                 var manager = plugin.McpManager.ToolManager;
-                if (manager == null) 
-                { 
+                if (manager == null)
+                {
                     label.text = "0 / 0 tools";
                     if (tokenLabel != null) tokenLabel.text = "~0 tokens total";
-                    return; 
+                    return;
                 }
 
                 void UpdateStats()
@@ -600,8 +600,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     {
                         var totalTokens = all
                             .Where(t => manager.IsToolEnabled(t.Name))
-                            .Sum(t => Utils.TokenCounter.EstimateToolTokens(t.Name, t.Description, t.InputSchema, t.OutputSchema));
-                        tokenLabel.text = $"~{Utils.TokenCounter.FormatTokenCount(totalTokens)} tokens total";
+                            .Sum(t => t.TokenCount);
+                        tokenLabel.text = $"~{UIMcpUtils.FormatTokenCount(totalTokens)} tokens total";
                     }
                 }
                 UpdateStats();
