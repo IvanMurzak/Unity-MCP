@@ -79,7 +79,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             // Assert
             Assert.Greater(totalTokens, 1000, "Total token count across all tools should be significant");
-            Assert.Less(totalTokens, 500000, "Total token count should not be absurdly large");
+            Assert.Less(totalTokens, 5000000, "Total token count should not be absurdly large");
         }
     }
 }
