@@ -65,7 +65,7 @@ chmod +x build-all.sh
 ```
 
 **Expected behavior**:
-- With .NET 9: Creates 7 platform executables successfully
+- With .NET 9: Creates 7 platform executables successfully and zips them.
 - With .NET 8 or lower: Fails immediately with NETSDK1045 error
 
 The multi-platform build creates executables for:
@@ -213,6 +213,23 @@ Unity CI uses containers from `unityci/editor` with specific Unity versions.
 3. Use `[Description]` attributes for AI understanding
 4. Test in Unity Editor with MCP client connection
 
+Example:
+```csharp
+[McpPluginToolType]
+public class Tool_GameObject
+{
+    [McpPluginTool("MyCustomTask", Title = "Create a new GameObject")]
+    [Description("Explain here to LLM what is this, when it should be called.")]
+    public string CustomTask([Description("Input data")] string inputData)
+    {
+        return MainThread.Instance.Run(() => {
+            // Unity API calls here
+            return $"[Success] Operation completed.";
+        });
+    }
+}
+```
+
 ### Debugging MCP Communication
 
 1. Check server logs in console output
@@ -225,8 +242,6 @@ Unity CI uses containers from `unityci/editor` with specific Unity versions.
 # Install and run MCP inspector for debugging
 npx @modelcontextprotocol/inspector
 ```
-
-This tool helps debug MCP protocol communication between clients and servers.
 
 ### Release Process
 
@@ -250,6 +265,9 @@ Unity-MCP/
 │   └── Dockerfile
 ├── Unity-MCP-Plugin/          # Unity Editor Plugin
 │   ├── Assets/root/           # Plugin source code
+│   │   ├── Runtime/           # Core logic
+│   │   ├── Editor/            # Editor integration
+│   │   └── Tests/             # Unit tests
 │   ├── ProjectSettings/       # Unity project settings
 │   └── Packages/              # Unity packages
 ├── Installer/      # Unity package installer
@@ -257,51 +275,51 @@ Unity-MCP/
 ```
 
 ### Key Package Info
-> Unity-MCP-Plugin/Assets/root/package.json
+> Unity-MCP-Plugin/Assets/root/package.json (as of v0.46.0)
 ```json
 {
     "name": "com.ivanmurzak.unity.mcp",
-    "displayName": "AI Game Developer (Unity MCP Plugin)",
-    "author": {
-        "name": "IvanMurzak",
-        "url": "https://github.com/IvanMurzak"
-    },
-    "keywords": [
-        "AI",
-        "AI Integration",
-        "MCP",
-        "Unity MCP"
-    ],
-    "version": "0.17.1",
+    "displayName": "AI Game Developer — Unity MCP",
+    "version": "0.46.0",
     "unity": "2022.3",
+    "description": "AI-powered bridge connecting LLMs and advanced AI agents to the Unity Editor via the Model Context Protocol (MCP).",
     "dependencies": {
         "com.unity.test-framework": "1.1.33",
         "com.unity.modules.uielements": "1.0.0",
-        "extensions.unity.playerprefsex": "2.0.2",
-        "org.nuget.microsoft.bcl.memory": "9.0.7",
-        "org.nuget.microsoft.aspnetcore.signalr.client": "9.0.7",
-        "org.nuget.microsoft.aspnetcore.signalr.protocols.json": "9.0.7",
-        "org.nuget.microsoft.codeanalysis.csharp": "4.13.0",
-        "org.nuget.microsoft.extensions.caching.abstractions": "9.0.7",
-        "org.nuget.microsoft.extensions.dependencyinjection.abstractions": "9.0.7",
-        "org.nuget.microsoft.extensions.hosting": "9.0.7",
-        "org.nuget.microsoft.extensions.hosting.abstractions": "9.0.7",
-        "org.nuget.microsoft.extensions.logging.abstractions": "9.0.7",
+        "extensions.unity.playerprefsex": "2.1.2",
+        "org.nuget.microsoft.bcl.memory": "10.0.1",
+        "org.nuget.microsoft.aspnetcore.signalr.client": "10.0.1",
+        "org.nuget.microsoft.aspnetcore.signalr.protocols.json": "10.0.1",
+        "org.nuget.microsoft.codeanalysis.csharp": "4.14.0",
+        "org.nuget.microsoft.extensions.caching.abstractions": "10.0.1",
+        "org.nuget.microsoft.extensions.dependencyinjection.abstractions": "10.0.1",
+        "org.nuget.microsoft.extensions.hosting": "10.0.1",
+        "org.nuget.microsoft.extensions.hosting.abstractions": "10.0.1",
+        "org.nuget.microsoft.extensions.logging": "10.0.1",
+        "org.nuget.microsoft.extensions.logging.abstractions": "10.0.1",
         "org.nuget.r3": "1.3.0",
-        "org.nuget.system.text.json": "9.0.7"
-    },
-    "scopedRegistries": [
-        {
-            "name": "package.openupm.com",
-            "url": "https://package.openupm.com",
-            "scopes": [
-                "org.nuget",
-                "extensions.unity"
-            ]
-        }
-    ]
+        "org.nuget.system.text.json": "10.0.1"
+    }
 }
 ```
+
+## Available MCP Tools (Summary)
+
+The plugin exposes the following categories of tools to AI clients:
+- **Assets**: Copy, Create-Folder, Delete, Find, Get-Data, Modify, Move, Refresh
+- **Assets/Material**: Create
+- **Assets/Shader**: List-All
+- **Assets/Prefab**: Create, Instantiate, Open/Close, Save
+- **GameObject**: Create, Destroy, Duplicate, Find, Modify, Set-Parent
+- **GameObject/Component**: Add, Destroy, Get, Modify
+- **Scene**: Create, Get-Data, List-Opened, Open, Save, Set-Active, Unload
+- **Script**: Delete, Execute (Roslyn), Read, Update-or-Create
+- **Console**: Get-Logs
+- **Editor/Application**: Get-State, Set-State
+- **Editor/Selection**: Get, Set
+- **Reflection**: Method-Find, Method-Call
+- **Tests**: Run
+- **Package Manager**: Add, Remove, List, Search
 
 ## Known Limitations
 
