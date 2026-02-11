@@ -48,12 +48,19 @@
     font-size: 16px;
     -unity-font-style: bold;
     white-space: normal;
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin-right: 10px;
 }
 
 /* Item ID/Subtitle */
 .item-id {
     font-size: 12px;
     color: #B0B0B0;
+    flex-shrink: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 /* Item Highlighting States */

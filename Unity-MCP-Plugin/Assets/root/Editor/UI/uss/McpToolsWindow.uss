@@ -1,6 +1,36 @@
 /* ==========================================================================
    MCP Tools Window Styles
-   Imports common list window styles - no tool-specific overrides needed
    ========================================================================== */
 
 @import url("common/_mcp-list-window.uss");
+
+/* Tool Item Header - column layout with two rows */
+.tool-item-header {
+    flex-direction: column;
+}
+
+/* Shared row style for tool item rows */
+.tool-item-row {
+    flex-direction: row;
+    justify-content: space-between;
+    width: 100%;
+}
+
+/* Title row - toggle aligned to top */
+.tool-item-title-row {
+    align-items: flex-start;
+}
+
+/* Subtitle row - vertically centered */
+.tool-item-subtitle-row {
+    align-items: center;
+}
+
+/* Token Count */
+.item-token-count {
+    flex-shrink: 0;
+    margin-left: 8px;
+    font-size: 10px;
+    color: rgb(150, 150, 150);
+    white-space: nowrap;
+}
