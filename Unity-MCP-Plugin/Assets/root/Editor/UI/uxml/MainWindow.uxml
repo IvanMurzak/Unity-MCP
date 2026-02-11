@@ -70,7 +70,10 @@
             <!-- Tools Configuration Section -->
             <ui:VisualElement name="ToolsConfigurationSection">
                 <ui:VisualElement class="row-top">
-                    <ui:Label name="toolsCountLabel" text="0 / 0 tools" class="header" />
+                    <ui:VisualElement style="flex-direction: column;">
+                        <ui:Label name="toolsCountLabel" text="0 / 0 tools" class="header" />
+                        <ui:Label name="toolsTokenCountLabel" text="~0 tokens total" style="font-size: 11px; color: rgb(150, 150, 150); margin-top: 2px;" />
+                    </ui:VisualElement>
                     <ui:Button name="btnOpenTools" text="Open" class="btn-secondary" />
                 </ui:VisualElement>
                 <ui:Foldout text="Information" value="false" class="base-foldout">
