@@ -1,13 +1,13 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <ui:VisualElement class="item-container">
-        <ui:VisualElement class="item-header" style="flex-direction: column;">
-            <ui:VisualElement style="flex-direction: row; justify-content: space-between; align-items: flex-start; width: 100%;">
-                <ui:Label name="item-title" text="Tool title, could be multiple lines long" class="item-title" style="flex-grow: 1; flex-shrink: 1; margin-right: 10px;" />
-                <ui:Toggle name="item-toggle" class="item-switch" style="flex-shrink: 0;" />
+        <ui:VisualElement class="item-header tool-item-header">
+            <ui:VisualElement class="tool-item-row tool-item-title-row">
+                <ui:Label name="item-title" text="Tool title, could be multiple lines long" class="item-title" />
+                <ui:Toggle name="item-toggle" class="item-switch" />
             </ui:VisualElement>
-            <ui:VisualElement style="flex-direction: row; align-items: center; justify-content: space-between; width: 100%;">
-                <ui:Label name="item-id" text="tool-id-single-line" class="item-id" style="flex-shrink: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" />
-                <ui:Label name="item-token-count" text="~0 tokens" class="item-token-count" style="flex-shrink: 0; margin-left: 8px; font-size: 10px; color: rgb(150, 150, 150); white-space: nowrap;" />
+            <ui:VisualElement class="tool-item-row tool-item-subtitle-row">
+                <ui:Label name="item-id" text="tool-id-single-line" class="item-id" />
+                <ui:Label name="item-token-count" text="~0 tokens" class="item-token-count" tooltip="Total tokens consumed by active tools in the AI context. Fewer tokens means more free context for AI to reason, leading to better and more accurate responses. Disable unused tools to reduce token usage." />
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="item-details">
