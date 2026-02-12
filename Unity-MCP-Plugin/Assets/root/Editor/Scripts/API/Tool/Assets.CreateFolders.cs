@@ -54,10 +54,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         continue;
                     }
 
+                    var invalidChars = System.IO.Path.GetInvalidFileNameChars();
+                    var invalidIndex = input.NewFolderName.IndexOfAny(invalidChars);
+                    if (invalidIndex >= 0)
+                    {
+                        response.Errors ??= new();
+                        response.Errors.Add($"Cannot create folder '{input.NewFolderName}' in '{input.ParentFolderPath}': folder name contains invalid character '{input.NewFolderName[invalidIndex]}'.");
+                        continue;
+                    }
+
                     if (!AssetDatabase.IsValidFolder(input.ParentFolderPath))
                     {
                         response.Errors ??= new();
                         response.Errors.Add($"Cannot create folder '{input.NewFolderName}': invalid parent folder path '{input.ParentFolderPath}'. The path must start with 'Assets/' and all folders in the path must already exist.");
+                        continue;
+                    }
+
+                    var targetPath = $"{input.ParentFolderPath}/{input.NewFolderName}";
+                    if (AssetDatabase.IsValidFolder(targetPath))
+                    {
+                        response.Errors ??= new();
+                        response.Errors.Add($"Cannot create folder '{input.NewFolderName}' in '{input.ParentFolderPath}': a folder with the same name already exists at '{targetPath}'.");
                         continue;
                     }
 

@@ -120,7 +120,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         [UnityTest]
-        public IEnumerator CreateFolder_DuplicateName_SecondCallStillSucceeds()
+        public IEnumerator CreateFolder_DuplicateName_ReturnsError()
         {
             var dupFolderPath = $"Assets/{TestFolderName}/Dup";
 
@@ -139,16 +139,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     Assert.IsTrue(AssetDatabase.IsValidFolder(dupFolderPath),
                         $"Folder should exist at {dupFolderPath}");
 
-                    // Create the same folder again — Unity may rename it or return empty GUID
-                    RunToolRaw(Tool_Assets.AssetsCreateFolderToolId, $@"{{
+                    var jsonResult = RunToolRaw(Tool_Assets.AssetsCreateFolderToolId, $@"{{
                         ""inputs"": [{{
                             ""parentFolderPath"": ""Assets/{TestFolderName}"",
                             ""newFolderName"": ""Dup""
                         }}]
                     }}");
 
-                    // The tool should not throw — it should either succeed (Unity auto-renames)
-                    // or return a structured error. Either way the original folder must still exist.
+                    StringAssert.Contains("a folder with the same name already exists", jsonResult);
+                    StringAssert.Contains(dupFolderPath, jsonResult);
+
                     Assert.IsTrue(AssetDatabase.IsValidFolder(dupFolderPath),
                         $"Original folder should still exist at {dupFolderPath}");
                 })
@@ -181,6 +181,62 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             }");
 
             StringAssert.Contains("folder name is empty or whitespace", jsonResult);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator CreateFolder_NullFolderName_ReturnsError()
+        {
+            var jsonResult = RunToolRaw(Tool_Assets.AssetsCreateFolderToolId, @"{
+                ""inputs"": [{
+                    ""parentFolderPath"": ""Assets"",
+                    ""newFolderName"": null
+                }]
+            }");
+
+            StringAssert.Contains("folder name is empty or whitespace", jsonResult);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator CreateFolder_FolderNameWithForwardSlash_ReturnsError()
+        {
+            var jsonResult = RunToolRaw(Tool_Assets.AssetsCreateFolderToolId, @"{
+                ""inputs"": [{
+                    ""parentFolderPath"": ""Assets"",
+                    ""newFolderName"": ""Invalid/Name""
+                }]
+            }");
+
+            StringAssert.Contains("contains invalid character", jsonResult);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator CreateFolder_FolderNameWithBackslash_ReturnsError()
+        {
+            var jsonResult = RunToolRaw(Tool_Assets.AssetsCreateFolderToolId, @"{
+                ""inputs"": [{
+                    ""parentFolderPath"": ""Assets"",
+                    ""newFolderName"": ""Invalid\\Name""
+                }]
+            }");
+
+            StringAssert.Contains("contains invalid character", jsonResult);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator CreateFolder_FolderNameWithSpecialCharacters_ReturnsError()
+        {
+            var jsonResult = RunToolRaw(Tool_Assets.AssetsCreateFolderToolId, @"{
+                ""inputs"": [{
+                    ""parentFolderPath"": ""Assets"",
+                    ""newFolderName"": ""Invalid<Name>""
+                }]
+            }");
+
+            StringAssert.Contains("contains invalid character", jsonResult);
             yield return null;
         }
     }
