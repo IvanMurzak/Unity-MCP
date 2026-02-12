@@ -36,7 +36,7 @@
 - ✔️ **豊富なツールセット** - 幅広いデフォルト[MCPツール](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)
 - ✔️ **拡張可能** - プロジェクトコードで[カスタムMCPツール](#カスタムmcpツールの追加)を作成
 
-[![インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download_ja.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.46.0/AI-Game-Dev-Installer.unitypackage)
+[![インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download_ja.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.46.1/AI-Game-Dev-Installer.unitypackage)
 
 ![AIゲーム開発者 窓](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/ai-game-developer-windows.png?raw=true)
 
@@ -252,7 +252,7 @@
 
 ### オプション1 - インストーラー
 
-- **[⬇️ インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.46.0/AI-Game-Dev-Installer.unitypackage)**
+- **[⬇️ インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.46.1/AI-Game-Dev-Installer.unitypackage)**
 - **📂 インストーラーをUnityプロジェクトにインポート**
   > - ファイルをダブルクリック - Unityが自動的に開きます
   > - または：最初にUnityエディターを開き、`Assets/Import Package/Custom Package`をクリックして、ファイルを選択
