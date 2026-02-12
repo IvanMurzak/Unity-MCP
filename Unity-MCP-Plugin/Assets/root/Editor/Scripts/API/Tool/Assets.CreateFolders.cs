@@ -20,6 +20,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Assets
     {
+        // Cross-platform invalid file name characters.
+        // Path.GetInvalidFileNameChars() is OS-dependent (Linux/Mac only returns '/' and '\0'),
+        // but Unity projects must be portable across all platforms.
+        public static readonly char[] InvalidFileNameChars = new[]
+        {
+            '/', '\\', '<', '>', ':', '"', '|', '?', '*',
+            '\0', '\x01', '\x02', '\x03', '\x04', '\x05', '\x06', '\x07',
+            '\x08', '\x09', '\x0A', '\x0B', '\x0C', '\x0D', '\x0E', '\x0F',
+            '\x10', '\x11', '\x12', '\x13', '\x14', '\x15', '\x16', '\x17',
+            '\x18', '\x19', '\x1A', '\x1B', '\x1C', '\x1D', '\x1E', '\x1F'
+        };
+
         public const string AssetsCreateFolderToolId = "assets-create-folder";
         [McpPluginTool
         (
@@ -54,8 +66,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         continue;
                     }
 
-                    var invalidChars = System.IO.Path.GetInvalidFileNameChars();
-                    var invalidIndex = input.NewFolderName.IndexOfAny(invalidChars);
+                    var invalidIndex = input.NewFolderName.IndexOfAny(InvalidFileNameChars);
                     if (invalidIndex >= 0)
                     {
                         response.Errors ??= new();
