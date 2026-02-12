@@ -101,6 +101,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             BindCommonItemFields(element, viewModel);
             BindDescriptionFoldout(element, viewModel, viewModel.descriptionExpanded.Value);
 
+            // Bind token count
+            var tokenCountLabel = element.Q<Label>("item-token-count");
+            if (tokenCountLabel != null)
+            {
+                tokenCountLabel.text = $"~{viewModel.TokenCount} tokens";
+            }
+            else
+            {
+                Logger.LogWarning("{method} Token count label missing for tool: {name}",
+                    nameof(BindItem), viewModel.Name);
+            }
+
             var inputArgumentsFoldout = element.Q<Foldout>("arguments-foldout");
             if (inputArgumentsFoldout != null)
             {
@@ -145,6 +157,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             public bool IsEnabled { get; set; }
             public IReadOnlyList<ArgumentData> Inputs { get; set; }
             public IReadOnlyList<ArgumentData> Outputs { get; set; }
+            public string TokenCount { get; set; }
             public PlayerPrefsBool descriptionExpanded;
             public PlayerPrefsBool inputsExpanded;
             public PlayerPrefsBool outputsExpanded;
@@ -157,6 +170,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 IsEnabled = toolManager?.IsToolEnabled(tool.Name) == true;
                 Inputs = ParseSchemaArguments(tool.InputSchema);
                 Outputs = ParseSchemaArguments(tool.OutputSchema);
+                TokenCount = UIMcpUtils.FormatTokenCount(tool.TokenCount);
                 descriptionExpanded = new PlayerPrefsBool(GetFoldoutKey(tool.Name, "description-foldout"));
                 inputsExpanded = new PlayerPrefsBool(GetFoldoutKey(tool.Name, "arguments-foldout"));
                 outputsExpanded = new PlayerPrefsBool(GetFoldoutKey(tool.Name, "outputs-foldout"));

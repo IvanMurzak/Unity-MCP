@@ -1,3 +1,4 @@
+
 /*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
@@ -7,22 +8,26 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
-using UnityEditor;
 
-namespace com.IvanMurzak.Unity.MCP.Installer
+namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
-    [InitializeOnLoad]
-    public static partial class Installer
+    public static class UIMcpUtils
     {
-        public const string PackageId = "com.ivanmurzak.unity.mcp";
-        public const string Version = "0.46.1";
-
-        static Installer()
+        /// <summary>
+        /// Formats a token count as a human-readable string with K suffix for thousands.
+        /// </summary>
+        /// <param name="tokens">The token count</param>
+        /// <returns>Formatted string (e.g., "1.2K" or "345")</returns>
+        public static string FormatTokenCount(int tokens)
         {
-#if !IVAN_MURZAK_INSTALLER_PROJECT
-            AddScopedRegistryIfNeeded(ManifestPath);
-#endif
+            if (tokens >= 1000)
+            {
+                var thousands = tokens / 1000.0;
+                return $"{thousands:0.#}K";
+            }
+            return tokens.ToString();
         }
     }
 }

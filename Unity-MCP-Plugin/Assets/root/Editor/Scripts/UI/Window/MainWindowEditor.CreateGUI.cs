@@ -575,18 +575,34 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         {
             var btn = root.Q<Button>("btnOpenTools");
             var label = root.Q<Label>("toolsCountLabel");
+            var tokenLabel = root.Q<Label>("toolsTokenCountLabel");
 
             btn.RegisterCallback<ClickEvent>(evt => McpToolsWindow.ShowWindow());
 
             McpPlugin.McpPlugin.DoAlways(plugin =>
             {
                 var manager = plugin.McpManager.ToolManager;
-                if (manager == null) { label.text = "0 / 0 tools"; return; }
+                if (manager == null)
+                {
+                    label.text = "0 / 0 tools";
+                    if (tokenLabel != null) tokenLabel.text = "~0 tokens total";
+                    return;
+                }
 
                 void UpdateStats()
                 {
                     var all = manager.GetAllTools();
-                    label.text = $"{all.Count(t => manager.IsToolEnabled(t.Name))} / {all.Count()} tools";
+                    var enabledCount = all.Count(t => manager.IsToolEnabled(t.Name));
+                    label.text = $"{enabledCount} / {all.Count()} tools";
+
+                    // Calculate total tokens for enabled tools
+                    if (tokenLabel != null)
+                    {
+                        var totalTokens = all
+                            .Where(t => manager.IsToolEnabled(t.Name))
+                            .Sum(t => t.TokenCount);
+                        tokenLabel.text = $"~{UIMcpUtils.FormatTokenCount(totalTokens)} tokens total";
+                    }
                 }
                 UpdateStats();
 
