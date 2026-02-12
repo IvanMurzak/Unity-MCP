@@ -47,10 +47,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 foreach (var input in inputs)
                 {
+                    if (string.IsNullOrWhiteSpace(input.NewFolderName))
+                    {
+                        response.Errors ??= new();
+                        response.Errors.Add($"Cannot create folder in '{input.ParentFolderPath}': folder name is empty or whitespace.");
+                        continue;
+                    }
+
                     if (!AssetDatabase.IsValidFolder(input.ParentFolderPath))
                     {
                         response.Errors ??= new();
-                        response.Errors.Add($"Invalid parent folder path: '{input.ParentFolderPath}'. The path must start with 'Assets/' and all folders in the path must already exist.");
+                        response.Errors.Add($"Cannot create folder '{input.NewFolderName}': invalid parent folder path '{input.ParentFolderPath}'. The path must start with 'Assets/' and all folders in the path must already exist.");
                         continue;
                     }
 
@@ -66,8 +73,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     response.CreatedFolderGuids.Add(guid);
                 }
 
-                AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-                EditorUtils.RepaintAllEditorWindows();
+                if (response.CreatedFolderGuids is { Count: > 0 })
+                {
+                    AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+                    EditorUtils.RepaintAllEditorWindows();
+                }
 
                 return response;
             });

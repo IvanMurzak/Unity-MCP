@@ -10,14 +10,11 @@
 
 #nullable enable
 using System.Collections;
-using System.Collections.Generic;
-using System.Text.Json;
-using com.IvanMurzak.McpPlugin.Common.Model;
-using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.Unity.MCP.Editor.API;
+using com.IvanMurzak.Unity.MCP.Editor.Tests.Utils;
 using NUnit.Framework;
 using UnityEditor;
-using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
@@ -25,128 +22,166 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     {
         const string TestFolderName = "Unity-MCP-Test-CreateFolder";
 
-        readonly List<string> _foldersToCleanup = new();
-
-        public override IEnumerator TearDown()
+        [UnityTest]
+        public IEnumerator CreateFolder_ValidParentFolder_Succeeds()
         {
-            foreach (var folder in _foldersToCleanup)
-            {
-                if (AssetDatabase.IsValidFolder(folder))
+            new CreateFolderExecutor("Assets", TestFolderName)
+                .AddChild(new CallToolExecutor(
+                    Tool_Assets.AssetsCreateFolderToolId,
+                    $@"{{
+                        ""inputs"": [{{
+                            ""parentFolderPath"": ""Assets/{TestFolderName}"",
+                            ""newFolderName"": ""ValidChild""
+                        }}]
+                    }}"))
+                .AddChild(new ValidateToolResultExecutor())
+                .AddChild(() =>
                 {
-                    Debug.Log($"Cleaning up test folder: {folder}");
-                    AssetDatabase.DeleteAsset(folder);
-                }
-            }
-            _foldersToCleanup.Clear();
-            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-            yield return base.TearDown();
+                    Assert.IsTrue(AssetDatabase.IsValidFolder($"Assets/{TestFolderName}/ValidChild"),
+                        $"Folder should exist at Assets/{TestFolderName}/ValidChild");
+                })
+                .Execute();
+            yield return null;
         }
 
-        /// <summary>
-        /// Calls the assets-create-folder tool and returns the full JSON result string
-        /// without asserting success (for testing error responses).
-        /// </summary>
-        string CallToolAndGetJson(string json)
+        [UnityTest]
+        public IEnumerator CreateFolder_InvalidParent_NonExistentPath_ReturnsError()
         {
-            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
-
-            Debug.Log($"{Tool_Assets.AssetsCreateFolderToolId} Started with JSON:\n{json}");
-
-            var parameters = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
-            var request = new RequestCallTool(Tool_Assets.AssetsCreateFolderToolId, parameters!);
-            var task = McpPlugin.McpPlugin.Instance.McpManager.ToolManager!.RunCallTool(request);
-            var result = task.Result;
-            var jsonResult = result.ToJson(reflector)!;
-
-            Debug.Log($"{Tool_Assets.AssetsCreateFolderToolId} Result:\n{jsonResult}");
-
-            return jsonResult;
-        }
-
-        [Test]
-        public void CreateFolder_ValidParentFolder_Succeeds()
-        {
-            var folderPath = $"Assets/{TestFolderName}";
-            _foldersToCleanup.Add(folderPath);
-
-            RunTool(Tool_Assets.AssetsCreateFolderToolId, $@"{{
-                ""inputs"": [{{
-                    ""parentFolderPath"": ""Assets"",
-                    ""newFolderName"": ""{TestFolderName}""
-                }}]
-            }}");
-
-            Assert.IsTrue(AssetDatabase.IsValidFolder(folderPath),
-                $"Folder should exist at {folderPath}");
-        }
-
-        [Test]
-        public void CreateFolder_InvalidParent_NonExistentPath_ReturnsError()
-        {
-            var jsonResult = CallToolAndGetJson(@"{
+            var jsonResult = RunToolRaw(Tool_Assets.AssetsCreateFolderToolId, @"{
                 ""inputs"": [{
                     ""parentFolderPath"": ""Assets/NonExistentFolder12345"",
                     ""newFolderName"": ""TestFolder""
                 }]
             }");
 
-            StringAssert.Contains("Invalid parent folder path", jsonResult);
+            StringAssert.Contains("invalid parent folder path", jsonResult);
             StringAssert.Contains("Assets/NonExistentFolder12345", jsonResult);
+            yield return null;
         }
 
-        [Test]
-        public void CreateFolder_InvalidParent_NotStartingWithAssets_ReturnsError()
+        [UnityTest]
+        public IEnumerator CreateFolder_InvalidParent_NotStartingWithAssets_ReturnsError()
         {
-            var jsonResult = CallToolAndGetJson(@"{
+            var jsonResult = RunToolRaw(Tool_Assets.AssetsCreateFolderToolId, @"{
                 ""inputs"": [{
                     ""parentFolderPath"": ""SomeRandomPath"",
                     ""newFolderName"": ""TestFolder""
                 }]
             }");
 
-            StringAssert.Contains("Invalid parent folder path", jsonResult);
+            StringAssert.Contains("invalid parent folder path", jsonResult);
             StringAssert.Contains("SomeRandomPath", jsonResult);
+            yield return null;
         }
 
-        [Test]
-        public void CreateFolder_InvalidParent_EmptyPath_ReturnsError()
+        [UnityTest]
+        public IEnumerator CreateFolder_InvalidParent_EmptyPath_ReturnsError()
         {
-            var jsonResult = CallToolAndGetJson(@"{
+            var jsonResult = RunToolRaw(Tool_Assets.AssetsCreateFolderToolId, @"{
                 ""inputs"": [{
                     ""parentFolderPath"": """",
                     ""newFolderName"": ""TestFolder""
                 }]
             }");
 
-            StringAssert.Contains("Invalid parent folder path", jsonResult);
+            StringAssert.Contains("invalid parent folder path", jsonResult);
+            yield return null;
         }
 
-        [Test]
-        public void CreateFolder_MixedInputs_ValidAndInvalid_PartialSuccess()
+        [UnityTest]
+        public IEnumerator CreateFolder_MixedInputs_ValidAndInvalid_PartialSuccess()
         {
-            var validFolderPath = $"Assets/{TestFolderName}-Mixed";
-            _foldersToCleanup.Add(validFolderPath);
+            new CreateFolderExecutor("Assets", TestFolderName)
+                .AddChild(() =>
+                {
+                    var jsonResult = RunToolRaw(Tool_Assets.AssetsCreateFolderToolId, $@"{{
+                        ""inputs"": [
+                            {{
+                                ""parentFolderPath"": ""Assets/NonExistentFolder12345"",
+                                ""newFolderName"": ""ShouldFail""
+                            }},
+                            {{
+                                ""parentFolderPath"": ""Assets/{TestFolderName}"",
+                                ""newFolderName"": ""Mixed""
+                            }}
+                        ]
+                    }}");
 
-            var jsonResult = CallToolAndGetJson($@"{{
-                ""inputs"": [
-                    {{
-                        ""parentFolderPath"": ""Assets/NonExistentFolder12345"",
-                        ""newFolderName"": ""ShouldFail""
-                    }},
-                    {{
-                        ""parentFolderPath"": ""Assets"",
-                        ""newFolderName"": ""{TestFolderName}-Mixed""
-                    }}
-                ]
-            }}");
+                    // Should contain error for the invalid path
+                    StringAssert.Contains("invalid parent folder path", jsonResult);
+                    StringAssert.Contains("Assets/NonExistentFolder12345", jsonResult);
 
-            // Should contain error for the invalid path
-            StringAssert.Contains("Invalid parent folder path", jsonResult);
-            StringAssert.Contains("Assets/NonExistentFolder12345", jsonResult);
+                    // Valid folder should still be created
+                    Assert.IsTrue(AssetDatabase.IsValidFolder($"Assets/{TestFolderName}/Mixed"),
+                        $"Valid folder should still be created at Assets/{TestFolderName}/Mixed");
+                })
+                .Execute();
+            yield return null;
+        }
 
-            // Valid folder should still be created
-            Assert.IsTrue(AssetDatabase.IsValidFolder(validFolderPath),
-                $"Valid folder should still be created at {validFolderPath}");
+        [UnityTest]
+        public IEnumerator CreateFolder_DuplicateName_SecondCallStillSucceeds()
+        {
+            var dupFolderPath = $"Assets/{TestFolderName}/Dup";
+
+            new CreateFolderExecutor("Assets", TestFolderName)
+                .AddChild(new CallToolExecutor(
+                    Tool_Assets.AssetsCreateFolderToolId,
+                    $@"{{
+                        ""inputs"": [{{
+                            ""parentFolderPath"": ""Assets/{TestFolderName}"",
+                            ""newFolderName"": ""Dup""
+                        }}]
+                    }}"))
+                .AddChild(new ValidateToolResultExecutor())
+                .AddChild(() =>
+                {
+                    Assert.IsTrue(AssetDatabase.IsValidFolder(dupFolderPath),
+                        $"Folder should exist at {dupFolderPath}");
+
+                    // Create the same folder again — Unity may rename it or return empty GUID
+                    RunToolRaw(Tool_Assets.AssetsCreateFolderToolId, $@"{{
+                        ""inputs"": [{{
+                            ""parentFolderPath"": ""Assets/{TestFolderName}"",
+                            ""newFolderName"": ""Dup""
+                        }}]
+                    }}");
+
+                    // The tool should not throw — it should either succeed (Unity auto-renames)
+                    // or return a structured error. Either way the original folder must still exist.
+                    Assert.IsTrue(AssetDatabase.IsValidFolder(dupFolderPath),
+                        $"Original folder should still exist at {dupFolderPath}");
+                })
+                .Execute();
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator CreateFolder_EmptyFolderName_ReturnsError()
+        {
+            var jsonResult = RunToolRaw(Tool_Assets.AssetsCreateFolderToolId, @"{
+                ""inputs"": [{
+                    ""parentFolderPath"": ""Assets"",
+                    ""newFolderName"": """"
+                }]
+            }");
+
+            StringAssert.Contains("folder name is empty or whitespace", jsonResult);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator CreateFolder_WhitespaceFolderName_ReturnsError()
+        {
+            var jsonResult = RunToolRaw(Tool_Assets.AssetsCreateFolderToolId, @"{
+                ""inputs"": [{
+                    ""parentFolderPath"": ""Assets"",
+                    ""newFolderName"": ""   ""
+                }]
+            }");
+
+            StringAssert.Contains("folder name is empty or whitespace", jsonResult);
+            yield return null;
         }
     }
 }
