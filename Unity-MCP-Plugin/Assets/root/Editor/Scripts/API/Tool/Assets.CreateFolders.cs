@@ -47,17 +47,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 foreach (var input in inputs)
                 {
-                    var guid = AssetDatabase.CreateFolder(input.ParentFolderPath, input.NewFolderName);
-                    if (!string.IsNullOrEmpty(guid))
+                    if (!AssetDatabase.IsValidFolder(input.ParentFolderPath))
                     {
-                        response.CreatedFolderGuids ??= new();
-                        response.CreatedFolderGuids.Add(guid);
+                        response.Errors ??= new();
+                        response.Errors.Add($"Invalid parent folder path: '{input.ParentFolderPath}'. The path must start with 'Assets/' and all folders in the path must already exist.");
+                        continue;
                     }
-                    else
+
+                    var guid = AssetDatabase.CreateFolder(input.ParentFolderPath, input.NewFolderName);
+                    if (string.IsNullOrEmpty(guid))
                     {
                         response.Errors ??= new();
                         response.Errors.Add($"Failed to create folder '{input.NewFolderName}' in '{input.ParentFolderPath}'.");
+                        continue;
                     }
+
+                    response.CreatedFolderGuids ??= new();
+                    response.CreatedFolderGuids.Add(guid);
                 }
 
                 AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
