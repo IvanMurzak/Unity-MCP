@@ -81,15 +81,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             }
 
             // Run command in a terminal window: npx @modelcontextprotocol/inspector http://localhost:8080 --transport http
-            var arguments = $"-y @modelcontextprotocol/inspector {UnityMcpPlugin.Host} --transport http";
-            Debug.Log($"Launching MCP Inspector with command: npx {arguments}");
+            var npxArgs = $"-y @modelcontextprotocol/inspector {UnityMcpPlugin.Host} --transport http";
+            Debug.Log($"Launching MCP Inspector with command: npx {npxArgs}");
 
             var processInfo = new System.Diagnostics.ProcessStartInfo
             {
                 FileName = "npx",
-                Arguments = arguments,
-                RedirectStandardOutput = false,
-                RedirectStandardError = false,
+                Arguments = npxArgs,
                 UseShellExecute = true,
                 CreateNoWindow = false,
             };
