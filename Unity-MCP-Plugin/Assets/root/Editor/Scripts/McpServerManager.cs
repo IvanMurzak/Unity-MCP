@@ -69,8 +69,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             // Register for editor quit to clean up the server process
             EditorApplication.quitting += OnEditorQuitting;
 
+            DownloadServerBinaryIfNeeded()
+                .ContinueWith(task =>
+                {
+                    if (!task.Result)
+                        return; // No binaries available (either in CI or failed to download), skip auto-start
+
+                    EditorApplication.update += ActionStartServerIfNeeded;
+                });
+
             // Check if server process is still running (e.g., after domain reload)
             CheckExistingProcess();
+        }
+
+        static void ActionStartServerIfNeeded()
+        {
+            EditorApplication.update -= ActionStartServerIfNeeded;
+            StartServerIfNeeded();
         }
 
         #region Binary Metadata
