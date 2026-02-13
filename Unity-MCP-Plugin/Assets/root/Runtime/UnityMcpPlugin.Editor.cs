@@ -14,19 +14,17 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
-using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP
 {
     public partial class UnityMcpPlugin
     {
-        public static string ResourcesFileName => "AI-Game-Developer-Config";
-        public static string AssetsFilePath => $"Assets/Resources/{ResourcesFileName}.json";
-#if UNITY_EDITOR
-        public static TextAsset AssetFile => UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(AssetsFilePath);
-        public static void InvalidateAssetFile() => UnityEditor.AssetDatabase.ImportAsset(AssetsFilePath, UnityEditor.ImportAssetOptions.ForceUpdate);
-        public static void MarkAssetFileDirty() => UnityEditor.EditorUtility.SetDirty(AssetFile);
-#endif
+        public static string ConfigFileName => "AI-Game-Developer-Config.json";
+        public static string ConfigDirectoryPath => "ProjectSettings/Packages/com.ivanmurzak.unity.mcp";
+        public static string ConfigFilePath => $"{ConfigDirectoryPath}/{ConfigFileName}";
+
+        /// <summary>Legacy config path for migration from older versions.</summary>
+        public static string LegacyAssetsFilePath => "Assets/Resources/AI-Game-Developer-Config.json";
 
         UnityConnectionConfig GetOrCreateConfig() => GetOrCreateConfig(out _);
         UnityConnectionConfig GetOrCreateConfig(out bool wasCreated)
@@ -35,14 +33,28 @@ namespace com.IvanMurzak.Unity.MCP
             try
             {
 #if UNITY_EDITOR
-                var json = Application.isPlaying
-                    ? UnityEngine.Resources.Load<TextAsset>(ResourcesFileName).text
-                    : File.Exists(AssetsFilePath)
-                        ? File.ReadAllText(AssetsFilePath)
-                        : null;
+                string? json = null;
+
+                // Try new location first
+                if (File.Exists(ConfigFilePath))
+                {
+                    json = File.ReadAllText(ConfigFilePath);
+                }
+                // Try legacy location (Assets/Resources/) and migrate
+                else if (File.Exists(LegacyAssetsFilePath))
+                {
+                    json = File.ReadAllText(LegacyAssetsFilePath);
+                    _logger.LogInformation("{method}: Migrating config from <i>{old}</i> to <i>{new}</i>",
+                        nameof(GetOrCreateConfig), LegacyAssetsFilePath, ConfigFilePath);
+                }
 #else
-                var json = UnityEngine.Resources.Load<TextAsset>(ResourcesFileName).text;
+                // In player builds, config is provided via Builder API or defaults are used.
+                // No config file is available in runtime builds.
+                wasCreated = true;
+                return new UnityConnectionConfig();
 #endif
+
+#if UNITY_EDITOR
                 UnityConnectionConfig? config = null;
                 try
                 {
@@ -56,24 +68,25 @@ namespace com.IvanMurzak.Unity.MCP
                 catch (Exception e)
                 {
                     _logger.LogCritical(e, "{method}: <color=red><b>{file}</b> file is corrupted at <i>{path}</i></color>",
-                        nameof(GetOrCreateConfig), ResourcesFileName, AssetsFilePath);
+                        nameof(GetOrCreateConfig), ConfigFileName, ConfigFilePath);
                 }
                 if (config == null)
                 {
                     _logger.LogWarning("{method}: <color=orange><b>Creating {file}</b> file at <i>{path}</i></color>",
-                        nameof(GetOrCreateConfig), ResourcesFileName, AssetsFilePath);
+                        nameof(GetOrCreateConfig), ConfigFileName, ConfigFilePath);
 
                     config = new UnityConnectionConfig();
                     wasCreated = true;
                 }
 
                 return config;
+#endif
             }
             catch (Exception e)
             {
                 _logger.LogCritical(e, "{method}: <color=red><b>{file}</b> file can't be loaded from <i>{path}</i></color>",
-                    nameof(GetOrCreateConfig), ResourcesFileName, AssetsFilePath);
-                throw e;
+                    nameof(GetOrCreateConfig), ConfigFileName, ConfigFilePath);
+                throw;
             }
         }
 
@@ -83,9 +96,8 @@ namespace com.IvanMurzak.Unity.MCP
             Validate();
             try
             {
-                var directory = Path.GetDirectoryName(AssetsFilePath);
-                if (!Directory.Exists(directory))
-                    Directory.CreateDirectory(directory);
+                if (!Directory.Exists(ConfigDirectoryPath))
+                    Directory.CreateDirectory(ConfigDirectoryPath);
 
                 unityConnectionConfig ??= new UnityConnectionConfig();
 
@@ -118,23 +130,56 @@ namespace com.IvanMurzak.Unity.MCP
                     WriteIndented = true,
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase
                 });
-                File.WriteAllText(AssetsFilePath, json);
+                File.WriteAllText(ConfigFilePath, json);
 
-                var assetFile = AssetFile;
-                if (assetFile != null)
-                    UnityEditor.EditorUtility.SetDirty(assetFile);
-                else
-                    UnityEditor.AssetDatabase.ImportAsset(AssetsFilePath);
+                // Clean up legacy config if it exists
+                MigrateLegacyConfig();
             }
             catch (Exception e)
             {
                 _logger.LogCritical(e, "{method}: <color=red><b>{file}</b> file can't be saved at <i>{path}</i></color>",
-                    nameof(Save), ResourcesFileName, AssetsFilePath);
+                    nameof(Save), ConfigFileName, ConfigFilePath);
             }
 #else
             // do nothing in runtime builds
             return;
 #endif
         }
+
+#if UNITY_EDITOR
+        private void MigrateLegacyConfig()
+        {
+            if (File.Exists(LegacyAssetsFilePath))
+            {
+                try
+                {
+                    File.Delete(LegacyAssetsFilePath);
+                    var metaPath = LegacyAssetsFilePath + ".meta";
+                    if (File.Exists(metaPath))
+                        File.Delete(metaPath);
+
+                    // Check if the Resources folder is now empty and clean it up
+                    var resourcesDir = Path.GetDirectoryName(LegacyAssetsFilePath);
+                    if (resourcesDir != null && Directory.Exists(resourcesDir)
+                        && Directory.GetFiles(resourcesDir).Length == 0
+                        && Directory.GetDirectories(resourcesDir).Length == 0)
+                    {
+                        Directory.Delete(resourcesDir);
+                        var resourcesMetaPath = resourcesDir + ".meta";
+                        if (File.Exists(resourcesMetaPath))
+                            File.Delete(resourcesMetaPath);
+                    }
+
+                    UnityEditor.AssetDatabase.Refresh();
+                    _logger.LogInformation("Migrated config from <i>{old}</i> to <i>{new}</i>",
+                        LegacyAssetsFilePath, ConfigFilePath);
+                }
+                catch (Exception e)
+                {
+                    _logger.LogWarning(e, "Failed to clean up legacy config at {path}", LegacyAssetsFilePath);
+                }
+            }
+        }
+#endif
     }
 }

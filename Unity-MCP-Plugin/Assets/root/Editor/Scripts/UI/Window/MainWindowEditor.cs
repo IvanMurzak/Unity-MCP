@@ -44,11 +44,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             saveChangesMessage = message;
 
-            Undo.RecordObject(UnityMcpPlugin.AssetFile, message); // Undo record started
             base.SaveChanges();
             UnityMcpPlugin.Instance.Save();
-            UnityMcpPlugin.InvalidateAssetFile();
-            UnityMcpPlugin.MarkAssetFileDirty(); // Undo record completed
         }
 
         private void OnChanged(UnityMcpPlugin.UnityConnectionConfig data) => Repaint();

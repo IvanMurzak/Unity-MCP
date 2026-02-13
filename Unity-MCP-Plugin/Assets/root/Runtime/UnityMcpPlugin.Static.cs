@@ -74,6 +74,28 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
+        /// <summary>
+        /// Creates or replaces the singleton instance with the given configuration.
+        /// Used by the runtime Builder API to initialize the plugin programmatically in player builds.
+        /// </summary>
+        public static UnityMcpPlugin CreateInstance(UnityConnectionConfig config)
+        {
+            if (config == null)
+                throw new ArgumentNullException(nameof(config));
+
+            lock (_instanceMutex)
+            {
+                if (instance != null)
+                {
+                    _logger.LogWarning("{method}: UnityMcpPlugin instance already exists. Disposing old instance.",
+                        nameof(CreateInstance));
+                    instance.Dispose();
+                }
+                instance = new UnityMcpPlugin(config);
+                return instance;
+            }
+        }
+
         public static bool IsLogEnabled(LogLevel level) => LogLevel.IsEnabled(level);
 
         public static LogLevel LogLevel

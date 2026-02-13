@@ -28,6 +28,12 @@
     ],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.ivanmurzak.unity.mcp.runtime",
+            "expression": "",
+            "define": "UNITY_MCP_RUNTIME"
+        }
+    ],
     "noEngineReferences": false
 }

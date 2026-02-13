@@ -10,7 +10,15 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [],
-    "versionDefines": [],
+    "defineConstraints": [
+        "UNITY_EDITOR || UNITY_MCP_RUNTIME"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.ivanmurzak.unity.mcp.runtime",
+            "expression": "",
+            "define": "UNITY_MCP_RUNTIME"
+        }
+    ],
     "noEngineReferences": false
 }

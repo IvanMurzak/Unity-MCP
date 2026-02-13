@@ -1,0 +1,24 @@
+{
+    "name": "com.IvanMurzak.Unity.MCP.Player",
+    "rootNamespace": "com.IvanMurzak.Unity.MCP.Player",
+    "references": [
+        "com.IvanMurzak.Unity.MCP.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "McpPlugin.dll",
+        "McpPlugin.Common.dll",
+        "ReflectorNet.dll",
+        "R3.dll",
+        "Microsoft.Extensions.Logging.Abstractions.dll",
+        "Microsoft.AspNetCore.SignalR.Client.dll",
+        "Microsoft.AspNetCore.SignalR.Client.Core.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

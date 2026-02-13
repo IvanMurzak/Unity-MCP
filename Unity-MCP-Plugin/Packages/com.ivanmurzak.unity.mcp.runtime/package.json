@@ -1,0 +1,20 @@
+{
+    "name": "com.ivanmurzak.unity.mcp.runtime",
+    "displayName": "AI Game Developer — MCP Runtime",
+    "author": {
+        "name": "Ivan Murzak",
+        "url": "https://github.com/IvanMurzak"
+    },
+    "keywords": [
+        "AI",
+        "MCP",
+        "Unity MCP",
+        "Runtime"
+    ],
+    "version": "0.46.2",
+    "unity": "2022.3",
+    "description": "Optional runtime module for Unity MCP. Install this package to include MCP plugin functionality in player builds. Adds the UNITY_MCP_RUNTIME scripting define symbol and provides a Builder API for programmatic runtime configuration.",
+    "dependencies": {
+        "com.ivanmurzak.unity.mcp": "0.46.2"
+    }
+}
