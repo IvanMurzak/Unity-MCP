@@ -30,10 +30,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         {
             lock (_compilationLock)
             {
-                if (_compilationCompletionSource != null && !_compilationCompletionSource.Task.IsCompleted)
-                {
-                    _compilationCompletionSource.SetResult(!EditorUtility.scriptCompilationFailed);
-                }
+                _compilationCompletionSource?.TrySetResult(!EditorUtility.scriptCompilationFailed);
             }
         }
 
@@ -124,7 +121,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             if (string.IsNullOrEmpty(errorDetails))
                 return "Compilation errors detected. See Unity console for full log.";
 
-            var lines = errorDetails.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+            var lines = errorDetails.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
             if (lines.Length <= maxErrors)
                 return $"{errorDetails}\n\nSee Unity console for full log.";
 
