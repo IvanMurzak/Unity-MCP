@@ -89,7 +89,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 
                 if (!compilationReady)
                 {
-                    var errorSummary = CompilationUtils.GetCompilationErrorSummary(maxErrors: 10);
+                    var errorSummary = CompilationUtils.GetCompilationErrorSummary();
                     return ResponseCallValueTool<TestRunResponse>
                         .Error($"Cannot run tests: Unity project has compilation errors.\n\n{errorSummary}")
                         .SetRequestID(requestId);

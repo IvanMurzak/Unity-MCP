@@ -27,6 +27,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// </summary>
         public const int DefaultCompilationTimeoutSeconds = 300;
 
+        /// <summary>
+        /// Default maximum number of errors to display in summary
+        /// </summary>
+        public const int DefaultMaxErrorsToDisplay = 10;
+
         static CompilationUtils()
         {
             CompilationPipeline.compilationFinished += OnCompilationFinished;
@@ -121,7 +126,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// </summary>
         /// <param name="maxErrors">Maximum number of errors to include in summary (default: 10)</param>
         /// <returns>Formatted error summary</returns>
-        public static string GetCompilationErrorSummary(int maxErrors = 10)
+        public static string GetCompilationErrorSummary(int maxErrors = DefaultMaxErrorsToDisplay)
         {
             var errorDetails = ScriptUtils.GetCompilationErrorDetails();
             
@@ -134,7 +139,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 return "No compilation errors found.";
             }
 
-            var lines = errorDetails.Split(LineEndingDelimiters, StringSplitOptions.None);
+            var lines = errorDetails.Split(LineEndingDelimiters, StringSplitOptions.RemoveEmptyEntries);
             if (lines.Length <= maxErrors)
                 return $"{errorDetails}\n\nSee Unity console for full log.";
 
