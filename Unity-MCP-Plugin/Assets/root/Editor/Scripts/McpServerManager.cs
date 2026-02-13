@@ -72,6 +72,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             DownloadServerBinaryIfNeeded()
                 .ContinueWith(task =>
                 {
+                    if (task.IsFaulted || !task.Result)
+                        return; // Failed to download binaries, skip auto-start
+
                     if (!task.Result)
                         return; // No binaries available (either in CI or failed to download), skip auto-start
 
