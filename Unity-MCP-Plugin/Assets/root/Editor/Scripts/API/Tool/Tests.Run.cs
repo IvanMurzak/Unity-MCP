@@ -85,7 +85,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     Debug.Log($"[TestRunner] Ensuring compilation is ready before running {testMode} tests...");
 
                 // Ensure compilation is ready before running tests
-                bool compilationReady = await CompilationUtils.EnsureCompilationReadyAsync(timeoutSeconds: 300);
+                bool compilationReady = await CompilationUtils.EnsureCompilationReadyAsync(CompilationUtils.DefaultCompilationTimeoutSeconds);
                 
                 if (!compilationReady)
                 {

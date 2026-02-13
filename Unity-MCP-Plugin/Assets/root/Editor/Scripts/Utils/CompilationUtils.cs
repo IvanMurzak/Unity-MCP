@@ -20,6 +20,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
     {
         private static TaskCompletionSource<bool>? _compilationCompletionSource;
         private static readonly object _compilationLock = new object();
+        private static readonly string[] LineEndingDelimiters = new[] { "\r\n", "\r", "\n" };
+
+        /// <summary>
+        /// Default timeout for compilation operations in seconds (5 minutes)
+        /// </summary>
+        public const int DefaultCompilationTimeoutSeconds = 300;
 
         static CompilationUtils()
         {
@@ -45,7 +51,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// </summary>
         /// <param name="timeoutSeconds">Maximum time to wait in seconds (default: 300 = 5 minutes)</param>
         /// <returns>True if compilation completed successfully, false if it failed or timed out</returns>
-        public static async Task<bool> WaitForCompilationAsync(int timeoutSeconds = 300)
+        public static async Task<bool> WaitForCompilationAsync(int timeoutSeconds = DefaultCompilationTimeoutSeconds)
         {
             // If no compilation is happening and no compilation errors exist, return immediately
             if (!EditorApplication.isCompiling && !EditorUtility.scriptCompilationFailed)
@@ -90,7 +96,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// </summary>
         /// <param name="timeoutSeconds">Maximum time to wait in seconds</param>
         /// <returns>True if Unity is ready (compiled successfully), false if compilation failed or timed out</returns>
-        public static async Task<bool> EnsureCompilationReadyAsync(int timeoutSeconds = 300)
+        public static async Task<bool> EnsureCompilationReadyAsync(int timeoutSeconds = DefaultCompilationTimeoutSeconds)
         {
             // Check if compilation is in progress or failed
             if (EditorApplication.isCompiling)
@@ -121,7 +127,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             if (string.IsNullOrEmpty(errorDetails))
                 return "Compilation errors detected. See Unity console for full log.";
 
-            var lines = errorDetails.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            var lines = errorDetails.Split(LineEndingDelimiters, StringSplitOptions.None);
             if (lines.Length <= maxErrors)
                 return $"{errorDetails}\n\nSee Unity console for full log.";
 
