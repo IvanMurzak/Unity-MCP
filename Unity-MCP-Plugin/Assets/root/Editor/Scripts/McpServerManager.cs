@@ -69,6 +69,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             // Register for editor quit to clean up the server process
             EditorApplication.quitting += OnEditorQuitting;
 
+            // Check if server process is still running (e.g., after domain reload)
+            EditorApplication.update += CheckExistingProcess;
+
             DownloadServerBinaryIfNeeded()
                 .ContinueWith(task =>
                 {
@@ -81,8 +84,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     if (EnvironmentUtils.IsCi())
                         return; // Skip auto-start in CI environment
 
-                    // Check if server process is still running (e.g., after domain reload)
-                    EditorApplication.update += CheckExistingProcess;
                     EditorApplication.update += StartServerIfNeeded;
                 });
         }
