@@ -117,6 +117,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
         /// <summary>
         /// Gets a summary of compilation errors suitable for user feedback.
+        /// This method should only be called when compilation has failed (EditorUtility.scriptCompilationFailed is true).
         /// </summary>
         /// <param name="maxErrors">Maximum number of errors to include in summary (default: 10)</param>
         /// <returns>Formatted error summary</returns>
@@ -125,7 +126,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             var errorDetails = ScriptUtils.GetCompilationErrorDetails();
             
             if (string.IsNullOrEmpty(errorDetails))
-                return "Compilation errors detected. See Unity console for full log.";
+            {
+                // If we can't get detailed errors but compilation failed, provide a generic message
+                if (EditorUtility.scriptCompilationFailed)
+                    return "Compilation errors detected. See Unity console for full log.";
+                
+                return "No compilation errors found.";
+            }
 
             var lines = errorDetails.Split(LineEndingDelimiters, StringSplitOptions.None);
             if (lines.Length <= maxErrors)
