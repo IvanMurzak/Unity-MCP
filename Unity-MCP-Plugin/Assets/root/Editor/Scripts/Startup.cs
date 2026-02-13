@@ -40,7 +40,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             // Defer MCP server auto-start to avoid blocking during domain reload
             // and to ensure configuration is fully loaded
             if (!EnvironmentUtils.IsCi())
-                EditorApplication.delayCall += () => McpServerManager.StartServerIfNeeded();
+                EditorApplication.update += ActionStartServerIfNeeded;
 
             if (Application.dataPath.Contains(" "))
                 Debug.LogError("The project path contains spaces, which may cause issues during usage of AI Game Developer. Please consider the move the project to a folder without spaces.");
@@ -51,6 +51,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             API.Tool_Tests.Init();
             UpdateChecker.Init();
             PackageUtils.Init();
+        }
+
+        static void ActionStartServerIfNeeded()
+        {
+            EditorApplication.update -= ActionStartServerIfNeeded;
+            McpServerManager.StartServerIfNeeded();
         }
     }
 }
