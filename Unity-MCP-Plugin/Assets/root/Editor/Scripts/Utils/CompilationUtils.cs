@@ -18,7 +18,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
     public static class CompilationUtils
     {
-        private static TaskCompletionSource<bool>? _compilationCompletionSource;
+        private static volatile TaskCompletionSource<bool>? _compilationCompletionSource;
         private static readonly object _compilationLock = new object();
 
         static CompilationUtils()
@@ -127,7 +127,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             if (string.IsNullOrEmpty(errorDetails))
                 return "Compilation errors detected. See Unity console for full log.";
 
-            var lines = errorDetails.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None);
+            var lines = errorDetails.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
             if (lines.Length <= maxErrors)
                 return $"{errorDetails}\n\nSee Unity console for full log.";
 
