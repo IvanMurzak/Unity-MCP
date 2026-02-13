@@ -1055,14 +1055,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             }
         }
 
-        public static void ToggleServer()
-        {
-            if (IsRunning)
-                StopServer();
-            else
-                StartServer();
-        }
-
         /// <summary>
         /// Starts the MCP server if KeepServerRunning is enabled and no external server is detected.
         /// This method is called during Unity Editor startup to auto-start the server based on user preference.
@@ -1127,8 +1119,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     _logger.LogDebug("CheckExternalServerAsync: No server detected on port {port} ({message})", port, ex.Message);
                 }
 
+                EditorApplication.CallbackFunction callbackAction = null!;
+
+                callbackAction = () =>
+                {
+                    EditorApplication.update -= callbackAction;
+                    onResult(result);
+                };
+
                 // Marshal callback back to the main thread
-                EditorApplication.delayCall += () => onResult(result);
+                EditorApplication.update += callbackAction;
             });
         }
 
