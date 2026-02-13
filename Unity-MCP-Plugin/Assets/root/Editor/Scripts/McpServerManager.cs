@@ -75,17 +75,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     if (!task.Result)
                         return; // No binaries available (either in CI or failed to download), skip auto-start
 
-                    EditorApplication.update += ActionStartServerIfNeeded;
-                });
+                    if (EnvironmentUtils.IsCi())
+                        return; // Skip auto-start in CI environment
 
-            // Check if server process is still running (e.g., after domain reload)
-            CheckExistingProcess();
-        }
+                    // Check if server process is still running (e.g., after domain reload)
+                    CheckExistingProcess();
 
-        static void ActionStartServerIfNeeded()
-        {
-            EditorApplication.update -= ActionStartServerIfNeeded;
-            StartServerIfNeeded();
+                    StartServerIfNeeded();
+                }, TaskScheduler.FromCurrentSynchronizationContext());
         }
 
         #region Binary Metadata
