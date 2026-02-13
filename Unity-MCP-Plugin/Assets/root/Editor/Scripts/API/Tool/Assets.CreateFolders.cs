@@ -20,6 +20,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Assets
     {
+        // Cross-platform invalid file name characters.
+        // Path.GetInvalidFileNameChars() is OS-dependent (Linux/Mac only returns '/' and '\0'),
+        // but Unity projects must be portable across all platforms.
+        public static readonly char[] InvalidFileNameChars = new[]
+        {
+            '/', '\\', '<', '>', ':', '"', '|', '?', '*',
+            '\0', '\x01', '\x02', '\x03', '\x04', '\x05', '\x06', '\x07',
+            '\x08', '\x09', '\x0A', '\x0B', '\x0C', '\x0D', '\x0E', '\x0F',
+            '\x10', '\x11', '\x12', '\x13', '\x14', '\x15', '\x16', '\x17',
+            '\x18', '\x19', '\x1A', '\x1B', '\x1C', '\x1D', '\x1E', '\x1F'
+        };
+
         public const string AssetsCreateFolderToolId = "assets-create-folder";
         [McpPluginTool
         (
@@ -47,21 +59,53 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 foreach (var input in inputs)
                 {
-                    var guid = AssetDatabase.CreateFolder(input.ParentFolderPath, input.NewFolderName);
-                    if (!string.IsNullOrEmpty(guid))
+                    if (string.IsNullOrWhiteSpace(input.NewFolderName))
                     {
-                        response.CreatedFolderGuids ??= new();
-                        response.CreatedFolderGuids.Add(guid);
+                        response.Errors ??= new();
+                        response.Errors.Add($"Cannot create folder in '{input.ParentFolderPath}': folder name is empty or whitespace.");
+                        continue;
                     }
-                    else
+
+                    var invalidIndex = input.NewFolderName.IndexOfAny(InvalidFileNameChars);
+                    if (invalidIndex >= 0)
+                    {
+                        response.Errors ??= new();
+                        response.Errors.Add($"Cannot create folder '{input.NewFolderName}' in '{input.ParentFolderPath}': folder name contains invalid character '{input.NewFolderName[invalidIndex]}'.");
+                        continue;
+                    }
+
+                    if (!AssetDatabase.IsValidFolder(input.ParentFolderPath))
+                    {
+                        response.Errors ??= new();
+                        response.Errors.Add($"Cannot create folder '{input.NewFolderName}': invalid parent folder path '{input.ParentFolderPath}'. The path must start with 'Assets/' and all folders in the path must already exist.");
+                        continue;
+                    }
+
+                    var targetPath = $"{input.ParentFolderPath}/{input.NewFolderName}";
+                    if (AssetDatabase.IsValidFolder(targetPath))
+                    {
+                        response.Errors ??= new();
+                        response.Errors.Add($"Cannot create folder '{input.NewFolderName}' in '{input.ParentFolderPath}': a folder with the same name already exists at '{targetPath}'.");
+                        continue;
+                    }
+
+                    var guid = AssetDatabase.CreateFolder(input.ParentFolderPath, input.NewFolderName);
+                    if (string.IsNullOrEmpty(guid))
                     {
                         response.Errors ??= new();
                         response.Errors.Add($"Failed to create folder '{input.NewFolderName}' in '{input.ParentFolderPath}'.");
+                        continue;
                     }
+
+                    response.CreatedFolderGuids ??= new();
+                    response.CreatedFolderGuids.Add(guid);
                 }
 
-                AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-                EditorUtils.RepaintAllEditorWindows();
+                if (response.CreatedFolderGuids is { Count: > 0 })
+                {
+                    AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+                    EditorUtils.RepaintAllEditorWindows();
+                }
 
                 return response;
             });

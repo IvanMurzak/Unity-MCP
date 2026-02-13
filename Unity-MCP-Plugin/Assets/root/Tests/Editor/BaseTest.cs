@@ -54,7 +54,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 Object.DestroyImmediate(go);
         }
 
-        protected virtual ResponseData<ResponseCallTool> RunTool(string toolName, string json)
+        private (ResponseData<ResponseCallTool> result, string json) CallToolInternal(string toolName, string json)
         {
             var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
 
@@ -67,15 +67,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             Debug.Log($"{toolName} Completed");
 
-            var jsonResult = result.ToJson(reflector);
+            var jsonResult = result.ToJson(reflector)!;
             Debug.Log($"{toolName} Result:\n{jsonResult}");
+
+            return (result, jsonResult);
+        }
+
+        /// <summary>
+        /// Calls a tool and returns the raw JSON result string without asserting success.
+        /// Useful for testing error responses.
+        /// </summary>
+        protected virtual string RunToolRaw(string toolName, string json)
+        {
+            return CallToolInternal(toolName, json).json;
+        }
+
+        protected virtual ResponseData<ResponseCallTool> RunTool(string toolName, string json)
+        {
+            var (result, jsonResult) = CallToolInternal(toolName, json);
 
             Assert.IsFalse(result.Status == ResponseStatus.Error, $"Tool call failed with error status: {result.Message}");
             Assert.IsNotNull(result.Message, $"Tool call returned null message");
             Assert.IsFalse(result.Message!.Contains("[Error]"), $"Tool call failed with error: {result.Message}");
             Assert.IsNotNull(result.Value, $"Tool call returned null value");
             Assert.IsFalse(result.Value!.Status == ResponseStatus.Error, $"Tool call failed");
-            Assert.IsFalse(jsonResult!.Contains("[Error]"), $"Tool call failed with error in JSON: {jsonResult}");
+            Assert.IsFalse(jsonResult.Contains("[Error]"), $"Tool call failed with error in JSON: {jsonResult}");
             Assert.IsFalse(jsonResult.Contains("[Warning]"), $"Tool call contains warnings in JSON: {jsonResult}");
 
             return result;
