@@ -82,10 +82,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         return; // Skip auto-start in CI environment
 
                     // Check if server process is still running (e.g., after domain reload)
-                    CheckExistingProcess();
-
-                    StartServerIfNeeded();
-                }, TaskScheduler.FromCurrentSynchronizationContext());
+                    EditorApplication.update += CheckExistingProcess;
+                    EditorApplication.update += StartServerIfNeeded;
+                });
         }
 
         #region Binary Metadata
@@ -482,6 +481,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         static void CheckExistingProcess()
         {
+            EditorApplication.update -= CheckExistingProcess;
             // Try to find an existing server process by checking if our tracked PID is still running
             // This helps maintain state across domain reloads
             var savedPid = EditorPrefs.GetInt(ProcessIdKey, -1);
@@ -1077,6 +1077,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         /// </summary>
         public static void StartServerIfNeeded()
         {
+            EditorApplication.update -= StartServerIfNeeded;
+
             // Check if user wants the server to keep running
             if (!UnityMcpPlugin.KeepServerRunning)
             {
