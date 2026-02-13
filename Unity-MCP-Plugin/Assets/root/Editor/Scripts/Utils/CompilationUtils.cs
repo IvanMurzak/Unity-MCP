@@ -34,6 +34,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
         static CompilationUtils()
         {
+            // Register compilation finished event handler.
+            // Note: This handler is intentionally not unregistered as it should remain active
+            // for the lifetime of the Unity Editor session.
             CompilationPipeline.compilationFinished += OnCompilationFinished;
         }
 
@@ -143,7 +146,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             if (lines.Length <= maxErrors)
                 return $"{errorDetails}\n\nSee Unity console for full log.";
 
-            var summary = string.Join("\n", lines, 0, Math.Min(maxErrors, lines.Length));
+            var summary = string.Join("\n", lines, 0, maxErrors);
             var remaining = lines.Length - maxErrors;
             return $"{summary}\n\n...and {remaining} more error(s). See Unity console for full log.";
         }
