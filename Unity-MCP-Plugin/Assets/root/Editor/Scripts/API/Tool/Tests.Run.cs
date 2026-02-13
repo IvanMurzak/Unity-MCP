@@ -74,7 +74,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             return await MainThread.Instance.RunAsync(async () =>
             {
                 // Check if editor is in play mode - tests cannot be run in play mode
-                if (EditorApplication.isPlayingOrWillChangePlaymode)
+                if (UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode)
                 {
                     return ResponseCallValueTool<TestRunResponse>
                         .Error("Cannot run tests while Unity is in or entering Play mode. Please stop Play mode first.")
@@ -86,7 +86,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 // Ensure compilation is ready before running tests
                 bool compilationReady = await CompilationUtils.EnsureCompilationReadyAsync();
-                
+
                 if (!compilationReady)
                 {
                     var errorSummary = CompilationUtils.GetCompilationErrorSummary();
