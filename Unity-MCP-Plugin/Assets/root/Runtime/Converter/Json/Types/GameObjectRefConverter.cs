@@ -26,8 +26,16 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
             if (reader.TokenType == JsonTokenType.Null)
                 return null;
 
+            if (reader.TokenType == JsonTokenType.Number)
+            {
+                return new GameObjectRef
+                {
+                    InstanceID = reader.GetInt32()
+                };
+            }
+
             if (reader.TokenType != JsonTokenType.StartObject)
-                throw new JsonException("Expected start of object token.");
+                throw new JsonException("Expected start of object token or a number (InstanceID).");
 
             var result = new GameObjectRef();
 
