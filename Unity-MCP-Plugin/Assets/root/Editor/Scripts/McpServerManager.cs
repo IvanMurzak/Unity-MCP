@@ -1130,18 +1130,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 {
                     _logger.LogDebug("CheckExternalServerAsync: No server detected on port {port} ({message})", port, ex.Message);
                 }
-
-                EditorApplication.CallbackFunction callbackAction = null!;
-
-                callbackAction = () =>
-                {
-                    EditorApplication.update -= callbackAction;
-                    onResult(result);
-                };
-
-                // Marshal callback back to the main thread
-                EditorApplication.update += callbackAction;
-            });
+                return result;
+            })
+            .ContinueWith(task => onResult(task.Result), TaskScheduler.FromCurrentSynchronizationContext());
         }
 
         #endregion // Process Lifecycle
