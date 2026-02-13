@@ -23,13 +23,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
         static CompilationUtils()
         {
-            CompilationPipeline.compilationStarted += OnCompilationStarted;
             CompilationPipeline.compilationFinished += OnCompilationFinished;
-        }
-
-        private static void OnCompilationStarted(object obj)
-        {
-            // Compilation started, no action needed here
         }
 
         private static void OnCompilationFinished(object obj)
@@ -48,23 +42,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// </summary>
         /// <returns>True if compilation is in progress</returns>
         public static bool IsCompiling() => EditorApplication.isCompiling;
-
-        /// <summary>
-        /// Checks if compilation is required or in progress.
-        /// </summary>
-        /// <returns>True if compilation is needed or ongoing</returns>
-        public static bool IsCompilationRequiredOrInProgress()
-        {
-            return EditorApplication.isCompiling || EditorUtility.scriptCompilationFailed;
-        }
-
-        /// <summary>
-        /// Triggers Unity to refresh and recompile scripts if needed.
-        /// </summary>
-        public static void TriggerCompilation()
-        {
-            AssetDatabase.Refresh(ImportAssetOptions.Default);
-        }
 
         /// <summary>
         /// Waits for any ongoing compilation to complete or triggers compilation if needed.
