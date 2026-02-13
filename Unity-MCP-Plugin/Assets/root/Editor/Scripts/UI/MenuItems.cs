@@ -93,7 +93,49 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 UseShellExecute = true,
                 CreateNoWindow = false,
             };
-            System.Diagnostics.Process.Start(processInfo);
+
+            try
+            {
+                System.Diagnostics.Process.Start(processInfo);
+            }
+            catch (System.ComponentModel.Win32Exception ex)
+            {
+                var command = $"{processInfo.FileName} {processInfo.Arguments}";
+                NotificationPopupWindow.Show(
+                    windowTitle: "Launch Failed",
+                    title: "Unable to start MCP Inspector",
+                    message:
+                        "The MCP Inspector could not be started from Unity.\n\n" +
+                        "This usually means that Node.js (and npx) is not installed, or 'npx' is not available on your PATH.\n\n" +
+                        "Prerequisites:\n" +
+                        " - Install Node.js (which includes npx)\n" +
+                        " - Ensure 'npx' is available from your terminal/command prompt\n\n" +
+                        "You can try running the following command manually in a terminal:\n" +
+                        command + "\n\n" +
+                        "System error:\n" +
+                        ex.Message,
+                    width: 450,
+                    minWidth: 450,
+                    height: 460,
+                    minHeight: 460);
+            }
+            catch (System.Exception ex)
+            {
+                var command = $"{processInfo.FileName} {processInfo.Arguments}";
+                NotificationPopupWindow.Show(
+                    windowTitle: "Launch Failed",
+                    title: "Unexpected error starting MCP Inspector",
+                    message:
+                        "An unexpected error occurred while trying to start the MCP Inspector.\n\n" +
+                        "You can try running the following command manually in a terminal:\n" +
+                        command + "\n\n" +
+                        "Error details:\n" +
+                        ex.Message,
+                    width: 450,
+                    minWidth: 450,
+                    height: 460,
+                    minHeight: 460);
+            }
         }
 
         [MenuItem("Tools/AI Game Developer/Debug/Show Update Popup", priority = 2000)]
