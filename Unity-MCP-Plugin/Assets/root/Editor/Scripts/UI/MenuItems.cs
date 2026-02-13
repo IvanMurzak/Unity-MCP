@@ -15,6 +15,7 @@ using System.Threading.Tasks;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEditor;
 using UnityEngine;
+using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
@@ -66,11 +67,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         [MenuItem("Tools/AI Game Developer/Server/Launch MCP Inspector", priority = 1004)]
         public static void LaunchMcpInspector()
         {
+            if (UnityMcpPlugin.TransportMethod != TransportMethod.streamableHttp)
+            {
+                NotificationPopupWindow.Show(
+                    windowTitle: "Error",
+                    title: "HTTP Transport required",
+                    message: "The MCP Inspector can only be launched when the transport method is set to HTTP. Please change the transport method in the plugin settings and try again.",
+                    width: 350,
+                    minWidth: 350,
+                    height: 200,
+                    minHeight: 200);
+                return;
+            }
+
             // Run command in a terminal window: npx @modelcontextprotocol/inspector http://localhost:8080 --transport http
+            var arguments = $"-y @modelcontextprotocol/inspector {UnityMcpPlugin.Host} --transport http";
+            Debug.Log($"Launching MCP Inspector with command: npx {arguments}");
+
             var processInfo = new System.Diagnostics.ProcessStartInfo
             {
                 FileName = "npx",
-                Arguments = $"-y @modelcontextprotocol/inspector {UnityMcpPlugin.Host} --transport http",
+                Arguments = arguments,
                 RedirectStandardOutput = false,
                 RedirectStandardError = false,
                 UseShellExecute = true,
