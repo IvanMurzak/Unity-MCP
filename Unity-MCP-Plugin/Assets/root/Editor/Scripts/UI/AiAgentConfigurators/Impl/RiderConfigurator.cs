@@ -30,84 +30,49 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override string? IconFileName => "rider-64.png";
 
-        protected override AiAgentConfig CreateConfigStdioWindows() => new RiderJsonAiAgentConfig(
-            name: AgentName,
-            configPath: Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "JetBrains",
-                "Rider",
-                "mcp.json"
-            ),
-            bodyPath: Consts.MCP.Server.DefaultBodyPath
-        )
-        .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
-        .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
-        .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
-        .SetProperty("args", new JsonArray {
-            $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
-            $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-            $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
-        }, requiredForConfiguration: true)
-        .SetPropertyToRemove("url");
+        private string JunieConfigPath => Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            ".junie",
+            "mcp",
+            "mcp.json"
+        );
 
-        protected override AiAgentConfig CreateConfigStdioMacLinux() => new RiderJsonAiAgentConfig(
-            name: AgentName,
-            configPath: Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                "Library",
-                "Application Support",
-                "JetBrains",
-                "Rider",
-                "mcp.json"
-            ),
-            bodyPath: Consts.MCP.Server.DefaultBodyPath
-        )
-        .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
-        .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
-        .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
-        .SetProperty("args", new JsonArray {
-            $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
-            $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-            $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
-        }, requiredForConfiguration: true)
-        .SetPropertyToRemove("url");
+        protected override AiAgentConfig CreateConfigStdioWindows() => CreateJunieConfig(TransportMethod.stdio);
+        protected override AiAgentConfig CreateConfigStdioMacLinux() => CreateJunieConfig(TransportMethod.stdio);
+        protected override AiAgentConfig CreateConfigHttpWindows() => CreateJunieConfig(TransportMethod.streamableHttp);
+        protected override AiAgentConfig CreateConfigHttpMacLinux() => CreateJunieConfig(TransportMethod.streamableHttp);
 
-        // ... (HTTP Configs remain unchanged) ...
+        private AiAgentConfig CreateJunieConfig(TransportMethod transportMethod)
+        {
+            var config = new JsonAiAgentConfig(
+                name: "Unity Project",
+                configPath: JunieConfigPath,
+                bodyPath: Consts.MCP.Server.DefaultBodyPath
+            )
+            .SetProperty("enabled", JsonValue.Create(true), requiredForConfiguration: true)
+            .SetPropertyToRemove("disabled");
 
-        protected override AiAgentConfig CreateConfigHttpWindows() => new JsonAiAgentConfig(
-            name: AgentName,
-            configPath: Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "JetBrains",
-                "Rider",
-                "mcp.json"
-            ),
-            bodyPath: Consts.MCP.Server.DefaultBodyPath
-        )
-        .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
-        .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
-        .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
-        .SetPropertyToRemove("command")
-        .SetPropertyToRemove("args");
+            if (transportMethod == TransportMethod.stdio)
+            {
+                config.SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
+                      .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
+                      .SetProperty("args", new JsonArray {
+                          $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
+                          $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+                          $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+                      }, requiredForConfiguration: true)
+                      .SetPropertyToRemove("url");
+            }
+            else
+            {
+                config.SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
+                      .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
+                      .SetPropertyToRemove("command")
+                      .SetPropertyToRemove("args");
+            }
 
-        protected override AiAgentConfig CreateConfigHttpMacLinux() => new JsonAiAgentConfig(
-            name: AgentName,
-            configPath: Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                "Library",
-                "Application Support",
-                "JetBrains",
-                "Rider",
-                "mcp.json"
-            ),
-            bodyPath: Consts.MCP.Server.DefaultBodyPath
-        )
-        .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
-        .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
-        .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
-        .SetPropertyToRemove("command")
-        .SetPropertyToRemove("args");
-
+            return config;
+        }
 
         protected override void OnUICreated(VisualElement root)
         {
@@ -115,10 +80,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             // STDIO Configuration
             var manualStepsContainer = TemplateFoldoutFirst("Manual Configuration Steps");
-            manualStepsContainer!.Add(TemplateLabelDescription("Rider typically uses HTTP for MCP, but can be configured with a JSON file."));
-            manualStepsContainer!.Add(TemplateLabelDescription("1. Open Rider settings: Settings | Tools | Junie | MCP Settings."));
-            manualStepsContainer!.Add(TemplateLabelDescription("2. Add a new server with the following details."));
+            
+            var relativePath = Path.Combine(".junie", "mcp", "mcp.json");
+            var terminalCommandStdio = $"mkdir -p .junie/mcp && printf '{ConfigStdio.ExpectedFileContent.Replace("'", "'\\''")}' > {relativePath}";
+
+            manualStepsContainer!.Add(TemplateLabelDescription("Option 1: Use Terminal (Recommended for CLI lovers)"));
+            manualStepsContainer!.Add(TemplateLabelDescription("Run this command in your project root terminal:"));
+            manualStepsContainer!.Add(TemplateTextFieldReadOnly(terminalCommandStdio));
+
+            manualStepsContainer!.Add(TemplateLabelDescription("Option 2: Manual File Creation"));
+            manualStepsContainer!.Add(TemplateLabelDescription($"1. Create or open the file: {relativePath}"));
+            manualStepsContainer!.Add(TemplateLabelDescription("2. Copy and paste the JSON below:"));
             manualStepsContainer!.Add(TemplateTextFieldReadOnly(ConfigStdio.ExpectedFileContent));
+            
+            manualStepsContainer!.Add(TemplateLabelDescription("Option 3: Rider Settings"));
+            manualStepsContainer!.Add(TemplateLabelDescription("Open Rider settings: Settings | Tools | Junie | MCP Settings and add a new server."));
 
             ContainerStdio!.Add(manualStepsContainer);
 
@@ -126,6 +102,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Ensure MCP configuration file doesn't have syntax errors"));
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Restart Rider after configuration changes"));
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- If using Terminal, ensure you are in the Unity project root folder."));
 
             ContainerStdio!.Add(troubleshootingContainerStdio);
 
@@ -139,64 +116,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             
             ContainerHttp!.Add(warningLabel);
             ContainerHttp!.Add(TemplateLabelDescription("The standard HTTP configuration is disabled due to stability issues."));
-
-            var troubleshootingContainerHttp = TemplateFoldout("Troubleshooting");
-
-            troubleshootingContainerHttp.Add(TemplateLabelDescription("- Ensure MCP configuration file doesn't have syntax errors"));
-            troubleshootingContainerHttp.Add(TemplateLabelDescription("- Restart Rider after configuration changes"));
-
-            ContainerHttp!.Add(troubleshootingContainerHttp);
-        }
-
-        private class RiderJsonAiAgentConfig : JsonAiAgentConfig
-        {
-            public RiderJsonAiAgentConfig(string name, string configPath, string bodyPath) : base(name, configPath, bodyPath)
-            {
-            }
-
-            public override bool Configure()
-            {
-                var result = base.Configure();
-                if (result)
-                {
-                    ConfigureJunie();
-                }
-                return result;
-            }
-
-            private void ConfigureJunie()
-            {
-                try
-                {
-                    var junieConfigPath = Path.Combine(
-                        Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                        ".junie",
-                        "mcp",
-                        "mcp.json"
-                    );
-
-                    var junieConfig = new JsonAiAgentConfig(
-                        name: "Unity Project",
-                        configPath: junieConfigPath,
-                        bodyPath: Consts.MCP.Server.DefaultBodyPath
-                    )
-                    .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
-                    .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
-                    .SetProperty("args", new JsonArray {
-                        $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
-                        $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-                        $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
-                    }, requiredForConfiguration: true)
-                    .SetPropertyToRemove("url");
-
-                    junieConfig.Configure();
-                    UnityEngine.Debug.Log($"Also configured Junie MCP at: {junieConfigPath}");
-                }
-                catch (Exception ex)
-                {
-                    UnityEngine.Debug.LogError($"Failed to configure Junie MCP: {ex.Message}");
-                }
-            }
+            ContainerHttp!.Add(TemplateLabelDescription("Please switch to the 'Stdio' transport method at the top to configure this agent."));
         }
     }
 }
