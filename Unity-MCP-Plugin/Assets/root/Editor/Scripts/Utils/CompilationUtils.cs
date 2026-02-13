@@ -18,7 +18,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
     public static class CompilationUtils
     {
-        private static volatile TaskCompletionSource<bool>? _compilationCompletionSource;
+        private static TaskCompletionSource<bool>? _compilationCompletionSource;
         private static readonly object _compilationLock = new object();
 
         static CompilationUtils()
@@ -78,10 +78,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 // Timeout occurred
                 lock (_compilationLock)
                 {
-                    if (!currentCompletionSource.Task.IsCompleted)
-                    {
-                        currentCompletionSource.SetResult(false);
-                    }
+                    currentCompletionSource.TrySetResult(false);
                 }
                 return false;
             }
