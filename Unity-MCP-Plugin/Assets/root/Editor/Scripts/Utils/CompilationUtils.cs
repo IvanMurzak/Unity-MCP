@@ -81,6 +81,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             if (!EditorApplication.isCompiling && EditorUtility.scriptCompilationFailed)
                 return false;
 
+            TaskCompletionSource<bool> currentCompletionSource;
             lock (_compilationLock)
             {
                 // Create a new TaskCompletionSource if one doesn't exist or is completed
@@ -88,27 +89,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 {
                     _compilationCompletionSource = new TaskCompletionSource<bool>();
                 }
+                currentCompletionSource = _compilationCompletionSource;
             }
 
             // Wait for compilation to complete with timeout
             var timeoutTask = Task.Delay(TimeSpan.FromSeconds(timeoutSeconds));
-            var completedTask = await Task.WhenAny(_compilationCompletionSource.Task, timeoutTask);
+            var completedTask = await Task.WhenAny(currentCompletionSource.Task, timeoutTask);
 
             if (completedTask == timeoutTask)
             {
                 // Timeout occurred
                 lock (_compilationLock)
                 {
-                    if (_compilationCompletionSource != null && !_compilationCompletionSource.Task.IsCompleted)
+                    if (!currentCompletionSource.Task.IsCompleted)
                     {
-                        _compilationCompletionSource.SetResult(false);
+                        currentCompletionSource.SetResult(false);
                     }
                 }
                 return false;
             }
 
             // Return the compilation result
-            return await _compilationCompletionSource.Task;
+            return await currentCompletionSource.Task;
         }
 
         /// <summary>
@@ -139,9 +141,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// <summary>
         /// Gets a summary of compilation errors suitable for user feedback.
         /// </summary>
-        /// <param name="maxErrors">Maximum number of errors to include in summary</param>
+        /// <param name="maxErrors">Maximum number of errors to include in summary (default: 10)</param>
         /// <returns>Formatted error summary</returns>
-        public static string GetCompilationErrorSummary(int maxErrors = 5)
+        public static string GetCompilationErrorSummary(int maxErrors = 10)
         {
             var errorDetails = ScriptUtils.GetCompilationErrorDetails();
             
