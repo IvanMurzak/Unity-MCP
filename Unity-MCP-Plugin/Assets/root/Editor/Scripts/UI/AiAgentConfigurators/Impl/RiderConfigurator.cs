@@ -24,8 +24,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
     /// </summary>
     public class RiderConfigurator : AiAgentConfigurator
     {
-        public override string AgentName => "Rider";
-        public override string AgentId => "rider";
+        public override string AgentName => "Rider (junie)";
+        public override string AgentId => "rider-junie";
         public override string DownloadUrl => "https://www.jetbrains.com/rider/download/";
 
         protected override string? IconFileName => "rider-64.png";
