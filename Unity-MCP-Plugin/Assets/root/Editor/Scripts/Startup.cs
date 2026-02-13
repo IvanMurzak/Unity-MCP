@@ -28,14 +28,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
             UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
 
-            McpServerManager.DownloadServerBinaryIfNeeded()
-                .ContinueWith(task =>
-                {
-                    if (!task.Result)
-                        return; // No binaries available (either in CI or already exist), skip auto-start
 
-                    EditorApplication.update += ActionStartServerIfNeeded;
-                });
 
             if (Application.dataPath.Contains(" "))
                 Debug.LogError("The project path contains spaces, which may cause issues during usage of AI Game Developer. Please consider the move the project to a folder without spaces.");
@@ -46,12 +39,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             API.Tool_Tests.Init();
             UpdateChecker.Init();
             PackageUtils.Init();
-        }
-
-        static void ActionStartServerIfNeeded()
-        {
-            EditorApplication.update -= ActionStartServerIfNeeded;
-            McpServerManager.StartServerIfNeeded();
         }
     }
 }
