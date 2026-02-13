@@ -73,16 +73,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             return await MainThread.Instance.RunAsync(async () =>
             {
-                if (UnityEditor.EditorUtility.scriptCompilationFailed)
+                // Check if editor is in play mode - tests cannot be run in play mode
+                if (EditorApplication.isPlayingOrWillChangePlaymode)
                 {
-                    var compilationErrorDetails = ScriptUtils.GetCompilationErrorDetails();
                     return ResponseCallValueTool<TestRunResponse>
-                        .Error($"Unity project has compilation error. Please fix all compilation errors before running tests.\n{compilationErrorDetails}")
+                        .Error("Cannot run tests while Unity is in or entering Play mode. Please stop Play mode first.")
                         .SetRequestID(requestId);
                 }
 
                 if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
-                    Debug.Log($"[TestRunner] ------------------------------------- Preparing to run {testMode} tests.");
+                    Debug.Log($"[TestRunner] Ensuring compilation is ready before running {testMode} tests...");
+
+                // Ensure compilation is ready before running tests
+                bool compilationReady = await CompilationUtils.EnsureCompilationReadyAsync(timeoutSeconds: 300);
+                
+                if (!compilationReady)
+                {
+                    var errorSummary = CompilationUtils.GetCompilationErrorSummary(maxErrors: 10);
+                    return ResponseCallValueTool<TestRunResponse>
+                        .Error($"Cannot run tests: Unity project has compilation errors.\n\n{errorSummary}")
+                        .SetRequestID(requestId);
+                }
+
+                if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
+                    Debug.Log($"[TestRunner] Compilation ready. Preparing to run {testMode} tests.");
 
                 try
                 {
