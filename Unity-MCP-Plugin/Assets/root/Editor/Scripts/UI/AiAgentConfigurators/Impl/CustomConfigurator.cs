@@ -70,7 +70,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             // HTTP Configuration
 
-            ContainerHttp!.Add(TemplateLabelDescription("1. (Just once) Setup and start the MCP server using Docker."));
+            ContainerHttp!.Add(TemplateLabelDescription("1. (First time or after port/version changes) Setup and start the MCP server using Docker."));
             ContainerHttp!.Add(TemplateTextFieldReadOnly(McpServerManager.DockerSetupRunCommand()));
 
             ContainerHttp!.Add(TemplateLabelDescription("2. (Next time) Start the MCP server using Docker."));
