@@ -28,20 +28,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
             UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
 
-            // Defer connection to avoid blocking during domain reload.
-            // Starting async SignalR connections during [InitializeOnLoad] can cause
-            // Unity to freeze because async continuations may run on the main thread
-            // while it's still processing the domain reload.
-            if (!EnvironmentUtils.IsCi())
-                EditorApplication.delayCall += () => UnityMcpPlugin.ConnectIfNeeded();
-
-            McpServerManager.DownloadServerBinaryIfNeeded();
-
-            // Defer MCP server auto-start to avoid blocking during domain reload
-            // and to ensure configuration is fully loaded
-            if (!EnvironmentUtils.IsCi())
-                EditorApplication.delayCall += () => McpServerManager.StartServerIfNeeded();
-
             if (Application.dataPath.Contains(" "))
                 Debug.LogError("The project path contains spaces, which may cause issues during usage of AI Game Developer. Please consider the move the project to a folder without spaces.");
 
