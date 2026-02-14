@@ -244,6 +244,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             return this;
         }
 
+        protected virtual AiAgentConfigurator DisableLinksContainer()
+        {
+            ThrowIfRootNotSet();
+            var linksContainer = Root!.Q<VisualElement>("linksContainer");
+            if (linksContainer != null)
+                linksContainer.style.display = DisplayStyle.None;
+            return this;
+        }
+
         protected virtual AiAgentConfigurator SetTutorialUrl(string url, string label = "YouTube")
         {
             ThrowIfRootNotSet();
