@@ -73,43 +73,58 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             return await MainThread.Instance.RunAsync(async () =>
             {
-                // Check if editor is in play mode - tests cannot be run in play mode
-                if (UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode)
+                // Save display options to PlayerPrefs BEFORE AssetDatabase.Refresh —
+                // these must be persisted before a potential domain reload
+                TestResultCollector.TestCallRequestID.Value = requestId;
+                TestResultCollector.IncludePassingTests.Value = includePassingTests;
+                TestResultCollector.IncludeMessage.Value = includeMessages;
+                TestResultCollector.IncludeMessageStacktrace.Value = includeStacktrace;
+
+                TestResultCollector.IncludeLogs.Value = includeLogs;
+                TestResultCollector.IncludeLogsMinLevel.Value = (int)logType;
+                TestResultCollector.IncludeLogsStacktrace.Value = includeLogsStacktrace;
+
+                // Trigger AssetDatabase.Refresh to detect and compile any changed scripts
+                if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
+                    Debug.Log($"[TestRunner] Refreshing AssetDatabase before running {testMode} tests...");
+
+                UnityEditor.AssetDatabase.Refresh();
+
+                // Check if compilation was triggered (scripts changed on disk)
+                if (UnityEditor.EditorApplication.isCompiling)
                 {
+                    if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
+                        Debug.Log($"[TestRunner] Scripts are compiling. Deferring test run until after domain reload.");
+
+                    // Save filter params to SessionState (survives domain reload)
+                    SavePendingTestRun(testMode, testAssembly, testNamespace, testClass, testMethod);
+
+                    // Register resume callback now — handles compilation failure (no domain reload).
+                    // If compilation succeeds, domain reload destroys this registration,
+                    // but the static constructor re-registers it after reload.
+                    UnityEditor.EditorApplication.update += ResumePendingTestRunOnce;
+
                     return ResponseCallValueTool<TestRunResponse>
-                        .Error("Cannot run tests while Unity is in or entering Play mode. Please stop Play mode first.")
+                        .Processing()
                         .SetRequestID(requestId);
                 }
 
-                if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
-                    Debug.Log($"[TestRunner] Ensuring compilation is ready before running {testMode} tests...");
-
-                // Ensure compilation is ready before running tests
-                bool compilationReady = await CompilationUtils.EnsureCompilationReadyAsync();
-
-                if (!compilationReady)
+                // Check for pre-existing compilation errors (no new compilation triggered)
+                if (UnityEditor.EditorUtility.scriptCompilationFailed)
                 {
-                    var errorSummary = CompilationUtils.GetCompilationErrorSummary();
+                    TestResultCollector.TestCallRequestID.Value = string.Empty;
+                    var errorDetails = ScriptUtils.GetCompilationErrorDetails();
                     return ResponseCallValueTool<TestRunResponse>
-                        .Error($"Cannot run tests: Unity project has compilation errors.\n\n{errorSummary}")
+                        .Error($"Cannot run tests: Unity project has compilation errors.\n\n{errorDetails}")
                         .SetRequestID(requestId);
                 }
 
+                // No compilation needed — run tests immediately
                 if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
-                    Debug.Log($"[TestRunner] Compilation ready. Preparing to run {testMode} tests.");
+                    Debug.Log($"[TestRunner] No compilation needed. Running {testMode} tests immediately.");
 
                 try
                 {
-                    TestResultCollector.TestCallRequestID.Value = requestId;
-                    TestResultCollector.IncludePassingTests.Value = includePassingTests;
-                    TestResultCollector.IncludeMessage.Value = includeMessages;
-                    TestResultCollector.IncludeMessageStacktrace.Value = includeStacktrace;
-
-                    TestResultCollector.IncludeLogs.Value = includeLogs;
-                    TestResultCollector.IncludeLogsMinLevel.Value = (int)logType;
-                    TestResultCollector.IncludeLogsStacktrace.Value = includeLogsStacktrace;
-
-                    // Create filter parameters
                     var filterParams = new TestFilterParameters(testAssembly, testNamespace, testClass, testMethod);
 
                     if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
