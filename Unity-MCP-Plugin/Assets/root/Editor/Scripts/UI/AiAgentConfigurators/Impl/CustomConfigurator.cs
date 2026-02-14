@@ -56,6 +56,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         {
             SetAgentIcon();
             SetTransportMethod(UnityMcpPlugin.TransportMethod);
+            SetAgentName(AgentName);
+            DisableLinksContainer();
 
             // STDIO Configuration
 
@@ -68,13 +70,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             // HTTP Configuration
 
-            ContainerHttp!.Add(TemplateLabelDescription("Copy paste the json into your MCP Client to configure it."));
+            ContainerHttp!.Add(TemplateLabelDescription("1. (Just once) Setup and start the MCP server using Docker."));
+            ContainerHttp!.Add(TemplateTextFieldReadOnly(McpServerManager.DockerSetupRunCommand()));
+
+            ContainerHttp!.Add(TemplateLabelDescription("2. (Next time) Start the MCP server using Docker."));
+            ContainerHttp!.Add(TemplateTextFieldReadOnly(McpServerManager.DockerRunCommand()));
+
+            ContainerHttp!.Add(TemplateLabelDescription("3. Copy paste the json into your MCP Client to configure it."));
             ContainerHttp!.Add(TemplateTextFieldReadOnly(McpServerManager.RawJsonConfigurationHttp(
                 url: UnityMcpPlugin.Host,
                 bodyPath: "mcpServers",
                 type: null).ToString()));
-            ContainerHttp!.Add(TemplateLabelDescription("Start the MCP server using Docker."));
-            ContainerHttp!.Add(TemplateTextFieldReadOnly(McpServerManager.DockerRunCommand()));
         }
     }
 }

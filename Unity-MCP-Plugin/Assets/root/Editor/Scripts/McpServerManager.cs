@@ -467,13 +467,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             return result;
         }
 
-        public static string DockerRunCommand()
+        public static string DockerSetupRunCommand()
         {
             var dockerPortMapping = $"-p {UnityMcpPlugin.Port}:{UnityMcpPlugin.Port}";
             var dockerEnvVars = $"-e MCP_PLUGIN_CLIENT_TRANSPORT={TransportMethod.streamableHttp} -e MCP_PLUGIN_PORT={UnityMcpPlugin.Port} -e MCP_PLUGIN_CLIENT_TIMEOUT={UnityMcpPlugin.TimeoutMs}";
             var dockerContainer = $"--name unity-mcp-server-{UnityMcpPlugin.Port}";
             var dockerImage = $"ivanmurzakdev/unity-mcp-server:{UnityMcpPlugin.Version}";
             return $"docker run -d {dockerPortMapping} {dockerEnvVars} {dockerContainer} {dockerImage}";
+        }
+
+        public static string DockerRunCommand()
+        {
+            return $"docker start unity-mcp-server-{UnityMcpPlugin.Port}";
         }
 
         #endregion // Client Configuration
