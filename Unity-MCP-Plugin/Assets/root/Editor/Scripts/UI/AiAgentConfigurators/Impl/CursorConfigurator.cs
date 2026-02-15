@@ -44,7 +44,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetProperty("args", new JsonArray {
             $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
             $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-            $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+            $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}",
+            $"{Consts.MCP.Server.Args.Token}={UnityMcpPlugin.Token}"
         }, requiredForConfiguration: true)
         .SetPropertyToRemove("url");
 
@@ -61,7 +62,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetProperty("args", new JsonArray {
             $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
             $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-            $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+            $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}",
+            $"{Consts.MCP.Server.Args.Token}={UnityMcpPlugin.Token}"
         }, requiredForConfiguration: true)
         .SetPropertyToRemove("url");
 

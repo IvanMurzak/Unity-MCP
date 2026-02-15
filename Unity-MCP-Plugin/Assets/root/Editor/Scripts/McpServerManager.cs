@@ -470,7 +470,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public static string DockerSetupRunCommand()
         {
             var dockerPortMapping = $"-p {UnityMcpPlugin.Port}:{UnityMcpPlugin.Port}";
-            var dockerEnvVars = $"-e MCP_PLUGIN_CLIENT_TRANSPORT={TransportMethod.streamableHttp} -e MCP_PLUGIN_PORT={UnityMcpPlugin.Port} -e MCP_PLUGIN_CLIENT_TIMEOUT={UnityMcpPlugin.TimeoutMs}";
+            var dockerEnvVars = $"-e MCP_PLUGIN_CLIENT_TRANSPORT={TransportMethod.streamableHttp} -e MCP_PLUGIN_PORT={UnityMcpPlugin.Port} -e MCP_PLUGIN_CLIENT_TIMEOUT={UnityMcpPlugin.TimeoutMs} -e MCP_PLUGIN_TOKEN={UnityMcpPlugin.Token}";
             var dockerContainer = $"--name unity-mcp-server-{UnityMcpPlugin.Port}";
             var dockerImage = $"ivanmurzakdev/unity-mcp-server:{UnityMcpPlugin.Version}";
             return $"docker run -d {dockerPortMapping} {dockerEnvVars} {dockerContainer} {dockerImage}";
@@ -479,6 +479,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public static string DockerRunCommand()
         {
             return $"docker start unity-mcp-server-{UnityMcpPlugin.Port}";
+        }
+
+        public static string DockerStopCommand()
+        {
+            return $"docker stop unity-mcp-server-{UnityMcpPlugin.Port}";
+        }
+
+        public static string DockerRemoveCommand()
+        {
+            return $"docker rm unity-mcp-server-{UnityMcpPlugin.Port}";
         }
 
         #endregion // Client Configuration
@@ -926,9 +936,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             var port = UnityMcpPlugin.Port;
             var timeout = UnityMcpPlugin.TimeoutMs;
             var transportMethod = TransportMethod.streamableHttp; // always must be streamableHttp for launching the server.
+            var token = UnityMcpPlugin.Token;
 
-            // Arguments format: port=XXXXX plugin-timeout=XXXXX client-transport=<TransportMethod>
-            return $"{McpConsts.MCP.Server.Args.Port}={port} {McpConsts.MCP.Server.Args.PluginTimeout}={timeout} {McpConsts.MCP.Server.Args.ClientTransportMethod}={transportMethod}";
+            // Arguments format: port=XXXXX plugin-timeout=XXXXX client-transport=<TransportMethod> token=<Token>
+            return $"{Args.Port}={port} {Args.PluginTimeout}={timeout} {Args.ClientTransportMethod}={transportMethod} {Args.Token}={token}";
         }
 
         /// <summary>

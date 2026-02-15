@@ -81,6 +81,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 url: UnityMcpPlugin.Host,
                 bodyPath: "mcpServers",
                 type: null).ToString()));
+
+            ContainerHttp!.Add(TemplateLabelDescription("4. (Optional) Stop and remove the MCP server using Docker when you are done."));
+            ContainerHttp!.Add(TemplateTextFieldReadOnly(McpServerManager.DockerStopCommand()));
+            ContainerHttp!.Add(TemplateTextFieldReadOnly(McpServerManager.DockerRemoveCommand()));
         }
     }
 }

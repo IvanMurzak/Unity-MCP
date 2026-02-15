@@ -141,6 +141,16 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
+        public static string? Token
+        {
+            get => Instance.unityConnectionConfig.Token;
+            set
+            {
+                Instance.unityConnectionConfig.Token = value;
+                NotifyChanged(Instance.unityConnectionConfig);
+            }
+        }
+
         static ReactiveProperty<HubConnectionState> _connectionState = new(HubConnectionState.Disconnected);
         public static ReadOnlyReactiveProperty<HubConnectionState> ConnectionState => _connectionState;
 

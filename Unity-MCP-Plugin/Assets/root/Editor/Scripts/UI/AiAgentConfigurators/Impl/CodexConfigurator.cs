@@ -41,7 +41,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetProperty("args", new[] {
             $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
             $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-            $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+            $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}",
+            $"{Consts.MCP.Server.Args.Token}={UnityMcpPlugin.Token}"
         }, requiredForConfiguration: true)
         .SetProperty("tool_timeout_sec", 300, requiredForConfiguration: false) // Optional: Set a longer tool timeout for Codex
         .SetPropertyToRemove("url")
@@ -61,7 +62,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetProperty("args", new[] {
             $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
             $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-            $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+            $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}",
+            $"{Consts.MCP.Server.Args.Token}={UnityMcpPlugin.Token}"
         }, requiredForConfiguration: true)
         .SetProperty("tool_timeout_sec", 300, requiredForConfiguration: false) // Optional: Set a longer tool timeout for Codex
         .SetPropertyToRemove("url")
