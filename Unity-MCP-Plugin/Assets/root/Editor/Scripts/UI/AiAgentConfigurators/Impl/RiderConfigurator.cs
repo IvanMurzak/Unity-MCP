@@ -131,7 +131,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             // HTTP Configuration
 
-            var warning = TemplateWarningLabel("Apologies for inconvenience. Please use Stdio to connect. Currently in Rider only Junie will be able to connect to Unity MCP, via Stdio.");
+            var warning = TemplateWarningLabel("Apologies for the inconvenience. Please use Stdio to connect. Currently in Rider only Junie will be able to connect to Unity MCP, via Stdio.");
             warning.style.whiteSpace = WhiteSpace.Normal;
             warning.style.marginBottom = 10;
 
