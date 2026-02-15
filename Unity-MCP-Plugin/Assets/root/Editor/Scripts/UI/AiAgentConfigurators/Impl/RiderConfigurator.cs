@@ -91,10 +91,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         {
             base.OnUICreated(root);
 
-            ContainerUnderHeader!.Add(TemplateWarningLabel("After configuring, go to Rider Settings | Tools | Junie | MCP Settings and check 'ai-game-developer' to connect AI agent."));
+            if (_configElementHttp != null)
+            {
+                _configElementHttp.Root.style.display = DisplayStyle.None;
+            }
 
             // STDIO Configuration
 
+            ContainerStdio!.Add(TemplateWarningLabel("After configuring, go to Rider Settings | Tools | Junie | MCP Settings and check 'ai-game-developer' to connect AI agent."));
             var manualSteps = TemplateFoldoutFirst("Manual Configuration Steps");
 
             var relativePath = Path.Combine(".junie", "mcp", "mcp.json");
