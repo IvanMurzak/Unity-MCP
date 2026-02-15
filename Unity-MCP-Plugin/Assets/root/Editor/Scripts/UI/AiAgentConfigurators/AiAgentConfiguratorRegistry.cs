@@ -26,6 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 new ClaudeDesktopConfigurator(),
                 new VisualStudioCodeCopilotConfigurator(),
                 new VisualStudioCopilotConfigurator(),
+                new RiderConfigurator(),
                 new CursorConfigurator(),
                 new GitHubCopilotCliConfigurator(),
                 new GeminiConfigurator(),
