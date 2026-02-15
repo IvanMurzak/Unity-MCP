@@ -35,7 +35,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private enum ConfigurationScope { Global, Local }
 
-        private const string AGENT_DISPLAY_NAME = "Rider (junie)";
+        private const string AGENT_DISPLAY_NAME = "Rider (Junie)";
         private const string AGENT_ID = "rider-junie";
         private const string DOWNLOAD_URL = "https://www.jetbrains.com/rider/download/";
         private const string ICON_NAME = "rider-64.png";
