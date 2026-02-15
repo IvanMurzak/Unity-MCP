@@ -417,14 +417,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private void SetupAiAgentSection(VisualElement root)
         {
-            var mcpPluginInstance = UnityMcpPlugin.Instance.McpPluginInstance;
-            if (mcpPluginInstance != null)
+            McpPlugin.McpPlugin.DoAlways(plugin =>
             {
-                mcpPluginInstance.McpManager.OnClientConnected
+                plugin.McpManager.OnClientConnected
                     .ObserveOnCurrentSynchronizationContext()
                     .Subscribe(data =>
                     {
-                        Logger.LogInformation("On AI agent connected: {clientName} {clientVersion}", data.ClientName, data.ClientVersion);
+                        Logger.LogInformation("On AI agent connected: {clientName} ({clientVersion})", data.ClientName, data.ClientVersion);
                         if (Logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Trace))
                             Logger.LogTrace("AI Agent Data: {data}", data.ToPrettyJson());
 
@@ -432,7 +431,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     })
                     .AddTo(_disposables);
 
-                mcpPluginInstance.McpManager.OnClientDisconnected
+                plugin.McpManager.OnClientDisconnected
                     .ObserveOnCurrentSynchronizationContext()
                     .Subscribe(_ =>
                     {
@@ -442,7 +441,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     .AddTo(_disposables);
 
                 FetchAiAgentData();
-            }
+            }).AddTo(_disposables);
 
             UnityMcpPlugin.IsConnected
                 .Where(isConnected => isConnected)
@@ -513,7 +512,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             });
         }
 
-        private void FetchAiAgentData()
+        private void FetchAiAgentData(int retryCount = 3, int retryDelayMs = 3000)
         {
             var mcpPluginInstance = UnityMcpPlugin.Instance.McpPluginInstance;
             if (mcpPluginInstance == null)
@@ -553,6 +552,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                         SetAiAgentStatus(data.IsConnected, data.IsConnected
                             ? $"AI agent: {data.ClientName} ({data.ClientVersion})"
                             : "AI agent");
+
+                        // If AI agent is not connected but Unity is, retry after delay.
+                        // The AI agent may need time to re-establish its session after Unity reconnects.
+                        if (!data.IsConnected && retryCount > 0 && UnityMcpPlugin.IsConnected.CurrentValue)
+                        {
+                            Logger.LogDebug("AI agent not connected yet, scheduling retry ({retriesLeft} left)", retryCount);
+                            Observable.Timer(TimeSpan.FromMilliseconds(retryDelayMs))
+                                .ObserveOnCurrentSynchronizationContext()
+                                .Subscribe(_ => FetchAiAgentData(retryCount - 1, retryDelayMs))
+                                .AddTo(_disposables);
+                        }
                     }
                     else if (t.IsFaulted)
                     {

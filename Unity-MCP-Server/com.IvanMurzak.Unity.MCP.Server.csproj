@@ -13,7 +13,7 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>unity-mcp-server</ToolCommandName>
     <PackageId>com.IvanMurzak.Unity.MCP.Server</PackageId>
-    <Version>0.46.4</Version>
+    <Version>0.46.5</Version>
     <Authors>Ivan Murzak</Authors>
     <Company>Ivan Murzak</Company>
     <Copyright>Copyright © 2025 Ivan Murzak</Copyright>
@@ -38,7 +38,7 @@
   <ItemGroup>
     <!-- <ProjectReference Include="./../../../dotnet/MCP-Plugin-dotnet/McpPlugin.Server/McpPlugin.Server.csproj" /> -->
     <PackageReference Include="com.IvanMurzak.ReflectorNet" Version="3.12.1" />
-    <PackageReference Include="com.IvanMurzak.McpPlugin.Server" Version="2.8.2" />
+    <PackageReference Include="com.IvanMurzak.McpPlugin.Server" Version="3.0.0" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
     <PackageReference Include="NLog.Web.AspNetCore" Version="6.1.0" />
