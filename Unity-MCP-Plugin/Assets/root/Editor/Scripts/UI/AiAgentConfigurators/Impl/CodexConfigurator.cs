@@ -10,7 +10,6 @@
 
 #nullable enable
 using System.IO;
-using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEngine.UIElements;
 using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
@@ -49,7 +48,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetPropertyToRemove("type")
         .SetPropertyToRemove("bearer_token_env_var");
 
-
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new TomlAiAgentConfig(
             name: AgentName,
             configPath: Path.Combine(
@@ -70,7 +68,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetPropertyToRemove("url")
         .SetPropertyToRemove("type")
         .SetPropertyToRemove("bearer_token_env_var");
-
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new TomlAiAgentConfig(
             name: AgentName,
