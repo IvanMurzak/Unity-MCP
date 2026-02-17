@@ -94,15 +94,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             // STDIO Configuration
 
-            var requiresSteps = TemplateFoldoutFirst("Configuration Steps");
-            requiresSteps.value = true;
+            var requiresStepsStdio = TemplateFoldoutFirst("Configuration Steps");
+            requiresStepsStdio.value = true;
 
-            requiresSteps.Add(TemplateLabelDescription("1. Open the Project Settings in Unity Editor:\n- Go to Edit > Project Settings > AI > MCP Servers"));
-            requiresSteps.Add(TemplateLabelDescription("2. Enable MCP Tools"));
-            requiresSteps.Add(TemplateLabelDescription("3. Click 'Refresh File and Servers' button"));
-            requiresSteps.Add(TemplateLabelDescription("4. (optional) Inspect 'ai-game-developer' at the bottom of this window. It must have green status and to have some amount of available tools. If not, click 'Restart ai-game-developer' button and check the status again."));
+            requiresStepsStdio.Add(TemplateLabelDescription("1. Open the Project Settings in Unity Editor:\n- Go to Edit > Project Settings > AI > MCP Servers"));
+            requiresStepsStdio.Add(TemplateLabelDescription("2. Enable MCP Tools"));
+            requiresStepsStdio.Add(TemplateLabelDescription("3. Click 'Refresh File and Servers' button"));
+            requiresStepsStdio.Add(TemplateLabelDescription("4. (optional) Inspect 'ai-game-developer' at the bottom of this window. It must have green status and to have some amount of available tools. If not, click 'Restart ai-game-developer' button and check the status again."));
 
-            ContainerStdio!.Add(requiresSteps);
+            ContainerStdio!.Add(requiresStepsStdio);
 
             var manualStepsContainer = TemplateFoldout("Manual Configuration Steps");
 
@@ -124,6 +124,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             ContainerHttp!.Add(TemplateAlertLabel("Please consider to switch to STDIO transport for local development."));
 
             ContainerHttp!.Add(TemplateWarningLabel("Unity AI agent is cloud based. To use HTTP transport you must to host MCP server in a cloud with https public access. You may use docker for that. Avoid using 'localhost' in your url."));
+
+            var requiresStepsHttp = TemplateFoldoutFirst("Configuration Steps");
+            requiresStepsHttp.value = true;
+
+            requiresStepsHttp.Add(TemplateLabelDescription("1. Open the Project Settings in Unity Editor:\n- Go to Edit > Project Settings > AI > MCP Servers"));
+            requiresStepsHttp.Add(TemplateLabelDescription("2. Enable MCP Tools"));
+            requiresStepsHttp.Add(TemplateLabelDescription("3. Click 'Refresh File and Servers' button"));
+            requiresStepsHttp.Add(TemplateLabelDescription("4. (optional) Inspect 'ai-game-developer' at the bottom of this window. It must have green status and to have some amount of available tools. If not, click 'Restart ai-game-developer' button and check the status again."));
+
+            ContainerHttp!.Add(requiresStepsHttp);
 
             var manualStepsContainerHttp = TemplateFoldoutFirst("Manual Configuration Steps");
 
