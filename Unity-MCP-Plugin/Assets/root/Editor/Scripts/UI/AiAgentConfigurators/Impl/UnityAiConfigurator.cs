@@ -25,7 +25,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public override string AgentName => "Unity AI";
         public override string AgentId => "unity-ai";
         public override string DownloadUrl => "https://unity.com/features/ai";
-        // public override string TutorialUrl => "https://www.youtube.com/watch?v=dyk-4gTolSU";
 
         protected override string? IconFileName => "unity-64.png";
 
