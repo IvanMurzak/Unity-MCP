@@ -111,7 +111,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             // HTTP Configuration
 
-            ContainerHttp!.Add(TemplateWarningLabel("Please consider to switch to STDIO transport for local development."));
+            ContainerHttp!.Add(TemplateAlertLabel("Please consider to switch to STDIO transport for local development."));
 
             ContainerHttp!.Add(TemplateWarningLabel("Unity AI agent is cloud based. To use HTTP transport you must to host MCP server in a cloud with https public access. You may use docker for that. Avoid using 'localhost' in your url."));
 
