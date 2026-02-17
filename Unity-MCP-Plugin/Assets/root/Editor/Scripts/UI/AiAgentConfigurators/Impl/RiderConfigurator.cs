@@ -97,7 +97,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             // STDIO Configuration
 
-            ContainerStdio!.Add(TemplateWarningLabel("After configuring, go to Rider Settings | Tools | Junie | MCP Settings and check 'ai-game-developer' to connect AI agent."));
+            ContainerStdio!.Add(TemplateWarningLabel("After configuring, go to Rider Settings / Tools / Junie / MCP Settings and check 'ai-game-developer' to connect AI agent."));
             var manualSteps = TemplateFoldoutFirst("Manual Configuration Steps");
 
             var relativePath = Path.Combine(".junie", "mcp", "mcp.json");
@@ -122,14 +122,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             manualSteps.Add(TemplateTextFieldReadOnly(ConfigStdio.ExpectedFileContent));
 
             manualSteps.Add(TemplateLabelDescription("Option 3: Rider Settings"));
-            manualSteps.Add(TemplateLabelDescription("Open Rider settings: Settings | Tools | Junie | MCP Settings and add a new server."));
+            manualSteps.Add(TemplateLabelDescription("Open Rider settings: Settings / Tools / Junie / MCP Settings and add a new server."));
 
             ContainerStdio!.Add(manualSteps);
 
             var troubleshootingStdio = TemplateFoldout("Troubleshooting");
             troubleshootingStdio.Add(TemplateLabelDescription("- Ensure MCP configuration file doesn't have syntax errors"));
             troubleshootingStdio.Add(TemplateLabelDescription("- Restart Rider after configuration changes"));
-            troubleshootingStdio.Add(TemplateLabelDescription("- If using Terminal, ensure you are in the ai-game-developer root folder."));
+            troubleshootingStdio.Add(TemplateLabelDescription("- If using Terminal, ensure you are in your Unity project root folder."));
             ContainerStdio.Add(troubleshootingStdio);
 
             // HTTP Configuration
@@ -140,7 +140,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             ContainerHttp!.Add(warning);
             ContainerHttp.Add(TemplateLabelDescription("The standard HTTP configuration is disabled due to stability issues."));
-            ContainerHttp.Add(TemplateLabelDescription("Please switch to the 'Stdio' transport method at the top to configure this agent."));
+            ContainerHttp.Add(TemplateLabelDescription("Please switch to the 'stdio' transport method at the top to configure this agent."));
         }
     }
 }
