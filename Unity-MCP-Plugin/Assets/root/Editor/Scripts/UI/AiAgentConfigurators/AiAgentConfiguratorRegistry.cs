@@ -31,7 +31,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 new GeminiConfigurator(),
                 new AntigravityConfigurator(),
                 new OpenCodeConfigurator(),
-                new CodexConfigurator()
+                new CodexConfigurator(),
+                new UnityAiConfigurator(),
             }
             .OrderBy(c => c.AgentName)
             .Append(new CustomConfigurator()) // Ensure CustomConfigurator is always last
