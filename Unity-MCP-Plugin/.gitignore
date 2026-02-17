@@ -58,6 +58,7 @@ sysinfo.txt
 
 # Unity Editor layouts
 UserSettings/Layouts/*
+UserSettings/mcp.json
 
 # Unity Render cache
 kernelsCache/*
