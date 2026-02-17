@@ -26,12 +26,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
     {
         #region Properties
 
-        private AiAgentConfig? _configStdio;
-        private AiAgentConfig? _configHttp;
-        private ConfigurationElements? _configElementStdio;
-        private ConfigurationElements? _configElementHttp;
-        private IDisposable? _subscriptionStdio;
-        private IDisposable? _subscriptionHttp;
+        protected AiAgentConfig? _configStdio;
+        protected AiAgentConfig? _configHttp;
+        protected ConfigurationElements? _configElementStdio;
+        protected ConfigurationElements? _configElementHttp;
+        protected IDisposable? _subscriptionStdio;
+        protected IDisposable? _subscriptionHttp;
 
         /// <summary>
         /// The display name of the AI agent.
