@@ -94,7 +94,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             // STDIO Configuration
 
-            var manualStepsContainer = TemplateFoldoutFirst("Manual Configuration Steps");
+            var requiresSteps = TemplateFoldoutFirst("Configuration Steps");
+            requiresSteps.value = true;
+
+            requiresSteps.Add(TemplateLabelDescription("1. Open the Project Settings in Unity Editor:\n- Go to Edit > Project Settings > AI > MCP Servers"));
+            requiresSteps.Add(TemplateLabelDescription("2. Enable MCP Tools"));
+            requiresSteps.Add(TemplateLabelDescription("3. Click 'Refresh File and Servers' button"));
+            requiresSteps.Add(TemplateLabelDescription("4. (optional) Inspect 'ai-game-developer' at the bottom of this window. It must have green status and to have some amount of available tools. If not, click 'Restart ai-game-developer' button and check the status again."));
+
+            ContainerStdio!.Add(requiresSteps);
+
+            var manualStepsContainer = TemplateFoldout("Manual Configuration Steps");
 
             manualStepsContainer!.Add(TemplateLabelDescription("1. Open or create file 'UserSettings/mcp.json'"));
             manualStepsContainer!.Add(TemplateLabelDescription("2. Copy and paste the configuration json into the file."));
@@ -105,7 +115,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var troubleshootingContainerStdio = TemplateFoldout("Troubleshooting");
 
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- 'UserSettings/mcp.json' file must have no json syntax errors."));
-            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Open Unity AI settings window, go to 'MCP Servers' to restart ai-game-developer or to get more information about the available MCP tools and the status of the server."));
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Open Unity AI settings window\n- Go to Edit > Project Settings > AI > MCP Servers\n- Click 'Restart ai-game-developer' button or check the status of the server."));
 
             ContainerStdio!.Add(troubleshootingContainerStdio);
 
@@ -126,7 +136,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var troubleshootingContainerHttp = TemplateFoldout("Troubleshooting");
 
             troubleshootingContainerHttp.Add(TemplateLabelDescription("- 'UserSettings/mcp.json' file must have no json syntax errors."));
-            troubleshootingContainerHttp.Add(TemplateLabelDescription("- Open Unity AI settings window, go to 'MCP Servers' to restart ai-game-developer or to get more information about the available MCP tools and the status of the server."));
+            troubleshootingContainerHttp.Add(TemplateLabelDescription("- Open Unity AI settings window\n- Go to Edit > Project Settings > AI > MCP Servers\n- Click 'Restart ai-game-developer' button or check the status of the server."));
 
             ContainerHttp!.Add(troubleshootingContainerHttp);
         }
