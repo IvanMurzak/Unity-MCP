@@ -31,7 +31,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         private static string JunieConfigPath => Path.Combine(ProjectRootPath, ".junie", "mcp", "mcp.json");
 
         protected override AiAgentConfig CreateConfigStdioWindows() => new JsonAiAgentConfig(
-            name: "ai-game-developer",
+            name: AgentName,
             configPath: JunieConfigPath,
             bodyPath: DefaultBodyPath
         )
@@ -47,7 +47,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetPropertyToRemove("url");
 
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonAiAgentConfig(
-            name: "ai-game-developer",
+            name: AgentName,
             configPath: JunieConfigPath,
             bodyPath: DefaultBodyPath
         )
@@ -63,7 +63,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetPropertyToRemove("url");
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new JsonAiAgentConfig(
-            name: "ai-game-developer",
+            name: AgentName,
             configPath: JunieConfigPath,
             bodyPath: DefaultBodyPath
         )
@@ -75,7 +75,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetPropertyToRemove("args");
 
         protected override AiAgentConfig CreateConfigHttpMacLinux() => new JsonAiAgentConfig(
-            name: "ai-game-developer",
+            name: AgentName,
             configPath: JunieConfigPath,
             bodyPath: DefaultBodyPath
         )
