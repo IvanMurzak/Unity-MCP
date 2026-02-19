@@ -66,6 +66,17 @@
             <ui:DropdownField name="aiAgentDropdown" label="Choose" class="content-item" />
             <ui:VisualElement name="ConfigureAgentsContainer" />
             <ui:VisualElement class="divider" />
+            <!-- Status Checks Section ============================== -->
+            <ui:VisualElement name="StatusChecksSection">
+                <ui:VisualElement class="row-top">
+                    <ui:Label name="statusChecksLabel" text="0/7 checks passed" class="header" />
+                    <ui:Button name="btnOpenStatusChecks" text="Open" class="btn-secondary" />
+                </ui:VisualElement>
+                <ui:Foldout text="Information" value="false" class="base-foldout">
+                    <ui:Label text="Status checks verify your MCP integration is working correctly. They help diagnose connection issues and confirm that tools are being executed by your AI assistant." class="section-desc" />
+                </ui:Foldout>
+            </ui:VisualElement>
+            <ui:VisualElement class="divider" />
             <!-- MCP features section ============================== -->
             <!-- Tools Configuration Section -->
             <ui:VisualElement name="ToolsConfigurationSection">

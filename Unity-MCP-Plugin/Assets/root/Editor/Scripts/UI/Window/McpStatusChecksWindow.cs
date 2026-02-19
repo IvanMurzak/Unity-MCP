@@ -14,6 +14,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using com.IvanMurzak.McpPlugin.Common;
+using com.IvanMurzak.Unity.MCP.Editor.UI;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
@@ -553,16 +554,45 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         private StatusCheckItem GetToolExecutedCheck(McpStatusCheckEvaluator.CheckResult checkResult)
         {
-            // This check is currently disabled as the tool execution tracking
-            // functionality is being moved to the DLL plugin.
-            // It will be re-enabled once the plugin update is available.
-            return new StatusCheckItem(
-                id: "tool-executed",
-                title: "MCP Tool executed",
-                subtitle: "Tracking disabled (awaiting plugin update)",
-                description: "Tool execution tracking is temporarily disabled. This functionality will be available in the next plugin update.",
-                status: CheckStatus.Pending
-            );
+            var mcpPlugin = UnityMcpPlugin.Instance.McpPluginInstance;
+
+            if (mcpPlugin == null)
+            {
+                return new StatusCheckItem(
+                    id: "tool-executed",
+                    title: "MCP Tool executed",
+                    subtitle: "Plugin not initialized",
+                    description: "The MCP Plugin is not initialized. Try connecting to the MCP Server first.",
+                    status: CheckStatus.Pending
+                );
+            }
+
+            var toolCallsCount = mcpPlugin.ToolCallsCount;
+
+            if (toolCallsCount > 0)
+            {
+                return new StatusCheckItem(
+                    id: "tool-executed",
+                    title: "MCP Tool executed",
+                    subtitle: $"{toolCallsCount} tool call{(toolCallsCount == 1 ? "" : "s")} completed",
+                    description: $"At least one MCP tool has been executed successfully. Total tool calls: {toolCallsCount}\n\n" +
+                        "This confirms that your AI assistant can interact with Unity through the MCP integration.",
+                    status: CheckStatus.Success
+                );
+            }
+            else
+            {
+                return new StatusCheckItem(
+                    id: "tool-executed",
+                    title: "MCP Tool executed",
+                    subtitle: "No tools executed yet",
+                    description: "No MCP tools have been executed yet.\n\n" +
+                        "To complete this check:\n" +
+                        "1. Make sure your AI assistant is connected\n" +
+                        "2. Ask it to perform an action in Unity (e.g., 'List all GameObjects in the scene')",
+                    status: CheckStatus.Pending
+                );
+            }
         }
 
         #endregion

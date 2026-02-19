@@ -69,6 +69,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             SetupConnectionSection(root);
             SetupMcpServerSection(root);
             SetupAiAgentSection(root);
+            SetupStatusChecksSection(root);
             SetupToolsSection(root);
             SetupPromptsSection(root);
             SetupResourcesSection(root);
@@ -565,6 +566,35 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     }
                 });
             });
+        }
+
+        #endregion
+
+        #region Status Checks
+
+        private void SetupStatusChecksSection(VisualElement root)
+        {
+            var btn = root.Q<Button>("btnOpenStatusChecks");
+            var label = root.Q<Label>("statusChecksLabel");
+
+            btn.RegisterCallback<ClickEvent>(evt => McpStatusChecksWindow.ShowWindow());
+
+            // Subscribe to connection state changes to update the status checks label
+            UnityMcpPlugin.ConnectionState
+                .ThrottleLast(TimeSpan.FromMilliseconds(100))
+                .ObserveOnCurrentSynchronizationContext()
+                .Subscribe(_ => UpdateStatusChecksLabel(label))
+                .AddTo(_disposables);
+
+            // Initial update
+            UpdateStatusChecksLabel(label);
+        }
+
+        private void UpdateStatusChecksLabel(Label label)
+        {
+            var passedCount = McpStatusCheckEvaluator.GetPassedCount();
+            var totalCount = McpStatusCheckEvaluator.GetTotalCount();
+            label.text = $"{passedCount}/{totalCount} checks passed";
         }
 
         #endregion

@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
+using com.IvanMurzak.Unity.MCP.Editor.UI;
 using Microsoft.AspNetCore.SignalR.Client;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
@@ -33,6 +34,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         {
             var results = EvaluateAllChecks();
             return results.Count(r => r.IsPassed && r.CanCountAsPassed);
+        }
+
+        public static int GetTotalCount()
+        {
+            return 7; // Total number of status checks
         }
 
         private static CheckResult EvaluateMcpClientConfiguredCheck()
@@ -130,13 +136,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         private static CheckResult EvaluateToolExecutedCheck()
         {
-            // This check is currently disabled as the tool execution tracking
-            // functionality is being moved to the DLL plugin.
-            // It will be re-enabled once the plugin update is available.
+            var mcpPlugin = UnityMcpPlugin.Instance.McpPluginInstance;
+
+            if (mcpPlugin == null)
+            {
+                return new CheckResult
+                {
+                    IsPassed = false,
+                    CanCountAsPassed = false
+                };
+            }
+
+            var toolCallsCount = mcpPlugin.ToolCallsCount;
+            var isPassed = toolCallsCount > 0;
+
             return new CheckResult
             {
-                IsPassed = false,
-                CanCountAsPassed = false
+                IsPassed = isPassed,
+                CanCountAsPassed = true
             };
         }
     }

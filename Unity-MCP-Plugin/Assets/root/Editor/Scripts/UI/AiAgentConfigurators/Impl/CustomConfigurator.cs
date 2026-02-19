@@ -38,12 +38,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigHttpWindows()
         {
-            throw new System.NotImplementedException();
+            return new ManualAiAgentConfig(AgentName);
         }
 
         protected override AiAgentConfig CreateConfigHttpMacLinux()
         {
-            throw new System.NotImplementedException();
+            return new ManualAiAgentConfig(AgentName);
         }
 
         protected override AiAgentConfigurator SetConfigureStatusIndicator()

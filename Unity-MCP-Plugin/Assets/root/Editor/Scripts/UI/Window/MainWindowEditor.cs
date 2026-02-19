@@ -47,7 +47,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var configuredClients = new List<string>();
             foreach (var configurator in AiAgentConfiguratorRegistry.All)
             {
-                if (configurator.ClientConfig.IsConfigured())
+                var config = UnityMcpPlugin.TransportMethod == McpPlugin.Common.Consts.MCP.Server.TransportMethod.stdio
+                    ? configurator.ConfigStdio
+                    : configurator.ConfigHttp;
+
+                if (config.IsConfigured())
                 {
                     configuredClients.Add(configurator.AgentName);
                 }
