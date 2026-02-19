@@ -70,7 +70,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             EditorApplication.quitting += OnEditorQuitting;
 
             // Check if server process is still running (e.g., after domain reload)
-            CheckExistingProcess();
+            EditorApplication.update += CheckExistingProcess;
+
+            DownloadServerBinaryIfNeeded()
+                .ContinueWith(task =>
+                {
+                    if (task.IsFaulted || !task.Result)
+                        return; // Failed to download binaries, skip auto-start
+
+                    if (!task.Result)
+                        return; // No binaries available (either in CI or failed to download), skip auto-start
+
+                    if (EnvironmentUtils.IsCi())
+                        return; // Skip auto-start in CI environment
+
+                    EditorApplication.update += StartServerIfNeeded;
+                });
         }
 
         #region Binary Metadata
@@ -452,7 +467,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             return result;
         }
 
-        public static string DockerRunCommand()
+        public static string DockerSetupRunCommand()
         {
             var dockerPortMapping = $"-p {UnityMcpPlugin.Port}:{UnityMcpPlugin.Port}";
             var dockerEnvVars = $"-e MCP_PLUGIN_CLIENT_TRANSPORT={TransportMethod.streamableHttp} -e MCP_PLUGIN_PORT={UnityMcpPlugin.Port} -e MCP_PLUGIN_CLIENT_TIMEOUT={UnityMcpPlugin.TimeoutMs}";
@@ -461,12 +476,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             return $"docker run -d {dockerPortMapping} {dockerEnvVars} {dockerContainer} {dockerImage}";
         }
 
+        public static string DockerRunCommand()
+        {
+            return $"docker start unity-mcp-server-{UnityMcpPlugin.Port}";
+        }
+
         #endregion // Client Configuration
 
         #region Process Lifecycle
 
         static void CheckExistingProcess()
         {
+            EditorApplication.update -= CheckExistingProcess;
             // Try to find an existing server process by checking if our tracked PID is still running
             // This helps maintain state across domain reloads
             var savedPid = EditorPrefs.GetInt(ProcessIdKey, -1);
@@ -1055,14 +1076,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             }
         }
 
-        public static void ToggleServer()
-        {
-            if (IsRunning)
-                StopServer();
-            else
-                StartServer();
-        }
-
         /// <summary>
         /// Starts the MCP server if KeepServerRunning is enabled and no external server is detected.
         /// This method is called during Unity Editor startup to auto-start the server based on user preference.
@@ -1070,6 +1083,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         /// </summary>
         public static void StartServerIfNeeded()
         {
+            EditorApplication.update -= StartServerIfNeeded;
+
             // Check if user wants the server to keep running
             if (!UnityMcpPlugin.KeepServerRunning)
             {
@@ -1126,10 +1141,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 {
                     _logger.LogDebug("CheckExternalServerAsync: No server detected on port {port} ({message})", port, ex.Message);
                 }
-
-                // Marshal callback back to the main thread
-                EditorApplication.delayCall += () => onResult(result);
-            });
+                return result;
+            })
+            .ContinueWith(task => onResult(task.Result), TaskScheduler.FromCurrentSynchronizationContext());
         }
 
         #endregion // Process Lifecycle

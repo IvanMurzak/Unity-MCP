@@ -36,7 +36,7 @@ A diferencia de otras herramientas, este plugin funciona **dentro de tu juego co
 - ✔️ **Conjunto de herramientas rico** - Amplio rango de [Herramientas MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md) por defecto
 - ✔️ **Extensible** - Crea [herramientas MCP personalizadas en el código de tu proyecto](#agregar-herramienta-mcp-personalizada)
 
-[![DESCARGAR INSTALADOR](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download_es.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.46.1/AI-Game-Dev-Installer.unitypackage)
+[![DESCARGAR INSTALADOR](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download_es.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.47.1/AI-Game-Dev-Installer.unitypackage)
 
 ![Desarrollador de juegos con IA Ventanas](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/ai-game-developer-windows.png?raw=true)
 
@@ -252,7 +252,7 @@ A diferencia de otras herramientas, este plugin funciona **dentro de tu juego co
 
 ### Opción 1 - Instalador
 
-- **[⬇️ Descargar Instalador](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.46.1/AI-Game-Dev-Installer.unitypackage)**
+- **[⬇️ Descargar Instalador](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.47.1/AI-Game-Dev-Installer.unitypackage)**
 - **📂 Importar instalador al proyecto Unity**
   > - Puedes hacer doble clic en el archivo - Unity lo abrirá automáticamente
   > - O: Abre Unity Editor primero, luego haz clic en `Assets/Import Package/Custom Package`, y elige el archivo

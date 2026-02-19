@@ -18,21 +18,20 @@ using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
     /// <summary>
-    /// Configurator for Cursor AI agent.
+    /// Configurator for Unity AI agent.
     /// </summary>
-    public class CursorConfigurator : AiAgentConfigurator
+    public class UnityAiConfigurator : AiAgentConfigurator
     {
-        public override string AgentName => "Cursor";
-        public override string AgentId => "cursor";
-        public override string DownloadUrl => "https://cursor.com/download";
-        public override string TutorialUrl => "https://www.youtube.com/watch?v=dyk-4gTolSU";
+        public override string AgentName => "Unity AI";
+        public override string AgentId => "unity-ai";
+        public override string DownloadUrl => "https://unity.com/features/ai";
 
-        protected override string? IconFileName => "cursor-64.png";
+        protected override string? IconFileName => "unity-64.png";
 
         protected override AiAgentConfig CreateConfigStdioWindows() => new JsonAiAgentConfig(
             name: AgentName,
             configPath: Path.Combine(
-                ".cursor",
+                "UserSettings",
                 "mcp.json"
             ),
             bodyPath: DefaultBodyPath
@@ -49,7 +48,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
             configPath: Path.Combine(
-                ".cursor",
+                "UserSettings",
                 "mcp.json"
             ),
             bodyPath: DefaultBodyPath
@@ -66,7 +65,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected override AiAgentConfig CreateConfigHttpWindows() => new JsonAiAgentConfig(
             name: AgentName,
             configPath: Path.Combine(
-                ".cursor",
+                "UserSettings",
                 "mcp.json"
             ),
             bodyPath: DefaultBodyPath
@@ -79,7 +78,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected override AiAgentConfig CreateConfigHttpMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
             configPath: Path.Combine(
-                ".cursor",
+                "UserSettings",
                 "mcp.json"
             ),
             bodyPath: DefaultBodyPath
@@ -95,9 +94,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             // STDIO Configuration
 
-            var manualStepsContainer = TemplateFoldoutFirst("Manual Configuration Steps");
+            var requiresStepsStdio = TemplateFoldoutFirst("Configuration Steps");
+            requiresStepsStdio.value = true;
 
-            manualStepsContainer!.Add(TemplateLabelDescription("1. Open or create file '.cursor/mcp.json'"));
+            requiresStepsStdio.Add(TemplateLabelDescription("1. Open the Project Settings in Unity Editor:\n- Go to Edit > Project Settings > AI > MCP Servers"));
+            requiresStepsStdio.Add(TemplateLabelDescription("2. Enable MCP Tools"));
+            requiresStepsStdio.Add(TemplateLabelDescription("3. Click 'Refresh File and Servers' button"));
+            requiresStepsStdio.Add(TemplateLabelDescription("4. (optional) Inspect 'ai-game-developer' at the bottom of this window. It must have green status and to have some amount of available tools. If not, click 'Restart ai-game-developer' button and check the status again."));
+
+            ContainerStdio!.Add(requiresStepsStdio);
+
+            var manualStepsContainer = TemplateFoldout("Manual Configuration Steps");
+
+            manualStepsContainer!.Add(TemplateLabelDescription("1. Open or create file 'UserSettings/mcp.json'"));
             manualStepsContainer!.Add(TemplateLabelDescription("2. Copy and paste the configuration json into the file."));
             manualStepsContainer!.Add(TemplateTextFieldReadOnly(ConfigStdio.ExpectedFileContent));
 
@@ -105,18 +114,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             var troubleshootingContainerStdio = TemplateFoldout("Troubleshooting");
 
-            troubleshootingContainerStdio.Add(TemplateLabelDescription("- '.cursor/mcp.json' file must have no json syntax errors."));
-            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Open Cursor settings window, go to 'MCP Servers' to restart ai-game-developer or to get more information about the available MCP tools and the status of the server."));
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- 'UserSettings/mcp.json' file must have no json syntax errors."));
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Open Unity AI settings window\n- Go to Edit > Project Settings > AI > MCP Servers\n- Click 'Restart ai-game-developer' button or check the status of the server."));
 
             ContainerStdio!.Add(troubleshootingContainerStdio);
 
             // HTTP Configuration
 
-            ContainerHttp!.Add(TemplateWarningLabel("IMPORTANT: Cursor disconnects frequently when using HTTP configuration. Highly recommended to use STDIO configuration instead, it's more stable and better integrated with Cursor app."));
+            ContainerHttp!.Add(TemplateAlertLabel("Please consider to switch to STDIO transport for local development."));
+
+            ContainerHttp!.Add(TemplateWarningLabel("Unity AI agent is cloud based. To use HTTP transport you must to host MCP server in a cloud with https public access. You may use docker for that. Avoid using 'localhost' in your url."));
+
+            var requiresStepsHttp = TemplateFoldoutFirst("Configuration Steps");
+            requiresStepsHttp.value = true;
+
+            requiresStepsHttp.Add(TemplateLabelDescription("1. Open the Project Settings in Unity Editor:\n- Go to Edit > Project Settings > AI > MCP Servers"));
+            requiresStepsHttp.Add(TemplateLabelDescription("2. Enable MCP Tools"));
+            requiresStepsHttp.Add(TemplateLabelDescription("3. Click 'Refresh File and Servers' button"));
+            requiresStepsHttp.Add(TemplateLabelDescription("4. (optional) Inspect 'ai-game-developer' at the bottom of this window. It must have green status and to have some amount of available tools. If not, click 'Restart ai-game-developer' button and check the status again."));
+
+            ContainerHttp!.Add(requiresStepsHttp);
 
             var manualStepsContainerHttp = TemplateFoldoutFirst("Manual Configuration Steps");
 
-            manualStepsContainerHttp!.Add(TemplateLabelDescription("1. Open or create file '.cursor/mcp.json'"));
+            manualStepsContainerHttp!.Add(TemplateLabelDescription("1. Open or create file 'UserSettings/mcp.json'"));
             manualStepsContainerHttp!.Add(TemplateLabelDescription("2. Copy and paste the configuration json into the file."));
             manualStepsContainerHttp!.Add(TemplateTextFieldReadOnly(ConfigHttp.ExpectedFileContent));
 
@@ -124,8 +145,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             var troubleshootingContainerHttp = TemplateFoldout("Troubleshooting");
 
-            troubleshootingContainerHttp.Add(TemplateLabelDescription("- '.cursor/mcp.json' file must have no json syntax errors."));
-            troubleshootingContainerHttp.Add(TemplateLabelDescription("- Open Cursor settings window, go to 'MCP Servers' to restart ai-game-developer or to get more information about the available MCP tools and the status of the server."));
+            troubleshootingContainerHttp.Add(TemplateLabelDescription("- 'UserSettings/mcp.json' file must have no json syntax errors."));
+            troubleshootingContainerHttp.Add(TemplateLabelDescription("- Open Unity AI settings window\n- Go to Edit > Project Settings > AI > MCP Servers\n- Click 'Restart ai-game-developer' button or check the status of the server."));
 
             ContainerHttp!.Add(troubleshootingContainerHttp);
         }

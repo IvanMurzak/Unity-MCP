@@ -9,10 +9,8 @@
 */
 
 #nullable enable
-using System;
 using System.IO;
 using System.Text.Json.Nodes;
-using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEngine.UIElements;
 using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
@@ -38,9 +36,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         )
         .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
         .SetProperty("args", new JsonArray {
-            $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
-            $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-            $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+            $"{Args.Port}={UnityMcpPlugin.Port}",
+            $"{Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+            $"{Args.ClientTransportMethod}={TransportMethod.stdio}"
         }, requiredForConfiguration: true)
         .SetPropertyToRemove("type")
         .SetPropertyToRemove("url");
@@ -52,9 +50,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         )
         .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
         .SetProperty("args", new JsonArray {
-            $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
-            $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-            $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+            $"{Args.Port}={UnityMcpPlugin.Port}",
+            $"{Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+            $"{Args.ClientTransportMethod}={TransportMethod.stdio}"
         }, requiredForConfiguration: true)
         .SetPropertyToRemove("type")
         .SetPropertyToRemove("url");
@@ -111,6 +109,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             ContainerStdio!.Add(troubleshootingContainerStdio);
 
             // HTTP Configuration
+
+            ContainerHttp!.Add(TemplateWarningLabel("IMPORTANT: Claude Code disconnects frequently when using HTTP configuration. Highly recommended to use STDIO configuration instead, it's more stable and better integrated with Claude Code app."));
 
             var manualStepsContainerHttp = TemplateFoldoutFirst("Manual Configuration Steps");
 

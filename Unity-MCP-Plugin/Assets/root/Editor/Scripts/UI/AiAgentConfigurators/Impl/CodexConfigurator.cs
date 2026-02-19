@@ -10,7 +10,6 @@
 
 #nullable enable
 using System.IO;
-using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEngine.UIElements;
 using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
@@ -39,9 +38,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetProperty("enabled", true, requiredForConfiguration: true) // Codex requires an "enabled" property
         .SetProperty("command", McpServerManager.ExecutableFullPath.Replace('\\', '/'), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
         .SetProperty("args", new[] {
-            $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
-            $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-            $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+            $"{Args.Port}={UnityMcpPlugin.Port}",
+            $"{Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+            $"{Args.ClientTransportMethod}={TransportMethod.stdio}"
         }, requiredForConfiguration: true)
         .SetProperty("tool_timeout_sec", 300, requiredForConfiguration: false) // Optional: Set a longer tool timeout for Codex
         .SetPropertyToRemove("url")
@@ -59,9 +58,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetProperty("enabled", true, requiredForConfiguration: true) // Codex requires an "enabled" property
         .SetProperty("command", McpServerManager.ExecutableFullPath.Replace('\\', '/'), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
         .SetProperty("args", new[] {
-            $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
-            $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-            $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+            $"{Args.Port}={UnityMcpPlugin.Port}",
+            $"{Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+            $"{Args.ClientTransportMethod}={TransportMethod.stdio}"
         }, requiredForConfiguration: true)
         .SetProperty("tool_timeout_sec", 300, requiredForConfiguration: false) // Optional: Set a longer tool timeout for Codex
         .SetPropertyToRemove("url")

@@ -11,7 +11,9 @@
 #nullable enable
 using System.Collections.Generic;
 using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API.TestRunner;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEditor;
 using UnityEditor.TestTools.TestRunner.Api;
@@ -28,9 +30,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         static volatile TestResultCollector? _resultCollector = null!;
         static volatile bool _callbacksRegistered = false;
 
+        // SessionState keys for persisting pending test run across domain reload
+        const string PendingTestRunKey       = "MCP_PendingTestRun";
+        const string PendingTestModeKey      = "MCP_PendingTestRun_TestMode";
+        const string PendingTestAssemblyKey  = "MCP_PendingTestRun_TestAssembly";
+        const string PendingTestNamespaceKey = "MCP_PendingTestRun_TestNamespace";
+        const string PendingTestClassKey     = "MCP_PendingTestRun_TestClass";
+        const string PendingTestMethodKey    = "MCP_PendingTestRun_TestMethod";
+
         static Tool_Tests()
         {
             _testRunnerApi ??= CreateInstance();
+
+            // Check for pending test run that was deferred due to script recompilation + domain reload
+            if (HasPendingTestRun())
+                EditorApplication.update += ResumePendingTestRunOnce;
         }
 
         public static TestRunnerApi TestRunnerApi
@@ -75,6 +89,83 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         public static void Init()
         {
             // none
+        }
+
+        static bool HasPendingTestRun()
+            => !string.IsNullOrEmpty(SessionState.GetString(PendingTestRunKey, string.Empty));
+
+        static void SavePendingTestRun(TestMode testMode, string? testAssembly, string? testNamespace, string? testClass, string? testMethod)
+        {
+            SessionState.SetString(PendingTestRunKey, "pending");
+            SessionState.SetInt(PendingTestModeKey, (int)testMode);
+            SessionState.SetString(PendingTestAssemblyKey, testAssembly ?? string.Empty);
+            SessionState.SetString(PendingTestNamespaceKey, testNamespace ?? string.Empty);
+            SessionState.SetString(PendingTestClassKey, testClass ?? string.Empty);
+            SessionState.SetString(PendingTestMethodKey, testMethod ?? string.Empty);
+        }
+
+        static void ClearPendingTestRun()
+        {
+            SessionState.EraseString(PendingTestRunKey);
+            SessionState.EraseInt(PendingTestModeKey);
+            SessionState.EraseString(PendingTestAssemblyKey);
+            SessionState.EraseString(PendingTestNamespaceKey);
+            SessionState.EraseString(PendingTestClassKey);
+            SessionState.EraseString(PendingTestMethodKey);
+        }
+
+        static void ResumePendingTestRunOnce()
+        {
+            // If still compiling, wait for next update tick
+            if (EditorApplication.isCompiling)
+                return;
+
+            // Compilation finished (or was never happening), unsubscribe
+            EditorApplication.update -= ResumePendingTestRunOnce;
+
+            var requestId = TestResultCollector.TestCallRequestID.Value;
+
+            // Check for compilation failure
+            if (EditorUtility.scriptCompilationFailed)
+            {
+                ClearPendingTestRun();
+                TestResultCollector.TestCallRequestID.Value = string.Empty;
+
+                var errorDetails = ScriptUtils.GetCompilationErrorDetails();
+                var response = ResponseCallValueTool<TestRunResponse>
+                    .Error($"Cannot run tests: compilation errors after script recompilation.\n\n{errorDetails}")
+                    .SetRequestID(requestId);
+
+                _ = UnityMcpPlugin.NotifyToolRequestCompleted(new RequestToolCompletedData
+                {
+                    RequestId = requestId,
+                    Result = response
+                });
+                return;
+            }
+
+            // Compilation succeeded — load filter params from SessionState and run tests
+            var testMode = (TestMode)SessionState.GetInt(PendingTestModeKey, (int)TestMode.EditMode);
+            var testAssembly = SessionState.GetString(PendingTestAssemblyKey, string.Empty);
+            var testNamespace = SessionState.GetString(PendingTestNamespaceKey, string.Empty);
+            var testClass = SessionState.GetString(PendingTestClassKey, string.Empty);
+            var testMethod = SessionState.GetString(PendingTestMethodKey, string.Empty);
+
+            ClearPendingTestRun();
+
+            // Normalize empty strings to null
+            if (string.IsNullOrEmpty(testAssembly)) testAssembly = null;
+            if (string.IsNullOrEmpty(testNamespace)) testNamespace = null;
+            if (string.IsNullOrEmpty(testClass)) testClass = null;
+            if (string.IsNullOrEmpty(testMethod)) testMethod = null;
+
+            var filterParams = new TestFilterParameters(testAssembly, testNamespace, testClass, testMethod);
+
+            if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
+                Debug.Log($"[TestRunner] Resuming test run after recompilation. Mode: {testMode}, Filters: {filterParams}");
+
+            var filter = CreateTestFilter(testMode, filterParams);
+            TestRunnerApi.Execute(new ExecutionSettings(filter));
         }
 
         private static class Error

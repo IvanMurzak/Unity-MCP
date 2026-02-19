@@ -26,12 +26,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
     {
         #region Properties
 
-        private AiAgentConfig? _configStdio;
-        private AiAgentConfig? _configHttp;
-        private ConfigurationElements? _configElementStdio;
-        private ConfigurationElements? _configElementHttp;
-        private IDisposable? _subscriptionStdio;
-        private IDisposable? _subscriptionHttp;
+        protected AiAgentConfig? _configStdio;
+        protected AiAgentConfig? _configHttp;
+        protected ConfigurationElements? _configElementStdio;
+        protected ConfigurationElements? _configElementHttp;
+        protected IDisposable? _subscriptionStdio;
+        protected IDisposable? _subscriptionHttp;
 
         /// <summary>
         /// The display name of the AI agent.
@@ -241,6 +241,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var downloadLink = Root!.Q<Label>("downloadLink");
             if (downloadLink != null)
                 downloadLink.RegisterCallback<ClickEvent>(evt => Application.OpenURL(DownloadUrl));
+            return this;
+        }
+
+        protected virtual AiAgentConfigurator DisableLinksContainer()
+        {
+            ThrowIfRootNotSet();
+            var linksContainer = Root!.Q<VisualElement>("linksContainer");
+            if (linksContainer != null)
+                linksContainer.style.display = DisplayStyle.None;
             return this;
         }
 

@@ -5,7 +5,7 @@
             <ui:VisualElement name="agentIcon" class="agent-icon" />
             <ui:VisualElement style="flex-grow: 1;">
                 <ui:Label name="agentName" text="Claude Code" class="section-title" />
-                <ui:VisualElement style="flex-direction: row; align-items: center;">
+                <ui:VisualElement name="linksContainer" style="flex-direction: row; align-items: center;">
                     <ui:Label name="downloadLink" text="Download" class="section-desc link-label" />
                     <ui:Label name="tutorialSeparator" text="•" class="section-desc link-separator" />
                     <ui:Label name="tutorialLink" text="YouTube Tutorial" class="section-desc link-label" />
