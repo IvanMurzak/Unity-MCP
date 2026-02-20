@@ -9,7 +9,6 @@
 */
 
 #nullable enable
-using System;
 using System.ComponentModel;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
@@ -41,14 +40,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             int height = 1080
         )
         {
+            if (width <= 0 || height <= 0)
+                return ResponseCallTool.Error($"Width and height must be greater than 0. Got {width}x{height}.");
+            if (width > MaxDimension || height > MaxDimension)
+                return ResponseCallTool.Error($"Width and height must not exceed {MaxDimension} pixels. Got {width}x{height}.");
+
             return MainThread.Instance.Run(() =>
             {
                 var camera = cameraRef?.FindGameObject()?.GetComponent<Camera>()
                     ?? Camera.main
                     ?? Camera.allCameras.FirstOrDefault();
-
-                if (camera == null)
-                    throw new Exception("No camera found in the scene to capture the screenshot.");
 
                 if (camera == null)
                 {
@@ -61,21 +62,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 var rt = new RenderTexture(width, height, 24);
                 var prevTarget = camera.targetTexture;
+                var prevActive = RenderTexture.active;
 
-                camera.targetTexture = rt;
-                camera.Render();
+                byte[] pngBytes;
+                try
+                {
+                    camera.targetTexture = rt;
+                    camera.Render();
 
-                RenderTexture.active = rt;
-                var tex = new Texture2D(width, height, TextureFormat.RGB24, false);
-                tex.ReadPixels(new Rect(0, 0, width, height), 0, 0);
-                tex.Apply();
-
-                camera.targetTexture = prevTarget;
-                RenderTexture.active = null;
-                UnityEngine.Object.DestroyImmediate(rt);
-
-                var pngBytes = tex.EncodeToPNG();
-                UnityEngine.Object.DestroyImmediate(tex);
+                    RenderTexture.active = rt;
+                    var tex = new Texture2D(width, height, TextureFormat.RGB24, false);
+                    try
+                    {
+                        tex.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+                        tex.Apply();
+                        pngBytes = tex.EncodeToPNG();
+                    }
+                    finally
+                    {
+                        Object.DestroyImmediate(tex);
+                    }
+                }
+                finally
+                {
+                    camera.targetTexture = prevTarget;
+                    RenderTexture.active = prevActive;
+                    Object.DestroyImmediate(rt);
+                }
 
                 return ResponseCallTool.Image(pngBytes, McpPlugin.Common.Consts.MimeType.ImagePng,
                     $"Screenshot from camera '{camera.name}' ({width}x{height})");

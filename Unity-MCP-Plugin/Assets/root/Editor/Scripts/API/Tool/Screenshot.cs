@@ -16,6 +16,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     [McpPluginToolType]
     public partial class Tool_Screenshot
     {
-
+        private const int MaxDimension = 16384;
     }
 }

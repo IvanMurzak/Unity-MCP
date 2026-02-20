@@ -35,6 +35,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             int height = 1080
         )
         {
+            if (width <= 0 || height <= 0)
+                return ResponseCallTool.Error($"Width and height must be greater than 0. Got {width}x{height}.");
+            if (width > MaxDimension || height > MaxDimension)
+                return ResponseCallTool.Error($"Width and height must not exceed {MaxDimension} pixels. Got {width}x{height}.");
+
             return MainThread.Instance.Run(() =>
             {
                 var sceneView = SceneView.lastActiveSceneView;
@@ -51,21 +56,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 var rt = new RenderTexture(width, height, 24);
                 var prevTarget = sceneCamera.targetTexture;
                 var prevActive = RenderTexture.active;
+                Texture2D? tex = null;
+                byte[]? pngBytes = null;
+                try
+                {
+                    sceneCamera.targetTexture = rt;
+                    sceneCamera.Render();
 
-                sceneCamera.targetTexture = rt;
-                sceneCamera.Render();
+                    RenderTexture.active = rt;
+                    tex = new Texture2D(width, height, TextureFormat.RGB24, false);
+                    tex.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+                    tex.Apply();
 
-                RenderTexture.active = rt;
-                var tex = new Texture2D(width, height, TextureFormat.RGB24, false);
-                tex.ReadPixels(new Rect(0, 0, width, height), 0, 0);
-                tex.Apply();
-
-                sceneCamera.targetTexture = prevTarget;
-                RenderTexture.active = prevActive;
-                Object.DestroyImmediate(rt);
-
-                var pngBytes = tex.EncodeToPNG();
-                Object.DestroyImmediate(tex);
+                    pngBytes = tex.EncodeToPNG();
+                }
+                finally
+                {
+                    sceneCamera.targetTexture = prevTarget;
+                    RenderTexture.active = prevActive;
+                    Object.DestroyImmediate(rt);
+                    if (tex != null)
+                        Object.DestroyImmediate(tex);
+                }
 
                 return ResponseCallTool.Image(pngBytes, McpPlugin.Common.Consts.MimeType.ImagePng,
                     $"Screenshot from Scene View ({width}x{height})");
