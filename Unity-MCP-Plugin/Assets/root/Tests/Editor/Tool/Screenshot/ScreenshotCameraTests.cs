@@ -9,12 +9,13 @@
 */
 
 #nullable enable
-using System;
+using System.Text.RegularExpressions;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
@@ -100,17 +101,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         [Test]
-        public void ScreenshotCamera_NoCameraInScene_ThrowsException()
+        public void ScreenshotCamera_NoCameraInScene_ReturnsError()
         {
-            // Arrange: scene is empty (TearDown destroys all GameObjects before each test)
+            // Explicitly remove every scene camera to force the no-camera error path.
+            foreach (var cam in Camera.allCameras)
+                if (cam != null)
+                    Object.DestroyImmediate(cam.gameObject);
 
-            // Act & Assert
-            var ex = Assert.Throws<Exception>(() =>
-                new Tool_Screenshot().ScreenshotCamera(width: 320, height: 240));
+            var result = new Tool_Screenshot().ScreenshotCamera(width: 320, height: 240);
 
-            Assert.IsNotNull(ex);
-            Assert.IsTrue(ex!.Message.Contains("No camera found"),
-                $"Exception should mention 'No camera found'. Actual: {ex.Message}");
+            Assert.IsNotNull(result);
+            Assert.AreEqual(ResponseStatus.Error, result.Status,
+                "Should return an error response when no camera exists in the scene");
         }
 
         [Test]
