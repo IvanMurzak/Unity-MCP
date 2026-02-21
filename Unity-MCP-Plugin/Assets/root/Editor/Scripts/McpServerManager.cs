@@ -470,10 +470,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public static string DockerSetupRunCommand()
         {
             var dockerPortMapping = $"-p {UnityMcpPlugin.Port}:{UnityMcpPlugin.Port}";
-            var dockerEnvVars = $"-e {Env.ClientTransportMethod}={TransportMethod.streamableHttp} -e {Env.Port}={UnityMcpPlugin.Port} -e {Env.PluginTimeout}={UnityMcpPlugin.TimeoutMs} -e {Env.DeploymentMode}={DeploymentMode.remote}";
+            var dockerEnvVars = $"-e {Env.ClientTransportMethod}={TransportMethod.streamableHttp} -e {Env.Port}={UnityMcpPlugin.Port} -e {Env.PluginTimeout}={UnityMcpPlugin.TimeoutMs}";
             var token = UnityMcpPlugin.Token;
-            if (!string.IsNullOrEmpty(token))
-                dockerEnvVars += $" -e {Env.Token}={token}";
+
+            dockerEnvVars += string.IsNullOrEmpty(token)
+                ? $" -e  {Env.DeploymentMode}={DeploymentMode.local}"
+                : $" -e  {Env.DeploymentMode}={DeploymentMode.remote} {Env.Token}={token}";
 
             var dockerContainer = $"--name unity-mcp-server-{UnityMcpPlugin.Port}";
             var dockerImage = $"ivanmurzakdev/unity-mcp-server:{UnityMcpPlugin.Version}";
@@ -941,13 +943,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             var timeout = UnityMcpPlugin.TimeoutMs;
             var transportMethod = TransportMethod.streamableHttp; // always must be streamableHttp for launching the server.
             var token = UnityMcpPlugin.Token;
-            var deploymentMode = DeploymentMode.remote;
 
             // Arguments format: port=XXXXX plugin-timeout=XXXXX client-transport=<TransportMethod> token=<Token>
-            var args = $"{Args.Port}={port} {Args.PluginTimeout}={timeout} {Args.ClientTransportMethod}={transportMethod} {Args.DeploymentMode}={deploymentMode}";
+            var args = $"{Args.Port}={port} {Args.PluginTimeout}={timeout} {Args.ClientTransportMethod}={transportMethod}";
 
-            if (!string.IsNullOrEmpty(token))
-                args += $" {Args.Token}={token}";
+            args += string.IsNullOrEmpty(token)
+                ? $" {Args.DeploymentMode}={DeploymentMode.local}"
+                : $" {Args.DeploymentMode}={DeploymentMode.remote} {Args.Token}={token}";
 
             return args;
         }
