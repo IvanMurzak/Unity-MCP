@@ -23,6 +23,21 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
         public override bool AllowCascadePropertiesConversion => true;
         public override bool AllowSetValue => true;
 
+        protected override IEnumerable<string> GetIgnoredProperties()
+        {
+            foreach (var property in base.GetIgnoredProperties())
+                yield return property;
+
+            // Ignore common Unity properties that cause circular references
+            // These are properties that reference back to the same object or parent objects
+            yield return nameof(UnityEngine.Component.gameObject);
+            yield return nameof(UnityEngine.Component.transform);
+            yield return nameof(UnityEngine.GameObject.scene);
+#if UNITY_6000_3_OR_NEWER
+            yield return nameof(UnityEngine.Component.transformHandle);
+#endif
+        }
+
         protected virtual IEnumerable<string> RestrictedInValuePropertyNames(Reflector reflector, JsonElement valueJsonElement) => new[]
         {
             nameof(SerializedMember.fields),
