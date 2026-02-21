@@ -52,6 +52,17 @@
                         <ui:Label text="AI agent" name="aiAgentLabel" class="timeline-label" />
                     </ui:VisualElement>
                 </ui:VisualElement>
+                <!-- Deployment mode toggle -->
+                <ui:VisualElement style="flex-direction: column; margin-top: 4px; margin-left: 3px;">
+                    <ui:VisualElement style="flex-direction: row; align-items: center;">
+                        <ui:Toggle name="toggleDeploymentLocal" label="local" class="toggle-text-button" tooltip="Local deployment: MCP server runs on the same machine as Unity" />
+                        <ui:Toggle name="toggleDeploymentRemote" label="remote" class="toggle-text-button" tooltip="Remote deployment: MCP server runs on a remote machine" />
+                        <ui:TextField name="inputRemoteToken" label="" placeholder-text="Token" style="flex-grow: 1; margin-left: 4px; margin-right: 12px; display: none;" />
+                    </ui:VisualElement>
+                    <ui:VisualElement name="tokenActionsRow" style="flex-direction: row; justify-content: flex-end; display: none;">
+                        <ui:Button name="btnGenerateToken" text="Generate" class="btn-secondary" tooltip="Generate a new random token for remote deployment" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement class="divider" />
             <!-- AI Agent Section ============================== -->

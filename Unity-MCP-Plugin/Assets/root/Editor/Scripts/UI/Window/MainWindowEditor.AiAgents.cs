@@ -9,9 +9,13 @@
 */
 
 #nullable enable
+using System;
+using System.Security.Cryptography;
 using Extensions.Unity.PlayerPrefsEx;
+using R3;
 using UnityEngine;
 using UnityEngine.UIElements;
+using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
@@ -75,6 +79,127 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 // Load UI for the newly selected agent
                 LoadAgentUI(container, newIndex);
             });
+
+            // Deployment mode toggles
+            var toggleDeploymentLocal = root.Query<Toggle>("toggleDeploymentLocal").First();
+            var toggleDeploymentRemote = root.Query<Toggle>("toggleDeploymentRemote").First();
+            var inputRemoteToken = root.Query<TextField>("inputRemoteToken").First();
+            var tokenActionsRow = root.Query<VisualElement>("tokenActionsRow").First();
+            var btnGenerateToken = root.Query<Button>("btnGenerateToken").First();
+
+            if (toggleDeploymentLocal == null)
+            {
+                Debug.LogError("toggleDeploymentLocal not found in UXML.");
+                return;
+            }
+            if (toggleDeploymentRemote == null)
+            {
+                Debug.LogError("toggleDeploymentRemote not found in UXML.");
+                return;
+            }
+            if (inputRemoteToken == null)
+            {
+                Debug.LogError("inputRemoteToken not found in UXML.");
+                return;
+            }
+            if (tokenActionsRow == null)
+            {
+                Debug.LogError("tokenActionsRow not found in UXML.");
+                return;
+            }
+            if (btnGenerateToken == null)
+            {
+                Debug.LogError("btnGenerateToken not found in UXML.");
+                return;
+            }
+
+            var isRemote = UnityMcpPlugin.DeploymentMode == DeploymentMode.remote;
+            toggleDeploymentLocal.SetValueWithoutNotify(!isRemote);
+            toggleDeploymentRemote.SetValueWithoutNotify(isRemote);
+            inputRemoteToken.SetValueWithoutNotify(UnityMcpPlugin.Token ?? string.Empty);
+            SetTokenFieldsVisible(inputRemoteToken, tokenActionsRow, isRemote);
+
+            toggleDeploymentLocal.RegisterValueChangedCallback(evt =>
+            {
+                if (evt.newValue)
+                {
+                    UnityMcpPlugin.DeploymentMode = DeploymentMode.local;
+                    UnityMcpPlugin.Instance.Save();
+                    toggleDeploymentRemote.SetValueWithoutNotify(false);
+                    SetTokenFieldsVisible(inputRemoteToken, tokenActionsRow, false);
+                }
+                else if (!toggleDeploymentRemote.value)
+                {
+                    toggleDeploymentLocal.SetValueWithoutNotify(true);
+                }
+            });
+
+            toggleDeploymentRemote.RegisterValueChangedCallback(evt =>
+            {
+                if (evt.newValue)
+                {
+                    UnityMcpPlugin.DeploymentMode = DeploymentMode.remote;
+                    UnityMcpPlugin.Instance.Save();
+                    toggleDeploymentLocal.SetValueWithoutNotify(false);
+                    SetTokenFieldsVisible(inputRemoteToken, tokenActionsRow, true);
+                }
+                else if (!toggleDeploymentLocal.value)
+                {
+                    toggleDeploymentRemote.SetValueWithoutNotify(true);
+                }
+            });
+
+            inputRemoteToken.RegisterCallback<FocusOutEvent>(_ =>
+            {
+                var newToken = inputRemoteToken.value;
+                if (newToken == UnityMcpPlugin.Token)
+                    return;
+
+                var wasRunning = McpServerManager.IsRunning;
+                UnityMcpPlugin.Token = newToken;
+                UnityMcpPlugin.Instance.Save();
+                RestartServerIfWasRunning(wasRunning);
+            });
+
+            btnGenerateToken.RegisterCallback<ClickEvent>(_ =>
+            {
+                var newToken = GenerateToken();
+                inputRemoteToken.SetValueWithoutNotify(newToken);
+
+                var wasRunning = McpServerManager.IsRunning;
+                UnityMcpPlugin.Token = newToken;
+                UnityMcpPlugin.Instance.Save();
+                RestartServerIfWasRunning(wasRunning);
+            });
+        }
+
+        private static void SetTokenFieldsVisible(TextField tokenField, VisualElement actionsRow, bool visible)
+        {
+            tokenField.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+            actionsRow.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
+        private void RestartServerIfWasRunning(bool wasRunning)
+        {
+            if (!wasRunning)
+                return;
+
+            McpServerManager.StopServer();
+
+            McpServerManager.ServerStatus
+                .Where(status => status == McpServerStatus.Stopped)
+                .Take(1)
+                .ObserveOnCurrentSynchronizationContext()
+                .Subscribe(_ => McpServerManager.StartServer())
+                .AddTo(_disposables);
+        }
+
+        private static string GenerateToken()
+        {
+            var bytes = new byte[32];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(bytes);
+            return Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
         }
 
         void LoadAgentUI(VisualElement container, int selectedIndex)

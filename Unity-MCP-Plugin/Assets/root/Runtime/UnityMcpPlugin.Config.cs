@@ -34,6 +34,7 @@ namespace com.IvanMurzak.Unity.MCP
             public LogLevel LogLevel { get; set; } = LogLevel.Warning;
             public bool KeepServerRunning { get; set; } = false;
             public TransportMethod TransportMethod { get; set; } = TransportMethod.streamableHttp;
+            public DeploymentMode DeploymentMode { get; set; } = DeploymentMode.local;
             public List<McpFeature> Tools { get; set; } = new();
             public List<McpFeature> Prompts { get; set; } = new();
             public List<McpFeature> Resources { get; set; } = new();
@@ -49,6 +50,7 @@ namespace com.IvanMurzak.Unity.MCP
                 KeepConnected = true;
                 KeepServerRunning = false;
                 TransportMethod = TransportMethod.streamableHttp;
+                DeploymentMode = DeploymentMode.local;
                 LogLevel = LogLevel.Warning;
                 TimeoutMs = Consts.Hub.DefaultTimeoutMs;
                 Tools = DefaultTools;
