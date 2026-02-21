@@ -112,8 +112,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             // HTTP Configuration
 
-            ContainerHttp!.Add(TemplateWarningLabel("IMPORTANT: Cursor disconnects frequently when using HTTP configuration. Highly recommended to use STDIO configuration instead, it's more stable and better integrated with Cursor app."));
-
             var manualStepsContainerHttp = TemplateFoldoutFirst("Manual Configuration Steps");
 
             manualStepsContainerHttp!.Add(TemplateLabelDescription("1. Open or create file '.cursor/mcp.json'"));
