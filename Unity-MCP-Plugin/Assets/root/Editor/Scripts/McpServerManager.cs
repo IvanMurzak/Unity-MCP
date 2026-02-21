@@ -470,7 +470,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public static string DockerSetupRunCommand()
         {
             var dockerPortMapping = $"-p {UnityMcpPlugin.Port}:{UnityMcpPlugin.Port}";
-            var dockerEnvVars = $"-e {Env.ClientTransportMethod}={TransportMethod.streamableHttp} -e {Env.Port}={UnityMcpPlugin.Port} -e {Env.PluginTimeout}={UnityMcpPlugin.TimeoutMs} -e {Env.Token}={UnityMcpPlugin.Token} -e {Env.DeploymentMode}={DeploymentMode.remote}";
+            var dockerEnvVars = $"-e {Env.ClientTransportMethod}={TransportMethod.streamableHttp} -e {Env.Port}={UnityMcpPlugin.Port} -e {Env.PluginTimeout}={UnityMcpPlugin.TimeoutMs} -e {Env.DeploymentMode}={DeploymentMode.remote}";
+            var token = UnityMcpPlugin.Token;
+            if (!string.IsNullOrEmpty(token))
+                dockerEnvVars += $" -e {Env.Token}={token}";
+
             var dockerContainer = $"--name unity-mcp-server-{UnityMcpPlugin.Port}";
             var dockerImage = $"ivanmurzakdev/unity-mcp-server:{UnityMcpPlugin.Version}";
             return $"docker run -d {dockerPortMapping} {dockerEnvVars} {dockerContainer} {dockerImage}";
@@ -940,7 +944,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             var deploymentMode = DeploymentMode.remote;
 
             // Arguments format: port=XXXXX plugin-timeout=XXXXX client-transport=<TransportMethod> token=<Token>
-            return $"{Args.Port}={port} {Args.PluginTimeout}={timeout} {Args.ClientTransportMethod}={transportMethod} {Args.Token}={token} {Args.DeploymentMode}={deploymentMode}";
+            var args = $"{Args.Port}={port} {Args.PluginTimeout}={timeout} {Args.ClientTransportMethod}={transportMethod} {Args.DeploymentMode}={deploymentMode}";
+
+            if (!string.IsNullOrEmpty(token))
+                args += $" {Args.Token}={token}";
+
+            return args;
         }
 
         /// <summary>
