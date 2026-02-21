@@ -7,22 +7,15 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
-using UnityEditor;
+using com.IvanMurzak.McpPlugin;
 
-namespace com.IvanMurzak.Unity.MCP.Installer
+namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
-    [InitializeOnLoad]
-    public static partial class Installer
+    [McpPluginToolType]
+    public partial class Tool_Screenshot
     {
-        public const string PackageId = "com.ivanmurzak.unity.mcp";
-        public const string Version = "0.48.1";
-
-        static Installer()
-        {
-#if !IVAN_MURZAK_INSTALLER_PROJECT
-            AddScopedRegistryIfNeeded(ManifestPath);
-#endif
-        }
+        private const int MaxDimension = 16384;
     }
 }

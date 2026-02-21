@@ -12,7 +12,6 @@
 using System;
 using System.IO;
 using System.Text.Json.Nodes;
-using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEngine.UIElements;
 using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
@@ -37,18 +36,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 "Claude",
                 "claude_desktop_config.json"
             ),
-            bodyPath: Consts.MCP.Server.DefaultBodyPath
+            bodyPath: DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
         .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
         .SetProperty("args", new JsonArray {
             $"{Args.Port}={UnityMcpPlugin.Port}",
             $"{Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-            $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
-            $"{Args.Token}={UnityMcpPlugin.Token}"
+            $"{Args.ClientTransportMethod}={TransportMethod.stdio}"
         }, requiredForConfiguration: true)
-        .SetPropertyToRemove("url")
-        .SetPropertyToRemove("headers");
+        .SetPropertyToRemove("url");
 
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
@@ -59,18 +56,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 "Claude",
                 "claude_desktop_config.json"
             ),
-            bodyPath: Consts.MCP.Server.DefaultBodyPath
+            bodyPath: DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
         .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
         .SetProperty("args", new JsonArray {
             $"{Args.Port}={UnityMcpPlugin.Port}",
             $"{Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-            $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
-            $"{Args.Token}={UnityMcpPlugin.Token}"
+            $"{Args.ClientTransportMethod}={TransportMethod.stdio}"
         }, requiredForConfiguration: true)
-        .SetPropertyToRemove("url")
-        .SetPropertyToRemove("headers");
+        .SetPropertyToRemove("url");
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new JsonAiAgentConfig(
             name: AgentName,
@@ -79,11 +74,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 "Claude",
                 "claude_desktop_config.json"
             ),
-            bodyPath: Consts.MCP.Server.DefaultBodyPath
+            bodyPath: DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
         .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
-        .SetProperty("headers", new JsonObject { ["Authorization"] = $"Bearer {UnityMcpPlugin.Token}" }, requiredForConfiguration: true)
         .SetPropertyToRemove("command")
         .SetPropertyToRemove("args");
 
@@ -96,11 +90,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 "Claude",
                 "claude_desktop_config.json"
             ),
-            bodyPath: Consts.MCP.Server.DefaultBodyPath
+            bodyPath: DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
         .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
-        .SetProperty("headers", new JsonObject { ["Authorization"] = $"Bearer {UnityMcpPlugin.Token}" }, requiredForConfiguration: true)
         .SetPropertyToRemove("command")
         .SetPropertyToRemove("args");
 

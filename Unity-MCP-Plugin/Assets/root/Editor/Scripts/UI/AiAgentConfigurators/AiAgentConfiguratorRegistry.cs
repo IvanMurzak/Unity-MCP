@@ -26,12 +26,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 new ClaudeDesktopConfigurator(),
                 new VisualStudioCodeCopilotConfigurator(),
                 new VisualStudioCopilotConfigurator(),
+                new RiderConfigurator(),
                 new CursorConfigurator(),
                 new GitHubCopilotCliConfigurator(),
                 new GeminiConfigurator(),
                 new AntigravityConfigurator(),
                 new OpenCodeConfigurator(),
-                new CodexConfigurator()
+                new CodexConfigurator(),
+                new UnityAiConfigurator(),
             }
             .OrderBy(c => c.AgentName)
             .Append(new CustomConfigurator()) // Ensure CustomConfigurator is always last

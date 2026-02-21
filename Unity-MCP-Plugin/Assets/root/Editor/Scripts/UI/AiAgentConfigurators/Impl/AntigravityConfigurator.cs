@@ -12,7 +12,6 @@
 using System;
 using System.IO;
 using System.Text.Json.Nodes;
-using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEngine.UIElements;
 using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
@@ -38,7 +37,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 "antigravity",
                 "mcp_config.json"
             ),
-            bodyPath: Consts.MCP.Server.DefaultBodyPath
+            bodyPath: DefaultBodyPath
         )
         .AddIdentityKey("serverUrl")
         .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
@@ -46,13 +45,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetProperty("args", new JsonArray {
             $"{Args.Port}={UnityMcpPlugin.Port}",
             $"{Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-            $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
-            $"{Args.Token}={UnityMcpPlugin.Token}"
+            $"{Args.ClientTransportMethod}={TransportMethod.stdio}"
         }, requiredForConfiguration: true)
         .SetPropertyToRemove("url")
         .SetPropertyToRemove("serverUrl")
-        .SetPropertyToRemove("type")
-        .SetPropertyToRemove("headers");
+        .SetPropertyToRemove("type");
 
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
@@ -62,7 +59,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 "antigravity",
                 "mcp_config.json"
             ),
-            bodyPath: Consts.MCP.Server.DefaultBodyPath
+            bodyPath: DefaultBodyPath
         )
         .AddIdentityKey("serverUrl")
         .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
@@ -70,13 +67,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetProperty("args", new JsonArray {
             $"{Args.Port}={UnityMcpPlugin.Port}",
             $"{Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-            $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
-            $"{Args.Token}={UnityMcpPlugin.Token}"
+            $"{Args.ClientTransportMethod}={TransportMethod.stdio}"
         }, requiredForConfiguration: true)
         .SetPropertyToRemove("url")
         .SetPropertyToRemove("serverUrl")
-        .SetPropertyToRemove("type")
-        .SetPropertyToRemove("headers");
+        .SetPropertyToRemove("type");
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new JsonAiAgentConfig(
             name: AgentName,
@@ -86,12 +81,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 "antigravity",
                 "mcp_config.json"
             ),
-            bodyPath: Consts.MCP.Server.DefaultBodyPath
+            bodyPath: DefaultBodyPath
         )
         .AddIdentityKey("serverUrl")
         .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
         .SetProperty("serverUrl", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
-        .SetProperty("headers", new JsonObject { ["Authorization"] = $"Bearer {UnityMcpPlugin.Token}" }, requiredForConfiguration: true)
         .SetPropertyToRemove("command")
         .SetPropertyToRemove("args")
         .SetPropertyToRemove("url")
@@ -105,12 +99,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 "antigravity",
                 "mcp_config.json"
             ),
-            bodyPath: Consts.MCP.Server.DefaultBodyPath
+            bodyPath: DefaultBodyPath
         )
         .AddIdentityKey("serverUrl")
         .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
         .SetProperty("serverUrl", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
-        .SetProperty("headers", new JsonObject { ["Authorization"] = $"Bearer {UnityMcpPlugin.Token}" }, requiredForConfiguration: true)
         .SetPropertyToRemove("command")
         .SetPropertyToRemove("args")
         .SetPropertyToRemove("url")

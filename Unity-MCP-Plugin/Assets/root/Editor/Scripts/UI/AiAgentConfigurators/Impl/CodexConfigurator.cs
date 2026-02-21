@@ -40,13 +40,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetProperty("args", new[] {
             $"{Args.Port}={UnityMcpPlugin.Port}",
             $"{Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-            $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
-            $"{Args.Token}={UnityMcpPlugin.Token}"
+            $"{Args.ClientTransportMethod}={TransportMethod.stdio}"
         }, requiredForConfiguration: true)
         .SetProperty("tool_timeout_sec", 300, requiredForConfiguration: false) // Optional: Set a longer tool timeout for Codex
         .SetPropertyToRemove("url")
-        .SetPropertyToRemove("type")
-        .SetPropertyToRemove("bearer_token_env_var");
+        .SetPropertyToRemove("type");
+
 
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new TomlAiAgentConfig(
             name: AgentName,
@@ -61,13 +60,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetProperty("args", new[] {
             $"{Args.Port}={UnityMcpPlugin.Port}",
             $"{Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-            $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
-            $"{Args.Token}={UnityMcpPlugin.Token}"
+            $"{Args.ClientTransportMethod}={TransportMethod.stdio}"
         }, requiredForConfiguration: true)
         .SetProperty("tool_timeout_sec", 300, requiredForConfiguration: false) // Optional: Set a longer tool timeout for Codex
         .SetPropertyToRemove("url")
-        .SetPropertyToRemove("type")
-        .SetPropertyToRemove("bearer_token_env_var");
+        .SetPropertyToRemove("type");
+
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new TomlAiAgentConfig(
             name: AgentName,
@@ -80,7 +78,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetProperty("enabled", true, requiredForConfiguration: true) // Codex requires an "enabled" property
         .SetProperty("url", UnityMcpPlugin.Host, requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
         .SetProperty("tool_timeout_sec", 300, requiredForConfiguration: false) // Optional: Set a longer tool timeout for Codex
-        .SetProperty("bearer_token_env_var", $"Bearer {UnityMcpPlugin.Token}", requiredForConfiguration: true)
         .SetPropertyToRemove("command")
         .SetPropertyToRemove("args")
         .SetPropertyToRemove("type");
@@ -96,7 +93,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetProperty("enabled", true, requiredForConfiguration: true) // Codex requires an "enabled" property
         .SetProperty("url", UnityMcpPlugin.Host, requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
         .SetProperty("tool_timeout_sec", 300, requiredForConfiguration: false) // Optional: Set a longer tool timeout for Codex
-        .SetProperty("bearer_token_env_var", $"Bearer {UnityMcpPlugin.Token}", requiredForConfiguration: true)
         .SetPropertyToRemove("command")
         .SetPropertyToRemove("args")
         .SetPropertyToRemove("type");
