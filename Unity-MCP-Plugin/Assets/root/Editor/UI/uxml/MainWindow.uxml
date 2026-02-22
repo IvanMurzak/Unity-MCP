@@ -81,10 +81,10 @@
             </ui:VisualElement>
             <ui:VisualElement class="divider" />
             <!-- AI Agent Section ============================== -->
-            <ui:VisualElement class="row" style="margin-top: 0;">
+            <ui:VisualElement class="row" style="margin-top: 0; align-items: center;">
                 <ui:Label text="AI agent" class="header" />
+                <ui:DropdownField name="aiAgentDropdown" class="content-item" style="flex-grow: 1; flex-shrink: 1; min-width: 0; padding-top: 4px; margin-right: 0px;" />
             </ui:VisualElement>
-            <ui:DropdownField name="aiAgentDropdown" label="Choose" class="content-item" />
             <ui:VisualElement name="ConfigureAgentsContainer" />
             <ui:VisualElement class="divider" />
             <!-- MCP features section ============================== -->
