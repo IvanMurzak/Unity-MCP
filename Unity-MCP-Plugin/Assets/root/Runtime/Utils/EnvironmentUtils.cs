@@ -30,8 +30,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         public static string? GetMcpServerUrl()
         {
             var commandLineArgs = ArgsUtils.ParseCommandLineArguments();
-            return commandLineArgs.GetValueOrDefault(McpServerUrlEnvVar)
-                ?? Environment.GetEnvironmentVariable(McpServerUrlEnvVar);
+            return commandLineArgs.GetValueOrDefault(McpServerUrlEnvVar) ?? Environment.GetEnvironmentVariable(McpServerUrlEnvVar);
         }
 
         /// <summary>

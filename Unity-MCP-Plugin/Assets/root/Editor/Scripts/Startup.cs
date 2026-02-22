@@ -10,7 +10,6 @@
 
 #nullable enable
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
-using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
 using UnityEditor;
 using UnityEngine;
@@ -27,15 +26,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         {
             UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
             UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
-
-            // Apply UNITY_MCP_SERVER_URL env variable if set — overrides the configured host
-            var mcpServerUrl = EnvironmentUtils.GetMcpServerUrl();
-            if (!string.IsNullOrEmpty(mcpServerUrl))
-            {
-                _logger.LogInformation("{class}: Applying {envVar}='{url}'",
-                    nameof(Startup), EnvironmentUtils.McpServerUrlEnvVar, mcpServerUrl);
-                UnityMcpPlugin.Host = mcpServerUrl;
-            }
 
             if (Application.dataPath.Contains(" "))
                 Debug.LogError("The project path contains spaces, which may cause issues during usage of AI Game Developer. Please consider the move the project to a folder without spaces.");
