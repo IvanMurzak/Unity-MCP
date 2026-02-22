@@ -18,6 +18,23 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
     public static class EnvironmentUtils
     {
         /// <summary>
+        /// Environment variable name used to override the MCP server URL.
+        /// When set, Unity Editor will automatically connect to the provided URL on startup.
+        /// </summary>
+        public const string McpServerUrlEnvVar = "UNITY_MCP_SERVER_URL";
+
+        /// <summary>
+        /// Returns the MCP server URL from the <see cref="McpServerUrlEnvVar"/> environment variable
+        /// or the matching command-line argument, or <c>null</c> if neither is set.
+        /// </summary>
+        public static string? GetMcpServerUrl()
+        {
+            var commandLineArgs = ArgsUtils.ParseCommandLineArguments();
+            return commandLineArgs.GetValueOrDefault(McpServerUrlEnvVar)
+                ?? Environment.GetEnvironmentVariable(McpServerUrlEnvVar);
+        }
+
+        /// <summary>
         /// Checks if the current environment is a CI environment.
         /// </summary>
         public static bool IsCi()
