@@ -73,14 +73,14 @@
 
 /* Compact Button — smaller variant of btn-secondary */
 .btn-compact {
-    height: 22px;
+    height: 20px;
     background-color: rgb(70, 70, 70);
     border-radius: 4px;
-    border-width: 0.5px;
+    border-width: 0px;
     border-color: rgb(100, 100, 100);
     color: rgb(200, 200, 200);
     font-size: 11px;
-    padding: 0 8px;
+    padding: 0 6px;
     transition-duration: 200ms;
 }
 

@@ -19,7 +19,7 @@
     flex-direction: row-reverse;
     flex-grow: 0;
     flex-shrink: 0;
-    margin: 2px 2px;
+    /* margin: 2px 2px; */
     min-width: 40px;
 }
 
@@ -168,4 +168,18 @@
     min-width: 60px;
     margin-top: 0;
     margin-bottom: 0;
+}
+
+/* Frame/Group containers */
+.frame-mcp-server {
+    /* background-color: rgba(20, 40, 69, 0.2); */
+
+    border-radius: 10px;
+
+    margin-bottom: -4px;
+    margin-top: 2px;
+    padding-top: 2px;
+
+    margin-right: -6px;
+    padding-right: 6px;
 }
