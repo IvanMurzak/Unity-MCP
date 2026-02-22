@@ -381,7 +381,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         ///     "Unity ProjectName": {
         ///       "type": "...",    // optional, only if provided
         ///       "command": "path/to/unity-mcp-server",
-        ///       "args": ["port=...", "plugin-timeout=...", "client-transport=stdio"]
+        ///       "args": ["port=...", "plugin-timeout=...", "client-transport=stdio", "token=..."]
         ///     }
         ///   }
         /// }
@@ -393,7 +393,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             int timeoutMs = Consts.Hub.DefaultTimeoutMs,
             string? type = null)
         {
-            var pathSegments = Consts.MCP.Server.BodyPathSegments(bodyPath);
+            var pathSegments = BodyPathSegments(bodyPath);
 
             // Build innermost content first
             var serverConfig = new JsonObject();
@@ -404,9 +404,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             serverConfig["command"] = ExecutableFullPath.Replace('\\', '/');
             serverConfig["args"] = new JsonArray
             {
-                $"{Consts.MCP.Server.Args.Port}={port}",
-                $"{Consts.MCP.Server.Args.PluginTimeout}={timeoutMs}",
-                $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+                $"{Args.Port}={port}",
+                $"{Args.PluginTimeout}={timeoutMs}",
+                $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
+                $"{Args.Token}={UnityMcpPlugin.Token}"
             };
 
             var innerContent = new JsonObject
@@ -431,7 +432,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         ///   "mcpServers": {
         ///     "Unity ProjectName": {
         ///       "type": "...",  // optional, only if provided
-        ///       "url": "http://localhost:port"
+        ///       "url": "http://localhost:port",
+        ///      "headers": {     // only if token is provided
+        ///        "Authorization": "Bearer token"
+        ///      }
         ///     }
         ///   }
         /// }
@@ -442,7 +446,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             string bodyPath = "mcpServers",
             string? type = null)
         {
-            var pathSegments = Consts.MCP.Server.BodyPathSegments(bodyPath);
+            var pathSegments = BodyPathSegments(bodyPath);
 
             // Build innermost content first
             var serverConfig = new JsonObject();
@@ -451,6 +455,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 serverConfig["type"] = type;
 
             serverConfig["url"] = url;
+            if (!string.IsNullOrEmpty(UnityMcpPlugin.Token))
+            {
+                serverConfig["headers"] = new JsonObject
+                {
+                    ["Authorization"] = $"Bearer {UnityMcpPlugin.Token}"
+                };
+            }
 
             var innerContent = new JsonObject
             {
