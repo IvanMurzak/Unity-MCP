@@ -153,6 +153,7 @@
     -unity-text-align: middle-left;
     color: rgb(200, 200, 200);
     font-size: 13px;
+    -unity-text-decoration: underline;
 }
 
 .timeline-btn {

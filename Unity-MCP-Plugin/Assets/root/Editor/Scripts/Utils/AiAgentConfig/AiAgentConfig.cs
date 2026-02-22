@@ -48,6 +48,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         }
 
         public abstract bool Configure();
+        public abstract bool Unconfigure();
         public abstract bool IsConfigured();
     }
 }

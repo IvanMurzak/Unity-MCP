@@ -170,6 +170,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
         }
 
+        public override bool Unconfigure()
+        {
+            if (string.IsNullOrEmpty(ConfigPath) || !File.Exists(ConfigPath))
+                return false;
+
+            try
+            {
+                var sectionName = $"{BodyPath}.{DefaultMcpServerName}";
+                var lines = File.ReadAllLines(ConfigPath).ToList();
+                var sectionIndex = FindTomlSection(lines, sectionName);
+                if (sectionIndex < 0)
+                    return false;
+
+                var sectionEnd = FindSectionEnd(lines, sectionIndex);
+                lines.RemoveRange(sectionIndex, sectionEnd - sectionIndex);
+
+                File.WriteAllText(ConfigPath, string.Join(Environment.NewLine, lines));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"{Consts.Log.Tag} Error unconfiguring TOML MCP client: {ex.Message}");
+                Debug.LogException(ex);
+                return false;
+            }
+        }
+
         public override bool IsConfigured()
         {
             if (string.IsNullOrEmpty(ConfigPath) || !File.Exists(ConfigPath))

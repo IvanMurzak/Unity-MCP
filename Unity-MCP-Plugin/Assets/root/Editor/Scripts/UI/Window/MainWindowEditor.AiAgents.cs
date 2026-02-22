@@ -84,7 +84,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var toggleDeploymentLocal = root.Query<Toggle>("toggleDeploymentLocal").First();
             var toggleDeploymentRemote = root.Query<Toggle>("toggleDeploymentRemote").First();
             var inputRemoteToken = root.Query<TextField>("inputRemoteToken").First();
-            var tokenActionsRow = root.Query<VisualElement>("tokenActionsRow").First();
+            var tokenSection = root.Query<VisualElement>("tokenSection").First();
             var btnGenerateToken = root.Query<Button>("btnGenerateToken").First();
 
             if (toggleDeploymentLocal == null)
@@ -102,9 +102,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 Debug.LogError("inputRemoteToken not found in UXML.");
                 return;
             }
-            if (tokenActionsRow == null)
+            if (tokenSection == null)
             {
-                Debug.LogError("tokenActionsRow not found in UXML.");
+                Debug.LogError("tokenSection not found in UXML.");
                 return;
             }
             if (btnGenerateToken == null)
@@ -117,7 +117,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             toggleDeploymentLocal.SetValueWithoutNotify(!isRemote);
             toggleDeploymentRemote.SetValueWithoutNotify(isRemote);
             inputRemoteToken.SetValueWithoutNotify(UnityMcpPlugin.Token ?? string.Empty);
-            SetTokenFieldsVisible(inputRemoteToken, tokenActionsRow, isRemote);
+            SetTokenFieldsVisible(inputRemoteToken, tokenSection, isRemote);
 
             void InvalidateAndReloadAgentUI()
             {
@@ -133,7 +133,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     UnityMcpPlugin.AuthOption = AuthOption.none;
                     UnityMcpPlugin.Instance.Save();
                     toggleDeploymentRemote.SetValueWithoutNotify(false);
-                    SetTokenFieldsVisible(inputRemoteToken, tokenActionsRow, false);
+                    SetTokenFieldsVisible(inputRemoteToken, tokenSection, false);
                     InvalidateAndReloadAgentUI();
                     RestartServerIfWasRunning(wasRunning);
                 }
@@ -151,7 +151,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     UnityMcpPlugin.AuthOption = AuthOption.required;
                     UnityMcpPlugin.Instance.Save();
                     toggleDeploymentLocal.SetValueWithoutNotify(false);
-                    SetTokenFieldsVisible(inputRemoteToken, tokenActionsRow, true);
+                    SetTokenFieldsVisible(inputRemoteToken, tokenSection, true);
                     InvalidateAndReloadAgentUI();
                     RestartServerIfWasRunning(wasRunning);
                 }

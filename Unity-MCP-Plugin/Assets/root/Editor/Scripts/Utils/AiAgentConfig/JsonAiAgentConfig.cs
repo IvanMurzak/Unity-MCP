@@ -164,6 +164,35 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
         }
 
+        public override bool Unconfigure()
+        {
+            if (string.IsNullOrEmpty(ConfigPath) || !File.Exists(ConfigPath))
+                return false;
+
+            try
+            {
+                var json = File.ReadAllText(ConfigPath);
+                var rootObj = JsonNode.Parse(json)?.AsObject();
+                if (rootObj == null)
+                    return false;
+
+                var pathSegments = Consts.MCP.Server.BodyPathSegments(BodyPath);
+                var targetObj = NavigateToJsonPath(rootObj, pathSegments);
+                if (targetObj == null)
+                    return false;
+
+                targetObj.Remove(DefaultMcpServerName);
+                File.WriteAllText(ConfigPath, rootObj.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error unconfiguring MCP client: {ex.Message}");
+                Debug.LogException(ex);
+                return false;
+            }
+        }
+
         public override bool IsConfigured()
         {
             if (string.IsNullOrEmpty(ConfigPath) || !File.Exists(ConfigPath))

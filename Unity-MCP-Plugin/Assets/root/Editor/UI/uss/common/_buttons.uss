@@ -193,6 +193,38 @@
     color: rgb(255, 235, 150);
 }
 
+/* Circular Remove Button */
+.btn-remove-circle {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    min-height: 22px;
+    border-top-left-radius: 11px;
+    border-top-right-radius: 11px;
+    border-bottom-left-radius: 11px;
+    border-bottom-right-radius: 11px;
+    background-color: rgba(110, 25, 25, 0.3);
+    border-width: 0;
+    color: rgb(255, 160, 160);
+    font-size: 12px;
+    padding: 0;
+    margin-left: 8px;
+    -unity-font-style: bold;
+    transition-duration: 200ms;
+}
+
+.btn-remove-circle:hover {
+    background-color: rgb(210, 50, 50);
+    color: white;
+    transition-duration: 200ms;
+}
+
+.btn-remove-circle:active {
+    background-color: rgb(255, 80, 80);
+    color: white;
+    transition-duration: 50ms;
+}
+
 /* Floating/Absolute positioned button */
 .btn-floating {
     position: absolute;
