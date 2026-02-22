@@ -38,9 +38,19 @@
                         <ui:VisualElement name="mcpServerStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
                         <ui:VisualElement class="timeline-line" />
                     </ui:VisualElement>
-                    <ui:VisualElement class="timeline-content">
-                        <ui:Label text="MCP server" name="mcpServerLabel" class="timeline-label" />
-                        <ui:Button name="btnStartStopServer" text="Start" class="btn-secondary timeline-btn" />
+                    <ui:VisualElement style="flex-direction: column; flex-grow: 1;">
+                        <ui:VisualElement style="flex-direction: row;">
+                            <!-- MCP Server status -->
+                            <ui:VisualElement class="timeline-content">
+                                <ui:Label text="MCP server" name="mcpServerLabel" class="timeline-label" />
+                                <ui:Button name="btnStartStopServer" text="Start" class="btn-secondary timeline-btn" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <!-- Token -->
+                        <ui:VisualElement name="tokenActionsRow" style="flex-direction: row; justify-content: flex-end; display: none; height: 22px;">
+                            <ui:TextField name="inputRemoteToken" label="" placeholder-text="Token" style="flex-grow: 1; flex-shrink: 1; min-width: 0; margin-left: 4px; height: 22px; display: none;" />
+                            <ui:Button name="btnGenerateToken" text="Generate" class="btn-compact" tooltip="Generate a new random token for remote deployment" />
+                        </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <!-- Point 3: AI Agent -->
@@ -52,22 +62,18 @@
                         <ui:Label text="AI agent" name="aiAgentLabel" class="timeline-label" />
                     </ui:VisualElement>
                 </ui:VisualElement>
-                <!-- Deployment mode toggle -->
-                <ui:VisualElement style="flex-direction: column; margin-top: 4px; margin-left: 3px;">
-                    <ui:VisualElement style="flex-direction: row;">
-                        <ui:Toggle name="toggleDeploymentLocal" label="local" class="toggle-text-button" tooltip="Local deployment: MCP server runs on the same machine as Unity" />
-                        <ui:Toggle name="toggleDeploymentRemote" label="remote" class="toggle-text-button" tooltip="Remote deployment: MCP server runs on a remote machine" />
-                        <ui:TextField name="inputRemoteToken" label="" placeholder-text="Token" style="flex-grow: 1; margin-left: 4px; display: none;" />
-                    </ui:VisualElement>
-                    <ui:VisualElement name="tokenActionsRow" style="flex-direction: row; justify-content: flex-end; display: none;">
-                        <ui:Button name="btnGenerateToken" text="Generate" class="btn-secondary" tooltip="Generate a new random token for remote deployment" />
-                    </ui:VisualElement>
-                </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement class="divider" />
             <!-- AI Agent Section ============================== -->
             <ui:VisualElement class="row" style="margin-top: 0;">
                 <ui:Label text="AI agent" class="header" />
+                <!-- Deployment mode toggle -->
+                <ui:VisualElement style="flex-direction: column; margin-top: 4px; margin-left: 3px;">
+                    <ui:VisualElement style="flex-direction: row;">
+                        <ui:Toggle name="toggleDeploymentLocal" label="local" class="toggle-text-button" tooltip="Local deployment: MCP server runs on the same machine as Unity" />
+                        <ui:Toggle name="toggleDeploymentRemote" label="remote" class="toggle-text-button" tooltip="Remote deployment: MCP server runs on a remote machine" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
                 <!-- Transport mode toggle -->
                 <ui:VisualElement style="flex-direction: row; margin-top: 4px;">
                     <ui:Toggle name="toggleOptionHttp" label="http" class="toggle-text-button" tooltip="Configure AI agent to communicate over HTTP (RECOMMENDED)" />
