@@ -43,6 +43,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             $"{Args.Port}={UnityMcpPlugin.Port}",
             $"{Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
             $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
+            $"{Args.Authorization}={UnityMcpPlugin.AuthOption}",
             $"{Args.Token}={UnityMcpPlugin.Token}"
         }, requiredForConfiguration: true)
         .SetProperty("tools", new JsonArray { "*" }, requiredForConfiguration: false)
@@ -63,6 +64,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             $"{Args.Port}={UnityMcpPlugin.Port}",
             $"{Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
             $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
+            $"{Args.Authorization}={UnityMcpPlugin.AuthOption}",
             $"{Args.Token}={UnityMcpPlugin.Token}"
         }, requiredForConfiguration: true)
         .SetProperty("tools", new JsonArray { "*" }, requiredForConfiguration: false)

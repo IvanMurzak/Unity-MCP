@@ -11,7 +11,6 @@
 #nullable enable
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEngine.UIElements;
-using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
@@ -55,6 +54,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected override void UpdateRemoveButton()
         {
             // Custom configurator doesn't have a remove button, so we can skip this
+        }
+
+        public override void Invalidate()
+        {
+            base.Invalidate();
         }
 
         protected override void OnUICreated(VisualElement root)

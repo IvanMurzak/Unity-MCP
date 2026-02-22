@@ -402,13 +402,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 serverConfig["type"] = type;
 
             serverConfig["command"] = ExecutableFullPath.Replace('\\', '/');
-            serverConfig["args"] = new JsonArray
+
+            var args = new JsonArray
             {
                 $"{Args.Port}={port}",
                 $"{Args.PluginTimeout}={timeoutMs}",
                 $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
-                $"{Args.Token}={UnityMcpPlugin.Token}"
+                $"{Args.Authorization}={UnityMcpPlugin.AuthOption}"
             };
+
+            var authRequired = UnityMcpPlugin.AuthOption == AuthOption.required;
+            if (authRequired && string.IsNullOrEmpty(UnityMcpPlugin.Token))
+            {
+                args.Add($"{Args.Token}={UnityMcpPlugin.Token}");
+            }
+
+            serverConfig["args"] = args;
 
             var innerContent = new JsonObject
             {
@@ -455,7 +464,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 serverConfig["type"] = type;
 
             serverConfig["url"] = url;
-            if (!string.IsNullOrEmpty(UnityMcpPlugin.Token))
+
+            var authRequired = UnityMcpPlugin.AuthOption == AuthOption.required;
+            if (authRequired && !string.IsNullOrEmpty(UnityMcpPlugin.Token))
             {
                 serverConfig["headers"] = new JsonObject
                 {
@@ -481,13 +492,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public static string DockerSetupRunCommand()
         {
             var dockerPortMapping = $"-p {UnityMcpPlugin.Port}:{UnityMcpPlugin.Port}";
-            var dockerEnvVars = $"-e {Env.ClientTransportMethod}={TransportMethod.streamableHttp} " +
+            var dockerEnvVars =
+                $"-e {Env.ClientTransportMethod}={TransportMethod.streamableHttp} " +
                 $"-e {Env.Port}={UnityMcpPlugin.Port} " +
                 $"-e {Env.PluginTimeout}={UnityMcpPlugin.TimeoutMs} " +
                 $"-e {Env.Authorization}={UnityMcpPlugin.AuthOption}";
 
+            var authRequired = UnityMcpPlugin.AuthOption == AuthOption.required;
             var token = UnityMcpPlugin.Token;
-            if (!string.IsNullOrEmpty(token))
+            if (authRequired && !string.IsNullOrEmpty(token))
                 dockerEnvVars += $" -e {Env.Token}={token}";
 
             var dockerContainer = $"--name unity-mcp-server-{UnityMcpPlugin.Port}";
