@@ -473,7 +473,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             var dockerEnvVars = $"-e {Env.ClientTransportMethod}={TransportMethod.streamableHttp} " +
                 $"-e {Env.Port}={UnityMcpPlugin.Port} " +
                 $"-e {Env.PluginTimeout}={UnityMcpPlugin.TimeoutMs} " +
-                $"-e {Env.DeploymentMode}={UnityMcpPlugin.AuthOption}";
+                $"-e {Env.Authorization}={UnityMcpPlugin.AuthOption}";
 
             var token = UnityMcpPlugin.Token;
             if (!string.IsNullOrEmpty(token))
@@ -951,7 +951,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             var args = $"{Args.Port}={port} " +
                 $"{Args.PluginTimeout}={timeout} " +
                 $"{Args.ClientTransportMethod}={transportMethod} " +
-                $"{Args.DeploymentMode}={deploymentMode}";
+                $"{Args.Authorization}={deploymentMode}";
 
             if (!string.IsNullOrEmpty(token))
                 args += $" {Args.Token}={token}";
