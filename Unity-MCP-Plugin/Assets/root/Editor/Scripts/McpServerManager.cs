@@ -972,7 +972,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             var deploymentMode = UnityMcpPlugin.AuthOption;
 
             // Arguments format: port=XXXXX plugin-timeout=XXXXX client-transport=<TransportMethod> token=<Token>
-            var args = $"{Args.Port}={port} " +
+            var args =
+                $"{Args.Port}={port} " +
                 $"{Args.PluginTimeout}={timeout} " +
                 $"{Args.ClientTransportMethod}={transportMethod} " +
                 $"{Args.Authorization}={deploymentMode}";
