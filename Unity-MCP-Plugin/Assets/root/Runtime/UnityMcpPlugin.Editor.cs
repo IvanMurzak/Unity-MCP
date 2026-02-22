@@ -13,6 +13,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using Microsoft.Extensions.Logging;
 using UnityEngine;
 
@@ -65,6 +66,15 @@ namespace com.IvanMurzak.Unity.MCP
 
                     config = new UnityConnectionConfig();
                     wasCreated = true;
+                }
+
+                // Override host with UNITY_MCP_SERVER_URL env variable if set
+                var mcpServerUrl = EnvironmentUtils.GetMcpServerUrl();
+                if (!string.IsNullOrEmpty(mcpServerUrl))
+                {
+                    _logger.LogInformation("{method}: Applying {envVar}='{url}'",
+                        nameof(GetOrCreateConfig), EnvironmentUtils.McpServerUrlEnvVar, mcpServerUrl);
+                    config.Host = mcpServerUrl;
                 }
 
                 return config;

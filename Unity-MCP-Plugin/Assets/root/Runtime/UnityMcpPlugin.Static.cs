@@ -197,6 +197,13 @@ namespace com.IvanMurzak.Unity.MCP
             if (KeepConnected == false)
                 return Task.FromResult(false);
 
+            var state = ConnectionState.CurrentValue;
+            if (state == HubConnectionState.Connected || state == HubConnectionState.Connecting)
+            {
+                _logger.LogTrace("{method}: already {state}, skipping", nameof(ConnectIfNeeded), state);
+                return Task.FromResult(false);
+            }
+
             return Connect();
         }
 
