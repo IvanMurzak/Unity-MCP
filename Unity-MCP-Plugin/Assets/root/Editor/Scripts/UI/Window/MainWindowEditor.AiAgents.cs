@@ -81,20 +81,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             });
 
             // Deployment mode toggles
-            var toggleDeploymentLocal = root.Query<Toggle>("toggleDeploymentLocal").First();
-            var toggleDeploymentRemote = root.Query<Toggle>("toggleDeploymentRemote").First();
+            var toggleAuthorizationNone = root.Query<Toggle>("toggleAuthorizationNone").First();
+            var toggleAuthorizationRequired = root.Query<Toggle>("toggleAuthorizationRequired").First();
             var inputRemoteToken = root.Query<TextField>("inputRemoteToken").First();
             var tokenSection = root.Query<VisualElement>("tokenSection").First();
             var btnGenerateToken = root.Query<Button>("btnGenerateToken").First();
 
-            if (toggleDeploymentLocal == null)
+            if (toggleAuthorizationNone == null)
             {
-                Debug.LogError("toggleDeploymentLocal not found in UXML.");
+                Debug.LogError("toggleAuthorizationNone not found in UXML.");
                 return;
             }
-            if (toggleDeploymentRemote == null)
+            if (toggleAuthorizationRequired == null)
             {
-                Debug.LogError("toggleDeploymentRemote not found in UXML.");
+                Debug.LogError("toggleAuthorizationRequired not found in UXML.");
                 return;
             }
             if (inputRemoteToken == null)
@@ -114,8 +114,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             }
 
             var isRemote = UnityMcpPlugin.AuthOption == AuthOption.required;
-            toggleDeploymentLocal.SetValueWithoutNotify(!isRemote);
-            toggleDeploymentRemote.SetValueWithoutNotify(isRemote);
+            toggleAuthorizationNone.SetValueWithoutNotify(!isRemote);
+            toggleAuthorizationRequired.SetValueWithoutNotify(isRemote);
             inputRemoteToken.SetValueWithoutNotify(UnityMcpPlugin.Token ?? string.Empty);
             SetTokenFieldsVisible(inputRemoteToken, tokenSection, isRemote);
 
@@ -125,39 +125,39 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 LoadAgentUI(container, agentNames.IndexOf(dropdown.value));
             }
 
-            toggleDeploymentLocal.RegisterValueChangedCallback(evt =>
+            toggleAuthorizationNone.RegisterValueChangedCallback(evt =>
             {
                 if (evt.newValue)
                 {
                     var wasRunning = McpServerManager.IsRunning && UnityMcpPlugin.TransportMethod != TransportMethod.stdio;
                     UnityMcpPlugin.AuthOption = AuthOption.none;
                     UnityMcpPlugin.Instance.Save();
-                    toggleDeploymentRemote.SetValueWithoutNotify(false);
+                    toggleAuthorizationRequired.SetValueWithoutNotify(false);
                     SetTokenFieldsVisible(inputRemoteToken, tokenSection, false);
                     InvalidateAndReloadAgentUI();
                     RestartServerIfWasRunning(wasRunning);
                 }
-                else if (!toggleDeploymentRemote.value)
+                else if (!toggleAuthorizationRequired.value)
                 {
-                    toggleDeploymentLocal.SetValueWithoutNotify(true);
+                    toggleAuthorizationNone.SetValueWithoutNotify(true);
                 }
             });
 
-            toggleDeploymentRemote.RegisterValueChangedCallback(evt =>
+            toggleAuthorizationRequired.RegisterValueChangedCallback(evt =>
             {
                 if (evt.newValue)
                 {
                     var wasRunning = McpServerManager.IsRunning && UnityMcpPlugin.TransportMethod != TransportMethod.stdio;
                     UnityMcpPlugin.AuthOption = AuthOption.required;
                     UnityMcpPlugin.Instance.Save();
-                    toggleDeploymentLocal.SetValueWithoutNotify(false);
+                    toggleAuthorizationNone.SetValueWithoutNotify(false);
                     SetTokenFieldsVisible(inputRemoteToken, tokenSection, true);
                     InvalidateAndReloadAgentUI();
                     RestartServerIfWasRunning(wasRunning);
                 }
-                else if (!toggleDeploymentLocal.value)
+                else if (!toggleAuthorizationNone.value)
                 {
-                    toggleDeploymentRemote.SetValueWithoutNotify(true);
+                    toggleAuthorizationRequired.SetValueWithoutNotify(true);
                 }
             });
 
