@@ -25,7 +25,7 @@
                 <ui:VisualElement name="TimelinePointUnity" class="timeline-point">
                     <ui:VisualElement class="timeline-indicator">
                         <ui:VisualElement name="connectionStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
-                        <ui:VisualElement class="timeline-line" />
+                        <ui:VisualElement class="timeline-line" style="margin-bottom: -4px;" />
                     </ui:VisualElement>
                     <ui:VisualElement class="timeline-content">
                         <ui:Label text="Unity" name="connectionStatusText" class="timeline-label" />
@@ -33,14 +33,40 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <!-- Point 2: MCP Server -->
-                <ui:VisualElement name="TimelinePointMcpServer" class="timeline-point">
-                    <ui:VisualElement class="timeline-indicator">
-                        <ui:VisualElement name="mcpServerStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
-                        <ui:VisualElement class="timeline-line" />
+                <ui:VisualElement name="TimelinePointMcpServer" class="timeline-point frame-group frame-mcp-server">
+                    <ui:VisualElement class="timeline-indicator" style="justify-content: flex-start;">
+                        <ui:VisualElement name="mcpServerStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" style="margin-top: 13px;" />
+                        <ui:VisualElement class="timeline-line" style="top: 29px; margin-top: 0; margin-bottom: -4px;" />
                     </ui:VisualElement>
-                    <ui:VisualElement class="timeline-content">
-                        <ui:Label text="MCP server" name="mcpServerLabel" class="timeline-label" />
-                        <ui:Button name="btnStartStopServer" text="Start" class="btn-secondary timeline-btn" />
+                    <ui:VisualElement style="flex-direction: column; flex-grow: 1;">
+                        <!-- Row 1: MCP Server label + Start/Stop button (fixed height, aligns with status circle) -->
+                        <ui:VisualElement name="mcpServerStatusControl" class="timeline-content" style="min-height: 40px;">
+                            <ui:Label text="MCP server" name="mcpServerLabel" class="timeline-label" />
+                            <ui:Button name="btnStartStopServer" text="Start" class="btn-secondary timeline-btn" />
+                        </ui:VisualElement>
+                        <!-- Row 2: Transport -->
+                        <ui:VisualElement style="flex-direction: row; align-items: center; justify-content: space-between; margin-top: 2px; margin-bottom: 2px;">
+                            <ui:Label text="Transport" class="section-desc" style="margin-bottom: 0;" />
+                            <ui:VisualElement style="flex-direction: row;">
+                                <ui:Toggle name="toggleOptionStdio" label="stdio" class="toggle-text-button" tooltip="Configure AI agent to communicate over STDIO (NOT RECOMMENDED)" />
+                                <ui:Toggle name="toggleOptionHttp" label="http" class="toggle-text-button" tooltip="Configure AI agent to communicate over HTTP (RECOMMENDED)" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <!-- Row 3: Authorization -->
+                        <ui:VisualElement style="flex-direction: row; align-items: center; justify-content: space-between; margin-top: 2px; margin-bottom: 2px;">
+                            <ui:Label text="Authorization Token" class="section-desc" style="margin-bottom: 0;" />
+                            <ui:VisualElement style="flex-direction: row;">
+                                <ui:Toggle name="toggleAuthorizationNone" label="none" class="toggle-text-button" tooltip="Local deployment: MCP server runs on the same machine as Unity" />
+                                <ui:Toggle name="toggleAuthorizationRequired" label="required" class="toggle-text-button" tooltip="Remote deployment: MCP server runs on a remote machine" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <!-- Row 4: Authorization Token -->
+                        <ui:VisualElement name="tokenSection" style="flex-direction: column; margin-top: 2px; margin-bottom: 2px;">
+                            <ui:VisualElement style="flex-direction: row;">
+                                <ui:TextField name="inputRemoteToken" label="" placeholder-text="Token" readonly="true" class="token-input" />
+                                <ui:Button name="btnGenerateToken" text="New" class="btn-compact" tooltip="Generate a new random token for remote deployment" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <!-- Point 3: AI Agent -->
@@ -55,15 +81,10 @@
             </ui:VisualElement>
             <ui:VisualElement class="divider" />
             <!-- AI Agent Section ============================== -->
-            <ui:VisualElement class="row" style="margin-top: 0;">
+            <ui:VisualElement class="row" style="margin-top: 0; align-items: center;">
                 <ui:Label text="AI agent" class="header" />
-                <!-- Transport mode toggle -->
-                <ui:VisualElement style="flex-direction: row; margin-top: 4px;">
-                    <ui:Toggle name="toggleOptionHttp" label="http" class="toggle-text-button" tooltip="Configure AI agent to communicate over HTTP (RECOMMENDED)" />
-                    <ui:Toggle name="toggleOptionStdio" label="stdio" class="toggle-text-button" tooltip="Configure AI agent to communicate over STDIO (NOT RECOMMENDED)" />
-                </ui:VisualElement>
+                <ui:DropdownField name="aiAgentDropdown" class="content-item" style="flex-grow: 1; flex-shrink: 1; min-width: 0; padding-top: 4px; margin-right: 0px;" />
             </ui:VisualElement>
-            <ui:DropdownField name="aiAgentDropdown" label="Choose" class="content-item" />
             <ui:VisualElement name="ConfigureAgentsContainer" />
             <ui:VisualElement class="divider" />
             <!-- MCP features section ============================== -->

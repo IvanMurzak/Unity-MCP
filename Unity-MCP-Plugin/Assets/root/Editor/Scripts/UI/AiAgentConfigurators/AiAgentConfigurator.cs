@@ -11,6 +11,7 @@
 #nullable enable
 using System;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
+using NUnit.Framework;
 using R3;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -65,6 +66,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected VisualElement? ContainerStdio { get; private set; }
         protected Toggle? ToggleOptionHttp { get; private set; }
         protected Toggle? ToggleOptionStdio { get; private set; }
+        protected Button? BtnRemoveConfig { get; private set; }
 
         /// <summary>
         /// Gets the icon paths for this agent.
@@ -87,6 +89,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 #else
                     _configStdio = CreateConfigStdioMacLinux();
 #endif
+                    ApplyStdioAuthorizationConfig(_configStdio);
                 }
                 return _configStdio;
             }
@@ -106,6 +109,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 #else
                     _configHttp = CreateConfigHttpMacLinux();
 #endif
+                    ApplyHttpAuthorizationConfig(_configHttp);
                 }
                 return _configHttp;
             }
@@ -207,6 +211,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             ContainerUnderHeader = root.Q<VisualElement>("containerUnderHeader") ?? throw new NullReferenceException("VisualElement 'containerUnderHeader' not found in UI.");
             ContainerHttp = root.Q<VisualElement>("containerHttp") ?? throw new NullReferenceException("VisualElement 'containerHttp' not found in UI.");
             ContainerStdio = root.Q<VisualElement>("containerStdio") ?? throw new NullReferenceException("VisualElement 'containerStdio' not found in UI.");
+            BtnRemoveConfig = root.Q<Button>("btnRemoveConfig");
 
             OnUICreated(root);
             McpWindowBase.EnableSmoothFoldoutTransitions(root);
@@ -225,6 +230,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             SetTutorialUrl(TutorialUrl);
             SetConfigureStatusIndicator();
             SetTransportMethod(UnityMcpPlugin.TransportMethod);
+
+            BtnRemoveConfig?.RegisterCallback<ClickEvent>(evt =>
+            {
+                var activeConfig = UnityMcpPlugin.TransportMethod == TransportMethod.stdio ? ConfigStdio : ConfigHttp;
+                activeConfig.Unconfigure();
+                _configElementStdio?.UpdateStatus();
+                _configElementHttp?.UpdateStatus();
+                UpdateRemoveButton();
+            });
+        }
+
+        protected virtual void UpdateRemoveButton()
+        {
+            if (BtnRemoveConfig == null)
+                return;
+
+            var activeConfig = UnityMcpPlugin.TransportMethod == TransportMethod.stdio ? ConfigStdio : ConfigHttp;
+            BtnRemoveConfig.style.display = activeConfig.IsDetected() ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         protected virtual AiAgentConfigurator SetAgentName(string name)
@@ -306,11 +329,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             _configElementStdio = TemplateConfigurationElements(ConfigStdio, TransportMethod.stdio);
             _configElementHttp = TemplateConfigurationElements(ConfigHttp, TransportMethod.streamableHttp);
 
-            _subscriptionStdio = _configElementStdio.OnConfigured.Subscribe(_ => _configElementHttp.UpdateStatus());
-            _subscriptionHttp = _configElementHttp.OnConfigured.Subscribe(_ => _configElementStdio.UpdateStatus());
+            _subscriptionStdio = _configElementStdio.OnConfigured.Subscribe(_ =>
+            {
+                _configElementHttp.UpdateStatus();
+                UpdateRemoveButton();
+            });
+            _subscriptionHttp = _configElementHttp.OnConfigured.Subscribe(_ =>
+            {
+                _configElementStdio.UpdateStatus();
+                UpdateRemoveButton();
+            });
 
             ContainerStdio!.Add(_configElementStdio.Root);
             ContainerHttp!.Add(_configElementHttp.Root);
+
+            UpdateRemoveButton();
 
             return this;
         }
@@ -340,12 +373,45 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 ? DisplayStyle.Flex
                 : DisplayStyle.None;
 
+            UpdateRemoveButton();
             return this;
         }
 
         #endregion
 
         #region Helpers
+
+        /// <summary>
+        /// Invalidates cached configurations so they are recreated on next access.
+        /// Call this when deployment mode or token changes.
+        /// </summary>
+        public virtual void Invalidate()
+        {
+            _configStdio = null;
+            _configHttp = null;
+        }
+
+        /// <summary>
+        /// Applies authorization to the STDIO config: injects the token into args when required,
+        /// removes it otherwise, and marks HTTP headers for removal.
+        /// Delegates to the config's own format-specific implementation.
+        /// </summary>
+        protected virtual void ApplyStdioAuthorizationConfig(AiAgentConfig config)
+        {
+            var isRequired = UnityMcpPlugin.AuthOption == AuthOption.required;
+            config.ApplyStdioAuthorization(isRequired, UnityMcpPlugin.Token);
+        }
+
+        /// <summary>
+        /// Injects MCP authorization into the HTTP config when remote deployment is active.
+        /// Delegates to the config's own format-specific implementation.
+        /// Only applies when transport is HTTP — no-op for stdio transport.
+        /// </summary>
+        protected virtual void ApplyHttpAuthorizationConfig(AiAgentConfig config)
+        {
+            var isRequired = UnityMcpPlugin.AuthOption == AuthOption.required;
+            config.ApplyHttpAuthorization(isRequired, UnityMcpPlugin.Token);
+        }
 
         protected void ThrowIfRootNotSet()
         {

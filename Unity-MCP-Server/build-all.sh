@@ -4,22 +4,11 @@
 
 set -uo pipefail
 
-CONFIGURATION="${1:-Release}"
-PROJECT_FILE="${2:-com.IvanMurzak.Unity.MCP.Server.csproj}"
+CONFIGURATION="Release"
+PROJECT_FILE="com.IvanMurzak.Unity.MCP.Server.csproj"
+SPECIFIED_PLATFORMS=()
 
-SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-PUBLISH_ROOT="${SCRIPT_DIR}/publish"
-
-echo "🚀 Building self-contained executables for all platforms..."
-
-# Clean publish root
-if [ -d "${PUBLISH_ROOT}" ]; then
-    echo "🧹 Cleaning existing publish folder..."
-    rm -rf "${PUBLISH_ROOT}" || { echo "Failed to remove publish folder"; exit 1; }
-fi
-mkdir -p "${PUBLISH_ROOT}" || { echo "Failed to create publish folder"; exit 1; }
-
-runtimes=(
+all_runtimes=(
     "win-x64"
     "win-x86"
     "win-arm64"
@@ -28,6 +17,64 @@ runtimes=(
     "osx-x64"
     "osx-arm64"
 )
+
+# Argument parsing
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -c|--configuration)
+            CONFIGURATION="$2"
+            shift 2
+            ;;
+        Debug|Release)
+            CONFIGURATION="$1"
+            shift
+            ;;
+        *.csproj)
+            PROJECT_FILE="$1"
+            shift
+            ;;
+        *)
+            # Check if it's a known runtime
+            is_runtime=false
+            for runtime in "${all_runtimes[@]}"; do
+                if [ "$1" == "$runtime" ]; then
+                    SPECIFIED_PLATFORMS+=("$1")
+                    is_runtime=true
+                    break
+                fi
+            done
+            if [ "$is_runtime" = false ]; then
+                echo "Unknown argument: $1"
+            fi
+            shift
+            ;;
+    esac
+done
+
+SCRIPT_DIR="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+PUBLISH_ROOT="${SCRIPT_DIR}/publish"
+
+echo "🚀 Building self-contained executables..."
+
+# Clean publish root
+if [ -d "${PUBLISH_ROOT}" ]; then
+    echo "🧹 Cleaning existing publish folder..."
+    rm -rf "${PUBLISH_ROOT}" || { echo "Failed to remove publish folder"; exit 1; }
+fi
+mkdir -p "${PUBLISH_ROOT}" || { echo "Failed to create publish folder"; exit 1; }
+
+# Filter runtimes if platforms are specified
+runtimes=()
+if [ ${#SPECIFIED_PLATFORMS[@]} -gt 0 ]; then
+    runtimes=("${SPECIFIED_PLATFORMS[@]}")
+else
+    runtimes=("${all_runtimes[@]}")
+fi
+
+echo "Configuration: ${CONFIGURATION}"
+echo "Project File: ${PROJECT_FILE}"
+echo "Target runtimes: ${runtimes[*]}"
+echo ""
 
 success=0
 failed=0

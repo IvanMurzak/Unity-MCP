@@ -381,7 +381,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         ///     "Unity ProjectName": {
         ///       "type": "...",    // optional, only if provided
         ///       "command": "path/to/unity-mcp-server",
-        ///       "args": ["port=...", "plugin-timeout=...", "client-transport=stdio"]
+        ///       "args": ["port=...", "plugin-timeout=...", "client-transport=stdio", "token=..."]
         ///     }
         ///   }
         /// }
@@ -393,7 +393,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             int timeoutMs = Consts.Hub.DefaultTimeoutMs,
             string? type = null)
         {
-            var pathSegments = Consts.MCP.Server.BodyPathSegments(bodyPath);
+            var pathSegments = BodyPathSegments(bodyPath);
 
             // Build innermost content first
             var serverConfig = new JsonObject();
@@ -402,12 +402,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 serverConfig["type"] = type;
 
             serverConfig["command"] = ExecutableFullPath.Replace('\\', '/');
-            serverConfig["args"] = new JsonArray
+
+            var args = new JsonArray
             {
-                $"{Consts.MCP.Server.Args.Port}={port}",
-                $"{Consts.MCP.Server.Args.PluginTimeout}={timeoutMs}",
-                $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+                $"{Args.Port}={port}",
+                $"{Args.PluginTimeout}={timeoutMs}",
+                $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
+                $"{Args.Authorization}={UnityMcpPlugin.AuthOption}"
             };
+
+            var authRequired = UnityMcpPlugin.AuthOption == AuthOption.required;
+            if (authRequired && string.IsNullOrEmpty(UnityMcpPlugin.Token))
+            {
+                args.Add($"{Args.Token}={UnityMcpPlugin.Token}");
+            }
+
+            serverConfig["args"] = args;
 
             var innerContent = new JsonObject
             {
@@ -431,7 +441,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         ///   "mcpServers": {
         ///     "Unity ProjectName": {
         ///       "type": "...",  // optional, only if provided
-        ///       "url": "http://localhost:port"
+        ///       "url": "http://localhost:port",
+        ///      "headers": {     // only if token is provided
+        ///        "Authorization": "Bearer token"
+        ///      }
         ///     }
         ///   }
         /// }
@@ -442,7 +455,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             string bodyPath = "mcpServers",
             string? type = null)
         {
-            var pathSegments = Consts.MCP.Server.BodyPathSegments(bodyPath);
+            var pathSegments = BodyPathSegments(bodyPath);
 
             // Build innermost content first
             var serverConfig = new JsonObject();
@@ -451,6 +464,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 serverConfig["type"] = type;
 
             serverConfig["url"] = url;
+
+            var authRequired = UnityMcpPlugin.AuthOption == AuthOption.required;
+            if (authRequired && !string.IsNullOrEmpty(UnityMcpPlugin.Token))
+            {
+                serverConfig["headers"] = new JsonObject
+                {
+                    ["Authorization"] = $"Bearer {UnityMcpPlugin.Token}"
+                };
+            }
 
             var innerContent = new JsonObject
             {
@@ -470,7 +492,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public static string DockerSetupRunCommand()
         {
             var dockerPortMapping = $"-p {UnityMcpPlugin.Port}:{UnityMcpPlugin.Port}";
-            var dockerEnvVars = $"-e MCP_PLUGIN_CLIENT_TRANSPORT={TransportMethod.streamableHttp} -e MCP_PLUGIN_PORT={UnityMcpPlugin.Port} -e MCP_PLUGIN_CLIENT_TIMEOUT={UnityMcpPlugin.TimeoutMs}";
+            var dockerEnvVars =
+                $"-e {Env.ClientTransportMethod}={TransportMethod.streamableHttp} " +
+                $"-e {Env.Port}={UnityMcpPlugin.Port} " +
+                $"-e {Env.PluginTimeout}={UnityMcpPlugin.TimeoutMs} " +
+                $"-e {Env.Authorization}={UnityMcpPlugin.AuthOption}";
+
+            var authRequired = UnityMcpPlugin.AuthOption == AuthOption.required;
+            var token = UnityMcpPlugin.Token;
+            if (authRequired && !string.IsNullOrEmpty(token))
+                dockerEnvVars += $" -e {Env.Token}={token}";
+
             var dockerContainer = $"--name unity-mcp-server-{UnityMcpPlugin.Port}";
             var dockerImage = $"ivanmurzakdev/unity-mcp-server:{UnityMcpPlugin.Version}";
             return $"docker run -d {dockerPortMapping} {dockerEnvVars} {dockerContainer} {dockerImage}";
@@ -479,6 +511,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public static string DockerRunCommand()
         {
             return $"docker start unity-mcp-server-{UnityMcpPlugin.Port}";
+        }
+
+        public static string DockerStopCommand()
+        {
+            return $"docker stop unity-mcp-server-{UnityMcpPlugin.Port}";
+        }
+
+        public static string DockerRemoveCommand()
+        {
+            return $"docker rm unity-mcp-server-{UnityMcpPlugin.Port}";
         }
 
         #endregion // Client Configuration
@@ -926,9 +968,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             var port = UnityMcpPlugin.Port;
             var timeout = UnityMcpPlugin.TimeoutMs;
             var transportMethod = TransportMethod.streamableHttp; // always must be streamableHttp for launching the server.
+            var token = UnityMcpPlugin.Token;
+            var deploymentMode = UnityMcpPlugin.AuthOption;
 
-            // Arguments format: port=XXXXX plugin-timeout=XXXXX client-transport=<TransportMethod>
-            return $"{McpConsts.MCP.Server.Args.Port}={port} {McpConsts.MCP.Server.Args.PluginTimeout}={timeout} {McpConsts.MCP.Server.Args.ClientTransportMethod}={transportMethod}";
+            // Arguments format: port=XXXXX plugin-timeout=XXXXX client-transport=<TransportMethod> token=<Token>
+            var args =
+                $"{Args.Port}={port} " +
+                $"{Args.PluginTimeout}={timeout} " +
+                $"{Args.ClientTransportMethod}={transportMethod} " +
+                $"{Args.Authorization}={deploymentMode}";
+
+            if (!string.IsNullOrEmpty(token))
+                args += $" {Args.Token}={token}";
+
+            return args;
         }
 
         /// <summary>

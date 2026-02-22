@@ -17,6 +17,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using com.IvanMurzak.McpPlugin.Common;
 using UnityEngine;
+using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
@@ -76,6 +77,48 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         {
             base.AddIdentityKey(key);
             return this;
+        }
+
+        public override void ApplyHttpAuthorization(bool isRequired, string? token)
+        {
+            if (isRequired && !string.IsNullOrEmpty(token))
+            {
+                SetProperty(
+                    key: "headers",
+                    value: new JsonObject { ["Authorization"] = JsonValue.Create($"Bearer {token}") },
+                    requiredForConfiguration: true
+                );
+            }
+            else
+            {
+                SetPropertyToRemove("headers");
+            }
+        }
+
+        public override void ApplyStdioAuthorization(bool isRequired, string? token)
+        {
+            // Remove HTTP-specific headers — not applicable to STDIO
+            SetPropertyToRemove("headers");
+
+            // Modify args: add or remove the token argument
+            if (!_properties.TryGetValue("args", out var argsProp) || argsProp.value is not JsonArray currentArgs)
+                return;
+
+            var tokenPrefix = $"{Args.Token}=";
+            var newArgs = new JsonArray();
+
+            foreach (var item in currentArgs)
+            {
+                if (item is JsonValue jsonVal && jsonVal.TryGetValue<string>(out var str) && str.StartsWith(tokenPrefix, StringComparison.Ordinal))
+                    continue; // Remove existing token arg
+
+                newArgs.Add(item != null ? JsonNode.Parse(item.ToJsonString()) : null);
+            }
+
+            if (isRequired && !string.IsNullOrEmpty(token))
+                newArgs.Add(JsonValue.Create($"{tokenPrefix}{token}"));
+
+            SetProperty("args", newArgs, argsProp.required, argsProp.comparison);
         }
 
         public override bool Configure()
@@ -155,6 +198,66 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 File.WriteAllText(ConfigPath, rootObj.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
 
                 return IsConfigured();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error reading config file: {ex.Message}");
+                Debug.LogException(ex);
+                return false;
+            }
+        }
+
+        public override bool Unconfigure()
+        {
+            if (string.IsNullOrEmpty(ConfigPath) || !File.Exists(ConfigPath))
+                return false;
+
+            try
+            {
+                var json = File.ReadAllText(ConfigPath);
+                var rootObj = JsonNode.Parse(json)?.AsObject();
+                if (rootObj == null)
+                    return false;
+
+                var pathSegments = Consts.MCP.Server.BodyPathSegments(BodyPath);
+                var targetObj = NavigateToJsonPath(rootObj, pathSegments);
+                if (targetObj == null)
+                    return false;
+
+                targetObj.Remove(DefaultMcpServerName);
+                File.WriteAllText(ConfigPath, rootObj.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error unconfiguring MCP client: {ex.Message}");
+                Debug.LogException(ex);
+                return false;
+            }
+        }
+
+        public override bool IsDetected()
+        {
+            if (string.IsNullOrEmpty(ConfigPath) || !File.Exists(ConfigPath))
+                return false;
+
+            try
+            {
+                var json = File.ReadAllText(ConfigPath);
+
+                if (string.IsNullOrWhiteSpace(json))
+                    return false;
+
+                var rootObj = JsonNode.Parse(json)?.AsObject();
+                if (rootObj == null)
+                    return false;
+
+                var pathSegments = Consts.MCP.Server.BodyPathSegments(BodyPath);
+                var targetObj = NavigateToJsonPath(rootObj, pathSegments);
+                if (targetObj == null)
+                    return false;
+
+                return targetObj[DefaultMcpServerName] != null;
             }
             catch (Exception ex)
             {

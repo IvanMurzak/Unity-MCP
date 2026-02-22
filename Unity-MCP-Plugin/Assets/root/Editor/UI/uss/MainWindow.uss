@@ -19,7 +19,7 @@
     flex-direction: row-reverse;
     flex-grow: 0;
     flex-shrink: 0;
-    margin: 2px 2px;
+    /* margin: 2px 2px; */
     min-width: 40px;
 }
 
@@ -149,10 +149,18 @@
 }
 
 .timeline-label {
-    flex-grow: 1;
+    flex-grow: 0;
     -unity-text-align: middle-left;
     color: rgb(200, 200, 200);
     font-size: 13px;
+    -unity-font-style: bold;
+
+    /* Simulate the underline with a bottom border */
+    border-bottom-width: 0.3px;
+    border-bottom-color: rgb(200, 200, 200);
+
+    /* Adjust padding so the line isn't touching the letters */
+    padding-bottom: 1px;
 }
 
 .timeline-btn {
@@ -160,4 +168,31 @@
     min-width: 60px;
     margin-top: 0;
     margin-bottom: 0;
+}
+
+/* Frame/Group containers */
+/* ==========================================================================
+   Remote Token Input - Read-only token display field
+   ========================================================================== */
+
+.token-input {
+    flex-grow: 1;
+    flex-shrink: 1;
+    height: 20px;
+}
+
+.token-input > .unity-base-field__input {
+    color: rgb(135, 135, 135);
+}
+
+.frame-mcp-server {
+    /* background-color: rgba(20, 40, 69, 0.2); */
+    border-radius: 10px;
+
+    margin-bottom: -4px;
+    margin-top: 2px;
+    padding-top: 2px;
+
+    margin-right: -6px;
+    padding-right: 6px;
 }

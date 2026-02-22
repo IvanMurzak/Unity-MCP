@@ -9,9 +9,13 @@
 */
 
 #nullable enable
+using System;
+using System.Security.Cryptography;
 using Extensions.Unity.PlayerPrefsEx;
+using R3;
 using UnityEngine;
 using UnityEngine.UIElements;
+using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
@@ -75,6 +79,141 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 // Load UI for the newly selected agent
                 LoadAgentUI(container, newIndex);
             });
+
+            // Deployment mode toggles
+            var toggleAuthorizationNone = root.Query<Toggle>("toggleAuthorizationNone").First();
+            var toggleAuthorizationRequired = root.Query<Toggle>("toggleAuthorizationRequired").First();
+            var inputRemoteToken = root.Query<TextField>("inputRemoteToken").First();
+            var tokenSection = root.Query<VisualElement>("tokenSection").First();
+            var btnGenerateToken = root.Query<Button>("btnGenerateToken").First();
+
+            if (toggleAuthorizationNone == null)
+            {
+                Debug.LogError("toggleAuthorizationNone not found in UXML.");
+                return;
+            }
+            if (toggleAuthorizationRequired == null)
+            {
+                Debug.LogError("toggleAuthorizationRequired not found in UXML.");
+                return;
+            }
+            if (inputRemoteToken == null)
+            {
+                Debug.LogError("inputRemoteToken not found in UXML.");
+                return;
+            }
+            if (tokenSection == null)
+            {
+                Debug.LogError("tokenSection not found in UXML.");
+                return;
+            }
+            if (btnGenerateToken == null)
+            {
+                Debug.LogError("btnGenerateToken not found in UXML.");
+                return;
+            }
+
+            var authOption = UnityMcpPlugin.AuthOption;
+            toggleAuthorizationNone.SetValueWithoutNotify(authOption == AuthOption.none);
+            toggleAuthorizationRequired.SetValueWithoutNotify(authOption == AuthOption.required);
+            inputRemoteToken.SetValueWithoutNotify(UnityMcpPlugin.Token ?? string.Empty);
+            SetTokenFieldsVisible(inputRemoteToken, tokenSection, authOption == AuthOption.required);
+
+            void InvalidateAndReloadAgentUI()
+            {
+                currentAiAgentConfigurator?.Invalidate();
+                LoadAgentUI(container, agentNames.IndexOf(dropdown.value));
+            }
+
+            toggleAuthorizationNone.RegisterValueChangedCallback(evt =>
+            {
+                if (evt.newValue)
+                {
+                    var wasRunning = McpServerManager.IsRunning && UnityMcpPlugin.TransportMethod != TransportMethod.stdio;
+                    UnityMcpPlugin.AuthOption = AuthOption.none;
+                    UnityMcpPlugin.Instance.Save();
+                    toggleAuthorizationRequired.SetValueWithoutNotify(false);
+                    SetTokenFieldsVisible(inputRemoteToken, tokenSection, false);
+                    InvalidateAndReloadAgentUI();
+                    RestartServerIfWasRunning(wasRunning);
+                }
+                else if (!toggleAuthorizationRequired.value)
+                {
+                    toggleAuthorizationNone.SetValueWithoutNotify(true);
+                }
+            });
+
+            toggleAuthorizationRequired.RegisterValueChangedCallback(evt =>
+            {
+                if (evt.newValue)
+                {
+                    var wasRunning = McpServerManager.IsRunning && UnityMcpPlugin.TransportMethod != TransportMethod.stdio;
+                    UnityMcpPlugin.AuthOption = AuthOption.required;
+                    UnityMcpPlugin.Instance.Save();
+                    toggleAuthorizationNone.SetValueWithoutNotify(false);
+                    SetTokenFieldsVisible(inputRemoteToken, tokenSection, true);
+                    InvalidateAndReloadAgentUI();
+                    RestartServerIfWasRunning(wasRunning);
+                }
+                else if (!toggleAuthorizationNone.value)
+                {
+                    toggleAuthorizationRequired.SetValueWithoutNotify(true);
+                }
+            });
+
+            inputRemoteToken.RegisterCallback<FocusOutEvent>(_ =>
+            {
+                var newToken = inputRemoteToken.value;
+                if (newToken == UnityMcpPlugin.Token)
+                    return;
+
+                var wasRunning = McpServerManager.IsRunning;
+                UnityMcpPlugin.Token = newToken;
+                UnityMcpPlugin.Instance.Save();
+                InvalidateAndReloadAgentUI();
+                RestartServerIfWasRunning(wasRunning);
+            });
+
+            btnGenerateToken.RegisterCallback<ClickEvent>(_ =>
+            {
+                var newToken = GenerateToken();
+                inputRemoteToken.SetValueWithoutNotify(newToken);
+
+                var wasRunning = McpServerManager.IsRunning;
+                UnityMcpPlugin.Token = newToken;
+                UnityMcpPlugin.Instance.Save();
+                InvalidateAndReloadAgentUI();
+                RestartServerIfWasRunning(wasRunning);
+            });
+        }
+
+        private static void SetTokenFieldsVisible(TextField tokenField, VisualElement actionsRow, bool visible)
+        {
+            tokenField.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+            actionsRow.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
+        private void RestartServerIfWasRunning(bool wasRunning)
+        {
+            if (!wasRunning)
+                return;
+
+            McpServerManager.StopServer();
+
+            McpServerManager.ServerStatus
+                .Where(status => status == McpServerStatus.Stopped)
+                .Take(1)
+                .ObserveOnCurrentSynchronizationContext()
+                .Subscribe(_ => McpServerManager.StartServer())
+                .AddTo(_disposables);
+        }
+
+        private static string GenerateToken()
+        {
+            var bytes = new byte[32];
+            using var rng = RandomNumberGenerator.Create();
+            rng.GetBytes(bytes);
+            return Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
         }
 
         void LoadAgentUI(VisualElement container, int selectedIndex)

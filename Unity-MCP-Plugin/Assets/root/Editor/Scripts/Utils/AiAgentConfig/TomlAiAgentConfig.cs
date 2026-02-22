@@ -85,6 +85,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             return this;
         }
 
+        public override void ApplyHttpAuthorization(bool isRequired, string? token)
+        {
+            // TOML HTTP config format does not currently support injecting
+            // authorization headers. Implement when TOML HTTP auth is needed.
+        }
+
+        public override void ApplyStdioAuthorization(bool isRequired, string? token)
+        {
+            // TOML STDIO config format does not currently support injecting
+            // the token argument. Implement when TOML STDIO auth is needed.
+        }
+
         public override bool Configure()
         {
             if (string.IsNullOrEmpty(ConfigPath))
@@ -165,6 +177,52 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             catch (Exception ex)
             {
                 Debug.LogError($"{Consts.Log.Tag} Error configuring TOML file: {ex.Message}");
+                Debug.LogException(ex);
+                return false;
+            }
+        }
+
+        public override bool Unconfigure()
+        {
+            if (string.IsNullOrEmpty(ConfigPath) || !File.Exists(ConfigPath))
+                return false;
+
+            try
+            {
+                var sectionName = $"{BodyPath}.{DefaultMcpServerName}";
+                var lines = File.ReadAllLines(ConfigPath).ToList();
+                var sectionIndex = FindTomlSection(lines, sectionName);
+                if (sectionIndex < 0)
+                    return false;
+
+                var sectionEnd = FindSectionEnd(lines, sectionIndex);
+                lines.RemoveRange(sectionIndex, sectionEnd - sectionIndex);
+
+                File.WriteAllText(ConfigPath, string.Join(Environment.NewLine, lines));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"{Consts.Log.Tag} Error unconfiguring TOML MCP client: {ex.Message}");
+                Debug.LogException(ex);
+                return false;
+            }
+        }
+
+        public override bool IsDetected()
+        {
+            if (string.IsNullOrEmpty(ConfigPath) || !File.Exists(ConfigPath))
+                return false;
+
+            try
+            {
+                var lines = File.ReadAllLines(ConfigPath).ToList();
+                var sectionName = $"{BodyPath}.{DefaultMcpServerName}";
+                return FindTomlSection(lines, sectionName) >= 0;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"{Consts.Log.Tag} Error reading TOML config file: {ex.Message}");
                 Debug.LogException(ex);
                 return false;
             }

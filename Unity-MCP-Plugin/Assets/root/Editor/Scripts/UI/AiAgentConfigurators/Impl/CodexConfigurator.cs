@@ -40,7 +40,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetProperty("args", new[] {
             $"{Args.Port}={UnityMcpPlugin.Port}",
             $"{Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-            $"{Args.ClientTransportMethod}={TransportMethod.stdio}"
+            $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
+            $"{Args.Authorization}={UnityMcpPlugin.AuthOption}",
+            $"{Args.Token}={UnityMcpPlugin.Token}"
         }, requiredForConfiguration: true)
         .SetProperty("tool_timeout_sec", 300, requiredForConfiguration: false) // Optional: Set a longer tool timeout for Codex
         .SetPropertyToRemove("url")
@@ -60,7 +62,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetProperty("args", new[] {
             $"{Args.Port}={UnityMcpPlugin.Port}",
             $"{Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-            $"{Args.ClientTransportMethod}={TransportMethod.stdio}"
+            $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
+            $"{Args.Authorization}={UnityMcpPlugin.AuthOption}",
+            $"{Args.Token}={UnityMcpPlugin.Token}"
         }, requiredForConfiguration: true)
         .SetProperty("tool_timeout_sec", 300, requiredForConfiguration: false) // Optional: Set a longer tool timeout for Codex
         .SetPropertyToRemove("url")
@@ -96,6 +100,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetPropertyToRemove("command")
         .SetPropertyToRemove("args")
         .SetPropertyToRemove("type");
+
+        protected override void ApplyHttpAuthorizationConfig(AiAgentConfig config)
+        {
+            base.ApplyHttpAuthorizationConfig(config);
+
+            var tomlConfig = config as TomlAiAgentConfig ?? throw new System.InvalidCastException("Expected TomlAiAgentConfig for Codex HTTP configuration");
+            var isRequired = UnityMcpPlugin.AuthOption == AuthOption.required;
+            var token = UnityMcpPlugin.Token;
+
+            if (isRequired && string.IsNullOrEmpty(token))
+            {
+                tomlConfig.SetProperty(
+                    key: "bearer_token_env_var",
+                    value: token!,
+                    requiredForConfiguration: true);
+            }
+            else
+            {
+                tomlConfig.SetPropertyToRemove("bearer_token_env_var");
+            }
+        }
 
         protected override void OnUICreated(VisualElement root)
         {

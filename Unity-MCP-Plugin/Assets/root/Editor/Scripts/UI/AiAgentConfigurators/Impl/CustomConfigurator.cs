@@ -11,7 +11,6 @@
 #nullable enable
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEngine.UIElements;
-using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
@@ -52,6 +51,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             return this;
         }
 
+        protected override void UpdateRemoveButton()
+        {
+            // Custom configurator doesn't have a remove button, so we can skip this
+        }
+
+        public override void Invalidate()
+        {
+            base.Invalidate();
+        }
+
         protected override void OnUICreated(VisualElement root)
         {
             SetAgentIcon();
@@ -81,6 +90,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 url: UnityMcpPlugin.Host,
                 bodyPath: "mcpServers",
                 type: null).ToString()));
+
+            ContainerHttp!.Add(TemplateLabelDescription("4. (Optional) Stop and remove the MCP server using Docker when you are done."));
+            ContainerHttp!.Add(TemplateTextFieldReadOnly(McpServerManager.DockerStopCommand()));
+            ContainerHttp!.Add(TemplateTextFieldReadOnly(McpServerManager.DockerRemoveCommand()));
         }
     }
 }
