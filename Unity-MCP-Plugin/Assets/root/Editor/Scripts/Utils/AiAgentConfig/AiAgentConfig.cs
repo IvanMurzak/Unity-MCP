@@ -51,5 +51,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         public abstract bool Unconfigure();
         public abstract bool IsDetected();
         public abstract bool IsConfigured();
+
+        /// <summary>
+        /// Applies HTTP authorization to this config.
+        /// Override in format-specific subclasses to inject authorization headers or tokens.
+        /// </summary>
+        /// <param name="isRequired">True when auth is required and token is non-empty.</param>
+        /// <param name="token">The bearer token value, or null/empty if not set.</param>
+        public virtual void ApplyHttpAuthorization(bool isRequired, string? token)
+        {
+            // Default: no-op. Subclasses override for format-specific injection.
+        }
     }
 }

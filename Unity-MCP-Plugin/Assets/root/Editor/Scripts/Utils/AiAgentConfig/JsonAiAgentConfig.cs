@@ -78,6 +78,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             return this;
         }
 
+        public override void ApplyHttpAuthorization(bool isRequired, string? token)
+        {
+            if (isRequired && !string.IsNullOrEmpty(token))
+            {
+                SetProperty(
+                    key: "headers",
+                    value: new JsonObject { ["Authorization"] = JsonValue.Create($"Bearer {token}") },
+                    requiredForConfiguration: true
+                );
+            }
+            else
+            {
+                SetPropertyToRemove("headers");
+            }
+        }
+
         public override bool Configure()
         {
             if (string.IsNullOrEmpty(ConfigPath))

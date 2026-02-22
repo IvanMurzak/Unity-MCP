@@ -85,6 +85,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             return this;
         }
 
+        public override void ApplyHttpAuthorization(bool isRequired, string? token)
+        {
+            // TOML HTTP config format does not currently support injecting
+            // authorization headers. Implement when TOML HTTP auth is needed.
+        }
+
         public override bool Configure()
         {
             if (string.IsNullOrEmpty(ConfigPath))

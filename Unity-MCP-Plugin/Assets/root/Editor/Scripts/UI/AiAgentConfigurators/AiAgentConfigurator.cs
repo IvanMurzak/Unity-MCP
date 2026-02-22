@@ -10,7 +10,6 @@
 
 #nullable enable
 using System;
-using System.Text.Json.Nodes;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using R3;
 using UnityEngine;
@@ -391,27 +390,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         }
 
         /// <summary>
-        /// Injects MCP authorization headers into the HTTP config when remote deployment is active.
-        /// Removes the headers property when local deployment is active.
+        /// Injects MCP authorization into the HTTP config when remote deployment is active.
+        /// Delegates to the config's own format-specific implementation.
         /// </summary>
         protected virtual void ApplyAuthorizationToHttpConfig(AiAgentConfig config)
         {
-            if (config is not JsonAiAgentConfig jsonConfig)
-                return;
-
-            var token = UnityMcpPlugin.Token;
-            if (UnityMcpPlugin.AuthOption == AuthOption.required && !string.IsNullOrEmpty(token))
-            {
-                jsonConfig.SetProperty(
-                    key: "headers",
-                    value: new JsonObject { ["Authorization"] = JsonValue.Create($"Bearer {token}") },
-                    requiredForConfiguration: true
-                );
-            }
-            else
-            {
-                jsonConfig.SetPropertyToRemove("headers");
-            }
+            var isRequired = UnityMcpPlugin.AuthOption == AuthOption.required;
+            config.ApplyHttpAuthorization(isRequired, UnityMcpPlugin.Token);
         }
 
         protected void ThrowIfRootNotSet()

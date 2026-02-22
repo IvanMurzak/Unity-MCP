@@ -97,6 +97,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetPropertyToRemove("args")
         .SetPropertyToRemove("type");
 
+        protected override void ApplyAuthorizationToHttpConfig(AiAgentConfig config)
+        {
+            base.ApplyAuthorizationToHttpConfig(config);
+
+            var tomlConfig = config as TomlAiAgentConfig ?? throw new System.InvalidCastException("Expected TomlAiAgentConfig for Codex HTTP configuration");
+            var isRequired = UnityMcpPlugin.AuthOption == AuthOption.required;
+            var token = UnityMcpPlugin.Token;
+
+            if (isRequired && string.IsNullOrEmpty(token))
+            {
+                tomlConfig.SetProperty(
+                    key: "bearer_token_env_var",
+                    value: token!,
+                    requiredForConfiguration: true);
+            }
+            else
+            {
+                tomlConfig.SetPropertyToRemove("bearer_token_env_var");
+            }
+        }
+
         protected override void OnUICreated(VisualElement root)
         {
             base.OnUICreated(root);
