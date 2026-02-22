@@ -17,6 +17,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using com.IvanMurzak.McpPlugin.Common;
 using UnityEngine;
+using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
@@ -92,6 +93,32 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             {
                 SetPropertyToRemove("headers");
             }
+        }
+
+        public override void ApplyStdioAuthorization(bool isRequired, string? token)
+        {
+            // Remove HTTP-specific headers — not applicable to STDIO
+            SetPropertyToRemove("headers");
+
+            // Modify args: add or remove the token argument
+            if (!_properties.TryGetValue("args", out var argsProp) || argsProp.value is not JsonArray currentArgs)
+                return;
+
+            var tokenPrefix = $"{Args.Token}=";
+            var newArgs = new JsonArray();
+
+            foreach (var item in currentArgs)
+            {
+                if (item is JsonValue jsonVal && jsonVal.TryGetValue<string>(out var str) && str.StartsWith(tokenPrefix, StringComparison.Ordinal))
+                    continue; // Remove existing token arg
+
+                newArgs.Add(item != null ? JsonNode.Parse(item.ToJsonString()) : null);
+            }
+
+            if (isRequired && !string.IsNullOrEmpty(token))
+                newArgs.Add(JsonValue.Create($"{tokenPrefix}{token}"));
+
+            SetProperty("args", newArgs, argsProp.required, argsProp.comparison);
         }
 
         public override bool Configure()

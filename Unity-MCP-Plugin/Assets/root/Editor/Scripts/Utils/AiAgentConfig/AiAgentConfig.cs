@@ -62,5 +62,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         {
             // Default: no-op. Subclasses override for format-specific injection.
         }
+
+        /// <summary>
+        /// Applies STDIO authorization to this config.
+        /// Override in format-specific subclasses to add or remove the token argument from args.
+        /// </summary>
+        /// <param name="isRequired">True when auth is required and token is non-empty.</param>
+        /// <param name="token">The bearer token value, or null/empty if not set.</param>
+        public virtual void ApplyStdioAuthorization(bool isRequired, string? token)
+        {
+            // Default: no-op. Subclasses override for format-specific injection.
+        }
     }
 }

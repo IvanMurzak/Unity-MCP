@@ -40,7 +40,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetProperty("args", new[] {
             $"{Args.Port}={UnityMcpPlugin.Port}",
             $"{Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-            $"{Args.ClientTransportMethod}={TransportMethod.stdio}"
+            $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
+            $"{Args.Token}={UnityMcpPlugin.Token}"
         }, requiredForConfiguration: true)
         .SetProperty("tool_timeout_sec", 300, requiredForConfiguration: false) // Optional: Set a longer tool timeout for Codex
         .SetPropertyToRemove("url")
@@ -60,7 +61,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetProperty("args", new[] {
             $"{Args.Port}={UnityMcpPlugin.Port}",
             $"{Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-            $"{Args.ClientTransportMethod}={TransportMethod.stdio}"
+            $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
+            $"{Args.Token}={UnityMcpPlugin.Token}"
         }, requiredForConfiguration: true)
         .SetProperty("tool_timeout_sec", 300, requiredForConfiguration: false) // Optional: Set a longer tool timeout for Codex
         .SetPropertyToRemove("url")
@@ -97,9 +99,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetPropertyToRemove("args")
         .SetPropertyToRemove("type");
 
-        protected override void ApplyAuthorizationToHttpConfig(AiAgentConfig config)
+        protected override void ApplyHttpAuthorizationConfig(AiAgentConfig config)
         {
-            base.ApplyAuthorizationToHttpConfig(config);
+            base.ApplyHttpAuthorizationConfig(config);
 
             var tomlConfig = config as TomlAiAgentConfig ?? throw new System.InvalidCastException("Expected TomlAiAgentConfig for Codex HTTP configuration");
             var isRequired = UnityMcpPlugin.AuthOption == AuthOption.required;

@@ -11,6 +11,7 @@
 #nullable enable
 using System;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
+using NUnit.Framework;
 using R3;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -88,6 +89,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 #else
                     _configStdio = CreateConfigStdioMacLinux();
 #endif
+                    ApplyStdioAuthorizationConfig(_configStdio);
                 }
                 return _configStdio;
             }
@@ -107,7 +109,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 #else
                     _configHttp = CreateConfigHttpMacLinux();
 #endif
-                    ApplyAuthorizationToHttpConfig(_configHttp);
+                    ApplyHttpAuthorizationConfig(_configHttp);
                 }
                 return _configHttp;
             }
@@ -390,10 +392,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         }
 
         /// <summary>
-        /// Injects MCP authorization into the HTTP config when remote deployment is active.
+        /// Applies authorization to the STDIO config: injects the token into args when required,
+        /// removes it otherwise, and marks HTTP headers for removal.
         /// Delegates to the config's own format-specific implementation.
         /// </summary>
-        protected virtual void ApplyAuthorizationToHttpConfig(AiAgentConfig config)
+        protected virtual void ApplyStdioAuthorizationConfig(AiAgentConfig config)
+        {
+            var isRequired = UnityMcpPlugin.AuthOption == AuthOption.required;
+            config.ApplyStdioAuthorization(isRequired, UnityMcpPlugin.Token);
+        }
+
+        /// <summary>
+        /// Injects MCP authorization into the HTTP config when remote deployment is active.
+        /// Delegates to the config's own format-specific implementation.
+        /// Only applies when transport is HTTP — no-op for stdio transport.
+        /// </summary>
+        protected virtual void ApplyHttpAuthorizationConfig(AiAgentConfig config)
         {
             var isRequired = UnityMcpPlugin.AuthOption == AuthOption.required;
             config.ApplyHttpAuthorization(isRequired, UnityMcpPlugin.Token);

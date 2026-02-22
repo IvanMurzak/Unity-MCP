@@ -91,6 +91,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             // authorization headers. Implement when TOML HTTP auth is needed.
         }
 
+        public override void ApplyStdioAuthorization(bool isRequired, string? token)
+        {
+            // TOML STDIO config format does not currently support injecting
+            // the token argument. Implement when TOML STDIO auth is needed.
+        }
+
         public override bool Configure()
         {
             if (string.IsNullOrEmpty(ConfigPath))

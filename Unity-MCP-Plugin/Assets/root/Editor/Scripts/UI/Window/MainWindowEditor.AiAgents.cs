@@ -113,11 +113,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 return;
             }
 
-            var isRemote = UnityMcpPlugin.AuthOption == AuthOption.required;
-            toggleAuthorizationNone.SetValueWithoutNotify(!isRemote);
-            toggleAuthorizationRequired.SetValueWithoutNotify(isRemote);
+            var authOption = UnityMcpPlugin.AuthOption;
+            toggleAuthorizationNone.SetValueWithoutNotify(authOption == AuthOption.none);
+            toggleAuthorizationRequired.SetValueWithoutNotify(authOption == AuthOption.required);
             inputRemoteToken.SetValueWithoutNotify(UnityMcpPlugin.Token ?? string.Empty);
-            SetTokenFieldsVisible(inputRemoteToken, tokenSection, isRemote);
+            SetTokenFieldsVisible(inputRemoteToken, tokenSection, authOption == AuthOption.required);
 
             void InvalidateAndReloadAgentUI()
             {
