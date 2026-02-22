@@ -11,7 +11,7 @@
                     <ui:Label name="tutorialLink" text="YouTube Tutorial" class="section-desc link-label" />
                 </ui:VisualElement>
             </ui:VisualElement>
-            <ui:Button name="btnRemoveConfig" text="✕" class="btn-remove-circle" style="align-self: flex-start;" />
+            <ui:Button name="btnRemoveConfig" text="✕" class="btn-remove-circle" style="align-self: flex-start;" tooltip="Remove MCP server from the AI agent configuration" />
         </ui:VisualElement>
 
         <!-- Under header container -->

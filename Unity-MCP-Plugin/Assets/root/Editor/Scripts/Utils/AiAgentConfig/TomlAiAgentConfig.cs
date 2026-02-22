@@ -197,6 +197,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
         }
 
+        public override bool IsDetected()
+        {
+            if (string.IsNullOrEmpty(ConfigPath) || !File.Exists(ConfigPath))
+                return false;
+
+            try
+            {
+                var lines = File.ReadAllLines(ConfigPath).ToList();
+                var sectionName = $"{BodyPath}.{DefaultMcpServerName}";
+                return FindTomlSection(lines, sectionName) >= 0;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"{Consts.Log.Tag} Error reading TOML config file: {ex.Message}");
+                Debug.LogException(ex);
+                return false;
+            }
+        }
+
         public override bool IsConfigured()
         {
             if (string.IsNullOrEmpty(ConfigPath) || !File.Exists(ConfigPath))

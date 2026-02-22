@@ -246,7 +246,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 return;
 
             var activeConfig = UnityMcpPlugin.TransportMethod == TransportMethod.stdio ? ConfigStdio : ConfigHttp;
-            BtnRemoveConfig.style.display = activeConfig.IsConfigured() ? DisplayStyle.Flex : DisplayStyle.None;
+            BtnRemoveConfig.style.display = activeConfig.IsDetected() ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         protected virtual AiAgentConfigurator SetAgentName(string name)

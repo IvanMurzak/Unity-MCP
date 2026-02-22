@@ -193,6 +193,37 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
         }
 
+        public override bool IsDetected()
+        {
+            if (string.IsNullOrEmpty(ConfigPath) || !File.Exists(ConfigPath))
+                return false;
+
+            try
+            {
+                var json = File.ReadAllText(ConfigPath);
+
+                if (string.IsNullOrWhiteSpace(json))
+                    return false;
+
+                var rootObj = JsonNode.Parse(json)?.AsObject();
+                if (rootObj == null)
+                    return false;
+
+                var pathSegments = Consts.MCP.Server.BodyPathSegments(BodyPath);
+                var targetObj = NavigateToJsonPath(rootObj, pathSegments);
+                if (targetObj == null)
+                    return false;
+
+                return targetObj[DefaultMcpServerName] != null;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error reading config file: {ex.Message}");
+                Debug.LogException(ex);
+                return false;
+            }
+        }
+
         public override bool IsConfigured()
         {
             if (string.IsNullOrEmpty(ConfigPath) || !File.Exists(ConfigPath))
