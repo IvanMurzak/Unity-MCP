@@ -150,12 +150,12 @@ namespace com.IvanMurzak.Unity.MCP
                 NotifyChanged(Instance.unityConnectionConfig);
             }
         }
-        public static DeploymentMode DeploymentMode
+        public static AuthOption AuthOption
         {
-            get => Instance.unityConnectionConfig.DeploymentMode;
+            get => Instance.unityConnectionConfig.AuthOption;
             set
             {
-                Instance.unityConnectionConfig.DeploymentMode = value;
+                Instance.unityConnectionConfig.AuthOption = value;
                 NotifyChanged(Instance.unityConnectionConfig);
             }
         }

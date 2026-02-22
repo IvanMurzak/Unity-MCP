@@ -10,6 +10,7 @@
 
 #nullable enable
 using System;
+using System.Text.Json.Nodes;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using R3;
 using UnityEngine;
@@ -106,6 +107,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 #else
                     _configHttp = CreateConfigHttpMacLinux();
 #endif
+                    ApplyAuthorizationToHttpConfig(_configHttp);
                 }
                 return _configHttp;
             }
@@ -346,6 +348,40 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         #endregion
 
         #region Helpers
+
+        /// <summary>
+        /// Invalidates cached configurations so they are recreated on next access.
+        /// Call this when deployment mode or token changes.
+        /// </summary>
+        public virtual void Invalidate()
+        {
+            _configStdio = null;
+            _configHttp = null;
+        }
+
+        /// <summary>
+        /// Injects MCP authorization headers into the HTTP config when remote deployment is active.
+        /// Removes the headers property when local deployment is active.
+        /// </summary>
+        protected virtual void ApplyAuthorizationToHttpConfig(AiAgentConfig config)
+        {
+            if (config is not JsonAiAgentConfig jsonConfig)
+                return;
+
+            var token = UnityMcpPlugin.Token;
+            if (UnityMcpPlugin.AuthOption == AuthOption.required && !string.IsNullOrEmpty(token))
+            {
+                jsonConfig.SetProperty(
+                    key: "headers",
+                    value: new JsonObject { ["Authorization"] = JsonValue.Create($"Bearer {token}") },
+                    requiredForConfiguration: true
+                );
+            }
+            else
+            {
+                jsonConfig.SetPropertyToRemove("headers");
+            }
+        }
 
         protected void ThrowIfRootNotSet()
         {

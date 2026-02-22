@@ -113,20 +113,29 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 return;
             }
 
-            var isRemote = UnityMcpPlugin.DeploymentMode == DeploymentMode.remote;
+            var isRemote = UnityMcpPlugin.AuthOption == AuthOption.required;
             toggleDeploymentLocal.SetValueWithoutNotify(!isRemote);
             toggleDeploymentRemote.SetValueWithoutNotify(isRemote);
             inputRemoteToken.SetValueWithoutNotify(UnityMcpPlugin.Token ?? string.Empty);
             SetTokenFieldsVisible(inputRemoteToken, tokenActionsRow, isRemote);
 
+            void InvalidateAndReloadAgentUI()
+            {
+                currentAiAgentConfigurator?.Invalidate();
+                LoadAgentUI(container, agentNames.IndexOf(dropdown.value));
+            }
+
             toggleDeploymentLocal.RegisterValueChangedCallback(evt =>
             {
                 if (evt.newValue)
                 {
-                    UnityMcpPlugin.DeploymentMode = DeploymentMode.local;
+                    var wasRunning = McpServerManager.IsRunning && UnityMcpPlugin.TransportMethod != TransportMethod.stdio;
+                    UnityMcpPlugin.AuthOption = AuthOption.none;
                     UnityMcpPlugin.Instance.Save();
                     toggleDeploymentRemote.SetValueWithoutNotify(false);
                     SetTokenFieldsVisible(inputRemoteToken, tokenActionsRow, false);
+                    InvalidateAndReloadAgentUI();
+                    RestartServerIfWasRunning(wasRunning);
                 }
                 else if (!toggleDeploymentRemote.value)
                 {
@@ -138,10 +147,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             {
                 if (evt.newValue)
                 {
-                    UnityMcpPlugin.DeploymentMode = DeploymentMode.remote;
+                    var wasRunning = McpServerManager.IsRunning && UnityMcpPlugin.TransportMethod != TransportMethod.stdio;
+                    UnityMcpPlugin.AuthOption = AuthOption.required;
                     UnityMcpPlugin.Instance.Save();
                     toggleDeploymentLocal.SetValueWithoutNotify(false);
                     SetTokenFieldsVisible(inputRemoteToken, tokenActionsRow, true);
+                    InvalidateAndReloadAgentUI();
+                    RestartServerIfWasRunning(wasRunning);
                 }
                 else if (!toggleDeploymentLocal.value)
                 {
@@ -158,6 +170,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 var wasRunning = McpServerManager.IsRunning;
                 UnityMcpPlugin.Token = newToken;
                 UnityMcpPlugin.Instance.Save();
+                InvalidateAndReloadAgentUI();
                 RestartServerIfWasRunning(wasRunning);
             });
 
@@ -169,6 +182,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 var wasRunning = McpServerManager.IsRunning;
                 UnityMcpPlugin.Token = newToken;
                 UnityMcpPlugin.Instance.Save();
+                InvalidateAndReloadAgentUI();
                 RestartServerIfWasRunning(wasRunning);
             });
         }
