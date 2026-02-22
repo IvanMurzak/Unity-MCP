@@ -63,7 +63,7 @@
                         <!-- Row 4: Authorization Token -->
                         <ui:VisualElement name="tokenSection" style="flex-direction: column; margin-top: 2px; margin-bottom: 2px;">
                             <ui:VisualElement style="flex-direction: row;">
-                                <ui:TextField name="inputRemoteToken" label="" placeholder-text="Token" readonly="true" style="flex-grow: 1; flex-shrink: 1; height: 20px;" />
+                                <ui:TextField name="inputRemoteToken" label="" placeholder-text="Token" readonly="true" class="token-input" />
                                 <ui:Button name="btnGenerateToken" text="New" class="btn-compact" tooltip="Generate a new random token for remote deployment" />
                             </ui:VisualElement>
                         </ui:VisualElement>

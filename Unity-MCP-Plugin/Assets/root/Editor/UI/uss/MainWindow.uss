@@ -171,9 +171,22 @@
 }
 
 /* Frame/Group containers */
+/* ==========================================================================
+   Remote Token Input - Read-only token display field
+   ========================================================================== */
+
+.token-input {
+    flex-grow: 1;
+    flex-shrink: 1;
+    height: 20px;
+}
+
+.token-input > .unity-base-field__input {
+    color: rgb(135, 135, 135);
+}
+
 .frame-mcp-server {
     /* background-color: rgba(20, 40, 69, 0.2); */
-
     border-radius: 10px;
 
     margin-bottom: -4px;
