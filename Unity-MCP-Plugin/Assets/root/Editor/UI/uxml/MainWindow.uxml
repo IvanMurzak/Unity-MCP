@@ -40,7 +40,7 @@
                     </ui:VisualElement>
                     <ui:VisualElement style="flex-direction: column; flex-grow: 1;">
                         <!-- Row 1: MCP Server label + Start/Stop button (fixed height, aligns with status circle) -->
-                        <ui:VisualElement class="timeline-content" style="min-height: 40px;">
+                        <ui:VisualElement name="mcpServerStatusControl" class="timeline-content" style="min-height: 40px;">
                             <ui:Label text="MCP server" name="mcpServerLabel" class="timeline-label" />
                             <ui:Button name="btnStartStopServer" text="Start" class="btn-secondary timeline-btn" />
                         </ui:VisualElement>

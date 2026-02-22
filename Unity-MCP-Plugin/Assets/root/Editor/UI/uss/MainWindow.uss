@@ -149,11 +149,18 @@
 }
 
 .timeline-label {
-    flex-grow: 1;
+    flex-grow: 0;
     -unity-text-align: middle-left;
     color: rgb(200, 200, 200);
     font-size: 13px;
-    -unity-text-decoration: underline;
+    -unity-font-style: bold;
+
+    /* Simulate the underline with a bottom border */
+    border-bottom-width: 0.3px;
+    border-bottom-color: rgb(200, 200, 200);
+
+    /* Adjust padding so the line isn't touching the letters */
+    padding-bottom: 1px;
 }
 
 .timeline-btn {
