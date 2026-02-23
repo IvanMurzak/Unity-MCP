@@ -110,8 +110,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             // HTTP Configuration
 
-            ContainerHttp!.Add(TemplateWarningLabel("IMPORTANT: Claude Code disconnects frequently when using HTTP configuration. Highly recommended to use STDIO configuration instead, it's more stable and better integrated with Claude Code app."));
-
             var manualStepsContainerHttp = TemplateFoldoutFirst("Manual Configuration Steps");
 
             var addMcpServerCommandHttp = $"claude mcp add --transport http {AiAgentConfig.DefaultMcpServerName} {UnityMcpPlugin.Host}";
