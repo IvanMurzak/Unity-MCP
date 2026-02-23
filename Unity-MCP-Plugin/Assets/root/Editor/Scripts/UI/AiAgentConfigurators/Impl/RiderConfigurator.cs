@@ -130,6 +130,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             troubleshootingStdio.Add(TemplateLabelDescription("- Ensure MCP configuration file doesn't have syntax errors"));
             troubleshootingStdio.Add(TemplateLabelDescription("- Restart Rider after configuration changes"));
             troubleshootingStdio.Add(TemplateLabelDescription("- If using Terminal, ensure you are in your Unity project root folder."));
+            troubleshootingStdio.Add(TemplateStatusChecksShortcut());
             ContainerStdio.Add(troubleshootingStdio);
 
             // HTTP Configuration

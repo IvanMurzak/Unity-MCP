@@ -97,14 +97,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             var isConnected = UnityMcpPlugin.IsConnected.CurrentValue;
             var mcpPlugin = UnityMcpPlugin.Instance.McpPluginInstance;
             var serverBasePath = mcpPlugin?.CurrentBaseDirectory ?? string.Empty;
-            var isPassed = configuredClients.Count > 0 && isConnected && !string.IsNullOrEmpty(serverBasePath);
-
-            if (isPassed)
+            
+            bool isPassed = false;
+            if (configuredClients.Count > 0 && isConnected && !string.IsNullOrEmpty(serverBasePath))
             {
-                var unityProjectDir = System.Environment.CurrentDirectory;
-                var normServerPath = System.IO.Path.GetFullPath(serverBasePath).TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
-                var normProjectPath = System.IO.Path.GetFullPath(unityProjectDir).TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
-                isPassed = normServerPath.StartsWith(normProjectPath, System.StringComparison.OrdinalIgnoreCase);
+                try
+                {
+                    var normPath = System.IO.Path.GetFullPath(serverBasePath);
+                    isPassed = System.IO.Directory.Exists(normPath);
+                }
+                catch
+                {
+                    isPassed = false;
+                }
             }
 
             return new CheckResult

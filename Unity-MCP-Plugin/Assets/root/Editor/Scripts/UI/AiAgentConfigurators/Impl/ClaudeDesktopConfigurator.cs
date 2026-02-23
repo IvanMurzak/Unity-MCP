@@ -121,6 +121,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Claude Desktop may not detect runtime updates to MCP tools. Ensure Claude Desktop reads the MCP tools on startup."));
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Start Unity first; the connection status should read 'Connecting...'"));
 
+            troubleshootingContainerStdio.Add(TemplateStatusChecksShortcut());
+
             ContainerStdio!.Add(troubleshootingContainerStdio);
 
             // HTTP Configuration

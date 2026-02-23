@@ -100,6 +100,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- '.vs/mcp.json' file must have no json syntax errors."));
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Unity may stay 'Connecting...' until the first prompt sent is processed."));
 
+            troubleshootingContainerStdio.Add(TemplateStatusChecksShortcut());
+
             ContainerStdio!.Add(troubleshootingContainerStdio);
 
             // HTTP Configuration
@@ -116,6 +118,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             troubleshootingContainerHttp.Add(TemplateLabelDescription("- '.vs/mcp.json' file must have no json syntax errors."));
             troubleshootingContainerHttp.Add(TemplateLabelDescription("- Unity may stay 'Connecting...' until the first prompt sent is processed."));
+
+            troubleshootingContainerHttp.Add(TemplateStatusChecksShortcut());
 
             ContainerHttp!.Add(troubleshootingContainerHttp);
         }

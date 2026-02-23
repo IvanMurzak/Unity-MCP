@@ -128,6 +128,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Ensure MCP configuration file doesn't have syntax errors"));
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Restart Antigravity after configuration changes"));
 
+            troubleshootingContainerStdio.Add(TemplateStatusChecksShortcut());
+
             ContainerStdio!.Add(troubleshootingContainerStdio);
 
             // HTTP Configuration
@@ -144,6 +146,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             troubleshootingContainerHttp.Add(TemplateLabelDescription("- Ensure MCP configuration file doesn't have syntax errors"));
             troubleshootingContainerHttp.Add(TemplateLabelDescription("- Restart Antigravity after configuration changes"));
+
+            troubleshootingContainerHttp.Add(TemplateStatusChecksShortcut());
 
             ContainerHttp!.Add(troubleshootingContainerHttp);
         }

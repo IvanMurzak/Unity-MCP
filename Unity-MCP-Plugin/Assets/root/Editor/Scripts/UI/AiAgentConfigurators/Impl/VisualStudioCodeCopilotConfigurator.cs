@@ -102,6 +102,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- '.vscode/mcp.json' file must have no json syntax errors."));
 
+            troubleshootingContainerStdio.Add(TemplateStatusChecksShortcut());
+
             ContainerStdio!.Add(troubleshootingContainerStdio);
 
             // HTTP Configuration
@@ -121,6 +123,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var troubleshootingContainerHttp = TemplateFoldout("Troubleshooting");
 
             troubleshootingContainerHttp.Add(TemplateLabelDescription("- '.vscode/mcp.json' file must have no json syntax errors."));
+
+            troubleshootingContainerHttp.Add(TemplateStatusChecksShortcut());
 
             ContainerHttp!.Add(troubleshootingContainerHttp);
         }

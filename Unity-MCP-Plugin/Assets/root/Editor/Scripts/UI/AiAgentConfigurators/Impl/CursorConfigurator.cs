@@ -108,6 +108,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- '.cursor/mcp.json' file must have no json syntax errors."));
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Open Cursor settings window, go to 'MCP Servers' to restart ai-game-developer or to get more information about the available MCP tools and the status of the server."));
 
+            troubleshootingContainerStdio.Add(TemplateStatusChecksShortcut());
+
             ContainerStdio!.Add(troubleshootingContainerStdio);
 
             // HTTP Configuration
@@ -124,6 +126,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             troubleshootingContainerHttp.Add(TemplateLabelDescription("- '.cursor/mcp.json' file must have no json syntax errors."));
             troubleshootingContainerHttp.Add(TemplateLabelDescription("- Open Cursor settings window, go to 'MCP Servers' to restart ai-game-developer or to get more information about the available MCP tools and the status of the server."));
+
+            troubleshootingContainerHttp.Add(TemplateStatusChecksShortcut());
 
             ContainerHttp!.Add(troubleshootingContainerHttp);
         }

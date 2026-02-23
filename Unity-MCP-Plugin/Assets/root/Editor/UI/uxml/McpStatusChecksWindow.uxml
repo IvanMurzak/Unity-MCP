@@ -12,10 +12,10 @@
         <ui:VisualElement name="full-view-container" class="full-view-container">
             <ui:VisualElement class="header-container">
                 <ui:VisualElement class="header-row">
-                    <ui:Label text="MCP Status Checks" class="header-title" />
+                    <ui:Label text="AI Developer Status Checks" class="header-title" />
                     <ui:Label name="stats-label" text="(0/7)" class="stats-label" />
                 </ui:VisualElement>
-                <ui:Label text="Verify your MCP integration is working correctly. Click on any item for details." class="header-description" />
+                <ui:Label text="Verify your AI Developer integration is working correctly. Click on any item for details." class="header-description" />
             </ui:VisualElement>
             
             <ui:ScrollView class="status-scroll-view">

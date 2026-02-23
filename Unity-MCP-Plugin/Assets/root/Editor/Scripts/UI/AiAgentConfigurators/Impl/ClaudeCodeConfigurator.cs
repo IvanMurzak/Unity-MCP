@@ -106,6 +106,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Check that the configuration file .mcp.json exists"));
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Restart Claude Code after configuration changes"));
 
+            troubleshootingContainerStdio.Add(TemplateStatusChecksShortcut());
+
             ContainerStdio!.Add(troubleshootingContainerStdio);
 
             // HTTP Configuration
@@ -130,6 +132,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             troubleshootingContainerHttp.Add(TemplateLabelDescription("- Ensure Claude Code is configured with the same port as it is in Unity right now"));
             troubleshootingContainerHttp.Add(TemplateLabelDescription("- Check that the configuration file .mcp.json exists"));
             troubleshootingContainerHttp.Add(TemplateLabelDescription("- Restart Claude Code after configuration changes"));
+
+            troubleshootingContainerHttp.Add(TemplateStatusChecksShortcut());
 
             ContainerHttp!.Add(troubleshootingContainerHttp);
         }

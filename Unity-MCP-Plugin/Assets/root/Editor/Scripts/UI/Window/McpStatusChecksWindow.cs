@@ -25,8 +25,8 @@ using UnityEngine.UIElements;
 namespace com.IvanMurzak.Unity.MCP.Editor
 {
     /// <summary>
-    /// Editor window for checking MCP tool status and diagnostics.
-    /// Provides onboarding tests to verify that MCP integration is working correctly.
+    /// Editor window for checking AI Developer status and diagnostics.
+    /// Provides onboarding tests to verify that AI Developer integration is working correctly.
     /// </summary>
     public class McpStatusChecksWindow : McpWindowBase
     {
@@ -35,7 +35,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         protected override string[] WindowUxmlPaths => _windowUxmlPaths;
         protected override string[] WindowUssPaths => _windowUssPaths;
-        protected override string WindowTitle => "MCP Status Checks";
+        protected override string WindowTitle => "AI Developer Status Checks";
 
         private readonly CompositeDisposable _disposables = new();
         private VisualElement? _statusItemsContainer;
@@ -75,11 +75,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         }
 
         /// <summary>
-        /// Shows the MCP Status Checks window.
+        /// Shows the AI Developer Status Checks window.
         /// </summary>
         public static void ShowWindow()
         {
-            var window = GetWindow<McpStatusChecksWindow>("MCP Status Checks");
+            var window = GetWindow<McpStatusChecksWindow>("AI Developer Status Checks");
             window.SetupWindowWithIcon();
             window.minSize = new UnityEngine.Vector2(400, 500);
             window.Show();
@@ -246,11 +246,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             return new StatusCheckItem(
                 id: "mcp-client-configured",
-                title: "MCP Client configured",
-                subtitle: isConfigured ? $"{count} configured: {clientList}" : "No MCP clients configured",
+                title: "AI agent configured",
+                subtitle: isConfigured ? $"{count} configured: {clientList}" : "No AI agents configured",
                 description: isConfigured
-                    ? $"Configured clients: {clientList}. You can configure more clients in the main window using the Configure button."
-                    : "No MCP clients are configured. Open the main MCP window and click the 'Configure' button next to your preferred MCP client (Claude Desktop, Cursor, etc.) to set up the connection.",
+                    ? $"Configured agents: {clientList}. You can configure more agents in the main window using the Configure button."
+                    : "No AI agents are configured. Open the main AI Developer window and click the 'Configure' button next to your preferred AI agent (Claude Desktop, Cursor, etc.) to set up the connection.",
                 status: isConfigured ? CheckStatus.Success : CheckStatus.Error
             );
         }
@@ -271,9 +271,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 return new StatusCheckItem(
                     id: "unity-connected",
-                    title: "Unity connected to MCP Server",
+                    title: "Unity connected to server",
                     subtitle: $"Connected (Plugin v{version})",
-                    description: $"Unity is successfully connected to the MCP Server. Plugin version: {version}",
+                    description: $"Unity is successfully connected to the server. Plugin version: {version}",
                     status: CheckStatus.Success
                 );
             }
@@ -281,9 +281,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 return new StatusCheckItem(
                     id: "unity-connected",
-                    title: "Unity connected to MCP Server",
+                    title: "Unity connected to server",
                     subtitle: connectionState == HubConnectionState.Connecting ? "Connecting..." : "Reconnecting...",
-                    description: "Unity is attempting to connect to the MCP Server. Please wait...",
+                    description: "Unity is attempting to connect to the server. Please wait...",
                     status: CheckStatus.Pending
                 );
             }
@@ -291,13 +291,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 return new StatusCheckItem(
                     id: "unity-connected",
-                    title: "Unity connected to MCP Server",
+                    title: "Unity connected to server",
                     subtitle: "Not connected",
-                    description: "Unity is not connected to the MCP Server.\n\n" +
+                    description: "Unity is not connected to the server.\n\n" +
                         "To fix this:\n" +
-                        "1. Open the main MCP window (Window → MCP → Main)\n" +
+                        "1. Open the main AI Developer window (Window → AI Game Developer)\n" +
                         "2. Click the 'Connect' button\n" +
-                        "3. Make sure your configured MCP client is running and has this Unity project folder open",
+                        "3. Make sure your configured AI agent is running and has this Unity project folder open",
                     status: CheckStatus.Error
                 );
             }
@@ -393,23 +393,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 return new StatusCheckItem(
                     id: "server-to-client",
-                    title: "MCP Server connected to MCP Client",
+                    title: "Server connected to AI agent",
                     subtitle: "Server not running",
-                    description: "The MCP Server is not running, so no MCP Client can connect.\n\n" +
-                        "First, click 'Connect' in the main MCP window to start the server.",
+                    description: "The server is not running, so no AI agent can connect.\n\n" +
+                        "First, click 'Connect' in the main AI Developer window to start the server.",
                     status: CheckStatus.Error
                 );
             }
 
             // Check if we have received a handshake response from the server
-            // This indicates an external MCP client has connected and the server responded
+            // This indicates an external AI agent has connected and the server responded
             if (handshake != null)
             {
                 return new StatusCheckItem(
                    id: "server-to-client",
-                   title: "MCP Server connected to MCP Client",
+                   title: "Server connected to AI agent",
                    subtitle: "Connected ✓",
-                   description: "The MCP Server has successfully connected to an external MCP Client.\n\n" +
+                   description: "The server has successfully connected to an AI agent.\n\n" +
                        $"Server version: {handshake.ServerVersion}\n" +
                        $"API version: {handshake.ApiVersion}",
                    status: CheckStatus.Success
@@ -419,12 +419,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 return new StatusCheckItem(
                    id: "server-to-client",
-                   title: "MCP Server connected to MCP Client",
-                   subtitle: "Waiting for external client...",
-                   description: "The Unity MCP Server is running, but no external MCP Client has connected yet.\n\n" +
+                   title: "Server connected to AI agent",
+                   subtitle: "Waiting for AI agent...",
+                   description: "The server is running, but no AI agent has connected yet.\n\n" +
                        "To complete this connection:\n" +
-                       "1. Open your MCP Client (Claude Desktop, Cursor, etc.)\n" +
-                       "2. Ensure it is configured to connect to this project's MCP server\n" +
+                       "1. Open your AI agent (Claude Desktop, Cursor, etc.)\n" +
+                       "2. Ensure it is configured to connect to this project's server\n" +
                        "3. Send any request (like listing tools) to establish the connection",
                    status: CheckStatus.Pending
                );
@@ -435,76 +435,46 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         {
             var mcpPlugin = UnityMcpPlugin.Instance.McpPluginInstance;
             var serverBasePath = mcpPlugin?.CurrentBaseDirectory ?? string.Empty;
-
-            var unityProjectDir = Environment.CurrentDirectory;
-            var expectedServerPath = System.IO.Path.Combine(unityProjectDir, "Library", "mcp-server");
-            var configuredClients = GetConfiguredClientNames();
             var isConnected = UnityMcpPlugin.IsConnected.CurrentValue;
 
             // If not connected or no handshake, we can't get the server path
             if (!isConnected || string.IsNullOrEmpty(serverBasePath))
             {
-                if (configuredClients.Count == 0)
-                {
-                    return new StatusCheckItem(
-                        id: "client-location",
-                        title: "MCP Client location match",
-                        subtitle: "No client config found",
-                        description: "Could not find any MCP client configuration.\n\n" +
-                            $"Unity project path: {unityProjectDir}\n\n" +
-                            "Configure an MCP client first using the 'Configure' button in the main MCP window.",
-                        status: CheckStatus.Error
-                    );
-                }
-
                 return new StatusCheckItem(
                     id: "client-location",
-                    title: "MCP Client location match",
-                    subtitle: "Connect to verify location",
-                    description: "Cannot verify server location until connected to the MCP Server.\n\n" +
-                        $"Unity project path: {unityProjectDir}\n" +
-                        $"Expected server path: {expectedServerPath}",
+                    title: "Server location",
+                    subtitle: "Connect to see location",
+                    description: "Server location will be shown once the AI agent is connected and the session is active.",
                     status: CheckStatus.Pending
                 );
             }
 
-            // Normalize paths for comparison
+            // Normalize path for display as absolute
             var normServerPath = System.IO.Path.GetFullPath(serverBasePath).TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
-            var normExpectedPath = System.IO.Path.GetFullPath(expectedServerPath).TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
-            var normProjectPath = System.IO.Path.GetFullPath(unityProjectDir).TrimEnd(System.IO.Path.DirectorySeparatorChar, System.IO.Path.AltDirectorySeparatorChar);
 
-            // Check if server is running from within the project's Library/mcp-server folder
-            bool isLocationMatch = normServerPath.StartsWith(normProjectPath, StringComparison.OrdinalIgnoreCase);
-
-            if (isLocationMatch)
+            // The evaluator now handles the simplified logic, so we trust checkResult.IsPassed
+            if (checkResult.IsPassed)
             {
                 return new StatusCheckItem(
                    id: "client-location",
-                   title: "MCP Client location match",
-                   subtitle: "Location verified ✓",
-                   description: $"Server is running from the correct project location.\n\n" +
-                       $"Server path: {serverBasePath}\n" +
-                       $"Unity project: {unityProjectDir}\n\n" +
-                       "This ensures the MCP server is operating on the correct files.",
+                   title: "Server location",
+                   subtitle: normServerPath,
+                   description: $"The AI Developer server is currently running from:\n\n{normServerPath}",
                    status: CheckStatus.Success
                );
             }
             else
             {
+                // This shouldn't really happen with the new simplified evaluator logic if isConnected and serverBasePath is valid
                 return new StatusCheckItem(
                     id: "client-location",
-                    title: "MCP Client location match",
-                    subtitle: "Path mismatch detected",
-                    description: $"Server is NOT running from this Unity project!\n\n" +
-                        $"Server path: {serverBasePath}\n" +
-                        $"Unity project: {unityProjectDir}\n" +
-                        $"Expected: {expectedServerPath}\n\n" +
-                        "This usually happens if the MCP client was configured for a different project.",
+                    title: "Server location",
+                    subtitle: "Location not available",
+                    description: "The AI Developer server location could not be determined. Please ensure the AI agent is correctly configured and connected.",
                     status: CheckStatus.Error
                 );
             }
         }
-
         private StatusCheckItem GetEnabledToolsCheck(McpStatusCheckEvaluator.CheckResult checkResult)
         {
             var mcpPlugin = UnityMcpPlugin.Instance.McpPluginInstance;
@@ -514,9 +484,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 return new StatusCheckItem(
                     id: "enabled-tools",
-                    title: "MCP Plugin has at least 1 enabled tool",
+                    title: "At least 1 enabled tool",
                     subtitle: "Plugin not initialized",
-                    description: "The MCP Plugin is not initialized. Try connecting to the MCP Server first.",
+                    description: "The plugin is not initialized. Try connecting to the server first.",
                     status: CheckStatus.Error
                 );
             }
@@ -529,10 +499,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 return new StatusCheckItem(
                     id: "enabled-tools",
-                    title: "MCP Plugin has at least 1 enabled tool",
+                    title: "At least 1 enabled tool",
                     subtitle: $"{enabledCount} / {totalCount} tools enabled",
                     description: $"You have {enabledCount} out of {totalCount} tools enabled.\n\n" +
-                        "You can manage enabled tools in Window → MCP → Tools. " +
+                        "You can manage enabled tools in the Tools window. " +
                         "Disabling unused tools saves LLM context tokens.",
                     status: CheckStatus.Success
                 );
@@ -541,11 +511,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 return new StatusCheckItem(
                     id: "enabled-tools",
-                    title: "MCP Plugin has at least 1 enabled tool",
+                    title: "At least 1 enabled tool",
                     subtitle: "0 tools enabled",
-                    description: "No tools are currently enabled. The MCP client won't be able to perform any actions.\n\n" +
+                    description: "No tools are currently enabled. The AI agent won't be able to perform any actions.\n\n" +
                         "To fix this:\n" +
-                        "1. Go to Window → MCP → Tools\n" +
+                        "1. Open the Tools window\n" +
                         "2. Enable at least one tool by toggling it on",
                     status: CheckStatus.Error
                 );
@@ -560,9 +530,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 return new StatusCheckItem(
                     id: "tool-executed",
-                    title: "MCP Tool executed",
+                    title: "Tool executed",
                     subtitle: "Plugin not initialized",
-                    description: "The MCP Plugin is not initialized. Try connecting to the MCP Server first.",
+                    description: "The plugin is not initialized. Try connecting to the server first.",
                     status: CheckStatus.Pending
                 );
             }
@@ -573,10 +543,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 return new StatusCheckItem(
                     id: "tool-executed",
-                    title: "MCP Tool executed",
+                    title: "Tool executed",
                     subtitle: $"{toolCallsCount} tool call{(toolCallsCount == 1 ? "" : "s")} completed",
-                    description: $"At least one MCP tool has been executed successfully. Total tool calls: {toolCallsCount}\n\n" +
-                        "This confirms that your AI assistant can interact with Unity through the MCP integration.",
+                    description: $"At least one tool has been executed successfully. Total tool calls: {toolCallsCount}\n\n" +
+                        "This confirms that your AI assistant can interact with Unity through the AI Developer integration.",
                     status: CheckStatus.Success
                 );
             }
@@ -584,9 +554,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 return new StatusCheckItem(
                     id: "tool-executed",
-                    title: "MCP Tool executed",
+                    title: "Tool executed",
                     subtitle: "No tools executed yet",
-                    description: "No MCP tools have been executed yet.\n\n" +
+                    description: "No tools have been executed yet.\n\n" +
                         "To complete this check:\n" +
                         "1. Make sure your AI assistant is connected\n" +
                         "2. Ask it to perform an action in Unity (e.g., 'List all GameObjects in the scene')",

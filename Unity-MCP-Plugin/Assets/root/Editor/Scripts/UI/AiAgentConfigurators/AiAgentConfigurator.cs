@@ -190,6 +190,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         }
         protected ConfigurationElements TemplateConfigurationElements(AiAgentConfig config, TransportMethod transportMode) => new ConfigurationElements(config, transportMode);
 
+        protected VisualElement TemplateStatusChecksShortcut()
+        {
+            var container = new VisualElement();
+            container.style.flexDirection = FlexDirection.Row;
+            container.style.alignItems = Align.Center;
+            container.style.marginTop = 6;
+            container.style.marginBottom = 2;
+
+            var label = TemplateLabelDescription("- Run status checks to diagnose connection issues");
+            label.style.flexGrow = 1;
+            label.style.flexShrink = 1;
+            container.Add(label);
+
+            var btn = new Button(() => McpStatusChecksWindow.ShowWindow())
+            {
+                text = "Status Checks"
+            };
+            btn.AddToClassList("btn-secondary");
+            btn.style.flexShrink = 0;
+            btn.style.marginLeft = 8;
+            container.Add(btn);
+
+            return container;
+        }
+
         #endregion
 
         #region UI Creation
