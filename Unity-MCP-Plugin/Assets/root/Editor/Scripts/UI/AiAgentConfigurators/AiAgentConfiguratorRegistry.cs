@@ -33,6 +33,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 new AntigravityConfigurator(),
                 new OpenCodeConfigurator(),
                 new CodexConfigurator(),
+                new KiloCodeConfigurator(),
                 new UnityAiConfigurator(),
             }
             .OrderBy(c => c.AgentName)
