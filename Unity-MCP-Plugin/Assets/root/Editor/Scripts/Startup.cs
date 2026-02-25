@@ -10,7 +10,6 @@
 
 #nullable enable
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
-using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
 using UnityEditor;
 using UnityEngine;
