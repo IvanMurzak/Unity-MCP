@@ -14,18 +14,15 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using Microsoft.Extensions.Logging;
-using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP
 {
-    public partial class UnityMcpPlugin
+    public partial class UnityMcpPluginEditor
     {
         public static string ResourcesFileName => "AI-Game-Developer-Config";
-        public static string AssetsFilePath => $"Assets/Resources/{ResourcesFileName}.json";
+        public static string AssetsFilePath => $"UserSettings/{ResourcesFileName}.json";
 #if UNITY_EDITOR
-        public static TextAsset AssetFile => UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(AssetsFilePath);
-        public static void InvalidateAssetFile() => UnityEditor.AssetDatabase.ImportAsset(AssetsFilePath, UnityEditor.ImportAssetOptions.ForceUpdate);
-        public static void MarkAssetFileDirty() => UnityEditor.EditorUtility.SetDirty(AssetFile);
+        public static UnityEngine.TextAsset AssetFile => UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.TextAsset>(AssetsFilePath);
 #endif
 
         UnityConnectionConfig GetOrCreateConfig() => GetOrCreateConfig(out _);
@@ -34,21 +31,15 @@ namespace com.IvanMurzak.Unity.MCP
             wasCreated = false;
             try
             {
-#if UNITY_EDITOR
-                var json = Application.isPlaying
-                    ? UnityEngine.Resources.Load<TextAsset>(ResourcesFileName).text
-                    : File.Exists(AssetsFilePath)
-                        ? File.ReadAllText(AssetsFilePath)
-                        : null;
-#else
-                var json = UnityEngine.Resources.Load<TextAsset>(ResourcesFileName).text;
-#endif
+                // Both Edit mode and Play mode read from the same UserSettings JSON file
+                var json = File.Exists(AssetsFilePath) ? File.ReadAllText(AssetsFilePath) : null;
+
                 UnityConnectionConfig? config = null;
                 try
                 {
                     config = string.IsNullOrWhiteSpace(json)
                         ? null
-                        : JsonSerializer.Deserialize<UnityConnectionConfig>(json, new JsonSerializerOptions
+                        : JsonSerializer.Deserialize<UnityConnectionConfig>(json!, new JsonSerializerOptions
                         {
                             PropertyNameCaseInsensitive = true
                         });
@@ -62,8 +53,12 @@ namespace com.IvanMurzak.Unity.MCP
                 {
                     _logger.LogWarning("{method}: <color=orange><b>Creating {file}</b> file at <i>{path}</i></color>",
                         nameof(GetOrCreateConfig), ResourcesFileName, AssetsFilePath);
-
                     config = new UnityConnectionConfig();
+                    wasCreated = true;
+                }
+                if (string.IsNullOrEmpty(config.Token))
+                {
+                    config.Token = GenerateToken();
                     wasCreated = true;
                 }
 
@@ -73,7 +68,7 @@ namespace com.IvanMurzak.Unity.MCP
             {
                 _logger.LogCritical(e, "{method}: <color=red><b>{file}</b> file can't be loaded from <i>{path}</i></color>",
                     nameof(GetOrCreateConfig), ResourcesFileName, AssetsFilePath);
-                throw e;
+                throw;
             }
         }
 
@@ -85,7 +80,7 @@ namespace com.IvanMurzak.Unity.MCP
             {
                 var directory = Path.GetDirectoryName(AssetsFilePath);
                 if (!Directory.Exists(directory))
-                    Directory.CreateDirectory(directory);
+                    Directory.CreateDirectory(directory!);
 
                 unityConnectionConfig ??= new UnityConnectionConfig();
 

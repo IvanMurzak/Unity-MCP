@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -142,7 +142,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             if (addRequest.Status == StatusCode.Success)
             {
-                UnityMcpPlugin.Instance.LogInfo("Package updated to version {version}", typeof(UpdatePopupWindow), latestVersion);
+                UnityMcpPluginEditor.Instance.LogInfo("Package updated to version {version}", typeof(UpdatePopupWindow), latestVersion);
                 EditorUtility.DisplayDialog(
                     "Update Complete",
                     $"AI Game Developer has been updated to version {latestVersion}.\n\nUnity will recompile scripts automatically.",
@@ -151,7 +151,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             else if (addRequest.Status >= StatusCode.Failure)
             {
                 var errorMessage = addRequest.Error?.message ?? "Unknown error";
-                UnityMcpPlugin.Instance.LogError("Failed to update package: {error}", typeof(UpdatePopupWindow), errorMessage);
+                UnityMcpPluginEditor.Instance.LogError("Failed to update package: {error}", typeof(UpdatePopupWindow), errorMessage);
                 EditorUtility.DisplayDialog(
                     "Update Failed",
                     $"Failed to update the package:\n{errorMessage}",

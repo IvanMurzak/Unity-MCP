@@ -27,16 +27,17 @@ Unlike other tools, this plugin works **inside your compiled game**, allowing fo
 
 ## Features
 
-- ✔️ **Runtime AI** - Use LLMs directly inside your compiled game for dynamic NPC behavior or debugging
-- ✔️ **Natural conversation** - Chat with AI like you would with a human
-- ✔️ **Code assistance** - Ask AI to write code and run tests
+- ✔️ **AI agents** - Use the best agents from **Anthropic**, **OpenAI**, **Microsoft**, or any other provider with no limits
+- ✔️ **TOOLS** - A wide range of default [MCP Tools](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md) for operating in Unity Editor
+- ✔️ **SKILLS** - Automatically generates skills for each MCP tool, allowing you to use tools without wasting tokens on MCP tool registration
+- ✔️ **Code and Tests** - Ask AI to write code and run tests
+- ✔️ **Runtime (in-game)** - Use LLMs directly inside your compiled game for dynamic NPC behavior or debugging
 - ✔️ **Debug support** - Ask AI to get logs and fix errors
-- ✔️ **Multiple LLM providers** - Use agents from **Anthropic**, **OpenAI**, **DeepSeek**, Microsoft, or any other provider with no limits
-- ✔️ **Flexible deployment** - Works locally (stdio) and remotely (http) by configuration
-- ✔️ **Rich toolset** - Wide range of default [MCP Tools](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)
+- ✔️ **Natural conversation** - Chat with AI like you would with a human
+- ✔️ **Flexible deployment** - Works locally (stdio) and remotely (http) via configuration
 - ✔️ **Extensible** - Create [custom MCP Tools in your project code](#add-custom-mcp-tool)
 
-[![DOWNLOAD INSTALLER](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.48.1/AI-Game-Dev-Installer.unitypackage)
+[![DOWNLOAD INSTALLER](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.50.1/AI-Game-Dev-Installer.unitypackage)
 
 ![AI Game Developer Windows](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/ai-game-developer-windows.png?raw=true)
 
@@ -252,7 +253,7 @@ Unlike other tools, this plugin works **inside your compiled game**, allowing fo
 
 ### Option 1 - Installer
 
-- **[⬇️ Download Installer](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.48.1/AI-Game-Dev-Installer.unitypackage)**
+- **[⬇️ Download Installer](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.50.1/AI-Game-Dev-Installer.unitypackage)**
 - **📂 Import installer into Unity project**
   > - You can double-click on the file - Unity will open it automatically
   > - OR: Open Unity Editor first, then click on `Assets/Import Package/Custom Package`, and choose the file
@@ -327,6 +328,7 @@ If automatic configuration doesn't work for you for any reason, use the JSON fro
   ```bash
   gemini mcp add ai-game-developer <command>
   ```
+
   > Replace `<command>` from the table above
 </details>
 
@@ -336,6 +338,7 @@ If automatic configuration doesn't work for you for any reason, use the JSON fro
   ```bash
   claude mcp add ai-game-developer <command>
   ```
+
   > Replace `<command>` from the table above
 </details>
 
@@ -471,9 +474,22 @@ public static class Prompt_ScriptingCode
 Use **[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** in your game/app. Use Tools, Resources or Prompts. By default there are no tools, you would need to implement your custom.
 
 ```csharp
-UnityMcpPlugin.BuildAndStart(); // Build and start Unity-MCP-Plugin, it is required
-UnityMcpPlugin.Connect(); // Start active connection with retry to Unity-MCP-Server
-UnityMcpPlugin.Disconnect(); // Stop active connection and close existed connection
+// Build MCP plugin
+var mcpPlugin = UnityMcpPluginRuntime.Initialize(builder =>
+    {
+        builder.WithConfig(config =>
+        {
+            config.Host = "http://localhost:8080";
+            config.Token = "your-token";
+        });
+        // Automatically register all tools from the current assembly
+        builder.WithToolsFromAssembly(Assembly.GetExecutingAssembly());
+    })
+    .Build();
+
+await mcpPlugin.Connect(); // Start active connection with retry to Unity-MCP-Server
+
+await mcpPlugin.Disconnect(); // Stop active connection and close existed connection
 ```
 
 ## Sample: AI powered Chess game bot

@@ -47,7 +47,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 .GetCustomAttribute<McpPluginToolAttribute>()
                 .Name;
 
-            var task = McpPlugin.McpPlugin.Instance!.McpManager.ToolManager!.RunCallTool(new RequestCallTool(toolName, parameters!));
+            var task = UnityMcpPluginEditor.Instance.Tools!.RunCallTool(new RequestCallTool(toolName, parameters!));
             while (!task.IsCompleted) yield return null;
 
             var result = task.Result.Message;

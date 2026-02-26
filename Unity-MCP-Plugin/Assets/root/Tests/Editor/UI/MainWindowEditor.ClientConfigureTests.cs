@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -59,8 +59,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
             .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true)
             .SetProperty("args", new JsonArray {
-                $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
-                $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+                $"{Consts.MCP.Server.Args.Port}={UnityMcpPluginEditor.Port}",
+                $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}",
                 $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
             }, requiredForConfiguration: true)
             .SetPropertyToRemove("url");
@@ -269,7 +269,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNotNull(args, "Args should exist for server");
 
             var argsStr = args!.ToString();
-            Assert.IsTrue(argsStr.Contains($"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}"),
+            Assert.IsTrue(argsStr.Contains($"{Consts.MCP.Server.Args.Port}={UnityMcpPluginEditor.Port}"),
                 $"Should contain current port, but got: {argsStr}");
 
             yield return null;

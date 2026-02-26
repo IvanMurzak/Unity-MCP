@@ -52,9 +52,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 if (!scene.IsValid())
                     throw new ArgumentException(Error.NotFoundSceneWithName(openedSceneName));
 
+                var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
+
                 return new SceneData(
                     scene: scene,
-                    reflector: McpPlugin.McpPlugin.Instance!.McpManager.Reflector,
+                    reflector: reflector,
                     includeRootGameObjects: includeRootGameObjects,
                     includeChildrenDepth: includeChildrenDepth,
                     includeBounds: includeBounds,

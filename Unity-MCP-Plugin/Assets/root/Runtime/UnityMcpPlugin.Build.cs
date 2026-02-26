@@ -18,70 +18,74 @@ using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.Extensions.Logging;
 using R3;
 using UnityEngine;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace com.IvanMurzak.Unity.MCP
 {
     using Consts = McpPlugin.Common.Consts;
-    using LogLevel = Runtime.Utils.LogLevel;
     using MicrosoftLogLevel = Microsoft.Extensions.Logging.LogLevel;
 
     public partial class UnityMcpPlugin
     {
-        protected readonly object buildMutex = new();
+        static readonly ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger<UnityMcpPlugin>();
 
-        protected IMcpPlugin? mcpPluginInstance;
-        public IMcpPlugin? McpPluginInstance
+        protected sealed class McpPluginSlot : IDisposable
         {
-            get
+            private readonly object _mutex = new();
+            private IMcpPlugin? _instance;
+
+            public IMcpPlugin? Instance
             {
-                lock (buildMutex)
+                get { lock (_mutex) { return _instance; } }
+            }
+
+            public bool HasInstance
+            {
+                get { lock (_mutex) { return _instance != null; } }
+            }
+
+            // Calls factory inside lock — guarantees build-once under concurrent access.
+            // Returns the built instance if it was just created, null if already built.
+            public IMcpPlugin? BuildOnce(Func<IMcpPlugin> factory)
+            {
+                lock (_mutex)
                 {
-                    return mcpPluginInstance;
+                    if (_instance != null) return null;
+                    _instance = factory();
+                    return _instance;
                 }
             }
-            protected set
+
+            // Disposes old instance (if any), sets new one, returns it.
+            public IMcpPlugin Set(IMcpPlugin plugin)
             {
-                lock (buildMutex)
+                lock (_mutex)
                 {
-                    mcpPluginInstance = value;
+                    _instance?.Dispose();
+                    _instance = plugin;
+                    return plugin;
                 }
             }
-        }
-        public bool HasMcpPluginInstance
-        {
-            get
+
+            // Atomically returns and clears the instance without disposing it.
+            // Used by callers that need to control when/how disposal happens (e.g. background thread).
+            public IMcpPlugin? TakeInstance()
             {
-                lock (buildMutex)
+                lock (_mutex)
                 {
-                    return mcpPluginInstance != null;
+                    var instance = _instance;
+                    _instance = null;
+                    return instance;
                 }
             }
-        }
 
-        public virtual UnityMcpPlugin BuildMcpPluginIfNeeded()
-        {
-            lock (buildMutex)
+            public void Dispose()
             {
-                if (mcpPluginInstance != null)
-                    return this; // already built
-
-                var stopwatch = System.Diagnostics.Stopwatch.StartNew();
-                mcpPluginInstance = BuildMcpPlugin(
-                    version: BuildVersion(),
-                    reflector: CreateDefaultReflector(),
-                    loggerProvider: BuildLoggerProvider()
-                );
-                stopwatch.Stop();
-                _logger.LogDebug("MCP Plugin built in {elapsedMilliseconds} ms.",
-                    stopwatch.ElapsedMilliseconds);
-
-                ApplyConfigToMcpPlugin(mcpPluginInstance);
-
-                mcpPluginInstance.ConnectionState
-                    .Subscribe(state => _connectionState.Value = state)
-                    .AddTo(_disposables);
-
-                return this;
+                lock (_mutex)
+                {
+                    _instance?.Dispose();
+                    _instance = null;
+                }
             }
         }
 
@@ -102,15 +106,15 @@ namespace com.IvanMurzak.Unity.MCP
 
         protected virtual IMcpPlugin BuildMcpPlugin(McpPlugin.Common.Version version, Reflector reflector, ILoggerProvider? loggerProvider = null)
         {
-            _logger.LogTrace("{method} called.",
-                nameof(BuildMcpPlugin));
+            _logger.LogTrace("{method} called.", nameof(BuildMcpPlugin));
 
             var assemblies = AssemblyUtils.AllAssemblies;
             var mcpPluginBuilder = new McpPluginBuilder(version, loggerProvider)
                 .WithConfig(config =>
                 {
-                    _logger.LogInformation("AI Game Developer server host: {host}", Host);
-                    config.Host = Host;
+                    _logger.LogInformation("AI Game Developer server host: {host}", unityConnectionConfig.Host);
+                    config.Host = unityConnectionConfig.Host;
+                    config.Token = unityConnectionConfig.Token;
                 })
                 .AddLogging(loggingBuilder =>
                 {
@@ -142,16 +146,18 @@ namespace com.IvanMurzak.Unity.MCP
 
             var mcpPlugin = mcpPluginBuilder.Build(reflector);
 
-            _logger.LogTrace("{method} completed.",
-                nameof(BuildMcpPlugin));
+            _pluginConnectionSubscription?.Dispose();
+            _pluginConnectionSubscription = mcpPlugin.ConnectionState
+                .Subscribe(state => _connectionState.Value = state);
+
+            _logger.LogTrace("{method} completed.", nameof(BuildMcpPlugin));
 
             return mcpPlugin;
         }
 
         protected virtual void ApplyConfigToMcpPlugin(IMcpPlugin mcpPlugin)
         {
-            _logger.LogTrace("{method} called.",
-                nameof(ApplyConfigToMcpPlugin));
+            _logger.LogTrace("{method} called.", nameof(ApplyConfigToMcpPlugin));
 
             // Enable/Disable tools based on config
             var toolManager = mcpPlugin.McpManager.ToolManager;
@@ -195,8 +201,7 @@ namespace com.IvanMurzak.Unity.MCP
                 }
             }
 
-            _logger.LogTrace("{method} completed.",
-                nameof(ApplyConfigToMcpPlugin));
+            _logger.LogTrace("{method} completed.", nameof(ApplyConfigToMcpPlugin));
         }
     }
 }
