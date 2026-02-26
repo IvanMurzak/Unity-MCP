@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -32,11 +32,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             {
                 var reflector = new Reflector();
 
-                // Match UnityMcpPlugin.CreateDefaultReflector
+                // Match UnityMcpPluginEditor.CreateDefaultReflector
                 reflector.Converters.Remove<GenericReflectionConverter<object>>();
                 reflector.Converters.Add(new UnityGenericReflectionConverter<object>());
 
-                // Register converters in the order they are in UnityMcpPlugin.Converters.cs
+                // Register converters in the order they are in UnityMcpPluginEditor.Converters.cs
                 // Assets
                 reflector.Converters.Add(new UnityEngine_Material_ReflectionConverter());
                 reflector.Converters.Add(new UnityEngine_Sprite_ReflectionConverter());

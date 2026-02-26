@@ -18,7 +18,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator Serialize_GameObject_WithComponent_ListOfNullColliders()
         {
-            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new System.InvalidOperationException("Reflector should not be null.");
 
             // Create a GameObject with the test component
             var go = new GameObject("TestGameObject_ColliderList");
@@ -77,7 +77,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator Serialize_GameObject_WithComponent_ListOfDestroyedColliders()
         {
-            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new System.InvalidOperationException("Reflector should not be null.");
 
             // Create a GameObject with the test component
             var go = new GameObject("TestGameObject_ColliderList");
@@ -151,7 +151,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator Serialize_BoxCollider_ShouldNotContainMaterialField()
         {
-            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new System.InvalidOperationException("Reflector should not be null.");
 
             // Create a GameObject and add BoxCollider component
             var go = new GameObject("TestGameObject_BoxCollider");
@@ -191,7 +191,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator Converter_ColliderTypes_ShouldUseColliderReflectionConverter()
         {
-            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new System.InvalidOperationException("Reflector should not be null.");
 
             yield return null;
 

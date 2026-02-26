@@ -32,7 +32,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var go = new GameObject("OriginalName");
             var objectRef = new ObjectRef(go);
 
-            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
             var diff = new SerializedMember
             {
@@ -66,7 +66,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var go = new GameObject("TestTransform");
             var objectRef = new ObjectRef(go.transform);
 
-            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
             var posMember = new SerializedMember
             {

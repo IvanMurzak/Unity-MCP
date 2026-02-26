@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System;
 using System.Collections;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.Unity.MCP.TestFiles;
@@ -41,7 +42,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var initialVector = new Vector3(1f, 2f, 3f);
             comp.vector3Field = initialVector;
 
-            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
             // Create a partial update that only modifies the 'x' field
             var componentDiff = SerializedMember.FromValue(
@@ -85,7 +86,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var initialColor = new Color(0.1f, 0.2f, 0.3f, 0.4f);
             comp.colorField = initialColor;
 
-            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
             // Create a partial update that only modifies 'r' and 'g'
             var componentDiff = SerializedMember.FromValue(
@@ -137,7 +138,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             };
             comp.customStructField = initialStruct;
 
-            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
             // Create a partial update that only modifies 'intValue'
             var componentDiff = SerializedMember.FromValue(
@@ -188,7 +189,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             };
             comp.customStructField = initialStruct;
 
-            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
             // Create a partial update that only modifies 'nestedVector.x'
             var componentDiff = SerializedMember.FromValue(
@@ -240,7 +241,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             comp.colorField = new Color(0.1f, 0.2f, 0.3f, 0.4f);
             comp.vector2Field = new Vector2(5f, 6f);
 
-            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
             // Create partial updates for multiple struct fields
             var componentDiff = SerializedMember.FromValue(
@@ -308,7 +309,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Set initial values
             comp.vector3Field = new Vector3(1f, 2f, 3f);
 
-            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
             // Create a full replacement (using valueJsonElement, not nested fields)
             var componentDiff = SerializedMember.FromValue(

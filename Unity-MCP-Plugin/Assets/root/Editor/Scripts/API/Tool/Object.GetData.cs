@@ -49,7 +49,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 if (obj == null)
                     throw new Exception("Not found UnityEngine.Object with provided data.");
 
-                return McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Serialize(
+                var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
+
+                return reflector.Serialize(
                     obj,
                     name: obj.name,
                     recursive: true,

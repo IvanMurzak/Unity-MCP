@@ -27,16 +27,17 @@
 
 ## 機能
 
-- ✔️ **ランタイムAI** - コンパイル済みゲーム内でLLMを直接使用し、動的NPCの動作やデバッグを実現
-- ✔️ **自然な会話** - 人間と話すようにAIとチャット
-- ✔️ **コードアシスタンス** - AIにコードの作成とテストの実行を依頼
+- ✔️ **AIエージェント** - **Anthropic**、**OpenAI**、**Microsoft**、または他のプロバイダーの最高のエージェントを制限なく使用
+- ✔️ **ツール** - Unity Editorで操作するための幅広いデフォルト[MCPツール](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)
+- ✔️ **スキル** - 各MCPツールのスキルを自動生成し、MCPツール登録にトークンを浪費せずにツールを使用可能
+- ✔️ **コードとテスト** - AIにコードの作成とテストの実行を依頼
+- ✔️ **ランタイム（ゲーム内）** - コンパイル済みゲーム内でLLMを直接使用し、動的NPCの動作やデバッグを実現
 - ✔️ **デバッグサポート** - AIにログの取得とエラーの修正を依頼
-- ✔️ **複数のLLMプロバイダー** - **Anthropic**、**OpenAI**、**DeepSeek**、Microsoft、または他のプロバイダーのエージェントを制限なく使用
+- ✔️ **自然な会話** - 人間と話すようにAIとチャット
 - ✔️ **柔軟なデプロイメント** - 設定によりローカル（stdio）およびリモート（http）で動作
-- ✔️ **豊富なツールセット** - 幅広いデフォルト[MCPツール](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)
 - ✔️ **拡張可能** - プロジェクトコードで[カスタムMCPツール](#カスタムmcpツールの追加)を作成
 
-[![インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download_ja.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.48.1/AI-Game-Dev-Installer.unitypackage)
+[![インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download_ja.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.50.1/AI-Game-Dev-Installer.unitypackage)
 
 ![AIゲーム開発者 窓](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/ai-game-developer-windows.png?raw=true)
 
@@ -252,7 +253,7 @@
 
 ### オプション1 - インストーラー
 
-- **[⬇️ インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.48.1/AI-Game-Dev-Installer.unitypackage)**
+- **[⬇️ インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.50.1/AI-Game-Dev-Installer.unitypackage)**
 - **📂 インストーラーをUnityプロジェクトにインポート**
   > - ファイルをダブルクリック - Unityが自動的に開きます
   > - または：最初にUnityエディターを開き、`Assets/Import Package/Custom Package`をクリックして、ファイルを選択
@@ -325,6 +326,7 @@ openupm add com.ivanmurzak.unity.mcp
   ```bash
   gemini mcp add ai-game-developer <command>
   ```
+
   > 上の表から`<command>`を置き換えてください
 </details>
 
@@ -334,6 +336,7 @@ openupm add com.ivanmurzak.unity.mcp
   ```bash
   claude mcp add ai-game-developer <command>
   ```
+
   > 上の表から`<command>`を置き換えてください
 </details>
 
@@ -469,9 +472,22 @@ public static class Prompt_ScriptingCode
 **[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)**をゲーム/アプリで使用します。ツール、リソース、プロンプトを使用できます。デフォルトではツールがないため、カスタムツールを実装する必要があります。
 
 ```csharp
-UnityMcpPlugin.BuildAndStart(); // Unity-MCP-Pluginをビルドして起動、これは必須です
-UnityMcpPlugin.Connect(); // Unity-MCP-Serverへのリトライ付きアクティブ接続を開始
-UnityMcpPlugin.Disconnect(); // アクティブな接続を停止し、既存の接続を閉じる
+// MCPプラグインをビルド
+var mcpPlugin = UnityMcpPluginRuntime.Initialize(builder =>
+    {
+        builder.WithConfig(config =>
+        {
+            config.Host = "http://localhost:8080";
+            config.Token = "your-token";
+        });
+        // 現在のアセンブリからすべてのツールを自動登録
+        builder.WithToolsFromAssembly(Assembly.GetExecutingAssembly());
+    })
+    .Build();
+
+await mcpPlugin.Connect(); // Unity-MCP-Serverへの再試行付きアクティブ接続を開始
+
+await mcpPlugin.Disconnect(); // アクティブ接続を停止し、既存の接続を閉じる
 ```
 
 ## サンプル：AI駆動のチェスゲームボット

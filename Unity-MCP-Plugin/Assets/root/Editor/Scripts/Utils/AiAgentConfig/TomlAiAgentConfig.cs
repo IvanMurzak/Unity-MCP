@@ -16,6 +16,7 @@ using System.Linq;
 using System.Text;
 using com.IvanMurzak.McpPlugin.Common;
 using UnityEngine;
+using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
@@ -83,6 +84,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         {
             base.AddIdentityKey(key);
             return this;
+        }
+
+        public override void ApplyHttpAuthorization(bool isRequired, string? token)
+        {
+            // TOML HTTP config format does not currently support injecting
+            // authorization headers. Implement when TOML HTTP auth is needed.
+        }
+
+        public override void ApplyStdioAuthorization(bool isRequired, string? token)
+        {
+            if (!_properties.TryGetValue("args", out var argsProp) || argsProp.value is not string[] currentArgs)
+                return;
+
+            var tokenPrefix = $"{Args.Token}=";
+            var filtered = currentArgs
+                .Where(arg => !arg.StartsWith(tokenPrefix, StringComparison.Ordinal))
+                .ToList();
+
+            if (isRequired && !string.IsNullOrEmpty(token))
+                filtered.Add($"{tokenPrefix}{token}");
+
+            SetProperty("args", filtered.ToArray(), argsProp.required, argsProp.comparison);
         }
 
         public override bool Configure()
@@ -170,6 +193,82 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
         }
 
+        public override bool Unconfigure()
+        {
+            if (string.IsNullOrEmpty(ConfigPath) || !File.Exists(ConfigPath))
+                return false;
+
+            try
+            {
+                var sectionName = $"{BodyPath}.{DefaultMcpServerName}";
+                var lines = File.ReadAllLines(ConfigPath).ToList();
+                var changed = false;
+
+                var sectionIndex = FindTomlSection(lines, sectionName);
+                if (sectionIndex >= 0)
+                {
+                    var sectionEnd = FindSectionEnd(lines, sectionIndex);
+                    lines.RemoveRange(sectionIndex, sectionEnd - sectionIndex);
+                    changed = true;
+                }
+
+                foreach (var deprecatedName in DeprecatedMcpServerNames)
+                {
+                    var deprecatedSection = $"{BodyPath}.{deprecatedName}";
+                    var deprecatedIndex = FindTomlSection(lines, deprecatedSection);
+                    if (deprecatedIndex >= 0)
+                    {
+                        var deprecatedEnd = FindSectionEnd(lines, deprecatedIndex);
+                        lines.RemoveRange(deprecatedIndex, deprecatedEnd - deprecatedIndex);
+                        changed = true;
+                    }
+                }
+
+                var countBefore = lines.Count;
+                RemoveDuplicateServerSections(lines, sectionName);
+                if (lines.Count != countBefore)
+                    changed = true;
+
+                if (!changed)
+                    return false;
+
+                File.WriteAllText(ConfigPath, string.Join(Environment.NewLine, lines));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"{Consts.Log.Tag} Error unconfiguring TOML MCP client: {ex.Message}");
+                Debug.LogException(ex);
+                return false;
+            }
+        }
+
+        public override bool IsDetected()
+        {
+            if (string.IsNullOrEmpty(ConfigPath) || !File.Exists(ConfigPath))
+                return false;
+
+            try
+            {
+                var lines = File.ReadAllLines(ConfigPath).ToList();
+                var sectionName = $"{BodyPath}.{DefaultMcpServerName}";
+                if (FindTomlSection(lines, sectionName) >= 0)
+                    return true;
+
+                foreach (var deprecatedName in DeprecatedMcpServerNames)
+                    if (FindTomlSection(lines, $"{BodyPath}.{deprecatedName}") >= 0)
+                        return true;
+
+                return FindDuplicateServerSectionIndices(lines, sectionName).Count > 0;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"{Consts.Log.Tag} Error reading TOML config file: {ex.Message}");
+                Debug.LogException(ex);
+                return false;
+            }
+        }
+
         public override bool IsConfigured()
         {
             if (string.IsNullOrEmpty(ConfigPath) || !File.Exists(ConfigPath))
@@ -231,6 +330,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 (bool[] e, bool[] a) => e.Length == a.Length && e.Zip(a, (x, y) => x == y).All(match => match),
                 (int e, int a) => e == a,
                 (int[] e, int[] a) => e.Length == a.Length && e.Zip(a, (x, y) => x == y).All(match => match),
+                (Dictionary<string, string> e, Dictionary<string, string> a) =>
+                    e.Count == a.Count && e.All(kv => a.TryGetValue(kv.Key, out var v) && AreStringValuesEquivalent(comparison, kv.Value, v)),
                 _ => false
             };
         }
@@ -285,6 +386,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 int[] arr => $"{key} = [{string.Join(",", arr)}]",
                 bool b => $"{key} = {b.ToString().ToLower()}",
                 bool[] arr => $"{key} = [{string.Join(",", arr.Select(v => v.ToString().ToLower()))}]",
+                Dictionary<string, string> dict => FormatTomlInlineTable(key, dict),
                 RawTomlValue raw => $"{key} = {raw.Value}",
                 _ => throw new InvalidOperationException($"Unsupported TOML value type: {value.GetType()}")
             };
@@ -319,6 +421,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                     if (stringValue != null)
                         props[key] = stringValue;
                 }
+                else if (rawValue.StartsWith("{"))
+                {
+                    // Inline table value: { "KEY" = "value", ... }
+                    var dictValue = ParseTomlInlineTable(rawValue);
+                    if (dictValue != null)
+                        props[key] = dictValue;
+                    else
+                        props[key] = new RawTomlValue(rawValue);
+                }
                 else
                 {
                     // Non-string, non-array scalar - strip inline comment first
@@ -333,6 +444,136 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 }
             }
             return props;
+        }
+
+        private static string FormatTomlInlineTable(string key, Dictionary<string, string> dict)
+        {
+            var pairs = string.Join(", ", dict.Select(kv =>
+                "\"" + EscapeTomlString(kv.Key) + "\" = \"" + EscapeTomlString(kv.Value) + "\""));
+            return key + " = { " + pairs + " }";
+        }
+
+        /// <summary>
+        /// Parses a TOML inline table such as <c>{ "KEY" = "value", KEY2 = "v2" }</c>
+        /// into a <see cref="Dictionary{TKey,TValue}"/> of string pairs.
+        /// Returns null if the input cannot be parsed.
+        /// </summary>
+        private static Dictionary<string, string>? ParseTomlInlineTable(string rawValue)
+        {
+            var trimmed = rawValue.Trim();
+            var closingBrace = trimmed.LastIndexOf('}');
+            if (!trimmed.StartsWith("{") || closingBrace < 0)
+                return null;
+
+            var content = trimmed[1..closingBrace].Trim();
+            var result = new Dictionary<string, string>();
+            if (string.IsNullOrEmpty(content))
+                return result;
+
+            var pos = 0;
+            while (pos < content.Length)
+            {
+                // Skip whitespace/commas
+                while (pos < content.Length && (char.IsWhiteSpace(content[pos]) || content[pos] == ','))
+                    pos++;
+                if (pos >= content.Length) break;
+
+                // Parse key (quoted or bare)
+                string? entryKey;
+                if (content[pos] == '"')
+                    entryKey = ReadQuotedString(content, ref pos);
+                else
+                {
+                    var start = pos;
+                    while (pos < content.Length && content[pos] != '=' && content[pos] != ',')
+                        pos++;
+                    entryKey = content[start..pos].Trim();
+                }
+                if (entryKey == null) return null;
+
+                // Skip whitespace and '='
+                while (pos < content.Length && char.IsWhiteSpace(content[pos])) pos++;
+                if (pos >= content.Length || content[pos] != '=') return null;
+                pos++; // consume '='
+                while (pos < content.Length && char.IsWhiteSpace(content[pos])) pos++;
+
+                // Parse value (quoted or bare)
+                string? entryValue;
+                if (pos < content.Length && content[pos] == '"')
+                    entryValue = ReadQuotedString(content, ref pos);
+                else
+                {
+                    var start = pos;
+                    while (pos < content.Length && content[pos] != ',')
+                        pos++;
+                    entryValue = content[start..pos].Trim();
+                }
+                if (entryValue == null) return null;
+
+                result[entryKey] = entryValue;
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// Reads a double-quoted TOML string starting at <paramref name="pos"/> and advances past the closing quote.
+        /// Returns null if the string is malformed.
+        /// </summary>
+        private static string? ReadQuotedString(string s, ref int pos)
+        {
+            if (pos >= s.Length || s[pos] != '"') return null;
+            pos++; // skip opening quote
+            var sb = new StringBuilder();
+            while (pos < s.Length)
+            {
+                if (s[pos] == '\\' && pos + 1 < s.Length)
+                {
+                    pos++;
+                    switch (s[pos])
+                    {
+                        case 'b':  sb.Append('\b'); pos++; break;
+                        case 't':  sb.Append('\t'); pos++; break;
+                        case 'n':  sb.Append('\n'); pos++; break;
+                        case 'f':  sb.Append('\f'); pos++; break;
+                        case 'r':  sb.Append('\r'); pos++; break;
+                        case '"':  sb.Append('"');  pos++; break;
+                        case '\\': sb.Append('\\'); pos++; break;
+                        case 'u' when pos + 4 < s.Length:
+                        {
+                            var hex = s.Substring(pos + 1, 4);
+                            if (int.TryParse(hex, System.Globalization.NumberStyles.HexNumber, null, out var cp))
+                                sb.Append((char)cp);
+                            pos += 5;
+                            break;
+                        }
+                        case 'U' when pos + 8 < s.Length:
+                        {
+                            var hex = s.Substring(pos + 1, 8);
+                            if (int.TryParse(hex, System.Globalization.NumberStyles.HexNumber, null, out var cp))
+                                sb.Append(char.ConvertFromUtf32(cp));
+                            pos += 9;
+                            break;
+                        }
+                        default:
+                            // Invalid escape — preserve as-is (best-effort)
+                            sb.Append('\\');
+                            sb.Append(s[pos]);
+                            pos++;
+                            break;
+                    }
+                }
+                else if (s[pos] == '"')
+                {
+                    pos++; // skip closing quote
+                    return sb.ToString();
+                }
+                else
+                {
+                    sb.Append(s[pos]);
+                    pos++;
+                }
+            }
+            return null; // unclosed quote
         }
 
         private static string EscapeTomlString(string value)
@@ -538,22 +779,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         }
 
         /// <summary>
-        /// Removes sibling TOML sections that represent the same server under a different name,
-        /// identified by matching identity key property values (e.g. "command", "url", "serverUrl").
+        /// Returns the (start, end) line index pairs of sibling TOML sections that represent the same
+        /// server under a different name, identified by matching identity key property values
+        /// (e.g. "command", "url", "serverUrl"). Pairs are in document order (top to bottom).
         /// </summary>
-        private void RemoveDuplicateServerSections(List<string> lines, string ownSectionName)
+        private List<(int start, int end)> FindDuplicateServerSectionIndices(List<string> lines, string ownSectionName)
         {
-            // Collect identity values we're about to write
             var ourIdentityValues = _identityKeys
                 .Where(key => _properties.TryGetValue(key, out var prop) && prop.value is string)
                 .ToDictionary(key => key, key => ((string)_properties[key].value, _properties[key].comparison));
 
             if (ourIdentityValues.Count == 0)
-                return;
+                return new List<(int, int)>();
 
-            // Find all sibling sections under the same body path
             var bodyPrefix = $"[{BodyPath}.";
-            var sectionsToRemove = new List<(int start, int end)>();
+            var result = new List<(int start, int end)>();
 
             for (int i = 0; i < lines.Count; i++)
             {
@@ -561,7 +801,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 if (!trimmed.StartsWith(bodyPrefix) || !trimmed.EndsWith("]"))
                     continue;
 
-                // Extract section name and skip our own section
                 var fullSectionName = trimmed[1..^1];
                 if (fullSectionName == ownSectionName)
                     continue;
@@ -569,15 +808,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 var sectionEnd = FindSectionEnd(lines, i);
                 var props = ParseSectionProperties(lines, i + 1, sectionEnd);
 
-                // Check if any identity property matches
                 if (ourIdentityValues.Any(identity =>
                         props.TryGetValue(identity.Key, out var existingValue)
                         && existingValue is string existingStr
                         && AreStringValuesEquivalent(identity.Value.comparison, identity.Value.Item1, existingStr)))
-                    sectionsToRemove.Add((i, sectionEnd));
+                    result.Add((i, sectionEnd));
             }
 
-            // Remove from bottom to top to preserve indices
+            return result;
+        }
+
+        /// <summary>
+        /// Removes sibling TOML sections that represent the same server under a different name,
+        /// identified by matching identity key property values (e.g. "command", "url", "serverUrl").
+        /// </summary>
+        private void RemoveDuplicateServerSections(List<string> lines, string ownSectionName)
+        {
+            var sectionsToRemove = FindDuplicateServerSectionIndices(lines, ownSectionName);
             for (int i = sectionsToRemove.Count - 1; i >= 0; i--)
             {
                 var (start, end) = sectionsToRemove[i];

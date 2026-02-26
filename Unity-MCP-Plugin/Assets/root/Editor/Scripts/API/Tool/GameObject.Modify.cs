@@ -69,8 +69,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     }
 
                     var objToModify = (object)go;
+                    var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
-                    var modified = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.TryPopulate(
+                    var modified = reflector.TryPopulate(
                         ref objToModify,
                         data: gameObjectDiffs[i],
                         logs: logs,

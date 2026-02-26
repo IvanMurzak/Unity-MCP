@@ -23,7 +23,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     {
         static void ValidateType<T>(T sourceValue)
         {
-            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
             var serializedValue = sourceValue.ToJson(reflector);
             var deserializedValue = reflector.JsonSerializer.Deserialize<T>(serializedValue!);

@@ -243,18 +243,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
 
             return path.ToString();
         }
-        public static string? Print(this GameObject? go) => go == null
-            ? null
-            : $"instanceID: {go.GetInstanceID()}, path: {go.GetPath()}, bounds: {go.CalculateBounds().ToJson(McpPlugin.McpPlugin.Instance!.McpManager.Reflector)}";
 
-        public static string Print(this IEnumerable<GameObject> gos)
-        {
-            var sb = new StringBuilder();
-            foreach (var go in gos)
-                sb.AppendLine(go.Print());
-
-            return sb.ToString();
-        }
         public static GameObjectMetadata? ToMetadata(this GameObject go, int includeChildrenDepth = 3)
             => GameObjectMetadata.FromGameObject(go, includeChildrenDepth);
 

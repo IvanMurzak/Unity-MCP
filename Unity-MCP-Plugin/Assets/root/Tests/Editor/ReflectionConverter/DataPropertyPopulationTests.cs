@@ -1,4 +1,4 @@
-#nullable enable
+﻿#nullable enable
 using System.Collections;
 using System.Collections.Generic;
 using com.IvanMurzak.ReflectorNet.Model;
@@ -87,7 +87,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 typeof(Tool_GameObject).GetMethod(nameof(Tool_GameObject.ModifyComponent)),
                 () =>
                 {
-                    var plugin = UnityMcpPlugin.Instance;
+                    var plugin = UnityMcpPluginEditor.Instance;
                     var mcpInstance = plugin?.McpPluginInstance;
                     var manager = mcpInstance?.McpManager;
                     var reflector = manager?.Reflector;

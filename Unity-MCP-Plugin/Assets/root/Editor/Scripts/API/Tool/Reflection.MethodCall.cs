@@ -130,11 +130,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             Func<SerializedMember> action = () =>
             {
-                var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+                var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
                 var dictInputParameters = inputParameters?.ToDictionary(
                     keySelector: p => p.name ?? throw new InvalidOperationException($"Input parameter name is null. Please specify 'name' property for each input parameter."),
-                    elementSelector: p => reflector.Deserialize(p, logger: McpPlugin.McpPlugin.Instance.Logger)
+                    elementSelector: p => reflector.Deserialize(p, logger: UnityMcpPluginEditor.Instance.Logger)
                 );
 
                 var methodWrapper = default(MethodWrapper);
@@ -142,18 +142,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 if (string.IsNullOrEmpty(targetObject?.typeName))
                 {
                     // No object instance needed. Probably static method.
-                    methodWrapper = new MethodWrapper(reflector, logger: McpPlugin.McpPlugin.Instance.Logger, method);
+                    methodWrapper = new MethodWrapper(reflector, logger: UnityMcpPluginEditor.Instance.Logger, method);
                 }
                 else
                 {
                     // Object instance needed. Probably instance method.
-                    var obj = reflector.Deserialize(targetObject!, logger: McpPlugin.McpPlugin.Instance.Logger);
+                    var obj = reflector.Deserialize(targetObject!, logger: UnityMcpPluginEditor.Instance.Logger);
                     if (obj == null)
                         throw new Exception($"'{nameof(targetObject)}' deserialized instance is null. Please specify the '{nameof(targetObject)}' properly.");
 
                     methodWrapper = new MethodWrapper(
                         reflector: reflector,
-                        logger: McpPlugin.McpPlugin.Instance.Logger,
+                        logger: UnityMcpPluginEditor.Instance.Logger,
                         targetInstance: obj,
                         methodInfo: method);
                 }

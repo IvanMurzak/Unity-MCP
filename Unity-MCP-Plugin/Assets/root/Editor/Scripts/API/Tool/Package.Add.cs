@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -67,7 +67,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 {
                     // If the operation failed immediately, send error response
                     var errorMessage = Error.PackageOperationFailed("add", packageId, addRequest.Error?.message ?? "Unknown error");
-                    _ = UnityMcpPlugin.NotifyToolRequestCompleted(new RequestToolCompletedData
+                    _ = UnityMcpPluginEditor.NotifyToolRequestCompleted(new RequestToolCompletedData
                     {
                         RequestId = requestId,
                         Result = ResponseCallTool.Error(errorMessage).SetRequestID(requestId)

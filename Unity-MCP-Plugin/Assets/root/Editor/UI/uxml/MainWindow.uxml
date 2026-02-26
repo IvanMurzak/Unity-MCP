@@ -25,7 +25,7 @@
                 <ui:VisualElement name="TimelinePointUnity" class="timeline-point">
                     <ui:VisualElement class="timeline-indicator">
                         <ui:VisualElement name="connectionStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
-                        <ui:VisualElement class="timeline-line" />
+                        <ui:VisualElement class="timeline-line" style="margin-bottom: -4px;" />
                     </ui:VisualElement>
                     <ui:VisualElement class="timeline-content">
                         <ui:Label text="Unity" name="connectionStatusText" class="timeline-label" />
@@ -33,37 +33,58 @@
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <!-- Point 2: MCP Server -->
-                <ui:VisualElement name="TimelinePointMcpServer" class="timeline-point">
-                    <ui:VisualElement class="timeline-indicator">
-                        <ui:VisualElement name="mcpServerStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
-                        <ui:VisualElement class="timeline-line" />
+                <ui:VisualElement name="TimelinePointMcpServer" class="timeline-point frame-group frame-mcp-server">
+                    <ui:VisualElement class="timeline-indicator" style="justify-content: flex-start;">
+                        <ui:VisualElement name="mcpServerStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" style="margin-top: 13px;" />
+                        <ui:VisualElement class="timeline-line" style="top: 29px; margin-top: 0; margin-bottom: -4px;" />
                     </ui:VisualElement>
-                    <ui:VisualElement class="timeline-content">
-                        <ui:Label text="MCP server" name="mcpServerLabel" class="timeline-label" />
-                        <ui:Button name="btnStartStopServer" text="Start" class="btn-secondary timeline-btn" />
+                    <ui:VisualElement style="flex-direction: column; flex-grow: 1;">
+                        <!-- Row 1: MCP Server label + Start/Stop button (fixed height, aligns with status circle) -->
+                        <ui:VisualElement name="mcpServerStatusControl" class="timeline-content" style="min-height: 40px;">
+                            <ui:Label text="MCP server" name="mcpServerLabel" class="timeline-label" />
+                            <ui:Button name="btnStartStopServer" text="Start" class="btn-secondary timeline-btn" />
+                        </ui:VisualElement>
+                        <!-- Row 2: Transport -->
+                        <ui:VisualElement style="flex-direction: row; align-items: center; justify-content: space-between; margin-top: 2px; margin-bottom: 2px;">
+                            <ui:Label name="labelTransport" text="Transport" class="section-desc" style="margin-bottom: 0;" />
+                            <ui:VisualElement style="flex-direction: row;">
+                                <ui:Toggle name="toggleOptionStdio" label="stdio" class="toggle-text-button" />
+                                <ui:Toggle name="toggleOptionHttp" label="http" class="toggle-text-button" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <!-- Row 3: Authorization -->
+                        <ui:VisualElement style="flex-direction: row; align-items: center; justify-content: space-between; margin-top: 2px; margin-bottom: 2px;">
+                            <ui:Label name="labelAuthorizationToken" text="Authorization Token" class="section-desc" style="margin-bottom: 0;" />
+                            <ui:VisualElement style="flex-direction: row;">
+                                <ui:Toggle name="toggleAuthorizationNone" label="none" class="toggle-text-button" />
+                                <ui:Toggle name="toggleAuthorizationRequired" label="required" class="toggle-text-button" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                        <!-- Row 4: Authorization Token -->
+                        <ui:VisualElement name="tokenSection" style="flex-direction: column; margin-top: 2px; margin-bottom: 2px;">
+                            <ui:VisualElement style="flex-direction: row;">
+                                <ui:TextField name="inputAuthorizationToken" label="" placeholder-text="Token" readonly="true" class="token-input" />
+                                <ui:Button name="btnGenerateToken" text="New" class="btn-compact" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
                     </ui:VisualElement>
                 </ui:VisualElement>
                 <!-- Point 3: AI Agent -->
-                <ui:VisualElement name="TimelinePointAiAgent" class="timeline-point timeline-point-last">
+                <ui:VisualElement name="TimelinePointAiAgent" class="timeline-point timeline-point-last" style="">
                     <ui:VisualElement class="timeline-indicator">
                         <ui:VisualElement name="aiAgentStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
                     </ui:VisualElement>
-                    <ui:VisualElement class="timeline-content">
-                        <ui:Label text="AI agent" name="aiAgentLabel" class="timeline-label" />
+                    <ui:VisualElement class="timeline-content" style="align-items: flex-start; margin-top: -3px; min-height: 0;">
+                        <ui:VisualElement name="aiAgentLabelsContainer" />
                     </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement class="divider" />
             <!-- AI Agent Section ============================== -->
-            <ui:VisualElement class="row" style="margin-top: 0;">
+            <ui:VisualElement class="row" style="margin-top: 0; align-items: center;">
                 <ui:Label text="AI agent" class="header" />
-                <!-- Transport mode toggle -->
-                <ui:VisualElement style="flex-direction: row; margin-top: 4px;">
-                    <ui:Toggle name="toggleOptionHttp" label="http" class="toggle-text-button" tooltip="Configure AI agent to communicate over HTTP (RECOMMENDED)" />
-                    <ui:Toggle name="toggleOptionStdio" label="stdio" class="toggle-text-button" tooltip="Configure AI agent to communicate over STDIO (NOT RECOMMENDED)" />
-                </ui:VisualElement>
+                <ui:DropdownField name="aiAgentDropdown" class="content-item" style="flex-grow: 1; flex-shrink: 1; min-width: 0; padding-top: 4px; margin-right: 0px;" />
             </ui:VisualElement>
-            <ui:DropdownField name="aiAgentDropdown" label="Choose" class="content-item" />
             <ui:VisualElement name="ConfigureAgentsContainer" />
             <ui:VisualElement class="divider" />
             <!-- MCP features section ============================== -->
@@ -76,9 +97,23 @@
                     </ui:VisualElement>
                     <ui:Button name="btnOpenTools" text="Open" class="btn-secondary" />
                 </ui:VisualElement>
-                <ui:Foldout text="Information" value="false" class="base-foldout">
-                    <ui:Label name="toolsStatusLabel" text="AI uses tools to achieve user's request. This is the main AI's instrument for doing everything.&#10;&#10;Active tools spend AI context. You want to keep the context consumption smaller, because AI works better when there is more free context. Consider disabling the tools you don't need." class="section-desc" />
-                </ui:Foldout>
+                <!-- Skills Sub-section -->
+                <ui:VisualElement name="SkillsSection" style="margin-top: 6px;">
+                    <ui:Label text="SKILLS (procedural)" class="timeline-label" style="align-self: flex-start;" tooltip="Skills give the AI specialized procedural knowledge to handle complex tasks. They work by providing structured guides (Markdown files) that the AI reads to understand exactly how to execute workflows. This helps the AI act more autonomously and accurately without needing constant detailed prompts." />
+                    <!-- Output Path row -->
+                    <ui:VisualElement style="flex-direction: row; align-items: center; margin-top: 4px; margin-bottom: 2px;">
+                        <ui:Label name="labelSkillsOutputPath" text="Output Path" class="section-desc" style="margin-bottom: 0; flex-shrink: 0;" />
+                        <ui:TextField name="inputSkillsRootFolder" style="flex-grow: 1; flex-shrink: 1; min-width: 0; margin-left: 47px;" />
+                    </ui:VisualElement>
+                    <!-- Auto-generate toggle + Generate button row -->
+                    <ui:VisualElement style="flex-direction: row; align-items: center; justify-content: space-between; margin-top: 2px;">
+                        <ui:VisualElement style="flex-direction: row; align-items: center;">
+                            <ui:Label text="Automatic generate" class="section-desc" style="margin-bottom: 0;" tooltip="Automatically regenerate skill files each time the Unity Editor reloads domain." />
+                            <ui:Toggle name="toggleAutoGenerateSkills" tooltip="Automatically regenerate skill files each time the Unity Editor reloads domain." style="margin-left: 4px;" />
+                        </ui:VisualElement>
+                        <ui:Button name="btnGenerateSkills" text="Generate" class="btn-compact" tooltip="Manually generate skill files." />
+                    </ui:VisualElement>
+                </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement class="divider" />
             <!-- Prompts Configuration Section -->
@@ -87,9 +122,6 @@
                     <ui:Label name="promptsCountLabel" text="0 / 0 prompts" class="header" />
                     <ui:Button name="btnOpenPrompts" text="Open" class="btn-secondary" />
                 </ui:VisualElement>
-                <ui:Foldout text="Information" value="false" class="base-foldout">
-                    <ui:Label name="promptsStatusLabel" text="Prompt is a command that user may use in MCP client. For example '/createGameObject'. The command may receive input arguments. The result of the command execution is the Prompt text message which injects into AI context and tells AI what to do.&#10;&#10;Prompt doesn't spent context memory. It only spends context when injected by a user action." class="section-desc" />
-                </ui:Foldout>
             </ui:VisualElement>
             <ui:VisualElement class="divider" />
             <!-- Resources Configuration Section -->
@@ -98,9 +130,6 @@
                     <ui:Label name="resourcesCountLabel" text="0 / 0 resources" class="header" />
                     <ui:Button name="btnOpenResources" text="Open" class="btn-secondary" />
                 </ui:VisualElement>
-                <ui:Foldout text="Information" value="false" class="base-foldout">
-                    <ui:Label name="resourcesStatusLabel" text="Resources provide read-only data that AI can access to understand your Unity project. They expose information like scene hierarchy, asset metadata, project settings, and more.&#10;&#10;Unlike tools which perform actions, resources give AI contextual awareness without modifying anything. Resources are fetched on-demand when AI needs specific information." class="section-desc" />
-                </ui:Foldout>
             </ui:VisualElement>
             <ui:VisualElement class="divider" />
             <!-- Support Section ============================== -->

@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -36,9 +36,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         )
         .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
         .SetProperty("args", new JsonArray {
-            $"{Args.Port}={UnityMcpPlugin.Port}",
-            $"{Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-            $"{Args.ClientTransportMethod}={TransportMethod.stdio}"
+            $"{Args.Port}={UnityMcpPluginEditor.Port}",
+            $"{Args.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}",
+            $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
+            $"{Args.Authorization}={UnityMcpPluginEditor.AuthOption}",
+            $"{Args.Token}={UnityMcpPluginEditor.Token}"
         }, requiredForConfiguration: true)
         .SetPropertyToRemove("type")
         .SetPropertyToRemove("url");
@@ -50,9 +52,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         )
         .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
         .SetProperty("args", new JsonArray {
-            $"{Args.Port}={UnityMcpPlugin.Port}",
-            $"{Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-            $"{Args.ClientTransportMethod}={TransportMethod.stdio}"
+            $"{Args.Port}={UnityMcpPluginEditor.Port}",
+            $"{Args.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}",
+            $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
+            $"{Args.Authorization}={UnityMcpPluginEditor.AuthOption}",
+            $"{Args.Token}={UnityMcpPluginEditor.Token}"
         }, requiredForConfiguration: true)
         .SetPropertyToRemove("type")
         .SetPropertyToRemove("url");
@@ -63,7 +67,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             bodyPath: "mcpServers"
         )
         .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
-        .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
+        .SetProperty("url", JsonValue.Create(UnityMcpPluginEditor.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
         .SetPropertyToRemove("command")
         .SetPropertyToRemove("args");
 
@@ -73,7 +77,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             bodyPath: "mcpServers"
         )
         .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
-        .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
+        .SetProperty("url", JsonValue.Create(UnityMcpPluginEditor.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
         .SetPropertyToRemove("command")
         .SetPropertyToRemove("args");
 
@@ -81,13 +85,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         {
             base.OnUICreated(root);
 
-            ContainerUnderHeader!.Add(TemplateWarningLabel("IMPORTANT: Consider to use Claude Code in a Terminal. Avoid using it as an extension to IDE (Visual Studio Code, etc). Claude Code as an extension is not stable with MCP server."));
-
             // STDIO Configuration
 
             var manualStepsContainer = TemplateFoldoutFirst("Manual Configuration Steps");
 
-            var addMcpServerCommandStdio = $"claude mcp add {AiAgentConfig.DefaultMcpServerName} \"{McpServerManager.ExecutableFullPath}\" port={UnityMcpPlugin.Port} plugin-timeout={UnityMcpPlugin.TimeoutMs} client-transport=stdio";
+            var addMcpServerCommandStdio = $"claude mcp add {AiAgentConfig.DefaultMcpServerName} \"{McpServerManager.ExecutableFullPath}\" port={UnityMcpPluginEditor.Port} plugin-timeout={UnityMcpPluginEditor.TimeoutMs} client-transport=stdio";
 
             manualStepsContainer!.Add(TemplateLabelDescription("1. Open a terminal and run the following command to be in the folder of the Unity project"));
             manualStepsContainer!.Add(TemplateTextFieldReadOnly($"cd \"{ProjectRootPath}\""));
@@ -112,7 +114,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             var manualStepsContainerHttp = TemplateFoldoutFirst("Manual Configuration Steps");
 
-            var addMcpServerCommandHttp = $"claude mcp add --transport http {AiAgentConfig.DefaultMcpServerName} {UnityMcpPlugin.Host}";
+            var addMcpServerCommandHttp = $"claude mcp add --transport http {AiAgentConfig.DefaultMcpServerName} {UnityMcpPluginEditor.Host}";
 
             manualStepsContainerHttp!.Add(TemplateLabelDescription("1. Open a terminal and run the following command to be in the folder of the Unity project"));
             manualStepsContainerHttp!.Add(TemplateTextFieldReadOnly($"cd \"{ProjectRootPath}\""));

@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -141,7 +141,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 }
 
                 // Send notification and mark for cleanup
-                _ = UnityMcpPlugin.NotifyToolRequestCompleted(new RequestToolCompletedData
+                _ = UnityMcpPluginEditor.NotifyToolRequestCompleted(new RequestToolCompletedData
                 {
                     RequestId = requestId,
                     Result = response

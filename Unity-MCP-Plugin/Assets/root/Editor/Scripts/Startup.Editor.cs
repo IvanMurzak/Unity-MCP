@@ -44,19 +44,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         /// Note: Log collector disposal always occurs regardless of this flag.</param>
         static void TryDisconnectAndCleanup(string callerName, bool onlyIfConnected = false)
         {
-            if (!UnityMcpPlugin.HasInstance)
+            if (!UnityMcpPluginEditor.HasInstance)
             {
-                _logger.LogDebug("{class} {method} triggered: No UnityMcpPlugin instance to disconnect",
+                _logger.LogDebug("{class} {method} triggered: No UnityMcpPluginEditor instance to disconnect",
                     nameof(Startup), callerName);
                 return;
             }
 
             _logger.LogInformation("{method} triggered", callerName);
 
-            var plugin = UnityMcpPlugin.Instance;
+            var plugin = UnityMcpPluginEditor.Instance;
             if (plugin.HasMcpPluginInstance)
             {
-                var connectionState = UnityMcpPlugin.ConnectionState.CurrentValue;
+                var connectionState = UnityMcpPluginEditor.ConnectionState.CurrentValue;
 
                 // When onlyIfConnected is true, skip disconnect unless we have an established connection.
                 // This prevents hanging when cancelling in-progress connection attempts (Connecting/Reconnecting states).
@@ -88,6 +88,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 _logger.LogWarning(e, "{class} {method}: Exception during log collector disposal (non-blocking): {message}",
                     nameof(Startup), callerName, e.Message);
             }
+
+            if (UnityMcpPluginRuntime.HasInstance)
+            {
+                try
+                {
+                    UnityMcpPluginRuntime.DisposeInstance();
+                }
+                catch (System.Exception e)
+                {
+                    _logger.LogWarning(e, "{class} {method}: Exception during runtime MCP plugin disposal (non-blocking): {message}",
+                        nameof(Startup), callerName, e.Message);
+                }
+            }
         }
         static void OnAfterAssemblyReload()
         {
@@ -96,18 +109,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             _logger.LogInformation("{method} triggered - BuildAndStart with connectionAllowed: {connectionAllowed}",
                 nameof(OnAfterAssemblyReload), connectionAllowed);
 
-            UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
-            UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
+            UnityMcpPluginEditor.Instance.BuildMcpPluginIfNeeded();
+            UnityMcpPluginEditor.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
 
             if (connectionAllowed)
-                UnityMcpPlugin.ConnectIfNeeded();
+                UnityMcpPluginEditor.ConnectIfNeeded();
         }
 
         static void OnPlayModeStateChanged(PlayModeStateChange state)
         {
-            if (!UnityMcpPlugin.HasInstance)
+            if (!UnityMcpPluginEditor.HasInstance)
             {
-                _logger.LogDebug("{class} {method} triggered: No UnityMcpPlugin instance available. State: {state}",
+                _logger.LogDebug("{class} {method} triggered: No UnityMcpPluginEditor instance available. State: {state}",
                     nameof(Startup), nameof(OnPlayModeStateChanged), state);
                 return;
             }
@@ -118,16 +131,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             switch (state)
             {
                 case PlayModeStateChange.ExitingPlayMode:
-                    // Unity is about to exit Play mode - connection may be lost
-                    // The OnBeforeReload will handle disconnection if domain reload occurs
-                    _logger.LogTrace("Exiting Play mode - connection may be affected by domain reload");
+                    // Dispose the runtime plugin instance created by Initialize().Build().
+                    // This handles the no-domain-reload case; TryDisconnectAndCleanup covers the domain-reload case.
+                    _logger.LogTrace("Exiting Play mode - disposing runtime MCP plugin instance if present");
+                    if (UnityMcpPluginRuntime.HasInstance)
+                        UnityMcpPluginRuntime.DisposeInstance();
                     break;
 
                 case PlayModeStateChange.EnteredEditMode:
                     // Unity has returned to Edit mode - ensure connection is re-established
                     // if the configuration expects it to be connected
                     _logger.LogTrace("Entered Edit mode - KeepConnected: {keepConnected}, IsCi: {isCi}",
-                        UnityMcpPlugin.KeepConnected, EnvironmentUtils.IsCi());
+                        UnityMcpPluginEditor.KeepConnected, EnvironmentUtils.IsCi());
 
                     if (EnvironmentUtils.IsCi())
                     {
@@ -142,18 +157,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     {
                         _logger.LogTrace("Initiating delayed reconnection after Play mode exit");
 
-                        UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
-                        UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
-                        UnityMcpPlugin.ConnectIfNeeded();
+                        UnityMcpPluginEditor.Instance.BuildMcpPluginIfNeeded();
+                        UnityMcpPluginEditor.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
+                        UnityMcpPluginEditor.ConnectIfNeeded();
                     };
 
                     // No delay, immediate reconnection for the case if Unity Editor in background
                     // (has no focus)
                     _logger.LogTrace("Initiating reconnection after Play mode exit");
 
-                    UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
-                    UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
-                    UnityMcpPlugin.ConnectIfNeeded();
+                    UnityMcpPluginEditor.Instance.BuildMcpPluginIfNeeded();
+                    UnityMcpPluginEditor.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
+                    UnityMcpPluginEditor.ConnectIfNeeded();
                     break;
 
                 case PlayModeStateChange.ExitingEditMode:

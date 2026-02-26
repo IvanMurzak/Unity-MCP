@@ -27,16 +27,17 @@
 
 ## 功能特性
 
-- ✔️ **运行时AI** - 在编译后的游戏中直接使用LLM实现动态NPC行为或调试
-- ✔️ **自然对话** - 像与人类交谈一样与AI聊天
-- ✔️ **代码辅助** - 请AI编写代码和运行测试
+- ✔️ **AI代理** - 使用来自 **Anthropic**、**OpenAI**、**Microsoft** 或任何其他提供商的最佳代理，无限制
+- ✔️ **工具** - 广泛的默认[MCP工具](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)，用于在Unity编辑器中操作
+- ✔️ **技能** - 自动为每个MCP工具生成技能，让您无需在MCP工具注册上浪费令牌即可使用工具
+- ✔️ **代码和测试** - 请AI编写代码和运行测试
+- ✔️ **运行时（游戏内）** - 在编译后的游戏中直接使用LLM实现动态NPC行为或调试
 - ✔️ **调试支持** - 请AI获取日志并修复错误
-- ✔️ **多种LLM提供商** - 使用来自 **Anthropic**、**OpenAI**、**DeepSeek**、Microsoft或任何其他提供商的代理，无限制
+- ✔️ **自然对话** - 像与人类交谈一样与AI聊天
 - ✔️ **灵活部署** - 通过配置支持本地（stdio）和远程（http）工作
-- ✔️ **丰富工具集** - 广泛的默认[MCP工具](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)
 - ✔️ **可扩展** - 在您的项目代码中创建[自定义MCP工具](#添加自定义mcp工具)
 
-[![下载安装程序](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download_zh-CN.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.48.1/AI-Game-Dev-Installer.unitypackage)
+[![下载安装程序](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download_zh-CN.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.50.1/AI-Game-Dev-Installer.unitypackage)
 
 ![AI 游戏开发者 窗户](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/ai-game-developer-windows.png?raw=true)
 
@@ -252,7 +253,7 @@
 
 ### 选项1 - 安装程序
 
-- **[⬇️ 下载安装程序](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.48.1/AI-Game-Dev-Installer.unitypackage)**
+- **[⬇️ 下载安装程序](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.50.1/AI-Game-Dev-Installer.unitypackage)**
 - **📂 将安装程序导入Unity项目**
   > - 您可以双击文件 - Unity会自动打开它
   > - 或者：先打开Unity编辑器，然后点击 `Assets/Import Package/Custom Package`，选择文件
@@ -325,6 +326,7 @@ openupm add com.ivanmurzak.unity.mcp
   ```bash
   gemini mcp add ai-game-developer <command>
   ```
+
   > 从上表中替换`<command>`
 </details>
 
@@ -334,6 +336,7 @@ openupm add com.ivanmurzak.unity.mcp
   ```bash
   claude mcp add ai-game-developer <command>
   ```
+
   > 从上表中替换`<command>`
 </details>
 
@@ -469,9 +472,22 @@ public static class Prompt_ScriptingCode
 在您的游戏/应用中使用 **[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)**。使用工具、资源或提示。默认情况下没有工具，您需要实现自定义工具。
 
 ```csharp
-UnityMcpPlugin.BuildAndStart(); // 构建并启动Unity-MCP-Plugin，这是必需的
-UnityMcpPlugin.Connect(); // 启动与Unity-MCP-Server的主动连接并重试
-UnityMcpPlugin.Disconnect(); // 停止主动连接并关闭现有连接
+// 构建 MCP 插件
+var mcpPlugin = UnityMcpPluginRuntime.Initialize(builder =>
+    {
+        builder.WithConfig(config =>
+        {
+            config.Host = "http://localhost:8080";
+            config.Token = "your-token";
+        });
+        // 自动注册当前程序集中的所有工具
+        builder.WithToolsFromAssembly(Assembly.GetExecutingAssembly());
+    })
+    .Build();
+
+await mcpPlugin.Connect(); // 启动与 Unity-MCP-Server 的主动连接（含重试）
+
+await mcpPlugin.Disconnect(); // 停止主动连接并关闭现有连接
 ```
 
 ## 示例：AI驱动的国际象棋游戏机器人
