@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -73,9 +73,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected void InitializePlugin()
         {
-            UnityMcpPlugin.InitSingletonIfNeeded();
-            UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
-            UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
+            UnityMcpPluginEditor.InitSingletonIfNeeded();
+            UnityMcpPluginEditor.Instance.BuildMcpPluginIfNeeded();
+            UnityMcpPluginEditor.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
         }
 
         protected void InitializeFilters(VisualElement root)

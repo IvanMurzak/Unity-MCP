@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -10,9 +10,11 @@
 
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.McpPlugin.Common.Utils;
+using com.IvanMurzak.McpPlugin.Skills;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -20,6 +22,7 @@ using Microsoft.Extensions.Logging;
 using R3;
 using UnityEngine;
 using UnityEngine.UIElements;
+using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 using LogLevel = com.IvanMurzak.Unity.MCP.Runtime.Utils.LogLevel;
 using TransportMethod = com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server.TransportMethod;
 
@@ -55,7 +58,124 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         private const string URL_GitHubIssues = "https://github.com/IvanMurzak/Unity-MCP/issues";
         private const string URL_Discord = "https://discord.gg/cfbdMZX99G";
 
-        private Label? _labelAiAgentStatus;
+        // ── Shared tooltip building blocks ──────────────────────────────────────────
+        //
+        // These blocks are embedded verbatim inside the per-element tooltips below so
+        // that each tooltip is self-contained yet the authoritative text lives in one place.
+
+        private const string Tooltip_TransportMethods =
+            "• stdio  —  The AI agent launches the MCP server as its own child process and " +
+            "exchanges messages over stdin/stdout. Only one agent at a time; not recommended " +
+            "unless the AI client has no HTTP support.\n\n" +
+            "• http  —  The AI agent connects over HTTP to a running MCP server. Supports " +
+            "multiple simultaneous agents and remote deployments. Recommended.";
+
+        private const string Tooltip_AuthorizationTokenConcept =
+            "The authorization token is a shared secret key. When required, every AI agent " +
+            "must include this token in its MCP server configuration. The server rejects any " +
+            "connection that does not supply the correct token.\n\n" +
+            "Treat this token like a password — do not share it publicly or commit it to version control.";
+
+        // ── Per-element tooltips ─────────────────────────────────────────────────────
+
+        private const string Tooltip_LabelTransport =
+            "Transport method defines the communication channel between the AI agent and the " +
+            "MCP server. It determines how the agent discovers, launches, and sends messages " +
+            "to the server.\n\n" +
+            "Available methods:\n" +
+            Tooltip_TransportMethods;
+
+        private const string Tooltip_ToggleStdio =
+            "Use STDIO transport.\n\n" +
+            "The AI agent launches the MCP server as its own subprocess and exchanges messages " +
+            "via standard input/output (stdin/stdout) streams.\n\n" +
+            "Limitations:\n" +
+            "  • Only one AI agent instance can connect at a time.\n" +
+            "  • The local MCP server Start / Stop controls are disabled — the AI agent manages " +
+            "the server lifecycle itself.\n" +
+            "  • Some features requiring a persistent long-running server may not function.\n\n" +
+            "Prefer HTTP unless your AI client has no HTTP support.\n\n" +
+            "Transport method overview:\n" +
+            Tooltip_TransportMethods;
+
+        private const string Tooltip_ToggleHttp =
+            "Use HTTP transport (recommended).\n\n" +
+            "The AI agent connects over HTTP to the MCP server already running on this machine " +
+            "(or a remote host if configured).\n\n" +
+            "Advantages:\n" +
+            "  • Multiple AI agents can connect to the same server simultaneously.\n" +
+            "  • Supports remote deployments — the server can run on a different machine.\n" +
+            "  • Full lifecycle control via the Start / Stop button.\n\n" +
+            "Ensure the local MCP server is running before the AI agent attempts to connect.\n\n" +
+            "Transport method overview:\n" +
+            Tooltip_TransportMethods;
+
+        private const string Tooltip_LabelAuthorizationToken =
+            "Controls whether the MCP server requires a secret token to accept connections " +
+            "from AI agents.\n\n" +
+            Tooltip_AuthorizationTokenConcept;
+
+        private const string Tooltip_ToggleAuthNone =
+            "Local deployment — no authorization token required.\n\n" +
+            "The MCP server accepts any connection without checking a token. This is safe when " +
+            "both Unity and the AI agent run on the same machine and the server port is not " +
+            "reachable from the network.\n\n" +
+            "Use this when:\n" +
+            "  • Unity, the MCP server, and the AI agent are all on the same computer.\n" +
+            "  • No other machines need to reach the server.\n\n" +
+            "⚠ Do not use this if the server port is exposed to other machines or the internet.\n\n" +
+            "About authorization tokens:\n" +
+            Tooltip_AuthorizationTokenConcept;
+
+        private const string Tooltip_ToggleAuthRequired =
+            "Remote deployment — authorization token required.\n\n" +
+            "Every AI agent must supply the correct token in its MCP server configuration. " +
+            "The server will reject any connection that does not include a valid token.\n\n" +
+            "Use this when:\n" +
+            "  • The MCP server runs on a different machine from the AI agent.\n" +
+            "  • The server endpoint is reachable over a network.\n\n" +
+            "After enabling, generate a secure token with the 'New' button, then copy it into " +
+            "your AI agent's MCP server configuration.\n\n" +
+            "About authorization tokens:\n" +
+            Tooltip_AuthorizationTokenConcept;
+
+        private const string Tooltip_ToolsCountLabel =
+            "In MCP, a Tool is an executable function the AI agent can invoke to perform an action — " +
+            "creating GameObjects, modifying assets, running scripts, reading scene data, and more. " +
+            "Tools are the primary instrument through which the AI interacts with your Unity project.\n\n" +
+            "Every active tool contributes tokens to the AI's context window. A smaller context means " +
+            "the AI has more room to reason, producing better and more accurate results. " +
+            "Disable tools you don't use to keep context consumption low.";
+
+        private const string Tooltip_PromptsCountLabel =
+            "In MCP, a Prompt is a slash-command the user can invoke directly from the AI client " +
+            "(e.g. /setup-basic-scene). Each prompt can accept arguments, and when triggered it " +
+            "injects a pre-written instruction into the AI context, guiding the AI on what to do next.\n\n" +
+            "Prompts do not passively consume context tokens — they only use context at the moment " +
+            "a user explicitly invokes them.";
+
+        private const string Tooltip_ResourcesCountLabel =
+            "In MCP, a Resource is a named, read-only data provider the AI agent can query to " +
+            "understand your Unity project. Resources expose structured information such as scene " +
+            "hierarchy, asset metadata, and project settings without performing any actions or " +
+            "modifications.\n\n" +
+            "Resources are fetched on-demand when the AI needs specific project information. " +
+            "Unlike tools, they never modify any state.";
+
+        private const string Tooltip_BtnGenerateToken =
+            "Generate a new cryptographically secure random token.\n\n" +
+            "Uses a cryptographic RNG to produce 32 bytes (256 bits) of randomness encoded as " +
+            "URL-safe Base64 — suitable for production-level authentication.\n\n" +
+            "Steps after generating:\n" +
+            "  1. The new token is saved automatically to your project configuration.\n" +
+            "  2. The MCP server is restarted to apply the new token.\n" +
+            "  3. Copy the token from the input field next to this button.\n" +
+            "  4. Open your AI agent's MCP server configuration and paste the token into the " +
+            "authorization field.\n\n" +
+            "⚠ Generating a new token immediately invalidates the previous one. Every AI agent " +
+            "must be updated with the new token before it can connect again.";
+
+        private VisualElement? _aiAgentLabelsContainer;
         private VisualElement? _aiAgentStatusCircle;
 
         private DateTime _setMcpServerDataTime;
@@ -70,6 +190,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             SetupMcpServerSection(root);
             SetupAiAgentSection(root);
             SetupToolsSection(root);
+            SetupSkillsSection(root);
             SetupPromptsSection(root);
             SetupResourcesSection(root);
             ConfigureAgents(root);
@@ -108,7 +229,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             _ => ServerButtonText_Connect
         };
 
-        private void SetAiAgentStatus(bool isConnected, string? label = null)
+        private void SetAiAgentStatus(bool isConnected, IEnumerable<string>? labels = null)
         {
             _setAiAgentDataTime = DateTime.UtcNow;
 
@@ -117,14 +238,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 Logger.LogError("{field} is not initialized, cannot update AI agent status", nameof(_aiAgentStatusCircle));
                 return;
             }
-            if (_labelAiAgentStatus == null)
+            if (_aiAgentLabelsContainer == null)
             {
-                Logger.LogError("{field} is not initialized, cannot update AI agent status", nameof(_labelAiAgentStatus));
+                Logger.LogError("{field} is not initialized, cannot update AI agent status", nameof(_aiAgentLabelsContainer));
                 return;
             }
 
             SetStatusIndicator(_aiAgentStatusCircle, isConnected ? USS_Connected : USS_Disconnected);
-            _labelAiAgentStatus.text = label ?? "AI agent";
+
+            _aiAgentLabelsContainer.Clear();
+            var labelList = labels?.ToList();
+            if (labelList == null || labelList.Count == 0)
+            {
+                var lbl = new Label("AI agent");
+                lbl.AddToClassList("timeline-label");
+                _aiAgentLabelsContainer.Add(lbl);
+            }
+            else
+            {
+                foreach (var text in labelList)
+                {
+                    var lbl = new Label(text);
+                    lbl.AddToClassList("timeline-label");
+                    _aiAgentLabelsContainer.Add(lbl);
+                }
+            }
         }
 
         #endregion
@@ -134,30 +272,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         private void SetupSettingsSection(VisualElement root)
         {
             var dropdownLogLevel = root.Q<EnumField>("dropdownLogLevel");
-            dropdownLogLevel.value = UnityMcpPlugin.LogLevel;
+            dropdownLogLevel.value = UnityMcpPluginEditor.LogLevel;
             dropdownLogLevel.tooltip = "The minimum level of messages to log. Debug includes all messages, while Critical includes only the most severe.";
             dropdownLogLevel.RegisterValueChangedCallback(evt =>
             {
-                UnityMcpPlugin.LogLevel = evt.newValue as LogLevel? ?? LogLevel.Warning;
+                UnityMcpPluginEditor.LogLevel = evt.newValue as LogLevel? ?? LogLevel.Warning;
                 SaveChanges($"[AI Game Developer] LogLevel Changed: {evt.newValue}");
             });
 
             var inputTimeoutMs = root.Q<IntegerField>("inputTimeoutMs");
-            inputTimeoutMs.value = UnityMcpPlugin.TimeoutMs;
+            inputTimeoutMs.value = UnityMcpPluginEditor.TimeoutMs;
             inputTimeoutMs.tooltip = $"Timeout for MCP tool execution in milliseconds.\n\nMost tools only need a few seconds.\n\nSet this higher than your longest test execution time.\n\nImportant: Also update the '{McpPlugin.Common.Consts.MCP.Server.Args.PluginTimeout}' argument in your AI agent configuration to match this value so your AI agent doesn't timeout before the tool completes.";
             inputTimeoutMs.RegisterCallback<FocusOutEvent>(evt =>
             {
                 var newValue = Mathf.Max(1000, inputTimeoutMs.value);
-                if (newValue == UnityMcpPlugin.TimeoutMs)
+                if (newValue == UnityMcpPluginEditor.TimeoutMs)
                     return;
 
                 if (newValue != inputTimeoutMs.value)
                     inputTimeoutMs.SetValueWithoutNotify(newValue);
 
-                UnityMcpPlugin.TimeoutMs = newValue;
+                UnityMcpPluginEditor.TimeoutMs = newValue;
 
                 var rawJsonField = root.Q<TextField>("rawJsonConfigurationStdio");
-                rawJsonField.value = McpServerManager.RawJsonConfigurationStdio(UnityMcpPlugin.Port, "mcpServers", UnityMcpPlugin.TimeoutMs).ToString();
+                rawJsonField.value = McpServerManager.RawJsonConfigurationStdio(UnityMcpPluginEditor.Port, "mcpServers", UnityMcpPluginEditor.TimeoutMs).ToString();
 
                 SaveChanges($"[AI Game Developer] Timeout Changed: {newValue} ms");
                 UnityBuildAndConnect();
@@ -177,28 +315,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var statusCircle = root.Q<VisualElement>("connectionStatusCircle");
             var statusText = root.Q<Label>("connectionStatusText");
 
-            _labelAiAgentStatus = root.Q<Label>("aiAgentLabel");
+            _aiAgentLabelsContainer = root.Q<VisualElement>("aiAgentLabelsContainer");
             _aiAgentStatusCircle = root.Q<VisualElement>("aiAgentStatusCircle");
 
-            inputFieldHost.value = UnityMcpPlugin.Host;
+            inputFieldHost.value = UnityMcpPluginEditor.Host;
             inputFieldHost.RegisterCallback<FocusOutEvent>(evt =>
             {
                 var newValue = inputFieldHost.value;
-                if (UnityMcpPlugin.Host == newValue)
+                if (UnityMcpPluginEditor.Host == newValue)
                     return;
 
-                UnityMcpPlugin.Host = newValue;
+                UnityMcpPluginEditor.Host = newValue;
                 SaveChanges($"[{nameof(MainWindowEditor)}] Host Changed: {newValue}");
                 Invalidate();
 
-                UnityMcpPlugin.Instance.DisposeMcpPluginInstance();
+                UnityMcpPluginEditor.Instance.DisposeMcpPluginInstance();
                 UnityBuildAndConnect();
             });
 
-            McpPlugin.McpPlugin.DoAlways(plugin =>
+            UnityMcpPluginEditor.PluginProperty
+                .WhereNotNull()
+                .Subscribe(plugin =>
             {
                 Observable.CombineLatest(
-                    UnityMcpPlugin.ConnectionState, plugin.KeepConnected,
+                    UnityMcpPluginEditor.ConnectionState, plugin.KeepConnected,
                     (state, keepConnected) => (state, keepConnected))
                 .ThrottleLast(TimeSpan.FromMilliseconds(10))
                 .ObserveOnCurrentSynchronizationContext()
@@ -239,16 +379,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         {
             if (buttonText.Equals(ServerButtonText_Connect, StringComparison.OrdinalIgnoreCase))
             {
-                UnityMcpPlugin.KeepConnected = true;
-                UnityMcpPlugin.Instance.Save();
+                UnityMcpPluginEditor.KeepConnected = true;
+                UnityMcpPluginEditor.Instance.Save();
                 UnityBuildAndConnect();
             }
             else
             {
-                UnityMcpPlugin.KeepConnected = false;
-                UnityMcpPlugin.Instance.Save();
-                if (UnityMcpPlugin.Instance.HasMcpPluginInstance)
-                    _ = UnityMcpPlugin.Instance.Disconnect();
+                UnityMcpPluginEditor.KeepConnected = false;
+                UnityMcpPluginEditor.Instance.Save();
+                if (UnityMcpPluginEditor.Instance.HasMcpPluginInstance)
+                    _ = UnityMcpPluginEditor.Instance.Disconnect();
             }
         }
 
@@ -264,7 +404,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             Observable.CombineLatest(
                     source1: McpServerManager.ServerStatus,
-                    source2: UnityMcpPlugin.IsConnected,
+                    source2: UnityMcpPluginEditor.IsConnected,
                     resultSelector: CombineMcpServerStatus)
                 .ThrottleLast(TimeSpan.FromMilliseconds(50))
                 .ObserveOnCurrentSynchronizationContext()
@@ -272,6 +412,116 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 .AddTo(_disposables);
 
             btnStartStop.RegisterCallback<ClickEvent>(evt => HandleServerButton(btnStartStop, statusLabel));
+
+            // MCP server authorization configuration UI elements
+            var labelAuthorizationToken = root.Query<Label>("labelAuthorizationToken").First();
+            var toggleAuthorizationNone = root.Query<Toggle>("toggleAuthorizationNone").First();
+            var toggleAuthorizationRequired = root.Query<Toggle>("toggleAuthorizationRequired").First();
+            var inputAuthorizationToken = root.Query<TextField>("inputAuthorizationToken").First();
+            var tokenSection = root.Query<VisualElement>("tokenSection").First();
+            var btnGenerateToken = root.Query<Button>("btnGenerateToken").First();
+
+            if (toggleAuthorizationNone == null)
+            {
+                Debug.LogError("toggleAuthorizationNone not found in UXML.");
+                return;
+            }
+            if (toggleAuthorizationRequired == null)
+            {
+                Debug.LogError("toggleAuthorizationRequired not found in UXML.");
+                return;
+            }
+            if (inputAuthorizationToken == null)
+            {
+                Debug.LogError("inputAuthorizationToken not found in UXML.");
+                return;
+            }
+            if (tokenSection == null)
+            {
+                Debug.LogError("tokenSection not found in UXML.");
+                return;
+            }
+            if (btnGenerateToken == null)
+            {
+                Debug.LogError("btnGenerateToken not found in UXML.");
+                return;
+            }
+
+            if (labelAuthorizationToken != null) labelAuthorizationToken.tooltip = Tooltip_LabelAuthorizationToken;
+            toggleAuthorizationNone.tooltip = Tooltip_ToggleAuthNone;
+            toggleAuthorizationRequired.tooltip = Tooltip_ToggleAuthRequired;
+            btnGenerateToken.tooltip = Tooltip_BtnGenerateToken;
+
+            var authOption = UnityMcpPluginEditor.AuthOption;
+            toggleAuthorizationNone.SetValueWithoutNotify(authOption == AuthOption.none);
+            toggleAuthorizationRequired.SetValueWithoutNotify(authOption == AuthOption.required);
+            inputAuthorizationToken.SetValueWithoutNotify(UnityMcpPluginEditor.Token ?? string.Empty);
+            SetTokenFieldsVisible(inputAuthorizationToken, tokenSection, authOption == AuthOption.required);
+
+
+
+            toggleAuthorizationNone.RegisterValueChangedCallback(evt =>
+            {
+                if (evt.newValue)
+                {
+                    var wasRunning = McpServerManager.IsRunning && UnityMcpPluginEditor.TransportMethod != TransportMethod.stdio;
+                    UnityMcpPluginEditor.AuthOption = AuthOption.none;
+                    UnityMcpPluginEditor.Instance.Save();
+                    toggleAuthorizationRequired.SetValueWithoutNotify(false);
+                    SetTokenFieldsVisible(inputAuthorizationToken, tokenSection, false);
+                    InvalidateAndReloadAgentUI();
+                    RestartServerIfWasRunning(wasRunning);
+                }
+                else if (!toggleAuthorizationRequired.value)
+                {
+                    toggleAuthorizationNone.SetValueWithoutNotify(true);
+                }
+            });
+
+            toggleAuthorizationRequired.RegisterValueChangedCallback(evt =>
+            {
+                if (evt.newValue)
+                {
+                    var wasRunning = McpServerManager.IsRunning && UnityMcpPluginEditor.TransportMethod != TransportMethod.stdio;
+                    UnityMcpPluginEditor.AuthOption = AuthOption.required;
+                    UnityMcpPluginEditor.Instance.Save();
+                    toggleAuthorizationNone.SetValueWithoutNotify(false);
+                    SetTokenFieldsVisible(inputAuthorizationToken, tokenSection, true);
+                    InvalidateAndReloadAgentUI();
+                    RestartServerIfWasRunning(wasRunning);
+                }
+                else if (!toggleAuthorizationNone.value)
+                {
+                    toggleAuthorizationRequired.SetValueWithoutNotify(true);
+                }
+            });
+
+            inputAuthorizationToken.RegisterCallback<FocusOutEvent>(_ =>
+            {
+                var newToken = inputAuthorizationToken.value;
+                if (newToken == UnityMcpPluginEditor.Token)
+                    return;
+
+                var wasRunning = McpServerManager.IsRunning && UnityMcpPluginEditor.TransportMethod != TransportMethod.stdio;
+                UnityMcpPluginEditor.Token = newToken;
+                UnityMcpPluginEditor.Instance.Save();
+
+                InvalidateAndReloadAgentUI();
+                RestartServerIfWasRunning(wasRunning);
+            });
+
+            btnGenerateToken.RegisterCallback<ClickEvent>(_ =>
+            {
+                var newToken = UnityMcpPlugin.GenerateToken();
+                inputAuthorizationToken.SetValueWithoutNotify(newToken);
+
+                var wasRunning = McpServerManager.IsRunning && UnityMcpPluginEditor.TransportMethod != TransportMethod.stdio;
+                UnityMcpPluginEditor.Token = newToken;
+                UnityMcpPluginEditor.Instance.Save();
+
+                InvalidateAndReloadAgentUI();
+                RestartServerIfWasRunning(wasRunning);
+            });
         }
 
         private McpServerStatus CombineMcpServerStatus(McpServerStatus status, bool isConnected)
@@ -323,16 +573,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 if (McpServerManager.IsRunning)
                 {
                     // User is stopping the server - remember not to auto-start
-                    UnityMcpPlugin.KeepServerRunning = false;
-                    UnityMcpPlugin.Instance.Save();
+                    UnityMcpPluginEditor.KeepServerRunning = false;
+                    UnityMcpPluginEditor.Instance.Save();
                     statusLabel.text = "MCP server: Stopping...";
                     McpServerManager.StopServer();
                 }
                 else
                 {
                     // User is starting the server - remember to auto-start
-                    UnityMcpPlugin.KeepServerRunning = true;
-                    UnityMcpPlugin.Instance.Save();
+                    UnityMcpPluginEditor.KeepServerRunning = true;
+                    UnityMcpPluginEditor.Instance.Save();
                     statusLabel.text = "MCP server: Starting...";
                     McpServerManager.StartServer();
                 }
@@ -366,22 +616,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             SetMcpServerData(null, status, btnStartStop, statusCircle, statusLabel);
 
             // Then try to fetch additional data asynchronously
-            var mcpPluginInstance = UnityMcpPlugin.Instance.McpPluginInstance;
+            var mcpPluginInstance = UnityMcpPluginEditor.Instance.McpPluginInstance;
             if (mcpPluginInstance == null)
             {
                 Logger.LogDebug("Cannot fetch MCP server data: McpPluginInstance is null");
                 return;
             }
 
-            var remoteMcpManagerHub = mcpPluginInstance.RemoteMcpManagerHub;
-            if (remoteMcpManagerHub == null)
+            var mcpManagerHub = mcpPluginInstance.McpManagerHub;
+            if (mcpManagerHub == null)
             {
-                Logger.LogDebug("Cannot fetch MCP server data: RemoteMcpManagerHub is null");
+                Logger.LogDebug("Cannot fetch MCP server data: McpManagerHub is null");
                 return;
             }
 
             var fetchTime = DateTime.UtcNow;
-            var task = remoteMcpManagerHub.GetMcpServerData();
+            var task = mcpManagerHub.GetMcpServerData();
             if (task == null)
             {
                 Logger.LogDebug("Cannot fetch MCP server data: GetMcpServerData returned null");
@@ -417,53 +667,76 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private void SetupAiAgentSection(VisualElement root)
         {
-            McpPlugin.McpPlugin.DoAlways(plugin =>
+            UnityMcpPluginEditor.PluginProperty
+                .WhereNotNull()
+                .Subscribe(plugin =>
             {
                 plugin.McpManager.OnClientConnected
-                    .ObserveOnCurrentSynchronizationContext()
                     .Subscribe(data =>
                     {
-                        Logger.LogInformation("On AI agent connected: {clientName} ({clientVersion})", data.ClientName, data.ClientVersion);
+                        Logger.LogInformation("On AI agent connected: {clientName} ({clientVersion})",
+                            data.ClientName, data.ClientVersion);
+
                         if (Logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Trace))
                             Logger.LogTrace("AI Agent Data: {data}", data.ToPrettyJson());
-
-                        SetAiAgentStatus(data.IsConnected, $"AI agent: {data.ClientName} ({data.ClientVersion})");
                     })
                     .AddTo(_disposables);
 
                 plugin.McpManager.OnClientDisconnected
-                    .ObserveOnCurrentSynchronizationContext()
-                    .Subscribe(_ =>
+                    .Subscribe(mcpClientData =>
                     {
-                        Logger.LogInformation("On AI agent disconnected");
-                        SetAiAgentStatus(false);
+                        Logger.LogInformation("On AI agent disconnected: {clientName} ({clientVersion})",
+                            mcpClientData.ClientName, mcpClientData.ClientVersion);
+                    })
+                    .AddTo(_disposables);
+
+                plugin.McpManager.OnClientsChanged
+                    .ObserveOnCurrentSynchronizationContext()
+                    .Subscribe(mcpClients =>
+                    {
+                        Logger.LogDebug("On AI agents changed: {count} clients", mcpClients.Count);
+
+                        var connectedAgents = mcpClients.Where(c => c.IsConnected).ToList();
+                        if (connectedAgents.Count == 0)
+                        {
+                            Logger.LogDebug("No connected AI agents found in clients list.");
+                            SetAiAgentStatus(false);
+                            return;
+                        }
+
+                        SetAiAgentStatus(true, connectedAgents.Select(a => $"AI agent: {a.ClientName} ({a.ClientVersion})"));
                     })
                     .AddTo(_disposables);
 
                 FetchAiAgentData();
             }).AddTo(_disposables);
 
-            UnityMcpPlugin.IsConnected
+            UnityMcpPluginEditor.IsConnected
                 .Where(isConnected => isConnected)
                 .ObserveOnCurrentSynchronizationContext()
                 .Subscribe(_ => FetchAiAgentData())
                 .AddTo(_disposables);
 
-            var containerMcpServer = root.Q<VisualElement>("TimelinePointMcpServer") ?? throw new InvalidOperationException("TimelinePointMcpServer element not found.");
+            var containerMcpServer = root.Q<VisualElement>("mcpServerStatusControl") ?? throw new InvalidOperationException("mcpServerStatusControl element not found.");
             var btnStartStopMcpServer = root.Q<Button>("btnStartStopServer") ?? throw new InvalidOperationException("MCP Server start/stop button not found.");
 
             var toggleOptionHttp = root.Q<Toggle>("toggleOptionHttp") ?? throw new NullReferenceException("Toggle 'toggleOptionHttp' not found in UI.");
             var toggleOptionStdio = root.Q<Toggle>("toggleOptionStdio") ?? throw new NullReferenceException("Toggle 'toggleOptionStdio' not found in UI.");
 
+            var labelTransport = root.Q<Label>("labelTransport");
+            if (labelTransport != null) labelTransport.tooltip = Tooltip_LabelTransport;
+            toggleOptionStdio.tooltip = Tooltip_ToggleStdio;
+            toggleOptionHttp.tooltip = Tooltip_ToggleHttp;
+
             // Initialize with HTTP selected by default
-            toggleOptionStdio.value = UnityMcpPlugin.TransportMethod == TransportMethod.stdio;
-            toggleOptionHttp.value = UnityMcpPlugin.TransportMethod != TransportMethod.stdio;
-            currentAiAgentConfigurator?.SetTransportMethod(UnityMcpPlugin.TransportMethod);
+            toggleOptionStdio.value = UnityMcpPluginEditor.TransportMethod == TransportMethod.stdio;
+            toggleOptionHttp.value = UnityMcpPluginEditor.TransportMethod != TransportMethod.stdio;
+            currentAiAgentConfigurator?.SetTransportMethod(UnityMcpPluginEditor.TransportMethod);
 
             void UpdateMcpServerState()
             {
-                containerMcpServer.SetEnabled(UnityMcpPlugin.TransportMethod != TransportMethod.stdio);
-                btnStartStopMcpServer.tooltip = UnityMcpPlugin.TransportMethod != TransportMethod.stdio
+                containerMcpServer.SetEnabled(UnityMcpPluginEditor.TransportMethod != TransportMethod.stdio);
+                btnStartStopMcpServer.tooltip = UnityMcpPluginEditor.TransportMethod != TransportMethod.stdio
                     ? "Start or stop the local MCP server."
                     : "Local MCP server is disabled in STDIO mode. AI agent will launch its own MCP server instance.";
             }
@@ -473,16 +746,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             {
                 if (evt.newValue)
                 {
-                    UnityMcpPlugin.TransportMethod = TransportMethod.stdio;
-                    UnityMcpPlugin.Instance.Save();
+                    UnityMcpPluginEditor.TransportMethod = TransportMethod.stdio;
+                    UnityMcpPluginEditor.Instance.Save();
                     toggleOptionHttp.SetValueWithoutNotify(false);
                     currentAiAgentConfigurator?.SetTransportMethod(TransportMethod.stdio);
 
                     // Stop MCP server if running to switch to stdio mode
                     if (McpServerManager.IsRunning)
                     {
-                        UnityMcpPlugin.KeepServerRunning = false;
-                        UnityMcpPlugin.Instance.Save();
+                        UnityMcpPluginEditor.KeepServerRunning = false;
+                        UnityMcpPluginEditor.Instance.Save();
                         McpServerManager.StopServer();
                     }
                 }
@@ -498,8 +771,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             {
                 if (evt.newValue)
                 {
-                    UnityMcpPlugin.TransportMethod = TransportMethod.streamableHttp;
-                    UnityMcpPlugin.Instance.Save();
+                    UnityMcpPluginEditor.TransportMethod = TransportMethod.streamableHttp;
+                    UnityMcpPluginEditor.Instance.Save();
                     toggleOptionStdio.SetValueWithoutNotify(false);
                     currentAiAgentConfigurator?.SetTransportMethod(TransportMethod.streamableHttp);
                 }
@@ -514,22 +787,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private void FetchAiAgentData(int retryCount = 3, int retryDelayMs = 3000)
         {
-            var mcpPluginInstance = UnityMcpPlugin.Instance.McpPluginInstance;
+            var mcpPluginInstance = UnityMcpPluginEditor.Instance.McpPluginInstance;
             if (mcpPluginInstance == null)
             {
                 Logger.LogDebug("Cannot fetch AI agent data: McpPluginInstance is null");
                 return;
             }
 
-            var remoteMcpManagerHub = mcpPluginInstance.RemoteMcpManagerHub;
-            if (remoteMcpManagerHub == null)
+            var mcpManagerHub = mcpPluginInstance.McpManagerHub;
+            if (mcpManagerHub == null)
             {
-                Logger.LogDebug("Cannot fetch AI agent data: RemoteMcpManagerHub is null");
+                Logger.LogDebug("Cannot fetch AI agent data: McpManagerHub is null");
                 return;
             }
 
             var fetchTime = DateTime.UtcNow;
-            var task = remoteMcpManagerHub.GetMcpClientData();
+            var task = mcpManagerHub.GetMcpClientData();
             if (task == null)
             {
                 Logger.LogDebug("Cannot fetch AI agent data: GetMcpClientData returned null");
@@ -548,14 +821,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 {
                     if (t.IsCompletedSuccessfully)
                     {
-                        var data = t.Result;
-                        SetAiAgentStatus(data.IsConnected, data.IsConnected
-                            ? $"AI agent: {data.ClientName} ({data.ClientVersion})"
-                            : "AI agent");
+                        var clients = t.Result;
+                        var connectedAgents = clients.Where(c => c.IsConnected).ToList();
+                        var isConnected = connectedAgents.Count > 0;
+                        SetAiAgentStatus(isConnected, isConnected
+                            ? connectedAgents.Select(a => $"AI agent: {a.ClientName} ({a.ClientVersion})")
+                            : null);
 
                         // If AI agent is not connected but Unity is, retry after delay.
                         // The AI agent may need time to re-establish its session after Unity reconnects.
-                        if (!data.IsConnected && retryCount > 0 && UnityMcpPlugin.IsConnected.CurrentValue)
+                        if (!isConnected && retryCount > 0 && UnityMcpPluginEditor.IsConnected.CurrentValue)
                         {
                             Logger.LogDebug("AI agent not connected yet, scheduling retry ({retriesLeft} left)", retryCount);
                             Observable.Timer(TimeSpan.FromMilliseconds(retryDelayMs))
@@ -571,7 +846,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     }
                     else
                     {
-                        SetAiAgentStatus(false, "AI agent: Not found");
+                        SetAiAgentStatus(false, new[] { "AI agent: Not found" });
                     }
                 });
             });
@@ -589,12 +864,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             btn.RegisterCallback<ClickEvent>(evt => McpToolsWindow.ShowWindow());
 
-            McpPlugin.McpPlugin.DoAlways(plugin =>
+            UnityMcpPluginEditor.PluginProperty
+                .WhereNotNull()
+                .Subscribe(plugin =>
             {
                 var manager = plugin.McpManager.ToolManager;
                 if (manager == null)
                 {
                     label.text = "0 / 0 tools";
+                    label.tooltip = Tooltip_ToolsCountLabel + "\n\n0 enabled / 0 disabled / 0 total";
                     if (tokenLabel != null) tokenLabel.text = "~0 tokens total";
                     return;
                 }
@@ -602,8 +880,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 void UpdateStats()
                 {
                     var all = manager.GetAllTools();
+                    var totalCount = all.Count();
                     var enabledCount = all.Count(t => manager.IsToolEnabled(t.Name));
-                    label.text = $"{enabledCount} / {all.Count()} tools";
+                    var disabledCount = totalCount - enabledCount;
+                    label.text = $"{enabledCount} / {totalCount} tools";
+                    label.tooltip = $"{Tooltip_ToolsCountLabel}\n\n{enabledCount} enabled / {disabledCount} disabled / {totalCount} total";
 
                     // Calculate total tokens for enabled tools
                     if (tokenLabel != null)
@@ -623,6 +904,55 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             }).AddTo(_disposables);
         }
 
+        private void SetupSkillsSection(VisualElement root)
+        {
+            var labelPath = root.Q<Label>("labelSkillsOutputPath");
+            var inputPath = root.Q<TextField>("inputSkillsRootFolder");
+            var toggleAutoGenerate = root.Q<Toggle>("toggleAutoGenerateSkills");
+            var btnGenerate = root.Q<Button>("btnGenerateSkills");
+
+            if (inputPath == null || toggleAutoGenerate == null || btnGenerate == null)
+                return;
+
+            const string skillsOutputPathTooltip =
+                "Root folder path where skill markdown files will be generated. " +
+                "The recommended default location is \"SKILLS\". " +
+                "AI Game Developer will also create a nested folder named \"unity-editor\" inside it.";
+
+            if (labelPath != null) labelPath.tooltip = skillsOutputPathTooltip;
+            inputPath.tooltip = skillsOutputPathTooltip;
+
+            inputPath.SetValueWithoutNotify(UnityMcpPluginEditor.SkillsRootFolder);
+            toggleAutoGenerate.SetValueWithoutNotify(UnityMcpPluginEditor.GenerateSkillFiles);
+
+            inputPath.RegisterValueChangedCallback(evt =>
+            {
+                UnityMcpPluginEditor.SkillsRootFolder = evt.newValue;
+                UnityMcpPluginEditor.Instance.Save();
+            });
+
+            toggleAutoGenerate.RegisterValueChangedCallback(evt =>
+            {
+                UnityMcpPluginEditor.GenerateSkillFiles = evt.newValue;
+                UnityMcpPluginEditor.Instance.Save();
+            });
+
+            btnGenerate.RegisterCallback<ClickEvent>(evt =>
+            {
+                var tools = UnityMcpPluginEditor.Instance.Tools;
+                if (tools == null)
+                {
+                    Logger.LogWarning("Cannot generate skill files: Tools manager is not available.");
+                    return;
+                }
+                new SkillFileGenerator(UnityMcpPluginEditor.Instance.Logger).Generate(
+                    tools: tools.GetAllTools(),
+                    rootFolder: "unity-editor",
+                    basePath: UnityMcpPluginEditor.SkillsRootFolder
+                );
+            });
+        }
+
         private void SetupPromptsSection(VisualElement root)
         {
             var btn = root.Q<Button>("btnOpenPrompts");
@@ -630,15 +960,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             btn.RegisterCallback<ClickEvent>(evt => McpPromptsWindow.ShowWindow());
 
-            McpPlugin.McpPlugin.DoAlways(plugin =>
+            UnityMcpPluginEditor.PluginProperty
+                .WhereNotNull()
+                .Subscribe(plugin =>
             {
                 var manager = plugin.McpManager.PromptManager;
-                if (manager == null) { label.text = "0 / 0 prompts"; return; }
+                if (manager == null)
+                {
+                    label.text = "0 / 0 prompts";
+                    label.tooltip = Tooltip_PromptsCountLabel + "\n\n0 enabled / 0 disabled / 0 total";
+                    return;
+                }
 
                 void UpdateStats()
                 {
                     var all = manager.GetAllPrompts();
-                    label.text = $"{all.Count(p => manager.IsPromptEnabled(p.Name))} / {all.Count()} prompts";
+                    var totalCount = all.Count();
+                    var enabledCount = all.Count(p => manager.IsPromptEnabled(p.Name));
+                    var disabledCount = totalCount - enabledCount;
+                    label.text = $"{enabledCount} / {totalCount} prompts";
+                    label.tooltip = $"{Tooltip_PromptsCountLabel}\n\n{enabledCount} enabled / {disabledCount} disabled / {totalCount} total";
                 }
                 UpdateStats();
 
@@ -656,15 +997,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             btn.RegisterCallback<ClickEvent>(evt => McpResourcesWindow.ShowWindow());
 
-            McpPlugin.McpPlugin.DoAlways(plugin =>
+            UnityMcpPluginEditor.PluginProperty
+                .WhereNotNull()
+                .Subscribe(plugin =>
             {
                 var manager = plugin.McpManager.ResourceManager;
-                if (manager == null) { label.text = "0 / 0 resources"; return; }
+                if (manager == null)
+                {
+                    label.text = "0 / 0 resources";
+                    label.tooltip = Tooltip_ResourcesCountLabel + "\n\n0 enabled / 0 disabled / 0 total";
+                    return;
+                }
 
                 void UpdateStats()
                 {
                     var all = manager.GetAllResources();
-                    label.text = $"{all.Count(r => manager.IsResourceEnabled(r.Name))} / {all.Count()} resources";
+                    var totalCount = all.Count();
+                    var enabledCount = all.Count(r => manager.IsResourceEnabled(r.Name));
+                    var disabledCount = totalCount - enabledCount;
+                    label.text = $"{enabledCount} / {totalCount} resources";
+                    label.tooltip = $"{Tooltip_ResourcesCountLabel}\n\n{enabledCount} enabled / {disabledCount} disabled / {totalCount} total";
                 }
                 UpdateStats();
 

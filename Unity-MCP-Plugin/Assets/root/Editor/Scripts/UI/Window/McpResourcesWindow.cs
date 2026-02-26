@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -45,7 +45,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override void RefreshItems()
         {
-            var resourceManager = UnityMcpPlugin.Instance.McpPluginInstance?.McpManager.ResourceManager;
+            var resourceManager = UnityMcpPluginEditor.Instance.Resources;
             var refreshed = new List<ResourceViewModel>();
 
             if (resourceManager != null)
@@ -61,7 +61,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override void OnItemToggleChanged(ResourceViewModel viewModel, bool isEnabled)
         {
-            var resourceManager = UnityMcpPlugin.Instance.McpPluginInstance?.McpManager.ResourceManager;
+            var resourceManager = UnityMcpPluginEditor.Instance.Resources;
             if (resourceManager == null)
             {
                 Logger.LogError("{method} ResourceManager is not available.", nameof(OnItemToggleChanged));
@@ -74,7 +74,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 Logger.LogTrace("{method} Setting resource '{name}' enabled state to {enabled}.",
                     nameof(OnItemToggleChanged), viewModel.Name, isEnabled);
                 resourceManager.SetResourceEnabled(viewModel.Name, isEnabled);
-                UnityMcpPlugin.Instance.Save();
+                UnityMcpPluginEditor.Instance.Save();
             }
         }
 

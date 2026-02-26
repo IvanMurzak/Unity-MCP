@@ -87,7 +87,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 if (result is SerializedMember serializedResult)
                     return serializedResult;
 
-                return McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Serialize(
+                var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
+
+                return reflector.Serialize(
                     obj: result,
                     logger: logger);
             });
@@ -114,8 +116,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 return false;
             }
 
+            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
+
             var parsedParameters = parameters
-                ?.Select(p => McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Deserialize(
+                ?.Select(p => reflector.Deserialize(
                     data: p,
                     logger: logger))
                 ?.ToArray();

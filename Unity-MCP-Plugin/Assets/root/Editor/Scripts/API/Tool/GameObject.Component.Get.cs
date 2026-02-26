@@ -87,7 +87,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     Component = new ComponentDataShallow(targetComponent)
                 };
 
-                var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+                var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
                 var logger = UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_GameObject>();
 
                 if (includeFields || includeProperties)

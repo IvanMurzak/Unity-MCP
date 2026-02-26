@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -136,7 +136,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     .Error($"Cannot run tests: compilation errors after script recompilation.\n\n{errorDetails}")
                     .SetRequestID(requestId);
 
-                _ = UnityMcpPlugin.NotifyToolRequestCompleted(new RequestToolCompletedData
+                _ = UnityMcpPluginEditor.NotifyToolRequestCompleted(new RequestToolCompletedData
                 {
                     RequestId = requestId,
                     Result = response

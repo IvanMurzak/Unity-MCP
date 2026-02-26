@@ -21,7 +21,7 @@ namespace com.IvanMurzak.Unity.MCP
     {
         protected readonly object configMutex = new();
 
-        protected UnityConnectionConfig unityConnectionConfig;
+        protected UnityConnectionConfig unityConnectionConfig = null!; // Set by subclass constructors
 
         public class UnityConnectionConfig : ConnectionConfig
         {
@@ -34,6 +34,7 @@ namespace com.IvanMurzak.Unity.MCP
             public LogLevel LogLevel { get; set; } = LogLevel.Warning;
             public bool KeepServerRunning { get; set; } = false;
             public TransportMethod TransportMethod { get; set; } = TransportMethod.streamableHttp;
+            public AuthOption AuthOption { get; set; } = AuthOption.none;
             public List<McpFeature> Tools { get; set; } = new();
             public List<McpFeature> Prompts { get; set; } = new();
             public List<McpFeature> Resources { get; set; } = new();
@@ -46,14 +47,16 @@ namespace com.IvanMurzak.Unity.MCP
             public UnityConnectionConfig SetDefault()
             {
                 Host = DefaultHost;
-                KeepConnected = true;
+                KeepConnected = false;
                 KeepServerRunning = false;
                 TransportMethod = TransportMethod.streamableHttp;
+                AuthOption = AuthOption.none;
                 LogLevel = LogLevel.Warning;
                 TimeoutMs = Consts.Hub.DefaultTimeoutMs;
                 Tools = DefaultTools;
                 Prompts = DefaultPrompts;
                 Resources = DefaultResources;
+                Token = GenerateToken();
                 return this;
             }
 

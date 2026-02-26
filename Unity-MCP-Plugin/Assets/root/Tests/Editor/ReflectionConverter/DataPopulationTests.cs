@@ -1,4 +1,4 @@
-#nullable enable
+﻿#nullable enable
 using System.Collections;
 using System.Collections.Generic;
 using com.IvanMurzak.ReflectorNet;
@@ -88,7 +88,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 typeof(Tool_GameObject).GetMethod(nameof(Tool_GameObject.ModifyComponent)),
                 () =>
                 {
-                    var plugin = UnityMcpPlugin.Instance;
+                    var plugin = UnityMcpPluginEditor.Instance;
                     Debug.Log($"[DataPopulationTests] Plugin: {plugin?.GetType().GetTypeShortName() ?? "null"}");
                     var mcpInstance = plugin?.McpPluginInstance;
                     Debug.Log($"[DataPopulationTests] McpInstance: {mcpInstance?.GetType().GetTypeShortName() ?? "null"}");

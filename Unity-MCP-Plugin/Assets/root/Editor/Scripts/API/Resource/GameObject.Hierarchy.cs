@@ -39,14 +39,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         public ResponseResourceContent[] CurrentScene(string uri, string path)
         {
             if (string.IsNullOrEmpty(path))
-                throw new System.Exception("[Error] Path to the GameObject is empty.");
+                throw new System.Exception("Path to the GameObject is empty.");
 
             return MainThread.Instance.Run(() =>
             {
                 var go = GameObjectUtils.FindByPath(path)
-                    ?? throw new System.Exception($"[Error] GameObject by path '{path}' not found.");
+                    ?? throw new System.Exception($"GameObject by path '{path}' not found.");
 
-                var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+                var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new System.Exception("Reflector is not available.");
 
                 return ResponseResourceContent.CreateText(
                     uri: uri,

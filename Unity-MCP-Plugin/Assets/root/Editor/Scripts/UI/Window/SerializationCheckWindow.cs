@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -121,7 +121,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             try
             {
                 var logger = UnityLoggerFactory.LoggerFactory.CreateLogger(nameof(SerializationCheckWindow));
-                var reflector = UnityMcpPlugin.Instance.Reflector ?? throw new InvalidOperationException("Reflector is null");
+                var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new InvalidOperationException("Reflector is null");
 
                 logger.LogInformation($"Serializing target '{target?.name}' of type '{target?.GetType().GetTypeId()}' with recursive={recursive}");
 

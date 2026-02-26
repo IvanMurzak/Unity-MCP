@@ -21,7 +21,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
     {
         public ValidateToolResultExecutor(Reflector? reflector = null) : base()
         {
-            reflector ??= McpPlugin.McpPlugin.Instance!.McpManager.Reflector ??
+            reflector ??= UnityMcpPluginEditor.Instance.Reflector ??
                 throw new ArgumentNullException(nameof(reflector), "Reflector cannot be null. Ensure McpPlugin is initialized before using this executor.");
 
             SetAction<ResponseData<ResponseCallTool>, ResponseData<ResponseCallTool>>(result =>

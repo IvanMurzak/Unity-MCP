@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
@@ -51,13 +52,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             {
                 var go = gameObjectRef.FindGameObject(out var error);
                 if (error != null)
-                    throw new System.Exception(error);
+                    throw new Exception(error);
 
                 if (go == null)
                     return null;
 
+                var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
+
                 return go.ToGameObjectData(
-                    reflector: McpPlugin.McpPlugin.Instance!.McpManager.Reflector,
+                    reflector: reflector,
                     includeData: includeData,
                     includeComponents: includeComponents,
                     includeBounds: includeBounds,

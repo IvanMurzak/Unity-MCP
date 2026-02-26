@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -35,7 +35,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public static void ShowWindowVoid() => ShowWindow();
 
         public void Invalidate() => CreateGUI();
-        void OnValidate() => UnityMcpPlugin.Instance.Validate();
+        void OnValidate() => UnityMcpPluginEditor.Instance.Validate();
 
         private void SaveChanges(string message)
         {
@@ -44,11 +44,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             saveChangesMessage = message;
 
-            Undo.RecordObject(UnityMcpPlugin.AssetFile, message); // Undo record started
             base.SaveChanges();
-            UnityMcpPlugin.Instance.Save();
-            UnityMcpPlugin.InvalidateAssetFile();
-            UnityMcpPlugin.MarkAssetFileDirty(); // Undo record completed
+            UnityMcpPluginEditor.Instance.Save();
         }
 
         private void OnChanged(UnityMcpPlugin.UnityConnectionConfig data) => Repaint();
@@ -56,7 +53,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected override void OnEnable()
         {
             base.OnEnable();
-            _disposables.Add(UnityMcpPlugin.SubscribeOnChanged(OnChanged));
+            _disposables.Add(UnityMcpPluginEditor.SubscribeOnChanged(OnChanged));
         }
         private void OnDisable()
         {
@@ -65,9 +62,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private static void UnityBuildAndConnect()
         {
-            UnityMcpPlugin.Instance.BuildMcpPluginIfNeeded();
-            UnityMcpPlugin.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
-            UnityMcpPlugin.ConnectIfNeeded();
+            UnityMcpPluginEditor.Instance.BuildMcpPluginIfNeeded();
+            UnityMcpPluginEditor.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
+            UnityMcpPluginEditor.ConnectIfNeeded();
         }
     }
 }

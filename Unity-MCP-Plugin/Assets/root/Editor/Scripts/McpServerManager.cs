@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -292,7 +292,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             try
             {
-                var previousKeepServerRunning = UnityMcpPlugin.KeepServerRunning;
+                var previousKeepServerRunning = UnityMcpPluginEditor.KeepServerRunning;
 
                 // Clear existed server folder
                 DeleteBinaryFolderIfExists();
@@ -381,7 +381,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         ///     "Unity ProjectName": {
         ///       "type": "...",    // optional, only if provided
         ///       "command": "path/to/unity-mcp-server",
-        ///       "args": ["port=...", "plugin-timeout=...", "client-transport=stdio"]
+        ///       "args": ["port=...", "plugin-timeout=...", "client-transport=stdio" /*, "token=..." if auth required */]
         ///     }
         ///   }
         /// }
@@ -393,7 +393,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             int timeoutMs = Consts.Hub.DefaultTimeoutMs,
             string? type = null)
         {
-            var pathSegments = Consts.MCP.Server.BodyPathSegments(bodyPath);
+            var pathSegments = BodyPathSegments(bodyPath);
 
             // Build innermost content first
             var serverConfig = new JsonObject();
@@ -402,12 +402,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 serverConfig["type"] = type;
 
             serverConfig["command"] = ExecutableFullPath.Replace('\\', '/');
-            serverConfig["args"] = new JsonArray
+
+            var args = new JsonArray
             {
-                $"{Consts.MCP.Server.Args.Port}={port}",
-                $"{Consts.MCP.Server.Args.PluginTimeout}={timeoutMs}",
-                $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
+                $"{Args.Port}={port}",
+                $"{Args.PluginTimeout}={timeoutMs}",
+                $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
+                $"{Args.Authorization}={UnityMcpPluginEditor.AuthOption}"
             };
+
+            var authRequired = UnityMcpPluginEditor.AuthOption == AuthOption.required;
+            if (authRequired && !string.IsNullOrEmpty(UnityMcpPluginEditor.Token))
+                args.Add($"{Args.Token}={UnityMcpPluginEditor.Token}");
+
+            serverConfig["args"] = args;
 
             var innerContent = new JsonObject
             {
@@ -431,7 +439,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         ///   "mcpServers": {
         ///     "Unity ProjectName": {
         ///       "type": "...",  // optional, only if provided
-        ///       "url": "http://localhost:port"
+        ///       "url": "http://localhost:port",
+        ///      "headers": {     // only if token is provided
+        ///        "Authorization": "Bearer token"
+        ///      }
         ///     }
         ///   }
         /// }
@@ -442,7 +453,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             string bodyPath = "mcpServers",
             string? type = null)
         {
-            var pathSegments = Consts.MCP.Server.BodyPathSegments(bodyPath);
+            var pathSegments = BodyPathSegments(bodyPath);
 
             // Build innermost content first
             var serverConfig = new JsonObject();
@@ -451,6 +462,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 serverConfig["type"] = type;
 
             serverConfig["url"] = url;
+
+            var authRequired = UnityMcpPluginEditor.AuthOption == AuthOption.required;
+            if (authRequired && !string.IsNullOrEmpty(UnityMcpPluginEditor.Token))
+            {
+                serverConfig["headers"] = new JsonObject
+                {
+                    ["Authorization"] = $"Bearer {UnityMcpPluginEditor.Token}"
+                };
+            }
 
             var innerContent = new JsonObject
             {
@@ -469,16 +489,36 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         public static string DockerSetupRunCommand()
         {
-            var dockerPortMapping = $"-p {UnityMcpPlugin.Port}:{UnityMcpPlugin.Port}";
-            var dockerEnvVars = $"-e MCP_PLUGIN_CLIENT_TRANSPORT={TransportMethod.streamableHttp} -e MCP_PLUGIN_PORT={UnityMcpPlugin.Port} -e MCP_PLUGIN_CLIENT_TIMEOUT={UnityMcpPlugin.TimeoutMs}";
-            var dockerContainer = $"--name unity-mcp-server-{UnityMcpPlugin.Port}";
+            var dockerPortMapping = $"-p {UnityMcpPluginEditor.Port}:{UnityMcpPluginEditor.Port}";
+            var dockerEnvVars =
+                $"-e {Env.ClientTransportMethod}={TransportMethod.streamableHttp} " +
+                $"-e {Env.Port}={UnityMcpPluginEditor.Port} " +
+                $"-e {Env.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs} " +
+                $"-e {Env.Authorization}={UnityMcpPluginEditor.AuthOption}";
+
+            var authRequired = UnityMcpPluginEditor.AuthOption == AuthOption.required;
+            var token = UnityMcpPluginEditor.Token;
+            if (authRequired && !string.IsNullOrEmpty(token))
+                dockerEnvVars += $" -e {Env.Token}={token}";
+
+            var dockerContainer = $"--name unity-mcp-server-{UnityMcpPluginEditor.Port}";
             var dockerImage = $"ivanmurzakdev/unity-mcp-server:{UnityMcpPlugin.Version}";
             return $"docker run -d {dockerPortMapping} {dockerEnvVars} {dockerContainer} {dockerImage}";
         }
 
         public static string DockerRunCommand()
         {
-            return $"docker start unity-mcp-server-{UnityMcpPlugin.Port}";
+            return $"docker start unity-mcp-server-{UnityMcpPluginEditor.Port}";
+        }
+
+        public static string DockerStopCommand()
+        {
+            return $"docker stop unity-mcp-server-{UnityMcpPluginEditor.Port}";
+        }
+
+        public static string DockerRemoveCommand()
+        {
+            return $"docker rm unity-mcp-server-{UnityMcpPluginEditor.Port}";
         }
 
         #endregion // Client Configuration
@@ -781,14 +821,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         /// <summary>
         /// Kills an orphaned unity-mcp-server process that is occupying this project's port.
-        /// Only targets the specific process listening on <see cref="UnityMcpPlugin.Port"/>.
+        /// Only targets the specific process listening on <see cref="UnityMcpPluginEditor.Port"/>.
         /// If the port owner cannot be determined, does nothing (fails safe).
         /// </summary>
         static void KillOrphanedServerProcesses()
         {
             try
             {
-                var port = UnityMcpPlugin.Port;
+                var port = UnityMcpPluginEditor.Port;
                 var currentPid = _serverProcess?.Id ?? -1;
 
                 var listeningPid = GetPidListeningOnPort(port);
@@ -923,12 +963,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         static string BuildArguments()
         {
-            var port = UnityMcpPlugin.Port;
-            var timeout = UnityMcpPlugin.TimeoutMs;
+            var port = UnityMcpPluginEditor.Port;
+            var timeout = UnityMcpPluginEditor.TimeoutMs;
             var transportMethod = TransportMethod.streamableHttp; // always must be streamableHttp for launching the server.
+            var token = UnityMcpPluginEditor.Token;
+            var authOption = UnityMcpPluginEditor.AuthOption;
 
-            // Arguments format: port=XXXXX plugin-timeout=XXXXX client-transport=<TransportMethod>
-            return $"{McpConsts.MCP.Server.Args.Port}={port} {McpConsts.MCP.Server.Args.PluginTimeout}={timeout} {McpConsts.MCP.Server.Args.ClientTransportMethod}={transportMethod}";
+            // Arguments format: port=XXXXX plugin-timeout=XXXXX client-transport=<TransportMethod> token=<Token>
+            var args =
+                $"{Args.Port}={port} " +
+                $"{Args.PluginTimeout}={timeout} " +
+                $"{Args.ClientTransportMethod}={transportMethod} " +
+                $"{Args.Authorization}={authOption}";
+
+            if (authOption == AuthOption.required && !string.IsNullOrEmpty(token))
+                args += $" {Args.Token}={token}";
+
+            return args;
         }
 
         /// <summary>
@@ -1086,7 +1137,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             EditorApplication.update -= StartServerIfNeeded;
 
             // Check if user wants the server to keep running
-            if (!UnityMcpPlugin.KeepServerRunning)
+            if (!UnityMcpPluginEditor.KeepServerRunning)
             {
                 _logger.LogDebug("StartServerIfNeeded: KeepServerRunning is false, skipping auto-start");
                 return;
@@ -1101,7 +1152,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             }
 
             // Check if an external server is available on the port (non-blocking)
-            var port = UnityMcpPlugin.Port;
+            var port = UnityMcpPluginEditor.Port;
             CheckExternalServerAsync(port, externalAvailable =>
             {
                 if (externalAvailable)

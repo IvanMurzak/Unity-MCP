@@ -58,7 +58,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 if (asset == null)
                     throw new Exception(Error.NotFoundAsset(assetRef.AssetPath!, assetRef.AssetGuid ?? "N/A"));
 
-                var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+                var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
                 return reflector.Serialize(
                     obj: asset,

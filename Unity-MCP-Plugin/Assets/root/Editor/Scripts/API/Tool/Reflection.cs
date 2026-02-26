@@ -150,7 +150,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         {
             public static string MoreThanOneMethodFound(List<MethodInfo> methods)
             {
-                var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+                var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
                 var methodsString = methods
                     .Select(method => new MethodData(reflector, method, justRef: false))
                     .ToJson(reflector);

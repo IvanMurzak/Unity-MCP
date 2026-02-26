@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -47,7 +47,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override void RefreshItems()
         {
-            var promptManager = UnityMcpPlugin.Instance.McpPluginInstance?.McpManager.PromptManager;
+            var promptManager = UnityMcpPluginEditor.Instance.Prompts;
             var refreshed = new List<PromptViewModel>();
 
             if (promptManager != null)
@@ -63,7 +63,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override void OnItemToggleChanged(PromptViewModel viewModel, bool isEnabled)
         {
-            var promptManager = UnityMcpPlugin.Instance.McpPluginInstance?.McpManager.PromptManager;
+            var promptManager = UnityMcpPluginEditor.Instance.Prompts;
             if (promptManager == null)
             {
                 Logger.LogError("{method} PromptManager is not available.", nameof(OnItemToggleChanged));
@@ -76,7 +76,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 Logger.LogTrace("{method} Setting prompt '{name}' enabled state to {enabled}.",
                     nameof(OnItemToggleChanged), viewModel.Name, isEnabled);
                 promptManager.SetPromptEnabled(viewModel.Name, isEnabled);
-                UnityMcpPlugin.Instance.Save();
+                UnityMcpPluginEditor.Instance.Save();
             }
         }
 

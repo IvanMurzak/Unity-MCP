@@ -10,6 +10,8 @@
 
 #nullable enable
 using Extensions.Unity.PlayerPrefsEx;
+using Microsoft.Extensions.Logging;
+using R3;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -21,19 +23,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private AiAgentConfigurator? currentAiAgentConfigurator;
 
+        private DropdownField? aiAgentDropdown;
+        private VisualElement? aiAgentContainer;
+
         void ConfigureAgents(VisualElement root)
         {
             // Get the dropdown element
-            var dropdown = root.Query<DropdownField>("aiAgentDropdown").First();
-            if (dropdown == null)
+            aiAgentDropdown = root.Query<DropdownField>("aiAgentDropdown").First();
+            if (aiAgentDropdown == null)
             {
                 Debug.LogError("aiAgentDropdown not found in UXML. Please ensure the dropdown element exists.");
                 return;
             }
 
             // Get the container where agent panels will be added
-            var container = root.Query<VisualElement>("ConfigureAgentsContainer").First();
-            if (container == null)
+            aiAgentContainer = root.Query<VisualElement>("ConfigureAgentsContainer").First();
+            if (aiAgentContainer == null)
             {
                 Debug.LogError("ConfigureAgentsContainer not found in UXML. Please ensure the container element exists.");
                 return;
@@ -41,7 +46,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             // Get agent names from registry
             var agentNames = AiAgentConfiguratorRegistry.GetAgentNames();
-            dropdown.choices = agentNames;
+            aiAgentDropdown.choices = agentNames;
 
             // Load saved selection from PlayerPrefs
             var savedAiAgentId = selectedAiAgentId.Value;
@@ -56,14 +61,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             // Set initial dropdown value without triggering callback
             if (agentNames.Count > 0)
             {
-                dropdown.SetValueWithoutNotify(agentNames[selectedIndex]);
+                aiAgentDropdown.SetValueWithoutNotify(agentNames[selectedIndex]);
             }
 
             // Load initial UI for selected agent
-            LoadAgentUI(container, selectedIndex);
+            LoadAgentUI(aiAgentContainer, selectedIndex);
 
             // Register callback for dropdown changes
-            dropdown.RegisterValueChangedCallback(evt =>
+            aiAgentDropdown.RegisterValueChangedCallback(evt =>
             {
                 var newIndex = agentNames.IndexOf(evt.newValue);
                 if (newIndex < 0) return;
@@ -73,8 +78,47 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 selectedAiAgentId.Value = configurator.AgentId;
 
                 // Load UI for the newly selected agent
-                LoadAgentUI(container, newIndex);
+                LoadAgentUI(aiAgentContainer, newIndex);
             });
+        }
+
+        private void InvalidateAndReloadAgentUI()
+        {
+            currentAiAgentConfigurator?.Invalidate();
+            if (aiAgentContainer == null || aiAgentDropdown == null)
+            {
+                Logger.LogError($"Cannot reload agent UI: {nameof(aiAgentContainer)} or {nameof(aiAgentDropdown)} is null.");
+                return;
+            }
+            var agentNames = AiAgentConfiguratorRegistry.GetAgentNames();
+            var index = agentNames.IndexOf(aiAgentDropdown.value);
+            if (index < 0 && agentNames.Count > 0)
+            {
+                index = 0;
+                aiAgentDropdown.SetValueWithoutNotify(agentNames[index]);
+            }
+            LoadAgentUI(aiAgentContainer, index);
+        }
+
+        private static void SetTokenFieldsVisible(TextField tokenField, VisualElement actionsRow, bool visible)
+        {
+            tokenField.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+            actionsRow.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
+        private void RestartServerIfWasRunning(bool wasRunning)
+        {
+            if (!wasRunning)
+                return;
+
+            McpServerManager.StopServer();
+
+            McpServerManager.ServerStatus
+                .Where(status => status == McpServerStatus.Stopped)
+                .Take(1)
+                .ObserveOnCurrentSynchronizationContext()
+                .Subscribe(_ => McpServerManager.StartServer())
+                .AddTo(_disposables);
         }
 
         void LoadAgentUI(VisualElement container, int selectedIndex)

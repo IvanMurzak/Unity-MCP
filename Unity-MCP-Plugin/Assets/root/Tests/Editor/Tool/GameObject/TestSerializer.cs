@@ -19,7 +19,6 @@ using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Converter;
 using com.IvanMurzak.Unity.MCP.Reflection.Converter;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
-using com.IvanMurzak.Unity.MCP.TestFiles;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -31,7 +30,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     {
         static void PrintSerializers<TTarget>()
         {
-            Debug.Log($"Serialize <b>[{typeof(TTarget)}]</b> priority:\n" + string.Join("\n", McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Converters.GetAllSerializers()
+            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
+            Debug.Log($"Serialize <b>[{typeof(TTarget)}]</b> priority:\n" + string.Join("\n", reflector.Converters.GetAllSerializers()
                 .Select(x => $"{x.GetType()}: Priority: {x.SerializationPriority(typeof(TTarget))}")
                 .ToList()));
         }
@@ -53,7 +53,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
         static void TestGetConverter(Type type, Type serializerType)
         {
-            var converter = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Converters.GetConverter(type);
+            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
+            var converter = reflector.Converters.GetConverter(type);
             Assert.IsNotNull(converter, $"{type}: Converter should not be null.");
             Assert.AreEqual(serializerType, converter!.GetType(), $"{type}: The Converter should be {serializerType}.");
         }
@@ -85,7 +86,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator SerializeMaterial()
         {
-            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
             var material = new Material(Shader.Find("Standard"));
 
@@ -122,7 +123,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator SerializeMaterialArray()
         {
-            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
             var material1 = new Material(Shader.Find("Standard"));
             var material2 = new Material(Shader.Find("Standard"));
@@ -150,7 +151,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
         void Test_Serialize_Deserialize<T>(T sourceObj)
         {
-            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
             var type = typeof(T);
             var serializedObj = reflector.Serialize(sourceObj, logger: _logger);

@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -47,7 +47,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override void RefreshItems()
         {
-            var toolManager = UnityMcpPlugin.Instance.McpPluginInstance?.McpManager.ToolManager;
+            var toolManager = UnityMcpPluginEditor.Instance.Tools;
             var refreshed = new List<ToolViewModel>();
 
             if (toolManager != null)
@@ -63,7 +63,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override void OnItemToggleChanged(ToolViewModel viewModel, bool isEnabled)
         {
-            var toolManager = UnityMcpPlugin.Instance.McpPluginInstance?.McpManager.ToolManager;
+            var toolManager = UnityMcpPluginEditor.Instance.Tools;
             if (toolManager == null)
             {
                 Logger.LogError("{method} ToolManager is not available.", nameof(OnItemToggleChanged));
@@ -76,7 +76,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 Logger.LogTrace("{method} Setting tool '{name}' enabled state to {enabled}.",
                     nameof(OnItemToggleChanged), viewModel.Name, isEnabled);
                 toolManager.SetToolEnabled(viewModel.Name, isEnabled);
-                UnityMcpPlugin.Instance.Save();
+                UnityMcpPluginEditor.Instance.Save();
             }
         }
 

@@ -17,11 +17,14 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using com.IvanMurzak.McpPlugin.Common;
 using UnityEngine;
+using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
     public class JsonAiAgentConfig : AiAgentConfig
     {
+        private static readonly JsonSerializerOptions WriteOptions = new() { WriteIndented = true };
+
         private readonly Dictionary<string, (JsonNode value, bool required, ValueComparisonMode comparison)> _properties = new();
         private readonly HashSet<string> _propertiesToRemove = new();
 
@@ -76,6 +79,48 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         {
             base.AddIdentityKey(key);
             return this;
+        }
+
+        public override void ApplyHttpAuthorization(bool isRequired, string? token)
+        {
+            if (isRequired && !string.IsNullOrEmpty(token))
+            {
+                SetProperty(
+                    key: "headers",
+                    value: new JsonObject { ["Authorization"] = JsonValue.Create($"Bearer {token}") },
+                    requiredForConfiguration: true
+                );
+            }
+            else
+            {
+                SetPropertyToRemove("headers");
+            }
+        }
+
+        public override void ApplyStdioAuthorization(bool isRequired, string? token)
+        {
+            // Remove HTTP-specific headers — not applicable to STDIO
+            SetPropertyToRemove("headers");
+
+            // Modify args: add or remove the token argument
+            if (!_properties.TryGetValue("args", out var argsProp) || argsProp.value is not JsonArray currentArgs)
+                return;
+
+            var tokenPrefix = $"{Args.Token}=";
+            var newArgs = new JsonArray();
+
+            foreach (var item in currentArgs)
+            {
+                if (item is JsonValue jsonVal && jsonVal.TryGetValue<string>(out var str) && str.StartsWith(tokenPrefix, StringComparison.Ordinal))
+                    continue; // Remove existing token arg
+
+                newArgs.Add(item != null ? JsonNode.Parse(item.ToJsonString()) : null);
+            }
+
+            if (isRequired && !string.IsNullOrEmpty(token))
+                newArgs.Add(JsonValue.Create($"{tokenPrefix}{token}"));
+
+            SetProperty("args", newArgs, argsProp.required, argsProp.comparison);
         }
 
         public override bool Configure()
@@ -152,9 +197,103 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 }
 
                 // Write back to file
-                File.WriteAllText(ConfigPath, rootObj.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+                File.WriteAllText(ConfigPath, rootObj.ToJsonString(WriteOptions));
 
                 return IsConfigured();
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error reading config file: {ex.Message}");
+                Debug.LogException(ex);
+                return false;
+            }
+        }
+
+        public override bool Unconfigure()
+        {
+            if (string.IsNullOrEmpty(ConfigPath) || !File.Exists(ConfigPath))
+                return false;
+
+            try
+            {
+                var json = File.ReadAllText(ConfigPath);
+                var rootObj = JsonNode.Parse(json)?.AsObject();
+                if (rootObj == null)
+                    return false;
+
+                var pathSegments = Consts.MCP.Server.BodyPathSegments(BodyPath);
+                var targetObj = NavigateToJsonPath(rootObj, pathSegments);
+                if (targetObj == null)
+                    return false;
+
+                var removed = false;
+
+                if (targetObj[DefaultMcpServerName] != null)
+                {
+                    targetObj.Remove(DefaultMcpServerName);
+                    removed = true;
+                }
+
+                foreach (var name in DeprecatedMcpServerNames)
+                {
+                    if (targetObj[name] != null)
+                    {
+                        targetObj.Remove(name);
+                        removed = true;
+                    }
+                }
+
+                var duplicateKeys = FindDuplicateServerEntryKeys(targetObj);
+                if (duplicateKeys.Count > 0)
+                {
+                    foreach (var key in duplicateKeys)
+                        targetObj.Remove(key);
+                    removed = true;
+                }
+
+                if (!removed)
+                    return false;
+
+                File.WriteAllText(ConfigPath, rootObj.ToJsonString(WriteOptions));
+                return true;
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"Error unconfiguring MCP client: {ex.Message}");
+                Debug.LogException(ex);
+                return false;
+            }
+        }
+
+        public override bool IsDetected()
+        {
+            if (string.IsNullOrEmpty(ConfigPath) || !File.Exists(ConfigPath))
+                return false;
+
+            try
+            {
+                var json = File.ReadAllText(ConfigPath);
+
+                if (string.IsNullOrWhiteSpace(json))
+                    return false;
+
+                var rootObj = JsonNode.Parse(json)?.AsObject();
+                if (rootObj == null)
+                    return false;
+
+                var pathSegments = Consts.MCP.Server.BodyPathSegments(BodyPath);
+                var targetObj = NavigateToJsonPath(rootObj, pathSegments);
+                if (targetObj == null)
+                    return false;
+
+                if (targetObj[DefaultMcpServerName] != null)
+                    return true;
+
+                foreach (var name in DeprecatedMcpServerNames)
+                    if (targetObj[name] != null)
+                        return true;
+
+                return FindDuplicateServerEntryKeys(targetObj).Count > 0;
             }
             catch (Exception ex)
             {
@@ -307,12 +446,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         }
 
         /// <summary>
-        /// Removes sibling server entries that represent the same server under a different name,
-        /// identified by matching identity key property values (e.g. "command", "url", "serverUrl").
+        /// Returns the keys of sibling server entries that represent the same server under a different
+        /// name, identified by matching identity key property values (e.g. "command", "url", "serverUrl").
         /// </summary>
-        private void RemoveDuplicateServerEntries(JsonObject targetObj)
+        private List<string> FindDuplicateServerEntryKeys(JsonObject targetObj)
         {
-            // Collect identity values we're about to write
             var ourIdentityValues = new Dictionary<string, (JsonNode value, ValueComparisonMode comparison)>();
             foreach (var identityKey in _identityKeys)
             {
@@ -321,10 +459,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
 
             if (ourIdentityValues.Count == 0)
-                return;
+                return new List<string>();
 
-            // Find sibling entries that share any identity value
-            var keysToRemove = new List<string>();
+            var keys = new List<string>();
             foreach (var kv in targetObj)
             {
                 if (kv.Key == DefaultMcpServerName)
@@ -339,13 +476,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                     var existingValue = entry[identity.Key];
                     if (existingValue != null && AreJsonValuesEquivalent(identity.Value.comparison, identity.Value.value, existingValue))
                     {
-                        keysToRemove.Add(kv.Key);
+                        keys.Add(kv.Key);
                         break;
                     }
                 }
             }
 
-            foreach (var key in keysToRemove)
+            return keys;
+        }
+
+        /// <summary>
+        /// Removes sibling server entries that represent the same server under a different name,
+        /// identified by matching identity key property values (e.g. "command", "url", "serverUrl").
+        /// </summary>
+        private void RemoveDuplicateServerEntries(JsonObject targetObj)
+        {
+            foreach (var key in FindDuplicateServerEntryKeys(targetObj))
                 targetObj.Remove(key);
         }
 

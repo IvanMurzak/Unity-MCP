@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -34,12 +34,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public override IEnumerator TearDown() => base.TearDown();
 
         /// <summary>
-        /// Creates a new Reflector configured similarly to UnityMcpPlugin.CreateDefaultReflector()
+        /// Creates a new Reflector configured similarly to UnityMcpPluginEditor.CreateDefaultReflector()
         /// but with custom blacklisted types for testing.
         /// </summary>
         private Reflector CreateTestReflector()
         {
-            return UnityMcpPlugin.Instance.CreateDefaultReflector();
+            return UnityMcpPluginEditor.Instance.CreateDefaultReflector();
         }
 
         [UnityTest]

@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -37,9 +37,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
         .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
         .SetProperty("args", new JsonArray {
-            $"{Args.Port}={UnityMcpPlugin.Port}",
-            $"{Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-            $"{Args.ClientTransportMethod}={TransportMethod.stdio}"
+            $"{Args.Port}={UnityMcpPluginEditor.Port}",
+            $"{Args.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}",
+            $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
+            $"{Args.Authorization}={UnityMcpPluginEditor.AuthOption}",
+            $"{Args.Token}={UnityMcpPluginEditor.Token}"
         }, requiredForConfiguration: true)
         .SetPropertyToRemove("url");
 
@@ -51,9 +53,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
         .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
         .SetProperty("args", new JsonArray {
-            $"{Args.Port}={UnityMcpPlugin.Port}",
-            $"{Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-            $"{Args.ClientTransportMethod}={TransportMethod.stdio}"
+            $"{Args.Port}={UnityMcpPluginEditor.Port}",
+            $"{Args.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}",
+            $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
+            $"{Args.Authorization}={UnityMcpPluginEditor.AuthOption}",
+            $"{Args.Token}={UnityMcpPluginEditor.Token}"
         }, requiredForConfiguration: true)
         .SetPropertyToRemove("url");
 
@@ -63,7 +67,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             bodyPath: "servers"
         )
         .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
-        .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
+        .SetProperty("url", JsonValue.Create(UnityMcpPluginEditor.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
         .SetPropertyToRemove("command")
         .SetPropertyToRemove("args");
 
@@ -73,7 +77,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             bodyPath: "servers"
         )
         .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
-        .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
+        .SetProperty("url", JsonValue.Create(UnityMcpPluginEditor.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
         .SetPropertyToRemove("command")
         .SetPropertyToRemove("args");
 
