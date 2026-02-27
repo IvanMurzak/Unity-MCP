@@ -1,0 +1,55 @@
+<svg width="1184" height="40" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="hazardStripes" x="0" y="0" width="120" height="40" patternUnits="userSpaceOnUse">
+      <rect width="120" height="120" fill="transparent"/>
+      <path d="M 0,0 L 60,0 L 120,120 L 60,120 Z" fill="#FFDC00"/>
+    </pattern>
+    
+    <clipPath id="viewportClip">
+      <rect x="0" y="0" width="1184" height="40"/>
+    </clipPath>
+    
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@700;800&amp;display=swap');
+      
+      text {
+        font-family: 'Inter', sans-serif;
+        font-weight: 700;
+        font-size: 56px;
+        text-anchor: middle;
+        dominant-baseline: middle;
+      }
+      
+      .ai-text {
+        fill: #FF0022;
+        font-weight: 800;
+      }
+      
+      .main-text {
+        fill: #FFFFFF;
+      }
+      
+      .italic-text {
+        font-style: italic;
+      }
+      
+      .text-main {
+        filter: url(#textShadow);
+        cursor: pointer;
+      }
+    </style>
+  </defs>
+  
+  <!-- Animated hazard background -->
+  <g clip-path="url(#viewportClip)">
+    <rect x="-240" y="0" width="1664" height="40" fill="url(#hazardStripes)">
+      <animateTransform
+        attributeName="transform"
+        type="translate"
+        from="0 0"
+        to="120 0"
+        dur="5s"
+        repeatCount="indefinite"/>
+    </rect>
+  </g>
+</svg>
