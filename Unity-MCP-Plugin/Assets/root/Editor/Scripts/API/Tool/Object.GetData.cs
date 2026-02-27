@@ -27,7 +27,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             ObjectGetDataToolId,
-            Title = "Object / Get Data"
+            Title = "Object / Get Data",
+            ReadOnlyHint = true,
+            IdempotentHint = true
         )]
         [Description("Get data of the specified Unity Object. " +
             "Returns serialized data of the object including its properties and fields. " +

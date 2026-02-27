@@ -25,7 +25,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             PackageAddToolId,
-            Title = "Package Manager / Add"
+            Title = "Package Manager / Add",
+            OpenWorldHint = true
         )]
         [Description("Install a package from the Unity Package Manager registry, Git URL, or local path. " +
             "This operation modifies the project's manifest.json and triggers package resolution. " +

@@ -62,7 +62,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     if (!AssetDatabase.CopyAsset(sourcePath, destinationPath))
                     {
                         response.Errors ??= new();
-                        response.Errors.Add($"[Error] Failed to copy asset from {sourcePath} to {destinationPath}.");
+                        response.Errors.Add($"Failed to copy asset from {sourcePath} to {destinationPath}.");
                         continue;
                     }
                     var newAssetType = AssetDatabase.GetMainAssetTypeAtPath(destinationPath);

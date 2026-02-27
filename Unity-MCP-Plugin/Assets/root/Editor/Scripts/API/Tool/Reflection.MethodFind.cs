@@ -25,7 +25,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             ReflectionMethodFindToolId,
-            Title = "Method C# / Find"
+            Title = "Method C# / Find",
+            ReadOnlyHint = true,
+            IdempotentHint = true
         )]
         [Description("Find method in the project using C# Reflection. " +
             "It looks for all assemblies in the project and finds method by its name, class name and parameters. " +

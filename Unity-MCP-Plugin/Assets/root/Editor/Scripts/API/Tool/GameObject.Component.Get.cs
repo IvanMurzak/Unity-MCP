@@ -30,7 +30,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             GameObjectComponentGetToolId,
-            Title = "GameObject / Component / Get"
+            Title = "GameObject / Component / Get",
+            ReadOnlyHint = true,
+            IdempotentHint = true
         )]
         [Description("Get detailed information about a specific Component on a GameObject. " +
         "Returns component type, enabled state, and optionally serialized fields and properties. " +

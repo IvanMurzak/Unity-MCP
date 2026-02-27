@@ -922,12 +922,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             if (labelPath != null) labelPath.tooltip = skillsOutputPathTooltip;
             inputPath.tooltip = skillsOutputPathTooltip;
 
-            inputPath.SetValueWithoutNotify(UnityMcpPluginEditor.SkillsRootFolder);
+            inputPath.SetValueWithoutNotify(UnityMcpPluginEditor.SkillsPath);
             toggleAutoGenerate.SetValueWithoutNotify(UnityMcpPluginEditor.GenerateSkillFiles);
 
             inputPath.RegisterValueChangedCallback(evt =>
             {
-                UnityMcpPluginEditor.SkillsRootFolder = evt.newValue;
+                UnityMcpPluginEditor.SkillsPath = evt.newValue;
                 UnityMcpPluginEditor.Instance.Save();
             });
 
@@ -939,17 +939,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             btnGenerate.RegisterCallback<ClickEvent>(evt =>
             {
-                var tools = UnityMcpPluginEditor.Instance.Tools;
-                if (tools == null)
-                {
-                    Logger.LogWarning("Cannot generate skill files: Tools manager is not available.");
-                    return;
-                }
-                new SkillFileGenerator(UnityMcpPluginEditor.Instance.Logger).Generate(
-                    tools: tools.GetAllTools(),
-                    rootFolder: "unity-editor",
-                    basePath: UnityMcpPluginEditor.SkillsRootFolder
-                );
+                UnityMcpPluginEditor.Instance.McpPluginInstance!.GenerateSkillFiles(UnityMcpPluginEditor.ProjectRootPath);
             });
         }
 

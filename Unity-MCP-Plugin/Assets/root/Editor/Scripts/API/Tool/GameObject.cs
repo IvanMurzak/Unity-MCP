@@ -41,7 +41,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 var instanceIdSample = new { componentData = availableComponentsPreview[0] }.ToJson(reflector);
                 var helpMessage = $"Use 'name=[index]' to specify the component. Or use 'instanceID' to specify the component.\n{instanceIdSample}";
 
-                return $"[Error] No component with instanceID '{componentInstanceID}' found in GameObject.\n{helpMessage}\nAvailable components preview:\n{previewJson}";
+                return $"No component with instanceID '{componentInstanceID}' found in GameObject.\n{helpMessage}\nAvailable components preview:\n{previewJson}";
             }
             public static string NotFoundComponents(ComponentRefList componentRefs, IEnumerable<UnityEngine.Component> allComponents)
             {
@@ -58,10 +58,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     .ToList();
                 var previewJson = availableComponentsPreview.ToJson(reflector);
 
-                return $"[Error] No components with instanceIDs [{componentInstanceIDsString}] found in GameObject.\nAvailable components preview:\n{previewJson}";
+                return $"No components with instanceIDs [{componentInstanceIDsString}] found in GameObject.\nAvailable components preview:\n{previewJson}";
             }
             public static string InvalidInstanceID(Type holderType, string fieldName)
-                => $"[Error] Invalid instanceID '{fieldName}' for '{holderType.GetTypeId()}'. It should be a valid field name.";
+                => $"Invalid instanceID '{fieldName}' for '{holderType.GetTypeId()}'. It should be a valid field name.";
         }
     }
 }

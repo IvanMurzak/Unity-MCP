@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common;
@@ -39,14 +40,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         public ResponseResourceContent[] CurrentScene(string uri, string path)
         {
             if (string.IsNullOrEmpty(path))
-                throw new System.Exception("Path to the GameObject is empty.");
+                throw new Exception("Path to the GameObject is empty.");
 
             return MainThread.Instance.Run(() =>
             {
                 var go = GameObjectUtils.FindByPath(path)
-                    ?? throw new System.Exception($"GameObject by path '{path}' not found.");
+                    ?? throw new Exception($"GameObject by path '{path}' not found.");
 
-                var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new System.Exception("Reflector is not available.");
+                var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
                 return ResponseResourceContent.CreateText(
                     uri: uri,

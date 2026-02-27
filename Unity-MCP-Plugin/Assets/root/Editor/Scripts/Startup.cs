@@ -11,7 +11,6 @@
 #nullable enable
 using com.IvanMurzak.McpPlugin.Skills;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
-using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.Extensions.Logging;
 using UnityEditor;
@@ -40,26 +39,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             UpdateChecker.Init();
             PackageUtils.Init();
 
-            GenerateSkillFilesIfNeeded();
-        }
-
-        static void GenerateSkillFilesIfNeeded()
-        {
-            if (!UnityMcpPluginEditor.GenerateSkillFiles)
-                return;
-
-            var tools = UnityMcpPluginEditor.Instance.Tools;
-            if (tools == null)
-            {
-                _logger.LogDebug("Cannot auto-generate skill files: Tools manager is not available.");
-                return;
-            }
-
-            new SkillFileGenerator(UnityMcpPluginEditor.Instance.Logger).Generate(
-                tools: tools.GetAllTools(),
-                rootFolder: "unity-editor",
-                basePath: UnityMcpPluginEditor.SkillsRootFolder
-            );
+            UnityMcpPluginEditor.Instance.McpPluginInstance!.GenerateSkillFilesIfNeeded(UnityMcpPluginEditor.ProjectRootPath);
         }
     }
 }

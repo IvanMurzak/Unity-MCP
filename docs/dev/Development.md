@@ -4,10 +4,11 @@
 [![MCP](https://badge.mcpx.dev 'MCP Server')](https://modelcontextprotocol.io/introduction)
 [![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&labelColor=333A41 'OpenUPM package')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
 [![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
-[![Unity Editor](https://img.shields.io/badge/Editor-X?style=flat&logo=unity&labelColor=333A41&color=49BC5C 'Unity Editor supported')](https://unity.com/releases/editor/archive)
-[![Unity Runtime](https://img.shields.io/badge/Runtime-X?style=flat&logo=unity&labelColor=333A41&color=49BC5C 'Unity Runtime supported')](https://unity.com/releases/editor/archive)
+[![Unity Editor](https://img.shields.io/badge/Editor-X?style=flat&logo=unity&labelColor=333A41&color=2A2A2A 'Unity Editor supported')](https://unity.com/releases/editor/archive)
+[![Unity Runtime](https://img.shields.io/badge/Runtime-X?style=flat&logo=unity&labelColor=333A41&color=2A2A2A 'Unity Runtime supported')](https://unity.com/releases/editor/archive)
 [![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg 'Tests Passed')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)</br>
 [![Discord](https://img.shields.io/badge/Discord-Join-7289da?logo=discord&logoColor=white&labelColor=333A41 'Join')](https://discord.gg/cfbdMZX99G)
+[![OpenUPM](https://img.shields.io/badge/dynamic/json?labelColor=333A41&label=Downloads&query=%24.downloads&suffix=%2Fmonth&url=https%3A%2F%2Fpackage.openupm.com%2Fdownloads%2Fpoint%2Flast-month%2Fcom.ivanmurzak.unity.mcp)](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
 [![Stars](https://img.shields.io/github/stars/IvanMurzak/Unity-MCP 'Stars')](https://github.com/IvanMurzak/Unity-MCP/stargazers)
 [![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&labelColor=333A41)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
@@ -16,29 +17,15 @@
 
 </div>
 
-**Vision**
-
-We believe that AI will be (if not already) an important part of the game development. There are amazing AI interfaces such as `Claude`, `Copilot`, `Cursor` and many others. They provide amazing agents and features and the most important - they keep improving it. These projects have huge budgets and probably will be the best AI platforms for professionals. We connect game development with these tools, this project works in a pair with them, not against them. We will grow with them. That is why this project won't implement internal isolated chat window. We want to build simple and elegant solution which became a foundation for AI systems in game development with Unity Engine ecosystem.
-
-**Project goals**
-
-- Deliver high quality AI game development solution for **free** to everyone
-- Provide a highly customizable platform for game developers for customizing AI features for their needs
-- Allow to utilize the best AI instruments for game development, all in one place
-- Maintain and support cutting edge AI technologies for game development especially in Unity Engine and beyond the engine
-
-**Contribute**
-
-Any contribution to the project is highly appreciated. Please follow this document to see out goals, vision and project structure. All of that should help to let you participate in the new technological era of game development
-
-**This document**
-
-This document explains the internal project structure, design, code style, and main principals. Please use it if you are a contributor or if you like to understand the project in depth.
+This document explains the internal structure, design, code style, and main principles of Unity-MCP. Use it if you are a contributor or want to understand the project in depth.
 
 > **[💬 Join our Discord Server](https://discord.gg/cfbdMZX99G)** - Ask questions, showcase your work, and connect with other developers!
 
-## Content
+## Contents
 
+- [Vision \& Goals](#vision--goals)
+- [Prerequisites](#prerequisites)
+- [Local Development Setup](#local-development-setup)
 - [Contribute](#contribute)
 - [Projects structure](#projects-structure)
   - [🔹Unity-MCP-Server](#unity-mcp-server)
@@ -50,10 +37,15 @@ This document explains the internal project structure, design, code style, and m
     - [MCP features](#mcp-features)
       - [Add `MCP Tool`](#add-mcp-tool)
       - [Add `MCP Prompt`](#add-mcp-prompt)
-  - [🔺Unity-MCP-Common](#unity-mcp-common)
   - [◾Installer (Unity)](#installer-unity)
-- [Code style](#code-style)
+- [Code Style](#code-style)
+  - [Key Conventions](#key-conventions)
+- [Running Tests](#running-tests)
+  - [Running locally](#running-locally)
+  - [Test modes](#test-modes)
+  - [Interpreting CI results](#interpreting-ci-results)
 - [CI/CD](#cicd)
+  - [For Contributors](#for-contributors)
   - [Workflows Overview](#workflows-overview)
     - [🚀 release.yml](#-releaseyml)
     - [🧪 test\_pull\_request.yml](#-test_pull_requestyml)
@@ -64,6 +56,81 @@ This document explains the internal project structure, design, code style, and m
   - [Security Considerations](#security-considerations)
   - [Deployment Targets](#deployment-targets)
 
+---
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+# Vision & Goals
+
+We believe that AI will be (if not already) an important part of game development. There are amazing AI interfaces such as `Claude`, `Copilot`, `Cursor` and many others that keep improving. We connect game development *with* these tools, not against them — Unity MCP is a foundation for AI systems in the Unity Engine ecosystem, not an isolated chat window.
+
+**Project goals**
+
+- Deliver a high quality AI game development solution for **free** to everyone
+- Provide a highly customizable platform for game developers to extend AI features for their needs
+- Allow utilization of the best AI instruments for game development, all in one place
+- Maintain and support cutting-edge AI technologies especially in Unity Engine and beyond
+
+---
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+# Prerequisites
+
+Before contributing, ensure the following tools are installed:
+
+| Tool | Version | Purpose |
+| ---- | ------- | ------- |
+| [Unity Editor](https://unity.com/releases/editor/archive) | 2022.3+ / 2023.2+ / 6000.3+ | Run and test the plugin |
+| [.NET SDK](https://dotnet.microsoft.com/download) | 9.0+ | Build and run the MCP Server |
+| [Node.js](https://nodejs.org/) | 18+ | Run MCP Inspector for debugging |
+| PowerShell | 7+ | Execute build and utility scripts |
+| Docker *(optional)* | Latest | Build and test Docker images |
+
+> A free Unity Personal license works for contribution.
+
+---
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+# Local Development Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/IvanMurzak/Unity-MCP.git
+   cd Unity-MCP
+   ```
+
+2. **Open the Plugin in Unity**
+   - Open Unity Hub → Add project → select the `Unity-MCP-Plugin/` folder
+   - Unity will compile all assemblies automatically on first open
+
+3. **Open the Server in your IDE**
+   - Open `Unity-MCP-Server/Server.sln` in Visual Studio, Rider, or VS Code
+   - Restore NuGet packages: `dotnet restore`
+
+4. **Run the Server locally**
+   ```bash
+   cd Unity-MCP-Server
+   dotnet run --project com.IvanMurzak.Unity.MCP.Server.csproj -- --port 8080 --client-transport stdio
+   ```
+
+5. **Point the Plugin at your local server** *(optional — skips the auto-downloaded binary)*
+   - In Unity: open `Window/AI Game Developer — MCP`
+   - Set the port to match your local server (`8080` by default)
+   - The plugin will connect automatically
+
+6. **Debug with MCP Inspector** *(optional)*
+   ```bash
+   Unity-MCP-Plugin/Commands/start_mcp_inspector.bat   # Windows (.bat)
+   Unity-MCP-Server/commands/start-mcp-inspector.ps1   # PowerShell (cross-platform)
+   ```
+   Requires Node.js. Opens a browser UI at `http://localhost:5173` for live inspection of MCP protocol messages.
+
+---
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
 # Contribute
 
 Lets build the bright game development future together, contribute to the project. Use this document to understand the project structure and how exactly it works.
@@ -72,11 +139,13 @@ Lets build the bright game development future together, contribute to the projec
 2. Make your improvements, follow code style
 3. [Create Pull Request](https://github.com/IvanMurzak/Unity-MCP/compare)
 
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
 # Projects structure
 
 ```mermaid
 graph LR
-  A(◽MCP-Client)
+  A(◽AI agent)
   B(🔹Unity-MCP-Server)
   C(🔸Unity-MCP-Plugin)
   D(🎮Unity)
@@ -87,9 +156,9 @@ graph LR
   C <--> D
 ```
 
-◽**MCP Client** - Any AI interface such as: *Claude*, *Copilot*, *Cursor* or any other, it is not part of these project, but it is an important element of the architecture.
+◽**AI agent** - Any AI interface such as: *Claude*, *Copilot*, *Cursor* or any other, it is not part of these project, but it is an important element of the architecture.
 
-🔹**Unity-MCP-Server** - `MCP Server` that connects to `MCP Client` and operates with it. In the same `Unity-MCP-Server` communicates with `Unity-MCP-Plugin` over SignalR. May run locally or in a cloud with HTTP transport. Tech stack: `C#`, `ASP.NET Core`, `SignalR`
+🔹**Unity-MCP-Server** - `MCP Server` that connects to `AI agent` and operates with it. In the same `Unity-MCP-Server` communicates with `Unity-MCP-Plugin` over SignalR. May run locally or in a cloud with HTTP transport. Tech stack: `C#`, `ASP.NET Core`, `SignalR`
 
 🔸**Unity-MCP-Plugin** - `Unity Plugin` which is integrated into a Unity project, has access to Unity's API. Communicates with `Unity-MCP-Server` and executes commands from the server. Tech stack: `C#`, `Unity`, `SignalR`
 
@@ -99,7 +168,7 @@ graph LR
 
 ## 🔹Unity-MCP-Server
 
-A C# ASP.NET Core application that acts as a bridge between MCP clients (AI interfaces like Claude, Cursor) and Unity Editor instances. The server implements the [Model Context Protocol](https://github.com/modelcontextprotocol) using the [csharp-sdk](https://github.com/modelcontextprotocol/csharp-sdk).
+A C# ASP.NET Core application that acts as a bridge between AI agents (AI interfaces like Claude, Cursor) and Unity Editor instances. The server implements the [Model Context Protocol](https://github.com/modelcontextprotocol) using the [csharp-sdk](https://github.com/modelcontextprotocol/csharp-sdk).
 
 > Project location: `Unity-MCP-Server`
 
@@ -108,17 +177,17 @@ A C# ASP.NET Core application that acts as a bridge between MCP clients (AI inte
 1. **MCP Protocol Implementation** ([ExtensionsMcpServer.cs](Unity-MCP-Server/src/Extension/ExtensionsMcpServer.cs))
    - Implements MCP server with support for Tools, Prompts, and Resources
    - Supports both STDIO and HTTP transport methods
-   - Handles MCP client requests: `CallTool`, `GetPrompt`, `ReadResource`, and their list operations
-   - Sends notifications to MCP clients when capabilities change (tool/prompt list updates)
+   - Handles AI agent requests: `CallTool`, `GetPrompt`, `ReadResource`, and their list operations
+   - Sends notifications to AI agents when capabilities change (tool/prompt list updates)
 
 2. **SignalR Hub Communication** ([RemoteApp.cs](Unity-MCP-Server/src/Hub/RemoteApp.cs), [BaseHub.cs](Unity-MCP-Server/src/Hub/BaseHub.cs))
    - Manages real-time bidirectional communication with Unity-MCP-Plugin via SignalR
    - Handles version handshake to ensure API compatibility between server and plugin
    - Tracks client connections and manages disconnections
-   - Routes tool/prompt/resource update notifications from Unity to MCP clients
+   - Routes tool/prompt/resource update notifications from Unity to AI agents
 
 3. **Request Routing & Execution** ([ToolRouter.Call.cs](Unity-MCP-Server/src/Routing/Tool/ToolRouter.Call.cs), [PromptRouter.Get.cs](Unity-MCP-Server/src/Routing/Prompt/PromptRouter.Get.cs), [ResourceRouter.ReadResource.cs](Unity-MCP-Server/src/Routing/Resource/ResourceRouter.ReadResource.cs))
-   - Routes MCP client requests to the appropriate Unity-MCP-Plugin instance
+   - Routes AI agent requests to the appropriate Unity-MCP-Plugin instance
    - Handles Tool calls, Prompt requests, and Resource reads
    - Performs error handling and validation
    - Converts between MCP protocol formats and internal data models
@@ -171,7 +240,7 @@ The Editor component provides Unity Editor integration, implementing MCP capabil
    - Downloads and manages `Unity-MCP-Server` executable from GitHub releases
    - Cross-platform binary selection (Windows/macOS/Linux, x86/x64/ARM/ARM64)
    - Version compatibility enforcement between server and plugin
-   - Configuration generation for MCP clients (JSON with executable paths and connection settings)
+   - Configuration generation for AI agents (JSON with executable paths and connection settings)
 
 3. **MCP API Implementation** ([Scripts/API/](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/))
    - **Tools** (50+): GameObject, Scene, Assets, Prefabs, Scripts, Components, Editor Control, Test Runner, Console, Reflection
@@ -264,25 +333,6 @@ public static class Prompt_ScriptingCode
 
 ---
 
-## 🔺Unity-MCP-Common
-
-```mermaid
-graph TD
-  A(🔹Unity-MCP-Server)
-  B(🔸Unity-MCP-Plugin)
-  C(🔺Unity-MCP-Common)
-
-  %% Relationships
-  A --> C
-  B --> C
-```
-
-**Unity-MCP-Common** - shared code base between `Unity-MCP-Server` and `Unity-MCP-Plugin`. It is needed to simplify the data model and API sharing between projects. It is an independent dotnet library project.
-
-> Project location: `Unity-MCP-Plugin/Assets/root/Unity-MCP-Common`
-
----
-
 ## ◾Installer (Unity)
 
 ```mermaid
@@ -304,9 +354,26 @@ graph LR
 
 ---
 
-# Code style
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
-This project follows consistent C# coding patterns. Below is a comprehensive example demonstrating the key conventions:
+# Code Style
+
+This project follows consistent C# coding patterns. All new code must adhere to these conventions.
+
+## Key Conventions
+
+1. **File Headers**: Include copyright notice in box comment format at the top of every file
+2. **Nullable Context**: Use `#nullable enable` for null safety — no implicit nulls
+3. **Attributes**: Leverage `[McpPluginTool]`, `[McpPluginPrompt]`, `[McpPluginResource]` for MCP discovery
+4. **Partial Classes**: Split functionality across files (e.g., `Tool_GameObject.Create.cs`, `Tool_GameObject.Destroy.cs`)
+5. **Main Thread Execution**: Wrap all Unity API calls with `MainThread.Instance.Run()`
+6. **Error Handling**: Throw exceptions for errors — use `ArgumentException` or `Exception`, never return error strings
+7. **Return Types**: Return typed data models annotated with `[Description]` for structured AI feedback
+8. **Descriptions**: Annotate all public APIs and parameters with `[Description]` for AI guidance
+9. **Naming**: PascalCase for public members and types, `_camelCase` for private readonly fields
+10. **Null Safety**: Use nullable types (`?`) and null-coalescing operators (`??`, `??=`)
+
+The annotated example below demonstrates how these conventions work together:
 
 ```csharp
 /*
@@ -329,9 +396,9 @@ using UnityEditor;
 
 using System;
 using System.ComponentModel;
-using System.Threading.Tasks;
-using com.IvanMurzak.Unity.MCP.Common;
-using com.IvanMurzak.Unity.MCP.Utils;
+using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -342,26 +409,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     // Pattern: One file per operation (e.g., GameObject.Create.cs, GameObject.Destroy.cs)
     public partial class Tool_GameObject
     {
-        // Nested Error class centralizes error messages for maintainability
-        public static class Error
-        {
-            // Static methods for consistent error formatting
-            public static string GameObjectNameIsEmpty()
-                => "[Error] GameObject name is empty. Please provide a valid name.";
-
-            public static string NotFoundGameObjectAtPath(string path)
-                => $"[Error] GameObject '{path}' not found.";
-        }
-
         // MCP Tool declaration with attribute-based metadata
         [McpPluginTool(
-            "GameObject_Create",                    // Unique tool identifier
-            Title = "Create a new GameObject"       // Human-readable title
+            "gameobject-create",                    // Unique tool identifier (kebab-case)
+            Title = "GameObject / Create"           // Human-readable title
         )]
         // Description attribute guides AI on when/how to use this tool
         [Description(@"Create a new GameObject in the scene.
 Provide position, rotation, and scale to minimize subsequent operations.")]
-        public string Create
+        public CreateResult Create                   // Return a typed data model, not a string
         (
             // Parameter descriptions help AI understand expected inputs
             [Description("Name of the new GameObject.")]
@@ -379,65 +435,63 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
             [Description("Transform scale of the GameObject.")]
             Vector3? scale = null
         )
-        // Lambda expression syntax for immediate main thread execution
-        => MainThread.Instance.Run(() =>           // All Unity API calls MUST run on main thread
         {
-            // Validate input parameters early
+            // Validate before entering the main thread — throw exceptions for errors
             if (string.IsNullOrEmpty(name))
-                return Error.GameObjectNameIsEmpty();
+                throw new ArgumentException("Name cannot be null or empty.", nameof(name));
 
-            // Null-coalescing assignment for default values
-            position ??= Vector3.zero;
-            rotation ??= Vector3.zero;
-            scale ??= Vector3.one;
-
-            // Create GameObject using Unity API
-            var go = new GameObject(name);
-
-            // Set parent if provided
-            if (parentGameObjectRef?.IsValid ?? false)
+            return MainThread.Instance.Run(() =>           // All Unity API calls MUST run on main thread
             {
-                var parentGo = parentGameObjectRef.FindGameObject(out var error);
-                if (error != null)
-                    return $"[Error] {error}";
+                // Null-coalescing assignment for default values
+                position ??= Vector3.zero;
+                rotation ??= Vector3.zero;
+                scale ??= Vector3.one;
 
-                go.transform.SetParent(parentGo.transform, worldPositionStays: false);
-            }
-
-            // Apply transform values
-            go.transform.localPosition = position.Value;
-            go.transform.localRotation = Quaternion.Euler(rotation.Value);
-            go.transform.localScale = scale.Value;
-
-            // Mark as modified for Unity Editor
-            EditorUtility.SetDirty(go);
-
-            // Return success message with structured data
-            // Use string interpolation for readable formatting
-            return $"[Success] Created GameObject.\ninstanceID: {go.GetInstanceID()}, path: {go.GetPath()}";
-        });
-
-        // Async method example with proper error handling
-        public static async Task<string> AsyncOperation(string parameter)
-        {
-            try
-            {
-                // Background work can happen here
-                await Task.Delay(100);
-
-                // Switch to main thread for Unity API calls
-                return await MainThread.Instance.RunAsync(() =>
+                // Resolve optional parent — throw on bad reference, don't return error strings
+                var parentGo = default(GameObject);
+                if (parentGameObjectRef?.IsValid(out _) == true)
                 {
-                    // Unity API calls here
-                    return "[Success] Async operation completed.";
-                });
-            }
-            catch (Exception ex)
-            {
-                // Log exceptions with structured logging
-                Debug.LogException(ex);
-                return $"[Error] Operation failed: {ex.Message}";
-            }
+                    parentGo = parentGameObjectRef.FindGameObject(out var error);
+                    if (error != null)
+                        throw new ArgumentException(error, nameof(parentGameObjectRef));
+                }
+
+                // Create GameObject using Unity API
+                var go = new GameObject(name);
+
+                // Set parent if provided
+                if (parentGo != null)
+                    go.transform.SetParent(parentGo.transform, worldPositionStays: false);
+
+                // Apply transform values
+                go.transform.localPosition = position.Value;
+                go.transform.localRotation = Quaternion.Euler(rotation.Value);
+                go.transform.localScale = scale.Value;
+
+                // Mark as modified for Unity Editor
+                EditorUtility.SetDirty(go);
+
+                // Return a typed result — properties annotated with [Description] for AI
+                return new CreateResult
+                {
+                    InstanceId = go.GetInstanceID(),
+                    Path       = go.GetPath(),
+                    Name       = go.name,
+                };
+            });
+        }
+
+        // Typed result class — structured data returned to the AI client
+        public class CreateResult
+        {
+            [Description("Instance ID of the created GameObject.")]
+            public int InstanceId { get; set; }
+
+            [Description("Hierarchy path of the created GameObject.")]
+            public string? Path { get; set; }
+
+            [Description("Name of the created GameObject.")]
+            public string? Name { get; set; }
         }
     }
 
@@ -457,24 +511,61 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 }
 ```
 
-**Key Conventions:**
+---
 
-1. **File Headers**: Include copyright notice in box comment format
-2. **Nullable Context**: Use `#nullable enable` for null safety
-3. **Attributes**: Leverage `[McpPluginTool]`, `[McpPluginPrompt]`, `[McpPluginResource]` for MCP discovery
-4. **Partial Classes**: Split functionality across files (e.g., `Tool_GameObject.Create.cs`)
-5. **Main Thread Execution**: Wrap Unity API calls with `MainThread.Instance.Run()`
-6. **Error Handling**: Centralize error messages in nested `Error` classes
-7. **Return Format**: Use `[Success]` or `[Error]` prefixes in return strings
-8. **Descriptions**: Annotate all public APIs with `[Description]` for AI guidance
-9. **Naming**: Use PascalCase for public members, camelCase for private/local
-10. **Null Safety**: Use nullable types (`?`) and null-coalescing operators (`??`, `??=`)
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+# Running Tests
+
+Tests cover three modes across three Unity versions (2022, 2023, 6000) and two OSes (Windows, Ubuntu) — 18 combinations total.
+
+## Running locally
+
+**Unity Test Runner (GUI)**
+1. Open the `Unity-MCP-Plugin/` project in Unity
+2. Go to `Window > General > Test Runner`
+3. Select **EditMode** or **PlayMode** tab
+4. Click **Run All** or select specific tests and **Run Selected**
+
+**PowerShell script (command line)**
+```powershell
+# Run tests for a specific Unity version and mode
+.\commands\run-unity-tests.ps1 -unityVersion "6000.3.1f1" -testMode "editmode"
+```
+
+## Test modes
+
+| Mode | What it tests | Location |
+| ---- | ------------- | -------- |
+| **EditMode** | Tool logic, serialization, editor utilities — no Play mode needed | `Assets/root/Tests/Editor` |
+| **PlayMode** | Runtime plugin, SignalR connection, main thread dispatch | `Assets/root/Tests/Runtime` |
+| **Standalone** | Full player build with embedded plugin | Requires a player build step |
+
+## Interpreting CI results
+
+Each CI job is named `test-unity-{version}-{mode}` (e.g., `test-unity-6000-3-1f1-editmode`). When a job fails:
+1. Open the failing job in GitHub Actions
+2. Expand the **Unity Test Runner** step for inline output
+3. Download the **test-results** artifact for the full XML report
+4. Fix the test and push — CI reruns automatically
 
 ---
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 # CI/CD
 
 The project implements a comprehensive CI/CD pipeline using GitHub Actions with multiple workflows orchestrating the build, test, and deployment processes.
+
+## For Contributors
+
+Here is what you need to know when working with CI as a contributor:
+
+- **PRs from forks** require a maintainer to apply the `ci-ok` label before CI starts. This is a security measure to prevent untrusted code from accessing secrets.
+- **Do not modify workflow files** in `.github/workflows/` in your PR — the CI check will abort if it detects changes to these files from an untrusted contributor.
+- **All 18 test matrix combinations must pass** before a PR can be merged. If your change breaks only one combination (e.g., `2022-editmode`), that job will show a red ✗ while others are green.
+- **Re-running failed jobs:** Go to the PR → **Checks** tab → click a failed job → **Re-run failed jobs**. This is useful for transient Unity Editor crashes.
+- **Workflow run order:** `test_pull_request.yml` runs on your PR. `release.yml` runs only after merging to `main`. You don't need to trigger releases manually.
 
 ## Workflows Overview
 
@@ -581,3 +672,5 @@ The project implements a comprehensive CI/CD pipeline using GitHub Actions with 
 2. **NuGet** - MCP Server package for .NET developers
 3. **Docker Hub** - Containerized MCP Server for cloud deployments
 4. **OpenUPM** - Unity plugin package (automatically synced from GitHub releases)
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)

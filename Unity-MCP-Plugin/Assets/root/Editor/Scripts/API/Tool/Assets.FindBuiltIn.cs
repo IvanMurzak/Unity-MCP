@@ -28,7 +28,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             AssetsFindBuiltInToolId,
-            Title = "Assets / Find (Built-in)"
+            Title = "Assets / Find (Built-in)",
+            ReadOnlyHint = true,
+            IdempotentHint = true
         )]
         [Description("Search the built-in assets of the Unity Editor located in the built-in resources: " +
             ExtensionsRuntimeObject.UnityEditorBuiltInResourcesPath + ". " +
