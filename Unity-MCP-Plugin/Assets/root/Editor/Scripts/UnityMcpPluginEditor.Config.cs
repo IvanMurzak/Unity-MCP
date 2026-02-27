@@ -18,14 +18,46 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP
 {
-    public partial class UnityMcpPlugin
+    public partial class UnityMcpPluginEditor
     {
         public static string ResourcesFileName => "AI-Game-Developer-Config";
-        public static string AssetsFilePath => $"Assets/Resources/{ResourcesFileName}.json";
+
+        /// <summary>
+        /// Project-relative path used by Unity's AssetDatabase API.
+        /// Do NOT use this with System.IO File/Directory operations — use <see cref="AssetsFileAbsolutePath"/> instead.
+        /// </summary>
+        public static string AssetsFilePath => $"UserSettings/{ResourcesFileName}.json";
+
+        /// <summary>
+        /// Gets the Unity project root folder path (the folder that contains the Assets directory).
+        /// Uses <see cref="Application.dataPath"/> to ensure correctness regardless of the process working directory.
+        /// </summary>
+        public static string ProjectRootPath => Path.GetDirectoryName(Application.dataPath)!;
+
+        /// <summary>
+        /// Absolute path to the config file for use with System.IO File/Directory operations.
+        /// Built from <see cref="ProjectRootPath"/> and <see cref="AssetsFilePath"/> to keep paths consistent.
+        /// </summary>
+        public static string AssetsFileAbsolutePath => Path.GetFullPath(Path.Combine(ProjectRootPath, AssetsFilePath));
+
+        /// <summary>
+        /// Absolute path to the skills root folder for use with System.IO File/Directory operations.
+        /// If <see cref="SkillsPath"/> is already an absolute path it is returned as-is;
+        /// otherwise it is resolved relative to <see cref="ProjectRootPath"/>.
+        /// </summary>
+        public static string SkillsRootFolderAbsolutePath
+        {
+            get
+            {
+                var folder = SkillsPath;
+                return Path.IsPathRooted(folder)
+                    ? folder
+                    : Path.GetFullPath(Path.Combine(ProjectRootPath, folder));
+            }
+        }
+
 #if UNITY_EDITOR
-        public static TextAsset AssetFile => UnityEditor.AssetDatabase.LoadAssetAtPath<TextAsset>(AssetsFilePath);
-        public static void InvalidateAssetFile() => UnityEditor.AssetDatabase.ImportAsset(AssetsFilePath, UnityEditor.ImportAssetOptions.ForceUpdate);
-        public static void MarkAssetFileDirty() => UnityEditor.EditorUtility.SetDirty(AssetFile);
+        public static UnityEngine.TextAsset AssetFile => UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.TextAsset>(AssetsFilePath);
 #endif
 
         UnityConnectionConfig GetOrCreateConfig() => GetOrCreateConfig(out _);
@@ -34,21 +66,16 @@ namespace com.IvanMurzak.Unity.MCP
             wasCreated = false;
             try
             {
-#if UNITY_EDITOR
-                var json = Application.isPlaying
-                    ? UnityEngine.Resources.Load<TextAsset>(ResourcesFileName).text
-                    : File.Exists(AssetsFilePath)
-                        ? File.ReadAllText(AssetsFilePath)
-                        : null;
-#else
-                var json = UnityEngine.Resources.Load<TextAsset>(ResourcesFileName).text;
-#endif
+                // Both Edit mode and Play mode read from the same UserSettings JSON file
+                // Use the absolute path so File.Exists/ReadAllText resolve correctly regardless of CWD.
+                var json = File.Exists(AssetsFileAbsolutePath) ? File.ReadAllText(AssetsFileAbsolutePath) : null;
+
                 UnityConnectionConfig? config = null;
                 try
                 {
                     config = string.IsNullOrWhiteSpace(json)
                         ? null
-                        : JsonSerializer.Deserialize<UnityConnectionConfig>(json, new JsonSerializerOptions
+                        : JsonSerializer.Deserialize<UnityConnectionConfig>(json!, new JsonSerializerOptions
                         {
                             PropertyNameCaseInsensitive = true
                         });
@@ -62,8 +89,12 @@ namespace com.IvanMurzak.Unity.MCP
                 {
                     _logger.LogWarning("{method}: <color=orange><b>Creating {file}</b> file at <i>{path}</i></color>",
                         nameof(GetOrCreateConfig), ResourcesFileName, AssetsFilePath);
-
                     config = new UnityConnectionConfig();
+                    wasCreated = true;
+                }
+                if (string.IsNullOrEmpty(config.Token))
+                {
+                    config.Token = GenerateToken();
                     wasCreated = true;
                 }
 
@@ -73,7 +104,7 @@ namespace com.IvanMurzak.Unity.MCP
             {
                 _logger.LogCritical(e, "{method}: <color=red><b>{file}</b> file can't be loaded from <i>{path}</i></color>",
                     nameof(GetOrCreateConfig), ResourcesFileName, AssetsFilePath);
-                throw e;
+                throw;
             }
         }
 
@@ -83,9 +114,9 @@ namespace com.IvanMurzak.Unity.MCP
             Validate();
             try
             {
-                var directory = Path.GetDirectoryName(AssetsFilePath);
+                var directory = Path.GetDirectoryName(AssetsFileAbsolutePath);
                 if (!Directory.Exists(directory))
-                    Directory.CreateDirectory(directory);
+                    Directory.CreateDirectory(directory!);
 
                 unityConnectionConfig ??= new UnityConnectionConfig();
 
@@ -118,7 +149,7 @@ namespace com.IvanMurzak.Unity.MCP
                     WriteIndented = true,
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase
                 });
-                File.WriteAllText(AssetsFilePath, json);
+                File.WriteAllText(AssetsFileAbsolutePath, json);
 
                 var assetFile = AssetFile;
                 if (assetFile != null)

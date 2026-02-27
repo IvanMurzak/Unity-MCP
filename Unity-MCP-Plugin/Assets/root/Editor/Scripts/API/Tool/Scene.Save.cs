@@ -25,7 +25,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             SceneSaveToolId,
-            Title = "Scene / Save"
+            Title = "Scene / Save",
+            IdempotentHint = true
         )]
         [Description("Save Opened scene to the asset file. " +
             "Use '" + SceneListOpenedToolId + "' tool to get the list of all opened scenes.")]

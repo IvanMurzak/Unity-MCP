@@ -26,7 +26,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             GameObjectSetParentToolId,
-            Title = "GameObject / Set Parent"
+            Title = "GameObject / Set Parent",
+            IdempotentHint = true
         )]
         [Description("Set parent GameObject to list of GameObjects in opened Prefab or in a Scene. " +
             "Use '" + GameObjectFindToolId + "' tool to find the target GameObjects first.")]

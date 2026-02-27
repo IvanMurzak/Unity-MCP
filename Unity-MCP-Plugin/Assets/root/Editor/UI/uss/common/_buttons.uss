@@ -71,6 +71,30 @@
     transition-duration: 50ms;
 }
 
+/* Compact Button — smaller variant of btn-secondary */
+.btn-compact {
+    height: 20px;
+    background-color: rgb(70, 70, 70);
+    border-radius: 4px;
+    border-width: 0px;
+    border-color: rgb(100, 100, 100);
+    color: rgb(200, 200, 200);
+    font-size: 11px;
+    padding: 0 6px;
+    transition-duration: 200ms;
+}
+
+.btn-compact:hover {
+    background-color: rgb(90, 90, 90);
+    border-color: rgb(120, 120, 120);
+    transition-duration: 200ms;
+}
+
+.btn-compact:active {
+    background-color: rgb(110, 110, 110);
+    transition-duration: 50ms;
+}
+
 /* Tertiary Button */
 .btn-tertiary {
     height: 26px;
@@ -167,6 +191,38 @@
 
 .btn-golden:active .btn-label {
     color: rgb(255, 235, 150);
+}
+
+/* Circular Remove Button */
+.btn-remove-circle {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    min-height: 22px;
+    border-top-left-radius: 11px;
+    border-top-right-radius: 11px;
+    border-bottom-left-radius: 11px;
+    border-bottom-right-radius: 11px;
+    background-color: rgba(110, 25, 25, 0.3);
+    border-width: 0;
+    color: rgb(255, 160, 160);
+    font-size: 12px;
+    padding: 0;
+    margin-left: 8px;
+    -unity-font-style: bold;
+    transition-duration: 200ms;
+}
+
+.btn-remove-circle:hover {
+    background-color: rgb(210, 50, 50);
+    color: white;
+    transition-duration: 200ms;
+}
+
+.btn-remove-circle:active {
+    background-color: rgb(255, 80, 80);
+    color: white;
+    transition-duration: 50ms;
 }
 
 /* Floating/Absolute positioned button */

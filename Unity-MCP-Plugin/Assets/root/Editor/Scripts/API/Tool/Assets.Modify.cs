@@ -30,7 +30,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             AssetsModifyToolId,
-            Title = "Assets / Modify"
+            Title = "Assets / Modify",
+            IdempotentHint = true
         )]
         [Description("Modify asset file in the project. " +
             "Use '" + AssetsGetDataToolId + "' tool first to inspect the asset structure before modifying. " +
@@ -65,8 +66,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 var obj = (object)asset;
                 var logs = new Logs();
+                var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
-                var success = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.TryPopulate(
+                var success = reflector.TryPopulate(
                     ref obj,
                     data: content,
                     logs: logs,

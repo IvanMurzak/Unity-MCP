@@ -1,0 +1,99 @@
+<svg width="1184" height="60" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="hazardStripes" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse">
+      <rect width="120" height="120" class="hazard-bg"/>
+      <path d="M 0,0 L 60,0 L 120,120 L 60,120 Z" class="hazard-stripe"/>
+    </pattern>
+
+    <clipPath id="viewportClip">
+      <rect x="0" y="0" width="1184" height="60"/>
+    </clipPath>
+
+    <filter id="textShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="3" dy="3" stdDeviation="5" class="shadow-color" flood-opacity="0.9"/>
+    </filter>
+
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@600;display=swap');
+
+      text {
+        font-family: 'Inter', sans-serif;
+        font-weight: 600;
+        font-size: 46px;
+        text-anchor: start;
+        dominant-baseline: middle;
+      }
+
+      /* Light theme (default) */
+      .shadow-color {
+        flood-color: #FFFFFF;
+      }
+
+      .hazard-bg {
+        fill: transparent;
+      }
+
+      .hazard-stripe {
+        fill: #FFDC00;
+      }
+
+      .ai-text {
+        fill: #FF0022;
+        font-weight: 800;
+      }
+
+      .main-text {
+        fill: #000000;
+      }
+
+      .italic-text {
+        font-style: italic;
+      }
+
+      .text-main {
+        filter: url(#textShadow);
+        cursor: pointer;
+      }
+
+      /* Dark theme */
+      @media (prefers-color-scheme: dark) {
+        .shadow-color {
+          flood-color: #000000;
+        }
+
+        .hazard-bg {
+          fill: #00000000;
+        }
+
+        .hazard-stripe {
+          fill: #FF000080;
+        }
+
+        .main-text {
+          fill: #FFFFFF;
+        }
+      }
+    </style>
+  </defs>
+
+  <!-- Animated hazard background (theme-aware) -->
+  <g clip-path="url(#viewportClip)">
+    <rect x="-240" y="0" width="1664" height="120" fill="url(#hazardStripes)">
+      <animateTransform
+        attributeName="transform"
+        type="translate"
+        from="0 0"
+        to="120 0"
+        dur="5s"
+        repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <!-- Text with shadow -->
+  <a href="https://github.com/IvanMurzak/Unity-MCP" target="_blank">
+    <text x="50" y="32" class="text-main">
+      <tspan class="main-text">Features</tspan>
+    </text>
+  </a>
+
+</svg>

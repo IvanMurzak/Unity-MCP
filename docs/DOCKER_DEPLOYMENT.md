@@ -15,10 +15,12 @@
 The Unity-MCP Server is available as a lightweight Docker container, ideal for cloud deployments or isolating the AI server environment.
 
 - **Image**: `ivanmurzakdev/unity-mcp-server`
-- **Tags**: `latest`, `X.Y.Z` (e.g., `0.35.0`)
+- **Tags**: `latest`, `X.Y.Z` (e.g., `0.50.1`)
 - **Architectures**: `linux/amd64`, `linux/arm64` (Apple Silicon compatible)
 
 ![Docker Launch](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/docker-launch.gif?raw=true)
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 ## 🚀 Quick Start
 
@@ -28,15 +30,19 @@ Run the server on port `8080`:
 docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server:latest
 ```
 
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
 ## ⚙️ Configuration
 
 The server can be configured using environment variables.
 
-| Variable                     | Default | Description                                              |
-| :--------------------------- | :------ | :------------------------------------------------------- |
-| `MCP_PLUGIN_PORT`            | `8080`  | The port the server listens on for Plugin connections.   |
-| `MCP_PLUGIN_CLIENT_TRANSPORT` | `streamableHttp`  | Transport for the Client connection (`streamableHttp` or `stdio`). |
-| `MCP_PLUGIN_CLIENT_TIMEOUT`   | `10000` | Connection timeout in milliseconds.                      |
+| Variable                      | Default          | Description                                                                            |
+| :---------------------------- | :--------------- | :------------------------------------------------------------------------------------- |
+| `MCP_PLUGIN_PORT`             | `8080`           | The port the server listens on for both Client (HTTP) and Plugin (SignalR) connections. |
+| `MCP_PLUGIN_CLIENT_TRANSPORT` | `streamableHttp` | Transport for the Client connection: `streamableHttp` or `stdio`.                      |
+| `MCP_PLUGIN_CLIENT_TIMEOUT`   | `10000`          | Timeout in milliseconds for Plugin responses.                                          |
+| `MCP_AUTHORIZATION`           | `none`           | Authentication mode for incoming Client connections: `none` or `required`.              |
+| `MCP_PLUGIN_TOKEN`            | *(unset)*        | Bearer token required from the Client when `MCP_AUTHORIZATION=required`.               |
 
 ### Example: Custom Port
 
@@ -59,6 +65,20 @@ docker run -i \
   ivanmurzakdev/unity-mcp-server:latest
 ```
 
+### Example: Bearer Token Authentication
+
+Require a bearer token from the MCP Client:
+
+```bash
+docker run \
+  -e MCP_AUTHORIZATION=required \
+  -e MCP_PLUGIN_TOKEN=your-secret-token \
+  -p 8080:8080 \
+  ivanmurzakdev/unity-mcp-server:latest
+```
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
 ## 💻 Client Configuration
 
 To use the Dockerized server with your AI Client (e.g., Claude):
@@ -74,6 +94,20 @@ To use the Dockerized server with your AI Client (e.g., Claude):
 }
 ```
 
+With bearer token authentication (`MCP_AUTHORIZATION=required`):
+```json
+{
+  "mcpServers": {
+    "ai-game-developer": {
+      "url": "http://localhost:8080",
+      "headers": {
+        "Authorization": "Bearer your-secret-token"
+      }
+    }
+  }
+}
+```
+
 ### STDIO Mode (Managed by Client)
 ```json
 {
@@ -82,7 +116,7 @@ To use the Dockerized server with your AI Client (e.g., Claude):
       "command": "docker",
       "args": [
         "run",
-        "-i",
+        "-t",
         "--rm",
         "-e", "MCP_PLUGIN_CLIENT_TRANSPORT=stdio",
         "-p", "8080:8080",
@@ -92,3 +126,26 @@ To use the Dockerized server with your AI Client (e.g., Claude):
   }
 }
 ```
+
+With bearer token authentication (`MCP_AUTHORIZATION=required`):
+```json
+{
+  "mcpServers": {
+    "ai-game-developer": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-t",
+        "--rm",
+        "-e", "MCP_PLUGIN_CLIENT_TRANSPORT=stdio",
+        "-e", "MCP_AUTHORIZATION=required",
+        "-e", "MCP_PLUGIN_TOKEN=your-secret-token",
+        "-p", "8080:8080",
+        "ivanmurzakdev/unity-mcp-server:latest"
+      ]
+    }
+  }
+}
+```
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)

@@ -20,22 +20,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         public static class Error
         {
             public static string PackageNameIsEmpty()
-                => "[Error] Package name is empty. Please provide a valid package name. Sample: 'com.unity.textmeshpro'.";
+                => "Package name is empty. Please provide a valid package name. Sample: 'com.unity.textmeshpro'.";
 
             public static string PackageIdentifierIsEmpty()
-                => "[Error] Package identifier is empty. Please provide a valid package identifier. Sample: 'com.unity.textmeshpro' or 'com.unity.textmeshpro@3.0.6'.";
+                => "Package identifier is empty. Please provide a valid package identifier. Sample: 'com.unity.textmeshpro' or 'com.unity.textmeshpro@3.0.6'.";
 
             public static string PackageNotFound(string packageName)
-                => $"[Error] Package '{packageName}' not found in the project.";
+                => $"Package '{packageName}' not found in the project.";
 
             public static string PackageOperationFailed(string operation, string packageName, string error)
-                => $"[Error] Failed to {operation} package '{packageName}': {error}";
+                => $"Failed to {operation} package '{packageName}': {error}";
 
             public static string PackageSearchFailed(string query, string error)
-                => $"[Error] Failed to search for packages with query '{query}': {error}";
+                => $"Failed to search for packages with query '{query}': {error}";
 
             public static string PackageListFailed(string error)
-                => $"[Error] Failed to list packages: {error}";
+                => $"Failed to list packages: {error}";
         }
 
         /// <summary>

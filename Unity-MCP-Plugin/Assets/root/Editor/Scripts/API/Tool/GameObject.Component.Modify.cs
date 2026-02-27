@@ -28,7 +28,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             GameObjectComponentModifyToolId,
-            Title = "GameObject / Component / Modify"
+            Title = "GameObject / Component / Modify",
+            IdempotentHint = true
         )]
         [Description("Modify a specific Component on a GameObject in opened Prefab or in a Scene. " +
             "Allows direct modification of component fields and properties without wrapping in GameObject structure. " +
@@ -83,8 +84,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 var logs = new Logs();
                 var objToModify = (object)targetComponent;
+                var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
-                var success = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.TryPopulate(
+                var success = reflector.TryPopulate(
                     ref objToModify,
                     data: componentDiff,
                     logs: logs,

@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -31,7 +31,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             Debug.Log($"[{GetType().GetTypeShortName()}] SetUp");
 
-            UnityMcpPlugin.InitSingletonIfNeeded();
+            UnityMcpPluginEditor.InitSingletonIfNeeded();
 
             _logger = UnityLoggerFactory.LoggerFactory.CreateLogger("Tests");
 
@@ -56,13 +56,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
         private (ResponseData<ResponseCallTool> result, string json) CallToolInternal(string toolName, string json)
         {
-            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+            var reflector = UnityMcpPluginEditor.Instance.Reflector;
 
             Debug.Log($"{toolName} Started with JSON:\n{json}");
 
             var parameters = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
             var request = new RequestCallTool(toolName, parameters!);
-            var task = McpPlugin.McpPlugin.Instance.McpManager.ToolManager!.RunCallTool(request);
+            var task = UnityMcpPluginEditor.Instance.Tools!.RunCallTool(request);
             var result = task.Result;
 
             Debug.Log($"{toolName} Completed");

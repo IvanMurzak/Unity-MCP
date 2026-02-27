@@ -25,7 +25,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             "screenshot-game-view",
-            Title = "Screenshot / Game View"
+            Title = "Screenshot / Game View",
+            ReadOnlyHint = true,
+            IdempotentHint = true
         )]
         [Description("Captures a screenshot from the Unity Editor Game View and returns it as an image. " +
             "Reads the Game View's own render texture directly via the Unity Editor API. " +

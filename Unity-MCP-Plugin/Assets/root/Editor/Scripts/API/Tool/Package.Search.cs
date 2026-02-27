@@ -51,7 +51,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             PackageSearchToolId,
-            Title = "Package Manager / Search"
+            Title = "Package Manager / Search",
+            ReadOnlyHint = true,
+            IdempotentHint = true,
+            OpenWorldHint = true
         )]
         [Description("Search for packages in both Unity Package Manager registry and installed packages. " +
             "Use this to find packages by name before installing them. Returns available versions and installation status. " +

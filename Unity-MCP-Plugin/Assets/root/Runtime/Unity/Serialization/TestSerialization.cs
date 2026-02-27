@@ -53,7 +53,10 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         public void SerializeTarget()
         {
             var logger = UnityLoggerFactory.LoggerFactory.CreateLogger(nameof(TestSerialization));
-            var reflector = UnityMcpPlugin.Instance.Reflector ?? throw new InvalidOperationException("Reflector is null");
+            if (!UnityMcpPluginRuntime.HasInstance || UnityMcpPluginRuntime.Instance.McpPluginInstance == null)
+                throw new InvalidOperationException("No active UnityMcpPluginRuntime instance. Call UnityMcpPluginRuntime.Initialize().Build() first.");
+            var reflector = UnityMcpPluginRuntime.Instance.McpPluginInstance.McpManager.Reflector
+                ?? throw new InvalidOperationException("Reflector is null");
 
             logger.LogInformation($"Serializing target '{target?.name}' of type '{target?.GetType().GetTypeId()}' with recursive={recursive}");
 

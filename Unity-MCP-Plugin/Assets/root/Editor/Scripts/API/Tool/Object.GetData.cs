@@ -27,7 +27,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             ObjectGetDataToolId,
-            Title = "Object / Get Data"
+            Title = "Object / Get Data",
+            ReadOnlyHint = true,
+            IdempotentHint = true
         )]
         [Description("Get data of the specified Unity Object. " +
             "Returns serialized data of the object including its properties and fields. " +
@@ -49,7 +51,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 if (obj == null)
                     throw new Exception("Not found UnityEngine.Object with provided data.");
 
-                return McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Serialize(
+                var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
+
+                return reflector.Serialize(
                     obj,
                     name: obj.name,
                     recursive: true,

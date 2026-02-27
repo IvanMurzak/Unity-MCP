@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -11,7 +11,6 @@
 #nullable enable
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEngine.UIElements;
-using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
@@ -52,10 +51,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             return this;
         }
 
+        protected override void UpdateRemoveButton()
+        {
+            // Custom configurator doesn't have a remove button, so we can skip this
+        }
+
         protected override void OnUICreated(VisualElement root)
         {
             SetAgentIcon();
-            SetTransportMethod(UnityMcpPlugin.TransportMethod);
+            SetTransportMethod(UnityMcpPluginEditor.TransportMethod);
             SetAgentName(AgentName);
             DisableLinksContainer();
 
@@ -63,9 +67,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             ContainerStdio!.Add(TemplateLabelDescription("Copy paste the json into your MCP Client to configure it."));
             ContainerStdio!.Add(TemplateTextFieldReadOnly(McpServerManager.RawJsonConfigurationStdio(
-                port: UnityMcpPlugin.Port,
+                port: UnityMcpPluginEditor.Port,
                 bodyPath: "mcpServers",
-                timeoutMs: UnityMcpPlugin.TimeoutMs,
+                timeoutMs: UnityMcpPluginEditor.TimeoutMs,
                 type: "stdio").ToString()));
 
             // HTTP Configuration
@@ -78,9 +82,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             ContainerHttp!.Add(TemplateLabelDescription("3. Copy paste the json into your MCP Client to configure it."));
             ContainerHttp!.Add(TemplateTextFieldReadOnly(McpServerManager.RawJsonConfigurationHttp(
-                url: UnityMcpPlugin.Host,
+                url: UnityMcpPluginEditor.Host,
                 bodyPath: "mcpServers",
                 type: null).ToString()));
+
+            ContainerHttp!.Add(TemplateLabelDescription("4. (Optional) Stop and remove the MCP server using Docker when you are done."));
+            ContainerHttp!.Add(TemplateTextFieldReadOnly(McpServerManager.DockerStopCommand()));
+            ContainerHttp!.Add(TemplateTextFieldReadOnly(McpServerManager.DockerRemoveCommand()));
         }
     }
 }

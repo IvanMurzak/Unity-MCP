@@ -27,7 +27,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             GameObjectModifyToolId,
-            Title = "GameObject / Modify"
+            Title = "GameObject / Modify",
+            IdempotentHint = true
         )]
         [Description("Modify GameObject fields and properties in opened Prefab or in a Scene. " +
             "You can modify multiple GameObjects at once. Just provide the same number of GameObject references and SerializedMember objects.")]
@@ -69,8 +70,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     }
 
                     var objToModify = (object)go;
+                    var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
-                    var modified = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.TryPopulate(
+                    var modified = reflector.TryPopulate(
                         ref objToModify,
                         data: gameObjectDiffs[i],
                         logs: logs,

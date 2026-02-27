@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -52,8 +52,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             .SetProperty("enabled", JsonValue.Create(true), requiredForConfiguration: true)
             .SetProperty("command", new JsonArray {
                 McpServerManager.ExecutableFullPath.Replace('\\', '/'),
-                $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
-                $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+                $"{Consts.MCP.Server.Args.Port}={UnityMcpPluginEditor.Port}",
+                $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}",
                 $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
             }, requiredForConfiguration: true)
             .SetPropertyToRemove("url")
@@ -364,7 +364,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(duplicateCommand, executable, "Executable should match");
 
             var argsStr = commandArray.ToString();
-            Assert.IsTrue(argsStr.Contains($"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}"),
+            Assert.IsTrue(argsStr.Contains($"{Consts.MCP.Server.Args.Port}={UnityMcpPluginEditor.Port}"),
                 $"Should contain current port, but got: {argsStr}");
 
             yield return null;
@@ -519,7 +519,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var wrongTypeJson = $@"{{
                 ""mcpServers"": {{
                     ""{AiAgentConfig.DefaultMcpServerName}"": {{
-                        ""command"": [""{executable}"", ""{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}"", ""{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}"", ""{Consts.MCP.Server.Args.ClientTransportMethod}=stdio""],
+                        ""command"": [""{executable}"", ""{Consts.MCP.Server.Args.Port}={UnityMcpPluginEditor.Port}"", ""{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}"", ""{Consts.MCP.Server.Args.ClientTransportMethod}=stdio""],
                         ""type"": ""wrong-type"",
                         ""enabled"": true
                     }}
@@ -545,7 +545,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var wrongCommandJson = $@"{{
                 ""mcpServers"": {{
                     ""{AiAgentConfig.DefaultMcpServerName}"": {{
-                        ""command"": [""wrong-executable"", ""{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}"", ""{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}""],
+                        ""command"": [""wrong-executable"", ""{Consts.MCP.Server.Args.Port}={UnityMcpPluginEditor.Port}"", ""{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}""],
                         ""type"": ""local"",
                         ""enabled"": true
                     }}
@@ -647,8 +647,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             .SetProperty("enabled", JsonValue.Create(true), requiredForConfiguration: true)
             .SetProperty("command", new JsonArray {
                 McpServerManager.ExecutableFullPath.Replace('\\', '/'),
-                $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
-                $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+                $"{Consts.MCP.Server.Args.Port}={UnityMcpPluginEditor.Port}",
+                $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}",
                 $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
             }, requiredForConfiguration: true);
 

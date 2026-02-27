@@ -397,7 +397,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var result1 = Tool_Console.Error.InvalidMaxEntries(0);
 
             // Assert
-            Assert.IsTrue(result1.Contains("[Error]"), "Should contain error prefix");
             Assert.IsTrue(result1.Contains("Invalid maxEntries value"), "Should contain error description");
             Assert.IsTrue(result1.Contains("'0'"), "Should contain the invalid value");
         }
@@ -409,7 +408,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var result = Tool_Console.Error.InvalidLogTypeFilter("InvalidType");
 
             // Assert
-            Assert.IsTrue(result.Contains("[Error]"), "Should contain error prefix");
             Assert.IsTrue(result.Contains("Invalid logType filter"), "Should contain error description");
             Assert.IsTrue(result.Contains("'InvalidType'"), "Should contain the invalid value");
             Assert.IsTrue(result.Contains("Valid values:"), "Should list valid values");

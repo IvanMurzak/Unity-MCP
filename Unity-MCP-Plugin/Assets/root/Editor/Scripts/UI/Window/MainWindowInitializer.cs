@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -35,7 +35,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 return;
 
             // Perform initialization
-            UnityMcpPlugin.InitSingletonIfNeeded();
+            UnityMcpPluginEditor.InitSingletonIfNeeded();
             MainWindowEditor.ShowWindow();
 
             isInitialized.Value = true;

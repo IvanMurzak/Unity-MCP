@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -50,8 +50,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 bodyPath: bodyPath)
             .SetProperty("command", McpServerManager.ExecutableFullPath.Replace('\\', '/'), requiredForConfiguration: true)
             .SetProperty("args", new[] {
-                $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
-                $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+                $"{Consts.MCP.Server.Args.Port}={UnityMcpPluginEditor.Port}",
+                $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}",
                 $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
             }, requiredForConfiguration: true)
             .SetPropertyToRemove("url");
@@ -63,7 +63,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 name: "Test",
                 configPath: configPath,
                 bodyPath: bodyPath)
-            .SetProperty("url", UnityMcpPlugin.Host, requiredForConfiguration: true)
+            .SetProperty("url", UnityMcpPluginEditor.Host, requiredForConfiguration: true)
             .SetPropertyToRemove("command")
             .SetPropertyToRemove("args");
         }
@@ -106,8 +106,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             // Assert
             var content = File.ReadAllText(tempConfigPath);
-            Assert.IsTrue(content.Contains($"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}"), "Should contain port argument");
-            Assert.IsTrue(content.Contains($"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}"), "Should contain timeout argument");
+            Assert.IsTrue(content.Contains($"{Consts.MCP.Server.Args.Port}={UnityMcpPluginEditor.Port}"), "Should contain port argument");
+            Assert.IsTrue(content.Contains($"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}"), "Should contain timeout argument");
             Assert.IsTrue(content.Contains($"{Consts.MCP.Server.Args.ClientTransportMethod}=stdio"), "Should contain transport argument");
 
             yield return null;
@@ -129,7 +129,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             var content = File.ReadAllText(tempConfigPath);
             Assert.IsTrue(content.Contains($"[mcp_servers.{AiAgentConfig.DefaultMcpServerName}]"), "Should contain correct section header");
-            Assert.IsTrue(content.Contains($"url = \"{UnityMcpPlugin.Host}\""), "Should contain url property");
+            Assert.IsTrue(content.Contains($"url = \"{UnityMcpPluginEditor.Host}\""), "Should contain url property");
             Assert.IsFalse(content.Contains("command = "), "Should not contain command property");
             Assert.IsFalse(content.Contains("args = ["), "Should not contain args property");
 
@@ -317,7 +317,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var sectionName = $"mcp_servers.{AiAgentConfig.DefaultMcpServerName}";
-            var wrongCommandToml = $"[{sectionName}]\ncommand = \"wrong-command\"\nargs = [\"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}\",\"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}\",\"{Consts.MCP.Server.Args.ClientTransportMethod}=stdio\"]\n";
+            var wrongCommandToml = $"[{sectionName}]\ncommand = \"wrong-command\"\nargs = [\"{Consts.MCP.Server.Args.Port}={UnityMcpPluginEditor.Port}\",\"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}\",\"{Consts.MCP.Server.Args.ClientTransportMethod}=stdio\"]\n";
             File.WriteAllText(tempConfigPath, wrongCommandToml);
             var config = CreateStdioConfig(tempConfigPath);
 
@@ -355,7 +355,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange - stdio config has SetPropertyToRemove("url"), so if url exists it should fail
             var executable = McpServerManager.ExecutableFullPath.Replace('\\', '/');
             var sectionName = $"mcp_servers.{AiAgentConfig.DefaultMcpServerName}";
-            var argsStr = $"\"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}\",\"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}\",\"{Consts.MCP.Server.Args.ClientTransportMethod}=stdio\"";
+            var argsStr = $"\"{Consts.MCP.Server.Args.Port}={UnityMcpPluginEditor.Port}\",\"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}\",\"{Consts.MCP.Server.Args.ClientTransportMethod}=stdio\"";
             var tomlWithUrl = $"[{sectionName}]\ncommand = \"{executable}\"\nargs = [{argsStr}]\nurl = \"http://some-url\"\n";
             File.WriteAllText(tempConfigPath, tomlWithUrl);
             var config = CreateStdioConfig(tempConfigPath);
@@ -403,8 +403,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             .SetProperty("enabled", true, requiredForConfiguration: true) // Codex requires an "enabled" property
             .SetProperty("command", McpServerManager.ExecutableFullPath.Replace('\\', '/'), requiredForConfiguration: true)
             .SetProperty("args", new[] {
-                $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
-                $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+                $"{Consts.MCP.Server.Args.Port}={UnityMcpPluginEditor.Port}",
+                $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}",
                 $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
             }, requiredForConfiguration: true)
             .SetProperty("tool_timeout_sec", 300, requiredForConfiguration: false) // Optional: Set a longer tool timeout for Codex
@@ -509,7 +509,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             // Assert
             Assert.IsTrue(content.Contains($"[mcp_servers.{AiAgentConfig.DefaultMcpServerName}]"), "Should contain correct section header");
-            Assert.IsTrue(content.Contains($"url = \"{UnityMcpPlugin.Host}\""), "Should contain url");
+            Assert.IsTrue(content.Contains($"url = \"{UnityMcpPluginEditor.Host}\""), "Should contain url");
             Assert.IsFalse(content.Contains("command = "), "Should not contain command");
             Assert.IsFalse(content.Contains("args = ["), "Should not contain args");
 
@@ -953,7 +953,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public IEnumerator Configure_Http_RemovesDuplicateByUrl()
         {
             // Arrange - existing file with the same server under a custom name
-            var existingToml = $"[mcp_servers.my-custom-name]\nurl = \"{UnityMcpPlugin.Host}\"\n";
+            var existingToml = $"[mcp_servers.my-custom-name]\nurl = \"{UnityMcpPluginEditor.Host}\"\n";
             File.WriteAllText(tempConfigPath, existingToml);
             var config = CreateHttpConfig(tempConfigPath);
 
@@ -972,14 +972,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public IEnumerator Configure_Http_RemovesDuplicateByServerUrl()
         {
             // Arrange - existing file with the same server under a custom name using serverUrl
-            var existingToml = $"[mcp_servers.my-custom-name]\nserverUrl = \"{UnityMcpPlugin.Host}\"\n";
+            var existingToml = $"[mcp_servers.my-custom-name]\nserverUrl = \"{UnityMcpPluginEditor.Host}\"\n";
             File.WriteAllText(tempConfigPath, existingToml);
             var config = new TomlAiAgentConfig(
                 name: "Test",
                 configPath: tempConfigPath,
                 bodyPath: "mcp_servers")
             .AddIdentityKey("serverUrl")
-            .SetProperty("serverUrl", UnityMcpPlugin.Host, requiredForConfiguration: true)
+            .SetProperty("serverUrl", UnityMcpPluginEditor.Host, requiredForConfiguration: true)
             .SetPropertyToRemove("command")
             .SetPropertyToRemove("args")
             .SetPropertyToRemove("url");
@@ -999,7 +999,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public IEnumerator Configure_Http_DefaultIdentityKeys_DoNotRemoveByServerUrl()
         {
             // Arrange - existing file with a server using serverUrl but config does NOT add serverUrl identity key
-            var existingToml = $"[mcp_servers.my-custom-name]\nserverUrl = \"{UnityMcpPlugin.Host}\"\n";
+            var existingToml = $"[mcp_servers.my-custom-name]\nserverUrl = \"{UnityMcpPluginEditor.Host}\"\n";
             File.WriteAllText(tempConfigPath, existingToml);
             var config = CreateHttpConfig(tempConfigPath);
 
@@ -1029,6 +1029,127 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var content = File.ReadAllText(tempConfigPath);
             Assert.IsTrue(content.Contains("[mcp_servers.other-server]"), "Unrelated server should be preserved");
             Assert.IsTrue(content.Contains($"[mcp_servers.{AiAgentConfig.DefaultMcpServerName}]"), "Default section should exist");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator IsDetected_DeprecatedName_ReturnsTrue()
+        {
+            // Arrange - file only contains the deprecated section name
+            var existingToml = "[mcp_servers.Unity-MCP]\ncommand = \"/some/path\"\n";
+            File.WriteAllText(tempConfigPath, existingToml);
+            var config = CreateStdioConfig(tempConfigPath);
+
+            // Act & Assert
+            Assert.IsTrue(config.IsDetected(), "IsDetected should return true when only the deprecated name is present");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator IsDetected_DuplicateByCommand_ReturnsTrue()
+        {
+            // Arrange - file only contains a duplicate section matching by command
+            var executable = McpServerManager.ExecutableFullPath.Replace('\\', '/');
+            var existingToml = $"[mcp_servers.my-custom-name]\ncommand = \"{executable}\"\nargs = [\"--old-arg\"]\n";
+            File.WriteAllText(tempConfigPath, existingToml);
+            var config = CreateStdioConfig(tempConfigPath);
+
+            // Act & Assert
+            Assert.IsTrue(config.IsDetected(), "IsDetected should return true when a duplicate section with the same command is present");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator IsDetected_DuplicateByUrl_ReturnsTrue()
+        {
+            // Arrange - file only contains a duplicate section matching by url
+            var url = UnityMcpPluginEditor.Host;
+            var existingToml = $"[mcp_servers.my-custom-name]\nurl = \"{url}\"\n";
+            File.WriteAllText(tempConfigPath, existingToml);
+            var config = CreateHttpConfig(tempConfigPath);
+
+            // Act & Assert
+            Assert.IsTrue(config.IsDetected(), "IsDetected should return true when a duplicate section with the same url is present");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Unconfigure_DeprecatedName_RemovesIt()
+        {
+            // Arrange - file only contains the deprecated section name
+            var existingToml = "[mcp_servers.Unity-MCP]\ncommand = \"/some/path\"\n";
+            File.WriteAllText(tempConfigPath, existingToml);
+            var config = CreateStdioConfig(tempConfigPath);
+
+            // Act
+            var result = config.Unconfigure();
+
+            // Assert
+            Assert.IsTrue(result, "Unconfigure should return true when deprecated section was removed");
+            var content = File.ReadAllText(tempConfigPath);
+            Assert.IsFalse(content.Contains("[mcp_servers.Unity-MCP]"), "Deprecated section should be removed");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Unconfigure_DuplicateByCommand_RemovesIt()
+        {
+            // Arrange - file only contains a duplicate section with the same command
+            var executable = McpServerManager.ExecutableFullPath.Replace('\\', '/');
+            var existingToml = $"[mcp_servers.my-custom-name]\ncommand = \"{executable}\"\nargs = [\"--old-arg\"]\n";
+            File.WriteAllText(tempConfigPath, existingToml);
+            var config = CreateStdioConfig(tempConfigPath);
+
+            // Act
+            var result = config.Unconfigure();
+
+            // Assert
+            Assert.IsTrue(result, "Unconfigure should return true when a duplicate section was removed");
+            var content = File.ReadAllText(tempConfigPath);
+            Assert.IsFalse(content.Contains("[mcp_servers.my-custom-name]"), "Duplicate section should be removed");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Unconfigure_DeprecatedAndCurrentPresent_RemovesBoth()
+        {
+            // Arrange - file contains both current and deprecated section names
+            var existingToml = "[mcp_servers.Unity-MCP]\ncommand = \"/old/path\"\n\n" +
+                               $"[mcp_servers.{AiAgentConfig.DefaultMcpServerName}]\ncommand = \"/some/path\"\n";
+            File.WriteAllText(tempConfigPath, existingToml);
+            var config = CreateStdioConfig(tempConfigPath);
+
+            // Act
+            var result = config.Unconfigure();
+
+            // Assert
+            Assert.IsTrue(result, "Unconfigure should return true when sections were removed");
+            var content = File.ReadAllText(tempConfigPath);
+            Assert.IsFalse(content.Contains("[mcp_servers.Unity-MCP]"), "Deprecated section should be removed");
+            Assert.IsFalse(content.Contains($"[mcp_servers.{AiAgentConfig.DefaultMcpServerName}]"), "Current section should be removed");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Unconfigure_NothingPresent_ReturnsFalse()
+        {
+            // Arrange - file has no known sections
+            var existingToml = "[mcp_servers.other-server]\ncommand = \"completely-different-command\"\n";
+            File.WriteAllText(tempConfigPath, existingToml);
+            var config = CreateStdioConfig(tempConfigPath);
+
+            // Act
+            var result = config.Unconfigure();
+
+            // Assert
+            Assert.IsFalse(result, "Unconfigure should return false when nothing was present to remove");
 
             yield return null;
         }

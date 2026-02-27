@@ -28,15 +28,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             static string ScenesPrinted => string.Join("\n", SceneUtils.GetAllOpenedScenes().Select(scene => scene.name));
 
             public static string SceneNameIsEmpty()
-                => $"[Error] Scene name is empty. Available scenes:\n{ScenesPrinted}";
+                => $"Scene name is empty. Available scenes:\n{ScenesPrinted}";
             public static string NotFoundSceneWithName(string? name)
-                => $"[Error] Scene '{name ?? "null"}' not found. Available scenes:\n{ScenesPrinted}";
+                => $"Scene '{name ?? "null"}' not found. Available scenes:\n{ScenesPrinted}";
             public static string ScenePathIsEmpty()
-                => "[Error] Scene path is empty. Please provide a valid path. Sample: \"Assets/Scenes/MyScene.unity\".";
+                => "Scene path is empty. Please provide a valid path. Sample: \"Assets/Scenes/MyScene.unity\".";
             public static string FilePathMustEndsWithUnity()
-                => "[Error] File path must end with '.unity'. Please provide a valid path. Sample: \"Assets/Scenes/MyScene.unity\".";
+                => "File path must end with '.unity'. Please provide a valid path. Sample: \"Assets/Scenes/MyScene.unity\".";
             public static string InvalidLoadSceneMode(int loadSceneMode)
-                => $"[Error] Invalid load scene mode '{loadSceneMode}'. Valid values are 0 (Single) and 1 (Additive).";
+                => $"Invalid load scene mode '{loadSceneMode}'. Valid values are 0 (Single) and 1 (Additive).";
         }
     }
 }
