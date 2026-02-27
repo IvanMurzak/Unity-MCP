@@ -23,7 +23,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             SceneListOpenedToolId,
-            Title = "Scene / List Opened"
+            Title = "Scene / List Opened",
+            ReadOnlyHint = true,
+            IdempotentHint = true
         )]
         [Description("Returns the list of currently opened scenes in Unity Editor. " +
             "Use '" + SceneGetDataToolId + "' tool to get detailed information about a specific scene.")]

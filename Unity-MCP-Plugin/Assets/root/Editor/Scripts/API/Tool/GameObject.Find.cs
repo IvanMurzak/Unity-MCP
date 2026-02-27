@@ -26,7 +26,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             GameObjectFindToolId,
-            Title = "GameObject / Find"
+            Title = "GameObject / Find",
+            ReadOnlyHint = true,
+            IdempotentHint = true
         )]
         [Description("Finds specific GameObject by provided information in opened Prefab or in a Scene. " +
             "First it looks for the opened Prefab, if any Prefab is opened it looks only there ignoring a scene. " +

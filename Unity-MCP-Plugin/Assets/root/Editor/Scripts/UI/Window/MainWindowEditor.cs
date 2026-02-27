@@ -34,7 +34,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         }
         public static void ShowWindowVoid() => ShowWindow();
 
-        public void Invalidate() => CreateGUI();
+        public void Invalidate()
+        {
+            InvalidateAndReloadAgentUI();
+            CreateGUI();
+        }
         void OnValidate() => UnityMcpPluginEditor.Instance.Validate();
 
         private void SaveChanges(string message)

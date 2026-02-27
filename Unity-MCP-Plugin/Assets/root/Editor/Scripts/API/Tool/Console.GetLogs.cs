@@ -22,7 +22,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             ConsoleGetLogsToolId,
-            Title = "Console / Get Logs"
+            Title = "Console / Get Logs",
+            ReadOnlyHint = true,
+            IdempotentHint = true
         )]
         [Description("Retrieves Unity Editor logs. " +
             "Useful for debugging and monitoring Unity Editor activity.")]
@@ -43,11 +45,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 throw new ArgumentException(Error.InvalidMaxEntries(maxEntries));
 
             if (!UnityMcpPluginEditor.HasInstance)
-                throw new InvalidOperationException("[Error] UnityMcpPluginEditor is not initialized.");
+                throw new InvalidOperationException("UnityMcpPluginEditor is not initialized.");
 
             var logCollector = UnityMcpPluginEditor.Instance.LogCollector;
             if (logCollector == null)
-                throw new InvalidOperationException("[Error] LogCollector is not initialized.");
+                throw new InvalidOperationException("LogCollector is not initialized.");
 
             // Get all log entries as array to avoid concurrent modification
             var logs = logCollector.Query(

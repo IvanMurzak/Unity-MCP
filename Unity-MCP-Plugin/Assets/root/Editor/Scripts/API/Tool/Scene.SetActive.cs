@@ -25,7 +25,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             SceneSetActiveToolId,
-            Title = "Scene / Set Active"
+            Title = "Scene / Set Active",
+            IdempotentHint = true
         )]
         [Description("Set the specified opened scene as the active scene. " +
             "Use '" + SceneListOpenedToolId + "' tool to get the list of all opened scenes.")]

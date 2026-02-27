@@ -24,7 +24,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             AssetsShaderListAllToolId,
-            Title = "Assets / List Shaders"
+            Title = "Assets / List Shaders",
+            ReadOnlyHint = true,
+            IdempotentHint = true
         )]
         [Description("List all available shaders in the project assets and packages. " +
             "Returns their names. " +

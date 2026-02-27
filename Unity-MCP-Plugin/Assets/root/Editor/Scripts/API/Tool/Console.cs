@@ -19,10 +19,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         public static class Error
         {
             public static string InvalidMaxEntries(int entriesCount)
-                => $"[Error] Invalid maxEntries value '{entriesCount}'. Must be greater than 0.";
+                => $"Invalid maxEntries value '{entriesCount}'. Must be greater than 0.";
 
             public static string InvalidLogTypeFilter(string logType)
-                => $"[Error] Invalid logType filter '{logType}'. Valid values: All, Error, Assert, Warning, Log, Exception.";
+                => $"Invalid logType filter '{logType}'. Valid values: All, Error, Assert, Warning, Log, Exception.";
         }
     }
 }

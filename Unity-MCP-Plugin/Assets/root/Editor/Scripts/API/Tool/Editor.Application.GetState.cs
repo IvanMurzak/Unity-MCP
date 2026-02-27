@@ -21,7 +21,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             EditorApplicationGetStateToolId,
-            Title = "Editor / Application / Get State"
+            Title = "Editor / Application / Get State",
+            ReadOnlyHint = true,
+            IdempotentHint = true
         )]
         [Description("Returns available information about 'UnityEditor.EditorApplication'. " +
             "Use it to get information about the current state of the Unity Editor application. " +

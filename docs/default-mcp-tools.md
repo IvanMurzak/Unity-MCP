@@ -21,19 +21,20 @@ Manage files, folders, and project resources.
 | Tool | ID | Description |
 | :--- | :--- | :--- |
 | **Assets / Create Folder** | `assets-create-folder` | Create new directories (supports nested paths). |
-| **Assets / Create** | `assets-create` | Create a new Unity Asset. |
 | **Assets / Delete** | `assets-delete` | Delete a specific asset or file. |
 | **Assets / Find** | `assets-find` | Find assets using search filters (e.g., `t:Texture`). |
+| **Assets / Find (Built-in)** | `assets-find-built-in` | Search built-in Unity Editor assets. |
 | **Assets / Copy** | `assets-copy` | Duplicate an asset. |
 | **Assets / Move** | `assets-move` | Move or rename an asset. |
 | **Assets / Get Data** | `assets-get-data` | Retrieve metadata or content of an asset. |
+| **Assets / Modify** | `assets-modify` | Modify an asset file in the project. |
 | **Assets / Refresh** | `assets-refresh` | Force an Asset Database refresh. |
 
 ### Materials & Shaders
 | Tool | ID | Description |
 | :--- | :--- | :--- |
-| **Assets / Material / Create** | `assets-material-create` | Create a new Material asset. |
-| **Assets / Shader / List All** | `assets-shader-list-all` | List all available shaders in the project. |
+| **Assets / Create Material** | `assets-material-create` | Create a new Material asset. |
+| **Assets / List Shaders** | `assets-shader-list-all` | List all available shaders in the project. |
 
 ### Prefabs
 | Tool | ID | Description |
@@ -59,11 +60,11 @@ Manage scene objects and hierarchy.
 ### Components
 | Tool | ID | Description |
 | :--- | :--- | :--- |
-| **Component / Add** | `gameobject-component-add` | Add a component (e.g., `Rigidbody`). |
-| **Component / Destroy** | `gameobject-component-destroy` | Remove a component. |
-| **Component / Get** | `gameobject-component-get` | Get details of a component. |
-| **Component / Modify** | `gameobject-component-modify` | Set fields, properties, or object references. |
-| **Component / List** | `component-list` | List available Component types. |
+| **GameObject / Component / Add** | `gameobject-component-add` | Add a component (e.g., `Rigidbody`). |
+| **GameObject / Component / Destroy** | `gameobject-component-destroy` | Remove a component. |
+| **GameObject / Component / Get** | `gameobject-component-get` | Get details of a component. |
+| **GameObject / Component / Modify** | `gameobject-component-modify` | Set fields, properties, or object references. |
+| **GameObject / Component / List All** | `gameobject-component-list-all` | List available Component types. |
 
 ## 🎬 Scene Management
 | Tool | ID | Description |
@@ -79,7 +80,7 @@ Manage scene objects and hierarchy.
 ## 📝 Scripting
 | Tool | ID | Description |
 | :--- | :--- | :--- |
-| **Script / Create** | `script-date-or-create` | Create or update a C# script file. |
+| **Script / Update or Create** | `script-update-or-create` | Create or update a C# script file. |
 | **Script / Read** | `script-read` | Read the content of a `.cs` file. |
 | **Script / Delete** | `script-delete` | Delete a script file. |
 | **Script / Execute** | `script-execute` | Compile and run C# code snippet dynamically. |
@@ -87,18 +88,38 @@ Manage scene objects and hierarchy.
 ## 📦 Package Manager
 | Tool | ID | Description |
 | :--- | :--- | :--- |
-| **Package / List** | `package-list` | List installed packages. |
-| **Package / Add** | `package-add` | Install package (Registry, Git, Local). |
-| **Package / Remove** | `package-remove` | Uninstall a package. |
-| **Package / Search** | `package-search` | Search Unity Registry. |
+| **Package Manager / List Installed** | `package-list` | List installed packages. |
+| **Package Manager / Add** | `package-add` | Install package (Registry, Git, Local). |
+| **Package Manager / Remove** | `package-remove` | Uninstall a package. |
+| **Package Manager / Search** | `package-search` | Search Unity Registry. |
+
+## 🧩 Object
+| Tool | ID | Description |
+| :--- | :--- | :--- |
+| **Object / Get Data** | `object-get-data` | Get serialized data of a Unity Object including properties and fields. |
+| **Object / Modify** | `object-modify` | Directly modify fields and properties of a Unity Object. |
+
+## 📸 Screenshot
+| Tool | ID | Description |
+| :--- | :--- | :--- |
+| **Screenshot / Camera** | `screenshot-camera` | Capture a screenshot from a camera (defaults to Main Camera). |
+| **Screenshot / Game View** | `screenshot-game-view` | Capture a screenshot from the Unity Editor Game View. |
+| **Screenshot / Scene View** | `screenshot-scene-view` | Capture a screenshot from the Unity Editor Scene View. |
+
+## 🧪 Testing
+| Tool | ID | Description |
+| :--- | :--- | :--- |
+| **Tests / Run** | `tests-run` | Execute Unity tests (EditMode/PlayMode) with optional filters and return detailed results. |
 
 ## 💡 Advanced & Editor
 | Tool | ID | Description |
 | :--- | :--- | :--- |
 | **Console / Get Logs** | `console-get-logs` | Retrieve Unity Console logs. |
-| **Editor / State / Get** | `editor-application-get-state` | Check Play/Pause/Edit mode status. |
-| **Editor / State / Set** | `editor-application-set-state` | Set Play/Pause status. |
+| **Editor / Application / Get State** | `editor-application-get-state` | Check Play/Pause/Edit mode status. |
+| **Editor / Application / Set State** | `editor-application-set-state` | Set Play/Pause status. |
 | **Editor / Selection / Get** | `editor-selection-get` | Get current selection. |
 | **Editor / Selection / Set** | `editor-selection-set` | Set current selection. |
-| **Reflection / Method Find** | `reflection-method-find` | Find any C# method (public/private). |
-| **Reflection / Method Call** | `reflection-method-call` | Execute any found method. |
+| **Method C# / Find** | `reflection-method-find` | Find any C# method (public/private). |
+| **Method C# / Call** | `reflection-method-call` | Execute any found method. |
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)

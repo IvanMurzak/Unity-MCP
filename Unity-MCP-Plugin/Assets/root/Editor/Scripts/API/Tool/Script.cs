@@ -30,13 +30,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             static string ComponentsPrinted => string.Join("\n", AllComponentTypes.Select(type => type.FullName));
 
             public static string ScriptPathIsEmpty()
-                => "[Error] Script path is empty. Please provide a valid path. Sample: \"Assets/Scripts/MyScript.cs\".";
+                => "Script path is empty. Please provide a valid path. Sample: \"Assets/Scripts/MyScript.cs\".";
 
             public static string ScriptFileNotFound(params string[] files)
-                => $"[Error] File(s) not found: {string.Join(", ", files.Select(f => $"'{f}'"))}. Please check the path(s) and try again.";
+                => $"File(s) not found: {string.Join(", ", files.Select(f => $"'{f}'"))}. Please check the path(s) and try again.";
 
             public static string FilePathMustEndsWithCs()
-                => "[Error] File path must end with \".cs\". Please provide a valid C# file path.";
+                => "File path must end with \".cs\". Please provide a valid C# file path.";
         }
     }
 }

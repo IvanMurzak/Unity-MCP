@@ -29,7 +29,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             ComponentListToolId,
-            Title = "GameObject / Component / List All"
+            Title = "GameObject / Component / List All",
+            ReadOnlyHint = true,
+            IdempotentHint = true
         )]
         [Description("List C# class names extended from UnityEngine.Component. " +
             "Use this to find component type names for '" + GameObjectComponentAddToolId + "' tool. " +

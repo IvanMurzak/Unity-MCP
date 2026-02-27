@@ -28,7 +28,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             ObjectModifyToolId,
-            Title = "Object / Modify"
+            Title = "Object / Modify",
+            IdempotentHint = true
         )]
         [Description("Modify the specified Unity Object. " +
             "Allows direct modification of object fields and properties. " +

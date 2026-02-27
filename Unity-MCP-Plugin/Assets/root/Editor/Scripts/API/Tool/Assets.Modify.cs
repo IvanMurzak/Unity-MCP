@@ -30,7 +30,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             AssetsModifyToolId,
-            Title = "Assets / Modify"
+            Title = "Assets / Modify",
+            IdempotentHint = true
         )]
         [Description("Modify asset file in the project. " +
             "Use '" + AssetsGetDataToolId + "' tool first to inspect the asset structure before modifying. " +

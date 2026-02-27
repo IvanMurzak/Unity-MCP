@@ -26,7 +26,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             AssetsPrefabSaveToolId,
-            Title = "Assets / Prefab / Save"
+            Title = "Assets / Prefab / Save",
+            IdempotentHint = true
         )]
         [Description("Save a prefab. " +
             "Use it when you are in prefab editing mode in Unity Editor. " +

@@ -28,7 +28,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             GameObjectComponentModifyToolId,
-            Title = "GameObject / Component / Modify"
+            Title = "GameObject / Component / Modify",
+            IdempotentHint = true
         )]
         [Description("Modify a specific Component on a GameObject in opened Prefab or in a Scene. " +
             "Allows direct modification of component fields and properties without wrapping in GameObject structure. " +

@@ -172,12 +172,12 @@ namespace com.IvanMurzak.Unity.MCP
                 NotifyChanged(Instance.unityConnectionConfig);
             }
         }
-        public static string SkillsRootFolder
+        public static string SkillsPath
         {
-            get => Instance.unityConnectionConfig.SkillsRootFolder;
+            get => Instance.unityConnectionConfig.SkillsPath;
             set
             {
-                Instance.unityConnectionConfig.SkillsRootFolder = value;
+                Instance.unityConnectionConfig.SkillsPath = value;
                 NotifyChanged(Instance.unityConnectionConfig);
             }
         }

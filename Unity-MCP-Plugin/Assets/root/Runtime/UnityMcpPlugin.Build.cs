@@ -110,12 +110,7 @@ namespace com.IvanMurzak.Unity.MCP
 
             var assemblies = AssemblyUtils.AllAssemblies;
             var mcpPluginBuilder = new McpPluginBuilder(version, loggerProvider)
-                .WithConfig(config =>
-                {
-                    _logger.LogInformation("AI Game Developer server host: {host}", unityConnectionConfig.Host);
-                    config.Host = unityConnectionConfig.Host;
-                    config.Token = unityConnectionConfig.Token;
-                })
+                .SetConfig(unityConnectionConfig ?? throw new InvalidOperationException("UnityConnectionConfig must be set before building the plugin."))
                 .AddLogging(loggingBuilder =>
                 {
                     loggingBuilder.ClearProviders(); // 👈 Clears the default providers
