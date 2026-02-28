@@ -94,8 +94,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             // STDIO Configuration
 
-            ContainerStdio!.Add(TemplateLabelDescription("Kilo Code uses a local configuration file in your project."));
-
             var manualStepsContainer = TemplateFoldoutFirst("Manual Configuration Steps");
 
             manualStepsContainer!.Add(TemplateLabelDescription("1. Create or open the file in your project:"));
@@ -116,8 +114,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             ContainerStdio!.Add(troubleshootingContainerStdio);
 
             // HTTP Configuration
-
-            ContainerHttp!.Add(TemplateLabelDescription("Kilo Code uses a local configuration file in your project."));
 
             var manualStepsContainerHttp = TemplateFoldoutFirst("Manual Configuration Steps");
 
