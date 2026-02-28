@@ -17,6 +17,9 @@ using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
+    /// <summary>
+    /// Configurator for Kilo Code AI agent.
+    /// </summary>
     public class KiloCodeConfigurator : AiAgentConfigurator
     {
         public override string AgentName => "Kilo Code";
@@ -30,56 +33,58 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected override AiAgentConfig CreateConfigStdioWindows() => new JsonAiAgentConfig(
             name: AgentName,
             configPath: LocalConfigPath,
-            bodyPath: "mcpServers"
+            bodyPath: DefaultBodyPath
         )
         .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
         .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
         .SetProperty("args", new JsonArray
         {
-            $"port={UnityMcpPluginEditor.Port}",
-            $"plugin-timeout={UnityMcpPluginEditor.TimeoutMs}",
-            $"client-transport={TransportMethod.stdio}",
-            $"authorization={UnityMcpPluginEditor.AuthOption}",
-            $"token={UnityMcpPluginEditor.Token}"
+            $"{Args.Port}={UnityMcpPluginEditor.Port}",
+            $"{Args.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}",
+            $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
+            $"{Args.Authorization}={UnityMcpPluginEditor.AuthOption}",
+            $"{Args.Token}={UnityMcpPluginEditor.Token}"
         }, requiredForConfiguration: true)
         .SetPropertyToRemove("url");
 
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
             configPath: LocalConfigPath,
-            bodyPath: "mcpServers"
+            bodyPath: DefaultBodyPath
         )
         .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
         .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
         .SetProperty("args", new JsonArray
         {
-            $"port={UnityMcpPluginEditor.Port}",
-            $"plugin-timeout={UnityMcpPluginEditor.TimeoutMs}",
-            $"client-transport={TransportMethod.stdio}",
-            $"authorization={UnityMcpPluginEditor.AuthOption}",
-            $"token={UnityMcpPluginEditor.Token}"
+            $"{Args.Port}={UnityMcpPluginEditor.Port}",
+            $"{Args.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}",
+            $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
+            $"{Args.Authorization}={UnityMcpPluginEditor.AuthOption}",
+            $"{Args.Token}={UnityMcpPluginEditor.Token}"
         }, requiredForConfiguration: true)
         .SetPropertyToRemove("url");
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new JsonAiAgentConfig(
             name: AgentName,
             configPath: LocalConfigPath,
-            bodyPath: "mcpServers"
+            bodyPath: DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("streamable-http"), requiredForConfiguration: true)
         .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
         .SetProperty("url", JsonValue.Create(UnityMcpPluginEditor.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
-        .SetPropertyToRemove("command");
+        .SetPropertyToRemove("command")
+        .SetPropertyToRemove("args");
 
         protected override AiAgentConfig CreateConfigHttpMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
             configPath: LocalConfigPath,
-            bodyPath: "mcpServers"
+            bodyPath: DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("streamable-http"), requiredForConfiguration: true)
         .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
         .SetProperty("url", JsonValue.Create(UnityMcpPluginEditor.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
-        .SetPropertyToRemove("command");
+        .SetPropertyToRemove("command")
+        .SetPropertyToRemove("args");
 
         protected override void OnUICreated(VisualElement root)
         {
