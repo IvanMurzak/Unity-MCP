@@ -35,6 +35,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             configPath: LocalConfigPath,
             bodyPath: DefaultBodyPath
         )
+        .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
         .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
         .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
         .SetProperty("args", new JsonArray
@@ -52,6 +53,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             configPath: LocalConfigPath,
             bodyPath: DefaultBodyPath
         )
+        .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
         .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
         .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
         .SetProperty("args", new JsonArray
