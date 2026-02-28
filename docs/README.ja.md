@@ -37,7 +37,7 @@
 - ✔️ **柔軟なデプロイ** - 設定によりローカル（stdio）およびリモート（http）で動作
 - ✔️ **拡張可能** - [プロジェクトコードにカスタム MCP ツールを作成](#カスタム-mcp-ツールの追加)可能
 
-[![インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.51.1/AI-Game-Dev-Installer.unitypackage)
+[![インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.51.2/AI-Game-Dev-Installer.unitypackage)
 
 ![AI Game Developer Windows](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/ai-game-developer-windows.png?raw=true)
 
@@ -216,7 +216,7 @@
 
 ### オプション 1 - インストーラー
 
-- **[⬇️ インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.51.1/AI-Game-Dev-Installer.unitypackage)**
+- **[⬇️ インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.51.2/AI-Game-Dev-Installer.unitypackage)**
 - **📂 Unity プロジェクトにインストーラーをインポート**
   > - ファイルをダブルクリックすると Unity が自動的に開きます
   > - または: Unity Editor を先に開き、`Assets/Import Package/Custom Package` をクリックしてファイルを選択
@@ -508,6 +508,8 @@ public static class ChessGameAI
 [![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
 
 Docker がインストールされていることを確認してください。Windows をお使いの場合は Docker Desktop が起動していることもご確認ください。
+
+[高度な Docker 設定手順を読む](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/DOCKER_DEPLOYMENT.md)。
 
 ### `streamableHttp` トランスポート
 

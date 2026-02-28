@@ -1,4 +1,4 @@
-# Docker Deployment
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/ai-developer-header.svg?raw=true)
 
 [![MCP](https://badge.mcpx.dev 'MCP Server')](https://modelcontextprotocol.io/introduction)
 [![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&labelColor=333A41 'OpenUPM package')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
@@ -12,7 +12,7 @@
 [![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&labelColor=333A41)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
-The Unity-MCP Server is available as a lightweight Docker container, ideal for cloud deployments or isolating the AI server environment.
+The Unity-MCP Server is available as a lightweight Docker container, ideal for cloud deployments or isolating the AI server environment. GitHub repository: [IvanMurzak/Unity-MCP](https://github.com/IvanMurzak/Unity-MCP)
 
 - **Image**: `ivanmurzakdev/unity-mcp-server`
 - **Tags**: `latest`, `X.Y.Z` (e.g., `0.50.1`)
@@ -30,19 +30,23 @@ Run the server on port `8080`:
 docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server:latest
 ```
 
+> ⚠️ **Required:**
+> 1. Install [Unity Editor](https://unity.com)
+> 2. Install [AI Game Developer](https://github.com/IvanMurzak/Unity-MCP) plugin in Unity project.
+
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 ## ⚙️ Configuration
 
 The server can be configured using environment variables.
 
-| Variable                      | Default          | Description                                                                            |
-| :---------------------------- | :--------------- | :------------------------------------------------------------------------------------- |
+| Variable                      | Default          | Description                                                                             |
+| :---------------------------- | :--------------- | :-------------------------------------------------------------------------------------- |
 | `MCP_PLUGIN_PORT`             | `8080`           | The port the server listens on for both Client (HTTP) and Plugin (SignalR) connections. |
-| `MCP_PLUGIN_CLIENT_TRANSPORT` | `streamableHttp` | Transport for the Client connection: `streamableHttp` or `stdio`.                      |
-| `MCP_PLUGIN_CLIENT_TIMEOUT`   | `10000`          | Timeout in milliseconds for Plugin responses.                                          |
+| `MCP_PLUGIN_CLIENT_TRANSPORT` | `streamableHttp` | Transport for the Client connection: `streamableHttp` or `stdio`.                       |
+| `MCP_PLUGIN_CLIENT_TIMEOUT`   | `10000`          | Timeout in milliseconds for Plugin responses.                                           |
 | `MCP_AUTHORIZATION`           | `none`           | Authentication mode for incoming Client connections: `none` or `required`.              |
-| `MCP_PLUGIN_TOKEN`            | *(unset)*        | Bearer token required from the Client when `MCP_AUTHORIZATION=required`.               |
+| `MCP_PLUGIN_TOKEN`            | *(unset)*        | Bearer token is optional. If set - server accept only connection with this exact token. Works only with `MCP_AUTHORIZATION=required`. |
 
 ### Example: Custom Port
 

@@ -104,7 +104,11 @@ namespace com.IvanMurzak.Unity.MCP
             return new UnityLoggerProvider();
         }
 
-        protected virtual IMcpPlugin BuildMcpPlugin(McpPlugin.Common.Version version, Reflector reflector, ILoggerProvider? loggerProvider = null)
+        protected virtual IMcpPlugin BuildMcpPlugin(
+            McpPlugin.Common.Version version,
+            Reflector reflector,
+            ILoggerProvider? loggerProvider = null,
+            Action<IMcpPluginBuilder>? configure = null)
         {
             _logger.LogTrace("{method} called.", nameof(BuildMcpPlugin));
 
@@ -138,6 +142,8 @@ namespace com.IvanMurzak.Unity.MCP
                 .WithToolsFromAssembly(assemblies)
                 .WithPromptsFromAssembly(assemblies)
                 .WithResourcesFromAssembly(assemblies);
+
+            configure?.Invoke(mcpPluginBuilder);
 
             var mcpPlugin = mcpPluginBuilder.Build(reflector);
 

@@ -49,6 +49,7 @@ namespace com.IvanMurzak.Unity.MCP
                 Host = DefaultHost;
                 KeepConnected = false;
                 KeepServerRunning = false;
+                GenerateSkillFiles = false;
                 TransportMethod = TransportMethod.streamableHttp;
                 AuthOption = AuthOption.none;
                 LogLevel = LogLevel.Warning;

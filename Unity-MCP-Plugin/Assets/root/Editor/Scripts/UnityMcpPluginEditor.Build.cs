@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using Microsoft.Extensions.Logging;
 
 namespace com.IvanMurzak.Unity.MCP
@@ -18,10 +19,15 @@ namespace com.IvanMurzak.Unity.MCP
         public UnityMcpPluginEditor BuildMcpPluginIfNeeded()
         {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+            var loggerProvider = BuildLoggerProvider();
             var built = _plugin.BuildOnce(() => BuildMcpPlugin(
                 version: BuildVersion(),
                 reflector: CreateDefaultReflector(),
-                loggerProvider: BuildLoggerProvider()
+                loggerProvider: loggerProvider,
+                configure: builder =>
+                {
+                    builder.WithSkillFileGenerator(new UnitySkillFileGenerator(loggerProvider?.CreateLogger(nameof(UnitySkillFileGenerator))));
+                }
             ));
             stopwatch.Stop();
 

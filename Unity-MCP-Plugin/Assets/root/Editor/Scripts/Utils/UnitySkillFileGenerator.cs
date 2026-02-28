@@ -7,22 +7,27 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+
 #nullable enable
-using UnityEditor;
+using System.Text;
+using com.IvanMurzak.McpPlugin.Skills;
+using Microsoft.Extensions.Logging;
 
-namespace com.IvanMurzak.Unity.MCP.Installer
+namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
-    [InitializeOnLoad]
-    public static partial class Installer
+    public class UnitySkillFileGenerator : SkillFileGenerator
     {
-        public const string PackageId = "com.ivanmurzak.unity.mcp";
-        public const string Version = "0.51.2";
-
-        static Installer()
+        public UnitySkillFileGenerator() : base()
         {
-#if !IVAN_MURZAK_INSTALLER_PROJECT
-            AddScopedRegistryIfNeeded(ManifestPath);
-#endif
+        }
+        public UnitySkillFileGenerator(ILogger? logger = null) : base(logger)
+        {
+        }
+        protected override void BuildInputAuthorizationNotes(StringBuilder sb)
+        {
+            sb.AppendLine($"> The token is stored in the file: `{UnityMcpPluginEditor.AssetsFilePath}`");
+            sb.AppendLine($"> Using the format: `\"token\": \"YOUR_TOKEN\"`");
+            sb.AppendLine();
         }
     }
 }

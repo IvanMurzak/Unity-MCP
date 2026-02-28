@@ -37,7 +37,7 @@
 - ✔️ **灵活部署** — 支持本地（stdio）和远程（http）两种配置方式
 - ✔️ **可扩展** — 在项目代码中[创建自定义 MCP 工具](#添加自定义-mcp-tool)
 
-[![下载安装器](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.51.1/AI-Game-Dev-Installer.unitypackage)
+[![下载安装器](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.51.2/AI-Game-Dev-Installer.unitypackage)
 
 ![AI 游戏开发者 Windows](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/ai-game-developer-windows.png?raw=true)
 
@@ -216,7 +216,7 @@
 
 ### 选项 1 — 安装器
 
-- **[⬇️ 下载安装器](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.51.1/AI-Game-Dev-Installer.unitypackage)**
+- **[⬇️ 下载安装器](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.51.2/AI-Game-Dev-Installer.unitypackage)**
 - **📂 将安装器导入 Unity 项目**
   > - 双击文件 — Unity 将自动打开它
   > - 或者：先打开 Unity 编辑器，然后点击 `Assets/Import Package/Custom Package`，选择文件
@@ -508,6 +508,8 @@ public static class ChessGameAI
 [![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
 
 确保已安装 Docker。如果你在 Windows 操作系统上，请确保 Docker Desktop 已启动。
+
+[阅读高级 Docker 配置说明](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/DOCKER_DEPLOYMENT.md)。
 
 ### `streamableHttp` 传输
 
