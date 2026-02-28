@@ -30,59 +30,55 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected override AiAgentConfig CreateConfigStdioWindows() => new JsonAiAgentConfig(
             name: AgentName,
             configPath: LocalConfigPath,
-            bodyPath: "mcp"
+            bodyPath: "mcpServers"
         )
-        .SetProperty("type", JsonValue.Create("local"), requiredForConfiguration: true)
-        .SetProperty("enabled", JsonValue.Create(true), requiredForConfiguration: true)
-        .SetProperty("command", new JsonArray
+        .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
+        .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
+        .SetProperty("args", new JsonArray
         {
-            McpServerManager.ExecutableFullPath.Replace('\\', '/'),
             $"port={UnityMcpPluginEditor.Port}",
             $"plugin-timeout={UnityMcpPluginEditor.TimeoutMs}",
             $"client-transport={TransportMethod.stdio}",
             $"authorization={UnityMcpPluginEditor.AuthOption}",
             $"token={UnityMcpPluginEditor.Token}"
-        }, requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
+        }, requiredForConfiguration: true)
         .SetPropertyToRemove("url");
 
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
             configPath: LocalConfigPath,
-            bodyPath: "mcp"
+            bodyPath: "mcpServers"
         )
-        .SetProperty("type", JsonValue.Create("local"), requiredForConfiguration: true)
-        .SetProperty("enabled", JsonValue.Create(true), requiredForConfiguration: true)
-        .SetProperty("command", new JsonArray
+        .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
+        .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
+        .SetProperty("args", new JsonArray
         {
-            McpServerManager.ExecutableFullPath.Replace('\\', '/'),
             $"port={UnityMcpPluginEditor.Port}",
             $"plugin-timeout={UnityMcpPluginEditor.TimeoutMs}",
             $"client-transport={TransportMethod.stdio}",
             $"authorization={UnityMcpPluginEditor.AuthOption}",
             $"token={UnityMcpPluginEditor.Token}"
-        }, requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
+        }, requiredForConfiguration: true)
         .SetPropertyToRemove("url");
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new JsonAiAgentConfig(
             name: AgentName,
             configPath: LocalConfigPath,
-            bodyPath: "mcp"
+            bodyPath: "mcpServers"
         )
-        .SetProperty("type", JsonValue.Create("remote"), requiredForConfiguration: true)
-        .SetProperty("enabled", JsonValue.Create(true), requiredForConfiguration: true)
+        .SetProperty("type", JsonValue.Create("streamable-http"), requiredForConfiguration: true)
+        .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
         .SetProperty("url", JsonValue.Create(UnityMcpPluginEditor.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
-        .SetProperty("oauth", JsonValue.Create(false), requiredForConfiguration: true)
         .SetPropertyToRemove("command");
 
         protected override AiAgentConfig CreateConfigHttpMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
             configPath: LocalConfigPath,
-            bodyPath: "mcp"
+            bodyPath: "mcpServers"
         )
-        .SetProperty("type", JsonValue.Create("remote"), requiredForConfiguration: true)
-        .SetProperty("enabled", JsonValue.Create(true), requiredForConfiguration: true)
+        .SetProperty("type", JsonValue.Create("streamable-http"), requiredForConfiguration: true)
+        .SetProperty("disabled", JsonValue.Create(false), requiredForConfiguration: true)
         .SetProperty("url", JsonValue.Create(UnityMcpPluginEditor.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
-        .SetProperty("oauth", JsonValue.Create(false), requiredForConfiguration: true)
         .SetPropertyToRemove("command");
 
         protected override void OnUICreated(VisualElement root)
