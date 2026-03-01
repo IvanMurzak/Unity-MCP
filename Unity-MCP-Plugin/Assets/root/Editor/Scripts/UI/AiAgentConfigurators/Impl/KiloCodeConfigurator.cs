@@ -112,6 +112,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Check that the executable path is correct."));
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Verify Kilo Code has MCP support enabled."));
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- The configuration file should be in your Unity project root, next to Assets folder."));
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Restart Kilo Code after configuration changes"));
 
             ContainerStdio!.Add(troubleshootingContainerStdio);
 
@@ -132,6 +133,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             troubleshootingContainerHttp.Add(TemplateLabelDescription("- Ensure the JSON file has no syntax errors."));
             troubleshootingContainerHttp.Add(TemplateLabelDescription("- Verify Kilo Code has MCP support enabled."));
             troubleshootingContainerHttp.Add(TemplateLabelDescription("- The configuration file should be in your Unity project root, next to Assets folder."));
+            troubleshootingContainerHttp.Add(TemplateLabelDescription("- Restart Kilo Code after configuration changes"));
 
             ContainerHttp!.Add(troubleshootingContainerHttp);
         }

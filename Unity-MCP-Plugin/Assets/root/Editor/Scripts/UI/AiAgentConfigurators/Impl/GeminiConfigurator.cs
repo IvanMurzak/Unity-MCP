@@ -113,6 +113,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Ensure Gemini CLI is installed and accessible from terminal"));
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Start Gemini with --debug flag, it helps MCP server to work properly with Gemini in stdio transport mode."));
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Ensure MCP configuration file doesn't have syntax errors"));
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Restart Gemini after configuration changes"));
 
             ContainerStdio!.Add(troubleshootingContainerStdio);
 
@@ -141,6 +142,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             troubleshootingContainerHttp.Add(TemplateLabelDescription("- Ensure Gemini CLI is installed and accessible from terminal"));
             troubleshootingContainerHttp.Add(TemplateLabelDescription("- Ensure MCP configuration file doesn't have syntax errors"));
+            troubleshootingContainerHttp.Add(TemplateLabelDescription("- Restart Gemini after configuration changes"));
 
             ContainerHttp!.Add(troubleshootingContainerHttp);
         }

@@ -98,9 +98,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             var manualStepsContainer = TemplateFoldout("Manual Configuration Steps");
 
+            var tokenStdio = !string.IsNullOrEmpty(UnityMcpPluginEditor.Token) ? UnityMcpPluginEditor.Token : "<token>";
             var authArgsStdio = isAuthRequired
-                ? $" {Args.Authorization}={AuthOption.required}" +
-                  (!string.IsNullOrEmpty(UnityMcpPluginEditor.Token) ? $" {Args.Token}={UnityMcpPluginEditor.Token}" : string.Empty)
+                ? $" {Args.Authorization}={AuthOption.required} {Args.Token}={tokenStdio}"
                 : string.Empty;
 
             var addMcpServerCommandStdio = $"claude mcp add {AiAgentConfig.DefaultMcpServerName} \"{McpServerManager.ExecutableFullPath}\" port={UnityMcpPluginEditor.Port} plugin-timeout={UnityMcpPluginEditor.TimeoutMs} client-transport=stdio{authArgsStdio}";
@@ -133,8 +133,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             var manualStepsContainerHttp = TemplateFoldout("Manual Configuration Steps");
 
-            var authHeaderHttp = isAuthRequired && !string.IsNullOrEmpty(UnityMcpPluginEditor.Token)
-                ? $" --header \"Authorization: Bearer {UnityMcpPluginEditor.Token}\""
+            var tokenHttp = !string.IsNullOrEmpty(UnityMcpPluginEditor.Token) ? UnityMcpPluginEditor.Token : "<token>";
+            var authHeaderHttp = isAuthRequired
+                ? $" --header \"Authorization: Bearer {tokenHttp}\""
                 : string.Empty;
 
             var addMcpServerCommandHttp = $"claude mcp add --transport http {AiAgentConfig.DefaultMcpServerName} {UnityMcpPluginEditor.Host}{authHeaderHttp}";

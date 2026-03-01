@@ -161,6 +161,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var troubleshootingContainerStdio = TemplateFoldout("Troubleshooting");
 
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Ensure Codex CLI is installed and accessible from terminal"));
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Restart Codex after configuration changes"));
 
             ContainerStdio!.Add(troubleshootingContainerStdio);
 
@@ -201,6 +202,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var troubleshootingContainerHttp = TemplateFoldout("Troubleshooting");
 
             troubleshootingContainerHttp.Add(TemplateLabelDescription("- Ensure Codex CLI is installed and accessible from terminal"));
+            troubleshootingContainerHttp.Add(TemplateLabelDescription("- Restart Codex after configuration changes"));
 
             ContainerHttp!.Add(troubleshootingContainerHttp);
         }
