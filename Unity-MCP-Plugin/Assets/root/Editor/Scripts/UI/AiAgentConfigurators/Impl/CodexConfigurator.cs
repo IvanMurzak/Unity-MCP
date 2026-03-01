@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System;
 using System.Collections.Generic;
 using System.IO;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
@@ -24,6 +25,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
     public class CodexConfigurator : AiAgentConfigurator
     {
         const string EnvVarNameAuthToken = "GAME_DEV_AUTH_TOKEN";
+        private const string McpPathSegment = "/mcp";
 
         public override string AgentName => "Codex";
         public override string AgentId => "codex";
@@ -84,7 +86,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             bodyPath: "mcp_servers"
         )
         .SetProperty("enabled", true, requiredForConfiguration: true) // Codex requires an "enabled" property
-        .SetProperty("url", UnityMcpPluginEditor.Host, requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
+        .SetProperty("url", GetCodexHttpUrl(), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
         .SetProperty("tool_timeout_sec", 300, requiredForConfiguration: false) // Optional: Set a longer tool timeout for Codex
         .SetProperty("startup_timeout_sec", 30, requiredForConfiguration: false) // Optional: Set a startup timeout for HTTP connection attempts
         .SetPropertyToRemove("command")
@@ -100,12 +102,47 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             bodyPath: "mcp_servers"
         )
         .SetProperty("enabled", true, requiredForConfiguration: true) // Codex requires an "enabled" property
-        .SetProperty("url", UnityMcpPluginEditor.Host, requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
+        .SetProperty("url", GetCodexHttpUrl(), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
         .SetProperty("tool_timeout_sec", 300, requiredForConfiguration: false) // Optional: Set a longer tool timeout for Codex
         .SetProperty("startup_timeout_sec", 30, requiredForConfiguration: false) // Optional: Set a startup timeout for HTTP connection attempts
         .SetPropertyToRemove("command")
         .SetPropertyToRemove("args")
         .SetPropertyToRemove("type");
+
+        private static string GetCodexHttpUrl()
+        {
+            return EnsureMcpSuffix(UnityMcpPluginEditor.Host);
+        }
+
+        private static string EnsureMcpSuffix(string url)
+        {
+            if (string.IsNullOrWhiteSpace(url))
+                return McpPathSegment;
+
+            if (Uri.TryCreate(url, UriKind.Absolute, out var uri))
+            {
+                var path = string.IsNullOrEmpty(uri.AbsolutePath) ? "/" : uri.AbsolutePath;
+                var normalizedPath = path.TrimEnd('/');
+
+                if (string.IsNullOrEmpty(normalizedPath))
+                    normalizedPath = "/";
+
+                if (normalizedPath.EndsWith(McpPathSegment, StringComparison.OrdinalIgnoreCase))
+                    return uri.GetLeftPart(UriPartial.Authority) + normalizedPath;
+
+                normalizedPath = normalizedPath == "/"
+                    ? McpPathSegment
+                    : normalizedPath + McpPathSegment;
+
+                return uri.GetLeftPart(UriPartial.Authority) + normalizedPath;
+            }
+
+            var trimmed = url.Trim();
+            if (trimmed.EndsWith(McpPathSegment, StringComparison.OrdinalIgnoreCase))
+                return trimmed;
+
+            return trimmed.TrimEnd('/') + McpPathSegment;
+        }
 
         protected override void ApplyHttpAuthorizationConfig(AiAgentConfig config)
         {
@@ -135,7 +172,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             base.OnUICreated(root);
 
             var addMcpServerCommandStdio = $"codex mcp add {AiAgentConfig.DefaultMcpServerName} \"{McpServerManager.ExecutableFullPath}\" port={UnityMcpPluginEditor.Port} plugin-timeout={UnityMcpPluginEditor.TimeoutMs} client-transport=stdio";
-            var addMcpServerCommandHttp = $"codex mcp add {AiAgentConfig.DefaultMcpServerName} --url {UnityMcpPluginEditor.Host}";
+            var addMcpServerCommandHttp = $"codex mcp add {AiAgentConfig.DefaultMcpServerName} --url {GetCodexHttpUrl()}";
 
             // STDIO Configuration
 
