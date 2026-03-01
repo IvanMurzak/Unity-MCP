@@ -107,6 +107,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             manualStepsContainer!.Add(TemplateLabelDescription("Run the following command in the folder of the Unity project to configure Claude Code"));
             manualStepsContainer!.Add(TemplateTextFieldReadOnly(addMcpServerCommandStdio));
+            manualStepsContainer!.Add(TemplateLabelDescription("Restart or start Claude Code to apply the configuration"));
+            manualStepsContainer!.Add(TemplateTextFieldReadOnly("claude"));
 
             ContainerStdio!.Add(manualStepsContainer);
 
@@ -135,10 +137,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 ? $" --header \"Authorization: Bearer {UnityMcpPluginEditor.Token}\""
                 : string.Empty;
 
-            var addMcpServerCommandHttp = $"claude mcp add --transport http{authHeaderHttp} {AiAgentConfig.DefaultMcpServerName} {UnityMcpPluginEditor.Host}";
+            var addMcpServerCommandHttp = $"claude mcp add --transport http {AiAgentConfig.DefaultMcpServerName} {UnityMcpPluginEditor.Host}{authHeaderHttp}";
 
             manualStepsContainerHttp!.Add(TemplateLabelDescription("Run the following command in the folder of the Unity project to configure Claude Code"));
             manualStepsContainerHttp!.Add(TemplateTextFieldReadOnly(addMcpServerCommandHttp));
+            manualStepsContainerHttp!.Add(TemplateLabelDescription("Restart or start Claude Code to apply the configuration"));
+            manualStepsContainerHttp!.Add(TemplateTextFieldReadOnly("claude"));
 
             ContainerHttp!.Add(manualStepsContainerHttp);
 
