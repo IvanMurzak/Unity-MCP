@@ -113,6 +113,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Ensure Open Code CLI is installed and accessible from terminal"));
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Ensure Open Code CLI is launched from the project root folder (the folder must contain the Assets folder inside)"));
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Restart Open Code after configuration changes"));
 
             ContainerStdio!.Add(troubleshootingContainerStdio);
 
@@ -139,6 +140,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             troubleshootingContainerHttp.Add(TemplateLabelDescription("- Ensure Open Code CLI is installed and accessible from terminal"));
             troubleshootingContainerHttp.Add(TemplateLabelDescription("- Ensure Open Code CLI is launched from the project root folder (the folder must contain the Assets folder inside)"));
+            troubleshootingContainerHttp.Add(TemplateLabelDescription("- Restart Open Code after configuration changes"));
 
             ContainerHttp!.Add(troubleshootingContainerHttp);
         }
