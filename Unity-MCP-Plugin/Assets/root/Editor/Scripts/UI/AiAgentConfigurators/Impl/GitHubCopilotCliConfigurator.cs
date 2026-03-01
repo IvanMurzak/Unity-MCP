@@ -1,4 +1,4 @@
-﻿/*
+/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -107,7 +107,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             // STDIO Configuration
 
-            var manualStepsContainer = TemplateFoldoutFirst("Manual Configuration Steps");
+            var startContainerStdio = TemplateFoldoutFirst("Start");
+            startContainerStdio!.Add(TemplateLabelDescription("Navigate to project root"));
+            startContainerStdio!.Add(TemplateTextFieldReadOnly($"cd \"{ProjectRootPath}\""));
+            startContainerStdio!.Add(TemplateLabelDescription("Launch GitHub Copilot CLI"));
+            startContainerStdio!.Add(TemplateTextFieldReadOnly("copilot"));
+            ContainerStdio!.Add(startContainerStdio);
+
+            var manualStepsContainer = TemplateFoldout("Manual Configuration Steps");
 
             manualStepsContainer!.Add(TemplateLabelDescription("1. Open or create file '%User%/.copilot/mcp-config.json'"));
             manualStepsContainer!.Add(TemplateLabelDescription("2. Copy and paste the configuration json into the file."));
@@ -124,7 +131,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             // HTTP Configuration
 
-            var manualStepsContainerHttp = TemplateFoldoutFirst("Manual Configuration Steps");
+            var startContainerHttp = TemplateFoldoutFirst("Start");
+            startContainerHttp!.Add(TemplateLabelDescription("Navigate to project root"));
+            startContainerHttp!.Add(TemplateTextFieldReadOnly($"cd \"{ProjectRootPath}\""));
+            startContainerHttp!.Add(TemplateLabelDescription("Launch GitHub Copilot CLI"));
+            startContainerHttp!.Add(TemplateTextFieldReadOnly("copilot"));
+            ContainerHttp!.Add(startContainerHttp);
+
+            var manualStepsContainerHttp = TemplateFoldout("Manual Configuration Steps");
 
             manualStepsContainerHttp!.Add(TemplateLabelDescription("1. Open or create file '%User%/.copilot/mcp-config.json'"));
             manualStepsContainerHttp!.Add(TemplateLabelDescription("2. Copy and paste the configuration json into the file."));
