@@ -37,7 +37,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.API
 
             [Description("None = only names, Inputs = with argument names, " +
                 "InputsWithDescription = with argument names and descriptions")]
-            InputRequest? includeInputs = InputRequest.None
+            InputRequest includeInputs = InputRequest.None
         )
         {
             if (!UnityMcpPlugin.HasInstance)
@@ -53,16 +53,24 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.API
 
             Regex? regex = null;
             if (!string.IsNullOrEmpty(regexSearch))
-                regex = new Regex(regexSearch, RegexOptions.IgnoreCase);
+            {
+                try
+                {
+                    regex = new Regex(regexSearch, RegexOptions.IgnoreCase, System.TimeSpan.FromSeconds(2));
+                }
+                catch (System.ArgumentException)
+                {
+                    throw new System.ArgumentException($"[Error] Invalid Regex Pattern: {regexSearch}");
+                }
+            }
 
             var result = new List<ToolData>();
 
             foreach (var tool in toolManager.GetAllTools())
             {
-                
-                var inputArray = tool.InputSchema as JsonArray;
+                var schemaObj = tool.InputSchema as JsonObject;
+                var properties = schemaObj?["properties"] as JsonObject;
 
-                
                 if (regex != null)
                 {
                     bool matches =
@@ -70,15 +78,12 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.API
                         regex.IsMatch(tool.Description ?? "");
 
                     
-                    if (!matches && inputArray != null)
+                    if (!matches && properties != null)
                     {
-                        foreach (var node in inputArray)  
+                        foreach (var prop in properties)
                         {
-                            var obj = node as JsonObject;
-                            if (obj == null) continue;
-
-                            var argName = obj["name"]?.ToString() ?? "";
-                            var argDesc = obj["description"]?.ToString() ?? "";
+                            var argName = prop.Key ?? "";
+                            var argDesc = (prop.Value as JsonObject)?["description"]?.ToString() ?? "";
 
                             if (regex.IsMatch(argName) || regex.IsMatch(argDesc))
                             {
@@ -91,7 +96,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.API
                     if (!matches) continue;
                 }
 
-                
+
                 var toolData = new ToolData
                 {
                     Name = tool.Name ?? string.Empty,
@@ -100,20 +105,16 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.API
                         : null
                 };
 
-                
-                if (includeInputs != InputRequest.None && inputArray != null)
+                if (includeInputs != InputRequest.None && properties != null)
                 {
                     var inputs = new List<InputData>();
-                    foreach (var node in inputArray)  
+                    foreach (var prop in properties)
                     {
-                        var obj = node as JsonObject;
-                        if (obj == null) continue;
-
                         inputs.Add(new InputData
                         {
-                            Name = obj["name"]?.ToString() ?? string.Empty,
+                            Name = prop.Key ?? string.Empty,
                             Description = includeInputs == InputRequest.InputsWithDescription
-                                ? obj["description"]?.ToString()
+                                ? (prop.Value as JsonObject)?["description"]?.ToString()
                                 : null
                         });
                     }
