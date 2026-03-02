@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -37,9 +37,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetProperty("enabled", JsonValue.Create(true), requiredForConfiguration: true)
         .SetProperty("command", new JsonArray {
             McpServerManager.ExecutableFullPath.Replace('\\', '/'),
-            $"{Args.Port}={UnityMcpPlugin.Port}",
-            $"{Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-            $"{Args.ClientTransportMethod}={TransportMethod.stdio}"
+            $"{Args.Port}={UnityMcpPluginEditor.Port}",
+            $"{Args.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}",
+            $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
+            $"{Args.Authorization}={UnityMcpPluginEditor.AuthOption}",
+            $"{Args.Token}={UnityMcpPluginEditor.Token}"
         }, requiredForConfiguration: true)
         .SetPropertyToRemove("url")
         .SetPropertyToRemove("args");
@@ -53,9 +55,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetProperty("enabled", JsonValue.Create(true), requiredForConfiguration: true)
         .SetProperty("command", new JsonArray {
             McpServerManager.ExecutableFullPath.Replace('\\', '/'),
-            $"{Args.Port}={UnityMcpPlugin.Port}",
-            $"{Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-            $"{Args.ClientTransportMethod}={TransportMethod.stdio}"
+            $"{Args.Port}={UnityMcpPluginEditor.Port}",
+            $"{Args.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}",
+            $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
+            $"{Args.Authorization}={UnityMcpPluginEditor.AuthOption}",
+            $"{Args.Token}={UnityMcpPluginEditor.Token}"
         }, requiredForConfiguration: true)
         .SetPropertyToRemove("url")
         .SetPropertyToRemove("args");
@@ -67,7 +71,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         )
         .SetProperty("type", JsonValue.Create("remote"), requiredForConfiguration: true)
         .SetProperty("enabled", JsonValue.Create(true), requiredForConfiguration: true)
-        .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
+        .SetProperty("url", JsonValue.Create(UnityMcpPluginEditor.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
         .SetPropertyToRemove("command")
         .SetPropertyToRemove("args");
 
@@ -78,7 +82,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         )
         .SetProperty("type", JsonValue.Create("remote"), requiredForConfiguration: true)
         .SetProperty("enabled", JsonValue.Create(true), requiredForConfiguration: true)
-        .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
+        .SetProperty("url", JsonValue.Create(UnityMcpPluginEditor.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
         .SetPropertyToRemove("command")
         .SetPropertyToRemove("args");
 
@@ -109,6 +113,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Ensure Open Code CLI is installed and accessible from terminal"));
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Ensure Open Code CLI is launched from the project root folder (the folder must contain the Assets folder inside)"));
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Restart Open Code after configuration changes"));
 
             ContainerStdio!.Add(troubleshootingContainerStdio);
 
@@ -135,6 +140,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             troubleshootingContainerHttp.Add(TemplateLabelDescription("- Ensure Open Code CLI is installed and accessible from terminal"));
             troubleshootingContainerHttp.Add(TemplateLabelDescription("- Ensure Open Code CLI is launched from the project root folder (the folder must contain the Assets folder inside)"));
+            troubleshootingContainerHttp.Add(TemplateLabelDescription("- Restart Open Code after configuration changes"));
 
             ContainerHttp!.Add(troubleshootingContainerHttp);
         }

@@ -51,14 +51,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             {
                 var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabAssetPath);
                 if (prefab == null)
-                    throw new ArgumentException(Error.NotFoundPrefabAtPath(prefabAssetPath), nameof(prefabAssetPath));
+                    throw new ArgumentException($"Prefab not found at path '{prefabAssetPath}'.", nameof(prefabAssetPath));
 
                 var parentGo = default(GameObject);
                 if (StringUtils.Path_ParseParent(gameObjectPath, out var parentPath, out var name))
                 {
                     parentGo = GameObjectUtils.FindByPath(parentPath);
                     if (parentGo == null)
-                        throw new ArgumentException(Tool_GameObject.Error.NotFoundGameObjectAtPath(parentPath!), nameof(gameObjectPath));
+                        throw new ArgumentException($"GameObject with path '{parentPath}' not found.", nameof(gameObjectPath));
                 }
 
                 position ??= Vector3.zero;
@@ -67,7 +67,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 var go = PrefabUtility.InstantiatePrefab(prefab) as GameObject;
                 if (go == null)
-                    throw new Exception($"[Error] Failed to instantiate prefab from path '{prefabAssetPath}'.");
+                    throw new Exception($"Failed to instantiate prefab from path '{prefabAssetPath}'.");
 
                 go.name = name ?? prefab.name;
                 if (parentGo != null)

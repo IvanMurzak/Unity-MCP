@@ -28,7 +28,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             ObjectModifyToolId,
-            Title = "Object / Modify"
+            Title = "Object / Modify",
+            IdempotentHint = true
         )]
         [Description("Modify the specified Unity Object. " +
             "Allows direct modification of object fields and properties. " +
@@ -59,8 +60,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 var logs = new Logs();
                 var objToModify = (object)obj;
+                var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
-                var success = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.TryPopulate(
+                var success = reflector.TryPopulate(
                     ref objToModify,
                     data: objectDiff,
                     logs: logs,
@@ -74,7 +76,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
                 // Return updated object data
-                var data = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Serialize(
+                var data = reflector.Serialize(
                     obj,
                     name: obj.name,
                     recursive: true,

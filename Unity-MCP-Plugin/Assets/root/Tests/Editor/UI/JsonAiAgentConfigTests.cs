@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -52,8 +52,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
             .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true)
             .SetProperty("args", new JsonArray {
-                $"{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}",
-                $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
+                $"{Consts.MCP.Server.Args.Port}={UnityMcpPluginEditor.Port}",
+                $"{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}",
                 $"{Consts.MCP.Server.Args.ClientTransportMethod}={TransportMethod.stdio}"
             }, requiredForConfiguration: true)
             .SetPropertyToRemove("url");
@@ -66,7 +66,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 configPath: configPath,
                 bodyPath: bodyPath)
             .SetProperty("type", JsonValue.Create($"{TransportMethod.streamableHttp}"), requiredForConfiguration: true)
-            .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true)
+            .SetProperty("url", JsonValue.Create(UnityMcpPluginEditor.Host), requiredForConfiguration: true)
             .SetPropertyToRemove("command")
             .SetPropertyToRemove("args");
         }
@@ -211,7 +211,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             var url = serverEntry!["url"]?.GetValue<string>();
             Assert.IsNotNull(url, "url should not be null");
-            Assert.AreEqual(UnityMcpPlugin.Host, url, "url should match McpServerUrl");
+            Assert.AreEqual(UnityMcpPluginEditor.Host, url, "url should match McpServerUrl");
 
             yield return null;
         }
@@ -394,7 +394,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 ""mcpServers"": {{
                     ""{AiAgentConfig.DefaultMcpServerName}"": {{
                         ""command"": ""{executable}"",
-                        ""args"": [""{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}"", ""{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}""],
+                        ""args"": [""{Consts.MCP.Server.Args.Port}={UnityMcpPluginEditor.Port}"", ""{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}""],
                         ""url"": ""http://localhost:50000/mcp""
                     }}
                 }}
@@ -419,7 +419,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var missingCommandJson = $@"{{
                 ""mcpServers"": {{
                     ""{AiAgentConfig.DefaultMcpServerName}"": {{
-                        ""args"": [""{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}"", ""{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}""]
+                        ""args"": [""{Consts.MCP.Server.Args.Port}={UnityMcpPluginEditor.Port}"", ""{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}""]
                     }}
                 }}
             }}";
@@ -445,7 +445,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 ""mcpServers"": {{
                     ""{AiAgentConfig.DefaultMcpServerName}"": {{
                         ""command"": ""{executable}"",
-                        ""args"": [""{Consts.MCP.Server.Args.Port}=99999"", ""{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}""]
+                        ""args"": [""{Consts.MCP.Server.Args.Port}=99999"", ""{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}""]
                     }}
                 }}
             }}";
@@ -487,7 +487,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange - create config with both http and command properties (invalid state)
             var bodyPath = "mcpServers";
-            var url = UnityMcpPlugin.Host;
+            var url = UnityMcpPluginEditor.Host;
             var mixedJson = $@"{{
                 ""mcpServers"": {{
                     ""{AiAgentConfig.DefaultMcpServerName}"": {{
@@ -514,7 +514,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange - create config with both http and args properties (invalid state)
             var bodyPath = "mcpServers";
-            var url = UnityMcpPlugin.Host;
+            var url = UnityMcpPluginEditor.Host;
             var mixedJson = $@"{{
                 ""mcpServers"": {{
                     ""{AiAgentConfig.DefaultMcpServerName}"": {{
@@ -565,7 +565,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var bodyPath = "mcpServers";
-            var url = UnityMcpPlugin.Host;
+            var url = UnityMcpPluginEditor.Host;
             var wrongTypeJson = $@"{{
                 ""mcpServers"": {{
                     ""{AiAgentConfig.DefaultMcpServerName}"": {{
@@ -799,7 +799,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     ""otherServer"": {{
                         ""type"": ""stdio"",
                         ""command"": ""{executable}"",
-                        ""args"": [""{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}"", ""{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}"", ""{Consts.MCP.Server.Args.ClientTransportMethod}=stdio""]
+                        ""args"": [""{Consts.MCP.Server.Args.Port}={UnityMcpPluginEditor.Port}"", ""{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}"", ""{Consts.MCP.Server.Args.ClientTransportMethod}=stdio""]
                     }}
                 }}
             }}";
@@ -826,7 +826,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     ""otherServer"": {{
                         ""type"": ""stdio"",
                         ""command"": ""{executable}"",
-                        ""args"": [""{Consts.MCP.Server.Args.Port}={UnityMcpPlugin.Port}"", ""{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}"", ""{Consts.MCP.Server.Args.ClientTransportMethod}=stdio""]
+                        ""args"": [""{Consts.MCP.Server.Args.Port}={UnityMcpPluginEditor.Port}"", ""{Consts.MCP.Server.Args.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}"", ""{Consts.MCP.Server.Args.ClientTransportMethod}=stdio""]
                     }},
                     ""{AiAgentConfig.DefaultMcpServerName}"": {{
                         ""type"": ""stdio"",
@@ -852,7 +852,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange - another server entry has matching http properties, but DefaultMcpServerName doesn't exist
             var bodyPath = "mcpServers";
-            var url = UnityMcpPlugin.Host;
+            var url = UnityMcpPluginEditor.Host;
             var json = $@"{{
                 ""mcpServers"": {{
                     ""otherServer"": {{
@@ -1020,7 +1020,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange - existing file with the same server under a custom name
             var bodyPath = "mcpServers";
-            var url = UnityMcpPlugin.Host;
+            var url = UnityMcpPluginEditor.Host;
             var existingJson = $@"{{
                 ""mcpServers"": {{
                     ""my-custom-name"": {{
@@ -1051,7 +1051,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange - existing file with the same server under a custom name using serverUrl
             var bodyPath = "mcpServers";
-            var url = UnityMcpPlugin.Host;
+            var url = UnityMcpPluginEditor.Host;
             var existingJson = $@"{{
                 ""mcpServers"": {{
                     ""my-custom-name"": {{
@@ -1089,7 +1089,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange - existing file with a server using serverUrl but config does NOT add serverUrl identity key
             var bodyPath = "mcpServers";
-            var url = UnityMcpPlugin.Host;
+            var url = UnityMcpPluginEditor.Host;
             var existingJson = $@"{{
                 ""mcpServers"": {{
                     ""my-custom-name"": {{
@@ -1141,6 +1141,194 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             Assert.IsNotNull(mcpServers!["other-server"], "Unrelated server should be preserved");
             Assert.IsNotNull(mcpServers[AiAgentConfig.DefaultMcpServerName], "Default entry should exist");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator IsDetected_DeprecatedName_ReturnsTrue()
+        {
+            // Arrange - file only contains the deprecated server name
+            var bodyPath = "mcpServers";
+            var existingJson = $@"{{
+                ""{bodyPath}"": {{
+                    ""Unity-MCP"": {{
+                        ""type"": ""stdio"",
+                        ""command"": ""/some/path""
+                    }}
+                }}
+            }}";
+            File.WriteAllText(tempConfigPath, existingJson);
+            var config = CreateStdioConfig(tempConfigPath, bodyPath);
+
+            // Act & Assert
+            Assert.IsTrue(config.IsDetected(), "IsDetected should return true when only the deprecated name is present");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator IsDetected_DuplicateByCommand_ReturnsTrue()
+        {
+            // Arrange - file only contains a duplicate entry matching by command
+            var bodyPath = "mcpServers";
+            var executable = McpServerManager.ExecutableFullPath.Replace('\\', '/');
+            var existingJson = $@"{{
+                ""{bodyPath}"": {{
+                    ""my-custom-name"": {{
+                        ""type"": ""stdio"",
+                        ""command"": ""{executable}"",
+                        ""args"": [""--old-arg""]
+                    }}
+                }}
+            }}";
+            File.WriteAllText(tempConfigPath, existingJson);
+            var config = CreateStdioConfig(tempConfigPath, bodyPath);
+
+            // Act & Assert
+            Assert.IsTrue(config.IsDetected(), "IsDetected should return true when a duplicate entry with the same command is present");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator IsDetected_DuplicateByUrl_ReturnsTrue()
+        {
+            // Arrange - file only contains a duplicate entry matching by url
+            var bodyPath = "mcpServers";
+            var url = UnityMcpPluginEditor.Host;
+            var existingJson = $@"{{
+                ""{bodyPath}"": {{
+                    ""my-custom-name"": {{
+                        ""type"": ""streamableHttp"",
+                        ""url"": ""{url}""
+                    }}
+                }}
+            }}";
+            File.WriteAllText(tempConfigPath, existingJson);
+            var config = CreateHttpConfig(tempConfigPath, bodyPath);
+
+            // Act & Assert
+            Assert.IsTrue(config.IsDetected(), "IsDetected should return true when a duplicate entry with the same url is present");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Unconfigure_DeprecatedName_RemovesIt()
+        {
+            // Arrange - file only contains the deprecated server name
+            var bodyPath = "mcpServers";
+            var existingJson = $@"{{
+                ""{bodyPath}"": {{
+                    ""Unity-MCP"": {{
+                        ""type"": ""stdio"",
+                        ""command"": ""/some/path""
+                    }}
+                }}
+            }}";
+            File.WriteAllText(tempConfigPath, existingJson);
+            var config = CreateStdioConfig(tempConfigPath, bodyPath);
+
+            // Act
+            var result = config.Unconfigure();
+
+            // Assert
+            Assert.IsTrue(result, "Unconfigure should return true when deprecated entry was removed");
+            var json = File.ReadAllText(tempConfigPath);
+            var rootObj = JsonNode.Parse(json)?.AsObject();
+            var mcpServers = rootObj!["mcpServers"]?.AsObject();
+            Assert.IsNull(mcpServers!["Unity-MCP"], "Deprecated entry should be removed");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Unconfigure_DuplicateByCommand_RemovesIt()
+        {
+            // Arrange - file only contains a duplicate entry with the same command
+            var bodyPath = "mcpServers";
+            var executable = McpServerManager.ExecutableFullPath.Replace('\\', '/');
+            var existingJson = $@"{{
+                ""{bodyPath}"": {{
+                    ""my-custom-name"": {{
+                        ""type"": ""stdio"",
+                        ""command"": ""{executable}"",
+                        ""args"": [""--old-arg""]
+                    }}
+                }}
+            }}";
+            File.WriteAllText(tempConfigPath, existingJson);
+            var config = CreateStdioConfig(tempConfigPath, bodyPath);
+
+            // Act
+            var result = config.Unconfigure();
+
+            // Assert
+            Assert.IsTrue(result, "Unconfigure should return true when a duplicate entry was removed");
+            var json = File.ReadAllText(tempConfigPath);
+            var rootObj = JsonNode.Parse(json)?.AsObject();
+            var mcpServers = rootObj!["mcpServers"]?.AsObject();
+            Assert.IsNull(mcpServers!["my-custom-name"], "Duplicate entry should be removed");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Unconfigure_DeprecatedAndCurrentPresent_RemovesBoth()
+        {
+            // Arrange - file contains both current and deprecated names
+            var bodyPath = "mcpServers";
+            var existingJson = $@"{{
+                ""{bodyPath}"": {{
+                    ""Unity-MCP"": {{
+                        ""type"": ""stdio"",
+                        ""command"": ""/old/path""
+                    }},
+                    ""{AiAgentConfig.DefaultMcpServerName}"": {{
+                        ""type"": ""stdio"",
+                        ""command"": ""/some/path""
+                    }}
+                }}
+            }}";
+            File.WriteAllText(tempConfigPath, existingJson);
+            var config = CreateStdioConfig(tempConfigPath, bodyPath);
+
+            // Act
+            var result = config.Unconfigure();
+
+            // Assert
+            Assert.IsTrue(result, "Unconfigure should return true when entries were removed");
+            var json = File.ReadAllText(tempConfigPath);
+            var rootObj = JsonNode.Parse(json)?.AsObject();
+            var mcpServers = rootObj!["mcpServers"]?.AsObject();
+            Assert.IsNull(mcpServers!["Unity-MCP"], "Deprecated entry should be removed");
+            Assert.IsNull(mcpServers[AiAgentConfig.DefaultMcpServerName], "Current entry should be removed");
+
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator Unconfigure_NothingPresent_ReturnsFalse()
+        {
+            // Arrange - file has no known entries
+            var bodyPath = "mcpServers";
+            var existingJson = $@"{{
+                ""{bodyPath}"": {{
+                    ""other-server"": {{
+                        ""type"": ""stdio"",
+                        ""command"": ""completely-different-command""
+                    }}
+                }}
+            }}";
+            File.WriteAllText(tempConfigPath, existingJson);
+            var config = CreateStdioConfig(tempConfigPath, bodyPath);
+
+            // Act
+            var result = config.Unconfigure();
+
+            // Assert
+            Assert.IsFalse(result, "Unconfigure should return false when nothing was present to remove");
 
             yield return null;
         }

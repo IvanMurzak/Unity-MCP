@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -26,7 +26,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             PackageRemoveToolId,
-            Title = "Package Manager / Remove"
+            Title = "Package Manager / Remove",
+            DestructiveHint = true
         )]
         [Description("Remove (uninstall) a package from the Unity project. " +
             "This removes the package from the project's manifest.json and triggers package resolution. " +
@@ -75,7 +76,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                     if (!isInstalled)
                     {
-                        _ = UnityMcpPlugin.NotifyToolRequestCompleted(new RequestToolCompletedData
+                        _ = UnityMcpPluginEditor.NotifyToolRequestCompleted(new RequestToolCompletedData
                         {
                             RequestId = requestId,
                             Result = ResponseCallTool.Error(Error.PackageNotFound(cleanPackageId)).SetRequestID(requestId)
@@ -92,7 +93,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 if (removeRequest.Status == StatusCode.Failure)
                 {
                     var errorMessage = Error.PackageOperationFailed("remove", cleanPackageId, removeRequest.Error?.message ?? "Unknown error");
-                    _ = UnityMcpPlugin.NotifyToolRequestCompleted(new RequestToolCompletedData
+                    _ = UnityMcpPluginEditor.NotifyToolRequestCompleted(new RequestToolCompletedData
                     {
                         RequestId = requestId,
                         Result = ResponseCallTool.Error(errorMessage).SetRequestID(requestId)

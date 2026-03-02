@@ -28,7 +28,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             AssetsGetDataToolId,
-            Title = "Assets / Get Data"
+            Title = "Assets / Get Data",
+            ReadOnlyHint = true,
+            IdempotentHint = true
         )]
         [Description("Get asset data from the asset file in the Unity project. " +
             "It includes all serializable fields and properties of the asset. " +
@@ -58,7 +60,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 if (asset == null)
                     throw new Exception(Error.NotFoundAsset(assetRef.AssetPath!, assetRef.AssetGuid ?? "N/A"));
 
-                var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+                var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
                 return reflector.Serialize(
                     obj: asset,

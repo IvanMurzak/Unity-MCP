@@ -38,28 +38,30 @@ You can run the server manually if you need advanced control or debugging.
 Download from **[Releases](https://github.com/IvanMurzak/Unity-MCP/releases)**.
 
 ```bash
-# Basic run (HTTP mode)
-./unity-mcp-server --port 8080
+# HTTP mode (default transport)
+./unity-mcp-server --port 8080 --client-transport streamableHttp
 
-# STDIO mode (for piping)
-./unity-mcp-server --client-transport stdio
+# STDIO mode (for piping to MCP clients like Claude Desktop)
+./unity-mcp-server --port 8080 --client-transport stdio
 ```
 
 ## CLI Arguments
 
-The server executable accepts the following arguments:
+All arguments can be provided as CLI flags or equivalent environment variables:
 
-| Argument             | Description                                          | Default |
-| :------------------- | :--------------------------------------------------- | :------ |
-| `--port`             | Port for the Unity Plugin connection.                | `8080`  |
-| `--client-transport` | Protocol for AI Client connection (`streamableHttp`, `stdio`). | `streamableHttp`  |
-| `--plugin-timeout`   | Timeout in ms for plugin responses.                  | `10000` |
-
-> **Note**: These can also be set via Environment Variables (e.g., `MCP_PLUGIN_PORT`).
+| Environment Variable          | CLI Argument         | Description                                                                                       | Default          |
+| :---------------------------- | :------------------- | :------------------------------------------------------------------------------------------------ | :--------------- |
+| `MCP_PLUGIN_PORT`             | `--port`             | Port for both the AI Client (HTTP) and Unity Plugin (SignalR) connections.                        | `8080`           |
+| `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport` | Protocol for AI Client connection: `streamableHttp` or `stdio`.                                   | `streamableHttp` |
+| `MCP_PLUGIN_CLIENT_TIMEOUT`   | `--plugin-timeout`   | Timeout in ms for plugin responses.                                                               | `10000`          |
+| `MCP_AUTHORIZATION`           | `--authorization`    | Authentication mode for incoming Client connections: `none` or `required`.                        | `none`           |
+| `MCP_PLUGIN_TOKEN`            | `--token`            | Bearer token required from the Client when `--authorization=required`. Ignored when `none`.       | *(unset)*        |
 
 ## Architecture
 
 The server is built on **.NET 9**, utilizing:
-- **Model Context Protocol SDK** for AI communication.
 - **ASP.NET Core** for HTTP/WebSockets.
-- **ReflectorNet** for dynamic assembly analysis (used by the plugin).
+- **SignalR** for communication between Server and Plugin.
+- **[Model Context Protocol SDK](https://github.com/modelcontextprotocol/csharp-sdk)** for implementing MCP protocol.
+- **[ReflectorNet](https://github.com/IvanMurzak/ReflectorNet)** for dynamic assembly analysis (used by the plugin).
+- **[MCP Plugin .NET](https://github.com/IvanMurzak/MCP-Plugin-dotnet)** for the MCP proxy implementation.

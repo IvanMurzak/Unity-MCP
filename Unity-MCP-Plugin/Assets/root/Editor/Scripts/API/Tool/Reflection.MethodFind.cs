@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System;
 using System.ComponentModel;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
@@ -24,7 +25,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             ReflectionMethodFindToolId,
-            Title = "Method C# / Find"
+            Title = "Method C# / Find",
+            ReadOnlyHint = true,
+            IdempotentHint = true
         )]
         [Description("Find method in the project using C# Reflection. " +
             "It looks for all assemblies in the project and finds method by its name, class name and parameters. " +
@@ -77,7 +80,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 if (methods.Count == 0)
                     return $"[Success] Method not found. With request:\n{filter}";
 
-                var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+                var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
                 var methodRefs = methods
                     .Select(method => new MethodData(reflector, method, justRef: false))

@@ -36,9 +36,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         )
         .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
         .SetProperty("args", new JsonArray {
-            $"{Args.Port}={UnityMcpPlugin.Port}",
-            $"{Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-            $"{Args.ClientTransportMethod}={TransportMethod.stdio}"
+            $"{Args.Port}={UnityMcpPluginEditor.Port}",
+            $"{Args.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}",
+            $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
+            $"{Args.Authorization}={UnityMcpPluginEditor.AuthOption}",
+            $"{Args.Token}={UnityMcpPluginEditor.Token}"
         }, requiredForConfiguration: true)
         .SetPropertyToRemove("type")
         .SetPropertyToRemove("url");
@@ -50,9 +52,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         )
         .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
         .SetProperty("args", new JsonArray {
-            $"{Args.Port}={UnityMcpPlugin.Port}",
-            $"{Args.PluginTimeout}={UnityMcpPlugin.TimeoutMs}",
-            $"{Args.ClientTransportMethod}={TransportMethod.stdio}"
+            $"{Args.Port}={UnityMcpPluginEditor.Port}",
+            $"{Args.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}",
+            $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
+            $"{Args.Authorization}={UnityMcpPluginEditor.AuthOption}",
+            $"{Args.Token}={UnityMcpPluginEditor.Token}"
         }, requiredForConfiguration: true)
         .SetPropertyToRemove("type")
         .SetPropertyToRemove("url");
@@ -63,7 +67,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             bodyPath: "mcpServers"
         )
         .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
-        .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
+        .SetProperty("url", JsonValue.Create(UnityMcpPluginEditor.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
         .SetPropertyToRemove("command")
         .SetPropertyToRemove("args");
 
@@ -73,7 +77,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             bodyPath: "mcpServers"
         )
         .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
-        .SetProperty("url", JsonValue.Create(UnityMcpPlugin.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
+        .SetProperty("url", JsonValue.Create(UnityMcpPluginEditor.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
         .SetPropertyToRemove("command")
         .SetPropertyToRemove("args");
 
@@ -81,19 +85,29 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         {
             base.OnUICreated(root);
 
-            ContainerUnderHeader!.Add(TemplateWarningLabel("IMPORTANT: Consider to use Claude Code in a Terminal. Avoid using it as an extension to IDE (Visual Studio Code, etc). Claude Code as an extension is not stable with MCP server."));
+            var isAuthRequired = UnityMcpPluginEditor.AuthOption == AuthOption.required;
 
             // STDIO Configuration
 
-            var manualStepsContainer = TemplateFoldoutFirst("Manual Configuration Steps");
+            var startContainerStdio = TemplateFoldoutFirst("Start");
+            startContainerStdio!.Add(TemplateLabelDescription("Navigate to project root"));
+            startContainerStdio!.Add(TemplateTextFieldReadOnly($"cd \"{ProjectRootPath}\""));
+            startContainerStdio!.Add(TemplateLabelDescription("Launch Claude Code"));
+            startContainerStdio!.Add(TemplateTextFieldReadOnly("claude"));
+            ContainerStdio!.Add(startContainerStdio);
 
-            var addMcpServerCommandStdio = $"claude mcp add {AiAgentConfig.DefaultMcpServerName} \"{McpServerManager.ExecutableFullPath}\" port={UnityMcpPlugin.Port} plugin-timeout={UnityMcpPlugin.TimeoutMs} client-transport=stdio";
+            var manualStepsContainer = TemplateFoldout("Manual Configuration Steps");
 
-            manualStepsContainer!.Add(TemplateLabelDescription("1. Open a terminal and run the following command to be in the folder of the Unity project"));
-            manualStepsContainer!.Add(TemplateTextFieldReadOnly($"cd \"{ProjectRootPath}\""));
-            manualStepsContainer!.Add(TemplateLabelDescription("2. Run the following command in the folder of the Unity project to configure Claude Code"));
+            var tokenStdio = !string.IsNullOrEmpty(UnityMcpPluginEditor.Token) ? UnityMcpPluginEditor.Token : "<token>";
+            var authArgsStdio = isAuthRequired
+                ? $" {Args.Authorization}={AuthOption.required} {Args.Token}={tokenStdio}"
+                : string.Empty;
+
+            var addMcpServerCommandStdio = $"claude mcp add {AiAgentConfig.DefaultMcpServerName} \"{McpServerManager.ExecutableFullPath}\" port={UnityMcpPluginEditor.Port} plugin-timeout={UnityMcpPluginEditor.TimeoutMs} client-transport=stdio{authArgsStdio}";
+
+            manualStepsContainer!.Add(TemplateLabelDescription("Run the following command in the folder of the Unity project to configure Claude Code"));
             manualStepsContainer!.Add(TemplateTextFieldReadOnly(addMcpServerCommandStdio));
-            manualStepsContainer!.Add(TemplateLabelDescription("3. Start Claude Code"));
+            manualStepsContainer!.Add(TemplateLabelDescription("Restart or start Claude Code to apply the configuration"));
             manualStepsContainer!.Add(TemplateTextFieldReadOnly("claude"));
 
             ContainerStdio!.Add(manualStepsContainer);
@@ -110,15 +124,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             // HTTP Configuration
 
-            var manualStepsContainerHttp = TemplateFoldoutFirst("Manual Configuration Steps");
+            var startContainerHttp = TemplateFoldoutFirst("Start");
+            startContainerHttp!.Add(TemplateLabelDescription("Navigate to project root"));
+            startContainerHttp!.Add(TemplateTextFieldReadOnly($"cd \"{ProjectRootPath}\""));
+            startContainerHttp!.Add(TemplateLabelDescription("Launch Claude Code"));
+            startContainerHttp!.Add(TemplateTextFieldReadOnly("claude"));
+            ContainerHttp!.Add(startContainerHttp);
 
-            var addMcpServerCommandHttp = $"claude mcp add --transport http {AiAgentConfig.DefaultMcpServerName} {UnityMcpPlugin.Host}";
+            var manualStepsContainerHttp = TemplateFoldout("Manual Configuration Steps");
 
-            manualStepsContainerHttp!.Add(TemplateLabelDescription("1. Open a terminal and run the following command to be in the folder of the Unity project"));
-            manualStepsContainerHttp!.Add(TemplateTextFieldReadOnly($"cd \"{ProjectRootPath}\""));
-            manualStepsContainerHttp!.Add(TemplateLabelDescription("2. Run the following command in the folder of the Unity project to configure Claude Code"));
+            var tokenHttp = !string.IsNullOrEmpty(UnityMcpPluginEditor.Token) ? UnityMcpPluginEditor.Token : "<token>";
+            var authHeaderHttp = isAuthRequired
+                ? $" --header \"Authorization: Bearer {tokenHttp}\""
+                : string.Empty;
+
+            var addMcpServerCommandHttp = $"claude mcp add --transport http {AiAgentConfig.DefaultMcpServerName} {UnityMcpPluginEditor.Host}{authHeaderHttp}";
+
+            manualStepsContainerHttp!.Add(TemplateLabelDescription("Run the following command in the folder of the Unity project to configure Claude Code"));
             manualStepsContainerHttp!.Add(TemplateTextFieldReadOnly(addMcpServerCommandHttp));
-            manualStepsContainerHttp!.Add(TemplateLabelDescription("3. Start Claude Code"));
+            manualStepsContainerHttp!.Add(TemplateLabelDescription("Restart or start Claude Code to apply the configuration"));
             manualStepsContainerHttp!.Add(TemplateTextFieldReadOnly("claude"));
 
             ContainerHttp!.Add(manualStepsContainerHttp);

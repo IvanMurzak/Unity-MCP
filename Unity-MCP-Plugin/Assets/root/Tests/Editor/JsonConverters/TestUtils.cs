@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -9,7 +9,7 @@
 */
 
 #nullable enable
-using com.IvanMurzak.Unity.MCP;
+using System;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -19,7 +19,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.JsonConverter
     {
         public static void ValidateType<T>(T sourceValue)
         {
-            var reflector = UnityMcpPlugin.Instance.McpPluginInstance!.McpManager.Reflector;
+            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
             var serializedValue = reflector.JsonSerializer.Serialize(sourceValue);
             var deserializedValue = reflector.JsonSerializer.Deserialize<T>(serializedValue);

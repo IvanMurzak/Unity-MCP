@@ -71,7 +71,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         if (type == null)
                         {
                             response.Errors ??= new List<string>();
-                            response.Errors.Add($"[Error] Type '{componentName}' not found.");
+                            response.Errors.Add($"Type '{componentName}' not found.");
                             continue;
                         }
                     }
@@ -80,20 +80,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     if (!typeof(UnityEngine.Component).IsAssignableFrom(type))
                     {
                         response.Errors ??= new List<string>();
-                        response.Errors.Add($"[Error] Type '{componentName}' is not a subclass of UnityEngine.Component.");
+                        response.Errors.Add($"Type '{componentName}' is not a subclass of UnityEngine.Component.");
                         continue;
                     }
 
                     var newComponent = go.AddComponent(type);
                     if (newComponent == null)
                     {
-                        response.Errors ??= new List<string>();
-                        response.Errors.Add($"[Warning] Component '{componentName}' already exists on GameObject or cannot be added.");
+                        response.Warnings ??= new List<string>();
+                        response.Warnings.Add($"Component '{componentName}' already exists on GameObject or cannot be added.");
                         continue;
                     }
 
                     response.Messages ??= new List<string>();
-                    response.Messages.Add($"[Success] Added component '{componentName}'.");
+                    response.Messages.Add($"Added component '{componentName}'.");
 
                     response.AddedComponents.Add(new ComponentDataShallow(newComponent));
                 }
@@ -112,6 +112,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             [Description("List of success messages for added components.")]
             public List<string>? Messages { get; set; }
+
+            [Description("List of warnings encountered during component addition.")]
+            public List<string>? Warnings { get; set; }
 
             [Description("List of errors encountered during component addition.")]
             public List<string>? Errors { get; set; }

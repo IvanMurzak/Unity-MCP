@@ -24,7 +24,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             AssetsFindToolId,
-            Title = "Assets / Find"
+            Title = "Assets / Find",
+            ReadOnlyHint = true,
+            IdempotentHint = true
         )]
         [Description("Search the asset database using the search filter string. " +
             "Allows you to search for Assets. The string argument can provide names, labels or types (classnames).")]

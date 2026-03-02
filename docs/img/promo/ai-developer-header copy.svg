@@ -1,0 +1,99 @@
+<svg width="1184" height="120" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="hazardStripes" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse">
+      <rect width="120" height="120" fill="transparent"/>
+      <path d="M 0,0 L 60,0 L 120,120 L 60,120 Z" fill="#FFDC00"/>
+    </pattern>
+
+    <pattern id="hazardStripesBlack" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse">
+      <rect width="120" height="120" fill="#000000"/>
+      <path d="M 0,0 L 60,0 L 120,120 L 60,120 Z" fill="#0D1117"/>
+    </pattern>
+    
+    <filter id="textShadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="3" dy="3" stdDeviation="5" flood-color="#000000" flood-opacity="0.9"/>
+    </filter>
+    
+    <clipPath id="viewportClip">
+      <rect x="0" y="0" width="1184" height="120"/>
+    </clipPath>
+    
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@700;800&amp;display=swap');
+      
+      text {
+        font-family: 'Inter', sans-serif;
+        font-weight: 700;
+        font-size: 56px;
+        text-anchor: middle;
+        dominant-baseline: middle;
+      }
+      
+      .ai-text {
+        fill: #FF0022;
+        font-weight: 800;
+      }
+      
+      .main-text {
+        fill: #FFFFFF;
+      }
+      
+      .italic-text {
+        font-style: italic;
+      }
+      
+      .text-main {
+        filter: url(#textShadow);
+        cursor: pointer;
+      }
+    </style>
+  </defs>
+  
+  <!-- Animated hazard background -->
+  <g clip-path="url(#viewportClip)">
+    <rect x="-240" y="0" width="1664" height="20" fill="url(#hazardStripes)">
+      <animateTransform
+        attributeName="transform"
+        type="translate"
+        from="0 0"
+        to="120 0"
+        dur="5s"
+        repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <!-- Animated hazard background -->
+  <g clip-path="url(#viewportClip)">
+    <rect x="-240" y="20" width="1664" height="80" fill="url(#hazardStripesBlack)">
+      <animateTransform
+        attributeName="transform"
+        type="translate"
+        from="0 0"
+        to="120 0"
+        dur="5s"
+        repeatCount="indefinite"/>
+    </rect>
+  </g>
+
+  <!-- Animated hazard background -->
+  <g clip-path="url(#viewportClip)">
+    <rect x="-240" y="100" width="1664" height="20" fill="url(#hazardStripes)">
+      <animateTransform
+        attributeName="transform"
+        type="translate"
+        from="0 0"
+        to="120 0"
+        dur="5s"
+        repeatCount="indefinite"/>
+    </rect>
+  </g>
+  
+  <!-- Text with shadow -->
+  <a href="https://github.com/IvanMurzak/Unity-MCP" target="_blank">
+    <text x="592" y="60" class="text-main">
+      <tspan class="ai-text">AI</tspan>
+      <tspan class="main-text"> Game Developer — </tspan>
+      <tspan class="main-text italic-text">Unity MCP</tspan>
+    </text>
+  </a>
+</svg>

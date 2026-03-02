@@ -46,7 +46,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void AllTools_TokenCount_ArePositive()
         {
             // Arrange
-            var toolManager = McpPlugin.McpPlugin.Instance!.McpManager.ToolManager;
+            var toolManager = UnityMcpPluginEditor.Instance.Tools;
             Assert.IsNotNull(toolManager, "ToolManager should not be null");
 
             var tools = toolManager!.GetAllTools();
@@ -61,7 +61,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void AllTools_TokenCount_AreWithinReasonableRange()
         {
             // Arrange
-            var tools = McpPlugin.McpPlugin.Instance!.McpManager.ToolManager!.GetAllTools();
+            var tools = UnityMcpPluginEditor.Instance.Tools!.GetAllTools();
 
             // Assert
             foreach (var tool in tools)
@@ -72,7 +72,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void AllTools_TotalTokenCount_IsReasonable()
         {
             // Arrange
-            var tools = McpPlugin.McpPlugin.Instance!.McpManager.ToolManager!.GetAllTools();
+            var tools = UnityMcpPluginEditor.Instance.Tools!.GetAllTools();
 
             // Act
             var totalTokens = tools.Sum(t => t.TokenCount);

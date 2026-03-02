@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -31,12 +31,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         static volatile bool _callbacksRegistered = false;
 
         // SessionState keys for persisting pending test run across domain reload
-        const string PendingTestRunKey       = "MCP_PendingTestRun";
-        const string PendingTestModeKey      = "MCP_PendingTestRun_TestMode";
-        const string PendingTestAssemblyKey  = "MCP_PendingTestRun_TestAssembly";
+        const string PendingTestRunKey = "MCP_PendingTestRun";
+        const string PendingTestModeKey = "MCP_PendingTestRun_TestMode";
+        const string PendingTestAssemblyKey = "MCP_PendingTestRun_TestAssembly";
         const string PendingTestNamespaceKey = "MCP_PendingTestRun_TestNamespace";
-        const string PendingTestClassKey     = "MCP_PendingTestRun_TestClass";
-        const string PendingTestMethodKey    = "MCP_PendingTestRun_TestMethod";
+        const string PendingTestClassKey = "MCP_PendingTestRun_TestClass";
+        const string PendingTestMethodKey = "MCP_PendingTestRun_TestMethod";
 
         static Tool_Tests()
         {
@@ -136,7 +136,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     .Error($"Cannot run tests: compilation errors after script recompilation.\n\n{errorDetails}")
                     .SetRequestID(requestId);
 
-                _ = UnityMcpPlugin.NotifyToolRequestCompleted(new RequestToolCompletedData
+                _ = UnityMcpPluginEditor.NotifyToolRequestCompleted(new RequestToolCompletedData
                 {
                     RequestId = requestId,
                     Result = response
@@ -171,13 +171,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         private static class Error
         {
             public static string InvalidTestMode(string testMode)
-                => $"[Error] Invalid test mode '{testMode}'. Valid modes: EditMode, PlayMode, All";
+                => $"Invalid test mode '{testMode}'. Valid modes: EditMode, PlayMode, All";
 
             public static string TestExecutionFailed(string reason)
-                => $"[Error] Test execution failed: {reason}";
+                => $"Test execution failed: {reason}";
 
             public static string TestTimeout(int timeoutMs)
-                => $"[Error] Test execution timed out after {timeoutMs} ms";
+                => $"Test execution timed out after {timeoutMs} ms";
 
             public static string NoTestsFound(TestFilterParameters filterParams)
             {
@@ -192,7 +192,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     ? $" matching {string.Join(", ", filters)}"
                     : string.Empty;
 
-                return $"[Error] No tests found{filterText}. Please check that the specified assembly, namespace, class, and method names are correct and that your Unity project contains tests.";
+                return $"No tests found{filterText}. Please check that the specified assembly, namespace, class, and method names are correct and that your Unity project contains tests.";
             }
         }
     }

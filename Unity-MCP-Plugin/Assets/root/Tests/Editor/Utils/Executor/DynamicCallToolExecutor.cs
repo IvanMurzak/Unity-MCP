@@ -35,7 +35,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
             if (toolName == null) throw new ArgumentNullException(nameof(toolName));
             if (jsonProvider == null) throw new ArgumentNullException(nameof(jsonProvider));
 
-            reflector ??= McpPlugin.McpPlugin.Instance!.McpManager.Reflector ??
+            reflector ??= UnityMcpPluginEditor.Instance.Reflector ??
                 throw new ArgumentNullException(nameof(reflector), "Reflector cannot be null. Ensure McpPlugin is initialized before using this executor.");
 
             SetAction(() =>
@@ -46,7 +46,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
                 var parameters = reflector.JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
                 using (var request = new RequestCallTool(toolName, parameters!))
                 {
-                    var task = McpPlugin.McpPlugin.Instance!.McpManager.ToolManager!.RunCallTool(request);
+                    var task = UnityMcpPluginEditor.Instance.Tools!.RunCallTool(request);
                     var result = task.Result;
 
                     Debug.Log($"{toolName} Completed");

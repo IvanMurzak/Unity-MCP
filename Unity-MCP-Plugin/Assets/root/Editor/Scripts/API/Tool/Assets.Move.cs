@@ -10,6 +10,7 @@
 
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
@@ -30,7 +31,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "Should be used for asset rename. " +
             "Does AssetDatabase.Refresh() at the end. " +
             "Use '" + AssetsFindToolId + "' tool to find assets before moving.")]
-        public string[] Move
+        public MoveAssetsResponse Move
         (
             [Description("The paths of the assets to move.")]
             string[] sourcePaths,
@@ -46,19 +47,34 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 if (sourcePaths.Length != destinationPaths.Length)
                     throw new ArgumentException(Error.SourceAndDestinationPathsArrayMustBeOfTheSameLength());
 
-                var logs = new string[sourcePaths.Length];
+                var response = new MoveAssetsResponse();
 
                 for (int i = 0; i < sourcePaths.Length; i++)
                 {
                     var error = AssetDatabase.MoveAsset(sourcePaths[i], destinationPaths[i]);
-                    logs[i] = string.IsNullOrEmpty(error)
-                        ? $"[Success] Moved asset from {sourcePaths[i]} to {destinationPaths[i]}."
-                        : $"[Error] Failed to move asset from {sourcePaths[i]} to {destinationPaths[i]}: {error}.";
+                    if (string.IsNullOrEmpty(error))
+                    {
+                        response.MovedPaths ??= new();
+                        response.MovedPaths.Add(destinationPaths[i]);
+                    }
+                    else
+                    {
+                        response.Errors ??= new();
+                        response.Errors.Add($"Failed to move asset from {sourcePaths[i]} to {destinationPaths[i]}: {error}.");
+                    }
                 }
                 AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
                 EditorUtils.RepaintAllEditorWindows();
-                return logs;
+                return response;
             });
+        }
+
+        public class MoveAssetsResponse
+        {
+            [Description("List of destination paths of successfully moved assets.")]
+            public List<string>? MovedPaths { get; set; }
+            [Description("List of errors encountered during move operations.")]
+            public List<string>? Errors { get; set; }
         }
     }
 }

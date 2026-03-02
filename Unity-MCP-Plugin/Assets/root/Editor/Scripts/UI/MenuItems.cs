@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -67,7 +67,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         [MenuItem("Tools/AI Game Developer/Server/Launch MCP Inspector", priority = 1004)]
         public static void LaunchMcpInspector()
         {
-            if (UnityMcpPlugin.TransportMethod != TransportMethod.streamableHttp)
+            if (UnityMcpPluginEditor.TransportMethod != TransportMethod.streamableHttp)
             {
                 NotificationPopupWindow.Show(
                     windowTitle: "Error",
@@ -81,7 +81,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             }
 
             // Run command in a terminal window: npx @modelcontextprotocol/inspector http://localhost:8080 --transport http
-            var npxArgs = $"-y @modelcontextprotocol/inspector {UnityMcpPlugin.Host} --transport http";
+            var npxArgs = $"-y @modelcontextprotocol/inspector {UnityMcpPluginEditor.Host} --transport http";
             Debug.Log($"Launching MCP Inspector with command: npx {npxArgs}");
 
             var processInfo = new System.Diagnostics.ProcessStartInfo
