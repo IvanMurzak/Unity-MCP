@@ -137,6 +137,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var addMcpServerCommandStdio = $"codex mcp add {AiAgentConfig.DefaultMcpServerName} \"{McpServerManager.ExecutableFullPath}\" port={UnityMcpPluginEditor.Port} plugin-timeout={UnityMcpPluginEditor.TimeoutMs} client-transport=stdio";
             var addMcpServerCommandHttp = $"codex mcp add {AiAgentConfig.DefaultMcpServerName} --url {UnityMcpPluginEditor.Host}";
 
+            if (UnityMcpPluginEditor.AuthOption == AuthOption.required)
+            {
+                addMcpServerCommandStdio += $" --bearer-token-env-var={EnvVarNameAuthToken}";
+                addMcpServerCommandHttp += $" --bearer-token-env-var={EnvVarNameAuthToken}";
+            }
+
             // STDIO Configuration
 
             var manualStepsOption1 = TemplateFoldoutFirst("Manual Configuration Steps - Option 1");
