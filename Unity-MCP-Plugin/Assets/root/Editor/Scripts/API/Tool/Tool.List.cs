@@ -92,7 +92,6 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.API
                     if (!matches) continue;
                 }
 
-
                 var toolData = new ToolData
                 {
                     Name = tool.Name ?? string.Empty,
