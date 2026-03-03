@@ -14,27 +14,8 @@ using com.IvanMurzak.McpPlugin;
 namespace com.IvanMurzak.Unity.MCP.Runtime.API
 {
     [McpPluginToolType]
-    public partial class Tool_MCP
+    public partial class Tool_Tool
     {
-        public enum InputRequest
-        {
-            None,
-            Inputs,
-            InputsWithDescription
-        }
-
-        public class InputData
-        {
-            public string Name { get; set; } = string.Empty;
-            public string? Description { get; set; }
-        }
-
-        public class ToolData
-        {
-            public string Name { get; set; } = string.Empty;
-            public string? Description { get; set; }
-            public InputData[]? Inputs { get; set; }
-        }
 
     }
 }

@@ -14,19 +14,22 @@ using System.ComponentModel;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.ReflectorNet.Utils;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.API
 {
-    public partial class Tool_MCP
+    public partial class Tool_Tool
     {
+        public const string ListToolsToolId = "tool-list";
         [McpPluginTool
         (
-            "mcp-list-tools",
-            Title = "MCP / List Tools"
+            ListToolsToolId,
+            Title = "Tool / List",
+            ReadOnlyHint = true,
+            DestructiveHint = false
         )]
-        [Description("Returns a list of all available MCP tools. " +
-            "Supports filtering by name, description, or argument using regex.")]
-        public List<ToolData> ListTools
+        [Description("Returns a list of all available MCP tools.")]
+        public ToolData[] ListTools
         (
             [Description("Regex to filter tools by name, description, " +
                 "argument name, or argument description. null means no filter.")]
@@ -35,60 +38,53 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.API
             [Description("If true, includes description of each tool. Default: false")]
             bool? includeDescription = false,
 
-            [Description("None = only names, Inputs = with argument names, " +
-                "InputsWithDescription = with argument names and descriptions")]
+            [Description("Specifies whether to include tool inputs and their descriptions in the output.")]
             InputRequest includeInputs = InputRequest.None
         )
         {
-            if (!UnityMcpPlugin.HasInstance)
-                throw new System.InvalidOperationException(
-                    "[Error] UnityMcpPlugin is not initialized.");
+            if (!UnityMcpPluginEditor.HasInstance)
+                throw new System.InvalidOperationException("UnityMcpPluginEditor is not initialized.");
 
-            var toolManager = UnityMcpPlugin.Instance
-                .McpPluginInstance?.McpManager?.ToolManager;
+            var toolManager = UnityMcpPluginEditor.Instance.McpPluginInstance?.McpManager?.ToolManager
+                ?? throw new System.InvalidOperationException("ToolManager is not available.");
 
-            if (toolManager == null)
-                throw new System.InvalidOperationException(
-                    "[Error] ToolManager is not initialized.");
-
-            Regex? regex = null;
-            if (!string.IsNullOrEmpty(regexSearch))
-            {
-                try
-                {
-                    regex = new Regex(regexSearch, RegexOptions.IgnoreCase, System.TimeSpan.FromSeconds(2));
-                }
-                catch (System.ArgumentException)
-                {
-                    throw new System.ArgumentException($"[Error] Invalid Regex Pattern: {regexSearch}");
-                }
-            }
+            var regex = !string.IsNullOrEmpty(regexSearch)
+                ? new Regex(regexSearch, RegexOptions.IgnoreCase, System.TimeSpan.FromSeconds(2))
+                : null;
 
             var result = new List<ToolData>();
 
             foreach (var tool in toolManager.GetAllTools())
             {
-                var schemaObj = tool.InputSchema as JsonObject;
-                var properties = schemaObj?["properties"] as JsonObject;
+                if (tool.InputSchema is not JsonObject schemaObj)
+                    continue;
+
+                var properties = schemaObj.TryGetPropertyValue(JsonSchema.Properties, out var propertiesNode)
+                    ? propertiesNode is JsonObject propsObj
+                        ? propsObj
+                        : null
+                    : null;
 
                 if (regex != null)
                 {
-                    bool matches =
-                        regex.IsMatch(tool.Name ?? "") ||
-                        regex.IsMatch(tool.Description ?? "");
+                    var matches =
+                        regex.IsMatch(tool.Name ?? string.Empty) ||
+                        regex.IsMatch(tool.Description ?? string.Empty);
 
-                    
                     if (!matches && properties != null)
                     {
                         foreach (var prop in properties)
                         {
-                            var argName = prop.Key ?? "";
-                            var argDesc = (prop.Value as JsonObject)?["description"]?.ToString() ?? "";
-
-                            if (regex.IsMatch(argName) || regex.IsMatch(argDesc))
+                            var argName = prop.Key ?? string.Empty;
+                            if (prop.Value is JsonObject propObj)
                             {
-                                matches = true;
-                                break;
+                                var argDesc = propObj?[JsonSchema.Description]?.ToString() ?? string.Empty;
+
+                                if (regex.IsMatch(argName) || regex.IsMatch(argDesc))
+                                {
+                                    matches = true;
+                                    break;
+                                }
                             }
                         }
                     }
@@ -114,7 +110,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.API
                         {
                             Name = prop.Key ?? string.Empty,
                             Description = includeInputs == InputRequest.InputsWithDescription
-                                ? (prop.Value as JsonObject)?["description"]?.ToString()
+                                ? (prop.Value as JsonObject)?[JsonSchema.Description]?.ToString()
                                 : null
                         });
                     }
@@ -124,7 +120,30 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.API
                 result.Add(toolData);
             }
 
-            return result;
+            return result.ToArray();
+        }
+
+        public enum InputRequest
+        {
+            [Description("Only include tool names, no arguments.")]
+            None,
+            [Description("Include tool inputs without descriptions.")]
+            Inputs,
+            [Description("Include tool inputs with descriptions.")]
+            InputsWithDescription
+        }
+
+        public class InputData
+        {
+            public string Name { get; set; } = string.Empty;
+            public string? Description { get; set; }
+        }
+
+        public class ToolData
+        {
+            public string Name { get; set; } = string.Empty;
+            public string? Description { get; set; }
+            public InputData[]? Inputs { get; set; }
         }
     }
 }
