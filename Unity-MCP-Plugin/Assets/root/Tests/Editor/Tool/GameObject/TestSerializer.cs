@@ -102,7 +102,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             var objMaterial = (object)material;
             var logs = new ReflectorNet.Model.Logs();
-            reflector.TryPopulate(
+            reflector.TryModify(
                 ref objMaterial,
                 data: serialized,
                 logs: logs,

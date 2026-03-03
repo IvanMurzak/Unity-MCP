@@ -68,7 +68,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 var logs = new Logs();
                 var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
-                var success = reflector.TryPopulate(
+                var success = reflector.TryModify(
                     ref obj,
                     data: content,
                     logs: logs,

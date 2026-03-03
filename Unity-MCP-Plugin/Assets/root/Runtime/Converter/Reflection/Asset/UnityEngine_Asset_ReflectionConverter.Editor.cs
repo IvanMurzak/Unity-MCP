@@ -24,7 +24,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
     public partial class UnityEngine_Asset_ReflectionConverter<T> : UnityEngine_Object_ReflectionConverter<T> where T : UnityEngine.Object
     {
-        public override bool TryPopulate(
+        public override bool TryModify(
             Reflector reflector,
             ref object? obj,
             SerializedMember data,
@@ -37,7 +37,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             var padding = StringUtils.GetPadding(depth);
 
             if (logger?.IsEnabled(LogLevel.Trace) == true)
-                logger.LogTrace($"{padding}Populate asset from data. Converter='{GetType().GetTypeShortName()}'.");
+                logger.LogTrace($"{padding}Modify asset from data. Converter='{GetType().GetTypeShortName()}'.");
 
             var objectRef = data.valueJsonElement.ToAssetObjectRef(
                 reflector: reflector,
@@ -49,7 +49,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             {
                 // If no object ref, maybe we should fall back to base behavior?
                 // But for assets, usually we expect an object ref.
-                // Let's return false to indicate we couldn't populate it as an asset.
+                // Let's return false to indicate we couldn't modify it as an asset.
                 return false;
             }
 

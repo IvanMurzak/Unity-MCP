@@ -174,7 +174,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 .FindGameObject();
         }
 
-        protected override bool TryPopulateProperty(
+        protected override bool TryModifyProperty(
             Reflector reflector,
             ref object obj,
             Type objType,
@@ -210,7 +210,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 logs?.Error($"Failed to set property '{member.name}': {e.Message}", depth);
                 return false;
             }
-            return base.TryPopulateProperty(
+            return base.TryModifyProperty(
                 reflector,
                 ref obj,
                 objType,
