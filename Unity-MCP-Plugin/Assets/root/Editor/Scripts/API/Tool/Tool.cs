@@ -11,11 +11,10 @@
 #nullable enable
 using com.IvanMurzak.McpPlugin;
 
-namespace com.IvanMurzak.Unity.MCP.Runtime.API
+namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     [McpPluginToolType]
     public partial class Tool_Tool
     {
-
     }
 }

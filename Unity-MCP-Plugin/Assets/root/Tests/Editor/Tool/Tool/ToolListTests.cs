@@ -11,7 +11,7 @@
 #nullable enable
 using System.Collections;
 using System.Linq;
-using com.IvanMurzak.Unity.MCP.Runtime.API;
+using com.IvanMurzak.Unity.MCP.Editor.API;
 using NUnit.Framework;
 using UnityEngine.TestTools;
 
