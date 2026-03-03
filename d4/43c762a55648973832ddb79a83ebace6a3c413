@@ -1,0 +1,27 @@
+Unity-MCP-Plugin/Assets/root/Tests/Editor/Tool/Tool/ToolListTests.cs
+  d173f2585e5601dc 14
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/Tool.cs
+  d173f2585e5601dc 14
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/Tool.List.cs
+  d173f2585e5601dc 19,30-32,36-38,44-45,62,82-84,86,100,102,117,129
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.7",
+  "base_commit_sha": "d443c762a55648973832ddb79a83ebace6a3c413",
+  "prompts": {
+    "d173f2585e5601dc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "140dc684-c427-44c8-83e9-01aa3ccd94e6",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 407,
+      "total_deletions": 412,
+      "accepted_lines": 77,
+      "overriden_lines": 0
+    }
+  }
+}
