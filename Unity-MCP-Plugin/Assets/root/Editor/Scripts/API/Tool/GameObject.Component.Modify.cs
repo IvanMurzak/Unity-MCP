@@ -86,7 +86,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 var objToModify = (object)targetComponent;
                 var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
-                var success = reflector.TryPopulate(
+                var success = reflector.TryModify(
                     ref objToModify,
                     data: componentDiff,
                     logs: logs,

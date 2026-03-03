@@ -79,7 +79,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
                 // Try to populate
                 object? obj = container;
-                var result = reflector.TryPopulate(ref obj, data);
+                var result = reflector.TryModify(ref obj, data);
 
                 Assert.IsTrue(result, "Population should succeed");
 
