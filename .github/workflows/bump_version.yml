@@ -12,11 +12,6 @@ jobs:
   bump-version:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Validate version format
         run: |
           if ! [[ "${{ github.event.inputs.version }}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
@@ -24,14 +19,33 @@ jobs:
             exit 1
           fi
 
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release branch
+        run: |
+          git config user.name "IvanMurzak"
+          git config user.email "Ivan.D.Murzak@gmail.com"
+          git checkout -b release/${{ github.event.inputs.version }}
+
       - name: Run bump-version script
         shell: pwsh
         run: ./commands/bump-version.ps1 -NewVersion "${{ github.event.inputs.version }}"
 
-      - name: Commit version bump
+      - name: Commit and push version bump
         run: |
-          git config user.name "IvanMurzak"
-          git config user.email "Ivan.D.Murzak@gmail.com"
           git add -A
           git commit -m "chore: bump version to ${{ github.event.inputs.version }}"
-          git push
+          git push origin release/${{ github.event.inputs.version }}
+
+      - name: Create pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh pr create \
+            --base ${{ github.ref_name }} \
+            --head release/${{ github.event.inputs.version }} \
+            --title "chore: bump version to ${{ github.event.inputs.version }}" \
+            --body "Automated version bump to \`${{ github.event.inputs.version }}\` triggered via workflow dispatch."
