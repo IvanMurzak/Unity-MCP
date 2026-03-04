@@ -43,6 +43,26 @@ jobs:
           path: Unity-MCP-Plugin/Library
           key: unity-library-2022.3.63f1-ubuntu-base
 
+      - name: Start AI-Game-Developer MCP Server
+        run: |
+          docker run -d \
+            --name unity-mcp-server \
+            --network host \
+            -e MCP_PLUGIN_PORT=8080 \
+            -e MCP_PLUGIN_CLIENT_TRANSPORT=streamableHttp \
+            -e MCP_AUTHORIZATION=none \
+            ivanmurzakdev/unity-mcp-server
+
+          echo "Waiting for MCP Server to be ready..."
+          for i in $(seq 1 12); do
+            sleep 5
+            if curl -sf http://localhost:8080 > /dev/null 2>&1; then
+              echo "MCP Server is ready."; break
+            fi
+            echo "Still waiting... ($((i*5))s)"
+          done
+        shell: bash
+
       - name: Start Unity Editor in background
         run: |
           # Write license file required by unityci images
@@ -51,6 +71,10 @@ jobs:
 
           docker run -d \
             --name unity-editor \
+            --network host \
+            -e UNITY_MCP_HOST=http://localhost:8080 \
+            -e UNITY_MCP_KEEP_CONNECTED=true \
+            -e UNITY_MCP_AUTH_OPTION=none \
             -v "${GITHUB_WORKSPACE}:/workspace" \
             -v /root/.local/share/unity3d:/root/.local/share/unity3d \
             unityci/editor:ubuntu-2022.3.63f1-base-3 \
@@ -95,3 +119,4 @@ jobs:
             --allowedTools Read
             --allowedTools WebFetch
             --allowedTools WebSearch
+            --mcp-config '{"mcpServers":{"ai-game-developer":{"type":"streamableHttp","url":"http://localhost:8080"}}}'
