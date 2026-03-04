@@ -14,6 +14,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
@@ -34,20 +35,45 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             OpenWorldHint = true
         )]
         [Description("Compiles and executes C# code dynamically using Roslyn. " +
-            "The provided code must define a class with a static method to execute.")]
+            "Supports two modes: full code mode (default) requires a complete class definition, " +
+            "while body-only mode (isMethodBody=true) auto-generates the boilerplate so you only " +
+            "provide the method body. Unity objects (GameObject, Component, etc.) can be passed as " +
+            "parameters using their Ref types (GameObjectRef, ComponentRef, etc.) or directly by type.")]
         public static SerializedMember? Execute
         (
-            [Description("C# code that compiles and executes immediately. It won't be stored as a script in the project. " +
-                "It is temporary one shot C# code execution using Roslyn. " +
-                "IMPORTANT: The code must define a class (e.g., 'public class Script') with a static method (e.g., 'public static object Main()'). " +
-                "Do NOT use top-level statements or code outside a class. Top-level statements are not supported and will cause compilation errors.")]
+            [Description("C# code to compile and execute. " +
+                "In full code mode (default, isMethodBody=false): must define a complete class with a static method. " +
+                "Example: 'using UnityEngine; public class Script { public static void Main() { Debug.Log(\"Hello\"); } }'. " +
+                "Do NOT use top-level statements. " +
+                "In body-only mode (isMethodBody=true): provide only the method body statements. " +
+                "The tool auto-generates usings, class, and method header. " +
+                "Example body: 'go.SetActive(false);'. " +
+                "Custom helper classes can still be defined inline in the body-only string after the main logic, " +
+                "but for complex additional class definitions use full code mode instead.")]
             string csharpCode,
-            [Description("The name of the class containing the method to execute.")]
+            [Description("The name of the class containing the method to execute. " +
+                "In body-only mode this becomes the generated class name.")]
             string className = "Script",
-            [Description("The name of the method to execute. It must be a static method in the class provided above.")]
+            [Description("The name of the method to execute. Must be a static method. " +
+                "In body-only mode this becomes the generated method name.")]
             string methodName = "Main",
-            [Description("Serialized parameters to pass to the method. If the method does not require parameters, leave this empty.")]
-            SerializedMemberList? parameters = null
+            [Description("Serialized parameters to pass to the method. Each entry must specify 'name' and 'typeName'. " +
+                "Supported parameter types include primitives, strings, and Unity object references: " +
+                "- 'UnityEngine.GameObject': resolves an actual GameObject from value '{\"instanceID\": N}', '{\"name\": \"...\"}', or '{\"path\": \"...\"}'. " +
+                "- 'UnityEngine.Component' (or any component subtype): resolves from '{\"instanceID\": N}'. " +
+                "- 'com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef': passes a GameObjectRef POCO directly; " +
+                "  the method body calls goRef.FindGameObject() to resolve it. " +
+                "- 'com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef': passes a ComponentRef POCO. " +
+                "- 'com.IvanMurzak.Unity.MCP.Runtime.Data.ObjectRef': passes a base ObjectRef POCO. " +
+                "If the method does not require parameters, leave this empty.")]
+            SerializedMemberList? parameters = null,
+            [Description("When true, 'csharpCode' is treated as just the method body. " +
+                "The tool auto-generates standard using directives (System, UnityEngine, " +
+                "com.IvanMurzak.Unity.MCP.Runtime.Data, com.IvanMurzak.Unity.MCP.Runtime.Extensions, UnityEditor), " +
+                "the class definition, and the method signature (void return type). " +
+                "Parameters from the 'parameters' list are automatically added to the method signature using their typeName and name. " +
+                "When false (default), 'csharpCode' must be a complete C# compilation unit with class and method definitions.")]
+            bool isMethodBody = false
         )
         {
             if (string.IsNullOrEmpty(csharpCode))
@@ -59,11 +85,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (string.IsNullOrEmpty(methodName))
                 throw new Exception($"'{nameof(methodName)}' cannot be null or empty.");
 
-            if (csharpCode.Contains(className) == false)
-                throw new Exception($"'{nameof(csharpCode)}' does not contain class '{className}'. Please ensure the class is defined in the provided code.");
+            string codeToCompile;
+            if (isMethodBody)
+            {
+                codeToCompile = GenerateFullCode(csharpCode, className, methodName, parameters);
+            }
+            else
+            {
+                if (csharpCode.Contains(className) == false)
+                    throw new Exception($"'{nameof(csharpCode)}' does not contain class '{className}'. Please ensure the class is defined in the provided code.");
 
-            if (csharpCode.Contains(methodName) == false)
-                throw new Exception($"'{nameof(csharpCode)}' does not contain method '{methodName}'. Please ensure the method is defined in the provided code.");
+                if (csharpCode.Contains(methodName) == false)
+                    throw new Exception($"'{nameof(csharpCode)}' does not contain method '{methodName}'. Please ensure the method is defined in the provided code.");
+
+                codeToCompile = csharpCode;
+            }
 
             return MainThread.Instance.Run(() =>
             {
@@ -73,7 +109,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 if (!ExecuteCSharpCode(
                     className: className,
                     methodName: methodName,
-                    code: csharpCode,
+                    code: codeToCompile,
                     parameters: parameters,
                     returnValue: out var result,
                     error: out var error,
@@ -95,6 +131,48 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     logger: logger);
             });
         }
+
+        static string GenerateFullCode(
+            string methodBody,
+            string className,
+            string methodName,
+            SerializedMemberList? parameters)
+        {
+            var sb = new StringBuilder();
+
+            // Standard using directives
+            sb.AppendLine("using System;");
+            sb.AppendLine("using System.Collections;");
+            sb.AppendLine("using System.Collections.Generic;");
+            sb.AppendLine("using System.Linq;");
+            sb.AppendLine("using UnityEngine;");
+            sb.AppendLine("using UnityEngine.UI;");
+            sb.AppendLine("using UnityEngine.SceneManagement;");
+            sb.AppendLine("using com.IvanMurzak.Unity.MCP.Runtime.Data;");
+            sb.AppendLine("using com.IvanMurzak.Unity.MCP.Runtime.Extensions;");
+            sb.AppendLine("using UnityEditor;");
+            sb.AppendLine();
+
+            // Build method parameter list from the parameters SerializedMemberList
+            var methodParams = parameters != null && parameters.Count > 0
+                ? string.Join(", ", parameters.Select(p => $"{p.typeName ?? "object"} {p.name ?? "param"}"))
+                : "";
+
+            sb.AppendLine($"public class {className}");
+            sb.AppendLine("{");
+            sb.AppendLine($"    public static void {methodName}({methodParams})");
+            sb.AppendLine("    {");
+
+            // Indent each line of the method body
+            foreach (var line in methodBody.Split('\n'))
+                sb.AppendLine($"        {line.TrimEnd()}");
+
+            sb.AppendLine("    }");
+            sb.AppendLine("}");
+
+            return sb.ToString();
+        }
+
         static bool ExecuteCSharpCode(
             string className,
             string methodName,
