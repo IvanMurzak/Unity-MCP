@@ -86,3 +86,9 @@ These apply across both C# sub-projects:
 - All Unity API calls must use `MainThread.Instance.Run(() => ...)` or `RunAsync()`
 - Tool/prompt names use **kebab-case** with category prefix (e.g., `gameobject-create`, `assets-find`)
 - Namespace pattern: `com.IvanMurzak.Unity.MCP.[Tier].[Component]`
+
+## Rules
+
+Important rules that must be followed:
+
+- `./Unity-MCP-Plugin/Assets/root/README.md` must be a copy of `./README.md`.

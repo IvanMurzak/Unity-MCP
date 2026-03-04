@@ -13,6 +13,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using Microsoft.Extensions.Logging;
 using UnityEngine;
 
@@ -98,6 +99,7 @@ namespace com.IvanMurzak.Unity.MCP
                     wasCreated = true;
                 }
 
+                EnvironmentUtils.ApplyEnvironmentOverrides(config);
                 return config;
             }
             catch (Exception e)

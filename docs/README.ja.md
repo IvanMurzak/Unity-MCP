@@ -170,6 +170,7 @@
   - [なぜランタイム使用が必要か？](#なぜランタイム使用が必要か)
 - [Unity `MCP Server` のセットアップ](#unity-mcp-server-のセットアップ)
   - [変数](#変数)
+  - [プラグイン変数](#プラグイン変数)
   - [Docker 📦](#docker-)
     - [`streamableHttp` トランスポート](#streamablehttp-トランスポート)
     - [`stdio` トランスポート](#stdio-トランスポート)
@@ -502,6 +503,29 @@ public static class ChessGameAI
 > コマンドライン引数は単一の `-` プレフィックス（`-port`）とプレフィックスなし（`port`）のオプションもサポートしています。
 
 > **トランスポートの選択:** MCP クライアントがサーバーバイナリを直接起動する場合（ローカル使用 — 最も一般的な設定）は `stdio` を使用します。サーバーをスタンドアロンプロセスとして実行するか Docker/クラウドで実行して HTTP 経由で接続する場合は `streamableHttp` を使用します。
+
+## プラグイン変数
+
+Unity MCP Plugin は起動時に以下の環境変数（およびコマンドライン引数）を読み込み、保存済み設定ファイルの値を上書きします。上書きはディスクに**保存されません** — 現在のセッションのみ有効です。
+
+| 環境変数                    | コマンドライン引数          | 値                  | 説明                                     |
+| --------------------------- | --------------------------- | ------------------- | ---------------------------------------- |
+| `UNITY_MCP_HOST`            | `-UNITY_MCP_HOST`           | URL 文字列          | MCP サーバーのホスト URL を上書き        |
+| `UNITY_MCP_KEEP_CONNECTED`  | `-UNITY_MCP_KEEP_CONNECTED` | `true` / `false`    | アクティブ接続を強制的に有効/無効化      |
+| `UNITY_MCP_AUTH_OPTION`     | `-UNITY_MCP_AUTH_OPTION`    | `none` / `required` | 認証モードを強制設定                     |
+| `UNITY_MCP_TOKEN`           | `-UNITY_MCP_TOKEN`          | 文字列              | 認証トークンを強制設定                   |
+
+> コマンドライン引数は環境変数より優先されます。どちらも保存済み設定ファイルの値を上書きします。
+
+**例（CI/CD バッチモード）:**
+
+```bash
+Unity.exe -batchmode -nographics \
+  -UNITY_MCP_HOST=http://localhost:8080 \
+  -UNITY_MCP_KEEP_CONNECTED=true \
+  -UNITY_MCP_AUTH_OPTION=required \
+  -UNITY_MCP_TOKEN=my-secret-token
+```
 
 ## Docker 📦
 

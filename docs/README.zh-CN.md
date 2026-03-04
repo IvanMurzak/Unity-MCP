@@ -170,6 +170,7 @@
   - [为什么需要运行时使用？](#为什么需要运行时使用)
 - [Unity `MCP Server` 设置](#unity-mcp-server-设置)
   - [变量](#变量)
+  - [插件变量](#插件变量)
   - [Docker 📦](#docker-)
     - [`streamableHttp` 传输](#streamablehttp-传输)
     - [`stdio` 传输](#stdio-传输)
@@ -502,6 +503,29 @@ public static class ChessGameAI
 > 命令行参数也支持单个 `-` 前缀（`-port`）以及不带前缀的选项（`port`）。
 
 > **选择传输方式：** 当 MCP 客户端直接启动服务器二进制文件时（本地使用 — 这是最常见的配置），使用 `stdio`。当以独立进程或在 Docker/云端运行服务器并通过 HTTP 连接时，使用 `streamableHttp`。
+
+## 插件变量
+
+Unity MCP 插件在启动时读取以下环境变量（及命令行参数），用于覆盖已保存配置文件中的值。覆盖**不会持久化**到磁盘 — 仅在当前会话有效。
+
+| 环境变量                    | 命令行参数                  | 值                  | 描述                           |
+| --------------------------- | --------------------------- | ------------------- | ------------------------------ |
+| `UNITY_MCP_HOST`            | `-UNITY_MCP_HOST`           | URL 字符串          | 覆盖 MCP 服务器主机 URL        |
+| `UNITY_MCP_KEEP_CONNECTED`  | `-UNITY_MCP_KEEP_CONNECTED` | `true` / `false`    | 强制启用或禁用活动连接         |
+| `UNITY_MCP_AUTH_OPTION`     | `-UNITY_MCP_AUTH_OPTION`    | `none` / `required` | 强制设置认证模式               |
+| `UNITY_MCP_TOKEN`           | `-UNITY_MCP_TOKEN`          | 字符串              | 强制设置认证令牌               |
+
+> 命令行参数优先于环境变量。两者均会覆盖已保存的配置文件值。
+
+**示例（CI/CD 批处理模式）：**
+
+```bash
+Unity.exe -batchmode -nographics \
+  -UNITY_MCP_HOST=http://localhost:8080 \
+  -UNITY_MCP_KEEP_CONNECTED=true \
+  -UNITY_MCP_AUTH_OPTION=required \
+  -UNITY_MCP_TOKEN=my-secret-token
+```
 
 ## Docker 📦
 
