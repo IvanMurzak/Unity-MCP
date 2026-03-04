@@ -15,7 +15,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
@@ -195,6 +194,106 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 toolNames.Add(tool.Name);
             }
             Assert.IsTrue(toolNames.Count > 0, "No tools found in the response");
+        }
+
+        [UnityTest]
+        public IEnumerator MCP_Tools_WithInputArgs_InputSchema_HasTypeObject()
+        {
+            var task = UnityMcpPluginEditor.Instance.Tools!.RunListTool(new RequestListTool());
+            while (!task.IsCompleted)
+            {
+                yield return null;
+            }
+            var toolResponse = task.Result;
+            var tools = toolResponse.Value;
+
+            Assert.IsNotNull(tools, "Tool response is null");
+            Assert.IsNotEmpty(tools, "Tool response is empty");
+
+            foreach (var tool in tools!)
+            {
+                var schema = JsonNode.Parse(tool.InputSchema.ToString());
+
+                if (schema is not JsonObject schemaObject)
+                {
+                    UnityEngine.Debug.Log($"Skipping tool '{tool.Name}': InputSchema is not a JsonObject");
+                    continue;
+                }
+
+                // Filter out tools with no input arguments
+                var hasInputArgs = schemaObject.TryGetPropertyValue(JsonSchema.Properties, out var propertiesNode)
+                    && propertiesNode is JsonObject propertiesObject
+                    && propertiesObject.Count > 0;
+
+                if (!hasInputArgs)
+                {
+                    UnityEngine.Debug.Log($"Skipping tool '{tool.Name}': no input arguments");
+                    continue;
+                }
+
+                // Tools with input arguments must have "type": "object" in InputSchema
+                UnityEngine.Debug.Log($"Validating tool '{tool.Name}' InputSchema: {schema}");
+
+                Assert.IsTrue(
+                    schemaObject.TryGetPropertyValue(JsonSchema.Type, out var typeNode),
+                    $"Tool '{tool.Name}' has input arguments but InputSchema is missing '{JsonSchema.Type}' property. Schema:\n{schema}"
+                );
+                Assert.AreEqual(
+                    "object",
+                    typeNode?.ToString(),
+                    $"Tool '{tool.Name}' InputSchema '{JsonSchema.Type}' is not 'object'. Schema:\n{schema}"
+                );
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator MCP_Tools_WithNoInputArgs_InputSchema_HasTypeObject()
+        {
+            var task = UnityMcpPluginEditor.Instance.Tools!.RunListTool(new RequestListTool());
+            while (!task.IsCompleted)
+            {
+                yield return null;
+            }
+            var toolResponse = task.Result;
+            var tools = toolResponse.Value;
+
+            Assert.IsNotNull(tools, "Tool response is null");
+            Assert.IsNotEmpty(tools, "Tool response is empty");
+
+            foreach (var tool in tools!)
+            {
+                var schema = JsonNode.Parse(tool.InputSchema.ToString());
+
+                if (schema is not JsonObject schemaObject)
+                {
+                    UnityEngine.Debug.Log($"Skipping tool '{tool.Name}': InputSchema is not a JsonObject");
+                    continue;
+                }
+
+                // Only test tools with no input arguments
+                var hasInputArgs = schemaObject.TryGetPropertyValue(JsonSchema.Properties, out var propertiesNode)
+                    && propertiesNode is JsonObject propertiesObject
+                    && propertiesObject.Count > 0;
+
+                if (hasInputArgs)
+                {
+                    UnityEngine.Debug.Log($"Skipping tool '{tool.Name}': has input arguments");
+                    continue;
+                }
+
+                // Tools with no input arguments must still have "type": "object" in InputSchema
+                UnityEngine.Debug.Log($"Validating tool '{tool.Name}' InputSchema: {schema}");
+
+                Assert.IsTrue(
+                    schemaObject.TryGetPropertyValue(JsonSchema.Type, out var typeNode),
+                    $"Tool '{tool.Name}' has no input arguments but InputSchema is missing '{JsonSchema.Type}' property. Schema:\n{schema}"
+                );
+                Assert.AreEqual(
+                    "object",
+                    typeNode?.ToString(),
+                    $"Tool '{tool.Name}' InputSchema '{JsonSchema.Type}' is not 'object'. Schema:\n{schema}"
+                );
+            }
         }
     }
 }
