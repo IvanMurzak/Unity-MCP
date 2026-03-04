@@ -37,6 +37,32 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: |
+            Unity-MCP-Plugin/Library
+            ~/.cache/unity3d
+          key: unity-library-2022.3.63f1-ubuntu-base
+
+      - name: Generate Unity image name
+        id: unity_image
+        run: echo "image=unityci/editor:ubuntu-2022.3.63f1-base-3" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Open Unity project
+        uses: game-ci/unity-builder@v4
+        env:
+          UNITY_LICENSE:  ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath:     Unity-MCP-Plugin
+          unityVersion:    2022.3.63f1
+          customImage:     ${{ steps.unity_image.outputs.image }}
+          buildMethod:     ''
+          allowDirtyBuild: true
+
       - name: Run Claude Code
         id: claude
         uses: anthropics/claude-code-action@v1
