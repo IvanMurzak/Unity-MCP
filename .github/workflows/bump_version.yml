@@ -28,7 +28,8 @@ jobs:
         run: |
           git config user.name "IvanMurzak"
           git config user.email "Ivan.D.Murzak@gmail.com"
-          git checkout -b release/${{ github.event.inputs.version }}
+          git fetch origin
+          git checkout -B release/${{ github.event.inputs.version }}
 
       - name: Run bump-version script
         shell: pwsh
@@ -38,7 +39,7 @@ jobs:
         run: |
           git add -A
           git commit -m "chore: bump version to ${{ github.event.inputs.version }}"
-          git push origin release/${{ github.event.inputs.version }}
+          git push --force-with-lease origin release/${{ github.event.inputs.version }}
 
       - name: Create pull request
         env:
