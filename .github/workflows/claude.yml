@@ -40,28 +40,35 @@ jobs:
       - name: Cache Unity Library
         uses: actions/cache@v4
         with:
-          path: |
-            Unity-MCP-Plugin/Library
-            ~/.cache/unity3d
+          path: Unity-MCP-Plugin/Library
           key: unity-library-2022.3.63f1-ubuntu-base
 
-      - name: Generate Unity image name
-        id: unity_image
-        run: echo "image=unityci/editor:ubuntu-2022.3.63f1-base-3" >> $GITHUB_OUTPUT
-        shell: bash
+      - name: Start Unity Editor in background
+        run: |
+          # Write license file required by unityci images
+          mkdir -p /root/.local/share/unity3d/Unity
+          echo "${{ secrets.UNITY_LICENSE }}" > /root/.local/share/unity3d/Unity/Unity_lic.ulf
 
-      - name: Open Unity project
-        uses: game-ci/unity-builder@v4
-        env:
-          UNITY_LICENSE:  ${{ secrets.UNITY_LICENSE }}
-          UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-        with:
-          projectPath:     Unity-MCP-Plugin
-          unityVersion:    2022.3.63f1
-          customImage:     ${{ steps.unity_image.outputs.image }}
-          buildMethod:     ''
-          allowDirtyBuild: true
+          docker run -d \
+            --name unity-editor \
+            -v "${GITHUB_WORKSPACE}:/workspace" \
+            -v /root/.local/share/unity3d:/root/.local/share/unity3d \
+            unityci/editor:ubuntu-2022.3.63f1-base-3 \
+            unity-editor \
+              -batchmode \
+              -projectPath /workspace/Unity-MCP-Plugin \
+              -logFile /dev/stdout
+
+          echo "Waiting for Unity project to load..."
+          # Poll until the MCP plugin signals readiness or timeout after 120 s
+          for i in $(seq 1 24); do
+            sleep 5
+            if docker logs unity-editor 2>&1 | grep -q "MCP.*ready\|Compilation finished\|All assemblies built"; then
+              echo "Unity is ready."; break
+            fi
+            echo "Still waiting... ($((i*5))s)"
+          done
+        shell: bash
 
       - name: Run Claude Code
         id: claude
