@@ -44,14 +44,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             SerializedMember componentDiff
         )
         {
+            if (!gameObjectRef.IsValid(out var gameObjectValidationError))
+                throw new ArgumentException(gameObjectValidationError, nameof(gameObjectRef));
+
+            if (!componentRef.IsValid(out var componentValidationError))
+                throw new ArgumentException(componentValidationError, nameof(componentRef));
+
             return MainThread.Instance.Run(() =>
             {
-                if (!gameObjectRef.IsValid(out var gameObjectValidationError))
-                    throw new ArgumentException(gameObjectValidationError, nameof(gameObjectRef));
-
-                if (!componentRef.IsValid(out var componentValidationError))
-                    throw new ArgumentException(componentValidationError, nameof(componentRef));
-
                 var go = gameObjectRef.FindGameObject(out var error);
                 if (error != null)
                     throw new Exception(error);

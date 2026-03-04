@@ -44,6 +44,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (!gameObjectRef.IsValid(out var gameObjectValidationError))
                 throw new ArgumentException(gameObjectValidationError, nameof(gameObjectRef));
 
+            if (componentNames == null)
+                throw new ArgumentNullException(nameof(componentNames), "No component names provided.");
+
+            if (componentNames.Length == 0)
+                throw new ArgumentException("No component names provided.", nameof(componentNames));
+
             return MainThread.Instance.Run(() =>
             {
                 var go = gameObjectRef.FindGameObject(out var error);
@@ -52,12 +58,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 if (go == null)
                     throw new Exception("GameObject not found.");
-
-                if (componentNames == null)
-                    throw new ArgumentNullException(nameof(componentNames), "No component names provided.");
-
-                if (componentNames.Length == 0)
-                    throw new ArgumentException("No component names provided.", nameof(componentNames));
 
                 var response = new AddComponentResponse();
 
