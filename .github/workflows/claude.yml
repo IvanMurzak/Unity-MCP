@@ -43,7 +43,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: Unity-MCP-Plugin/Library
-          key: unity-library-2022.3.62f3-ubuntu-base
+          key: unity-library-${{ hashFiles('Unity-MCP-Plugin/ProjectSettings/ProjectVersion.txt') }}-ubuntu-base
 
       - name: Start AI-Game-Developer MCP Server
         run: |
@@ -72,6 +72,30 @@ jobs:
           done
         shell: bash
 
+      - name: Activate Unity license
+        if: ${{ env.ACT != 'true' }}
+        env:
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        run: |
+          docker rm -f unity-activate 2>/dev/null || true
+
+          # Run activation synchronously — exits with Unity's exit code.
+          docker run --rm \
+            --name unity-activate \
+            --network host \
+            -e UNITY_EMAIL \
+            -e UNITY_PASSWORD \
+            -v "${GITHUB_WORKSPACE}:/workspace" \
+            unityci/editor:ubuntu-2022.3.62f3-base-3 \
+            unity-editor -quit -batchmode -nographics -logFile /dev/stdout \
+              -username "$UNITY_EMAIL" -password "$UNITY_PASSWORD"
+
+          echo "--- Activation exit: $? ---"
+          echo "--- License dir contents: ---"
+          ls -la /root/.local/share/unity3d/Unity/ 2>&1 || echo "(dir not found)"
+        shell: bash
+
       - name: Start Unity Editor in background
         if: ${{ env.ACT != 'true' }}
         env:
@@ -80,7 +104,6 @@ jobs:
         run: |
           docker rm -f unity-editor 2>/dev/null || true
 
-          # Activate Unity online with email+password, then open the project.
           docker run -d \
             --name unity-editor \
             --network host \
@@ -90,14 +113,8 @@ jobs:
             -e UNITY_MCP_KEEP_CONNECTED=true \
             -e UNITY_MCP_AUTH_OPTION=none \
             -v "${GITHUB_WORKSPACE}:/workspace" \
-            --entrypoint /bin/bash \
             unityci/editor:ubuntu-2022.3.62f3-base-3 \
-            -c 'unity-editor -quit -batchmode -nographics -logFile /dev/stdout \
-                  -username "$UNITY_EMAIL" -password "$UNITY_PASSWORD" ; \
-              echo "--- Activation exit: $? ---" ; \
-              echo "--- License dir contents: ---" ; \
-              ls -la /root/.local/share/unity3d/Unity/ 2>&1 || echo "(dir not found)" ; \
-              exec unity-editor -batchmode -projectPath /workspace/Unity-MCP-Plugin -logFile /dev/stdout'
+            unity-editor -batchmode -projectPath /workspace/Unity-MCP-Plugin -logFile /dev/stdout
 
           echo "Waiting for Unity project to load..."
           for i in $(seq 1 48); do
@@ -138,23 +155,14 @@ jobs:
           # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
           # or https://code.claude.com/docs/en/cli-reference for available options
           claude_args: >-
-            --allowedTools Bash
-            --allowedTools Edit
-            --allowedTools Write
-            --allowedTools Glob
-            --allowedTools Grep
-            --allowedTools Read
-            --allowedTools WebFetch
-            --allowedTools WebSearch
             --allowedTools Bash(*)
-            --allowedTools WebBrowser
-            --allowedTools WebFetch(*)
-            --allowedTools WebSearch(*)
             --allowedTools Read(*)
             --allowedTools Write(*)
             --allowedTools Edit(*)
             --allowedTools Glob(*)
             --allowedTools Grep(*)
+            --allowedTools WebFetch(*)
+            --allowedTools WebSearch(*)
             --allowedTools Agent(*)
             --allowedTools NotebookEdit(*)
             --allowedTools TodoWrite
@@ -166,3 +174,9 @@ jobs:
             --allowedTools EnterWorktree
             --allowedTools AskUserQuestion
             --mcp-config '{"mcpServers":{"ai-game-developer":{"type":"streamableHttp","url":"http://localhost:8080"}}}'
+
+      - name: Cleanup Docker containers
+        if: always()
+        run: |
+          docker rm -f unity-mcp-server unity-editor 2>/dev/null || true
+        shell: bash

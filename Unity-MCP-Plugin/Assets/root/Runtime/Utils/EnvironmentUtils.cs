@@ -12,12 +12,15 @@
 using System;
 using System.Collections.Generic;
 using com.IvanMurzak.McpPlugin.Common.Utils;
+using com.IvanMurzak.Unity.MCP.Utils;
+using Microsoft.Extensions.Logging;
 using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
 {
     public static class EnvironmentUtils
     {
+        static readonly ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger(nameof(EnvironmentUtils));
         // Environment variable names for MCP connection overrides.
         // These override values loaded from the JSON config file and are never persisted to disk.
         public const string EnvHost = "UNITY_MCP_HOST";
@@ -54,24 +57,36 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
             // Host URL override
             var host = args.GetValueOrDefault(EnvHost) ?? Environment.GetEnvironmentVariable(EnvHost);
             if (!string.IsNullOrWhiteSpace(host))
+            {
                 config.Host = host.Trim().Trim('"');
+                _logger.LogInformation("[MCP] Env override: {Key}={Value}", EnvHost, config.Host);
+            }
 
             // KeepConnected (active connection) override
             var keepConnected = args.GetValueOrDefault(EnvKeepConnected) ?? Environment.GetEnvironmentVariable(EnvKeepConnected);
             if (!string.IsNullOrWhiteSpace(keepConnected)
                 && bool.TryParse(keepConnected.Trim().Trim('"'), out var kc))
+            {
                 config.KeepConnected = kc;
+                _logger.LogInformation("[MCP] Env override: {Key}={Value}", EnvKeepConnected, config.KeepConnected);
+            }
 
             // AuthOption override (none / required)
             var authOption = args.GetValueOrDefault(EnvAuthOption) ?? Environment.GetEnvironmentVariable(EnvAuthOption);
             if (!string.IsNullOrWhiteSpace(authOption)
                 && Enum.TryParse<AuthOption>(authOption.Trim().Trim('"'), ignoreCase: true, out var ao))
+            {
                 config.AuthOption = ao;
+                _logger.LogInformation("[MCP] Env override: {Key}={Value}", EnvAuthOption, config.AuthOption);
+            }
 
             // Auth token override
             var token = args.GetValueOrDefault(EnvToken) ?? Environment.GetEnvironmentVariable(EnvToken);
             if (!string.IsNullOrWhiteSpace(token))
+            {
                 config.Token = token.Trim().Trim('"');
+                _logger.LogInformation("[MCP] Env override: {Key}=***", EnvToken);
+            }
         }
     }
 }
