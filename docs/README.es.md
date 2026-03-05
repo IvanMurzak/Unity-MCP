@@ -510,10 +510,11 @@ El Plugin Unity MCP lee las siguientes variables de entorno (y argumentos de lí
 
 | Variable de Entorno         | Arg de Línea de Comandos    | Valores             | Descripción                                               |
 | --------------------------- | --------------------------- | ------------------- | --------------------------------------------------------- |
-| `UNITY_MCP_HOST`            | `-UNITY_MCP_HOST`           | URL string          | Sobreescribe la URL del servidor MCP                      |
-| `UNITY_MCP_KEEP_CONNECTED`  | `-UNITY_MCP_KEEP_CONNECTED` | `true` / `false`    | Fuerza habilitar o deshabilitar la conexión activa        |
-| `UNITY_MCP_AUTH_OPTION`     | `-UNITY_MCP_AUTH_OPTION`    | `none` / `required` | Fuerza el modo de autenticación                           |
-| `UNITY_MCP_TOKEN`           | `-UNITY_MCP_TOKEN`          | string              | Fuerza el token de autenticación                         |
+| `UNITY_MCP_HOST`            | `-UNITY_MCP_HOST`           | URL string          | Sobreescribe la URL del servidor MCP                                                                                   |
+| `UNITY_MCP_KEEP_CONNECTED`  | `-UNITY_MCP_KEEP_CONNECTED` | `true` / `false`    | Fuerza habilitar o deshabilitar la conexión activa                                                                     |
+| `UNITY_MCP_AUTH_OPTION`     | `-UNITY_MCP_AUTH_OPTION`    | `none` / `required` | Fuerza el modo de autenticación                                                                                        |
+| `UNITY_MCP_TOKEN`           | `-UNITY_MCP_TOKEN`          | string              | Fuerza el token de autenticación                                                                                       |
+| `UNITY_MCP_TOOLS`           | `-UNITY_MCP_TOOLS`          | IDs separados por comas | Activa solo las herramientas listadas; todas las demás se desactivan. Los IDs desconocidos se registran como errores. |
 
 > Los argumentos de línea de comandos tienen precedencia sobre las variables de entorno. Ambos sobreescriben el valor del archivo de configuración guardado.
 

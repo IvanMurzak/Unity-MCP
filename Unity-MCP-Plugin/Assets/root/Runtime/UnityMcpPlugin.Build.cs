@@ -10,6 +10,7 @@
 
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet;
@@ -164,13 +165,39 @@ namespace com.IvanMurzak.Unity.MCP
             var toolManager = mcpPlugin.McpManager.ToolManager;
             if (toolManager != null)
             {
-                foreach (var tool in toolManager.GetAllTools())
+                var enabledToolsOverride = unityConnectionConfig.EnabledToolsOverride;
+                if (enabledToolsOverride != null)
                 {
-                    var toolFeature = unityConnectionConfig.Tools.FirstOrDefault(t => t.Name == tool.Name!);
-                    var isEnabled = toolFeature == null || toolFeature.Enabled;
-                    toolManager.SetToolEnabled(tool.Name!, isEnabled);
-                    _logger.LogDebug("{method}: Tool '{tool}' enabled: {isEnabled}",
-                        nameof(ApplyConfigToMcpPlugin), tool.Name, isEnabled);
+                    // Validate requested tool IDs against the registered tool list
+                    var allToolNames = new HashSet<string>(
+                        toolManager.GetAllTools().Select(t => t.Name!),
+                        StringComparer.OrdinalIgnoreCase);
+                    foreach (var requestedId in enabledToolsOverride)
+                    {
+                        if (!allToolNames.Contains(requestedId))
+                            _logger.LogError("[MCP] {Key}: tool '{ToolId}' not found. Check the tool ID.",
+                                "UNITY_MCP_TOOLS", requestedId);
+                    }
+
+                    // Apply: enable only tools in the override list, disable all others
+                    foreach (var tool in toolManager.GetAllTools())
+                    {
+                        var isEnabled = enabledToolsOverride.Contains(tool.Name!);
+                        toolManager.SetToolEnabled(tool.Name!, isEnabled);
+                        _logger.LogDebug("{method}: Tool '{tool}' enabled: {isEnabled} (env override)",
+                            nameof(ApplyConfigToMcpPlugin), tool.Name, isEnabled);
+                    }
+                }
+                else
+                {
+                    foreach (var tool in toolManager.GetAllTools())
+                    {
+                        var toolFeature = unityConnectionConfig.Tools.FirstOrDefault(t => t.Name == tool.Name!);
+                        var isEnabled = toolFeature == null || toolFeature.Enabled;
+                        toolManager.SetToolEnabled(tool.Name!, isEnabled);
+                        _logger.LogDebug("{method}: Tool '{tool}' enabled: {isEnabled}",
+                            nameof(ApplyConfigToMcpPlugin), tool.Name, isEnabled);
+                    }
                 }
             }
 

@@ -27,6 +27,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         public const string EnvKeepConnected = "UNITY_MCP_KEEP_CONNECTED";
         public const string EnvAuthOption = "UNITY_MCP_AUTH_OPTION";
         public const string EnvToken = "UNITY_MCP_TOKEN";
+        public const string EnvTools = "UNITY_MCP_TOOLS";
 
         /// <summary>
         /// Checks if the current environment is a CI environment.
@@ -86,6 +87,18 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
             {
                 config.Token = token.Trim().Trim('"');
                 _logger.LogInformation("[MCP] Env override: {Key}=***", EnvToken);
+            }
+
+            // Enabled tools override — comma-separated tool IDs
+            var tools = args.GetValueOrDefault(EnvTools) ?? Environment.GetEnvironmentVariable(EnvTools);
+            if (!string.IsNullOrWhiteSpace(tools))
+            {
+                var ids = tools.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                var trimmed = new List<string>(ids.Length);
+                foreach (var id in ids)
+                    trimmed.Add(id.Trim().Trim('"'));
+                config.EnabledToolsOverride = trimmed;
+                _logger.LogInformation("[MCP] Env override: {Key}={Value}", EnvTools, tools.Trim());
             }
         }
     }
