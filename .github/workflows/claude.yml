@@ -39,11 +39,17 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Read Unity version
+        run: |
+          UNITY_VERSION=$(grep "^m_EditorVersion:" Unity-MCP-Plugin/ProjectSettings/ProjectVersion.txt | awk '{print $2}')
+          echo "UNITY_VERSION=${UNITY_VERSION}" >> $GITHUB_ENV
+        shell: bash
+
       - name: Cache Unity Library
         uses: actions/cache@v4
         with:
           path: Unity-MCP-Plugin/Library
-          key: unity-library-${{ hashFiles('Unity-MCP-Plugin/ProjectSettings/ProjectVersion.txt') }}-ubuntu-base
+          key: unity-library-${{ env.UNITY_VERSION }}-ubuntu-base
 
       - name: Start AI-Game-Developer MCP Server
         run: |
@@ -73,7 +79,6 @@ jobs:
         shell: bash
 
       - name: Activate Unity license
-        if: ${{ env.ACT != 'true' }}
         env:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
@@ -87,7 +92,7 @@ jobs:
             -e UNITY_EMAIL \
             -e UNITY_PASSWORD \
             -v "${GITHUB_WORKSPACE}:/workspace" \
-            unityci/editor:ubuntu-2022.3.62f3-base-3 \
+            unityci/editor:ubuntu-${UNITY_VERSION}-base-3 \
             unity-editor -quit -batchmode -nographics -logFile /dev/stdout \
               -username "$UNITY_EMAIL" -password "$UNITY_PASSWORD"
 
@@ -97,7 +102,6 @@ jobs:
         shell: bash
 
       - name: Start Unity Editor in background
-        if: ${{ env.ACT != 'true' }}
         env:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
@@ -113,7 +117,7 @@ jobs:
             -e UNITY_MCP_KEEP_CONNECTED=true \
             -e UNITY_MCP_AUTH_OPTION=none \
             -v "${GITHUB_WORKSPACE}:/workspace" \
-            unityci/editor:ubuntu-2022.3.62f3-base-3 \
+            unityci/editor:ubuntu-${UNITY_VERSION}-base-3 \
             unity-editor -batchmode -projectPath /workspace/Unity-MCP-Plugin -logFile /dev/stdout
 
           echo "Waiting for Unity project to load..."
