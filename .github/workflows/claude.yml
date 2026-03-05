@@ -40,16 +40,17 @@ jobs:
           fetch-depth: 1
 
       - name: Read Unity version
+        id: unity-version
         run: |
           UNITY_VERSION=$(grep "^m_EditorVersion:" Unity-MCP-Plugin/ProjectSettings/ProjectVersion.txt | awk '{print $2}')
-          echo "UNITY_VERSION=${UNITY_VERSION}" >> $GITHUB_ENV
+          echo "unity_version=${UNITY_VERSION}" >> "$GITHUB_OUTPUT"
         shell: bash
 
       - name: Cache Unity Library
         uses: actions/cache@v4
         with:
           path: Unity-MCP-Plugin/Library
-          key: unity-library-${{ env.UNITY_VERSION }}-ubuntu-base
+          key: unity-library-${{ steps.unity-version.outputs.unity_version }}-ubuntu-base
 
       - name: Start AI-Game-Developer MCP Server
         run: |
@@ -82,6 +83,7 @@ jobs:
         env:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_VERSION: ${{ steps.unity-version.outputs.unity_version }}
         run: |
           docker rm -f unity-activate 2>/dev/null || true
 
@@ -105,6 +107,7 @@ jobs:
         env:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_VERSION: ${{ steps.unity-version.outputs.unity_version }}
         run: |
           docker rm -f unity-editor 2>/dev/null || true
 

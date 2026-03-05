@@ -22,7 +22,8 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
     {
         static readonly ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger(nameof(EnvironmentUtils));
         // Environment variable names for MCP connection overrides.
-        // These override values loaded from the JSON config file and are never persisted to disk.
+        // These override values loaded from the JSON config file. Overrides are applied after
+        // any initial Save() so they are never written back to disk.
         public const string EnvHost = "UNITY_MCP_HOST";
         public const string EnvKeepConnected = "UNITY_MCP_KEEP_CONNECTED";
         public const string EnvAuthOption = "UNITY_MCP_AUTH_OPTION";
@@ -49,7 +50,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         /// Applies environment variable (or command-line argument) overrides to the given config.
         /// Checks command-line args first, then falls back to process environment variables.
         /// Invalid or missing values are silently ignored, leaving the config field unchanged.
-        /// Overrides are NOT persisted to disk.
+        /// Overrides are applied after any initial config save and are never written back to disk.
         /// </summary>
         public static void ApplyEnvironmentOverrides(UnityMcpPlugin.UnityConnectionConfig config)
         {

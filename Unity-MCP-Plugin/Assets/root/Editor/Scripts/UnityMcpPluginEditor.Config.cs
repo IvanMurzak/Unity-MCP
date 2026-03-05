@@ -99,7 +99,6 @@ namespace com.IvanMurzak.Unity.MCP
                     wasCreated = true;
                 }
 
-                EnvironmentUtils.ApplyEnvironmentOverrides(config);
                 return config;
             }
             catch (Exception e)

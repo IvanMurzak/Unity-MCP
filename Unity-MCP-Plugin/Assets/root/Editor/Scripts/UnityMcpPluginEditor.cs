@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 
 namespace com.IvanMurzak.Unity.MCP
 {
@@ -26,6 +27,7 @@ namespace com.IvanMurzak.Unity.MCP
             ApplyLogLevel(unityConnectionConfig.LogLevel);
             if (wasCreated)
                 Save();
+            EnvironmentUtils.ApplyEnvironmentOverrides(unityConnectionConfig);
             IncrementSingletonCount();
         }
 
