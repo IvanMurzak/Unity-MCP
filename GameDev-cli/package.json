@@ -1,0 +1,32 @@
+{
+  "name": "gamedev-cli",
+  "version": "1.0.0",
+  "description": "CLI tool for Unity project operations with Unity MCP integration",
+  "type": "module",
+  "bin": {
+    "gamedev": "./bin/gamedev.js"
+  },
+  "scripts": {
+    "start": "node bin/gamedev.js",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "dependencies": {
+    "commander": "^12.0.0"
+  },
+  "devDependencies": {
+    "@vitest/coverage-v8": "^2.0.0",
+    "vitest": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "unity",
+    "mcp",
+    "game-development",
+    "cli"
+  ],
+  "license": "Apache-2.0"
+}
