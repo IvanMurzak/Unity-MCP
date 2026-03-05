@@ -43,7 +43,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: Unity-MCP-Plugin/Library
-          key: unity-library-2022.3.63f1-ubuntu-base
+          key: unity-library-2022.3.62f3-ubuntu-base
 
       - name: Start AI-Game-Developer MCP Server
         run: |
@@ -75,7 +75,7 @@ jobs:
       - name: Start Unity Editor in background
         if: ${{ env.ACT != 'true' }}
         env:
-          UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         run: |
           docker rm -f unity-editor 2>/dev/null || true
@@ -91,7 +91,7 @@ jobs:
             -e UNITY_MCP_AUTH_OPTION=none \
             -v "${GITHUB_WORKSPACE}:/workspace" \
             --entrypoint /bin/bash \
-            unityci/editor:ubuntu-2022.3.63f1-base-3 \
+            unityci/editor:ubuntu-2022.3.62f3-base-3 \
             -c 'unity-editor -quit -batchmode -nographics -logFile /dev/stdout \
                   -username "$UNITY_EMAIL" -password "$UNITY_PASSWORD" ; \
               echo "--- Activation exit: $? ---" ; \
