@@ -1,0 +1,134 @@
+name: "Copilot Setup Steps"
+
+# Automatically run the setup steps when they are changed to allow for easy validation, and
+# allow manual testing through the repository's "Actions" tab
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  # The job MUST be called `copilot-setup-steps` or it will not be picked up by Copilot.
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+
+    # Set the permissions to the lowest permissions possible needed for your steps.
+    # Copilot will be given its own token for its operations.
+    permissions:
+      # If you want to clone the repository as part of your setup steps, for example to install dependencies, you'll need the `contents: read` permission. If you don't clone the repository in your setup steps, Copilot will do this for you automatically after the steps complete.
+      contents: read
+
+    # You can define any steps you want, and they will run before the agent starts.
+    # If you do not check out your code, Copilot will do this for you.
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Read Unity version
+        id: unity-version
+        run: |
+          UNITY_VERSION=$(grep "^m_EditorVersion:" Unity-MCP-Plugin/ProjectSettings/ProjectVersion.txt | awk '{print $2}')
+          echo "unity_version=${UNITY_VERSION}" >> "$GITHUB_OUTPUT"
+        shell: bash
+
+      - name: Cache Unity Library
+        uses: actions/cache@v4
+        with:
+          path: Unity-MCP-Plugin/Library
+          key: unity-library-${{ steps.unity-version.outputs.unity_version }}-ubuntu-base
+
+      - name: Start AI-Game-Developer MCP Server
+        run: |
+          docker rm -f unity-mcp-server 2>/dev/null || true
+
+          docker run -d \
+            --name unity-mcp-server \
+            --network host \
+            -e MCP_PLUGIN_PORT=8080 \
+            -e MCP_PLUGIN_CLIENT_TRANSPORT=streamableHttp \
+            -e MCP_AUTHORIZATION=none \
+            ivanmurzakdev/unity-mcp-server
+
+          echo "Waiting for MCP Server to be ready..."
+          for i in $(seq 1 12); do
+            sleep 5
+            if docker logs unity-mcp-server 2>&1 | grep -q "Start listening on port:"; then
+              echo "MCP Server is ready."; break
+            fi
+            echo "Still waiting... ($((i*5))s)"
+            if [ "$i" -eq 12 ]; then
+              echo "Timeout waiting for MCP Server"
+              docker logs unity-mcp-server
+              exit 1
+            fi
+          done
+        shell: bash
+
+      - name: Activate Unity license
+        env:
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_VERSION: ${{ steps.unity-version.outputs.unity_version }}
+        run: |
+          docker rm -f unity-activate 2>/dev/null || true
+
+          # Run activation synchronously — exits with Unity's exit code.
+          docker run --rm \
+            --name unity-activate \
+            --network host \
+            -e UNITY_EMAIL \
+            -e UNITY_PASSWORD \
+            -v "${GITHUB_WORKSPACE}:/workspace" \
+            unityci/editor:ubuntu-${UNITY_VERSION}-base-3 \
+            unity-editor -quit -batchmode -nographics -logFile /dev/stdout \
+              -username "$UNITY_EMAIL" -password "$UNITY_PASSWORD"
+
+          echo "--- Activation exit: $? ---"
+          echo "--- License dir contents: ---"
+          ls -la /root/.local/share/unity3d/Unity/ 2>&1 || echo "(dir not found)"
+        shell: bash
+
+      - name: Start Unity Editor in background
+        env:
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_VERSION: ${{ steps.unity-version.outputs.unity_version }}
+        run: |
+          docker rm -f unity-editor 2>/dev/null || true
+
+          docker run -d \
+            --name unity-editor \
+            --network host \
+            -e UNITY_EMAIL \
+            -e UNITY_PASSWORD \
+            -e UNITY_MCP_HOST=http://localhost:8080 \
+            -e UNITY_MCP_KEEP_CONNECTED=true \
+            -e UNITY_MCP_AUTH_OPTION=none \
+            -v "${GITHUB_WORKSPACE}:/workspace" \
+            unityci/editor:ubuntu-${UNITY_VERSION}-base-3 \
+            unity-editor -batchmode -projectPath /workspace/Unity-MCP-Plugin -logFile /dev/stdout
+
+          echo "Waiting for Unity project to load..."
+          for i in $(seq 1 48); do
+            sleep 5
+            # Fail fast if the container already exited
+            if [ "$(docker inspect -f '{{.State.Status}}' unity-editor 2>/dev/null)" = "exited" ]; then
+              echo "Unity Editor container exited early!"
+              docker logs unity-editor
+              exit 1
+            fi
+            if docker logs unity-editor 2>&1 | grep -q "MCP.*ready\|Compilation finished\|All assemblies built"; then
+              echo "Unity is ready."; break
+            fi
+            echo "Still waiting... ($((i*5))s)"
+            if [ "$i" -eq 48 ]; then
+              echo "Timeout waiting for Unity Editor"
+              docker logs unity-editor
+              exit 1
+            fi
+          done
+        shell: bash
