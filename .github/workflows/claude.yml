@@ -1,6 +1,7 @@
 name: Claude Code
 
 on:
+  workflow_dispatch:
   issue_comment:
     types: [created]
   pull_request_review_comment:
@@ -13,6 +14,7 @@ on:
 jobs:
   claude:
     if: |
+      github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
@@ -45,6 +47,8 @@ jobs:
 
       - name: Start AI-Game-Developer MCP Server
         run: |
+          docker rm -f unity-mcp-server 2>/dev/null || true
+
           docker run -d \
             --name unity-mcp-server \
             --network host \
@@ -56,41 +60,63 @@ jobs:
           echo "Waiting for MCP Server to be ready..."
           for i in $(seq 1 12); do
             sleep 5
-            if curl -sf http://localhost:8080 > /dev/null 2>&1; then
+            if docker logs unity-mcp-server 2>&1 | grep -q "Start listening on port:"; then
               echo "MCP Server is ready."; break
             fi
             echo "Still waiting... ($((i*5))s)"
+            if [ "$i" -eq 12 ]; then
+              echo "Timeout waiting for MCP Server"
+              docker logs unity-mcp-server
+              exit 1
+            fi
           done
         shell: bash
 
       - name: Start Unity Editor in background
+        if: ${{ env.ACT != 'true' }}
+        env:
+          UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         run: |
-          # Write license file required by unityci images
-          mkdir -p /root/.local/share/unity3d/Unity
-          echo "${{ secrets.UNITY_LICENSE }}" > /root/.local/share/unity3d/Unity/Unity_lic.ulf
+          docker rm -f unity-editor 2>/dev/null || true
 
+          # Activate Unity online with email+password, then open the project.
           docker run -d \
             --name unity-editor \
             --network host \
+            -e UNITY_EMAIL \
+            -e UNITY_PASSWORD \
             -e UNITY_MCP_HOST=http://localhost:8080 \
             -e UNITY_MCP_KEEP_CONNECTED=true \
             -e UNITY_MCP_AUTH_OPTION=none \
             -v "${GITHUB_WORKSPACE}:/workspace" \
-            -v /root/.local/share/unity3d:/root/.local/share/unity3d \
+            --entrypoint /bin/bash \
             unityci/editor:ubuntu-2022.3.63f1-base-3 \
-            unity-editor \
-              -batchmode \
-              -projectPath /workspace/Unity-MCP-Plugin \
-              -logFile /dev/stdout
+            -c 'unity-editor -quit -batchmode -nographics -logFile /dev/stdout \
+                  -username "$UNITY_EMAIL" -password "$UNITY_PASSWORD" ; \
+              echo "--- Activation exit: $? ---" ; \
+              echo "--- License dir contents: ---" ; \
+              ls -la /root/.local/share/unity3d/Unity/ 2>&1 || echo "(dir not found)" ; \
+              exec unity-editor -batchmode -projectPath /workspace/Unity-MCP-Plugin -logFile /dev/stdout'
 
           echo "Waiting for Unity project to load..."
-          # Poll until the MCP plugin signals readiness or timeout after 120 s
-          for i in $(seq 1 24); do
+          for i in $(seq 1 48); do
             sleep 5
+            # Fail fast if the container already exited
+            if [ "$(docker inspect -f '{{.State.Status}}' unity-editor 2>/dev/null)" = "exited" ]; then
+              echo "Unity Editor container exited early!"
+              docker logs unity-editor
+              exit 1
+            fi
             if docker logs unity-editor 2>&1 | grep -q "MCP.*ready\|Compilation finished\|All assemblies built"; then
               echo "Unity is ready."; break
             fi
             echo "Still waiting... ($((i*5))s)"
+            if [ "$i" -eq 48 ]; then
+              echo "Timeout waiting for Unity Editor"
+              docker logs unity-editor
+              exit 1
+            fi
           done
         shell: bash
 
@@ -99,6 +125,7 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ github.token }}
 
           # This is an optional setting that allows Claude to read CI results on PRs
           additional_permissions: |
@@ -119,4 +146,23 @@ jobs:
             --allowedTools Read
             --allowedTools WebFetch
             --allowedTools WebSearch
+            --allowedTools Bash(*)
+            --allowedTools WebBrowser
+            --allowedTools WebFetch(*)
+            --allowedTools WebSearch(*)
+            --allowedTools Read(*)
+            --allowedTools Write(*)
+            --allowedTools Edit(*)
+            --allowedTools Glob(*)
+            --allowedTools Grep(*)
+            --allowedTools Agent(*)
+            --allowedTools NotebookEdit(*)
+            --allowedTools TodoWrite
+            --allowedTools Skill(*)
+            --allowedTools TaskOutput(*)
+            --allowedTools TaskStop(*)
+            --allowedTools EnterPlanMode
+            --allowedTools ExitPlanMode
+            --allowedTools EnterWorktree
+            --allowedTools AskUserQuestion
             --mcp-config '{"mcpServers":{"ai-game-developer":{"type":"streamableHttp","url":"http://localhost:8080"}}}'
