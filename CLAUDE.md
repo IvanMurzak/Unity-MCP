@@ -92,3 +92,4 @@ These apply across both C# sub-projects:
 Important rules that must be followed:
 
 - `./Unity-MCP-Plugin/Assets/root/README.md` must be a copy of `./README.md`.
+- `./Unity-MCP-Plugin/Assets/root/README.md` must be translated to related translated versions of this file under `./docs/README.*.md`.
