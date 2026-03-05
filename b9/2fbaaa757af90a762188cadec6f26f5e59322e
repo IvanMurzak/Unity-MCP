@@ -1,0 +1,35 @@
+docs/README.ja.md
+  e8f200f4f95ee0d9 513-517
+Unity-MCP-Plugin/Assets/root/Runtime/UnityMcpPlugin.Config.cs
+  e8f200f4f95ee0d9 13,43-50
+docs/README.es.md
+  e8f200f4f95ee0d9 513-517
+docs/README.zh-CN.md
+  e8f200f4f95ee0d9 513-517
+Unity-MCP-Plugin/Assets/root/Runtime/UnityMcpPlugin.Build.cs
+  e8f200f4f95ee0d9 168-169,171,173-192,200
+Unity-MCP-Plugin/Assets/root/Runtime/Utils/EnvironmentUtils.cs
+  e8f200f4f95ee0d9 30,91-102
+README.md
+  e8f200f4f95ee0d9 513-517
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "b92fbaaa757af90a762188cadec6f26f5e59322e",
+  "prompts": {
+    "e8f200f4f95ee0d9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "451101ca-7f9e-4763-947f-952f203faec7",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 3478,
+      "total_deletions": 3426,
+      "accepted_lines": 1573,
+      "overriden_lines": 1
+    }
+  }
+}
