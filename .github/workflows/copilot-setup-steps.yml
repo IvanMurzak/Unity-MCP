@@ -68,34 +68,63 @@ jobs:
           done
         shell: bash
 
-      - name: Activate Unity license
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install unity-license-activate
+        run: npm install --global unity-license-activate
+        shell: bash
+
+      - name: Generate Unity activation file (.alf)
         env:
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
           UNITY_VERSION: ${{ steps.unity-version.outputs.unity_version }}
         run: |
-          docker rm -f unity-activate 2>/dev/null || true
+          mkdir -p "${GITHUB_WORKSPACE}/.unity-license"
 
-          # Run activation synchronously — exits with Unity's exit code.
           docker run --rm \
-            --name unity-activate \
-            --network host \
-            -e UNITY_EMAIL \
-            -e UNITY_PASSWORD \
-            -v "${GITHUB_WORKSPACE}:/workspace" \
+            -v "${GITHUB_WORKSPACE}/.unity-license:/output" \
+            -w /output \
             unityci/editor:ubuntu-${UNITY_VERSION}-base-3 \
-            unity-editor -quit -batchmode -nographics -logFile /dev/stdout \
-              -username "$UNITY_EMAIL" -password "$UNITY_PASSWORD"
+            unity-editor -batchmode -createManualActivationFile -logFile /dev/stdout || true
 
-          echo "--- Activation exit: $? ---"
-          echo "--- License dir contents: ---"
-          ls -la /root/.local/share/unity3d/Unity/ 2>&1 || echo "(dir not found)"
+          ALF_FILE=$(find "${GITHUB_WORKSPACE}/.unity-license" -name "*.alf" | head -1)
+          if [ -z "$ALF_FILE" ]; then
+            echo "Failed to generate .alf file"
+            exit 1
+          fi
+          echo "Generated ALF file: $ALF_FILE"
+          echo "alf_path=${ALF_FILE}" >> "$GITHUB_OUTPUT"
+        id: alf
         shell: bash
+
+      - name: Activate Unity license
+        run: |
+          unity-license-activate \
+            "${{ secrets.UNITY_EMAIL }}" \
+            "${{ secrets.UNITY_PASSWORD }}" \
+            "${{ steps.alf.outputs.alf_path }}"
+
+          ULF_FILE=$(find . -name "*.ulf" -o -name "*.xml" 2>/dev/null | head -1)
+          if [ -z "$ULF_FILE" ]; then
+            echo "Failed to obtain .ulf license file"
+            exit 1
+          fi
+          cp "$ULF_FILE" "${GITHUB_WORKSPACE}/.unity-license/Unity_lic.ulf"
+          echo "Unity license activated successfully"
+        shell: bash
+
+      - name: Upload error screenshot
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unity-license-error
+          path: error.png
+          if-no-files-found: ignore
 
       - name: Start Unity Editor in background
         env:
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
           UNITY_VERSION: ${{ steps.unity-version.outputs.unity_version }}
         run: |
           docker rm -f unity-editor 2>/dev/null || true
@@ -103,12 +132,11 @@ jobs:
           docker run -d \
             --name unity-editor \
             --network host \
-            -e UNITY_EMAIL \
-            -e UNITY_PASSWORD \
             -e UNITY_MCP_HOST=http://localhost:8080 \
             -e UNITY_MCP_KEEP_CONNECTED=true \
             -e UNITY_MCP_AUTH_OPTION=none \
             -v "${GITHUB_WORKSPACE}:/workspace" \
+            -v "${GITHUB_WORKSPACE}/.unity-license:/root/.local/share/unity3d/Unity/" \
             unityci/editor:ubuntu-${UNITY_VERSION}-base-3 \
             unity-editor -batchmode -projectPath /workspace/Unity-MCP-Plugin -logFile /dev/stdout
 
