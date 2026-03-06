@@ -180,9 +180,10 @@ namespace com.IvanMurzak.Unity.MCP
                     }
 
                     // Apply: enable only tools in the override list, disable all others
+                    var enabledSet = new HashSet<string>(enabledToolsOverride, StringComparer.OrdinalIgnoreCase);
                     foreach (var tool in toolManager.GetAllTools())
                     {
-                        var isEnabled = enabledToolsOverride.Contains(tool.Name!);
+                        var isEnabled = enabledSet.Contains(tool.Name!);
                         toolManager.SetToolEnabled(tool.Name!, isEnabled);
                         _logger.LogDebug("{method}: Tool '{tool}' enabled: {isEnabled} (env override)",
                             nameof(ApplyConfigToMcpPlugin), tool.Name, isEnabled);
