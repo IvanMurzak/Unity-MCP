@@ -106,12 +106,18 @@ jobs:
             "${{ secrets.UNITY_PASSWORD }}" \
             "${{ steps.alf.outputs.alf_path }}"
 
-          ULF_FILE=$(find . -name "*.ulf" -o -name "*.xml" 2>/dev/null | head -1)
+          echo "--- Searching for .ulf file in workspace root ---"
+          find "${GITHUB_WORKSPACE}" -maxdepth 1 -name "*.ulf" -ls 2>/dev/null
+
+          ULF_FILE=$(find "${GITHUB_WORKSPACE}" -maxdepth 1 -name "*.ulf" | head -1)
           if [ -z "$ULF_FILE" ]; then
             echo "Failed to obtain .ulf license file"
             exit 1
           fi
+          echo "Found ULF file: $ULF_FILE"
           cp "$ULF_FILE" "${GITHUB_WORKSPACE}/.unity-license/Unity_lic.ulf"
+          echo "--- License directory contents ---"
+          ls -la "${GITHUB_WORKSPACE}/.unity-license/"
           echo "Unity license activated successfully"
         shell: bash
 
