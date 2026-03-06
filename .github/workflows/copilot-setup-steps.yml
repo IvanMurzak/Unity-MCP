@@ -155,13 +155,13 @@ jobs:
               docker logs unity-editor
               exit 1
             fi
-            if docker logs unity-editor 2>&1 | grep -q "MCP.*ready\|Compilation finished\|All assemblies built"; then
+            if docker logs unity-editor 2>&1 | grep -q "Loading completed\|Compilation finished\|All assemblies built"; then
               echo "Unity is ready."; break
             fi
             echo "Still waiting... ($((i*5))s)"
             if [ "$i" -eq 48 ]; then
               echo "Timeout waiting for Unity Editor"
-              docker logs unity-editor
+              docker logs unity-editor 2>&1 | tail -50
               exit 1
             fi
           done
