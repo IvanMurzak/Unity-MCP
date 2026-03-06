@@ -152,6 +152,7 @@ jobs:
             -e UNITY_MCP_HOST=http://localhost:8080 \
             -e UNITY_MCP_KEEP_CONNECTED=true \
             -e UNITY_MCP_AUTH_OPTION=none \
+            -e UNITY_MCP_TOOLS=assets-refresh,console-get-logs,script-execute,tests-run \
             -v "${GITHUB_WORKSPACE}:/workspace" \
             -v "${GITHUB_WORKSPACE}/.unity-license:/root/.local/share/unity3d/Unity/" \
             unityci/editor:ubuntu-${UNITY_VERSION}-base-3 \
