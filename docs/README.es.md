@@ -506,7 +506,7 @@ Sin importar qué opción de lanzamiento elijas, todas admiten configuración pe
 
 ## Variables del Plugin
 
-El Plugin Unity MCP lee las siguientes variables de entorno (y argumentos de línea de comandos) al arrancar para sobreescribir los valores del archivo de configuración guardado. Las sobreescrituras **no se persisten** en disco — solo afectan la sesión actual. Cada vez que Unity se inicia, las sobreescrituras deben estar presentes en las variables de entorno o argumentos de línea de comandos para tener efecto.
+El Plugin Unity MCP lee las siguientes variables de entorno (y argumentos de línea de comandos) al arrancar para sobreescribir los valores del archivo de configuración guardado. Las sobreescrituras se aplican en tiempo de ejecución; en la primera ejecución o cuando se genera un nuevo token de autenticación, los valores sobreescritos se **escriben en el archivo de configuración**. En ejecuciones posteriores, las sobreescrituras se aplican en memoria pero no se guardan automáticamente. La excepción es `UNITY_MCP_TOOLS`, que usa `[JsonIgnore]` y **nunca se persiste** — solo funciona en tiempo de ejecución.
 
 | Variable de Entorno         | Arg de Línea de Comandos    | Valores             | Descripción                                               |
 | --------------------------- | --------------------------- | ------------------- | --------------------------------------------------------- |

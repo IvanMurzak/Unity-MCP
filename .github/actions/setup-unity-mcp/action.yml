@@ -91,6 +91,7 @@ runs:
 
         docker run --rm \
           -v "${GITHUB_WORKSPACE}/.unity-license:/output" \
+          -v "${GITHUB_WORKSPACE}/.unity-license:/root/.local/share/unity3d/Unity/" \
           -w /output \
           unityci/editor:ubuntu-${UNITY_VERSION}-base-3 \
           unity-editor -batchmode -createManualActivationFile -logFile /dev/stdout || true

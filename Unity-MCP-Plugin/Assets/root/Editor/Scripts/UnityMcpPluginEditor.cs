@@ -25,9 +25,9 @@ namespace com.IvanMurzak.Unity.MCP
             var config = GetOrCreateConfig(out var wasCreated);
             unityConnectionConfig = config;
             ApplyLogLevel(unityConnectionConfig.LogLevel);
+            EnvironmentUtils.ApplyEnvironmentOverrides(unityConnectionConfig);
             if (wasCreated)
                 Save();
-            EnvironmentUtils.ApplyEnvironmentOverrides(unityConnectionConfig);
             IncrementSingletonCount();
         }
 

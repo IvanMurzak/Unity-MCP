@@ -506,7 +506,7 @@ Doesn't matter what launch option you choose, all of them support custom configu
 
 ## Plugin Variables
 
-The Unity MCP Plugin reads the following environment variables (and command-line arguments) on startup to override values from the saved config file. Overrides are **not persisted** to disk — they only affect the current session. Each time Unity starts, the overrides must be present in the environment or command-line arguments to take effect.
+The Unity MCP Plugin reads the following environment variables (and command-line arguments) on startup to override values from the saved config file. Overrides are applied at runtime; on first run or when a new authentication token is generated, the overridden values are **written to the config file**. On subsequent runs, overrides are applied in memory but are not automatically saved. The exception is `UNITY_MCP_TOOLS`, which uses `[JsonIgnore]` and is **never persisted** — it is runtime-only.
 
 | Environment Variable        | Command Line Arg            | Values              | Description                                   |
 | --------------------------- | --------------------------- | ------------------- | --------------------------------------------- |

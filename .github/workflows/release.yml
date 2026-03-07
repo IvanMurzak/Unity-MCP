@@ -22,7 +22,7 @@ jobs:
       tag_exists: ${{ steps.tag_exists.outputs.exists }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           fetch-tags: true
@@ -49,7 +49,7 @@ jobs:
     if: needs.check-version-tag.outputs.tag_exists == 'false'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Cache Unity Library
         uses: actions/cache@v4
@@ -111,7 +111,7 @@ jobs:
     if: needs.check-version-tag.outputs.tag_exists == 'false'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -246,7 +246,7 @@ jobs:
       release_notes: ${{ steps.rel_desc.outputs.release_body }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           fetch-tags: true
@@ -328,7 +328,7 @@ jobs:
     if: needs.release-unity-plugin.outputs.success == 'true'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Download build zips artifact
         uses: actions/download-artifact@v4

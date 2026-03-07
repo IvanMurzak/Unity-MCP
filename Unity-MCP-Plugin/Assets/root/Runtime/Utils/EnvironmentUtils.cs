@@ -22,8 +22,10 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
     {
         static readonly ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger(nameof(EnvironmentUtils));
         // Environment variable names for MCP connection overrides.
-        // These override values loaded from the JSON config file. Overrides are applied after
-        // any initial Save() so they are never written back to disk.
+        // These override values loaded from the JSON config file. On first run (when the config
+        // is newly created), overrides are applied before Save() so they are persisted to disk.
+        // On subsequent runs the config already exists, so overrides are applied at runtime only.
+        // Exception: UNITY_MCP_TOOLS uses [JsonIgnore] and is never persisted.
         public const string EnvHost = "UNITY_MCP_HOST";
         public const string EnvKeepConnected = "UNITY_MCP_KEEP_CONNECTED";
         public const string EnvAuthOption = "UNITY_MCP_AUTH_OPTION";
@@ -50,7 +52,10 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         /// Applies environment variable (or command-line argument) overrides to the given config.
         /// Checks command-line args first, then falls back to process environment variables.
         /// Invalid or missing values are silently ignored, leaving the config field unchanged.
-        /// Overrides are applied after any initial config save and are never written back to disk.
+        /// On first run (when the config is newly created), overrides are applied before Save()
+        /// so they are persisted to disk. On subsequent runs they act as runtime-only overrides.
+        /// Exception: <see cref="EnvTools"/> (<c>UNITY_MCP_TOOLS</c>) targets a
+        /// <c>[JsonIgnore]</c> property and is never persisted regardless of timing.
         /// </summary>
         public static void ApplyEnvironmentOverrides(UnityMcpPlugin.UnityConnectionConfig config)
         {
@@ -95,9 +100,14 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
             if (!string.IsNullOrWhiteSpace(tools))
             {
                 var ids = tools.Split(',', StringSplitOptions.RemoveEmptyEntries);
+                var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                 var trimmed = new List<string>(ids.Length);
                 foreach (var id in ids)
-                    trimmed.Add(id.Trim().Trim('"'));
+                {
+                    var value = id.Trim().Trim('"');
+                    if (!string.IsNullOrWhiteSpace(value) && seen.Add(value))
+                        trimmed.Add(value);
+                }
                 config.EnabledToolsOverride = trimmed;
                 _logger.LogInformation("[MCP] Env override: {Key}={Value}", EnvTools, tools.Trim());
             }
