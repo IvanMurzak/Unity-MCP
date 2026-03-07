@@ -67,27 +67,35 @@ jobs:
 
           show_full_output: true
 
+          settings: |
+            {
+              "permissions": {
+                "allow": [
+                  "Bash(*)",
+                  "Read(*)",
+                  "Write(*)",
+                  "Edit(*)",
+                  "Glob(*)",
+                  "Grep(*)",
+                  "WebFetch(*)",
+                  "WebSearch(*)",
+                  "Agent(*)",
+                  "NotebookEdit(*)",
+                  "TodoWrite",
+                  "Skill(*)",
+                  "TaskOutput(*)",
+                  "TaskStop(*)",
+                  "EnterPlanMode",
+                  "ExitPlanMode",
+                  "EnterWorktree",
+                  "AskUserQuestion",
+                  "mcp__ai-game-developer__*"
+                ]
+              }
+            }
+
           claude_args: >-
-            --allowedTools "Bash(*)"
-            --allowedTools "Read(*)"
-            --allowedTools "Write(*)"
-            --allowedTools "Edit(*)"
-            --allowedTools "Glob(*)"
-            --allowedTools "Grep(*)"
-            --allowedTools "WebFetch(*)"
-            --allowedTools "WebSearch(*)"
-            --allowedTools "Agent(*)"
-            --allowedTools "NotebookEdit(*)"
-            --allowedTools "TodoWrite"
-            --allowedTools "Skill(*)"
-            --allowedTools "TaskOutput(*)"
-            --allowedTools "TaskStop(*)"
-            --allowedTools "EnterPlanMode"
-            --allowedTools "ExitPlanMode"
-            --allowedTools "EnterWorktree"
-            --allowedTools "AskUserQuestion"
-            --allowedTools "mcp__ai-game-developer__*"
-            --mcp-config '{"mcpServers":{"ai-game-developer":{"type":"streamableHttp","url":"http://localhost:8080"}}}'
+            --mcp-config .github/configs/mcp-servers.json
 
       - name: Cleanup Docker containers
         if: always()
