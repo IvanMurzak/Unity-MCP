@@ -1,5 +1,6 @@
 # GitHub
 .secrets
+.unity-license
 
 # AI configurations
 .claude
