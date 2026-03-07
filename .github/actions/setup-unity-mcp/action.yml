@@ -56,7 +56,7 @@ runs:
           -e MCP_PLUGIN_PORT=8080 \
           -e MCP_PLUGIN_CLIENT_TRANSPORT=streamableHttp \
           -e MCP_AUTHORIZATION=none \
-          ivanmurzakdev/unity-mcp-server
+          ivanmurzakdev/unity-mcp-server:latest
 
         echo "Waiting for MCP Server to be ready..."
         for i in $(seq 1 12); do
