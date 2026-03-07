@@ -65,31 +65,28 @@ jobs:
           additional_permissions: |
             actions: read
 
-          # Optional: Give a custom prompt to Claude. If this is not specified, Claude will perform the instructions specified in the comment that tagged it.
-          # prompt: 'Update the pull request description to include a summary of changes.'
+          show_full_output: true
 
-          # Optional: Add claude_args to customize behavior and configuration
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          # or https://code.claude.com/docs/en/cli-reference for available options
           claude_args: >-
-            --allowedTools Bash(*)
-            --allowedTools Read(*)
-            --allowedTools Write(*)
-            --allowedTools Edit(*)
-            --allowedTools Glob(*)
-            --allowedTools Grep(*)
-            --allowedTools WebFetch(*)
-            --allowedTools WebSearch(*)
-            --allowedTools Agent(*)
-            --allowedTools NotebookEdit(*)
-            --allowedTools TodoWrite
-            --allowedTools Skill(*)
-            --allowedTools TaskOutput(*)
-            --allowedTools TaskStop(*)
-            --allowedTools EnterPlanMode
-            --allowedTools ExitPlanMode
-            --allowedTools EnterWorktree
-            --allowedTools AskUserQuestion
+            --allowedTools "Bash(*)"
+            --allowedTools "Read(*)"
+            --allowedTools "Write(*)"
+            --allowedTools "Edit(*)"
+            --allowedTools "Glob(*)"
+            --allowedTools "Grep(*)"
+            --allowedTools "WebFetch(*)"
+            --allowedTools "WebSearch(*)"
+            --allowedTools "Agent(*)"
+            --allowedTools "NotebookEdit(*)"
+            --allowedTools "TodoWrite"
+            --allowedTools "Skill(*)"
+            --allowedTools "TaskOutput(*)"
+            --allowedTools "TaskStop(*)"
+            --allowedTools "EnterPlanMode"
+            --allowedTools "ExitPlanMode"
+            --allowedTools "EnterWorktree"
+            --allowedTools "AskUserQuestion"
+            --allowedTools "mcp__ai-game-developer__*"
             --mcp-config '{"mcpServers":{"ai-game-developer":{"type":"streamableHttp","url":"http://localhost:8080"}}}'
 
       - name: Cleanup Docker containers
