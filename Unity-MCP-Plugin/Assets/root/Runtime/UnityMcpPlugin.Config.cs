@@ -10,6 +10,7 @@
 
 #nullable enable
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
@@ -38,6 +39,14 @@ namespace com.IvanMurzak.Unity.MCP
             public List<McpFeature> Tools { get; set; } = new();
             public List<McpFeature> Prompts { get; set; } = new();
             public List<McpFeature> Resources { get; set; } = new();
+
+            /// <summary>
+            /// When non-null, only the tools whose names appear in this list are enabled;
+            /// all others are disabled. Set by the <c>UNITY_MCP_TOOLS</c> environment variable
+            /// (comma-separated tool IDs). Not persisted to disk.
+            /// </summary>
+            [JsonIgnore]
+            public List<string>? EnabledToolsOverride { get; set; }
 
             public UnityConnectionConfig()
             {

@@ -1,3 +1,11 @@
+# ┌──────────────────────────────────────────────────────────────────┐
+# │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
+# │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
+# │  Copyright (c) 2025 Ivan Murzak                                  │
+# │  Licensed under the Apache License, Version 2.0.                 │
+# │  See the LICENSE file in the project root for more information.  │
+# └──────────────────────────────────────────────────────────────────┘
+
 name: deploy
 
 on:
@@ -7,7 +15,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Deploy to NuGet and Docker Hub version (e.g., 1.0.0).'
+        description: "Deploy to NuGet and Docker Hub version (e.g., 1.0.0)."
         required: true
         type: string
 
@@ -15,16 +23,16 @@ on:
     inputs:
       version: { required: true, type: string }
     secrets:
-      NUGET_API_KEY:    { required: true }
-      DOCKER_USERNAME:  { required: true }
-      DOCKER_PASSWORD:  { required: true }
+      NUGET_API_KEY: { required: true }
+      DOCKER_USERNAME: { required: true }
+      DOCKER_PASSWORD: { required: true }
 
 jobs:
   deploy-mcp-server-to-nuget:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Extract version from tag
         id: version
@@ -36,7 +44,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: "9.0.x"
 
       - name: Restore dependencies
         run: |
@@ -74,7 +82,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Extract version from tag
         id: version
