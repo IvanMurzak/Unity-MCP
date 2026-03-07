@@ -194,7 +194,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         /// </summary>
         /// <param name="namespaceName">The namespace to filter by</param>
         /// <returns>Regex pattern for Unity's Filter.groupNames field</returns>
-        private static string CreateNamespaceRegexPattern(string namespaceName)
+        internal static string CreateNamespaceRegexPattern(string namespaceName)
             => $"^{EscapeRegex(namespaceName)}\\.";
 
         /// <summary>
@@ -204,7 +204,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         /// </summary>
         /// <param name="className">The class name to filter by</param>
         /// <returns>Regex pattern for Unity's Filter.groupNames field</returns>
-        static string CreateClassRegexPattern(string className)
+        internal static string CreateClassRegexPattern(string className)
             => $"^.*\\.{EscapeRegex(className)}\\.[^\\.]+$";
 
         /// <summary>
@@ -213,7 +213,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         /// </summary>
         /// <param name="input">The string to escape</param>
         /// <returns>Regex-safe escaped string</returns>
-        static string EscapeRegex(string input)
+        internal static string EscapeRegex(string input)
             => Regex.Escape(input);
 
         static async Task<int> GetMatchingTestCount(TestRunnerApi testRunnerApi, TestMode testMode, TestFilterParameters filterParams)
