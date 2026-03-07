@@ -169,9 +169,12 @@ namespace com.IvanMurzak.Unity.MCP
                 var enabledToolsOverride = unityConnectionConfig.EnabledToolsOverride;
                 if (enabledToolsOverride != null)
                 {
+                    var allTools = toolManager.GetAllTools().ToList();
+                    var enabledSet = new HashSet<string>(enabledToolsOverride, StringComparer.OrdinalIgnoreCase);
+
                     // Validate requested tool IDs against the registered tool list
                     var allToolNames = new HashSet<string>(
-                        toolManager.GetAllTools().Select(t => t.Name!),
+                        allTools.Select(t => t.Name!),
                         StringComparer.OrdinalIgnoreCase);
                     foreach (var requestedId in enabledToolsOverride)
                     {
@@ -181,8 +184,7 @@ namespace com.IvanMurzak.Unity.MCP
                     }
 
                     // Apply: enable only tools in the override list, disable all others
-                    var enabledSet = new HashSet<string>(enabledToolsOverride, StringComparer.OrdinalIgnoreCase);
-                    foreach (var tool in toolManager.GetAllTools())
+                    foreach (var tool in allTools)
                     {
                         var isEnabled = enabledSet.Contains(tool.Name!);
                         toolManager.SetToolEnabled(tool.Name!, isEnabled);
