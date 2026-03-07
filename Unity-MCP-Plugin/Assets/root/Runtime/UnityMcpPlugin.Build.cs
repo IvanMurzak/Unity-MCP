@@ -15,6 +15,7 @@ using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.Extensions.Logging;
 using R3;
@@ -176,7 +177,7 @@ namespace com.IvanMurzak.Unity.MCP
                     {
                         if (!allToolNames.Contains(requestedId))
                             _logger.LogError("[MCP] {Key}: tool '{ToolId}' not found. Check the tool ID.",
-                                "UNITY_MCP_TOOLS", requestedId);
+                                EnvironmentUtils.EnvTools, requestedId);
                     }
 
                     // Apply: enable only tools in the override list, disable all others

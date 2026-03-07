@@ -6,7 +6,7 @@
 # │  See the LICENSE file in the project root for more information.  │
 # └──────────────────────────────────────────────────────────────────┘
 
-name: test-pull-request
+name: test-pull-request-manual
 
 on:
   workflow_dispatch:

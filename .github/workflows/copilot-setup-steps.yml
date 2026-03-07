@@ -41,4 +41,4 @@ jobs:
         with:
           unity-email: ${{ secrets.UNITY_EMAIL }}
           unity-password: ${{ secrets.UNITY_PASSWORD }}
-          unity-mcp-tools: ${{ secrets.UNITY_MCP_TOOLS || 'assets-refresh,console-get-logs,script-execute,tests-run' }}
+          unity-mcp-tools: ${{ secrets.UNITY_MCP_TOOLS != '' && secrets.UNITY_MCP_TOOLS || 'assets-refresh,console-get-logs,script-execute,tests-run' }}
