@@ -95,7 +95,7 @@ jobs:
             }
 
           claude_args: >-
-            --mcp-config .github/configs/mcp-servers.json
+            --mcp-config ${{ github.workspace }}/.github/configs/mcp-servers.json
 
       - name: Cleanup Docker containers
         if: always()
