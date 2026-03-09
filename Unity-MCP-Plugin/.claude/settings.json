@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "*"
+    ],
+    "deny": [],
+    "ask": [],
+    "additionalDirectories": [
+      "../Installer",
+      "../Unity-MCP-Server",
+      "../Unity-MCP.wiki",
+      "../Unity-Tests",
+      "../commands",
+      "../docs"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "ai-game-developer"
+  ]
+}

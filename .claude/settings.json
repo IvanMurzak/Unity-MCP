@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "WebBrowser",
+      "WebFetch(*)",
+      "WebSearch(*)",
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)",
+      "Glob(*)",
+      "Grep(*)",
+      "Agent(*)",
+      "NotebookEdit(*)",
+      "TodoWrite",
+      "Skill(*)",
+      "TaskOutput(*)",
+      "TaskStop(*)",
+      "EnterPlanMode",
+      "ExitPlanMode",
+      "EnterWorktree",
+      "AskUserQuestion"
+    ],
+    "additionalDirectories": [
+      "C:\\tmp"
+    ]
+  },
+  "enabledPlugins": {
+    "csharp-lsp@claude-plugins-official": true
+  }
+}
