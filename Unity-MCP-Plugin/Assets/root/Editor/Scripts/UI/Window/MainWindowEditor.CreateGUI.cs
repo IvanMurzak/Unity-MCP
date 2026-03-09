@@ -12,6 +12,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.McpPlugin.Common.Utils;
 using com.IvanMurzak.McpPlugin.Skills;
@@ -178,8 +179,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         private VisualElement? _aiAgentLabelsContainer;
         private VisualElement? _aiAgentStatusCircle;
 
-        private DateTime _setMcpServerDataTime;
-        private DateTime _setAiAgentDataTime;
+        private long _mcpServerDataVersion;
+        private long _aiAgentDataVersion;
 
         protected override void OnGUICreated(VisualElement root)
         {
@@ -231,7 +232,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private void SetAiAgentStatus(bool isConnected, IEnumerable<string>? labels = null)
         {
-            _setAiAgentDataTime = DateTime.UtcNow;
+            Interlocked.Increment(ref _aiAgentDataVersion);
 
             if (_aiAgentStatusCircle == null)
             {
@@ -595,9 +596,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             }
         }
 
-        private void SetMcpServerData(McpServerData? data, McpServerStatus status, Button btnStartStop, VisualElement statusCircle, Label statusLabel)
+        private long SetMcpServerData(McpServerData? data, McpServerStatus status, Button btnStartStop, VisualElement statusCircle, Label statusLabel)
         {
-            _setMcpServerDataTime = DateTime.UtcNow;
+            var version = Interlocked.Increment(ref _mcpServerDataVersion);
             if (Logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Trace))
                 Logger.LogTrace("Setting MCP server data: {status}, Data: {data}", status, data?.ToPrettyJson() ?? "null");
 
@@ -608,12 +609,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             btnStartStop.SetEnabled(status == McpServerStatus.Running || status == McpServerStatus.Stopped);
             statusLabel.text = GetServerLabelText(status, data);
             SetStatusIndicator(statusCircle, GetServerStatusClass(status));
+            return version;
         }
 
         private void FetchMcpServerData(McpServerStatus status, Button btnStartStop, VisualElement statusCircle, Label statusLabel)
         {
-            // Update UI immediately with current status
-            SetMcpServerData(null, status, btnStartStop, statusCircle, statusLabel);
+            // Update UI immediately with current status; capture the version atomically so that
+            // the async result can detect if a newer update has superseded it.
+            var fetchVersion = SetMcpServerData(null, status, btnStartStop, statusCircle, statusLabel);
 
             // Then try to fetch additional data asynchronously
             var mcpPluginInstance = UnityMcpPluginEditor.Instance.McpPluginInstance;
@@ -630,7 +633,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 return;
             }
 
-            var fetchTime = DateTime.UtcNow;
             var task = mcpManagerHub.GetMcpServerData();
             if (task == null)
             {
@@ -640,14 +642,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             task.ContinueWith(t =>
             {
-                if (_setMcpServerDataTime > fetchTime)
+                if (Interlocked.Read(ref _mcpServerDataVersion) != fetchVersion)
                 {
                     Logger.LogWarning("Skipping MCP server data update because a newer update was applied at {time}",
-                        _setMcpServerDataTime);
+                        DateTime.UtcNow);
                     return;
                 }
                 MainThread.Instance.Run(() =>
                 {
+                    // Second check: close the TOCTOU window between the thread-pool check above
+                    // and the main-thread callback execution.
+                    if (Interlocked.Read(ref _mcpServerDataVersion) != fetchVersion)
+                        return;
                     if (t.IsCompletedSuccessfully)
                     {
                         var data = t.Result;
@@ -801,7 +807,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 return;
             }
 
-            var fetchTime = DateTime.UtcNow;
             var task = mcpManagerHub.GetMcpClientData();
             if (task == null)
             {
@@ -809,16 +814,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 return;
             }
 
+            // Claim a unique version for this fetch so the async result can detect if a newer
+            // update (e.g. from OnClientsChanged or another FetchAiAgentData call) has superseded it.
+            var fetchVersion = Interlocked.Increment(ref _aiAgentDataVersion);
+
             task.ContinueWith(t =>
             {
-                if (_setAiAgentDataTime > fetchTime)
+                if (Interlocked.Read(ref _aiAgentDataVersion) != fetchVersion)
                 {
                     Logger.LogWarning("Skipping AI agent data update because a newer update was applied at {time}",
-                        _setAiAgentDataTime);
+                        DateTime.UtcNow);
                     return;
                 }
                 MainThread.Instance.Run(() =>
                 {
+                    // Second check: close the TOCTOU window between the thread-pool check above
+                    // and the main-thread callback execution.
+                    if (Interlocked.Read(ref _aiAgentDataVersion) != fetchVersion)
+                        return;
                     if (t.IsCompletedSuccessfully)
                     {
                         var clients = t.Result;
