@@ -644,7 +644,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             {
                 if (Interlocked.Read(ref _mcpServerDataVersion) != fetchVersion)
                 {
-                    Logger.LogWarning("Skipping MCP server data update because a newer update was applied at {time}",
+                    Logger.LogTrace("Skipping MCP server data update because a newer update was applied at {time}",
                         DateTime.UtcNow);
                     return;
                 }
@@ -822,7 +822,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             {
                 if (Interlocked.Read(ref _aiAgentDataVersion) != fetchVersion)
                 {
-                    Logger.LogWarning("Skipping AI agent data update because a newer update was applied at {time}",
+                    Logger.LogTrace("Skipping AI agent data update because a newer update was applied at {time}",
                         DateTime.UtcNow);
                     return;
                 }
