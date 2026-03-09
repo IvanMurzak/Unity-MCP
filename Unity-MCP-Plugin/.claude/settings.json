@@ -17,5 +17,8 @@
   "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "ai-game-developer"
-  ]
+  ],
+  "enabledPlugins": {
+    "csharp-lsp@claude-plugins-official": true
+  }
 }
