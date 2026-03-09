@@ -54,14 +54,14 @@ dotnet run --project com.IvanMurzak.Unity.MCP.Server.csproj -- --client-transpor
 
 ### MCP Inspector (debugging)
 ```bash
-Commands/start_mcp_inspector.bat   # requires Node.js
+Unity-MCP-Plugin/Commands/start_mcp_inspector.bat   # requires Node.js
 ```
 
 ## Release & Versioning
 
 Version is sourced from [Unity-MCP-Plugin/Assets/root/package.json](Unity-MCP-Plugin/Assets/root/package.json).
 
-- **Bump version**: `.\bump-version.ps1 <version>` — updates all version references across the repo
+- **Bump version**: `.\commands\bump-version.ps1 <version>` — updates all version references across the repo
 - **Release**: Push to `main` triggers `.github/workflows/release.yml`, which runs the 18-combination Unity test matrix (3 Unity versions × 3 test modes × 2 OS), publishes executables to GitHub Releases, Docker Hub, and NuGet
 
 ## CI/CD
@@ -70,8 +70,13 @@ Version is sourced from [Unity-MCP-Plugin/Assets/root/package.json](Unity-MCP-Pl
 |---|---|---|
 | `release.yml` | Push to `main` | Full release pipeline |
 | `test_pull_request.yml` | PR to `main`/`dev` | Validates all 18 test matrix combinations |
+| `test_pull_request_manual.yml` | Manual | Manual trigger for PR test matrix |
+| `test_unity_plugin.yml` | Reusable | Unity plugin test runner (called by other workflows) |
 | `deploy.yml` | Release published / manual | NuGet + Docker Hub deploy |
 | `deploy_server_executables.yml` | Release published | Cross-platform binary upload |
+| `bump_version.yml` | Manual | Automated version bumping |
+| `claude.yml` | Issue/PR comments | Claude Code AI assistant |
+| `copilot-setup-steps.yml` | Reusable | GitHub Copilot setup steps |
 
 PRs from untrusted contributors require a `ci-ok` label from a maintainer before CI runs.
 
