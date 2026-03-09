@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "*"
+      "Bash(*)",
+      "Read(*)",
+      "WebFetch(*)",
+      "mcp__ai-game-developer__*"
     ],
     "additionalDirectories": []
   },
