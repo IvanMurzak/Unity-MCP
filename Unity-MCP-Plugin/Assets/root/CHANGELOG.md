@@ -1,11 +1,5 @@
 # Changelog
 
-## [0.51.6] - 2025-03-10
-
-### Changed
-
-- **Package tests hidden from consumers**: The package tests folder was renamed from `Tests` to `Tests~`. Unity treats folders ending with `~` as hidden, so consumer projects that install the package via OpenUPM no longer see the package’s unit tests in the Test Runner. The repo and CI continue to run tests from `Tests~` when opening the Plugin or Installer project.
-
 ## [0.17.1] - 2025-01-XX
 
 ### Fixed
