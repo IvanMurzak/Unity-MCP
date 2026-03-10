@@ -544,7 +544,7 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 
 複数の UPM パッケージを使うプロジェクトでは、[プロジェクトマニフェスト](https://docs.unity3d.com/Manual/upm-manifestPrj.html)の **`testables`** フィールドで、どのパッケージのテストを Test Runner に表示するか制御できます。`testables` に列挙したパッケージのみ、テストがコンパイル・表示されます。プロジェクトマニフェストの `testables` に本パッケージ（または他のパッケージ）を追加すると、そのテストが含まれます。
 
-**例** — `Packages/manifest.json` で（Git 参照にするとリリースごとのバージョン更新が不要です）:
+**例** — `Packages/manifest.json` で：
 
 ```json
 {

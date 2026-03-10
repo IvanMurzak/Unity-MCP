@@ -545,7 +545,7 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 
 在使用多个 UPM 包的项目中，可通过[项目清单](https://docs.unity3d.com/Manual/upm-manifestPrj.html)的 **`testables`** 字段控制哪些包的测试出现在 Test Runner 中。只有列在 `testables` 中的包才会编译并显示其测试。在项目清单的 `testables` 中加入本包（或任意其他包）即可包含其测试。
 
-**示例** — 在 `Packages/manifest.json` 中（使用 Git 引用可避免每次发布都改版本）：
+**示例** — 在 `Packages/manifest.json` 中：
 
 ```json
 {

@@ -202,7 +202,7 @@
 
 Unity 的[项目清单](https://docs.unity3d.com/Manual/upm-manifestPrj.html)支持 **`testables`** 数组，用于控制已安装的包中哪些向 **Test Runner**（`Window > General > Test Runner`）提供测试。只有列在 `testables` 中的包才会编译并显示其测试。在项目清单的 `testables` 中加入本包（或任意其他包）即可包含其测试。
 
-**示例** — 在项目的 `Packages/manifest.json` 中，添加包含要运行的测试所属包名的 `testables` 数组。可从 Git 安装本包以保持版本最新：
+**示例** — 在项目的 `Packages/manifest.json` 中，添加包含要运行的测试所属包名的 `testables` 数组：
 
 ```json
 {
