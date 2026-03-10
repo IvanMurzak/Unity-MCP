@@ -215,7 +215,7 @@ Unity 的[项目清单](https://docs.unity3d.com/Manual/upm-manifestPrj.html)支
 }
 ```
 
-详见 [Unity: 项目清单（testables）](https://docs.unity3d.com/Manual/upm-manifestPrj.html#testables)。
+详见 [Unity: 向包添加测试](https://docs.unity3d.com/Manual/cus-tests.html) 与 [Unity: 项目清单（testables）](https://docs.unity3d.com/Manual/upm-manifestPrj.html#testables)。
 
 ![AI 游戏开发者 — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 

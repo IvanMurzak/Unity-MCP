@@ -558,7 +558,7 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 }
 ```
 
-详见 [Unity: 项目清单（testables）](https://docs.unity3d.com/Manual/upm-manifestPrj.html#testables)。
+详见 [Unity: 向包添加测试](https://docs.unity3d.com/Manual/cus-tests.html) 与 [Unity: 项目清单（testables）](https://docs.unity3d.com/Manual/upm-manifestPrj.html#testables)。
 
 ## 解读 CI 结果
 

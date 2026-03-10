@@ -558,7 +558,7 @@ In projects that use multiple UPM packages, you can control which packages’ te
 }
 ```
 
-See [Unity: Project manifest (testables)](https://docs.unity3d.com/Manual/upm-manifestPrj.html#testables) for full documentation.
+See [Unity: Add tests to your package](https://docs.unity3d.com/Manual/cus-tests.html) and [Unity: Project manifest (testables)](https://docs.unity3d.com/Manual/upm-manifestPrj.html#testables) for full documentation.
 
 ## Interpreting CI results
 

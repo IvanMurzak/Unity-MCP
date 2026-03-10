@@ -215,7 +215,7 @@ Unity’s [project manifest](https://docs.unity3d.com/Manual/upm-manifestPrj.htm
 }
 ```
 
-See [Unity: Project manifest (testables)](https://docs.unity3d.com/Manual/upm-manifestPrj.html#testables) for details.
+See [Unity: Add tests to your package](https://docs.unity3d.com/Manual/cus-tests.html) and [Unity: Project manifest (testables)](https://docs.unity3d.com/Manual/upm-manifestPrj.html#testables) for details.
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 

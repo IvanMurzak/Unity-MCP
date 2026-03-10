@@ -215,7 +215,7 @@ Unity の[プロジェクトマニフェスト](https://docs.unity3d.com/Manual/
 }
 ```
 
-詳細は [Unity: プロジェクトマニフェスト（testables）](https://docs.unity3d.com/Manual/upm-manifestPrj.html#testables) を参照してください。
+詳細は [Unity: パッケージにテストを追加](https://docs.unity3d.com/Manual/cus-tests.html) と [Unity: プロジェクトマニフェスト（testables）](https://docs.unity3d.com/Manual/upm-manifestPrj.html#testables) を参照してください。
 
 ![AI ゲーム開発者 — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 

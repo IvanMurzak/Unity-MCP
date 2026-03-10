@@ -557,7 +557,7 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 }
 ```
 
-詳細は [Unity: プロジェクトマニフェスト（testables）](https://docs.unity3d.com/Manual/upm-manifestPrj.html#testables) を参照してください。
+詳細は [Unity: パッケージにテストを追加](https://docs.unity3d.com/Manual/cus-tests.html) と [Unity: プロジェクトマニフェスト（testables）](https://docs.unity3d.com/Manual/upm-manifestPrj.html#testables) を参照してください。
 
 ## CI 結果の解釈
 

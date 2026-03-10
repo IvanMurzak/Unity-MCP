@@ -558,7 +558,7 @@ En proyectos que usan varios paquetes UPM, puedes controlar qué paquetes muestr
 }
 ```
 
-Consulta [Unity: Manifest del proyecto (testables)](https://docs.unity3d.com/Manual/upm-manifestPrj.html#testables) para la documentación completa.
+Consulta [Unity: Añadir tests a tu paquete](https://docs.unity3d.com/Manual/cus-tests.html) y [Unity: Manifest del proyecto (testables)](https://docs.unity3d.com/Manual/upm-manifestPrj.html#testables) para la documentación completa.
 
 ## Interpretación de resultados de CI
 
