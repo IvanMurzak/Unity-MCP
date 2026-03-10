@@ -207,7 +207,7 @@ El [manifest del proyecto](https://docs.unity3d.com/Manual/upm-manifestPrj.html)
 ```json
 {
   "dependencies": {
-    "com.ivanmurzak.unity.mcp": "https://github.com/IvanMurzak/Unity-MCP.git?path=Unity-MCP-Plugin/Assets/root"
+    "com.ivanmurzak.unity.mcp": "X.X.X"
   },
   "testables": [
     "com.ivanmurzak.unity.mcp"
