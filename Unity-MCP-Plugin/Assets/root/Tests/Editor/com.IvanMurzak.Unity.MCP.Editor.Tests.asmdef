@@ -1,13 +1,21 @@
 {
-    "name": "com.IvanMurzak.Unity.MCP.Tests",
+    "name": "com.IvanMurzak.Unity.MCP.Editor.Tests",
     "rootNamespace": "",
     "references": [
         "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
         "com.IvanMurzak.Unity.MCP.Runtime",
-        "com.IvanMurzak.Unity.MCP.TestFiles"
+        "com.IvanMurzak.Unity.MCP.TestFiles",
+        "com.IvanMurzak.Unity.MCP.Editor"
     ],
-    "includePlatforms": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
+    "optionalUnityReferences": ["TestAssemblies"],
     "allowUnsafeCode": false,
     "overrideReferences": true,
     "precompiledReferences": [
@@ -22,9 +30,7 @@
         "R3.dll"
     ],
     "autoReferenced": true,
-    "defineConstraints": [
-        "UNITY_INCLUDE_TESTS"
-    ],
+    "defineConstraints": [],
     "versionDefines": [],
     "noEngineReferences": false
 }
