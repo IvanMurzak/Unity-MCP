@@ -163,6 +163,39 @@ namespace com.IvanMurzak.Unity.MCP
                 NotifyChanged(Instance.unityConnectionConfig);
             }
         }
+        public static ConnectionMode ConnectionMode
+        {
+            get => Instance.unityConnectionConfig.ConnectionMode;
+            set
+            {
+                Instance.unityConnectionConfig.ConnectionMode = value;
+                NotifyChanged(Instance.unityConnectionConfig);
+            }
+        }
+        public static string CloudServerUrl
+        {
+            get => Instance.unityConnectionConfig.CloudServerUrl;
+            set
+            {
+                Instance.unityConnectionConfig.CloudServerUrl = value;
+                NotifyChanged(Instance.unityConnectionConfig);
+            }
+        }
+        public static string? CloudToken
+        {
+            get => Instance.unityConnectionConfig.CloudToken;
+            set
+            {
+                Instance.unityConnectionConfig.CloudToken = value;
+                NotifyChanged(Instance.unityConnectionConfig);
+            }
+        }
+
+        public static string ActiveHost => ConnectionMode == ConnectionMode.Cloud
+            ? CloudServerUrl + "/mcp" : Host;
+        public static string? ActiveToken => ConnectionMode == ConnectionMode.Cloud
+            ? CloudToken : Token;
+
         public static bool GenerateSkillFiles
         {
             get => Instance.unityConnectionConfig.GenerateSkillFiles;

@@ -36,6 +36,9 @@ namespace com.IvanMurzak.Unity.MCP
             public bool KeepServerRunning { get; set; } = false;
             public TransportMethod TransportMethod { get; set; } = TransportMethod.streamableHttp;
             public AuthOption AuthOption { get; set; } = AuthOption.none;
+            public ConnectionMode ConnectionMode { get; set; } = ConnectionMode.Local;
+            public string CloudServerUrl { get; set; } = "https://ai-game.dev";
+            public string? CloudToken { get; set; }
             public List<McpFeature> Tools { get; set; } = new();
             public List<McpFeature> Prompts { get; set; } = new();
             public List<McpFeature> Resources { get; set; } = new();
@@ -61,6 +64,9 @@ namespace com.IvanMurzak.Unity.MCP
                 GenerateSkillFiles = false;
                 TransportMethod = TransportMethod.streamableHttp;
                 AuthOption = AuthOption.none;
+                ConnectionMode = ConnectionMode.Local;
+                CloudServerUrl = "https://ai-game.dev";
+                CloudToken = null;
                 LogLevel = LogLevel.Warning;
                 TimeoutMs = Consts.Hub.DefaultTimeoutMs;
                 Tools = DefaultTools;
@@ -83,5 +89,11 @@ namespace com.IvanMurzak.Unity.MCP
                 }
             }
         }
+    }
+
+    public enum ConnectionMode
+    {
+        Local,
+        Cloud
     }
 }

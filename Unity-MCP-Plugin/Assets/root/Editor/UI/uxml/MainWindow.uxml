@@ -15,10 +15,27 @@
             <ui:VisualElement class="divider" />
             <!-- Connection Section ============================== -->
             <ui:Label text="Connection" class="header" />
+            <!-- Connection Mode Toggle -->
+            <ui:VisualElement style="flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+                <ui:Label text="Mode" class="section-desc" style="margin-bottom: 0;" />
+                <ui:VisualElement style="flex-direction: row;">
+                    <ui:Toggle name="toggleModeLocal" label="Local" class="toggle-text-button" />
+                    <ui:Toggle name="toggleModeCloud" label="Cloud" class="toggle-text-button" />
+                </ui:VisualElement>
+            </ui:VisualElement>
             <ui:TextField picking-mode="Ignore" label="Server URL" value="http://localhost:8080" name="InputServerURL" tooltip="Connection URL to an MCP server. Default value: http://localhost:8080" class="content-item" />
             <ui:Foldout text="Information" value="false" class="base-foldout">
                 <ui:Label text="Usually the server is hosted locally at:&#10;http://localhost:8080&#10;&#10;But feel free to connect to remote MCP server if needed. The connection under the hood is established using SignalR and supports wide range of features." class="section-desc" />
             </ui:Foldout>
+            <!-- Cloud Authorization (visible in Cloud mode only) -->
+            <ui:VisualElement name="cloudAuthSection" style="flex-direction: column; margin-top: 4px; display: none;">
+                <ui:TextField name="inputCloudServerUrl" label="Cloud URL" value="https://ai-game.dev" class="content-item" />
+                <ui:VisualElement style="flex-direction: row; margin-top: 2px; align-items: center;">
+                    <ui:TextField name="inputCloudToken" label="" placeholder-text="Cloud Token" readonly="true" style="flex-grow: 1;" class="token-input" />
+                    <ui:Button name="btnCloudAuthorize" text="Authorize" class="btn-compact" />
+                </ui:VisualElement>
+                <ui:Label name="labelCloudAuthStatus" text="" class="section-desc" style="margin-top: 2px;" />
+            </ui:VisualElement>
             <!-- Connection Timeline -->
             <ui:VisualElement name="ConnectionTimeline" class="connection-timeline">
                 <!-- Point 1: Unity -->

@@ -17,6 +17,7 @@ using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.McpPlugin.Common.Utils;
 using com.IvanMurzak.McpPlugin.Skills;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Services;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
@@ -179,6 +180,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         private VisualElement? _aiAgentLabelsContainer;
         private VisualElement? _aiAgentStatusCircle;
 
+        private DeviceAuthFlow? _deviceAuthFlow;
+
         private long _mcpServerDataVersion;
         private long _aiAgentDataVersion;
 
@@ -188,6 +191,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             SetupSettingsSection(root);
             SetupConnectionSection(root);
+            SetupConnectionModeToggle(root);
+            SetupCloudAuthSection(root);
             SetupMcpServerSection(root);
             SetupAiAgentSection(root);
             SetupToolsSection(root);
@@ -391,6 +396,132 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 if (UnityMcpPluginEditor.Instance.HasMcpPluginInstance)
                     _ = UnityMcpPluginEditor.Instance.Disconnect();
             }
+        }
+
+        private void SetupConnectionModeToggle(VisualElement root)
+        {
+            var toggleLocal = root.Q<Toggle>("toggleModeLocal");
+            var toggleCloud = root.Q<Toggle>("toggleModeCloud");
+            if (toggleLocal == null || toggleCloud == null) return;
+
+            var inputServerUrl = root.Q<TextField>("InputServerURL");
+            var infoFoldout = root.Q<Foldout>();
+            var mcpServerPoint = root.Q<VisualElement>("TimelinePointMcpServer");
+            var cloudAuthSection = root.Q<VisualElement>("cloudAuthSection");
+
+            void UpdateModeVisibility(ConnectionMode mode)
+            {
+                var isLocal = mode == ConnectionMode.Local;
+                if (inputServerUrl != null) inputServerUrl.style.display = isLocal ? DisplayStyle.Flex : DisplayStyle.None;
+                if (infoFoldout != null) infoFoldout.style.display = isLocal ? DisplayStyle.Flex : DisplayStyle.None;
+                if (mcpServerPoint != null) mcpServerPoint.style.display = isLocal ? DisplayStyle.Flex : DisplayStyle.None;
+                if (cloudAuthSection != null) cloudAuthSection.style.display = isLocal ? DisplayStyle.None : DisplayStyle.Flex;
+            }
+
+            var currentMode = UnityMcpPluginEditor.ConnectionMode;
+            toggleLocal.SetValueWithoutNotify(currentMode == ConnectionMode.Local);
+            toggleCloud.SetValueWithoutNotify(currentMode == ConnectionMode.Cloud);
+            UpdateModeVisibility(currentMode);
+
+            toggleLocal.RegisterValueChangedCallback(evt =>
+            {
+                if (evt.newValue)
+                {
+                    UnityMcpPluginEditor.ConnectionMode = ConnectionMode.Local;
+                    UnityMcpPluginEditor.Instance.Save();
+                    toggleCloud.SetValueWithoutNotify(false);
+                    UpdateModeVisibility(ConnectionMode.Local);
+                }
+                else if (!toggleCloud.value)
+                {
+                    toggleLocal.SetValueWithoutNotify(true);
+                }
+            });
+
+            toggleCloud.RegisterValueChangedCallback(evt =>
+            {
+                if (evt.newValue)
+                {
+                    UnityMcpPluginEditor.ConnectionMode = ConnectionMode.Cloud;
+                    UnityMcpPluginEditor.Instance.Save();
+                    toggleLocal.SetValueWithoutNotify(false);
+                    UpdateModeVisibility(ConnectionMode.Cloud);
+                }
+                else if (!toggleLocal.value)
+                {
+                    toggleCloud.SetValueWithoutNotify(true);
+                }
+            });
+        }
+
+        private void SetupCloudAuthSection(VisualElement root)
+        {
+            var inputCloudUrl = root.Q<TextField>("inputCloudServerUrl");
+            var inputCloudToken = root.Q<TextField>("inputCloudToken");
+            var btnAuthorize = root.Q<Button>("btnCloudAuthorize");
+            var statusLabel = root.Q<Label>("labelCloudAuthStatus");
+            if (inputCloudUrl == null || inputCloudToken == null || btnAuthorize == null) return;
+
+            inputCloudUrl.value = UnityMcpPluginEditor.CloudServerUrl;
+            inputCloudToken.value = UnityMcpPluginEditor.CloudToken ?? string.Empty;
+
+            inputCloudUrl.RegisterCallback<FocusOutEvent>(_ =>
+            {
+                var newValue = inputCloudUrl.value;
+                if (UnityMcpPluginEditor.CloudServerUrl == newValue) return;
+                UnityMcpPluginEditor.CloudServerUrl = newValue;
+                SaveChanges($"[AI Game Developer] Cloud URL Changed: {newValue}");
+            });
+
+            btnAuthorize.RegisterCallback<ClickEvent>(_ =>
+            {
+                // If currently running, cancel
+                if (_deviceAuthFlow != null && (_deviceAuthFlow.State == DeviceAuthFlowState.Initiating
+                    || _deviceAuthFlow.State == DeviceAuthFlowState.WaitingForUser
+                    || _deviceAuthFlow.State == DeviceAuthFlowState.Polling))
+                {
+                    _deviceAuthFlow.Cancel();
+                    return;
+                }
+
+                _deviceAuthFlow?.Cancel();
+                _deviceAuthFlow = new DeviceAuthFlow();
+
+                _deviceAuthFlow.OnStateChanged += state =>
+                {
+                    // Must dispatch to main thread for UI updates
+                    UnityEditor.EditorApplication.delayCall += () =>
+                    {
+                        if (statusLabel != null)
+                        {
+                            statusLabel.text = state switch
+                            {
+                                DeviceAuthFlowState.Initiating => "Initiating...",
+                                DeviceAuthFlowState.WaitingForUser => $"Code: {_deviceAuthFlow.UserCode} — Authorize in browser",
+                                DeviceAuthFlowState.Polling => $"Code: {_deviceAuthFlow.UserCode} — Waiting for authorization...",
+                                DeviceAuthFlowState.Authorized => "Authorized!",
+                                DeviceAuthFlowState.Failed => $"Failed: {_deviceAuthFlow.ErrorMessage}",
+                                DeviceAuthFlowState.Expired => "Expired — try again",
+                                DeviceAuthFlowState.Cancelled => "Cancelled",
+                                _ => ""
+                            };
+                        }
+                        if (state == DeviceAuthFlowState.Authorized && inputCloudToken != null)
+                        {
+                            inputCloudToken.value = UnityMcpPluginEditor.CloudToken ?? string.Empty;
+                        }
+                        if (btnAuthorize != null)
+                        {
+                            var isRunning = state == DeviceAuthFlowState.Initiating
+                                || state == DeviceAuthFlowState.WaitingForUser
+                                || state == DeviceAuthFlowState.Polling;
+                            btnAuthorize.text = isRunning ? "Cancel" : "Authorize";
+                        }
+                    };
+                };
+
+                _ = _deviceAuthFlow.StartAsync(UnityMcpPluginEditor.CloudServerUrl, "Unity Editor");
+            });
         }
 
         #endregion
