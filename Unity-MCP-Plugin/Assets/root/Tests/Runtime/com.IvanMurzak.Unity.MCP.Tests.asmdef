@@ -2,12 +2,8 @@
     "name": "com.IvanMurzak.Unity.MCP.Tests",
     "rootNamespace": "",
     "references": [
-        "UnityEngine.TestRunner",
         "com.IvanMurzak.Unity.MCP.Runtime",
         "com.IvanMurzak.Unity.MCP.TestFiles"
-    ],
-    "optionalUnityReferences": [
-        "TestAssemblies"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
