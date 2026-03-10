@@ -541,6 +541,25 @@ Las pruebas cubren tres modos en tres versiones de Unity (2022, 2023, 6000) y do
 | **PlayMode** | Plugin en runtime, conexión SignalR, dispatch al hilo principal | `Assets/root/Tests~/Runtime` |
 | **Standalone** | Build de player completo con plugin embebido | Requiere un paso de build de player |
 
+## Incluir tests de paquetes en el Test Runner (testables)
+
+En proyectos que usan varios paquetes UPM, puedes controlar qué paquetes muestran sus tests en el Test Runner mediante el campo **`testables`** del [manifest del proyecto](https://docs.unity3d.com/Manual/upm-manifestPrj.html). Solo los paquetes listados en `testables` compilan y muestran sus tests. El paquete de este repo usa la carpeta oculta `Tests~`, por lo que no añade tests al consumirse vía OpenUPM; usa `testables` para otros paquetes que incluyan tests.
+
+**Ejemplo** — en `Packages/manifest.json` (la referencia por Git evita actualizar la versión en cada release):
+
+```json
+{
+  "dependencies": {
+    "com.ivanmurzak.unity.mcp": "https://github.com/IvanMurzak/Unity-MCP.git?path=Unity-MCP-Plugin/Assets/root"
+  },
+  "testables": [
+    "com.ivanmurzak.unity.mcp"
+  ]
+}
+```
+
+Consulta [Unity: Manifest del proyecto (testables)](https://docs.unity3d.com/Manual/upm-manifestPrj.html#testables) para la documentación completa.
+
 ## Interpretación de resultados de CI
 
 Cada trabajo de CI se llama `test-unity-{version}-{mode}` (por ej., `test-unity-6000-3-1f1-editmode`). Cuando falla un trabajo:

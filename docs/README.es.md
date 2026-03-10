@@ -198,6 +198,25 @@ Instala extensiones cuando necesites más herramientas o [crea las tuyas propias
 | [Guía de Desarrollo](docs/dev/Development.md) | Arquitectura, estilo de código, CI/CD — para colaboradores |
 | [Wiki](https://github.com/IvanMurzak/Unity-MCP/wiki) | Primeros pasos, tutoriales, referencia de API, preguntas frecuentes |
 
+### Incluir tests de paquetes en el Test Runner (testables)
+
+El [manifest del proyecto](https://docs.unity3d.com/Manual/upm-manifestPrj.html) de Unity admite un array **`testables`** para controlar qué paquetes instalados aportan tests al **Test Runner** (`Window > General > Test Runner`). Solo los paquetes listados en `testables` compilan y muestran sus tests. Este paquete guarda sus tests en la carpeta oculta `Tests~`, así que no añade tests a tu proyecto; usa `testables` cuando instales otros paquetes que incluyan tests y quieras incluirlos.
+
+**Ejemplo** — en el `Packages/manifest.json` de tu proyecto, añade un array `testables` con los nombres de los paquetes cuyos tests quieras ejecutar. Puedes instalar el paquete desde Git para mantener la versión al día:
+
+```json
+{
+  "dependencies": {
+    "com.ivanmurzak.unity.mcp": "https://github.com/IvanMurzak/Unity-MCP.git?path=Unity-MCP-Plugin/Assets/root"
+  },
+  "testables": [
+    "com.ivanmurzak.unity.mcp"
+  ]
+}
+```
+
+Consulta [Unity: Manifest del proyecto (testables)](https://docs.unity3d.com/Manual/upm-manifestPrj.html#testables) para más detalles.
+
 ![Desarrollador de Juegos con IA — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 # Instalación
