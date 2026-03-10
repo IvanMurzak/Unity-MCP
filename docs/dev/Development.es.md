@@ -545,12 +545,12 @@ Las pruebas cubren tres modos en tres versiones de Unity (2022, 2023, 6000) y do
 
 En proyectos que usan varios paquetes UPM, puedes controlar qué paquetes muestran sus tests en el Test Runner mediante el campo **`testables`** del [manifest del proyecto](https://docs.unity3d.com/Manual/upm-manifestPrj.html). Solo los paquetes listados en `testables` compilan y muestran sus tests. Añade este paquete (u otro) a `testables` en el manifest del proyecto para incluir sus tests.
 
-**Ejemplo** — en `Packages/manifest.json` (la referencia por Git evita actualizar la versión en cada release):
+**Ejemplo** — en `Packages/manifest.json`. Sustituye `X.X.X` por la versión de [OpenUPM](https://openupm.com/packages/com.ivanmurzak.unity.mcp/):
 
 ```json
 {
   "dependencies": {
-    "com.ivanmurzak.unity.mcp": "https://github.com/IvanMurzak/Unity-MCP.git?path=Unity-MCP-Plugin/Assets/root"
+    "com.ivanmurzak.unity.mcp": "X.X.X"
   },
   "testables": [
     "com.ivanmurzak.unity.mcp"
