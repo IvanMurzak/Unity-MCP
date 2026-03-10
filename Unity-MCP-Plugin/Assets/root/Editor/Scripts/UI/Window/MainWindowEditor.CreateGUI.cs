@@ -400,9 +400,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private void SetupConnectionModeToggle(VisualElement root)
         {
-            var toggleLocal = root.Q<Toggle>("toggleModeLocal");
+            var toggleCustom = root.Q<Toggle>("toggleModeCustom");
             var toggleCloud = root.Q<Toggle>("toggleModeCloud");
-            if (toggleLocal == null || toggleCloud == null) return;
+            if (toggleCustom == null || toggleCloud == null) return;
 
             var inputServerUrl = root.Q<TextField>("InputServerURL");
             var infoFoldout = root.Q<Foldout>();
@@ -411,26 +411,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             void UpdateModeVisibility(ConnectionMode mode)
             {
-                var isLocal = mode == ConnectionMode.Local;
-                if (inputServerUrl != null) inputServerUrl.style.display = isLocal ? DisplayStyle.Flex : DisplayStyle.None;
-                if (infoFoldout != null) infoFoldout.style.display = isLocal ? DisplayStyle.Flex : DisplayStyle.None;
-                if (mcpServerPoint != null) mcpServerPoint.style.display = isLocal ? DisplayStyle.Flex : DisplayStyle.None;
-                if (cloudAuthSection != null) cloudAuthSection.style.display = isLocal ? DisplayStyle.None : DisplayStyle.Flex;
+                var isCustom = mode == ConnectionMode.Custom;
+                if (inputServerUrl != null) inputServerUrl.style.display = isCustom ? DisplayStyle.Flex : DisplayStyle.None;
+                if (infoFoldout != null) infoFoldout.style.display = isCustom ? DisplayStyle.Flex : DisplayStyle.None;
+                if (mcpServerPoint != null) mcpServerPoint.style.display = isCustom ? DisplayStyle.Flex : DisplayStyle.None;
+                if (cloudAuthSection != null) cloudAuthSection.style.display = isCustom ? DisplayStyle.None : DisplayStyle.Flex;
             }
 
             var currentMode = UnityMcpPluginEditor.ConnectionMode;
-            toggleLocal.SetValueWithoutNotify(currentMode == ConnectionMode.Local);
+            toggleCustom.SetValueWithoutNotify(currentMode == ConnectionMode.Custom);
             toggleCloud.SetValueWithoutNotify(currentMode == ConnectionMode.Cloud);
             UpdateModeVisibility(currentMode);
 
-            toggleLocal.RegisterValueChangedCallback(evt =>
+            toggleCustom.RegisterValueChangedCallback(evt =>
             {
                 if (evt.newValue)
                 {
-                    UnityMcpPluginEditor.ConnectionMode = ConnectionMode.Local;
+                    UnityMcpPluginEditor.ConnectionMode = ConnectionMode.Custom;
                     UnityMcpPluginEditor.Instance.Save();
                     toggleCloud.SetValueWithoutNotify(false);
-                    UpdateModeVisibility(ConnectionMode.Local);
+                    UpdateModeVisibility(ConnectionMode.Custom);
 
                     // Invalidate cached AI agent configs so they pick up the new Host/Token
                     InvalidateAndReloadAgentUI();
@@ -441,7 +441,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 }
                 else if (!toggleCloud.value)
                 {
-                    toggleLocal.SetValueWithoutNotify(true);
+                    toggleCustom.SetValueWithoutNotify(true);
                 }
             });
 
@@ -451,7 +451,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 {
                     UnityMcpPluginEditor.ConnectionMode = ConnectionMode.Cloud;
                     UnityMcpPluginEditor.Instance.Save();
-                    toggleLocal.SetValueWithoutNotify(false);
+                    toggleCustom.SetValueWithoutNotify(false);
                     UpdateModeVisibility(ConnectionMode.Cloud);
 
                     // Invalidate cached AI agent configs so they pick up the new Host/Token
@@ -464,7 +464,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     // Reconnect to cloud server
                     ReconnectAfterModeSwitch();
                 }
-                else if (!toggleLocal.value)
+                else if (!toggleCustom.value)
                 {
                     toggleCloud.SetValueWithoutNotify(true);
                 }
@@ -491,6 +491,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
                 // Invalidate cached AI agent configs so they pick up the new cloud URL
                 InvalidateAndReloadAgentUI();
+
+                // Reconnect to the new cloud URL if currently in Cloud mode
+                if (UnityMcpPluginEditor.ConnectionMode == ConnectionMode.Cloud)
+                    ReconnectAfterModeSwitch();
             });
 
             btnAuthorize.RegisterCallback<ClickEvent>(async _ =>

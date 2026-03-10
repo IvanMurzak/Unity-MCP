@@ -14,13 +14,11 @@
             </ui:Box>
             <ui:VisualElement class="divider" />
             <!-- Connection Section ============================== -->
-            <ui:Label text="Connection" class="header" />
-            <!-- Connection Mode Toggle -->
-            <ui:VisualElement style="flex-direction: row; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-                <ui:Label text="Mode" class="section-desc" style="margin-bottom: 0;" />
-                <ui:VisualElement style="flex-direction: row;">
-                    <ui:Toggle name="toggleModeLocal" label="Local" class="toggle-text-button" />
-                    <ui:Toggle name="toggleModeCloud" label="Cloud" class="toggle-text-button" />
+            <ui:VisualElement class="row" style="margin-top: 0; align-items: center;">
+                <ui:Label text="Connection" class="header" />
+                <ui:VisualElement style="flex-direction: row; flex-grow: 1; justify-content: flex-end;">
+                    <ui:Toggle name="toggleModeCustom" label="Custom" tooltip="Connect to your own MCP server. The plugin starts a local MCP server automatically and manages its lifecycle. Use this when you want full control over the server configuration, port, transport, and authorization settings." class="toggle-text-button" />
+                    <ui:Toggle name="toggleModeCloud" label="Cloud" tooltip="Connect to a remote MCP server hosted in the cloud (e.g. ai-game.dev). No local server is started — the plugin connects directly to the specified Cloud URL. Requires authorization via device code flow." class="toggle-text-button" />
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:TextField picking-mode="Ignore" label="Server URL" value="http://localhost:8080" name="InputServerURL" tooltip="Connection URL to an MCP server. Default value: http://localhost:8080" class="content-item" />
