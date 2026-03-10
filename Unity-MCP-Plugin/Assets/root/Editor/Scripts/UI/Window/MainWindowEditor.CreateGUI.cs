@@ -473,7 +473,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 SaveChanges($"[AI Game Developer] Cloud URL Changed: {newValue}");
             });
 
-            btnAuthorize.RegisterCallback<ClickEvent>(_ =>
+            btnAuthorize.RegisterCallback<ClickEvent>(async _ =>
             {
                 // If currently running, cancel
                 if (_deviceAuthFlow != null && (_deviceAuthFlow.State == DeviceAuthFlowState.Initiating
@@ -520,7 +520,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     };
                 };
 
-                _ = _deviceAuthFlow.StartAsync(UnityMcpPluginEditor.CloudServerUrl, "Unity Editor");
+                await _deviceAuthFlow.StartAsync(UnityMcpPluginEditor.CloudServerUrl, "Unity Editor");
             });
         }
 

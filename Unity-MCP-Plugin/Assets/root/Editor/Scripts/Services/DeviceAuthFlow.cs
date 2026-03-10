@@ -14,6 +14,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using UnityEngine;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Services
 {
@@ -31,7 +32,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
 
     public class DeviceAuthFlow
     {
-        private static readonly ILogger _logger = Unity.MCP.Utils.UnityLoggerFactory.LoggerFactory.CreateLogger<DeviceAuthFlow>();
+        private static readonly ILogger _logger = MCP.Utils.UnityLoggerFactory.LoggerFactory.CreateLogger<DeviceAuthFlow>();
 
         private CancellationTokenSource? _cts;
 
