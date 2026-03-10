@@ -537,8 +537,8 @@ Las pruebas cubren tres modos en tres versiones de Unity (2022, 2023, 6000) y do
 
 | Modo | Qué prueba | Ubicación |
 | ---- | ------------- | -------- |
-| **EditMode** | Lógica de tools, serialización, utilidades del editor — sin necesidad de modo Play | `Assets/root/Tests/Editor` |
-| **PlayMode** | Plugin en runtime, conexión SignalR, dispatch al hilo principal | `Assets/root/Tests/Runtime` |
+| **EditMode** | Lógica de tools, serialización, utilidades del editor — sin necesidad de modo Play | `Assets/root/Tests~/Editor` |
+| **PlayMode** | Plugin en runtime, conexión SignalR, dispatch al hilo principal | `Assets/root/Tests~/Runtime` |
 | **Standalone** | Build de player completo con plugin embebido | Requiere un paso de build de player |
 
 ## Interpretación de resultados de CI

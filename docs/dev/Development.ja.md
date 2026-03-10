@@ -536,8 +536,8 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 
 | モード | テスト対象 | 場所 |
 | ---- | ------------- | -------- |
-| **EditMode** | ツールロジック、シリアライゼーション、エディターユーティリティ — Play モード不要 | `Assets/root/Tests/Editor` |
-| **PlayMode** | ランタイムプラグイン、SignalR 接続、メインスレッドディスパッチ | `Assets/root/Tests/Runtime` |
+| **EditMode** | ツールロジック、シリアライゼーション、エディターユーティリティ — Play モード不要 | `Assets/root/Tests~/Editor` |
+| **PlayMode** | ランタイムプラグイン、SignalR 接続、メインスレッドディスパッチ | `Assets/root/Tests~/Runtime` |
 | **Standalone** | 組み込みプラグインを含むフルプレイヤービルド | プレイヤービルドステップが必要 |
 
 ## CI 結果の解釈

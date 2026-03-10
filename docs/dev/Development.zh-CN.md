@@ -537,8 +537,8 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 
 | 模式 | 测试内容 | 位置 |
 | ---- | ------------- | -------- |
-| **EditMode** | 工具逻辑、序列化、编辑器工具——无需播放模式 | `Assets/root/Tests/Editor` |
-| **PlayMode** | 运行时插件、SignalR 连接、主线程调度 | `Assets/root/Tests/Runtime` |
+| **EditMode** | 工具逻辑、序列化、编辑器工具——无需播放模式 | `Assets/root/Tests~/Editor` |
+| **PlayMode** | 运行时插件、SignalR 连接、主线程调度 | `Assets/root/Tests~/Runtime` |
 | **Standalone** | 内嵌插件的完整播放器构建 | 需要播放器构建步骤 |
 
 ## 解读 CI 结果

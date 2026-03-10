@@ -537,9 +537,28 @@ Tests cover three modes across three Unity versions (2022, 2023, 6000) and two O
 
 | Mode | What it tests | Location |
 | ---- | ------------- | -------- |
-| **EditMode** | Tool logic, serialization, editor utilities — no Play mode needed | `Assets/root/Tests/Editor` |
-| **PlayMode** | Runtime plugin, SignalR connection, main thread dispatch | `Assets/root/Tests/Runtime` |
+| **EditMode** | Tool logic, serialization, editor utilities — no Play mode needed | `Assets/root/Tests~/Editor` |
+| **PlayMode** | Runtime plugin, SignalR connection, main thread dispatch | `Assets/root/Tests~/Runtime` |
 | **Standalone** | Full player build with embedded plugin | Requires a player build step |
+
+## Including package tests (testables)
+
+In projects that use multiple UPM packages, you can control which packages’ tests appear in the Test Runner via the [project manifest](https://docs.unity3d.com/Manual/upm-manifestPrj.html) **`testables`** field. Only packages listed in `testables` have their tests compiled and shown. This repo’s package uses a hidden `Tests~` folder, so it does not add tests when consumed via OpenUPM; use `testables` for other packages that ship tests.
+
+**Example** — in `Packages/manifest.json`:
+
+```json
+{
+  "dependencies": {
+    "com.example.another-package": "1.0.0"
+  },
+  "testables": [
+    "com.example.another-package"
+  ]
+}
+```
+
+See [Unity: Project manifest (testables)](https://docs.unity3d.com/Manual/upm-manifestPrj.html#testables) for full documentation.
 
 ## Interpreting CI results
 

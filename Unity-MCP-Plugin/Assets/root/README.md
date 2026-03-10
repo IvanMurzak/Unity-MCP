@@ -198,6 +198,28 @@ Install extensions when need more tools or [create your own](#add-custom-mcp-too
 | [Development Guide](docs/dev/Development.md) | Architecture, code style, CI/CD — for contributors |
 | [Wiki](https://github.com/IvanMurzak/Unity-MCP/wiki) | Getting started, tutorials, API reference, FAQ |
 
+Package tests live under `Tests~` and are intended for development/CI only; Unity does not load them in consumer projects. If you embed the package, you can ignore or remove that folder.
+
+### Including package tests in the Test Runner (testables)
+
+Unity’s [project manifest](https://docs.unity3d.com/Manual/upm-manifestPrj.html) supports a **`testables`** array to control which installed packages contribute tests to the **Test Runner** (`Window > General > Test Runner`). Only packages listed in `testables` will have their tests compiled and shown. This package keeps its tests in a hidden `Tests~` folder, so it does not add tests to your project; use `testables` when you install other packages that ship tests and want to include them.
+
+**Example** — in your project’s `Packages/manifest.json`, add a `testables` array with the package names whose tests you want to run:
+
+```json
+{
+  "dependencies": {
+    "com.unity.inputsystem": "1.7.0",
+    "com.ivanmurzak.unity.mcp": "0.51.6"
+  },
+  "testables": [
+    "com.unity.inputsystem"
+  ]
+}
+```
+
+See [Unity: Project manifest (testables)](https://docs.unity3d.com/Manual/upm-manifestPrj.html#testables) for details.
+
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 # Installation

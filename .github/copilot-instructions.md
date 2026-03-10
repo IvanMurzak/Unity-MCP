@@ -10,7 +10,7 @@
 - **Unity-MCP-Plugin**: Main Unity package.
     - Core logic: [Assets/root/Runtime](Unity-MCP-Plugin/Assets/root/Runtime).
     - Editor logic: `Assets/root/Editor`.
-    - Tests: `Assets/root/Tests`.
+    - Tests: `Assets/root/Tests~`.
 - **Unity-MCP-Server**: ASP.NET Core bridging LLMs and Unity.
     - Entry point: [Program.cs](Unity-MCP-Server/src/Program.cs) (or similar in project root/src).
     - SignalR Hub: `RemoteApp` (referenced in CLAUDE.md).
@@ -21,7 +21,7 @@
 - **Plugin**:
     - Auto-compiles in Unity.
     - Run tests: [commands/run-unity-tests.ps1](commands/run-unity-tests.ps1).
-    - Editor Tests: `Assets/root/Tests/Editor`.
+    - Editor Tests: `Assets/root/Tests~/Editor`.
 - **Server**:
     - Build: `.\Unity-MCP-Server\build-all.ps1`.
     - Run: `dotnet run --project Unity-MCP-Server/com.IvanMurzak.Unity.MCP.Server.csproj`.
