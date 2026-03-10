@@ -92,9 +92,9 @@ namespace com.IvanMurzak.Unity.MCP
                     config = new UnityConnectionConfig();
                     wasCreated = true;
                 }
-                if (string.IsNullOrEmpty(config.Token))
+                if (string.IsNullOrEmpty(config.LocalToken))
                 {
-                    config.Token = GenerateToken();
+                    config.LocalToken = GenerateToken();
                     wasCreated = true;
                 }
 

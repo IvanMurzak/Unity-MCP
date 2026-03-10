@@ -70,5 +70,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             UnityMcpPluginEditor.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
             UnityMcpPluginEditor.ConnectIfNeeded();
         }
+
+        /// <summary>
+        /// Disconnects, disposes the current MCP plugin, rebuilds it (picking up the new Host/Token
+        /// from the changed ConnectionMode), and reconnects if KeepConnected is enabled.
+        /// Called when switching between Local and Cloud modes.
+        /// </summary>
+        private static void ReconnectAfterModeSwitch()
+        {
+            if (UnityMcpPluginEditor.Instance.HasMcpPluginInstance)
+            {
+                UnityMcpPluginEditor.Instance.DisposeMcpPluginInstance();
+            }
+            UnityBuildAndConnect();
+        }
     }
 }

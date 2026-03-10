@@ -431,6 +431,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     UnityMcpPluginEditor.Instance.Save();
                     toggleCloud.SetValueWithoutNotify(false);
                     UpdateModeVisibility(ConnectionMode.Local);
+
+                    // Invalidate cached AI agent configs so they pick up the new Host/Token
+                    InvalidateAndReloadAgentUI();
+
+                    // Start local server if configured and reconnect to it
+                    McpServerManager.StartServerIfNeeded();
+                    ReconnectAfterModeSwitch();
                 }
                 else if (!toggleCloud.value)
                 {
@@ -446,6 +453,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     UnityMcpPluginEditor.Instance.Save();
                     toggleLocal.SetValueWithoutNotify(false);
                     UpdateModeVisibility(ConnectionMode.Cloud);
+
+                    // Invalidate cached AI agent configs so they pick up the new Host/Token
+                    InvalidateAndReloadAgentUI();
+
+                    // Stop local server — not needed in Cloud mode
+                    if (McpServerManager.IsRunning)
+                        McpServerManager.StopServer();
+
+                    // Reconnect to cloud server
+                    ReconnectAfterModeSwitch();
                 }
                 else if (!toggleLocal.value)
                 {
@@ -471,6 +488,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 if (UnityMcpPluginEditor.CloudServerUrl == newValue) return;
                 UnityMcpPluginEditor.CloudServerUrl = newValue;
                 SaveChanges($"[AI Game Developer] Cloud URL Changed: {newValue}");
+
+                // Invalidate cached AI agent configs so they pick up the new cloud URL
+                InvalidateAndReloadAgentUI();
             });
 
             btnAuthorize.RegisterCallback<ClickEvent>(async _ =>
