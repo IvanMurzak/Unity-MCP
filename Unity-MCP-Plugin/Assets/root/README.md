@@ -209,11 +209,10 @@ Unity’s [project manifest](https://docs.unity3d.com/Manual/upm-manifestPrj.htm
 ```json
 {
   "dependencies": {
-    "com.unity.inputsystem": "1.7.0",
-    "com.ivanmurzak.unity.mcp": "0.51.6"
+    "com.ivanmurzak.unity.mcp": "https://github.com/IvanMurzak/Unity-MCP.git?path=Unity-MCP-Plugin/Assets/root"
   },
   "testables": [
-    "com.unity.inputsystem"
+    "com.ivanmurzak.unity.mcp"
   ]
 }
 ```

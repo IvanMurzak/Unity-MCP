@@ -550,10 +550,10 @@ In projects that use multiple UPM packages, you can control which packages’ te
 ```json
 {
   "dependencies": {
-    "com.example.another-package": "1.0.0"
+    "com.ivanmurzak.unity.mcp": "https://github.com/IvanMurzak/Unity-MCP.git?path=Unity-MCP-Plugin/Assets/root"
   },
   "testables": [
-    "com.example.another-package"
+    "com.ivanmurzak.unity.mcp"
   ]
 }
 ```
