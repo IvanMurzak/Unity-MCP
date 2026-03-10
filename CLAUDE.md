@@ -48,8 +48,8 @@ dotnet run --project com.IvanMurzak.Unity.MCP.Server.csproj -- --client-transpor
 ### MCP Plugin (Unity)
 - Open the `Unity-MCP-Plugin` folder in Unity Editor
 - Tests run via `Window > General > Test Runner`
-  - EditMode tests: `Assets/root/Tests~/Editor`
-  - PlayMode tests: `Assets/root/Tests~/Runtime`
+  - EditMode tests: `Assets/root/Tests/Editor`
+  - PlayMode tests: `Assets/root/Tests/Runtime`
 - No standalone build command — Unity compiles C# automatically
 
 ### MCP Inspector (debugging)

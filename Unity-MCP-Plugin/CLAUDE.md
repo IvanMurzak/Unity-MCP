@@ -21,8 +21,8 @@ Unity-MCP is a bridge between Large Language Models (LLMs) and Unity Editor that
 
 - **Open Unity Project**: Open the `Unity-MCP-Plugin` folder in Unity Editor
 - **Run Tests**: Use Unity Test Runner window (`Window > General > Test Runner`)
-  - EditMode tests: `Assets/root/Tests~/Editor` (76 files)
-  - PlayMode tests: `Assets/root/Tests~/Runtime` (1 file)
+  - EditMode tests: `Assets/root/Tests/Editor` (76 files)
+  - PlayMode tests: `Assets/root/Tests/Runtime` (1 file)
 - **Build Plugin**: Unity handles compilation automatically when scripts change
 
 ### MCP Development
@@ -73,7 +73,7 @@ Assets/root/
 ├── Plugins/                    # Bundled DLLs
 │   ├── com.IvanMurzak.McpPlugin/   # MCP protocol implementation
 │   └── com.IvanMurzak.ReflectorNet/ # Advanced reflection system
-└── Tests~/                     # 77 test files (hidden from consumers; for dev/CI only)
+└── Tests/                      # 77 test files
     ├── Editor/
     └── Runtime/
 ```

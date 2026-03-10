@@ -200,14 +200,14 @@ Install extensions when need more tools or [create your own](#add-custom-mcp-too
 
 ### Including package tests in the Test Runner (testables)
 
-Unity’s [project manifest](https://docs.unity3d.com/Manual/upm-manifestPrj.html) supports a **`testables`** array to control which installed packages contribute tests to the **Test Runner** (`Window > General > Test Runner`). Only packages listed in `testables` will have their tests compiled and shown. This package keeps its tests in a hidden `Tests~` folder, so it does not add tests to your project; use `testables` when you install other packages that ship tests and want to include them.
+Unity’s [project manifest](https://docs.unity3d.com/Manual/upm-manifestPrj.html) supports a **`testables`** array to control which installed packages contribute tests to the **Test Runner** (`Window > General > Test Runner`). Only packages listed in `testables` have their tests compiled and shown. Add this package (or any other) to `testables` in your project manifest to include its tests.
 
 **Example** — in your project’s `Packages/manifest.json`, add a `testables` array with the package names whose tests you want to run:
 
 ```json
 {
   "dependencies": {
-    "com.ivanmurzak.unity.mcp": "https://github.com/IvanMurzak/Unity-MCP.git?path=Unity-MCP-Plugin/Assets/root"
+    "com.ivanmurzak.unity.mcp": "X.X.X"
   },
   "testables": [
     "com.ivanmurzak.unity.mcp"

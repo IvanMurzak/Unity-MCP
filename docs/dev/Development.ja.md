@@ -536,20 +536,20 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 
 | モード | テスト対象 | 場所 |
 | ---- | ------------- | -------- |
-| **EditMode** | ツールロジック、シリアライゼーション、エディターユーティリティ — Play モード不要 | `Assets/root/Tests~/Editor` |
-| **PlayMode** | ランタイムプラグイン、SignalR 接続、メインスレッドディスパッチ | `Assets/root/Tests~/Runtime` |
+| **EditMode** | ツールロジック、シリアライゼーション、エディターユーティリティ — Play モード不要 | `Assets/root/Tests/Editor` |
+| **PlayMode** | ランタイムプラグイン、SignalR 接続、メインスレッドディスパッチ | `Assets/root/Tests/Runtime` |
 | **Standalone** | 組み込みプラグインを含むフルプレイヤービルド | プレイヤービルドステップが必要 |
 
 ## パッケージテストを Test Runner に含める（testables）
 
-複数の UPM パッケージを使うプロジェクトでは、[プロジェクトマニフェスト](https://docs.unity3d.com/Manual/upm-manifestPrj.html)の **`testables`** フィールドで、どのパッケージのテストを Test Runner に表示するか制御できます。`testables` に列挙したパッケージのみ、テストがコンパイル・表示されます。このリポジトリのパッケージは隠しフォルダ `Tests~` を使っているため、OpenUPM で導入した場合はテストは追加されません。テストを同梱する他のパッケージには `testables` を使用してください。
+複数の UPM パッケージを使うプロジェクトでは、[プロジェクトマニフェスト](https://docs.unity3d.com/Manual/upm-manifestPrj.html)の **`testables`** フィールドで、どのパッケージのテストを Test Runner に表示するか制御できます。`testables` に列挙したパッケージのみ、テストがコンパイル・表示されます。プロジェクトマニフェストの `testables` に本パッケージ（または他のパッケージ）を追加すると、そのテストが含まれます。
 
 **例** — `Packages/manifest.json` で（Git 参照にするとリリースごとのバージョン更新が不要です）:
 
 ```json
 {
   "dependencies": {
-    "com.ivanmurzak.unity.mcp": "https://github.com/IvanMurzak/Unity-MCP.git?path=Unity-MCP-Plugin/Assets/root"
+    "com.ivanmurzak.unity.mcp": "X.X.X"
   },
   "testables": [
     "com.ivanmurzak.unity.mcp"

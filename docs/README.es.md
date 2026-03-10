@@ -200,7 +200,7 @@ Instala extensiones cuando necesites más herramientas o [crea las tuyas propias
 
 ### Incluir tests de paquetes en el Test Runner (testables)
 
-El [manifest del proyecto](https://docs.unity3d.com/Manual/upm-manifestPrj.html) de Unity admite un array **`testables`** para controlar qué paquetes instalados aportan tests al **Test Runner** (`Window > General > Test Runner`). Solo los paquetes listados en `testables` compilan y muestran sus tests. Este paquete guarda sus tests en la carpeta oculta `Tests~`, así que no añade tests a tu proyecto; usa `testables` cuando instales otros paquetes que incluyan tests y quieras incluirlos.
+El [manifest del proyecto](https://docs.unity3d.com/Manual/upm-manifestPrj.html) de Unity admite un array **`testables`** para controlar qué paquetes instalados aportan tests al **Test Runner** (`Window > General > Test Runner`). Solo los paquetes listados en `testables` compilan y muestran sus tests. Añade este paquete (u otro) a `testables` en el manifest del proyecto para incluir sus tests.
 
 **Ejemplo** — en el `Packages/manifest.json` de tu proyecto, añade un array `testables` con los nombres de los paquetes cuyos tests quieras ejecutar. Puedes instalar el paquete desde Git para mantener la versión al día:
 

@@ -537,20 +537,20 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 
 | 模式 | 测试内容 | 位置 |
 | ---- | ------------- | -------- |
-| **EditMode** | 工具逻辑、序列化、编辑器工具——无需播放模式 | `Assets/root/Tests~/Editor` |
-| **PlayMode** | 运行时插件、SignalR 连接、主线程调度 | `Assets/root/Tests~/Runtime` |
+| **EditMode** | 工具逻辑、序列化、编辑器工具——无需播放模式 | `Assets/root/Tests/Editor` |
+| **PlayMode** | 运行时插件、SignalR 连接、主线程调度 | `Assets/root/Tests/Runtime` |
 | **Standalone** | 内嵌插件的完整播放器构建 | 需要播放器构建步骤 |
 
 ## 在 Test Runner 中包含包测试（testables）
 
-在使用多个 UPM 包的项目中，可通过[项目清单](https://docs.unity3d.com/Manual/upm-manifestPrj.html)的 **`testables`** 字段控制哪些包的测试出现在 Test Runner 中。只有列在 `testables` 中的包才会编译并显示其测试。本仓库的包使用隐藏的 `Tests~` 文件夹，因此通过 OpenUPM 安装时不会添加测试；请对其他提供测试的包使用 `testables`。
+在使用多个 UPM 包的项目中，可通过[项目清单](https://docs.unity3d.com/Manual/upm-manifestPrj.html)的 **`testables`** 字段控制哪些包的测试出现在 Test Runner 中。只有列在 `testables` 中的包才会编译并显示其测试。在项目清单的 `testables` 中加入本包（或任意其他包）即可包含其测试。
 
 **示例** — 在 `Packages/manifest.json` 中（使用 Git 引用可避免每次发布都改版本）：
 
 ```json
 {
   "dependencies": {
-    "com.ivanmurzak.unity.mcp": "https://github.com/IvanMurzak/Unity-MCP.git?path=Unity-MCP-Plugin/Assets/root"
+    "com.ivanmurzak.unity.mcp": "X.X.X"
   },
   "testables": [
     "com.ivanmurzak.unity.mcp"
