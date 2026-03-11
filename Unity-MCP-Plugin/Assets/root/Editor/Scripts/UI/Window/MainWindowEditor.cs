@@ -82,11 +82,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     ? "Cloud token is required. Press the Authorize button to authenticate."
                     : "";
             }
-            if (_btnConnect != null && needsAuth)
+            if (_btnConnect != null)
             {
-                _btnConnect.text = ServerButtonText_Connect;
-                _btnConnect.EnableInClassList("btn-primary", false);
-                _btnConnect.EnableInClassList("btn-secondary", true);
+                if (needsAuth)
+                {
+                    _btnConnect.text = ServerButtonText_Connect;
+                    _btnConnect.EnableInClassList("btn-primary", false);
+                    _btnConnect.EnableInClassList("btn-secondary", true);
+                }
+                else if (isCloud && hasToken
+                    && _btnConnect.text == ServerButtonText_Connect)
+                {
+                    _btnConnect.EnableInClassList("btn-primary", true);
+                    _btnConnect.EnableInClassList("btn-secondary", false);
+                }
             }
             if (_btnAuthorize != null)
             {
