@@ -29,7 +29,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         void ConfigureAgents(VisualElement root)
         {
             // Get the dropdown element
-            aiAgentDropdown = root.Query<DropdownField>("aiAgentDropdown").First();
+            aiAgentDropdown = root.Q<DropdownField>("aiAgentDropdown");
             if (aiAgentDropdown == null)
             {
                 Debug.LogError("aiAgentDropdown not found in UXML. Please ensure the dropdown element exists.");
@@ -37,7 +37,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             }
 
             // Get the container where agent panels will be added
-            aiAgentContainer = root.Query<VisualElement>("ConfigureAgentsContainer").First();
+            aiAgentContainer = root.Q<VisualElement>("ConfigureAgentsContainer");
             if (aiAgentContainer == null)
             {
                 Debug.LogError("ConfigureAgentsContainer not found in UXML. Please ensure the container element exists.");

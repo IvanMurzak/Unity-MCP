@@ -43,12 +43,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             btnStartStop.RegisterCallback<ClickEvent>(evt => HandleServerButton(btnStartStop, statusLabel));
 
             // MCP server authorization configuration UI elements
-            var labelAuthorizationToken = root.Query<Label>("labelAuthorizationToken").First();
-            var toggleAuthorizationNone = root.Query<Toggle>("toggleAuthorizationNone").First();
-            var toggleAuthorizationRequired = root.Query<Toggle>("toggleAuthorizationRequired").First();
-            var inputAuthorizationToken = root.Query<TextField>("inputAuthorizationToken").First();
-            var tokenSection = root.Query<VisualElement>("tokenSection").First();
-            var btnGenerateToken = root.Query<Button>("btnGenerateToken").First();
+            var labelAuthorizationToken = root.Q<Label>("labelAuthorizationToken");
+            var toggleAuthorizationNone = root.Q<Toggle>("toggleAuthorizationNone");
+            var toggleAuthorizationRequired = root.Q<Toggle>("toggleAuthorizationRequired");
+            var inputAuthorizationToken = root.Q<TextField>("inputAuthorizationToken");
+            var tokenSection = root.Q<VisualElement>("tokenSection");
+            var btnGenerateToken = root.Q<Button>("btnGenerateToken");
 
             if (toggleAuthorizationNone == null || toggleAuthorizationRequired == null
                 || inputAuthorizationToken == null || tokenSection == null || btnGenerateToken == null)
