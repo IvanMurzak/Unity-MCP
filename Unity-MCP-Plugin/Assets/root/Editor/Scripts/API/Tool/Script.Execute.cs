@@ -156,7 +156,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                             return null;
                         }
                     })
-                    .Where(r => r != null)
                     .OfType<MetadataReference>()
                     .ToArray(),
                 options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
