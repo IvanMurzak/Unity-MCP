@@ -44,15 +44,15 @@ runs:
       env:
         UNITY_VERSION: ${{ inputs.unityVersion }}
       run: |
-        mkdir -p unity-license
+        mkdir -p .unity-license
 
         docker run --rm \
-          -v "$(pwd)/unity-license:/output" \
+          -v "$(pwd)/.unity-license:/output" \
           -w /output \
           unityci/editor:ubuntu-${UNITY_VERSION}-base-3 \
           unity-editor -batchmode -createManualActivationFile -logFile /dev/stdout || true
 
-        ALF_FILE=$(find unity-license -name "*.alf" | head -1)
+        ALF_FILE=$(find .unity-license -name "*.alf" | head -1)
         if [ -z "$ALF_FILE" ]; then
           echo "Failed to generate .alf file"
           exit 1
