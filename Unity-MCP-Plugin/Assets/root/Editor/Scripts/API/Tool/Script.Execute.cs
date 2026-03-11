@@ -136,18 +136,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         try { return MetadataReference.CreateFromFile(a.Location); }
                         catch (DirectoryNotFoundException ex)
                         {
-                            logger?.LogWarning("Directory not found for assembly '{AssemblyName}' at '{Location}': {Error}",
+                            logger?.LogWarning(ex, "Directory not found for assembly '{AssemblyName}' at '{Location}': {Error}",
+                                a.GetName().Name, a.Location, ex.Message);
+                            return null;
+                        }
+                        catch (FileNotFoundException ex)
+                        {
+                            logger?.LogWarning(ex, "File not found for assembly '{AssemblyName}' at '{Location}': {Error}",
                                 a.GetName().Name, a.Location, ex.Message);
                             return null;
                         }
                         catch (Exception ex)
                         {
-                            logger?.LogWarning("Failed to load metadata reference for assembly '{AssemblyName}' at '{Location}': {Error}",
+                            logger?.LogWarning(ex, "Failed to load metadata reference for assembly '{AssemblyName}' at '{Location}': {Error}",
                                 a.GetName().Name, a.Location, ex.Message);
                             return null;
                         }
                     })
                     .Where(r => r != null)
+                    .OfType<MetadataReference>()
                     .ToArray(),
                 options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
             );
