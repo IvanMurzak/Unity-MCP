@@ -51,6 +51,25 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v5
 
+      - name: Activate Unity license
+        id: activate
+        uses: ./.github/actions/unity/activate-license
+        with:
+          unityVersion: "2022.3.62f3"
+          unity-email: ${{ secrets.UNITY_EMAIL }}
+          unity-password: ${{ secrets.UNITY_PASSWORD }}
+
+      - name: Decode Unity license
+        run: |
+          echo "$LICENSE_B64" | base64 -d > /tmp/unity_license.ulf
+          DELIM="UNITY_LIC_EOF_$(openssl rand -hex 16)"
+          echo "UNITY_LICENSE<<$DELIM" >> "$GITHUB_ENV"
+          cat /tmp/unity_license.ulf >> "$GITHUB_ENV"
+          printf '\n%s\n' "$DELIM" >> "$GITHUB_ENV"
+        env:
+          LICENSE_B64: ${{ steps.activate.outputs.license }}
+        shell: bash
+
       - name: Cache Unity Library
         uses: actions/cache@v4
         with:
@@ -60,7 +79,6 @@ jobs:
       - name: Test Unity Installer (EditMode)
         uses: game-ci/unity-test-runner@v4
         env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
@@ -87,7 +105,6 @@ jobs:
       - name: Export Unity Package
         uses: game-ci/unity-builder@v4
         env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
