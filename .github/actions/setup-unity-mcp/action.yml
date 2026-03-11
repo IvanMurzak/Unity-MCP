@@ -82,14 +82,21 @@ runs:
     # --------------------------------------------------------------------- #
     # License activation: use provided license or activate from credentials
     # --------------------------------------------------------------------- #
-    - name: Activate Unity license
-      if: inputs.unity-license == ''
-      id: activate
+    - name: Activate Unity license (with credentials)
+      if: inputs.unity-license == '' && inputs.unity-email != '' && inputs.unity-password != ''
+      id: activate-creds
       uses: ./.github/actions/unity/activate-license
       with:
         unityVersion: ${{ steps.unity-version.outputs.unity_version }}
         unity-email: ${{ inputs.unity-email }}
         unity-password: ${{ inputs.unity-password }}
+
+    - name: Activate Unity license (with defaults)
+      if: inputs.unity-license == '' && (inputs.unity-email == '' || inputs.unity-password == '')
+      id: activate-defaults
+      uses: ./.github/actions/unity/activate-license
+      with:
+        unityVersion: ${{ steps.unity-version.outputs.unity_version }}
 
     - name: Write Unity license file
       run: |
@@ -103,7 +110,7 @@ runs:
         fi
       env:
         LICENSE_FROM_INPUT: ${{ inputs.unity-license }}
-        LICENSE_B64: ${{ steps.activate.outputs.license }}
+        LICENSE_B64: ${{ steps.activate-creds.outputs.license || steps.activate-defaults.outputs.license }}
       shell: bash
 
     - name: Start Unity Editor in background

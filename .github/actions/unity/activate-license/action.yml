@@ -36,7 +36,7 @@ runs:
         node-version: "20"
 
     - name: Install unity-license-activate
-      run: npm install --global unity-license-activate
+      run: npm install --global unity-license-activate@0.3.9
       shell: bash
 
     - name: Generate Unity activation file (.alf)
