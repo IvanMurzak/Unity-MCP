@@ -133,7 +133,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     .Where(a => !string.IsNullOrEmpty(a.Location))
                     .Select(a =>
                     {
-                        try { return MetadataReference.CreateFromFile(a.Location); }
+                        try
+                        {
+                            return MetadataReference.CreateFromFile(a.Location);
+                        }
                         catch (DirectoryNotFoundException ex)
                         {
                             logger?.LogWarning(ex, "Directory not found for assembly '{AssemblyName}' at '{Location}': {Error}",
