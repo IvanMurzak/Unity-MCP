@@ -127,7 +127,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             RestartServerIfWasRunning(wasRunning);
         }
 
-        private McpServerStatus CombineMcpServerStatus(McpServerStatus status, bool isConnected)
+        internal static McpServerStatus CombineMcpServerStatus(McpServerStatus status, bool isConnected)
         {
             if (isConnected && status != McpServerStatus.Running)
                 return McpServerStatus.External;
@@ -135,7 +135,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             return status;
         }
 
-        private static string GetServerButtonText(McpServerStatus status) => status switch
+        internal static string GetServerButtonText(McpServerStatus status) => status switch
         {
             McpServerStatus.Running => "Stop",
             McpServerStatus.Starting => "Starting...",
@@ -144,12 +144,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             _ => "Start"
         };
 
-        private static string GetServerLabelText(McpServerStatus status, McpServerData? data) => status switch
+        internal static string GetServerLabelText(McpServerStatus status, TransportMethod? serverTransport) => status switch
         {
             McpServerStatus.Running => "MCP server: Running (http)",
             McpServerStatus.Starting => "MCP server: Starting... (http)",
             McpServerStatus.Stopping => "MCP server: Stopping... (http)",
-            McpServerStatus.External => "MCP server: External" + data?.ServerTransport switch
+            McpServerStatus.External => "MCP server: External" + serverTransport switch
             {
                 TransportMethod.stdio => " (stdio)",
                 TransportMethod.streamableHttp => " (http)",
@@ -158,13 +158,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             _ => "MCP server"
         };
 
-        private static string GetServerStatusClass(McpServerStatus status) => status switch
+        internal static string GetServerStatusClass(McpServerStatus status) => status switch
         {
             McpServerStatus.Running => USS_Connected,
             McpServerStatus.Starting or McpServerStatus.Stopping => USS_Connecting,
             McpServerStatus.External => USS_External,
             _ => USS_Disconnected
         };
+
+        internal static bool IsServerButtonEnabled(McpServerStatus status) =>
+            status == McpServerStatus.Running || status == McpServerStatus.Stopped;
 
         private static void HandleServerButton(Button btnStartStop, Label statusLabel)
         {
@@ -208,8 +211,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var isStart = status == McpServerStatus.Stopped;
             btnStartStop.EnableInClassList("btn-primary", isStart);
             btnStartStop.EnableInClassList("btn-secondary", !isStart);
-            btnStartStop.SetEnabled(status == McpServerStatus.Running || status == McpServerStatus.Stopped);
-            statusLabel.text = GetServerLabelText(status, data);
+            btnStartStop.SetEnabled(IsServerButtonEnabled(status));
+            statusLabel.text = GetServerLabelText(status, data?.ServerTransport);
             SetStatusIndicator(statusCircle, GetServerStatusClass(status));
             return version;
         }

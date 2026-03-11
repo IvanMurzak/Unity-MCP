@@ -68,11 +68,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             _disposables.Clear();
         }
 
+        internal static (bool needsAuth, bool hasToken, bool isCloud) ComputeCloudAuthState(ConnectionMode mode, string? token)
+        {
+            var isCloud = mode == ConnectionMode.Cloud;
+            var hasToken = !string.IsNullOrEmpty(token);
+            var needsAuth = isCloud && !hasToken;
+            return (needsAuth, hasToken, isCloud);
+        }
+
         private void UpdateCloudAuthState()
         {
-            var isCloud = UnityMcpPluginEditor.ConnectionMode == ConnectionMode.Cloud;
-            var hasToken = !string.IsNullOrEmpty(UnityMcpPluginEditor.CloudToken);
-            var needsAuth = isCloud && !hasToken;
+            var (needsAuth, hasToken, isCloud) = ComputeCloudAuthState(UnityMcpPluginEditor.ConnectionMode, UnityMcpPluginEditor.CloudToken);
 
             if (_timelinePointUnity != null)
             {

@@ -65,9 +65,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             btnConnect.RegisterCallback<ClickEvent>(evt => HandleConnectButton(btnConnect.text));
         }
 
+        internal static bool IsHostFieldReadOnly(bool keepConnected, HubConnectionState state) =>
+            keepConnected || state != HubConnectionState.Disconnected;
+
         private static void UpdateHostFieldState(TextField field, bool keepConnected, HubConnectionState state)
         {
-            var isReadOnly = keepConnected || state != HubConnectionState.Disconnected;
+            var isReadOnly = IsHostFieldReadOnly(keepConnected, state);
             field.isReadOnly = isReadOnly;
             var defaultUrl = $"http://localhost:{UnityMcpPlugin.GeneratePortFromDirectory()}";
             field.tooltip = keepConnected
@@ -152,6 +155,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                         ReconnectAfterModeSwitch();
                 });
         }
+
+        internal static bool IsAuthFlowRunning(DeviceAuthFlowState state) =>
+            state == DeviceAuthFlowState.Initiating
+            || state == DeviceAuthFlowState.WaitingForUser
+            || state == DeviceAuthFlowState.Polling;
+
+        internal static string GetAuthFlowStatusMessage(DeviceAuthFlowState state, string? userCode, string? errorMessage) => state switch
+        {
+            DeviceAuthFlowState.Initiating => "Initiating...",
+            DeviceAuthFlowState.WaitingForUser => $"Code: {userCode} — Authorize in browser",
+            DeviceAuthFlowState.Polling => $"Code: {userCode} — Waiting for authorization...",
+            DeviceAuthFlowState.Authorized => "Authorized!",
+            DeviceAuthFlowState.Failed => $"Failed: {errorMessage}",
+            DeviceAuthFlowState.Expired => "Expired — try again",
+            DeviceAuthFlowState.Cancelled => "Cancelled",
+            _ => ""
+        };
 
         private void SetupCloudAuthSection(VisualElement root)
         {
@@ -239,9 +259,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             btnAuthorize.RegisterCallback<ClickEvent>(async _ =>
             {
                 // If currently running, cancel
-                if (_deviceAuthFlow != null && (_deviceAuthFlow.State == DeviceAuthFlowState.Initiating
-                    || _deviceAuthFlow.State == DeviceAuthFlowState.WaitingForUser
-                    || _deviceAuthFlow.State == DeviceAuthFlowState.Polling))
+                if (_deviceAuthFlow != null && IsAuthFlowRunning(_deviceAuthFlow.State))
                 {
                     _deviceAuthFlow.Cancel();
                     return;
@@ -257,17 +275,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     {
                         if (statusLabel != null)
                         {
-                            statusLabel.text = state switch
-                            {
-                                DeviceAuthFlowState.Initiating => "Initiating...",
-                                DeviceAuthFlowState.WaitingForUser => $"Code: {_deviceAuthFlow.UserCode} — Authorize in browser",
-                                DeviceAuthFlowState.Polling => $"Code: {_deviceAuthFlow.UserCode} — Waiting for authorization...",
-                                DeviceAuthFlowState.Authorized => "Authorized!",
-                                DeviceAuthFlowState.Failed => $"Failed: {_deviceAuthFlow.ErrorMessage}",
-                                DeviceAuthFlowState.Expired => "Expired — try again",
-                                DeviceAuthFlowState.Cancelled => "Cancelled",
-                                _ => ""
-                            };
+                            statusLabel.text = GetAuthFlowStatusMessage(state, _deviceAuthFlow.UserCode, _deviceAuthFlow.ErrorMessage);
                             statusLabel.style.display = string.IsNullOrEmpty(statusLabel.text)
                                 ? DisplayStyle.None
                                 : DisplayStyle.Flex;
@@ -280,10 +288,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                         }
                         if (btnAuthorize != null)
                         {
-                            var isRunning = state == DeviceAuthFlowState.Initiating
-                                || state == DeviceAuthFlowState.WaitingForUser
-                                || state == DeviceAuthFlowState.Polling;
-                            btnAuthorize.text = isRunning ? "Cancel" : "Authorize";
+                            btnAuthorize.text = IsAuthFlowRunning(state) ? "Cancel" : "Authorize";
                         }
                     };
                 };

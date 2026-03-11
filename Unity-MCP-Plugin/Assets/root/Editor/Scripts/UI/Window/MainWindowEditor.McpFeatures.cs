@@ -25,6 +25,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
     public partial class MainWindowEditor
     {
+        internal static bool IsMcpServerControlEnabled(TransportMethod transport) =>
+            transport != TransportMethod.stdio;
+
         private void SetupAiAgentSection(VisualElement root)
         {
             UnityMcpPluginEditor.PluginProperty
@@ -95,8 +98,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             void UpdateMcpServerState()
             {
-                containerMcpServer.SetEnabled(UnityMcpPluginEditor.TransportMethod != TransportMethod.stdio);
-                btnStartStopMcpServer.tooltip = UnityMcpPluginEditor.TransportMethod != TransportMethod.stdio
+                containerMcpServer.SetEnabled(IsMcpServerControlEnabled(UnityMcpPluginEditor.TransportMethod));
+                btnStartStopMcpServer.tooltip = IsMcpServerControlEnabled(UnityMcpPluginEditor.TransportMethod)
                     ? "Start or stop the local MCP server."
                     : "Local MCP server is disabled in STDIO mode. AI agent will launch its own MCP server instance.";
             }

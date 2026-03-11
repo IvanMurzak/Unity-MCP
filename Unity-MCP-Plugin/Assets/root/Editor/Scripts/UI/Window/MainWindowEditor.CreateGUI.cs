@@ -210,21 +210,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             element.AddToClassList(statusClass);
         }
 
-        private static string GetConnectionStatusClass(HubConnectionState state, bool keepConnected) => state switch
+        internal static string GetConnectionStatusClass(HubConnectionState state, bool keepConnected) => state switch
         {
             HubConnectionState.Connected when keepConnected => USS_Connected,
             _ when keepConnected => USS_Connecting,
             _ => USS_Disconnected
         };
 
-        private static string GetConnectionStatusText(HubConnectionState state, bool keepConnected) => state switch
+        internal static string GetConnectionStatusText(HubConnectionState state, bool keepConnected) => state switch
         {
             HubConnectionState.Connected when keepConnected => "Connected",
             _ when keepConnected => "Connecting...",
             _ => "Disconnected"
         };
 
-        private static string GetButtonText(HubConnectionState state, bool keepConnected) => state switch
+        internal static string GetButtonText(HubConnectionState state, bool keepConnected) => state switch
         {
             HubConnectionState.Connected when keepConnected => ServerButtonText_Disconnect,
             _ when keepConnected => ServerButtonText_Stop,
