@@ -68,6 +68,7 @@ jobs:
           printf '\n%s\n' "$DELIM" >> "$GITHUB_ENV"
         env:
           LICENSE_B64: ${{ steps.activate.outputs.license }}
+        shell: bash
 
       - name: Cache Unity Library
         uses: actions/cache@v4

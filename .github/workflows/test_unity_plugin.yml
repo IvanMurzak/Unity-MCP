@@ -37,37 +37,14 @@ jobs:
 
     steps:
       # --------------------------------------------------------------------- #
-      # 2-a. Checkout base branch (always safe)
+      # 2-a. Checkout repository
       # --------------------------------------------------------------------- #
       - uses: actions/checkout@v5
         with:
           lfs: false
 
       # --------------------------------------------------------------------- #
-      # 2-b. (Fork PRs only) abort if the contributor changed workflow files
-      # --------------------------------------------------------------------- #
-      - name: Abort if workflow files modified
-        if: "github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name != github.repository"
-        env:
-          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          git fetch --depth=1 origin "$PR_HEAD_SHA"
-          if git diff --name-only HEAD FETCH_HEAD | grep -q '^\.github/'; then
-            echo "::error::This PR edits workflow/action files - refusing to run"
-            exit 1
-          fi
-
-      # --------------------------------------------------------------------- #
-      # 2-c. (Fork PRs only) checkout PR head after safety check
-      # --------------------------------------------------------------------- #
-      - uses: actions/checkout@v5
-        if: "github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name != github.repository"
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          lfs: false
-
-      # --------------------------------------------------------------------- #
-      # 2-d. Activate Unity license
+      # 2-b. Activate Unity license
       # --------------------------------------------------------------------- #
       - name: Activate Unity license
         id: activate
@@ -78,7 +55,7 @@ jobs:
           unity-password: ${{ secrets.UNITY_PASSWORD || 'ZUq3YR6qM1' }}
 
       # --------------------------------------------------------------------- #
-      # 2-e. Cache & run the Unity test-runner
+      # 2-c. Cache & run the Unity test-runner
       # --------------------------------------------------------------------- #
       - name: Generate cache key
         id: cache_key
