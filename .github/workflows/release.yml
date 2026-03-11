@@ -61,13 +61,11 @@ jobs:
 
       - name: Decode Unity license
         run: |
-          DELIM="UNITY_LIC_$(openssl rand -hex 8)"
           echo "$LICENSE_B64" | base64 -d > /tmp/unity_license.ulf
-          {
-            echo "UNITY_LICENSE<<$DELIM"
-            cat /tmp/unity_license.ulf
-            echo "$DELIM"
-          } >> "$GITHUB_ENV"
+          DELIM="UNITY_LIC_EOF_$(openssl rand -hex 16)"
+          echo "UNITY_LICENSE<<$DELIM" >> "$GITHUB_ENV"
+          cat /tmp/unity_license.ulf >> "$GITHUB_ENV"
+          printf '\n%s\n' "$DELIM" >> "$GITHUB_ENV"
         env:
           LICENSE_B64: ${{ steps.activate.outputs.license }}
 
