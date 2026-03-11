@@ -1,6 +1,7 @@
 # GitHub
 .secrets
 .unity-license
+*.ulf
 
 # AI configurations
 **/.claude/settings.local.json
