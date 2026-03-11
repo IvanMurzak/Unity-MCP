@@ -51,15 +51,13 @@ jobs:
       # 2-b. (Fork PRs only) abort if the contributor changed workflow files
       # --------------------------------------------------------------------- #
       - name: Abort if workflow files modified
-        if: |
-          github.event_name == ‘pull_request_target’ &&
-          github.event.pull_request.head.repo.full_name != github.repository
+        if: "github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name != github.repository"
         env:
           PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           git fetch --depth=1 origin "$PR_HEAD_SHA"
-          if git diff --name-only HEAD FETCH_HEAD | grep -q ‘^\.github/’; then
-            echo "::error::This PR edits workflow/action files – refusing to run"
+          if git diff --name-only HEAD FETCH_HEAD | grep -q '^\.github/'; then
+            echo "::error::This PR edits workflow/action files - refusing to run"
             exit 1
           fi
 
@@ -67,9 +65,7 @@ jobs:
       # 2-c. (Fork PRs only) checkout PR head after safety check
       # --------------------------------------------------------------------- #
       - uses: actions/checkout@v5
-        if: |
-          github.event_name == ‘pull_request_target’ &&
-          github.event.pull_request.head.repo.full_name != github.repository
+        if: "github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name != github.repository"
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           lfs: false
