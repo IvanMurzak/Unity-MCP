@@ -59,6 +59,18 @@ jobs:
           unity-email: ${{ secrets.UNITY_EMAIL }}
           unity-password: ${{ secrets.UNITY_PASSWORD }}
 
+      - name: Decode Unity license
+        run: |
+          DELIM="UNITY_LIC_$(openssl rand -hex 8)"
+          echo "$LICENSE_B64" | base64 -d > /tmp/unity_license.ulf
+          {
+            echo "UNITY_LICENSE<<$DELIM"
+            cat /tmp/unity_license.ulf
+            echo "$DELIM"
+          } >> "$GITHUB_ENV"
+        env:
+          LICENSE_B64: ${{ steps.activate.outputs.license }}
+
       - name: Cache Unity Library
         uses: actions/cache@v4
         with:
@@ -68,7 +80,6 @@ jobs:
       - name: Test Unity Installer (EditMode)
         uses: game-ci/unity-test-runner@v4
         env:
-          UNITY_LICENSE: ${{ steps.activate.outputs.license }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
@@ -95,7 +106,6 @@ jobs:
       - name: Export Unity Package
         uses: game-ci/unity-builder@v4
         env:
-          UNITY_LICENSE: ${{ steps.activate.outputs.license }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:

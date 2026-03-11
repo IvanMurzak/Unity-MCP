@@ -98,12 +98,12 @@ runs:
           echo "$LICENSE_FROM_INPUT" > "${GITHUB_WORKSPACE}/.unity-license/Unity_lic.ulf"
           echo "Unity license written from input"
         else
-          echo "$LICENSE_FROM_ACTIVATION" > "${GITHUB_WORKSPACE}/.unity-license/Unity_lic.ulf"
+          echo "$LICENSE_B64" | base64 -d > "${GITHUB_WORKSPACE}/.unity-license/Unity_lic.ulf"
           echo "Unity license written from activation"
         fi
       env:
         LICENSE_FROM_INPUT: ${{ inputs.unity-license }}
-        LICENSE_FROM_ACTIVATION: ${{ steps.activate.outputs.license }}
+        LICENSE_B64: ${{ steps.activate.outputs.license }}
       shell: bash
 
     - name: Start Unity Editor in background

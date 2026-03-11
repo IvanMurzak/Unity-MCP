@@ -24,7 +24,7 @@ inputs:
 
 outputs:
   license:
-    description: "Unity license file content (ULF XML)"
+    description: "Unity license file content (ULF XML, base64-encoded)"
     value: ${{ steps.ulf.outputs.content }}
 
 runs:
@@ -89,11 +89,8 @@ runs:
         fi
         echo "Found ULF file: $ULF_FILE"
 
-        {
-          echo "content<<UNITY_LICENSE_EOF"
-          cat "$ULF_FILE"
-          echo "UNITY_LICENSE_EOF"
-        } >> "$GITHUB_OUTPUT"
+        encoded=$(base64 -w 0 "$ULF_FILE")
+        echo "content=$encoded" >> "$GITHUB_OUTPUT"
       shell: bash
 
     - name: Upload error screenshot
