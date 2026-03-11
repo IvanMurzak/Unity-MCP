@@ -541,6 +541,25 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 | **PlayMode** | 运行时插件、SignalR 连接、主线程调度 | `Assets/root/Tests/Runtime` |
 | **Standalone** | 内嵌插件的完整播放器构建 | 需要播放器构建步骤 |
 
+## 在 Test Runner 中包含包测试（testables）
+
+在使用多个 UPM 包的项目中，可通过[项目清单](https://docs.unity3d.com/Manual/upm-manifestPrj.html)的 **`testables`** 字段控制哪些包的测试出现在 Test Runner 中。只有列在 `testables` 中的包才会编译并显示其测试。在项目清单的 `testables` 中加入本包（或任意其他包）即可包含其测试。
+
+**示例** — 在 `Packages/manifest.json` 中：
+
+```json
+{
+  "dependencies": {
+    "com.ivanmurzak.unity.mcp": "X.X.X"
+  },
+  "testables": [
+    "com.ivanmurzak.unity.mcp"
+  ]
+}
+```
+
+详见 [Unity: 向包添加测试](https://docs.unity3d.com/Manual/cus-tests.html) 与 [Unity: 项目清单（testables）](https://docs.unity3d.com/Manual/upm-manifestPrj.html#testables)。
+
 ## 解读 CI 结果
 
 每个 CI 任务命名为 `test-unity-{版本}-{模式}`（如 `test-unity-6000-3-1f1-editmode`）。当任务失败时：
