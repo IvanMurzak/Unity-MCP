@@ -540,6 +540,25 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 | **PlayMode** | ランタイムプラグイン、SignalR 接続、メインスレッドディスパッチ | `Assets/root/Tests/Runtime` |
 | **Standalone** | 組み込みプラグインを含むフルプレイヤービルド | プレイヤービルドステップが必要 |
 
+## パッケージテストを Test Runner に含める（testables）
+
+複数の UPM パッケージを使うプロジェクトでは、[プロジェクトマニフェスト](https://docs.unity3d.com/Manual/upm-manifestPrj.html)の **`testables`** フィールドで、どのパッケージのテストを Test Runner に表示するか制御できます。`testables` に列挙したパッケージのみ、テストがコンパイル・表示されます。プロジェクトマニフェストの `testables` に本パッケージ（または他のパッケージ）を追加すると、そのテストが含まれます。
+
+**例** — `Packages/manifest.json` で：
+
+```json
+{
+  "dependencies": {
+    "com.ivanmurzak.unity.mcp": "X.X.X"
+  },
+  "testables": [
+    "com.ivanmurzak.unity.mcp"
+  ]
+}
+```
+
+詳細は [Unity: パッケージにテストを追加](https://docs.unity3d.com/Manual/cus-tests.html) と [Unity: プロジェクトマニフェスト（testables）](https://docs.unity3d.com/Manual/upm-manifestPrj.html#testables) を参照してください。
+
 ## CI 結果の解釈
 
 各 CI ジョブは `test-unity-{version}-{mode}` という名前です（例: `test-unity-6000-3-1f1-editmode`）。ジョブが失敗した場合:

@@ -37,7 +37,7 @@
 - ✔️ **灵活部署** — 支持本地（stdio）和远程（http）两种配置方式
 - ✔️ **可扩展** — 在项目代码中[创建自定义 MCP 工具](#添加自定义-mcp-tool)
 
-[![下载安装器](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.51.5/AI-Game-Dev-Installer.unitypackage)
+[![下载安装器](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.51.6/AI-Game-Dev-Installer.unitypackage)
 
 ![AI 游戏开发者 Windows](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/ai-game-developer-windows.png?raw=true)
 
@@ -198,6 +198,25 @@
 | [开发指南](dev/Development.md) | 架构、代码风格、CI/CD — 面向贡献者 |
 | [Wiki](https://github.com/IvanMurzak/Unity-MCP/wiki) | 入门教程、API 参考、常见问题 |
 
+### 在 Test Runner 中包含包测试（testables）
+
+Unity 的[项目清单](https://docs.unity3d.com/Manual/upm-manifestPrj.html)支持 **`testables`** 数组，用于控制已安装的包中哪些向 **Test Runner**（`Window > General > Test Runner`）提供测试。只有列在 `testables` 中的包才会编译并显示其测试。在项目清单的 `testables` 中加入本包（或任意其他包）即可包含其测试。
+
+**示例** — 在项目的 `Packages/manifest.json` 中，添加包含要运行的测试所属包名的 `testables` 数组：
+
+```json
+{
+  "dependencies": {
+    "com.ivanmurzak.unity.mcp": "X.X.X"
+  },
+  "testables": [
+    "com.ivanmurzak.unity.mcp"
+  ]
+}
+```
+
+详见 [Unity: 向包添加测试](https://docs.unity3d.com/Manual/cus-tests.html) 与 [Unity: 项目清单（testables）](https://docs.unity3d.com/Manual/upm-manifestPrj.html#testables)。
+
 ![AI 游戏开发者 — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 # 安装
@@ -217,7 +236,7 @@
 
 ### 选项 1 — 安装器
 
-- **[⬇️ 下载安装器](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.51.5/AI-Game-Dev-Installer.unitypackage)**
+- **[⬇️ 下载安装器](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.51.6/AI-Game-Dev-Installer.unitypackage)**
 - **📂 将安装器导入 Unity 项目**
   > - 双击文件 — Unity 将自动打开它
   > - 或者：先打开 Unity 编辑器，然后点击 `Assets/Import Package/Custom Package`，选择文件
