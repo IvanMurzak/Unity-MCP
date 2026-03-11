@@ -27,6 +27,7 @@
                 <ui:TextField name="inputCloudServerUrl" label="Cloud URL" value="https://ai-game.dev" class="content-item" />
                 <ui:VisualElement style="flex-direction: row; margin-top: 2px; align-items: center;">
                     <ui:TextField name="inputCloudToken" label="" placeholder-text="Cloud Token" readonly="true" style="flex-grow: 1;" class="token-input" />
+                    <ui:Button name="btnCloudRevoke" text="Revoke" class="btn-compact btn-alert" style="display: none;" />
                     <ui:Button name="btnCloudAuthorize" text="Authorize" class="btn-compact" />
                 </ui:VisualElement>
                 <ui:Label name="labelCloudAuthStatus" text="" class="section-desc" style="margin-top: 2px; display: none;" />

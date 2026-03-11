@@ -13,12 +13,17 @@ using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using R3;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
     public partial class MainWindowEditor : McpWindowBase
     {
         readonly CompositeDisposable _disposables = new();
+
+        Button? _btnConnect;
+        Button? _btnAuthorize;
+        VisualElement? _timelinePointUnity;
 
         protected override string WindowTitle => "Game Developer";
         protected override string[] WindowUxmlPaths => _windowUxmlPaths;
@@ -62,6 +67,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         private void OnDisable()
         {
             _disposables.Clear();
+        }
+
+        private void UpdateCloudAuthState()
+        {
+            var isCloud = UnityMcpPluginEditor.ConnectionMode == ConnectionMode.Cloud;
+            var hasToken = !string.IsNullOrEmpty(UnityMcpPluginEditor.CloudToken);
+            var needsAuth = isCloud && !hasToken;
+
+            if (_timelinePointUnity != null)
+            {
+                _timelinePointUnity.SetEnabled(!needsAuth);
+                _timelinePointUnity.tooltip = needsAuth
+                    ? "Cloud token is required. Press the Authorize button to authenticate."
+                    : "";
+            }
+            if (_btnConnect != null && needsAuth)
+            {
+                _btnConnect.text = ServerButtonText_Connect;
+                _btnConnect.EnableInClassList("btn-primary", false);
+                _btnConnect.EnableInClassList("btn-secondary", true);
+            }
+            if (_btnAuthorize != null)
+            {
+                _btnAuthorize.EnableInClassList("btn-primary", !hasToken);
+            }
         }
 
         private static void UnityBuildAndConnect()
