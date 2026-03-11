@@ -98,6 +98,15 @@ namespace com.IvanMurzak.Unity.MCP
                 NotifyChanged(Instance.unityConnectionConfig);
             }
         }
+        public static string LocalHost
+        {
+            get => Instance.unityConnectionConfig.LocalHost;
+            set
+            {
+                Instance.unityConnectionConfig.LocalHost = value;
+                NotifyChanged(Instance.unityConnectionConfig);
+            }
+        }
         public static bool KeepConnected
         {
             get => Instance.unityConnectionConfig.KeepConnected;
@@ -190,11 +199,6 @@ namespace com.IvanMurzak.Unity.MCP
                 NotifyChanged(Instance.unityConnectionConfig);
             }
         }
-
-        public static string ActiveHost => ConnectionMode == ConnectionMode.Cloud
-            ? CloudServerUrl + "/mcp" : Host;
-        public static string? ActiveToken => ConnectionMode == ConnectionMode.Cloud
-            ? CloudToken : Token;
 
         public static bool GenerateSkillFiles
         {

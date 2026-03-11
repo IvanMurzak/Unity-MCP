@@ -324,14 +324,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             _aiAgentLabelsContainer = root.Q<VisualElement>("aiAgentLabelsContainer");
             _aiAgentStatusCircle = root.Q<VisualElement>("aiAgentStatusCircle");
 
-            inputFieldHost.value = UnityMcpPluginEditor.Host;
+            inputFieldHost.value = UnityMcpPluginEditor.LocalHost;
             inputFieldHost.RegisterCallback<FocusOutEvent>(evt =>
             {
                 var newValue = inputFieldHost.value;
-                if (UnityMcpPluginEditor.Host == newValue)
+                if (UnityMcpPluginEditor.LocalHost == newValue)
                     return;
 
-                UnityMcpPluginEditor.Host = newValue;
+                UnityMcpPluginEditor.LocalHost = newValue;
                 SaveChanges($"[{nameof(MainWindowEditor)}] Host Changed: {newValue}");
                 Invalidate();
 
@@ -373,9 +373,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         {
             var isReadOnly = keepConnected || state != HubConnectionState.Disconnected;
             field.isReadOnly = isReadOnly;
+            var defaultUrl = $"http://localhost:{UnityMcpPlugin.GeneratePortFromDirectory()}";
             field.tooltip = keepConnected
                 ? "Editable only when Unity disconnected from the MCP Server."
-                : $"The server URL. http://localhost:{UnityMcpPlugin.GeneratePortFromDirectory()}";
+                : $"Usually the server is hosted locally at {defaultUrl}. Feel free to connect to a remote MCP server if needed. The connection is established using SignalR.";
 
             field.EnableInClassList("disabled-text-field", isReadOnly);
             field.EnableInClassList("enabled-text-field", !isReadOnly);
@@ -405,7 +406,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             if (toggleCustom == null || toggleCloud == null) return;
 
             var inputServerUrl = root.Q<TextField>("InputServerURL");
-            var infoFoldout = root.Q<Foldout>();
             var mcpServerPoint = root.Q<VisualElement>("TimelinePointMcpServer");
             var cloudAuthSection = root.Q<VisualElement>("cloudAuthSection");
 
@@ -413,7 +413,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             {
                 var isCustom = mode == ConnectionMode.Custom;
                 if (inputServerUrl != null) inputServerUrl.style.display = isCustom ? DisplayStyle.Flex : DisplayStyle.None;
-                if (infoFoldout != null) infoFoldout.style.display = isCustom ? DisplayStyle.Flex : DisplayStyle.None;
                 if (mcpServerPoint != null) mcpServerPoint.style.display = isCustom ? DisplayStyle.Flex : DisplayStyle.None;
                 if (cloudAuthSection != null) cloudAuthSection.style.display = isCustom ? DisplayStyle.None : DisplayStyle.Flex;
             }
@@ -529,6 +528,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                                 DeviceAuthFlowState.Cancelled => "Cancelled",
                                 _ => ""
                             };
+                            statusLabel.style.display = string.IsNullOrEmpty(statusLabel.text)
+                                ? DisplayStyle.None
+                                : DisplayStyle.Flex;
                         }
                         if (state == DeviceAuthFlowState.Authorized && inputCloudToken != null)
                         {
