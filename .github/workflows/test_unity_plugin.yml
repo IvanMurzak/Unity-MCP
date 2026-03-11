@@ -35,10 +35,6 @@ jobs:
     name: ${{ inputs.unityVersion }} ${{ inputs.testMode }} on ${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
 
-    # permissions: # minimize the default token
-    #   contents: write
-    #   pull-requests: write
-
     steps:
       # --------------------------------------------------------------------- #
       # 2-a. Checkout base branch (always safe)
@@ -71,7 +67,18 @@ jobs:
           lfs: false
 
       # --------------------------------------------------------------------- #
-      # 2-d. Cache & run the Unity test-runner
+      # 2-d. Activate Unity license
+      # --------------------------------------------------------------------- #
+      - name: Activate Unity license
+        id: activate
+        uses: ./.github/actions/unity/activate-license
+        with:
+          unityVersion: ${{ inputs.unityVersion }}
+          unity-email: ${{ secrets.UNITY_EMAIL || 'UnityEngineTester@gmail.com' }}
+          unity-password: ${{ secrets.UNITY_PASSWORD || 'ZUq3YR6qM1' }}
+
+      # --------------------------------------------------------------------- #
+      # 2-e. Cache & run the Unity test-runner
       # --------------------------------------------------------------------- #
       - name: Generate cache key
         id: cache_key
@@ -97,6 +104,7 @@ jobs:
       - uses: game-ci/unity-test-runner@v4
         id: tests
         env:
+          UNITY_LICENSE: ${{ steps.activate.outputs.license }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL || 'UnityEngineTester@gmail.com' }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD || 'ZUq3YR6qM1' }}
         with:
