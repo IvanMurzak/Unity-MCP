@@ -198,25 +198,6 @@
 | [開発ガイド](docs/dev/Development.md) | アーキテクチャ、コードスタイル、CI/CD（コントリビューター向け） |
 | [Wiki](https://github.com/IvanMurzak/Unity-MCP/wiki) | はじめに、チュートリアル、API リファレンス、FAQ |
 
-### パッケージテストを Test Runner に含める（testables）
-
-Unity の[プロジェクトマニフェスト](https://docs.unity3d.com/Manual/upm-manifestPrj.html)では **`testables`** 配列で、インストールしたパッケージのうちどのテストを **Test Runner**（`Window > General > Test Runner`）に表示するか制御できます。`testables` に含まれるパッケージのみ、テストがコンパイル・表示されます。プロジェクトマニフェストの `testables` に本パッケージ（または他のパッケージ）を追加すると、そのテストが含まれます。
-
-**例** — プロジェクトの `Packages/manifest.json` で、実行したいテストのパッケージ名を `testables` 配列に追加します：
-
-```json
-{
-  "dependencies": {
-    "com.ivanmurzak.unity.mcp": "X.X.X"
-  },
-  "testables": [
-    "com.ivanmurzak.unity.mcp"
-  ]
-}
-```
-
-詳細は [Unity: パッケージにテストを追加](https://docs.unity3d.com/Manual/cus-tests.html) と [Unity: プロジェクトマニフェスト（testables）](https://docs.unity3d.com/Manual/upm-manifestPrj.html#testables) を参照してください。
-
 ![AI ゲーム開発者 — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 # インストール
