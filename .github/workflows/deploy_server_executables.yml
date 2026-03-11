@@ -1,3 +1,11 @@
+# ┌──────────────────────────────────────────────────────────────────┐
+# │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
+# │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
+# │  Copyright (c) 2025 Ivan Murzak                                  │
+# │  Licensed under the Apache License, Version 2.0.                 │
+# │  See the LICENSE file in the project root for more information.  │
+# └──────────────────────────────────────────────────────────────────┘
+
 # This workflow builds the MCP server executables for all platforms and uploads them as release assets.
 # It is triggered when a new release is published manually.
 # It is NOT triggered by CI/CD pipelines or other automated processes.
@@ -12,25 +20,25 @@ jobs:
   build-and-zip:
     runs-on: macos-latest
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v5
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '9.0.x'
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "9.0.x"
 
-    - name: Make build script executable
-      run: chmod +x ./Unity-MCP-Server/build-all.sh
+      - name: Make build script executable
+        run: chmod +x ./Unity-MCP-Server/build-all.sh
 
-    - name: Build executables for all platforms
-      shell: bash {0}
-      run: cd Unity-MCP-Server && ./build-all.sh Release
+      - name: Build executables for all platforms
+        shell: bash {0}
+        run: cd Unity-MCP-Server && ./build-all.sh Release
 
-    - name: Upload release assets
-      uses: softprops/action-gh-release@v2
-      with:
-        files: ./Unity-MCP-Server/publish/*.zip
-        tag_name: ${{ github.event.release.tag_name }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Upload release assets
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ./Unity-MCP-Server/publish/*.zip
+          tag_name: ${{ github.event.release.tag_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

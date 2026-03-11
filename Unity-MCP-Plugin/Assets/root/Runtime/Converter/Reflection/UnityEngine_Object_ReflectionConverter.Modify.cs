@@ -27,7 +27,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
     public partial class UnityEngine_Object_ReflectionConverter<T>
     {
-        public override bool TryPopulate(
+        public override bool TryModify(
             Reflector reflector,
             ref object? obj,
             SerializedMember data,
@@ -37,7 +37,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic,
             ILogger? logger = null)
         {
-            logs?.Info($"TryPopulate called for type '{obj?.GetType().Name}'.", depth);
+            logs?.Info($"TryModify called for type '{obj?.GetType().Name}'.", depth);
 
             // Trying to fix JSON value body, if critical property is missed or detected return false
             if (!FixJsonValueBody(
@@ -52,7 +52,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             {
                 return false;
             }
-            return base.TryPopulate(
+            return base.TryModify(
                 reflector: reflector,
                 obj: ref obj,
                 data: data,

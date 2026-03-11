@@ -1,8 +1,9 @@
 # GitHub
 .secrets
+.unity-license
 
 # AI configurations
-.claude
+**/.claude/settings.local.json
 .gemini
 .aider*
 .roo

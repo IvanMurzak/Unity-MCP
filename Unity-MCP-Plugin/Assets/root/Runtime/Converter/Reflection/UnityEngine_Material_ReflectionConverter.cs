@@ -212,7 +212,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             }.SetValue(reflector, new ObjectRef(material));
         }
 
-        public override bool TryPopulate(
+        public override bool TryModify(
             Reflector reflector,
             ref object? obj,
             SerializedMember data,
@@ -255,7 +255,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 if (material.GetInstanceID() == unityObject.GetInstanceID())
                 {
                     // Recognized as a command to update material
-                    return base.TryPopulate(
+                    return base.TryModify(
                         reflector: reflector,
                         obj: ref obj,
                         data: data,
@@ -265,7 +265,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                         flags: flags,
                         logger: logger);
                 }
-                // Need to set new material after and maybe to populate the new material.
+                // Need to set new material after and maybe to modify the new material.
                 var newMaterial = reflector.Deserialize(
                     data,
                     fallbackType: obj?.GetType() ?? typeof(Material),
@@ -274,7 +274,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                     logs: logs,
                     logger: logger);
 
-                var success = base.TryPopulate(
+                var success = base.TryModify(
                     reflector: reflector,
                     obj: ref newMaterial,
                     data: data,
@@ -289,7 +289,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 
                 return success;
             }
-            return base.TryPopulate(
+            return base.TryModify(
                 reflector: reflector,
                 obj: ref obj,
                 data: data,
@@ -300,7 +300,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 logger: logger);
         }
 
-        protected override bool TryPopulateField(
+        protected override bool TryModifyField(
             Reflector reflector,
             ref object obj,
             Type objType,
@@ -313,7 +313,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             var padding = StringUtils.GetPadding(depth);
 
             if (logger?.IsEnabled(LogLevel.Trace) == true)
-                logger.LogTrace($"{StringUtils.GetPadding(depth)}Populate field for type='{objType.GetTypeId()}'. Converter='{GetType().GetTypeShortName()}'.");
+                logger.LogTrace($"{StringUtils.GetPadding(depth)}Modify field for type='{objType.GetTypeId()}'. Converter='{GetType().GetTypeShortName()}'.");
 
             var material = obj as Material;
             if (material == null)

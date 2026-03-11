@@ -24,7 +24,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
     public partial class UnityEngine_Texture_ReflectionConverter : UnityEngine_Asset_ReflectionConverter<UnityEngine.Texture>
     {
-        // public override bool TryPopulate(
+        // public override bool TryModify(
         //     Reflector reflector,
         //     ref object? obj,
         //     SerializedMember data,
@@ -37,7 +37,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
         //     var padding = StringUtils.GetPadding(depth);
 
         //     if (logger?.IsEnabled(LogLevel.Trace) == true)
-        //         logger.LogTrace($"{StringUtils.GetPadding(depth)}Populate sprite from data. Converter='{GetType().GetTypeShortName()}'.");
+        //         logger.LogTrace($"{StringUtils.GetPadding(depth)}Modify sprite from data. Converter='{GetType().GetTypeShortName()}'.");
 
         //     if (logger?.IsEnabled(LogLevel.Error) == true)
         //         logger.LogError($"{padding}Operation is not supported in runtime. Converter: {GetType().GetTypeShortName()}");

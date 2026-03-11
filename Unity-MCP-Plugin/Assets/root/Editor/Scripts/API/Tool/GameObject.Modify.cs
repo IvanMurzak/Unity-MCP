@@ -44,15 +44,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             SerializedMemberList gameObjectDiffs
         )
         {
+            if (gameObjectRefs.Count == 0)
+                throw new ArgumentException("No GameObject references provided. Please provide at least one GameObject reference.", nameof(gameObjectRefs));
+
+            if (gameObjectDiffs.Count != gameObjectRefs.Count)
+                throw new ArgumentException($"The number of {nameof(gameObjectDiffs)} and {nameof(gameObjectRefs)} should be the same. " +
+                    $"{nameof(gameObjectDiffs)}: {gameObjectDiffs.Count}, {nameof(gameObjectRefs)}: {gameObjectRefs.Count}", nameof(gameObjectDiffs));
+
             return MainThread.Instance.Run(() =>
             {
-                if (gameObjectRefs.Count == 0)
-                    throw new Exception("No GameObject references provided. Please provide at least one GameObject reference.");
-
-                if (gameObjectDiffs.Count != gameObjectRefs.Count)
-                    throw new Exception($"The number of {nameof(gameObjectDiffs)} and {nameof(gameObjectRefs)} should be the same. " +
-                        $"{nameof(gameObjectDiffs)}: {gameObjectDiffs.Count}, {nameof(gameObjectRefs)}: {gameObjectRefs.Count}");
-
                 var logs = new Logs();
 
                 for (int i = 0; i < gameObjectRefs.Count; i++)
@@ -72,7 +72,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     var objToModify = (object)go;
                     var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
-                    var modified = reflector.TryPopulate(
+                    var modified = reflector.TryModify(
                         ref objToModify,
                         data: gameObjectDiffs[i],
                         logs: logs,
