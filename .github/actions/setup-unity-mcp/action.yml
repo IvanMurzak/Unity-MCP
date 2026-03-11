@@ -12,10 +12,16 @@ description: "Start MCP Server and Unity Editor in Docker containers with licens
 inputs:
   unity-email:
     description: "Unity account email for license activation"
-    required: true
+    required: false
+    default: ""
   unity-password:
     description: "Unity account password for license activation"
-    required: true
+    required: false
+    default: ""
+  unity-license:
+    description: "Unity license file content (ULF XML). If provided, skips activation."
+    required: false
+    default: ""
   unity-project-path:
     description: "Relative path to the Unity project folder"
     required: false
@@ -73,80 +79,39 @@ runs:
         done
       shell: bash
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
+    # --------------------------------------------------------------------- #
+    # License activation: use provided license or activate from credentials
+    # --------------------------------------------------------------------- #
+    - name: Activate Unity license (with credentials)
+      if: inputs.unity-license == '' && inputs.unity-email != '' && inputs.unity-password != ''
+      id: activate-creds
+      uses: ./.github/actions/unity/activate-license
       with:
-        node-version: "20"
+        unityVersion: ${{ steps.unity-version.outputs.unity_version }}
+        unity-email: ${{ inputs.unity-email }}
+        unity-password: ${{ inputs.unity-password }}
 
-    - name: Install unity-license-activate
-      run: npm install --global unity-license-activate
-      shell: bash
+    - name: Activate Unity license (with defaults)
+      if: inputs.unity-license == '' && (inputs.unity-email == '' || inputs.unity-password == '')
+      id: activate-defaults
+      uses: ./.github/actions/unity/activate-license
+      with:
+        unityVersion: ${{ steps.unity-version.outputs.unity_version }}
 
-    - name: Generate Unity activation file (.alf)
-      id: alf
-      env:
-        UNITY_VERSION: ${{ steps.unity-version.outputs.unity_version }}
+    - name: Write Unity license file
       run: |
         mkdir -p "${GITHUB_WORKSPACE}/.unity-license"
-
-        docker run --rm \
-          -v "${GITHUB_WORKSPACE}/.unity-license:/output" \
-          -v "${GITHUB_WORKSPACE}/.unity-license:/root/.local/share/unity3d/Unity/" \
-          -w /output \
-          unityci/editor:ubuntu-${UNITY_VERSION}-base-3 \
-          unity-editor -batchmode -createManualActivationFile -logFile /dev/stdout || true
-
-        ALF_FILE=$(find "${GITHUB_WORKSPACE}/.unity-license" -name "*.alf" | head -1)
-        if [ -z "$ALF_FILE" ]; then
-          echo "Failed to generate .alf file"
-          exit 1
+        if [ -n "$LICENSE_FROM_INPUT" ]; then
+          echo "$LICENSE_FROM_INPUT" > "${GITHUB_WORKSPACE}/.unity-license/Unity_lic.ulf"
+          echo "Unity license written from input"
+        else
+          echo "$LICENSE_B64" | base64 -d > "${GITHUB_WORKSPACE}/.unity-license/Unity_lic.ulf"
+          echo "Unity license written from activation"
         fi
-        echo "Generated ALF file: $ALF_FILE"
-        echo "alf_path=${ALF_FILE}" >> "$GITHUB_OUTPUT"
+      env:
+        LICENSE_FROM_INPUT: ${{ inputs.unity-license }}
+        LICENSE_B64: ${{ steps.activate-creds.outputs.license || steps.activate-defaults.outputs.license }}
       shell: bash
-
-    - name: Activate Unity license
-      run: |
-        MAX_RETRIES=5
-        for attempt in $(seq 1 $MAX_RETRIES); do
-          echo "=== License activation attempt $attempt of $MAX_RETRIES ==="
-          if unity-license-activate \
-            "${{ inputs.unity-email }}" \
-            "${{ inputs.unity-password }}" \
-            "${{ steps.alf.outputs.alf_path }}"; then
-            echo "unity-license-activate succeeded on attempt $attempt"
-            break
-          fi
-          if [ "$attempt" -eq "$MAX_RETRIES" ]; then
-            echo "All $MAX_RETRIES license activation attempts failed"
-            exit 1
-          fi
-          echo "Attempt $attempt failed, retrying in 10s..."
-          sleep 10
-        done
-
-        echo "--- Searching for .ulf file in workspace root ---"
-        find "${GITHUB_WORKSPACE}" -maxdepth 1 -name "*.ulf" -ls 2>/dev/null
-
-        ULF_FILE=$(find "${GITHUB_WORKSPACE}" -maxdepth 1 -name "*.ulf" | head -1)
-        if [ -z "$ULF_FILE" ]; then
-          echo "Failed to obtain .ulf license file"
-          exit 1
-        fi
-        echo "Found ULF file: $ULF_FILE"
-        cp "$ULF_FILE" "${GITHUB_WORKSPACE}/.unity-license/Unity_lic.ulf"
-        echo "--- License directory contents ---"
-        ls -la "${GITHUB_WORKSPACE}/.unity-license/"
-        echo "Unity license activated successfully"
-      shell: bash
-
-    - name: Upload error screenshot
-      if: failure()
-      uses: actions/upload-artifact@v4
-      with:
-        name: unity-license-error
-        path: error.png
-        if-no-files-found: ignore
 
     - name: Start Unity Editor in background
       env:

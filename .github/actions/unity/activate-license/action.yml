@@ -1,0 +1,102 @@
+# ┌──────────────────────────────────────────────────────────────────┐
+# │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
+# │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
+# │  Copyright (c) 2025 Ivan Murzak                                  │
+# │  Licensed under the Apache License, Version 2.0.                 │
+# │  See the LICENSE file in the project root for more information.  │
+# └──────────────────────────────────────────────────────────────────┘
+
+name: "Unity Activate License"
+description: "Activate a Unity Personal license via unity-license-activate and output the ULF content"
+
+inputs:
+  unityVersion:
+    description: "Unity version to activate (e.g. 2022.3.62f3)"
+    required: true
+  unity-email:
+    description: "Unity account email"
+    required: false
+    default: "UnityEngineTester@gmail.com"
+  unity-password:
+    description: "Unity account password"
+    required: false
+    default: "ZUq3YR6qM1"
+
+outputs:
+  license:
+    description: "Unity license file content (ULF XML, base64-encoded)"
+    value: ${{ steps.ulf.outputs.content }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+
+    - name: Install unity-license-activate
+      run: npm install --global unity-license-activate@0.3.9
+      shell: bash
+
+    - name: Generate Unity activation file (.alf)
+      id: alf
+      env:
+        UNITY_VERSION: ${{ inputs.unityVersion }}
+      run: |
+        mkdir -p unity-license
+
+        docker run --rm \
+          -v "$(pwd)/unity-license:/output" \
+          -w /output \
+          unityci/editor:ubuntu-${UNITY_VERSION}-base-3 \
+          unity-editor -batchmode -createManualActivationFile -logFile /dev/stdout || true
+
+        ALF_FILE=$(find unity-license -name "*.alf" | head -1)
+        if [ -z "$ALF_FILE" ]; then
+          echo "Failed to generate .alf file"
+          exit 1
+        fi
+        echo "Generated ALF file: $ALF_FILE"
+        echo "alf_path=${ALF_FILE}" >> "$GITHUB_OUTPUT"
+      shell: bash
+
+    - name: Activate Unity license
+      id: ulf
+      env:
+        UNITY_EMAIL: ${{ inputs.unity-email }}
+        UNITY_PASSWORD: ${{ inputs.unity-password }}
+      run: |
+        MAX_RETRIES=5
+        for attempt in $(seq 1 $MAX_RETRIES); do
+          echo "=== License activation attempt $attempt of $MAX_RETRIES ==="
+          if unity-license-activate "$UNITY_EMAIL" "$UNITY_PASSWORD" "${{ steps.alf.outputs.alf_path }}"; then
+            echo "unity-license-activate succeeded on attempt $attempt"
+            break
+          fi
+          if [ "$attempt" -eq "$MAX_RETRIES" ]; then
+            echo "All $MAX_RETRIES license activation attempts failed"
+            exit 1
+          fi
+          echo "Attempt $attempt failed, retrying in 10s..."
+          sleep 10
+        done
+
+        ULF_FILE=$(find . -maxdepth 2 -name "*.ulf" | head -1)
+        if [ -z "$ULF_FILE" ]; then
+          echo "Failed to obtain .ulf license file"
+          exit 1
+        fi
+        echo "Found ULF file: $ULF_FILE"
+
+        encoded=$(base64 -w 0 "$ULF_FILE")
+        echo "content=$encoded" >> "$GITHUB_OUTPUT"
+      shell: bash
+
+    - name: Upload error screenshot
+      if: failure()
+      uses: actions/upload-artifact@v4
+      with:
+        name: unity-license-error-${{ inputs.unityVersion }}
+        path: error.png
+        if-no-files-found: ignore

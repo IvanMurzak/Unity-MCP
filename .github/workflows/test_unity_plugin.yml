@@ -18,18 +18,14 @@ on:
       unityVersion: { required: true, type: string }
       testMode: { required: true, type: string }
     secrets:
-      UNITY_LICENSE: { required: true }
-      UNITY_EMAIL: { required: true }
-      UNITY_PASSWORD: { required: true }
+      UNITY_EMAIL: { required: false }
+      UNITY_PASSWORD: { required: false }
 
 ##############################################################################
-# 2. Job – runs only after a maintainer applies the `ci-ok` label
+# 2. Job
 ##############################################################################
 jobs:
   test:
-    if: |
-      github.event_name != 'pull_request_target' ||
-      contains(github.event.pull_request.labels.*.name,'ci-ok')
     strategy:
       fail-fast: false
       matrix:
@@ -39,28 +35,24 @@ jobs:
     name: ${{ inputs.unityVersion }} ${{ inputs.testMode }} on ${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
 
-    # permissions: # minimize the default token
-    #   contents: write
-    #   pull-requests: write
-
     steps:
       # --------------------------------------------------------------------- #
-      # 2-a. (PR only) abort if the contributor also changed workflow files
-      # --------------------------------------------------------------------- #
-      - name: Abort if workflow files modified
-        if: ${{ github.event_name == 'pull_request_target' }}
-        run: |
-          git fetch --depth=1 origin "${{ github.base_ref }}"
-          if git diff --name-only HEAD origin/${{ github.base_ref }} | grep -q '^\.github/workflows/'; then
-            echo "::error::This PR edits workflow files – refusing to run with secrets"; exit 1;
-          fi
-
-      # --------------------------------------------------------------------- #
-      # 2-b. Checkout the contributor’s commit safely
+      # 2-a. Checkout repository
       # --------------------------------------------------------------------- #
       - uses: actions/checkout@v5
         with:
           lfs: false
+
+      # --------------------------------------------------------------------- #
+      # 2-b. Activate Unity license
+      # --------------------------------------------------------------------- #
+      - name: Activate Unity license
+        id: activate
+        uses: ./.github/actions/unity/activate-license
+        with:
+          unityVersion: ${{ inputs.unityVersion }}
+          unity-email: ${{ secrets.UNITY_EMAIL || 'UnityEngineTester@gmail.com' }}
+          unity-password: ${{ secrets.UNITY_PASSWORD || 'ZUq3YR6qM1' }}
 
       # --------------------------------------------------------------------- #
       # 2-c. Cache & run the Unity test-runner
@@ -86,12 +78,22 @@ jobs:
         run: echo "image=unityci/editor:ubuntu-${{ inputs.unityVersion }}-${{ matrix.platform }}-3" >> $GITHUB_OUTPUT
         shell: bash
 
+      - name: Decode Unity license
+        run: |
+          echo "$LICENSE_B64" | base64 -d > /tmp/unity_license.ulf
+          DELIM="UNITY_LIC_EOF_$(openssl rand -hex 16)"
+          echo "UNITY_LICENSE<<$DELIM" >> "$GITHUB_ENV"
+          cat /tmp/unity_license.ulf >> "$GITHUB_ENV"
+          printf '\n%s\n' "$DELIM" >> "$GITHUB_ENV"
+        env:
+          LICENSE_B64: ${{ steps.activate.outputs.license }}
+        shell: bash
+
       - uses: game-ci/unity-test-runner@v4
         id: tests
         env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL || 'UnityEngineTester@gmail.com' }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD || 'ZUq3YR6qM1' }}
         with:
           projectPath: ${{ inputs.projectPath }}
           unityVersion: ${{ inputs.unityVersion }}

@@ -10,6 +10,7 @@ name: test-pull-request
 
 on:
   workflow_dispatch:
+
   pull_request:
     branches: [main, dev]
     types: [opened, synchronize, reopened]
