@@ -12,6 +12,9 @@ on:
   workflow_dispatch:
 
 jobs:
+  test-cli:
+    uses: ./.github/workflows/test_cli.yml
+
   # --- UNITY TESTS ---
   # -------------------
 

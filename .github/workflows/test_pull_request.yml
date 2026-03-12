@@ -16,6 +16,9 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
+  test-cli:
+    uses: ./.github/workflows/test_cli.yml
+
   build-and-zip-mcp-server:
     runs-on: macos-latest
     steps:

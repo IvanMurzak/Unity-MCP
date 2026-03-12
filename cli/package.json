@@ -9,6 +9,8 @@
   },
   "scripts": {
     "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
@@ -35,6 +37,7 @@
   "devDependencies": {
     "@types/node": "^22.15.0",
     "@types/semver": "^7.7.0",
-    "typescript": "^5.8.0"
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0"
   }
 }

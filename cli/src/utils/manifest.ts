@@ -64,7 +64,7 @@ export async function resolveLatestVersion(): Promise<string> {
  * Only update if the new version is higher than the current version.
  * Ports the C# Installer.ShouldUpdateVersion() logic.
  */
-function shouldUpdateVersion(currentVersion: string, newVersion: string): boolean {
+export function shouldUpdateVersion(currentVersion: string, newVersion: string): boolean {
   if (!currentVersion) return true;
   if (!newVersion) return false;
 
