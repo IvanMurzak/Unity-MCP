@@ -408,7 +408,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         /// </summary>
         protected virtual void ApplyHttpAuthorizationConfig(AiAgentConfig config)
         {
-            var isRequired = UnityMcpPluginEditor.AuthOption == AuthOption.required;
+            // In Cloud mode, authorization is always required (cloud server enforces it).
+            // In Local mode, it depends on the user's AuthOption setting.
+            var isCloud = UnityMcpPluginEditor.ConnectionMode == ConnectionMode.Cloud;
+            var isRequired = isCloud || UnityMcpPluginEditor.AuthOption == AuthOption.required;
             config.ApplyHttpAuthorization(isRequired, UnityMcpPluginEditor.Token);
         }
 

@@ -22,6 +22,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     public class ScreenshotSceneViewTests : BaseTest
     {
         // -----------------------------------------------------------------------
+        // Setup — ensure Scene View window is open and focused before each test
+        // -----------------------------------------------------------------------
+
+        [SetUp]
+        public void EnsureSceneViewOpen()
+        {
+            var sceneView = SceneView.lastActiveSceneView;
+            if (sceneView == null && SceneView.sceneViews.Count > 0)
+                sceneView = SceneView.sceneViews[0] as SceneView;
+
+            if (sceneView == null)
+                sceneView = EditorWindow.GetWindow<SceneView>("Scene", true);
+
+            sceneView.Show();
+            sceneView.Focus();
+            sceneView.Repaint();
+        }
+
+        // -----------------------------------------------------------------------
         // Helpers
         // -----------------------------------------------------------------------
 
@@ -32,46 +51,36 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         private static bool SceneViewAvailable =>
             SceneView.lastActiveSceneView != null || SceneView.sceneViews.Count > 0;
 
+        private static void CloseSceneView()
+        {
+            var windows = Resources.FindObjectsOfTypeAll<SceneView>();
+            foreach (var window in windows)
+                window.Close();
+        }
+
         // -----------------------------------------------------------------------
-        // No-SceneView error path — always testable
+        // No-SceneView error path — close the window to test error handling
         // -----------------------------------------------------------------------
 
         [Test]
         public void ScreenshotSceneView_WhenNoSceneViewOpen_ReturnsSpecificError()
         {
-            // This test is only meaningful when no SceneView window is present.
-            // In environments where a SceneView IS open the tool succeeds instead,
-            // so we skip the assertion and just verify the tool doesn't crash.
+            CloseSceneView();
+
             var result = new Tool_Screenshot().ScreenshotSceneView(width: 320, height: 240);
 
             Assert.IsNotNull(result, "Result should never be null");
-
-            if (!SceneViewAvailable)
-            {
-                Assert.AreEqual(ResponseStatus.Error, result.Status,
-                    "Without a SceneView the tool must return an error response");
-            }
-            else
-            {
-                // SceneView is present — tool should succeed
-                Assert.AreNotEqual(ResponseStatus.Error, result.Status,
-                    "With a SceneView open the tool should return a non-error response");
-            }
+            Assert.AreEqual(ResponseStatus.Error, result.Status,
+                "Without a SceneView the tool must return an error response");
         }
 
         // -----------------------------------------------------------------------
-        // Happy path — only run when a SceneView is actually available
+        // Happy path — Scene View is open and ready
         // -----------------------------------------------------------------------
 
         [Test]
         public void ScreenshotSceneView_WithSceneView_DefaultDimensions_ReturnsImage()
         {
-            if (!SceneViewAvailable)
-            {
-                Assert.Ignore("No SceneView window open; skipping happy-path test.");
-                return;
-            }
-
             var result = new Tool_Screenshot().ScreenshotSceneView();
 
             Assert.IsNotNull(result);
@@ -82,12 +91,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [Test]
         public void ScreenshotSceneView_WithSceneView_CustomDimensions_ReturnsImage()
         {
-            if (!SceneViewAvailable)
-            {
-                Assert.Ignore("No SceneView window open; skipping happy-path test.");
-                return;
-            }
-
             var result = new Tool_Screenshot().ScreenshotSceneView(width: 640, height: 480);
 
             Assert.IsNotNull(result);
@@ -98,12 +101,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [Test]
         public void ScreenshotSceneView_WithSceneView_SmallDimensions_ReturnsImage()
         {
-            if (!SceneViewAvailable)
-            {
-                Assert.Ignore("No SceneView window open; skipping happy-path test.");
-                return;
-            }
-
             // Small texture keeps the test fast
             var result = new Tool_Screenshot().ScreenshotSceneView(width: 16, height: 16);
 
@@ -117,26 +114,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         // -----------------------------------------------------------------------
 
         [Test]
-        public void ScreenshotSceneView_ViaRunTool_HandledCorrectly()
+        public void ScreenshotSceneView_ViaRunTool_WhenSceneViewReady_Succeeds()
         {
-            if (!SceneViewAvailable)
-            {
-                // When no SceneView is open the tool returns ResponseCallTool.Error,
-                // which causes RunTool to fail. Use RunToolRaw to verify the error
-                // message is the expected one rather than an unexpected crash.
-                LogAssert.Expect(LogType.Error, new Regex("No Scene View|Scene View camera"));
-                var raw = RunToolRaw("screenshot-scene-view", @"{""width"": 320, ""height"": 240}");
+            RunTool("screenshot-scene-view", @"{""width"": 320, ""height"": 240}");
+        }
 
-                Assert.IsNotNull(raw, "Raw result should not be null");
-                Assert.IsTrue(
-                    raw.Contains("No Scene View") || raw.Contains("Scene View camera"),
-                    $"Expected 'No Scene View' error message. Actual JSON:\n{raw}");
-            }
-            else
-            {
-                // SceneView present — full success path
-                RunTool("screenshot-scene-view", @"{""width"": 320, ""height"": 240}");
-            }
+        [Test]
+        public void ScreenshotSceneView_ViaRunTool_WhenNoSceneView_ReturnsErrorJson()
+        {
+            CloseSceneView();
+
+            LogAssert.Expect(LogType.Error, new Regex("No Scene View|Scene View camera"));
+            var raw = RunToolRaw("screenshot-scene-view", @"{""width"": 320, ""height"": 240}");
+
+            Assert.IsNotNull(raw, "Raw result should not be null");
+            Assert.IsTrue(
+                raw.Contains("No Scene View") || raw.Contains("Scene View camera"),
+                $"Expected 'No Scene View' error message. Actual JSON:\n{raw}");
         }
 
         [Test]

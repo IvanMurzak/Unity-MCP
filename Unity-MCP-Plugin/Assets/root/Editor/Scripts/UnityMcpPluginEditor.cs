@@ -36,9 +36,9 @@ namespace com.IvanMurzak.Unity.MCP
             var changed = false;
             var data = unityConnectionConfig ??= new UnityConnectionConfig();
 
-            if (string.IsNullOrEmpty(data.Host))
+            if (string.IsNullOrEmpty(data.LocalHost))
             {
-                data.Host = UnityConnectionConfig.DefaultHost;
+                data.LocalHost = UnityConnectionConfig.DefaultHost;
                 changed = true;
             }
 
