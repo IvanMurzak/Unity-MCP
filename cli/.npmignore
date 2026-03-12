@@ -1,0 +1,5 @@
+src/
+tsconfig.json
+*.ts
+!dist/**/*.js
+!dist/**/*.d.ts
