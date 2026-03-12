@@ -115,9 +115,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
 
         public void Cancel()
         {
-            _cts?.Cancel();
-            _cts?.Dispose();
+            var cts = _cts;
             _cts = null;
+            if (cts != null)
+            {
+                try { cts.Cancel(); } catch (ObjectDisposedException) { }
+                cts.Dispose();
+            }
         }
 
         private void SetState(DeviceAuthFlowState state)
