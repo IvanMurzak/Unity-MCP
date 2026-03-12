@@ -37,19 +37,22 @@ export async function resolveLatestVersion(): Promise<string> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 5000);
 
-    const res = await fetch(`https://package.openupm.com/${PACKAGE_ID}`, {
-      signal: controller.signal,
-      headers: { Accept: 'application/json' },
-    });
-    clearTimeout(timeout);
+    try {
+      const res = await fetch(`https://package.openupm.com/${PACKAGE_ID}`, {
+        signal: controller.signal,
+        headers: { Accept: 'application/json' },
+      });
 
-    if (res.ok) {
-      const data = (await res.json()) as { 'dist-tags'?: { latest?: string } };
-      const latest = data?.['dist-tags']?.latest;
-      if (latest) {
-        console.log(`Resolved latest version from OpenUPM: ${latest}`);
-        return latest;
+      if (res.ok) {
+        const data = (await res.json()) as { 'dist-tags'?: { latest?: string } };
+        const latest = data?.['dist-tags']?.latest;
+        if (latest) {
+          console.log(`Resolved latest version from OpenUPM: ${latest}`);
+          return latest;
+        }
       }
+    } finally {
+      clearTimeout(timeout);
     }
   } catch {
     // Network error or timeout — fall through to hardcoded version
@@ -67,6 +70,12 @@ export async function resolveLatestVersion(): Promise<string> {
 export function shouldUpdateVersion(currentVersion: string, newVersion: string): boolean {
   if (!currentVersion) return true;
   if (!newVersion) return false;
+
+  // Skip automatic update for non-semver specs (file:, git+, http, etc.)
+  const nonSemverPrefixes = ['file:', 'git+', 'http:', 'https:'];
+  if (nonSemverPrefixes.some((prefix) => currentVersion.startsWith(prefix))) {
+    return false;
+  }
 
   const current = semver.valid(semver.coerce(currentVersion));
   const target = semver.valid(semver.coerce(newVersion));

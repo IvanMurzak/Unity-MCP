@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { fileURLToPath } from 'url';
 import { getProjectEditorVersion } from '../src/utils/unity-editor.js';
 
 describe('getProjectEditorVersion', () => {
@@ -73,29 +74,22 @@ describe('getProjectEditorVersion', () => {
 
 // Test against the actual test project files in the repo
 describe('getProjectEditorVersion (real projects)', () => {
-  const repoRoot = path.resolve(import.meta.dirname, '..', '..');
+  const __dirname = path.dirname(fileURLToPath(import.meta.url));
+  const repoRoot = path.resolve(__dirname, '..', '..');
 
-  it('reads version from Unity-Tests/2022.3.62f3', () => {
-    const projectPath = path.join(repoRoot, 'Unity-Tests', '2022.3.62f3');
-    if (fs.existsSync(path.join(projectPath, 'ProjectSettings', 'ProjectVersion.txt'))) {
-      const result = getProjectEditorVersion(projectPath);
-      expect(result).toBe('2022.3.62f3');
-    }
-  });
+  const testCases = [
+    { folder: '2022.3.62f3', expected: '2022.3.62f3' },
+    { folder: '2023.2.22f1', expected: '2023.2.22f1' },
+    { folder: '6000.3.1f1', expected: '6000.3.1f1' },
+  ];
 
-  it('reads version from Unity-Tests/2023.2.22f1', () => {
-    const projectPath = path.join(repoRoot, 'Unity-Tests', '2023.2.22f1');
-    if (fs.existsSync(path.join(projectPath, 'ProjectSettings', 'ProjectVersion.txt'))) {
-      const result = getProjectEditorVersion(projectPath);
-      expect(result).toBe('2023.2.22f1');
-    }
-  });
+  for (const { folder, expected } of testCases) {
+    const projectPath = path.join(repoRoot, 'Unity-Tests', folder);
+    const versionFileExists = fs.existsSync(path.join(projectPath, 'ProjectSettings', 'ProjectVersion.txt'));
 
-  it('reads version from Unity-Tests/6000.3.1f1', () => {
-    const projectPath = path.join(repoRoot, 'Unity-Tests', '6000.3.1f1');
-    if (fs.existsSync(path.join(projectPath, 'ProjectSettings', 'ProjectVersion.txt'))) {
+    it.skipIf(!versionFileExists)(`reads version from Unity-Tests/${folder}`, () => {
       const result = getProjectEditorVersion(projectPath);
-      expect(result).toBe('6000.3.1f1');
-    }
-  });
+      expect(result).toBe(expected);
+    });
+  }
 });

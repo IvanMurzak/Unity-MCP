@@ -1,5 +1,7 @@
 src/
+tests/
 tsconfig.json
 *.ts
 !dist/**/*.js
 !dist/**/*.d.ts
+package-lock.json

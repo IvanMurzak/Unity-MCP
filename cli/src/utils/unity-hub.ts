@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { execFileSync, spawn } from 'child_process';
+import { execFileSync } from 'child_process';
 import { platform } from 'os';
 
 /**
@@ -79,7 +79,7 @@ export function listInstalledEditors(hubPath: string): InstalledEditor[] {
 export function installEditor(hubPath: string, version: string): void {
   console.log(`Installing Unity Editor ${version} via Unity Hub...`);
   try {
-    const output = execFileSync(
+    execFileSync(
       hubPath,
       ['--', '--headless', 'install', '--version', version],
       { encoding: 'utf-8', timeout: 600000, stdio: 'inherit' }

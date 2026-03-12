@@ -3,8 +3,10 @@ import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { fileURLToPath } from 'url';
 
-const CLI_PATH = path.resolve(import.meta.dirname, '..', 'bin', 'unity-mcp.js');
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const CLI_PATH = path.resolve(__dirname, '..', 'bin', 'unity-mcp.js');
 
 function runCli(args: string[], options?: { cwd?: string }): { stdout: string; exitCode: number } {
   try {

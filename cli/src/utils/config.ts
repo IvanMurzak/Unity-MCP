@@ -62,7 +62,14 @@ export function readConfig(projectPath: string): UnityConnectionConfig | null {
     return null;
   }
   const json = fs.readFileSync(configPath, 'utf-8');
-  return JSON.parse(json) as UnityConnectionConfig;
+  try {
+    return JSON.parse(json) as UnityConnectionConfig;
+  } catch (err) {
+    if (err instanceof SyntaxError) {
+      console.error(`Malformed JSON in config file: ${configPath}\n${err.message}`);
+    }
+    return null;
+  }
 }
 
 /**
@@ -106,7 +113,13 @@ export function updateFeatures(
     disableAll?: boolean;
   }
 ): void {
-  const features: McpFeature[] = config[featureType] as McpFeature[] ?? [];
+  const rawFeatures = config[featureType];
+  const features: McpFeature[] = Array.isArray(rawFeatures)
+    ? rawFeatures.filter(
+        (f): f is McpFeature =>
+          typeof f === 'object' && f !== null && typeof f.name === 'string' && typeof f.enabled === 'boolean'
+      )
+    : [];
 
   if (options.enableAll) {
     for (const f of features) f.enabled = true;
