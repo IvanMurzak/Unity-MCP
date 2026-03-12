@@ -5,7 +5,7 @@
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "unity-mcp": "bin/unity-mcp.js"
+    "unity-mcp-cli": "bin/unity-mcp-cli.js"
   },
   "scripts": {
     "build": "tsc",

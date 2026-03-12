@@ -81,7 +81,7 @@ export async function findEditorPath(version?: string): Promise<string | null> {
     if (match) return getEditorBinary(match.path);
   }
 
-  // Return the latest editor by version-aware sorting
+  // Return the highest installed editor by version-aware sorting
   const sorted = [...editors].sort((a, b) => compareUnityVersions(b.version, a.version));
   return getEditorBinary(sorted[0].path);
 }

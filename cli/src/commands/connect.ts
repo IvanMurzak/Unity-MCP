@@ -11,7 +11,7 @@ export const connectCommand = new Command('connect')
   .option('--token <token>', 'Auth token (sets UNITY_MCP_TOKEN)')
   .option('--auth <option>', 'Auth option: none or required (sets UNITY_MCP_AUTH_OPTION)')
   .option('--keep-connected', 'Force keep connected (sets UNITY_MCP_KEEP_CONNECTED=true)')
-  .option('--unity-version <version>', 'Specific Unity Editor version to use')
+  .option('--unity <version>', 'Specific Unity Editor version to use')
   .action(async (options: {
     path: string;
     url: string;
@@ -19,7 +19,7 @@ export const connectCommand = new Command('connect')
     token?: string;
     auth?: string;
     keepConnected?: boolean;
-    unityVersion?: string;
+    unity?: string;
   }) => {
     const projectPath = path.resolve(options.path);
 
@@ -29,7 +29,7 @@ export const connectCommand = new Command('connect')
     }
 
     // Determine editor version
-    let version = options.unityVersion;
+    let version = options.unity;
     if (!version) {
       version = getProjectEditorVersion(projectPath) ?? undefined;
       if (version) {
@@ -40,7 +40,7 @@ export const connectCommand = new Command('connect')
     const editorPath = await findEditorPath(version);
     if (!editorPath) {
       const versionMsg = version ? ` (version ${version})` : '';
-      console.error(`Error: Unity Editor not found${versionMsg}. Install it with: unity-mcp install-editor --version <version>`);
+      console.error(`Error: Unity Editor not found${versionMsg}. Install it with: unity-mcp-cli install-editor --version <version>`);
       process.exit(1);
     }
 

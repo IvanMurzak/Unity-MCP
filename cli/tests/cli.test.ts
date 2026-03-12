@@ -32,7 +32,7 @@ describe('CLI integration', () => {
     it('shows help with --help', () => {
       const { stdout, exitCode } = runCli(['--help']);
       expect(exitCode).toBe(0);
-      expect(stdout).toContain('unity-mcp');
+      expect(stdout).toContain('unity-mcp-cli');
       expect(stdout).toContain('create-project');
       expect(stdout).toContain('install-editor');
       expect(stdout).toContain('open');

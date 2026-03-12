@@ -42,7 +42,7 @@ export const configureCommand = new Command('configure')
   }) => {
     const resolvedPath = positionalPath ?? options.path;
     if (!resolvedPath) {
-      console.error('Error: Path is required. Usage: unity-mcp configure <path> or --path <path>');
+      console.error('Error: Path is required. Usage: unity-mcp-cli configure <path> or --path <path>');
       process.exit(1);
     }
     const projectPath = path.resolve(resolvedPath);

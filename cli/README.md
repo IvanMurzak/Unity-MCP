@@ -36,7 +36,7 @@ Or install globally:
 
 ```bash
 npm install -g unity-mcp-cli
-unity-mcp install-plugin /path/to/unity/project
+unity-mcp-cli install-plugin /path/to/unity/project
 ```
 
 > **Requirements:** [Node.js](https://nodejs.org/) >= 18. [Unity Hub](https://unity.com/download) is installed automatically if not found.
@@ -71,12 +71,12 @@ npx unity-mcp-cli create-project /path/to/new/project
 | Option | Required | Description |
 |---|---|---|
 | `[path]` | Yes | Path where the project will be created (positional or `--path`) |
-| `--unity-version <version>` | No | Unity Editor version to use (defaults to highest installed) |
+| `--unity <version>` | No | Unity Editor version to use (defaults to highest installed) |
 
 **Example — create a project with a specific editor version:**
 
 ```bash
-npx unity-mcp-cli create-project ./MyGame --unity-version 2022.3.62f1
+npx unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
 ```
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
@@ -115,7 +115,7 @@ npx unity-mcp-cli open ./MyGame
 | Option | Required | Description |
 |---|---|---|
 | `[path]` | Yes | Path to the Unity project (positional or `--path`) |
-| `--unity-version <version>` | No | Specific Unity Editor version to use (defaults to version from project settings) |
+| `--unity <version>` | No | Specific Unity Editor version to use (defaults to version from project settings, falls back to highest installed) |
 
 The editor process is spawned in detached mode — the CLI returns immediately.
 
@@ -211,7 +211,7 @@ npx unity-mcp-cli connect \
 | `--token <token>` | No | Authentication token |
 | `--auth <option>` | No | Auth mode: `none` or `required` |
 | `--keep-connected` | No | Force keep the connection alive |
-| `--unity-version <version>` | No | Specific Unity Editor version to use |
+| `--unity <version>` | No | Specific Unity Editor version to use (defaults to version from project settings, falls back to highest installed) |
 
 This command launches the Unity Editor with MCP environment variables (`UNITY_MCP_HOST`, `UNITY_MCP_TOOLS`, `UNITY_MCP_TOKEN`, etc.) so the plugin connects automatically on startup.
 
@@ -235,7 +235,7 @@ Set up a complete Unity MCP project from scratch in one script:
 
 ```bash
 # 1. Create a new Unity project
-npx unity-mcp-cli create-project ./MyAIGame --unity-version 6000.3.1f1
+npx unity-mcp-cli create-project ./MyAIGame --unity 6000.3.1f1
 
 # 2. Install the Unity-MCP plugin
 npx unity-mcp-cli install-plugin ./MyAIGame

@@ -13,7 +13,7 @@ const pkg = require('../package.json') as { version: string };
 const program = new Command();
 
 program
-  .name('unity-mcp')
+  .name('unity-mcp-cli')
   .description('Cross-platform CLI tool for Unity-MCP operations')
   .version(pkg.version);
 

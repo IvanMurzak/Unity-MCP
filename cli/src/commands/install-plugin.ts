@@ -11,7 +11,7 @@ export const installPluginCommand = new Command('install-plugin')
   .action(async (positionalPath: string | undefined, options: { path?: string; pluginVersion?: string }) => {
     const resolvedPath = positionalPath ?? options.path;
     if (!resolvedPath) {
-      console.error('Error: Path is required. Usage: unity-mcp install-plugin <path> or --path <path>');
+      console.error('Error: Path is required. Usage: unity-mcp-cli install-plugin <path> or --path <path>');
       process.exit(1);
     }
     const projectPath = path.resolve(resolvedPath);
