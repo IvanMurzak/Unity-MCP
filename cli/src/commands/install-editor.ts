@@ -1,22 +1,18 @@
 import { Command } from 'commander';
-import { findUnityHub, installEditor, listInstalledEditors } from '../utils/unity-hub.js';
+import { ensureUnityHub, installEditor, listInstalledEditors } from '../utils/unity-hub.js';
 import { getProjectEditorVersion } from '../utils/unity-editor.js';
 
 export const installEditorCommand = new Command('install-editor')
   .description('Install Unity Editor via Unity Hub')
   .option('--version <version>', 'Unity Editor version to install')
-  .option('--project-path <path>', 'Read version from an existing Unity project')
-  .action(async (options: { version?: string; projectPath?: string }) => {
-    const hubPath = findUnityHub();
-    if (!hubPath) {
-      console.error('Error: Unity Hub not found. Please install Unity Hub first.');
-      process.exit(1);
-    }
+  .option('--path <path>', 'Read version from an existing Unity project')
+  .action(async (options: { version?: string; path?: string }) => {
+    const hubPath = await ensureUnityHub();
 
     let version = options.version;
 
-    if (!version && options.projectPath) {
-      version = getProjectEditorVersion(options.projectPath) ?? undefined;
+    if (!version && options.path) {
+      version = getProjectEditorVersion(options.path) ?? undefined;
       if (version) {
         console.log(`Detected editor version from project: ${version}`);
       } else {
@@ -26,7 +22,7 @@ export const installEditorCommand = new Command('install-editor')
     }
 
     if (!version) {
-      console.error('Error: Please specify --version or --project-path');
+      console.error('Error: Please specify --version or --path');
 
       // Show installed editors as a hint
       const editors = listInstalledEditors(hubPath);

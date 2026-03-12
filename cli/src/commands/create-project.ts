@@ -1,31 +1,34 @@
 import { Command } from 'commander';
 import * as path from 'path';
-import { findUnityHub, createProject, listInstalledEditors } from '../utils/unity-hub.js';
+import { ensureUnityHub, createProject, listInstalledEditors, findHighestEditor } from '../utils/unity-hub.js';
 
 export const createProjectCommand = new Command('create-project')
   .description('Create a new Unity project')
-  .requiredOption('--path <path>', 'Path where the project will be created')
-  .option('--editor-version <version>', 'Unity Editor version to use')
-  .action(async (options: { path: string; editorVersion?: string }) => {
-    const hubPath = findUnityHub();
-    if (!hubPath) {
-      console.error('Error: Unity Hub not found. Please install Unity Hub first.');
+  .argument('[path]', 'Path where the project will be created')
+  .option('--path <path>', 'Path where the project will be created')
+  .option('--unity-version <version>', 'Unity Editor version to use')
+  .action(async (positionalPath: string | undefined, options: { path?: string; unityVersion?: string }) => {
+    const resolvedPath = positionalPath ?? options.path;
+    if (!resolvedPath) {
+      console.error('Error: Path is required. Usage: unity-mcp create-project <path> or --path <path>');
       process.exit(1);
     }
+    const hubPath = await ensureUnityHub();
 
-    let editorVersion = options.editorVersion;
+    let editorVersion = options.unityVersion;
 
     if (!editorVersion) {
-      // Use the latest installed editor
+      // Use the highest installed editor version
       const editors = listInstalledEditors(hubPath);
       if (editors.length === 0) {
         console.error('Error: No Unity editors installed. Install one with: unity-mcp install-editor --version <version>');
         process.exit(1);
       }
-      editorVersion = editors[0].version;
-      console.log(`No editor version specified, using latest installed: ${editorVersion}`);
+      const highest = findHighestEditor(editors);
+      editorVersion = highest.version;
+      console.log(`No Unity version specified, using highest installed: ${editorVersion}`);
     }
 
-    const projectPath = path.resolve(options.path);
+    const projectPath = path.resolve(resolvedPath);
     createProject(hubPath, projectPath, editorVersion);
   });

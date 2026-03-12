@@ -14,7 +14,7 @@ Cross-platform CLI tool for **[Unity MCP](https://github.com/IvanMurzak/Unity-MC
 
 ## ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-features.svg?raw=true)
 
-- :white_check_mark: **Create projects** — scaffold new Unity projects via Unity Hub
+- :white_check_mark: **Create projects** — scaffold new Unity projects via Unity Editor
 - :white_check_mark: **Install editors** — install any Unity Editor version from the command line
 - :white_check_mark: **Install plugin** — add Unity-MCP plugin to `manifest.json` with all required scoped registries
 - :white_check_mark: **Configure** — enable/disable MCP tools, prompts, and resources
@@ -29,17 +29,17 @@ Cross-platform CLI tool for **[Unity MCP](https://github.com/IvanMurzak/Unity-MC
 Run any command instantly with `npx` — no installation required:
 
 ```bash
-npx unity-mcp-cli install-plugin --project-path /path/to/unity/project
+npx unity-mcp-cli install-plugin /path/to/unity/project
 ```
 
 Or install globally:
 
 ```bash
 npm install -g unity-mcp-cli
-unity-mcp install-plugin --project-path /path/to/unity/project
+unity-mcp install-plugin /path/to/unity/project
 ```
 
-> **Requirements:** [Node.js](https://nodejs.org/) >= 18 and [Unity Hub](https://unity.com/download) (for project/editor commands)
+> **Requirements:** [Node.js](https://nodejs.org/) >= 18. [Unity Hub](https://unity.com/download) is installed automatically if not found.
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
@@ -62,21 +62,21 @@ unity-mcp install-plugin --project-path /path/to/unity/project
 
 ## `create-project`
 
-Create a new Unity project using Unity Hub.
+Create a new Unity project using the Unity Editor.
 
 ```bash
-npx unity-mcp-cli create-project --path /path/to/new/project
+npx unity-mcp-cli create-project /path/to/new/project
 ```
 
 | Option | Required | Description |
 |---|---|---|
-| `--path <path>` | Yes | Path where the project will be created |
-| `--editor-version <version>` | No | Unity Editor version to use (defaults to latest installed) |
+| `[path]` | Yes | Path where the project will be created (positional or `--path`) |
+| `--unity-version <version>` | No | Unity Editor version to use (defaults to highest installed) |
 
 **Example — create a project with a specific editor version:**
 
 ```bash
-npx unity-mcp-cli create-project --path ./MyGame --editor-version 2022.3.62f1
+npx unity-mcp-cli create-project ./MyGame --unity-version 2022.3.62f1
 ```
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
@@ -92,14 +92,14 @@ npx unity-mcp-cli install-editor --version 6000.3.1f1
 | Option | Required | Description |
 |---|---|---|
 | `--version <version>` | No | Unity Editor version to install |
-| `--project-path <path>` | No | Read the required version from an existing project |
+| `--path <path>` | No | Read the required version from an existing project |
 
 If neither option is provided, the command lists currently installed editors.
 
 **Example — install the editor version that a project needs:**
 
 ```bash
-npx unity-mcp-cli install-editor --project-path ./MyGame
+npx unity-mcp-cli install-editor --path ./MyGame
 ```
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
@@ -109,13 +109,13 @@ npx unity-mcp-cli install-editor --project-path ./MyGame
 Open a Unity project in the Unity Editor.
 
 ```bash
-npx unity-mcp-cli open --project-path ./MyGame
+npx unity-mcp-cli open ./MyGame
 ```
 
 | Option | Required | Description |
 |---|---|---|
-| `--project-path <path>` | Yes | Path to the Unity project |
-| `--editor-version <version>` | No | Specific Unity Editor version to use (defaults to version from project settings) |
+| `[path]` | Yes | Path to the Unity project (positional or `--path`) |
+| `--unity-version <version>` | No | Specific Unity Editor version to use (defaults to version from project settings) |
 
 The editor process is spawned in detached mode — the CLI returns immediately.
 
@@ -126,12 +126,12 @@ The editor process is spawned in detached mode — the CLI returns immediately.
 Install the Unity-MCP plugin into a Unity project's `Packages/manifest.json`.
 
 ```bash
-npx unity-mcp-cli install-plugin --project-path ./MyGame
+npx unity-mcp-cli install-plugin ./MyGame
 ```
 
 | Option | Required | Description |
 |---|---|---|
-| `--project-path <path>` | Yes | Path to the Unity project |
+| `[path]` | Yes | Path to the Unity project (positional or `--path`) |
 | `--plugin-version <version>` | No | Plugin version to install (defaults to latest from [OpenUPM](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)) |
 
 This command:
@@ -142,7 +142,7 @@ This command:
 **Example — install a specific plugin version:**
 
 ```bash
-npx unity-mcp-cli install-plugin --project-path ./MyGame --plugin-version 0.51.6
+npx unity-mcp-cli install-plugin ./MyGame --plugin-version 0.51.6
 ```
 
 > After running this command, open the project in Unity Editor to complete the package installation.
@@ -154,12 +154,12 @@ npx unity-mcp-cli install-plugin --project-path ./MyGame --plugin-version 0.51.6
 Configure MCP tools, prompts, and resources in `UserSettings/AI-Game-Developer-Config.json`.
 
 ```bash
-npx unity-mcp-cli configure --project-path ./MyGame --list
+npx unity-mcp-cli configure ./MyGame --list
 ```
 
 | Option | Required | Description |
 |---|---|---|
-| `--project-path <path>` | Yes | Path to the Unity project |
+| `[path]` | Yes | Path to the Unity project (positional or `--path`) |
 | `--list` | No | List current configuration and exit |
 | `--enable-tools <names>` | No | Enable specific tools (comma-separated) |
 | `--disable-tools <names>` | No | Disable specific tools (comma-separated) |
@@ -177,7 +177,7 @@ npx unity-mcp-cli configure --project-path ./MyGame --list
 **Example — enable specific tools and disable all prompts:**
 
 ```bash
-npx unity-mcp-cli configure --project-path ./MyGame \
+npx unity-mcp-cli configure ./MyGame \
   --enable-tools gameobject-create,gameobject-find \
   --disable-all-prompts
 ```
@@ -185,7 +185,7 @@ npx unity-mcp-cli configure --project-path ./MyGame \
 **Example — enable everything:**
 
 ```bash
-npx unity-mcp-cli configure --project-path ./MyGame \
+npx unity-mcp-cli configure ./MyGame \
   --enable-all-tools \
   --enable-all-prompts \
   --enable-all-resources
@@ -199,19 +199,19 @@ Open a Unity project and connect it to a specific MCP server via environment var
 
 ```bash
 npx unity-mcp-cli connect \
-  --project-path ./MyGame \
+  --path ./MyGame \
   --url http://localhost:8080
 ```
 
 | Option | Required | Description |
 |---|---|---|
-| `--project-path <path>` | Yes | Path to the Unity project |
+| `--path <path>` | Yes | Path to the Unity project |
 | `--url <url>` | Yes | MCP server URL to connect to |
 | `--tools <names>` | No | Comma-separated list of tools to enable |
 | `--token <token>` | No | Authentication token |
 | `--auth <option>` | No | Auth mode: `none` or `required` |
 | `--keep-connected` | No | Force keep the connection alive |
-| `--editor-version <version>` | No | Specific Unity Editor version to use |
+| `--unity-version <version>` | No | Specific Unity Editor version to use |
 
 This command launches the Unity Editor with MCP environment variables (`UNITY_MCP_HOST`, `UNITY_MCP_TOOLS`, `UNITY_MCP_TOKEN`, etc.) so the plugin connects automatically on startup.
 
@@ -219,7 +219,7 @@ This command launches the Unity Editor with MCP environment variables (`UNITY_MC
 
 ```bash
 npx unity-mcp-cli connect \
-  --project-path ./MyGame \
+  --path ./MyGame \
   --url http://my-server:8080 \
   --token my-secret-token \
   --auth required \
@@ -235,17 +235,17 @@ Set up a complete Unity MCP project from scratch in one script:
 
 ```bash
 # 1. Create a new Unity project
-npx unity-mcp-cli create-project --path ./MyAIGame --editor-version 6000.3.1f1
+npx unity-mcp-cli create-project ./MyAIGame --unity-version 6000.3.1f1
 
 # 2. Install the Unity-MCP plugin
-npx unity-mcp-cli install-plugin --project-path ./MyAIGame
+npx unity-mcp-cli install-plugin ./MyAIGame
 
 # 3. Enable all MCP tools
-npx unity-mcp-cli configure --project-path ./MyAIGame --enable-all-tools
+npx unity-mcp-cli configure ./MyAIGame --enable-all-tools
 
 # 4. Open the project with MCP connection
 npx unity-mcp-cli connect \
-  --project-path ./MyAIGame \
+  --path ./MyAIGame \
   --url http://localhost:8080 \
   --keep-connected
 ```
@@ -275,6 +275,9 @@ The `configure` command reads and writes `UserSettings/AI-Game-Developer-Config.
 
 ### Unity Hub Integration
 
-Commands that manage editors or create projects use the **Unity Hub CLI** (`--headless` mode). The CLI automatically detects Unity Hub's installation path across all platforms.
+Commands that manage editors or create projects use the **Unity Hub CLI** (`--headless` mode). If Unity Hub is not installed, the CLI **downloads and installs it automatically**:
+- **Windows** — silent install via `UnityHubSetup.exe /S` (may require administrator privileges)
+- **macOS** — downloads the DMG, mounts it, and copies `Unity Hub.app` to `/Applications`
+- **Linux** — downloads `UnityHub.AppImage` to `~/Applications/`
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)

@@ -5,23 +5,23 @@ import { findEditorPath, getProjectEditorVersion, launchEditor } from '../utils/
 
 export const connectCommand = new Command('connect')
   .description('Open Unity and enforce MCP connection to a specified server URL via environment variables')
-  .requiredOption('--project-path <path>', 'Path to the Unity project')
+  .requiredOption('--path <path>', 'Path to the Unity project')
   .requiredOption('--url <url>', 'MCP server URL to connect to')
   .option('--tools <names>', 'Comma-separated list of tools to enable (sets UNITY_MCP_TOOLS)')
   .option('--token <token>', 'Auth token (sets UNITY_MCP_TOKEN)')
   .option('--auth <option>', 'Auth option: none or required (sets UNITY_MCP_AUTH_OPTION)')
   .option('--keep-connected', 'Force keep connected (sets UNITY_MCP_KEEP_CONNECTED=true)')
-  .option('--editor-version <version>', 'Specific Unity Editor version to use')
+  .option('--unity-version <version>', 'Specific Unity Editor version to use')
   .action(async (options: {
-    projectPath: string;
+    path: string;
     url: string;
     tools?: string;
     token?: string;
     auth?: string;
     keepConnected?: boolean;
-    editorVersion?: string;
+    unityVersion?: string;
   }) => {
-    const projectPath = path.resolve(options.projectPath);
+    const projectPath = path.resolve(options.path);
 
     if (!fs.existsSync(projectPath)) {
       console.error(`Error: Project path does not exist: ${projectPath}`);
@@ -29,7 +29,7 @@ export const connectCommand = new Command('connect')
     }
 
     // Determine editor version
-    let version = options.editorVersion;
+    let version = options.unityVersion;
     if (!version) {
       version = getProjectEditorVersion(projectPath) ?? undefined;
       if (version) {
@@ -37,7 +37,7 @@ export const connectCommand = new Command('connect')
       }
     }
 
-    const editorPath = findEditorPath(version);
+    const editorPath = await findEditorPath(version);
     if (!editorPath) {
       const versionMsg = version ? ` (version ${version})` : '';
       console.error(`Error: Unity Editor not found${versionMsg}. Install it with: unity-mcp install-editor --version <version>`);

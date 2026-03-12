@@ -9,7 +9,8 @@ function parseCommaSeparated(value: string): string[] {
 
 export const configureCommand = new Command('configure')
   .description('Configure MCP tools, prompts, and resources in AI-Game-Developer-Config.json')
-  .requiredOption('--project-path <path>', 'Path to the Unity project')
+  .argument('[path]', 'Path to the Unity project')
+  .option('--path <path>', 'Path to the Unity project')
   .option('--enable-tools <names>', 'Enable specific tools (comma-separated)', parseCommaSeparated)
   .option('--disable-tools <names>', 'Disable specific tools (comma-separated)', parseCommaSeparated)
   .option('--enable-all-tools', 'Enable all tools')
@@ -23,8 +24,8 @@ export const configureCommand = new Command('configure')
   .option('--enable-all-resources', 'Enable all resources')
   .option('--disable-all-resources', 'Disable all resources')
   .option('--list', 'List current configuration')
-  .action(async (options: {
-    projectPath: string;
+  .action(async (positionalPath: string | undefined, options: {
+    path?: string;
     enableTools?: string[];
     disableTools?: string[];
     enableAllTools?: boolean;
@@ -39,7 +40,12 @@ export const configureCommand = new Command('configure')
     disableAllResources?: boolean;
     list?: boolean;
   }) => {
-    const projectPath = path.resolve(options.projectPath);
+    const resolvedPath = positionalPath ?? options.path;
+    if (!resolvedPath) {
+      console.error('Error: Path is required. Usage: unity-mcp configure <path> or --path <path>');
+      process.exit(1);
+    }
+    const projectPath = path.resolve(resolvedPath);
 
     if (!fs.existsSync(projectPath)) {
       console.error(`Error: Project path does not exist: ${projectPath}`);

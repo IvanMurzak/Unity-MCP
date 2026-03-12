@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { spawn } from 'child_process';
 import { platform } from 'os';
-import { findUnityHub, listInstalledEditors } from './unity-hub.js';
+import { findUnityHub, ensureUnityHub, listInstalledEditors } from './unity-hub.js';
 
 /**
  * Compare two Unity version strings with numeric-aware sorting.
@@ -62,10 +62,10 @@ export function getProjectEditorVersion(projectPath: string): string | null {
 
 /**
  * Find the Unity Editor binary path for a specific version.
- * Uses Unity Hub to locate installed editors.
+ * Uses Unity Hub to locate installed editors. Installs Unity Hub automatically if needed.
  */
-export function findEditorPath(version?: string): string | null {
-  const hubPath = findUnityHub();
+export async function findEditorPath(version?: string): Promise<string | null> {
+  const hubPath = await ensureUnityHub().catch(() => null);
   if (!hubPath) {
     // Try common default locations
     return findEditorPathByCommonLocations(version);
@@ -156,8 +156,17 @@ function findEditorPathByCommonLocations(version?: string): string | null {
 
 /**
  * Get the Unity binary path from an editor installation directory.
+ * Handles cases where the path already points to the executable
+ * (e.g. Unity Hub may return ".../Editor/Unity.exe" directly).
  */
 function getEditorBinary(editorDir: string): string {
+  const basename = path.basename(editorDir).toLowerCase();
+
+  // If the path already points to the executable, return it as-is
+  if (basename === 'unity.exe' || basename === 'unity') {
+    return editorDir;
+  }
+
   const os = platform();
   switch (os) {
     case 'win32':
