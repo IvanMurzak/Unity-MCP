@@ -9,7 +9,6 @@
 */
 
 #nullable enable
-using System.Reflection;
 using System.Text.RegularExpressions;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API;
@@ -23,26 +22,39 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     public class ScreenshotGameViewTests : BaseTest
     {
         // -----------------------------------------------------------------------
+        // Setup — ensure Game View window is open and focused before each test
+        // -----------------------------------------------------------------------
+
+        [SetUp]
+        public void EnsureGameViewOpen()
+        {
+            var gameViewType = System.Type.GetType("UnityEditor.GameView,UnityEditor");
+            if (gameViewType == null)
+                return;
+
+            var gameView = EditorWindow.GetWindow(gameViewType, false, "Game", true);
+            gameView.Show();
+            gameView.Focus();
+            gameView.Repaint();
+        }
+
+        // -----------------------------------------------------------------------
         // Helpers — mirror the exact checks the tool performs internally
         // -----------------------------------------------------------------------
 
         private static bool GameViewTypeAvailable =>
             System.Type.GetType("UnityEditor.GameView,UnityEditor") != null;
 
-        private static bool GameViewRenderTextureReady
+        private static void CloseGameView()
         {
-            get
+            var gameViewType = System.Type.GetType("UnityEditor.GameView,UnityEditor");
+            if (gameViewType == null) return;
+
+            var windows = Resources.FindObjectsOfTypeAll(gameViewType);
+            foreach (var window in windows)
             {
-                var gameViewType = System.Type.GetType("UnityEditor.GameView,UnityEditor");
-                if (gameViewType == null) return false;
-
-                var gameView = EditorWindow.GetWindow(gameViewType, false, null, false);
-                if (gameView == null) return false;
-
-                var rtField = gameViewType.GetField("m_RenderTexture",
-                    BindingFlags.NonPublic | BindingFlags.Instance);
-                var rt = rtField?.GetValue(gameView) as RenderTexture;
-                return rt != null && rt.IsCreated();
+                if (window is EditorWindow editorWindow)
+                    editorWindow.Close();
             }
         }
 
@@ -70,18 +82,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var result = new Tool_Screenshot().ScreenshotGameView();
 
             Assert.IsNotNull(result, "Result must never be null");
-
-            if (result.Status == ResponseStatus.Error)
-            {
-                // One of the three documented error messages must appear in the JSON
-                LogAssert.Expect(LogType.Error, new Regex("GameView type not found|No Game View window|Game View render texture is not available"));
-                var raw = RunToolRaw("screenshot-game-view", "{}");
-                Assert.IsTrue(
-                    raw.Contains("GameView type not found") ||
-                    raw.Contains("No Game View window") ||
-                    raw.Contains("Game View render texture is not available"),
-                    $"Error response must contain a known message. Actual JSON:\n{raw}");
-            }
+            Assert.AreNotEqual(ResponseStatus.Error, result.Status,
+                "Should return a non-error response when the Game View is open and focused");
         }
 
         // -----------------------------------------------------------------------
@@ -97,18 +99,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         // -----------------------------------------------------------------------
-        // Happy path — only exercised when the Game View RT is ready
+        // Happy path — Game View is open and ready
         // -----------------------------------------------------------------------
 
         [Test]
         public void ScreenshotGameView_WhenGameViewReady_ReturnsImage()
         {
-            if (!GameViewRenderTextureReady)
-            {
-                Assert.Ignore("Game View render texture is not ready; skipping happy-path test.");
-                return;
-            }
-
             var result = new Tool_Screenshot().ScreenshotGameView();
 
             Assert.IsNotNull(result);
@@ -117,17 +113,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         // -----------------------------------------------------------------------
-        // Error path — render texture unavailable
+        // Error path — render texture unavailable (Game View closed)
         // -----------------------------------------------------------------------
 
         [Test]
         public void ScreenshotGameView_WhenRenderTextureNotReady_ReturnsSpecificError()
         {
-            if (GameViewRenderTextureReady)
-            {
-                Assert.Ignore("Game View render texture is ready; skipping render-texture-unavailable test.");
-                return;
-            }
+            CloseGameView();
 
             var result = new Tool_Screenshot().ScreenshotGameView();
 
@@ -143,12 +135,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [Test]
         public void ScreenshotGameView_ViaRunTool_WhenGameViewReady_Succeeds()
         {
-            if (!GameViewRenderTextureReady)
-            {
-                Assert.Ignore("Game View render texture is not ready; skipping framework happy-path test.");
-                return;
-            }
-
             // Method takes no parameters; an empty JSON object is the correct input.
             RunTool("screenshot-game-view", "{}");
         }
@@ -156,11 +142,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [Test]
         public void ScreenshotGameView_ViaRunTool_WhenRenderTextureNotReady_ReturnsErrorJson()
         {
-            if (GameViewRenderTextureReady)
-            {
-                Assert.Ignore("Game View render texture is ready; skipping framework error-path test.");
-                return;
-            }
+            CloseGameView();
 
             LogAssert.Expect(LogType.Error, new Regex("No Game View window|Game View render texture is not available"));
             var raw = RunToolRaw("screenshot-game-view", "{}");
