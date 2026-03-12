@@ -62,7 +62,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
             var body = clientLabel != null
                 ? JsonSerializer.Serialize(new { client_label = clientLabel }, _jsonOptions)
                 : "{}";
-            var content = new StringContent(body, Encoding.UTF8, "application/json");
+            using var content = new StringContent(body, Encoding.UTF8, "application/json");
             var response = await _httpClient.PostAsync($"{serverUrl.TrimEnd('/')}/api/auth/device/authorize", content, ct);
             response.EnsureSuccessStatusCode();
             var json = await response.Content.ReadAsStringAsync();
@@ -74,7 +74,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
             string serverUrl, string deviceCode, CancellationToken ct = default)
         {
             var body = JsonSerializer.Serialize(new { device_code = deviceCode, grant_type = "urn:ietf:params:oauth:grant-type:device_code" }, _jsonOptions);
-            var content = new StringContent(body, Encoding.UTF8, "application/json");
+            using var content = new StringContent(body, Encoding.UTF8, "application/json");
             var response = await _httpClient.PostAsync($"{serverUrl.TrimEnd('/')}/api/auth/device/token", content, ct);
             var json = await response.Content.ReadAsStringAsync();
             return JsonSerializer.Deserialize<DeviceTokenResponse>(json, _jsonOptions)
