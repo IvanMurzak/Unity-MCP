@@ -31,6 +31,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 new GitHubCopilotCliConfigurator(),
                 new GeminiConfigurator(),
                 new AntigravityConfigurator(),
+                new ClineConfigurator(),
                 new OpenCodeConfigurator(),
                 new CodexConfigurator(),
                 new KiloCodeConfigurator(),
