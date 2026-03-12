@@ -20,7 +20,9 @@
     "mcp",
     "model-context-protocol",
     "ai",
-    "cli"
+    "cli",
+    "gamedev",
+    "game-dev"
   ],
   "author": "Ivan Murzak",
   "license": "Apache-2.0",
