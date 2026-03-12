@@ -1,5 +1,5 @@
 {
-  "name": "unity-mcp",
+  "name": "unity-mcp-cli",
   "version": "0.51.6",
   "description": "Cross-platform CLI tool for Unity-MCP operations — create projects, install plugins, configure tools, and manage MCP connections",
   "type": "module",
@@ -12,7 +12,8 @@
     "pretest": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "prepack": "npm run build"
   },
   "keywords": [
     "unity",

@@ -26,7 +26,6 @@ on:
       NUGET_API_KEY: { required: true }
       DOCKER_USERNAME: { required: true }
       DOCKER_PASSWORD: { required: true }
-      NPM_TOKEN: { required: true }
 
 jobs:
   deploy-mcp-server-to-nuget:
@@ -115,6 +114,9 @@ jobs:
 
   deploy-cli-to-npm:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -140,9 +142,7 @@ jobs:
           cd cli
           npm test
 
-      - name: Publish to npm
+      - name: Publish to npm with provenance
         run: |
           cd cli
-          npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          npm publish --access public --provenance
