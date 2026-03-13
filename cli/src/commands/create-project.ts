@@ -39,7 +39,5 @@ export const createProjectCommand = new Command('create-project')
     }
 
     const projectPath = path.resolve(resolvedPath);
-    ui.info(`Creating project at: ${projectPath}`);
     createProject(hubPath, projectPath, editorVersion);
-    ui.success(`Project created successfully at ${projectPath}`);
   });

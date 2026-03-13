@@ -47,8 +47,7 @@ export function configureStyledHelp(cmd: Command, appVersion?: string): Command 
       lines.push('');
 
       // Subcommands
-      const subcommands = helper.visibleCommands(target)
-        .sort((a, b) => a.name().localeCompare(b.name()));
+      const subcommands = helper.visibleCommands(target);
       if (subcommands.length > 0) {
         lines.push(chalk.bold('Commands:'));
         for (const sub of subcommands) {
@@ -91,23 +90,6 @@ export function configureStyledHelp(cmd: Command, appVersion?: string): Command 
     },
   });
   return cmd;
-}
-
-/**
- * Display a styled banner with the app name and optional subtitle.
- */
-export function banner(title: string, subtitle?: string): void {
-  const lines = [chalk.bold.cyan(title)];
-  if (subtitle) {
-    lines.push(chalk.dim(subtitle));
-  }
-  console.log(
-    boxen(lines.join('\n'), {
-      padding: { top: 0, bottom: 0, left: 2, right: 2 },
-      borderColor: 'cyan',
-      borderStyle: 'round',
-    })
-  );
 }
 
 /**
@@ -157,20 +139,6 @@ export function label(key: string, value: string): void {
  */
 export function startSpinner(text: string): Ora {
   return ora({ text, color: 'cyan' }).start();
-}
-
-/**
- * Format a command name and description for help output.
- */
-export function formatCommand(name: string, desc: string): string {
-  return `  ${chalk.yellow(name.padEnd(20))} ${chalk.dim(desc)}`;
-}
-
-/**
- * Format an option flag and description for help output.
- */
-export function formatOption(flags: string, desc: string): string {
-  return `  ${chalk.green(flags.padEnd(30))} ${chalk.dim(desc)}`;
 }
 
 /**

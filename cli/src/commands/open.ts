@@ -44,5 +44,4 @@ export const openCommand = new Command('open')
     ui.label('Project', projectPath);
     ui.label('Editor', editorPath);
     launchEditor(editorPath, projectPath);
-    ui.success('Unity Editor launched');
   });

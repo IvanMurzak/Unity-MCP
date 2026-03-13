@@ -15,7 +15,7 @@ const REQUIRED_SCOPES = [
 ];
 
 // Hardcoded fallback version (updated on each release)
-const FALLBACK_VERSION = '0.52.0';
+const FALLBACK_VERSION = '0.51.6';
 
 interface ScopedRegistry {
   name: string;
