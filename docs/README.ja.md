@@ -48,6 +48,7 @@
 3 ステップで始められます：
 
 1. **[プラグインをインストール](#ステップ-1-unity-mcp-プラグインのインストール)** — `.unitypackage` インストーラーをダウンロードするか `openupm add com.ivanmurzak.unity.mcp` を実行
+   > **代替方法:** `npx unity-mcp-cli install-plugin ./MyUnityProject` — [CLI ドキュメント](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.ja.md)を参照
 2. **[MCP クライアントを選ぶ](#ステップ-2-mcp-クライアントのインストール)** — Claude Code、Claude Desktop、GitHub Copilot、Cursor など
 3. **[クライアントを設定](#ステップ-3-mcp-クライアントの設定)** — Unity で `Window/AI Game Developer - MCP` を開き **Configure** をクリック
 
@@ -153,6 +154,7 @@
   - [ステップ 1: `Unity MCP Plugin` のインストール](#ステップ-1-unity-mcp-plugin-のインストール)
     - [オプション 1 - インストーラー](#オプション-1---インストーラー)
     - [オプション 2 - OpenUPM-CLI](#オプション-2---openupm-cli)
+    - [オプション 3 - CLI](#オプション-3---cli)
   - [ステップ 2: `MCP Client` のインストール](#ステップ-2-mcp-client-のインストール)
   - [ステップ 3: `MCP Client` の設定](#ステップ-3-mcp-client-の設定)
     - [自動設定](#自動設定)
@@ -197,6 +199,7 @@
 | [Docker デプロイ](docs/DOCKER_DEPLOYMENT.md) | Docker デプロイのステップバイステップガイド |
 | [開発ガイド](docs/dev/Development.md) | アーキテクチャ、コードスタイル、CI/CD（コントリビューター向け） |
 | [Wiki](https://github.com/IvanMurzak/Unity-MCP/wiki) | はじめに、チュートリアル、API リファレンス、FAQ |
+| [CLI ツール](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.ja.md) | コマンドラインでプラグインのインストール、設定、接続 |
 
 ![AI ゲーム開発者 — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
@@ -230,6 +233,22 @@
 ```bash
 openupm add com.ivanmurzak.unity.mcp
 ```
+
+### オプション 3 - CLI
+
+[`unity-mcp-cli`](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.ja.md) でプラグインをインストール — Unity Editor 不要：
+
+```bash
+npx unity-mcp-cli install-plugin ./MyUnityProject
+```
+
+アクティブな MCP 接続で Unity を起動：
+
+```bash
+npx unity-mcp-cli connect --path ./MyUnityProject --url http://localhost:8080
+```
+
+> すべての利用可能なコマンドについては[完全な CLI ドキュメント](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.ja.md)を参照してください。
 
 ## ステップ 2: `MCP Client` のインストール
 

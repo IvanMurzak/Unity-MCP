@@ -10,6 +10,8 @@
 
 </div>
 
+<b>[中文](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.zh-CN.md) | [日本語](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.ja.md) | [Español](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.es.md)</b>
+
 Cross-platform CLI tool for **[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** — create projects, install plugins, configure MCP tools, and launch Unity with active MCP connections. All from a single command line.
 
 ## ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-features.svg?raw=true)
@@ -325,5 +327,7 @@ Commands that manage editors or create projects use the **Unity Hub CLI** (`--he
 - **Windows** — silent install via `UnityHubSetup.exe /S` (may require administrator privileges)
 - **macOS** — downloads the DMG, mounts it, and copies `Unity Hub.app` to `/Applications`
 - **Linux** — downloads `UnityHub.AppImage` to `~/Applications/`
+
+> For the full Unity-MCP project documentation, see the [main README](https://github.com/IvanMurzak/Unity-MCP/blob/main/README.md).
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
