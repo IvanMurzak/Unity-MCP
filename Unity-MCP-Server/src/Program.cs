@@ -73,10 +73,43 @@ namespace com.IvanMurzak.Unity.MCP.Server
 
                 // builder.WebHost.UseUrls(Consts.Hub.DefaultEndpoint);
 
+                logger.Info($"Start listening on port: {dataArguments.Port}");
+
+                // Bind IPv4 and IPv6 separately to avoid dual-stack socket issues on macOS.
+                // TODO: Replace with builder.WebHost.UseKestrelForMcpPlugin(dataArguments.Port)
+                //       once McpPlugin.Server NuGet package includes the extension method.
                 builder.WebHost.UseKestrel(options =>
                 {
-                    logger.Info($"Start listening on port: {dataArguments.Port}");
-                    options.ListenAnyIP(dataArguments.Port);
+                    options.Listen(System.Net.IPAddress.Any, dataArguments.Port);
+                    options.Listen(System.Net.IPAddress.IPv6Any, dataArguments.Port);
+                });
+                builder.Services.Configure<Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketTransportOptions>(socketOptions =>
+                {
+                    var defaultFactory = socketOptions.CreateBoundListenSocket;
+                    socketOptions.CreateBoundListenSocket = endpoint =>
+                    {
+                        if (endpoint is System.Net.IPEndPoint ipEndPoint
+                            && ipEndPoint.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
+                        {
+                            var socket = new System.Net.Sockets.Socket(
+                                System.Net.Sockets.AddressFamily.InterNetworkV6,
+                                System.Net.Sockets.SocketType.Stream,
+                                System.Net.Sockets.ProtocolType.Tcp);
+                            socket.DualMode = false;
+                            socket.Bind(endpoint);
+                            return socket;
+                        }
+
+                        if (defaultFactory != null)
+                            return defaultFactory(endpoint);
+
+                        var fallback = new System.Net.Sockets.Socket(
+                            endpoint.AddressFamily,
+                            System.Net.Sockets.SocketType.Stream,
+                            System.Net.Sockets.ProtocolType.Tcp);
+                        fallback.Bind(endpoint);
+                        return fallback;
+                    };
                 });
 
                 var app = builder.Build();
