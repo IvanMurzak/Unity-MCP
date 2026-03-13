@@ -39,7 +39,7 @@ jobs:
       # --------------------------------------------------------------------- #
       # 2-a. Checkout repository
       # --------------------------------------------------------------------- #
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
         with:
           lfs: false
 
@@ -65,7 +65,7 @@ jobs:
           echo "project_path_sanitized=$sanitized_path" >> $GITHUB_OUTPUT
         shell: bash
 
-      - uses: actions/cache@v4
+      - uses: actions/cache@v5
         with:
           path: |
             ${{ inputs.projectPath }}/Library
@@ -105,7 +105,7 @@ jobs:
           customParameters: -CI true -GITHUB_ACTIONS true
 
       # --------------------------------------------------------------------- #
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: Test results for ${{ inputs.unityVersion }} ${{ inputs.testMode }} on ${{ matrix.platform }}

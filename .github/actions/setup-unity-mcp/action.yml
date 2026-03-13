@@ -47,7 +47,7 @@ runs:
 
     - name: Cache Unity Library
       if: inputs.cache-library == 'true'
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ${{ inputs.unity-project-path }}/Library
         key: unity-library-${{ steps.unity-version.outputs.unity_version }}-ubuntu-base

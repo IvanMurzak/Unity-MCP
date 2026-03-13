@@ -38,30 +38,6 @@ $ErrorActionPreference = "Stop"
 # Version file locations (relative to script root)
 $VersionFiles = @(
     @{
-        Path        = "README.md"
-        Pattern     = "https://github\.com/IvanMurzak/Unity-MCP/releases/download/[\d\.]+/AI-Game-Dev-Installer\.unitypackage"
-        Replace     = "https://github.com/IvanMurzak/Unity-MCP/releases/download/{VERSION}/AI-Game-Dev-Installer.unitypackage"
-        Description = "English README download URL"
-    },
-    @{
-        Path        = "docs/README.zh-CN.md"
-        Pattern     = "https://github\.com/IvanMurzak/Unity-MCP/releases/download/[\d\.]+/AI-Game-Dev-Installer\.unitypackage"
-        Replace     = "https://github.com/IvanMurzak/Unity-MCP/releases/download/{VERSION}/AI-Game-Dev-Installer.unitypackage"
-        Description = "Chinese README download URL"
-    },
-    @{
-        Path        = "docs/README.ja.md"
-        Pattern     = "https://github\.com/IvanMurzak/Unity-MCP/releases/download/[\d\.]+/AI-Game-Dev-Installer\.unitypackage"
-        Replace     = "https://github.com/IvanMurzak/Unity-MCP/releases/download/{VERSION}/AI-Game-Dev-Installer.unitypackage"
-        Description = "Japanese README download URL"
-    },
-    @{
-        Path        = "docs/README.es.md"
-        Pattern     = "https://github\.com/IvanMurzak/Unity-MCP/releases/download/[\d\.]+/AI-Game-Dev-Installer\.unitypackage"
-        Replace     = "https://github.com/IvanMurzak/Unity-MCP/releases/download/{VERSION}/AI-Game-Dev-Installer.unitypackage"
-        Description = "Spanish README download URL"
-    },
-    @{
         Path        = "Unity-MCP-Server/server.json"
         Pattern     = '"version":\s*"[\d\.]+"'
         Replace     = '"version": "{VERSION}"'
@@ -84,12 +60,6 @@ $VersionFiles = @(
         Pattern     = '"version":\s*"[\d\.]+"'
         Replace     = '"version": "{VERSION}"'
         Description = "Unity package version"
-    },
-    @{
-        Path        = "Unity-MCP-Plugin/Assets/root/README.md"
-        Pattern     = "https://github\.com/IvanMurzak/Unity-MCP/releases/download/[\d\.]+/AI-Game-Dev-Installer\.unitypackage"
-        Replace     = "https://github.com/IvanMurzak/Unity-MCP/releases/download/{VERSION}/AI-Game-Dev-Installer.unitypackage"
-        Description = "Plugin README download URL"
     },
     @{
         Path        = "Unity-MCP-Plugin/Assets/root/Runtime/UnityMcpPlugin.cs"
