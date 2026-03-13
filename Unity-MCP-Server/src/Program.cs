@@ -81,7 +81,9 @@ namespace com.IvanMurzak.Unity.MCP.Server
                 builder.WebHost.UseKestrel(options =>
                 {
                     options.Listen(System.Net.IPAddress.Any, dataArguments.Port);
-                    options.Listen(System.Net.IPAddress.IPv6Any, dataArguments.Port);
+
+                    if (System.Net.Sockets.Socket.OSSupportsIPv6)
+                        options.Listen(System.Net.IPAddress.IPv6Any, dataArguments.Port);
                 });
                 builder.Services.Configure<Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketTransportOptions>(socketOptions =>
                 {
@@ -95,9 +97,17 @@ namespace com.IvanMurzak.Unity.MCP.Server
                                 System.Net.Sockets.AddressFamily.InterNetworkV6,
                                 System.Net.Sockets.SocketType.Stream,
                                 System.Net.Sockets.ProtocolType.Tcp);
-                            socket.DualMode = false;
-                            socket.Bind(endpoint);
-                            return socket;
+                            try
+                            {
+                                socket.DualMode = false;
+                                socket.Bind(endpoint);
+                                return socket;
+                            }
+                            catch
+                            {
+                                socket.Dispose();
+                                throw;
+                            }
                         }
 
                         if (defaultFactory != null)
@@ -107,8 +117,16 @@ namespace com.IvanMurzak.Unity.MCP.Server
                             endpoint.AddressFamily,
                             System.Net.Sockets.SocketType.Stream,
                             System.Net.Sockets.ProtocolType.Tcp);
-                        fallback.Bind(endpoint);
-                        return fallback;
+                        try
+                        {
+                            fallback.Bind(endpoint);
+                            return fallback;
+                        }
+                        catch
+                        {
+                            fallback.Dispose();
+                            throw;
+                        }
                     };
                 });
 
