@@ -95,6 +95,19 @@
     transition-duration: 50ms;
 }
 
+.btn-compact.btn-primary {
+    background-color: rgb(175, 232, 230);
+    color: black;
+}
+
+.btn-compact.btn-primary:hover {
+    background-color: rgb(118, 231, 227);
+}
+
+.btn-compact.btn-primary:active {
+    background-color: rgb(250, 255, 234);
+}
+
 /* Tertiary Button */
 .btn-tertiary {
     height: 26px;

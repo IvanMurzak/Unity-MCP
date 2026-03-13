@@ -11,14 +11,18 @@
 #nullable enable
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using R3;
-using UnityEditor;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
     public partial class MainWindowEditor : McpWindowBase
     {
         readonly CompositeDisposable _disposables = new();
+
+        Button? _btnConnect;
+        Button? _btnAuthorize;
+        VisualElement? _timelinePointUnity;
 
         protected override string WindowTitle => "Game Developer";
         protected override string[] WindowUxmlPaths => _windowUxmlPaths;
@@ -64,11 +68,65 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             _disposables.Clear();
         }
 
+        internal static (bool needsAuth, bool hasToken, bool isCloud) ComputeCloudAuthState(ConnectionMode mode, string? token)
+        {
+            var isCloud = mode == ConnectionMode.Cloud;
+            var hasToken = !string.IsNullOrEmpty(token);
+            var needsAuth = isCloud && !hasToken;
+            return (needsAuth, hasToken, isCloud);
+        }
+
+        private void UpdateCloudAuthState()
+        {
+            var (needsAuth, hasToken, isCloud) = ComputeCloudAuthState(UnityMcpPluginEditor.ConnectionMode, UnityMcpPluginEditor.CloudToken);
+
+            if (_timelinePointUnity != null)
+            {
+                _timelinePointUnity.SetEnabled(!needsAuth);
+                _timelinePointUnity.tooltip = needsAuth
+                    ? "Cloud token is required. Press the Authorize button to authenticate."
+                    : "";
+            }
+            if (_btnConnect != null)
+            {
+                if (needsAuth)
+                {
+                    _btnConnect.text = ServerButtonText_Connect;
+                    _btnConnect.EnableInClassList("btn-primary", false);
+                    _btnConnect.EnableInClassList("btn-secondary", true);
+                }
+                else if (isCloud && hasToken
+                    && _btnConnect.text == ServerButtonText_Connect)
+                {
+                    _btnConnect.EnableInClassList("btn-primary", true);
+                    _btnConnect.EnableInClassList("btn-secondary", false);
+                }
+            }
+            if (_btnAuthorize != null)
+            {
+                _btnAuthorize.EnableInClassList("btn-primary", !hasToken);
+            }
+        }
+
         private static void UnityBuildAndConnect()
         {
             UnityMcpPluginEditor.Instance.BuildMcpPluginIfNeeded();
             UnityMcpPluginEditor.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
             UnityMcpPluginEditor.ConnectIfNeeded();
+        }
+
+        /// <summary>
+        /// Disconnects, disposes the current MCP plugin, rebuilds it (picking up the new Host/Token
+        /// from the changed ConnectionMode), and reconnects if KeepConnected is enabled.
+        /// Called when switching between Local and Cloud modes.
+        /// </summary>
+        private static void ReconnectAfterModeSwitch()
+        {
+            if (UnityMcpPluginEditor.Instance.HasMcpPluginInstance)
+            {
+                UnityMcpPluginEditor.Instance.DisposeMcpPluginInstance();
+            }
+            UnityBuildAndConnect();
         }
     }
 }

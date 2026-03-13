@@ -209,7 +209,32 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 references: AssemblyUtils.AllAssemblies
                     .Where(a => !a.IsDynamic) // Exclude dynamic assemblies
                     .Where(a => !string.IsNullOrEmpty(a.Location))
-                    .Select(a => MetadataReference.CreateFromFile(a.Location))
+                    .Select(a =>
+                    {
+                        try
+                        {
+                            return MetadataReference.CreateFromFile(a.Location);
+                        }
+                        catch (DirectoryNotFoundException ex)
+                        {
+                            logger?.LogWarning(ex, "Directory not found for assembly '{AssemblyName}' at '{Location}': {Error}",
+                                a.GetName().Name, a.Location, ex.Message);
+                            return null;
+                        }
+                        catch (FileNotFoundException ex)
+                        {
+                            logger?.LogWarning(ex, "File not found for assembly '{AssemblyName}' at '{Location}': {Error}",
+                                a.GetName().Name, a.Location, ex.Message);
+                            return null;
+                        }
+                        catch (Exception ex)
+                        {
+                            logger?.LogWarning(ex, "Failed to load metadata reference for assembly '{AssemblyName}' at '{Location}': {Error}",
+                                a.GetName().Name, a.Location, ex.Message);
+                            return null;
+                        }
+                    })
+                    .OfType<MetadataReference>()
                     .ToArray(),
                 options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
             );

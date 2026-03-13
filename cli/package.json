@@ -1,0 +1,47 @@
+{
+  "name": "unity-mcp-cli",
+  "version": "0.51.6",
+  "description": "Cross-platform CLI tool for Unity-MCP operations — create projects, install plugins, configure tools, and manage MCP connections",
+  "type": "module",
+  "main": "dist/index.js",
+  "bin": {
+    "unity-mcp-cli": "bin/unity-mcp-cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "pretest": "npm run build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "prepublishOnly": "npm run build",
+    "prepack": "npm run build"
+  },
+  "keywords": [
+    "unity",
+    "mcp",
+    "model-context-protocol",
+    "ai",
+    "cli",
+    "gamedev",
+    "game-dev"
+  ],
+  "author": "Ivan Murzak",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/IvanMurzak/Unity-MCP.git",
+    "directory": "cli"
+  },
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "dependencies": {
+    "commander": "^13.1.0",
+    "semver": "^7.7.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "@types/semver": "^7.7.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0"
+  }
+}

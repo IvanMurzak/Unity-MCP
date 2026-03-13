@@ -541,6 +541,25 @@ Tests cover three modes across three Unity versions (2022, 2023, 6000) and two O
 | **PlayMode** | Runtime plugin, SignalR connection, main thread dispatch | `Assets/root/Tests/Runtime` |
 | **Standalone** | Full player build with embedded plugin | Requires a player build step |
 
+## Including package tests (testables)
+
+In projects that use multiple UPM packages, you can control which packages’ tests appear in the Test Runner via the [project manifest](https://docs.unity3d.com/Manual/upm-manifestPrj.html) **`testables`** field. Only packages listed in `testables` have their tests compiled and shown. Add this package (or any other) to `testables` in your project manifest to include its tests.
+
+**Example** — in `Packages/manifest.json`:
+
+```json
+{
+  "dependencies": {
+    "com.ivanmurzak.unity.mcp": "X.X.X"
+  },
+  "testables": [
+    "com.ivanmurzak.unity.mcp"
+  ]
+}
+```
+
+See [Unity: Add tests to your package](https://docs.unity3d.com/Manual/cus-tests.html) and [Unity: Project manifest (testables)](https://docs.unity3d.com/Manual/upm-manifestPrj.html#testables) for full documentation.
+
 ## Interpreting CI results
 
 Each CI job is named `test-unity-{version}-{mode}` (e.g., `test-unity-6000-3-1f1-editmode`). When a job fails:

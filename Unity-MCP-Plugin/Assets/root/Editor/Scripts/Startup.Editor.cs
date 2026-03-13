@@ -104,10 +104,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         }
         static void OnAfterAssemblyReload()
         {
-            var connectionAllowed = EnvironmentUtils.IsCi() == false;
+            var isCi = EnvironmentUtils.IsCi();
+            var keepConnected = UnityMcpPluginEditor.KeepConnected;
+            var connectionAllowed = !isCi || keepConnected;
 
-            _logger.LogInformation("{method} triggered - BuildAndStart with connectionAllowed: {connectionAllowed}",
-                nameof(OnAfterAssemblyReload), connectionAllowed);
+            _logger.LogInformation("{method} triggered - BuildAndStart with connectionAllowed: {connectionAllowed} (isCi: {isCi}, keepConnected: {keepConnected})",
+                nameof(OnAfterAssemblyReload), connectionAllowed, isCi, keepConnected);
 
             UnityMcpPluginEditor.Instance.BuildMcpPluginIfNeeded();
             UnityMcpPluginEditor.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
@@ -141,12 +143,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 case PlayModeStateChange.EnteredEditMode:
                     // Unity has returned to Edit mode - ensure connection is re-established
                     // if the configuration expects it to be connected
+                    var isCi = EnvironmentUtils.IsCi();
+                    var keepConnected = UnityMcpPluginEditor.KeepConnected;
                     _logger.LogTrace("Entered Edit mode - KeepConnected: {keepConnected}, IsCi: {isCi}",
-                        UnityMcpPluginEditor.KeepConnected, EnvironmentUtils.IsCi());
+                        keepConnected, isCi);
 
-                    if (EnvironmentUtils.IsCi())
+                    if (isCi && !keepConnected)
                     {
-                        _logger.LogTrace("Skipping reconnection in CI environment");
+                        _logger.LogTrace("Skipping reconnection in CI environment (KeepConnected is false)");
                         break;
                     }
 
