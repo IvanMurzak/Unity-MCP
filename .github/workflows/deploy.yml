@@ -68,6 +68,8 @@ jobs:
       - name: NuGet login (Trusted Publishing)
         uses: NuGet/login@v1
         id: nuget-login
+        with:
+          user: IvanMurzak
 
       - name: Deploy MCP Server NuGet package
         run: |
