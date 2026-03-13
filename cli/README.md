@@ -17,6 +17,7 @@ Cross-platform CLI tool for **[Unity MCP](https://github.com/IvanMurzak/Unity-MC
 - :white_check_mark: **Create projects** — scaffold new Unity projects via Unity Editor
 - :white_check_mark: **Install editors** — install any Unity Editor version from the command line
 - :white_check_mark: **Install plugin** — add Unity-MCP plugin to `manifest.json` with all required scoped registries
+- :white_check_mark: **Remove plugin** — remove Unity-MCP plugin from `manifest.json`
 - :white_check_mark: **Configure** — enable/disable MCP tools, prompts, and resources
 - :white_check_mark: **Connect** — launch Unity with MCP environment variables for automated server connection
 - :white_check_mark: **Cross-platform** — Windows, macOS, and Linux
@@ -51,6 +52,7 @@ unity-mcp-cli install-plugin /path/to/unity/project
   - [`install-editor`](#install-editor) — Install Unity Editor via Unity Hub
   - [`open`](#open) — Open a Unity project in the Editor
   - [`install-plugin`](#install-plugin) — Install Unity-MCP plugin into a project
+  - [`remove-plugin`](#remove-plugin) — Remove Unity-MCP plugin from a project
   - [`configure`](#configure) — Configure MCP tools, prompts, and resources
   - [`connect`](#connect) — Launch Unity with MCP connection
 - [Full Automation Example](#full-automation-example)
@@ -146,6 +148,27 @@ npx unity-mcp-cli install-plugin ./MyGame --plugin-version 0.51.6
 ```
 
 > After running this command, open the project in Unity Editor to complete the package installation.
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `remove-plugin`
+
+Remove the Unity-MCP plugin from a Unity project's `Packages/manifest.json`.
+
+```bash
+npx unity-mcp-cli remove-plugin ./MyGame
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `[path]` | Yes | Path to the Unity project (positional or `--path`) |
+
+This command:
+1. Removes `com.ivanmurzak.unity.mcp` from `dependencies`
+2. **Preserves scoped registries and scopes** — other packages may depend on them
+3. **No-op** if the plugin is not installed
+
+> After running this command, open the project in Unity Editor to apply the change.
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
