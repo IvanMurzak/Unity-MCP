@@ -3,6 +3,7 @@ import * as path from 'path';
 import { spawn } from 'child_process';
 import { platform } from 'os';
 import { findUnityHub, ensureUnityHub, listInstalledEditors } from './unity-hub.js';
+import * as ui from './ui.js';
 
 /**
  * Compare two Unity version strings with numeric-aware sorting.
@@ -199,5 +200,5 @@ export function launchEditor(
   });
 
   child.unref();
-  console.log(`Launched Unity Editor (PID: ${child.pid})`);
+  ui.success(`Launched Unity Editor (PID: ${child.pid})`);
 }
