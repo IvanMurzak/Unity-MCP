@@ -92,7 +92,7 @@ jobs:
       - name: Extract version from tag
         id: version
         run: |
-          version=${{ inputs.version || github.event.release.tag_name }}
+          version=${{ inputs.version }}
           echo "version=$version" >> $GITHUB_OUTPUT
           echo "Extracted version: $version"
 
@@ -135,7 +135,7 @@ jobs:
       - name: Extract version from tag
         id: version
         run: |
-          version=${{ inputs.version || github.event.release.tag_name }}
+          version=${{ inputs.version }}
           echo "version=$version" >> $GITHUB_OUTPUT
           echo "Extracted version: $version"
 
