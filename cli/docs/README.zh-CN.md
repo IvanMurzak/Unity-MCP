@@ -2,7 +2,7 @@
   <h1>Unity MCP — <i>CLI</i></h1>
 
 [![npm](https://img.shields.io/npm/v/unity-mcp-cli?label=npm&labelColor=333A41 'npm package')](https://www.npmjs.com/package/unity-mcp-cli)
-[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18-5FA04E?logo=nodedotjs&labelColor=333A41 'Node.js')](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-%5E20.19.0%20%7C%7C%20%3E%3D22.12.0-5FA04E?logo=nodedotjs&labelColor=333A41 'Node.js')](https://nodejs.org/)
 [![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&labelColor=333A41)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
@@ -42,7 +42,7 @@ npm install -g unity-mcp-cli
 unity-mcp-cli install-plugin /path/to/unity/project
 ```
 
-> **环境要求：** [Node.js](https://nodejs.org/) >= 18。若未检测到 [Unity Hub](https://unity.com/download)，将自动下载安装。
+> **环境要求：** [Node.js](https://nodejs.org/) ^20.19.0 或 >=22.12.0。若未检测到 [Unity Hub](https://unity.com/download)，将自动下载安装。
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
@@ -146,7 +146,7 @@ npx unity-mcp-cli install-plugin ./MyGame
 **示例 — 安装指定插件版本：**
 
 ```bash
-npx unity-mcp-cli install-plugin ./MyGame --plugin-version 0.51.6
+npx unity-mcp-cli install-plugin ./MyGame --plugin-version 0.52.0
 ```
 
 > 运行此命令后，请在 Unity Editor 中打开项目以完成包安装。
