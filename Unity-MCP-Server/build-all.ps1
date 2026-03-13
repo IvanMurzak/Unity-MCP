@@ -79,11 +79,11 @@ foreach ($runtime in $runtimes) {
     }
 
     if ($exitCode -eq 0) {
-        Write-Host "✅ Successfully built $runtime" -ForegroundColor Green
+        Write-Host "Successfully built $runtime" -ForegroundColor Green
         $success++
     }
     else {
-        Write-Host "❌ Failed to build $runtime (exit code: $exitCode)" -ForegroundColor Red
+        Write-Host "Failed to build $runtime (exit code: $exitCode)" -ForegroundColor Red
         $failed++
     }
 }
@@ -93,15 +93,15 @@ Write-Host "Success: $success" -ForegroundColor Green
 Write-Host "Failed: $failed" -ForegroundColor Red
 
 if ($failed -gt 0) {
-    Write-Host "`n⚠️ Some builds failed. Check the output above." -ForegroundColor Yellow
+    Write-Host "`nSome builds failed. Check the output above." -ForegroundColor Yellow
     exit 1
 }
 
-Write-Host "`n🎉 All builds completed successfully!" -ForegroundColor Green
+Write-Host "`nAll builds completed successfully!" -ForegroundColor Green
 Write-Host "Executables are located in: $PublishRoot" -ForegroundColor Yellow
 Write-Host "Per-platform folders: ./publish/{runtime}/" -ForegroundColor Yellow
 
-Write-Host "`n📦 Creating zip archives for each runtime..." -ForegroundColor Cyan
+Write-Host "`nCreating zip archives for each runtime..." -ForegroundColor Cyan
 
 $zipSuccess = 0
 $zipFailed = 0
@@ -110,7 +110,7 @@ foreach ($runtime in $runtimes) {
     $runtimePath = Join-Path $PublishRoot $runtime
 
     if (Test-Path $runtimePath) {
-        Write-Host "🗜️  Creating zip for $runtime..." -ForegroundColor Yellow
+        Write-Host "Creating zip for $runtime..." -ForegroundColor Yellow
 
         $zipName = "unity-mcp-server-$runtime.zip"
         $zipPath = Join-Path $PublishRoot $zipName
@@ -123,28 +123,28 @@ foreach ($runtime in $runtimes) {
             Add-Type -AssemblyName System.IO.Compression.FileSystem
             [System.IO.Compression.ZipFile]::CreateFromDirectory($runtimePath, $zipPath)
 
-            Write-Host "✅ Successfully created $zipName" -ForegroundColor Green
+            Write-Host "Successfully created $zipName" -ForegroundColor Green
             $zipSuccess++
         }
         catch {
-            Write-Host "❌ Failed to create $zipName : $($_.Exception.Message)" -ForegroundColor Red
+            Write-Host "Failed to create $zipName : $($_.Exception.Message)" -ForegroundColor Red
             $zipFailed++
         }
     }
     else {
-        Write-Host "⚠️  Skipping $runtime - directory not found" -ForegroundColor Yellow
+        Write-Host "Skipping $runtime - directory not found" -ForegroundColor Yellow
         $zipFailed++
     }
 }
 
-Write-Host "`n📊 Zip Creation Summary:" -ForegroundColor Cyan
+Write-Host "`nZip Creation Summary:" -ForegroundColor Cyan
 Write-Host "Success: $zipSuccess" -ForegroundColor Green
 Write-Host "Failed: $zipFailed" -ForegroundColor Red
 
 if ($zipFailed -eq 0) {
-    Write-Host "`n🎉 All zip archives created successfully!" -ForegroundColor Green
-    Write-Host "📁 Zip files are located in: $PublishRoot" -ForegroundColor Yellow
-    Write-Host "📋 Created files:" -ForegroundColor Cyan
+    Write-Host "`nAll zip archives created successfully!" -ForegroundColor Green
+    Write-Host "Zip files are located in: $PublishRoot" -ForegroundColor Yellow
+    Write-Host "Created files:" -ForegroundColor Cyan
 
     $zipFiles = Get-ChildItem -Path $PublishRoot -Filter "*.zip" -ErrorAction SilentlyContinue
     if ($zipFiles) {
@@ -154,6 +154,6 @@ if ($zipFailed -eq 0) {
         }
     }
 } else {
-    Write-Host "`n❌ $zipFailed zip archive(s) failed to create. See errors above." -ForegroundColor Red
+    Write-Host "`n$zipFailed zip archive(s) failed to create. See errors above." -ForegroundColor Red
     exit 1
 }
