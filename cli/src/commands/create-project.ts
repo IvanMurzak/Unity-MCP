@@ -16,7 +16,13 @@ export const createProjectCommand = new Command('create-project')
     }
 
     const spinner = ui.startSpinner('Locating Unity Hub...');
-    const hubPath = await ensureUnityHub();
+    let hubPath: string;
+    try {
+      hubPath = await ensureUnityHub();
+    } catch (err) {
+      spinner.fail('Failed to locate Unity Hub');
+      throw err;
+    }
     spinner.succeed('Unity Hub located');
 
     let editorVersion = options.unity;

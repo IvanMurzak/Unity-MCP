@@ -118,7 +118,7 @@ export function success(msg: string): void {
 }
 
 /**
- * Print an error message with a red cross and exit.
+ * Print an error message with a red cross to stderr.
  */
 export function error(msg: string): void {
   console.error(`${chalk.red('\u2716')} ${chalk.red(msg)}`);
@@ -180,6 +180,13 @@ export function badge(enabled: boolean): string {
   return enabled
     ? chalk.bgGreen.black('[enabled]')
     : chalk.bgRed.white('[disabled]');
+}
+
+/**
+ * Print a feature row with a styled badge and name.
+ */
+export function featureRow(name: string, enabled: boolean): void {
+  console.log(`    ${badge(enabled)} ${name}`);
 }
 
 /**

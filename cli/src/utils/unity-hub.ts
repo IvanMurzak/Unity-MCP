@@ -90,7 +90,12 @@ export async function installUnityHub(): Promise<string> {
     case 'win32': {
       const installerPath = path.join(tmpDir, 'UnityHubSetup.exe');
       const spinner = ui.startSpinner('Downloading Unity Hub installer...');
-      await downloadFile(url, installerPath);
+      try {
+        await downloadFile(url, installerPath);
+      } catch (err) {
+        spinner.fail('Failed to download Unity Hub installer');
+        throw err;
+      }
       spinner.succeed('Unity Hub installer downloaded');
       ui.info('Installing Unity Hub silently (may require administrator privileges)...');
       try {
@@ -107,7 +112,12 @@ export async function installUnityHub(): Promise<string> {
     case 'darwin': {
       const dmgPath = path.join(tmpDir, 'UnityHubSetup.dmg');
       const spinner = ui.startSpinner('Downloading Unity Hub installer...');
-      await downloadFile(url, dmgPath);
+      try {
+        await downloadFile(url, dmgPath);
+      } catch (err) {
+        spinner.fail('Failed to download Unity Hub installer');
+        throw err;
+      }
       spinner.succeed('Unity Hub installer downloaded');
       const installSpinner = ui.startSpinner('Installing Unity Hub...');
       try {
@@ -138,7 +148,12 @@ export async function installUnityHub(): Promise<string> {
       const appImagePath = path.join(appDir, 'UnityHub.AppImage');
       const spinner = ui.startSpinner('Downloading Unity Hub AppImage...');
       fs.mkdirSync(appDir, { recursive: true });
-      await downloadFile(url, appImagePath);
+      try {
+        await downloadFile(url, appImagePath);
+      } catch (err) {
+        spinner.fail('Failed to download Unity Hub AppImage');
+        throw err;
+      }
       fs.chmodSync(appImagePath, 0o755);
       spinner.succeed(`Unity Hub installed at: ${appImagePath}`);
       return appImagePath;

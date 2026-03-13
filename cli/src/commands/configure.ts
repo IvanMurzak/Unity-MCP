@@ -70,8 +70,7 @@ export const configureCommand = new Command('configure')
         }
         ui.heading(featureLabel);
         for (const f of features) {
-          const status = f.enabled ? '[enabled]' : '[disabled]';
-          console.log(`    ${ui.badge(f.enabled)} ${f.name}`);
+          ui.featureRow(f.name, f.enabled);
         }
       };
 

@@ -105,7 +105,7 @@ export const connectCommand = new Command('connect')
       ui.label(key, display);
     }
 
-    console.log('');
+    ui.divider();
     launchEditor(editorPath, projectPath, env);
     ui.success('Unity Editor launched');
   });

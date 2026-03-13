@@ -1,5 +1,4 @@
 import { Command } from 'commander';
-import chalk from 'chalk';
 import { createRequire } from 'module';
 import { createProjectCommand } from './commands/create-project.js';
 import { installUnityCommand } from './commands/install-unity.js';
@@ -8,7 +7,7 @@ import { installPluginCommand } from './commands/install-plugin.js';
 import { configureCommand } from './commands/configure.js';
 import { connectCommand } from './commands/connect.js';
 import { removePluginCommand } from './commands/remove-plugin.js';
-import { configureStyledHelp } from './utils/ui.js';
+import { configureStyledHelp, error as uiError } from './utils/ui.js';
 
 const require = createRequire(import.meta.url);
 const pkg = require('../package.json') as { version: string };
@@ -45,6 +44,6 @@ program.action(() => {
 });
 
 program.parseAsync().catch((err) => {
-  console.error(chalk.red(`\u2716 ${(err as Error).message || err}`));
+  uiError((err as Error).message || String(err));
   process.exit(1);
 });

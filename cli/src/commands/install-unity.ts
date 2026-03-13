@@ -11,7 +11,13 @@ export const installUnityCommand = new Command('install-unity')
   .option('--path <path>', 'Read version from an existing Unity project')
   .action(async (options: { version?: string; path?: string }) => {
     const spinner = ui.startSpinner('Locating Unity Hub...');
-    const hubPath = await ensureUnityHub();
+    let hubPath: string;
+    try {
+      hubPath = await ensureUnityHub();
+    } catch (err) {
+      spinner.fail('Failed to locate Unity Hub');
+      throw err;
+    }
     spinner.succeed('Unity Hub located');
 
     let version = options.version;
