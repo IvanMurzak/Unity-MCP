@@ -167,3 +167,28 @@ export function addPluginToManifest(projectPath: string, version: string): void 
     console.log('manifest.json is already up to date.');
   }
 }
+
+/**
+ * Remove Unity-MCP plugin from a Unity project's Packages/manifest.json.
+ * Only removes the plugin dependency — scoped registries and scopes are
+ * left untouched because other packages may depend on them.
+ */
+export function removePluginFromManifest(projectPath: string): void {
+  const manifestPath = path.join(projectPath, 'Packages', 'manifest.json');
+
+  if (!fs.existsSync(manifestPath)) {
+    throw new Error(`manifest.json not found at: ${manifestPath}`);
+  }
+
+  const rawJson = fs.readFileSync(manifestPath, 'utf-8');
+  const manifest: Manifest = JSON.parse(rawJson);
+
+  if (!manifest.dependencies || !(PACKAGE_ID in manifest.dependencies)) {
+    console.log('Unity-MCP plugin is not installed. Nothing to remove.');
+    return;
+  }
+
+  delete manifest.dependencies[PACKAGE_ID];
+  fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
+  console.log(`Removed ${PACKAGE_ID} from ${manifestPath}`);
+}

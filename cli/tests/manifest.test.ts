@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { addPluginToManifest, shouldUpdateVersion } from '../src/utils/manifest.js';
+import { addPluginToManifest, removePluginFromManifest, shouldUpdateVersion } from '../src/utils/manifest.js';
 
 // --- shouldUpdateVersion tests (ported from C# VersionComparisonTests.cs) ---
 
@@ -287,6 +287,133 @@ describe('addPluginToManifest', () => {
   it('throws when manifest.json does not exist', () => {
     const nonexistentPath = path.join(tmpDir, 'nonexistent');
     expect(() => addPluginToManifest(nonexistentPath, TEST_VERSION)).toThrow(
+      /manifest\.json not found/
+    );
+  });
+});
+
+// --- removePluginFromManifest tests ---
+
+describe('removePluginFromManifest', () => {
+  let tmpDir: string;
+
+  const PACKAGE_ID = 'com.ivanmurzak.unity.mcp';
+  const TEST_VERSION = '0.51.6';
+  const REQUIRED_SCOPES = [
+    'com.ivanmurzak',
+    'extensions.unity',
+    'org.nuget.com.ivanmurzak',
+    'org.nuget.microsoft',
+    'org.nuget.system',
+    'org.nuget.r3',
+  ];
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-test-'));
+    fs.mkdirSync(path.join(tmpDir, 'Packages'), { recursive: true });
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  function writeManifest(manifest: object): void {
+    fs.writeFileSync(
+      path.join(tmpDir, 'Packages', 'manifest.json'),
+      JSON.stringify(manifest, null, 2)
+    );
+  }
+
+  function readManifest(): Record<string, unknown> {
+    const content = fs.readFileSync(
+      path.join(tmpDir, 'Packages', 'manifest.json'),
+      'utf-8'
+    );
+    return JSON.parse(content);
+  }
+
+  it('removes plugin dependency when present', () => {
+    writeManifest({
+      dependencies: {
+        'com.unity.ugui': '1.0.0',
+        [PACKAGE_ID]: TEST_VERSION,
+      },
+      scopedRegistries: [
+        {
+          name: 'package.openupm.com',
+          url: 'https://package.openupm.com',
+          scopes: REQUIRED_SCOPES,
+        },
+      ],
+    });
+    removePluginFromManifest(tmpDir);
+    const result = readManifest();
+    const deps = result.dependencies as Record<string, string>;
+    expect(deps[PACKAGE_ID]).toBeUndefined();
+  });
+
+  it('preserves other dependencies', () => {
+    writeManifest({
+      dependencies: {
+        'com.unity.ugui': '1.0.0',
+        'com.unity.test-framework': '1.1.33',
+        [PACKAGE_ID]: TEST_VERSION,
+      },
+    });
+    removePluginFromManifest(tmpDir);
+    const result = readManifest();
+    const deps = result.dependencies as Record<string, string>;
+    expect(deps['com.unity.ugui']).toBe('1.0.0');
+    expect(deps['com.unity.test-framework']).toBe('1.1.33');
+    expect(deps[PACKAGE_ID]).toBeUndefined();
+  });
+
+  it('preserves scoped registries untouched', () => {
+    writeManifest({
+      dependencies: { [PACKAGE_ID]: TEST_VERSION },
+      scopedRegistries: [
+        {
+          name: 'package.openupm.com',
+          url: 'https://package.openupm.com',
+          scopes: REQUIRED_SCOPES,
+        },
+        {
+          name: 'other-registry',
+          url: 'https://other.example.com',
+          scopes: ['com.other'],
+        },
+      ],
+    });
+    removePluginFromManifest(tmpDir);
+    const result = readManifest();
+    const registries = result.scopedRegistries as Array<{ name: string; scopes: string[] }>;
+    expect(registries.length).toBe(2);
+    expect(registries[0].name).toBe('package.openupm.com');
+    expect(registries[0].scopes).toEqual(REQUIRED_SCOPES);
+    expect(registries[1].name).toBe('other-registry');
+  });
+
+  it('no-op when plugin is not in dependencies', () => {
+    writeManifest({
+      dependencies: { 'com.unity.ugui': '1.0.0' },
+    });
+    removePluginFromManifest(tmpDir);
+    const result = readManifest();
+    const deps = result.dependencies as Record<string, string>;
+    expect(deps['com.unity.ugui']).toBe('1.0.0');
+    expect(deps[PACKAGE_ID]).toBeUndefined();
+  });
+
+  it('no-op when dependencies field is missing', () => {
+    writeManifest({ scopedRegistries: [] });
+    removePluginFromManifest(tmpDir);
+    const result = readManifest();
+    expect(result.dependencies).toBeUndefined();
+  });
+
+  it('throws when manifest.json does not exist', () => {
+    const nonexistentPath = path.join(tmpDir, 'nonexistent');
+    expect(() => removePluginFromManifest(nonexistentPath)).toThrow(
       /manifest\.json not found/
     );
   });

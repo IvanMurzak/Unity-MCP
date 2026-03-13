@@ -37,6 +37,7 @@ describe('CLI integration', () => {
       expect(stdout).toContain('install-editor');
       expect(stdout).toContain('open');
       expect(stdout).toContain('install-plugin');
+      expect(stdout).toContain('remove-plugin');
       expect(stdout).toContain('configure');
       expect(stdout).toContain('connect');
     });
@@ -99,6 +100,73 @@ describe('CLI integration', () => {
         fs.readFileSync(path.join(tmpDir, 'Packages', 'manifest.json'), 'utf-8')
       );
       expect(manifest.dependencies['com.ivanmurzak.unity.mcp']).toBe('0.51.6');
+      expect(manifest.scopedRegistries).toBeDefined();
+      expect(manifest.scopedRegistries[0].name).toBe('package.openupm.com');
+    });
+  });
+
+  // --- remove-plugin command ---
+
+  describe('remove-plugin', () => {
+    let tmpDir: string;
+
+    beforeEach(() => {
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-cli-test-'));
+      fs.mkdirSync(path.join(tmpDir, 'Packages'), { recursive: true });
+    });
+
+    afterEach(() => {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    });
+
+    it('shows help with --help', () => {
+      const { stdout, exitCode } = runCli(['remove-plugin', '--help']);
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain('--path');
+    });
+
+    it('fails when project path has no manifest.json', () => {
+      const emptyDir = fs.mkdtempSync(path.join(os.tmpdir(), 'empty-'));
+      const { stdout, exitCode } = runCli([
+        'remove-plugin',
+        '--path', emptyDir,
+      ]);
+      expect(exitCode).toBe(1);
+      expect(stdout).toContain('Not a valid Unity project');
+      fs.rmSync(emptyDir, { recursive: true, force: true });
+    });
+
+    it('removes plugin from manifest', () => {
+      fs.writeFileSync(
+        path.join(tmpDir, 'Packages', 'manifest.json'),
+        JSON.stringify({
+          dependencies: {
+            'com.unity.ugui': '1.0.0',
+            'com.ivanmurzak.unity.mcp': '0.51.6',
+          },
+          scopedRegistries: [
+            {
+              name: 'package.openupm.com',
+              url: 'https://package.openupm.com',
+              scopes: ['com.ivanmurzak'],
+            },
+          ],
+        }, null, 2)
+      );
+
+      const { stdout, exitCode } = runCli([
+        'remove-plugin',
+        '--path', tmpDir,
+      ]);
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain('Removing Unity-MCP plugin');
+
+      const manifest = JSON.parse(
+        fs.readFileSync(path.join(tmpDir, 'Packages', 'manifest.json'), 'utf-8')
+      );
+      expect(manifest.dependencies['com.ivanmurzak.unity.mcp']).toBeUndefined();
+      expect(manifest.dependencies['com.unity.ugui']).toBe('1.0.0');
+      // Scoped registries should be preserved
       expect(manifest.scopedRegistries).toBeDefined();
       expect(manifest.scopedRegistries[0].name).toBe('package.openupm.com');
     });
