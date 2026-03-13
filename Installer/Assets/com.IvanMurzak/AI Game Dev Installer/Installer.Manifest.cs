@@ -73,12 +73,12 @@ namespace com.IvanMurzak.Unity.MCP.Installer
             }
         }
 
-        public static void AddScopedRegistryIfNeeded(string manifestPath, int indent = 2)
+        public static bool AddScopedRegistryIfNeeded(string manifestPath, int indent = 2)
         {
             if (!File.Exists(manifestPath))
             {
                 Debug.LogError($"{manifestPath} not found!");
-                return;
+                return false;
             }
             var jsonText = File.ReadAllText(manifestPath)
                 .Replace("{ }", "{\n}")
@@ -90,7 +90,7 @@ namespace com.IvanMurzak.Unity.MCP.Installer
             if (manifestJson == null)
             {
                 Debug.LogError($"Failed to parse {manifestPath} as JSON.");
-                return;
+                return false;
             }
 
             var modified = false;
@@ -162,6 +162,8 @@ namespace com.IvanMurzak.Unity.MCP.Installer
             // --- Write changes back to manifest
             if (modified)
                 File.WriteAllText(manifestPath, manifestJson.ToString(indent).Replace("\" : ", "\": "));
+
+            return true;
         }
     }
 }
