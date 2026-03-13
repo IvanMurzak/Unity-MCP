@@ -33,7 +33,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "Reads the Game View's own render texture directly via the Unity Editor API. " +
             "The image size matches the current Game View resolution. " +
             "Returns the image directly for visual inspection by the LLM.")]
-        public ResponseCallTool ScreenshotGameView()
+        public ResponseCallTool ScreenshotGameView(string? nothing = null)
         {
             return MainThread.Instance.Run(() =>
             {

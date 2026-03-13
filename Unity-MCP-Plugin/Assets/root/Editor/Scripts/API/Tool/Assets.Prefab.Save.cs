@@ -32,7 +32,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [Description("Save a prefab. " +
             "Use it when you are in prefab editing mode in Unity Editor. " +
             "Use '" + AssetsPrefabOpenToolId + "' tool to open a prefab first.")]
-        public AssetObjectRef Save() => MainThread.Instance.Run(() =>
+        public AssetObjectRef Save(string? nothing = null) => MainThread.Instance.Run(() =>
         {
             var prefabStage = PrefabStageUtility.GetCurrentPrefabStage();
             if (prefabStage == null)
