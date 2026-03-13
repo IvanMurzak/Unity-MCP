@@ -23,13 +23,15 @@ on:
     inputs:
       version: { required: true, type: string }
     secrets:
-      NUGET_API_KEY: { required: true }
       DOCKER_USERNAME: { required: true }
       DOCKER_PASSWORD: { required: true }
 
 jobs:
   deploy-mcp-server-to-nuget:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -76,7 +78,7 @@ jobs:
             exit 1
           fi
           echo "Deploying NuGet package: $nupkg_file (version: ${{ steps.version.outputs.version }})"
-          dotnet nuget push "$nupkg_file" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+          dotnet nuget push "$nupkg_file" --api-key az --source https://api.nuget.org/v3/index.json
 
   deploy-docker-image:
     runs-on: ubuntu-latest
