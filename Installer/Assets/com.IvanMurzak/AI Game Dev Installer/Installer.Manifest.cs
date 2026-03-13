@@ -151,11 +151,15 @@ namespace com.IvanMurzak.Unity.MCP.Installer
                 modified = true;
             }
 
-            // Only update version if installer version is higher than current version
+            // Resolve the best available version from OpenUPM, falling back to hardcoded version.
+            // This prevents installation failures when OpenUPM hasn't indexed the latest release yet.
+            var resolvedVersion = GetLatestAvailableVersion() ?? Version;
+
+            // Only update version if resolved version is higher than current version
             var currentVersion = dependencies[PackageId];
-            if (currentVersion == null || ShouldUpdateVersion(currentVersion, Version))
+            if (currentVersion == null || ShouldUpdateVersion(currentVersion, resolvedVersion))
             {
-                dependencies[PackageId] = Version;
+                dependencies[PackageId] = resolvedVersion;
                 modified = true;
             }
 
