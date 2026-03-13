@@ -11,6 +11,9 @@ export const connectCommand = new Command('connect')
   .option('--token <token>', 'Auth token (sets UNITY_MCP_TOKEN)')
   .option('--auth <option>', 'Auth option: none or required (sets UNITY_MCP_AUTH_OPTION)')
   .option('--keep-connected', 'Force keep connected (sets UNITY_MCP_KEEP_CONNECTED=true)')
+  .option('--transport <method>', 'Transport method: streamableHttp or stdio (sets UNITY_MCP_TRANSPORT)')
+  .option('--start-server', 'Start MCP server in Unity Editor (sets UNITY_MCP_START_SERVER=true)')
+  .option('--no-start-server', 'Prevent MCP server from starting in Unity Editor (sets UNITY_MCP_START_SERVER=false)')
   .option('--unity <version>', 'Specific Unity Editor version to use')
   .action(async (options: {
     path: string;
@@ -19,6 +22,8 @@ export const connectCommand = new Command('connect')
     token?: string;
     auth?: string;
     keepConnected?: boolean;
+    transport?: string;
+    startServer?: boolean;
     unity?: string;
   }) => {
     const projectPath = path.resolve(options.path);
@@ -67,6 +72,18 @@ export const connectCommand = new Command('connect')
         process.exit(1);
       }
       env['UNITY_MCP_AUTH_OPTION'] = options.auth;
+    }
+
+    if (options.transport) {
+      if (options.transport !== 'streamableHttp' && options.transport !== 'stdio') {
+        console.error('Error: --transport must be "streamableHttp" or "stdio"');
+        process.exit(1);
+      }
+      env['UNITY_MCP_TRANSPORT'] = options.transport;
+    }
+
+    if (options.startServer !== undefined) {
+      env['UNITY_MCP_START_SERVER'] = String(options.startServer);
     }
 
     console.log(`Connecting to MCP server: ${options.url}`);

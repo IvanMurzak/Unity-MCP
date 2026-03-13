@@ -195,7 +195,7 @@ npx unity-mcp-cli configure ./MyGame \
 
 ## `connect`
 
-Open a Unity project and connect it to a specific MCP server via environment variables.
+Open a Unity project and connect it to a specific MCP server via environment variables. Every option maps to a `UNITY_MCP_*` environment variable that the Unity plugin reads on startup.
 
 ```bash
 npx unity-mcp-cli connect \
@@ -203,17 +203,19 @@ npx unity-mcp-cli connect \
   --url http://localhost:8080
 ```
 
-| Option | Required | Description |
-|---|---|---|
-| `--path <path>` | Yes | Path to the Unity project |
-| `--url <url>` | Yes | MCP server URL to connect to |
-| `--tools <names>` | No | Comma-separated list of tools to enable |
-| `--token <token>` | No | Authentication token |
-| `--auth <option>` | No | Auth mode: `none` or `required` |
-| `--keep-connected` | No | Force keep the connection alive |
-| `--unity <version>` | No | Specific Unity Editor version to use (defaults to version from project settings, falls back to highest installed) |
+| Option | Env Variable | Required | Description |
+|---|---|---|---|
+| `--url <url>` | `UNITY_MCP_HOST` | Yes | MCP server URL to connect to |
+| `--path <path>` | — | Yes | Path to the Unity project |
+| `--keep-connected` | `UNITY_MCP_KEEP_CONNECTED` | No | Force keep the connection alive |
+| `--token <token>` | `UNITY_MCP_TOKEN` | No | Authentication token |
+| `--auth <option>` | `UNITY_MCP_AUTH_OPTION` | No | Auth mode: `none` or `required` |
+| `--tools <names>` | `UNITY_MCP_TOOLS` | No | Comma-separated list of tools to enable |
+| `--transport <method>` | `UNITY_MCP_TRANSPORT` | No | Transport method: `streamableHttp` or `stdio` |
+| `--start-server` / `--no-start-server` | `UNITY_MCP_START_SERVER` | No | Start or prevent MCP server auto-start in Unity Editor (only applies to `streamableHttp` transport) |
+| `--unity <version>` | — | No | Specific Unity Editor version to use (defaults to version from project settings, falls back to highest installed) |
 
-This command launches the Unity Editor with MCP environment variables (`UNITY_MCP_HOST`, `UNITY_MCP_TOOLS`, `UNITY_MCP_TOKEN`, etc.) so the plugin connects automatically on startup.
+This command launches the Unity Editor with the corresponding `UNITY_MCP_*` environment variables so the plugin picks them up automatically on startup. The environment variables override values from the project's `UserSettings/AI-Game-Developer-Config.json` config file at runtime.
 
 **Example — connect with authentication and specific tools:**
 
@@ -225,6 +227,27 @@ npx unity-mcp-cli connect \
   --auth required \
   --keep-connected \
   --tools gameobject-create,gameobject-find,script-execute
+```
+
+**Example — connect with stdio transport (server managed by AI agent):**
+
+```bash
+npx unity-mcp-cli connect \
+  --path ./MyGame \
+  --url http://localhost:8080 \
+  --transport stdio \
+  --no-start-server
+```
+
+**Example — connect with streamableHttp and auto-start server:**
+
+```bash
+npx unity-mcp-cli connect \
+  --path ./MyGame \
+  --url http://localhost:8080 \
+  --transport streamableHttp \
+  --start-server \
+  --keep-connected
 ```
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
