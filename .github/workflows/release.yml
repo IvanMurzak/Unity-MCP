@@ -447,6 +447,9 @@ jobs:
   deploy:
     needs: release-unity-plugin
     if: needs.release-unity-plugin.outputs.success == 'true'
+    permissions:
+      id-token: write
+      contents: read
     uses: ./.github/workflows/deploy.yml
     with:
       version: ${{ needs.release-unity-plugin.outputs.version }}
