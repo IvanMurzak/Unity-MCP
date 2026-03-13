@@ -38,11 +38,11 @@ jobs:
 
       - name: Find previous version tag
         id: prev_tag
-        uses: WyriHaximus/github-action-get-previous-tag@v1
+        uses: WyriHaximus/github-action-get-previous-tag@v2
 
       - name: Check if tag exists
         id: tag_exists
-        uses: mukunku/tag-exists-action@v1.6.0
+        uses: mukunku/tag-exists-action@v1.7.0
         with:
           tag: ${{ steps.get_version.outputs.current-version }}
 
