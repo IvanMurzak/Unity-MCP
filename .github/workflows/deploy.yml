@@ -113,3 +113,38 @@ jobs:
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  deploy-cli-to-npm:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        run: |
+          cd cli
+          npm ci
+
+      - name: Build
+        run: |
+          cd cli
+          npm run build
+
+      - name: Test
+        run: |
+          cd cli
+          npm test
+
+      - name: Publish to npm with provenance
+        run: |
+          cd cli
+          npm publish --access public --provenance

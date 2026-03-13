@@ -31,6 +31,8 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         public const string EnvAuthOption = "UNITY_MCP_AUTH_OPTION";
         public const string EnvToken = "UNITY_MCP_TOKEN";
         public const string EnvTools = "UNITY_MCP_TOOLS";
+        public const string EnvStartServer = "UNITY_MCP_START_SERVER";
+        public const string EnvTransport = "UNITY_MCP_TRANSPORT";
 
         /// <summary>
         /// Checks if the current environment is a CI environment.
@@ -93,6 +95,24 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
             {
                 config.Token = token.Trim().Trim('"');
                 _logger.LogInformation("[MCP] Env override: {Key}=***", EnvToken);
+            }
+
+            // Transport method override (streamableHttp / stdio)
+            var transport = args.GetValueOrDefault(EnvTransport) ?? Environment.GetEnvironmentVariable(EnvTransport);
+            if (!string.IsNullOrWhiteSpace(transport)
+                && Enum.TryParse<TransportMethod>(transport.Trim().Trim('"'), ignoreCase: true, out var tm))
+            {
+                config.TransportMethod = tm;
+                _logger.LogInformation("[MCP] Env override: {Key}={Value}", EnvTransport, config.TransportMethod);
+            }
+
+            // Start server override — controls whether MCP server auto-starts in streamableHttp mode
+            var startServer = args.GetValueOrDefault(EnvStartServer) ?? Environment.GetEnvironmentVariable(EnvStartServer);
+            if (!string.IsNullOrWhiteSpace(startServer)
+                && bool.TryParse(startServer.Trim().Trim('"'), out var ss))
+            {
+                config.KeepServerRunning = ss;
+                _logger.LogInformation("[MCP] Env override: {Key}={Value}", EnvStartServer, config.KeepServerRunning);
             }
 
             // Enabled tools override — comma-separated tool IDs
