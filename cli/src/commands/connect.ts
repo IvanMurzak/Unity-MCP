@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import * as path from 'path';
 import * as fs from 'fs';
 import { findEditorPath, getProjectEditorVersion, launchEditor } from '../utils/unity-editor.js';
+import * as ui from '../utils/ui.js';
 
 export const connectCommand = new Command('connect')
   .description('Open Unity and enforce MCP connection to a specified server URL via environment variables')
@@ -28,7 +29,7 @@ export const connectCommand = new Command('connect')
     const projectPath = path.resolve(options.path);
 
     if (!fs.existsSync(projectPath)) {
-      console.error(`Error: Project path does not exist: ${projectPath}`);
+      ui.error(`Project path does not exist: ${projectPath}`);
       process.exit(1);
     }
 
@@ -37,16 +38,19 @@ export const connectCommand = new Command('connect')
     if (!version) {
       version = getProjectEditorVersion(projectPath) ?? undefined;
       if (version) {
-        console.log(`Detected editor version from project: ${version}`);
+        ui.info(`Detected editor version from project: ${version}`);
       }
     }
 
+    const spinner = ui.startSpinner('Locating Unity Editor...');
     const editorPath = await findEditorPath(version);
     if (!editorPath) {
+      spinner.fail('Unity Editor not found');
       const versionMsg = version ? ` (version ${version})` : '';
-      console.error(`Error: Unity Editor not found${versionMsg}. Install it with: unity-mcp-cli install-editor --version <version>`);
+      ui.error(`Unity Editor not found${versionMsg}. Install it with: unity-mcp-cli install-unity --version <version>`);
       process.exit(1);
     }
+    spinner.succeed('Unity Editor located');
 
     // Build environment variables for MCP connection
     const env: Record<string, string> = {
@@ -67,7 +71,7 @@ export const connectCommand = new Command('connect')
 
     if (options.auth) {
       if (options.auth !== 'none' && options.auth !== 'required') {
-        console.error('Error: --auth must be "none" or "required"');
+        ui.error('--auth must be "none" or "required"');
         process.exit(1);
       }
       env['UNITY_MCP_AUTH_OPTION'] = options.auth;
@@ -75,7 +79,7 @@ export const connectCommand = new Command('connect')
 
     if (options.transport) {
       if (options.transport !== 'streamableHttp' && options.transport !== 'stdio') {
-        console.error('Error: --transport must be "streamableHttp" or "stdio"');
+        ui.error('--transport must be "streamableHttp" or "stdio"');
         process.exit(1);
       }
       env['UNITY_MCP_TRANSPORT'] = options.transport;
@@ -84,20 +88,23 @@ export const connectCommand = new Command('connect')
     if (options.startServer !== undefined) {
       const val = options.startServer.toLowerCase();
       if (val !== 'true' && val !== 'false') {
-        console.error('Error: --start-server must be "true" or "false"');
+        ui.error('--start-server must be "true" or "false"');
         process.exit(1);
       }
       env['UNITY_MCP_START_SERVER'] = val;
     }
 
-    console.log(`Connecting to MCP server: ${options.url}`);
-    console.log('Environment variables:');
+    ui.heading('Connection Details');
+    ui.label('MCP Server', options.url);
+    ui.label('Project', projectPath);
+    ui.label('Editor', editorPath);
+
+    ui.heading('Environment Variables');
     for (const [key, value] of Object.entries(env)) {
       const display = key === 'UNITY_MCP_TOKEN' ? '***' : value;
-      console.log(`  ${key}=${display}`);
+      ui.label(key, display);
     }
 
-    console.log(`\nOpening project: ${projectPath}`);
-    console.log(`Using editor: ${editorPath}`);
+    ui.divider();
     launchEditor(editorPath, projectPath, env);
   });

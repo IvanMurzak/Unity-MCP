@@ -5,6 +5,7 @@ import { execFileSync, execSync } from 'child_process';
 import { platform } from 'os';
 import { get as httpsGet } from 'https';
 import { get as httpGet, IncomingMessage } from 'http';
+import * as ui from './ui.js';
 
 const UNITY_HUB_DOWNLOAD_URLS: Record<string, string> = {
   win32: 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.exe',
@@ -88,9 +89,15 @@ export async function installUnityHub(): Promise<string> {
   switch (plat) {
     case 'win32': {
       const installerPath = path.join(tmpDir, 'UnityHubSetup.exe');
-      console.log('Downloading Unity Hub installer...');
-      await downloadFile(url, installerPath);
-      console.log('Installing Unity Hub silently (may require administrator privileges)...');
+      const spinner = ui.startSpinner('Downloading Unity Hub installer...');
+      try {
+        await downloadFile(url, installerPath);
+      } catch (err) {
+        spinner.fail('Failed to download Unity Hub installer');
+        throw err;
+      }
+      spinner.succeed('Unity Hub installer downloaded');
+      ui.info('Installing Unity Hub silently (may require administrator privileges)...');
       try {
         execFileSync(installerPath, ['/S'], { timeout: 300000, stdio: 'inherit' });
       } finally {
@@ -104,9 +111,15 @@ export async function installUnityHub(): Promise<string> {
     }
     case 'darwin': {
       const dmgPath = path.join(tmpDir, 'UnityHubSetup.dmg');
-      console.log('Downloading Unity Hub installer...');
-      await downloadFile(url, dmgPath);
-      console.log('Installing Unity Hub...');
+      const spinner = ui.startSpinner('Downloading Unity Hub installer...');
+      try {
+        await downloadFile(url, dmgPath);
+      } catch (err) {
+        spinner.fail('Failed to download Unity Hub installer');
+        throw err;
+      }
+      spinner.succeed('Unity Hub installer downloaded');
+      const installSpinner = ui.startSpinner('Installing Unity Hub...');
       try {
         const mountOutput = execSync(`hdiutil attach -nobrowse -noverify "${dmgPath}"`, { encoding: 'utf-8' });
         const mountMatch = mountOutput.match(/\/Volumes\/.+/);
@@ -117,6 +130,10 @@ export async function installUnityHub(): Promise<string> {
         } finally {
           execSync(`hdiutil detach "${mountPoint}" -quiet`, { stdio: 'ignore' });
         }
+        installSpinner.succeed('Unity Hub installed');
+      } catch (err) {
+        installSpinner.fail('Unity Hub installation failed');
+        throw err;
       } finally {
         try { fs.unlinkSync(dmgPath); } catch { /* ignore */ }
       }
@@ -129,11 +146,16 @@ export async function installUnityHub(): Promise<string> {
     case 'linux': {
       const appDir = path.join(process.env['HOME'] ?? '', 'Applications');
       const appImagePath = path.join(appDir, 'UnityHub.AppImage');
-      console.log('Downloading Unity Hub AppImage...');
+      const spinner = ui.startSpinner('Downloading Unity Hub AppImage...');
       fs.mkdirSync(appDir, { recursive: true });
-      await downloadFile(url, appImagePath);
+      try {
+        await downloadFile(url, appImagePath);
+      } catch (err) {
+        spinner.fail('Failed to download Unity Hub AppImage');
+        throw err;
+      }
       fs.chmodSync(appImagePath, 0o755);
-      console.log(`Unity Hub installed at: ${appImagePath}`);
+      spinner.succeed(`Unity Hub installed at: ${appImagePath}`);
       return appImagePath;
     }
     default:
@@ -148,7 +170,7 @@ export async function ensureUnityHub(): Promise<string> {
   const hubPath = findUnityHub();
   if (hubPath) return hubPath;
 
-  console.log('Unity Hub not found. Installing automatically...');
+  ui.warn('Unity Hub not found. Installing automatically...');
   return installUnityHub();
 }
 
@@ -181,7 +203,7 @@ export function listInstalledEditors(hubPath: string): InstalledEditor[] {
 
     return editors;
   } catch (err) {
-    console.error('Failed to list installed editors:', (err as Error).message);
+    ui.warn(`Failed to list installed editors: ${(err as Error).message}`);
     return [];
   }
 }
@@ -227,7 +249,7 @@ export function findHighestEditor(editors: InstalledEditor[]): InstalledEditor {
  * Install a Unity editor version via Unity Hub CLI.
  */
 export function installEditor(hubPath: string, version: string): void {
-  console.log(`Installing Unity Editor ${version} via Unity Hub...`);
+  ui.info(`Installing Unity Editor ${version} via Unity Hub...`);
   try {
     execFileSync(
       hubPath,
@@ -296,7 +318,7 @@ export function createProject(hubPath: string, projectPath: string, editorVersio
   // Find the editor install path
   const editors = listInstalledEditors(hubPath);
   if (editors.length === 0) {
-    throw new Error('No Unity editors installed. Install one with: unity-mcp-cli install-editor --version <version>');
+    throw new Error('No Unity editors installed. Install one with: unity-mcp-cli install-unity --version <version>');
   }
 
   let editor: InstalledEditor | undefined;
@@ -316,15 +338,15 @@ export function createProject(hubPath: string, projectPath: string, editorVersio
 
   const args = ['-createProject', projectPath, '-quit', '-batchmode'];
 
-  console.log(`Creating Unity project at: ${projectPath}`);
-  console.log(`Using Unity Editor: ${editor.version} (${editorExe})`);
+  ui.info(`Creating Unity project at: ${projectPath}`);
+  ui.label('Unity Editor', `${editor.version} (${editorExe})`);
   try {
     execFileSync(editorExe, args, {
       encoding: 'utf-8',
       timeout: 120000,
       stdio: 'inherit',
     });
-    console.log('Project created successfully.');
+    ui.success('Project created successfully.');
   } catch (err) {
     throw new Error(`Failed to create project: ${(err as Error).message}`);
   }

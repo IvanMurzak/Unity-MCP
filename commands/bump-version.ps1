@@ -66,6 +66,18 @@ $VersionFiles = @(
         Pattern     = 'public const string Version = "[\d\.]+";'
         Replace     = 'public const string Version = "{VERSION}";'
         Description = "Plugin C# version constant"
+    },
+    @{
+        Path        = "cli/package.json"
+        Pattern     = '"version":\s*"[\d\.]+(-[a-zA-Z0-9\-\.]+)?(\+[a-zA-Z0-9\-\.]+)?"'
+        Replace     = '"version": "{VERSION}"'
+        Description = "CLI npm package version"
+    },
+    @{
+        Path        = "cli/src/utils/manifest.ts"
+        Pattern     = "const FALLBACK_VERSION = '[\d\.]+(-[a-zA-Z0-9\-\.]+)?(\+[a-zA-Z0-9\-\.]+)?'"
+        Replace     = "const FALLBACK_VERSION = '{VERSION}'"
+        Description = "CLI OpenUPM fallback version"
     }
 )
 
@@ -208,6 +220,22 @@ try {
     }
 
     if ($changes -and $changes.Count -gt 0) {
+        # Update CLI package-lock.json — only the two root-level version fields
+        # that follow "name": "unity-mcp-cli". Dependency versions are not touched.
+        $lockFilePath = "cli/package-lock.json"
+        if (Test-Path $lockFilePath) {
+            Write-ColorText "`nUpdating CLI package-lock.json..." "Cyan"
+            $lockContent = Get-Content $lockFilePath -Raw
+            $pattern = '("name":\s*"unity-mcp-cli",\s+"version":\s*")[\d\.]+(-[a-zA-Z0-9\-\.]+)?(\+[a-zA-Z0-9\-\.]+)?'
+            $replacement = "`${1}$NewVersion"
+            $newLockContent = [regex]::Replace($lockContent, $pattern, $replacement)
+            if ($newLockContent -ne $lockContent) {
+                $matches = [regex]::Matches($lockContent, $pattern)
+                Set-Content -Path $lockFilePath -Value $newLockContent -NoNewline
+                Write-ColorText "   CLI package-lock.json updated ($($matches.Count) occurrences)" "Green"
+            }
+        }
+
         Write-ColorText "`n🎉 Version bump completed successfully!" "Green"
         Write-ColorText "   Updated $($changes.Count) files" "White"
         Write-ColorText "   Total replacements: $(($changes | Measure-Object -Property Matches -Sum).Sum)" "White"

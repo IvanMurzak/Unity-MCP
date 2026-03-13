@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import * as path from 'path';
 import * as fs from 'fs';
 import { getOrCreateConfig, writeConfig, updateFeatures } from '../utils/config.js';
+import * as ui from '../utils/ui.js';
 
 function parseCommaSeparated(value: string): string[] {
   return value.split(',').map((s) => s.trim()).filter(Boolean);
@@ -42,34 +43,34 @@ export const configureCommand = new Command('configure')
   }) => {
     const resolvedPath = positionalPath ?? options.path;
     if (!resolvedPath) {
-      console.error('Error: Path is required. Usage: unity-mcp-cli configure <path> or --path <path>');
+      ui.error('Path is required. Usage: unity-mcp-cli configure <path> or --path <path>');
       process.exit(1);
     }
     const projectPath = path.resolve(resolvedPath);
 
     if (!fs.existsSync(projectPath)) {
-      console.error(`Error: Project path does not exist: ${projectPath}`);
+      ui.error(`Project path does not exist: ${projectPath}`);
       process.exit(1);
     }
 
     const config = getOrCreateConfig(projectPath);
 
     if (options.list) {
-      console.log('\nCurrent configuration:');
-      console.log(`  Host: ${config.host ?? 'not set'}`);
-      console.log(`  Keep Connected: ${config.keepConnected ?? false}`);
-      console.log(`  Transport: ${config.transportMethod ?? 'streamableHttp'}`);
-      console.log(`  Auth: ${config.authOption ?? 'none'}`);
+      ui.heading('Current configuration');
+      ui.label('Host', config.host ?? 'not set');
+      ui.label('Keep Connected', String(config.keepConnected ?? false));
+      ui.label('Transport', config.transportMethod ?? 'streamableHttp');
+      ui.label('Auth', config.authOption ?? 'none');
 
-      const printFeatures = (label: string, features: { name: string; enabled: boolean }[] | undefined) => {
+      const printFeatures = (featureLabel: string, features: { name: string; enabled: boolean }[] | undefined) => {
         if (!features || features.length === 0) {
-          console.log(`\n  ${label}: (none configured - all enabled by default)`);
+          ui.heading(featureLabel);
+          ui.info('(none configured - all enabled by default)');
           return;
         }
-        console.log(`\n  ${label}:`);
+        ui.heading(featureLabel);
         for (const f of features) {
-          const status = f.enabled ? '[enabled]' : '[disabled]';
-          console.log(`    ${status} ${f.name}`);
+          ui.featureRow(f.name, f.enabled);
         }
       };
 
@@ -110,5 +111,5 @@ export const configureCommand = new Command('configure')
     }
 
     writeConfig(projectPath, config);
-    console.log('Configuration updated successfully.');
+    ui.success('Configuration updated successfully.');
   });

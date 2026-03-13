@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import * as path from 'path';
 import * as fs from 'fs';
 import { removePluginFromManifest } from '../utils/manifest.js';
+import * as ui from '../utils/ui.js';
 
 export const removePluginCommand = new Command('remove-plugin')
   .description('Remove Unity-MCP plugin from a Unity project')
@@ -10,7 +11,7 @@ export const removePluginCommand = new Command('remove-plugin')
   .action(async (positionalPath: string | undefined, options: { path?: string }) => {
     const resolvedPath = positionalPath ?? options.path;
     if (!resolvedPath) {
-      console.error('Error: Path is required. Usage: unity-mcp-cli remove-plugin <path> or --path <path>');
+      ui.error('Path is required. Usage: unity-mcp-cli remove-plugin <path> or --path <path>');
       process.exit(1);
     }
     const projectPath = path.resolve(resolvedPath);
@@ -18,11 +19,11 @@ export const removePluginCommand = new Command('remove-plugin')
     // Validate project exists
     const manifestPath = path.join(projectPath, 'Packages', 'manifest.json');
     if (!fs.existsSync(manifestPath)) {
-      console.error(`Error: Not a valid Unity project (missing Packages/manifest.json): ${projectPath}`);
+      ui.error(`Not a valid Unity project (missing Packages/manifest.json): ${projectPath}`);
       process.exit(1);
     }
 
-    console.log(`Removing Unity-MCP plugin from: ${projectPath}`);
+    ui.info(`Removing Unity-MCP plugin from: ${projectPath}`);
     removePluginFromManifest(projectPath);
-    console.log('Done!');
+    ui.success('Done!');
   });

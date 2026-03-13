@@ -48,6 +48,7 @@ Unlike other tools, this plugin works **inside your compiled game**, allowing fo
 Get up and running in three steps:
 
 1. **[Install the Plugin](#step-1-install-unity-mcp-plugin)** — download the `.unitypackage` installer or run `openupm add com.ivanmurzak.unity.mcp`
+   > **Alternative:** `npx unity-mcp-cli install-plugin ./MyUnityProject` — see [CLI documentation](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md)
 2. **[Pick an MCP Client](#step-2-install-mcp-client)** — Claude Code, Claude Desktop, GitHub Copilot, Cursor, or any other
 3. **[Configure the client](#step-3-configure-mcp-client)** — open `Window/AI Game Developer — MCP` in Unity and click **Configure**
 
@@ -153,6 +154,7 @@ Install extensions when need more tools or [create your own](#add-custom-mcp-too
   - [Step 1: Install `Unity MCP Plugin`](#step-1-install-unity-mcp-plugin)
     - [Option 1 - Installer](#option-1---installer)
     - [Option 2 - OpenUPM-CLI](#option-2---openupm-cli)
+    - [Option 3 - CLI](#option-3---cli)
   - [Step 2: Install `MCP Client`](#step-2-install-mcp-client)
   - [Step 3: Configure `MCP Client`](#step-3-configure-mcp-client)
     - [Automatic configuration](#automatic-configuration)
@@ -197,6 +199,7 @@ Install extensions when need more tools or [create your own](#add-custom-mcp-too
 | [Docker Deployment](docs/DOCKER_DEPLOYMENT.md) | Step-by-step Docker deployment guide |
 | [Development Guide](docs/dev/Development.md) | Architecture, code style, CI/CD — for contributors |
 | [Wiki](https://github.com/IvanMurzak/Unity-MCP/wiki) | Getting started, tutorials, API reference, FAQ |
+| [CLI Tool](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) | Install plugins, configure, and connect via command line |
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
@@ -230,6 +233,22 @@ Install extensions when need more tools or [create your own](#add-custom-mcp-too
 ```bash
 openupm add com.ivanmurzak.unity.mcp
 ```
+
+### Option 3 - CLI
+
+Install the plugin via [`unity-mcp-cli`](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) — no Unity Editor needed:
+
+```bash
+npx unity-mcp-cli install-plugin ./MyUnityProject
+```
+
+Launch Unity with an active MCP connection:
+
+```bash
+npx unity-mcp-cli connect --path ./MyUnityProject --url http://localhost:8080
+```
+
+> See [full CLI documentation](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) for all available commands.
 
 ## Step 2: Install `MCP Client`
 

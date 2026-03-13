@@ -10,6 +10,8 @@
 
 </div>
 
+<b>[中文](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.zh-CN.md) | [日本語](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.ja.md) | [Español](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.es.md)</b>
+
 Cross-platform CLI tool for **[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** — create projects, install plugins, configure MCP tools, and launch Unity with active MCP connections. All from a single command line.
 
 ## ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-features.svg?raw=true)
@@ -49,7 +51,7 @@ unity-mcp-cli install-plugin /path/to/unity/project
 - [Quick Start](#quick-start)
 - [Commands](#commands)
   - [`create-project`](#create-project) — Create a new Unity project
-  - [`install-editor`](#install-editor) — Install Unity Editor via Unity Hub
+  - [`install-unity`](#install-unity) — Install Unity Editor via Unity Hub
   - [`open`](#open) — Open a Unity project in the Editor
   - [`install-plugin`](#install-plugin) — Install Unity-MCP plugin into a project
   - [`remove-plugin`](#remove-plugin) — Remove Unity-MCP plugin from a project
@@ -83,12 +85,12 @@ npx unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
-## `install-editor`
+## `install-unity`
 
 Install a Unity Editor version via Unity Hub CLI.
 
 ```bash
-npx unity-mcp-cli install-editor --version 6000.3.1f1
+npx unity-mcp-cli install-unity --version 6000.3.1f1
 ```
 
 | Option | Required | Description |
@@ -101,7 +103,7 @@ If neither option is provided, the command lists currently installed editors.
 **Example — install the editor version that a project needs:**
 
 ```bash
-npx unity-mcp-cli install-editor --path ./MyGame
+npx unity-mcp-cli install-unity --path ./MyGame
 ```
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
@@ -325,5 +327,7 @@ Commands that manage editors or create projects use the **Unity Hub CLI** (`--he
 - **Windows** — silent install via `UnityHubSetup.exe /S` (may require administrator privileges)
 - **macOS** — downloads the DMG, mounts it, and copies `Unity Hub.app` to `/Applications`
 - **Linux** — downloads `UnityHub.AppImage` to `~/Applications/`
+
+> For the full Unity-MCP project documentation, see the [main README](https://github.com/IvanMurzak/Unity-MCP/blob/main/README.md).
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
