@@ -391,6 +391,69 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsTrue(assertLogEntry.ToString().Contains("[Assert]"), "Should format Assert type correctly");
         }
         [Test]
+        public void ClearLogs_DoesNotThrow()
+        {
+            // Act & Assert
+            Assert.DoesNotThrow(() => _tool.ClearLogs());
+        }
+
+        [UnityTest]
+        public IEnumerator ClearLogs_RemovesAllLogs()
+        {
+            // Arrange: Generate some test logs
+            Debug.Log("Log before clear 1");
+            Debug.LogWarning("Warning before clear");
+            Debug.Log("Log before clear 2");
+
+            for (int i = 0; i < 3; i++)
+                yield return null;
+
+            _logCollector.Save();
+
+            // Verify logs exist
+            var logsBefore = _tool.GetLogs();
+            Assert.IsTrue(logsBefore.Length > 0, "Should have logs before clearing.");
+
+            // Act
+            _tool.ClearLogs();
+
+            // Assert
+            var logsAfter = _tool.GetLogs();
+            Assert.AreEqual(0, logsAfter.Length, "Should have no logs after clearing.");
+        }
+
+        [UnityTest]
+        public IEnumerator ClearLogs_ThenGetLogs_OnlyShowsNewLogs()
+        {
+            // Arrange: Generate some old logs
+            var oldLog = "Old log before clear";
+            Debug.Log(oldLog);
+
+            for (int i = 0; i < 3; i++)
+                yield return null;
+
+            _logCollector.Save();
+
+            // Act: Clear logs, then generate new logs
+            _tool.ClearLogs();
+
+            var newLog = "New log after clear";
+            Debug.Log(newLog);
+
+            for (int i = 0; i < 3; i++)
+                yield return null;
+
+            _logCollector.Save();
+
+            // Assert: Only new logs should be present
+            var result = _tool.GetLogs();
+            Assert.IsTrue(result.Any(entry => entry.Message.Contains(newLog)),
+                "Should contain the new log message.");
+            Assert.IsFalse(result.Any(entry => entry.Message.Contains(oldLog)),
+                "Should NOT contain the old log message.");
+        }
+
+        [Test]
         public void Error_InvalidMaxEntries_ReturnsCorrectMessage()
         {
             // Act

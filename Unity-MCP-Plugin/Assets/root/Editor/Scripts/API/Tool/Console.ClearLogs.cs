@@ -1,0 +1,42 @@
+/*
+┌──────────────────────────────────────────────────────────────────┐
+│  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
+│  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
+│  Copyright (c) 2025 Ivan Murzak                                  │
+│  Licensed under the Apache License, Version 2.0.                 │
+│  See the LICENSE file in the project root for more information.  │
+└──────────────────────────────────────────────────────────────────┘
+*/
+
+#nullable enable
+using System;
+using System.ComponentModel;
+using com.IvanMurzak.McpPlugin;
+
+namespace com.IvanMurzak.Unity.MCP.Editor.API
+{
+    public partial class Tool_Console
+    {
+        public const string ConsoleClearLogsToolId = "console-clear-logs";
+        [McpPluginTool
+        (
+            ConsoleClearLogsToolId,
+            Title = "Console / Clear Logs",
+            DestructiveHint = true,
+            IdempotentHint = true
+        )]
+        [Description("Clears all Unity Editor console logs. " +
+            "Useful for isolating errors related to a specific action by clearing logs before performing the action.")]
+        public void ClearLogs()
+        {
+            if (!UnityMcpPluginEditor.HasInstance)
+                throw new InvalidOperationException("UnityMcpPluginEditor is not initialized.");
+
+            var logCollector = UnityMcpPluginEditor.Instance.LogCollector;
+            if (logCollector == null)
+                throw new InvalidOperationException("LogCollector is not initialized.");
+
+            logCollector.Clear();
+        }
+    }
+}
