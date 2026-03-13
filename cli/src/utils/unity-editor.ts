@@ -127,11 +127,14 @@ function findEditorPathByCommonLocations(version?: string): string | null {
       break;
     }
     case 'linux': {
+      const home = process.env['HOME'];
       if (version) {
         candidates.push(`/opt/unity/hub/Editor/${version}/Editor/Unity`);
-        candidates.push(path.join(process.env['HOME'] ?? '', 'Unity', 'Hub', 'Editor', version, 'Editor', 'Unity'));
+        if (home) candidates.push(path.join(home, 'Unity', 'Hub', 'Editor', version, 'Editor', 'Unity'));
       }
-      for (const baseDir of ['/opt/unity/hub/Editor', path.join(process.env['HOME'] ?? '', 'Unity', 'Hub', 'Editor')]) {
+      const linuxBaseDirs = ['/opt/unity/hub/Editor'];
+      if (home) linuxBaseDirs.push(path.join(home, 'Unity', 'Hub', 'Editor'));
+      for (const baseDir of linuxBaseDirs) {
         if (fs.existsSync(baseDir)) {
           try {
             const versions = fs.readdirSync(baseDir).sort((a, b) => compareUnityVersions(b, a));

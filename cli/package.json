@@ -32,7 +32,7 @@
     "directory": "cli"
   },
   "engines": {
-    "node": ">=18.0.0"
+    "node": "^20.19.0 || >=22.12.0"
   },
   "dependencies": {
     "commander": "^13.1.0",

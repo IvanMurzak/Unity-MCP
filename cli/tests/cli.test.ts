@@ -6,7 +6,7 @@ import * as os from 'os';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const CLI_PATH = path.resolve(__dirname, '..', 'bin', 'unity-mcp.js');
+const CLI_PATH = path.resolve(__dirname, '..', 'bin', 'unity-mcp-cli.js');
 
 function runCli(args: string[], options?: { cwd?: string }): { stdout: string; exitCode: number } {
   try {
@@ -65,7 +65,7 @@ describe('CLI integration', () => {
     it('shows help with --help', () => {
       const { stdout, exitCode } = runCli(['install-plugin', '--help']);
       expect(exitCode).toBe(0);
-      expect(stdout).toContain('--project-path');
+      expect(stdout).toContain('--path');
       expect(stdout).toContain('--plugin-version');
     });
 
@@ -73,7 +73,7 @@ describe('CLI integration', () => {
       const emptyDir = fs.mkdtempSync(path.join(os.tmpdir(), 'empty-'));
       const { stdout, exitCode } = runCli([
         'install-plugin',
-        '--project-path', emptyDir,
+        '--path', emptyDir,
         '--plugin-version', '0.51.6',
       ]);
       expect(exitCode).toBe(1);
@@ -89,7 +89,7 @@ describe('CLI integration', () => {
 
       const { stdout, exitCode } = runCli([
         'install-plugin',
-        '--project-path', tmpDir,
+        '--path', tmpDir,
         '--plugin-version', '0.51.6',
       ]);
       expect(exitCode).toBe(0);
@@ -128,7 +128,7 @@ describe('CLI integration', () => {
     it('creates default config and lists it', () => {
       const { stdout, exitCode } = runCli([
         'configure',
-        '--project-path', tmpDir,
+        '--path', tmpDir,
         '--list',
       ]);
       expect(exitCode).toBe(0);
@@ -139,15 +139,15 @@ describe('CLI integration', () => {
 
     it('enables and disables tools', () => {
       // First create default config
-      runCli(['configure', '--project-path', tmpDir, '--enable-tools', 'tool-a,tool-b']);
+      runCli(['configure', '--path', tmpDir, '--enable-tools', 'tool-a,tool-b']);
 
-      const { stdout } = runCli(['configure', '--project-path', tmpDir, '--list']);
+      const { stdout } = runCli(['configure', '--path', tmpDir, '--list']);
       expect(stdout).toContain('[enabled] tool-a');
       expect(stdout).toContain('[enabled] tool-b');
 
       // Now disable one
-      runCli(['configure', '--project-path', tmpDir, '--disable-tools', 'tool-a']);
-      const { stdout: stdout2 } = runCli(['configure', '--project-path', tmpDir, '--list']);
+      runCli(['configure', '--path', tmpDir, '--disable-tools', 'tool-a']);
+      const { stdout: stdout2 } = runCli(['configure', '--path', tmpDir, '--list']);
       expect(stdout2).toContain('[disabled] tool-a');
       expect(stdout2).toContain('[enabled] tool-b');
     });
@@ -155,7 +155,7 @@ describe('CLI integration', () => {
     it('fails when project path does not exist', () => {
       const { exitCode, stdout } = runCli([
         'configure',
-        '--project-path', '/nonexistent/path/12345',
+        '--path', '/nonexistent/path/12345',
         '--list',
       ]);
       expect(exitCode).toBe(1);
@@ -176,10 +176,10 @@ describe('CLI integration', () => {
       expect(stdout).toContain('--keep-connected');
     });
 
-    it('requires --project-path and --url', () => {
+    it('requires --path and --url', () => {
       const { exitCode, stdout } = runCli(['connect']);
       expect(exitCode).toBe(1);
-      expect(stdout).toContain('--project-path');
+      expect(stdout).toContain('--path');
     });
   });
 
@@ -189,8 +189,8 @@ describe('CLI integration', () => {
     it('shows help with --help', () => {
       const { stdout, exitCode } = runCli(['open', '--help']);
       expect(exitCode).toBe(0);
-      expect(stdout).toContain('--project-path');
-      expect(stdout).toContain('--editor-version');
+      expect(stdout).toContain('--path');
+      expect(stdout).toContain('--unity');
     });
   });
 
@@ -201,7 +201,7 @@ describe('CLI integration', () => {
       const { stdout, exitCode } = runCli(['create-project', '--help']);
       expect(exitCode).toBe(0);
       expect(stdout).toContain('--path');
-      expect(stdout).toContain('--editor-version');
+      expect(stdout).toContain('--unity');
     });
   });
 
@@ -212,7 +212,7 @@ describe('CLI integration', () => {
       const { stdout, exitCode } = runCli(['install-editor', '--help']);
       expect(exitCode).toBe(0);
       expect(stdout).toContain('--version');
-      expect(stdout).toContain('--project-path');
+      expect(stdout).toContain('--path');
     });
   });
 });

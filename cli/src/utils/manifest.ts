@@ -1,6 +1,5 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import semver from 'semver';
 
 const PACKAGE_ID = 'com.ivanmurzak.unity.mcp';
 const REGISTRY_NAME = 'package.openupm.com';
@@ -77,15 +76,20 @@ export function shouldUpdateVersion(currentVersion: string, newVersion: string):
     return false;
   }
 
-  const current = semver.valid(semver.coerce(currentVersion));
-  const target = semver.valid(semver.coerce(newVersion));
-
-  if (current && target) {
-    return semver.gt(target, current);
+  const numericOnly = /^\d+(\.\d+)*$/;
+  if (numericOnly.test(currentVersion) && numericOnly.test(newVersion)) {
+    const currentParts = currentVersion.split('.').map(Number);
+    const targetParts = newVersion.split('.').map(Number);
+    const len = Math.max(currentParts.length, targetParts.length);
+    for (let i = 0; i < len; i++) {
+      const c = currentParts[i] ?? 0;
+      const t = targetParts[i] ?? 0;
+      if (t !== c) return t > c;
+    }
+    return false;
   }
 
-  // Fallback to string comparison
-  return newVersion.localeCompare(currentVersion) > 0;
+  return newVersion.toLowerCase() > currentVersion.toLowerCase();
 }
 
 /**

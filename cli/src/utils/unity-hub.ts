@@ -24,7 +24,7 @@ export function findUnityHub(): string | null {
     case 'win32':
       candidates.push(
         path.join(process.env['PROGRAMFILES'] ?? 'C:\\Program Files', 'Unity Hub', 'Unity Hub.exe'),
-        path.join(process.env['LOCALAPPDATA'] ?? '', 'Programs', 'Unity Hub', 'Unity Hub.exe')
+        ...(process.env['LOCALAPPDATA'] ? [path.join(process.env['LOCALAPPDATA'], 'Programs', 'Unity Hub', 'Unity Hub.exe')] : [])
       );
       break;
     case 'darwin':
@@ -34,7 +34,7 @@ export function findUnityHub(): string | null {
       candidates.push(
         '/usr/bin/unity-hub',
         '/snap/bin/unity-hub',
-        path.join(process.env['HOME'] ?? '', 'Applications', 'Unity Hub.AppImage')
+        ...(process.env['HOME'] ? [path.join(process.env['HOME'], 'Applications', 'Unity Hub.AppImage')] : [])
       );
       break;
   }
@@ -57,7 +57,7 @@ function downloadFile(url: string, destPath: string): Promise<void> {
     doGet(url, (response: IncomingMessage) => {
       // Follow redirects
       if (response.statusCode && response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
-        downloadFile(response.headers.location, destPath).then(resolve, reject);
+        downloadFile(new URL(response.headers.location, url).toString(), destPath).then(resolve, reject);
         return;
       }
       if (response.statusCode && response.statusCode !== 200) {

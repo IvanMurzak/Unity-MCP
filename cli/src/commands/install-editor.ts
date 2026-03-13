@@ -1,4 +1,6 @@
 import { Command } from 'commander';
+import * as path from 'path';
+import * as fs from 'fs';
 import { ensureUnityHub, installEditor, listInstalledEditors } from '../utils/unity-hub.js';
 import { getProjectEditorVersion } from '../utils/unity-editor.js';
 
@@ -12,7 +14,12 @@ export const installEditorCommand = new Command('install-editor')
     let version = options.version;
 
     if (!version && options.path) {
-      version = getProjectEditorVersion(options.path) ?? undefined;
+      const projectPath = path.resolve(options.path);
+      if (!fs.existsSync(projectPath)) {
+        console.error(`Error: Project path does not exist: ${projectPath}`);
+        process.exit(1);
+      }
+      version = getProjectEditorVersion(projectPath) ?? undefined;
       if (version) {
         console.log(`Detected editor version from project: ${version}`);
       } else {

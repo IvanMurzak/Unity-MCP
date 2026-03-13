@@ -12,8 +12,7 @@ export const connectCommand = new Command('connect')
   .option('--auth <option>', 'Auth option: none or required (sets UNITY_MCP_AUTH_OPTION)')
   .option('--keep-connected', 'Force keep connected (sets UNITY_MCP_KEEP_CONNECTED=true)')
   .option('--transport <method>', 'Transport method: streamableHttp or stdio (sets UNITY_MCP_TRANSPORT)')
-  .option('--start-server', 'Start MCP server in Unity Editor (sets UNITY_MCP_START_SERVER=true)')
-  .option('--no-start-server', 'Prevent MCP server from starting in Unity Editor (sets UNITY_MCP_START_SERVER=false)')
+  .option('--start-server <value>', 'Set to true/false to control server auto-start (sets UNITY_MCP_START_SERVER)', undefined)
   .option('--unity <version>', 'Specific Unity Editor version to use')
   .action(async (options: {
     path: string;
@@ -23,7 +22,7 @@ export const connectCommand = new Command('connect')
     auth?: string;
     keepConnected?: boolean;
     transport?: string;
-    startServer?: boolean;
+    startServer?: string;
     unity?: string;
   }) => {
     const projectPath = path.resolve(options.path);
@@ -83,7 +82,12 @@ export const connectCommand = new Command('connect')
     }
 
     if (options.startServer !== undefined) {
-      env['UNITY_MCP_START_SERVER'] = String(options.startServer);
+      const val = options.startServer.toLowerCase();
+      if (val !== 'true' && val !== 'false') {
+        console.error('Error: --start-server must be "true" or "false"');
+        process.exit(1);
+      }
+      env['UNITY_MCP_START_SERVER'] = val;
     }
 
     console.log(`Connecting to MCP server: ${options.url}`);

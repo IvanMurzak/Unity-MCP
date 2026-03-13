@@ -66,9 +66,9 @@ export function readConfig(projectPath: string): UnityConnectionConfig | null {
     return JSON.parse(json) as UnityConnectionConfig;
   } catch (err) {
     if (err instanceof SyntaxError) {
-      console.error(`Malformed JSON in config file: ${configPath}\n${err.message}`);
+      throw new SyntaxError(`Malformed JSON in config file: ${configPath}\n${err.message}`);
     }
-    return null;
+    throw err;
   }
 }
 
@@ -89,8 +89,9 @@ export function writeConfig(projectPath: string, config: UnityConnectionConfig):
  * Read config or create with defaults if it doesn't exist.
  */
 export function getOrCreateConfig(projectPath: string): UnityConnectionConfig {
-  const existing = readConfig(projectPath);
-  if (existing) return existing;
+  if (fs.existsSync(getConfigPath(projectPath))) {
+    return readConfig(projectPath) as UnityConnectionConfig;
+  }
 
   const config = createDefaultConfig(projectPath);
   writeConfig(projectPath, config);
