@@ -76,59 +76,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
                 logger.Info($"Start listening on port: {dataArguments.Port}");
 
                 // Bind IPv4 and IPv6 separately to avoid dual-stack socket issues on macOS.
-                // TODO: Replace with builder.WebHost.UseKestrelForMcpPlugin(dataArguments.Port)
-                //       once McpPlugin.Server NuGet package includes the extension method.
-                builder.WebHost.UseKestrel(options =>
-                {
-                    options.Listen(System.Net.IPAddress.Any, dataArguments.Port);
-
-                    if (System.Net.Sockets.Socket.OSSupportsIPv6)
-                        options.Listen(System.Net.IPAddress.IPv6Any, dataArguments.Port);
-                });
-                builder.Services.Configure<Microsoft.AspNetCore.Server.Kestrel.Transport.Sockets.SocketTransportOptions>(socketOptions =>
-                {
-                    var defaultFactory = socketOptions.CreateBoundListenSocket;
-                    socketOptions.CreateBoundListenSocket = endpoint =>
-                    {
-                        if (endpoint is System.Net.IPEndPoint ipEndPoint
-                            && ipEndPoint.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6)
-                        {
-                            var socket = new System.Net.Sockets.Socket(
-                                System.Net.Sockets.AddressFamily.InterNetworkV6,
-                                System.Net.Sockets.SocketType.Stream,
-                                System.Net.Sockets.ProtocolType.Tcp);
-                            try
-                            {
-                                socket.DualMode = false;
-                                socket.Bind(endpoint);
-                                return socket;
-                            }
-                            catch
-                            {
-                                socket.Dispose();
-                                throw;
-                            }
-                        }
-
-                        if (defaultFactory != null)
-                            return defaultFactory(endpoint);
-
-                        var fallback = new System.Net.Sockets.Socket(
-                            endpoint.AddressFamily,
-                            System.Net.Sockets.SocketType.Stream,
-                            System.Net.Sockets.ProtocolType.Tcp);
-                        try
-                        {
-                            fallback.Bind(endpoint);
-                            return fallback;
-                        }
-                        catch
-                        {
-                            fallback.Dispose();
-                            throw;
-                        }
-                    };
-                });
+                builder.WebHost.UseKestrelForMcpPlugin(dataArguments.Port);
 
                 var app = builder.Build();
 
