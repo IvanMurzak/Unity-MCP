@@ -1,4 +1,4 @@
-﻿/*
+/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -13,10 +13,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
-using com.IvanMurzak.McpPlugin.Common.Model;
-using com.IvanMurzak.McpPlugin.Common.Utils;
-using com.IvanMurzak.McpPlugin.Skills;
-using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.Unity.MCP.Editor.Services;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
@@ -25,7 +23,6 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 using LogLevel = com.IvanMurzak.Unity.MCP.Runtime.Utils.LogLevel;
-using TransportMethod = com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server.TransportMethod;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
@@ -179,6 +176,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         private VisualElement? _aiAgentLabelsContainer;
         private VisualElement? _aiAgentStatusCircle;
 
+        private DeviceAuthFlow? _deviceAuthFlow;
+
         private long _mcpServerDataVersion;
         private long _aiAgentDataVersion;
 
@@ -188,6 +187,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             SetupSettingsSection(root);
             SetupConnectionSection(root);
+            SetupConnectionModeToggle(root);
+            SetupCloudAuthSection(root);
             SetupMcpServerSection(root);
             SetupAiAgentSection(root);
             SetupToolsSection(root);
@@ -209,21 +210,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             element.AddToClassList(statusClass);
         }
 
-        private static string GetConnectionStatusClass(HubConnectionState state, bool keepConnected) => state switch
+        internal static string GetConnectionStatusClass(HubConnectionState state, bool keepConnected) => state switch
         {
             HubConnectionState.Connected when keepConnected => USS_Connected,
             _ when keepConnected => USS_Connecting,
             _ => USS_Disconnected
         };
 
-        private static string GetConnectionStatusText(HubConnectionState state, bool keepConnected) => state switch
+        internal static string GetConnectionStatusText(HubConnectionState state, bool keepConnected) => state switch
         {
             HubConnectionState.Connected when keepConnected => "Connected",
             _ when keepConnected => "Connecting...",
             _ => "Disconnected"
         };
 
-        private static string GetButtonText(HubConnectionState state, bool keepConnected) => state switch
+        internal static string GetButtonText(HubConnectionState state, bool keepConnected) => state switch
         {
             HubConnectionState.Connected when keepConnected => ServerButtonText_Disconnect,
             _ when keepConnected => ServerButtonText_Stop,
@@ -283,7 +284,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             var inputTimeoutMs = root.Q<IntegerField>("inputTimeoutMs");
             inputTimeoutMs.value = UnityMcpPluginEditor.TimeoutMs;
-            inputTimeoutMs.tooltip = $"Timeout for MCP tool execution in milliseconds.\n\nMost tools only need a few seconds.\n\nSet this higher than your longest test execution time.\n\nImportant: Also update the '{McpPlugin.Common.Consts.MCP.Server.Args.PluginTimeout}' argument in your AI agent configuration to match this value so your AI agent doesn't timeout before the tool completes.";
+            inputTimeoutMs.tooltip = $"Timeout for MCP tool execution in milliseconds.\n\nMost tools only need a few seconds.\n\nSet this higher than your longest test execution time.\n\nImportant: Also update the '{Args.PluginTimeout}' argument in your AI agent configuration to match this value so your AI agent doesn't timeout before the tool completes.";
             inputTimeoutMs.RegisterCallback<FocusOutEvent>(evt =>
             {
                 var newValue = Mathf.Max(1000, inputTimeoutMs.value);
@@ -307,33 +308,53 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         #endregion
 
-        #region Connection
+        #region Shared Helpers
 
-        private void SetupConnectionSection(VisualElement root)
+        /// <summary>
+        /// Sets up two toggles as a mutually exclusive pair where exactly one must always be selected.
+        /// When toggle A is selected, toggle B is deselected and vice versa.
+        /// If the currently-selected toggle is unchecked and the other is also unchecked, it re-checks itself.
+        /// </summary>
+        private static void SetupMutuallyExclusiveToggles(
+            Toggle toggleA, Toggle toggleB,
+            Action onASelected, Action onBSelected,
+            Action? onChanged = null)
         {
-            var inputFieldHost = root.Q<TextField>("InputServerURL");
-            var btnConnect = root.Q<Button>("btnConnectOrDisconnect");
-            var statusCircle = root.Q<VisualElement>("connectionStatusCircle");
-            var statusText = root.Q<Label>("connectionStatusText");
-
-            _aiAgentLabelsContainer = root.Q<VisualElement>("aiAgentLabelsContainer");
-            _aiAgentStatusCircle = root.Q<VisualElement>("aiAgentStatusCircle");
-
-            inputFieldHost.value = UnityMcpPluginEditor.Host;
-            inputFieldHost.RegisterCallback<FocusOutEvent>(evt =>
+            toggleA.RegisterValueChangedCallback(evt =>
             {
-                var newValue = inputFieldHost.value;
-                if (UnityMcpPluginEditor.Host == newValue)
-                    return;
-
-                UnityMcpPluginEditor.Host = newValue;
-                SaveChanges($"[{nameof(MainWindowEditor)}] Host Changed: {newValue}");
-                Invalidate();
-
-                UnityMcpPluginEditor.Instance.DisposeMcpPluginInstance();
-                UnityBuildAndConnect();
+                if (evt.newValue)
+                {
+                    toggleB.SetValueWithoutNotify(false);
+                    onASelected();
+                }
+                else if (!toggleB.value)
+                {
+                    toggleA.SetValueWithoutNotify(true);
+                }
+                onChanged?.Invoke();
             });
 
+            toggleB.RegisterValueChangedCallback(evt =>
+            {
+                if (evt.newValue)
+                {
+                    toggleA.SetValueWithoutNotify(false);
+                    onBSelected();
+                }
+                else if (!toggleA.value)
+                {
+                    toggleB.SetValueWithoutNotify(true);
+                }
+                onChanged?.Invoke();
+            });
+        }
+
+        /// <summary>
+        /// Subscribes to the combined connection state (HubConnectionState + KeepConnected) with
+        /// throttling and synchronization context marshaling.
+        /// </summary>
+        private void SubscribeToConnectionState(Action<HubConnectionState, bool> onStateChanged)
+        {
             UnityMcpPluginEditor.PluginProperty
                 .WhereNotNull()
                 .Subscribe(plugin =>
@@ -347,729 +368,46 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 .Subscribe(tuple =>
                 {
                     var (state, keepConnected) = tuple;
-                    UpdateHostFieldState(inputFieldHost, plugin.KeepConnected.CurrentValue, state);
-                    statusText.text = "Unity: " + GetConnectionStatusText(state, keepConnected);
-                    btnConnect.text = GetButtonText(state, keepConnected);
-                    var isConnect = btnConnect.text == ServerButtonText_Connect;
-                    btnConnect.EnableInClassList("btn-primary", isConnect);
-                    btnConnect.EnableInClassList("btn-secondary", !isConnect);
-                    SetStatusIndicator(statusCircle, GetConnectionStatusClass(state, keepConnected));
-
-                    if (!(state == HubConnectionState.Connected && keepConnected))
-                        SetAiAgentStatus(false);
+                    onStateChanged(state, keepConnected);
                 })
                 .AddTo(_disposables);
             }).AddTo(_disposables);
-
-            btnConnect.RegisterCallback<ClickEvent>(evt => HandleConnectButton(btnConnect.text));
         }
 
-        private static void UpdateHostFieldState(TextField field, bool keepConnected, HubConnectionState state)
-        {
-            var isReadOnly = keepConnected || state != HubConnectionState.Disconnected;
-            field.isReadOnly = isReadOnly;
-            field.tooltip = keepConnected
-                ? "Editable only when Unity disconnected from the MCP Server."
-                : $"The server URL. http://localhost:{UnityMcpPlugin.GeneratePortFromDirectory()}";
-
-            field.EnableInClassList("disabled-text-field", isReadOnly);
-            field.EnableInClassList("enabled-text-field", !isReadOnly);
-        }
-
-        private static void HandleConnectButton(string buttonText)
-        {
-            if (buttonText.Equals(ServerButtonText_Connect, StringComparison.OrdinalIgnoreCase))
-            {
-                UnityMcpPluginEditor.KeepConnected = true;
-                UnityMcpPluginEditor.Instance.Save();
-                UnityBuildAndConnect();
-            }
-            else
-            {
-                UnityMcpPluginEditor.KeepConnected = false;
-                UnityMcpPluginEditor.Instance.Save();
-                if (UnityMcpPluginEditor.Instance.HasMcpPluginInstance)
-                    _ = UnityMcpPluginEditor.Instance.Disconnect();
-            }
-        }
-
-        #endregion
-
-        #region MCP Server
-
-        private void SetupMcpServerSection(VisualElement root)
-        {
-            var btnStartStop = root.Q<Button>("btnStartStopServer") ?? throw new InvalidOperationException("MCP Server start/stop button not found.");
-            var statusCircle = root.Q<VisualElement>("mcpServerStatusCircle") ?? throw new InvalidOperationException("MCP Server status circle not found.");
-            var statusLabel = root.Q<Label>("mcpServerLabel") ?? throw new InvalidOperationException("MCP Server status label not found.");
-
-            Observable.CombineLatest(
-                    source1: McpServerManager.ServerStatus,
-                    source2: UnityMcpPluginEditor.IsConnected,
-                    resultSelector: CombineMcpServerStatus)
-                .ThrottleLast(TimeSpan.FromMilliseconds(50))
-                .ObserveOnCurrentSynchronizationContext()
-                .Subscribe(status => FetchMcpServerData(status, btnStartStop, statusCircle, statusLabel))
-                .AddTo(_disposables);
-
-            btnStartStop.RegisterCallback<ClickEvent>(evt => HandleServerButton(btnStartStop, statusLabel));
-
-            // MCP server authorization configuration UI elements
-            var labelAuthorizationToken = root.Query<Label>("labelAuthorizationToken").First();
-            var toggleAuthorizationNone = root.Query<Toggle>("toggleAuthorizationNone").First();
-            var toggleAuthorizationRequired = root.Query<Toggle>("toggleAuthorizationRequired").First();
-            var inputAuthorizationToken = root.Query<TextField>("inputAuthorizationToken").First();
-            var tokenSection = root.Query<VisualElement>("tokenSection").First();
-            var btnGenerateToken = root.Query<Button>("btnGenerateToken").First();
-
-            if (toggleAuthorizationNone == null)
-            {
-                Debug.LogError("toggleAuthorizationNone not found in UXML.");
-                return;
-            }
-            if (toggleAuthorizationRequired == null)
-            {
-                Debug.LogError("toggleAuthorizationRequired not found in UXML.");
-                return;
-            }
-            if (inputAuthorizationToken == null)
-            {
-                Debug.LogError("inputAuthorizationToken not found in UXML.");
-                return;
-            }
-            if (tokenSection == null)
-            {
-                Debug.LogError("tokenSection not found in UXML.");
-                return;
-            }
-            if (btnGenerateToken == null)
-            {
-                Debug.LogError("btnGenerateToken not found in UXML.");
-                return;
-            }
-
-            if (labelAuthorizationToken != null) labelAuthorizationToken.tooltip = Tooltip_LabelAuthorizationToken;
-            toggleAuthorizationNone.tooltip = Tooltip_ToggleAuthNone;
-            toggleAuthorizationRequired.tooltip = Tooltip_ToggleAuthRequired;
-            btnGenerateToken.tooltip = Tooltip_BtnGenerateToken;
-
-            var authOption = UnityMcpPluginEditor.AuthOption;
-            toggleAuthorizationNone.SetValueWithoutNotify(authOption == AuthOption.none);
-            toggleAuthorizationRequired.SetValueWithoutNotify(authOption == AuthOption.required);
-            inputAuthorizationToken.SetValueWithoutNotify(UnityMcpPluginEditor.Token ?? string.Empty);
-            SetTokenFieldsVisible(inputAuthorizationToken, tokenSection, authOption == AuthOption.required);
-
-
-
-            toggleAuthorizationNone.RegisterValueChangedCallback(evt =>
-            {
-                if (evt.newValue)
-                {
-                    var wasRunning = McpServerManager.IsRunning && UnityMcpPluginEditor.TransportMethod != TransportMethod.stdio;
-                    UnityMcpPluginEditor.AuthOption = AuthOption.none;
-                    UnityMcpPluginEditor.Instance.Save();
-                    toggleAuthorizationRequired.SetValueWithoutNotify(false);
-                    SetTokenFieldsVisible(inputAuthorizationToken, tokenSection, false);
-                    InvalidateAndReloadAgentUI();
-                    RestartServerIfWasRunning(wasRunning);
-                }
-                else if (!toggleAuthorizationRequired.value)
-                {
-                    toggleAuthorizationNone.SetValueWithoutNotify(true);
-                }
-            });
-
-            toggleAuthorizationRequired.RegisterValueChangedCallback(evt =>
-            {
-                if (evt.newValue)
-                {
-                    var wasRunning = McpServerManager.IsRunning && UnityMcpPluginEditor.TransportMethod != TransportMethod.stdio;
-                    UnityMcpPluginEditor.AuthOption = AuthOption.required;
-                    UnityMcpPluginEditor.Instance.Save();
-                    toggleAuthorizationNone.SetValueWithoutNotify(false);
-                    SetTokenFieldsVisible(inputAuthorizationToken, tokenSection, true);
-                    InvalidateAndReloadAgentUI();
-                    RestartServerIfWasRunning(wasRunning);
-                }
-                else if (!toggleAuthorizationNone.value)
-                {
-                    toggleAuthorizationRequired.SetValueWithoutNotify(true);
-                }
-            });
-
-            inputAuthorizationToken.RegisterCallback<FocusOutEvent>(_ =>
-            {
-                var newToken = inputAuthorizationToken.value;
-                if (newToken == UnityMcpPluginEditor.Token)
-                    return;
-
-                var wasRunning = McpServerManager.IsRunning && UnityMcpPluginEditor.TransportMethod != TransportMethod.stdio;
-                UnityMcpPluginEditor.Token = newToken;
-                UnityMcpPluginEditor.Instance.Save();
-
-                InvalidateAndReloadAgentUI();
-                RestartServerIfWasRunning(wasRunning);
-            });
-
-            btnGenerateToken.RegisterCallback<ClickEvent>(_ =>
-            {
-                var newToken = UnityMcpPlugin.GenerateToken();
-                inputAuthorizationToken.SetValueWithoutNotify(newToken);
-
-                var wasRunning = McpServerManager.IsRunning && UnityMcpPluginEditor.TransportMethod != TransportMethod.stdio;
-                UnityMcpPluginEditor.Token = newToken;
-                UnityMcpPluginEditor.Instance.Save();
-
-                InvalidateAndReloadAgentUI();
-                RestartServerIfWasRunning(wasRunning);
-            });
-        }
-
-        private McpServerStatus CombineMcpServerStatus(McpServerStatus status, bool isConnected)
-        {
-            if (isConnected && status != McpServerStatus.Running)
-                return McpServerStatus.External;
-
-            return status;
-        }
-
-        private static string GetServerButtonText(McpServerStatus status) => status switch
-        {
-            McpServerStatus.Running => "Stop",
-            McpServerStatus.Starting => "Starting...",
-            McpServerStatus.Stopping => "Stopping...",
-            McpServerStatus.External => "External",
-            _ => "Start"
-        };
-
-        private static string GetServerLabelText(McpServerStatus status, McpServerData? data) => status switch
-        {
-            McpServerStatus.Running => "MCP server: Running (http)",
-            McpServerStatus.Starting => "MCP server: Starting... (http)",
-            McpServerStatus.Stopping => "MCP server: Stopping... (http)",
-            McpServerStatus.External => "MCP server: External" + data?.ServerTransport switch
-            {
-                TransportMethod.stdio => " (stdio)",
-                TransportMethod.streamableHttp => " (http)",
-                _ => string.Empty
-            },
-            _ => "MCP server"
-        };
-
-        private static string GetServerStatusClass(McpServerStatus status) => status switch
-        {
-            McpServerStatus.Running => USS_Connected,
-            McpServerStatus.Starting or McpServerStatus.Stopping => USS_Connecting,
-            McpServerStatus.External => USS_External,
-            _ => USS_Disconnected
-        };
-
-        private static void HandleServerButton(Button btnStartStop, Label statusLabel)
-        {
-            // Disable button immediately to prevent double-clicks
-            btnStartStop.SetEnabled(false);
-
-            try
-            {
-                if (McpServerManager.IsRunning)
-                {
-                    // User is stopping the server - remember not to auto-start
-                    UnityMcpPluginEditor.KeepServerRunning = false;
-                    UnityMcpPluginEditor.Instance.Save();
-                    statusLabel.text = "MCP server: Stopping...";
-                    McpServerManager.StopServer();
-                }
-                else
-                {
-                    // User is starting the server - remember to auto-start
-                    UnityMcpPluginEditor.KeepServerRunning = true;
-                    UnityMcpPluginEditor.Instance.Save();
-                    statusLabel.text = "MCP server: Starting...";
-                    McpServerManager.StartServer();
-                }
-            }
-            catch
-            {
-                // Re-enable button on exception to avoid infinite lock
-                btnStartStop.SetEnabled(true);
-                throw;
-            }
-        }
-
-        private long SetMcpServerData(McpServerData? data, McpServerStatus status, Button btnStartStop, VisualElement statusCircle, Label statusLabel)
-        {
-            var version = Interlocked.Increment(ref _mcpServerDataVersion);
-            if (Logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Trace))
-                Logger.LogTrace("Setting MCP server data: {status}, Data: {data}", status, data?.ToPrettyJson() ?? "null");
-
-            btnStartStop.text = GetServerButtonText(status);
-            var isStart = status == McpServerStatus.Stopped;
-            btnStartStop.EnableInClassList("btn-primary", isStart);
-            btnStartStop.EnableInClassList("btn-secondary", !isStart);
-            btnStartStop.SetEnabled(status == McpServerStatus.Running || status == McpServerStatus.Stopped);
-            statusLabel.text = GetServerLabelText(status, data);
-            SetStatusIndicator(statusCircle, GetServerStatusClass(status));
-            return version;
-        }
-
-        private void FetchMcpServerData(McpServerStatus status, Button btnStartStop, VisualElement statusCircle, Label statusLabel)
-        {
-            // Update UI immediately with current status; capture the version atomically so that
-            // the async result can detect if a newer update has superseded it.
-            var fetchVersion = SetMcpServerData(null, status, btnStartStop, statusCircle, statusLabel);
-
-            // Then try to fetch additional data asynchronously
-            var mcpPluginInstance = UnityMcpPluginEditor.Instance.McpPluginInstance;
-            if (mcpPluginInstance == null)
-            {
-                Logger.LogDebug("Cannot fetch MCP server data: McpPluginInstance is null");
-                return;
-            }
-
-            var mcpManagerHub = mcpPluginInstance.McpManagerHub;
-            if (mcpManagerHub == null)
-            {
-                Logger.LogDebug("Cannot fetch MCP server data: McpManagerHub is null");
-                return;
-            }
-
-            var task = mcpManagerHub.GetMcpServerData();
-            if (task == null)
-            {
-                Logger.LogDebug("Cannot fetch MCP server data: GetMcpServerData returned null");
-                return;
-            }
-
-            task.ContinueWith(t =>
-            {
-                if (Interlocked.Read(ref _mcpServerDataVersion) != fetchVersion)
-                {
-                    Logger.LogTrace("Skipping MCP server data update because a newer update was applied at {time}",
-                        DateTime.UtcNow);
-                    return;
-                }
-                MainThread.Instance.Run(() =>
-                {
-                    // Second check: close the TOCTOU window between the thread-pool check above
-                    // and the main-thread callback execution.
-                    if (Interlocked.Read(ref _mcpServerDataVersion) != fetchVersion)
-                        return;
-                    if (t.IsCompletedSuccessfully)
-                    {
-                        var data = t.Result;
-                        SetMcpServerData(data, status, btnStartStop, statusCircle, statusLabel);
-                    }
-                    else if (t.IsFaulted)
-                    {
-                        Logger.LogDebug("Failed to fetch MCP server data: {error}", t.Exception?.Message ?? "Unknown error");
-                    }
-                });
-            });
-        }
-
-        #endregion
-
-        #region AI Agent
-
-        private void SetupAiAgentSection(VisualElement root)
+        /// <summary>
+        /// Subscribes to a feature manager's stats (tools/prompts/resources) and updates
+        /// the label with enabled/total counts and tooltip.
+        /// </summary>
+        private void SubscribeToFeatureStats(
+            Label label, string featureName, string tooltip,
+            Func<(int total, int enabled, int totalTokens)> computeStats,
+            Func<IMcpPlugin, Observable<Unit>?> getOnUpdated,
+            Label? tokenLabel = null)
         {
             UnityMcpPluginEditor.PluginProperty
                 .WhereNotNull()
                 .Subscribe(plugin =>
             {
-                plugin.McpManager.OnClientConnected
-                    .Subscribe(data =>
-                    {
-                        Logger.LogInformation("On AI agent connected: {clientName} ({clientVersion})",
-                            data.ClientName, data.ClientVersion);
-
-                        if (Logger.IsEnabled(Microsoft.Extensions.Logging.LogLevel.Trace))
-                            Logger.LogTrace("AI Agent Data: {data}", data.ToPrettyJson());
-                    })
-                    .AddTo(_disposables);
-
-                plugin.McpManager.OnClientDisconnected
-                    .Subscribe(mcpClientData =>
-                    {
-                        Logger.LogInformation("On AI agent disconnected: {clientName} ({clientVersion})",
-                            mcpClientData.ClientName, mcpClientData.ClientVersion);
-                    })
-                    .AddTo(_disposables);
-
-                plugin.McpManager.OnClientsChanged
-                    .ObserveOnCurrentSynchronizationContext()
-                    .Subscribe(mcpClients =>
-                    {
-                        Logger.LogDebug("On AI agents changed: {count} clients", mcpClients.Count);
-
-                        var connectedAgents = mcpClients.Where(c => c.IsConnected).ToList();
-                        if (connectedAgents.Count == 0)
-                        {
-                            Logger.LogDebug("No connected AI agents found in clients list.");
-                            SetAiAgentStatus(false);
-                            return;
-                        }
-
-                        SetAiAgentStatus(true, connectedAgents.Select(a => $"AI agent: {a.ClientName} ({a.ClientVersion})"));
-                    })
-                    .AddTo(_disposables);
-
-                FetchAiAgentData();
-            }).AddTo(_disposables);
-
-            UnityMcpPluginEditor.IsConnected
-                .Where(isConnected => isConnected)
-                .ObserveOnCurrentSynchronizationContext()
-                .Subscribe(_ => FetchAiAgentData())
-                .AddTo(_disposables);
-
-            var containerMcpServer = root.Q<VisualElement>("mcpServerStatusControl") ?? throw new InvalidOperationException("mcpServerStatusControl element not found.");
-            var btnStartStopMcpServer = root.Q<Button>("btnStartStopServer") ?? throw new InvalidOperationException("MCP Server start/stop button not found.");
-
-            var toggleOptionHttp = root.Q<Toggle>("toggleOptionHttp") ?? throw new NullReferenceException("Toggle 'toggleOptionHttp' not found in UI.");
-            var toggleOptionStdio = root.Q<Toggle>("toggleOptionStdio") ?? throw new NullReferenceException("Toggle 'toggleOptionStdio' not found in UI.");
-
-            var labelTransport = root.Q<Label>("labelTransport");
-            if (labelTransport != null) labelTransport.tooltip = Tooltip_LabelTransport;
-            toggleOptionStdio.tooltip = Tooltip_ToggleStdio;
-            toggleOptionHttp.tooltip = Tooltip_ToggleHttp;
-
-            // Initialize with HTTP selected by default
-            toggleOptionStdio.value = UnityMcpPluginEditor.TransportMethod == TransportMethod.stdio;
-            toggleOptionHttp.value = UnityMcpPluginEditor.TransportMethod != TransportMethod.stdio;
-            currentAiAgentConfigurator?.SetTransportMethod(UnityMcpPluginEditor.TransportMethod);
-
-            void UpdateMcpServerState()
-            {
-                containerMcpServer.SetEnabled(UnityMcpPluginEditor.TransportMethod != TransportMethod.stdio);
-                btnStartStopMcpServer.tooltip = UnityMcpPluginEditor.TransportMethod != TransportMethod.stdio
-                    ? "Start or stop the local MCP server."
-                    : "Local MCP server is disabled in STDIO mode. AI agent will launch its own MCP server instance.";
-            }
-            UpdateMcpServerState();
-
-            toggleOptionStdio.RegisterValueChangedCallback(evt =>
-            {
-                if (evt.newValue)
-                {
-                    UnityMcpPluginEditor.TransportMethod = TransportMethod.stdio;
-                    UnityMcpPluginEditor.Instance.Save();
-                    toggleOptionHttp.SetValueWithoutNotify(false);
-                    currentAiAgentConfigurator?.SetTransportMethod(TransportMethod.stdio);
-
-                    // Stop MCP server if running to switch to stdio mode
-                    if (McpServerManager.IsRunning)
-                    {
-                        UnityMcpPluginEditor.KeepServerRunning = false;
-                        UnityMcpPluginEditor.Instance.Save();
-                        McpServerManager.StopServer();
-                    }
-                }
-                else if (!toggleOptionHttp.value)
-                {
-                    // Prevent both toggles from being unchecked
-                    toggleOptionStdio.SetValueWithoutNotify(true);
-                }
-                UpdateMcpServerState();
-            });
-
-            toggleOptionHttp.RegisterValueChangedCallback(evt =>
-            {
-                if (evt.newValue)
-                {
-                    UnityMcpPluginEditor.TransportMethod = TransportMethod.streamableHttp;
-                    UnityMcpPluginEditor.Instance.Save();
-                    toggleOptionStdio.SetValueWithoutNotify(false);
-                    currentAiAgentConfigurator?.SetTransportMethod(TransportMethod.streamableHttp);
-                }
-                else if (!toggleOptionStdio.value)
-                {
-                    // Prevent both toggles from being unchecked
-                    toggleOptionHttp.SetValueWithoutNotify(true);
-                }
-                UpdateMcpServerState();
-            });
-        }
-
-        private void FetchAiAgentData(int retryCount = 3, int retryDelayMs = 3000)
-        {
-            var mcpPluginInstance = UnityMcpPluginEditor.Instance.McpPluginInstance;
-            if (mcpPluginInstance == null)
-            {
-                Logger.LogDebug("Cannot fetch AI agent data: McpPluginInstance is null");
-                return;
-            }
-
-            var mcpManagerHub = mcpPluginInstance.McpManagerHub;
-            if (mcpManagerHub == null)
-            {
-                Logger.LogDebug("Cannot fetch AI agent data: McpManagerHub is null");
-                return;
-            }
-
-            var task = mcpManagerHub.GetMcpClientData();
-            if (task == null)
-            {
-                Logger.LogDebug("Cannot fetch AI agent data: GetMcpClientData returned null");
-                return;
-            }
-
-            // Claim a unique version for this fetch so the async result can detect if a newer
-            // update (e.g. from OnClientsChanged or another FetchAiAgentData call) has superseded it.
-            var fetchVersion = Interlocked.Increment(ref _aiAgentDataVersion);
-
-            task.ContinueWith(t =>
-            {
-                if (Interlocked.Read(ref _aiAgentDataVersion) != fetchVersion)
-                {
-                    Logger.LogTrace("Skipping AI agent data update because a newer update was applied at {time}",
-                        DateTime.UtcNow);
-                    return;
-                }
-                MainThread.Instance.Run(() =>
-                {
-                    // Second check: close the TOCTOU window between the thread-pool check above
-                    // and the main-thread callback execution.
-                    if (Interlocked.Read(ref _aiAgentDataVersion) != fetchVersion)
-                        return;
-                    if (t.IsCompletedSuccessfully)
-                    {
-                        var clients = t.Result;
-                        var connectedAgents = clients.Where(c => c.IsConnected).ToList();
-                        var isConnected = connectedAgents.Count > 0;
-                        SetAiAgentStatus(isConnected, isConnected
-                            ? connectedAgents.Select(a => $"AI agent: {a.ClientName} ({a.ClientVersion})")
-                            : null);
-
-                        // If AI agent is not connected but Unity is, retry after delay.
-                        // The AI agent may need time to re-establish its session after Unity reconnects.
-                        if (!isConnected && retryCount > 0 && UnityMcpPluginEditor.IsConnected.CurrentValue)
-                        {
-                            Logger.LogDebug("AI agent not connected yet, scheduling retry ({retriesLeft} left)", retryCount);
-                            Observable.Timer(TimeSpan.FromMilliseconds(retryDelayMs))
-                                .ObserveOnCurrentSynchronizationContext()
-                                .Subscribe(_ => FetchAiAgentData(retryCount - 1, retryDelayMs))
-                                .AddTo(_disposables);
-                        }
-                    }
-                    else if (t.IsFaulted)
-                    {
-                        Logger.LogDebug("Failed to fetch AI agent data: {error}", t.Exception?.Message ?? "Unknown error");
-                        SetAiAgentStatus(false);
-                    }
-                    else
-                    {
-                        SetAiAgentStatus(false, new[] { "AI agent: Not found" });
-                    }
-                });
-            });
-        }
-
-        #endregion
-
-        #region MCP Features
-
-        private void SetupToolsSection(VisualElement root)
-        {
-            var btn = root.Q<Button>("btnOpenTools");
-            var label = root.Q<Label>("toolsCountLabel");
-            var tokenLabel = root.Q<Label>("toolsTokenCountLabel");
-
-            btn.RegisterCallback<ClickEvent>(evt => McpToolsWindow.ShowWindow());
-
-            UnityMcpPluginEditor.PluginProperty
-                .WhereNotNull()
-                .Subscribe(plugin =>
-            {
-                var manager = plugin.McpManager.ToolManager;
-                if (manager == null)
-                {
-                    label.text = "0 / 0 tools";
-                    label.tooltip = Tooltip_ToolsCountLabel + "\n\n0 enabled / 0 disabled / 0 total";
-                    if (tokenLabel != null) tokenLabel.text = "~0 tokens total";
-                    return;
-                }
-
                 void UpdateStats()
                 {
-                    var all = manager.GetAllTools();
-                    var totalCount = all.Count();
-                    var enabledCount = all.Count(t => manager.IsToolEnabled(t.Name));
-                    var disabledCount = totalCount - enabledCount;
-                    label.text = $"{enabledCount} / {totalCount} tools";
-                    label.tooltip = $"{Tooltip_ToolsCountLabel}\n\n{enabledCount} enabled / {disabledCount} disabled / {totalCount} total";
+                    var (total, enabled, totalTokens) = computeStats();
+                    var disabled = total - enabled;
+                    label.text = $"{enabled} / {total} {featureName}";
+                    label.tooltip = $"{tooltip}\n\n{enabled} enabled / {disabled} disabled / {total} total";
 
-                    // Calculate total tokens for enabled tools
-                    if (tokenLabel != null)
-                    {
-                        var totalTokens = all
-                            .Where(t => manager.IsToolEnabled(t.Name))
-                            .Sum(t => t.TokenCount);
+                    if (tokenLabel != null && totalTokens > 0)
                         tokenLabel.text = $"~{UIMcpUtils.FormatTokenCount(totalTokens)} tokens total";
-                    }
+                    else if (tokenLabel != null)
+                        tokenLabel.text = "~0 tokens total";
                 }
                 UpdateStats();
 
-                manager.OnToolsUpdated
+                var onUpdated = getOnUpdated(plugin);
+                onUpdated?
                     .ObserveOnCurrentSynchronizationContext()
                     .Subscribe(_ => UpdateStats())
                     .AddTo(_disposables);
             }).AddTo(_disposables);
-        }
-
-        private void SetupSkillsSection(VisualElement root)
-        {
-            var labelPath = root.Q<Label>("labelSkillsOutputPath");
-            var inputPath = root.Q<TextField>("inputSkillsRootFolder");
-            var toggleAutoGenerate = root.Q<Toggle>("toggleAutoGenerateSkills");
-            var btnGenerate = root.Q<Button>("btnGenerateSkills");
-
-            if (inputPath == null || toggleAutoGenerate == null || btnGenerate == null)
-                return;
-
-            const string skillsOutputPathTooltip =
-                "Root folder path where skill markdown files will be generated. " +
-                "The recommended default location is \"SKILLS\". " +
-                "AI Game Developer will also create a nested folder named \"unity-editor\" inside it.";
-
-            if (labelPath != null) labelPath.tooltip = skillsOutputPathTooltip;
-            inputPath.tooltip = skillsOutputPathTooltip;
-
-            inputPath.SetValueWithoutNotify(UnityMcpPluginEditor.SkillsPath);
-            toggleAutoGenerate.SetValueWithoutNotify(UnityMcpPluginEditor.GenerateSkillFiles);
-
-            inputPath.RegisterValueChangedCallback(evt =>
-            {
-                UnityMcpPluginEditor.SkillsPath = evt.newValue;
-                UnityMcpPluginEditor.Instance.Save();
-            });
-
-            toggleAutoGenerate.RegisterValueChangedCallback(evt =>
-            {
-                UnityMcpPluginEditor.GenerateSkillFiles = evt.newValue;
-                UnityMcpPluginEditor.Instance.Save();
-            });
-
-            btnGenerate.RegisterCallback<ClickEvent>(evt =>
-            {
-                UnityMcpPluginEditor.Instance.McpPluginInstance!.GenerateSkillFiles(UnityMcpPluginEditor.ProjectRootPath);
-            });
-        }
-
-        private void SetupPromptsSection(VisualElement root)
-        {
-            var btn = root.Q<Button>("btnOpenPrompts");
-            var label = root.Q<Label>("promptsCountLabel");
-
-            btn.RegisterCallback<ClickEvent>(evt => McpPromptsWindow.ShowWindow());
-
-            UnityMcpPluginEditor.PluginProperty
-                .WhereNotNull()
-                .Subscribe(plugin =>
-            {
-                var manager = plugin.McpManager.PromptManager;
-                if (manager == null)
-                {
-                    label.text = "0 / 0 prompts";
-                    label.tooltip = Tooltip_PromptsCountLabel + "\n\n0 enabled / 0 disabled / 0 total";
-                    return;
-                }
-
-                void UpdateStats()
-                {
-                    var all = manager.GetAllPrompts();
-                    var totalCount = all.Count();
-                    var enabledCount = all.Count(p => manager.IsPromptEnabled(p.Name));
-                    var disabledCount = totalCount - enabledCount;
-                    label.text = $"{enabledCount} / {totalCount} prompts";
-                    label.tooltip = $"{Tooltip_PromptsCountLabel}\n\n{enabledCount} enabled / {disabledCount} disabled / {totalCount} total";
-                }
-                UpdateStats();
-
-                manager.OnPromptsUpdated
-                    .ObserveOnCurrentSynchronizationContext()
-                    .Subscribe(_ => UpdateStats())
-                    .AddTo(_disposables);
-            }).AddTo(_disposables);
-        }
-
-        private void SetupResourcesSection(VisualElement root)
-        {
-            var btn = root.Q<Button>("btnOpenResources");
-            var label = root.Q<Label>("resourcesCountLabel");
-
-            btn.RegisterCallback<ClickEvent>(evt => McpResourcesWindow.ShowWindow());
-
-            UnityMcpPluginEditor.PluginProperty
-                .WhereNotNull()
-                .Subscribe(plugin =>
-            {
-                var manager = plugin.McpManager.ResourceManager;
-                if (manager == null)
-                {
-                    label.text = "0 / 0 resources";
-                    label.tooltip = Tooltip_ResourcesCountLabel + "\n\n0 enabled / 0 disabled / 0 total";
-                    return;
-                }
-
-                void UpdateStats()
-                {
-                    var all = manager.GetAllResources();
-                    var totalCount = all.Count();
-                    var enabledCount = all.Count(r => manager.IsResourceEnabled(r.Name));
-                    var disabledCount = totalCount - enabledCount;
-                    label.text = $"{enabledCount} / {totalCount} resources";
-                    label.tooltip = $"{Tooltip_ResourcesCountLabel}\n\n{enabledCount} enabled / {disabledCount} disabled / {totalCount} total";
-                }
-                UpdateStats();
-
-                manager.OnResourcesUpdated
-                    .ObserveOnCurrentSynchronizationContext()
-                    .Subscribe(_ => UpdateStats())
-                    .AddTo(_disposables);
-            }).AddTo(_disposables);
-        }
-
-        #endregion
-
-        #region Social and Debug Buttons
-
-        private void SetupSocialButtons(VisualElement root)
-        {
-            var discordIcon = EditorAssetLoader.LoadAssetAtPath<Texture2D>(_discordIconPaths);
-            var githubIcon = EditorAssetLoader.LoadAssetAtPath<Texture2D>(_githubIconPaths);
-            var starIcon = EditorAssetLoader.LoadAssetAtPath<Texture2D>(_starIconPaths);
-
-            SetupSocialButton(root, "btnGitHubStar", "btnGitHubStarIcon", starIcon, URL_GitHub, "Star on GitHub");
-            SetupSocialButton(root, "btnGitHubIssue", "btnGitHubIssueIcon", githubIcon, URL_GitHubIssues, "Report an issue on GitHub");
-            SetupSocialButton(root, "btnDiscordHelp", "btnDiscordHelpIcon", discordIcon, URL_Discord, "Get help on Discord");
-        }
-
-        private static void SetupSocialButton(VisualElement root, string buttonName, string iconName, Texture2D? icon, string url, string tooltip)
-        {
-            var button = root.Q<Button>(buttonName);
-            if (button == null)
-                return;
-
-            var iconElement = root.Q<VisualElement>(iconName);
-            if (iconElement != null)
-            {
-                iconElement.style.backgroundImage = icon;
-                iconElement.style.display = icon != null ? DisplayStyle.Flex : DisplayStyle.None;
-            }
-
-            button.tooltip = tooltip;
-            button.RegisterCallback<ClickEvent>(evt => Application.OpenURL(url));
-        }
-
-        private static void SetupDebugButtons(VisualElement root)
-        {
-            var btnCheckSerialization = root.Q<Button>("btnCheckSerialization");
-            if (btnCheckSerialization != null)
-            {
-                btnCheckSerialization.tooltip = "Open Serialization Check window";
-                btnCheckSerialization.RegisterCallback<ClickEvent>(evt => SerializationCheckWindow.ShowWindow());
-            }
         }
 
         #endregion

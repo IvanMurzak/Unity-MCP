@@ -14,6 +14,9 @@ on:
       - main
 
 jobs:
+  test-cli:
+    uses: ./.github/workflows/test_cli.yml
+
   check-version-tag:
     runs-on: ubuntu-latest
     outputs:
@@ -22,7 +25,7 @@ jobs:
       tag_exists: ${{ steps.tag_exists.outputs.exists }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           fetch-tags: true
@@ -35,11 +38,11 @@ jobs:
 
       - name: Find previous version tag
         id: prev_tag
-        uses: WyriHaximus/github-action-get-previous-tag@v1
+        uses: WyriHaximus/github-action-get-previous-tag@v2
 
       - name: Check if tag exists
         id: tag_exists
-        uses: mukunku/tag-exists-action@v1.6.0
+        uses: mukunku/tag-exists-action@v1.7.0
         with:
           tag: ${{ steps.get_version.outputs.current-version }}
 
@@ -49,7 +52,7 @@ jobs:
     if: needs.check-version-tag.outputs.tag_exists == 'false'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Activate Unity license
         id: activate
@@ -71,7 +74,7 @@ jobs:
         shell: bash
 
       - name: Cache Unity Library
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ./Installer/Library
           key: Library-Unity-Installer
@@ -117,7 +120,7 @@ jobs:
           customParameters: -CI true -GITHUB_ACTIONS true
 
       - name: Upload Unity Package as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: unity-installer-package
           path: ./Installer/build/AI-Game-Dev-Installer.unitypackage
@@ -128,10 +131,10 @@ jobs:
     if: needs.check-version-tag.outputs.tag_exists == 'false'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
           dotnet-version: "9.0.x"
 
@@ -143,7 +146,7 @@ jobs:
         run: cd Unity-MCP-Server && ./build-all.sh Release
 
       - name: Upload build zips as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: mcp-server-zips
           path: ./Unity-MCP-Server/publish/*.zip
@@ -244,6 +247,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [
         check-version-tag,
+        test-cli,
         build-and-zip-mcp-server,
         build-unity-installer,
         test-unity-2022-3-62f3-editmode,
@@ -263,7 +267,7 @@ jobs:
       release_notes: ${{ steps.rel_desc.outputs.release_body }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           fetch-tags: true
@@ -326,7 +330,7 @@ jobs:
     if: needs.release-unity-plugin.outputs.success == 'true'
     steps:
       - name: Download Unity Package artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: unity-installer-package
           path: ./
@@ -345,10 +349,10 @@ jobs:
     if: needs.release-unity-plugin.outputs.success == 'true'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Download build zips artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: mcp-server-zips
           path: ./Unity-MCP-Server/publish
@@ -443,6 +447,9 @@ jobs:
   deploy:
     needs: release-unity-plugin
     if: needs.release-unity-plugin.outputs.success == 'true'
+    permissions:
+      id-token: write
+      contents: read
     uses: ./.github/workflows/deploy.yml
     with:
       version: ${{ needs.release-unity-plugin.outputs.version }}

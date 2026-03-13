@@ -29,7 +29,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         )]
         [Description("Returns the list of currently opened scenes in Unity Editor. " +
             "Use '" + SceneGetDataToolId + "' tool to get detailed information about a specific scene.")]
-        public SceneDataShallow[] ListOpened()
+        public SceneDataShallow[] ListOpened(string? nothing = null)
         {
             return MainThread.Instance.Run(() =>
             {

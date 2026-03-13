@@ -32,10 +32,51 @@ namespace com.IvanMurzak.Unity.MCP
             public static List<McpFeature> DefaultPrompts => new();
             public static List<McpFeature> DefaultResources => new();
 
+            /// <summary>
+            /// Backing field for the local server URL. Serialized as "host" in JSON.
+            /// Use <see cref="Host"/> for the active connection URL (routes through Cloud mode).
+            /// </summary>
+            [JsonPropertyName("host")]
+            public string LocalHost { get; set; } = DefaultHost;
+
+            /// <summary>
+            /// Backing field for the local auth token. Serialized as "token" in JSON.
+            /// Use <see cref="Token"/> for the active token (routes through Cloud mode).
+            /// </summary>
+            [JsonPropertyName("token")]
+            public string? LocalToken { get; set; }
+
+            /// <summary>
+            /// Returns the active connection host based on <see cref="ConnectionMode"/>.
+            /// In Cloud mode, returns <see cref="CloudServerUrl"/> + "/mcp".
+            /// In Local mode, returns <see cref="LocalHost"/>.
+            /// </summary>
+            [JsonIgnore]
+            public override string Host
+            {
+                get => ConnectionMode == ConnectionMode.Cloud ? CloudServerUrl + "/mcp" : LocalHost;
+                set => LocalHost = value;
+            }
+
+            /// <summary>
+            /// Returns the active auth token based on <see cref="ConnectionMode"/>.
+            /// In Cloud mode, returns <see cref="CloudToken"/>.
+            /// In Local mode, returns <see cref="LocalToken"/>.
+            /// </summary>
+            [JsonIgnore]
+            public override string? Token
+            {
+                get => ConnectionMode == ConnectionMode.Cloud ? CloudToken : LocalToken;
+                set => LocalToken = value;
+            }
+
             public LogLevel LogLevel { get; set; } = LogLevel.Warning;
             public bool KeepServerRunning { get; set; } = false;
             public TransportMethod TransportMethod { get; set; } = TransportMethod.streamableHttp;
             public AuthOption AuthOption { get; set; } = AuthOption.none;
+            public ConnectionMode ConnectionMode { get; set; } = ConnectionMode.Custom;
+            public string CloudServerUrl { get; set; } = "https://ai-game.dev";
+            public string? CloudToken { get; set; }
             public List<McpFeature> Tools { get; set; } = new();
             public List<McpFeature> Prompts { get; set; } = new();
             public List<McpFeature> Resources { get; set; } = new();
@@ -61,6 +102,9 @@ namespace com.IvanMurzak.Unity.MCP
                 GenerateSkillFiles = false;
                 TransportMethod = TransportMethod.streamableHttp;
                 AuthOption = AuthOption.none;
+                ConnectionMode = ConnectionMode.Custom;
+                CloudServerUrl = "https://ai-game.dev";
+                CloudToken = null;
                 LogLevel = LogLevel.Warning;
                 TimeoutMs = Consts.Hub.DefaultTimeoutMs;
                 Tools = DefaultTools;
@@ -83,5 +127,11 @@ namespace com.IvanMurzak.Unity.MCP
                 }
             }
         }
+    }
+
+    public enum ConnectionMode
+    {
+        Custom,
+        Cloud
     }
 }

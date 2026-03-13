@@ -127,7 +127,7 @@ MCP client config:
 {
   "mcpServers": {
     "ai-game-developer": {
-      "command": "C:/Projects/Unity/Unity-MCP/Unity-MCP-Plugin/Library/mcp-server/win-x64/unity-mcp-server.exe",
+      "command": "C:/unity-project/Library/mcp-server/win-x64/unity-mcp-server.exe",
       "args": [
         "--client-transport=stdio"
       ]
@@ -150,7 +150,7 @@ MCP client config:
 {
   "mcpServers": {
     "ai-game-developer": {
-      "command": "C:/Projects/Unity/Unity-MCP/Unity-MCP-Plugin/Library/mcp-server/win-x64/unity-mcp-server.exe",
+      "command": "C:/unity-project/Library/mcp-server/win-x64/unity-mcp-server.exe",
       "args": [
         "--port=8080",
         "--plugin-timeout=10000",
@@ -175,7 +175,7 @@ MCP client config:
 {
   "mcpServers": {
     "ai-game-developer": {
-      "command": "C:/Projects/Unity/Unity-MCP/Unity-MCP-Plugin/Library/mcp-server/win-x64/unity-mcp-server.exe",
+      "command": "C:/unity-project/Library/mcp-server/win-x64/unity-mcp-server.exe",
       "args": [
         "--port=8080",
         "--plugin-timeout=10000",
