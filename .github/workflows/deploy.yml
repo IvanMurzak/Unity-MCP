@@ -9,9 +9,6 @@
 name: deploy
 
 on:
-  release:
-    types: [released]
-
   workflow_dispatch:
     inputs:
       version:
@@ -68,6 +65,10 @@ jobs:
           cd Unity-MCP-Server
           dotnet pack com.IvanMurzak.Unity.MCP.Server.csproj --no-build --configuration Release --output ./nupkg
 
+      - name: NuGet login (Trusted Publishing)
+        uses: NuGet/login@v1
+        id: nuget-login
+
       - name: Deploy MCP Server NuGet package
         run: |
           cd Unity-MCP-Server
@@ -78,7 +79,7 @@ jobs:
             exit 1
           fi
           echo "Deploying NuGet package: $nupkg_file (version: ${{ steps.version.outputs.version }})"
-          dotnet nuget push "$nupkg_file" --api-key az --source https://api.nuget.org/v3/index.json
+          dotnet nuget push "$nupkg_file" --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
 
   deploy-docker-image:
     runs-on: ubuntu-latest
@@ -126,7 +127,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: "22"
+          node-version: "24"
           registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
