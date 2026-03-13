@@ -199,6 +199,13 @@ export function launchEditor(
     env: { ...process.env, ...env },
   });
 
+  child.on('spawn', () => {
+    ui.success(`Launched Unity Editor (PID: ${child.pid})`);
+  });
+
+  child.on('error', (err) => {
+    ui.error(`Failed to launch Unity Editor: ${err.message}`);
+  });
+
   child.unref();
-  ui.success(`Launched Unity Editor (PID: ${child.pid})`);
 }

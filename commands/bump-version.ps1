@@ -69,13 +69,13 @@ $VersionFiles = @(
     },
     @{
         Path        = "cli/package.json"
-        Pattern     = '"version":\s*"[\d\.]+"'
+        Pattern     = '"version":\s*"[\d\.]+(-[a-zA-Z0-9\-\.]+)?(\+[a-zA-Z0-9\-\.]+)?"'
         Replace     = '"version": "{VERSION}"'
         Description = "CLI npm package version"
     },
     @{
         Path        = "cli/src/utils/manifest.ts"
-        Pattern     = "const FALLBACK_VERSION = '[\d\.]+'"
+        Pattern     = "const FALLBACK_VERSION = '[\d\.]+(-[a-zA-Z0-9\-\.]+)?(\+[a-zA-Z0-9\-\.]+)?'"
         Replace     = "const FALLBACK_VERSION = '{VERSION}'"
         Description = "CLI OpenUPM fallback version"
     }
@@ -226,7 +226,7 @@ try {
         if (Test-Path $lockFilePath) {
             Write-ColorText "`nUpdating CLI package-lock.json..." "Cyan"
             $lockContent = Get-Content $lockFilePath -Raw
-            $pattern = '("name":\s*"unity-mcp-cli",\s+"version":\s*")[\d\.]+'
+            $pattern = '("name":\s*"unity-mcp-cli",\s+"version":\s*")[\d\.]+(-[a-zA-Z0-9\-\.]+)?(\+[a-zA-Z0-9\-\.]+)?'
             $replacement = "`${1}$NewVersion"
             $newLockContent = [regex]::Replace($lockContent, $pattern, $replacement)
             if ($newLockContent -ne $lockContent) {
