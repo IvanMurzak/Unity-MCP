@@ -36,7 +36,7 @@ export const openCommand = new Command('open')
     if (!editorPath) {
       spinner.fail('Unity Editor not found');
       const versionMsg = version ? ` (version ${version})` : '';
-      ui.error(`Unity Editor not found${versionMsg}. Install it with: unity-mcp-cli install-editor --version <version>`);
+      ui.error(`Unity Editor not found${versionMsg}. Install it with: unity-mcp-cli install-unity --version <version>`);
       process.exit(1);
     }
     spinner.succeed('Unity Editor located');

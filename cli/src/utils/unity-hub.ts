@@ -303,7 +303,7 @@ export function createProject(hubPath: string, projectPath: string, editorVersio
   // Find the editor install path
   const editors = listInstalledEditors(hubPath);
   if (editors.length === 0) {
-    throw new Error('No Unity editors installed. Install one with: unity-mcp-cli install-editor --version <version>');
+    throw new Error('No Unity editors installed. Install one with: unity-mcp-cli install-unity --version <version>');
   }
 
   let editor: InstalledEditor | undefined;

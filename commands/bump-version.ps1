@@ -66,6 +66,18 @@ $VersionFiles = @(
         Pattern     = 'public const string Version = "[\d\.]+";'
         Replace     = 'public const string Version = "{VERSION}";'
         Description = "Plugin C# version constant"
+    },
+    @{
+        Path        = "cli/package.json"
+        Pattern     = '"version":\s*"[\d\.]+"'
+        Replace     = '"version": "{VERSION}"'
+        Description = "CLI npm package version"
+    },
+    @{
+        Path        = "cli/src/utils/manifest.ts"
+        Pattern     = "const FALLBACK_VERSION = '[\d\.]+'"
+        Replace     = "const FALLBACK_VERSION = '{VERSION}'"
+        Description = "CLI OpenUPM fallback version"
     }
 )
 

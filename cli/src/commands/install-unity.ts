@@ -5,7 +5,7 @@ import { ensureUnityHub, installEditor, listInstalledEditors } from '../utils/un
 import { getProjectEditorVersion } from '../utils/unity-editor.js';
 import * as ui from '../utils/ui.js';
 
-export const installEditorCommand = new Command('install-editor')
+export const installUnityCommand = new Command('install-unity')
   .description('Install Unity Editor via Unity Hub')
   .option('--version <version>', 'Unity Editor version to install')
   .option('--path <path>', 'Read version from an existing Unity project')

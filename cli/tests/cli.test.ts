@@ -34,7 +34,7 @@ describe('CLI integration', () => {
       expect(exitCode).toBe(0);
       expect(stdout).toContain('unity-mcp-cli');
       expect(stdout).toContain('create-project');
-      expect(stdout).toContain('install-editor');
+      expect(stdout).toContain('install-unity');
       expect(stdout).toContain('open');
       expect(stdout).toContain('install-plugin');
       expect(stdout).toContain('remove-plugin');
@@ -273,11 +273,11 @@ describe('CLI integration', () => {
     });
   });
 
-  // --- install-editor command ---
+  // --- install-unity command ---
 
-  describe('install-editor', () => {
+  describe('install-unity', () => {
     it('shows help with --help', () => {
-      const { stdout, exitCode } = runCli(['install-editor', '--help']);
+      const { stdout, exitCode } = runCli(['install-unity', '--help']);
       expect(exitCode).toBe(0);
       expect(stdout).toContain('--version');
       expect(stdout).toContain('--path');
