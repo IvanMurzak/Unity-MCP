@@ -130,6 +130,18 @@ jobs:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
 
+      - name: Extract version from tag
+        id: version
+        run: |
+          version=${{ inputs.version || github.event.release.tag_name }}
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "Extracted version: $version"
+
+      - name: Set package version
+        run: |
+          cd cli
+          npm version ${{ steps.version.outputs.version }} --no-git-tag-version
+
       - name: Install dependencies
         run: |
           cd cli
