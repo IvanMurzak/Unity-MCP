@@ -48,6 +48,7 @@
 三步即可运行：
 
 1. **[安装插件](#第一步安装-unity-mcp-插件)** — 下载 `.unitypackage` 安装器，或运行 `openupm add com.ivanmurzak.unity.mcp`
+   > **替代方式：** `npx unity-mcp-cli install-plugin ./MyUnityProject` — 参见 [CLI 文档](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.zh-CN.md)
 2. **[选择 MCP 客户端](#第二步安装-mcp-客户端)** — Claude Code、Claude Desktop、GitHub Copilot、Cursor 或其他
 3. **[配置客户端](#第三步配置-mcp-客户端)** — 在 Unity 中打开 `Window/AI Game Developer — MCP`，点击 **Configure**
 
@@ -153,6 +154,7 @@
   - [第一步：安装 `Unity MCP 插件`](#第一步安装-unity-mcp-插件)
     - [选项 1 — 安装器](#选项-1--安装器)
     - [选项 2 — OpenUPM-CLI](#选项-2--openupm-cli)
+    - [选项 3 — CLI](#选项-3--cli)
   - [第二步：安装 `MCP 客户端`](#第二步安装-mcp-客户端)
   - [第三步：配置 `MCP 客户端`](#第三步配置-mcp-客户端)
     - [自动配置](#自动配置)
@@ -197,6 +199,7 @@
 | [Docker 部署](DOCKER_DEPLOYMENT.md) | 分步 Docker 部署指南 |
 | [开发指南](dev/Development.md) | 架构、代码风格、CI/CD — 面向贡献者 |
 | [Wiki](https://github.com/IvanMurzak/Unity-MCP/wiki) | 入门教程、API 参考、常见问题 |
+| [CLI 工具](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.zh-CN.md) | 通过命令行安装插件、配置和连接 |
 
 ![AI 游戏开发者 — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
@@ -230,6 +233,22 @@
 ```bash
 openupm add com.ivanmurzak.unity.mcp
 ```
+
+### 选项 3 — CLI
+
+通过 [`unity-mcp-cli`](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.zh-CN.md) 安装插件 — 无需 Unity 编辑器：
+
+```bash
+npx unity-mcp-cli install-plugin ./MyUnityProject
+```
+
+使用活跃的 MCP 连接启动 Unity：
+
+```bash
+npx unity-mcp-cli connect --path ./MyUnityProject --url http://localhost:8080
+```
+
+> 查看[完整 CLI 文档](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.zh-CN.md)了解所有可用命令。
 
 ## 第二步：安装 `MCP 客户端`
 

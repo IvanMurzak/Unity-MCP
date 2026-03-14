@@ -27,7 +27,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Type / Get Json Schema",
             ReadOnlyHint = true,
             DestructiveHint = false,
-            IdempotentHint = true
+            IdempotentHint = true,
+            Enabled = false
         )]
         [Description("Generates a JSON Schema for a given C# type name using reflection. " +
             "Supports primitives, enums, arrays, generic collections, dictionaries, and complex objects. " +

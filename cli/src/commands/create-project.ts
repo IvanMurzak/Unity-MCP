@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import * as path from 'path';
 import { ensureUnityHub, createProject, listInstalledEditors, findHighestEditor } from '../utils/unity-hub.js';
+import * as ui from '../utils/ui.js';
 
 export const createProjectCommand = new Command('create-project')
   .description('Create a new Unity project')
@@ -10,23 +11,31 @@ export const createProjectCommand = new Command('create-project')
   .action(async (positionalPath: string | undefined, options: { path?: string; unity?: string }) => {
     const resolvedPath = positionalPath ?? options.path;
     if (!resolvedPath) {
-      console.error('Error: Path is required. Usage: unity-mcp-cli create-project <path> or --path <path>');
+      ui.error('Path is required. Usage: unity-mcp-cli create-project <path> or --path <path>');
       process.exit(1);
     }
-    const hubPath = await ensureUnityHub();
+
+    const spinner = ui.startSpinner('Locating Unity Hub...');
+    let hubPath: string;
+    try {
+      hubPath = await ensureUnityHub();
+    } catch (err) {
+      spinner.fail('Failed to locate Unity Hub');
+      throw err;
+    }
+    spinner.succeed('Unity Hub located');
 
     let editorVersion = options.unity;
 
     if (!editorVersion) {
-      // Use the highest installed editor version
       const editors = listInstalledEditors(hubPath);
       if (editors.length === 0) {
-        console.error('Error: No Unity editors installed. Install one with: unity-mcp-cli install-editor --version <version>');
+        ui.error('No Unity editors installed. Install one with: unity-mcp-cli install-unity --version <version>');
         process.exit(1);
       }
       const highest = findHighestEditor(editors);
       editorVersion = highest.version;
-      console.log(`No Unity version specified, using highest installed: ${editorVersion}`);
+      ui.info(`No Unity version specified, using highest installed: ${editorVersion}`);
     }
 
     const projectPath = path.resolve(resolvedPath);

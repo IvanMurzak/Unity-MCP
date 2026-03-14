@@ -110,3 +110,12 @@ jobs:
         with:
           name: Test results for ${{ inputs.unityVersion }} ${{ inputs.testMode }} on ${{ matrix.platform }}
           path: ${{ steps.tests.outputs.artifactsPath }}
+
+      # --------------------------------------------------------------------- #
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          files: ${{ steps.tests.outputs.artifactsPath }}/**/*.xml
+          check_name: ${{ inputs.unityVersion }} ${{ inputs.testMode }} ${{ matrix.platform }} Results
+          comment_mode: failures

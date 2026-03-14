@@ -35,7 +35,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Route = "gameobject://currentScene/{path}",
             MimeType = Consts.MimeType.TextJson,
             ListResources = nameof(CurrentSceneAll),
-            Description = "Get gameObject's components and the values of each explicit property."
+            Description = "Get gameObject's components and the values of each explicit property.",
+            Enabled = false
         )]
         public ResponseResourceContent[] CurrentScene(string uri, string path)
         {

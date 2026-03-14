@@ -54,7 +54,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Package Manager / Search",
             ReadOnlyHint = true,
             IdempotentHint = true,
-            OpenWorldHint = true
+            OpenWorldHint = true,
+            Enabled = false
         )]
         [Description("Search for packages in both Unity Package Manager registry and installed packages. " +
             "Use this to find packages by name before installing them. Returns available versions and installation status. " +

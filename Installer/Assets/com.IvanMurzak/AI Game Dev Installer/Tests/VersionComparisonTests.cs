@@ -197,13 +197,14 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
             // Act - Run installer (should upgrade)
             Installer.AddScopedRegistryIfNeeded(TestManifestPath);
 
-            // Assert - Version should be upgraded to installer version
+            // Assert - Version should be upgraded to resolved version (OpenUPM best match or fallback)
+            var expectedVersion = Installer.GetLatestAvailableVersion() ?? Installer.Version;
             var updatedContent = File.ReadAllText(TestManifestPath);
             var updatedManifest = JSONObject.Parse(updatedContent);
             var actualVersion = updatedManifest[Installer.Dependencies][PackageId];
 
-            Assert.AreEqual(Installer.Version, actualVersion.ToString().Trim('"'),
-                "Version should be upgraded to installer version");
+            Assert.AreEqual(expectedVersion, actualVersion.ToString().Trim('"'),
+                "Version should be upgraded to resolved version");
         }
 
         [Test]

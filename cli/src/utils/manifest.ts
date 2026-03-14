@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import * as ui from './ui.js';
 
 const PACKAGE_ID = 'com.ivanmurzak.unity.mcp';
 const REGISTRY_NAME = 'package.openupm.com';
@@ -14,7 +15,7 @@ const REQUIRED_SCOPES = [
 ];
 
 // Hardcoded fallback version (updated on each release)
-const FALLBACK_VERSION = '0.51.6';
+const FALLBACK_VERSION = '0.53.0';
 
 interface ScopedRegistry {
   name: string;
@@ -46,7 +47,7 @@ export async function resolveLatestVersion(): Promise<string> {
         const data = (await res.json()) as { 'dist-tags'?: { latest?: string } };
         const latest = data?.['dist-tags']?.latest;
         if (latest) {
-          console.log(`Resolved latest version from OpenUPM: ${latest}`);
+          ui.info(`Resolved latest version from OpenUPM: ${latest}`);
           return latest;
         }
       }
@@ -57,7 +58,7 @@ export async function resolveLatestVersion(): Promise<string> {
     // Network error or timeout — fall through to hardcoded version
   }
 
-  console.log(`Using fallback version: ${FALLBACK_VERSION}`);
+  ui.warn(`Using fallback version: ${FALLBACK_VERSION}`);
   return FALLBACK_VERSION;
 }
 
@@ -154,7 +155,7 @@ export function addPluginToManifest(projectPath: string, version: string): void 
     manifest.dependencies[PACKAGE_ID] = version;
     modified = true;
   } else {
-    console.log(
+    ui.info(
       `Plugin already at version ${currentVersion} (>= ${version}). Skipping version update.`
     );
   }
@@ -162,9 +163,9 @@ export function addPluginToManifest(projectPath: string, version: string): void 
   // --- Write back
   if (modified) {
     fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
-    console.log(`Updated ${manifestPath}`);
+    ui.success(`Updated ${manifestPath}`);
   } else {
-    console.log('manifest.json is already up to date.');
+    ui.info('manifest.json is already up to date.');
   }
 }
 
@@ -184,11 +185,11 @@ export function removePluginFromManifest(projectPath: string): void {
   const manifest: Manifest = JSON.parse(rawJson);
 
   if (!manifest.dependencies || !(PACKAGE_ID in manifest.dependencies)) {
-    console.log('Unity-MCP plugin is not installed. Nothing to remove.');
+    ui.info('Unity-MCP plugin is not installed. Nothing to remove.');
     return;
   }
 
   delete manifest.dependencies[PACKAGE_ID];
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
-  console.log(`Removed ${PACKAGE_ID} from ${manifestPath}`);
+  ui.success(`Removed ${PACKAGE_ID} from ${manifestPath}`);
 }
