@@ -397,27 +397,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.DoesNotThrow(() => _tool.ClearLogs());
         }
 
-        [Test]
-        public void ClearLogs_ReturnsSuccessMessage()
-        {
-            // Act
-            var result = _tool.ClearLogs();
-
-            // Assert
-            Assert.IsTrue(result.Contains("[Success]"), "Should return success message.");
-        }
-
-        [Test]
-        public void ClearLogs_WithClearMcpCacheFalse_PreservesCache()
-        {
-            // Act
-            var result = _tool.ClearLogs(clearMcpCache: false);
-
-            // Assert
-            Assert.IsTrue(result.Contains("[Success]"), "Should return success message.");
-            Assert.IsTrue(result.Contains("preserved"), "Should indicate cache was preserved.");
-        }
-
         [UnityTest]
         public IEnumerator ClearLogs_RemovesAllLogs()
         {

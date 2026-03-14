@@ -249,8 +249,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             UnityMcpPluginEditor.Instance.LogCollector?.Save();
 
             // Step 1: Clear logs
-            var clearResult = _tool.ClearLogs();
-            Assert.IsTrue(clearResult.Contains("[Success]"), "ClearLogs should return success.");
+            _tool.ClearLogs();
 
             // Step 2: Perform an action (simulate by generating new logs)
             var actionLog = $"Action log {uniqueId}";
