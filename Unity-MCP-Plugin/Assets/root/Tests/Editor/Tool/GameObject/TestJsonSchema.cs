@@ -15,7 +15,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
@@ -38,24 +37,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
         static void ValidateSchema(Reflector reflector, JsonNode schema, Type type)
         {
-            UnityEngine.Debug.Log($"Schema for '{type.GetTypeName(pretty: true)}': {schema}");
+            UnityEngine.Debug.Log($"Schema for '{type.GetTypeId()}': {schema}");
 
-            Assert.IsNotNull(schema, $"Schema for '{type.GetTypeName(pretty: true)}' is null");
+            Assert.IsNotNull(schema, $"Schema for '{type.GetTypeId()}' is null");
 
             Assert.IsFalse(schema.ToJsonString().Contains($"\"{JsonSchema.Error}\":"),
-                $"Schema for '{type.GetTypeName(pretty: true)}' contains {JsonSchema.Error} string");
+                $"Schema for '{type.GetTypeId()}' contains {JsonSchema.Error} string");
 
             var typeNodes = JsonSchema.FindAllProperties(schema, JsonSchema.Type);
             foreach (var typeNode in typeNodes)
             {
-                UnityEngine.Debug.Log($"Type node for '{type.GetTypeName(pretty: true)}': {typeNode}");
+                UnityEngine.Debug.Log($"Type node for '{type.GetTypeId()}': {typeNode}");
                 switch (typeNode)
                 {
                     case JsonValue value:
                         var typeValue = value.ToString();
-                        Assert.IsFalse(string.IsNullOrEmpty(typeValue), $"Type node for '{type.GetTypeName(pretty: true)}' is empty");
-                        Assert.IsFalse(typeValue == "null", $"Type node for '{type.GetTypeName(pretty: true)}' is \"null\" string");
-                        Assert.IsFalse(typeValue.Contains($"\"{JsonSchema.Error}\""), $"Type node for '{type.GetTypeName(pretty: true)}' contains error string");
+                        Assert.IsFalse(string.IsNullOrEmpty(typeValue), $"Type node for '{type.GetTypeId()}' is empty");
+                        Assert.IsFalse(typeValue == "null", $"Type node for '{type.GetTypeId()}' is \"null\" string");
+                        Assert.IsFalse(typeValue.Contains($"\"{JsonSchema.Error}\""), $"Type node for '{type.GetTypeId()}' contains error string");
                         break;
                     default:
                         if (typeNode is JsonObject typeObject)
@@ -63,7 +62,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                             if (typeObject.TryGetPropertyValue("enum", out var enumValue))
                                 continue; // Skip enum types
                         }
-                        Assert.Fail($"Unexpected type node for '{type.GetTypeName(pretty: true)}'.\nThe '{JsonSchema.Type}' node has the type '{typeNode?.GetType().GetTypeShortName()}':\n{typeNode}");
+                        Assert.Fail($"Unexpected type node for '{type.GetTypeId()}'.\nThe '{JsonSchema.Type}' node has the type '{typeNode?.GetType().GetTypeShortName()}':\n{typeNode}");
                         break;
                 }
             }
@@ -87,7 +86,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator Primitives()
         {
-            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
             ValidateType<int>(reflector);
             ValidateType<float>(reflector);
@@ -101,7 +100,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator Classes()
         {
-            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
             ValidateType<ObjectRef>(reflector);
 
@@ -111,7 +110,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             ValidateType<GameObjectComponentsRefList>(reflector);
 
             ValidateType<ComponentData>(reflector);
-            ValidateType<ComponentDataLight>(reflector);
+            ValidateType<ComponentDataShallow>(reflector);
             ValidateType<ComponentRef>(reflector);
             ValidateType<ComponentRefList>(reflector);
 
@@ -124,7 +123,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator Structs()
         {
-            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
             ValidateType<DateTime>(reflector);
             ValidateType<TimeSpan>(reflector);
@@ -135,7 +134,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator UnityStructs()
         {
-            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
             ValidateType<UnityEngine.Color32>(reflector);
             ValidateType<UnityEngine.Color>(reflector);
@@ -156,7 +155,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator Unity()
         {
-            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
             ValidateType<UnityEngine.Object>(reflector);
             ValidateType<UnityEngine.Rigidbody>(reflector);
@@ -172,7 +171,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator MCP_Tools()
         {
-            var task = McpPlugin.McpPlugin.Instance!.McpManager.ToolManager!.RunListTool(new RequestListTool());
+            var task = UnityMcpPluginEditor.Instance.Tools!.RunListTool(new RequestListTool());
             while (!task.IsCompleted)
             {
                 yield return null; // Wait for the task to complete

@@ -1,0 +1,10 @@
+/* ==========================================================================
+   Update Popup Window Styles
+   Imports common styles and adds popup-specific customizations
+   ========================================================================== */
+
+@import url("common/_base.uss");
+@import url("common/_typography.uss");
+@import url("common/_buttons.uss");
+@import url("common/_status-indicators.uss");
+@import url("common/_animations.uss");

@@ -1,3 +1,11 @@
+# ┌──────────────────────────────────────────────────────────────────┐
+# │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
+# │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
+# │  Copyright (c) 2025 Ivan Murzak                                  │
+# │  Licensed under the Apache License, Version 2.0.                 │
+# │  See the LICENSE file in the project root for more information.  │
+# └──────────────────────────────────────────────────────────────────┘
+
 name: test-unity-plugin
 
 ##############################################################################
@@ -6,22 +14,18 @@ name: test-unity-plugin
 on:
   workflow_call:
     inputs:
-      projectPath:    { required: true, type: string }
-      unityVersion:   { required: true, type: string }
-      testMode:       { required: true, type: string }
+      projectPath: { required: true, type: string }
+      unityVersion: { required: true, type: string }
+      testMode: { required: true, type: string }
     secrets:
-      UNITY_LICENSE:  { required: true }
-      UNITY_EMAIL:    { required: true }
-      UNITY_PASSWORD: { required: true }
+      UNITY_EMAIL: { required: false }
+      UNITY_PASSWORD: { required: false }
 
 ##############################################################################
-# 2. Job – runs only after a maintainer applies the `ci-ok` label
+# 2. Job
 ##############################################################################
 jobs:
   test:
-    if: |
-      github.event_name != 'pull_request_target' ||
-      contains(github.event.pull_request.labels.*.name,'ci-ok')
     strategy:
       fail-fast: false
       matrix:
@@ -31,38 +35,42 @@ jobs:
     name: ${{ inputs.unityVersion }} ${{ inputs.testMode }} on ${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
 
-    # permissions: # minimize the default token
-    #   contents: write
-    #   pull-requests: write
-
     steps:
       # --------------------------------------------------------------------- #
-      # 2-a. (PR only) abort if the contributor also changed workflow files
+      # 2-a. Checkout repository
       # --------------------------------------------------------------------- #
-      - name: Abort if workflow files modified
-        if: ${{ github.event_name == 'pull_request_target' }}
-        run: |
-          git fetch --depth=1 origin "${{ github.base_ref }}"
-          if git diff --name-only HEAD origin/${{ github.base_ref }} | grep -q '^\.github/workflows/'; then
-            echo "::error::This PR edits workflow files – refusing to run with secrets"; exit 1;
-          fi
-
-      # --------------------------------------------------------------------- #
-      # 2-b. Checkout the contributor’s commit safely
-      # --------------------------------------------------------------------- #
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           lfs: false
 
       # --------------------------------------------------------------------- #
+      # 2-b. Activate Unity license
+      # --------------------------------------------------------------------- #
+      - name: Activate Unity license
+        id: activate
+        uses: ./.github/actions/unity/activate-license
+        with:
+          unityVersion: ${{ inputs.unityVersion }}
+          unity-email: ${{ secrets.UNITY_EMAIL || 'UnityEngineTester@gmail.com' }}
+          unity-password: ${{ secrets.UNITY_PASSWORD || 'ZUq3YR6qM1' }}
+
+      # --------------------------------------------------------------------- #
       # 2-c. Cache & run the Unity test-runner
       # --------------------------------------------------------------------- #
-      - uses: actions/cache@v4
+      - name: Generate cache key
+        id: cache_key
+        run: |
+          # Sanitize projectPath: replace /, \, :, and spaces with underscores
+          sanitized_path=$(echo "${{ inputs.projectPath }}" | sed 's/[\/\\: ]/_/g')
+          echo "project_path_sanitized=$sanitized_path" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - uses: actions/cache@v5
         with:
           path: |
             ${{ inputs.projectPath }}/Library
             ~/.cache/unity3d
-          key: Library-${{ inputs.unityVersion }}-${{ inputs.testMode }}-${{ matrix.platform }}
+          key: ${{ steps.cache_key.outputs.project_path_sanitized }}-${{ inputs.testMode }}-${{ matrix.platform }}
 
       # --------------------------------------------------------------------- #
       - name: Generate custom image name
@@ -70,25 +78,34 @@ jobs:
         run: echo "image=unityci/editor:ubuntu-${{ inputs.unityVersion }}-${{ matrix.platform }}-3" >> $GITHUB_OUTPUT
         shell: bash
 
+      - name: Decode Unity license
+        run: |
+          echo "$LICENSE_B64" | base64 -d > /tmp/unity_license.ulf
+          DELIM="UNITY_LIC_EOF_$(openssl rand -hex 16)"
+          echo "UNITY_LICENSE<<$DELIM" >> "$GITHUB_ENV"
+          cat /tmp/unity_license.ulf >> "$GITHUB_ENV"
+          printf '\n%s\n' "$DELIM" >> "$GITHUB_ENV"
+        env:
+          LICENSE_B64: ${{ steps.activate.outputs.license }}
+        shell: bash
+
       - uses: game-ci/unity-test-runner@v4
         id: tests
         env:
-          UNITY_LICENSE:  ${{ secrets.UNITY_LICENSE }}
-          UNITY_EMAIL:    ${{ secrets.UNITY_EMAIL }}
-          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL || 'UnityEngineTester@gmail.com' }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD || 'ZUq3YR6qM1' }}
         with:
-          projectPath:    ${{ inputs.projectPath }}
-          unityVersion:   ${{ inputs.unityVersion }}
-          testMode:       ${{ inputs.testMode }}
-          customImage:    ${{ steps.custom_image.outputs.image }}
-          githubToken:    ${{ secrets.GITHUB_TOKEN }}
-          checkName:      ${{ inputs.unityVersion }} ${{ inputs.testMode }} ${{ matrix.platform }} Test Results
-          artifactsPath:  artifacts-${{ inputs.unityVersion }}-${{ inputs.testMode }}-${{ matrix.platform }}
+          projectPath: ${{ inputs.projectPath }}
+          unityVersion: ${{ inputs.unityVersion }}
+          testMode: ${{ inputs.testMode }}
+          customImage: ${{ steps.custom_image.outputs.image }}
+          artifactsPath: artifacts-${{ inputs.unityVersion }}-${{ inputs.testMode }}-${{ matrix.platform }}
           customParameters: -CI true -GITHUB_ACTIONS true
 
       # --------------------------------------------------------------------- #
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v6
         if: always()
         with:
           name: Test results for ${{ inputs.unityVersion }} ${{ inputs.testMode }} on ${{ matrix.platform }}
           path: ${{ steps.tests.outputs.artifactsPath }}
+

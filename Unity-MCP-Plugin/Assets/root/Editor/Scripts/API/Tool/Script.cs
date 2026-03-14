@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.ReflectorNet.Utils;
 using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -21,8 +22,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     [InitializeOnLoad]
     public static partial class Tool_Script
     {
-        static IEnumerable<Type> AllComponentTypes => AppDomain.CurrentDomain.GetAssemblies()
-            .SelectMany(assembly => assembly.GetTypes())
+        static IEnumerable<Type> AllComponentTypes => TypeUtils.AllTypes
             .Where(type => typeof(UnityEngine.Component).IsAssignableFrom(type) && !type.IsAbstract);
 
         public static class Error
@@ -30,13 +30,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             static string ComponentsPrinted => string.Join("\n", AllComponentTypes.Select(type => type.FullName));
 
             public static string ScriptPathIsEmpty()
-                => "[Error] Script path is empty. Please provide a valid path. Sample: \"Assets/Scripts/MyScript.cs\".";
+                => "Script path is empty. Please provide a valid path. Sample: \"Assets/Scripts/MyScript.cs\".";
 
             public static string ScriptFileNotFound(params string[] files)
-                => $"[Error] File(s) not found: {string.Join(", ", files.Select(f => $"'{f}'"))}. Please check the path(s) and try again.";
+                => $"File(s) not found: {string.Join(", ", files.Select(f => $"'{f}'"))}. Please check the path(s) and try again.";
 
             public static string FilePathMustEndsWithCs()
-                => "[Error] File path must end with \".cs\". Please provide a valid C# file path.";
+                => "File path must end with \".cs\". Please provide a valid C# file path.";
         }
     }
 }

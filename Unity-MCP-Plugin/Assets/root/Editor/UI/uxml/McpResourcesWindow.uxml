@@ -1,0 +1,19 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement class="root-container" style="min-width: 320px;">
+        <ui:VisualElement class="header-container">
+            <ui:Label text="MCP Resources" class="header-title" />
+            <ui:Label text="See and control all MCP resources. Disable not needed resources." class="header-description" />
+            <ui:VisualElement class="filter-row">
+                <ui:Label text="Filter:" class="filter-label" />
+                <ui:TextField name="filter-textfield" class="filter-textfield" />
+            </ui:VisualElement>
+            <ui:VisualElement class="filter-row">
+                <ui:Label text="Type:" class="filter-label" />
+                <ui:DropdownField name="type-dropdown" index="0" class="type-dropdown" />
+                <ui:Label text="Filtered: 0, Total: 0" name="filter-stats-label" class="filter-stats-label" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:Label name="empty-list-label" text="No resources by current filter" class="empty-list-label" />
+        <ui:ListView name="mcp-list-view" class="mcp-list-view" />
+    </ui:VisualElement>
+</ui:UXML>

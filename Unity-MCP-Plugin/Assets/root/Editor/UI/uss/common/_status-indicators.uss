@@ -1,0 +1,56 @@
+/* ==========================================================================
+   Status Indicator Styles - Connection status circles
+   ========================================================================== */
+
+/* Base Status Indicator Circle */
+.status-indicator-circle {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    margin-right: 4px;
+}
+
+/* Online/Connected Status */
+.status-indicator-circle-online {
+    background-color: rgb(111, 226, 101);
+}
+
+/* Connecting Status */
+.status-indicator-circle-connecting {
+    border-color: rgb(111, 226, 101);
+    border-width: 2px;
+}
+
+/* Disconnected/Offline Status */
+.status-indicator-circle-disconnected {
+    background-color: rgb(220, 76, 9);
+}
+
+/* External Server Status - Green ring only (no fill) */
+.status-indicator-circle-external {
+    border-color: rgb(111, 226, 101);
+    border-width: 2px;
+    background-color: transparent;
+}
+
+/* Logo image */
+.logo-img {
+    width: 32px;
+    height: 32px;
+    background-color: rgb(238, 238, 238);
+}
+
+/* Icon container (for popups) */
+.icon-container {
+    width: 72px;
+    height: 72px;
+    margin-bottom: 12px;
+    transition-duration: 500ms;
+    transition-timing-function: ease-in-out-cubic;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.icon-container:hover {
+    scale: 0.9 0.9;
+    rotate: 0;
+}

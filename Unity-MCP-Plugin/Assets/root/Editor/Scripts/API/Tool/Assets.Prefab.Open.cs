@@ -9,60 +9,57 @@
 */
 
 #nullable enable
+using System;
 using System.ComponentModel;
-using System.Reflection;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
-using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Assets_Prefab
     {
+        public const string AssetsPrefabOpenToolId = "assets-prefab-open";
         [McpPluginTool
         (
-            "Assets_Prefab_Open",
-            Title = "Open prefab"
+            AssetsPrefabOpenToolId,
+            Title = "Assets / Prefab / Open"
         )]
-        [Description(@"Open prefab edit mode for a specific GameObject. In the Edit mode you can modify the prefab.
-The modification will be applied to the all instances of the prefab across the project.
-Note: Please 'Close' the prefab later to exit prefab editing mode.")]
-        public string Open
+        [Description("Open prefab edit mode for a specific GameObject. " +
+            "In the Edit mode you can modify the prefab. " +
+            "The modification will be applied to all instances of the prefab across the project. " +
+            "Note: Please use '" + AssetsPrefabCloseToolId + "' tool later to exit prefab editing mode.")]
+        public void Open
         (
             [Description("GameObject that represents prefab instance of an original prefab GameObject.")]
             GameObjectRef gameObjectRef
         )
-        => MainThread.Instance.Run(() =>
         {
-            if (gameObjectRef?.IsValid == false)
-                return $"[Error] '{nameof(gameObjectRef)}' is not valid. Please provide at least a single valid {string.Join(", ", $"'{AssetObjectRef.AssetObjectRefProperty.All}'")} property.";
+            if (gameObjectRef?.IsValid(out var validationError) == false)
+                throw new ArgumentException(validationError, nameof(gameObjectRef));
 
-            var prefabStage = UnityEditor.SceneManagement.PrefabStageUtility.GetCurrentPrefabStage();
-            var gameObject = gameObjectRef.FindGameObject();
+            MainThread.Instance.Run(() =>
+            {
+                var prefabStage = UnityEditor.SceneManagement.PrefabStageUtility.GetCurrentPrefabStage();
+                var gameObject = gameObjectRef.FindGameObject();
 
-            if (gameObject == null)
-                return "[Error] GameObject not found. Provide a reference to existed GameObject.";
+                if (gameObject == null)
+                    throw new Exception("GameObject not found. Provide a reference to existed GameObject.");
 
-            var prefabAssetPath = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(gameObject);
+                var prefabAssetPath = PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(gameObject);
 
-            prefabStage = gameObject.IsAsset()
-                ? UnityEditor.SceneManagement.PrefabStageUtility.OpenPrefab(prefabAssetPath)
-                : UnityEditor.SceneManagement.PrefabStageUtility.OpenPrefab(prefabAssetPath, gameObject);
+                prefabStage = gameObject.IsAsset()
+                    ? UnityEditor.SceneManagement.PrefabStageUtility.OpenPrefab(prefabAssetPath)
+                    : UnityEditor.SceneManagement.PrefabStageUtility.OpenPrefab(prefabAssetPath, gameObject);
 
-            if (prefabStage == null)
-                return Error.PrefabStageIsNotOpened();
+                if (prefabStage == null)
+                    throw new Exception("Failed to open prefab edit mode for the provided GameObject.");
 
-            var name = typeof(Tool_Assets_Prefab)
-                .GetMethod(nameof(Close))
-                .GetCustomAttribute<McpPluginToolAttribute>()
-                .Name;
-
-            return @$"[Success] Prefab '{prefabStage.assetPath}' opened. Use '{name}' to close it.
-# Prefab information:
-{prefabStage.prefabContentsRoot.ToMetadata()?.Print() ?? "null"}";
-        });
+                EditorUtils.RepaintAllEditorWindows();
+            });
+        }
     }
 }

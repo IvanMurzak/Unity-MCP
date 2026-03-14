@@ -14,7 +14,7 @@ using System.ComponentModel;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
-    [Description(@"Array of GameObjects in opened Prefab or in the active Scene.")]
+    [Description("Array of GameObjects in opened Prefab or in the active Scene.")]
     public class GameObjectRefList : List<GameObjectRef>
     {
         public GameObjectRefList() { }

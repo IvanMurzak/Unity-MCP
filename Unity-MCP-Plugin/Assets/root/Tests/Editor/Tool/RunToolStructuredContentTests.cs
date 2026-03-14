@@ -65,12 +65,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Assert
             Assert.IsNotNull(result, "Result should not be null");
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
-            Assert.AreEqual(expectedValue.ToString(), result.GetMessage(), "Should return int as string");
+
+            var expectedJson = System.Text.Json.JsonSerializer.Serialize(new { result = expectedValue });
+            Assert.AreEqual(expectedJson, result.GetMessage(), "Should return int as JSON string");
+
             Assert.IsNotNull(result.StructuredContent![JsonSchema.Result], "Primitive types should have structured content");
             Assert.AreEqual(expectedValue, result.StructuredContent![JsonSchema.Result]!.GetValue<int>(), "Structured content should contain the expected int value");
 
             // Verify the int value can be parsed back to the original value
-            var parsedValue = int.Parse(result.GetMessage());
+            var jsonNode = JsonNode.Parse(result.GetMessage()!);
+            var parsedValue = jsonNode![JsonSchema.Result]!.GetValue<int>();
             Assert.AreEqual(expectedValue, parsedValue, "Parsed int should match original value");
         }
 
@@ -92,12 +96,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Assert
             Assert.IsNotNull(result, "Result should not be null");
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
-            Assert.AreEqual(expectedValue, result.GetMessage(), "Should return string value");
+
+            var expectedJson = System.Text.Json.JsonSerializer.Serialize(new { result = expectedValue });
+            Assert.AreEqual(expectedJson, result.GetMessage(), "Should return string as JSON string");
+
             Assert.IsNotNull(result.StructuredContent![JsonSchema.Result], "String is primitive and should have structured content");
             Assert.AreEqual(expectedValue, result.StructuredContent![JsonSchema.Result]!.GetValue<string>(), "Structured content should contain the expected string value");
 
             // Verify the string value matches exactly (no corruption)
-            Assert.AreEqual(expectedValue, result.GetMessage(), "String should match original value exactly");
+            var jsonNode = JsonNode.Parse(result.GetMessage()!);
+            var parsedValue = jsonNode![JsonSchema.Result]!.GetValue<string>();
+            Assert.AreEqual(expectedValue, parsedValue, "String should match original value exactly");
         }
 
         [UnityTest]
@@ -118,12 +127,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Assert
             Assert.IsNotNull(result, "Result should not be null");
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
-            Assert.AreEqual(expectedValue.ToString(), result.GetMessage(), "Should return float as string");
+
+            var expectedJson = System.Text.Json.JsonSerializer.Serialize(new { result = expectedValue });
+            Assert.AreEqual(expectedJson, result.GetMessage(), "Should return float as JSON string");
+
             Assert.IsNotNull(result.StructuredContent![JsonSchema.Result], "Primitive types should have structured content");
             Assert.AreEqual(expectedValue, result.StructuredContent![JsonSchema.Result]!.GetValue<float>(), 0.001f, "Structured content should contain the expected float value");
 
             // Verify the float value can be parsed back to the original value
-            var parsedValue = float.Parse(result.GetMessage());
+            var jsonNode = JsonNode.Parse(result.GetMessage()!);
+            var parsedValue = jsonNode![JsonSchema.Result]!.GetValue<float>();
             Assert.AreEqual(expectedValue, parsedValue, 0.001f, "Parsed float should match original value");
         }
 
@@ -145,12 +158,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Assert
             Assert.IsNotNull(result, "Result should not be null");
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
-            Assert.AreEqual(expectedValue.ToString(), result.GetMessage(), "Should return bool as string");
+
+            var expectedJson = System.Text.Json.JsonSerializer.Serialize(new { result = expectedValue });
+            Assert.AreEqual(expectedJson, result.GetMessage(), "Should return bool as JSON string");
+
             Assert.IsNotNull(result.StructuredContent![JsonSchema.Result], "Primitive types should have structured content");
             Assert.AreEqual(expectedValue, result.StructuredContent![JsonSchema.Result]!.GetValue<bool>(), "Structured content should contain the expected bool value");
 
             // Verify the bool value can be parsed back to the original value
-            var parsedValue = bool.Parse(result.GetMessage());
+            var jsonNode = JsonNode.Parse(result.GetMessage()!);
+            var parsedValue = jsonNode![JsonSchema.Result]!.GetValue<bool>();
             Assert.AreEqual(expectedValue, parsedValue, "Parsed bool should match original value");
         }
 
@@ -172,7 +189,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Assert
             Assert.IsNotNull(result, "Result should not be null");
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
-            Assert.AreEqual(expectedEnumValue.ToString(), result.GetMessage(), "Should return enum as string");
+
+            var options = new System.Text.Json.JsonSerializerOptions();
+            options.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+            var expectedJson = System.Text.Json.JsonSerializer.Serialize(new { result = expectedEnumValue }, options);
+            Assert.AreEqual(expectedJson, result.GetMessage(), "Should return enum as JSON string");
+
             Assert.IsNotNull(result.StructuredContent![JsonSchema.Result], "Enum is primitive and should have structured content");
 
             // Enum can be serialized as string or int, so we check if it matches either representation
@@ -184,7 +206,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsTrue(isStringMatch || isIntMatch, "Structured content should contain the expected enum value as string or int");
 
             // Verify the enum value can be parsed back to the original value
-            var parsedValue = Enum.Parse(typeof(ResponseStatus), result.GetMessage());
+            var jsonNode = JsonNode.Parse(result.GetMessage()!);
+            var resultValue = jsonNode![JsonSchema.Result];
+            Assert.IsNotNull(resultValue, "Result value should not be null");
+
+            var parsedValue = resultValue!.GetValueKind() == System.Text.Json.JsonValueKind.Number
+                ? (ResponseStatus)resultValue.GetValue<int>()
+                : (ResponseStatus)Enum.Parse(typeof(ResponseStatus), resultValue.GetValue<string>());
+
             Assert.AreEqual(expectedEnumValue, parsedValue, "Parsed enum should match original value");
         }
 
@@ -226,7 +255,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Assert
             Assert.IsNotNull(result, "Result should not be null");
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
-            Assert.AreEqual(expectedValue.ToString(), result.GetMessage(), "Should return Microsoft.Extensions.Logging.LogLevel as string");
+
+            var options = new System.Text.Json.JsonSerializerOptions();
+            options.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+            var expectedJson = System.Text.Json.JsonSerializer.Serialize(new { result = expectedValue }, options);
+            Assert.AreEqual(expectedJson, result.GetMessage(), "Should return Microsoft.Extensions.Logging.LogLevel as JSON string");
+
             Assert.IsNotNull(result.StructuredContent![JsonSchema.Result], "Enum is primitive and should have structured content");
 
             // Enum can be serialized as string or int, so we check if it matches either representation
@@ -238,7 +272,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsTrue(isStringMatch || isIntMatch, "Structured content should contain the expected enum value as string or int");
 
             // Verify the enum value can be parsed back to the original value
-            var parsedValue = Enum.Parse(typeof(Microsoft.Extensions.Logging.LogLevel), result.GetMessage());
+            var jsonNode = JsonNode.Parse(result.GetMessage()!);
+            var resultValue = jsonNode![JsonSchema.Result];
+            Assert.IsNotNull(resultValue, "Result value should not be null");
+            var parsedValue = resultValue!.GetValueKind() == System.Text.Json.JsonValueKind.Number
+                ? (LogLevel)resultValue.GetValue<int>()
+                : (LogLevel)Enum.Parse(typeof(LogLevel), resultValue.GetValue<string>());
+
             Assert.AreEqual(expectedValue, parsedValue, "Parsed enum should match original value");
         }
 

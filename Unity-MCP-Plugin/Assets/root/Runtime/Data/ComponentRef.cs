@@ -13,10 +13,12 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text.Json.Serialization;
+using com.IvanMurzak.ReflectorNet;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
-    [Description(@"Component reference. Used to find a Component at GameObject.")]
+    [Description("Component reference. " +
+        "Used to find a Component at GameObject.")]
     public class ComponentRef : ObjectRef
     {
         public static partial class ComponentRefProperty
@@ -38,25 +40,41 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
         [Description("Component type full name. Sample 'UnityEngine.Transform'. If the gameObject has two components of the same type, the output component is unpredictable. Priority: 3. Default value is null.")]
         public string? TypeName { get; set; } = null;
 
-        [JsonIgnore]
-        public bool IsValid
+        public override bool IsValid(out string? error)
         {
-            get
+            if (InstanceID != 0)
             {
-                if (InstanceID != 0)
-                    return true;
-                if (Index >= 0)
-                    return true;
-                if (!string.IsNullOrEmpty(TypeName))
-                    return true;
-                return false;
+                error = null;
+                return true;
             }
+            if (Index >= 0)
+            {
+                error = null;
+                return true;
+            }
+            if (!string.IsNullOrEmpty(TypeName))
+            {
+                error = null;
+                return true;
+            }
+            error = $"Invalid ComponentRef: '{ObjectRefProperty.InstanceID}' is 0, '{ComponentRefProperty.Index}' is less than 0, and '{ComponentRefProperty.TypeName}' is null or empty.";
+            return false;
         }
 
         public ComponentRef() { }
         public ComponentRef(int instanceID)
         {
             this.InstanceID = instanceID;
+        }
+        public ComponentRef(UnityEngine.Component? component) : base(component)
+        {
+            if (component == null)
+                return;
+
+            var go = component.gameObject;
+            var components = go.GetComponents<UnityEngine.Component>();
+            this.Index = System.Array.IndexOf(components, component);
+            this.TypeName = component.GetType().GetTypeShortName();
         }
 
         public override string ToString()

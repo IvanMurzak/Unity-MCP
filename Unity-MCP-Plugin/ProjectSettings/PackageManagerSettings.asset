@@ -78,7 +78,6 @@ MonoBehaviour:
     - org.nuget.microsoft.extensions.primitives
     - org.nuget.r3
     - org.nuget.system.buffers
-    - org.nuget.system.collections.immutable
     - org.nuget.system.componentmodel.annotations
     - org.nuget.system.diagnostics.diagnosticsource
     - org.nuget.system.diagnostics.eventlog
@@ -102,6 +101,6 @@ MonoBehaviour:
   m_RegistryInfoDraft:
     m_Modified: 0
     m_ErrorMessage: 
-    m_UserModificationsInstanceId: -830
-    m_OriginalInstanceId: -834
+    m_UserModificationsInstanceId: -834
+    m_OriginalInstanceId: -838
   m_LoadAssets: 0

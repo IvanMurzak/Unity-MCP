@@ -17,24 +17,30 @@ using System.Reflection;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.Extensions.Logging;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public static partial class Tool_Script
     {
+        public const string ScriptExecuteToolId = "script-execute";
         [McpPluginTool
         (
-            "Script_Execute",
-            Title = "Execute C# code immediately"
+            ScriptExecuteToolId,
+            Title = "Script / Execute",
+            OpenWorldHint = true
         )]
-        [Description("Compiles and executes C# code dynamically using Roslyn. The provided code must define a class with a static method to execute.")]
-        public static string Execute
+        [Description("Compiles and executes C# code dynamically using Roslyn. " +
+            "The provided code must define a class with a static method to execute.")]
+        public static SerializedMember? Execute
         (
-            [Description(@"C# code that compiles and executes immediately. It won't be stored as a script in the project. It is temporary one shot C# code execution using Roslyn.
-IMPORTANT: The code must define a class (e.g., 'public class Script') with a static method (e.g., 'public static object Main()').
-Do NOT use top-level statements or code outside a class. Top-level statements are not supported and will cause compilation errors.")]
+            [Description("C# code that compiles and executes immediately. It won't be stored as a script in the project. " +
+                "It is temporary one shot C# code execution using Roslyn. " +
+                "IMPORTANT: The code must define a class (e.g., 'public class Script') with a static method (e.g., 'public static object Main()'). " +
+                "Do NOT use top-level statements or code outside a class. Top-level statements are not supported and will cause compilation errors.")]
             string csharpCode,
             [Description("The name of the class containing the method to execute.")]
             string className = "Script",
@@ -45,30 +51,58 @@ Do NOT use top-level statements or code outside a class. Top-level statements ar
         )
         {
             if (string.IsNullOrEmpty(csharpCode))
-                return $"[Error] '{nameof(csharpCode)}' is null or empty. Please provide valid C# code to execute.";
+                throw new Exception($"'{nameof(csharpCode)}' is null or empty. Please provide valid C# code to execute.");
 
             if (string.IsNullOrEmpty(className))
-                return $"[Error] '{nameof(className)}' cannot be null or empty.";
+                throw new Exception($"'{nameof(className)}' cannot be null or empty.");
 
             if (string.IsNullOrEmpty(methodName))
-                return $"[Error] '{nameof(methodName)}' cannot be null or empty.";
+                throw new Exception($"'{nameof(methodName)}' cannot be null or empty.");
 
             if (csharpCode.Contains(className) == false)
-                return $"[Error] '{nameof(csharpCode)}' does not contain class '{className}'. Please ensure the class is defined in the provided code.";
+                throw new Exception($"'{nameof(csharpCode)}' does not contain class '{className}'. Please ensure the class is defined in the provided code.");
 
             if (csharpCode.Contains(methodName) == false)
-                return $"[Error] '{nameof(csharpCode)}' does not contain method '{methodName}'. Please ensure the method is defined in the provided code.";
+                throw new Exception($"'{nameof(csharpCode)}' does not contain method '{methodName}'. Please ensure the method is defined in the provided code.");
 
             return MainThread.Instance.Run(() =>
             {
-                // Compile C# code using Roslyn and execute it immediately
-                if (ExecuteCSharpCode(className, methodName, csharpCode, parameters, out var result, out var error) == false)
-                    return $"[Error] {error}";
+                var logger = UnityLoggerFactory.LoggerFactory.CreateLogger("Tool_Script.Execute");
 
-                return $"[Success] {result}";
+                // Compile C# code using Roslyn and execute it immediately
+                if (!ExecuteCSharpCode(
+                    className: className,
+                    methodName: methodName,
+                    code: csharpCode,
+                    parameters: parameters,
+                    returnValue: out var result,
+                    error: out var error,
+                    logger: logger))
+                {
+                    throw new Exception(error);
+                }
+
+                if (result is null)
+                    return null;
+
+                if (result is SerializedMember serializedResult)
+                    return serializedResult;
+
+                var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
+
+                return reflector.Serialize(
+                    obj: result,
+                    logger: logger);
             });
         }
-        static bool ExecuteCSharpCode(string className, string methodName, string code, SerializedMemberList? parameters, out object? returnValue, out string? error)
+        static bool ExecuteCSharpCode(
+            string className,
+            string methodName,
+            string code,
+            SerializedMemberList? parameters,
+            out object? returnValue,
+            out string? error,
+            ILogger? logger = null)
         {
             if (string.IsNullOrEmpty(className))
             {
@@ -83,17 +117,46 @@ Do NOT use top-level statements or code outside a class. Top-level statements ar
                 return false;
             }
 
+            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
+
             var parsedParameters = parameters
-                ?.Select(p => McpPlugin.McpPlugin.Instance!.McpManager.Reflector.Deserialize(p, logger: McpPlugin.McpPlugin.Instance.Logger))
+                ?.Select(p => reflector.Deserialize(
+                    data: p,
+                    logger: logger))
                 ?.ToArray();
 
             var compilation = CSharpCompilation.Create(
                 assemblyName: "DynamicAssembly",
                 syntaxTrees: new[] { CSharpSyntaxTree.ParseText(code) },
-                references: AppDomain.CurrentDomain.GetAssemblies()
+                references: AssemblyUtils.AllAssemblies
                     .Where(a => !a.IsDynamic) // Exclude dynamic assemblies
                     .Where(a => !string.IsNullOrEmpty(a.Location))
-                    .Select(a => MetadataReference.CreateFromFile(a.Location))
+                    .Select(a =>
+                    {
+                        try
+                        {
+                            return MetadataReference.CreateFromFile(a.Location);
+                        }
+                        catch (DirectoryNotFoundException ex)
+                        {
+                            logger?.LogWarning(ex, "Directory not found for assembly '{AssemblyName}' at '{Location}': {Error}",
+                                a.GetName().Name, a.Location, ex.Message);
+                            return null;
+                        }
+                        catch (FileNotFoundException ex)
+                        {
+                            logger?.LogWarning(ex, "File not found for assembly '{AssemblyName}' at '{Location}': {Error}",
+                                a.GetName().Name, a.Location, ex.Message);
+                            return null;
+                        }
+                        catch (Exception ex)
+                        {
+                            logger?.LogWarning(ex, "Failed to load metadata reference for assembly '{AssemblyName}' at '{Location}': {Error}",
+                                a.GetName().Name, a.Location, ex.Message);
+                            return null;
+                        }
+                    })
+                    .OfType<MetadataReference>()
                     .ToArray(),
                 options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
             );

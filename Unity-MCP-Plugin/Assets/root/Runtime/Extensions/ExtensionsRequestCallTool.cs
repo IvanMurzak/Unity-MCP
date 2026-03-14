@@ -27,7 +27,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
         {
             data.Arguments ??= value == null
                 ? new Dictionary<string, JsonElement>()
-                : new Dictionary<string, JsonElement>() { [name] = value.ToJsonElement(McpPlugin.McpPlugin.Instance?.McpManager.Reflector) };
+                : new Dictionary<string, JsonElement>() { [name] = value.ToJsonElement(UnityMcpPluginRuntime.Instance.McpPluginInstance?.McpManager.Reflector) };
             return data;
         }
         // public static IRequestData BuildRequest(this IRequestTool data)

@@ -1,107 +1,115 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## Overview
 
-## Project Overview
+Unity-MCP Plugin — Unity Editor/Runtime side of the MCP bridge. Attribute-based framework that registers and executes MCP tools, prompts, and resources. Includes a self-hosted MCP server manager and auto-configuration for AI clients.
 
-Unity-MCP is a bridge between Large Language Models (LLMs) and Unity Editor that implements the Model Context Protocol (MCP). It enables AI assistants to interact with Unity projects through a comprehensive set of tools for managing GameObjects, assets, scripts, and more.
+## Development
 
-**Key Architecture Components:**
-- **MCP Plugin System**: Core framework that manages tool registration and execution
-- **SignalR Hub Connection**: Real-time communication between Unity and external MCP clients
-- **Reflection-based Tools**: Dynamic access to Unity API using advanced reflection
-- **Custom Tool Framework**: Extensible system for adding project-specific tools
+- **Open**: `Unity-MCP-Plugin` folder in Unity Editor (compiles automatically)
+- **Tests**: Unity Test Runner (`Window > General > Test Runner`) — EditMode in `Assets/root/Tests/Editor`, PlayMode in `Assets/root/Tests/Runtime`
+- **MCP Inspector**: `Commands/start_mcp_inspector.bat` (requires Node.js)
 
-## Development Commands
+## Directory Structure
 
-### Unity Operations
-- **Open Unity Project**: Open the `Unity-MCP-Plugin` folder in Unity Editor
-- **Run Tests**: Use Unity Test Runner window (`Window > General > Test Runner`)
-  - EditMode tests: `Assets/root/Tests/Editor`
-  - PlayMode tests: `Assets/root/Tests/Runtime`
-- **Build Plugin**: Unity handles compilation automatically when scripts change
-
-### MCP Development
-- **Start MCP Inspector**: `Commands/start_mcp_inspector.bat` - Debug MCP protocol communication
-- **Package Management**: Uses OpenUPM and Unity Package Manager for dependencies
-
-### Project Structure Commands
-- **Copy README**: `Commands/copy_readme.bat` - Synchronizes README files
-- No traditional build/lint commands - Unity handles C# compilation and validation
-
-## Code Architecture
-
-### Core Plugin Structure
 ```
 Assets/root/
-├── Runtime/                 # Core runtime functionality
-│   ├── Config/             # UnityMcpPlugin configuration system
-│   ├── Extensions/         # Unity-specific extension methods
-│   ├── JsonConverters/     # Custom JSON serialization for Unity types
-│   ├── ReflectionConverters/ # Advanced reflection system for Unity objects
-│   └── Utils/              # Utility classes and helper functions
-├── Editor/                 # Unity Editor integration
-│   ├── Scripts/API/Tool/   # MCP tool implementations
-│   └── Scripts/UI/         # Editor UI windows and components
-└── Tests/                  # Unit and integration tests
+├── Runtime/
+│   ├── UnityMcpPluginRuntime.cs      # Runtime singleton (+ .Static.cs)
+│   ├── Data/                         # ObjectRef hierarchy, GameObjectData, etc.
+│   ├── Converter/                    # Json/ and Reflection/ converters
+│   ├── Logger/                       # UnityLogger, factory, provider
+│   ├── Extensions/                   # Extension methods
+│   └── Utils/                        # MainThread dispatcher
+├── Editor/
+│   ├── Scripts/
+│   │   ├── UnityMcpPluginEditor.cs   # Editor singleton (+ .Static, .Build, .Config)
+│   │   ├── Startup.cs                # [InitializeOnLoad] entry (+ .Editor.cs)
+│   │   ├── McpServerManager.cs       # Server binary lifecycle
+│   │   ├── API/
+│   │   │   ├── Tool/                 # MCP tools (partial classes, 1 op per file)
+│   │   │   ├── Prompt/               # MCP prompts
+│   │   │   └── Resource/             # MCP resources
+│   │   ├── Services/                 # Device auth flow
+│   │   └── UI/                       # Editor windows, AI agent configurators
+│   └── Gizmos/                       # Icons
+├── Tests/
+│   ├── Editor/                       # EditMode tests
+│   └── Runtime/                      # PlayMode tests
+└── Plugins/                          # Bundled DLLs (McpPlugin, ReflectorNet)
 ```
 
-### MCP Tool System
-Tools are implemented using attributes:
-- `[McpPluginToolType]` - Marks a class as containing MCP tools
-- `[McpPluginTool]` - Marks methods as callable MCP tools
-- `[Description]` - Provides AI-readable documentation
+### Key Classes
 
-### Unity-Specific Patterns
-- **MainThread Execution**: All Unity API calls must use `MainThread.Instance.Run(() => ...)` for thread safety
-- **Object References**: Use `GameObjectRef`, `ComponentRef`, `AssetObjectRef` for persistent object referencing
-- **Reflection System**: Custom converters in `ReflectionConverters/` enable AI to read/write complex Unity data structures
+- **UnityMcpPluginEditor** (4 partials: `.cs`, `.Static.cs`, `.Build.cs`, `.Config.cs`) — Editor-only singleton managing persistent MCP connection, config persistence (JSON file I/O), and lazy assembly scanning via `McpPluginBuilder`
+- **UnityMcpPluginRuntime** (2 partials: `.cs`, `.Static.cs`) — Runtime singleton with `Initialize(Action<IMcpPluginBuilder>?)` API for game builds; no JSON config dependency, separate MCP connection from Editor
+- **Startup** (2 partials: `.cs`, `.Editor.cs`) — `[InitializeOnLoad]` entry point; `.Editor.cs` handles assembly reload, play mode transitions, graceful disconnect
 
-### Connection Management
-- **Configuration**: `UnityMcpPlugin` class manages connection settings (host, port, logging level)
-- **Transport**: SignalR-based communication with external MCP clients
-- **Real-time Updates**: Reactive extensions (R3) for connection state management
+## Startup Flow
 
-## Development Guidelines
+Triggered by `[InitializeOnLoad]` static constructor in `Startup.cs`:
 
-### Adding Custom Tools
-1. Create class with `[McpPluginToolType]` attribute
-2. Add methods with `[McpPluginTool]` and `[Description]` attributes
-3. Use optional parameters with `?` and defaults for flexible AI interaction
-4. Wrap Unity API calls in `MainThread.Instance.Run()` when needed
+1. Build `IMcpPlugin` instance (scan assemblies for tools/prompts/resources)
+2. Add `BufferedFileLogStorage` log collector for early log capture
+3. **Deferred** connection via `EditorApplication.delayCall` (prevents Unity freeze on async SignalR)
+4. Start server binary download asynchronously
+5. **Deferred** server auto-start via `EditorApplication.delayCall`
+6. Validate project path (no spaces)
+7. Subscribe to editor lifecycle events (domain reload, play mode transitions)
+8. CI environment detection — skips connection and server start in CI
 
-### Testing Patterns
-- Use `BaseTest` class for test infrastructure
-- Test both successful operations and error conditions
-- Use Unity's coroutine testing (`[UnityTest]`) for async operations
-- Mock external dependencies when testing tool logic
+## MCP Protocol Implementation
 
-### Unity Integration
-- Follow Unity's C# coding conventions
-- Use Unity's serialization system for persistent data
-- Leverage Unity's asset management for file operations
-- Implement proper cleanup in OnDestroy/OnDisable methods
+Attribute-based registration for three MCP primitives. All use `[System.ComponentModel.Description]` for AI-readable documentation.
 
-### Error Handling
-- Use structured error responses for AI consumption
-- Include helpful context in error messages
-- Handle both Unity-specific and general exceptions
-- Log errors with appropriate log levels using `UnityMcpPlugin.LogLevel`
+- **Tools**: `[McpPluginToolType]` on class, `[McpPluginTool(Name = "category-action")]` on methods
+- **Prompts**: `[McpPluginPromptType]` on class, `[McpPluginPrompt]` on methods
+- **Resources**: `[McpPluginResourceType]` on class, `[McpPluginResource]` on methods (e.g., `gameobject://currentScene/{path}`)
 
-## Important Notes
+## Object Reference Hierarchy
 
-### Requirements
-- **No spaces in project path** - Unity-MCP requires project paths without spaces
-- **Unity 2022.3+** - Minimum supported Unity version
-- **MCP Client** - Requires compatible MCP client (Claude Desktop, Cursor, VS Code Copilot, etc.)
+```text
+ObjectRef (base — contains InstanceID)
+├── AssetObjectRef (+ AssetPath, AssetGuid, AssetType)
+│   └── GameObjectRef (+ Path, Name)
+├── ComponentRef (+ Index, TypeName)
+└── SceneRef (+ Path, BuildIndex)
+```
 
-### Configuration
-- Main configuration through `Window/AI Game Developer`
-- Connection settings stored in `UnityMcpPlugin.Data`
-- Runtime configuration via `Assets/Resources/Unity-MCP-ConnectionConfig.json`
+Supporting types: `GameObjectData`, `ComponentData`, `SceneData`, `GameObjectMetadata`, plus `*Shallow` and `*List` variants. All use `[JsonPropertyName]` and implement `IsValid(out string? error)`.
 
-### Dependencies
-- **SignalR Client**: Real-time communication
-- **Roslyn**: C# code compilation and execution
-- **R3 Reactive Extensions**: Reactive programming patterns
-- **ReflectorNet**: Advanced reflection system for Unity objects
+## Connection & Transport
+
+- **Port**: Deterministic — SHA256 of project path, mapped to 50000–59999
+- **Server Binary**: Downloaded from GitHub releases to `Library/mcp-server/{platform}/`. Version tracked in a `version` file alongside binary.
+- **Process Lifecycle** (`McpServerStatus`): `Stopped` → `Starting` → `Running` → `Stopping` → `Stopped`, plus `External`. PID persisted in EditorPrefs for domain reload resilience.
+- **Domain Reload**: Disconnects before reload (only if `Connected`), rebuilds and reconnects after. Play mode transitions trigger delayed reconnection.
+
+## AI Agent Configurators
+
+Auto-configuration system generating MCP config files for AI clients. Each configurator has platform-specific and transport variants.
+
+**Key patterns**:
+- Fluent builder: `.SetProperty(key, value, requiredForConfiguration, comparison).SetPropertyToRemove(key)`
+- `ValueComparisonMode`: `Exact`, `Path` (normalized separators), `Url` (case-insensitive scheme+host)
+- Duplicate detection via identity keys. Deprecated section cleanup for old "Unity-MCP" entries.
+
+## Testing Patterns
+
+- Extend `BaseTest` class — provides `[UnitySetUp]` (initializes singleton, creates logger) and `[UnityTearDown]` (destroys all GameObjects)
+- `BaseTest.RunTool(string toolName, string json)` helper — executes a tool and asserts success
+- Use `[UnityTest]` with `IEnumerator` return type; call `yield return base.SetUp()` / `base.TearDown()`
+- Some tests use standard NUnit `[Test]`/`[SetUp]`/`[TearDown]` when Unity APIs aren't needed
+
+## Error Handling
+
+- Structured error responses for AI consumption; graceful non-blocking cleanup on disconnect/quit
+- SIGTERM for Unix (falls back to `Kill()`), immediate `Kill()` on Windows
+- Log all exceptions (never silently swallowed)
+
+## Configuration
+
+- **No spaces in project path** — validated on startup with user warning
+- **Unity 2022.3+** minimum
+- Main UI: `Window/AI Game Developer`
+- Config file: `Assets/Resources/AI-Game-Developer-Config.json` (auto-created). Editor mode: file path; Play mode: `Resources.Load<TextAsset>()`

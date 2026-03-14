@@ -9,92 +9,86 @@
 */
 
 #nullable enable
+using System;
 using System.ComponentModel;
-using System.Text;
 using com.IvanMurzak.McpPlugin;
-using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
-using UnityEngine;
+using com.IvanMurzak.Unity.MCP.Utils;
+using Microsoft.Extensions.Logging;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_GameObject
     {
+        public const string GameObjectModifyToolId = "gameobject-modify";
         [McpPluginTool
         (
-            "GameObject_Modify",
-            Title = "Modify GameObjects in opened Prefab or in a Scene"
+            GameObjectModifyToolId,
+            Title = "GameObject / Modify",
+            IdempotentHint = true
         )]
-        [Description(@"Modify GameObjects and/or attached component's field and properties.
-You can modify multiple GameObjects at once. Just provide the same number of GameObject references and SerializedMember objects.")]
-        public string Modify
+        [Description("Modify GameObject fields and properties in opened Prefab or in a Scene. " +
+            "You can modify multiple GameObjects at once. Just provide the same number of GameObject references and SerializedMember objects.")]
+        public Logs? Modify
         (
             GameObjectRefList gameObjectRefs,
-            [Description("Each item in the array represents a GameObject modification of the 'gameObjectRefs' at the same index.\n" +
-                "Usually a GameObject is a container for components. Each component may have fields and properties for modification.\n" +
-                "If you need to modify components of a gameObject, please use '" + nameof(SerializedMember.fields) + "' to wrap a component into it. " +
-                "Each component needs to have '" + nameof(SerializedMember.typeName) + "' and '" + nameof(SerializedMember.name) + "' or 'value." + ObjectRef.ObjectRefProperty.InstanceID + "' fields to identify the exact modification target.\n" +
-                "Ignore values that should not be modified.\n" +
-                "Any unknown or wrong located fields and properties will be ignored.\n" +
+            [Description("Each item in the array represents a GameObject modification of the 'gameObjectRefs' at the same index. " +
+                "Usually a GameObject is a container for components. Each component may have fields and properties for modification. " +
+                "If you need to modify components of a GameObject, please use '" + GameObjectComponentModifyToolId + "' tool. " +
+                "Ignore values that should not be modified. " +
+                "Any unknown or wrong located fields and properties will be ignored. " +
                 "Check the result of this command to see what was changed. The ignored fields and properties will be listed.")]
             SerializedMemberList gameObjectDiffs
         )
-        => MainThread.Instance.Run(() =>
         {
             if (gameObjectRefs.Count == 0)
-                return "[Error] No GameObject references provided. Please provide at least one GameObject reference.";
+                throw new ArgumentException("No GameObject references provided. Please provide at least one GameObject reference.", nameof(gameObjectRefs));
 
             if (gameObjectDiffs.Count != gameObjectRefs.Count)
-                return $"[Error] The number of {nameof(gameObjectDiffs)} and {nameof(gameObjectRefs)} should be the same. " +
-                    $"{nameof(gameObjectDiffs)}: {gameObjectDiffs.Count}, {nameof(gameObjectRefs)}: {gameObjectRefs.Count}";
+                throw new ArgumentException($"The number of {nameof(gameObjectDiffs)} and {nameof(gameObjectRefs)} should be the same. " +
+                    $"{nameof(gameObjectDiffs)}: {gameObjectDiffs.Count}, {nameof(gameObjectRefs)}: {gameObjectRefs.Count}", nameof(gameObjectDiffs));
 
-            var stringBuilder = new StringBuilder();
-
-            for (int i = 0; i < gameObjectRefs.Count; i++)
+            return MainThread.Instance.Run(() =>
             {
+                var logs = new Logs();
 
-                var go = gameObjectRefs[i].FindGameObject(out var error);
-                if (error != null)
+                for (int i = 0; i < gameObjectRefs.Count; i++)
                 {
-                    stringBuilder.AppendLine($"[Error] {error}");
-                    continue;
-                }
-                if (go == null)
-                {
-                    stringBuilder.AppendLine($"[Error] GameObject by {nameof(gameObjectRefs)}[{i}] not found.");
-                    continue;
-                }
-                var objToModify = (object)go;
-
-                // LLM may mistakenly provide "typeName" as a Component type when it should be a GameObject.
-                // It is fine, lets handle it gracefully.
-                var type = TypeUtils.GetType(gameObjectDiffs[i].typeName);
-                if (type != null && typeof(UnityEngine.Component).IsAssignableFrom(type))
-                {
-                    var component = go.GetComponent(type);
-                    if (component == null)
+                    var go = gameObjectRefs[i].FindGameObject(out var error);
+                    if (error != null)
                     {
-                        stringBuilder.AppendLine($"[Error] Component '{type.GetTypeName(pretty: false)}' not found on GameObject '{go.name.ValueOrNull()}'.");
+                        logs.Error(error);
                         continue;
                     }
-                    // Switch to the component type for modification.
-                    objToModify = component;
+                    if (go == null)
+                    {
+                        logs.Error($"GameObject by {nameof(gameObjectRefs)}[{i}] not found.");
+                        continue;
+                    }
+
+                    var objToModify = (object)go;
+                    var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
+
+                    var modified = reflector.TryModify(
+                        ref objToModify,
+                        data: gameObjectDiffs[i],
+                        logs: logs,
+                        logger: UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_GameObject>());
+
+                    if (modified)
+                        UnityEditor.EditorUtility.SetDirty(go);
                 }
 
-                var success = McpPlugin.McpPlugin.Instance!.McpManager.Reflector.TryPopulate(
-                    ref objToModify,
-                    data: gameObjectDiffs[i],
-                    stringBuilder: stringBuilder,
-                    logger: McpPlugin.McpPlugin.Instance.Logger);
-            }
+                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
-            var result = stringBuilder.ToString();
-            return string.IsNullOrEmpty(result)
-                ? "[Success] No modifications were made."
-                : result;
-        });
+                if (logs.Count == 0)
+                    logs.Warning("No modifications were made.");
+
+                return logs;
+            });
+        }
     }
 }

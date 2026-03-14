@@ -10,8 +10,8 @@
 
 #nullable enable
 using System.Collections;
-using com.IvanMurzak.McpPlugin.Common;
 using NUnit.Framework;
+using R3;
 using UnityEngine.TestTools;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
@@ -20,113 +20,86 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     public class McpPluginTests : BaseTest
     {
         const int WaitTimeoutTicks = 100000;
+
         [Test]
-        public void McpPlugin_Instance_ShouldNotBeNull_WhenInitialized()
+        public void CurrentPlugin_ShouldNotBeNull_WhenInitialized()
         {
             // Act & Assert
-            Assert.IsNotNull(McpPlugin.McpPlugin.Instance, "McpPlugin instance should not be null after initialization");
-            Assert.IsTrue(McpPlugin.McpPlugin.HasInstance, "McpPlugin should have an instance after initialization");
+            Assert.IsNotNull(UnityMcpPluginEditor.Instance.McpPluginInstance, "CurrentPlugin should not be null after initialization");
         }
 
         [Test]
-        public void McpPlugin_Instance_ShouldHaveValidMcpRunner()
+        public void CurrentPlugin_ShouldHaveValidMcpManager()
         {
             // Act
-            var instance = McpPlugin.McpPlugin.Instance;
+            var plugin = UnityMcpPluginEditor.Instance.McpPluginInstance;
 
             // Assert
-            Assert.IsNotNull(instance, "McpPlugin instance should not be null");
-            Assert.IsNotNull(instance!.McpManager, "McpRunner should not be null");
-            Assert.IsNotNull(instance!.McpManager.Reflector, "Reflector should not be null");
+            Assert.IsNotNull(plugin, "CurrentPlugin should not be null");
+            Assert.IsNotNull(plugin!.McpManager, "McpManager should not be null");
+            Assert.IsNotNull(plugin!.McpManager.Reflector, "Reflector should not be null");
         }
 
         [UnityTest]
-        public IEnumerator McpPlugin_DoOnce_ShouldExecuteCallbackOnce()
+        public IEnumerator PluginProperty_WhereNotNull_Take1_ShouldExecuteCallbackOnce()
         {
             // Arrange
             var callbackExecuted = false;
             var executionCount = 0;
 
             // Act
-            var subscription = McpPlugin.McpPlugin.DoOnce(plugin =>
-            {
-                callbackExecuted = true;
-                executionCount++;
-            });
+            var subscription = UnityMcpPluginEditor.PluginProperty
+                .WhereNotNull()
+                .Take(1)
+                .Subscribe(plugin =>
+                {
+                    callbackExecuted = true;
+                    executionCount++;
+                });
+
             try
             {
                 for (int i = 0; !callbackExecuted && i < WaitTimeoutTicks; i++)
-                    yield return null; // Allow callback to execute
+                    yield return null;
 
                 // Assert
-                Assert.IsTrue(callbackExecuted, "DoOnce callback should have executed");
-                Assert.AreEqual(1, executionCount, "DoOnce callback should execute exactly once");
+                Assert.IsTrue(callbackExecuted, "PluginProperty callback should have executed");
+                Assert.AreEqual(1, executionCount, "Take(1) callback should execute exactly once");
             }
             finally
             {
-                // Cleanup
                 subscription?.Dispose();
             }
         }
 
         [UnityTest]
-        public IEnumerator McpPlugin_DoAlways_ShouldExecuteCallbackMultipleTimes()
+        public IEnumerator PluginProperty_WhereNotNull_ShouldExecuteCallbackAtLeastOnce()
         {
             // Arrange
             var callbackExecuted = false;
             var executionCount = 0;
 
             // Act
-            var subscription = McpPlugin.McpPlugin.DoAlways(plugin =>
-            {
-                callbackExecuted = true;
-                executionCount++;
-            });
+            var subscription = UnityMcpPluginEditor.PluginProperty
+                .WhereNotNull()
+                .Subscribe(plugin =>
+                {
+                    callbackExecuted = true;
+                    executionCount++;
+                });
 
             try
             {
                 for (int i = 0; !callbackExecuted && i < WaitTimeoutTicks; i++)
-                    yield return null; // Allow callback to execute
-
-                // Trigger another execution by accessing Instance again
-                var _ = McpPlugin.McpPlugin.Instance;
-                yield return null;
+                    yield return null;
 
                 // Assert
-                Assert.IsTrue(executionCount >= 1, "DoAlways callback should have executed at least once");
+                Assert.IsTrue(executionCount >= 1, "PluginProperty callback should have executed at least once");
             }
             finally
             {
-                // Cleanup
                 subscription?.Dispose();
             }
-        }
-
-        // [UnityTest]
-        // public IEnumerator McpPlugin_StaticDisposeAsync_ShouldNotThrow()
-        // {
-        //     // Act & Assert
-        //     var task = McpPlugin.StaticDisposeAsync();
-        //     while (!task.IsCompleted)
-        //         yield return null;
-
-        //     Assert.Pass("StaticDisposeAsync completed without throwing exceptions");
-        // }
-
-        [Test]
-        public void McpPlugin_DoOnce_WithNullCallback_ShouldNotThrow()
-        {
-            // Act & Assert
-            Assert.DoesNotThrow(() => McpPlugin.McpPlugin.DoOnce(null!),
-                "DoOnce with null callback should not throw");
-        }
-
-        [Test]
-        public void McpPlugin_DoAlways_WithNullCallback_ShouldNotThrow()
-        {
-            // Act & Assert
-            Assert.DoesNotThrow(() => McpPlugin.McpPlugin.DoAlways(null!),
-                "DoAlways with null callback should not throw");
         }
     }
 }

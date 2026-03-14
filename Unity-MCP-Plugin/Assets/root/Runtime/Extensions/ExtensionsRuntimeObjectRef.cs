@@ -22,16 +22,19 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
 
 #if UNITY_EDITOR
             if (objectRef.InstanceID != 0)
+            {
+#if UNITY_6000_3_OR_NEWER
+                return UnityEditor.EditorUtility.EntityIdToObject((UnityEngine.EntityId)objectRef.InstanceID);
+#else
                 return UnityEditor.EditorUtility.InstanceIDToObject(objectRef.InstanceID);
+#endif
+            }
 #endif
             return null;
         }
         public static ObjectRef? ToObjectRef(this UnityEngine.Object? obj)
         {
-            if (obj == null)
-                return new ObjectRef();
-
-            return new ObjectRef(obj.GetInstanceID());
+            return new ObjectRef(obj);
         }
     }
 }

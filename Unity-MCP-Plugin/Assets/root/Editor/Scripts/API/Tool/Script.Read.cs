@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
@@ -18,12 +19,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public static partial class Tool_Script
     {
+        public const string ScriptReadToolId = "script-read";
         [McpPluginTool
         (
-            "Script_Read",
-            Title = "Read Script content"
+            ScriptReadToolId,
+            Title = "Script / Read",
+            ReadOnlyHint = true,
+            IdempotentHint = true,
+            Enabled = false
         )]
-        [Description("Reads the content of a script file and returns it as a string.")]
+        [Description("Reads the content of a script file and returns it as a string. " +
+            "Use '" + ScriptUpdateOrCreateToolId + "' tool to update or create script files.")]
         public static string Read
         (
             [Description("The path to the file. Sample: \"Assets/Scripts/MyScript.cs\".")]
@@ -35,13 +41,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         )
         {
             if (string.IsNullOrEmpty(filePath))
-                return Error.ScriptPathIsEmpty();
+                throw new ArgumentException(Error.ScriptPathIsEmpty(), nameof(filePath));
 
             if (!filePath.EndsWith(".cs"))
-                return Error.FilePathMustEndsWithCs();
+                throw new ArgumentException(Error.FilePathMustEndsWithCs(), nameof(filePath));
 
-            if (File.Exists(filePath) == false)
-                return Error.ScriptFileNotFound(filePath);
+            if (!File.Exists(filePath))
+                throw new FileNotFoundException(Error.ScriptFileNotFound(filePath), filePath);
 
             var lines = File.ReadAllLines(filePath);
 

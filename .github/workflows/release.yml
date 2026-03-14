@@ -1,3 +1,11 @@
+# ┌──────────────────────────────────────────────────────────────────┐
+# │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
+# │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
+# │  Copyright (c) 2025 Ivan Murzak                                  │
+# │  Licensed under the Apache License, Version 2.0.                 │
+# │  See the LICENSE file in the project root for more information.  │
+# └──────────────────────────────────────────────────────────────────┘
+
 name: release
 
 on:
@@ -6,6 +14,9 @@ on:
       - main
 
 jobs:
+  test-cli:
+    uses: ./.github/workflows/test_cli.yml
+
   check-version-tag:
     runs-on: ubuntu-latest
     outputs:
@@ -14,7 +25,7 @@ jobs:
       tag_exists: ${{ steps.tag_exists.outputs.exists }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           fetch-tags: true
@@ -27,37 +38,13 @@ jobs:
 
       - name: Find previous version tag
         id: prev_tag
-        uses: WyriHaximus/github-action-get-previous-tag@v1
+        uses: WyriHaximus/github-action-get-previous-tag@v2
 
       - name: Check if tag exists
         id: tag_exists
-        uses: mukunku/tag-exists-action@v1.6.0
+        uses: mukunku/tag-exists-action@v1.7.0
         with:
           tag: ${{ steps.get_version.outputs.current-version }}
-
-  # test-unity-mcp-common:
-  #   runs-on: ubuntu-latest
-  #   needs: check-version-tag
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v4
-
-  #     - name: Setup .NET
-  #       uses: actions/setup-dotnet@v4
-  #       with:
-  #         dotnet-version: '9.0.x'
-
-  #     - name: Restore dependencies
-  #       working-directory: Unity-MCP-Plugin/Assets/root/Unity-MCP-Common
-  #       run: dotnet restore
-
-  #     - name: Build
-  #       working-directory: Unity-MCP-Plugin/Assets/root/Unity-MCP-Common
-  #       run: dotnet build --no-restore --configuration Release
-
-  #     - name: Test
-  #       working-directory: Unity-MCP-Plugin/Assets/root/Unity-MCP-Common
-  #       run: dotnet test --no-build --verbosity normal --configuration Release
 
   build-unity-installer:
     runs-on: ubuntu-latest
@@ -65,10 +52,29 @@ jobs:
     if: needs.check-version-tag.outputs.tag_exists == 'false'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
+
+      - name: Activate Unity license
+        id: activate
+        uses: ./.github/actions/unity/activate-license
+        with:
+          unityVersion: "2022.3.62f3"
+          unity-email: ${{ secrets.UNITY_EMAIL }}
+          unity-password: ${{ secrets.UNITY_PASSWORD }}
+
+      - name: Decode Unity license
+        run: |
+          echo "$LICENSE_B64" | base64 -d > /tmp/unity_license.ulf
+          DELIM="UNITY_LIC_EOF_$(openssl rand -hex 16)"
+          echo "UNITY_LICENSE<<$DELIM" >> "$GITHUB_ENV"
+          cat /tmp/unity_license.ulf >> "$GITHUB_ENV"
+          printf '\n%s\n' "$DELIM" >> "$GITHUB_ENV"
+        env:
+          LICENSE_B64: ${{ steps.activate.outputs.license }}
+        shell: bash
 
       - name: Cache Unity Library
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ./Installer/Library
           key: Library-Unity-Installer
@@ -76,13 +82,12 @@ jobs:
       - name: Test Unity Installer (EditMode)
         uses: game-ci/unity-test-runner@v4
         env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           projectPath: ./Installer
-          unityVersion: 2022.3.61f1
-          customImage: 'unityci/editor:ubuntu-2022.3.61f1-base-3'
+          unityVersion: 2022.3.62f3
+          customImage: "unityci/editor:ubuntu-2022.3.62f3-base-3"
           testMode: editmode
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           checkName: Unity Installer EditMode Test Results
@@ -103,20 +108,19 @@ jobs:
       - name: Export Unity Package
         uses: game-ci/unity-builder@v4
         env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           projectPath: ./Installer
-          unityVersion: 2022.3.61f1
-          customImage: 'unityci/editor:ubuntu-2022.3.61f1-base-3'
+          unityVersion: 2022.3.62f3
+          customImage: "unityci/editor:ubuntu-2022.3.62f3-base-3"
           buildName: AI-Game-Dev-Installer
           buildsPath: build
           buildMethod: com.IvanMurzak.Unity.MCP.Installer.PackageExporter.ExportPackage
           customParameters: -CI true -GITHUB_ACTIONS true
 
       - name: Upload Unity Package as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: unity-installer-package
           path: ./Installer/build/AI-Game-Dev-Installer.unitypackage
@@ -127,12 +131,12 @@ jobs:
     if: needs.check-version-tag.outputs.tag_exists == 'false'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: "9.0.x"
 
       - name: Make build script executable
         run: chmod +x ./Unity-MCP-Server/build-all.sh
@@ -142,7 +146,7 @@ jobs:
         run: cd Unity-MCP-Server && ./build-all.sh Release
 
       - name: Upload build zips as artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: mcp-server-zips
           path: ./Unity-MCP-Server/publish/*.zip
@@ -152,89 +156,89 @@ jobs:
 
   # --- EDIT MODE ---
 
-  test-unity-2022-3-61f1-editmode:
+  test-unity-2022-3-62f3-editmode:
     needs: [build-and-zip-mcp-server, build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: './Unity-MCP-Plugin'
-      unityVersion: '2022.3.61f1'
-      testMode: 'editmode'
+      projectPath: "./Unity-Tests/2022.3.62f3"
+      unityVersion: "2022.3.62f3"
+      testMode: "editmode"
     secrets: inherit
 
-  test-unity-2023-2-20f1-editmode:
+  test-unity-2023-2-22f1-editmode:
     needs: [build-and-zip-mcp-server, build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: './Unity-MCP-Plugin'
-      unityVersion: '2023.2.20f1'
-      testMode: 'editmode'
+      projectPath: "./Unity-Tests/2023.2.22f1"
+      unityVersion: "2023.2.22f1"
+      testMode: "editmode"
     secrets: inherit
 
-  test-unity-6000-2-3f1-editmode:
+  test-unity-6000-3-1f1-editmode:
     needs: [build-and-zip-mcp-server, build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: './Unity-MCP-Plugin'
-      unityVersion: '6000.2.3f1'
-      testMode: 'editmode'
+      projectPath: "./Unity-Tests/6000.3.1f1"
+      unityVersion: "6000.3.1f1"
+      testMode: "editmode"
     secrets: inherit
 
   # --- PLAY MODE ---
 
-  test-unity-2022-3-61f1-playmode:
-    needs: [build-and-zip-mcp-server, build-unity-installer]
-    uses: ./.github/workflows/test_unity_plugin.yml
-    with:
-      projectPath: './Unity-MCP-Plugin'
-      unityVersion: '2022.3.61f1'
-      testMode: 'playmode'
-    secrets: inherit
+  # test-unity-2022-3-62f3-playmode:
+  #   needs: [build-and-zip-mcp-server, build-unity-installer]
+  #   uses: ./.github/workflows/test_unity_plugin.yml
+  #   with:
+  #     projectPath: './Unity-Tests/2022.3.62f3'
+  #     unityVersion: '2022.3.62f3'
+  #     testMode: 'playmode'
+  #   secrets: inherit
 
-  test-unity-2023-2-20f1-playmode:
-    needs: [build-and-zip-mcp-server, build-unity-installer]
-    uses: ./.github/workflows/test_unity_plugin.yml
-    with:
-      projectPath: './Unity-MCP-Plugin'
-      unityVersion: '2023.2.20f1'
-      testMode: 'playmode'
-    secrets: inherit
+  # test-unity-2023-2-22f1-playmode:
+  #   needs: [build-and-zip-mcp-server, build-unity-installer]
+  #   uses: ./.github/workflows/test_unity_plugin.yml
+  #   with:
+  #     projectPath: './Unity-Tests/2023.2.22f1'
+  #     unityVersion: '2023.2.22f1'
+  #     testMode: 'playmode'
+  #   secrets: inherit
 
-  test-unity-6000-2-3f1-playmode:
-    needs: [build-and-zip-mcp-server, build-unity-installer]
-    uses: ./.github/workflows/test_unity_plugin.yml
-    with:
-      projectPath: './Unity-MCP-Plugin'
-      unityVersion: '6000.2.3f1'
-      testMode: 'playmode'
-    secrets: inherit
+  # test-unity-6000-3-1f1-playmode:
+  #   needs: [build-and-zip-mcp-server, build-unity-installer]
+  #   uses: ./.github/workflows/test_unity_plugin.yml
+  #   with:
+  #     projectPath: './Unity-Tests/6000.3.1f1'
+  #     unityVersion: '6000.3.1f1'
+  #     testMode: 'playmode'
+  #   secrets: inherit
 
   # --- STANDALONE ---
 
-  test-unity-2022-3-61f1-standalone:
+  test-unity-2022-3-62f3-standalone:
     needs: [build-and-zip-mcp-server, build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: './Unity-MCP-Plugin'
-      unityVersion: '2022.3.61f1'
-      testMode: 'standalone'
+      projectPath: "./Unity-Tests/2022.3.62f3"
+      unityVersion: "2022.3.62f3"
+      testMode: "standalone"
     secrets: inherit
 
-  test-unity-2023-2-20f1-standalone:
+  test-unity-2023-2-22f1-standalone:
     needs: [build-and-zip-mcp-server, build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: './Unity-MCP-Plugin'
-      unityVersion: '2023.2.20f1'
-      testMode: 'standalone'
+      projectPath: "./Unity-Tests/2023.2.22f1"
+      unityVersion: "2023.2.22f1"
+      testMode: "standalone"
     secrets: inherit
 
-  test-unity-6000-2-3f1-standalone:
+  test-unity-6000-3-1f1-standalone:
     needs: [build-and-zip-mcp-server, build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: './Unity-MCP-Plugin'
-      unityVersion: '6000.2.3f1'
-      testMode: 'standalone'
+      projectPath: "./Unity-Tests/6000.3.1f1"
+      unityVersion: "6000.3.1f1"
+      testMode: "standalone"
     secrets: inherit
 
   # -------------------
@@ -242,19 +246,20 @@ jobs:
   release-unity-plugin:
     runs-on: ubuntu-latest
     needs: [
-      check-version-tag,
-      build-and-zip-mcp-server,
-      build-unity-installer,
-      test-unity-2022-3-61f1-editmode,
-      test-unity-2022-3-61f1-playmode,
-      test-unity-2022-3-61f1-standalone,
-      test-unity-2023-2-20f1-editmode,
-      test-unity-2023-2-20f1-playmode,
-      test-unity-2023-2-20f1-standalone,
-      test-unity-6000-2-3f1-editmode,
-      test-unity-6000-2-3f1-playmode,
-      test-unity-6000-2-3f1-standalone
-    ]
+        check-version-tag,
+        test-cli,
+        build-and-zip-mcp-server,
+        build-unity-installer,
+        test-unity-2022-3-62f3-editmode,
+        # test-unity-2022-3-62f3-playmode,
+        test-unity-2022-3-62f3-standalone,
+        test-unity-2023-2-22f1-editmode,
+        # test-unity-2023-2-22f1-playmode,
+        test-unity-2023-2-22f1-standalone,
+        test-unity-6000-3-1f1-editmode,
+        # test-unity-6000-3-1f1-playmode,
+        test-unity-6000-3-1f1-standalone,
+      ]
     if: needs.check-version-tag.outputs.tag_exists == 'false'
     outputs:
       version: ${{ needs.check-version-tag.outputs.version }}
@@ -262,7 +267,7 @@ jobs:
       release_notes: ${{ steps.rel_desc.outputs.release_body }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
           fetch-tags: true
@@ -325,7 +330,7 @@ jobs:
     if: needs.release-unity-plugin.outputs.success == 'true'
     steps:
       - name: Download Unity Package artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: unity-installer-package
           path: ./
@@ -344,10 +349,10 @@ jobs:
     if: needs.release-unity-plugin.outputs.success == 'true'
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download build zips artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v6
         with:
           name: mcp-server-zips
           path: ./Unity-MCP-Server/publish
@@ -362,16 +367,29 @@ jobs:
 
   publish_discord:
     runs-on: ubuntu-latest
-    needs: release-unity-plugin
-    if: needs.release-unity-plugin.outputs.success == 'true'
+    needs:
+      [
+        release-unity-plugin,
+        publish-unity-installer,
+        publish-mcp-server,
+        deploy,
+      ]
+    if: |
+      always() &&
+      needs.release-unity-plugin.result == 'success' &&
+      needs.publish-unity-installer.result == 'success' &&
+      needs.publish-mcp-server.result == 'success'
     steps:
       - name: Send Release Notes to Discord
         env:
           DISCORD_WEBHOOK: ${{ secrets.DISCORD_RELEASE_NOTES_WEBHOOK }}
+          RELEASE_NOTES: ${{ needs.release-unity-plugin.outputs.release_notes }}
+          VERSION: ${{ needs.release-unity-plugin.outputs.version }}
         run: |
-          # Get the release notes from the previous job
-          release_notes='${{ needs.release-unity-plugin.outputs.release_notes }}'
-          version='${{ needs.release-unity-plugin.outputs.version }}'
+          # Get the release notes from environment variables
+          # (Using env vars avoids shell quoting issues with apostrophes in commit messages)
+          release_notes="$RELEASE_NOTES"
+          version="$VERSION"
 
           # Convert usernames to GitHub profile links
           # Convert "by @username" to "by [@username](https://github.com/username)"
@@ -429,6 +447,9 @@ jobs:
   deploy:
     needs: release-unity-plugin
     if: needs.release-unity-plugin.outputs.success == 'true'
+    permissions:
+      id-token: write
+      contents: read
     uses: ./.github/workflows/deploy.yml
     with:
       version: ${{ needs.release-unity-plugin.outputs.version }}

@@ -9,50 +9,60 @@
 */
 
 #nullable enable
+using System;
 using System.ComponentModel;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Scene
     {
+        public const string SceneSaveToolId = "scene-save";
         [McpPluginTool
         (
-            "Scene_Save",
-            Title = "Save scene"
+            SceneSaveToolId,
+            Title = "Scene / Save",
+            IdempotentHint = true
         )]
-        [Description("Save scene from the project assets.")]
-        public string Save
+        [Description("Save Opened scene to the asset file. " +
+            "Use '" + SceneListOpenedToolId + "' tool to get the list of all opened scenes.")]
+        public void Save
         (
-            [Description("Path to the scene file.")]
-            string path,
-            [Description("Name of the opened scene. Could be empty if need to save current active scene. It is helpful when multiple scenes are opened.")]
-            string? targetSceneName = null
+            [Description("Name of the opened scene that should be saved. Could be empty if need to save the current active scene.")]
+            string? openedSceneName = null,
+            [Description("Path to the scene file. Should end with \".unity\". If null or empty save to the existed scene asset file.")]
+            string? path = null
         )
-        => MainThread.Instance.Run(() =>
         {
-            if (string.IsNullOrEmpty(path))
-                return Error.ScenePathIsEmpty();
+            MainThread.Instance.Run(() =>
+            {
+                var scene = string.IsNullOrEmpty(openedSceneName)
+                    ? SceneUtils.GetActiveScene()
+                    : SceneUtils.GetAllOpenedScenes()
+                        .FirstOrDefault(scene => scene.name == openedSceneName);
 
-            if (path.EndsWith(".unity") == false)
-                return Error.FilePathMustEndsWithUnity();
+                if (!scene.IsValid())
+                    throw new Exception(Error.NotFoundSceneWithName(openedSceneName));
 
-            var scene = string.IsNullOrEmpty(targetSceneName)
-                ? SceneUtils.GetActiveScene()
-                : SceneUtils.GetAllLoadedScenes()
-                    .FirstOrDefault(scene => scene.name == targetSceneName);
+                if (string.IsNullOrEmpty(path))
+                    path = scene.path;
 
-            if (!scene.IsValid())
-                return Error.NotFoundSceneWithName(targetSceneName);
+                if (string.IsNullOrEmpty(path))
+                    throw new Exception($"Scene '{scene.name}' has no path. Please provide a path to save the scene.");
 
-            bool saved = UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene, path);
-            if (!saved)
-                return $"[Error] Failed to save scene at '{path}'.\n{LoadedScenes}";
+                if (!path!.EndsWith(".unity"))
+                    throw new Exception(Error.FilePathMustEndsWithUnity());
 
-            return $"[Success] Scene saved at '{path}'.\n{LoadedScenes}";
-        });
+                bool saved = UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene, path);
+                if (!saved)
+                    throw new Exception($"Failed to save scene at '{path}'.\n{OpenedScenesText}");
+
+                EditorUtils.RepaintAllEditorWindows();
+            });
+        }
     }
 }

@@ -10,16 +10,15 @@
 
 #nullable enable
 using System.Collections.Generic;
-using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using UnityEngine.SceneManagement;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
 {
     public static partial class SceneUtils
     {
-        public static Scene GetActiveScene()
-            => SceneManager.GetActiveScene();
-        public static IEnumerable<Scene> GetAllLoadedScenes()
+        public static Scene GetActiveScene() => SceneManager.GetActiveScene();
+
+        public static IEnumerable<Scene> GetAllOpenedScenes()
         {
             var sceneCount = SceneManager.sceneCount;
             for (var i = 0; i < sceneCount; i++)
@@ -29,7 +28,5 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
                     yield return scene;
             }
         }
-        public static SceneMetadata? ToMetadata(this Scene scene, int includeChildrenDepth = 3)
-            => SceneMetadata.FromScene(scene, includeChildrenDepth);
     }
 }

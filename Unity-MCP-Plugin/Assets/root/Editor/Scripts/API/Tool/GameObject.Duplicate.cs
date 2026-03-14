@@ -24,16 +24,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_GameObject
     {
+        public const string GameObjectDuplicateToolId = "gameobject-duplicate";
         [McpPluginTool
         (
-            "GameObject_Duplicate",
-            Title = "Duplicate GameObjects"
+            GameObjectDuplicateToolId,
+            Title = "GameObject / Duplicate"
         )]
-        [Description(@"Duplicate GameObjects in opened Prefab or in a Scene.")]
-        public string Duplicate
-        (
-            GameObjectRefList gameObjectRefs
-        )
+        [Description("Duplicate GameObjects in opened Prefab or in a Scene. " +
+            "Use '" + GameObjectFindToolId + "' tool to find the target GameObjects first.")]
+        public List<GameObjectRef> Duplicate(GameObjectRefList gameObjectRefs)
         {
             return MainThread.Instance.Run(() =>
             {
@@ -46,17 +45,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     var gameObjectRef = gameObjectRefs[i];
                     var go = gameObjectRefs[i].FindGameObject(out var error);
                     if (error != null)
-                        return $"[Error] {error}";
+                        throw new System.Exception(error);
                     if (go == null)
-                        return $"[Error] GameObject by {nameof(gameObjectRefs)}[{i}] not found.";
+                        throw new System.Exception($"GameObject by {nameof(gameObjectRefs)}[{i}] not found.");
 
                     gos.Add(go);
                 }
-                Selection.instanceIDs = gos
-                    .Select(go => go.GetInstanceID())
-                    .ToArray();
+
+#if UNITY_6000_3_OR_NEWER
+                Selection.entityIds = gos.Select(go => go.GetEntityId()).ToArray();
+#else
+                Selection.instanceIDs = gos.Select(go => go.GetInstanceID()).ToArray();
+#endif
 
                 Unsupported.DuplicateGameObjectsUsingPasteboard();
+                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
 
                 var modifiedScenes = Selection.gameObjects
                     .Select(go => go.scene)
@@ -66,10 +69,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 foreach (var scene in modifiedScenes)
                     EditorSceneManager.MarkSceneDirty(scene);
 
-                var location = prefabStage != null ? "Prefab" : "Scene";
-                return @$"[Success] Duplicated {gos.Count} GameObjects in opened {location} by 'instanceID' (int) array.
-Duplicated instanceIDs:
-{string.Join(", ", Selection.instanceIDs)}";
+                return gos
+                    .Select(go => new GameObjectRef(go))
+                    .ToList();
             });
         }
     }

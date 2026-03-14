@@ -21,10 +21,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         public static class Error
         {
             public static string ScriptPathIsEmpty()
-                => "[Error] Script path is empty. Please provide a valid path. Sample: \"Assets/Scripts/MyScript.cs\".";
+                => "Script path is empty. Please provide a valid path. Sample: \"Assets/Scripts/MyScript.cs\".";
         }
 
-        [Description(@"Available information about 'UnityEditor.EditorApplication'.")]
+        [Description("Available information about 'UnityEditor.EditorApplication'.")]
         public class EditorStatsData
         {
             [Description("Whether the Editor is in Play mode.")]

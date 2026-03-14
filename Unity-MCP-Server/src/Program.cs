@@ -49,10 +49,10 @@ namespace com.IvanMurzak.Unity.MCP.Server
             {
                 var consoleWriteLine = dataArguments.ClientTransport switch
                 {
-                    Consts.MCP.Server.TransportMethod.stdio => (Action<string>)(message => Console.Error.WriteLine(message)),
-                    Consts.MCP.Server.TransportMethod.http => (Action<string>)(message => Console.WriteLine(message)),
+                    Consts.MCP.Server.TransportMethod.stdio => (Action<string>)(message => { /* ignore console output */ }),
+                    Consts.MCP.Server.TransportMethod.streamableHttp => (Action<string>)(message => Console.WriteLine(message)),
                     _ => throw new ArgumentException($"Unsupported transport method: {dataArguments.ClientTransport}. " +
-                        $"Supported methods are: {Consts.MCP.Server.TransportMethod.stdio}, {Consts.MCP.Server.TransportMethod.http}")
+                        $"Supported methods are: {Consts.MCP.Server.TransportMethod.stdio}, {Consts.MCP.Server.TransportMethod.streamableHttp}")
                 };
 
                 consoleWriteLine("Location: " + Environment.CurrentDirectory);
@@ -68,16 +68,15 @@ namespace com.IvanMurzak.Unity.MCP.Server
                 // Setup MCP Plugin ---------------------------------------------------------------
 
                 builder.Services
-                    .WithMcpServer(dataArguments.ClientTransport, logger)
+                    .WithMcpServer(dataArguments, logger)
                     .WithMcpPluginServer(dataArguments);
 
                 // builder.WebHost.UseUrls(Consts.Hub.DefaultEndpoint);
 
-                builder.WebHost.UseKestrel(options =>
-                {
-                    logger.Info($"Start listening on port: {dataArguments.Port}");
-                    options.ListenAnyIP(dataArguments.Port);
-                });
+                logger.Info($"Start listening on port: {dataArguments.Port}");
+
+                // Bind IPv4 and IPv6 separately to avoid dual-stack socket issues on macOS.
+                builder.WebHost.UseKestrelForMcpPlugin(dataArguments.Port);
 
                 var app = builder.Build();
 
@@ -88,7 +87,7 @@ namespace com.IvanMurzak.Unity.MCP.Server
                 app.UseMcpPluginServer(dataArguments);
 
                 // Setup MCP client -------------------------------------------------
-                if (dataArguments.ClientTransport == Consts.MCP.Server.TransportMethod.http)
+                if (dataArguments.ClientTransport == Consts.MCP.Server.TransportMethod.streamableHttp)
                 {
                     // Add a GET /help endpoint for informational message
                     app.MapGet("/help", () =>

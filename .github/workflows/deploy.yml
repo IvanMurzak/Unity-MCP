@@ -1,13 +1,18 @@
+# ┌──────────────────────────────────────────────────────────────────┐
+# │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
+# │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
+# │  Copyright (c) 2025 Ivan Murzak                                  │
+# │  Licensed under the Apache License, Version 2.0.                 │
+# │  See the LICENSE file in the project root for more information.  │
+# └──────────────────────────────────────────────────────────────────┘
+
 name: deploy
 
 on:
-  release:
-    types: [released]
-
   workflow_dispatch:
     inputs:
       version:
-        description: 'Deploy to NuGet and Docker Hub version (e.g., 1.0.0).'
+        description: "Deploy to NuGet and Docker Hub version (e.g., 1.0.0)."
         required: true
         type: string
 
@@ -15,16 +20,18 @@ on:
     inputs:
       version: { required: true, type: string }
     secrets:
-      NUGET_API_KEY:    { required: true }
-      DOCKER_USERNAME:  { required: true }
-      DOCKER_PASSWORD:  { required: true }
+      DOCKER_USERNAME: { required: true }
+      DOCKER_PASSWORD: { required: true }
 
 jobs:
   deploy-mcp-server-to-nuget:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Extract version from tag
         id: version
@@ -34,9 +41,9 @@ jobs:
           echo "Extracted version: $version"
 
       - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: '9.0.x'
+          dotnet-version: "9.0.x"
 
       - name: Restore dependencies
         run: |
@@ -58,6 +65,12 @@ jobs:
           cd Unity-MCP-Server
           dotnet pack com.IvanMurzak.Unity.MCP.Server.csproj --no-build --configuration Release --output ./nupkg
 
+      - name: NuGet login (Trusted Publishing)
+        uses: NuGet/login@v1
+        id: nuget-login
+        with:
+          user: IvanMurzak
+
       - name: Deploy MCP Server NuGet package
         run: |
           cd Unity-MCP-Server
@@ -68,32 +81,32 @@ jobs:
             exit 1
           fi
           echo "Deploying NuGet package: $nupkg_file (version: ${{ steps.version.outputs.version }})"
-          dotnet nuget push "$nupkg_file" --api-key ${{ secrets.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
+          dotnet nuget push "$nupkg_file" --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }} --source https://api.nuget.org/v3/index.json
 
   deploy-docker-image:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Extract version from tag
         id: version
         run: |
-          version=${{ inputs.version || github.event.release.tag_name }}
+          version=${{ inputs.version }}
           echo "version=$version" >> $GITHUB_OUTPUT
           echo "Extracted version: $version"
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@v5
+        uses: docker/build-push-action@v7
         with:
           context: ./Unity-MCP-Server
           push: true
@@ -103,3 +116,50 @@ jobs:
           platforms: linux/amd64,linux/arm64
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  deploy-cli-to-npm:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          version=${{ inputs.version }}
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "Extracted version: $version"
+
+      - name: Set package version
+        run: |
+          cd cli
+          npm version ${{ steps.version.outputs.version }} --no-git-tag-version --allow-same-version
+
+      - name: Install dependencies
+        run: |
+          cd cli
+          npm ci
+
+      - name: Build
+        run: |
+          cd cli
+          npm run build
+
+      - name: Test
+        run: |
+          cd cli
+          npm test
+
+      - name: Publish to npm with provenance
+        run: |
+          cd cli
+          npm publish --access public --provenance

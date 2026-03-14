@@ -1,0 +1,218 @@
+﻿/*
+┌──────────────────────────────────────────────────────────────────┐
+│  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
+│  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
+│  Copyright (c) 2025 Ivan Murzak                                  │
+│  Licensed under the Apache License, Version 2.0.                 │
+│  See the LICENSE file in the project root for more information.  │
+└──────────────────────────────────────────────────────────────────┘
+*/
+
+#nullable enable
+using System.Collections.Generic;
+using System.IO;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
+using UnityEngine;
+using UnityEngine.UIElements;
+using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
+
+namespace com.IvanMurzak.Unity.MCP.Editor.UI
+{
+    /// <summary>
+    /// Configurator for Codex AI agent.
+    /// </summary>
+    public class CodexConfigurator : AiAgentConfigurator
+    {
+        const string EnvVarNameAuthToken = "GAME_DEV_AUTH_TOKEN";
+
+        public override string AgentName => "Codex";
+        public override string AgentId => "codex";
+        public override string DownloadUrl => "https://openai.com/codex/";
+
+        protected override string? IconFileName => "codex-64.png";
+
+        protected override AiAgentConfig CreateConfigStdioWindows() => new TomlAiAgentConfig(
+            name: AgentName,
+            configPath: Path.Combine(
+                ".codex",
+                "config.toml"
+            ),
+            bodyPath: "mcp_servers"
+        )
+        .SetProperty("enabled", true, requiredForConfiguration: true) // Codex requires an "enabled" property
+        .SetProperty("command", McpServerManager.ExecutableFullPath.Replace('\\', '/'), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
+        .SetProperty("args", new[] {
+            $"{Args.Port}={UnityMcpPluginEditor.Port}",
+            $"{Args.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}",
+            $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
+            $"{Args.Authorization}={UnityMcpPluginEditor.AuthOption}"
+        }, requiredForConfiguration: true)
+        .SetProperty("tool_timeout_sec", 300, requiredForConfiguration: false) // Optional: Set a longer tool timeout for Codex
+        .SetPropertyToRemove("url")
+        .SetPropertyToRemove("type")
+        .SetPropertyToRemove("startup_timeout_sec");
+
+
+        protected override AiAgentConfig CreateConfigStdioMacLinux() => new TomlAiAgentConfig(
+            name: AgentName,
+            configPath: Path.Combine(
+                ".codex",
+                "config.toml"
+            ),
+            bodyPath: "mcp_servers"
+        )
+        .SetProperty("enabled", true, requiredForConfiguration: true) // Codex requires an "enabled" property
+        .SetProperty("command", McpServerManager.ExecutableFullPath.Replace('\\', '/'), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
+        .SetProperty("args", new[] {
+            $"{Args.Port}={UnityMcpPluginEditor.Port}",
+            $"{Args.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}",
+            $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
+            $"{Args.Authorization}={UnityMcpPluginEditor.AuthOption}"
+        }, requiredForConfiguration: true)
+        .SetProperty("tool_timeout_sec", 300, requiredForConfiguration: false) // Optional: Set a longer tool timeout for Codex
+        .SetPropertyToRemove("url")
+        .SetPropertyToRemove("type")
+        .SetPropertyToRemove("startup_timeout_sec");
+
+
+        protected override AiAgentConfig CreateConfigHttpWindows() => new TomlAiAgentConfig(
+            name: AgentName,
+            configPath: Path.Combine(
+                ".codex",
+                "config.toml"
+            ),
+            bodyPath: "mcp_servers"
+        )
+        .SetProperty("enabled", true, requiredForConfiguration: true) // Codex requires an "enabled" property
+        .SetProperty("url", UnityMcpPluginEditor.Host, requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
+        .SetProperty("tool_timeout_sec", 300, requiredForConfiguration: false) // Optional: Set a longer tool timeout for Codex
+        .SetProperty("startup_timeout_sec", 30, requiredForConfiguration: false) // Optional: Set a startup timeout for HTTP connection attempts
+        .SetPropertyToRemove("command")
+        .SetPropertyToRemove("args")
+        .SetPropertyToRemove("type");
+
+        protected override AiAgentConfig CreateConfigHttpMacLinux() => new TomlAiAgentConfig(
+            name: AgentName,
+            configPath: Path.Combine(
+                ".codex",
+                "config.toml"
+            ),
+            bodyPath: "mcp_servers"
+        )
+        .SetProperty("enabled", true, requiredForConfiguration: true) // Codex requires an "enabled" property
+        .SetProperty("url", UnityMcpPluginEditor.Host, requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
+        .SetProperty("tool_timeout_sec", 300, requiredForConfiguration: false) // Optional: Set a longer tool timeout for Codex
+        .SetProperty("startup_timeout_sec", 30, requiredForConfiguration: false) // Optional: Set a startup timeout for HTTP connection attempts
+        .SetPropertyToRemove("command")
+        .SetPropertyToRemove("args")
+        .SetPropertyToRemove("type");
+
+        protected override void ApplyHttpAuthorizationConfig(AiAgentConfig config)
+        {
+            base.ApplyHttpAuthorizationConfig(config);
+
+            var tomlConfig = config as TomlAiAgentConfig ?? throw new System.InvalidCastException($"Expected TomlAiAgentConfig for Codex HTTP configuration but got {config.GetType().Name}");
+            var isCloud = UnityMcpPluginEditor.ConnectionMode == ConnectionMode.Cloud;
+            var isRequired = isCloud || UnityMcpPluginEditor.AuthOption == AuthOption.required;
+            var token = UnityMcpPluginEditor.Token;
+
+            const string envVarNameBearerToken = "bearer_token_env_var";
+
+            if (isRequired && !string.IsNullOrEmpty(token))
+            {
+                tomlConfig.SetProperty(
+                    key: envVarNameBearerToken,
+                    value: EnvVarNameAuthToken,
+                    requiredForConfiguration: true);
+            }
+            else
+            {
+                tomlConfig.SetPropertyToRemove(envVarNameBearerToken);
+            }
+        }
+
+        protected override void OnUICreated(VisualElement root)
+        {
+            base.OnUICreated(root);
+
+            var addMcpServerCommandStdio = $"codex mcp add {AiAgentConfig.DefaultMcpServerName} \"{McpServerManager.ExecutableFullPath}\" port={UnityMcpPluginEditor.Port} plugin-timeout={UnityMcpPluginEditor.TimeoutMs} client-transport=stdio";
+            var addMcpServerCommandHttp = $"codex mcp add {AiAgentConfig.DefaultMcpServerName} --url {UnityMcpPluginEditor.Host}";
+
+            var isCloud = UnityMcpPluginEditor.ConnectionMode == ConnectionMode.Cloud;
+            if (isCloud || UnityMcpPluginEditor.AuthOption == AuthOption.required)
+            {
+                addMcpServerCommandStdio += $" --bearer-token-env-var={EnvVarNameAuthToken}";
+                addMcpServerCommandHttp += $" --bearer-token-env-var={EnvVarNameAuthToken}";
+            }
+
+            // STDIO Configuration
+
+            var manualStepsOption1 = TemplateFoldoutFirst("Manual Configuration Steps - Option 1");
+
+            manualStepsOption1!.Add(TemplateLabelDescription("1. Open a terminal and run the following command to be in the folder of the Unity project"));
+            manualStepsOption1!.Add(TemplateTextFieldReadOnly($"cd \"{ProjectRootPath}\""));
+            manualStepsOption1!.Add(TemplateLabelDescription("2. Run the following command in the folder of the Unity project to configure Codex"));
+            manualStepsOption1!.Add(TemplateTextFieldReadOnly(addMcpServerCommandStdio));
+            manualStepsOption1!.Add(TemplateLabelDescription("3. Start Codex"));
+            manualStepsOption1!.Add(TemplateTextFieldReadOnly("codex"));
+
+            ContainerStdio!.Add(manualStepsOption1);
+
+            var manualStepsOption2 = TemplateFoldout("Manual Configuration Steps - Option 2");
+
+            manualStepsOption2!.Add(TemplateLabelDescription("1. Open or create file '.codex/config.toml'"));
+            manualStepsOption2!.Add(TemplateLabelDescription("2. Copy and paste the configuration TOML into the file."));
+            manualStepsOption2!.Add(TemplateTextFieldReadOnly(ConfigStdio.ExpectedFileContent));
+
+            ContainerStdio!.Add(manualStepsOption2);
+
+            var troubleshootingContainerStdio = TemplateFoldout("Troubleshooting");
+
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Ensure Codex CLI is installed and accessible from terminal"));
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Restart Codex after configuration changes"));
+
+            ContainerStdio!.Add(troubleshootingContainerStdio);
+
+            // HTTP Configuration
+
+            if (isCloud || UnityMcpPluginEditor.AuthOption == AuthOption.required)
+            {
+                // ContainerHttp!.Add(TemplateAlertLabel($"Authorization is not fully functional in Codex. Consider to disable Authorization or use another AI agent."));
+
+                ContainerHttp!.Add(TemplateWarningLabel($"Authorization is enabled. Set the '{EnvVarNameAuthToken}' environment variable before starting Codex in terminal."));
+#if UNITY_EDITOR_WIN
+                ContainerHttp!.Add(TemplateTextFieldReadOnly($"setx {EnvVarNameAuthToken} \"{UnityMcpPluginEditor.Token}\""));
+                ContainerHttp!.Add(TemplateWarningLabel($"Terminal restart required."));
+#else
+                ContainerHttp!.Add(TemplateTextFieldReadOnly($"export {EnvVarNameAuthToken}=\"{UnityMcpPluginEditor.Token}\""));
+#endif
+            }
+
+            var manualStepsOption1Http = TemplateFoldoutFirst("Manual Configuration Steps - Option 1");
+
+            manualStepsOption1Http!.Add(TemplateLabelDescription("1. Open a terminal and run the following command to be in the folder of the Unity project"));
+            manualStepsOption1Http!.Add(TemplateTextFieldReadOnly($"cd \"{ProjectRootPath}\""));
+            manualStepsOption1Http!.Add(TemplateLabelDescription("2. Run the following command in the folder of the Unity project to configure Codex"));
+            manualStepsOption1Http!.Add(TemplateTextFieldReadOnly(addMcpServerCommandHttp));
+            manualStepsOption1Http!.Add(TemplateLabelDescription("3. Start Codex"));
+            manualStepsOption1Http!.Add(TemplateTextFieldReadOnly("codex"));
+
+            ContainerHttp!.Add(manualStepsOption1Http);
+
+            var manualStepsOption2Http = TemplateFoldout("Manual Configuration Steps - Option 2");
+
+            manualStepsOption2Http!.Add(TemplateLabelDescription("1. Open or create file '.codex/config.toml'"));
+            manualStepsOption2Http!.Add(TemplateLabelDescription("2. Copy and paste the configuration TOML into the file."));
+            manualStepsOption2Http!.Add(TemplateTextFieldReadOnly(ConfigHttp.ExpectedFileContent));
+
+            ContainerHttp!.Add(manualStepsOption2Http);
+
+            var troubleshootingContainerHttp = TemplateFoldout("Troubleshooting");
+
+            troubleshootingContainerHttp.Add(TemplateLabelDescription("- Ensure Codex CLI is installed and accessible from terminal"));
+            troubleshootingContainerHttp.Add(TemplateLabelDescription("- Restart Codex after configuration changes"));
+
+            ContainerHttp!.Add(troubleshootingContainerHttp);
+        }
+    }
+}

@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -9,12 +9,11 @@
 */
 
 #nullable enable
-using com.IvanMurzak.McpPlugin.Common.Reflection.Convertor;
 using com.IvanMurzak.ReflectorNet;
-using com.IvanMurzak.ReflectorNet.Convertor;
+using com.IvanMurzak.ReflectorNet.Converter;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.Unity.MCP.Editor.Tests.Utils;
-using com.IvanMurzak.Unity.MCP.Reflection.Convertor;
+using com.IvanMurzak.Unity.MCP.Reflection.Converter;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using NUnit.Framework;
 using UnityEngine;
@@ -33,17 +32,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             {
                 var reflector = new Reflector();
 
-                // Match UnityMcpPlugin.CreateDefaultReflector
-                reflector.Convertors.Remove<GenericReflectionConvertor<object>>();
-                reflector.Convertors.Add(new UnityGenericReflectionConvertor<object>());
+                // Match UnityMcpPluginEditor.CreateDefaultReflector
+                reflector.Converters.Remove<GenericReflectionConverter<object>>();
+                reflector.Converters.Add(new UnityGenericReflectionConverter<object>());
 
-                // Register converters in the order they are in UnityMcpPlugin.Converters.cs
+                // Register converters in the order they are in UnityMcpPluginEditor.Converters.cs
                 // Assets
-                reflector.Convertors.Add(new UnityEngine_Material_ReflectionConvertor());
-                reflector.Convertors.Add(new UnityEngine_Sprite_ReflectionConvertor());
+                reflector.Converters.Add(new UnityEngine_Material_ReflectionConverter());
+                reflector.Converters.Add(new UnityEngine_Sprite_ReflectionConverter());
 
                 // Fallback
-                reflector.Convertors.Add(new UnityEngine_Object_ReflectionConvertor());
+                reflector.Converters.Add(new UnityEngine_Object_ReflectionConverter());
 
                 // Create a dummy object to populate
                 var container = new SpriteContainer();
@@ -59,27 +58,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
                 var spriteMember = new SerializedMember
                 {
-                    name = "spriteField",
-                    typeName = typeof(Sprite).AssemblyQualifiedName,
+                    name = nameof(SpriteContainer.spriteField),
+                    typeName = typeof(Sprite).GetTypeId(), // typeof(Sprite).AssemblyQualifiedName,
                     valueJsonElement = jsonElement
                 };
 
                 var spritePropertyMember = new SerializedMember
                 {
-                    name = "spriteProperty",
-                    typeName = typeof(Sprite).AssemblyQualifiedName,
+                    name = nameof(SpriteContainer.spriteProperty),
+                    typeName = typeof(Sprite).GetTypeId(), // typeof(Sprite).AssemblyQualifiedName,
                     valueJsonElement = jsonElement
+                };
+
+                var data = new SerializedMember
+                {
+                    typeName = typeof(SpriteContainer).GetTypeId(), // typeof(SpriteContainer).AssemblyQualifiedName,
+                    fields = new SerializedMemberList { spriteMember },
+                    props = new SerializedMemberList { spritePropertyMember }
                 };
 
                 // Try to populate
                 object? obj = container;
-
-                var result = reflector.TryPopulate(ref obj, new SerializedMember
-                {
-                    typeName = typeof(SpriteContainer).AssemblyQualifiedName,
-                    fields = new SerializedMemberList { spriteMember },
-                    props = new SerializedMemberList { spritePropertyMember }
-                });
+                var result = reflector.TryModify(ref obj, data);
 
                 Assert.IsTrue(result, "Population should succeed");
 

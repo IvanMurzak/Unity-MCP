@@ -28,7 +28,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void TestSetUp()
         {
             // Create local collector
-            _logCollector = new UnityLogCollector(new FileLogStorage(cacheFileName: "test-tool-console.txt"));
+            _logCollector = new UnityLogCollector(new FileLogStorage(requestedFileName: "test-tool-console.txt"));
 
             _tool = new Tool_Console();
         }
@@ -391,13 +391,75 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsTrue(assertLogEntry.ToString().Contains("[Assert]"), "Should format Assert type correctly");
         }
         [Test]
+        public void ClearLogs_DoesNotThrow()
+        {
+            // Act & Assert
+            Assert.DoesNotThrow(() => _tool.ClearLogs());
+        }
+
+        [UnityTest]
+        public IEnumerator ClearLogs_RemovesAllLogs()
+        {
+            // Arrange: Generate some test logs
+            Debug.Log("Log before clear 1");
+            Debug.LogWarning("Warning before clear");
+            Debug.Log("Log before clear 2");
+
+            for (int i = 0; i < 3; i++)
+                yield return null;
+
+            UnityMcpPluginEditor.Instance.LogCollector?.Save();
+
+            // Verify logs exist
+            var logsBefore = _tool.GetLogs();
+            Assert.IsTrue(logsBefore.Length > 0, "Should have logs before clearing.");
+
+            // Act
+            _tool.ClearLogs();
+
+            // Assert
+            var logsAfter = _tool.GetLogs();
+            Assert.AreEqual(0, logsAfter.Length, "Should have no logs after clearing.");
+        }
+
+        [UnityTest]
+        public IEnumerator ClearLogs_ThenGetLogs_OnlyShowsNewLogs()
+        {
+            // Arrange: Generate some old logs
+            var oldLog = "Old log before clear";
+            Debug.Log(oldLog);
+
+            for (int i = 0; i < 3; i++)
+                yield return null;
+
+            UnityMcpPluginEditor.Instance.LogCollector?.Save();
+
+            // Act: Clear logs, then generate new logs
+            _tool.ClearLogs();
+
+            var newLog = "New log after clear";
+            Debug.Log(newLog);
+
+            for (int i = 0; i < 3; i++)
+                yield return null;
+
+            UnityMcpPluginEditor.Instance.LogCollector?.Save();
+
+            // Assert: Only new logs should be present
+            var result = _tool.GetLogs();
+            Assert.IsTrue(result.Any(entry => entry.Message.Contains(newLog)),
+                "Should contain the new log message.");
+            Assert.IsFalse(result.Any(entry => entry.Message.Contains(oldLog)),
+                "Should NOT contain the old log message.");
+        }
+
+        [Test]
         public void Error_InvalidMaxEntries_ReturnsCorrectMessage()
         {
             // Act
             var result1 = Tool_Console.Error.InvalidMaxEntries(0);
 
             // Assert
-            Assert.IsTrue(result1.Contains("[Error]"), "Should contain error prefix");
             Assert.IsTrue(result1.Contains("Invalid maxEntries value"), "Should contain error description");
             Assert.IsTrue(result1.Contains("'0'"), "Should contain the invalid value");
         }
@@ -409,7 +471,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var result = Tool_Console.Error.InvalidLogTypeFilter("InvalidType");
 
             // Assert
-            Assert.IsTrue(result.Contains("[Error]"), "Should contain error prefix");
             Assert.IsTrue(result.Contains("Invalid logType filter"), "Should contain error description");
             Assert.IsTrue(result.Contains("'InvalidType'"), "Should contain the invalid value");
             Assert.IsTrue(result.Contains("Valid values:"), "Should list valid values");

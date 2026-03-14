@@ -1,53 +1,155 @@
-# Docker Deployment
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/ai-developer-header.svg?raw=true)
 
-The Unity-MCP-Server is automatically built and deployed as a Docker image when a new release is created.
+[![MCP](https://badge.mcpx.dev 'MCP Server')](https://modelcontextprotocol.io/introduction)
+[![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&labelColor=333A41 'OpenUPM package')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
+[![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
+[![Unity Editor](https://img.shields.io/badge/Editor-X?style=flat&logo=unity&labelColor=333A41&color=2A2A2A 'Unity Editor supported')](https://unity.com/releases/editor/archive)
+[![Unity Runtime](https://img.shields.io/badge/Runtime-X?style=flat&logo=unity&labelColor=333A41&color=2A2A2A 'Unity Runtime supported')](https://unity.com/releases/editor/archive)
+[![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg 'Tests Passed')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)</br>
+[![Discord](https://img.shields.io/badge/Discord-Join-7289da?logo=discord&logoColor=white&labelColor=333A41 'Join')](https://discord.gg/cfbdMZX99G)
+[![OpenUPM](https://img.shields.io/badge/dynamic/json?labelColor=333A41&label=Downloads&query=%24.downloads&suffix=%2Fmonth&url=https%3A%2F%2Fpackage.openupm.com%2Fdownloads%2Fpoint%2Flast-month%2Fcom.ivanmurzak.unity.mcp)](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
+[![Stars](https://img.shields.io/github/stars/IvanMurzak/Unity-MCP 'Stars')](https://github.com/IvanMurzak/Unity-MCP/stargazers)
+[![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&labelColor=333A41)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
+[![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
-## Docker Hub Repository
+The Unity-MCP Server is available as a lightweight Docker container, ideal for cloud deployments or isolating the AI server environment. GitHub repository: [IvanMurzak/Unity-MCP](https://github.com/IvanMurzak/Unity-MCP)
 
-- **Repository**: `ivanmurzakdev/unity-mcp-server`
-- **Tags**: 
-  - Version-specific: `ivanmurzakdev/unity-mcp-server:X.Y.Z` (e.g., `0.17.1`)
-  - Latest: `ivanmurzakdev/unity-mcp-server:latest`
+- **Image**: `ivanmurzakdev/unity-mcp-server`
+- **Tags**: `latest`, `X.Y.Z` (e.g., `0.50.1`)
+- **Architectures**: `linux/amd64`, `linux/arm64` (Apple Silicon compatible)
 
-## Deployment Process
+![Docker Launch](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/docker-launch.gif?raw=true)
 
-The Docker image is built and pushed automatically by the `release.yml` GitHub Actions workflow when:
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
-1. Code is pushed to the `main` branch
-2. All Unity tests pass successfully  
-3. A new version tag is created based on the `package.json` version
+## 🚀 Quick Start
 
-## Multi-Platform Support
+Run the server on port `8080`:
 
-The Docker images are built for multiple architectures:
-- `linux/amd64` (Intel/AMD 64-bit)
-- `linux/arm64` (ARM 64-bit, including Apple Silicon)
-
-## Required Secrets
-
-The deployment requires the following GitHub repository secrets:
-- `DOCKER_USERNAME`: Docker Hub username
-- `DOCKER_PASSWORD`: Docker Hub password or access token
-
-## Usage
-
-### Pull and Run Latest Version
 ```bash
-docker pull ivanmurzakdev/unity-mcp-server:latest
 docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server:latest
 ```
 
-### Pull and Run Specific Version
+> ⚠️ **Required:**
+> 1. Install [Unity Editor](https://unity.com)
+> 2. Install [AI Game Developer](https://github.com/IvanMurzak/Unity-MCP) plugin in Unity project.
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## ⚙️ Configuration
+
+The server can be configured using environment variables.
+
+| Variable                      | Default          | Description                                                                             |
+| :---------------------------- | :--------------- | :-------------------------------------------------------------------------------------- |
+| `MCP_PLUGIN_PORT`             | `8080`           | The port the server listens on for both Client (HTTP) and Plugin (SignalR) connections. |
+| `MCP_PLUGIN_CLIENT_TRANSPORT` | `streamableHttp` | Transport for the Client connection: `streamableHttp` or `stdio`.                       |
+| `MCP_PLUGIN_CLIENT_TIMEOUT`   | `10000`          | Timeout in milliseconds for Plugin responses.                                           |
+| `MCP_AUTHORIZATION`           | `none`           | Authentication mode for incoming Client connections: `none` or `required`.              |
+| `MCP_PLUGIN_TOKEN`            | *(unset)*        | Bearer token is optional. If set - server accept only connection with this exact token. Works only with `MCP_AUTHORIZATION=required`. |
+
+### Example: Custom Port
+
+Run on port `9090`:
+
 ```bash
-docker pull ivanmurzakdev/unity-mcp-server:0.17.1
-docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server:0.17.1
+docker run \
+  -e MCP_PLUGIN_PORT=9090 \
+  -p 9090:9090 \
+  ivanmurzakdev/unity-mcp-server:latest
 ```
 
-## Technical Details
+### Example: STDIO Mode
+STDIO mode is used when the MCP Client manages the Docker process directly.
 
-- **Base Image**: `mcr.microsoft.com/dotnet/aspnet:9.0`
-- **Build Image**: `mcr.microsoft.com/dotnet/sdk:9.0`
-- **Exposed Port**: 8080
-- **Framework**: .NET 9.0
+```bash
+docker run -i \
+  -e MCP_PLUGIN_CLIENT_TRANSPORT=stdio \
+  -p 8080:8080 \
+  ivanmurzakdev/unity-mcp-server:latest
+```
 
-The Docker image is built using multi-stage builds to optimize size and security.
+### Example: Bearer Token Authentication
+
+Require a bearer token from the MCP Client:
+
+```bash
+docker run \
+  -e MCP_AUTHORIZATION=required \
+  -e MCP_PLUGIN_TOKEN=your-secret-token \
+  -p 8080:8080 \
+  ivanmurzakdev/unity-mcp-server:latest
+```
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## 💻 Client Configuration
+
+To use the Dockerized server with your AI Client (e.g., Claude):
+
+### HTTP Mode (Recommended for Remote/Cloud)
+```json
+{
+  "mcpServers": {
+    "ai-game-developer": {
+      "url": "http://localhost:8080"
+    }
+  }
+}
+```
+
+With bearer token authentication (`MCP_AUTHORIZATION=required`):
+```json
+{
+  "mcpServers": {
+    "ai-game-developer": {
+      "url": "http://localhost:8080",
+      "headers": {
+        "Authorization": "Bearer your-secret-token"
+      }
+    }
+  }
+}
+```
+
+### STDIO Mode (Managed by Client)
+```json
+{
+  "mcpServers": {
+    "ai-game-developer": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-t",
+        "--rm",
+        "-e", "MCP_PLUGIN_CLIENT_TRANSPORT=stdio",
+        "-p", "8080:8080",
+        "ivanmurzakdev/unity-mcp-server:latest"
+      ]
+    }
+  }
+}
+```
+
+With bearer token authentication (`MCP_AUTHORIZATION=required`):
+```json
+{
+  "mcpServers": {
+    "ai-game-developer": {
+      "command": "docker",
+      "args": [
+        "run",
+        "-t",
+        "--rm",
+        "-e", "MCP_PLUGIN_CLIENT_TRANSPORT=stdio",
+        "-e", "MCP_AUTHORIZATION=required",
+        "-e", "MCP_PLUGIN_TOKEN=your-secret-token",
+        "-p", "8080:8080",
+        "ivanmurzakdev/unity-mcp-server:latest"
+      ]
+    }
+  }
+}
+```
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)

@@ -9,94 +9,68 @@
 */
 
 #nullable enable
+using System;
 using System.ComponentModel;
-using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin;
-using com.IvanMurzak.McpPlugin.Common.Model;
-using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
-using com.IvanMurzak.Unity.MCP.Runtime.Utils;
-using UnityEngine;
+using com.IvanMurzak.Unity.MCP.Utils;
+using Microsoft.Extensions.Logging;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_GameObject
     {
+        public const string GameObjectFindToolId = "gameobject-find";
         [McpPluginTool
         (
-            "GameObject_Find",
-            Title = "Find GameObject in opened Prefab or in a Scene"
+            GameObjectFindToolId,
+            Title = "GameObject / Find",
+            ReadOnlyHint = true,
+            IdempotentHint = true
         )]
-        [Description(@"Finds specific GameObject by provided information.
-First it looks for the opened Prefab, if any Prefab is opened it looks only there ignoring a scene.
-If no opened Prefab it looks into current active scene.
-Returns GameObject information and its children.
-Also, it returns Components preview just for the target GameObject.")]
-        public async Task<ResponseCallValueTool<GameObjectFindResponse>> Find
+        [Description("Finds specific GameObject by provided information in opened Prefab or in a Scene. " +
+            "First it looks for the opened Prefab, if any Prefab is opened it looks only there ignoring a scene. " +
+            "If no opened Prefab it looks into current active scene. " +
+            "Returns GameObject information and its children. " +
+            "Also, it returns Components preview just for the target GameObject.")]
+        public GameObjectData? Find
         (
             GameObjectRef gameObjectRef,
-            [Description("Include serialized data of the GameObject and its components.")]
-            bool includeData = true,
-            [Description("Include bounds of the GameObject.")]
-            bool includeBounds = true,
+            [Description("Include editable GameObject data (tag, layer, etc).")]
+            bool includeData = false,
+            [Description("Include attached components references.")]
+            bool includeComponents = false,
+            [Description("Include 3D bounds of the GameObject.")]
+            bool includeBounds = false,
             [Description("Include hierarchy metadata.")]
-            bool includeHierarchy = true,
+            bool includeHierarchy = false,
             [Description("Determines the depth of the hierarchy to include. 0 - means only the target GameObject. 1 - means to include one layer below.")]
-            int hierarchyDepth = 0,
-            [Description("Performs deep serialization including all nested objects. Otherwise, only serializes top-level properties.")]
-            bool deepSerialization = true
+            int hierarchyDepth = 0
         )
         {
-            return await MainThread.Instance.RunAsync(() =>
+            return MainThread.Instance.Run(() =>
             {
                 var go = gameObjectRef.FindGameObject(out var error);
                 if (error != null)
-                    return ResponseCallValueTool<GameObjectFindResponse>.Error($"[Error] {error}");
+                    throw new Exception(error);
 
                 if (go == null)
-                    return ResponseCallValueTool<GameObjectFindResponse>.Error($"[Error] GameObject by {nameof(gameObjectRef)} not found.");
+                    return null;
 
-                var response = new GameObjectFindResponse();
+                var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
-                if (includeData)
-                {
-                    var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
-                    response.Data = reflector.Serialize(
-                        obj: go,
-                        name: go.name,
-                        recursive: deepSerialization,
-                        logger: McpPlugin.McpPlugin.Instance.Logger
-                    );
-                }
-
-                if (includeBounds)
-                {
-                    response.Bounds = go.CalculateBounds();
-                }
-
-                if (includeHierarchy)
-                {
-                    response.Hierarchy = go.ToMetadata(hierarchyDepth);
-                }
-
-                var reflectorInstance = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
-                var jsonNode = reflectorInstance.JsonSerializer.SerializeToNode(response);
-                var jsonString = jsonNode?.ToJsonString();
-
-                return ResponseCallValueTool<GameObjectFindResponse>.SuccessStructured(jsonNode, jsonString);
+                return go.ToGameObjectData(
+                    reflector: reflector,
+                    includeData: includeData,
+                    includeComponents: includeComponents,
+                    includeBounds: includeBounds,
+                    includeHierarchy: includeHierarchy,
+                    hierarchyDepth: hierarchyDepth,
+                    logger: UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_GameObject>()
+                );
             });
-        }
-
-        public class GameObjectFindResponse
-        {
-            [Description("Serialized data of the GameObject and its components.")]
-            public SerializedMember? Data { get; set; }
-            [Description("Bounds of the GameObject.")]
-            public Bounds? Bounds { get; set; }
-            [Description("Hierarchy metadata of the GameObject.")]
-            public GameObjectMetadata? Hierarchy { get; set; } = null;
         }
     }
 }

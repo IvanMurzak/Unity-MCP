@@ -1,71 +1,68 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## Build & Run
 
-## Common Development Commands
+```bash
+dotnet build com.IvanMurzak.Unity.MCP.Server.csproj
+dotnet run --project com.IvanMurzak.Unity.MCP.Server.csproj
 
-### Build & Publish
-- **Build for all platforms**: `.\build-all.ps1` (Windows) or `./build-all.sh` (Linux/macOS)
-- **Build specific configuration**: `.\build-all.ps1 Debug` or `./build-all.sh Debug`
-- **Standard .NET build**: `dotnet build com.IvanMurzak.Unity.MCP.Server.csproj`
-- **Standard .NET run**: `dotnet run --project com.IvanMurzak.Unity.MCP.Server.csproj`
+# Cross-platform publish (creates publish/ dir)
+./build-all.sh          # Linux/macOS
+.\build-all.ps1         # Windows PowerShell
+```
 
-Build scripts create cross-platform executables in the `publish/` directory for:
-- Windows: win-x64, win-x86, win-arm64
-- Linux: linux-x64, linux-arm64
-- macOS: osx-x64, osx-arm64
+Also available as NuGet global tool (`dotnet tool install -g com.IvanMurzak.Unity.MCP.Server`) and Docker image (`ivanmurzakdev/unity-mcp-server`).
 
-### Running the Server
-The server supports two transport methods:
+## Running the Server
 
-#### STDIO Transport (for MCP clients)
+### STDIO Transport (for MCP clients)
 ```bash
 dotnet run -- --client-transport stdio --port 8080
 ```
 
-#### HTTP Transport (for web-based clients)
+### HTTP Transport (for web-based clients)
 ```bash
-dotnet run -- --client-transport http --port 8080 --port 8080
+dotnet run -- --client-transport streamableHttp --port 8080
 ```
 
-### Configuration
-Key command-line arguments and environment variables:
-- `UNITY_MCP_PORT` / `--port`: Client & Plugin connection port (default: 8080)
-- `UNITY_MCP_PLUGIN_TIMEOUT` / `--plugin-timeout`: Plugin connection timeout (default: 10000ms)
-- `UNITY_MCP_CLIENT_TRANSPORT` / `--client-transport`: Transport type: `stdio` or `http`
+## Configuration
 
-## Architecture Overview
+CLI arguments override environment variables.
 
-### Core Components
+### Core
+
+| Argument | Environment Variable | Purpose | Default |
+|----------|---------------------|---------|---------|
+| `--port` | `MCP_PLUGIN_PORT` | Client & Plugin connection port | `8080` |
+| `--client-transport` | `MCP_PLUGIN_CLIENT_TRANSPORT` | Transport: `stdio` or `streamableHttp` | `streamableHttp` |
+| `--plugin-timeout` | `MCP_PLUGIN_CLIENT_TIMEOUT` | Plugin connection timeout (ms) | `10000` |
+| `--token` | `MCP_PLUGIN_TOKEN` | Bearer token required from connecting plugins | none |
+| `--authorization` | `MCP_AUTHORIZATION` | Authorization enforcement mode | `none` |
+
+### Analytics Webhooks
+
+| Argument | Environment Variable | Purpose |
+|----------|---------------------|---------|
+| `--webhook-tool-url` | `MCP_PLUGIN_WEBHOOK_TOOL_URL` | Tool call event endpoint |
+| `--webhook-prompt-url` | `MCP_PLUGIN_WEBHOOK_PROMPT_URL` | Prompt retrieval endpoint |
+| `--webhook-resource-url` | `MCP_PLUGIN_WEBHOOK_RESOURCE_URL` | Resource access endpoint |
+| `--webhook-connection-url` | `MCP_PLUGIN_WEBHOOK_CONNECTION_URL` | Client connect/disconnect endpoint |
+| `--webhook-token` | `MCP_PLUGIN_WEBHOOK_TOKEN` | Security token sent in webhook header |
+| `--webhook-header` | `MCP_PLUGIN_WEBHOOK_HEADER` | Custom header name for token (default: `X-Webhook-Token`) |
+| `--webhook-timeout` | `MCP_PLUGIN_WEBHOOK_TIMEOUT` | HTTP delivery timeout in ms (default: `10000`) |
+
+### Authorization Webhooks
+
+| Argument | Environment Variable | Purpose |
+|----------|---------------------|---------|
+| `--webhook-authorization-url` | `MCP_PLUGIN_WEBHOOK_AUTHORIZATION_URL` | Connection authorization endpoint |
+| `--webhook-authorization-fail-open` | `MCP_PLUGIN_WEBHOOK_AUTHORIZATION_FAIL_OPEN` | Allow connections if webhook fails (default: `false`) |
+
+## Core Components
+
 - **Program.cs**: Main entry point, configures ASP.NET Core web host with MCP server and SignalR hub
-- **McpServerService.cs**: Hosted service that manages the MCP server lifecycle and tool change notifications
-- **Hub/RemoteApp.cs**: SignalR hub for Unity Plugin communication on port 8080
+- **McpServerService.cs**: Hosted service that manages MCP server lifecycle and tool change notifications
+- **Hub/RemoteApp.cs**: SignalR hub for Unity Plugin communication
 - **Routing/**: MCP protocol handlers for tools and resources
 - **Client/**: Utilities for remote tool and resource execution
 - **Extension/**: Builder extensions for MCP server configuration
-
-### Communication Flow
-```
-MCP Client <--> MCP Server <--> Unity Plugin (via SignalR)
-     ^              ^                    ^
-  stdio/http    ASP.NET Core         port 8080
-```
-
-### Key Technologies
-- **.NET 9.0**: Target framework
-- **ASP.NET Core**: Web host and HTTP transport
-- **SignalR**: Real-time communication with Unity Plugin
-- **ModelContextProtocol**: MCP server implementation
-- **NLog**: Logging framework
-- **ReflectorNet**: Advanced reflection utilities
-
-### Project Structure
-- `src/`: Main source code
-  - `Hub/`: SignalR hub and Unity Plugin communication
-  - `Routing/`: MCP protocol request handlers
-  - `Client/`: Remote execution utilities
-  - `Extension/`: Configuration extensions
-- `publish/`: Build outputs (created by build scripts)
-- Configuration files: `appsettings.json`, `NLog.config`
-
-The server acts as a bridge between MCP clients (VS Code, Claude Desktop, etc.) and Unity Editor/games via the Unity-MCP Plugin, enabling AI assistants to interact with Unity projects through the Model Context Protocol.
