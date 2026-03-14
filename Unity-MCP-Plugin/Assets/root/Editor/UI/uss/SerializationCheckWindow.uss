@@ -1,0 +1,47 @@
+/* ==========================================================================
+   Serialization Check Window Styles
+   Imports common styles and adds window-specific customizations
+   ========================================================================== */
+
+@import url("common/_base.uss");
+@import url("common/_typography.uss");
+@import url("common/_buttons.uss");
+@import url("common/_forms.uss");
+
+/* JSON Container */
+.json-container {
+    flex-grow: 1;
+    position: relative;
+}
+
+.btn-copy {
+    position: absolute;
+    bottom: 8px;
+    right: 20px;
+}
+
+/* Output List */
+.json-text-list {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 0px;
+}
+
+.json-text-list .unity-list-view__item {
+    background-color: transparent;
+    border-width: 0;
+    padding: 0 8px;
+    margin: 0;
+}
+
+.json-text-line {
+    font-size: 12px;
+    white-space: normal;
+    padding: 0;
+    margin: 0;
+}

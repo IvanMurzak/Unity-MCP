@@ -13,7 +13,19 @@
             "args": [
                 "--port=55123",
                 "--plugin-timeout=30000",
-                "--client-transport=http"
+                "--client-transport=streamableHttp"
+            ]
+        },
+        {
+            "name": "http (59479)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "dotnet: build",
+            "program": "${workspaceFolder}/bin/Debug/net9.0/unity-mcp-server.exe",
+            "args": [
+                "--port=59479",
+                "--plugin-timeout=30000",
+                "--client-transport=streamableHttp"
             ]
         },
         {
@@ -25,7 +37,7 @@
             "args": [
                 "--port=9090",
                 "--plugin-timeout=30000",
-                "--client-transport=http"
+                "--client-transport=streamableHttp"
             ]
         },
         {

@@ -15,7 +15,6 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.ReflectorNet;
@@ -33,21 +32,23 @@ namespace com.IvanMurzak.Unity.MCP
         protected const int DefaultMaxFileSizeMB = 512;
 
         protected readonly ILogger _logger;
-        protected readonly string _cacheFilePath;
-        protected readonly string _cacheFileName;
-        protected readonly string _cacheFile;
+        protected readonly string _directoryPath;
+        protected readonly string _requestedFileName;
         protected readonly JsonSerializerOptions _jsonOptions;
-        protected readonly SemaphoreSlim _fileLock = new(1, 1);
+        protected readonly object _fileMutex = new();
         protected readonly int _fileBufferSize;
         protected readonly long _maxFileSizeBytes;
         protected readonly ThreadSafeBool _isDisposed = new(false);
+
+        protected string fileName;
+        protected string filePath;
 
         protected FileStream? fileWriteStream;
 
         public FileLogStorage(
             ILogger? logger = null,
-            string? cacheFilePath = null,
-            string? cacheFileName = null,
+            string? directoryPath = null,
+            string? requestedFileName = null,
             int fileBufferSize = 4096,
             int maxFileSizeMB = DefaultMaxFileSizeMB,
             JsonSerializerOptions? jsonOptions = null)
@@ -63,15 +64,20 @@ namespace com.IvanMurzak.Unity.MCP
 
             _logger = logger ?? UnityLoggerFactory.LoggerFactory.CreateLogger(GetType().GetTypeShortName());
 
-            _cacheFilePath = cacheFilePath ?? (Application.isEditor
+            _directoryPath = Path.GetFullPath(directoryPath ?? (Application.isEditor
                 ? $"{Path.GetDirectoryName(Application.dataPath)}/Temp/mcp-server"
-                : $"{Application.persistentDataPath}/Temp/mcp-server");
+                : $"{Application.persistentDataPath}/Temp/mcp-server"));
 
-            _cacheFileName = cacheFileName ?? (Application.isEditor
+            _requestedFileName = requestedFileName ?? (Application.isEditor
                 ? "ai-editor-logs.txt"
                 : "ai-player-logs.txt");
 
-            _cacheFile = $"{Path.Combine(_cacheFilePath, _cacheFileName)}";
+            if (!Directory.Exists(_directoryPath))
+                Directory.CreateDirectory(_directoryPath);
+
+            _fileBufferSize = fileBufferSize;
+            _maxFileSizeBytes = maxFileSizeMB * 1024L * 1024L;
+
             _jsonOptions = jsonOptions ?? new JsonSerializerOptions
             {
                 PropertyNameCaseInsensitive = true,
@@ -79,13 +85,10 @@ namespace com.IvanMurzak.Unity.MCP
                 DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
             };
 
-            _fileBufferSize = fileBufferSize;
-            _maxFileSizeBytes = maxFileSizeMB * 1024L * 1024L;
-
-            fileWriteStream = CreateWriteStream();
+            fileWriteStream = CreateWriteStream(_requestedFileName, out fileName, out filePath);
         }
 
-        protected virtual FileStream CreateWriteStream()
+        protected virtual FileStream CreateWriteStream(string fileName, out string resultFileName, out string resultFilePath)
         {
             if (_isDisposed.Value)
             {
@@ -93,9 +96,39 @@ namespace com.IvanMurzak.Unity.MCP
                     nameof(CreateWriteStream));
                 throw new ObjectDisposedException(GetType().GetTypeShortName());
             }
-            if (!Directory.Exists(_cacheFilePath))
-                Directory.CreateDirectory(_cacheFilePath);
-            return new FileStream(_cacheFile, FileMode.Append, FileAccess.Write, FileShare.Read, bufferSize: _fileBufferSize, useAsync: false);
+
+            var baseName = Path.GetFileNameWithoutExtension(fileName);
+            var extension = Path.GetExtension(fileName);
+            var currentFileName = fileName;
+            int incrementIndex = 1;
+
+            while (true)
+            {
+                if (incrementIndex > 1000)
+                    throw new Exception("Failed to create unique log file name after 1000 attempts.");
+
+                try
+                {
+                    var filePath = Path.GetFullPath(Path.Combine(_directoryPath, currentFileName));
+
+                    _logger.LogDebug("Creating log file stream: {file}", filePath);
+
+                    var stream = new FileStream(filePath, FileMode.Append, FileAccess.Write, FileShare.Read, bufferSize: _fileBufferSize, useAsync: false)
+                        ?? throw new Exception("Failed to create file stream for log storage.");
+
+                    resultFileName = currentFileName;
+                    resultFilePath = filePath;
+
+                    return stream;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to create log file stream for {file}. Retrying with a different file name.",
+                        currentFileName);
+                    incrementIndex++;
+                    currentFileName = $"{baseName}-{incrementIndex}{extension}";
+                }
+            }
         }
 
         public virtual void Flush()
@@ -106,34 +139,32 @@ namespace com.IvanMurzak.Unity.MCP
                     nameof(Flush));
                 return;
             }
-            _fileLock.Wait();
-            try
+            lock (_fileMutex)
             {
                 fileWriteStream?.Flush();
             }
-            finally
-            {
-                _fileLock.Release();
-            }
         }
-        public virtual async Task FlushAsync()
+        public virtual Task FlushAsync()
         {
             if (_isDisposed.Value)
             {
                 _logger.LogWarning("{method} called but already disposed, ignored.",
                     nameof(FlushAsync));
-                return;
+                return Task.CompletedTask;
             }
-            await _fileLock.WaitAsync();
-            try
+            return Task.Run(() =>
             {
-                if (fileWriteStream != null)
-                    await fileWriteStream.FlushAsync();
-            }
-            finally
-            {
-                _fileLock.Release();
-            }
+                if (_isDisposed.Value)
+                {
+                    _logger.LogWarning("{method} called but already disposed, ignored.",
+                        nameof(FlushAsync));
+                    return;
+                }
+                lock (_fileMutex)
+                {
+                    fileWriteStream?.Flush();
+                }
+            });
         }
 
         public virtual Task AppendAsync(params LogEntry[] entries)
@@ -144,16 +175,17 @@ namespace com.IvanMurzak.Unity.MCP
                     nameof(AppendAsync));
                 return Task.CompletedTask;
             }
-            return Task.Run(async () =>
+            return Task.Run(() =>
             {
-                await _fileLock.WaitAsync();
-                try
+                if (_isDisposed.Value)
+                {
+                    _logger.LogWarning("{method} called but already disposed, ignored.",
+                        nameof(AppendAsync));
+                    return;
+                }
+                lock (_fileMutex)
                 {
                     AppendInternal(entries);
-                }
-                finally
-                {
-                    _fileLock.Release();
                 }
             });
         }
@@ -166,14 +198,9 @@ namespace com.IvanMurzak.Unity.MCP
                     nameof(Append));
                 return;
             }
-            _fileLock.Wait();
-            try
+            lock (_fileMutex)
             {
                 AppendInternal(entries);
-            }
-            finally
-            {
-                _fileLock.Release();
             }
         }
 
@@ -185,7 +212,7 @@ namespace com.IvanMurzak.Unity.MCP
                     nameof(AppendInternal));
                 return;
             }
-            fileWriteStream ??= CreateWriteStream();
+            fileWriteStream ??= CreateWriteStream(_requestedFileName, out fileName, out filePath);
 
             // Check if file size limit reached and reset if needed
             if (fileWriteStream.Length >= _maxFileSizeBytes)
@@ -218,14 +245,13 @@ namespace com.IvanMurzak.Unity.MCP
                 _maxFileSizeBytes / (1024 * 1024));
 
             fileWriteStream?.Flush();
-            fileWriteStream?.Close();
             fileWriteStream?.Dispose();
             fileWriteStream = null;
 
-            if (File.Exists(_cacheFile))
-                File.Delete(_cacheFile);
+            if (File.Exists(filePath))
+                File.Delete(filePath);
 
-            fileWriteStream = CreateWriteStream();
+            fileWriteStream = CreateWriteStream(_requestedFileName, out this.fileName, out filePath);
         }
 
         /// <summary>
@@ -239,22 +265,16 @@ namespace com.IvanMurzak.Unity.MCP
                     nameof(Clear));
                 return;
             }
-            _fileLock.Wait();
-            try
+            lock (_fileMutex)
             {
-                fileWriteStream?.Close();
                 fileWriteStream?.Dispose();
                 fileWriteStream = null;
 
-                if (File.Exists(_cacheFile))
-                    File.Delete(_cacheFile);
+                if (File.Exists(filePath))
+                    File.Delete(filePath);
 
-                if (File.Exists(_cacheFile))
-                    _logger.LogError("Failed to delete cache file: {file}", _cacheFile);
-            }
-            finally
-            {
-                _fileLock.Release();
+                if (File.Exists(filePath))
+                    _logger.LogError("Failed to delete cache file: {file}", filePath);
             }
         }
 
@@ -285,14 +305,9 @@ namespace com.IvanMurzak.Unity.MCP
                     nameof(Query));
                 return Array.Empty<LogEntry>();
             }
-            _fileLock.Wait();
-            try
+            lock (_fileMutex)
             {
                 return QueryInternal(maxEntries, logTypeFilter, includeStackTrace, lastMinutes);
-            }
-            finally
-            {
-                _fileLock.Release();
             }
         }
 
@@ -302,10 +317,10 @@ namespace com.IvanMurzak.Unity.MCP
             bool includeStackTrace = false,
             int lastMinutes = 0)
         {
-            if (!File.Exists(_cacheFile))
+            if (!File.Exists(filePath))
                 return Array.Empty<LogEntry>();
 
-            using (var fileStream = new FileStream(_cacheFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
             {
                 var cutoffTime = lastMinutes > 0
                     ? DateTime.Now.AddMinutes(-lastMinutes)
@@ -418,13 +433,15 @@ namespace com.IvanMurzak.Unity.MCP
             if (!_isDisposed.TrySetTrue())
                 return; // already disposed
 
-            Flush();
-
-            fileWriteStream?.Close();
-            fileWriteStream?.Dispose();
-            fileWriteStream = null;
-
-            _fileLock.Dispose();
+            try
+            {
+                Flush();
+            }
+            finally
+            {
+                fileWriteStream?.Dispose();
+                fileWriteStream = null;
+            }
 
             GC.SuppressFinalize(this);
         }

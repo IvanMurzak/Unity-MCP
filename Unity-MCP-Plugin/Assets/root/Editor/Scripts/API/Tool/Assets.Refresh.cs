@@ -18,18 +18,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Assets
     {
+        public const string AssetsRefreshToolId = "assets-refresh";
         [McpPluginTool
         (
-            "Assets_Refresh",
-            Title = "Assets Refresh"
+            AssetsRefreshToolId,
+            Title = "Assets / Refresh",
+            IdempotentHint = true
         )]
-        [Description(@"Refreshes the AssetDatabase. Use it if any new files were added or updated in the project outside of Unity API.
-Don't need to call it for Scripts manipulations.
-It also triggers scripts recompilation if any changes in '.cs' files.")]
-        public string Refresh() => MainThread.Instance.Run(() =>
+        [Description("Refreshes the AssetDatabase. " +
+            "Use it if any file was added or updated in the project outside of Unity API. " +
+            "Use it if need to force scripts recompilation when '.cs' file changed.")]
+        public void Refresh(ImportAssetOptions? options = ImportAssetOptions.ForceSynchronousImport)
         {
-            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-            return @$"[Success] AssetDatabase refreshed. {AssetDatabase.GetAllAssetPaths().Length} assets found. Use 'Assets_Search' for more details.";
-        });
+            MainThread.Instance.Run(() =>
+            {
+                AssetDatabase.Refresh(options ?? ImportAssetOptions.ForceSynchronousImport);
+            });
+        }
     }
 }

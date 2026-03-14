@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -12,7 +12,7 @@
 using Extensions.Unity.PlayerPrefsEx;
 using UnityEditor;
 
-namespace com.IvanMurzak.Unity.MCP.Editor
+namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
     [InitializeOnLoad]
     static class MainWindowInitializer
@@ -35,7 +35,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 return;
 
             // Perform initialization
-            UnityMcpPlugin.InitSingletonIfNeeded();
+            UnityMcpPluginEditor.InitSingletonIfNeeded();
             MainWindowEditor.ShowWindow();
 
             isInitialized.Value = true;

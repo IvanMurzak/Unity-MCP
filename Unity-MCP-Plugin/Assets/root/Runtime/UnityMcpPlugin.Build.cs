@@ -10,73 +10,84 @@
 
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet;
+using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.Extensions.Logging;
 using R3;
 using UnityEngine;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace com.IvanMurzak.Unity.MCP
 {
     using Consts = McpPlugin.Common.Consts;
-    using LogLevel = Runtime.Utils.LogLevel;
     using MicrosoftLogLevel = Microsoft.Extensions.Logging.LogLevel;
 
     public partial class UnityMcpPlugin
     {
-        protected readonly object buildMutex = new();
+        static readonly ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger<UnityMcpPlugin>();
 
-        protected IMcpPlugin? mcpPluginInstance;
-        public IMcpPlugin? McpPluginInstance
+        protected sealed class McpPluginSlot : IDisposable
         {
-            get
+            private readonly object _mutex = new();
+            private IMcpPlugin? _instance;
+
+            public IMcpPlugin? Instance
             {
-                lock (buildMutex)
+                get { lock (_mutex) { return _instance; } }
+            }
+
+            public bool HasInstance
+            {
+                get { lock (_mutex) { return _instance != null; } }
+            }
+
+            // Calls factory inside lock — guarantees build-once under concurrent access.
+            // Returns the built instance if it was just created, null if already built.
+            public IMcpPlugin? BuildOnce(Func<IMcpPlugin> factory)
+            {
+                lock (_mutex)
                 {
-                    return mcpPluginInstance;
+                    if (_instance != null) return null;
+                    _instance = factory();
+                    return _instance;
                 }
             }
-            protected set
+
+            // Disposes old instance (if any), sets new one, returns it.
+            public IMcpPlugin Set(IMcpPlugin plugin)
             {
-                lock (buildMutex)
+                lock (_mutex)
                 {
-                    mcpPluginInstance = value;
+                    _instance?.Dispose();
+                    _instance = plugin;
+                    return plugin;
                 }
             }
-        }
-        public bool HasMcpPluginInstance
-        {
-            get
+
+            // Atomically returns and clears the instance without disposing it.
+            // Used by callers that need to control when/how disposal happens (e.g. background thread).
+            public IMcpPlugin? TakeInstance()
             {
-                lock (buildMutex)
+                lock (_mutex)
                 {
-                    return mcpPluginInstance != null;
+                    var instance = _instance;
+                    _instance = null;
+                    return instance;
                 }
             }
-        }
 
-        public virtual UnityMcpPlugin BuildMcpPluginIfNeeded()
-        {
-            lock (buildMutex)
+            public void Dispose()
             {
-                if (mcpPluginInstance != null)
-                    return this; // already built
-
-                mcpPluginInstance = BuildMcpPlugin(
-                    version: BuildVersion(),
-                    reflector: CreateDefaultReflector(),
-                    loggerProvider: BuildLoggerProvider()
-                );
-
-                ApplyConfigToMcpPlugin(mcpPluginInstance);
-
-                mcpPluginInstance.ConnectionState
-                    .Subscribe(state => _connectionState.Value = state)
-                    .AddTo(_disposables);
-
-                return this;
+                lock (_mutex)
+                {
+                    _instance?.Dispose();
+                    _instance = null;
+                }
             }
         }
 
@@ -95,18 +106,17 @@ namespace com.IvanMurzak.Unity.MCP
             return new UnityLoggerProvider();
         }
 
-        protected virtual IMcpPlugin BuildMcpPlugin(McpPlugin.Common.Version version, Reflector reflector, ILoggerProvider? loggerProvider = null)
+        protected virtual IMcpPlugin BuildMcpPlugin(
+            McpPlugin.Common.Version version,
+            Reflector reflector,
+            ILoggerProvider? loggerProvider = null,
+            Action<IMcpPluginBuilder>? configure = null)
         {
-            _logger.LogTrace("{method} called.",
-                nameof(BuildMcpPlugin));
+            _logger.LogTrace("{method} called.", nameof(BuildMcpPlugin));
 
-            var assemblies = AppDomain.CurrentDomain.GetAssemblies();
-            var mcpPlugin = new McpPluginBuilder(version, loggerProvider)
-                .WithConfig(config =>
-                {
-                    _logger.LogInformation("AI Game Developer server host: {host}", Host);
-                    config.Host = Host;
-                })
+            var assemblies = AssemblyUtils.AllAssemblies;
+            var mcpPluginBuilder = new McpPluginBuilder(version, loggerProvider)
+                .SetConfig(unityConnectionConfig ?? throw new InvalidOperationException("UnityConnectionConfig must be set before building the plugin."))
                 .AddLogging(loggingBuilder =>
                 {
                     loggingBuilder.ClearProviders(); // 👈 Clears the default providers
@@ -115,33 +125,83 @@ namespace com.IvanMurzak.Unity.MCP
                     if (loggerProvider != null)
                         loggingBuilder.AddProvider(loggerProvider);
                 })
+                .IgnoreAssemblies(
+                    "mscorlib",
+                    "Mono.Security",
+                    "netstandard",
+                    "nunit.framework",
+                    "System",
+                    "UnityEngine",
+                    "UnityEditor",
+                    "Unity.",
+                    "Microsoft",
+                    "R3",
+                    "McpPlugin",
+                    "ReflectorNet",
+                    "com.IvanMurzak.Unity.MCP.TestFiles",
+                    "com.IvanMurzak.Unity.MCP.Editor.Tests",
+                    "com.IvanMurzak.Unity.MCP.Tests")
                 .WithToolsFromAssembly(assemblies)
                 .WithPromptsFromAssembly(assemblies)
-                .WithResourcesFromAssembly(assemblies)
-                .Build(reflector);
+                .WithResourcesFromAssembly(assemblies);
 
-            _logger.LogTrace("{method} completed.",
-                nameof(BuildMcpPlugin));
+            configure?.Invoke(mcpPluginBuilder);
+
+            var mcpPlugin = mcpPluginBuilder.Build(reflector);
+
+            _pluginConnectionSubscription?.Dispose();
+            _pluginConnectionSubscription = mcpPlugin.ConnectionState
+                .Subscribe(state => _connectionState.Value = state);
+
+            _logger.LogTrace("{method} completed.", nameof(BuildMcpPlugin));
 
             return mcpPlugin;
         }
 
         protected virtual void ApplyConfigToMcpPlugin(IMcpPlugin mcpPlugin)
         {
-            _logger.LogTrace("{method} called.",
-                nameof(ApplyConfigToMcpPlugin));
+            _logger.LogTrace("{method} called.", nameof(ApplyConfigToMcpPlugin));
 
             // Enable/Disable tools based on config
             var toolManager = mcpPlugin.McpManager.ToolManager;
             if (toolManager != null)
             {
-                var allEnabled = unityConnectionConfig.EnabledTools.Contains("*");
-                foreach (var tool in toolManager.GetAllTools())
+                var enabledToolsOverride = unityConnectionConfig.EnabledToolsOverride;
+                if (enabledToolsOverride != null)
                 {
-                    var isEnabled = allEnabled || unityConnectionConfig.EnabledTools.Contains(tool.Name!);
-                    toolManager.SetToolEnabled(tool.Name!, isEnabled);
-                    _logger.LogDebug("{method}: Tool '{tool}' enabled: {isEnabled}",
-                        nameof(ApplyConfigToMcpPlugin), tool.Name, isEnabled);
+                    var allTools = toolManager.GetAllTools().ToList();
+                    var enabledSet = new HashSet<string>(enabledToolsOverride, StringComparer.OrdinalIgnoreCase);
+
+                    // Validate requested tool IDs against the registered tool list
+                    var allToolNames = new HashSet<string>(
+                        allTools.Select(t => t.Name!),
+                        StringComparer.OrdinalIgnoreCase);
+                    foreach (var requestedId in enabledToolsOverride)
+                    {
+                        if (!allToolNames.Contains(requestedId))
+                            _logger.LogError("[MCP] {Key}: tool '{ToolId}' not found. Check the tool ID.",
+                                EnvironmentUtils.EnvTools, requestedId);
+                    }
+
+                    // Apply: enable only tools in the override list, disable all others
+                    foreach (var tool in allTools)
+                    {
+                        var isEnabled = enabledSet.Contains(tool.Name!);
+                        toolManager.SetToolEnabled(tool.Name!, isEnabled);
+                        _logger.LogDebug("{method}: Tool '{tool}' enabled: {isEnabled} (env override)",
+                            nameof(ApplyConfigToMcpPlugin), tool.Name, isEnabled);
+                    }
+                }
+                else
+                {
+                    foreach (var tool in toolManager.GetAllTools())
+                    {
+                        var toolFeature = unityConnectionConfig.Tools.FirstOrDefault(t => t.Name == tool.Name!);
+                        var isEnabled = toolFeature?.Enabled ?? tool.Enabled;
+                        toolManager.SetToolEnabled(tool.Name!, isEnabled);
+                        _logger.LogDebug("{method}: Tool '{tool}' enabled: {isEnabled}",
+                            nameof(ApplyConfigToMcpPlugin), tool.Name, isEnabled);
+                    }
                 }
             }
 
@@ -149,10 +209,10 @@ namespace com.IvanMurzak.Unity.MCP
             var promptManager = mcpPlugin.McpManager.PromptManager;
             if (promptManager != null)
             {
-                var allEnabled = unityConnectionConfig.EnabledPrompts.Contains("*");
                 foreach (var prompt in promptManager.GetAllPrompts())
                 {
-                    var isEnabled = allEnabled || unityConnectionConfig.EnabledPrompts.Contains(prompt.Name);
+                    var promptFeature = unityConnectionConfig.Prompts.FirstOrDefault(p => p.Name == prompt.Name);
+                    var isEnabled = promptFeature?.Enabled ?? prompt.Enabled;
                     promptManager.SetPromptEnabled(prompt.Name, isEnabled);
                     _logger.LogDebug("{method}: Prompt '{prompt}' enabled: {isEnabled}",
                         nameof(ApplyConfigToMcpPlugin), prompt.Name, isEnabled);
@@ -163,18 +223,17 @@ namespace com.IvanMurzak.Unity.MCP
             var resourceManager = mcpPlugin.McpManager.ResourceManager;
             if (resourceManager != null)
             {
-                var allEnabled = unityConnectionConfig.EnabledResources.Contains("*");
                 foreach (var resource in resourceManager.GetAllResources())
                 {
-                    var isEnabled = allEnabled || unityConnectionConfig.EnabledResources.Contains(resource.Name);
+                    var resourceFeature = unityConnectionConfig.Resources.FirstOrDefault(r => r.Name == resource.Name);
+                    var isEnabled = resourceFeature?.Enabled ?? resource.Enabled;
                     resourceManager.SetResourceEnabled(resource.Name, isEnabled);
                     _logger.LogDebug("{method}: Resource '{resource}' enabled: {isEnabled}",
                         nameof(ApplyConfigToMcpPlugin), resource.Name, isEnabled);
                 }
             }
 
-            _logger.LogTrace("{method} completed.",
-                nameof(ApplyConfigToMcpPlugin));
+            _logger.LogTrace("{method} completed.", nameof(ApplyConfigToMcpPlugin));
         }
     }
 }

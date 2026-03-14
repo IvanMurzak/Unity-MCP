@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -18,12 +18,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Console
     {
+        public const string ConsoleGetLogsToolId = "console-get-logs";
         [McpPluginTool
         (
-            "Console_GetLogs",
-            Title = "Get Unity Console Logs"
+            ConsoleGetLogsToolId,
+            Title = "Console / Get Logs",
+            ReadOnlyHint = true,
+            IdempotentHint = true
         )]
-        [Description("Retrieves the Unity Console log entries. Supports filtering by log type and limiting the number of entries returned.")]
+        [Description("Retrieves Unity Editor logs. " +
+            "Useful for debugging and monitoring Unity Editor activity.")]
         public LogEntry[] GetLogs
         (
             [Description("Maximum number of log entries to return. Minimum: 1. Default: 100")]
@@ -40,12 +44,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (maxEntries < 1)
                 throw new ArgumentException(Error.InvalidMaxEntries(maxEntries));
 
-            if (!UnityMcpPlugin.HasInstance)
-                throw new InvalidOperationException("[Error] UnityMcpPlugin is not initialized.");
+            if (!UnityMcpPluginEditor.HasInstance)
+                throw new InvalidOperationException("UnityMcpPluginEditor is not initialized.");
 
-            var logCollector = UnityMcpPlugin.Instance.LogCollector;
+            var logCollector = UnityMcpPluginEditor.Instance.LogCollector;
             if (logCollector == null)
-                throw new InvalidOperationException("[Error] LogCollector is not initialized.");
+                throw new InvalidOperationException("LogCollector is not initialized.");
 
             // Get all log entries as array to avoid concurrent modification
             var logs = logCollector.Query(

@@ -9,54 +9,119 @@
 */
 
 #nullable enable
-using com.IvanMurzak.McpPlugin.Common.Reflection.Convertor;
 using com.IvanMurzak.ReflectorNet;
-using com.IvanMurzak.ReflectorNet.Convertor;
+using com.IvanMurzak.ReflectorNet.Converter;
 using com.IvanMurzak.Unity.MCP.JsonConverters;
-using com.IvanMurzak.Unity.MCP.Reflection.Convertor;
+using com.IvanMurzak.Unity.MCP.Reflection.Converter;
+using Microsoft.Extensions.Logging;
 
 namespace com.IvanMurzak.Unity.MCP
 {
     public partial class UnityMcpPlugin
     {
-        static Reflector CreateDefaultReflector()
+        public Reflector CreateDefaultReflector()
         {
+            var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+
             var reflector = new Reflector();
+            reflector.JsonSerializerOptions.NumberHandling = System.Text.Json.Serialization.JsonNumberHandling.AllowNamedFloatingPointLiterals;
 
             // Remove converters that are not needed in Unity
-            reflector.Convertors.Remove<GenericReflectionConvertor<object>>();
-            reflector.Convertors.Remove<ArrayReflectionConvertor>();
+            reflector.Converters.Remove<GenericReflectionConverter<object>>();
+            reflector.Converters.Remove<ArrayReflectionConverter>();
 
             // Add Unity-specific converters
-            reflector.Convertors.Add(new UnityGenericReflectionConvertor<object>());
-            reflector.Convertors.Add(new UnityArrayReflectionConvertor());
+            reflector.Converters.Add(new UnityGenericReflectionConverter<object>());
+            reflector.Converters.Add(new UnityArrayReflectionConverter());
 
             // Unity types
-            reflector.Convertors.Add(new UnityEngine_Color32_ReflectionConvertor());
-            reflector.Convertors.Add(new UnityEngine_Color_ReflectionConvertor());
-            reflector.Convertors.Add(new UnityEngine_Matrix4x4_ReflectionConvertor());
-            reflector.Convertors.Add(new UnityEngine_Quaternion_ReflectionConvertor());
-            reflector.Convertors.Add(new UnityEngine_Vector2_ReflectionConvertor());
-            reflector.Convertors.Add(new UnityEngine_Vector2Int_ReflectionConvertor());
-            reflector.Convertors.Add(new UnityEngine_Vector3_ReflectionConvertor());
-            reflector.Convertors.Add(new UnityEngine_Vector3Int_ReflectionConvertor());
-            reflector.Convertors.Add(new UnityEngine_Vector4_ReflectionConvertor());
-            reflector.Convertors.Add(new UnityEngine_Bounds_ReflectionConvertor());
-            reflector.Convertors.Add(new UnityEngine_BoundsInt_ReflectionConvertor());
-            reflector.Convertors.Add(new UnityEngine_Rect_ReflectionConvertor());
-            reflector.Convertors.Add(new UnityEngine_RectInt_ReflectionConvertor());
+            reflector.Converters.Add(new UnityEngine_Color32_ReflectionConverter());
+            reflector.Converters.Add(new UnityEngine_Color_ReflectionConverter());
+            reflector.Converters.Add(new UnityEngine_Matrix4x4_ReflectionConverter());
+            reflector.Converters.Add(new UnityEngine_Quaternion_ReflectionConverter());
+            reflector.Converters.Add(new UnityEngine_Vector2_ReflectionConverter());
+            reflector.Converters.Add(new UnityEngine_Vector2Int_ReflectionConverter());
+            reflector.Converters.Add(new UnityEngine_Vector3_ReflectionConverter());
+            reflector.Converters.Add(new UnityEngine_Vector3Int_ReflectionConverter());
+            reflector.Converters.Add(new UnityEngine_Vector4_ReflectionConverter());
+            reflector.Converters.Add(new UnityEngine_Bounds_ReflectionConverter());
+            reflector.Converters.Add(new UnityEngine_BoundsInt_ReflectionConverter());
+            reflector.Converters.Add(new UnityEngine_Rect_ReflectionConverter());
+            reflector.Converters.Add(new UnityEngine_RectInt_ReflectionConverter());
+
+            // Unity objects
+            reflector.Converters.Add(new UnityEngine_Object_ReflectionConverter());
+            reflector.Converters.Add(new UnityEngine_GameObject_ReflectionConverter());
 
             // Components
-            reflector.Convertors.Add(new UnityEngine_Object_ReflectionConvertor());
-            reflector.Convertors.Add(new UnityEngine_GameObject_ReflectionConvertor());
-            reflector.Convertors.Add(new UnityEngine_Component_ReflectionConvertor());
-            reflector.Convertors.Add(new UnityEngine_Transform_ReflectionConvertor());
-            reflector.Convertors.Add(new UnityEngine_Renderer_ReflectionConvertor());
-            reflector.Convertors.Add(new UnityEngine_MeshFilter_ReflectionConvertor());
+            var componentConverter = new UnityEngine_Component_ReflectionConverter();
+            reflector.Converters.Add(componentConverter);
+            reflector.Converters.Add(new UnityEngine_Transform_ReflectionConverter());
+            reflector.Converters.Add(new UnityEngine_Renderer_ReflectionConverter());
+            reflector.Converters.Add(new UnityEngine_MeshFilter_ReflectionConverter());
+            reflector.Converters.Add(new UnityEngine_Collider_ReflectionConverter(componentConverter));
 
             // Assets
-            reflector.Convertors.Add(new UnityEngine_Material_ReflectionConvertor());
-            reflector.Convertors.Add(new UnityEngine_Sprite_ReflectionConvertor());
+            reflector.Converters.Add(new UnityEngine_Material_ReflectionConverter());
+            reflector.Converters.Add(new UnityEngine_Texture_ReflectionConverter());
+            reflector.Converters.Add(new UnityEngine_Sprite_ReflectionConverter());
+            reflector.Converters.Add(new UnityEngine_TextAsset_ReflectionConverter());
+
+            // Blacklist types
+            // ---------------------------------------------------------
+
+            // System types
+            reflector.Converters.BlacklistType(typeof(System.Delegate));
+            reflector.Converters.BlacklistType(typeof(System.EventHandler));
+            reflector.Converters.BlacklistType(typeof(System.EventHandler<>));
+            reflector.Converters.BlacklistType(typeof(System.MulticastDelegate));
+            reflector.Converters.BlacklistType(typeof(System.IntPtr));
+            reflector.Converters.BlacklistType(typeof(System.UIntPtr));
+            reflector.Converters.BlacklistType(typeof(System.Reflection.FieldInfo));
+            reflector.Converters.BlacklistType(typeof(System.Reflection.PropertyInfo));
+            reflector.Converters.BlacklistType(typeof(System.Threading.CancellationToken));
+            reflector.Converters.BlacklistType(typeof(System.Span<>));
+            reflector.Converters.BlacklistType(typeof(System.ReadOnlySpan<>));
+
+#if UNITY_2023_1_OR_NEWER
+            reflector.Converters.BlacklistType(typeof(UnityEngine.LowLevelPhysics.GeometryHolder));
+#endif
+            // Redundant text data
+            reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.Text.FontFeatureTable));
+            reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.Glyph));
+            reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.GlyphRect));
+            reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.GlyphMetrics));
+
+            // Redundant TextMeshPro data
+            reflector.Converters.BlacklistTypesInAssembly(
+                assemblyNamePrefix: "Unity.TextMeshPro",
+                typeFullNames: new[]
+                {
+                    "TMPro.TMP_TextInfo",         // Heavy text data
+                    "TMPro.TMP_TextElement",      // Heavy text data
+                    "TMPro.TMP_FontFeatureTable", // Heavy font data
+                    "TMPro.TMP_FontWeightPair",   // Heavy font data
+                    "TMPro.FaceInfo_Legacy"       // Heavy font data
+                }
+            );
+
+            // Redundant RenderPipeline data
+            reflector.Converters.BlacklistTypeInAssembly(
+                assemblyNamePrefix: "Unity.RenderPipelines.Core.Runtime",
+                typeFullName: "UnityEngine.Rendering.RTHandle" // Can't be utilized
+            );
+
+            // Photon IL-weaved types
+            reflector.Converters.BlacklistTypeInAssembly(
+                assemblyNamePrefix: "Fusion.Runtime",
+                typeFullName: "Fusion.NetworkBehaviourBuffer"
+            );
+
+            // Addressables
+            reflector.Converters.BlacklistTypeInAssembly(
+                assemblyNamePrefix: "Unity.ResourceManager",
+                typeFullName: "UnityEngine.ResourceManagement.AsyncOperations.AsyncOperationHandle"
+            );
 
             // Json Converters
             // ---------------------------------------------------------
@@ -81,6 +146,11 @@ namespace com.IvanMurzak.Unity.MCP
             reflector.JsonSerializer.AddConverter(new AssetObjectRefConverter());
             reflector.JsonSerializer.AddConverter(new GameObjectRefConverter());
             reflector.JsonSerializer.AddConverter(new ComponentRefConverter());
+            reflector.JsonSerializer.AddConverter(new SceneRefConverter());
+
+            stopwatch.Stop();
+            _logger.LogDebug("Created default reflector in {elapsedMilliseconds} ms.",
+                stopwatch.ElapsedMilliseconds);
 
             return reflector;
         }

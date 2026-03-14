@@ -14,17 +14,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using com.IvanMurzak.McpPlugin;
-using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
+using com.IvanMurzak.ReflectorNet.Utils;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     [McpPluginToolType]
     public partial class Tool_Reflection
     {
-        static IEnumerable<Type> AllTypes => AppDomain.CurrentDomain.GetAssemblies()
-            .SelectMany(assembly => assembly.GetTypes());
+        static IEnumerable<Type> AllTypes => TypeUtils.AllTypes;
 
         static IEnumerable<MethodInfo> AllMethods => AllTypes
             .SelectMany(type => type.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static))
@@ -151,12 +150,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         {
             public static string MoreThanOneMethodFound(List<MethodInfo> methods)
             {
-                var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+                var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
                 var methodsString = methods
                     .Select(method => new MethodData(reflector, method, justRef: false))
                     .ToJson(reflector);
 
-                return @$"[Error] Found more than one method. Only single method should be targeted. Please specify the method name more precisely.
+                return @$"Found more than one method. Only single method should be targeted. Please specify the method name more precisely.
 Found {methods.Count} method(s):
 ```json
 {methodsString}

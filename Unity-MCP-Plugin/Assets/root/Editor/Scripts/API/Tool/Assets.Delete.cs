@@ -11,43 +11,81 @@
 #nullable enable
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Text;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
+using com.IvanMurzak.Unity.MCP.Utils;
+using Microsoft.Extensions.Logging;
 using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Assets
     {
+        public const string AssetsDeleteToolId = "assets-delete";
         [McpPluginTool
         (
-            "Assets_Delete",
-            Title = "Assets Delete"
+            AssetsDeleteToolId,
+            Title = "Assets / Delete",
+            DestructiveHint = true,
+            Enabled = false
         )]
-        [Description(@"Delete the assets at paths from the project. Does AssetDatabase.Refresh() at the end.")]
-        public string Delete
+        [Description("Delete the assets at paths from the project. " +
+            "Does AssetDatabase.Refresh() at the end. " +
+            "Use '" + AssetsFindToolId + "' tool to find assets before deleting.")]
+        public DeleteAssetsResponse Delete
         (
             [Description("The paths of the assets")]
             string[] paths
         )
-        => MainThread.Instance.Run(() =>
         {
-            if (paths.Length == 0)
-                return Error.SourcePathsArrayIsEmpty();
-
-            var outFailedPaths = new List<string>();
-            var success = AssetDatabase.DeleteAssets(paths, outFailedPaths);
-            if (!success)
+            return MainThread.Instance.Run(() =>
             {
-                var stringBuilder = new StringBuilder();
-                foreach (var failedPath in outFailedPaths)
-                    stringBuilder.AppendLine($"[Error] Failed to delete asset at {failedPath}.");
-                return stringBuilder.ToString();
-            }
+                var logger = UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_Assets>();
 
-            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-            return "[Success] Deleted assets at paths:\n" + string.Join("\n", paths);
-        });
+                if (paths.Length == 0)
+                    throw new System.Exception(Error.SourcePathsArrayIsEmpty());
+
+                logger.LogInformation("Deleting {Count} asset(s): {Paths}", paths.Length, string.Join(", ", paths));
+
+                var response = new DeleteAssetsResponse();
+                var outFailedPaths = new List<string>();
+                var success = AssetDatabase.DeleteAssets(paths, outFailedPaths);
+
+                if (!success)
+                {
+                    response.Errors ??= new();
+                    foreach (var failedPath in outFailedPaths)
+                    {
+                        logger.LogWarning("Failed to delete asset at '{Path}'", failedPath);
+                        response.Errors.Add($"Failed to delete asset at {failedPath}.");
+                    }
+                }
+
+                // Add successfully deleted paths
+                foreach (var path in paths)
+                {
+                    if (!outFailedPaths.Contains(path))
+                    {
+                        logger.LogInformation("Successfully deleted asset at '{Path}'", path);
+                        response.DeletedPaths ??= new();
+                        response.DeletedPaths.Add(path);
+                    }
+                }
+
+                AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+                EditorUtils.RepaintAllEditorWindows();
+
+                return response;
+            });
+        }
+
+        public class DeleteAssetsResponse
+        {
+            [Description("List of paths of deleted assets.")]
+            public List<string>? DeletedPaths { get; set; }
+            [Description("List of errors encountered during delete operations.")]
+            public List<string>? Errors { get; set; }
+        }
     }
 }

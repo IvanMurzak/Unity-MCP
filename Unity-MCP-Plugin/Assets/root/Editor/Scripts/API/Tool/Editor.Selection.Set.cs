@@ -10,37 +10,40 @@
 
 #nullable enable
 using System.ComponentModel;
+using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Editor_Selection
     {
+        public const string EditorSelectionSetToolId = "editor-selection-set";
         [McpPluginTool
         (
-            "Editor_Selection_Set",
-            Title = "Set Selection in Unity Editor"
+            EditorSelectionSetToolId,
+            Title = "Editor / Selection / Set",
+            IdempotentHint = true,
+            Enabled = false
         )]
-        [Description(@"'UnityEditor.Selection'. Access to the selection in the editor.
-Use it to select Assets or GameObjects in a scene. Set empty array to clear selection.
-Selection.instanceIDs - The actual unfiltered selection from the Scene returned as instance ids.
-Selection.activeInstanceID -  The 'instanceID' of the actual object selection. Includes Prefabs, non-modifiable objects.")]
-        public string Set
-        (
-            [Description("The 'instanceID' array of the target GameObjects.")]
-            int[]? instanceIDs = null,
-            [Description("The 'instanceID' of the target Object.")]
-            int activeInstanceID = 0
-        )
+        [Description("Set the current Selection in the Unity Editor to the provided objects. " +
+            "Use '" + EditorSelectionGetToolId + "' tool to get the current selection first.")]
+        public SelectionData Set(ObjectRef[] select)
         {
             return MainThread.Instance.Run(() =>
             {
-                Selection.instanceIDs = instanceIDs ?? new int[0];
-                Selection.activeInstanceID = activeInstanceID;
+                var objects = select.Select(o => o.FindObject()).ToArray();
+                if (objects.Any(o => o == null))
+                    throw new System.Exception("One or more objects could not be found. Please ensure all provided ObjectRefs are valid.");
 
-                return "[Success] " + SelectionPrint;
+                Selection.objects = objects;
+
+                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+
+                return SelectionData.FromSelection();
             });
         }
     }

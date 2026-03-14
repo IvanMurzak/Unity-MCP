@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System.Collections.Generic;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
@@ -18,23 +19,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     [McpPluginToolType]
     public partial class Tool_Scene
     {
-        public static string LoadedScenes
-            => $"Loaded Scenes:\n{string.Join("\n", SceneUtils.GetAllLoadedScenes().Select(scene => scene.name))}";
+        public static IEnumerable<UnityEngine.SceneManagement.Scene> OpenedScenes => SceneUtils.GetAllOpenedScenes();
+        public static string OpenedScenesText
+            => $"Opened Scenes:\n{string.Join("\n", SceneUtils.GetAllOpenedScenes().Select(scene => scene.name))}";
 
         public static class Error
         {
-            static string ScenesPrinted => string.Join("\n", SceneUtils.GetAllLoadedScenes().Select(scene => scene.name));
+            static string ScenesPrinted => string.Join("\n", SceneUtils.GetAllOpenedScenes().Select(scene => scene.name));
 
             public static string SceneNameIsEmpty()
-                => $"[Error] Scene name is empty. Available scenes:\n{ScenesPrinted}";
+                => $"Scene name is empty. Available scenes:\n{ScenesPrinted}";
             public static string NotFoundSceneWithName(string? name)
-                => $"[Error] Scene '{name ?? "null"}' not found. Available scenes:\n{ScenesPrinted}";
+                => $"Scene '{name ?? "null"}' not found. Available scenes:\n{ScenesPrinted}";
             public static string ScenePathIsEmpty()
-                => "[Error] Scene path is empty. Please provide a valid path. Sample: \"Assets/Scenes/MyScene.unity\".";
+                => "Scene path is empty. Please provide a valid path. Sample: \"Assets/Scenes/MyScene.unity\".";
             public static string FilePathMustEndsWithUnity()
-                => "[Error] File path must end with '.unity'. Please provide a valid path. Sample: \"Assets/Scenes/MyScene.unity\".";
+                => "File path must end with '.unity'. Please provide a valid path. Sample: \"Assets/Scenes/MyScene.unity\".";
             public static string InvalidLoadSceneMode(int loadSceneMode)
-                => $"[Error] Invalid load scene mode '{loadSceneMode}'. Valid values are 0 (Single) and 1 (Additive).";
+                => $"Invalid load scene mode '{loadSceneMode}'. Valid values are 0 (Single) and 1 (Additive).";
         }
     }
 }

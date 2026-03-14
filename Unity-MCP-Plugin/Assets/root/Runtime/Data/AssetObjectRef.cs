@@ -15,21 +15,27 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Text.Json.Serialization;
+using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
     [Serializable]
-    [Description("Reference to UnityEngine.Object asset instance. It could be Material, ScriptableObject, Prefab, and any other Asset. Anything located in the Assets folder.")]
+    [Description("Reference to UnityEngine.Object asset instance. " +
+        "It could be Material, ScriptableObject, Prefab, and any other Asset. " +
+        "Anything located in the Assets and Packages folders.")]
     public class AssetObjectRef : ObjectRef
     {
         public static partial class AssetObjectRefProperty
         {
+            public const string AssetType = "assetType";
             public const string AssetPath = "assetPath";
             public const string AssetGuid = "assetGuid";
 
             public static IEnumerable<string> All => ObjectRefProperty.All.Concat(new[]
             {
+                AssetType,
                 AssetPath,
                 AssetGuid
             });
@@ -37,6 +43,10 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
         [JsonInclude, JsonPropertyName(ObjectRefProperty.InstanceID)]
         [Description("instanceID of the UnityEngine.Object. If this is '0' and 'assetPath' and 'assetGuid' is not provided, empty or null, then it will be used as 'null'.")]
         public override int InstanceID { get; set; } = 0;
+
+        [JsonInclude, JsonPropertyName(AssetObjectRefProperty.AssetType)]
+        [Description("Type of the asset.")]
+        public Type? AssetType { get; set; }
 
         [JsonInclude, JsonPropertyName(AssetObjectRefProperty.AssetPath)]
         [Description("Path to the asset within the project. Starts with 'Assets/'")]
@@ -48,25 +58,64 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 
         public AssetObjectRef() : this(id: 0) { }
         public AssetObjectRef(int id) => InstanceID = id;
-        public AssetObjectRef(string assetPath) => this.AssetPath = assetPath;
-
-        [JsonIgnore]
-        public virtual bool IsValid
+#if UNITY_EDITOR
+        public AssetObjectRef(string assetPath) : this(
+            UnityEditor.AssetDatabase.LoadAssetAtPath(
+                assetPath: assetPath,
+                type: UnityEditor.AssetDatabase.GetMainAssetTypeAtPath(assetPath) ?? throw new ArgumentException($"Cannot determine asset type at path '{assetPath}'."))
+            ?? throw new ArgumentException($"No asset found at path '{assetPath}'."))
         {
-            get
+            // empty
+        }
+#else
+        public AssetObjectRef(string assetPath) : this()
+        {
+            AssetPath = assetPath;
+        }
+#endif
+        public AssetObjectRef(UnityEngine.Object? obj, bool throwIfNotAnAsset = true) : base(obj)
+        {
+#if UNITY_EDITOR
+            if (obj != null)
             {
-                if (InstanceID != 0)
-                    return true;
-
-                if (!StringUtils.IsNullOrEmpty(AssetPath)
-                    && (AssetPath!.StartsWith("Assets/") || AssetPath.StartsWith("Packages/")))
-                    return true;
-
-                if (!StringUtils.IsNullOrEmpty(AssetGuid))
-                    return true;
-
-                return false;
+                if (!obj.IsAsset())
+                {
+                    if (throwIfNotAnAsset)
+                        throw new ArgumentException($"Provided object (InstanceID={obj.GetInstanceID()}) is not an asset. Type: {obj.GetType().GetTypeId()}");
+                    return;
+                }
+                AssetType = obj.GetType();
+                AssetPath = obj.GetAssetPath();
+                AssetGuid = !StringUtils.IsNullOrEmpty(AssetPath)
+                    ? UnityEditor.AssetDatabase.AssetPathToGUID(AssetPath)
+                    : null;
             }
+#endif
+        }
+
+        public override bool IsValid(out string? error)
+        {
+            if (InstanceID != 0)
+            {
+                error = null;
+                return true;
+            }
+
+            if (!StringUtils.IsNullOrEmpty(AssetPath)
+                && (AssetPath!.StartsWith("Assets/") || AssetPath.StartsWith("Packages/") || AssetPath.StartsWith(ExtensionsRuntimeObject.UnityEditorBuiltInResourcesPath)))
+            {
+                error = null;
+                return true;
+            }
+
+            if (!StringUtils.IsNullOrEmpty(AssetGuid))
+            {
+                error = null;
+                return true;
+            }
+
+            error = $"Neither '{AssetObjectRefProperty.All.JoinEnclose()}' is provided.";
+            return false;
         }
 
         public override string ToString()

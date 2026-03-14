@@ -8,38 +8,38 @@
     "source": "github",
     "subfolder": "Unity-MCP-Server"
   },
-  "version": "0.27.0",
+  "version": "0.53.1",
   "packages": [
     {
       "registry_type": "oci",
       "registry_base_url": "https://docker.io",
       "identifier": "ivanmurzakdev/unity-mcp-server",
-      "version": "0.27.0",
+      "version": "0.53.1",
       "transport": {
         "type": "stdio"
       },
       "environment_variables": [
         {
-          "name": "UNITY_MCP_PORT",
+          "name": "MCP_PLUGIN_PORT",
           "description": "Client -> Server <- Plugin connection port (default: 8080)",
           "format": "number",
           "is_required": false,
           "is_secret": false
         },
         {
-          "name": "UNITY_MCP_PLUGIN_TIMEOUT",
+          "name": "MCP_PLUGIN_CLIENT_TIMEOUT",
           "description": "Plugin -> Server connection timeout (ms) (default: 10000)",
           "format": "number",
           "is_required": false,
           "is_secret": false
         },
         {
-          "name": "UNITY_MCP_CLIENT_TRANSPORT",
-          "description": "Client -> Server transport type: stdio or http (default: http)",
+          "name": "MCP_PLUGIN_CLIENT_TRANSPORT",
+          "description": "Client -> Server transport type: stdio or streamableHttp (default: stdio)",
           "format": "string",
           "default": "stdio",
           "enum": [
-            "http",
+            "streamableHttp",
             "stdio"
           ],
           "is_required": false,

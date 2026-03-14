@@ -1,0 +1,106 @@
+# ┌──────────────────────────────────────────────────────────────────┐
+# │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
+# │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
+# │  Copyright (c) 2025 Ivan Murzak                                  │
+# │  Licensed under the Apache License, Version 2.0.                 │
+# │  See the LICENSE file in the project root for more information.  │
+# └──────────────────────────────────────────────────────────────────┘
+
+name: Claude Code
+
+on:
+  workflow_dispatch:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  issues:
+    types: [opened, assigned]
+  pull_request_review:
+    types: [submitted]
+
+jobs:
+  claude:
+    if: |
+      github.actor == 'IvanMurzak' && (
+        github.event_name == 'workflow_dispatch' ||
+        (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+        (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
+        (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
+        (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
+      )
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read # Required for Claude to read CI results on PRs
+    steps:
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Setup Unity MCP
+        uses: ./.github/actions/setup-unity-mcp
+        with:
+          unity-email: ${{ secrets.UNITY_EMAIL }}
+          unity-password: ${{ secrets.UNITY_PASSWORD }}
+          unity-mcp-tools: ${{ secrets.UNITY_MCP_TOOLS != '' && secrets.UNITY_MCP_TOOLS || 'assets-refresh,console-get-logs,script-execute,tests-run' }}
+
+      - name: Run Claude Code
+        id: claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ github.token }}
+
+          # This is an optional setting that allows Claude to read CI results on PRs
+          additional_permissions: |
+            actions: read
+
+          show_full_output: true
+
+          settings: |
+            {
+              "permissions": {
+                "allow": [
+                  "Bash(*)",
+                  "Read(*)",
+                  "Write(*)",
+                  "Edit(*)",
+                  "Glob(*)",
+                  "Grep(*)",
+                  "WebFetch(*)",
+                  "WebSearch(*)",
+                  "Agent(*)",
+                  "NotebookEdit(*)",
+                  "TodoWrite",
+                  "Skill(*)",
+                  "TaskOutput(*)",
+                  "TaskStop(*)",
+                  "EnterPlanMode",
+                  "ExitPlanMode",
+                  "EnterWorktree",
+                  "AskUserQuestion",
+                  "mcp__ai-game-developer__*"
+                ]
+              }
+            }
+
+          claude_args: >-
+            --mcp-config ${{ github.workspace }}/.github/configs/mcp-servers.json
+
+      - name: Cleanup Docker containers
+        if: always()
+        run: |
+          docker rm -f unity-mcp-server unity-editor 2>/dev/null || true
+        shell: bash

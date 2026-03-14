@@ -1,0 +1,16 @@
+/* ==========================================================================
+   MCP Resources Window Styles
+   Imports common list window styles and adds resource-specific customizations
+   ========================================================================== */
+
+@import url("common/_mcp-list-window.uss");
+
+/* Resource-specific: URI label color */
+.item-uri {
+    color: #9ACD32;
+}
+
+/* Resource-specific: MIME type label color */
+.item-mimetype {
+    color: #DDA0DD;
+}

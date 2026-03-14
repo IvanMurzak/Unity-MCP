@@ -10,6 +10,7 @@
 
 #nullable enable
 using com.IvanMurzak.ReflectorNet;
+using com.IvanMurzak.ReflectorNet.Model;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -21,6 +22,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         const string GO_Child1Name = "child 1";
         const string GO_Child2Name = "child 2";
 
+        void ResultValidation(Logs? logs)
+        {
+            ResultValidation(logs?.ToString());
+        }
         void ResultValidation(string? result)
         {
             Debug.Log($"[{GetType().GetTypeShortName()}] Result:\n{result}");

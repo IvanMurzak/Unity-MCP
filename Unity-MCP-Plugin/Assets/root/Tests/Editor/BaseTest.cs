@@ -1,4 +1,4 @@
-/*
+﻿/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.Text.Json;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet;
+using com.IvanMurzak.Unity.MCP.Utils;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -23,12 +24,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
     public class BaseTest
     {
+        protected Microsoft.Extensions.Logging.ILogger _logger = null!;
+
         [UnitySetUp]
         public virtual IEnumerator SetUp()
         {
             Debug.Log($"[{GetType().GetTypeShortName()}] SetUp");
 
-            UnityMcpPlugin.InitSingletonIfNeeded();
+            UnityMcpPluginEditor.InitSingletonIfNeeded();
+
+            _logger = UnityLoggerFactory.LoggerFactory.CreateLogger("Tests");
 
             yield return null;
         }
@@ -49,21 +54,37 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 Object.DestroyImmediate(go);
         }
 
-        protected virtual ResponseData<ResponseCallTool> RunTool(string toolName, string json)
+        private (ResponseData<ResponseCallTool> result, string json) CallToolInternal(string toolName, string json)
         {
-            var reflector = McpPlugin.McpPlugin.Instance!.McpManager.Reflector;
+            var reflector = UnityMcpPluginEditor.Instance.Reflector;
 
             Debug.Log($"{toolName} Started with JSON:\n{json}");
 
             var parameters = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
             var request = new RequestCallTool(toolName, parameters!);
-            var task = McpPlugin.McpPlugin.Instance.McpManager.ToolManager!.RunCallTool(request);
+            var task = UnityMcpPluginEditor.Instance.Tools!.RunCallTool(request);
             var result = task.Result;
 
             Debug.Log($"{toolName} Completed");
 
-            var jsonResult = result.ToJson(reflector);
+            var jsonResult = result.ToJson(reflector)!;
             Debug.Log($"{toolName} Result:\n{jsonResult}");
+
+            return (result, jsonResult);
+        }
+
+        /// <summary>
+        /// Calls a tool and returns the raw JSON result string without asserting success.
+        /// Useful for testing error responses.
+        /// </summary>
+        protected virtual string RunToolRaw(string toolName, string json)
+        {
+            return CallToolInternal(toolName, json).json;
+        }
+
+        protected virtual ResponseData<ResponseCallTool> RunTool(string toolName, string json)
+        {
+            var (result, jsonResult) = CallToolInternal(toolName, json);
 
             Assert.IsFalse(result.Status == ResponseStatus.Error, $"Tool call failed with error status: {result.Message}");
             Assert.IsNotNull(result.Message, $"Tool call returned null message");

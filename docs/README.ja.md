@@ -4,183 +4,329 @@
 [![MCP](https://badge.mcpx.dev 'MCP Server')](https://modelcontextprotocol.io/introduction)
 [![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&labelColor=333A41 'OpenUPM package')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
 [![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
-[![Unity Editor](https://img.shields.io/badge/Editor-X?style=flat&logo=unity&labelColor=333A41&color=49BC5C 'Unity Editor supported')](https://unity.com/releases/editor/archive)
-[![Unity Runtime](https://img.shields.io/badge/Runtime-X?style=flat&logo=unity&labelColor=333A41&color=49BC5C 'Unity Runtime supported')](https://unity.com/releases/editor/archive)
+[![Unity Editor](https://img.shields.io/badge/Editor-X?style=flat&logo=unity&labelColor=333A41&color=2A2A2A 'Unity Editor supported')](https://unity.com/releases/editor/archive)
+[![Unity Runtime](https://img.shields.io/badge/Runtime-X?style=flat&logo=unity&labelColor=333A41&color=2A2A2A 'Unity Runtime supported')](https://unity.com/releases/editor/archive)
 [![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg 'Tests Passed')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)</br>
 [![Discord](https://img.shields.io/badge/Discord-Join-7289da?logo=discord&logoColor=white&labelColor=333A41 'Join')](https://discord.gg/cfbdMZX99G)
+[![OpenUPM](https://img.shields.io/badge/dynamic/json?labelColor=333A41&label=Downloads&query=%24.downloads&suffix=%2Fmonth&url=https%3A%2F%2Fpackage.openupm.com%2Fdownloads%2Fpoint%2Flast-month%2Fcom.ivanmurzak.unity.mcp)](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
 [![Stars](https://img.shields.io/github/stars/IvanMurzak/Unity-MCP 'Stars')](https://github.com/IvanMurzak/Unity-MCP/stargazers)
 [![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&labelColor=333A41)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
   <img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/promo/ai-developer-banner.jpg" alt="AI work" title="Level building" width="100%">
 
-  <b>[English](https://github.com/IvanMurzak/Unity-MCP/blob/main/README.md) | [中文](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.zh-CN.md) | [Español](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.es.md)</b>
+  <b>[English](https://github.com/IvanMurzak/Unity-MCP/blob/main/README.md) | [日本語](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.ja.md) | [Español](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.es.md)</b>
 
 </div>
 
-`Unity MCP` は**エディターとランタイム両方に対応した**AI駆動のゲーム開発アシスタントです。MCP経由で **Claude**、**Cursor**、**Windsurf** をUnityに接続します。ワークフローを自動化し、コードを生成し、**ゲーム内でAIを有効化**できます。
+`Unity MCP` は **エディター & ランタイム** 向けの AI 駆動ゲーム開発アシスタントです。**Claude**、**Cursor**、**Windsurf** を MCP を通じて Unity に接続できます。ワークフローの自動化、コード生成、そして**ゲーム内での AI 活用**を実現します。
 
-他のツールとは異なり、このプラグインは**コンパイル済みゲーム内で動作**し、リアルタイムAIデバッグやプレイヤー-AI間のインタラクションを可能にします。
+他のツールとは異なり、このプラグインは**コンパイル済みのゲーム内部**でも動作するため、リアルタイムの AI デバッグやプレイヤーと AI のインタラクションが可能です。
 
-> **[💬 Discordサーバーに参加](https://discord.gg/cfbdMZX99G)** - 質問、作品の紹介、他の開発者との交流ができます！
+> **[💬 Discord サーバーに参加](https://discord.gg/cfbdMZX99G)** - 質問したり、作品を披露したり、他の開発者とつながりましょう！
 
-## 機能
+## ![AI ゲーム開発者 — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-features.ja.svg?raw=true)
 
-- ✔️ **ランタイムAI** - コンパイル済みゲーム内でLLMを直接使用し、動的NPCの動作やデバッグを実現
-- ✔️ **自然な会話** - 人間と話すようにAIとチャット
-- ✔️ **コードアシスタンス** - AIにコードの作成とテストの実行を依頼
-- ✔️ **デバッグサポート** - AIにログの取得とエラーの修正を依頼
-- ✔️ **複数のLLMプロバイダー** - **Anthropic**、**OpenAI**、**DeepSeek**、Microsoft、または他のプロバイダーのエージェントを制限なく使用
-- ✔️ **柔軟なデプロイメント** - 設定によりローカル（stdio）およびリモート（http）で動作
-- ✔️ **豊富なツールセット** - 幅広いデフォルト[MCPツール](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)
-- ✔️ **拡張可能** - プロジェクトコードで[カスタムMCPツール](#カスタムmcpツールの追加)を作成
+- ✔️ **AI エージェント** - **Anthropic**、**OpenAI**、**Microsoft**、その他あらゆるプロバイダーの最良のエージェントを制限なく使用
+- ✔️ **ツール** - Unity Editor で操作するための豊富なデフォルト [MCP ツール](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)
+- ✔️ **スキル** - 各 MCP ツールのスキルを自動生成
+- ✔️ **コードとテスト** - AI にコードを書かせ、テストを実行
+- ✔️ **ランタイム（ゲーム内）** - コンパイル済みゲーム内で直接 LLM を使用し、動的な NPC 挙動やデバッグに活用
+- ✔️ **デバッグサポート** - AI にログを取得させ、エラーを修正
+- ✔️ **自然な会話** - 人と話すように AI とチャット
+- ✔️ **柔軟なデプロイ** - 設定によりローカル（stdio）およびリモート（http）で動作
+- ✔️ **拡張可能** - [プロジェクトコードにカスタム MCP ツールを作成](#カスタム-mcp-ツールの追加)可能
 
-### 安定性ステータス
+[![インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/latest/download/AI-Game-Dev-Installer.unitypackage)
 
-| Unityバージョン | エディットモード | プレイモード | スタンドアロン |
-| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 2022.3.61f1   | [![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg?job=test-unity-2022-3-61f1-editmode)](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml) | [![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg?job=test-unity-2022-3-61f1-playmode)](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml) | [![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg?job=test-unity-2022-3-61f1-standalone)](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml) |
-| 2023.2.20f1   | [![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg?job=test-unity-2023-2-20f1-editmode)](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml) | [![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg?job=test-unity-2023-2-20f1-playmode)](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml) | [![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg?job=test-unity-2023-2-20f1-standalone)](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml) |
-| 6000.2.3f1    | [![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg?job=test-unity-6000-2-3f1-editmode)](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)  | [![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg?job=test-unity-6000-2-3f1-playmode)](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)  | [![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg?job=test-unity-6000-2-3f1-standalone)](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)  |
+![AI Game Developer Windows](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/ai-game-developer-windows.png?raw=true)
 
-## 目次
+![AI ゲーム開発者 — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
+# クイックスタート
+
+3 ステップで始められます：
+
+1. **[プラグインをインストール](#ステップ-1-unity-mcp-プラグインのインストール)** — `.unitypackage` インストーラーをダウンロードするか `openupm add com.ivanmurzak.unity.mcp` を実行
+   > **代替方法:** `npx unity-mcp-cli install-plugin ./MyUnityProject` — [CLI ドキュメント](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.ja.md)を参照
+2. **[MCP クライアントを選ぶ](#ステップ-2-mcp-クライアントのインストール)** — Claude Code、Claude Desktop、GitHub Copilot、Cursor など
+3. **[クライアントを設定](#ステップ-3-mcp-クライアントの設定)** — Unity で `Window/AI Game Developer - MCP` を開き **Configure** をクリック
+
+以上です。AI に *「半径 2 の円上に 3 つのキューブを作成して」* と尋ねると、それが実現されます。✨
+
+---
+
+# ツールリファレンス
+
+プラグインには 3 つのカテゴリにわたる 50 以上の組み込みツールが含まれています。インストール直後にすべてのツールが利用可能で、追加設定は不要です。詳細な説明を含む完全なリファレンスは [docs/default-mcp-tools.md](docs/default-mcp-tools.md) をご覧ください。
+
+<details>
+  <summary>プロジェクト & アセット</summary>
+
+- `assets-copy` - 指定パスのアセットをコピーして newPath に保存
+- `assets-create-folder` - 指定した親フォルダに新しいフォルダを作成
+- `assets-delete` - プロジェクトから指定パスのアセットを削除
+- `assets-find` - 検索フィルター文字列でアセットデータベースを検索
+- `assets-find-built-in` - Unity Editor の組み込みアセットを検索
+- `assets-get-data` - アセットファイルからすべてのシリアライズ可能なフィールドとプロパティを含むアセットデータを取得
+- `assets-material-create` - デフォルトパラメーターで新しいマテリアルアセットを作成
+- `assets-modify` - プロジェクト内のアセットファイルを変更
+- `assets-move` - プロジェクト内のアセットを移動（名前変更にも使用）
+- `assets-prefab-close` - 現在開いているプレハブを閉じる
+- `assets-prefab-create` - 現在アクティブなシーンの GameObject からプレハブを作成
+- `assets-prefab-instantiate` - 現在アクティブなシーンにプレハブをインスタンス化
+- `assets-prefab-open` - 特定の GameObject のプレハブ編集モードを開く
+- `assets-prefab-save` - プレハブ編集モードでプレハブを保存
+- `assets-refresh` - AssetDatabase を更新
+- `assets-shader-list-all` - プロジェクトアセットとパッケージ内の利用可能なシェーダーをすべて一覧表示
+- `package-add` - Unity Package Manager レジストリ、Git URL、またはローカルパスからパッケージをインストール
+- `package-list` - Unity プロジェクトにインストールされたすべてのパッケージを一覧表示（UPM パッケージ）
+- `package-remove` - Unity プロジェクトからパッケージをアンインストール
+- `package-search` - Unity Package Manager レジストリとインストール済みパッケージの両方でパッケージを検索
+
+</details>
+
+<details>
+  <summary>シーン & ヒエラルキー</summary>
+
+- `gameobject-component-add` - GameObject にコンポーネントを追加
+- `gameobject-component-destroy` - 対象 GameObject から 1 つまたは複数のコンポーネントを削除
+- `gameobject-component-get` - GameObject 上の特定のコンポーネントの詳細情報を取得
+- `gameobject-component-list-all` - UnityEngine.Component を継承する C# クラス名を一覧表示
+- `gameobject-component-modify` - GameObject 上の特定のコンポーネントを変更
+- `gameobject-create` - 開いているプレハブまたはシーン内に新しい GameObject を作成
+- `gameobject-destroy` - GameObject とすべてのネストされた GameObject を再帰的に削除
+- `gameobject-duplicate` - 開いているプレハブまたはシーン内で GameObject を複製
+- `gameobject-find` - 提供された情報で特定の GameObject を検索
+- `gameobject-modify` - GameObject およびアタッチされたコンポーネントのフィールドとプロパティを変更
+- `gameobject-set-parent` - GameObject のリストに親 GameObject を設定
+- `object-get-data` - 指定した Unity オブジェクトのデータを取得
+- `object-modify` - 指定した Unity オブジェクトを変更
+- `scene-create` - プロジェクトアセットに新しいシーンを作成
+- `scene-get-data` - 指定したシーンのルート GameObject のリストを取得
+- `scene-list-opened` - Unity Editor で現在開いているシーンのリストを返す
+- `scene-open` - プロジェクトアセットファイルからシーンを開く
+- `scene-save` - 開いているシーンをアセットファイルに保存
+- `scene-set-active` - 指定した開いているシーンをアクティブシーンに設定
+- `scene-unload` - Unity Editor の開いているシーンからシーンをアンロード
+- `screenshot-camera` - カメラからスクリーンショットをキャプチャして画像として返す
+- `screenshot-game-view` - Unity Editor ゲームビューからスクリーンショットをキャプチャ
+- `screenshot-scene-view` - Unity Editor シーンビューからスクリーンショットをキャプチャ
+
+</details>
+
+<details>
+  <summary>スクリプティング & エディター</summary>
+
+- `console-get-logs` - フィルタリングオプション付きで Unity Editor ログを取得
+- `editor-application-get-state` - Unity Editor アプリケーションの状態（プレイモード、一時停止、コンパイル）に関する情報を返す
+- `editor-application-set-state` - Unity Editor アプリケーションの状態を制御（プレイモードの開始/停止/一時停止）
+- `editor-selection-get` - Unity Editor の現在の選択情報を取得
+- `editor-selection-set` - Unity Editor の現在の選択を設定
+- `reflection-method-call` - 入力パラメーターで任意の C# メソッドを呼び出し、結果を返す
+- `reflection-method-find` - C# リフレクションを使用してプロジェクト内のメソッドを検索（プライベートメソッドも含む）
+- `script-delete` - スクリプトファイルを削除
+- `script-execute` - Roslyn を使用して C# コードを動的にコンパイル・実行
+- `script-read` - スクリプトファイルの内容を読み込む
+- `script-update-or-create` - 提供された C# コードでスクリプトファイルを更新または作成
+- `tests-run` - フィルタリングと詳細な結果付きで Unity テスト（EditMode/PlayMode）を実行
+
+</details>
+
+#### 追加ツール
+
+より多くのツールが必要な場合は拡張機能をインストールするか、[独自のツールを作成](#カスタム-mcp-ツールの追加)してください。
+
+- [アニメーション](https://github.com/IvanMurzak/Unity-AI-Animation/)
+- [パーティクルシステム](https://github.com/IvanMurzak/Unity-AI-ParticleSystem/)
+- [ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)
+
+![AI ゲーム開発者 — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+# 目次
+
+- [クイックスタート](#クイックスタート)
+- [ツールリファレンス](#ツールリファレンス)
+      - [追加ツール](#追加ツール)
+- [目次](#目次)
+  - [その他のドキュメント](#その他のドキュメント)
 - [インストール](#インストール)
-  - [ステップ1：`Unity MCPプラグイン`のインストール](#ステップ1unity-mcpプラグインのインストール)
-    - [オプション1 - インストーラー](#オプション1---インストーラー)
-    - [オプション2 - OpenUPM-CLI](#オプション2---openupm-cli)
-  - [ステップ2：`MCPクライアント`のインストール](#ステップ2mcpクライアントのインストール)
-  - [ステップ3：`MCPクライアント`の設定](#ステップ3mcpクライアントの設定)
+  - [ステップ 1: `Unity MCP Plugin` のインストール](#ステップ-1-unity-mcp-plugin-のインストール)
+    - [オプション 1 - インストーラー](#オプション-1---インストーラー)
+    - [オプション 2 - OpenUPM-CLI](#オプション-2---openupm-cli)
+    - [オプション 3 - CLI](#オプション-3---cli)
+  - [ステップ 2: `MCP Client` のインストール](#ステップ-2-mcp-client-のインストール)
+  - [ステップ 3: `MCP Client` の設定](#ステップ-3-mcp-client-の設定)
     - [自動設定](#自動設定)
     - [手動設定](#手動設定)
-    - [コマンドライン設定](#コマンドライン設定)
-- [AIワークフロー例：Claude と Gemini](#aiワークフロー例claude-と-gemini)
-  - [LLMの高度な機能](#llmの高度な機能)
+      - [コマンドライン設定](#コマンドライン設定)
+- [AI ワークフロー例: Claude \& Gemini](#ai-ワークフロー例-claude--gemini)
+  - [LLM 向け高度な機能](#llm-向け高度な機能)
     - [コア機能](#コア機能)
-    - [リフレクション機能](#リフレクション機能)
-- [MCPのカスタマイズ](#mcpのカスタマイズ)
-  - [カスタム`MCPツール`の追加](#カスタムmcpツールの追加)
-  - [カスタム`MCPプロンプト`の追加](#カスタムmcpプロンプトの追加)
-- [ランタイムでの使用（ゲーム内）](#ランタイムでの使用ゲーム内)
-  - [サンプル：AI駆動のチェスゲームボット](#サンプルai駆動のチェスゲームボット)
-  - [ランタイムでの使用が必要な理由](#ランタイムでの使用が必要な理由)
-- [Unity `MCPサーバー` セットアップ](#unity-mcpサーバー-セットアップ)
+    - [リフレクション活用機能](#リフレクション活用機能)
+- [MCP のカスタマイズ](#mcp-のカスタマイズ)
+  - [カスタム MCP ツールの追加](#カスタム-mcp-ツールの追加)
+  - [カスタム MCP プロンプトの追加](#カスタム-mcp-プロンプトの追加)
+- [ランタイム使用（ゲーム内）](#ランタイム使用ゲーム内)
+  - [サンプル: AI 搭載チェスゲームボット](#サンプル-ai-搭載チェスゲームボット)
+  - [なぜランタイム使用が必要か？](#なぜランタイム使用が必要か)
+- [Unity `MCP Server` のセットアップ](#unity-mcp-server-のセットアップ)
   - [変数](#変数)
+  - [プラグイン変数](#プラグイン変数)
   - [Docker 📦](#docker-)
-    - [`HTTP` トランスポート](#http-トランスポート)
-    - [`STDIO` トランスポート](#stdio-トランスポート)
-    - [カスタム`ポート`](#カスタムポート)
+    - [`streamableHttp` トランスポート](#streamablehttp-トランスポート)
+    - [`stdio` トランスポート](#stdio-トランスポート)
+    - [カスタム `port`](#カスタム-port)
   - [バイナリ実行ファイル](#バイナリ実行ファイル)
-- [動作原理](#動作原理)
-  - [`MCP`とは](#mcpとは)
-  - [`MCPクライアント`とは](#mcpクライアントとは)
-  - [`MCPサーバー`とは](#mcpサーバーとは)
-  - [`MCPツール`とは](#mcpツールとは)
-    - [`MCPツール`をいつ使用するか](#mcpツールをいつ使用するか)
-  - [`MCPリソース`とは](#mcpリソースとは)
-    - [`MCPリソース`をいつ使用するか](#mcpリソースをいつ使用するか)
-  - [`MCPプロンプト`とは](#mcpプロンプトとは)
-    - [`MCPプロンプト`をいつ使用するか](#mcpプロンプトをいつ使用するか)
-- [貢献 💙💛](#貢献-)
+- [Unity MCP アーキテクチャの仕組み](#unity-mcp-アーキテクチャの仕組み)
+  - [`MCP` とは](#mcp-とは)
+  - [`MCP Client` とは](#mcp-client-とは)
+  - [`MCP Server` とは](#mcp-server-とは)
+  - [`MCP Tool` とは](#mcp-tool-とは)
+    - [`MCP Tool` を使うべき場面](#mcp-tool-を使うべき場面)
+  - [`MCP Resource` とは](#mcp-resource-とは)
+    - [`MCP Resource` を使うべき場面](#mcp-resource-を使うべき場面)
+  - [`MCP Prompt` とは](#mcp-prompt-とは)
+    - [`MCP Prompt` を使うべき場面](#mcp-prompt-を使うべき場面)
+- [コントリビューション 💙💛](#コントリビューション-)
+
+## その他のドキュメント
+
+| ドキュメント | 説明 |
+| -------- | ----------- |
+| [デフォルト MCP ツール](docs/default-mcp-tools.md) | 説明付きすべての組み込みツールの完全リファレンス |
+| [MCP Server セットアップ](docs/mcp-server.md) | サーバー設定、環境変数、リモートホスティング |
+| [Docker デプロイ](docs/DOCKER_DEPLOYMENT.md) | Docker デプロイのステップバイステップガイド |
+| [開発ガイド](docs/dev/Development.md) | アーキテクチャ、コードスタイル、CI/CD（コントリビューター向け） |
+| [Wiki](https://github.com/IvanMurzak/Unity-MCP/wiki) | はじめに、チュートリアル、API リファレンス、FAQ |
+| [CLI ツール](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.ja.md) | コマンドラインでプラグインのインストール、設定、接続 |
+
+![AI ゲーム開発者 — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 # インストール
 
-## ステップ1：`Unity MCPプラグイン`のインストール
+## ステップ 1: `Unity MCP Plugin` のインストール
 
 <details>
   <summary><b>⚠️ 要件（クリック）</b></summary>
 
-> [!重要]
-> **プロジェクトパスにスペースを含めることはできません**
+> [!IMPORTANT]
+> **プロジェクトパスにスペースを含めないでください**
 >
 > - ✅ `C:/MyProjects/Project`
 > - ❌ `C:/My Projects/Project`
 
 </details>
 
-### オプション1 - インストーラー
+### オプション 1 - インストーラー
 
-- **[⬇️ インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.27.0/AI-Game-Dev-Installer.unitypackage)**
-- **📂 インストーラーをUnityプロジェクトにインポート**
-  > - ファイルをダブルクリック - Unityが自動的に開きます
-  > - または：最初にUnityエディターを開き、`Assets/Import Package/Custom Package`をクリックして、ファイルを選択
+- **[⬇️ インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/releases/latest/download/AI-Game-Dev-Installer.unitypackage)**
+- **📂 Unity プロジェクトにインストーラーをインポート**
+  > - ファイルをダブルクリックすると Unity が自動的に開きます
+  > - または: Unity Editor を先に開き、`Assets/Import Package/Custom Package` をクリックしてファイルを選択
 
-### オプション2 - OpenUPM-CLI
+### オプション 2 - OpenUPM-CLI
 
-- [⬇️ OpenUPM-CLIのインストール](https://github.com/openupm/openupm-cli#installation)
-- 📟 Unityプロジェクトフォルダーでコマンドラインを開く
+- [⬇️ OpenUPM-CLI をインストール](https://github.com/openupm/openupm-cli#installation)
+- 📟 Unity プロジェクトフォルダでコマンドラインを開く
 
 ```bash
 openupm add com.ivanmurzak.unity.mcp
 ```
 
-## ステップ2：`MCPクライアント`のインストール
+### オプション 3 - CLI
 
-お好みの単一の`MCPクライアント`を選択してください - すべてインストールする必要はありません。これがLLMとの通信のメインチャットウィンドウになります。
+[`unity-mcp-cli`](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.ja.md) でプラグインをインストール — Unity Editor 不要：
+
+```bash
+npx unity-mcp-cli install-plugin ./MyUnityProject
+```
+
+アクティブな MCP 接続で Unity を起動：
+
+```bash
+npx unity-mcp-cli connect --path ./MyUnityProject --url http://localhost:8080
+```
+
+> すべての利用可能なコマンドについては[完全な CLI ドキュメント](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.ja.md)を参照してください。
+
+## ステップ 2: `MCP Client` のインストール
+
+お好みの `MCP クライアント` を 1 つ選んでください — すべてをインストールする必要はありません。これが LLM とコミュニケーションするメインのチャットウィンドウになります。
 
 - [Claude Code](https://github.com/anthropics/claude-code)（強く推奨）
 - [Claude Desktop](https://claude.ai/download)
 - [GitHub Copilot in VS Code](https://code.visualstudio.com/docs/copilot/overview)
+- [Antigravity](https://antigravity.google/)
 - [Cursor](https://www.cursor.com/)
 - [Windsurf](https://windsurf.com)
 - その他サポートされているクライアント
 
-> MCPプロトコルは非常に汎用的で、お好みの任意のMCPクライアントを使用できます - 他のクライアントと同様にスムーズに動作します。唯一の重要な要件は、MCPクライアントが動的MCPツール更新をサポートしている必要があることです。
+> MCP プロトコルは非常に汎用的なので、お好みの MCP クライアントを使用できます — どれも同様にスムーズに動作します。唯一の重要な要件は、MCP クライアントが MCP ツールの動的更新をサポートしている必要があることです。
 
-## ステップ3：`MCPクライアント`の設定
+## ステップ 3: `MCP Client` の設定
 
 ### 自動設定
 
-- Unityプロジェクトを開く
-- `Window/AI Game Developer (Unity-MCP)`を開く
-- MCPクライアントで`Configure`をクリック
+- Unity プロジェクトを開く
+- `Window/AI Game Developer (Unity-MCP)` を開く
+- MCP クライアントの `Configure` をクリック
 
 ![Unity_AI](https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/ai-connector-window.gif)
 
-> MCPクライアントがリストにない場合は、ウィンドウに表示されている生のJSONを使用してMCPクライアントに注入してください。特定のMCPクライアントでこれを行う方法については、説明書をお読みください。
+> MCP クライアントがリストにない場合は、ウィンドウに表示されている生の JSON を MCP クライアントに挿入してください。具体的な MCP クライアントの手順については、そのクライアントのドキュメントを参照してください。
 
 ### 手動設定
 
-何らかの理由で自動設定が動作しない場合は、`AI Game Developer (Unity-MCP)`ウィンドウのJSONを使用して任意の`MCPクライアント`を手動設定してください。
+何らかの理由で自動設定がうまくいかない場合は、`AI Game Developer (Unity-MCP)` ウィンドウの JSON を使用して任意の `MCP クライアント` を手動で設定できます。
 
-### コマンドライン設定
-
-**1. 環境に応じた`<command>`を選択**
-
-| プラットフォーム | `<command>` |
-|---------------------|----------------|
-| Windows x64         | `"<unityProjectPath>/Library/mcp-server/win-x64/unity-mcp-server.exe" port=<port> client-transport=stdio` |
-| Windows x86         | `"<unityProjectPath>/Library/mcp-server/win-x86/unity-mcp-server.exe" port=<port> client-transport=stdio` |
-| Windows arm64       | `"<unityProjectPath>/Library/mcp-server/win-arm64/unity-mcp-server.exe" port=<port> client-transport=stdio` |
-| MacOS Apple-Silicon | `"<unityProjectPath>/Library/mcp-server/osx-arm64/unity-mcp-server" port=<port> client-transport=stdio` |
-| MacOS Apple-Intel   | `"<unityProjectPath>/Library/mcp-server/osx-x64/unity-mcp-server" port=<port> client-transport=stdio` |
-| Linux x64           | `"<unityProjectPath>/Library/mcp-server/linux-x64/unity-mcp-server" port=<port> client-transport=stdio` |
-| Linux arm64         | `"<unityProjectPath>/Library/mcp-server/linux-arm64/unity-mcp-server" port=<port> client-transport=stdio` |
-
-**2. `<unityProjectPath>`をUnityプロジェクトへのフルパスに置き換える**
-**3. `<port>`をAI Game Developer設定のポートに置き換える**
-**4. コマンドラインを使用してMCPサーバーを追加**
+#### コマンドライン設定
 
 <details>
-  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/gemini-64.png" width="16" height="16" alt="Gemini"> Gemini</summary>
+  <summary><b><code>command</code> の作成</b></summary>
+
+**1. 環境に合った `<command>` を選択してください**
+
+| プラットフォーム     | `<command>`                                                                                                 |
+| ------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Windows x64         | `"<unityProjectPath>/Library/mcp-server/win-x64/unity-mcp-server.exe" port=<port> client-transport=stdio`   |
+| Windows x86         | `"<unityProjectPath>/Library/mcp-server/win-x86/unity-mcp-server.exe" port=<port> client-transport=stdio`   |
+| Windows arm64       | `"<unityProjectPath>/Library/mcp-server/win-arm64/unity-mcp-server.exe" port=<port> client-transport=stdio` |
+| MacOS Apple-Silicon | `"<unityProjectPath>/Library/mcp-server/osx-arm64/unity-mcp-server" port=<port> client-transport=stdio`     |
+| MacOS Apple-Intel   | `"<unityProjectPath>/Library/mcp-server/osx-x64/unity-mcp-server" port=<port> client-transport=stdio`       |
+| Linux x64           | `"<unityProjectPath>/Library/mcp-server/linux-x64/unity-mcp-server" port=<port> client-transport=stdio`     |
+| Linux arm64         | `"<unityProjectPath>/Library/mcp-server/linux-arm64/unity-mcp-server" port=<port> client-transport=stdio`   |
+
+**2. `<unityProjectPath>` を Unity プロジェクトへのフルパスに置き換える**
+
+**3. `<port>` を AI Game Developer 設定のポート番号に置き換える**
+
+**4. コマンドラインを使用して MCP サーバーを追加**
+
+</details>
+
+<details>
+  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/gemini-64.png?raw=true" width="16" height="16" alt="Gemini CLI"> Gemini CLI</summary>
 
   ```bash
   gemini mcp add ai-game-developer <command>
   ```
-  > 上の表から`<command>`を置き換えてください
+
+  > 上の表の `<command>` に置き換えてください
 </details>
 
 <details>
-  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/claude-64.png" width="16" height="16" alt="Gemini"> Claude Code</summary>
+  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/claude-64.png?raw=true" width="16" height="16" alt="Claude Code CLI"> Claude Code CLI</summary>
 
   ```bash
   claude mcp add ai-game-developer <command>
   ```
-  > 上の表から`<command>`を置き換えてください
+
+  > 上の表の `<command>` に置き換えてください
 </details>
 
 <details>
-  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/github-copilot-64.png" width="16" height="16" alt="Gemini"> GitHub Copilot CLI</summary>
+  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/github-copilot-64.png?raw=true" width="16" height="16" alt="GitHub Copilot CLI"> GitHub Copilot CLI</summary>
 
   ```bash
   copilot
@@ -193,71 +339,71 @@ openupm add com.ivanmurzak.unity.mcp
   サーバー名: `ai-game-developer`
   サーバータイプ: `local`
   コマンド: `<command>`
-  > 上の表から`<command>`を置き換えてください
+  > 上の表の `<command>` に置き換えてください
 </details>
 
----
+![AI ゲーム開発者 — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
-# AIワークフロー例：Claude と Gemini
+# AI ワークフロー例: Claude & Gemini
 
-`MCPクライアント`でAI（LLM）と通信します。やりたいことは何でも依頼してください。タスクやアイデアをより良く説明すればするほど、より良いパフォーマンスを発揮します。
+`MCP クライアント` で AI（LLM）とコミュニケーションしてください。やりたいことを何でも尋ねましょう。タスクやアイデアをより詳しく説明するほど、AI はより良いパフォーマンスを発揮します。
 
-一部の`MCPクライアント`では異なるLLMモデルを選択できます。この機能に注意してください。一部のモデルは他のモデルよりもはるかに良く動作する場合があります。
+一部の `MCP クライアント` では異なる LLM モデルを選択できます。この機能に注目してください。モデルによって大きく性能差が出る場合があります。
 
-**コマンド例：**
+**コマンド例:**
 
 ```text
-シーン階層を説明してください
+シーン階層を説明して
 ```
 
 ```text
-半径2の円に3つの立方体を作成してください
+半径 2 の円上に 3 つのキューブを作成して
 ```
 
 ```text
-メタリックゴールドマテリアルを作成し、球体ゲームオブジェクトにアタッチしてください
+メタリックゴールドのマテリアルを作成して球体の GameObject に適用して
 ```
 
-> MCPクライアントで`Agent`モードがオンになっていることを確認してください
+> MCP クライアントで `エージェント` モードがオンになっていることを確認してください
 
-## LLMの高度な機能
+## LLM 向け高度な機能
 
-Unity MCPは、LLMがより速く効果的に動作し、ミスを避け、エラーが発生した際に自己修正できるようにする高度なツールを提供します。すべてが目標を効率的に達成するように設計されています。
+Unity MCP は LLM がより速く効果的に作業できる高度なツールを提供し、ミスを回避してエラーが発生した際に自己修正できるようにします。すべてはあなたのゴールを効率的に達成するために設計されています。
 
 ### コア機能
 
-- ✔️ **エージェント対応ツール** - 1〜2ステップで必要なものを見つける
-- ✔️ **インスタントコンパイル** - より高速な反復のための`Roslyn`を使用したC#コードコンパイルと実行
-- ✔️ **完全なアセットアクセス** - アセットとC#スクリプトへの読み書きアクセス
-- ✔️ **インテリジェントフィードバック** - 適切な問題理解のための詳細なポジティブおよびネガティブフィードバック
+- ✔️ **エージェント対応ツール** - 1〜2 ステップで必要なものをすべて検索
+- ✔️ **インスタントコンパイル** - より速い反復のための `Roslyn` を使った C# コードコンパイル & 実行
+- ✔️ **フルアセットアクセス** - アセットと C# スクリプトへの読み書きアクセス
+- ✔️ **インテリジェントフィードバック** - 適切な問題理解のための詳細なポジティブ/ネガティブフィードバック
 
-### リフレクション機能
+### リフレクション活用機能
 
-- ✔️ **オブジェクト参照** - インスタントC#コード用の既存オブジェクトへの参照を提供
-- ✔️ **プロジェクトデータアクセス** - 読み取り可能な形式でプロジェクト全体のデータへの完全アクセス
-- ✔️ **細かい変更** - プロジェクト内の任意のデータ片を入力・変更
-- ✔️ **メソッド発見** - コンパイルされたDLLファイルを含むコードベース全体で任意のメソッドを見つける
-- ✔️ **メソッド実行** - コードベース全体で任意のメソッドを呼び出し
-- ✔️ **高度なパラメータ** - メソッド呼び出しに任意のプロパティを提供、メモリ内の既存オブジェクトへの参照も含む
-- ✔️ **ライブUnity API** - Unity APIがすぐに利用可能 - Unityが変更されても、最新のAPIを取得
-- ✔️ **自己文書化** - `Description`属性を通じて任意の`class`、`method`、`field`、`property`の人間が読める説明にアクセス
+- ✔️ **オブジェクト参照** - インスタントな C# コードのために既存オブジェクトへの参照を提供
+- ✔️ **プロジェクトデータアクセス** - 読みやすい形式でプロジェクト全体のデータにフルアクセス
+- ✔️ **細かい変更** - プロジェクト内の任意のデータを設定・変更
+- ✔️ **メソッド探索** - コンパイル済み DLL ファイルを含むコードベース全体のあらゆるメソッドを検索
+- ✔️ **メソッド実行** - コードベース全体の任意のメソッドを呼び出し
+- ✔️ **高度なパラメーター** - メモリ内の既存オブジェクトへの参照を含む、メソッド呼び出しのあらゆるプロパティを提供
+- ✔️ **ライブ Unity API** - Unity の変更に応じて新鮮な API が即座に利用可能
+- ✔️ **自己ドキュメント化** - `Description` 属性を通じて任意の `クラス`、`メソッド`、`プロパティ` の人間が読める説明にアクセス
 
----
+![AI ゲーム開発者 — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
-# MCPのカスタマイズ
+# MCP のカスタマイズ
 
-**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)**は、プロジェクトオーナーによるカスタム`MCPツール`、`MCPリソース`、`MCPプロンプト`の開発をサポートします。MCPサーバーは`Unity MCPプラグイン`からデータを取得し、それをクライアントに公開します。MCP通信チェーンの誰もが新しいMCP機能についての情報を受信し、LLMは適切なタイミングでそれらを使用することを決定できます。
+**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** はプロジェクトオーナーによるカスタム `MCP Tool`、`MCP Resource`、`MCP Prompt` の開発をサポートします。MCP サーバーは `Unity MCP Plugin` からデータを取得してクライアントに公開します。MCP 通信チェーン上のすべての人が新しい MCP 機能の情報を受け取り、LLM はある時点でそれを使用することを決定する場合があります。
 
-## カスタム`MCPツール`の追加
+## カスタム MCP ツールの追加
 
-カスタム`MCPツール`を追加するには、以下が必要です：
+カスタム `MCP Tool` を追加するには：
 
-1. `McpPluginToolType`属性を持つクラス
-2. `McpPluginTool`属性を持つクラス内のメソッド
-3. *オプション：* 各メソッド引数に`Description`属性を追加してLLMの理解を助ける
-4. *オプション：* `string? optional = null`プロパティを`?`とデフォルト値で使用してLLMの`optional`としてマークする
+1. `McpPluginToolType` 属性を持つクラス
+2. `McpPluginTool` 属性を持つクラス内のメソッド
+3. *オプション:* LLM が理解しやすいように各メソッド引数に `Description` 属性を追加
+4. *オプション:* LLM に対して `optional`（任意）であることを示すために、`?` とデフォルト値を持つ `string? optional = null` プロパティを使用
 
-> `MainThread.Instance.Run(() =>`の行に注意してください。これにより、Unity APIとの相互作用に必要なメインスレッドでコードを実行できます。これが不要で、バックグラウンドスレッドでツールを実行することが受け入れられる場合は、効率のためにメインスレッドの使用を避けてください。
+> `MainThread.Instance.Run(() =>` という行は、Unity の API とやり取りするために必要なメインスレッドでコードを実行することを可能にします。これが不要でバックグラウンドスレッドでツールを実行することが許容できる場合は、効率性のためにメインスレッドの使用を避けてください。
 
 ```csharp
 [McpPluginToolType]
@@ -268,10 +414,10 @@ public class Tool_GameObject
         "MyCustomTask",
         Title = "Create a new GameObject"
     )]
-    [Description("LLMにこれが何か、いつ呼び出されるべきかをここで説明してください。")]
+    [Description("これが何であるか、いつ呼び出すべきかを LLM に説明します。")]
     public string CustomTask
     (
-        [Description("LLMにこれが何かを説明してください。")]
+        [Description("これが何であるかを LLM に説明します。")]
         string inputData
     )
     {
@@ -281,58 +427,71 @@ public class Tool_GameObject
         {
             // 必要に応じてメインスレッドで何かを実行
 
-            return $"[成功] 操作が完了しました。";
+            return $"[Success] Operation completed.";
         });
     }
 }
 ```
 
-## カスタム`MCPプロンプト`の追加
+## カスタム MCP プロンプトの追加
 
-`MCPプロンプト`により、LLMとの会話に事前定義されたプロンプトを注入できます。これらは、AIの動作を導くコンテキスト、指示、または知識を提供できるスマートテンプレートです。プロンプトは静的テキストか、プロジェクトの現在の状態に基づいて動的に生成できます。
+`MCP プロンプト` を使用すると、LLM との会話にカスタムプロンプトを挿入できます。ユーザーとアシスタントの 2 つの送信者ロールをサポートします。これは LLM に特定のタスクを実行するよう指示する素早い方法です。カスタムデータを使ってプロンプトを生成し、リストやその他の関連情報を提供できます。
 
 ```csharp
 [McpPluginPromptType]
 public static class Prompt_ScriptingCode
 {
     [McpPluginPrompt(Name = "add-event-system", Role = Role.User)]
-    [Description("GameObjects間でUnityEventベースの通信システムを実装します。")]
+    [Description("GameObject 間の UnityEvent ベースの通信システムを実装します。")]
     public string AddEventSystem()
     {
-        return "ゲームシステムとコンポーネント間の非結合通信のために、UnityEvents、UnityActions、またはカスタムイベントデリゲートを使用してイベントシステムを作成します。";
+        return "UnityEvents、UnityActions、またはカスタムイベントデリゲートを使用して、ゲームシステムとコンポーネント間の疎結合通信のためのイベントシステムを作成してください。";
     }
 }
 ```
 
----
+![AI ゲーム開発者 — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
-# ランタイムでの使用（ゲーム内）
+# ランタイム使用（ゲーム内）
 
-**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)**をゲーム/アプリで使用します。ツール、リソース、プロンプトを使用できます。デフォルトではツールがないため、カスタムツールを実装する必要があります。
+**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** をゲーム/アプリ内で使用します。ツール、リソース、プロンプトを活用できます。デフォルトではツールがないため、カスタムで実装する必要があります。
 
 ```csharp
-UnityMcpPlugin.BuildAndStart(); // Unity-MCP-Pluginをビルドして起動、これは必須です
-UnityMcpPlugin.Connect(); // Unity-MCP-Serverへのリトライ付きアクティブ接続を開始
-UnityMcpPlugin.Disconnect(); // アクティブな接続を停止し、既存の接続を閉じる
+// MCP プラグインのビルド
+var mcpPlugin = UnityMcpPluginRuntime.Initialize(builder =>
+    {
+        builder.WithConfig(config =>
+        {
+            config.Host = "http://localhost:8080";
+            config.Token = "your-token";
+        });
+        // 現在のアセンブリからすべてのツールを自動登録
+        builder.WithToolsFromAssembly(Assembly.GetExecutingAssembly());
+    })
+    .Build();
+
+await mcpPlugin.Connect(); // Unity-MCP-Server との再試行付きアクティブ接続を開始
+
+await mcpPlugin.Disconnect(); // アクティブ接続を停止し、既存の接続を閉じる
 ```
 
-## サンプル：AI駆動のチェスゲームボット
+## サンプル: AI 搭載チェスゲームボット
 
-クラシックなチェスゲームがあります。ボットのロジックをLLMに任せましょう。ボットはゲームルールを使用してターンを実行する必要があります。
+クラシックなチェスゲームを考えてみましょう。ゲームルールに従ってターンを実行するボットロジックを LLM に委ねます。
 
 ```csharp
 [McpPluginToolType]
 public static class ChessGameAI
 {
     [McpPluginTool("chess-do-turn", Title = "Do the turn")]
-    [Description("Do the turn in the chess game. Returns true if the turn was accepted, false otherwise.")]
+    [Description("チェスゲームでターンを実行します。ターンが受け入れられた場合は true、そうでない場合は false を返します。")]
     public static Task<bool> DoTurn(int figureId, Vector2Int position)
     {
         return MainThread.Instance.RunAsync(() => ChessGameController.Instance.DoTurn(figureId, position));
     }
 
     [McpPluginTool("chess-get-board", Title = "Get the board")]
-    [Description("Get the current state of the chess board.")]
+    [Description("チェスボードの現在の状態を取得します。")]
     public static Task<BoardData> GetBoard()
     {
         return MainThread.Instance.RunAsync(() => ChessGameController.Instance.GetBoardData());
@@ -340,78 +499,106 @@ public static class ChessGameAI
 }
 ```
 
-## ランタイムでの使用が必要な理由
+## なぜランタイム使用が必要か？
 
-ユースケースは多数あります。例えば、ボット付きのチェスゲームに取り組んでいるとします。数行のコードを書くだけで、ボットの意思決定をLLMに委託できます。
+多くのユースケースがあります。ボット付きのチェスゲームを作っていると想像してください。数行のコードを書くだけで、ボットの意思決定を LLM に委ねることができます。
 
----
+![AI ゲーム開発者 — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
-# Unity `MCPサーバー` セットアップ
+# Unity `MCP Server` のセットアップ
 
-**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)**サーバーは多くの異なる起動オプションとDockerデプロイメントをサポートします。両方のトランスポートプロトコルがサポートされています：`http`と`stdio`。Unity MCPサーバーをカスタマイズまたはクラウドにデプロイする必要がある場合、このセクションが適しています。[詳細を読む...](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md)
+**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** サーバーはさまざまな起動オプションと Docker デプロイをサポートしています。`streamableHttp` と `stdio` の両方のトランスポートプロトコルをサポートしています。Unity MCP サーバーをカスタマイズするかクラウドにデプロイする必要がある場合は、このセクションをご覧ください。[詳細はこちら...](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md)
 
 ## 変数
 
-どの起動オプションを選択しても、すべて環境変数とコマンドライン引数の両方を使用したカスタム設定をサポートします。起動するだけであれば、デフォルト値で動作するので、変数に時間を費やす必要はありません。Unityプラグインもデフォルト値を持っていることを確認してください。特に`--port`は同じである必要があります。
+どの起動オプションを選択しても、環境変数とコマンドライン引数の両方を使ったカスタム設定をサポートします。単に起動するだけであれば、デフォルト値で動作するので変数を設定する手間は不要です。Unity プラグインも、特に `--port` についてデフォルト値を持っていること（両方が同じ値）を確認してください。
 
-| 環境変数 | コマンドライン引数 | 説明 |
-|-----------------------------|-----------------------|-----------------------------------------------------------------------------|
-| `UNITY_MCP_PORT`            | `--port`              | **クライアント** -> **サーバー** <- **プラグイン** 接続ポート（デフォルト：8080） |
-| `UNITY_MCP_PLUGIN_TIMEOUT`  | `--plugin-timeout`    | **プラグイン** -> **サーバー** 接続タイムアウト（ms）（デフォルト：10000） |
-| `UNITY_MCP_CLIENT_TRANSPORT`| `--client-transport`  | **クライアント** -> **サーバー** トランスポートタイプ：`stdio`または`http`（デフォルト：`http`） |
+| 環境変数                      | コマンドライン引数    | 説明                                                                          |
+| ----------------------------- | -------------------- | ----------------------------------------------------------------------------- |
+| `MCP_PLUGIN_PORT`             | `--port`             | **クライアント** -> **サーバー** <- **プラグイン** 接続ポート（デフォルト: 8080） |
+| `MCP_PLUGIN_CLIENT_TIMEOUT`   | `--plugin-timeout`   | **プラグイン** -> **サーバー** 接続タイムアウト（ms）（デフォルト: 10000）       |
+| `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport` | **クライアント** -> **サーバー** トランスポートタイプ: `stdio` または `streamableHttp`（デフォルト: `streamableHttp`） |
 
-> コマンドライン引数は単一の`-`プレフィックス（`-port`）オプションと、プレフィックスなしのオプション（`port`）もサポートします。
+> コマンドライン引数は単一の `-` プレフィックス（`-port`）とプレフィックスなし（`port`）のオプションもサポートしています。
+
+> **トランスポートの選択:** MCP クライアントがサーバーバイナリを直接起動する場合（ローカル使用 — 最も一般的な設定）は `stdio` を使用します。サーバーをスタンドアロンプロセスとして実行するか Docker/クラウドで実行して HTTP 経由で接続する場合は `streamableHttp` を使用します。
+
+## プラグイン変数
+
+Unity MCP Plugin は起動時に以下の環境変数（およびコマンドライン引数）を読み込み、保存済み設定ファイルの値を上書きします。上書きはランタイムで適用されます。初回起動時または新しい認証トークンが生成された際には、上書きされた値が**設定ファイルに書き込まれます**。以降の起動では、上書きはメモリ上でのみ適用され、自動的には保存されません。例外として `UNITY_MCP_TOOLS` は `[JsonIgnore]` を使用しており、**永続化されません** — ランタイムのみで有効です。
+
+| 環境変数                    | コマンドライン引数          | 値                  | 説明                                     |
+| --------------------------- | --------------------------- | ------------------- | ---------------------------------------- |
+| `UNITY_MCP_HOST`            | `-UNITY_MCP_HOST`           | URL 文字列          | MCP サーバーのホスト URL を上書き                                                              |
+| `UNITY_MCP_KEEP_CONNECTED`  | `-UNITY_MCP_KEEP_CONNECTED` | `true` / `false`    | アクティブ接続を強制的に有効/無効化                                                            |
+| `UNITY_MCP_AUTH_OPTION`     | `-UNITY_MCP_AUTH_OPTION`    | `none` / `required` | 認証モードを強制設定                                                                           |
+| `UNITY_MCP_TOKEN`           | `-UNITY_MCP_TOKEN`          | 文字列              | 認証トークンを強制設定                                                                         |
+| `UNITY_MCP_TOOLS`           | `-UNITY_MCP_TOOLS`          | カンマ区切りのツール ID | 指定したツールのみ有効化し、それ以外はすべて無効化します。不明な ID はエラーとしてログに記録されます。 |
+
+> コマンドライン引数は環境変数より優先されます。どちらも保存済み設定ファイルの値を上書きします。
+
+**例（CI/CD バッチモード）:**
+
+```bash
+Unity.exe -batchmode -nographics \
+  -UNITY_MCP_HOST=http://localhost:8080 \
+  -UNITY_MCP_KEEP_CONNECTED=true \
+  -UNITY_MCP_AUTH_OPTION=required \
+  -UNITY_MCP_TOKEN=my-secret-token
+```
 
 ## Docker 📦
 
 [![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
 
-Dockerがインストールされていることを確認してください。Windowsオペレーティングシステムを使用している場合は、Docker Desktopが起動していることを確認してください。
+Docker がインストールされていることを確認してください。Windows をお使いの場合は Docker Desktop が起動していることもご確認ください。
 
-### `HTTP` トランスポート
+[高度な Docker 設定手順を読む](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/DOCKER_DEPLOYMENT.md)。
+
+### `streamableHttp` トランスポート
 
 ```bash
 docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server
 ```
 
 <details>
-  <summary><code>MCPクライアント</code>設定：</summary>
+  <summary><code>MCP クライアント</code> 設定:</summary>
 
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer": {
       "url": "http://localhost:8080"
     }
   }
 }
 ```
 
-> クラウドでホストされている場合は、`url`を実際のエンドポイントに置き換えてください
+> クラウドでホストされている場合は `url` を実際のエンドポイントに置き換えてください。
 
 </details>
 
-### `STDIO` トランスポート
+### `stdio` トランスポート
 
-この方法を使用するには、`MCPクライアント`がdocker内で`MCPサーバー`を起動する必要があります。これは修正された`MCPクライアント`設定を通じて実現できます。
+このオプションを使用するには、`MCP クライアント` が Docker で `MCP サーバー` を起動する必要があります。修正された `MCP クライアント` 設定で実現できます。
 
 ```bash
-docker run -t -e UNITY_MCP_CLIENT_TRANSPORT=stdio -p 8080:8080 ivanmurzakdev/unity-mcp-server
+docker run -t -e MCP_PLUGIN_CLIENT_TRANSPORT=stdio -p 8080:8080 ivanmurzakdev/unity-mcp-server
 ```
 
 <details>
-  <summary><code>MCPクライアント</code>設定：</summary>
+  <summary><code>MCP クライアント</code> 設定:</summary>
 
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer": {
       "command": "docker",
       "args": [
         "run",
         "-t",
         "-e",
-        "UNITY_MCP_CLIENT_TRANSPORT=stdio",
+        "MCP_PLUGIN_CLIENT_TRANSPORT=stdio",
         "-p",
         "8080:8080",
         "ivanmurzakdev/unity-mcp-server"
@@ -423,45 +610,45 @@ docker run -t -e UNITY_MCP_CLIENT_TRANSPORT=stdio -p 8080:8080 ivanmurzakdev/uni
 
 </details>
 
-### カスタム`ポート`
+### カスタム `port`
 
 ```bash
-docker run -e UNITY_MCP_PORT=123 -p 123:123 ivanmurzakdev/unity-mcp-server
+docker run -e MCP_PLUGIN_PORT=123 -p 123:123 ivanmurzakdev/unity-mcp-server
 ```
 
 <details>
-  <summary><code>MCPクライアント</code>設定：</summary>
+  <summary><code>MCP クライアント</code> 設定:</summary>
 
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer": {
       "url": "http://localhost:123"
     }
   }
 }
 ```
 
-> クラウドでホストされている場合は、`url`を実際のエンドポイントに置き換えてください
+> クラウドでホストされている場合は `url` を実際のエンドポイントに置き換えてください。
 </details>
 
 ## バイナリ実行ファイル
 
-バイナリファイルから直接Unity `MCPサーバー`を起動できます。CPUアーキテクチャ専用にコンパイルされたバイナリが必要です。[GitHubリリースページ](https://github.com/IvanMurzak/Unity-MCP/releases)をチェックしてください。すべてのCPUアーキテクチャ用のプリコンパイルされたバイナリが含まれています。
+バイナリファイルから Unity `MCP Server` を直接起動できます。CPU アーキテクチャに合わせてコンパイルされたバイナリが必要です。すべての CPU アーキテクチャ向けのコンパイル済みバイナリを含む [GitHub リリースページ](https://github.com/IvanMurzak/Unity-MCP/releases) をご確認ください。
 
 ```bash
 ./unity-mcp-server --port 8080 --plugin-timeout 10000 --client-transport stdio
 ```
 
 <details>
-  <summary><code>MCPクライアント</code>設定：</summary>
+  <summary><code>MCP クライアント</code> 設定:</summary>
 
-> `<project>`をUnityプロジェクトパスに置き換えてください。
+> `<project>` を Unity プロジェクトパスに置き換えてください。
 
 ```json
 {
   "mcpServers": {
-    "Unity-MCP": {
+    "ai-game-developer": {
       "command": "<project>/Library/mcp-server/win-x64/unity-mcp-server.exe",
       "args": [
         "--port=8080",
@@ -475,119 +662,121 @@ docker run -e UNITY_MCP_PORT=123 -p 123:123 ivanmurzakdev/unity-mcp-server
 
 </details>
 
----
+![AI ゲーム開発者 — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
-# 動作原理
+# Unity MCP アーキテクチャの仕組み
 
-**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)**はLLMとUnityの橋渡しとして機能します。UnityのツールをLLMに公開し説明し、LLMがインターフェースを理解してユーザーの要求に応じてツールを利用します。
+**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** は LLM と Unity の橋渡し役として機能します。Unity のツールを LLM に公開して説明し、LLM はインターフェースを理解してユーザーのリクエストに応じてツールを活用します。
 
-統合された`AI Connector`ウィンドウを使用して、**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)**を[Claude](https://claude.ai/download)や[Cursor](https://www.cursor.com/)などのLLMクライアントに接続します。カスタムクライアントもサポートされています。
+統合された `AI コネクター` ウィンドウを使用して、**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** を [Claude](https://claude.ai/download) や [Cursor](https://www.cursor.com/) などの LLM クライアントに接続します。カスタムクライアントもサポートされています。
 
-システムは高度に拡張可能です - Unityプロジェクトのコードベースで直接カスタム`MCPツール`、`MCPリソース`、`MCPプロンプト`を定義して、AIや自動化クライアントに新しい機能を公開できます。これにより、Unity MCPは高度なワークフロー構築、ラピッドプロトタイピング、開発プロセスへのAI駆動機能統合のための柔軟な基盤となります。
+システムは高度に拡張可能で、Unity プロジェクトのコードベースに直接カスタム `MCP ツール`、`MCP リソース`、`MCP プロンプト` を定義し、AI や自動化クライアントに新しい機能を公開できます。これにより Unity MCP は高度なワークフローの構築、迅速なプロトタイピング、開発プロセスへの AI 駆動機能の統合のための柔軟な基盤となります。
 
-## `MCP`とは
+## `MCP` とは
 
-MCP - Model Context Protocol。簡潔に言うと、これはAI、特にLLM（Large Language Model）用の`USB Type-C`です。LLMに外部機能の使用方法を教えます。この場合はUnity Engineや、コード内のカスタムC#メソッドも含みます。[公式ドキュメント](https://modelcontextprotocol.io/)。
+MCP（Model Context Protocol）は、一言で言えば AI 向けの `USB Type-C` であり、特に LLM（大規模言語モデル）向けです。LLM が Unity エンジンや、コード内のカスタム C# メソッドなどの外部機能を使用する方法を教えます。[公式ドキュメント](https://modelcontextprotocol.io/)
 
-## `MCPクライアント`とは
+## `MCP Client` とは
 
-チャットウィンドウを持つアプリケーションです。より良い操作のためのスマートエージェントや、埋め込まれた高度なMCPツールを持つ場合があります。一般的に、よくできたMCPクライアントは、AIがタスクを実行する成功の50%を占めます。そのため、使用に最適なものを選択することが非常に重要です。
+チャットウィンドウを持つアプリケーションです。より効果的に動作するスマートエージェントを持つ場合もあり、高度な組み込み MCP ツールを持つ場合もあります。一般的に優れた MCP クライアントは AI がタスクを実行する成功の 50% を占めます。だから最良のものを選ぶことが非常に重要です。
 
-## `MCPサーバー`とは
+## `MCP Server` とは
 
-`MCPクライアント`と「何か他のもの」の間の橋渡しです。この特定のケースではUnity Engineです。このプロジェクトには`MCPサーバー`が含まれています。
+`MCP クライアント` と「他のもの」（この場合は Unity エンジン）の橋渡し役です。このプロジェクトには `MCP サーバー` が含まれています。
 
-## `MCPツール`とは
+## `MCP Tool` とは
 
-`MCPツール`は、LLMがUnityと相互作用するために呼び出すことができる関数またはメソッドです。これらのツールは、自然言語の要求と実際のUnity操作の間の橋渡しとして機能します。AIに「立方体を作成」や「マテリアルの色を変更」を依頼すると、MCPツールを使用してこれらのアクションを実行します。
+`MCP ツール` は LLM が Unity とやり取りするために呼び出せる関数またはメソッドです。これらのツールは自然言語リクエストと実際の Unity 操作の橋渡し役として機能します。AI に「キューブを作成して」や「マテリアルの色を変えて」と頼むと、AI は MCP ツールを使ってこれらのアクションを実行します。
 
-**主な特徴：**
+**主な特徴:**
 
 - 特定の操作を実行する**実行可能な関数**
-- LLMがどのようなデータを提供すべきかを理解するのに役立つ説明付きの**型付きパラメータ**
-- 操作の成功または失敗についてのフィードバックを与える**戻り値**
-- **スレッド対応** - Unity API呼び出しのためにメインスレッドで実行するか、重い処理のためにバックグラウンドスレッドで実行可能
+- LLM がどのデータを提供するか理解するための説明付き**型付きパラメーター**
+- 操作の成功・失敗に関するフィードバックを提供する**戻り値**
+- Unity API 呼び出しのためのメインスレッド実行や重い処理のバックグラウンドスレッド実行が可能な**スレッド対応**
 
-### `MCPツール`をいつ使用するか
+### `MCP Tool` を使うべき場面
 
-- **反復的なタスクの自動化** - 頻繁に行う一般的な操作のツールを作成
-- **複雑な操作** - 複数のUnity API呼び出しを単一の使いやすいツールにバンドル
+- **定型タスクの自動化** - 頻繁に行う一般的な操作のツールを作成
+- **複雑な操作** - 複数の Unity API 呼び出しを 1 つの使いやすいツールにまとめる
 - **プロジェクト固有のワークフロー** - プロジェクトの特定の構造と規約を理解するツールを構築
-- **エラーが起こりやすいタスク** - 検証とエラーハンドリングを含むツールを作成
-- **カスタムゲームロジック** - 動的コンテンツ作成のためにゲームシステムをAIに公開
+- **エラーが起きやすいタスク** - バリデーションとエラー処理を含むツールを作成
+- **カスタムゲームロジック** - 動的なコンテンツ作成のためにゲームのシステムを AI に公開
 
-**例：**
+**例:**
 
-- 特定のコンポーネントを持つGameObjectsの作成と設定
+- 特定のコンポーネントを持つ GameObject の作成と設定
 - アセット（テクスチャ、マテリアル、プレハブ）のバッチ処理
-- ライティングとポストプロセシング効果の設定
+- ライティングとポストプロセッシング効果の設定
 - レベルジオメトリの生成やオブジェクトの手続き的配置
 - 物理設定やコリジョンレイヤーの設定
 
-## `MCPリソース`とは
+## `MCP Resource` とは
 
-`MCPリソース`は、Unityプロジェクト内のデータへの読み取り専用アクセスを提供します。アクションを実行するMCPツールとは異なり、リソースはLLMがプロジェクトの現在の状態、アセット、設定を検査し理解することを可能にします。これらをAIにプロジェクトのコンテキストを提供する「センサー」と考えてください。
+`MCP リソース` は Unity プロジェクト内のデータへの読み取り専用アクセスを提供します。アクションを実行する MCP ツールとは異なり、リソースは LLM がプロジェクトの現在の状態、アセット、設定を検査して理解することを可能にします。プロジェクトについて AI にコンテキストを与える「センサー」と考えてください。
 
-**主な特徴：**
+**主な特徴:**
 
-- プロジェクトデータとUnityオブジェクトへの**読み取り専用アクセス**
-- LLMが理解できる形式で提示される**構造化された情報**
+- プロジェクトデータと Unity オブジェクトへの**読み取り専用アクセス**
+- LLM が理解できる形式で提示される**構造化された情報**
 - プロジェクトの現在の状態を反映する**リアルタイムデータ**
-- AIが情報に基づいた決定を行うのに役立つ**コンテキスト認識**
+- AI がより良い判断を下すための**コンテキスト認識**
 
-### `MCPリソース`をいつ使用するか
+### `MCP Resource` を使うべき場面
 
-- **プロジェクト分析** - AIにプロジェクト構造、アセット、組織を理解させる
+- **プロジェクト分析** - AI がプロジェクトの構造、アセット、組織を理解できるようにする
 - **デバッグ支援** - トラブルシューティングのための現在の状態情報を提供
-- **インテリジェントな提案** - AIにより良い推奨事項を作るためのコンテキストを提供
-- **ドキュメント生成** - プロジェクト状態に基づいてドキュメントを自動作成
-- **アセット管理** - AIが利用可能なアセットとそのプロパティを理解するのを助ける
+- **インテリジェントな提案** - AI がより良い推奨事項を出せるようにコンテキストを提供
+- **ドキュメント生成** - プロジェクトの状態に基づいてドキュメントを自動作成
+- **アセット管理** - AI が利用可能なアセットとそのプロパティを理解するのを支援
 
-**例：**
+**例:**
 
-- シーン階層とGameObjectプロパティの公開
-- 利用可能なマテリアル、テクスチャとその設定のリスト
-- スクリプト依存関係とコンポーネント関係の表示
-- 現在のライティング設定とレンダーパイプライン設定の表示
+- シーン階層と GameObject プロパティの公開
+- 利用可能なマテリアル、テクスチャ、その設定の一覧表示
+- スクリプトの依存関係とコンポーネントの関係の表示
+- 現在のライティング設定とレンダーパイプライン設定の提供
 - オーディオソース、アニメーション、パーティクルシステムに関する情報の提供
 
-## `MCPプロンプト`とは
+## `MCP Prompt` とは
 
-`MCPプロンプト`により、LLMとの会話に事前定義されたプロンプトを注入できます。これらは、AIの動作を導くコンテキスト、指示、または知識を提供できるスマートテンプレートです。プロンプトは静的テキストまたはプロジェクトの現在の状態に基づいて動的に生成できます。
+`MCP プロンプト` を使用すると、LLM との会話に事前定義されたプロンプトを挿入できます。これらは AI の動作を導くためのコンテキスト、指示、または知識を提供するスマートテンプレートです。プロンプトは静的テキストまたはプロジェクトの現在の状態に基づいて動的に生成することができます。
 
-**主な特徴：**
+**主な特徴:**
 
-- AIの応答方法に影響を与える**コンテキストガイダンス**
-- **ロールベース** - 異なるペルソナ（ユーザー要求またはアシスタント知識）をシミュレート可能
-- **動的コンテンツ** - リアルタイムプロジェクトデータを含むことが可能
-- 一般的なシナリオとワークフローのための**再利用可能なテンプレート**
+- AI の応答に影響を与える**コンテキストガイダンス**
+- 異なるペルソナをシミュレートできる**ロールベース**（ユーザーリクエストまたはアシスタントの知識）
+- リアルタイムのプロジェクトデータを含むことができる**動的コンテンツ**
+- 一般的なシナリオとワークフロー向けの**再利用可能なテンプレート**
 
-### `MCPプロンプト`をいつ使用するか
+### `MCP Prompt` を使うべき場面
 
-- **ドメイン知識の提供** - プロジェクト固有のベストプラクティスとコーディング標準を共有
-- **コーディング規約の設定** - 命名規約、アーキテクチャパターン、コードスタイルを確立
-- **プロジェクト構造についてのコンテキスト提供** - プロジェクトの組織方法とその理由を説明
-- **ワークフロー指示の共有** - 一般的なタスクの段階的手順を提供
-- **専門知識の注入** - 特定のUnity機能、サードパーティアセット、カスタムシステムに関する情報を追加
+- **ドメイン知識の提供** - プロジェクト固有のベストプラクティスとコーディング基準を共有
+- **コーディング規約の設定** - 命名規則、アーキテクチャパターン、コードスタイルを確立
+- **プロジェクト構造に関するコンテキストを提供** - プロジェクトがどのように組織されているか、そしてその理由を説明
+- **ワークフロー手順の共有** - 一般的なタスクのステップバイステップの手順を提供
+- **専門知識の注入** - 特定の Unity 機能、サードパーティアセット、カスタムシステムに関する情報を追加
 
-**例：**
+**例:**
 
-- 「パブリックメソッドには常にPascalCaseを、プライベートフィールドにはcamelCaseを使用してください」
-- 「このプロジェクトはScripts/Events/にあるカスタムイベントシステムを使用しています」
-- 「UI要素を作成する際は、常にScene/UI/MainCanvasのCanvasに追加してください」
-- 「パフォーマンスが重要です - 頻繁にインスタンス化されるオブジェクトにはオブジェクトプーリングを優先してください」
-- 「このプロジェクトはSOLID原則に従います - アーキテクチャの決定を説明してください」
+- 「パブリックメソッドは PascalCase、プライベートフィールドは camelCase を常に使用する」
+- 「このプロジェクトは Scripts/Events/ にあるカスタムイベントシステムを使用しています」
+- 「UI 要素を作成する際は、常に Scene/UI/MainCanvas の Canvas に追加してください」
+- 「パフォーマンスが重要 - 頻繁にインスタンス化するオブジェクトにはオブジェクトプールを優先使用」
+- 「このプロジェクトは SOLID 原則に従っています - アーキテクチャの決定を説明してください」
 
----
+![AI ゲーム開発者 — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
-# 貢献 💙💛
+# コントリビューション 💙💛
 
-貢献を高く評価しています。あなたのアイデアを持参して、ゲーム開発をこれまで以上にシンプルにしましょう！新しい`MCPツール`や機能のアイデアがあるか、バグを発見して修正方法を知っていますか？
+コントリビューションは大歓迎です。あなたのアイデアを持ち寄って、ゲーム開発をこれまでよりもシンプルにしましょう！新しい `MCP ツール` や機能のアイデアはありますか？あるいはバグを発見して修正方法を知っていますか？
 
-**このプロジェクトが役に立ったら、ぜひスター 🌟 をお願いします！**
+**役立つと思ったらこのプロジェクトにスター 🌟 をつけてください！**
 
-1. 👉 [開発ドキュメントを読む](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.ja.md)
+1. 👉 [開発ドキュメントを読む](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.md)
 2. 👉 [プロジェクトをフォーク](https://github.com/IvanMurzak/Unity-MCP/fork)
-3. フォークをクローンし、Unityで`./Unity-MCP-Plugin`フォルダーを開く
-4. プロジェクトで新しい機能を実装し、コミット、GitHubにプッシュ
-5. 元の[Unity-MCP](https://github.com/IvanMurzak/Unity-MCP/compare)リポジトリの`main`ブランチをターゲットとするプルリクエストを作成。
+3. フォークをクローンして `./Unity-MCP-Plugin` フォルダーを Unity で開く
+4. プロジェクトに新しいものを実装し、コミットして GitHub にプッシュ
+5. 元の [Unity-MCP](https://github.com/IvanMurzak/Unity-MCP/compare) リポジトリの `main` ブランチを対象にプルリクエストを作成
+
+![AI ゲーム開発者 — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)

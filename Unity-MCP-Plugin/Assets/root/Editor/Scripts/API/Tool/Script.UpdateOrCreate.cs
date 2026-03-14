@@ -22,12 +22,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public static partial class Tool_Script
     {
+        public const string ScriptUpdateOrCreateToolId = "script-update-or-create";
         [McpPluginTool
         (
-            "Script_CreateOrUpdate",
-            Title = "Create or Update Script"
+            ScriptUpdateOrCreateToolId,
+            Title = "Script / Update or Create",
+            DestructiveHint = true,
+            OpenWorldHint = false,
+            Enabled = false
         )]
-        [Description("Creates or updates a script file with the provided content. Does AssetDatabase.Refresh() at the end.")]
+        [Description("Updates or creates script file with the provided C# code. " +
+            "Does AssetDatabase.Refresh() at the end. " +
+            "Provides compilation error details if the code has syntax errors. " +
+            "Use '" + ScriptReadToolId + "' tool to read existing script files first.")]
         public static ResponseCallTool UpdateOrCreate
         (
             [Description("The path to the file. Sample: \"Assets/Scripts/MyScript.cs\".")]

@@ -1,0 +1,11 @@
+/* ==========================================================================
+   MCP Prompts Window Styles
+   Imports common list window styles and adds prompt-specific customizations
+   ========================================================================== */
+
+@import url("common/_mcp-list-window.uss");
+
+/* Prompt-specific: Role label color */
+.item-role {
+    color: #8FAADC;
+}

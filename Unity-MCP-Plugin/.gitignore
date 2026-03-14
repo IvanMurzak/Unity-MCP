@@ -58,6 +58,20 @@ sysinfo.txt
 
 # Unity Editor layouts
 UserSettings/Layouts/*
+UserSettings/mcp.json
+UserSettings/AI-Game-Developer-Config.json
 
 # Unity Render cache
 kernelsCache/*
+
+# Procedural Skills
+SKILLS
+.github/skills
+
+# AI agents
+opencode.json
+.codex
+.cursor
+.vscode/mcp.json
+.gemini
+.mcp.json

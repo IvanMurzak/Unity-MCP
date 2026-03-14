@@ -21,7 +21,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
     {
         public ValidateToolResultExecutor(Reflector? reflector = null) : base()
         {
-            reflector ??= McpPlugin.McpPlugin.Instance!.McpManager.Reflector ??
+            reflector ??= UnityMcpPluginEditor.Instance.Reflector ??
                 throw new ArgumentNullException(nameof(reflector), "Reflector cannot be null. Ensure McpPlugin is initialized before using this executor.");
 
             SetAction<ResponseData<ResponseCallTool>, ResponseData<ResponseCallTool>>(result =>
@@ -37,8 +37,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
                 Assert.IsNotNull(result.Value);
                 Assert.IsFalse(result.Value!.Status == ResponseStatus.Error, $"Tool call failed");
 
-                Assert.IsFalse(jsonResult.Contains("[Error]"), $"Tool call failed with error in JSON: {jsonResult}");
-                Assert.IsFalse(jsonResult.Contains("[Warning]"), $"Tool call contains warnings in JSON: {jsonResult}");
+                Assert.IsFalse(jsonResult!.Contains("[Error]"), $"Tool call failed with error in JSON: {jsonResult}");
+                Assert.IsFalse(jsonResult!.Contains("[Warning]"), $"Tool call contains warnings in JSON: {jsonResult}");
 
                 return result;
             });

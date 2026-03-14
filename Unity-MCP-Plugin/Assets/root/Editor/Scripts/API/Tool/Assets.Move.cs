@@ -9,53 +9,73 @@
 */
 
 #nullable enable
+using System;
+using System.Collections.Generic;
 using System.ComponentModel;
-using System.Text;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Assets
     {
+        public const string AssetsMoveToolId = "assets-move";
         [McpPluginTool
         (
-            "Assets_Move",
-            Title = "Assets Move"
+            AssetsMoveToolId,
+            Title = "Assets / Move",
+            Enabled = false
         )]
-        [Description(@"Move the assets at paths in the project. Should be used for asset rename. Does AssetDatabase.Refresh() at the end.")]
-        public string Move
+        [Description("Move the assets at paths in the project. " +
+            "Should be used for asset rename. " +
+            "Does AssetDatabase.Refresh() at the end. " +
+            "Use '" + AssetsFindToolId + "' tool to find assets before moving.")]
+        public MoveAssetsResponse Move
         (
             [Description("The paths of the assets to move.")]
             string[] sourcePaths,
             [Description("The paths of moved assets.")]
             string[] destinationPaths
         )
-        => MainThread.Instance.Run(() =>
         {
-            if (sourcePaths.Length == 0)
-                return Error.SourcePathsArrayIsEmpty();
-
-            if (sourcePaths.Length != destinationPaths.Length)
-                return Error.SourceAndDestinationPathsArrayMustBeOfTheSameLength();
-
-            var stringBuilder = new StringBuilder();
-
-            for (int i = 0; i < sourcePaths.Length; i++)
+            return MainThread.Instance.Run(() =>
             {
-                var error = AssetDatabase.MoveAsset(sourcePaths[i], destinationPaths[i]);
-                if (string.IsNullOrEmpty(error))
+                if (sourcePaths.Length == 0)
+                    throw new ArgumentException(Error.SourcePathsArrayIsEmpty(), nameof(sourcePaths));
+
+                if (sourcePaths.Length != destinationPaths.Length)
+                    throw new ArgumentException(Error.SourceAndDestinationPathsArrayMustBeOfTheSameLength());
+
+                var response = new MoveAssetsResponse();
+
+                for (int i = 0; i < sourcePaths.Length; i++)
                 {
-                    stringBuilder.AppendLine($"[Success] Moved asset from {sourcePaths[i]} to {destinationPaths[i]}.");
+                    var error = AssetDatabase.MoveAsset(sourcePaths[i], destinationPaths[i]);
+                    if (string.IsNullOrEmpty(error))
+                    {
+                        response.MovedPaths ??= new();
+                        response.MovedPaths.Add(destinationPaths[i]);
+                    }
+                    else
+                    {
+                        response.Errors ??= new();
+                        response.Errors.Add($"Failed to move asset from {sourcePaths[i]} to {destinationPaths[i]}: {error}.");
+                    }
                 }
-                else
-                {
-                    stringBuilder.AppendLine($"[Error] Failed to move asset from {sourcePaths[i]} to {destinationPaths[i]}: {error}.");
-                }
-            }
-            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
-            return stringBuilder.ToString();
-        });
+                AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+                EditorUtils.RepaintAllEditorWindows();
+                return response;
+            });
+        }
+
+        public class MoveAssetsResponse
+        {
+            [Description("List of destination paths of successfully moved assets.")]
+            public List<string>? MovedPaths { get; set; }
+            [Description("List of errors encountered during move operations.")]
+            public List<string>? Errors { get; set; }
+        }
     }
 }

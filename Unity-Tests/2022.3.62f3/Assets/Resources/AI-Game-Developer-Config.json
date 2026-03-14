@@ -1,0 +1,15 @@
+{
+  "logLevel": 3,
+  "enabledTools": [
+    "*"
+  ],
+  "enabledPrompts": [
+    "*"
+  ],
+  "enabledResources": [
+    "*"
+  ],
+  "host": "http://localhost:50886",
+  "timeoutMs": 10000,
+  "keepConnected": false
+}

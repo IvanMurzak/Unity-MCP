@@ -1,0 +1,246 @@
+/* ==========================================================================
+   Button Styles - All button variants
+   ========================================================================== */
+
+/* Primary Button */
+.btn-primary,
+.btn-primary {
+    background-color: rgb(175, 232, 230);
+    transition-duration: 200ms;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border-width: 0;
+    color: black;
+    font-size: 12px;
+}
+
+/* Primary Button Bold */
+.btn-primary-bold {
+    background-color: rgb(175, 232, 230);
+    transition-duration: 200ms;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border-width: 0;
+    color: black;
+    font-size: 14px;
+    -unity-font-style: bold;
+}
+
+.btn-primary-bold:hover {
+    background-color: rgb(118, 231, 227);
+    transition-duration: 200ms;
+}
+
+.btn-primary-bold:active {
+    background-color: rgb(250, 255, 234);
+    transition-duration: 50ms;
+}
+
+.btn-primary:hover,
+.btn-primary:hover {
+    background-color: rgb(118, 231, 227);
+    transition-duration: 200ms;
+}
+
+.btn-primary:active,
+.btn-primary:active {
+    background-color: rgb(250, 255, 234);
+    transition-duration: 50ms;
+}
+
+/* Secondary Button */
+.btn-secondary {
+    height: 30px;
+    background-color: rgb(70, 70, 70);
+    border-radius: 6px;
+    border-width: 1px;
+    border-color: rgb(100, 100, 100);
+    color: rgb(200, 200, 200);
+    font-size: 12px;
+    transition-duration: 200ms;
+}
+
+.btn-secondary:hover {
+    background-color: rgb(90, 90, 90);
+    border-color: rgb(120, 120, 120);
+    transition-duration: 200ms;
+}
+
+.btn-secondary:active {
+    background-color: rgb(110, 110, 110);
+    transition-duration: 50ms;
+}
+
+/* Compact Button — smaller variant of btn-secondary */
+.btn-compact {
+    height: 20px;
+    background-color: rgb(70, 70, 70);
+    border-radius: 4px;
+    border-width: 0px;
+    border-color: rgb(100, 100, 100);
+    color: rgb(200, 200, 200);
+    font-size: 11px;
+    padding: 0 6px;
+    transition-duration: 200ms;
+}
+
+.btn-compact:hover {
+    background-color: rgb(90, 90, 90);
+    border-color: rgb(120, 120, 120);
+    transition-duration: 200ms;
+}
+
+.btn-compact:active {
+    background-color: rgb(110, 110, 110);
+    transition-duration: 50ms;
+}
+
+.btn-compact.btn-primary {
+    background-color: rgb(175, 232, 230);
+    color: black;
+}
+
+.btn-compact.btn-primary:hover {
+    background-color: rgb(118, 231, 227);
+}
+
+.btn-compact.btn-primary:active {
+    background-color: rgb(250, 255, 234);
+}
+
+/* Tertiary Button */
+.btn-tertiary {
+    height: 26px;
+    margin-top: 8px;
+    background-color: transparent;
+    border-radius: 4px;
+    border-width: 0;
+    color: rgb(140, 140, 140);
+    font-size: 11px;
+    transition-duration: 200ms;
+}
+
+.btn-tertiary:hover {
+    color: rgb(180, 180, 180);
+    background-color: rgba(255, 255, 255, 0.05);
+    transition-duration: 200ms;
+}
+
+.btn-tertiary:active {
+    color: rgb(200, 200, 200);
+    background-color: rgba(255, 255, 255, 0.1);
+    transition-duration: 50ms;
+}
+
+/* Alert Button */
+.btn-alert {
+    background-color: rgb(88, 44, 44);
+    transition-duration: 200ms;
+}
+
+.btn-alert:hover {
+    background-color: rgb(255, 110, 110);
+    transition-duration: 200ms;
+    color: black;
+}
+
+/* Accept Button */
+.btn-accept {
+    transition-duration: 200ms;
+}
+
+.btn-accept:hover {
+    transition-duration: 200ms;
+}
+
+/* Button with Icon */
+.btn-with-icon {
+    flex-direction: row;
+    align-items: center;
+    padding: 4px 10px 4px 6px;
+}
+
+.btn-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    margin-right: 6px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.btn-label {
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0;
+}
+
+/* Premium/Golden Button */
+.btn-golden {
+    background-color: rgb(45, 40, 25);
+    border-color: rgb(180, 150, 60);
+    border-width: 1px;
+    color: rgb(255, 215, 100);
+}
+
+.btn-golden:hover {
+    background-color: rgb(60, 52, 30);
+    border-color: rgb(220, 180, 80);
+    color: rgb(255, 225, 130);
+}
+
+.btn-golden:active {
+    background-color: rgb(80, 68, 35);
+    border-color: rgb(255, 200, 100);
+    color: rgb(255, 235, 150);
+}
+
+.btn-golden .btn-label {
+    color: rgb(255, 215, 100);
+}
+
+.btn-golden:hover .btn-label {
+    color: rgb(255, 225, 130);
+}
+
+.btn-golden:active .btn-label {
+    color: rgb(255, 235, 150);
+}
+
+/* Circular Remove Button */
+.btn-remove-circle {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    min-height: 22px;
+    border-top-left-radius: 11px;
+    border-top-right-radius: 11px;
+    border-bottom-left-radius: 11px;
+    border-bottom-right-radius: 11px;
+    background-color: rgba(110, 25, 25, 0.3);
+    border-width: 0;
+    color: rgb(255, 160, 160);
+    font-size: 12px;
+    padding: 0;
+    margin-left: 8px;
+    -unity-font-style: bold;
+    transition-duration: 200ms;
+}
+
+.btn-remove-circle:hover {
+    background-color: rgb(210, 50, 50);
+    color: white;
+    transition-duration: 200ms;
+}
+
+.btn-remove-circle:active {
+    background-color: rgb(255, 80, 80);
+    color: white;
+    transition-duration: 50ms;
+}
+
+/* Floating/Absolute positioned button */
+.btn-floating {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+}
