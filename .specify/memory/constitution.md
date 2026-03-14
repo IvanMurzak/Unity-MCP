@@ -1,14 +1,10 @@
 <!--
 Sync Impact Report
 ==================
-- Version change: 1.1.0 → 1.2.0 (project scoping added)
-- Modified principles:
-  - I. → scoped to `Unity-MCP-Plugin`
-  - II. → scoped to `Unity-MCP-Plugin`
-  - III. → scoped to `Unity-MCP-Plugin`
-  - IV. → scoped to `Unity-MCP-Plugin`
-  - V–VII remain universal (all sub-projects)
-- Added sections: none
+- Version change: 1.3.0 → 1.4.0 (mandatory tool input argument added)
+- Modified principles: none
+- Added sections:
+  - IX. `Unity-MCP-Plugin` Mandatory Tool Input Argument
 - Removed sections: none
 - Templates requiring updates:
   - .specify/templates/plan-template.md — ✅ compatible
@@ -124,6 +120,52 @@ Rationale: MCP servers are network-accessible. A single
 leaked secret or injection vector can compromise the entire
 Unity project and host machine.
 
+### VIII. No Reflection for Private Access
+
+C# Reflection (`System.Reflection`) MUST NOT be used to access
+private, internal, or otherwise non-public fields, properties,
+methods, or classes in project code. This includes `Type.GetType`,
+`BindingFlags.NonPublic`, `GetMethod`, `GetField`, `GetProperty`,
+and similar reflection APIs when used to bypass access modifiers.
+
+Prohibited example:
+```csharp
+// WRONG: Accessing internal Unity API via reflection
+var logEntriesType = Type.GetType("UnityEditor.LogEntries, UnityEditor.CoreModule")
+                  ?? Type.GetType("UnityEditorInternal.LogEntries, UnityEditor.CoreModule")
+                  ?? Type.GetType("UnityEditor.LogEntries, UnityEditor")
+                  ?? Type.GetType("UnityEditorInternal.LogEntries, UnityEditor");
+logEntriesType?.GetMethod("Clear", BindingFlags.Static | BindingFlags.Public)
+              ?.Invoke(null, null);
+```
+
+This rule does NOT apply to `ReflectorNet` library usage, which is
+an external dependency specifically designed for reflection-based
+access patterns.
+
+Rationale: Reflection bypasses compile-time type safety, breaks
+encapsulation, and creates fragile code that silently fails when
+internal APIs change across Unity versions. It also makes code
+review harder — non-public members are non-public for a reason.
+
+### IX. `Unity-MCP-Plugin` Mandatory Tool Input Argument
+
+Every MCP tool implemented in `Unity-MCP-Plugin` MUST declare at
+least one input argument. If a tool has no meaningful parameters,
+it MUST use the following default placeholder argument:
+
+```csharp
+string? nothing = null
+```
+
+This MUST be the sole input argument for otherwise parameterless
+MCP tools.
+
+Rationale: Some AI agents fail when invoking MCP tools that have
+zero input arguments. A nullable placeholder argument with a
+default value ensures universal agent compatibility without
+affecting tool behavior.
+
 ## Architecture Constraints
 
 - **Three-tier architecture**: MCP Client ↔ MCP Server
@@ -179,4 +221,4 @@ preferences when conflicts arise.
 adherence to these principles. Complexity that violates a
 principle MUST be justified in the PR description.
 
-**Version**: 1.2.0 | **Ratified**: 2026-03-13 | **Last Amended**: 2026-03-13
+**Version**: 1.4.0 | **Ratified**: 2026-03-13 | **Last Amended**: 2026-03-14
