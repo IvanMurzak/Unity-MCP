@@ -37,9 +37,12 @@ export const installUnityCommand = new Command('install-unity')
       }
     }
 
+    // Fetch available releases once — reused for latest-stable lookup and install
+    let releases: ReturnType<typeof listAvailableReleases> | undefined;
+
     // No version specified — resolve latest stable release from Unity Hub
     if (!version) {
-      const releases = listAvailableReleases(hubPath);
+      releases = listAvailableReleases(hubPath);
       const latest = findLatestStableRelease(releases);
 
       if (!latest) {
@@ -66,6 +69,6 @@ export const installUnityCommand = new Command('install-unity')
       return;
     }
 
-    await installEditor(hubPath, version);
+    await installEditor(hubPath, version, releases);
     ui.success(`Unity Editor ${version} installed successfully`);
   });

@@ -5,6 +5,7 @@ import { execFileSync, execSync, spawn } from 'child_process';
 import { platform } from 'os';
 import { get as httpsGet } from 'https';
 import { get as httpGet, IncomingMessage } from 'http';
+import type { Spinner } from 'yocto-spinner';
 import * as ui from './ui.js';
 
 export interface AvailableRelease {
@@ -343,8 +344,16 @@ function fetchUrl(url: string, redirectsRemaining = FETCH_MAX_REDIRECTS): Promis
  * Resolve the changeset hash for a Unity version by scraping the release notes page.
  * Returns the changeset string, or null if not found.
  */
+// Unity version format: major.minor.patchSuffix (e.g. 2022.3.62f3, 6000.3.1f1)
+const UNITY_VERSION_RE = /^\d+\.\d+\.\d+[a-zA-Z]\d+$/;
+
+export function isValidUnityVersion(version: string): boolean {
+  return UNITY_VERSION_RE.test(version);
+}
+
 export async function resolveChangeset(version: string): Promise<string | null> {
-  // Use the version as-is in the URL; Unity's release notes page accepts the full version string
+  if (!isValidUnityVersion(version)) return null;
+
   const url = `https://unity.com/releases/editor/whats-new/${version}`;
   try {
     const html = await fetchUrl(url);
@@ -365,7 +374,7 @@ export async function resolveChangeset(version: string): Promise<string | null> 
  *   [Unity (6000.3.11f1)] installing...
  *   [Unity (6000.3.11f1)] installed successfully.
  */
-function parseHubProgress(line: string): { percent: number; status: string } | null {
+export function parseHubProgress(line: string): { percent: number; status: string } | null {
   const trimmed = line.replace(/\x1b\[[0-9;]*[A-Za-z]/g, '').trim();
   if (!trimmed || trimmed === 'Progress:' || trimmed === 'All Tasks Completed Successfully.') return null;
 
@@ -400,23 +409,21 @@ function parseHubProgress(line: string): { percent: number; status: string } | n
 function runHubInstallWithProgress(hubPath: string, args: string[], version: string): Promise<void> {
   return new Promise((resolve, reject) => {
     const progress = ui.createProgressBar();
-    let activeSpinner = ui.startSpinner(`Preparing Unity Editor ${version}...`);
+    let activeSpinner: Spinner | null = ui.startSpinner(`Preparing Unity Editor ${version}...`);
     let isDownloading = false;
 
     const proc = spawn(hubPath, args, { stdio: ['ignore', 'pipe', 'pipe'] });
     let stderr = '';
 
-    function transitionSpinner(msg: string): void {
+    function stopActiveSpinner(msg: string): void {
       if (activeSpinner) {
         activeSpinner.success(msg);
+        activeSpinner = null;
       }
-      activeSpinner = null as unknown as ReturnType<typeof ui.startSpinner>;
     }
 
     function startPhaseSpinner(status: string): void {
-      if (activeSpinner) {
-        activeSpinner.success(activeSpinner.text ?? '');
-      }
+      stopActiveSpinner(activeSpinner?.text ?? '');
       activeSpinner = ui.startSpinner(`${status}...`);
     }
 
@@ -432,7 +439,7 @@ function runHubInstallWithProgress(hubPath: string, args: string[], version: str
         if (parsed.status === 'Downloading' || parsed.status === 'Starting download') {
           if (!isDownloading) {
             isDownloading = true;
-            transitionSpinner(`Downloading Unity Editor ${version}`);
+            stopActiveSpinner(`Downloading Unity Editor ${version}`);
           }
           progress.update(parsed.percent, `Downloading Unity Editor ${version}`);
         } else if (parsed.status === 'Download complete') {
@@ -441,11 +448,7 @@ function runHubInstallWithProgress(hubPath: string, args: string[], version: str
             isDownloading = false;
           }
         } else if (parsed.status === 'Installed') {
-          // Final success — stop active spinner, caller prints the final message
-          if (activeSpinner) {
-            activeSpinner.success(`Unity Editor ${version} installed`);
-            activeSpinner = null as unknown as ReturnType<typeof ui.startSpinner>;
-          }
+          stopActiveSpinner(`Unity Editor ${version} installed`);
         } else {
           // Post-download phases: show as a spinner so the user sees activity
           if (!isDownloading) {
@@ -484,9 +487,9 @@ function runHubInstallWithProgress(hubPath: string, args: string[], version: str
  * Automatically resolves changeset for versions not in the promoted releases list.
  * Shows a progress bar during download and status during installation.
  */
-export async function installEditor(hubPath: string, version: string): Promise<void> {
-  // Check if version is in the promoted releases list
-  const releases = listAvailableReleases(hubPath);
+export async function installEditor(hubPath: string, version: string, prefetchedReleases?: AvailableRelease[]): Promise<void> {
+  // Use pre-fetched releases when available to avoid a duplicate Hub CLI call
+  const releases = prefetchedReleases ?? listAvailableReleases(hubPath);
   const isPromoted = releases.some(r => r.version === version);
 
   const baseArgs = ['--', '--headless', 'install', '--version', version];
