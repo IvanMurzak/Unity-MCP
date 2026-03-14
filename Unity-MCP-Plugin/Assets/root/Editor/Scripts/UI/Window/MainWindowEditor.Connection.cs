@@ -10,8 +10,8 @@
 
 #nullable enable
 using System;
+using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.Services;
-using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using Microsoft.AspNetCore.SignalR.Client;
 using UnityEngine.UIElements;
 
@@ -148,7 +148,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     InvalidateAndReloadAgentUI();
 
                     // Stop local server — not needed in Cloud mode
-                    if (McpServerManager.IsRunning)
+                    if (McpServerManager.IsRunning || McpServerManager.IsStarting)
                         McpServerManager.StopServer();
 
                     // Reconnect to cloud server (only if authorized)
@@ -275,7 +275,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     // Use RunAsync (EditorApplication.update-based) instead of delayCall so that
                     // the UI updates even when the Unity Editor window is not focused — delayCall
                     // is throttled/paused when Unity loses application focus.
-                    _ = MainThread.Instance.RunAsync(() =>
+                    MainThread.Instance.RunAsync(() =>
                     {
                         // Ignore stale events from a previous auth flow
                         if (_deviceAuthFlow != capturedFlow) return;
