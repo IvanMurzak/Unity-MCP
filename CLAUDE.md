@@ -16,12 +16,12 @@ Unity-MCP bridges LLMs (Claude, Cursor, Copilot, etc.) with Unity Editor and Run
 
 ```
 MCP Client (Claude/Cursor/etc.)
-        ↕ stdio or streamableHttp
-  Unity-MCP-Server  (ASP.NET Core + MCP SDK)
-        ↕ SignalR
-  Unity-MCP-Plugin  (Unity Editor/Runtime)
-        ↕ Unity API (main thread)
-      Unity Engine
+      ↕ stdio or streamableHttp
+Unity-MCP-Server  (ASP.NET Core + MCP SDK)
+      ↕ SignalR
+Unity-MCP-Plugin  (Unity Editor/Runtime)
+      ↕ Unity API (main thread)
+Unity Engine
 ```
 
 - The **MCP Server** is a standalone binary downloaded automatically by the plugin to `Library/mcp-server/{platform}/`. It is also published to Docker Hub and NuGet.
