@@ -23,6 +23,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         (
             ConsoleClearLogsToolId,
             Title = "Console / Clear Logs",
+            Enabled = false,
             DestructiveHint = true,
             IdempotentHint = true
         )]
