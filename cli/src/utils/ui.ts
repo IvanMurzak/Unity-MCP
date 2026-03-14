@@ -1,7 +1,35 @@
 import chalk from 'chalk';
-import ora, { type Ora } from 'ora';
-import boxen from 'boxen';
+import yoctoSpinner, { type Spinner } from 'yocto-spinner';
 import type { Command, Help } from 'commander';
+
+/**
+ * Draw a Unicode rounded box around text with cyan borders.
+ */
+function drawBox(text: string): string {
+  const lines = text.split('\n');
+  const padding = 2;
+  const maxLen = Math.max(...lines.map(l => stripAnsi(l).length));
+  const innerWidth = maxLen + padding * 2;
+  const pad = ' '.repeat(padding);
+
+  const top = chalk.cyan('╭' + '─'.repeat(innerWidth) + '╮');
+  const bottom = chalk.cyan('╰' + '─'.repeat(innerWidth) + '╯');
+  const middle = lines.map(l => {
+    const visible = stripAnsi(l).length;
+    const right = ' '.repeat(maxLen - visible);
+    return chalk.cyan('│') + pad + l + right + pad + chalk.cyan('│');
+  });
+
+  return [top, ...middle, bottom].join('\n');
+}
+
+/**
+ * Strip ANSI escape codes from a string.
+ */
+function stripAnsi(str: string): string {
+  // eslint-disable-next-line no-control-regex
+  return str.replace(/\x1B\[[0-9;]*m/g, '');
+}
 
 /**
  * Apply styled help formatting to a Commander command.
@@ -19,24 +47,14 @@ export function configureStyledHelp(cmd: Command, appVersion?: string): Command 
       // Banner for root, styled title for subcommands
       if (isRoot && appVersion) {
         lines.push(
-          boxen(
-            `${chalk.bold.cyan('Unity-MCP CLI')}  ${chalk.dim(`v${appVersion}`)}\n${chalk.dim('Bridge LLMs with Unity via Model Context Protocol')}`,
-            {
-              padding: { top: 0, bottom: 0, left: 2, right: 2 },
-              borderColor: 'cyan',
-              borderStyle: 'round',
-            }
+          drawBox(
+            `${chalk.bold.cyan('Unity-MCP CLI')}  ${chalk.dim(`v${appVersion}`)}\n${chalk.dim('Bridge LLMs with Unity via Model Context Protocol')}`
           )
         );
       } else {
         lines.push(
-          boxen(
-            `${chalk.bold.cyan(target.name())} ${chalk.dim('\u2014')} ${target.description()}`,
-            {
-              padding: { top: 0, bottom: 0, left: 2, right: 2 },
-              borderColor: 'cyan',
-              borderStyle: 'round',
-            }
+          drawBox(
+            `${chalk.bold.cyan(target.name())} ${chalk.dim('\u2014')} ${target.description()}`
           )
         );
       }
@@ -135,10 +153,10 @@ export function label(key: string, value: string): void {
 }
 
 /**
- * Start an ora spinner with the given text. Returns the spinner instance.
+ * Start a spinner with the given text. Returns the spinner instance.
  */
-export function startSpinner(text: string): Ora {
-  return ora({ text, color: 'cyan' }).start();
+export function startSpinner(text: string): Spinner {
+  return yoctoSpinner({ text, color: 'cyan' }).start();
 }
 
 /**

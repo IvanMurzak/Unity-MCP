@@ -45,12 +45,12 @@ export const connectCommand = new Command('connect')
     const spinner = ui.startSpinner('Locating Unity Editor...');
     const editorPath = await findEditorPath(version);
     if (!editorPath) {
-      spinner.fail('Unity Editor not found');
+      spinner.error('Unity Editor not found');
       const versionMsg = version ? ` (version ${version})` : '';
       ui.error(`Unity Editor not found${versionMsg}. Install it with: unity-mcp-cli install-unity --version <version>`);
       process.exit(1);
     }
-    spinner.succeed('Unity Editor located');
+    spinner.success('Unity Editor located');
 
     // Build environment variables for MCP connection
     const env: Record<string, string> = {

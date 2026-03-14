@@ -93,10 +93,10 @@ export async function installUnityHub(): Promise<string> {
       try {
         await downloadFile(url, installerPath);
       } catch (err) {
-        spinner.fail('Failed to download Unity Hub installer');
+        spinner.error('Failed to download Unity Hub installer');
         throw err;
       }
-      spinner.succeed('Unity Hub installer downloaded');
+      spinner.success('Unity Hub installer downloaded');
       ui.info('Installing Unity Hub silently (may require administrator privileges)...');
       try {
         execFileSync(installerPath, ['/S'], { timeout: 300000, stdio: 'inherit' });
@@ -115,10 +115,10 @@ export async function installUnityHub(): Promise<string> {
       try {
         await downloadFile(url, dmgPath);
       } catch (err) {
-        spinner.fail('Failed to download Unity Hub installer');
+        spinner.error('Failed to download Unity Hub installer');
         throw err;
       }
-      spinner.succeed('Unity Hub installer downloaded');
+      spinner.success('Unity Hub installer downloaded');
       const installSpinner = ui.startSpinner('Installing Unity Hub...');
       try {
         const mountOutput = execSync(`hdiutil attach -nobrowse -noverify "${dmgPath}"`, { encoding: 'utf-8' });
@@ -130,9 +130,9 @@ export async function installUnityHub(): Promise<string> {
         } finally {
           execSync(`hdiutil detach "${mountPoint}" -quiet`, { stdio: 'ignore' });
         }
-        installSpinner.succeed('Unity Hub installed');
+        installSpinner.success('Unity Hub installed');
       } catch (err) {
-        installSpinner.fail('Unity Hub installation failed');
+        installSpinner.error('Unity Hub installation failed');
         throw err;
       } finally {
         try { fs.unlinkSync(dmgPath); } catch { /* ignore */ }
@@ -151,11 +151,11 @@ export async function installUnityHub(): Promise<string> {
       try {
         await downloadFile(url, appImagePath);
       } catch (err) {
-        spinner.fail('Failed to download Unity Hub AppImage');
+        spinner.error('Failed to download Unity Hub AppImage');
         throw err;
       }
       fs.chmodSync(appImagePath, 0o755);
-      spinner.succeed(`Unity Hub installed at: ${appImagePath}`);
+      spinner.success(`Unity Hub installed at: ${appImagePath}`);
       return appImagePath;
     }
     default:
