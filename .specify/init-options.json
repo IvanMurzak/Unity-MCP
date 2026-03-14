@@ -1,0 +1,9 @@
+{
+  "ai": "claude",
+  "ai_commands_dir": null,
+  "ai_skills": false,
+  "here": true,
+  "preset": null,
+  "script": "ps",
+  "speckit_version": "0.3.0"
+}

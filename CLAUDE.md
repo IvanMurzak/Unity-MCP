@@ -87,7 +87,7 @@ These apply across both C# sub-projects:
 - `#nullable enable` at the top of every file
 - Copyright box comment header in every file
 - MCP tool classes are `partial` — one operation per file (e.g., `Tool_GameObject.Create.cs`)
-- Return strings prefixed with `[Success]` or `[Error]` for structured AI feedback
+- MCP tools MUST return structured types (data models, `List<T>`, `void`, or `Task`) — avoid raw string returns
 - All Unity API calls must use `MainThread.Instance.Run(() => ...)` or `RunAsync()`
 - Tool/prompt names use **kebab-case** with category prefix (e.g., `gameobject-create`, `assets-find`)
 - Namespace pattern: `com.IvanMurzak.Unity.MCP.[Tier].[Component]`
