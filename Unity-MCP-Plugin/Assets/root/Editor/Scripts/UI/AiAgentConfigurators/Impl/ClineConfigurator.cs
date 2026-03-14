@@ -84,8 +84,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             $"{Args.Authorization}={UnityMcpPluginEditor.AuthOption}",
             $"{Args.Token}={UnityMcpPluginEditor.Token}"
         }, requiredForConfiguration: true)
-        .SetPropertyToRemove("url")
-        .SetPropertyToRemove("headers");
+        .SetPropertyToRemove("url");
 
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
@@ -101,8 +100,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             $"{Args.Authorization}={UnityMcpPluginEditor.AuthOption}",
             $"{Args.Token}={UnityMcpPluginEditor.Token}"
         }, requiredForConfiguration: true)
-        .SetPropertyToRemove("url")
-        .SetPropertyToRemove("headers");
+        .SetPropertyToRemove("url");
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new JsonAiAgentConfig(
             name: AgentName,
@@ -112,8 +110,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetProperty("type", JsonValue.Create("streamableHttp"), requiredForConfiguration: true)
         .SetProperty("url", JsonValue.Create(UnityMcpPluginEditor.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
         .SetPropertyToRemove("command")
-        .SetPropertyToRemove("args")
-        .SetPropertyToRemove("headers");
+        .SetPropertyToRemove("args");
 
         protected override AiAgentConfig CreateConfigHttpMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
@@ -123,8 +120,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         .SetProperty("type", JsonValue.Create("streamableHttp"), requiredForConfiguration: true)
         .SetProperty("url", JsonValue.Create(UnityMcpPluginEditor.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
         .SetPropertyToRemove("command")
-        .SetPropertyToRemove("args")
-        .SetPropertyToRemove("headers");
+        .SetPropertyToRemove("args");
 
         protected override void OnUICreated(VisualElement root)
         {
