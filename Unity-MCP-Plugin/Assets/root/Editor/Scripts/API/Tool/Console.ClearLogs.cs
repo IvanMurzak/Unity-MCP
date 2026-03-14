@@ -11,6 +11,7 @@
 #nullable enable
 using System;
 using System.ComponentModel;
+using System.Reflection;
 using com.IvanMurzak.McpPlugin;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -25,18 +26,36 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             DestructiveHint = true,
             IdempotentHint = true
         )]
-        [Description("Clears all Unity Editor console logs. " +
+        [Description("Clears the Unity Editor Console window and optionally the MCP log cache (used by console-get-logs). " +
             "Useful for isolating errors related to a specific action by clearing logs before performing the action.")]
-        public void ClearLogs()
+        public string ClearLogs(
+            [Description("Whether to also clear the MCP log cache used by console-get-logs. Default: true")]
+            bool clearMcpCache = true
+        )
         {
-            if (!UnityMcpPluginEditor.HasInstance)
-                throw new InvalidOperationException("UnityMcpPluginEditor is not initialized.");
+            // Clear the Unity Editor Console window via reflection (LogEntries is internal API)
+            var logEntriesType = Type.GetType("UnityEditor.LogEntries, UnityEditor.CoreModule")
+                              ?? Type.GetType("UnityEditorInternal.LogEntries, UnityEditor.CoreModule")
+                              ?? Type.GetType("UnityEditor.LogEntries, UnityEditor")
+                              ?? Type.GetType("UnityEditorInternal.LogEntries, UnityEditor");
+            logEntriesType?.GetMethod("Clear", BindingFlags.Static | BindingFlags.Public)
+                          ?.Invoke(null, null);
 
-            var logCollector = UnityMcpPluginEditor.Instance.LogCollector;
-            if (logCollector == null)
-                throw new InvalidOperationException("LogCollector is not initialized.");
+            if (clearMcpCache)
+            {
+                if (!UnityMcpPluginEditor.HasInstance)
+                    throw new InvalidOperationException("UnityMcpPluginEditor is not initialized.");
 
-            logCollector.Clear();
+                var logCollector = UnityMcpPluginEditor.Instance.LogCollector;
+                if (logCollector == null)
+                    throw new InvalidOperationException("LogCollector is not initialized.");
+
+                logCollector.Clear();
+            }
+
+            return clearMcpCache
+                ? "[Success] Cleared Unity Console and MCP log cache."
+                : "[Success] Cleared Unity Console. MCP log cache preserved.";
         }
     }
 }

@@ -246,10 +246,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             for (int i = 0; i < 3; i++)
                 yield return null;
 
-            _logCollector.Save();
+            UnityMcpPluginEditor.Instance.LogCollector?.Save();
 
             // Step 1: Clear logs
-            Assert.DoesNotThrow(() => _tool.ClearLogs());
+            var clearResult = _tool.ClearLogs();
+            Assert.IsTrue(clearResult.Contains("[Success]"), "ClearLogs should return success.");
 
             // Step 2: Perform an action (simulate by generating new logs)
             var actionLog = $"Action log {uniqueId}";
@@ -260,7 +261,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             for (int i = 0; i < 5; i++)
                 yield return null;
 
-            _logCollector.Save();
+            UnityMcpPluginEditor.Instance.LogCollector?.Save();
 
             // Step 3: Get logs - should only contain action logs
             var result = _tool.GetLogs(maxEntries: 1000);
