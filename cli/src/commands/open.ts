@@ -34,7 +34,7 @@ export const openCommand = new Command('open')
     const spinner = ui.startSpinner('Locating Unity Editor...');
     const editorPath = await findEditorPath(version);
     if (!editorPath) {
-      spinner.error('Unity Editor not found');
+      spinner.stop();
       printEditorNotFoundHelp(version, 'open');
       process.exit(1);
     }

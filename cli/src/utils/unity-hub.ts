@@ -317,13 +317,16 @@ function fetchUrl(url: string, redirectsRemaining = FETCH_MAX_REDIRECTS): Promis
       clearTimeout(timer);
       if (response.statusCode && response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
         if (redirectsRemaining <= 0) {
+          response.resume();
           reject(new Error(`Too many redirects (max ${FETCH_MAX_REDIRECTS}) fetching: ${url}`));
           return;
         }
+        response.resume();
         fetchUrl(new URL(response.headers.location, url).toString(), redirectsRemaining - 1).then(resolve, reject);
         return;
       }
       if (response.statusCode && response.statusCode !== 200) {
+        response.resume();
         reject(new Error(`HTTP ${response.statusCode}`));
         return;
       }
@@ -417,9 +420,12 @@ function runHubInstallWithProgress(hubPath: string, args: string[], version: str
       activeSpinner = ui.startSpinner(`${status}...`);
     }
 
+    let stdoutBuffer = '';
     proc.stdout.on('data', (data: Buffer) => {
-      const text = data.toString('utf-8');
-      for (const line of text.split('\n')) {
+      const text = stdoutBuffer + data.toString('utf-8');
+      const lines = text.split('\n');
+      stdoutBuffer = lines.pop() ?? '';
+      for (const line of lines) {
         const parsed = parseHubProgress(line);
         if (!parsed) continue;
 

@@ -45,7 +45,7 @@ export const connectCommand = new Command('connect')
     const spinner = ui.startSpinner('Locating Unity Editor...');
     const editorPath = await findEditorPath(version);
     if (!editorPath) {
-      spinner.error('Unity Editor not found');
+      spinner.stop();
       printEditorNotFoundHelp(version, 'connect');
       process.exit(1);
     }
