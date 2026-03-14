@@ -15,10 +15,10 @@ export const installUnityCommand = new Command('install-unity')
     try {
       hubPath = await ensureUnityHub();
     } catch (err) {
-      spinner.fail('Failed to locate Unity Hub');
+      spinner.error('Failed to locate Unity Hub');
       throw err;
     }
-    spinner.succeed('Unity Hub located');
+    spinner.success('Unity Hub located');
 
     let version = options.version;
 
