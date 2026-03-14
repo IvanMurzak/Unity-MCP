@@ -1,10 +1,10 @@
 <!--
 Sync Impact Report
 ==================
-- Version change: 1.2.0 → 1.3.0 (reflection prohibition added)
+- Version change: 1.3.0 → 1.4.0 (mandatory tool input argument added)
 - Modified principles: none
 - Added sections:
-  - VIII. No Reflection for Private Access (universal, all sub-projects)
+  - IX. `Unity-MCP-Plugin` Mandatory Tool Input Argument
 - Removed sections: none
 - Templates requiring updates:
   - .specify/templates/plan-template.md — ✅ compatible
@@ -148,6 +148,24 @@ encapsulation, and creates fragile code that silently fails when
 internal APIs change across Unity versions. It also makes code
 review harder — non-public members are non-public for a reason.
 
+### IX. `Unity-MCP-Plugin` Mandatory Tool Input Argument
+
+Every MCP tool implemented in `Unity-MCP-Plugin` MUST declare at
+least one input argument. If a tool has no meaningful parameters,
+it MUST use the following default placeholder argument:
+
+```csharp
+string? nothing = null
+```
+
+This MUST be the sole input argument for otherwise parameterless
+MCP tools.
+
+Rationale: Some AI agents fail when invoking MCP tools that have
+zero input arguments. A nullable placeholder argument with a
+default value ensures universal agent compatibility without
+affecting tool behavior.
+
 ## Architecture Constraints
 
 - **Three-tier architecture**: MCP Client ↔ MCP Server
@@ -203,4 +221,4 @@ preferences when conflicts arise.
 adherence to these principles. Complexity that violates a
 principle MUST be justified in the PR description.
 
-**Version**: 1.3.0 | **Ratified**: 2026-03-13 | **Last Amended**: 2026-03-14
+**Version**: 1.4.0 | **Ratified**: 2026-03-13 | **Last Amended**: 2026-03-14

@@ -47,14 +47,31 @@ These apply across both C# sub-projects:
 - All Unity API calls must use `MainThread.Instance.Run(() => ...)` or `RunAsync()`
 - Tool/prompt names use **kebab-case** with category prefix (e.g., `gameobject-create`, `assets-find`)
 - Namespace pattern: `com.IvanMurzak.Unity.MCP.[Tier].[Component]`
+- **No Reflection for private access** — C# Reflection (`System.Reflection`) MUST NOT be used to access private, internal, or non-public members. Exception: `ReflectorNet` library usage is allowed.
 
 ## Project Constitution
 
 Non-negotiable principles and architecture constraints: [`.specify/memory/constitution.md`](.specify/memory/constitution.md)
 
-## Rules
+**Code review**: You MUST read the constitution before performing any code review. It contains critical rules for code quality, safety, and project governance that all reviews must verify against.
 
-Important rules that must be followed:
+## Documentation
 
-- `./Unity-MCP-Plugin/Assets/root/README.md` must be a copy of `./README.md`.
-- `./Unity-MCP-Plugin/Assets/root/README.md` must be translated to related translated versions of this file under `./docs/README.*.md`.
+```
+README.md                                                        ← Root project documentation
+Unity-MCP-Plugin/Assets/root/README.md                           ← Copy of root README.md *
+Installer/Assets/com.IvanMurzak/AI Game Dev Installer/README.md  ← Copy of root README.md *
+docs/
+├── README.es.md                                                 ← Spanish translation of root README *
+├── README.ja.md                                                 ← Japanese translation *
+└── README.zh-CN.md                                              ← Simplified Chinese translation *
+Unity-MCP-Server/README.md                                       ← MCP Server documentation
+Unity-MCP-Server/MCP-Test-Client/README.md                       ← Test client documentation
+cli/README.md                                                    ← CLI documentation
+cli/docs/
+├── README.es.md                                                 ← Spanish translation of CLI README
+├── README.ja.md                                                 ← Japanese translation
+└── README.zh-CN.md                                              ← Simplified Chinese translation
+```
+
+Files marked with `*` MUST be kept in sync with `README.md` when it changes.
