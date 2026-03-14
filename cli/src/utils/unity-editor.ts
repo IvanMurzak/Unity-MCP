@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { spawn } from 'child_process';
 import { platform } from 'os';
-import { findUnityHub, ensureUnityHub, listInstalledEditors } from './unity-hub.js';
+import { findUnityHub, ensureUnityHub, listInstalledEditors, type InstalledEditor } from './unity-hub.js';
 import * as ui from './ui.js';
 
 /**
@@ -66,9 +66,15 @@ export function getProjectEditorVersion(projectPath: string): string | null {
  * Uses Unity Hub to locate installed editors. Installs Unity Hub automatically if needed.
  */
 export async function findEditorPath(version?: string): Promise<string | null> {
+  // Fast path: if we know the version, check common install locations first (instant filesystem check)
+  if (version) {
+    const fastResult = findEditorPathByCommonLocations(version);
+    if (fastResult) return fastResult;
+  }
+
+  // Slow path: query Unity Hub CLI for installed editors
   const hubPath = await ensureUnityHub().catch(() => null);
   if (!hubPath) {
-    // Try common default locations
     return findEditorPathByCommonLocations(version);
   }
 
@@ -208,4 +214,41 @@ export function launchEditor(
   });
 
   child.unref();
+}
+
+/**
+ * Print actionable help when a required Unity Editor version is not found.
+ * Lists installed editors and suggests install or override commands.
+ */
+export function printEditorNotFoundHelp(requestedVersion: string | undefined, commandName: string): void {
+  if (requestedVersion) {
+    ui.error(`Unity Editor ${requestedVersion} is not installed.`);
+  } else {
+    ui.error('No Unity Editor found.');
+  }
+
+  ui.heading('Options:');
+
+  if (requestedVersion) {
+    ui.info(`Install it:  npx unity-mcp-cli install-unity ${requestedVersion}`);
+  }
+  ui.info('Install latest stable:  npx unity-mcp-cli install-unity');
+
+  // Show installed editors as alternatives
+  const hubPath = findUnityHub();
+  if (hubPath) {
+    const editors = listInstalledEditors(hubPath);
+    if (editors.length > 0) {
+      ui.heading('Installed editors:');
+      for (const editor of editors) {
+        ui.label(editor.version, editor.path);
+      }
+      if (requestedVersion) {
+        const hint = commandName === 'connect'
+          ? `npx unity-mcp-cli ${commandName} --unity ${editors[0].version} --path <path> --url <url>`
+          : `npx unity-mcp-cli ${commandName} <path> --unity ${editors[0].version}`;
+        ui.info(`Use a different version:  ${hint}`);
+      }
+    }
+  }
 }
