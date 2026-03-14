@@ -25,7 +25,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ScriptReadToolId,
             Title = "Script / Read",
             ReadOnlyHint = true,
-            IdempotentHint = true
+            IdempotentHint = true,
+            Enabled = false
         )]
         [Description("Reads the content of a script file and returns it as a string. " +
             "Use '" + ScriptUpdateOrCreateToolId + "' tool to update or create script files.")]

@@ -27,7 +27,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "screenshot-game-view",
             Title = "Screenshot / Game View",
             ReadOnlyHint = true,
-            IdempotentHint = true
+            IdempotentHint = true,
+            Enabled = false
         )]
         [Description("Captures a screenshot from the Unity Editor Game View and returns it as an image. " +
             "Reads the Game View's own render texture directly via the Unity Editor API. " +

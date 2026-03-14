@@ -25,7 +25,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         (
             EditorApplicationSetStateToolId,
             Title = "Editor / Application / Set State",
-            IdempotentHint = true
+            IdempotentHint = true,
+            Enabled = false
         )]
         [Description("Control the Unity Editor application state. " +
             "You can start, stop, or pause the 'playmode'. " +

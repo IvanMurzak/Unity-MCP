@@ -149,6 +149,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         [MenuItem("Tools/AI Game Developer/Debug/Serialization Check", priority = 2002)]
         public static void ShowSerializationCheck() => SerializationCheckWindow.ShowWindow();
 
+        [MenuItem("Tools/AI Game Developer/Debug/Reset Config", priority = 2002)]
+        public static void ResetConfig()
+        {
+            UnityMcpPluginEditor.ResetConfig();
+            // Reload Domain to ensure all changes are picked up, including config file deletion and plugin disposal.
+            EditorUtility.RequestScriptReload();
+        }
+
         static void OpenFile(string path)
         {
             if (!File.Exists(path))
