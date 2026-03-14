@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { spawn } from 'child_process';
 import { platform } from 'os';
-import { findUnityHub, ensureUnityHub, listInstalledEditors, type InstalledEditor } from './unity-hub.js';
+import { findUnityHub, ensureUnityHub, listInstalledEditors } from './unity-hub.js';
 import * as ui from './ui.js';
 
 /**

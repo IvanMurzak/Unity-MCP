@@ -315,8 +315,8 @@ function fetchUrl(url: string, redirectsRemaining = FETCH_MAX_REDIRECTS): Promis
 
     const doGet = url.startsWith('https') ? httpsGet : httpGet;
     const req = doGet(url, { signal: controller.signal } as Parameters<typeof httpsGet>[1], (response: IncomingMessage) => {
-      clearTimeout(timer);
       if (response.statusCode && response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
+        clearTimeout(timer);
         if (redirectsRemaining <= 0) {
           response.resume();
           reject(new Error(`Too many redirects (max ${FETCH_MAX_REDIRECTS}) fetching: ${url}`));
@@ -327,14 +327,15 @@ function fetchUrl(url: string, redirectsRemaining = FETCH_MAX_REDIRECTS): Promis
         return;
       }
       if (response.statusCode && response.statusCode !== 200) {
+        clearTimeout(timer);
         response.resume();
         reject(new Error(`HTTP ${response.statusCode}`));
         return;
       }
       const chunks: Buffer[] = [];
       response.on('data', (chunk: Buffer) => chunks.push(chunk));
-      response.on('end', () => resolve(Buffer.concat(chunks).toString('utf-8')));
-      response.on('error', reject);
+      response.on('end', () => { clearTimeout(timer); resolve(Buffer.concat(chunks).toString('utf-8')); });
+      response.on('error', (err) => { clearTimeout(timer); reject(err); });
     });
     req.on('error', (err) => { clearTimeout(timer); reject(err); });
   });
@@ -462,12 +463,15 @@ function runHubInstallWithProgress(hubPath: string, args: string[], version: str
 
     proc.on('close', (code) => {
       if (activeSpinner) activeSpinner.stop();
-      if (isDownloading) {
-        progress.fail(`Download failed for Unity Editor ${version}`);
-      }
       if (code === 0) {
+        if (isDownloading) {
+          progress.complete(`Unity Editor ${version} downloaded`);
+        }
         resolve();
       } else {
+        if (isDownloading) {
+          progress.fail(`Download failed for Unity Editor ${version}`);
+        }
         reject(new Error(
           `Failed to install Unity Editor ${version} (exit code ${code})` +
           (stderr ? `:\n${stderr.trim()}` : '')
