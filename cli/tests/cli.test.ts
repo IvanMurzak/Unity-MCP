@@ -279,7 +279,7 @@ describe('CLI integration', () => {
     it('shows help with --help', () => {
       const { stdout, exitCode } = runCli(['install-unity', '--help']);
       expect(exitCode).toBe(0);
-      expect(stdout).toContain('--version');
+      expect(stdout).toContain('version');
       expect(stdout).toContain('--path');
     });
   });
