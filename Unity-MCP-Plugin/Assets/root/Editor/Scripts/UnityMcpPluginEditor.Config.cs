@@ -57,7 +57,7 @@ namespace com.IvanMurzak.Unity.MCP
         }
 
         /// <summary>
-        /// Deletes the config file from the Assets folder. Used for testing and debugging purposes to reset the plugin state.
+        /// Resets the config file to its default state.
         /// </summary>
         public static void ResetConfig()
         {
