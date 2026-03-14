@@ -142,7 +142,7 @@ jobs:
       - name: Set package version
         run: |
           cd cli
-          npm version ${{ steps.version.outputs.version }} --no-git-tag-version
+          npm version ${{ steps.version.outputs.version }} --no-git-tag-version --allow-same-version
 
       - name: Install dependencies
         run: |
