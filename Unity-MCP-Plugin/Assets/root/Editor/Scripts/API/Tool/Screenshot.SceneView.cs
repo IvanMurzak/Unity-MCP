@@ -25,7 +25,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "screenshot-scene-view",
             Title = "Screenshot / Scene View",
             ReadOnlyHint = true,
-            IdempotentHint = true
+            IdempotentHint = true,
+            Enabled = false
         )]
         [Description("Captures a screenshot from the Unity Editor Scene View and returns it as an image. " +
             "Returns the image directly for visual inspection by the LLM.")]

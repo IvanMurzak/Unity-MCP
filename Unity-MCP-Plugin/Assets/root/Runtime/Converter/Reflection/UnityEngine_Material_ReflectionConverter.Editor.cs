@@ -27,7 +27,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
     public partial class UnityEngine_Material_ReflectionConverter : UnityEngine_Object_ReflectionConverter<Material>
     {
-        protected override bool TryPopulateProperty(
+        protected override bool TryModifyProperty(
             Reflector reflector,
             ref object obj,
             Type objType,
@@ -40,7 +40,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             var padding = StringUtils.GetPadding(depth);
 
             if (logger?.IsEnabled(LogLevel.Trace) == true)
-                logger.LogTrace($"{StringUtils.GetPadding(depth)}PopulateProperty property='{propertyValue.name}' type='{propertyValue.typeName}'. Converter='{GetType().GetTypeShortName()}'.");
+                logger.LogTrace($"{StringUtils.GetPadding(depth)}ModifyProperty property='{propertyValue.name}' type='{propertyValue.typeName}'. Converter='{GetType().GetTypeShortName()}'.");
 
             var material = obj as Material;
             if (material == null)

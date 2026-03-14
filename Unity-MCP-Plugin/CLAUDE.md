@@ -13,7 +13,7 @@ Unity-MCP is a bridge between Large Language Models (LLMs) and Unity Editor that
 - **Reflection-based Tools**: Dynamic access to Unity API using ReflectorNet
 - **AI Agent Configurators**: Auto-configuration system for 10 AI clients (Claude Desktop, Cursor, VS Code Copilot, Gemini, etc.)
 
-**Package**: `com.ivanmurzak.unity.mcp` (current version: `0.45.0`)
+**Package**: `com.ivanmurzak.unity.mcp` (current version: `0.51.4`)
 
 ## Development Commands
 
@@ -235,9 +235,9 @@ Key packages (via OpenUPM `org.nuget.*` scope):
 
 - **McpPlugin** (bundled DLL): MCP protocol implementation and plugin framework
 - **ReflectorNet** (bundled DLL): Advanced reflection system for Unity objects
-- **SignalR Client** `10.0.1`: Real-time communication (abstracted via `IMcpPlugin`)
+- **SignalR Client** `10.0.3`: Real-time communication (abstracted via `IMcpPlugin`)
 - **Roslyn** `4.14.0`: C# code compilation and execution
 - **R3** `1.3.0`: Reactive programming (`ReactiveProperty`, `Subject`, `Observable`)
-- **System.Text.Json** `10.0.1`: JSON serialization
-- **Microsoft.Extensions.Hosting** `10.0.1`: Server hosting infrastructure
-- **Microsoft.Extensions.Logging** `10.0.1`: Logging abstractions
+- **System.Text.Json** `10.0.3`: JSON serialization
+- **Microsoft.Extensions.Hosting** `10.0.3`: Server hosting infrastructure
+- **Microsoft.Extensions.Logging** `10.0.3`: Logging abstractions

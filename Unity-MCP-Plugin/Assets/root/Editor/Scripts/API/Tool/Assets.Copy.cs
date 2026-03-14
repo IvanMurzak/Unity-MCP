@@ -25,7 +25,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             AssetsCopyToolId,
-            Title = "Assets / Copy"
+            Title = "Assets / Copy",
+            Enabled = false
         )]
         [Description("Copy the asset at path and stores it at newPath. " +
             "Does AssetDatabase.Refresh() at the end. " +

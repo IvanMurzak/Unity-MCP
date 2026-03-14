@@ -27,7 +27,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "screenshot-camera",
             Title = "Screenshot / Camera",
             ReadOnlyHint = true,
-            IdempotentHint = true
+            IdempotentHint = true,
+            Enabled = false
         )]
         [Description("Captures a screenshot from a camera and returns it as an image. " +
             "If no camera is specified, uses the Main Camera. " +

@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "Read(*)",
+      "WebFetch(*)",
+      "mcp__ai-game-developer__*"
+    ],
+    "additionalDirectories": []
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "ai-game-developer"
+  ],
+  "enabledPlugins": {
+    "csharp-lsp@claude-plugins-official": true
+  }
+}

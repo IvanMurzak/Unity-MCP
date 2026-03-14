@@ -26,7 +26,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             EditorSelectionGetToolId,
             Title = "Editor / Selection / Get",
             ReadOnlyHint = true,
-            IdempotentHint = true
+            IdempotentHint = true,
+            Enabled = false
         )]
         [Description("Get information about the current Selection in the Unity Editor. " +
             "Use '" + EditorSelectionSetToolId + "' tool to set the selection.")]

@@ -60,14 +60,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Act
             var objToModify = (object)comp;
             var logs = new Logs();
-            var success = reflector.TryPopulate(
+            var success = reflector.TryModify(
                 ref objToModify,
                 data: componentDiff,
                 logs: logs,
                 logger: _logger);
 
             // Assert
-            Assert.IsTrue(success, $"TryPopulate should succeed. Logs: {logs}");
+            Assert.IsTrue(success, $"TryModify should succeed. Logs: {logs}");
             Assert.AreEqual(10f, comp.vector3Field.x, 0.001f, "X should be updated to 10");
             Assert.AreEqual(initialVector.y, comp.vector3Field.y, 0.001f, "Y should be preserved");
             Assert.AreEqual(initialVector.z, comp.vector3Field.z, 0.001f, "Z should be preserved");
@@ -105,14 +105,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Act
             var objToModify = (object)comp;
             var logs = new Logs();
-            var success = reflector.TryPopulate(
+            var success = reflector.TryModify(
                 ref objToModify,
                 data: componentDiff,
                 logs: logs,
                 logger: _logger);
 
             // Assert
-            Assert.IsTrue(success, $"TryPopulate should succeed. Logs: {logs}");
+            Assert.IsTrue(success, $"TryModify should succeed. Logs: {logs}");
             Assert.AreEqual(1.0f, comp.colorField.r, 0.001f, "R should be updated to 1.0");
             Assert.AreEqual(0.5f, comp.colorField.g, 0.001f, "G should be updated to 0.5");
             Assert.AreEqual(initialColor.b, comp.colorField.b, 0.001f, "B should be preserved");
@@ -156,14 +156,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Act
             var objToModify = (object)comp;
             var logs = new Logs();
-            var success = reflector.TryPopulate(
+            var success = reflector.TryModify(
                 ref objToModify,
                 data: componentDiff,
                 logs: logs,
                 logger: _logger);
 
             // Assert
-            Assert.IsTrue(success, $"TryPopulate should succeed. Logs: {logs}");
+            Assert.IsTrue(success, $"TryModify should succeed. Logs: {logs}");
             Assert.AreEqual(100, comp.customStructField.intValue, "intValue should be updated to 100");
             Assert.AreEqual(initialStruct.floatValue, comp.customStructField.floatValue, 0.001f, "floatValue should be preserved");
             Assert.AreEqual(initialStruct.stringValue, comp.customStructField.stringValue, "stringValue should be preserved");
@@ -211,14 +211,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Act
             var objToModify = (object)comp;
             var logs = new Logs();
-            var success = reflector.TryPopulate(
+            var success = reflector.TryModify(
                 ref objToModify,
                 data: componentDiff,
                 logs: logs,
                 logger: _logger);
 
             // Assert
-            Assert.IsTrue(success, $"TryPopulate should succeed. Logs: {logs}");
+            Assert.IsTrue(success, $"TryModify should succeed. Logs: {logs}");
             Assert.AreEqual(99f, comp.customStructField.nestedVector.x, 0.001f, "nestedVector.x should be updated to 99");
             Assert.AreEqual(initialStruct.nestedVector.y, comp.customStructField.nestedVector.y, 0.001f, "nestedVector.y should be preserved");
             Assert.AreEqual(initialStruct.nestedVector.z, comp.customStructField.nestedVector.z, 0.001f, "nestedVector.z should be preserved");
@@ -272,14 +272,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Act
             var objToModify = (object)comp;
             var logs = new Logs();
-            var success = reflector.TryPopulate(
+            var success = reflector.TryModify(
                 ref objToModify,
                 data: componentDiff,
                 logs: logs,
                 logger: _logger);
 
             // Assert
-            Assert.IsTrue(success, $"TryPopulate should succeed. Logs: {logs}");
+            Assert.IsTrue(success, $"TryModify should succeed. Logs: {logs}");
 
             // Verify vector3Field
             Assert.AreEqual(1f, comp.vector3Field.x, 0.001f, "vector3Field.x should be preserved");
@@ -326,14 +326,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Act
             var objToModify = (object)comp;
             var logs = new Logs();
-            var success = reflector.TryPopulate(
+            var success = reflector.TryModify(
                 ref objToModify,
                 data: componentDiff,
                 logs: logs,
                 logger: _logger);
 
             // Assert
-            Assert.IsTrue(success, $"TryPopulate should succeed. Logs: {logs}");
+            Assert.IsTrue(success, $"TryModify should succeed. Logs: {logs}");
             Assert.AreEqual(newVector.x, comp.vector3Field.x, 0.001f, "vector3Field.x should be updated");
             Assert.AreEqual(newVector.y, comp.vector3Field.y, 0.001f, "vector3Field.y should be updated");
             Assert.AreEqual(newVector.z, comp.vector3Field.z, 0.001f, "vector3Field.z should be updated");

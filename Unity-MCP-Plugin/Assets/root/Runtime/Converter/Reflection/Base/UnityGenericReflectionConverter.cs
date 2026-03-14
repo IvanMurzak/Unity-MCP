@@ -107,7 +107,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 logger: logger);
 
             // If obj became null but we had an object, and the value didn't explicitly say null, restore it.
-            // This handles cases where TryPopulate is called with an existing object but no valueJsonElement.
+            // This handles cases where TryModify is called with an existing object but no valueJsonElement.
             if (obj == null && originalObj != null)
             {
                 var isExplicitNull = value.HasValue && value.Value.ValueKind == System.Text.Json.JsonValueKind.Null;
@@ -120,7 +120,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             return result;
         }
 
-        protected override bool TryPopulateField(
+        protected override bool TryModifyField(
             Reflector reflector,
             ref object obj,
             Type objType,
@@ -134,8 +134,8 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             if (obj == null)
             {
                 if (logger?.IsEnabled(LogLevel.Error) == true)
-                    logger.LogError("{padding}obj is null in TryPopulateField for '{field}'", padding, fieldValue.name);
-                logs?.Error($"obj is null in TryPopulateField for '{fieldValue.name}'", depth);
+                    logger.LogError("{padding}obj is null in TryModifyField for '{field}'", padding, fieldValue.name);
+                logs?.Error($"obj is null in TryModifyField for '{fieldValue.name}'", depth);
                 return false;
             }
 
@@ -152,7 +152,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             {
                 // For value types (structs) with nested fields/props, we need to:
                 // 1. Get the existing value to preserve unspecified members
-                // 2. Call TryPopulate on it to modify only the specified members
+                // 2. Call TryModify on it to modify only the specified members
                 // 3. Write the modified value back to the parent object
                 // This prevents losing existing values when doing partial updates on structs.
                 var fieldType = field.FieldType;
@@ -165,8 +165,8 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                     var existingValue = field.GetValue(obj);
                     if (existingValue != null)
                     {
-                        // Populate the existing struct with only the specified members
-                        var success = reflector.TryPopulate(
+                        // Modify the existing struct with only the specified members
+                        var success = reflector.TryModify(
                             ref existingValue,
                             data: fieldValue,
                             depth: depth + 1,
@@ -198,7 +198,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             }
         }
 
-        protected override bool TryPopulateProperty(
+        protected override bool TryModifyProperty(
             Reflector reflector,
             ref object obj,
             Type objType,
@@ -212,8 +212,8 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             if (obj == null)
             {
                 if (logger?.IsEnabled(LogLevel.Error) == true)
-                    logger.LogError("{padding}obj is null in TryPopulateProperty for '{property}'", padding, member.name);
-                logs?.Error($"obj is null in TryPopulateProperty for '{member.name}'", depth);
+                    logger.LogError("{padding}obj is null in TryModifyProperty for '{property}'", padding, member.name);
+                logs?.Error($"obj is null in TryModifyProperty for '{member.name}'", depth);
                 return false;
             }
 
@@ -230,7 +230,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             {
                 // For value types (structs) with nested fields/props, we need to:
                 // 1. Get the existing value to preserve unspecified members
-                // 2. Call TryPopulate on it to modify only the specified members
+                // 2. Call TryModify on it to modify only the specified members
                 // 3. Write the modified value back to the parent object
                 // This prevents losing existing values when doing partial updates on structs.
                 var propertyType = property.PropertyType;
@@ -243,8 +243,8 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                     var existingValue = property.GetValue(obj);
                     if (existingValue != null)
                     {
-                        // Populate the existing struct with only the specified members
-                        var success = reflector.TryPopulate(
+                        // Modify the existing struct with only the specified members
+                        var success = reflector.TryModify(
                             ref existingValue,
                             data: member,
                             depth: depth + 1,

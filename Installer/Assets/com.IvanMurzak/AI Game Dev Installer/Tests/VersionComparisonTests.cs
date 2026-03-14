@@ -197,17 +197,69 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
             // Act - Run installer (should upgrade)
             Installer.AddScopedRegistryIfNeeded(TestManifestPath);
 
-            // Assert - Version should be upgraded to installer version
+            // Assert - version was upgraded and is within valid bounds
             var updatedContent = File.ReadAllText(TestManifestPath);
             var updatedManifest = JSONObject.Parse(updatedContent);
-            var actualVersion = updatedManifest[Installer.Dependencies][PackageId];
+            var actualVersionStr = updatedManifest[Installer.Dependencies][PackageId].ToString().Trim('"');
+            var actualVersion = new System.Version(actualVersionStr);
 
-            Assert.AreEqual(Installer.Version, actualVersion.ToString().Trim('"'),
-                "Version should be upgraded to installer version");
+            Assert.Greater(actualVersion, new System.Version(lowerVersion),
+                "Version should be upgraded above the initial lower version");
+            Assert.LessOrEqual(actualVersion, new System.Version(Installer.Version),
+                "Version should not exceed the installer version");
         }
 
         [Test]
-        public void AddScopedRegistryIfNeeded_NoExistingDependency_InstallsNewVersion()
+        public void AddScopedRegistryIfNeeded_AllowVersionUpgrade_WritesResolvedVersion()
+        {
+            // Arrange - Create manifest with lower version (0.0.1 is always lower)
+            const string knownVersion = "1.2.3";
+            var manifest = new JSONObject
+            {
+                [Installer.Dependencies] = new JSONObject
+                {
+                    [PackageId] = "0.0.1"
+                },
+                [Installer.ScopedRegistries] = new JSONArray()
+            };
+            File.WriteAllText(TestManifestPath, manifest.ToString(2));
+
+            // Act - inject a known version, bypassing OpenUPM
+            Installer.AddScopedRegistryIfNeeded(TestManifestPath, knownVersion);
+
+            // Assert - version was upgraded to exactly the injected version
+            var updatedManifest = JSONObject.Parse(File.ReadAllText(TestManifestPath));
+            var actualVersion = updatedManifest[Installer.Dependencies][PackageId].ToString().Trim('"');
+
+            Assert.AreEqual(knownVersion, actualVersion,
+                "Package should be upgraded to exactly the injected version");
+        }
+
+        [Test]
+        public void AddScopedRegistryIfNeeded_NoExistingDependency_WritesResolvedVersion()
+        {
+            // Arrange - Create manifest without the package
+            const string knownVersion = "1.2.3";
+            var manifest = new JSONObject
+            {
+                [Installer.Dependencies] = new JSONObject(),
+                [Installer.ScopedRegistries] = new JSONArray()
+            };
+            File.WriteAllText(TestManifestPath, manifest.ToString(2));
+
+            // Act - inject a known version, bypassing OpenUPM
+            Installer.AddScopedRegistryIfNeeded(TestManifestPath, knownVersion);
+
+            // Assert - package is present with exactly the injected version
+            var updatedManifest = JSONObject.Parse(File.ReadAllText(TestManifestPath));
+            var actualVersion = updatedManifest[Installer.Dependencies][PackageId].ToString().Trim('"');
+
+            Assert.AreEqual(knownVersion, actualVersion,
+                "Package should be installed with exactly the injected version");
+        }
+
+        [Test]
+        public void AddScopedRegistryIfNeeded_NoExistingDependency_Integration()
         {
             // Arrange - Create manifest without the package
             var manifest = new JSONObject
@@ -217,16 +269,16 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
             };
             File.WriteAllText(TestManifestPath, manifest.ToString(2));
 
-            // Act - Run installer
+            // Act - Run installer (queries OpenUPM)
             Installer.AddScopedRegistryIfNeeded(TestManifestPath);
 
-            // Assert - Package should be added with installer version
-            var updatedContent = File.ReadAllText(TestManifestPath);
-            var updatedManifest = JSONObject.Parse(updatedContent);
-            var actualVersion = updatedManifest[Installer.Dependencies][PackageId];
+            // Assert - package is present with a valid semver <= installer version
+            var updatedManifest = JSONObject.Parse(File.ReadAllText(TestManifestPath));
+            var actualVersionStr = updatedManifest[Installer.Dependencies][PackageId].ToString().Trim('"');
+            var actualVersion = new System.Version(actualVersionStr);
 
-            Assert.AreEqual(Installer.Version, actualVersion.ToString().Trim('"'),
-                "New package should be installed with installer version");
+            Assert.LessOrEqual(actualVersion, new System.Version(Installer.Version),
+                "Installed version should not exceed the installer version");
         }
     }
 }

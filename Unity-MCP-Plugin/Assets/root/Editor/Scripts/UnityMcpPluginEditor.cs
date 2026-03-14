@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 
 namespace com.IvanMurzak.Unity.MCP
 {
@@ -24,6 +25,7 @@ namespace com.IvanMurzak.Unity.MCP
             var config = GetOrCreateConfig(out var wasCreated);
             unityConnectionConfig = config;
             ApplyLogLevel(unityConnectionConfig.LogLevel);
+            EnvironmentUtils.ApplyEnvironmentOverrides(unityConnectionConfig);
             if (wasCreated)
                 Save();
             IncrementSingletonCount();
@@ -34,9 +36,9 @@ namespace com.IvanMurzak.Unity.MCP
             var changed = false;
             var data = unityConnectionConfig ??= new UnityConnectionConfig();
 
-            if (string.IsNullOrEmpty(data.Host))
+            if (string.IsNullOrEmpty(data.LocalHost))
             {
-                data.Host = UnityConnectionConfig.DefaultHost;
+                data.LocalHost = UnityConnectionConfig.DefaultHost;
                 changed = true;
             }
 

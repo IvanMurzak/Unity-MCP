@@ -1136,6 +1136,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         {
             EditorApplication.update -= StartServerIfNeeded;
 
+            // Skip local server auto-start in Cloud mode — Unity connects to the cloud server instead
+            if (UnityMcpPluginEditor.ConnectionMode == ConnectionMode.Cloud)
+            {
+                _logger.LogDebug("StartServerIfNeeded: Cloud mode active, skipping local server auto-start");
+                return;
+            }
+
             // Check if user wants the server to keep running
             if (!UnityMcpPluginEditor.KeepServerRunning)
             {

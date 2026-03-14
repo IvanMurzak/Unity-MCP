@@ -112,7 +112,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             base.ApplyHttpAuthorizationConfig(config);
 
             var tomlConfig = config as TomlAiAgentConfig ?? throw new System.InvalidCastException($"Expected TomlAiAgentConfig for Codex HTTP configuration but got {config.GetType().Name}");
-            var isRequired = UnityMcpPluginEditor.AuthOption == AuthOption.required;
+            var isCloud = UnityMcpPluginEditor.ConnectionMode == ConnectionMode.Cloud;
+            var isRequired = isCloud || UnityMcpPluginEditor.AuthOption == AuthOption.required;
             var token = UnityMcpPluginEditor.Token;
 
             const string envVarNameBearerToken = "bearer_token_env_var";
@@ -136,6 +137,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             var addMcpServerCommandStdio = $"codex mcp add {AiAgentConfig.DefaultMcpServerName} \"{McpServerManager.ExecutableFullPath}\" port={UnityMcpPluginEditor.Port} plugin-timeout={UnityMcpPluginEditor.TimeoutMs} client-transport=stdio";
             var addMcpServerCommandHttp = $"codex mcp add {AiAgentConfig.DefaultMcpServerName} --url {UnityMcpPluginEditor.Host}";
+
+            var isCloud = UnityMcpPluginEditor.ConnectionMode == ConnectionMode.Cloud;
+            if (isCloud || UnityMcpPluginEditor.AuthOption == AuthOption.required)
+            {
+                addMcpServerCommandStdio += $" --bearer-token-env-var={EnvVarNameAuthToken}";
+                addMcpServerCommandHttp += $" --bearer-token-env-var={EnvVarNameAuthToken}";
+            }
 
             // STDIO Configuration
 
@@ -167,7 +175,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             // HTTP Configuration
 
-            if (UnityMcpPluginEditor.AuthOption == AuthOption.required)
+            if (isCloud || UnityMcpPluginEditor.AuthOption == AuthOption.required)
             {
                 // ContainerHttp!.Add(TemplateAlertLabel($"Authorization is not fully functional in Codex. Consider to disable Authorization or use another AI agent."));
 

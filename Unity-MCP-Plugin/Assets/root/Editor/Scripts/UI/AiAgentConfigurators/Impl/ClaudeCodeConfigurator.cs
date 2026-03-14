@@ -85,7 +85,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         {
             base.OnUICreated(root);
 
-            var isAuthRequired = UnityMcpPluginEditor.AuthOption == AuthOption.required;
+            var isCloud = UnityMcpPluginEditor.ConnectionMode == ConnectionMode.Cloud;
+            var isAuthRequired = isCloud || UnityMcpPluginEditor.AuthOption == AuthOption.required;
 
             // STDIO Configuration
 

@@ -56,6 +56,18 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
+        /// <summary>
+        /// Resets the config file to its default state.
+        /// </summary>
+        public static void ResetConfig()
+        {
+            Instance.unityConnectionConfig.SetDefault();
+            var plugin = CurrentPlugin;
+            if (plugin != null)
+                Instance.ApplyConfigToMcpPlugin(plugin);
+            Instance.Save(captureCurrentToolStates: false);
+        }
+
 #if UNITY_EDITOR
         public static UnityEngine.TextAsset AssetFile => UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.TextAsset>(AssetsFilePath);
 #endif
@@ -92,9 +104,9 @@ namespace com.IvanMurzak.Unity.MCP
                     config = new UnityConnectionConfig();
                     wasCreated = true;
                 }
-                if (string.IsNullOrEmpty(config.Token))
+                if (string.IsNullOrEmpty(config.LocalToken))
                 {
-                    config.Token = GenerateToken();
+                    config.LocalToken = GenerateToken();
                     wasCreated = true;
                 }
 
@@ -108,7 +120,7 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
-        public void Save()
+        public void Save(bool captureCurrentToolStates = true)
         {
 #if UNITY_EDITOR
             Validate();
@@ -120,29 +132,32 @@ namespace com.IvanMurzak.Unity.MCP
 
                 unityConnectionConfig ??= new UnityConnectionConfig();
 
-                var enabledToolNames = Tools?.GetAllTools()
-                    ?.Select(t => new UnityConnectionConfig.McpFeature(t.Name, Tools.IsToolEnabled(t.Name)))
-                    ?.ToList();
+                if (captureCurrentToolStates)
+                {
+                    var enabledToolNames = Tools?.GetAllTools()
+                        ?.Select(t => new UnityConnectionConfig.McpFeature(t.Name, Tools.IsToolEnabled(t.Name)))
+                        ?.ToList();
 
-                var enabledPromptNames = Prompts?.GetAllPrompts()
-                    ?.Select(p => new UnityConnectionConfig.McpFeature(p.Name, Prompts.IsPromptEnabled(p.Name)))
-                    ?.ToList();
+                    var enabledPromptNames = Prompts?.GetAllPrompts()
+                        ?.Select(p => new UnityConnectionConfig.McpFeature(p.Name, Prompts.IsPromptEnabled(p.Name)))
+                        ?.ToList();
 
-                var enabledResourceNames = Resources?.GetAllResources()
-                    ?.Select(r => new UnityConnectionConfig.McpFeature(r.Name, Resources.IsResourceEnabled(r.Name)))
-                    ?.ToList();
+                    var enabledResourceNames = Resources?.GetAllResources()
+                        ?.Select(r => new UnityConnectionConfig.McpFeature(r.Name, Resources.IsResourceEnabled(r.Name)))
+                        ?.ToList();
 
-                unityConnectionConfig.Tools = enabledToolNames != null && enabledToolNames.Count > 0
-                    ? enabledToolNames
-                    : UnityConnectionConfig.DefaultTools;
+                    unityConnectionConfig.Tools = enabledToolNames != null && enabledToolNames.Count > 0
+                        ? enabledToolNames
+                        : UnityConnectionConfig.DefaultTools;
 
-                unityConnectionConfig.Prompts = enabledPromptNames != null && enabledPromptNames.Count > 0
-                    ? enabledPromptNames
-                    : UnityConnectionConfig.DefaultPrompts;
+                    unityConnectionConfig.Prompts = enabledPromptNames != null && enabledPromptNames.Count > 0
+                        ? enabledPromptNames
+                        : UnityConnectionConfig.DefaultPrompts;
 
-                unityConnectionConfig.Resources = enabledResourceNames != null && enabledResourceNames.Count > 0
-                    ? enabledResourceNames
-                    : UnityConnectionConfig.DefaultResources;
+                    unityConnectionConfig.Resources = enabledResourceNames != null && enabledResourceNames.Count > 0
+                        ? enabledResourceNames
+                        : UnityConnectionConfig.DefaultResources;
+                }
 
                 var json = JsonSerializer.Serialize(unityConnectionConfig, new JsonSerializerOptions
                 {

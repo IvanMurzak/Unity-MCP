@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "Read(*)",
+      "WebFetch(*)",
+      "mcp__ai-game-developer__*"
+    ],
+    "deny": [],
+    "ask": [],
+    "additionalDirectories": [
+      "../Installer",
+      "../Unity-MCP-Server",
+      "../Unity-MCP.wiki",
+      "../Unity-Tests",
+      "../commands",
+      "../docs"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
+  "enabledMcpjsonServers": [
+    "ai-game-developer"
+  ],
+  "enabledPlugins": {
+    "csharp-lsp@claude-plugins-official": true
+  }
+}

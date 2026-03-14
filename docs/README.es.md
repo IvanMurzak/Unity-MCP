@@ -37,7 +37,7 @@ A diferencia de otras herramientas, este plugin funciona **dentro de tu juego co
 - ✔️ **Despliegue flexible** - Funciona localmente (stdio) y remotamente (http) mediante configuración
 - ✔️ **Extensible** - Crea [Herramientas MCP personalizadas en el código de tu proyecto](#añadir-herramienta-mcp-personalizada)
 
-[![DESCARGAR INSTALADOR](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.51.3/AI-Game-Dev-Installer.unitypackage)
+[![DESCARGAR INSTALADOR](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/latest/download/AI-Game-Dev-Installer.unitypackage)
 
 ![Ventanas del Desarrollador de Juegos con IA](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/ai-game-developer-windows.png?raw=true)
 
@@ -48,6 +48,7 @@ A diferencia de otras herramientas, este plugin funciona **dentro de tu juego co
 Comienza en tres pasos:
 
 1. **[Instala el Plugin](#paso-1-instalar-el-plugin-unity-mcp)** — descarga el instalador `.unitypackage` o ejecuta `openupm add com.ivanmurzak.unity.mcp`
+   > **Alternativa:** `npx unity-mcp-cli install-plugin ./MyUnityProject` — ver [documentación de CLI](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.es.md)
 2. **[Elige un cliente MCP](#paso-2-instalar-cliente-mcp)** — Claude Code, Claude Desktop, GitHub Copilot, Cursor u cualquier otro
 3. **[Configura el cliente](#paso-3-configurar-cliente-mcp)** — abre `Window/AI Game Developer - MCP` en Unity y haz clic en **Configure**
 
@@ -153,6 +154,7 @@ Instala extensiones cuando necesites más herramientas o [crea las tuyas propias
   - [Paso 1: Instalar el Plugin `Unity MCP`](#paso-1-instalar-el-plugin-unity-mcp)
     - [Opción 1 - Instalador](#opción-1---instalador)
     - [Opción 2 - OpenUPM-CLI](#opción-2---openupm-cli)
+    - [Opción 3 - CLI](#opción-3---cli)
   - [Paso 2: Instalar `Cliente MCP`](#paso-2-instalar-cliente-mcp)
   - [Paso 3: Configurar `Cliente MCP`](#paso-3-configurar-cliente-mcp)
     - [Configuración automática](#configuración-automática)
@@ -170,6 +172,7 @@ Instala extensiones cuando necesites más herramientas o [crea las tuyas propias
   - [¿Por qué se necesita el uso en runtime?](#por-qué-se-necesita-el-uso-en-runtime)
 - [Configuración del `Servidor MCP` de Unity](#configuración-del-servidor-mcp-de-unity)
   - [Variables](#variables)
+  - [Variables del Plugin](#variables-del-plugin)
   - [Docker 📦](#docker-)
     - [Transporte `streamableHttp`](#transporte-streamablehttp)
     - [Transporte `stdio`](#transporte-stdio)
@@ -196,6 +199,7 @@ Instala extensiones cuando necesites más herramientas o [crea las tuyas propias
 | [Despliegue con Docker](docs/DOCKER_DEPLOYMENT.md) | Guía paso a paso para despliegue con Docker |
 | [Guía de Desarrollo](docs/dev/Development.md) | Arquitectura, estilo de código, CI/CD — para colaboradores |
 | [Wiki](https://github.com/IvanMurzak/Unity-MCP/wiki) | Primeros pasos, tutoriales, referencia de API, preguntas frecuentes |
+| [Herramienta CLI](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.es.md) | Instalar plugins, configurar y conectar desde la línea de comandos |
 
 ![Desarrollador de Juegos con IA — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
@@ -216,7 +220,7 @@ Instala extensiones cuando necesites más herramientas o [crea las tuyas propias
 
 ### Opción 1 - Instalador
 
-- **[⬇️ Descargar Instalador](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.51.3/AI-Game-Dev-Installer.unitypackage)**
+- **[⬇️ Descargar Instalador](https://github.com/IvanMurzak/Unity-MCP/releases/latest/download/AI-Game-Dev-Installer.unitypackage)**
 - **📂 Importar el instalador en el proyecto de Unity**
   > - Puedes hacer doble clic en el archivo - Unity lo abrirá automáticamente
   > - O BIEN: Abre el Editor de Unity primero, luego haz clic en `Assets/Import Package/Custom Package` y elige el archivo
@@ -229,6 +233,22 @@ Instala extensiones cuando necesites más herramientas o [crea las tuyas propias
 ```bash
 openupm add com.ivanmurzak.unity.mcp
 ```
+
+### Opción 3 - CLI
+
+Instala el plugin mediante [`unity-mcp-cli`](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.es.md) — sin necesidad de Unity Editor:
+
+```bash
+npx unity-mcp-cli install-plugin ./MyUnityProject
+```
+
+Inicia Unity con una conexión MCP activa:
+
+```bash
+npx unity-mcp-cli connect --path ./MyUnityProject --url http://localhost:8080
+```
+
+> Consulta la [documentación completa de CLI](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.es.md) para todos los comandos disponibles.
 
 ## Paso 2: Instalar `Cliente MCP`
 
@@ -502,6 +522,30 @@ Sin importar qué opción de lanzamiento elijas, todas admiten configuración pe
 > Los args de línea de comandos también admiten la opción con un prefijo `-` simple (`-port`) y una opción sin prefijo (`port`).
 
 > **Elegir un transporte:** Usa `stdio` cuando el cliente MCP lanza el binario del servidor directamente (uso local — esta es la configuración más común). Usa `streamableHttp` cuando ejecutes el servidor como un proceso independiente o en Docker/nube, y te conectes a través de HTTP.
+
+## Variables del Plugin
+
+El Plugin Unity MCP lee las siguientes variables de entorno (y argumentos de línea de comandos) al arrancar para sobreescribir los valores del archivo de configuración guardado. Las sobreescrituras se aplican en tiempo de ejecución; en la primera ejecución o cuando se genera un nuevo token de autenticación, los valores sobreescritos se **escriben en el archivo de configuración**. En ejecuciones posteriores, las sobreescrituras se aplican en memoria pero no se guardan automáticamente. La excepción es `UNITY_MCP_TOOLS`, que usa `[JsonIgnore]` y **nunca se persiste** — solo funciona en tiempo de ejecución.
+
+| Variable de Entorno         | Arg de Línea de Comandos    | Valores             | Descripción                                               |
+| --------------------------- | --------------------------- | ------------------- | --------------------------------------------------------- |
+| `UNITY_MCP_HOST`            | `-UNITY_MCP_HOST`           | URL string          | Sobreescribe la URL del servidor MCP                                                                                   |
+| `UNITY_MCP_KEEP_CONNECTED`  | `-UNITY_MCP_KEEP_CONNECTED` | `true` / `false`    | Fuerza habilitar o deshabilitar la conexión activa                                                                     |
+| `UNITY_MCP_AUTH_OPTION`     | `-UNITY_MCP_AUTH_OPTION`    | `none` / `required` | Fuerza el modo de autenticación                                                                                        |
+| `UNITY_MCP_TOKEN`           | `-UNITY_MCP_TOKEN`          | string              | Fuerza el token de autenticación                                                                                       |
+| `UNITY_MCP_TOOLS`           | `-UNITY_MCP_TOOLS`          | IDs separados por comas | Activa solo las herramientas listadas; todas las demás se desactivan. Los IDs desconocidos se registran como errores. |
+
+> Los argumentos de línea de comandos tienen precedencia sobre las variables de entorno. Ambos sobreescriben el valor del archivo de configuración guardado.
+
+**Ejemplo (modo batch CI/CD):**
+
+```bash
+Unity.exe -batchmode -nographics \
+  -UNITY_MCP_HOST=http://localhost:8080 \
+  -UNITY_MCP_KEEP_CONNECTED=true \
+  -UNITY_MCP_AUTH_OPTION=required \
+  -UNITY_MCP_TOKEN=mi-token-secreto
+```
 
 ## Docker 📦
 

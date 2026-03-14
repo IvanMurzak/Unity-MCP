@@ -73,11 +73,10 @@ namespace com.IvanMurzak.Unity.MCP.Server
 
                 // builder.WebHost.UseUrls(Consts.Hub.DefaultEndpoint);
 
-                builder.WebHost.UseKestrel(options =>
-                {
-                    logger.Info($"Start listening on port: {dataArguments.Port}");
-                    options.ListenAnyIP(dataArguments.Port);
-                });
+                logger.Info($"Start listening on port: {dataArguments.Port}");
+
+                // Bind IPv4 and IPv6 separately to avoid dual-stack socket issues on macOS.
+                builder.WebHost.UseKestrelForMcpPlugin(dataArguments.Port);
 
                 var app = builder.Build();
 

@@ -18,6 +18,7 @@ using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using NUnit.Framework;
 using UnityEngine.TestTools;
+using static com.IvanMurzak.Unity.MCP.Editor.API.Tool_Type;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {

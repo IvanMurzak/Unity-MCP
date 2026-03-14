@@ -37,7 +37,7 @@ Unlike other tools, this plugin works **inside your compiled game**, allowing fo
 - ✔️ **Flexible deployment** - Works locally (stdio) and remotely (http) via configuration
 - ✔️ **Extensible** - Create [custom MCP Tools in your project code](#add-custom-mcp-tool)
 
-[![DOWNLOAD INSTALLER](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.51.3/AI-Game-Dev-Installer.unitypackage)
+[![DOWNLOAD INSTALLER](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/latest/download/AI-Game-Dev-Installer.unitypackage)
 
 ![AI Game Developer Windows](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/ai-game-developer-windows.png?raw=true)
 
@@ -48,6 +48,7 @@ Unlike other tools, this plugin works **inside your compiled game**, allowing fo
 Get up and running in three steps:
 
 1. **[Install the Plugin](#step-1-install-unity-mcp-plugin)** — download the `.unitypackage` installer or run `openupm add com.ivanmurzak.unity.mcp`
+   > **Alternative:** `npx unity-mcp-cli install-plugin ./MyUnityProject` — see [CLI documentation](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md)
 2. **[Pick an MCP Client](#step-2-install-mcp-client)** — Claude Code, Claude Desktop, GitHub Copilot, Cursor, or any other
 3. **[Configure the client](#step-3-configure-mcp-client)** — open `Window/AI Game Developer — MCP` in Unity and click **Configure**
 
@@ -153,6 +154,7 @@ Install extensions when need more tools or [create your own](#add-custom-mcp-too
   - [Step 1: Install `Unity MCP Plugin`](#step-1-install-unity-mcp-plugin)
     - [Option 1 - Installer](#option-1---installer)
     - [Option 2 - OpenUPM-CLI](#option-2---openupm-cli)
+    - [Option 3 - CLI](#option-3---cli)
   - [Step 2: Install `MCP Client`](#step-2-install-mcp-client)
   - [Step 3: Configure `MCP Client`](#step-3-configure-mcp-client)
     - [Automatic configuration](#automatic-configuration)
@@ -170,6 +172,7 @@ Install extensions when need more tools or [create your own](#add-custom-mcp-too
   - [Why runtime usage is needed?](#why-runtime-usage-is-needed)
 - [Unity `MCP Server` setup](#unity-mcp-server-setup)
   - [Variables](#variables)
+  - [Plugin Variables](#plugin-variables)
   - [Docker 📦](#docker-)
     - [`streamableHttp` Transport](#streamablehttp-transport)
     - [`stdio` Transport](#stdio-transport)
@@ -196,6 +199,7 @@ Install extensions when need more tools or [create your own](#add-custom-mcp-too
 | [Docker Deployment](docs/DOCKER_DEPLOYMENT.md) | Step-by-step Docker deployment guide |
 | [Development Guide](docs/dev/Development.md) | Architecture, code style, CI/CD — for contributors |
 | [Wiki](https://github.com/IvanMurzak/Unity-MCP/wiki) | Getting started, tutorials, API reference, FAQ |
+| [CLI Tool](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) | Install plugins, configure, and connect via command line |
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
@@ -216,7 +220,7 @@ Install extensions when need more tools or [create your own](#add-custom-mcp-too
 
 ### Option 1 - Installer
 
-- **[⬇️ Download Installer](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.51.3/AI-Game-Dev-Installer.unitypackage)**
+- **[⬇️ Download Installer](https://github.com/IvanMurzak/Unity-MCP/releases/latest/download/AI-Game-Dev-Installer.unitypackage)**
 - **📂 Import installer into Unity project**
   > - You can double-click on the file - Unity will open it automatically
   > - OR: Open Unity Editor first, then click on `Assets/Import Package/Custom Package`, and choose the file
@@ -229,6 +233,22 @@ Install extensions when need more tools or [create your own](#add-custom-mcp-too
 ```bash
 openupm add com.ivanmurzak.unity.mcp
 ```
+
+### Option 3 - CLI
+
+Install the plugin via [`unity-mcp-cli`](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) — no Unity Editor needed:
+
+```bash
+npx unity-mcp-cli install-plugin ./MyUnityProject
+```
+
+Launch Unity with an active MCP connection:
+
+```bash
+npx unity-mcp-cli connect --path ./MyUnityProject --url http://localhost:8080
+```
+
+> See [full CLI documentation](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) for all available commands.
 
 ## Step 2: Install `MCP Client`
 
@@ -502,6 +522,30 @@ Doesn't matter what launch option you choose, all of them support custom configu
 > Command line args support also the option with a single `-` prefix (`-port`) and an option without prefix at all (`port`).
 
 > **Choosing a transport:** Use `stdio` when the MCP client launches the server binary directly (local use — this is the most common setup). Use `streamableHttp` when running the server as a standalone process or in Docker/cloud, and connecting over HTTP.
+
+## Plugin Variables
+
+The Unity MCP Plugin reads the following environment variables (and command-line arguments) on startup to override values from the saved config file. Overrides are applied at runtime; on first run or when a new authentication token is generated, the overridden values are **written to the config file**. On subsequent runs, overrides are applied in memory but are not automatically saved. The exception is `UNITY_MCP_TOOLS`, which uses `[JsonIgnore]` and is **never persisted** — it is runtime-only.
+
+| Environment Variable        | Command Line Arg            | Values              | Description                                   |
+| --------------------------- | --------------------------- | ------------------- | --------------------------------------------- |
+| `UNITY_MCP_HOST`            | `-UNITY_MCP_HOST`           | URL string                    | Override the MCP Server host URL                                    |
+| `UNITY_MCP_KEEP_CONNECTED`  | `-UNITY_MCP_KEEP_CONNECTED` | `true` / `false`              | Force enable or disable the active connection                       |
+| `UNITY_MCP_AUTH_OPTION`     | `-UNITY_MCP_AUTH_OPTION`    | `none` / `required`           | Force set the authentication mode                                   |
+| `UNITY_MCP_TOKEN`           | `-UNITY_MCP_TOKEN`          | string                        | Force set the authentication token                                  |
+| `UNITY_MCP_TOOLS`           | `-UNITY_MCP_TOOLS`          | comma-separated tool IDs      | Enable only the listed tools; all others are disabled. Unknown IDs are logged as errors. |
+
+> Command-line args take precedence over environment variables. Both override the saved config file value.
+
+**Example (CI/CD batch mode):**
+
+```bash
+Unity.exe -batchmode -nographics \
+  -UNITY_MCP_HOST=http://localhost:8080 \
+  -UNITY_MCP_KEEP_CONNECTED=true \
+  -UNITY_MCP_AUTH_OPTION=required \
+  -UNITY_MCP_TOKEN=my-secret-token
+```
 
 ## Docker 📦
 

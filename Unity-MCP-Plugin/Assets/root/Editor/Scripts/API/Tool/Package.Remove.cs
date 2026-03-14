@@ -27,7 +27,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         (
             PackageRemoveToolId,
             Title = "Package Manager / Remove",
-            DestructiveHint = true
+            DestructiveHint = true,
+            Enabled = false
         )]
         [Description("Remove (uninstall) a package from the Unity project. " +
             "This removes the package from the project's manifest.json and triggers package resolution. " +

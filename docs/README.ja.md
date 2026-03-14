@@ -37,7 +37,7 @@
 - ✔️ **柔軟なデプロイ** - 設定によりローカル（stdio）およびリモート（http）で動作
 - ✔️ **拡張可能** - [プロジェクトコードにカスタム MCP ツールを作成](#カスタム-mcp-ツールの追加)可能
 
-[![インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.51.3/AI-Game-Dev-Installer.unitypackage)
+[![インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/latest/download/AI-Game-Dev-Installer.unitypackage)
 
 ![AI Game Developer Windows](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/ai-game-developer-windows.png?raw=true)
 
@@ -48,6 +48,7 @@
 3 ステップで始められます：
 
 1. **[プラグインをインストール](#ステップ-1-unity-mcp-プラグインのインストール)** — `.unitypackage` インストーラーをダウンロードするか `openupm add com.ivanmurzak.unity.mcp` を実行
+   > **代替方法:** `npx unity-mcp-cli install-plugin ./MyUnityProject` — [CLI ドキュメント](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.ja.md)を参照
 2. **[MCP クライアントを選ぶ](#ステップ-2-mcp-クライアントのインストール)** — Claude Code、Claude Desktop、GitHub Copilot、Cursor など
 3. **[クライアントを設定](#ステップ-3-mcp-クライアントの設定)** — Unity で `Window/AI Game Developer - MCP` を開き **Configure** をクリック
 
@@ -153,6 +154,7 @@
   - [ステップ 1: `Unity MCP Plugin` のインストール](#ステップ-1-unity-mcp-plugin-のインストール)
     - [オプション 1 - インストーラー](#オプション-1---インストーラー)
     - [オプション 2 - OpenUPM-CLI](#オプション-2---openupm-cli)
+    - [オプション 3 - CLI](#オプション-3---cli)
   - [ステップ 2: `MCP Client` のインストール](#ステップ-2-mcp-client-のインストール)
   - [ステップ 3: `MCP Client` の設定](#ステップ-3-mcp-client-の設定)
     - [自動設定](#自動設定)
@@ -170,6 +172,7 @@
   - [なぜランタイム使用が必要か？](#なぜランタイム使用が必要か)
 - [Unity `MCP Server` のセットアップ](#unity-mcp-server-のセットアップ)
   - [変数](#変数)
+  - [プラグイン変数](#プラグイン変数)
   - [Docker 📦](#docker-)
     - [`streamableHttp` トランスポート](#streamablehttp-トランスポート)
     - [`stdio` トランスポート](#stdio-トランスポート)
@@ -196,6 +199,7 @@
 | [Docker デプロイ](docs/DOCKER_DEPLOYMENT.md) | Docker デプロイのステップバイステップガイド |
 | [開発ガイド](docs/dev/Development.md) | アーキテクチャ、コードスタイル、CI/CD（コントリビューター向け） |
 | [Wiki](https://github.com/IvanMurzak/Unity-MCP/wiki) | はじめに、チュートリアル、API リファレンス、FAQ |
+| [CLI ツール](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.ja.md) | コマンドラインでプラグインのインストール、設定、接続 |
 
 ![AI ゲーム開発者 — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
@@ -216,7 +220,7 @@
 
 ### オプション 1 - インストーラー
 
-- **[⬇️ インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/releases/download/0.51.3/AI-Game-Dev-Installer.unitypackage)**
+- **[⬇️ インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/releases/latest/download/AI-Game-Dev-Installer.unitypackage)**
 - **📂 Unity プロジェクトにインストーラーをインポート**
   > - ファイルをダブルクリックすると Unity が自動的に開きます
   > - または: Unity Editor を先に開き、`Assets/Import Package/Custom Package` をクリックしてファイルを選択
@@ -229,6 +233,22 @@
 ```bash
 openupm add com.ivanmurzak.unity.mcp
 ```
+
+### オプション 3 - CLI
+
+[`unity-mcp-cli`](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.ja.md) でプラグインをインストール — Unity Editor 不要：
+
+```bash
+npx unity-mcp-cli install-plugin ./MyUnityProject
+```
+
+アクティブな MCP 接続で Unity を起動：
+
+```bash
+npx unity-mcp-cli connect --path ./MyUnityProject --url http://localhost:8080
+```
+
+> すべての利用可能なコマンドについては[完全な CLI ドキュメント](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.ja.md)を参照してください。
 
 ## ステップ 2: `MCP Client` のインストール
 
@@ -502,6 +522,30 @@ public static class ChessGameAI
 > コマンドライン引数は単一の `-` プレフィックス（`-port`）とプレフィックスなし（`port`）のオプションもサポートしています。
 
 > **トランスポートの選択:** MCP クライアントがサーバーバイナリを直接起動する場合（ローカル使用 — 最も一般的な設定）は `stdio` を使用します。サーバーをスタンドアロンプロセスとして実行するか Docker/クラウドで実行して HTTP 経由で接続する場合は `streamableHttp` を使用します。
+
+## プラグイン変数
+
+Unity MCP Plugin は起動時に以下の環境変数（およびコマンドライン引数）を読み込み、保存済み設定ファイルの値を上書きします。上書きはランタイムで適用されます。初回起動時または新しい認証トークンが生成された際には、上書きされた値が**設定ファイルに書き込まれます**。以降の起動では、上書きはメモリ上でのみ適用され、自動的には保存されません。例外として `UNITY_MCP_TOOLS` は `[JsonIgnore]` を使用しており、**永続化されません** — ランタイムのみで有効です。
+
+| 環境変数                    | コマンドライン引数          | 値                  | 説明                                     |
+| --------------------------- | --------------------------- | ------------------- | ---------------------------------------- |
+| `UNITY_MCP_HOST`            | `-UNITY_MCP_HOST`           | URL 文字列          | MCP サーバーのホスト URL を上書き                                                              |
+| `UNITY_MCP_KEEP_CONNECTED`  | `-UNITY_MCP_KEEP_CONNECTED` | `true` / `false`    | アクティブ接続を強制的に有効/無効化                                                            |
+| `UNITY_MCP_AUTH_OPTION`     | `-UNITY_MCP_AUTH_OPTION`    | `none` / `required` | 認証モードを強制設定                                                                           |
+| `UNITY_MCP_TOKEN`           | `-UNITY_MCP_TOKEN`          | 文字列              | 認証トークンを強制設定                                                                         |
+| `UNITY_MCP_TOOLS`           | `-UNITY_MCP_TOOLS`          | カンマ区切りのツール ID | 指定したツールのみ有効化し、それ以外はすべて無効化します。不明な ID はエラーとしてログに記録されます。 |
+
+> コマンドライン引数は環境変数より優先されます。どちらも保存済み設定ファイルの値を上書きします。
+
+**例（CI/CD バッチモード）:**
+
+```bash
+Unity.exe -batchmode -nographics \
+  -UNITY_MCP_HOST=http://localhost:8080 \
+  -UNITY_MCP_KEEP_CONNECTED=true \
+  -UNITY_MCP_AUTH_OPTION=required \
+  -UNITY_MCP_TOKEN=my-secret-token
+```
 
 ## Docker 📦
 
