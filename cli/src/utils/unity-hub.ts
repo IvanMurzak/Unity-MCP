@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { execFileSync, execSync } from 'child_process';
+import { execFileSync, execSync, spawn } from 'child_process';
 import { platform } from 'os';
 import { get as httpsGet } from 'https';
 import { get as httpGet, IncomingMessage } from 'http';
@@ -351,30 +351,145 @@ export async function resolveChangeset(version: string): Promise<string | null> 
 }
 
 /**
+ * Parse Unity Hub CLI stdout and update the progress bar accordingly.
+ * Hub output lines look like:
+ *   [Unity (6000.3.11f1)] downloading 50.54%
+ *   [Unity (6000.3.11f1)] validating download...
+ *   [Unity (6000.3.11f1)] installing...
+ *   [Unity (6000.3.11f1)] installed successfully.
+ */
+function parseHubProgress(line: string): { percent: number; status: string } | null {
+  const trimmed = line.replace(/\x1b\[[0-9;]*[A-Za-z]/g, '').trim();
+  if (!trimmed || trimmed === 'Progress:' || trimmed === 'All Tasks Completed Successfully.') return null;
+
+  // Match: [Unity (VERSION)] STATUS
+  const match = trimmed.match(/^\[.+?\]\s+(.+)$/);
+  if (!match) return null;
+
+  const status = match[1];
+
+  // "downloading 50.54%"
+  const dlMatch = status.match(/^downloading\s+([\d.]+)%$/);
+  if (dlMatch) {
+    return { percent: parseFloat(dlMatch[1]), status: 'Downloading' };
+  }
+
+  // Map known phases to approximate progress
+  if (status.includes('validating download')) return { percent: 0, status: 'Validating download' };
+  if (status.includes('in progress')) return { percent: 0, status: 'Starting download' };
+  if (status.includes('finished downloading')) return { percent: 100, status: 'Download complete' };
+  if (status.includes('queued for install')) return { percent: 100, status: 'Queued for install' };
+  if (status.includes('validating installation')) return { percent: 100, status: 'Validating installation' };
+  if (status.includes('installing')) return { percent: 100, status: 'Installing' };
+  if (status.includes('installed successfully')) return { percent: 100, status: 'Installed' };
+
+  return { percent: 0, status };
+}
+
+/**
+ * Run Unity Hub install command with a progress bar.
+ * Spawns the process and parses stdout to display download/install progress.
+ */
+function runHubInstallWithProgress(hubPath: string, args: string[], version: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const progress = ui.createProgressBar();
+    let activeSpinner = ui.startSpinner(`Preparing Unity Editor ${version}...`);
+    let isDownloading = false;
+
+    const proc = spawn(hubPath, args, { stdio: ['ignore', 'pipe', 'pipe'] });
+    let stderr = '';
+
+    function transitionSpinner(msg: string): void {
+      if (activeSpinner) {
+        activeSpinner.success(msg);
+      }
+      activeSpinner = null as unknown as ReturnType<typeof ui.startSpinner>;
+    }
+
+    function startPhaseSpinner(status: string): void {
+      if (activeSpinner) {
+        activeSpinner.success(activeSpinner.text ?? '');
+      }
+      activeSpinner = ui.startSpinner(`${status}...`);
+    }
+
+    proc.stdout.on('data', (data: Buffer) => {
+      const text = data.toString('utf-8');
+      for (const line of text.split('\n')) {
+        const parsed = parseHubProgress(line);
+        if (!parsed) continue;
+
+        if (parsed.status === 'Downloading' || parsed.status === 'Starting download') {
+          if (!isDownloading) {
+            isDownloading = true;
+            transitionSpinner(`Downloading Unity Editor ${version}`);
+          }
+          progress.update(parsed.percent, `Downloading Unity Editor ${version}`);
+        } else if (parsed.status === 'Download complete') {
+          if (isDownloading) {
+            progress.complete(`Unity Editor ${version} downloaded`);
+            isDownloading = false;
+          }
+        } else if (parsed.status === 'Installed') {
+          // Final success — stop active spinner, caller prints the final message
+          if (activeSpinner) {
+            activeSpinner.success(`Unity Editor ${version} installed`);
+            activeSpinner = null as unknown as ReturnType<typeof ui.startSpinner>;
+          }
+        } else {
+          // Post-download phases: show as a spinner so the user sees activity
+          if (!isDownloading) {
+            startPhaseSpinner(parsed.status);
+          }
+        }
+      }
+    });
+
+    proc.stderr.on('data', (data: Buffer) => { stderr += data.toString('utf-8'); });
+
+    proc.on('close', (code) => {
+      if (activeSpinner) activeSpinner.stop();
+      if (isDownloading) {
+        progress.fail(`Download failed for Unity Editor ${version}`);
+      }
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(
+          `Failed to install Unity Editor ${version} (exit code ${code})` +
+          (stderr ? `:\n${stderr.trim()}` : '')
+        ));
+      }
+    });
+
+    proc.on('error', (err) => {
+      if (activeSpinner) activeSpinner.stop();
+      reject(new Error(`Failed to install Unity Editor ${version}: ${err.message}`));
+    });
+  });
+}
+
+/**
  * Install a Unity editor version via Unity Hub CLI.
  * Automatically resolves changeset for versions not in the promoted releases list.
+ * Shows a progress bar during download and status during installation.
  */
 export async function installEditor(hubPath: string, version: string): Promise<void> {
-  ui.info(`Installing Unity Editor ${version} via Unity Hub...`);
-
   // Check if version is in the promoted releases list
+  const releaseSpinner = ui.startSpinner(`Checking available releases for ${version}...`);
   const releases = listAvailableReleases(hubPath);
   const isPromoted = releases.some(r => r.version === version);
 
+  const baseArgs = ['--', '--headless', 'install', '--version', version];
+
   if (isPromoted) {
-    try {
-      execFileSync(
-        hubPath,
-        ['--', '--headless', 'install', '--version', version],
-        { encoding: 'utf-8', timeout: 600000, stdio: 'inherit' }
-      );
-      return;
-    } catch (err) {
-      throw new Error(`Failed to install Unity Editor ${version}: ${(err as Error).message}`);
-    }
+    releaseSpinner.success(`Unity Editor ${version} found in releases`);
+    await runHubInstallWithProgress(hubPath, baseArgs, version);
+    return;
   }
 
   // Version not in releases — resolve changeset
+  releaseSpinner.success(`Unity Editor ${version} not in promoted releases, resolving changeset`);
   const changesetSpinner = ui.startSpinner(`Resolving changeset for ${version}...`);
   const changeset = await resolveChangeset(version);
   if (!changeset) {
@@ -386,15 +501,7 @@ export async function installEditor(hubPath: string, version: string): Promise<v
   }
   changesetSpinner.success(`Resolved changeset: ${changeset}`);
 
-  try {
-    execFileSync(
-      hubPath,
-      ['--', '--headless', 'install', '--version', version, '--changeset', changeset],
-      { encoding: 'utf-8', timeout: 600000, stdio: 'inherit' }
-    );
-  } catch (err) {
-    throw new Error(`Failed to install Unity Editor ${version}: ${(err as Error).message}`);
-  }
+  await runHubInstallWithProgress(hubPath, [...baseArgs, '--changeset', changeset], version);
 }
 
 /**
