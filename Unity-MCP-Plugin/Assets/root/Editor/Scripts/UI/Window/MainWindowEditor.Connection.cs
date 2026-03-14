@@ -286,6 +286,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                             UpdateRevokeButtonVisibility();
                             UpdateCloudAuthState();
                         }
+                        if (state == DeviceAuthFlowState.Authorized)
+                        {
+                            // Invalidate cached AI agent configs so they pick up the new cloud token
+                            InvalidateAndReloadAgentUI();
+
+                            // Reconnect to cloud server with the new token
+                            ReconnectAfterModeSwitch();
+                        }
                         if (btnAuthorize != null)
                         {
                             btnAuthorize.text = IsAuthFlowRunning(state) ? "Cancel" : "Authorize";
