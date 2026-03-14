@@ -90,15 +90,15 @@ npx unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
 Instala una versión del Editor de Unity mediante la CLI de Unity Hub.
 
 ```bash
-npx unity-mcp-cli install-unity --version 6000.3.1f1
+npx unity-mcp-cli install-unity 6000.3.1f1
 ```
 
-| Opción | Requerido | Descripción |
+| Argumento / Opción | Requerido | Descripción |
 |---|---|---|
-| `--version <version>` | No | Versión del Editor de Unity a instalar |
+| `[version]` | No | Versión del Editor de Unity a instalar (ej. `6000.3.1f1`) |
 | `--path <path>` | No | Lee la versión requerida desde un proyecto existente |
 
-Si no se proporciona ninguna opción, el comando lista los editores instalados actualmente.
+Si no se proporciona ningún argumento ni opción, el comando lista los editores instalados actualmente.
 
 **Ejemplo — instalar la versión del editor que necesita un proyecto:**
 

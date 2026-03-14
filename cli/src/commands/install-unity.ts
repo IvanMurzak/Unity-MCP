@@ -7,9 +7,9 @@ import * as ui from '../utils/ui.js';
 
 export const installUnityCommand = new Command('install-unity')
   .description('Install Unity Editor via Unity Hub')
-  .option('--version <version>', 'Unity Editor version to install')
+  .argument('[version]', 'Unity Editor version to install (e.g. 6000.3.1f1)')
   .option('--path <path>', 'Read version from an existing Unity project')
-  .action(async (options: { version?: string; path?: string }) => {
+  .action(async (positionalVersion: string | undefined, options: { path?: string }) => {
     const spinner = ui.startSpinner('Locating Unity Hub...');
     let hubPath: string;
     try {
@@ -20,7 +20,7 @@ export const installUnityCommand = new Command('install-unity')
     }
     spinner.success('Unity Hub located');
 
-    let version = options.version;
+    let version = positionalVersion;
 
     if (!version && options.path) {
       const projectPath = path.resolve(options.path);
@@ -38,7 +38,7 @@ export const installUnityCommand = new Command('install-unity')
     }
 
     if (!version) {
-      ui.error('Please specify --version or --path');
+      ui.error('Please specify a version or --path');
 
       const editors = listInstalledEditors(hubPath);
       if (editors.length > 0) {
