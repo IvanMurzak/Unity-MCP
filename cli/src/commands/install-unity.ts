@@ -1,13 +1,13 @@
 import { Command } from 'commander';
 import * as path from 'path';
 import * as fs from 'fs';
-import { ensureUnityHub, installEditor, listInstalledEditors } from '../utils/unity-hub.js';
+import { ensureUnityHub, installEditor, listInstalledEditors, listAvailableReleases, findLatestStableRelease } from '../utils/unity-hub.js';
 import { getProjectEditorVersion } from '../utils/unity-editor.js';
 import * as ui from '../utils/ui.js';
 
 export const installUnityCommand = new Command('install-unity')
   .description('Install Unity Editor via Unity Hub')
-  .argument('[version]', 'Unity Editor version to install (e.g. 6000.3.1f1)')
+  .argument('[version]', 'Unity Editor version to install (e.g. 6000.3.1f1). Omit to install latest stable release.')
   .option('--path <path>', 'Read version from an existing Unity project')
   .action(async (positionalVersion: string | undefined, options: { path?: string }) => {
     const spinner = ui.startSpinner('Locating Unity Hub...');
@@ -37,18 +37,26 @@ export const installUnityCommand = new Command('install-unity')
       }
     }
 
+    // No version specified — resolve latest stable release from Unity Hub
     if (!version) {
-      ui.error('Please specify a version or --path');
+      const releaseSpinner = ui.startSpinner('Fetching available releases...');
+      const releases = listAvailableReleases(hubPath);
+      const latest = findLatestStableRelease(releases);
 
-      const editors = listInstalledEditors(hubPath);
-      if (editors.length > 0) {
-        ui.heading('Currently installed editors:');
-        for (const editor of editors) {
-          ui.label(editor.version, editor.path);
+      if (!latest) {
+        releaseSpinner.error('No stable releases found');
+        const editors = listInstalledEditors(hubPath);
+        if (editors.length > 0) {
+          ui.heading('Currently installed editors:');
+          for (const editor of editors) {
+            ui.label(editor.version, editor.path);
+          }
         }
+        process.exit(1);
       }
 
-      process.exit(1);
+      releaseSpinner.success(`Latest stable release: ${latest.version}`);
+      version = latest.version;
     }
 
     // Check if already installed
@@ -59,6 +67,6 @@ export const installUnityCommand = new Command('install-unity')
       return;
     }
 
-    installEditor(hubPath, version);
+    await installEditor(hubPath, version);
     ui.success(`Unity Editor ${version} installed successfully`);
   });

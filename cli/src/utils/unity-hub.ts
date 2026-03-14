@@ -7,6 +7,11 @@ import { get as httpsGet } from 'https';
 import { get as httpGet, IncomingMessage } from 'http';
 import * as ui from './ui.js';
 
+export interface AvailableRelease {
+  version: string;
+  isStable: boolean;
+}
+
 const UNITY_HUB_DOWNLOAD_URLS: Record<string, string> = {
   win32: 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.exe',
   darwin: 'https://public-cdn.cloud.unity3d.com/hub/prod/UnityHubSetup.dmg',
@@ -246,14 +251,128 @@ export function findHighestEditor(editors: InstalledEditor[]): InstalledEditor {
 }
 
 /**
- * Install a Unity editor version via Unity Hub CLI.
+ * List available Unity editor releases from Unity Hub CLI.
  */
-export function installEditor(hubPath: string, version: string): void {
+export function listAvailableReleases(hubPath: string): AvailableRelease[] {
+  try {
+    const output = execFileSync(hubPath, ['--', '--headless', 'editors', '--releases'], {
+      encoding: 'utf-8',
+      timeout: 30000,
+    });
+
+    const releases: AvailableRelease[] = [];
+    for (const line of output.split('\n')) {
+      const trimmed = line.trim();
+      if (!trimmed) continue;
+
+      // Extract version from line (may also contain "installed at ..." suffix)
+      const match = trimmed.match(/^([\d.]+[a-zA-Z]\d+)/);
+      if (match) {
+        const version = match[1];
+        const isStable = /f\d+$/.test(version);
+        releases.push({ version, isStable });
+      }
+    }
+
+    return releases;
+  } catch (err) {
+    ui.warn(`Failed to list available releases: ${(err as Error).message}`);
+    return [];
+  }
+}
+
+/**
+ * Find the latest stable (f-suffix) release from the available releases.
+ */
+export function findLatestStableRelease(releases: AvailableRelease[]): AvailableRelease | null {
+  const stable = releases.filter(r => r.isStable);
+  if (stable.length === 0) return null;
+  return stable.reduce((highest, current) =>
+    compareUnityVersions(current.version, highest.version) > 0 ? current : highest
+  );
+}
+
+/**
+ * Fetch a URL and return the response body as a string.
+ */
+function fetchUrl(url: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const doGet = url.startsWith('https') ? httpsGet : httpGet;
+    doGet(url, (response: IncomingMessage) => {
+      if (response.statusCode && response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
+        fetchUrl(new URL(response.headers.location, url).toString()).then(resolve, reject);
+        return;
+      }
+      if (response.statusCode && response.statusCode !== 200) {
+        reject(new Error(`HTTP ${response.statusCode}`));
+        return;
+      }
+      const chunks: Buffer[] = [];
+      response.on('data', (chunk: Buffer) => chunks.push(chunk));
+      response.on('end', () => resolve(Buffer.concat(chunks).toString('utf-8')));
+      response.on('error', reject);
+    }).on('error', reject);
+  });
+}
+
+/**
+ * Resolve the changeset hash for a Unity version by scraping the release notes page.
+ * Returns the changeset string, or null if not found.
+ */
+export async function resolveChangeset(version: string): Promise<string | null> {
+  // Strip suffix for URL: "6000.3.9f1" -> "6000.3.9f1" (Unity redirects both forms)
+  const url = `https://unity.com/releases/editor/whats-new/${version}`;
+  try {
+    const html = await fetchUrl(url);
+    // Look for unityhub://VERSION/CHANGESET pattern
+    const match = html.match(/unityhub:\/\/[^/]+\/([a-f0-9]{12})/);
+    if (match) return match[1];
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Install a Unity editor version via Unity Hub CLI.
+ * Automatically resolves changeset for versions not in the promoted releases list.
+ */
+export async function installEditor(hubPath: string, version: string): Promise<void> {
   ui.info(`Installing Unity Editor ${version} via Unity Hub...`);
+
+  // Check if version is in the promoted releases list
+  const releases = listAvailableReleases(hubPath);
+  const isPromoted = releases.some(r => r.version === version);
+
+  if (isPromoted) {
+    try {
+      execFileSync(
+        hubPath,
+        ['--', '--headless', 'install', '--version', version],
+        { encoding: 'utf-8', timeout: 600000, stdio: 'inherit' }
+      );
+      return;
+    } catch (err) {
+      throw new Error(`Failed to install Unity Editor ${version}: ${(err as Error).message}`);
+    }
+  }
+
+  // Version not in releases — resolve changeset
+  const changesetSpinner = ui.startSpinner(`Resolving changeset for ${version}...`);
+  const changeset = await resolveChangeset(version);
+  if (!changeset) {
+    changesetSpinner.error(`Could not resolve changeset for ${version}`);
+    throw new Error(
+      `Unity Editor ${version} is not in the promoted releases list and its changeset could not be resolved. ` +
+      `You can provide a changeset manually: unity-hub -- --headless install --version ${version} --changeset <hash>`
+    );
+  }
+  changesetSpinner.success(`Resolved changeset: ${changeset}`);
+
   try {
     execFileSync(
       hubPath,
-      ['--', '--headless', 'install', '--version', version],
+      ['--', '--headless', 'install', '--version', version, '--changeset', changeset],
       { encoding: 'utf-8', timeout: 600000, stdio: 'inherit' }
     );
   } catch (err) {
