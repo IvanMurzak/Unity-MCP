@@ -99,8 +99,6 @@ jobs:
           unityVersion: ${{ inputs.unityVersion }}
           testMode: ${{ inputs.testMode }}
           customImage: ${{ steps.custom_image.outputs.image }}
-          githubToken: ${{ secrets.GITHUB_TOKEN }}
-          checkName: ${{ inputs.unityVersion }} ${{ inputs.testMode }} ${{ matrix.platform }} Test Results
           artifactsPath: artifacts-${{ inputs.unityVersion }}-${{ inputs.testMode }}-${{ matrix.platform }}
           customParameters: -CI true -GITHUB_ACTIONS true
 
@@ -111,11 +109,3 @@ jobs:
           name: Test results for ${{ inputs.unityVersion }} ${{ inputs.testMode }} on ${{ matrix.platform }}
           path: ${{ steps.tests.outputs.artifactsPath }}
 
-      # --------------------------------------------------------------------- #
-      - name: Publish Test Results
-        uses: EnricoMi/publish-unit-test-result-action@v2
-        if: always()
-        with:
-          files: ${{ steps.tests.outputs.artifactsPath }}/**/*.xml
-          check_name: ${{ inputs.unityVersion }} ${{ inputs.testMode }} ${{ matrix.platform }} Results
-          comment_mode: failures

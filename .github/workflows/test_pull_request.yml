@@ -16,6 +16,15 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
+  save-event-file:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Save event file for publish workflow
+        uses: actions/upload-artifact@v6
+        with:
+          name: Event File
+          path: ${{ github.event_path }}
+
   test-cli:
     uses: ./.github/workflows/test_cli.yml
 

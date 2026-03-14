@@ -1,0 +1,44 @@
+# ┌──────────────────────────────────────────────────────────────────┐
+# │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
+# │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
+# │  Copyright (c) 2025 Ivan Murzak                                  │
+# │  Licensed under the Apache License, Version 2.0.                 │
+# │  See the LICENSE file in the project root for more information.  │
+# └──────────────────────────────────────────────────────────────────┘
+
+name: publish-test-results
+
+# Runs after test-pull-request completes — uses write token from the base
+# repo so it works for fork PRs (where the PR workflow token is read-only).
+
+on:
+  workflow_run:
+    workflows: ["test-pull-request"]
+    types: [completed]
+
+permissions:
+  actions: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion != 'cancelled'
+
+    steps:
+      - name: Download all test result artifacts
+        uses: actions/download-artifact@v4
+        with:
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: artifacts
+
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        with:
+          commit: ${{ github.event.workflow_run.head_sha }}
+          event_file: artifacts/Event File/event.json
+          event_name: ${{ github.event.workflow_run.event }}
+          files: artifacts/Test results for */**/*.xml
+          comment_mode: changes in failures
