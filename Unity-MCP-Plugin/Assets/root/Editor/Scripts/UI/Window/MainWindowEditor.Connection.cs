@@ -10,6 +10,7 @@
 
 #nullable enable
 using System;
+using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.Services;
 using Microsoft.AspNetCore.SignalR.Client;
 using UnityEngine.UIElements;
@@ -147,7 +148,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     InvalidateAndReloadAgentUI();
 
                     // Stop local server — not needed in Cloud mode
-                    if (McpServerManager.IsRunning)
+                    if (McpServerManager.IsRunning || McpServerManager.IsStarting)
                         McpServerManager.StopServer();
 
                     // Reconnect to cloud server (only if authorized)
@@ -267,15 +268,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
                 _deviceAuthFlow?.Cancel();
                 _deviceAuthFlow = new DeviceAuthFlow();
+                var capturedFlow = _deviceAuthFlow; // Capture to avoid stale field reference in async callbacks
 
-                _deviceAuthFlow.OnStateChanged += state =>
+                capturedFlow.OnStateChanged += state =>
                 {
-                    // Must dispatch to main thread for UI updates
-                    UnityEditor.EditorApplication.delayCall += () =>
+                    // Use RunAsync (EditorApplication.update-based) instead of delayCall so that
+                    // the UI updates even when the Unity Editor window is not focused — delayCall
+                    // is throttled/paused when Unity loses application focus.
+                    MainThread.Instance.RunAsync(() =>
                     {
+                        // Ignore stale events from a previous auth flow
+                        if (_deviceAuthFlow != capturedFlow) return;
+
                         if (statusLabel != null)
                         {
-                            statusLabel.text = GetAuthFlowStatusMessage(state, _deviceAuthFlow.UserCode, _deviceAuthFlow.ErrorMessage);
+                            statusLabel.text = GetAuthFlowStatusMessage(state, capturedFlow.UserCode, capturedFlow.ErrorMessage);
                             statusLabel.style.display = string.IsNullOrEmpty(statusLabel.text)
                                 ? DisplayStyle.None
                                 : DisplayStyle.Flex;
@@ -286,14 +293,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                             UpdateRevokeButtonVisibility();
                             UpdateCloudAuthState();
                         }
+                        if (state == DeviceAuthFlowState.Authorized)
+                        {
+                            // Invalidate cached AI agent configs so they pick up the new cloud token
+                            InvalidateAndReloadAgentUI();
+
+                            // Reconnect to cloud server with the new token (only if still in Cloud mode)
+                            if (UnityMcpPluginEditor.ConnectionMode == ConnectionMode.Cloud)
+                                ReconnectAfterModeSwitch();
+                        }
                         if (btnAuthorize != null)
                         {
                             btnAuthorize.text = IsAuthFlowRunning(state) ? "Cancel" : "Authorize";
                         }
-                    };
+                        Repaint();
+                    });
                 };
 
-                await _deviceAuthFlow.StartAsync(UnityMcpPluginEditor.CloudServerUrl, "Unity Editor");
+                await capturedFlow.StartAsync(UnityMcpPluginEditor.CloudServerUrl, "Unity Editor");
             });
         }
     }
