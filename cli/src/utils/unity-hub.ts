@@ -292,15 +292,31 @@ export function findLatestStableRelease(releases: AvailableRelease[]): Available
   );
 }
 
+const FETCH_TIMEOUT_MS = 10000;
+const FETCH_MAX_REDIRECTS = 5;
+
 /**
  * Fetch a URL and return the response body as a string.
+ * Supports redirect following up to FETCH_MAX_REDIRECTS deep, and enforces a
+ * FETCH_TIMEOUT_MS request timeout to prevent indefinite hangs.
  */
-function fetchUrl(url: string): Promise<string> {
+function fetchUrl(url: string, redirectsRemaining = FETCH_MAX_REDIRECTS): Promise<string> {
   return new Promise((resolve, reject) => {
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      controller.abort();
+      reject(new Error(`Request timed out after ${FETCH_TIMEOUT_MS}ms: ${url}`));
+    }, FETCH_TIMEOUT_MS);
+
     const doGet = url.startsWith('https') ? httpsGet : httpGet;
-    doGet(url, (response: IncomingMessage) => {
+    const req = doGet(url, { signal: controller.signal } as Parameters<typeof httpsGet>[1], (response: IncomingMessage) => {
+      clearTimeout(timer);
       if (response.statusCode && response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
-        fetchUrl(new URL(response.headers.location, url).toString()).then(resolve, reject);
+        if (redirectsRemaining <= 0) {
+          reject(new Error(`Too many redirects (max ${FETCH_MAX_REDIRECTS}) fetching: ${url}`));
+          return;
+        }
+        fetchUrl(new URL(response.headers.location, url).toString(), redirectsRemaining - 1).then(resolve, reject);
         return;
       }
       if (response.statusCode && response.statusCode !== 200) {
@@ -311,7 +327,8 @@ function fetchUrl(url: string): Promise<string> {
       response.on('data', (chunk: Buffer) => chunks.push(chunk));
       response.on('end', () => resolve(Buffer.concat(chunks).toString('utf-8')));
       response.on('error', reject);
-    }).on('error', reject);
+    });
+    req.on('error', (err) => { clearTimeout(timer); reject(err); });
   });
 }
 
@@ -320,7 +337,7 @@ function fetchUrl(url: string): Promise<string> {
  * Returns the changeset string, or null if not found.
  */
 export async function resolveChangeset(version: string): Promise<string | null> {
-  // Strip suffix for URL: "6000.3.9f1" -> "6000.3.9f1" (Unity redirects both forms)
+  // Use the version as-is in the URL; Unity's release notes page accepts the full version string
   const url = `https://unity.com/releases/editor/whats-new/${version}`;
   try {
     const html = await fetchUrl(url);
@@ -437,7 +454,7 @@ export function createProject(hubPath: string, projectPath: string, editorVersio
   // Find the editor install path
   const editors = listInstalledEditors(hubPath);
   if (editors.length === 0) {
-    throw new Error('No Unity editors installed. Install one with: unity-mcp-cli install-unity <version>');
+    throw new Error('No Unity editors installed. Install one with: unity-mcp-cli install-unity [version]');
   }
 
   let editor: InstalledEditor | undefined;

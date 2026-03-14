@@ -98,7 +98,7 @@ npx unity-mcp-cli install-unity 6000.3.1f1
 | `[version]` | No | Unity Editor version to install (e.g. `6000.3.1f1`) |
 | `--path <path>` | No | Read the required version from an existing project |
 
-If neither argument nor option is provided, the command lists currently installed editors.
+If neither argument nor option is provided, the command installs the latest stable release from Unity Hub's releases list.
 
 **Example — install the editor version that a project needs:**
 

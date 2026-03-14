@@ -30,7 +30,7 @@ export const createProjectCommand = new Command('create-project')
     if (!editorVersion) {
       const editors = listInstalledEditors(hubPath);
       if (editors.length === 0) {
-        ui.error('No Unity editors installed. Install one with: unity-mcp-cli install-unity <version>');
+        ui.error('No Unity editors installed. Install one with: unity-mcp-cli install-unity [version]');
         process.exit(1);
       }
       const highest = findHighestEditor(editors);
