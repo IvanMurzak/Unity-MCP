@@ -97,8 +97,8 @@ namespace com.IvanMurzak.Unity.MCP
             public UnityConnectionConfig SetDefault()
             {
                 Host = DefaultHost;
-                KeepConnected = false;
-                KeepServerRunning = false;
+                KeepConnected = true;
+                KeepServerRunning = true;
                 GenerateSkillFiles = false;
                 TransportMethod = TransportMethod.streamableHttp;
                 AuthOption = AuthOption.none;
