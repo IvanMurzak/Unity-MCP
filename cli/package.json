@@ -1,6 +1,6 @@
 {
   "name": "unity-mcp-cli",
-  "version": "0.53.0",
+  "version": "0.53.1",
   "description": "Cross-platform CLI tool for Unity-MCP operations — create projects, install plugins, configure tools, and manage MCP connections",
   "type": "module",
   "main": "dist/index.js",
