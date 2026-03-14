@@ -74,6 +74,9 @@ namespace com.IvanMurzak.Unity.MCP.Installer
         }
 
         public static bool AddScopedRegistryIfNeeded(string manifestPath, int indent = 2)
+            => AddScopedRegistryIfNeeded(manifestPath, GetLatestAvailableVersion() ?? Version, indent);
+
+        internal static bool AddScopedRegistryIfNeeded(string manifestPath, string resolvedVersion, int indent = 2)
         {
             if (!File.Exists(manifestPath))
             {
@@ -150,10 +153,6 @@ namespace com.IvanMurzak.Unity.MCP.Installer
                 manifestJson[Dependencies] = dependencies = new JSONObject();
                 modified = true;
             }
-
-            // Resolve the best available version from OpenUPM, falling back to hardcoded version.
-            // This prevents installation failures when OpenUPM hasn't indexed the latest release yet.
-            var resolvedVersion = GetLatestAvailableVersion() ?? Version;
 
             // Only update version if resolved version is higher than current version
             var currentVersion = dependencies[PackageId];

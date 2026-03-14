@@ -237,7 +237,7 @@ npx unity-mcp-cli connect \
 | `--auth <option>` | `UNITY_MCP_AUTH_OPTION` | 否 | 认证模式：`none` 或 `required` |
 | `--tools <names>` | `UNITY_MCP_TOOLS` | 否 | 要启用的工具列表（逗号分隔） |
 | `--transport <method>` | `UNITY_MCP_TRANSPORT` | 否 | 传输方式：`streamableHttp` 或 `stdio` |
-| `--start-server` / `--no-start-server` | `UNITY_MCP_START_SERVER` | 否 | 在 Unity Editor 中启动或阻止 MCP 服务器自动启动（仅适用于 `streamableHttp` 传输方式） |
+| `--start-server <value>` | `UNITY_MCP_START_SERVER` | 否 | 设置为 `true` 或 `false` 以控制 Unity Editor 中 MCP 服务器的自动启动（仅适用于 `streamableHttp` 传输方式） |
 | `--unity <version>` | — | 否 | 要使用的特定 Unity Editor 版本（默认为项目设置中的版本，回退为已安装的最高版本） |
 
 此命令携带相应的 `UNITY_MCP_*` 环境变量启动 Unity Editor，以便插件在启动时自动获取这些配置。运行时，环境变量将覆盖项目 `UserSettings/AI-Game-Developer-Config.json` 配置文件中的对应值。
@@ -261,7 +261,7 @@ npx unity-mcp-cli connect \
   --path ./MyGame \
   --url http://localhost:8080 \
   --transport stdio \
-  --no-start-server
+  --start-server false
 ```
 
 **示例 — 使用 streamableHttp 连接并自动启动服务器：**
@@ -271,7 +271,7 @@ npx unity-mcp-cli connect \
   --path ./MyGame \
   --url http://localhost:8080 \
   --transport streamableHttp \
-  --start-server \
+  --start-server true \
   --keep-connected
 ```
 

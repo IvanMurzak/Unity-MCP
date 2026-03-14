@@ -237,7 +237,7 @@ npx unity-mcp-cli connect \
 | `--auth <option>` | `UNITY_MCP_AUTH_OPTION` | No | Modo de autenticación: `none` o `required` |
 | `--tools <names>` | `UNITY_MCP_TOOLS` | No | Lista de herramientas a activar, separadas por comas |
 | `--transport <method>` | `UNITY_MCP_TRANSPORT` | No | Método de transporte: `streamableHttp` o `stdio` |
-| `--start-server` / `--no-start-server` | `UNITY_MCP_START_SERVER` | No | Inicia o impide el inicio automático del servidor MCP en el Editor de Unity (solo aplica al transporte `streamableHttp`) |
+| `--start-server <value>` | `UNITY_MCP_START_SERVER` | No | Establece `true` o `false` para controlar el inicio automático del servidor MCP en el Editor de Unity (solo aplica al transporte `streamableHttp`) |
 | `--unity <version>` | — | No | Versión específica del Editor de Unity a utilizar (por defecto, la versión de la configuración del proyecto; si no está disponible, la más alta instalada) |
 
 Este comando inicia el Editor de Unity con las variables de entorno `UNITY_MCP_*` correspondientes para que el plugin las recoja automáticamente al arrancar. Las variables de entorno anulan los valores del archivo de configuración `UserSettings/AI-Game-Developer-Config.json` del proyecto en tiempo de ejecución.
@@ -261,7 +261,7 @@ npx unity-mcp-cli connect \
   --path ./MyGame \
   --url http://localhost:8080 \
   --transport stdio \
-  --no-start-server
+  --start-server false
 ```
 
 **Ejemplo — conectar con streamableHttp e inicio automático del servidor:**
@@ -271,7 +271,7 @@ npx unity-mcp-cli connect \
   --path ./MyGame \
   --url http://localhost:8080 \
   --transport streamableHttp \
-  --start-server \
+  --start-server true \
   --keep-connected
 ```
 

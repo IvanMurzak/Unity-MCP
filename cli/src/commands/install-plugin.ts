@@ -29,7 +29,7 @@ export const installPluginCommand = new Command('install-plugin')
     if (!version) {
       const spinner = ui.startSpinner('Resolving latest plugin version...');
       version = await resolveLatestVersion();
-      spinner.succeed(`Resolved plugin version: ${version}`);
+      spinner.success(`Resolved plugin version: ${version}`);
     }
 
     ui.info(`Installing Unity-MCP plugin v${version} into: ${projectPath}`);
