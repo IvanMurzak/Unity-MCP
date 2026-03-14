@@ -25,7 +25,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [McpPluginTool
         (
             AssetsMoveToolId,
-            Title = "Assets / Move"
+            Title = "Assets / Move",
+            Enabled = false
         )]
         [Description("Move the assets at paths in the project. " +
             "Should be used for asset rename. " +

@@ -27,7 +27,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         (
             AssetsDeleteToolId,
             Title = "Assets / Delete",
-            DestructiveHint = true
+            DestructiveHint = true,
+            Enabled = false
         )]
         [Description("Delete the assets at paths from the project. " +
             "Does AssetDatabase.Refresh() at the end. " +

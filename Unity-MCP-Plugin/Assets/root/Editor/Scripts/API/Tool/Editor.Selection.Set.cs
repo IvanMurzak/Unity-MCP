@@ -26,7 +26,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         (
             EditorSelectionSetToolId,
             Title = "Editor / Selection / Set",
-            IdempotentHint = true
+            IdempotentHint = true,
+            Enabled = false
         )]
         [Description("Set the current Selection in the Unity Editor to the provided objects. " +
             "Use '" + EditorSelectionGetToolId + "' tool to get the current selection first.")]

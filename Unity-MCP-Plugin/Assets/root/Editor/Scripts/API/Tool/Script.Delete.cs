@@ -28,7 +28,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         (
             ScriptDeleteToolId,
             Title = "Script / Delete",
-            DestructiveHint = true
+            DestructiveHint = true,
+            Enabled = false
         )]
         [Description("Delete the script file(s). " +
             "Does AssetDatabase.Refresh() and waits for Unity compilation to complete before reporting results. " +
