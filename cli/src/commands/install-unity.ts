@@ -39,12 +39,11 @@ export const installUnityCommand = new Command('install-unity')
 
     // No version specified — resolve latest stable release from Unity Hub
     if (!version) {
-      const releaseSpinner = ui.startSpinner('Fetching available releases...');
       const releases = listAvailableReleases(hubPath);
       const latest = findLatestStableRelease(releases);
 
       if (!latest) {
-        releaseSpinner.error('No stable releases found');
+        ui.error('No stable releases found');
         const editors = listInstalledEditors(hubPath);
         if (editors.length > 0) {
           ui.heading('Currently installed editors:');
@@ -55,7 +54,7 @@ export const installUnityCommand = new Command('install-unity')
         process.exit(1);
       }
 
-      releaseSpinner.success(`Latest stable release: ${latest.version}`);
+      ui.success(`Latest stable release: ${latest.version}`);
       version = latest.version;
     }
 

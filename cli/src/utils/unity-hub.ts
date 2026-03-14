@@ -188,10 +188,11 @@ export interface InstalledEditor {
  * List installed Unity editors via Unity Hub CLI.
  */
 export function listInstalledEditors(hubPath: string): InstalledEditor[] {
+  const spinner = ui.startSpinner('Listing installed editors...');
   try {
     const output = execFileSync(hubPath, ['--', '--headless', 'editors', '--installed'], {
       encoding: 'utf-8',
-      timeout: 30000,
+      timeout: 120000,
     });
 
     const editors: InstalledEditor[] = [];
@@ -206,9 +207,10 @@ export function listInstalledEditors(hubPath: string): InstalledEditor[] {
       }
     }
 
+    spinner.success(`Found ${editors.length} installed editor${editors.length !== 1 ? 's' : ''}`);
     return editors;
   } catch (err) {
-    ui.warn(`Failed to list installed editors: ${(err as Error).message}`);
+    spinner.error(`Failed to list installed editors: ${(err as Error).message}`);
     return [];
   }
 }
@@ -254,10 +256,11 @@ export function findHighestEditor(editors: InstalledEditor[]): InstalledEditor {
  * List available Unity editor releases from Unity Hub CLI.
  */
 export function listAvailableReleases(hubPath: string): AvailableRelease[] {
+  const spinner = ui.startSpinner('Fetching available releases...');
   try {
     const output = execFileSync(hubPath, ['--', '--headless', 'editors', '--releases'], {
       encoding: 'utf-8',
-      timeout: 30000,
+      timeout: 120000,
     });
 
     const releases: AvailableRelease[] = [];
@@ -274,9 +277,10 @@ export function listAvailableReleases(hubPath: string): AvailableRelease[] {
       }
     }
 
+    spinner.success(`Found ${releases.length} available release${releases.length !== 1 ? 's' : ''}`);
     return releases;
   } catch (err) {
-    ui.warn(`Failed to list available releases: ${(err as Error).message}`);
+    spinner.error(`Failed to fetch available releases: ${(err as Error).message}`);
     return [];
   }
 }
@@ -476,20 +480,17 @@ function runHubInstallWithProgress(hubPath: string, args: string[], version: str
  */
 export async function installEditor(hubPath: string, version: string): Promise<void> {
   // Check if version is in the promoted releases list
-  const releaseSpinner = ui.startSpinner(`Checking available releases for ${version}...`);
   const releases = listAvailableReleases(hubPath);
   const isPromoted = releases.some(r => r.version === version);
 
   const baseArgs = ['--', '--headless', 'install', '--version', version];
 
   if (isPromoted) {
-    releaseSpinner.success(`Unity Editor ${version} found in releases`);
     await runHubInstallWithProgress(hubPath, baseArgs, version);
     return;
   }
 
   // Version not in releases — resolve changeset
-  releaseSpinner.success(`Unity Editor ${version} not in promoted releases, resolving changeset`);
   const changesetSpinner = ui.startSpinner(`Resolving changeset for ${version}...`);
   const changeset = await resolveChangeset(version);
   if (!changeset) {
