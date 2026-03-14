@@ -237,7 +237,7 @@ npx unity-mcp-cli connect \
 | `--auth <option>` | `UNITY_MCP_AUTH_OPTION` | No | Auth mode: `none` or `required` |
 | `--tools <names>` | `UNITY_MCP_TOOLS` | No | Comma-separated list of tools to enable |
 | `--transport <method>` | `UNITY_MCP_TRANSPORT` | No | Transport method: `streamableHttp` or `stdio` |
-| `--start-server` / `--no-start-server` | `UNITY_MCP_START_SERVER` | No | Start or prevent MCP server auto-start in Unity Editor (only applies to `streamableHttp` transport) |
+| `--start-server <value>` | `UNITY_MCP_START_SERVER` | No | Set to `true` or `false` to control MCP server auto-start in Unity Editor (only applies to `streamableHttp` transport) |
 | `--unity <version>` | — | No | Specific Unity Editor version to use (defaults to version from project settings, falls back to highest installed) |
 
 This command launches the Unity Editor with the corresponding `UNITY_MCP_*` environment variables so the plugin picks them up automatically on startup. The environment variables override values from the project's `UserSettings/AI-Game-Developer-Config.json` config file at runtime.
@@ -261,7 +261,7 @@ npx unity-mcp-cli connect \
   --path ./MyGame \
   --url http://localhost:8080 \
   --transport stdio \
-  --no-start-server
+  --start-server false
 ```
 
 **Example — connect with streamableHttp and auto-start server:**
@@ -271,7 +271,7 @@ npx unity-mcp-cli connect \
   --path ./MyGame \
   --url http://localhost:8080 \
   --transport streamableHttp \
-  --start-server \
+  --start-server true \
   --keep-connected
 ```
 
