@@ -114,28 +114,28 @@ export function configureStyledHelp(cmd: Command, appVersion?: string): Command 
  * Print a success message with a green checkmark.
  */
 export function success(msg: string): void {
-  console.log(`${chalk.green('\u2714')} ${msg}`);
+  console.log(`${chalk.green('\u2714')}  ${msg}`);
 }
 
 /**
  * Print an error message with a red cross to stderr.
  */
 export function error(msg: string): void {
-  console.error(`${chalk.red('\u2716')} ${chalk.red(msg)}`);
+  console.error(`${chalk.red('\u2716')}  ${chalk.red(msg)}`);
 }
 
 /**
  * Print an info message with a blue info symbol.
  */
 export function info(msg: string): void {
-  console.log(`${chalk.blue('\u2139')} ${msg}`);
+  console.log(`${chalk.blue('\u2139')}  ${msg}`);
 }
 
 /**
  * Print a warning message with a yellow warning symbol.
  */
 export function warn(msg: string): void {
-  console.log(`${chalk.yellow('\u26A0')} ${chalk.yellow(msg)}`);
+  console.log(`${chalk.yellow('\u26A0')}  ${chalk.yellow(msg)}`);
 }
 
 /**
@@ -153,10 +153,24 @@ export function label(key: string, value: string): void {
 }
 
 /**
- * Start a spinner with the given text. Returns the spinner instance.
+ * Start a spinner with the given text. Returns a wrapped spinner instance
+ * whose success/error/warning/info methods add an extra space after the symbol
+ * for consistent formatting.
  */
 export function startSpinner(text: string): Spinner {
-  return yoctoSpinner({ text, color: 'cyan' }).start();
+  const spinner = yoctoSpinner({ text, color: 'cyan' }).start();
+
+  const origSuccess = spinner.success.bind(spinner);
+  const origError = spinner.error.bind(spinner);
+  const origWarning = spinner.warning.bind(spinner);
+  const origInfo = spinner.info.bind(spinner);
+
+  spinner.success = (msg?: string) => origSuccess(msg ? ` ${msg}` : undefined);
+  spinner.error = (msg?: string) => origError(msg ? ` ${msg}` : undefined);
+  spinner.warning = (msg?: string) => origWarning(msg ? ` ${msg}` : undefined);
+  spinner.info = (msg?: string) => origInfo(msg ? ` ${msg}` : undefined);
+
+  return spinner;
 }
 
 /**
@@ -180,4 +194,51 @@ export function featureRow(name: string, enabled: boolean): void {
  */
 export function divider(): void {
   console.log(chalk.dim('\u2500'.repeat(50)));
+}
+
+/**
+ * A progress bar that overwrites itself on the same line.
+ */
+export interface ProgressBar {
+  update(percent: number, status: string): void;
+  complete(msg: string): void;
+  fail(msg: string): void;
+}
+
+export function createProgressBar(): ProgressBar {
+  const barWidth = 30;
+  let lastLine = '';
+
+  function render(percent: number, status: string): string {
+    const clamped = Math.min(100, Math.max(0, percent));
+    const filled = Math.round((clamped / 100) * barWidth);
+    const empty = barWidth - filled;
+    const bar = chalk.cyan('\u2588').repeat(filled) + chalk.dim('\u2591').repeat(empty);
+    const pct = `${clamped.toFixed(1)}%`.padStart(6);
+    return `  ${bar} ${chalk.bold(pct)}  ${chalk.dim(status)}`;
+  }
+
+  return {
+    update(percent: number, status: string) {
+      if (lastLine) {
+        process.stderr.write('\r\x1b[K');
+      }
+      lastLine = render(percent, status);
+      process.stderr.write(lastLine);
+    },
+    complete(msg: string) {
+      if (lastLine) {
+        process.stderr.write('\r\x1b[K');
+      }
+      console.log(`${chalk.green('\u2714')}  ${msg}`);
+      lastLine = '';
+    },
+    fail(msg: string) {
+      if (lastLine) {
+        process.stderr.write('\r\x1b[K');
+      }
+      console.error(`${chalk.red('\u2716')}  ${chalk.red(msg)}`);
+      lastLine = '';
+    },
+  };
 }

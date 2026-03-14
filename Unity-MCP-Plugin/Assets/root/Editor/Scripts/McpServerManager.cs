@@ -63,6 +63,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public static ReadOnlyReactiveProperty<McpServerStatus> ServerStatus => _serverStatus;
 
         public static bool IsRunning => _serverStatus.CurrentValue == McpServerStatus.Running;
+        public static bool IsStarting => _serverStatus.CurrentValue == McpServerStatus.Starting;
 
         static McpServerManager()
         {
