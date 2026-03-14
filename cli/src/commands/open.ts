@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import * as path from 'path';
 import * as fs from 'fs';
-import { findEditorPath, getProjectEditorVersion, launchEditor } from '../utils/unity-editor.js';
+import { findEditorPath, getProjectEditorVersion, launchEditor, printEditorNotFoundHelp } from '../utils/unity-editor.js';
 import * as ui from '../utils/ui.js';
 
 export const openCommand = new Command('open')
@@ -34,9 +34,8 @@ export const openCommand = new Command('open')
     const spinner = ui.startSpinner('Locating Unity Editor...');
     const editorPath = await findEditorPath(version);
     if (!editorPath) {
-      spinner.error('Unity Editor not found');
-      const versionMsg = version ? ` (version ${version})` : '';
-      ui.error(`Unity Editor not found${versionMsg}. Install it with: unity-mcp-cli install-unity --version <version>`);
+      spinner.stop();
+      printEditorNotFoundHelp(version, 'open');
       process.exit(1);
     }
     spinner.success('Unity Editor located');
