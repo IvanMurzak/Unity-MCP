@@ -229,6 +229,52 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 $"{parameterName} parameter description should contain 'Default: 100'. Actual description: '{description}'");
         }
 
+        [UnityTest]
+        public IEnumerator ClearLogs_ThenAction_ThenGetLogs_IsolatesErrors()
+        {
+            // This test validates the exact workflow described in the issue:
+            // 1. Call console-clear-logs
+            // 2. Perform an action
+            // 3. Call console-get-logs to retrieve only errors from that action
+
+            var uniqueId = System.Guid.NewGuid().ToString("N")[..8];
+
+            // Arrange: Generate some pre-existing logs
+            Debug.Log($"Pre-existing log {uniqueId}");
+            Debug.LogWarning($"Pre-existing warning {uniqueId}");
+
+            for (int i = 0; i < 3; i++)
+                yield return null;
+
+            UnityMcpPluginEditor.Instance.LogCollector?.Save();
+
+            // Step 1: Clear logs
+            _tool.ClearLogs();
+
+            // Step 2: Perform an action (simulate by generating new logs)
+            var actionLog = $"Action log {uniqueId}";
+            var actionWarning = $"Action warning {uniqueId}";
+            Debug.Log(actionLog);
+            Debug.LogWarning(actionWarning);
+
+            for (int i = 0; i < 5; i++)
+                yield return null;
+
+            UnityMcpPluginEditor.Instance.LogCollector?.Save();
+
+            // Step 3: Get logs - should only contain action logs
+            var result = _tool.GetLogs(maxEntries: 1000);
+
+            Assert.IsTrue(result.Any(entry => entry.Message.Contains(actionLog)),
+                "Should contain action log.");
+            Assert.IsTrue(result.Any(entry => entry.Message.Contains(actionWarning)),
+                "Should contain action warning.");
+            Assert.IsFalse(result.Any(entry => entry.Message.Contains($"Pre-existing log {uniqueId}")),
+                "Should NOT contain pre-existing log.");
+            Assert.IsFalse(result.Any(entry => entry.Message.Contains($"Pre-existing warning {uniqueId}")),
+                "Should NOT contain pre-existing warning.");
+        }
+
         // TODO: Re-enable these tests when UnityLogCollector API is updated
         // These tests require LogEntries property, ClearLogs(), SaveToFile(), LoadFromFile(), GetAllLogs() methods
         // which are not currently available in the UnityLogCollector class
