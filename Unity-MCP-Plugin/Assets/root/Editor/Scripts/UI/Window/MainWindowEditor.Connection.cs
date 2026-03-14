@@ -11,6 +11,7 @@
 #nullable enable
 using System;
 using com.IvanMurzak.Unity.MCP.Editor.Services;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using Microsoft.AspNetCore.SignalR.Client;
 using UnityEngine.UIElements;
 
@@ -271,8 +272,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
                 capturedFlow.OnStateChanged += state =>
                 {
-                    // Must dispatch to main thread for UI updates
-                    UnityEditor.EditorApplication.delayCall += () =>
+                    // Use RunAsync (EditorApplication.update-based) instead of delayCall so that
+                    // the UI updates even when the Unity Editor window is not focused — delayCall
+                    // is throttled/paused when Unity loses application focus.
+                    _ = MainThread.Instance.RunAsync(() =>
                     {
                         // Ignore stale events from a previous auth flow
                         if (_deviceAuthFlow != capturedFlow) return;
@@ -303,7 +306,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                         {
                             btnAuthorize.text = IsAuthFlowRunning(state) ? "Cancel" : "Authorize";
                         }
-                    };
+                        Repaint();
+                    });
                 };
 
                 await capturedFlow.StartAsync(UnityMcpPluginEditor.CloudServerUrl, "Unity Editor");
