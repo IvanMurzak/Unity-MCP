@@ -13,6 +13,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.Logging;
 using UnityEngine;
 
@@ -89,7 +90,8 @@ namespace com.IvanMurzak.Unity.MCP
                         ? null
                         : JsonSerializer.Deserialize<UnityConnectionConfig>(json!, new JsonSerializerOptions
                         {
-                            PropertyNameCaseInsensitive = true
+                            PropertyNameCaseInsensitive = true,
+                            Converters = { new JsonStringEnumConverter() }
                         });
                 }
                 catch (Exception e)
@@ -162,7 +164,8 @@ namespace com.IvanMurzak.Unity.MCP
                 var json = JsonSerializer.Serialize(unityConnectionConfig, new JsonSerializerOptions
                 {
                     WriteIndented = true,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    Converters = { new JsonStringEnumConverter() }
                 });
                 File.WriteAllText(AssetsFileAbsolutePath, json);
 

@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { fileURLToPath } from 'url';
-import { resolveConnectionFromConfig, type UnityConnectionConfig } from '../src/utils/config.js';
+import { resolveConnectionFromConfig, isCloudMode, type UnityConnectionConfig } from '../src/utils/config.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CLI_PATH = path.resolve(__dirname, '..', 'bin', 'unity-mcp-cli.js');
@@ -101,6 +101,56 @@ describe('resolveConnectionFromConfig', () => {
     };
     const result = resolveConnectionFromConfig(config);
     expect(result.token).toBe('cloud-only');
+  });
+
+  // Legacy integer enum values (written by older Unity plugin versions)
+
+  it('handles legacy integer 0 as Custom mode', () => {
+    const config: UnityConnectionConfig = {
+      connectionMode: 0,
+      host: 'http://localhost:55000',
+      token: 'custom-secret',
+      cloudServerUrl: 'https://cloud.example.com',
+      cloudToken: 'cloud-secret',
+    };
+    const result = resolveConnectionFromConfig(config);
+    expect(result.url).toBe('http://localhost:55000');
+    expect(result.token).toBe('custom-secret');
+  });
+
+  it('handles legacy integer 1 as Cloud mode', () => {
+    const config: UnityConnectionConfig = {
+      connectionMode: 1,
+      host: 'http://localhost:55000',
+      token: 'custom-secret',
+      cloudServerUrl: 'https://cloud.example.com',
+      cloudToken: 'cloud-secret',
+    };
+    const result = resolveConnectionFromConfig(config);
+    expect(result.url).toBe('https://cloud.example.com');
+    expect(result.token).toBe('cloud-secret');
+  });
+});
+
+describe('isCloudMode', () => {
+  it('returns true for string "Cloud"', () => {
+    expect(isCloudMode({ connectionMode: 'Cloud' })).toBe(true);
+  });
+
+  it('returns true for integer 1', () => {
+    expect(isCloudMode({ connectionMode: 1 })).toBe(true);
+  });
+
+  it('returns false for string "Custom"', () => {
+    expect(isCloudMode({ connectionMode: 'Custom' })).toBe(false);
+  });
+
+  it('returns false for integer 0', () => {
+    expect(isCloudMode({ connectionMode: 0 })).toBe(false);
+  });
+
+  it('returns false when connectionMode is undefined', () => {
+    expect(isCloudMode({})).toBe(false);
   });
 });
 
