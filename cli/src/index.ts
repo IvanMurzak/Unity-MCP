@@ -6,6 +6,7 @@ import { openCommand } from './commands/open.js';
 import { installPluginCommand } from './commands/install-plugin.js';
 import { configureCommand } from './commands/configure.js';
 import { removePluginCommand } from './commands/remove-plugin.js';
+import { runToolCommand } from './commands/run-tool.js';
 import { configureStyledHelp, error as uiError, setVerbose } from './utils/ui.js';
 
 const require = createRequire(import.meta.url);
@@ -27,6 +28,7 @@ const subcommands = [
   installUnityCommand,
   openCommand,
   removePluginCommand,
+  runToolCommand,
 ];
 
 for (const cmd of subcommands) {

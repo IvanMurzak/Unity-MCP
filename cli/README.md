@@ -36,6 +36,7 @@ Cross-platform CLI tool for **[Unity MCP](https://github.com/IvanMurzak/Unity-MC
 - :white_check_mark: **Install plugin** — add Unity-MCP plugin to `manifest.json` with all required scoped registries
 - :white_check_mark: **Remove plugin** — remove Unity-MCP plugin from `manifest.json`
 - :white_check_mark: **Configure** — enable/disable MCP tools, prompts, and resources
+- :white_check_mark: **Run tools** — execute MCP tools directly from the command line
 - :white_check_mark: **Open & Connect** — launch Unity with optional MCP environment variables for automated server connection
 - :white_check_mark: **Cross-platform** — Windows, macOS, and Linux
 - :white_check_mark: **CI-friendly** — auto-detects non-interactive terminals and disables spinners/colors
@@ -73,6 +74,7 @@ unity-mcp-cli install-plugin /path/to/unity/project
   - [`install-unity`](#install-unity) — Install Unity Editor via Unity Hub
   - [`open`](#open) — Open a Unity project in the Editor
   - [`remove-plugin`](#remove-plugin) — Remove Unity-MCP plugin from a project
+  - [`run-tool`](#run-tool) — Execute an MCP tool via the HTTP API
 - [Global Options](#global-options)
 - [Full Automation Example](#full-automation-example)
 - [How It Works](#how-it-works)
@@ -242,6 +244,49 @@ npx unity-mcp-cli open ./MyGame \
   --token my-secret-token \
   --auth required \
   --tools gameobject-create,gameobject-find
+```
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `run-tool`
+
+Execute an MCP tool directly via the HTTP API.
+
+```bash
+npx unity-mcp-cli run-tool gameobject-create --url http://localhost:8080 --input '{"name":"Cube"}'
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `<tool-name>` | Yes | Name of the MCP tool to execute |
+| `[path]` | No | Unity project path for auto port detection (positional or `--path`) |
+| `--url <url>` | No | Direct server URL override (bypasses port detection) |
+| `--input <json>` | No | JSON string of tool arguments (defaults to `{}`) |
+| `--input-file <file>` | No | Read JSON arguments from a file |
+| `--token <token>` | No | Bearer token for authorization |
+| `--raw` | No | Output raw JSON (no formatting, no spinner) |
+
+**URL resolution priority:**
+1. `--url` → use directly
+2. `[path]` or `--path` → compute port via deterministic hash → `http://localhost:{port}`
+3. Neither → use current working directory for port detection
+
+**Example — call a tool with auto port detection from a project path:**
+
+```bash
+npx unity-mcp-cli run-tool gameobject-find ./MyGame --input '{"query":"Player"}'
+```
+
+**Example — call a tool with authorization:**
+
+```bash
+npx unity-mcp-cli run-tool scene-save --url http://localhost:8080 --token my-secret-token
+```
+
+**Example — pipe raw JSON output:**
+
+```bash
+npx unity-mcp-cli run-tool assets-list --url http://localhost:8080 --raw | jq '.results'
 ```
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
