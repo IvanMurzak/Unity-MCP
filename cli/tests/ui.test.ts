@@ -11,10 +11,14 @@ describe('TTY detection', () => {
     Object.defineProperty(process.stdout, 'isTTY', { value: false, writable: true });
     // Re-import to pick up the TTY state
     const ui = await import('../src/utils/ui.js');
+    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const spinner = ui.startSpinner('test');
     // No-op spinner should have success/error/warning/info methods that don't throw
     expect(() => spinner.success('done')).not.toThrow();
     expect(() => spinner.error('fail')).not.toThrow();
+    consoleSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
   });
 
   it('createProgressBar outputs plain text in non-TTY mode', async () => {

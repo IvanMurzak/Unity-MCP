@@ -6,7 +6,7 @@ import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
 
 export const openCommand = new Command('open')
-  .description('Open a Unity project in Unity Editor (with MCP connection by default)')
+  .description('Open a Unity project in Unity Editor, optionally passing MCP connection env vars when connection options (--url, --token, etc.) are provided. Use --no-connect to suppress all MCP env vars.')
   .argument('[path]', 'Path to the Unity project')
   .option('--path <path>', 'Path to the Unity project')
   .option('--unity <version>', 'Specific Unity Editor version to use')

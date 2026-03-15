@@ -133,18 +133,12 @@ Configure MCP tools, prompts, and resources.
 All errors follow this structure:
 
 ```text
-✖ [Error summary]
-
-  [Detailed explanation]
-
-  Suggestion: [Actionable next step]
+✖  [Error message]
 ```
 
-In non-TTY mode, the Unicode symbols are replaced with plain text prefixes:
+In non-TTY mode, the Unicode symbol is replaced with a plain text prefix:
 ```text
-ERROR: [Error summary]
-[Detailed explanation]
-Suggestion: [Actionable next step]
+ERROR: [Error message]
 ```
 
 ## Verbose Output Contract
