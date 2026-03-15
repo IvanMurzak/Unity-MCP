@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import * as path from 'path';
 import { ensureUnityHub, createProject, listInstalledEditors, findHighestEditor } from '../utils/unity-hub.js';
 import * as ui from '../utils/ui.js';
+import { verbose } from '../utils/ui.js';
 
 export const createProjectCommand = new Command('create-project')
   .description('Create a new Unity project')
@@ -39,5 +40,7 @@ export const createProjectCommand = new Command('create-project')
     }
 
     const projectPath = path.resolve(resolvedPath);
+    verbose(`Creating project at: ${projectPath} with editor version: ${editorVersion}`);
+    verbose(`Unity Hub path: ${hubPath}`);
     createProject(hubPath, projectPath, editorVersion);
   });

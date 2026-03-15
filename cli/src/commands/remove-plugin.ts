@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { removePluginFromManifest } from '../utils/manifest.js';
 import * as ui from '../utils/ui.js';
+import { verbose } from '../utils/ui.js';
 
 export const removePluginCommand = new Command('remove-plugin')
   .description('Remove Unity-MCP plugin from a Unity project')
@@ -23,6 +24,7 @@ export const removePluginCommand = new Command('remove-plugin')
       process.exit(1);
     }
 
+    verbose(`Manifest path: ${manifestPath}`);
     ui.info(`Removing Unity-MCP plugin from: ${projectPath}`);
     removePluginFromManifest(projectPath);
     ui.success('Done!');

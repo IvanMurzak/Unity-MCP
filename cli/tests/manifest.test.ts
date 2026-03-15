@@ -195,8 +195,8 @@ describe('addPluginToManifest', () => {
     assertHasAllScopes(result);
   });
 
-  // --- version-aware: prevents downgrade ---
-  it('does not downgrade when existing version is higher', () => {
+  // --- version-aware: prevents downgrade (auto-resolved) ---
+  it('does not downgrade when existing version is higher and force is false', () => {
     writeManifest({
       dependencies: { [PACKAGE_ID]: '99.0.0' },
       scopedRegistries: [],
@@ -207,6 +207,17 @@ describe('addPluginToManifest', () => {
     expect(deps[PACKAGE_ID]).toBe('99.0.0');
   });
 
+  // --- version-aware: allows downgrade when forced (explicit --plugin-version) ---
+  it('downgrades when existing version is higher and force is true', () => {
+    writeManifest({
+      dependencies: { [PACKAGE_ID]: '99.0.0' },
+      scopedRegistries: [],
+    });
+    addPluginToManifest(tmpDir, TEST_VERSION, true);
+    const result = readManifest();
+    assertHasDependency(result, TEST_VERSION);
+  });
+
   // --- version-aware: allows upgrade ---
   it('upgrades when existing version is lower', () => {
     writeManifest({
@@ -214,6 +225,17 @@ describe('addPluginToManifest', () => {
       scopedRegistries: [],
     });
     addPluginToManifest(tmpDir, TEST_VERSION);
+    const result = readManifest();
+    assertHasDependency(result, TEST_VERSION);
+  });
+
+  // --- version-aware: allows upgrade when forced ---
+  it('upgrades when existing version is lower and force is true', () => {
+    writeManifest({
+      dependencies: { [PACKAGE_ID]: '0.0.1' },
+      scopedRegistries: [],
+    });
+    addPluginToManifest(tmpDir, TEST_VERSION, true);
     const result = readManifest();
     assertHasDependency(result, TEST_VERSION);
   });

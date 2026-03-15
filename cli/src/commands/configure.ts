@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { getOrCreateConfig, writeConfig, updateFeatures } from '../utils/config.js';
 import * as ui from '../utils/ui.js';
+import { verbose } from '../utils/ui.js';
 
 function parseCommaSeparated(value: string): string[] {
   return value.split(',').map((s) => s.trim()).filter(Boolean);
@@ -53,6 +54,7 @@ export const configureCommand = new Command('configure')
       process.exit(1);
     }
 
+    verbose(`Loading config for project: ${projectPath}`);
     const config = getOrCreateConfig(projectPath);
 
     if (options.list) {
@@ -110,6 +112,7 @@ export const configureCommand = new Command('configure')
       });
     }
 
+    verbose('Writing updated configuration');
     writeConfig(projectPath, config);
     ui.success('Configuration updated successfully.');
   });
