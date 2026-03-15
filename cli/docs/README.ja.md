@@ -64,116 +64,6 @@ unity-mcp-cli install-plugin /path/to/unity/project
 
 # コマンド
 
-## `create-project`
-
-Unity Editor を使用して新しい Unity プロジェクトを作成します。
-
-```bash
-npx unity-mcp-cli create-project /path/to/new/project
-```
-
-| オプション | 必須 | 説明 |
-|---|---|---|
-| `[path]` | はい | プロジェクトの作成先パス（位置引数または `--path`） |
-| `--unity <version>` | いいえ | 使用する Unity Editor バージョン（デフォルトは最も高いバージョン） |
-
-**例 — 特定のエディターバージョンでプロジェクトを作成:**
-
-```bash
-npx unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
-```
-
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
-
-## `install-unity`
-
-Unity Hub CLI を通じて Unity Editor のバージョンをインストールします。
-
-```bash
-npx unity-mcp-cli install-unity 6000.3.1f1
-```
-
-| 引数 / オプション | 必須 | 説明 |
-|---|---|---|
-| `[version]` | いいえ | インストールする Unity Editor のバージョン（例: `6000.3.1f1`） |
-| `--path <path>` | いいえ | 既存のプロジェクトから必要なバージョンを読み取る |
-
-引数もオプションも指定しない場合、コマンドは Unity Hub のリリース一覧から最新の安定版をインストールします。
-
-**例 — プロジェクトが必要とするエディターバージョンをインストール:**
-
-```bash
-npx unity-mcp-cli install-unity --path ./MyGame
-```
-
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
-
-## `open`
-
-Unity プロジェクトを Unity Editor で開きます。
-
-```bash
-npx unity-mcp-cli open ./MyGame
-```
-
-| オプション | 必須 | 説明 |
-|---|---|---|
-| `[path]` | はい | Unity プロジェクトへのパス（位置引数または `--path`） |
-| `--unity <version>` | いいえ | 使用する Unity Editor の特定バージョン（デフォルトはプロジェクト設定のバージョン、次に最も高いインストール済みバージョン） |
-
-エディターのプロセスはデタッチモードで起動されるため、CLI はすぐに制御を返します。
-
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
-
-## `install-plugin`
-
-Unity-MCP プラグインを Unity プロジェクトの `Packages/manifest.json` にインストールします。
-
-```bash
-npx unity-mcp-cli install-plugin ./MyGame
-```
-
-| オプション | 必須 | 説明 |
-|---|---|---|
-| `[path]` | はい | Unity プロジェクトへのパス（位置引数または `--path`） |
-| `--plugin-version <version>` | いいえ | インストールするプラグインバージョン（デフォルトは [OpenUPM](https://openupm.com/packages/com.ivanmurzak.unity.mcp/) の最新バージョン） |
-
-このコマンドは以下を実行します:
-1. 必要なすべてのスコープを含む **OpenUPM スコープ付きレジストリ** を追加する
-2. `com.ivanmurzak.unity.mcp` を `dependencies` に追加する
-3. **ダウングレードしない** — より高いバージョンがすでにインストールされている場合はそれを保持する
-
-**例 — 特定のプラグインバージョンをインストール:**
-
-```bash
-npx unity-mcp-cli install-plugin ./MyGame --plugin-version 0.52.0
-```
-
-> このコマンドを実行した後、Unity Editor でプロジェクトを開いてパッケージのインストールを完了してください。
-
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
-
-## `remove-plugin`
-
-Unity-MCP プラグインを Unity プロジェクトの `Packages/manifest.json` から削除します。
-
-```bash
-npx unity-mcp-cli remove-plugin ./MyGame
-```
-
-| オプション | 必須 | 説明 |
-|---|---|---|
-| `[path]` | はい | Unity プロジェクトへのパス（位置引数または `--path`） |
-
-このコマンドは以下を実行します:
-1. `com.ivanmurzak.unity.mcp` を `dependencies` から削除する
-2. **スコープ付きレジストリとスコープを保持する** — 他のパッケージがそれらに依存している可能性があるため
-3. プラグインがインストールされていない場合は **何もしない**
-
-> このコマンドを実行した後、Unity Editor でプロジェクトを開いて変更を適用してください。
-
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
-
 ## `configure`
 
 `UserSettings/AI-Game-Developer-Config.json` 内の MCP ツール、プロンプト、リソースを設定します。
@@ -274,6 +164,116 @@ npx unity-mcp-cli connect \
   --start-server true \
   --keep-connected
 ```
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `create-project`
+
+Unity Editor を使用して新しい Unity プロジェクトを作成します。
+
+```bash
+npx unity-mcp-cli create-project /path/to/new/project
+```
+
+| オプション | 必須 | 説明 |
+|---|---|---|
+| `[path]` | はい | プロジェクトの作成先パス（位置引数または `--path`） |
+| `--unity <version>` | いいえ | 使用する Unity Editor バージョン（デフォルトは最も高いバージョン） |
+
+**例 — 特定のエディターバージョンでプロジェクトを作成:**
+
+```bash
+npx unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
+```
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `install-plugin`
+
+Unity-MCP プラグインを Unity プロジェクトの `Packages/manifest.json` にインストールします。
+
+```bash
+npx unity-mcp-cli install-plugin ./MyGame
+```
+
+| オプション | 必須 | 説明 |
+|---|---|---|
+| `[path]` | はい | Unity プロジェクトへのパス（位置引数または `--path`） |
+| `--plugin-version <version>` | いいえ | インストールするプラグインバージョン（デフォルトは [OpenUPM](https://openupm.com/packages/com.ivanmurzak.unity.mcp/) の最新バージョン） |
+
+このコマンドは以下を実行します:
+1. 必要なすべてのスコープを含む **OpenUPM スコープ付きレジストリ** を追加する
+2. `com.ivanmurzak.unity.mcp` を `dependencies` に追加する
+3. **ダウングレードしない** — より高いバージョンがすでにインストールされている場合はそれを保持する
+
+**例 — 特定のプラグインバージョンをインストール:**
+
+```bash
+npx unity-mcp-cli install-plugin ./MyGame --plugin-version 0.52.0
+```
+
+> このコマンドを実行した後、Unity Editor でプロジェクトを開いてパッケージのインストールを完了してください。
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `install-unity`
+
+Unity Hub CLI を通じて Unity Editor のバージョンをインストールします。
+
+```bash
+npx unity-mcp-cli install-unity 6000.3.1f1
+```
+
+| 引数 / オプション | 必須 | 説明 |
+|---|---|---|
+| `[version]` | いいえ | インストールする Unity Editor のバージョン（例: `6000.3.1f1`） |
+| `--path <path>` | いいえ | 既存のプロジェクトから必要なバージョンを読み取る |
+
+引数もオプションも指定しない場合、コマンドは Unity Hub のリリース一覧から最新の安定版をインストールします。
+
+**例 — プロジェクトが必要とするエディターバージョンをインストール:**
+
+```bash
+npx unity-mcp-cli install-unity --path ./MyGame
+```
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `open`
+
+Unity プロジェクトを Unity Editor で開きます。
+
+```bash
+npx unity-mcp-cli open ./MyGame
+```
+
+| オプション | 必須 | 説明 |
+|---|---|---|
+| `[path]` | はい | Unity プロジェクトへのパス（位置引数または `--path`） |
+| `--unity <version>` | いいえ | 使用する Unity Editor の特定バージョン（デフォルトはプロジェクト設定のバージョン、次に最も高いインストール済みバージョン） |
+
+エディターのプロセスはデタッチモードで起動されるため、CLI はすぐに制御を返します。
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `remove-plugin`
+
+Unity-MCP プラグインを Unity プロジェクトの `Packages/manifest.json` から削除します。
+
+```bash
+npx unity-mcp-cli remove-plugin ./MyGame
+```
+
+| オプション | 必須 | 説明 |
+|---|---|---|
+| `[path]` | はい | Unity プロジェクトへのパス（位置引数または `--path`） |
+
+このコマンドは以下を実行します:
+1. `com.ivanmurzak.unity.mcp` を `dependencies` から削除する
+2. **スコープ付きレジストリとスコープを保持する** — 他のパッケージがそれらに依存している可能性があるため
+3. プラグインがインストールされていない場合は **何もしない**
+
+> このコマンドを実行した後、Unity Editor でプロジェクトを開いて変更を適用してください。
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 

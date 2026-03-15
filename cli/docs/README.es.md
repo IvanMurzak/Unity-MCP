@@ -167,6 +167,116 @@ npx unity-mcp-cli connect \
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
+## `create-project`
+
+Crea un nuevo proyecto de Unity utilizando el Editor de Unity.
+
+```bash
+npx unity-mcp-cli create-project /path/to/new/project
+```
+
+| Opción | Requerido | Descripción |
+|---|---|---|
+| `[path]` | Sí | Ruta donde se creará el proyecto (posicional o `--path`) |
+| `--unity <version>` | No | Versión del Editor de Unity a utilizar (por defecto, la más alta instalada) |
+
+**Ejemplo — crear un proyecto con una versión específica del editor:**
+
+```bash
+npx unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
+```
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `install-plugin`
+
+Instala el plugin Unity-MCP en el archivo `Packages/manifest.json` de un proyecto de Unity.
+
+```bash
+npx unity-mcp-cli install-plugin ./MyGame
+```
+
+| Opción | Requerido | Descripción |
+|---|---|---|
+| `[path]` | Sí | Ruta al proyecto de Unity (posicional o `--path`) |
+| `--plugin-version <version>` | No | Versión del plugin a instalar (por defecto, la última desde [OpenUPM](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)) |
+
+Este comando:
+1. Añade el **registro de ámbito de OpenUPM** con todos los ámbitos requeridos
+2. Añade `com.ivanmurzak.unity.mcp` a `dependencies`
+3. **Nunca degrada** — si ya hay instalada una versión superior, se conserva
+
+**Ejemplo — instalar una versión específica del plugin:**
+
+```bash
+npx unity-mcp-cli install-plugin ./MyGame --plugin-version 0.52.0
+```
+
+> Después de ejecutar este comando, abre el proyecto en el Editor de Unity para completar la instalación del paquete.
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `install-unity`
+
+Instala una versión del Editor de Unity mediante la CLI de Unity Hub.
+
+```bash
+npx unity-mcp-cli install-unity 6000.3.1f1
+```
+
+| Argumento / Opción | Requerido | Descripción |
+|---|---|---|
+| `[version]` | No | Versión del Editor de Unity a instalar (ej. `6000.3.1f1`) |
+| `--path <path>` | No | Lee la versión requerida desde un proyecto existente |
+
+Si no se proporciona ningún argumento ni opción, el comando instala la última versión estable desde la lista de lanzamientos de Unity Hub.
+
+**Ejemplo — instalar la versión del editor que necesita un proyecto:**
+
+```bash
+npx unity-mcp-cli install-unity --path ./MyGame
+```
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `open`
+
+Abre un proyecto de Unity en el Editor de Unity.
+
+```bash
+npx unity-mcp-cli open ./MyGame
+```
+
+| Opción | Requerido | Descripción |
+|---|---|---|
+| `[path]` | Sí | Ruta al proyecto de Unity (posicional o `--path`) |
+| `--unity <version>` | No | Versión específica del Editor de Unity a utilizar (por defecto, la versión de la configuración del proyecto; si no está disponible, la más alta instalada) |
+
+El proceso del editor se lanza en modo desacoplado — la CLI regresa inmediatamente.
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `remove-plugin`
+
+Elimina el plugin Unity-MCP del archivo `Packages/manifest.json` de un proyecto de Unity.
+
+```bash
+npx unity-mcp-cli remove-plugin ./MyGame
+```
+
+| Opción | Requerido | Descripción |
+|---|---|---|
+| `[path]` | Sí | Ruta al proyecto de Unity (posicional o `--path`) |
+
+Este comando:
+1. Elimina `com.ivanmurzak.unity.mcp` de `dependencies`
+2. **Conserva los registros de ámbito y sus ámbitos** — otros paquetes pueden depender de ellos
+3. **No realiza ninguna acción** si el plugin no está instalado
+
+> Después de ejecutar este comando, abre el proyecto en el Editor de Unity para aplicar el cambio.
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
 # Ejemplo de Automatización Completa
 
 Configura un proyecto Unity MCP completo desde cero con un solo script:
