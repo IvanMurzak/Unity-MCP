@@ -7,6 +7,7 @@ import { get as httpsGet } from 'https';
 import { get as httpGet, IncomingMessage } from 'http';
 import type { Spinner } from 'yocto-spinner';
 import * as ui from './ui.js';
+import { verbose } from './ui.js';
 
 export interface AvailableRelease {
   version: string;
@@ -47,11 +48,14 @@ export function findUnityHub(): string | null {
   }
 
   for (const candidate of candidates) {
+    verbose(`Checking Unity Hub candidate: ${candidate}`);
     if (candidate && fs.existsSync(candidate)) {
+      verbose(`Found Unity Hub at: ${candidate}`);
       return candidate;
     }
   }
 
+  verbose('Unity Hub not found in any candidate location');
   return null;
 }
 

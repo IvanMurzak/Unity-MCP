@@ -2,6 +2,24 @@ import chalk from 'chalk';
 import yoctoSpinner, { type Spinner } from 'yocto-spinner';
 import type { Command, Help } from 'commander';
 
+// --- Verbose mode ---
+let verboseEnabled = false;
+
+export function setVerbose(enabled: boolean): void {
+  verboseEnabled = enabled;
+}
+
+export function verbose(msg: string): void {
+  if (verboseEnabled) {
+    console.log(chalk.dim(`[verbose] ${msg}`));
+  }
+}
+
+// --- TTY detection ---
+function isTTY(): boolean {
+  return !!process.stdout.isTTY;
+}
+
 /**
  * Draw a Unicode rounded box around text with cyan borders.
  */
@@ -112,30 +130,50 @@ export function configureStyledHelp(cmd: Command, appVersion?: string): Command 
 
 /**
  * Print a success message with a green checkmark.
+ * In non-TTY mode, uses plain text prefix.
  */
 export function success(msg: string): void {
-  console.log(`${chalk.green('\u2714')}  ${msg}`);
+  if (isTTY()) {
+    console.log(`${chalk.green('\u2714')}  ${msg}`);
+  } else {
+    console.log(`SUCCESS: ${msg}`);
+  }
 }
 
 /**
  * Print an error message with a red cross to stderr.
+ * In non-TTY mode, uses plain text prefix.
  */
 export function error(msg: string): void {
-  console.error(`${chalk.red('\u2716')}  ${chalk.red(msg)}`);
+  if (isTTY()) {
+    console.error(`${chalk.red('\u2716')}  ${chalk.red(msg)}`);
+  } else {
+    console.error(`ERROR: ${msg}`);
+  }
 }
 
 /**
  * Print an info message with a blue info symbol.
+ * In non-TTY mode, uses plain text prefix.
  */
 export function info(msg: string): void {
-  console.log(`${chalk.blue('\u2139')}  ${msg}`);
+  if (isTTY()) {
+    console.log(`${chalk.blue('\u2139')}  ${msg}`);
+  } else {
+    console.log(`INFO: ${msg}`);
+  }
 }
 
 /**
  * Print a warning message with a yellow warning symbol.
+ * In non-TTY mode, uses plain text prefix.
  */
 export function warn(msg: string): void {
-  console.log(`${chalk.yellow('\u26A0')}  ${chalk.yellow(msg)}`);
+  if (isTTY()) {
+    console.log(`${chalk.yellow('\u26A0')}  ${chalk.yellow(msg)}`);
+  } else {
+    console.log(`WARN: ${msg}`);
+  }
 }
 
 /**
@@ -153,11 +191,41 @@ export function label(key: string, value: string): void {
 }
 
 /**
+ * Create a no-op spinner for non-TTY environments.
+ * Methods are safe to call but produce no ANSI output.
+ */
+function createNoOpSpinner(text: string): Spinner {
+  console.log(text);
+  const self: Spinner = {
+    start: () => self,
+    stop: () => self,
+    success: (msg?: string) => { if (msg) console.log(`SUCCESS: ${msg}`); return self; },
+    error: (msg?: string) => { if (msg) console.error(`ERROR: ${msg}`); return self; },
+    warning: (msg?: string) => { if (msg) console.log(`WARN: ${msg}`); return self; },
+    info: (msg?: string) => { if (msg) console.log(`INFO: ${msg}`); return self; },
+    clear: () => self,
+    get text() { return text; },
+    set text(value: string) { text = value; },
+    get isSpinning() { return false; },
+    get color() { return 'cyan' as const; },
+    set color(_: string) { /* no-op */ },
+  } as unknown as Spinner;
+  return self;
+}
+
+/**
  * Start a spinner with the given text. Returns a wrapped spinner instance
  * whose success/error/warning/info methods add an extra space after the symbol
  * for consistent formatting.
+ *
+ * In non-TTY environments (CI pipelines, piped output), returns a no-op
+ * spinner that outputs plain text without ANSI escape codes.
  */
 export function startSpinner(text: string): Spinner {
+  if (!isTTY()) {
+    return createNoOpSpinner(text);
+  }
+
   const spinner = yoctoSpinner({ text, color: 'cyan' }).start();
 
   const origSuccess = spinner.success.bind(spinner);
@@ -206,6 +274,22 @@ export interface ProgressBar {
 }
 
 export function createProgressBar(): ProgressBar {
+  if (!isTTY()) {
+    // Plain text progress for non-interactive environments
+    return {
+      update(percent: number, status: string) {
+        const clamped = Math.min(100, Math.max(0, percent));
+        console.log(`[${clamped.toFixed(0)}%] ${status}`);
+      },
+      complete(msg: string) {
+        console.log(`SUCCESS: ${msg}`);
+      },
+      fail(msg: string) {
+        console.error(`ERROR: ${msg}`);
+      },
+    };
+  }
+
   const barWidth = 30;
   let lastLine = '';
 

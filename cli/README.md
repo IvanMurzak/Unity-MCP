@@ -21,8 +21,10 @@ Cross-platform CLI tool for **[Unity MCP](https://github.com/IvanMurzak/Unity-MC
 - :white_check_mark: **Install plugin** — add Unity-MCP plugin to `manifest.json` with all required scoped registries
 - :white_check_mark: **Remove plugin** — remove Unity-MCP plugin from `manifest.json`
 - :white_check_mark: **Configure** — enable/disable MCP tools, prompts, and resources
-- :white_check_mark: **Connect** — launch Unity with MCP environment variables for automated server connection
+- :white_check_mark: **Open & Connect** — launch Unity with optional MCP environment variables for automated server connection
 - :white_check_mark: **Cross-platform** — Windows, macOS, and Linux
+- :white_check_mark: **CI-friendly** — auto-detects non-interactive terminals and disables spinners/colors
+- :white_check_mark: **Verbose mode** — use `--verbose` on any command for detailed diagnostic output
 - :white_check_mark: **Version-aware** — never downgrades plugin versions, resolves latest from OpenUPM
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
@@ -56,7 +58,7 @@ unity-mcp-cli install-plugin /path/to/unity/project
   - [`install-plugin`](#install-plugin) — Install Unity-MCP plugin into a project
   - [`remove-plugin`](#remove-plugin) — Remove Unity-MCP plugin from a project
   - [`configure`](#configure) — Configure MCP tools, prompts, and resources
-  - [`connect`](#connect) — Launch Unity with MCP connection
+- [Global Options](#global-options)
 - [Full Automation Example](#full-automation-example)
 - [How It Works](#how-it-works)
 
@@ -110,18 +112,50 @@ npx unity-mcp-cli install-unity --path ./MyGame
 
 ## `open`
 
-Open a Unity project in the Unity Editor.
+Open a Unity project in the Unity Editor. By default, sets MCP connection environment variables if connection options are provided. Use `--no-connect` to open without MCP connection.
 
 ```bash
 npx unity-mcp-cli open ./MyGame
 ```
 
-| Option | Required | Description |
-|---|---|---|
-| `[path]` | Yes | Path to the Unity project (positional or `--path`) |
-| `--unity <version>` | No | Specific Unity Editor version to use (defaults to version from project settings, falls back to highest installed) |
+| Option | Env Variable | Required | Description |
+|---|---|---|---|
+| `[path]` | — | Yes | Path to the Unity project (positional or `--path`) |
+| `--unity <version>` | — | No | Specific Unity Editor version to use (defaults to version from project settings, falls back to highest installed) |
+| `--no-connect` | — | No | Open without MCP connection environment variables |
+| `--url <url>` | `UNITY_MCP_HOST` | No | MCP server URL to connect to |
+| `--keep-connected` | `UNITY_MCP_KEEP_CONNECTED` | No | Force keep the connection alive |
+| `--token <token>` | `UNITY_MCP_TOKEN` | No | Authentication token |
+| `--auth <option>` | `UNITY_MCP_AUTH_OPTION` | No | Auth mode: `none` or `required` |
+| `--tools <names>` | `UNITY_MCP_TOOLS` | No | Comma-separated list of tools to enable |
+| `--transport <method>` | `UNITY_MCP_TRANSPORT` | No | Transport method: `streamableHttp` or `stdio` |
+| `--start-server <value>` | `UNITY_MCP_START_SERVER` | No | Set to `true` or `false` to control MCP server auto-start |
 
 The editor process is spawned in detached mode — the CLI returns immediately.
+
+**Example — open with MCP connection:**
+
+```bash
+npx unity-mcp-cli open ./MyGame \
+  --url http://localhost:8080 \
+  --keep-connected
+```
+
+**Example — open without MCP connection (simple open):**
+
+```bash
+npx unity-mcp-cli open ./MyGame --no-connect
+```
+
+**Example — open with authentication and specific tools:**
+
+```bash
+npx unity-mcp-cli open ./MyGame \
+  --url http://my-server:8080 \
+  --token my-secret-token \
+  --auth required \
+  --tools gameobject-create,gameobject-find
+```
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
@@ -218,61 +252,20 @@ npx unity-mcp-cli configure ./MyGame \
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
-## `connect`
+## Global Options
 
-Open a Unity project and connect it to a specific MCP server via environment variables. Every option maps to a `UNITY_MCP_*` environment variable that the Unity plugin reads on startup.
+These options are available on all commands:
 
-```bash
-npx unity-mcp-cli connect \
-  --path ./MyGame \
-  --url http://localhost:8080
-```
+| Option | Description |
+|---|---|
+| `-v, --verbose` | Enable verbose diagnostic output for troubleshooting |
+| `--version` | Display CLI version |
+| `--help` | Display help for the command |
 
-| Option | Env Variable | Required | Description |
-|---|---|---|---|
-| `--url <url>` | `UNITY_MCP_HOST` | Yes | MCP server URL to connect to |
-| `--path <path>` | — | Yes | Path to the Unity project |
-| `--keep-connected` | `UNITY_MCP_KEEP_CONNECTED` | No | Force keep the connection alive |
-| `--token <token>` | `UNITY_MCP_TOKEN` | No | Authentication token |
-| `--auth <option>` | `UNITY_MCP_AUTH_OPTION` | No | Auth mode: `none` or `required` |
-| `--tools <names>` | `UNITY_MCP_TOOLS` | No | Comma-separated list of tools to enable |
-| `--transport <method>` | `UNITY_MCP_TRANSPORT` | No | Transport method: `streamableHttp` or `stdio` |
-| `--start-server <value>` | `UNITY_MCP_START_SERVER` | No | Set to `true` or `false` to control MCP server auto-start in Unity Editor (only applies to `streamableHttp` transport) |
-| `--unity <version>` | — | No | Specific Unity Editor version to use (defaults to version from project settings, falls back to highest installed) |
-
-This command launches the Unity Editor with the corresponding `UNITY_MCP_*` environment variables so the plugin picks them up automatically on startup. The environment variables override values from the project's `UserSettings/AI-Game-Developer-Config.json` config file at runtime.
-
-**Example — connect with authentication and specific tools:**
+**Example — run any command with verbose output:**
 
 ```bash
-npx unity-mcp-cli connect \
-  --path ./MyGame \
-  --url http://my-server:8080 \
-  --token my-secret-token \
-  --auth required \
-  --keep-connected \
-  --tools gameobject-create,gameobject-find,script-execute
-```
-
-**Example — connect with stdio transport (server managed by AI agent):**
-
-```bash
-npx unity-mcp-cli connect \
-  --path ./MyGame \
-  --url http://localhost:8080 \
-  --transport stdio \
-  --start-server false
-```
-
-**Example — connect with streamableHttp and auto-start server:**
-
-```bash
-npx unity-mcp-cli connect \
-  --path ./MyGame \
-  --url http://localhost:8080 \
-  --transport streamableHttp \
-  --start-server true \
-  --keep-connected
+npx unity-mcp-cli install-plugin ./MyGame --verbose
 ```
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
@@ -292,8 +285,7 @@ npx unity-mcp-cli install-plugin ./MyAIGame
 npx unity-mcp-cli configure ./MyAIGame --enable-all-tools
 
 # 4. Open the project with MCP connection
-npx unity-mcp-cli connect \
-  --path ./MyAIGame \
+npx unity-mcp-cli open ./MyAIGame \
   --url http://localhost:8080 \
   --keep-connected
 ```

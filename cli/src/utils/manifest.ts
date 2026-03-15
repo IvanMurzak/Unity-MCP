@@ -14,9 +14,6 @@ const REQUIRED_SCOPES = [
   'org.nuget.r3',
 ];
 
-// Hardcoded fallback version (updated on each release)
-const FALLBACK_VERSION = '0.53.1';
-
 interface ScopedRegistry {
   name: string;
   url: string;
@@ -30,36 +27,43 @@ interface Manifest {
 }
 
 /**
- * Resolve the latest plugin version. Tries OpenUPM API first, falls back to hardcoded version.
+ * Resolve the latest plugin version from the OpenUPM registry.
+ * Throws an error with actionable suggestions if the network request fails.
  */
 export async function resolveLatestVersion(): Promise<string> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(`https://package.openupm.com/${PACKAGE_ID}`, {
+      signal: controller.signal,
+      headers: { Accept: 'application/json' },
+    });
 
-    try {
-      const res = await fetch(`https://package.openupm.com/${PACKAGE_ID}`, {
-        signal: controller.signal,
-        headers: { Accept: 'application/json' },
-      });
-
-      if (res.ok) {
-        const data = (await res.json()) as { 'dist-tags'?: { latest?: string } };
-        const latest = data?.['dist-tags']?.latest;
-        if (latest) {
-          ui.info(`Resolved latest version from OpenUPM: ${latest}`);
-          return latest;
-        }
+    if (res.ok) {
+      const data = (await res.json()) as { 'dist-tags'?: { latest?: string } };
+      const latest = data?.['dist-tags']?.latest;
+      if (latest) {
+        ui.info(`Resolved latest version from OpenUPM: ${latest}`);
+        return latest;
       }
-    } finally {
-      clearTimeout(timeout);
     }
-  } catch {
-    // Network error or timeout — fall through to hardcoded version
-  }
 
-  ui.warn(`Using fallback version: ${FALLBACK_VERSION}`);
-  return FALLBACK_VERSION;
+    throw new Error(
+      `OpenUPM returned status ${res.status}. ` +
+      'Check your network connection and retry, or specify a version manually with --plugin-version <version>'
+    );
+  } catch (err) {
+    if (err instanceof Error && err.message.includes('--plugin-version')) {
+      throw err;
+    }
+    throw new Error(
+      'Failed to resolve latest plugin version from OpenUPM. ' +
+      'Check your network connection and retry, or specify a version manually with --plugin-version <version>'
+    );
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 /**

@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { addPluginToManifest, resolveLatestVersion } from '../utils/manifest.js';
 import * as ui from '../utils/ui.js';
+import { verbose } from '../utils/ui.js';
 
 export const installPluginCommand = new Command('install-plugin')
   .description('Install Unity-MCP plugin into a Unity project')
@@ -28,10 +29,18 @@ export const installPluginCommand = new Command('install-plugin')
     let version = options.pluginVersion;
     if (!version) {
       const spinner = ui.startSpinner('Resolving latest plugin version...');
-      version = await resolveLatestVersion();
-      spinner.success(`Resolved plugin version: ${version}`);
+      try {
+        version = await resolveLatestVersion();
+        spinner.success(`Resolved plugin version: ${version}`);
+      } catch (err) {
+        spinner.error('Failed to resolve plugin version');
+        ui.error((err as Error).message);
+        process.exit(1);
+      }
     }
 
+    verbose(`Plugin version: ${version}`);
+    verbose(`Manifest path: ${manifestPath}`);
     ui.info(`Installing Unity-MCP plugin v${version} into: ${projectPath}`);
     addPluginToManifest(projectPath, version);
     ui.success('Done! Open the project in Unity Editor to complete installation.');
