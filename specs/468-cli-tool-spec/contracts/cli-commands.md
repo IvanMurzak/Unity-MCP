@@ -153,5 +153,5 @@ When `--verbose` is enabled, diagnostic lines are prefixed:
 ```text
 [verbose] Resolved Unity path: /path/to/editor
 [verbose] Detected project version: 2022.3.10f1
-[verbose] Setting UNITY_MCP_URL=http://localhost:51234
+[verbose] Setting UNITY_MCP_HOST=http://localhost:51234
 ```

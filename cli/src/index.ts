@@ -30,6 +30,7 @@ const subcommands = [
 ];
 
 for (const cmd of subcommands) {
+  cmd.option('-v, --verbose', 'Enable verbose diagnostic output');
   configureStyledHelp(cmd);
   program.addCommand(cmd);
 }
@@ -38,8 +39,8 @@ for (const cmd of subcommands) {
 configureStyledHelp(program, pkg.version);
 
 // Wire verbose flag before any command executes
-program.hook('preAction', () => {
-  const opts = program.opts() as { verbose?: boolean };
+program.hook('preAction', (_thisCommand, actionCommand) => {
+  const opts = actionCommand.optsWithGlobals() as { verbose?: boolean };
   if (opts.verbose) {
     setVerbose(true);
   }

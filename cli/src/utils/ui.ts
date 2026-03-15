@@ -11,7 +11,11 @@ export function setVerbose(enabled: boolean): void {
 
 export function verbose(msg: string): void {
   if (verboseEnabled) {
-    console.log(chalk.dim(`[verbose] ${msg}`));
+    if (isTTY()) {
+      console.log(chalk.dim(`[verbose] ${msg}`));
+    } else {
+      console.log(`[verbose] ${msg}`);
+    }
   }
 }
 

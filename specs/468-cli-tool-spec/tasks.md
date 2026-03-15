@@ -130,7 +130,7 @@
 
 **Goal**: A developer can open a Unity project with a single `open` command that sets MCP env vars by default, with `--no-connect` to skip MCP connection
 
-**Independent Test**: Run `unity-mcp-cli open ./my-project --url http://localhost:5000` and verify Unity Editor launches with `UNITY_MCP_URL` set; run with `--no-connect` and verify no MCP env vars
+**Independent Test**: Run `unity-mcp-cli open ./my-project --url http://localhost:5000` and verify Unity Editor launches with `UNITY_MCP_HOST` set; run with `--no-connect` and verify no MCP env vars
 
 ### Tests for User Story 5
 

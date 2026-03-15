@@ -82,7 +82,7 @@ Environment variables set when launching Unity with MCP connection.
 
 | Variable | Type | Description |
 |----------|------|-------------|
-| UNITY_MCP_URL | string | MCP server URL |
+| UNITY_MCP_HOST | string | MCP server URL |
 | UNITY_MCP_TOOLS | string? | Comma-separated tool names to enable |
 | UNITY_MCP_TOKEN | string? | Authentication token |
 | UNITY_MCP_AUTH_OPTION | "none" \| "required" | Authentication mode |
