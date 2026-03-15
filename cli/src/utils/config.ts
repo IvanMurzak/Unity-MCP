@@ -18,7 +18,7 @@ export interface UnityConnectionConfig {
   keepServerRunning?: boolean;
   transportMethod?: string;
   authOption?: string;
-  connectionMode?: string;
+  connectionMode?: string | number;
   cloudServerUrl?: string;
   cloudToken?: string;
   tools?: McpFeature[];
@@ -157,4 +157,32 @@ export function updateFeatures(
   }
 
   config[featureType] = features;
+}
+
+/**
+ * Determine whether the config is in Cloud mode.
+ * Handles both string ("Cloud") and legacy integer (1) representations
+ * of the ConnectionMode enum.
+ */
+export function isCloudMode(config: UnityConnectionConfig): boolean {
+  const mode = config.connectionMode;
+  return mode === 'Cloud' || mode === 1;
+}
+
+/**
+ * Resolve the server URL and auth token from a project config based on connectionMode.
+ * - Custom mode (string "Custom" or integer 0): uses `host` and `token`
+ * - Cloud mode (string "Cloud" or integer 1): uses `cloudServerUrl` and `cloudToken`
+ * Returns undefined values when the config or relevant fields are not set.
+ */
+export function resolveConnectionFromConfig(config: UnityConnectionConfig): {
+  url: string | undefined;
+  token: string | undefined;
+} {
+  const cloud = isCloudMode(config);
+
+  return {
+    url: cloud ? config.cloudServerUrl : config.host,
+    token: cloud ? config.cloudToken : config.token,
+  };
 }
