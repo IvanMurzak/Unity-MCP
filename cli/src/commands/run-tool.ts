@@ -4,30 +4,56 @@ import * as path from 'path';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
 import { generatePortFromDirectory } from '../utils/port.js';
+import { readConfig, resolveConnectionFromConfig } from '../utils/config.js';
 
 interface RunToolOptions {
   path?: string;
   url?: string;
   input?: string;
   inputFile?: string;
-  token?: string;
   raw?: boolean;
 }
 
-function resolveUrl(positionalPath: string | undefined, options: RunToolOptions): string {
+/**
+ * Resolve the project path from positional arg, --path option, or cwd.
+ */
+function resolveProjectPath(positionalPath: string | undefined, options: RunToolOptions): string {
+  return path.resolve(positionalPath ?? options.path ?? process.cwd());
+}
+
+/**
+ * Resolve the server URL and auth token.
+ *
+ * URL priority:
+ *   1. --url flag (explicit override)
+ *   2. Config file connectionMode → Custom: host, Cloud: cloudServerUrl
+ *   3. Deterministic port from project path
+ *
+ * Token: always read from config (Custom: token, Cloud: cloudToken).
+ */
+function resolveConnection(
+  projectPath: string,
+  options: RunToolOptions
+): { url: string; token: string | undefined } {
+  const config = readConfig(projectPath);
+  const fromConfig = config ? resolveConnectionFromConfig(config) : { url: undefined, token: undefined };
+
+  verbose(`Config loaded: connectionMode=${config?.connectionMode ?? 'N/A'}, configUrl=${fromConfig.url ?? 'N/A'}, hasToken=${!!fromConfig.token}`);
+
+  let url: string;
   if (options.url) {
-    verbose(`Using explicit URL: ${options.url}`);
-    return options.url.replace(/\/$/, '');
+    url = options.url.replace(/\/$/, '');
+    verbose(`Using explicit --url: ${url}`);
+  } else if (fromConfig.url) {
+    url = fromConfig.url.replace(/\/$/, '');
+    verbose(`Using URL from config (${config?.connectionMode} mode): ${url}`);
+  } else {
+    const port = generatePortFromDirectory(projectPath);
+    url = `http://localhost:${port}`;
+    verbose(`Using deterministic port URL: ${url}`);
   }
 
-  const dir = positionalPath ?? options.path ?? process.cwd();
-  const resolvedDir = path.resolve(dir);
-  verbose(`Resolving port from directory: ${resolvedDir}`);
-
-  const port = generatePortFromDirectory(resolvedDir);
-  const url = `http://localhost:${port}`;
-  verbose(`Resolved URL: ${url}`);
-  return url;
+  return { url, token: fromConfig.token };
 }
 
 function parseInput(options: RunToolOptions): string {
@@ -38,7 +64,6 @@ function parseInput(options: RunToolOptions): string {
       process.exit(1);
     }
     const content = fs.readFileSync(filePath, 'utf-8');
-    // Validate JSON
     try {
       JSON.parse(content);
     } catch {
@@ -64,15 +89,15 @@ function parseInput(options: RunToolOptions): string {
 export const runToolCommand = new Command('run-tool')
   .description('Execute an MCP tool via the HTTP API')
   .argument('<tool-name>', 'Name of the MCP tool to execute')
-  .argument('[path]', 'Unity project path (used for auto port detection)')
-  .option('--path <path>', 'Unity project path (auto port detection)')
-  .option('--url <url>', 'Direct server URL override')
+  .argument('[path]', 'Unity project path (used for config and auto port detection)')
+  .option('--path <path>', 'Unity project path (config and auto port detection)')
+  .option('--url <url>', 'Direct server URL override (bypasses config)')
   .option('--input <json>', 'JSON string of tool arguments')
   .option('--input-file <file>', 'Read JSON arguments from file')
-  .option('--token <token>', 'Bearer token for authorization')
   .option('--raw', 'Output raw JSON (no formatting)')
   .action(async (toolName: string, positionalPath: string | undefined, options: RunToolOptions) => {
-    const baseUrl = resolveUrl(positionalPath, options);
+    const projectPath = resolveProjectPath(positionalPath, options);
+    const { url: baseUrl, token } = resolveConnection(projectPath, options);
     const body = parseInput(options);
     const endpoint = `${baseUrl}/api/tools/${toolName}`;
 
@@ -84,17 +109,17 @@ export const runToolCommand = new Command('run-tool')
       'Content-Type': 'application/json',
     };
 
-    if (options.token) {
-      headers['Authorization'] = `Bearer ${options.token}`;
-      verbose('Authorization header set');
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+      verbose('Authorization header set from config');
     }
 
     if (!options.raw) {
       ui.heading('Run Tool');
       ui.label('Tool', toolName);
       ui.label('URL', endpoint);
-      if (options.token) {
-        ui.label('Auth', '***');
+      if (token) {
+        ui.label('Auth', 'from config');
       }
       ui.divider();
     }

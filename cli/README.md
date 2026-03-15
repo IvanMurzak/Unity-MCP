@@ -250,43 +250,44 @@ npx unity-mcp-cli open ./MyGame \
 
 ## `run-tool`
 
-Execute an MCP tool directly via the HTTP API.
+Execute an MCP tool directly via the HTTP API. The server URL and authorization token are **automatically resolved** from the project's config file (`UserSettings/AI-Game-Developer-Config.json`), based on the current connection mode (Custom or Cloud).
 
 ```bash
-npx unity-mcp-cli run-tool gameobject-create --url http://localhost:8080 --input '{"name":"Cube"}'
+npx unity-mcp-cli run-tool gameobject-create ./MyGame --input '{"name":"Cube"}'
 ```
 
 | Option | Required | Description |
 |---|---|---|
 | `<tool-name>` | Yes | Name of the MCP tool to execute |
-| `[path]` | No | Unity project path for auto port detection (positional or `--path`) |
-| `--url <url>` | No | Direct server URL override (bypasses port detection) |
+| `[path]` | No | Unity project path (positional or `--path`) — used to read config and detect port |
+| `--url <url>` | No | Direct server URL override (bypasses config) |
 | `--input <json>` | No | JSON string of tool arguments (defaults to `{}`) |
 | `--input-file <file>` | No | Read JSON arguments from a file |
-| `--token <token>` | No | Bearer token for authorization |
 | `--raw` | No | Output raw JSON (no formatting, no spinner) |
 
 **URL resolution priority:**
 1. `--url` → use directly
-2. `[path]` or `--path` → compute port via deterministic hash → `http://localhost:{port}`
-3. Neither → use current working directory for port detection
+2. Config file → `host` (Custom mode) or `cloudServerUrl` (Cloud mode)
+3. Deterministic port from project path
 
-**Example — call a tool with auto port detection from a project path:**
+**Authorization** is read automatically from the project config (`token` in Custom mode, `cloudToken` in Cloud mode). No manual `--token` flag is needed.
+
+**Example — call a tool (URL and auth from config):**
 
 ```bash
 npx unity-mcp-cli run-tool gameobject-find ./MyGame --input '{"query":"Player"}'
 ```
 
-**Example — call a tool with authorization:**
+**Example — explicit URL override:**
 
 ```bash
-npx unity-mcp-cli run-tool scene-save --url http://localhost:8080 --token my-secret-token
+npx unity-mcp-cli run-tool scene-save --url http://localhost:8080
 ```
 
 **Example — pipe raw JSON output:**
 
 ```bash
-npx unity-mcp-cli run-tool assets-list --url http://localhost:8080 --raw | jq '.results'
+npx unity-mcp-cli run-tool assets-list ./MyGame --raw | jq '.results'
 ```
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)

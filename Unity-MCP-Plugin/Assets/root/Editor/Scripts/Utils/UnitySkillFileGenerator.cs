@@ -10,7 +10,6 @@
 
 #nullable enable
 using System;
-using System.Text;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Skills;
 using Microsoft.Extensions.Logging;
@@ -20,6 +19,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
     /// <summary>
     /// Unity-specific skill file generator that emits <c>unity-mcp-cli run-tool</c>
     /// commands instead of <c>curl</c> HTTP API calls in the "How to Call" section.
+    /// Authorization is handled automatically by the CLI (reads config file),
+    /// so the authorization example block is omitted.
     /// </summary>
     public class UnitySkillFileGenerator : SkillFileGenerator
     {
@@ -29,6 +30,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         public UnitySkillFileGenerator(ILogger? logger = null) : base(logger)
         {
         }
+
+        /// <summary>
+        /// Authorization is handled automatically by the CLI from the project config file.
+        /// No need to show a separate authorization example in SKILL.md.
+        /// </summary>
+        public override bool IncludeAuthorizationExample => false;
 
         protected override string BuildMarkdown(IRunTool tool, string skillName, string host)
         {
@@ -45,32 +52,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 "Execute this tool directly via the MCP Plugin HTTP API:",
                 "Execute this tool directly via the Unity-MCP CLI:");
 
-            // Replace authorization curl block (must be replaced before the basic one
-            // because the basic pattern is a substring of the auth pattern)
-            var oldAuthCurl = string.Concat(
-                $"curl -X POST {trimmedHost}/api/tools/{tool.Name} \\", nl,
-                "  -H \"Content-Type: application/json\" \\", nl,
-                "  -H \"Authorization: Bearer YOUR_TOKEN\" \\", nl,
-                $"  -d '{inputExample}'");
-            var newAuthCli = $"unity-mcp-cli run-tool {tool.Name} --url {trimmedHost} --token YOUR_TOKEN --input '{inputExample}'";
-            result = result.Replace(oldAuthCurl, newAuthCli);
-
-            // Replace basic curl block
+            // Replace basic curl block with CLI command
             var oldCurl = string.Concat(
                 $"curl -X POST {trimmedHost}/api/tools/{tool.Name} \\", nl,
                 "  -H \"Content-Type: application/json\" \\", nl,
                 $"  -d '{inputExample}'");
-            var newCli = $"unity-mcp-cli run-tool {tool.Name} --url {trimmedHost} --input '{inputExample}'";
+            var newCli = $"unity-mcp-cli run-tool {tool.Name} --input '{inputExample}'";
             result = result.Replace(oldCurl, newCli);
 
             return result;
-        }
-
-        protected override void BuildInputAuthorizationNotes(StringBuilder sb)
-        {
-            sb.AppendLine($"> The token is stored in the file: `{UnityMcpPluginEditor.AssetsFilePath}`");
-            sb.AppendLine($"> Using the format: `\"token\": \"YOUR_TOKEN\"`");
-            sb.AppendLine();
         }
     }
 }
