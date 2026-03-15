@@ -101,9 +101,11 @@ export function shouldUpdateVersion(currentVersion: string, newVersion: string):
  * Add Unity-MCP plugin to a Unity project's Packages/manifest.json.
  * Ports the C# Installer.Manifest.cs logic:
  * - Adds OpenUPM scoped registry with required scopes
- * - Adds/updates the plugin dependency (never downgrades)
+ * - Adds/updates the plugin dependency
+ * - When force is false (auto-resolved version): never downgrades
+ * - When force is true (user-specified --plugin-version): allows downgrade
  */
-export function addPluginToManifest(projectPath: string, version: string): void {
+export function addPluginToManifest(projectPath: string, version: string, force = false): void {
   const manifestPath = path.join(projectPath, 'Packages', 'manifest.json');
 
   if (!fs.existsSync(manifestPath)) {
@@ -155,12 +157,12 @@ export function addPluginToManifest(projectPath: string, version: string): void 
   }
 
   const currentVersion = manifest.dependencies[PACKAGE_ID];
-  if (!currentVersion || shouldUpdateVersion(currentVersion, version)) {
+  if (!currentVersion || force || shouldUpdateVersion(currentVersion, version)) {
     manifest.dependencies[PACKAGE_ID] = version;
     modified = true;
   } else {
     ui.info(
-      `Plugin already at version ${currentVersion} (>= ${version}). Skipping version update.`
+      `Plugin already at version ${currentVersion} (>= ${version}). Skipping version update. Use --plugin-version to force a specific version.`
     );
   }
 

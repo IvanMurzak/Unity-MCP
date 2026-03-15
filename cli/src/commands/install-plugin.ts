@@ -27,6 +27,7 @@ export const installPluginCommand = new Command('install-plugin')
 
     // Resolve version
     let version = options.pluginVersion;
+    const isExplicitVersion = !!version;
     if (!version) {
       const spinner = ui.startSpinner('Resolving latest plugin version...');
       try {
@@ -39,9 +40,9 @@ export const installPluginCommand = new Command('install-plugin')
       }
     }
 
-    verbose(`Plugin version: ${version}`);
+    verbose(`Plugin version: ${version} (explicit: ${isExplicitVersion})`);
     verbose(`Manifest path: ${manifestPath}`);
     ui.info(`Installing Unity-MCP plugin v${version} into: ${projectPath}`);
-    addPluginToManifest(projectPath, version);
+    addPluginToManifest(projectPath, version, isExplicitVersion);
     ui.success('Done! Open the project in Unity Editor to complete installation.');
   });
