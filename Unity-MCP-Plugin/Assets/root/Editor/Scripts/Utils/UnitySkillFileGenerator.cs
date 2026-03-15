@@ -11,7 +11,7 @@
 #nullable enable
 using System;
 using System.Text;
-using System.Text.Json.Nodes;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Skills;
 using Microsoft.Extensions.Logging;
 
