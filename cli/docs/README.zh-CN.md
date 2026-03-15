@@ -50,13 +50,13 @@ unity-mcp-cli install-plugin /path/to/unity/project
 
 - [快速开始](#快速开始)
 - [命令](#命令)
-  - [`create-project`](#create-project) — 创建新 Unity 项目
-  - [`install-unity`](#install-unity) — 通过 Unity Hub 安装 Unity Editor
-  - [`open`](#open) — 在编辑器中打开 Unity 项目
-  - [`install-plugin`](#install-plugin) — 将 Unity-MCP 插件安装到项目中
-  - [`remove-plugin`](#remove-plugin) — 从项目中移除 Unity-MCP 插件
   - [`configure`](#configure) — 配置 MCP 工具、提示词和资源
   - [`connect`](#connect) — 启动 Unity 并建立 MCP 连接
+  - [`create-project`](#create-project) — 创建新 Unity 项目
+  - [`install-plugin`](#install-plugin) — 将 Unity-MCP 插件安装到项目中
+  - [`install-unity`](#install-unity) — 通过 Unity Hub 安装 Unity Editor
+  - [`open`](#open) — 在编辑器中打开 Unity 项目
+  - [`remove-plugin`](#remove-plugin) — 从项目中移除 Unity-MCP 插件
 - [完整自动化示例](#完整自动化示例)
 - [工作原理](#工作原理)
 

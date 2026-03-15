@@ -50,13 +50,13 @@ unity-mcp-cli install-plugin /path/to/unity/project
 
 - [クイックスタート](#クイックスタート)
 - [コマンド](#コマンド)
-  - [`create-project`](#create-project) — 新しい Unity プロジェクトを作成する
-  - [`install-unity`](#install-unity) — Unity Hub 経由で Unity Editor をインストールする
-  - [`open`](#open) — Unity プロジェクトをエディターで開く
-  - [`install-plugin`](#install-plugin) — Unity-MCP プラグインをプロジェクトにインストールする
-  - [`remove-plugin`](#remove-plugin) — Unity-MCP プラグインをプロジェクトから削除する
   - [`configure`](#configure) — MCP ツール、プロンプト、リソースを設定する
   - [`connect`](#connect) — MCP 接続を確立して Unity を起動する
+  - [`create-project`](#create-project) — 新しい Unity プロジェクトを作成する
+  - [`install-plugin`](#install-plugin) — Unity-MCP プラグインをプロジェクトにインストールする
+  - [`install-unity`](#install-unity) — Unity Hub 経由で Unity Editor をインストールする
+  - [`open`](#open) — Unity プロジェクトをエディターで開く
+  - [`remove-plugin`](#remove-plugin) — Unity-MCP プラグインをプロジェクトから削除する
 - [完全自動化の例](#完全自動化の例)
 - [仕組み](#仕組み)
 

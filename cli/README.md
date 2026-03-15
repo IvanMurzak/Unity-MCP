@@ -52,12 +52,12 @@ unity-mcp-cli install-plugin /path/to/unity/project
 
 - [Quick Start](#quick-start)
 - [Commands](#commands)
+  - [`configure`](#configure) — Configure MCP tools, prompts, and resources
   - [`create-project`](#create-project) — Create a new Unity project
+  - [`install-plugin`](#install-plugin) — Install Unity-MCP plugin into a project
   - [`install-unity`](#install-unity) — Install Unity Editor via Unity Hub
   - [`open`](#open) — Open a Unity project in the Editor
-  - [`install-plugin`](#install-plugin) — Install Unity-MCP plugin into a project
   - [`remove-plugin`](#remove-plugin) — Remove Unity-MCP plugin from a project
-  - [`configure`](#configure) — Configure MCP tools, prompts, and resources
 - [Global Options](#global-options)
 - [Full Automation Example](#full-automation-example)
 - [How It Works](#how-it-works)
@@ -65,6 +65,50 @@ unity-mcp-cli install-plugin /path/to/unity/project
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 # Commands
+
+## `configure`
+
+Configure MCP tools, prompts, and resources in `UserSettings/AI-Game-Developer-Config.json`.
+
+```bash
+npx unity-mcp-cli configure ./MyGame --list
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `[path]` | Yes | Path to the Unity project (positional or `--path`) |
+| `--list` | No | List current configuration and exit |
+| `--enable-tools <names>` | No | Enable specific tools (comma-separated) |
+| `--disable-tools <names>` | No | Disable specific tools (comma-separated) |
+| `--enable-all-tools` | No | Enable all tools |
+| `--disable-all-tools` | No | Disable all tools |
+| `--enable-prompts <names>` | No | Enable specific prompts (comma-separated) |
+| `--disable-prompts <names>` | No | Disable specific prompts (comma-separated) |
+| `--enable-all-prompts` | No | Enable all prompts |
+| `--disable-all-prompts` | No | Disable all prompts |
+| `--enable-resources <names>` | No | Enable specific resources (comma-separated) |
+| `--disable-resources <names>` | No | Disable specific resources (comma-separated) |
+| `--enable-all-resources` | No | Enable all resources |
+| `--disable-all-resources` | No | Disable all resources |
+
+**Example — enable specific tools and disable all prompts:**
+
+```bash
+npx unity-mcp-cli configure ./MyGame \
+  --enable-tools gameobject-create,gameobject-find \
+  --disable-all-prompts
+```
+
+**Example — enable everything:**
+
+```bash
+npx unity-mcp-cli configure ./MyGame \
+  --enable-all-tools \
+  --enable-all-prompts \
+  --enable-all-resources
+```
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 ## `create-project`
 
@@ -84,6 +128,34 @@ npx unity-mcp-cli create-project /path/to/new/project
 ```bash
 npx unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
 ```
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `install-plugin`
+
+Install the Unity-MCP plugin into a Unity project's `Packages/manifest.json`.
+
+```bash
+npx unity-mcp-cli install-plugin ./MyGame
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `[path]` | Yes | Path to the Unity project (positional or `--path`) |
+| `--plugin-version <version>` | No | Plugin version to install (defaults to latest from [OpenUPM](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)) |
+
+This command:
+1. Adds the **OpenUPM scoped registry** with all required scopes
+2. Adds `com.ivanmurzak.unity.mcp` to `dependencies`
+3. **Never downgrades** — if a higher version is already installed, it is preserved
+
+**Example — install a specific plugin version:**
+
+```bash
+npx unity-mcp-cli install-plugin ./MyGame --plugin-version 0.51.6
+```
+
+> After running this command, open the project in Unity Editor to complete the package installation.
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
@@ -159,34 +231,6 @@ npx unity-mcp-cli open ./MyGame \
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
-## `install-plugin`
-
-Install the Unity-MCP plugin into a Unity project's `Packages/manifest.json`.
-
-```bash
-npx unity-mcp-cli install-plugin ./MyGame
-```
-
-| Option | Required | Description |
-|---|---|---|
-| `[path]` | Yes | Path to the Unity project (positional or `--path`) |
-| `--plugin-version <version>` | No | Plugin version to install (defaults to latest from [OpenUPM](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)) |
-
-This command:
-1. Adds the **OpenUPM scoped registry** with all required scopes
-2. Adds `com.ivanmurzak.unity.mcp` to `dependencies`
-3. **Never downgrades** — if a higher version is already installed, it is preserved
-
-**Example — install a specific plugin version:**
-
-```bash
-npx unity-mcp-cli install-plugin ./MyGame --plugin-version 0.51.6
-```
-
-> After running this command, open the project in Unity Editor to complete the package installation.
-
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
-
 ## `remove-plugin`
 
 Remove the Unity-MCP plugin from a Unity project's `Packages/manifest.json`.
@@ -205,50 +249,6 @@ This command:
 3. **No-op** if the plugin is not installed
 
 > After running this command, open the project in Unity Editor to apply the change.
-
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
-
-## `configure`
-
-Configure MCP tools, prompts, and resources in `UserSettings/AI-Game-Developer-Config.json`.
-
-```bash
-npx unity-mcp-cli configure ./MyGame --list
-```
-
-| Option | Required | Description |
-|---|---|---|
-| `[path]` | Yes | Path to the Unity project (positional or `--path`) |
-| `--list` | No | List current configuration and exit |
-| `--enable-tools <names>` | No | Enable specific tools (comma-separated) |
-| `--disable-tools <names>` | No | Disable specific tools (comma-separated) |
-| `--enable-all-tools` | No | Enable all tools |
-| `--disable-all-tools` | No | Disable all tools |
-| `--enable-prompts <names>` | No | Enable specific prompts (comma-separated) |
-| `--disable-prompts <names>` | No | Disable specific prompts (comma-separated) |
-| `--enable-all-prompts` | No | Enable all prompts |
-| `--disable-all-prompts` | No | Disable all prompts |
-| `--enable-resources <names>` | No | Enable specific resources (comma-separated) |
-| `--disable-resources <names>` | No | Disable specific resources (comma-separated) |
-| `--enable-all-resources` | No | Enable all resources |
-| `--disable-all-resources` | No | Disable all resources |
-
-**Example — enable specific tools and disable all prompts:**
-
-```bash
-npx unity-mcp-cli configure ./MyGame \
-  --enable-tools gameobject-create,gameobject-find \
-  --disable-all-prompts
-```
-
-**Example — enable everything:**
-
-```bash
-npx unity-mcp-cli configure ./MyGame \
-  --enable-all-tools \
-  --enable-all-prompts \
-  --enable-all-resources
-```
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
