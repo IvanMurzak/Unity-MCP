@@ -425,11 +425,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             // Show the skills output path
             pathLabel.text = SkillsPath;
 
-            // Configure toggle
-            toggleAutoGenerate.SetValueWithoutNotify(UnityMcpPluginEditor.GenerateSkillFiles);
+            // Configure toggle (per-agent)
+            toggleAutoGenerate.SetValueWithoutNotify(UnityMcpPluginEditor.IsAutoGenerateSkills(AgentId));
             toggleAutoGenerate.RegisterValueChangedCallback(evt =>
             {
-                UnityMcpPluginEditor.GenerateSkillFiles = evt.newValue;
+                UnityMcpPluginEditor.SetAutoGenerateSkills(AgentId, evt.newValue);
                 UnityMcpPluginEditor.SkillsPath = SkillsPath!;
                 UnityMcpPluginEditor.Instance.Save();
 

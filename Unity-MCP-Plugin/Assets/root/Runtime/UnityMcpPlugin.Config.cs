@@ -80,6 +80,7 @@ namespace com.IvanMurzak.Unity.MCP
             public List<McpFeature> Tools { get; set; } = new();
             public List<McpFeature> Prompts { get; set; } = new();
             public List<McpFeature> Resources { get; set; } = new();
+            public Dictionary<string, bool> SkillAutoGenerate { get; set; } = new();
 
             /// <summary>
             /// When non-null, only the tools whose names appear in this list are enabled;
@@ -102,6 +103,7 @@ namespace com.IvanMurzak.Unity.MCP
                 KeepServerRunning = !isCi;
                 GenerateSkillFiles = false;
                 SkillsPath = ".claude/skills"; // default skills location for Claude Code
+                SkillAutoGenerate = new();
                 TransportMethod = TransportMethod.streamableHttp;
                 AuthOption = AuthOption.none;
                 ConnectionMode = ConnectionMode.Custom;

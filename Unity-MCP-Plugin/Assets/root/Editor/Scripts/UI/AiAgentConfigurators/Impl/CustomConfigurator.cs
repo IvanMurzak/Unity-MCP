@@ -120,11 +120,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             headerRow.Remove(pathLabel);
             headerRow.Add(inputPath);
 
-            // Configure toggle
-            toggleAutoGenerate.SetValueWithoutNotify(UnityMcpPluginEditor.GenerateSkillFiles);
+            // Configure toggle (per-agent)
+            toggleAutoGenerate.SetValueWithoutNotify(UnityMcpPluginEditor.IsAutoGenerateSkills(AgentId));
             toggleAutoGenerate.RegisterValueChangedCallback(evt =>
             {
-                UnityMcpPluginEditor.GenerateSkillFiles = evt.newValue;
+                UnityMcpPluginEditor.SetAutoGenerateSkills(AgentId, evt.newValue);
                 UnityMcpPluginEditor.Instance.Save();
 
                 if (evt.newValue)

@@ -146,14 +146,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             container.Add(agentSpecificUI);
 
-            // Sync SkillsPath in config when the new agent supports skills
-            if (configurator.SupportsSkills)
+            // Auto-generate skill files when switching to an agent with it enabled
+            if (configurator.SupportsSkills && UnityMcpPluginEditor.IsAutoGenerateSkills(configurator.AgentId))
             {
                 UnityMcpPluginEditor.SkillsPath = configurator.SkillsPath!;
                 UnityMcpPluginEditor.Instance.Save();
-
-                if (UnityMcpPluginEditor.GenerateSkillFiles)
-                    UnityMcpPluginEditor.Instance.McpPluginInstance?.GenerateSkillFiles(UnityMcpPluginEditor.ProjectRootPath);
+                UnityMcpPluginEditor.Instance.McpPluginInstance?.GenerateSkillFiles(UnityMcpPluginEditor.ProjectRootPath);
             }
         }
     }
