@@ -9,6 +9,7 @@ import { readConfig, resolveConnectionFromConfig } from '../utils/config.js';
 interface RunToolOptions {
   path?: string;
   url?: string;
+  token?: string;
   input?: string;
   inputFile?: string;
   raw?: boolean;
@@ -34,7 +35,9 @@ function resolveProjectPath(positionalPath: string | undefined, options: RunTool
  *   2. Config file connectionMode → Custom: host, Cloud: cloudServerUrl
  *   3. Deterministic port from project path
  *
- * Token: read from config unless --url is provided (avoids leaking credentials to explicit URLs).
+ * Token priority:
+ *   1. --token flag (explicit override)
+ *   2. Config file token
  */
 function resolveConnection(
   projectPath: string,
@@ -58,7 +61,12 @@ function resolveConnection(
     verbose(`Using deterministic port URL: ${url}`);
   }
 
-  return { url, token: options.url ? undefined : fromConfig.token };
+  const token = options.token ?? fromConfig.token;
+  if (options.token) {
+    verbose('Using explicit --token');
+  }
+
+  return { url, token };
 }
 
 function parseInput(options: RunToolOptions): string {
@@ -97,6 +105,7 @@ export const runToolCommand = new Command('run-tool')
   .argument('[path]', 'Unity project path (used for config and auto port detection)')
   .option('--path <path>', 'Unity project path (config and auto port detection)')
   .option('--url <url>', 'Direct server URL override (bypasses config)')
+  .option('--token <token>', 'Bearer token override (bypasses config)')
   .option('--input <json>', 'JSON string of tool arguments')
   .option('--input-file <file>', 'Read JSON arguments from file')
   .option('--raw', 'Output raw JSON (no formatting)')
@@ -116,15 +125,17 @@ export const runToolCommand = new Command('run-tool')
 
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
-      verbose('Authorization header set from config');
+      verbose(`Authorization header set (source: ${options.token ? '--token flag' : 'config'})`);
     }
+
+    const authSource = options.token ? '--token flag' : 'config';
 
     if (!options.raw) {
       ui.heading('Run Tool');
       ui.label('Tool', toolName);
       ui.label('URL', endpoint);
       if (token) {
-        ui.label('Auth', 'from config');
+        ui.label('Auth', `from ${authSource}`);
       }
       ui.divider();
     }
@@ -176,13 +187,12 @@ export const runToolCommand = new Command('run-tool')
           : JSON.stringify(responseData, null, 2));
       }
     } catch (err) {
-      clearTimeout(fetchTimeout);
       spinner?.stop();
       const message = err instanceof Error ? err.message : String(err);
       const isTimeout = err instanceof Error && err.name === 'AbortError';
       const displayMessage = isTimeout ? `Tool call timed out after 30 seconds: ${toolName}` : message;
       if (options.raw) {
-        process.stderr.write(displayMessage);
+        process.stderr.write(displayMessage + '\n');
       } else {
         ui.error(`Failed to call tool: ${displayMessage}`);
       }
