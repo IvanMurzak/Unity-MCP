@@ -39,6 +39,7 @@ describe('CLI integration', () => {
       expect(stdout).toContain('install-plugin');
       expect(stdout).toContain('remove-plugin');
       expect(stdout).toContain('configure');
+      expect(stdout).toContain('run-tool');
       // connect command was merged into open — no separate 'connect' command listed
       // (the word 'connect' may appear in descriptions, but not as a standalone command)
     });
@@ -47,7 +48,7 @@ describe('CLI integration', () => {
       const { stdout, exitCode } = runCli(['--help']);
       expect(exitCode).toBe(0);
       // Extract command names from help output
-      const commandNames = ['configure', 'create-project', 'install-plugin', 'install-unity', 'open', 'remove-plugin'];
+      const commandNames = ['configure', 'create-project', 'install-plugin', 'install-unity', 'open', 'remove-plugin', 'run-tool'];
       const positions = commandNames.map(name => stdout.indexOf(name));
       // Verify each command appears after the previous one (alphabetical order)
       for (let i = 1; i < positions.length; i++) {

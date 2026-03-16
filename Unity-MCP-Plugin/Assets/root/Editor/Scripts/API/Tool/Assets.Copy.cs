@@ -28,14 +28,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Assets / Copy",
             Enabled = false
         )]
-        [Description("Copy the asset at path and stores it at newPath. " +
+        [Description("Copy assets at given paths and store them at new paths. " +
             "Does AssetDatabase.Refresh() at the end. " +
             "Use '" + AssetsFindToolId + "' tool to find assets before copying.")]
         public CopyAssetsResponse Copy
         (
-            [Description("The paths of the asset to copy.")]
+            [Description("The paths of the assets to copy.")]
             string[] sourcePaths,
-            [Description("The paths to store the copied asset.")]
+            [Description("The paths to store the copied assets.")]
             string[] destinationPaths
         )
         {

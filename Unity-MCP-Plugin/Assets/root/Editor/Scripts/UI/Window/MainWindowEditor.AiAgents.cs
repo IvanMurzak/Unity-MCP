@@ -57,6 +57,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 selectedIndex = AiAgentConfiguratorRegistry.GetIndexByAgentId(savedAiAgentId);
                 if (selectedIndex < 0) selectedIndex = 0;
             }
+            else
+            {
+                // Default to Claude Code on initial setup
+                var claudeCodeIndex = AiAgentConfiguratorRegistry.GetIndexByAgentId("claude-code");
+                if (claudeCodeIndex >= 0) selectedIndex = claudeCodeIndex;
+            }
 
             // Set initial dropdown value without triggering callback
             if (agentNames.Count > 0)
@@ -139,6 +145,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 return;
 
             container.Add(agentSpecificUI);
+
+            // Auto-generate skill files when switching to an agent with it enabled
+            if (configurator.SupportsSkills && UnityMcpPluginEditor.IsAutoGenerateSkills(configurator.AgentId))
+            {
+                UnityMcpPluginEditor.SkillsPath = configurator.SkillsPath!;
+                UnityMcpPluginEditor.Instance.Save();
+                UnityMcpPluginEditor.Instance.McpPluginInstance?.GenerateSkillFiles(UnityMcpPluginEditor.ProjectRootPath);
+            }
         }
     }
 }

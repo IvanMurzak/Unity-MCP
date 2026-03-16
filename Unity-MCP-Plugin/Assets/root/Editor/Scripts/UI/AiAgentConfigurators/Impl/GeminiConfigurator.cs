@@ -25,6 +25,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public override string AgentName => "Gemini";
         public override string AgentId => "gemini";
         public override string DownloadUrl => "https://geminicli.com/docs/get-started/installation/";
+        public override string? SkillsPath => ".gemini/skills";
 
         protected override string? IconFileName => "gemini-64.png";
 

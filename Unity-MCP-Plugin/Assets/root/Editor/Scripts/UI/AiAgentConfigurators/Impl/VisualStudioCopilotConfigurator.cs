@@ -26,6 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public override string AgentId => "vs-copilot";
         public override string DownloadUrl => "https://visualstudio.microsoft.com/downloads/";
         public override string TutorialUrl => "https://www.youtube.com/watch?v=RGdak4T69mc";
+        public override string? SkillsPath => ".github/skills";
 
         protected override string? IconFileName => "visual-studio-64.png";
 

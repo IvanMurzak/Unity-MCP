@@ -110,23 +110,6 @@
                     </ui:VisualElement>
                     <ui:Button name="btnOpenTools" text="Open" class="btn-secondary" />
                 </ui:VisualElement>
-                <!-- Skills Sub-section -->
-                <ui:VisualElement name="SkillsSection" style="margin-top: 6px;">
-                    <ui:Label text="SKILLS (procedural)" class="timeline-label" style="align-self: flex-start;" tooltip="Skills give the AI specialized procedural knowledge to handle complex tasks. They work by providing structured guides (Markdown files) that the AI reads to understand exactly how to execute workflows. This helps the AI act more autonomously and accurately without needing constant detailed prompts." />
-                    <!-- Output Path row -->
-                    <ui:VisualElement style="flex-direction: row; align-items: center; margin-top: 4px; margin-bottom: 2px;">
-                        <ui:Label name="labelSkillsOutputPath" text="Output Path" class="section-desc" style="margin-bottom: 0; flex-shrink: 0;" />
-                        <ui:TextField name="inputSkillsRootFolder" style="flex-grow: 1; flex-shrink: 1; min-width: 0; margin-left: 47px;" />
-                    </ui:VisualElement>
-                    <!-- Auto-generate toggle + Generate button row -->
-                    <ui:VisualElement style="flex-direction: row; align-items: center; justify-content: space-between; margin-top: 2px;">
-                        <ui:VisualElement style="flex-direction: row; align-items: center;">
-                            <ui:Label text="Automatic generate" class="section-desc" style="margin-bottom: 0;" tooltip="Automatically regenerate skill files each time the Unity Editor reloads domain." />
-                            <ui:Toggle name="toggleAutoGenerateSkills" tooltip="Automatically regenerate skill files each time the Unity Editor reloads domain." style="margin-left: 4px;" />
-                        </ui:VisualElement>
-                        <ui:Button name="btnGenerateSkills" text="Generate" class="btn-compact" tooltip="Manually generate skill files." />
-                    </ui:VisualElement>
-                </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement class="divider" />
             <!-- Prompts Configuration Section -->

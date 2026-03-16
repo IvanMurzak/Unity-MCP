@@ -17,6 +17,9 @@
         <!-- Under header container -->
         <ui:VisualElement name="containerUnderHeader" />
 
+        <!-- Skills container -->
+        <ui:VisualElement name="containerSkills" />
+
         <!-- Transport mode container: HTTP -->
         <ui:VisualElement name="containerHttp" />
 

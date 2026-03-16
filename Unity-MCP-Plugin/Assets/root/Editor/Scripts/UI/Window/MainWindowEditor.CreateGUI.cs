@@ -192,7 +192,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             SetupMcpServerSection(root);
             SetupAiAgentSection(root);
             SetupToolsSection(root);
-            SetupSkillsSection(root);
             SetupPromptsSection(root);
             SetupResourcesSection(root);
             ConfigureAgents(root);

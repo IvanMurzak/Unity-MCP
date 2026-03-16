@@ -226,45 +226,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 tokenLabel: tokenLabel);
         }
 
-        private void SetupSkillsSection(VisualElement root)
-        {
-            var labelPath = root.Q<Label>("labelSkillsOutputPath");
-            var inputPath = root.Q<TextField>("inputSkillsRootFolder");
-            var toggleAutoGenerate = root.Q<Toggle>("toggleAutoGenerateSkills");
-            var btnGenerate = root.Q<Button>("btnGenerateSkills");
-
-            if (inputPath == null || toggleAutoGenerate == null || btnGenerate == null)
-                return;
-
-            const string skillsOutputPathTooltip =
-                "Root folder path where skill markdown files will be generated. " +
-                "The recommended default location is \"SKILLS\". " +
-                "AI Game Developer will also create a nested folder named \"unity-editor\" inside it.";
-
-            if (labelPath != null) labelPath.tooltip = skillsOutputPathTooltip;
-            inputPath.tooltip = skillsOutputPathTooltip;
-
-            inputPath.SetValueWithoutNotify(UnityMcpPluginEditor.SkillsPath);
-            toggleAutoGenerate.SetValueWithoutNotify(UnityMcpPluginEditor.GenerateSkillFiles);
-
-            inputPath.RegisterValueChangedCallback(evt =>
-            {
-                UnityMcpPluginEditor.SkillsPath = evt.newValue;
-                UnityMcpPluginEditor.Instance.Save();
-            });
-
-            toggleAutoGenerate.RegisterValueChangedCallback(evt =>
-            {
-                UnityMcpPluginEditor.GenerateSkillFiles = evt.newValue;
-                UnityMcpPluginEditor.Instance.Save();
-            });
-
-            btnGenerate.RegisterCallback<ClickEvent>(evt =>
-            {
-                UnityMcpPluginEditor.Instance.McpPluginInstance!.GenerateSkillFiles(UnityMcpPluginEditor.ProjectRootPath);
-            });
-        }
-
         private void SetupPromptsSection(VisualElement root)
         {
             var btn = root.Q<Button>("btnOpenPrompts");
