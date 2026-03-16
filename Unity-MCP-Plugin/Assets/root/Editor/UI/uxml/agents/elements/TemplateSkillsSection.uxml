@@ -14,7 +14,7 @@
                 <ui:Button name="btnGenerateSkills" text="Generate" class="btn-compact" tooltip="Manually generate skill files." />
             </ui:VisualElement>
             <!-- Unsupported label (hidden by default, shown when agent doesn't support skills) -->
-            <ui:Label name="labelSkillsUnsupported" text="Skills not supported for this agent" class="section-desc" style="display: none;" />
+            <ui:Label name="labelSkillsUnsupported" text="Skills not supported by this agent" class="section-desc" style="display: none;" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

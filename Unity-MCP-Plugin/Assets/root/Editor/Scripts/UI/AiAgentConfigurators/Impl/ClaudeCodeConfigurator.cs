@@ -26,8 +26,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public override string AgentId => "claude-code";
         public override string DownloadUrl => "https://docs.anthropic.com/en/docs/claude-code/overview";
         public override string TutorialUrl => "https://www.youtube.com/watch?v=xUYV2yxsaLs";
-
         public override string? SkillsPath => ".claude/skills";
+
         protected override string? IconFileName => "claude-64.png";
 
         protected override AiAgentConfig CreateConfigStdioWindows() => new JsonAiAgentConfig(
