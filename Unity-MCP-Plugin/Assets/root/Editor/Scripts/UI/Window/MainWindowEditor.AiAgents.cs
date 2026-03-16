@@ -57,6 +57,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 selectedIndex = AiAgentConfiguratorRegistry.GetIndexByAgentId(savedAiAgentId);
                 if (selectedIndex < 0) selectedIndex = 0;
             }
+            else
+            {
+                // Default to Claude Code on initial setup
+                var claudeCodeIndex = AiAgentConfiguratorRegistry.GetIndexByAgentId("claude-code");
+                if (claudeCodeIndex >= 0) selectedIndex = claudeCodeIndex;
+            }
 
             // Set initial dropdown value without triggering callback
             if (agentNames.Count > 0)
