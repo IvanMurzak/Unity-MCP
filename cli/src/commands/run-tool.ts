@@ -18,7 +18,12 @@ interface RunToolOptions {
  * Resolve the project path from positional arg, --path option, or cwd.
  */
 function resolveProjectPath(positionalPath: string | undefined, options: RunToolOptions): string {
-  return path.resolve(positionalPath ?? options.path ?? process.cwd());
+  const resolved = path.resolve(positionalPath ?? options.path ?? process.cwd());
+  if ((positionalPath !== undefined || options.path !== undefined) && !fs.existsSync(resolved)) {
+    ui.error(`Project path does not exist: ${resolved}`);
+    process.exit(1);
+  }
+  return resolved;
 }
 
 /**
@@ -29,7 +34,7 @@ function resolveProjectPath(positionalPath: string | undefined, options: RunTool
  *   2. Config file connectionMode → Custom: host, Cloud: cloudServerUrl
  *   3. Deterministic port from project path
  *
- * Token: always read from config (Custom: token, Cloud: cloudToken).
+ * Token: read from config unless --url is provided (avoids leaking credentials to explicit URLs).
  */
 function resolveConnection(
   projectPath: string,
@@ -53,7 +58,7 @@ function resolveConnection(
     verbose(`Using deterministic port URL: ${url}`);
   }
 
-  return { url, token: fromConfig.token };
+  return { url, token: options.url ? undefined : fromConfig.token };
 }
 
 function parseInput(options: RunToolOptions): string {
@@ -99,7 +104,7 @@ export const runToolCommand = new Command('run-tool')
     const projectPath = resolveProjectPath(positionalPath, options);
     const { url: baseUrl, token } = resolveConnection(projectPath, options);
     const body = parseInput(options);
-    const endpoint = `${baseUrl}/api/tools/${toolName}`;
+    const endpoint = `${baseUrl}/api/tools/${encodeURIComponent(toolName)}`;
 
     verbose(`Tool: ${toolName}`);
     verbose(`Endpoint: ${endpoint}`);
@@ -126,11 +131,15 @@ export const runToolCommand = new Command('run-tool')
 
     const spinner = options.raw ? null : ui.startSpinner(`Calling ${toolName}...`);
 
+    const controller = new AbortController();
+    const fetchTimeout = setTimeout(() => controller.abort(), 30000);
+
     try {
       const response = await fetch(endpoint, {
         method: 'POST',
         headers,
         body,
+        signal: controller.signal,
       });
 
       const responseText = await response.text();
@@ -144,9 +153,7 @@ export const runToolCommand = new Command('run-tool')
       if (!response.ok) {
         spinner?.stop();
         if (options.raw) {
-          process.stdout.write(typeof responseData === 'string'
-            ? responseData
-            : JSON.stringify(responseData, null, 2));
+          process.stdout.write(responseText);
         } else {
           ui.error(`HTTP ${response.status}: ${response.statusText}`);
           if (responseData) {
@@ -161,9 +168,7 @@ export const runToolCommand = new Command('run-tool')
       spinner?.success(`${toolName} completed`);
 
       if (options.raw) {
-        process.stdout.write(typeof responseData === 'string'
-          ? responseData
-          : JSON.stringify(responseData));
+        process.stdout.write(responseText);
       } else {
         ui.success('Response:');
         console.log(typeof responseData === 'string'
@@ -171,13 +176,18 @@ export const runToolCommand = new Command('run-tool')
           : JSON.stringify(responseData, null, 2));
       }
     } catch (err) {
+      clearTimeout(fetchTimeout);
       spinner?.stop();
       const message = err instanceof Error ? err.message : String(err);
+      const isTimeout = err instanceof Error && err.name === 'AbortError';
+      const displayMessage = isTimeout ? `Tool call timed out after 30 seconds: ${toolName}` : message;
       if (options.raw) {
-        process.stderr.write(message);
+        process.stderr.write(displayMessage);
       } else {
-        ui.error(`Failed to call tool: ${message}`);
+        ui.error(`Failed to call tool: ${displayMessage}`);
       }
       process.exit(1);
+    } finally {
+      clearTimeout(fetchTimeout);
     }
   });

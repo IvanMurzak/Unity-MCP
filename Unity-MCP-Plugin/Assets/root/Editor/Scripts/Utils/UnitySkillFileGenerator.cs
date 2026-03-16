@@ -10,7 +10,6 @@
 
 #nullable enable
 using System;
-using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Skills;
 using Microsoft.Extensions.Logging;
 
@@ -24,11 +23,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
     /// </summary>
     public class UnitySkillFileGenerator : SkillFileGenerator
     {
+        private readonly ILogger? _log;
+
         public UnitySkillFileGenerator() : base()
         {
         }
         public UnitySkillFileGenerator(ILogger? logger = null) : base(logger)
         {
+            _log = logger;
         }
 
         /// <summary>
@@ -57,8 +59,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 $"curl -X POST {trimmedHost}/api/tools/{tool.Name} \\", nl,
                 "  -H \"Content-Type: application/json\" \\", nl,
                 $"  -d '{inputExample}'");
-            var newCli = $"unity-mcp-cli run-tool {tool.Name} --input '{inputExample}'";
+            var newCli = $"unity-mcp-cli run-tool {tool.Name} --url {trimmedHost} --input '{inputExample}'";
             result = result.Replace(oldCurl, newCli);
+
+            if (result.Contains($"curl -X POST {trimmedHost}/api/tools/{tool.Name}"))
+                _log?.LogWarning("UnitySkillFileGenerator: failed to replace curl block for tool '{ToolName}' — base format may have changed.", tool.Name);
 
             return result;
         }

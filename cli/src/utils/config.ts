@@ -181,8 +181,9 @@ export function resolveConnectionFromConfig(config: UnityConnectionConfig): {
 } {
   const cloud = isCloudMode(config);
 
-  const cloudUrl = config.cloudServerUrl
-    ? config.cloudServerUrl.replace(/\/$/, '') + '/mcp'
+  const rawCloudUrl = config.cloudServerUrl?.replace(/\/$/, '');
+  const cloudUrl = rawCloudUrl
+    ? rawCloudUrl.endsWith('/mcp') ? rawCloudUrl : rawCloudUrl + '/mcp'
     : undefined;
 
   return {

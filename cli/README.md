@@ -270,7 +270,7 @@ npx unity-mcp-cli run-tool gameobject-create ./MyGame --input '{"name":"Cube"}'
 2. Config file → `host` (Custom mode) or `cloudServerUrl` (Cloud mode)
 3. Deterministic port from project path
 
-**Authorization** is read automatically from the project config (`token` in Custom mode, `cloudToken` in Cloud mode). No manual `--token` flag is needed.
+**Authorization** is read automatically from the project config (`token` in Custom mode, `cloudToken` in Cloud mode) unless `--url` is used — explicit URL overrides disable config-derived auth to avoid leaking credentials to external hosts.
 
 **Example — call a tool (URL and auth from config):**
 

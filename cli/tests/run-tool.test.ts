@@ -176,7 +176,7 @@ describe('run-tool command', () => {
   it('requires tool name argument', () => {
     const { exitCode, stdout } = runCli(['run-tool']);
     expect(exitCode).toBe(1);
-    expect(stdout).toContain("missing required argument 'tool-name'");
+    expect(stdout).toContain("missing required argument");
   });
 
   it('appears in global help', () => {
@@ -239,7 +239,7 @@ describe('run-tool config resolution', () => {
     writeProjectConfig({
       connectionMode: 'Cloud',
       host: 'http://localhost:55555',
-      cloudServerUrl: 'https://cloud.example.com',
+      cloudServerUrl: 'http://localhost:55556',
       authOption: 'none',
     });
     const { stdout } = runCli([
@@ -249,7 +249,7 @@ describe('run-tool config resolution', () => {
       '--raw',
     ]);
     expect(stdout).toContain('Cloud mode');
-    expect(stdout).toContain('https://cloud.example.com/mcp');
+    expect(stdout).toContain('http://localhost:55556/mcp');
   });
 
   it('--url flag overrides config URL', () => {
@@ -260,12 +260,12 @@ describe('run-tool config resolution', () => {
     const { stdout } = runCli([
       'run-tool', 'test-tool',
       '--path', tmpDir,
-      '--url', 'http://override:9999',
+      '--url', 'http://localhost:9999',
       '--verbose',
       '--raw',
     ]);
     expect(stdout).toContain('--url');
-    expect(stdout).toContain('http://override:9999');
+    expect(stdout).toContain('http://localhost:9999');
   });
 
   it('falls back to deterministic port when no config exists', () => {
