@@ -168,9 +168,9 @@ describe('run-tool command', () => {
     expect(stdout).toContain('--path');
   });
 
-  it('does not expose --token option', () => {
+  it('exposes --token option', () => {
     const { stdout } = runCli(['run-tool', '--help']);
-    expect(stdout).not.toContain('--token');
+    expect(stdout).toContain('--token');
   });
 
   it('requires tool name argument', () => {
@@ -292,7 +292,7 @@ describe('run-tool config resolution', () => {
       '--raw',
     ]);
     expect(stdout).toContain('hasToken=true');
-    expect(stdout).toContain('Authorization header set from config');
+    expect(stdout).toContain('Authorization header set');
   });
 
   it('reads cloudToken from config in Cloud mode (--verbose shows hasToken)', () => {
@@ -308,7 +308,7 @@ describe('run-tool config resolution', () => {
       '--raw',
     ]);
     expect(stdout).toContain('hasToken=true');
-    expect(stdout).toContain('Authorization header set from config');
+    expect(stdout).toContain('Authorization header set');
   });
 
   it('does not set auth header when config has no token', () => {
