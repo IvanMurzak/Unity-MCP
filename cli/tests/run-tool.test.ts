@@ -42,7 +42,7 @@ describe('resolveConnectionFromConfig', () => {
     expect(result.token).toBe('custom-secret');
   });
 
-  it('returns cloudServerUrl and cloudToken in Cloud mode', () => {
+  it('returns cloudServerUrl with /mcp suffix and cloudToken in Cloud mode', () => {
     const config: UnityConnectionConfig = {
       connectionMode: 'Cloud',
       host: 'http://localhost:55000',
@@ -51,7 +51,7 @@ describe('resolveConnectionFromConfig', () => {
       cloudToken: 'cloud-secret',
     };
     const result = resolveConnectionFromConfig(config);
-    expect(result.url).toBe('https://cloud.example.com');
+    expect(result.url).toBe('https://cloud.example.com/mcp');
     expect(result.token).toBe('cloud-secret');
   });
 
@@ -118,7 +118,7 @@ describe('resolveConnectionFromConfig', () => {
     expect(result.token).toBe('custom-secret');
   });
 
-  it('handles legacy integer 1 as Cloud mode', () => {
+  it('handles legacy integer 1 as Cloud mode with /mcp suffix', () => {
     const config: UnityConnectionConfig = {
       connectionMode: 1,
       host: 'http://localhost:55000',
@@ -127,7 +127,7 @@ describe('resolveConnectionFromConfig', () => {
       cloudToken: 'cloud-secret',
     };
     const result = resolveConnectionFromConfig(config);
-    expect(result.url).toBe('https://cloud.example.com');
+    expect(result.url).toBe('https://cloud.example.com/mcp');
     expect(result.token).toBe('cloud-secret');
   });
 });
@@ -235,7 +235,7 @@ describe('run-tool config resolution', () => {
     expect(stdout).toContain('http://localhost:55555');
   });
 
-  it('reads URL from config in Cloud mode (--verbose shows config URL)', () => {
+  it('reads URL from config in Cloud mode with /mcp suffix (--verbose shows config URL)', () => {
     writeProjectConfig({
       connectionMode: 'Cloud',
       host: 'http://localhost:55555',
@@ -249,7 +249,7 @@ describe('run-tool config resolution', () => {
       '--raw',
     ]);
     expect(stdout).toContain('Cloud mode');
-    expect(stdout).toContain('https://cloud.example.com');
+    expect(stdout).toContain('https://cloud.example.com/mcp');
   });
 
   it('--url flag overrides config URL', () => {

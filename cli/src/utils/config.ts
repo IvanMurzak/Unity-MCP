@@ -181,8 +181,12 @@ export function resolveConnectionFromConfig(config: UnityConnectionConfig): {
 } {
   const cloud = isCloudMode(config);
 
+  const cloudUrl = config.cloudServerUrl
+    ? config.cloudServerUrl.replace(/\/$/, '') + '/mcp'
+    : undefined;
+
   return {
-    url: cloud ? config.cloudServerUrl : config.host,
+    url: cloud ? cloudUrl : config.host,
     token: cloud ? config.cloudToken : config.token,
   };
 }
