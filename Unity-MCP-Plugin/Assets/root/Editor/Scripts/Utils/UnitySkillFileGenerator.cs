@@ -10,6 +10,7 @@
 
 #nullable enable
 using System;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Skills;
 using Microsoft.Extensions.Logging;
 
