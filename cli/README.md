@@ -261,6 +261,7 @@ npx unity-mcp-cli run-tool gameobject-create ./MyGame --input '{"name":"Cube"}'
 | `<tool-name>` | Yes | Name of the MCP tool to execute |
 | `[path]` | No | Unity project path (positional or `--path`) — used to read config and detect port |
 | `--url <url>` | No | Direct server URL override (bypasses config) |
+| `--token <token>` | No | Bearer token override (bypasses config) |
 | `--input <json>` | No | JSON string of tool arguments (defaults to `{}`) |
 | `--input-file <file>` | No | Read JSON arguments from a file |
 | `--raw` | No | Output raw JSON (no formatting, no spinner) |
@@ -270,7 +271,7 @@ npx unity-mcp-cli run-tool gameobject-create ./MyGame --input '{"name":"Cube"}'
 2. Config file → `host` (Custom mode) or `cloudServerUrl` (Cloud mode)
 3. Deterministic port from project path
 
-**Authorization** is read automatically from the project config (`token` in Custom mode, `cloudToken` in Cloud mode) unless `--url` is used — explicit URL overrides disable config-derived auth to avoid leaking credentials to external hosts.
+**Authorization** is read automatically from the project config (`token` in Custom mode, `cloudToken` in Cloud mode). Use `--token` to override the config-derived token explicitly.
 
 **Example — call a tool (URL and auth from config):**
 
