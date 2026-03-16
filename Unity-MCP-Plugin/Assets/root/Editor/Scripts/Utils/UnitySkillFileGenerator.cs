@@ -9,7 +9,7 @@
 */
 
 #nullable enable
-using System;
+using System.Text;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Skills;
 using Microsoft.Extensions.Logging;
@@ -24,14 +24,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
     /// </summary>
     public class UnitySkillFileGenerator : SkillFileGenerator
     {
-        private readonly ILogger? _log;
-
         public UnitySkillFileGenerator() : base()
         {
         }
         public UnitySkillFileGenerator(ILogger? logger = null) : base(logger)
         {
-            _log = logger;
         }
 
         /// <summary>
@@ -40,33 +37,34 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// </summary>
         public override bool IncludeAuthorizationExample => false;
 
-        protected override string BuildMarkdown(IRunTool tool, string skillName, string host)
+        /// <summary>
+        /// Description is already in the YAML front-matter — skip the duplicate paragraph
+        /// after the title to save tokens.
+        /// </summary>
+        public override bool IncludeDescriptionBody => false;
+
+        /// <summary>
+        /// Descriptions are already shown in the parameter table — strip them from the
+        /// Input JSON Schema to save tokens.
+        /// </summary>
+        public override bool IncludeInputSchemaPropertyDescriptions => false;
+
+        /// <inheritdoc/>
+        protected override void BuildHowToCallHeading(StringBuilder sb)
         {
-            var result = base.BuildMarkdown(tool, skillName, host);
-            var trimmedHost = host.TrimEnd('/');
-            var inputExample = BuildInputExample(tool.InputSchema);
-            var nl = Environment.NewLine;
+            sb.AppendLine("### CLI (Direct Tool Execution)");
+            sb.AppendLine();
+            sb.AppendLine("Execute this tool directly via command line:");
+            sb.AppendLine();
+        }
 
-            // Replace section heading and intro text
-            result = result.Replace(
-                "### HTTP API (Direct Tool Execution)",
-                "### CLI (Direct Tool Execution)");
-            result = result.Replace(
-                "Execute this tool directly via the MCP Plugin HTTP API:",
-                "Execute this tool directly via the Unity-MCP CLI:");
-
-            // Replace basic curl block with CLI command
-            var oldCurl = string.Concat(
-                $"curl -X POST {trimmedHost}/api/tools/{tool.Name} \\", nl,
-                "  -H \"Content-Type: application/json\" \\", nl,
-                $"  -d '{inputExample}'");
-            var newCli = $"unity-mcp-cli run-tool {tool.Name} --url {trimmedHost} --input '{inputExample}'";
-            result = result.Replace(oldCurl, newCli);
-
-            if (result.Contains($"curl -X POST {trimmedHost}/api/tools/{tool.Name}"))
-                _log?.LogWarning("UnitySkillFileGenerator: failed to replace curl block for tool '{ToolName}' — base format may have changed.", tool.Name);
-
-            return result;
+        /// <inheritdoc/>
+        protected override void BuildToolCommand(StringBuilder sb, IRunTool tool, string host, string inputExample)
+        {
+            sb.AppendLine("```bash");
+            sb.AppendLine($"unity-mcp-cli run-tool {tool.Name} --input '{inputExample}'");
+            sb.AppendLine("```");
+            sb.AppendLine();
         }
     }
 }
