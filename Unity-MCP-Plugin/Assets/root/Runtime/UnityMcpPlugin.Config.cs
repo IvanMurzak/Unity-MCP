@@ -101,6 +101,7 @@ namespace com.IvanMurzak.Unity.MCP
                 KeepConnected = !isCi;
                 KeepServerRunning = !isCi;
                 GenerateSkillFiles = false;
+                SkillsPath = ".claude/skills"; // default skills location for Claude Code
                 TransportMethod = TransportMethod.streamableHttp;
                 AuthOption = AuthOption.none;
                 ConnectionMode = ConnectionMode.Custom;
