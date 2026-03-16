@@ -10,7 +10,6 @@
 
 #nullable enable
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
-using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
@@ -98,77 +97,32 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             if (ContainerSkills == null)
                 return;
 
-            // "SKILLS" header
-            var headerLabel = new Label("SKILLS (procedural)");
-            headerLabel.AddToClassList("timeline-label");
-            headerLabel.style.alignSelf = Align.FlexStart;
-            headerLabel.tooltip = "Skills give the AI specialized procedural knowledge to handle complex tasks. " +
-                "They work by providing structured guides (Markdown files) that the AI reads to understand exactly " +
-                "how to execute workflows.";
-            ContainerSkills.Add(headerLabel);
+            var section = TemplateSkillsSection();
+            var pathLabel = section.Q<Label>("labelSkillsPath");
+            var toggleAutoGenerate = section.Q<Toggle>("toggleAutoGenerateSkills");
+            var btnGenerate = section.Q<Button>("btnGenerateSkills");
+            var unsupportedLabel = section.Q<Label>("labelSkillsUnsupported");
 
-            // Editable output path
-            var pathRow = new VisualElement();
-            pathRow.style.flexDirection = FlexDirection.Row;
-            pathRow.style.alignItems = Align.Center;
-            pathRow.style.marginTop = 4;
-            pathRow.style.marginBottom = 2;
+            // Hide the unsupported label
+            unsupportedLabel.style.display = DisplayStyle.None;
 
-            var pathLabel = new Label("Output Path");
-            pathLabel.AddToClassList("section-desc");
-            pathLabel.style.marginBottom = 0;
-            pathLabel.style.flexShrink = 0;
-            pathLabel.tooltip = "Root folder path where skill markdown files will be generated.";
-            pathRow.Add(pathLabel);
-
-            var pathField = new TextField { value = UnityMcpPluginEditor.SkillsPath };
-            pathField.style.flexGrow = 1;
-            pathField.style.flexShrink = 1;
-            pathField.style.minWidth = 0;
-            pathField.style.marginLeft = 47;
-            pathField.RegisterValueChangedCallback(evt =>
+            // Replace the read-only path label with an editable TextField for custom configurator
+            var headerRow = pathLabel.parent;
+            var inputPath = new TextField { value = UnityMcpPluginEditor.SkillsPath };
+            inputPath.style.flexGrow = 1;
+            inputPath.style.flexShrink = 1;
+            inputPath.style.minWidth = 0;
+            inputPath.RegisterValueChangedCallback(evt =>
             {
                 UnityMcpPluginEditor.SkillsPath = evt.newValue;
                 UnityMcpPluginEditor.Instance.Save();
             });
-            pathRow.Add(pathField);
+            headerRow.Remove(pathLabel);
+            headerRow.Add(inputPath);
 
-            ContainerSkills.Add(pathRow);
-
-            // Auto-generate toggle + Generate button row
-            var toggleRow = new VisualElement();
-            toggleRow.style.flexDirection = FlexDirection.Row;
-            toggleRow.style.alignItems = Align.Center;
-            toggleRow.style.justifyContent = Justify.SpaceBetween;
-            toggleRow.style.marginTop = 2;
-
-            var toggleLabelContainer = new VisualElement();
-            toggleLabelContainer.style.flexDirection = FlexDirection.Row;
-            toggleLabelContainer.style.alignItems = Align.Center;
-
-            var toggleLabel = new Label("Automatic generate");
-            toggleLabel.AddToClassList("section-desc");
-            toggleLabel.style.marginBottom = 0;
-            toggleLabel.tooltip = "Automatically regenerate skill files each time the Unity Editor reloads domain.";
-            toggleLabelContainer.Add(toggleLabel);
-
-            var toggle = new Toggle();
-            toggle.style.marginLeft = 4;
-            toggle.tooltip = "Automatically regenerate skill files each time the Unity Editor reloads domain.";
-            toggle.SetValueWithoutNotify(UnityMcpPluginEditor.GenerateSkillFiles);
-            toggleLabelContainer.Add(toggle);
-            toggleRow.Add(toggleLabelContainer);
-
-            var btnGenerate = new Button { text = "Generate" };
-            btnGenerate.AddToClassList("btn-compact");
-            btnGenerate.tooltip = "Manually generate skill files.";
-            btnGenerate.RegisterCallback<ClickEvent>(evt =>
-            {
-                UnityMcpPluginEditor.Instance.McpPluginInstance!.GenerateSkillFiles(UnityMcpPluginEditor.ProjectRootPath);
-            });
-            toggleRow.Add(btnGenerate);
-
-            toggle.RegisterValueChangedCallback(evt =>
+            // Configure toggle
+            toggleAutoGenerate.SetValueWithoutNotify(UnityMcpPluginEditor.GenerateSkillFiles);
+            toggleAutoGenerate.RegisterValueChangedCallback(evt =>
             {
                 UnityMcpPluginEditor.GenerateSkillFiles = evt.newValue;
                 UnityMcpPluginEditor.Instance.Save();
@@ -177,7 +131,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     UnityMcpPluginEditor.Instance.McpPluginInstance!.GenerateSkillFiles(UnityMcpPluginEditor.ProjectRootPath);
             });
 
-            ContainerSkills.Add(toggleRow);
+            // Configure generate button
+            btnGenerate.RegisterCallback<ClickEvent>(evt =>
+            {
+                UnityMcpPluginEditor.Instance.McpPluginInstance!.GenerateSkillFiles(UnityMcpPluginEditor.ProjectRootPath);
+            });
+
+            ContainerSkills.Add(section);
         }
     }
 }
