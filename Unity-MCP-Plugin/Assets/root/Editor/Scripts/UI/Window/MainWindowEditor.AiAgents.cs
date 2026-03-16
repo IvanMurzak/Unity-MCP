@@ -19,7 +19,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
     public partial class MainWindowEditor
     {
-        private static PlayerPrefsString selectedAiAgentId = new("Unity_MCP_SelectedAiAgent");
+        internal static PlayerPrefsString selectedAiAgentId = new("Unity_MCP_SelectedAiAgent");
 
         private AiAgentConfigurator? currentAiAgentConfigurator;
 
