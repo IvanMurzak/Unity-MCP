@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System;
 using System.IO;
 using System.Text.Json.Nodes;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
@@ -26,6 +27,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public override string AgentId => "kilo-code";
         public override string DownloadUrl => "https://app.kilo.ai/get-started";
 
+        public override string? SkillsPath => Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".kilocode", "skills");
         protected override string? IconFileName => "kilo-code-64.png";
 
         private static string LocalConfigPath => Path.Combine(ProjectRootPath, ".kilocode", "mcp.json");

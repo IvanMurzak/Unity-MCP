@@ -26,6 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public override string AgentId => "open-code";
         public override string DownloadUrl => "https://opencode.ai/download";
 
+        public override string? SkillsPath => ".claude/skills";
         protected override string? IconFileName => "open-code-64.png";
 
         protected override AiAgentConfig CreateConfigStdioWindows() => new JsonAiAgentConfig(

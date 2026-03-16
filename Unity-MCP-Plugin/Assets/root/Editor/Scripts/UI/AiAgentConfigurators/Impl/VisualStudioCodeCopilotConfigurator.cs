@@ -27,6 +27,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public override string DownloadUrl => "https://code.visualstudio.com/download";
         public override string TutorialUrl => "https://www.youtube.com/watch?v=ZhP7Ju91mOE";
 
+        public override string? SkillsPath => ".github/skills";
         protected override string? IconFileName => "vs-code-64.png";
 
         protected override AiAgentConfig CreateConfigStdioWindows() => new JsonAiAgentConfig(

@@ -49,6 +49,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public abstract string DownloadUrl { get; }
 
         /// <summary>
+        /// The relative (or absolute) path where skill files should be generated for this agent.
+        /// Return null if the agent does not support skills.
+        /// </summary>
+        public virtual string? SkillsPath => null;
+
+        /// <summary>
+        /// Whether this agent supports skill file generation.
+        /// </summary>
+        public bool SupportsSkills => SkillsPath != null;
+
+        /// <summary>
         /// The tutorial URL for configuring the AI agent.
         /// </summary>
         public virtual string TutorialUrl => string.Empty;
@@ -63,6 +74,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected VisualElement? ContainerUnderHeader { get; private set; }
         protected VisualElement? ContainerHttp { get; private set; }
         protected VisualElement? ContainerStdio { get; private set; }
+        protected VisualElement? ContainerSkills { get; private set; }
         protected Toggle? ToggleOptionHttp { get; private set; }
         protected Toggle? ToggleOptionStdio { get; private set; }
         protected Button? BtnRemoveConfig { get; private set; }
@@ -210,9 +222,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             ContainerUnderHeader = root.Q<VisualElement>("containerUnderHeader") ?? throw new NullReferenceException("VisualElement 'containerUnderHeader' not found in UI.");
             ContainerHttp = root.Q<VisualElement>("containerHttp") ?? throw new NullReferenceException("VisualElement 'containerHttp' not found in UI.");
             ContainerStdio = root.Q<VisualElement>("containerStdio") ?? throw new NullReferenceException("VisualElement 'containerStdio' not found in UI.");
+            ContainerSkills = root.Q<VisualElement>("containerSkills") ?? throw new NullReferenceException("VisualElement 'containerSkills' not found in UI.");
             BtnRemoveConfig = root.Q<Button>("btnRemoveConfig");
 
             OnUICreated(root);
+            SetupSkillsUI();
             McpWindowBase.EnableSmoothFoldoutTransitions(root);
             return root;
         }
@@ -374,6 +388,104 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             UpdateRemoveButton();
             return this;
+        }
+
+        /// <summary>
+        /// Builds the skills UI inside <see cref="ContainerSkills"/>.
+        /// Override in subclasses that need a custom layout (e.g. editable path field).
+        /// </summary>
+        protected virtual void SetupSkillsUI()
+        {
+            if (ContainerSkills == null)
+                return;
+
+            if (!SupportsSkills)
+            {
+                var label = new Label("Skills not supported for this agent");
+                label.AddToClassList("section-desc");
+                label.SetEnabled(false);
+                label.style.marginTop = 6;
+                ContainerSkills.Add(label);
+                return;
+            }
+
+            // "SKILLS" header
+            var headerLabel = new Label("SKILLS (procedural)");
+            headerLabel.AddToClassList("timeline-label");
+            headerLabel.style.alignSelf = Align.FlexStart;
+            headerLabel.tooltip = "Skills give the AI specialized procedural knowledge to handle complex tasks. " +
+                "They work by providing structured guides (Markdown files) that the AI reads to understand exactly " +
+                "how to execute workflows.";
+            ContainerSkills.Add(headerLabel);
+
+            // Output path (read-only)
+            var pathRow = new VisualElement();
+            pathRow.style.flexDirection = FlexDirection.Row;
+            pathRow.style.alignItems = Align.Center;
+            pathRow.style.marginTop = 4;
+            pathRow.style.marginBottom = 2;
+
+            var pathLabel = new Label("Output Path");
+            pathLabel.AddToClassList("section-desc");
+            pathLabel.style.marginBottom = 0;
+            pathLabel.style.flexShrink = 0;
+            pathRow.Add(pathLabel);
+
+            var pathField = new TextField { value = SkillsPath, isReadOnly = true };
+            pathField.style.flexGrow = 1;
+            pathField.style.flexShrink = 1;
+            pathField.style.minWidth = 0;
+            pathField.style.marginLeft = 47;
+            pathRow.Add(pathField);
+
+            ContainerSkills.Add(pathRow);
+
+            // Auto-generate toggle row
+            var toggleRow = new VisualElement();
+            toggleRow.style.flexDirection = FlexDirection.Row;
+            toggleRow.style.alignItems = Align.Center;
+            toggleRow.style.justifyContent = Justify.SpaceBetween;
+            toggleRow.style.marginTop = 2;
+
+            var toggleLabelContainer = new VisualElement();
+            toggleLabelContainer.style.flexDirection = FlexDirection.Row;
+            toggleLabelContainer.style.alignItems = Align.Center;
+
+            var toggleLabel = new Label("Automatic generate");
+            toggleLabel.AddToClassList("section-desc");
+            toggleLabel.style.marginBottom = 0;
+            toggleLabel.tooltip = "Automatically regenerate skill files each time the Unity Editor reloads domain.";
+            toggleLabelContainer.Add(toggleLabel);
+
+            var toggle = new Toggle();
+            toggle.style.marginLeft = 4;
+            toggle.tooltip = "Automatically regenerate skill files each time the Unity Editor reloads domain.";
+            toggle.SetValueWithoutNotify(UnityMcpPluginEditor.GenerateSkillFiles);
+            toggleLabelContainer.Add(toggle);
+            toggleRow.Add(toggleLabelContainer);
+
+            var btnGenerate = new Button { text = "Generate" };
+            btnGenerate.AddToClassList("btn-compact");
+            btnGenerate.tooltip = "Manually generate skill files.";
+            btnGenerate.RegisterCallback<ClickEvent>(evt =>
+            {
+                UnityMcpPluginEditor.SkillsPath = SkillsPath!;
+                UnityMcpPluginEditor.Instance.Save();
+                UnityMcpPluginEditor.Instance.McpPluginInstance!.GenerateSkillFiles(UnityMcpPluginEditor.ProjectRootPath);
+            });
+            toggleRow.Add(btnGenerate);
+
+            toggle.RegisterValueChangedCallback(evt =>
+            {
+                UnityMcpPluginEditor.GenerateSkillFiles = evt.newValue;
+                UnityMcpPluginEditor.SkillsPath = SkillsPath!;
+                UnityMcpPluginEditor.Instance.Save();
+
+                if (evt.newValue)
+                    UnityMcpPluginEditor.Instance.McpPluginInstance!.GenerateSkillFiles(UnityMcpPluginEditor.ProjectRootPath);
+            });
+
+            ContainerSkills.Add(toggleRow);
         }
 
         #endregion

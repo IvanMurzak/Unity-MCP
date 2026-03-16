@@ -145,6 +145,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 return;
 
             container.Add(agentSpecificUI);
+
+            // Sync SkillsPath in config when the new agent supports skills
+            if (configurator.SupportsSkills)
+            {
+                UnityMcpPluginEditor.SkillsPath = configurator.SkillsPath!;
+                UnityMcpPluginEditor.Instance.Save();
+
+                if (UnityMcpPluginEditor.GenerateSkillFiles)
+                    UnityMcpPluginEditor.Instance.McpPluginInstance?.GenerateSkillFiles(UnityMcpPluginEditor.ProjectRootPath);
+            }
         }
     }
 }

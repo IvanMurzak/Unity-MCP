@@ -27,6 +27,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public override string AgentId => "antigravity";
         public override string DownloadUrl => "https://antigravity.google/download";
 
+        public override string? SkillsPath => ".agent/skills";
         protected override string? IconFileName => "antigravity-64.png";
 
         protected override AiAgentConfig CreateConfigStdioWindows() => new JsonAiAgentConfig(
