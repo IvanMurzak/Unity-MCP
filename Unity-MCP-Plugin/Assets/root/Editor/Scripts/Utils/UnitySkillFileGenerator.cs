@@ -62,7 +62,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         protected override void BuildToolCommand(StringBuilder sb, IRunTool tool, string host, string inputExample)
         {
             sb.AppendLine("```bash");
-            sb.AppendLine($"unity-mcp-cli run-tool {tool.Name} --input '{inputExample}'");
+            sb.AppendLine($"npx unity-mcp-cli run-tool {tool.Name} --input '{inputExample}'");
             sb.AppendLine("```");
             sb.AppendLine();
         }
