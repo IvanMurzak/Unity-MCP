@@ -206,7 +206,8 @@ export function listInstalledEditors(hubPath: string): InstalledEditor[] {
       if (!trimmed) continue;
 
       // Format: "2022.3.62f3 , installed at /path/to/editor"
-      const match = trimmed.match(/^([\d.]+\w*)\s*,?\s*installed at\s+(.+)$/i);
+      // or:     "6000.3.11f1 (Apple silicon) installed at /path/to/editor"
+      const match = trimmed.match(/^([\d.]+\w*)\s*(?:\([^)]*\)\s*)?(?:,\s*)?installed at\s+(.+)$/i);
       if (match) {
         editors.push({ version: match[1], path: match[2].trim() });
       }
@@ -547,6 +548,10 @@ function resolveEditorExecutable(editorPath: string): string {
       );
       break;
     case 'darwin':
+      // If path already ends with .app, go directly into Contents/MacOS/Unity
+      if (editorPath.endsWith('.app')) {
+        candidates.push(path.join(editorPath, 'Contents', 'MacOS', 'Unity'));
+      }
       candidates.push(
         path.join(editorPath, 'Unity.app', 'Contents', 'MacOS', 'Unity'),
         path.join(editorPath, 'Contents', 'MacOS', 'Unity')

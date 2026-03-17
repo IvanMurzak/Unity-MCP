@@ -182,6 +182,11 @@ function getEditorBinary(editorDir: string): string {
     case 'win32':
       return path.join(editorDir, 'Editor', 'Unity.exe');
     case 'darwin':
+      // If path already ends with .app (e.g. Unity Hub returns ".../Unity.app"),
+      // go directly into Contents/MacOS/Unity instead of appending another Unity.app
+      if (editorDir.endsWith('.app')) {
+        return path.join(editorDir, 'Contents', 'MacOS', 'Unity');
+      }
       return path.join(editorDir, 'Unity.app', 'Contents', 'MacOS', 'Unity');
     default:
       return path.join(editorDir, 'Editor', 'Unity');
