@@ -358,7 +358,7 @@ npx unity-mcp-cli open ./MyAIGame \
 
 ### Deterministic Port
 
-The CLI generates a **deterministic port** for each Unity project based on its directory path (SHA256 hash mapped to port range 50000–59999). This matches the port generation in the Unity plugin, ensuring the server and plugin automatically agree on the same port without manual configuration.
+The CLI generates a **deterministic port** for each Unity project based on its directory path (SHA256 hash mapped to port range 20000–29999). This matches the port generation in the Unity plugin, ensuring the server and plugin automatically agree on the same port without manual configuration.
 
 ### Plugin Installation
 

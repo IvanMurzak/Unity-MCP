@@ -173,7 +173,7 @@ A developer wants visual feedback during long-running operations (installing Uni
 - **FR-012**: System MUST be published to NPMJS as a publicly available package, installable via `npm install -g`.
 - **FR-013**: System MUST not use any dependencies with known security vulnerabilities at the time of release.
 - **FR-014**: System MUST determine the Unity Editor version from `ProjectSettings/ProjectVersion.txt` when a version is not explicitly provided.
-- **FR-015**: System MUST generate a deterministic server port from the project path using SHA256 hashing, mapped to the 50000-59999 range.
+- **FR-015**: System MUST generate a deterministic server port from the project path using SHA256 hashing, mapped to the 20000-29999 range.
 - **FR-016**: System MUST provide clear, actionable error messages when operations fail, including suggestions for resolution.
 - **FR-017**: System MUST support cross-platform operation on Windows, macOS, and Linux.
 - **FR-018**: System MUST fail with a clear error message and actionable suggestions (retry or provide value manually) when network operations fail (e.g., OpenUPM version lookup, Unity Hub download). Silent fallbacks to hardcoded values are not permitted.

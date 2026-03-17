@@ -319,7 +319,7 @@ npx unity-mcp-cli connect \
 
 ### Puerto Determinista
 
-La CLI genera un **puerto determinista** para cada proyecto de Unity basándose en la ruta de su directorio (hash SHA256 mapeado al rango de puertos 50000–59999). Esto coincide con la generación de puertos del plugin de Unity, garantizando que el servidor y el plugin acuerden automáticamente el mismo puerto sin necesidad de configuración manual.
+La CLI genera un **puerto determinista** para cada proyecto de Unity basándose en la ruta de su directorio (hash SHA256 mapeado al rango de puertos 20000–29999). Esto coincide con la generación de puertos del plugin de Unity, garantizando que el servidor y el plugin acuerden automáticamente el mismo puerto sin necesidad de configuración manual.
 
 ### Instalación del Plugin
 

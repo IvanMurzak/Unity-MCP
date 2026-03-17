@@ -1,13 +1,13 @@
 import { createHash } from 'crypto';
 
-const MIN_PORT = 50000;
-const MAX_PORT = 59999;
+const MIN_PORT = 20000;
+const MAX_PORT = 29999;
 const PORT_RANGE = MAX_PORT - MIN_PORT + 1;
 
 /**
  * Generate a deterministic port from a directory path.
  * Ports the C# UnityMcpPlugin.GeneratePortFromDirectory() logic.
- * SHA256 hash of lowercased directory → first 4 bytes as uint32 → modulo 10000 + 50000.
+ * SHA256 hash of lowercased directory → first 4 bytes as uint32 → modulo 10000 + 20000.
  */
 export function generatePortFromDirectory(dir: string): number {
   const hash = createHash('sha256')
