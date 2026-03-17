@@ -34,7 +34,7 @@ Refactor and enhance the existing `unity-mcp-cli` Node.js CLI tool. Key changes:
 | VII. Security By Default | Yes | ✅ | No hardcoded secrets; inputs validated; errors don't leak paths |
 | VIII. No Reflection | No | N/A | TypeScript/Node.js |
 | IX. Mandatory Tool Input | No | N/A | CLI tool, not MCP tool |
-| Deterministic Port | Yes | ✅ | SHA256-based port in `port.ts`, range 50000-59999 |
+| Deterministic Port | Yes | ✅ | SHA256-based port in `port.ts`, range 20000-29999 |
 | Three-Tier Architecture | Yes | ✅ | CLI interacts with server tier, doesn't bypass |
 | File Size Discipline | Yes | ✅ | All source files under 300 lines |
 

@@ -172,7 +172,7 @@ affecting tool behavior.
   (ASP.NET Core + SignalR) ↔ Unity Plugin. Changes MUST
   NOT collapse or bypass these tiers.
 - **Deterministic port**: Port is derived from SHA256 of the
-  project path, mapped to 50000–59999. This algorithm MUST
+  project path, mapped to 20000–29999. This algorithm MUST
   NOT change without a migration plan.
 - **Server binary lifecycle**: The plugin downloads and
   manages the server binary. Binary path is
