@@ -3,7 +3,50 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { fileURLToPath } from 'url';
-import { getProjectEditorVersion } from '../src/utils/unity-editor.js';
+import { getProjectEditorVersion, resolveEditorPath } from '../src/utils/unity-editor.js';
+
+describe('resolveEditorPath', () => {
+  describe('darwin', () => {
+    it('resolves .app bundle path to Contents/MacOS/Unity', () => {
+      const result = resolveEditorPath('/Applications/Unity/Hub/Editor/6000.3.11f1/Unity.app', 'darwin');
+      expect(result).toBe('/Applications/Unity/Hub/Editor/6000.3.11f1/Unity.app/Contents/MacOS/Unity');
+    });
+
+    it('resolves install root (non-.app) to Unity.app/Contents/MacOS/Unity', () => {
+      const result = resolveEditorPath('/Applications/Unity/Hub/Editor/2022.3.62f3', 'darwin');
+      expect(result).toBe('/Applications/Unity/Hub/Editor/2022.3.62f3/Unity.app/Contents/MacOS/Unity');
+    });
+
+    it('returns as-is when path basename is unity (executable)', () => {
+      const result = resolveEditorPath('/some/path/Unity.app/Contents/MacOS/Unity', 'darwin');
+      expect(result).toBe('/some/path/Unity.app/Contents/MacOS/Unity');
+    });
+  });
+
+  describe('win32', () => {
+    it('resolves install root to Editor/Unity.exe', () => {
+      const result = resolveEditorPath('/Unity/Hub/Editor/2022.3.62f3', 'win32');
+      expect(result).toBe(path.join('/Unity/Hub/Editor/2022.3.62f3', 'Editor', 'Unity.exe'));
+    });
+
+    it('returns as-is when path basename is unity.exe', () => {
+      const result = resolveEditorPath('/Unity/Editor/Unity.exe', 'win32');
+      expect(result).toBe('/Unity/Editor/Unity.exe');
+    });
+  });
+
+  describe('linux', () => {
+    it('resolves install root to Editor/Unity', () => {
+      const result = resolveEditorPath('/opt/unity/editors/2022.3.62f3', 'linux');
+      expect(result).toBe('/opt/unity/editors/2022.3.62f3/Editor/Unity');
+    });
+
+    it('returns as-is when path basename is unity (executable)', () => {
+      const result = resolveEditorPath('/opt/unity/editors/2022.3.62f3/Editor/Unity', 'linux');
+      expect(result).toBe('/opt/unity/editors/2022.3.62f3/Editor/Unity');
+    });
+  });
+});
 
 describe('getProjectEditorVersion', () => {
   let tmpDir: string;
