@@ -165,11 +165,14 @@ function findEditorPathByCommonLocations(version?: string): string | null {
 }
 
 /**
- * Get the Unity binary path from an editor installation directory.
+ * Resolve the Unity binary path from an editor installation directory for a given platform.
+ * Exported for testing purposes.
+ *
  * Handles cases where the path already points to the executable
  * (e.g. Unity Hub may return ".../Editor/Unity.exe" directly).
+ * On macOS, also handles paths that already end with `.app`.
  */
-function getEditorBinary(editorDir: string): string {
+export function resolveEditorPath(editorDir: string, os: string): string {
   const basename = path.basename(editorDir).toLowerCase();
 
   // If the path already points to the executable, return it as-is
@@ -177,15 +180,28 @@ function getEditorBinary(editorDir: string): string {
     return editorDir;
   }
 
-  const os = platform();
   switch (os) {
     case 'win32':
       return path.join(editorDir, 'Editor', 'Unity.exe');
     case 'darwin':
+      // If path already ends with .app (e.g. Unity Hub returns ".../Unity.app"),
+      // go directly into Contents/MacOS/Unity instead of appending another Unity.app
+      if (editorDir.endsWith('.app')) {
+        return path.join(editorDir, 'Contents', 'MacOS', 'Unity');
+      }
       return path.join(editorDir, 'Unity.app', 'Contents', 'MacOS', 'Unity');
     default:
       return path.join(editorDir, 'Editor', 'Unity');
   }
+}
+
+/**
+ * Get the Unity binary path from an editor installation directory.
+ * Handles cases where the path already points to the executable
+ * (e.g. Unity Hub may return ".../Editor/Unity.exe" directly).
+ */
+function getEditorBinary(editorDir: string): string {
+  return resolveEditorPath(editorDir, platform());
 }
 
 /**

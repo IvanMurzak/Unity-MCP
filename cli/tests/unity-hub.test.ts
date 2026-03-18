@@ -3,8 +3,51 @@ import {
   findLatestStableRelease,
   parseHubProgress,
   isValidUnityVersion,
+  parseInstalledEditorsLine,
   type AvailableRelease,
 } from '../src/utils/unity-hub.js';
+
+describe('parseInstalledEditorsLine', () => {
+  it('parses standard format with comma', () => {
+    const result = parseInstalledEditorsLine('2022.3.62f3 , installed at /Applications/Unity/Hub/Editor/2022.3.62f3');
+    expect(result).toEqual({ version: '2022.3.62f3', path: '/Applications/Unity/Hub/Editor/2022.3.62f3' });
+  });
+
+  it('parses format without comma', () => {
+    const result = parseInstalledEditorsLine('6000.3.11f1 installed at /Applications/Unity/Hub/Editor/6000.3.11f1');
+    expect(result).toEqual({ version: '6000.3.11f1', path: '/Applications/Unity/Hub/Editor/6000.3.11f1' });
+  });
+
+  it('parses format with parenthetical note (Apple silicon)', () => {
+    const result = parseInstalledEditorsLine('6000.3.11f1 (Apple silicon) installed at /Applications/Unity/Hub/Editor/6000.3.11f1');
+    expect(result).toEqual({ version: '6000.3.11f1', path: '/Applications/Unity/Hub/Editor/6000.3.11f1' });
+  });
+
+  it('parses format with parenthetical note and comma', () => {
+    const result = parseInstalledEditorsLine('6000.3.11f1 (Apple silicon), installed at /Applications/Unity/Hub/Editor/6000.3.11f1');
+    expect(result).toEqual({ version: '6000.3.11f1', path: '/Applications/Unity/Hub/Editor/6000.3.11f1' });
+  });
+
+  it('parses Windows path with backslashes', () => {
+    const result = parseInstalledEditorsLine('2022.3.62f3 , installed at C:\\Program Files\\Unity\\Hub\\Editor\\2022.3.62f3');
+    expect(result).toEqual({ version: '2022.3.62f3', path: 'C:\\Program Files\\Unity\\Hub\\Editor\\2022.3.62f3' });
+  });
+
+  it('trims surrounding whitespace from the line', () => {
+    const result = parseInstalledEditorsLine('  2022.3.62f3 , installed at /some/path  ');
+    expect(result).toEqual({ version: '2022.3.62f3', path: '/some/path' });
+  });
+
+  it('returns null for empty line', () => {
+    expect(parseInstalledEditorsLine('')).toBeNull();
+    expect(parseInstalledEditorsLine('   ')).toBeNull();
+  });
+
+  it('returns null for unrecognized line format', () => {
+    expect(parseInstalledEditorsLine('No editors found')).toBeNull();
+    expect(parseInstalledEditorsLine('[Unity (6000.3.11f1)] downloading 50%')).toBeNull();
+  });
+});
 
 describe('isValidUnityVersion', () => {
   it('accepts standard version formats', () => {

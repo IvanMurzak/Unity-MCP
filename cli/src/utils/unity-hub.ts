@@ -192,6 +192,25 @@ export interface InstalledEditor {
 /**
  * List installed Unity editors via Unity Hub CLI.
  */
+/**
+ * Parse a single line from Unity Hub `--installed` output into an InstalledEditor entry.
+ * Handles formats such as:
+ *   "2022.3.62f3 , installed at /path/to/editor"
+ *   "6000.3.11f1 (Apple silicon) installed at /path/to/editor"
+ *   "6000.3.11f1 (Apple silicon), installed at /path/to/editor"
+ * Returns null if the line does not match the expected format.
+ */
+export function parseInstalledEditorsLine(line: string): InstalledEditor | null {
+  const trimmed = line.trim();
+  if (!trimmed) return null;
+
+  const match = trimmed.match(/^([\d.]+\w*)\s*(?:\([^)]*\)\s*)?(?:,\s*)?installed at\s+(.+)$/i);
+  if (match) {
+    return { version: match[1], path: match[2].trim() };
+  }
+  return null;
+}
+
 export function listInstalledEditors(hubPath: string): InstalledEditor[] {
   const spinner = ui.startSpinner('Listing installed editors...');
   try {
@@ -202,13 +221,9 @@ export function listInstalledEditors(hubPath: string): InstalledEditor[] {
 
     const editors: InstalledEditor[] = [];
     for (const line of output.split('\n')) {
-      const trimmed = line.trim();
-      if (!trimmed) continue;
-
-      // Format: "2022.3.62f3 , installed at /path/to/editor"
-      const match = trimmed.match(/^([\d.]+\w*)\s*,?\s*installed at\s+(.+)$/i);
-      if (match) {
-        editors.push({ version: match[1], path: match[2].trim() });
+      const editor = parseInstalledEditorsLine(line);
+      if (editor) {
+        editors.push(editor);
       }
     }
 
@@ -547,6 +562,10 @@ function resolveEditorExecutable(editorPath: string): string {
       );
       break;
     case 'darwin':
+      // If path already ends with .app, go directly into Contents/MacOS/Unity
+      if (editorPath.endsWith('.app')) {
+        candidates.push(path.join(editorPath, 'Contents', 'MacOS', 'Unity'));
+      }
       candidates.push(
         path.join(editorPath, 'Unity.app', 'Contents', 'MacOS', 'Unity'),
         path.join(editorPath, 'Contents', 'MacOS', 'Unity')
