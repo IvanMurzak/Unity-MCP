@@ -310,45 +310,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         #region Shared Helpers
 
         /// <summary>
-        /// Sets up two toggles as a mutually exclusive pair where exactly one must always be selected.
-        /// When toggle A is selected, toggle B is deselected and vice versa.
-        /// If the currently-selected toggle is unchecked and the other is also unchecked, it re-checks itself.
-        /// </summary>
-        private static void SetupMutuallyExclusiveToggles(
-            Toggle toggleA, Toggle toggleB,
-            Action onASelected, Action onBSelected,
-            Action? onChanged = null)
-        {
-            toggleA.RegisterValueChangedCallback(evt =>
-            {
-                if (evt.newValue)
-                {
-                    toggleB.SetValueWithoutNotify(false);
-                    onASelected();
-                }
-                else if (!toggleB.value)
-                {
-                    toggleA.SetValueWithoutNotify(true);
-                }
-                onChanged?.Invoke();
-            });
-
-            toggleB.RegisterValueChangedCallback(evt =>
-            {
-                if (evt.newValue)
-                {
-                    toggleA.SetValueWithoutNotify(false);
-                    onBSelected();
-                }
-                else if (!toggleA.value)
-                {
-                    toggleB.SetValueWithoutNotify(true);
-                }
-                onChanged?.Invoke();
-            });
-        }
-
-        /// <summary>
         /// Subscribes to the combined connection state (HubConnectionState + KeepConnected) with
         /// throttling and synchronization context marshaling.
         /// </summary>

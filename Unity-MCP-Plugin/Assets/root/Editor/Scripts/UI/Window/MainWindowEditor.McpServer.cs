@@ -14,6 +14,7 @@ using System.Threading;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.McpPlugin.Common.Utils;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.UI.Controls;
 using Microsoft.Extensions.Logging;
 using R3;
 using UnityEngine;
@@ -44,23 +45,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             // MCP server authorization configuration UI elements
             var labelAuthorizationToken = root.Q<Label>("labelAuthorizationToken");
-            var toggleAuthorizationNone = root.Q<Toggle>("toggleAuthorizationNone");
-            var toggleAuthorizationRequired = root.Q<Toggle>("toggleAuthorizationRequired");
+            var segmentAuthorization = root.Q<VisualElement>("segmentAuthorization");
             var inputAuthorizationToken = root.Q<TextField>("inputAuthorizationToken");
             var tokenSection = root.Q<VisualElement>("tokenSection");
             var btnGenerateToken = root.Q<Button>("btnGenerateToken");
 
-            if (toggleAuthorizationNone == null || toggleAuthorizationRequired == null
-                || inputAuthorizationToken == null || tokenSection == null || btnGenerateToken == null)
+            if (segmentAuthorization == null || inputAuthorizationToken == null
+                || tokenSection == null || btnGenerateToken == null)
             {
                 Debug.LogError("One or more authorization UI elements not found in UXML: " +
-                    $"toggleAuthorizationNone={toggleAuthorizationNone != null}, " +
-                    $"toggleAuthorizationRequired={toggleAuthorizationRequired != null}, " +
+                    $"segmentAuthorization={segmentAuthorization != null}, " +
                     $"inputAuthorizationToken={inputAuthorizationToken != null}, " +
                     $"tokenSection={tokenSection != null}, " +
                     $"btnGenerateToken={btnGenerateToken != null}");
                 return;
             }
+
+            var authControl = new SegmentedControl("none", "required");
+            authControl.SetTooltips(Tooltip_ToggleAuthNone, Tooltip_ToggleAuthRequired);
+            segmentAuthorization.Add(authControl);
 
             inputAuthorizationToken.isPasswordField = true;
             inputAuthorizationToken.RegisterCallback<KeyDownEvent>(evt =>
@@ -74,18 +77,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             });
 
             if (labelAuthorizationToken != null) labelAuthorizationToken.tooltip = Tooltip_LabelAuthorizationToken;
-            toggleAuthorizationNone.tooltip = Tooltip_ToggleAuthNone;
-            toggleAuthorizationRequired.tooltip = Tooltip_ToggleAuthRequired;
             btnGenerateToken.tooltip = Tooltip_BtnGenerateToken;
 
             var authOption = UnityMcpPluginEditor.AuthOption;
-            toggleAuthorizationNone.SetValueWithoutNotify(authOption == AuthOption.none);
-            toggleAuthorizationRequired.SetValueWithoutNotify(authOption == AuthOption.required);
+            authControl.SetValueWithoutNotify(authOption == AuthOption.none ? 0 : 1);
             inputAuthorizationToken.SetValueWithoutNotify(UnityMcpPluginEditor.Token ?? string.Empty);
             SetTokenFieldsVisible(inputAuthorizationToken, tokenSection, authOption == AuthOption.required);
 
-            SetupMutuallyExclusiveToggles(toggleAuthorizationNone, toggleAuthorizationRequired,
-                onASelected: () =>
+            authControl.RegisterCallback<ChangeEvent<int>>(evt =>
+            {
+                if (evt.newValue == 0)
                 {
                     ApplyServerSettingAndRestart(() =>
                     {
@@ -93,8 +94,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     });
                     SetTokenFieldsVisible(inputAuthorizationToken, tokenSection, false);
                     InvalidateAndReloadAgentUI();
-                },
-                onBSelected: () =>
+                }
+                else
                 {
                     ApplyServerSettingAndRestart(() =>
                     {
@@ -102,7 +103,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     });
                     SetTokenFieldsVisible(inputAuthorizationToken, tokenSection, true);
                     InvalidateAndReloadAgentUI();
-                });
+                }
+            });
 
             inputAuthorizationToken.RegisterCallback<FocusOutEvent>(_ =>
             {

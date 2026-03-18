@@ -12,6 +12,7 @@
 using System;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.Services;
+using com.IvanMurzak.Unity.MCP.Editor.UI.Controls;
 using Microsoft.AspNetCore.SignalR.Client;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -102,9 +103,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private void SetupConnectionModeToggle(VisualElement root)
         {
-            var toggleCustom = root.Q<Toggle>("toggleModeCustom");
-            var toggleCloud = root.Q<Toggle>("toggleModeCloud");
-            if (toggleCustom == null || toggleCloud == null) return;
+            var container = root.Q<VisualElement>("segmentConnectionMode");
+            if (container == null) return;
+
+            var control = new SegmentedControl("Custom", "Cloud");
+            control.SetTooltips(
+                "Connect to your own MCP server. The plugin starts a local MCP server automatically and manages its lifecycle. Use this when you want full control over the server configuration, port, transport, and authorization settings.",
+                "Connect to a remote MCP server hosted in the cloud (e.g. ai-game.dev). No local server is started — the plugin connects directly to the specified Cloud URL. Requires authorization via device code flow.");
+            container.Add(control);
 
             var inputServerUrl = root.Q<TextField>("InputServerURL");
             var mcpServerPoint = root.Q<VisualElement>("TimelinePointMcpServer");
@@ -119,12 +125,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             }
 
             var currentMode = UnityMcpPluginEditor.ConnectionMode;
-            toggleCustom.SetValueWithoutNotify(currentMode == ConnectionMode.Custom);
-            toggleCloud.SetValueWithoutNotify(currentMode == ConnectionMode.Cloud);
+            control.SetValueWithoutNotify(currentMode == ConnectionMode.Custom ? 0 : 1);
             UpdateModeVisibility(currentMode);
 
-            SetupMutuallyExclusiveToggles(toggleCustom, toggleCloud,
-                onASelected: () =>
+            control.RegisterCallback<ChangeEvent<int>>(evt =>
+            {
+                if (evt.newValue == 0)
                 {
                     UnityMcpPluginEditor.ConnectionMode = ConnectionMode.Custom;
                     UnityMcpPluginEditor.Instance.Save();
@@ -137,8 +143,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     // Start local server if configured and reconnect to it
                     McpServerManager.StartServerIfNeeded();
                     ReconnectAfterModeSwitch();
-                },
-                onBSelected: () =>
+                }
+                else
                 {
                     UnityMcpPluginEditor.ConnectionMode = ConnectionMode.Cloud;
                     UnityMcpPluginEditor.Instance.Save();
@@ -155,7 +161,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     // Reconnect to cloud server (only if authorized)
                     if (!string.IsNullOrEmpty(UnityMcpPluginEditor.CloudToken))
                         ReconnectAfterModeSwitch();
-                });
+                }
+            });
         }
 
         internal static bool IsAuthFlowRunning(DeviceAuthFlowState state) =>

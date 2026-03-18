@@ -16,10 +16,7 @@
             <!-- Connection Section ============================== -->
             <ui:VisualElement class="row" style="margin-top: 0; align-items: center;">
                 <ui:Label text="Connection" class="header" />
-                <ui:VisualElement style="flex-direction: row; flex-grow: 1; justify-content: flex-end; margin-right: 0;">
-                    <ui:Toggle name="toggleModeCustom" label="Custom" tooltip="Connect to your own MCP server. The plugin starts a local MCP server automatically and manages its lifecycle. Use this when you want full control over the server configuration, port, transport, and authorization settings." class="toggle-text-button" />
-                    <ui:Toggle name="toggleModeCloud" label="Cloud" tooltip="Connect to a remote MCP server hosted in the cloud (e.g. ai-game.dev). No local server is started — the plugin connects directly to the specified Cloud URL. Requires authorization via device code flow." class="toggle-text-button" />
-                </ui:VisualElement>
+                <ui:VisualElement name="segmentConnectionMode" style="flex-direction: row; flex-grow: 1; justify-content: flex-end; margin-right: 0;" />
             </ui:VisualElement>
             <ui:TextField picking-mode="Ignore" label="Server URL" value="http://localhost:8080" name="InputServerURL" class="content-item" />
             <!-- Cloud Authorization (visible in Cloud mode only) -->
@@ -59,18 +56,12 @@
                         <!-- Row 2: Transport -->
                         <ui:VisualElement style="flex-direction: row; align-items: center; justify-content: space-between; margin-top: 2px; margin-bottom: 2px;">
                             <ui:Label name="labelTransport" text="Transport" class="section-desc" style="margin-bottom: 0;" />
-                            <ui:VisualElement style="flex-direction: row;">
-                                <ui:Toggle name="toggleOptionStdio" label="stdio" class="toggle-text-button" />
-                                <ui:Toggle name="toggleOptionHttp" label="http" class="toggle-text-button" />
-                            </ui:VisualElement>
+                            <ui:VisualElement name="segmentTransport" />
                         </ui:VisualElement>
                         <!-- Row 3: Authorization -->
                         <ui:VisualElement style="flex-direction: row; align-items: center; justify-content: space-between; margin-top: 2px; margin-bottom: 2px;">
                             <ui:Label name="labelAuthorizationToken" text="Authorization Token" class="section-desc" style="margin-bottom: 0;" />
-                            <ui:VisualElement style="flex-direction: row;">
-                                <ui:Toggle name="toggleAuthorizationNone" label="none" class="toggle-text-button" />
-                                <ui:Toggle name="toggleAuthorizationRequired" label="required" class="toggle-text-button" />
-                            </ui:VisualElement>
+                            <ui:VisualElement name="segmentAuthorization" />
                         </ui:VisualElement>
                         <!-- Row 4: Authorization Token -->
                         <ui:VisualElement name="tokenSection" style="flex-direction: column; margin-top: 2px; margin-bottom: 2px;">

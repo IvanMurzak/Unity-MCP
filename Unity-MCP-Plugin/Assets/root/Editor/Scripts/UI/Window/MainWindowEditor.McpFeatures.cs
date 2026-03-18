@@ -14,6 +14,7 @@ using System.Linq;
 using System.Threading;
 using com.IvanMurzak.McpPlugin.Common.Utils;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.UI.Controls;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using Microsoft.Extensions.Logging;
 using R3;
@@ -83,17 +84,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var containerMcpServer = root.Q<VisualElement>("mcpServerStatusControl") ?? throw new InvalidOperationException("mcpServerStatusControl element not found.");
             var btnStartStopMcpServer = root.Q<Button>("btnStartStopServer") ?? throw new InvalidOperationException("MCP Server start/stop button not found.");
 
-            var toggleOptionHttp = root.Q<Toggle>("toggleOptionHttp") ?? throw new NullReferenceException("Toggle 'toggleOptionHttp' not found in UI.");
-            var toggleOptionStdio = root.Q<Toggle>("toggleOptionStdio") ?? throw new NullReferenceException("Toggle 'toggleOptionStdio' not found in UI.");
+            var segmentTransport = root.Q<VisualElement>("segmentTransport") ?? throw new InvalidOperationException("segmentTransport element not found.");
+            var transportControl = new SegmentedControl("stdio", "http");
+            transportControl.SetTooltips(Tooltip_ToggleStdio, Tooltip_ToggleHttp);
+            segmentTransport.Add(transportControl);
 
             var labelTransport = root.Q<Label>("labelTransport");
             if (labelTransport != null) labelTransport.tooltip = Tooltip_LabelTransport;
-            toggleOptionStdio.tooltip = Tooltip_ToggleStdio;
-            toggleOptionHttp.tooltip = Tooltip_ToggleHttp;
 
-            // Initialize with HTTP selected by default
-            toggleOptionStdio.value = UnityMcpPluginEditor.TransportMethod == TransportMethod.stdio;
-            toggleOptionHttp.value = UnityMcpPluginEditor.TransportMethod != TransportMethod.stdio;
+            // Initialize: index 0 = stdio, index 1 = http
+            transportControl.SetValueWithoutNotify(UnityMcpPluginEditor.TransportMethod == TransportMethod.stdio ? 0 : 1);
             currentAiAgentConfigurator?.SetTransportMethod(UnityMcpPluginEditor.TransportMethod);
 
             void UpdateMcpServerState()
@@ -105,8 +105,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             }
             UpdateMcpServerState();
 
-            SetupMutuallyExclusiveToggles(toggleOptionStdio, toggleOptionHttp,
-                onASelected: () =>
+            transportControl.RegisterCallback<ChangeEvent<int>>(evt =>
+            {
+                if (evt.newValue == 0)
                 {
                     UnityMcpPluginEditor.TransportMethod = TransportMethod.stdio;
                     UnityMcpPluginEditor.Instance.Save();
@@ -119,14 +120,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                         UnityMcpPluginEditor.Instance.Save();
                         McpServerManager.StopServer();
                     }
-                },
-                onBSelected: () =>
+                }
+                else
                 {
                     UnityMcpPluginEditor.TransportMethod = TransportMethod.streamableHttp;
                     UnityMcpPluginEditor.Instance.Save();
                     currentAiAgentConfigurator?.SetTransportMethod(TransportMethod.streamableHttp);
-                },
-                onChanged: UpdateMcpServerState);
+                }
+                UpdateMcpServerState();
+            });
         }
 
         private void FetchAiAgentData(int retryCount = 3, int retryDelayMs = 3000)
