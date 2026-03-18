@@ -57,9 +57,15 @@
 }
 
 .disabled-text-field .unity-text-field__input {
-    border-width: 0;
-    margin: 1px;
-    background-color: rgba(0, 255, 255, 0.1);
+    border-color: rgba(0, 0, 0, 0);
+    background-color: rgba(255, 255, 255, 0.03);
+    color: rgb(110, 110, 110);
+    transition-duration: 200ms;
+}
+
+.disabled-text-field .unity-label {
+    color: rgb(110, 110, 110);
+    transition-duration: 200ms;
 }
 
 .transparent-text-field {
@@ -73,6 +79,11 @@
 
 .enabled-text-field .unity-text-field__input {
     background-color: rgba(0, 0, 0, 0.2);
+    transition-duration: 200ms;
+}
+
+.enabled-text-field .unity-label {
+    transition-duration: 200ms;
 }
 
 /* Argument items (form-like display) */
