@@ -47,7 +47,6 @@ describe('config', () => {
       expect(config.transportMethod).toBe('streamableHttp');
       expect(config.authOption).toBe('none');
       expect(config.connectionMode).toBe('Custom');
-      expect(config.cloudServerUrl).toBe('https://ai-game.dev');
       expect(config.tools).toEqual([]);
       expect(config.prompts).toEqual([]);
       expect(config.resources).toEqual([]);

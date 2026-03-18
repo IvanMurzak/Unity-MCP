@@ -181,15 +181,7 @@ namespace com.IvanMurzak.Unity.MCP
                 NotifyChanged(Instance.unityConnectionConfig);
             }
         }
-        public static string CloudServerUrl
-        {
-            get => Instance.unityConnectionConfig.CloudServerUrl;
-            set
-            {
-                Instance.unityConnectionConfig.CloudServerUrl = value;
-                NotifyChanged(Instance.unityConnectionConfig);
-            }
-        }
+        public static string CloudServerUrl => UnityMcpPlugin.UnityConnectionConfig.CloudServerUrl;
         public static string? CloudToken
         {
             get => Instance.unityConnectionConfig.CloudToken;

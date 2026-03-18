@@ -1,15 +1,14 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <ui:VisualElement class="root-container" style="min-width: 320px;">
         <ui:VisualElement class="header-container">
-            <ui:Label text="MCP Prompts" class="header-title" />
-            <ui:Label text="See and control all MCP prompts. Disable not needed prompts. Passive prompts do not consume AI context. Don't need to disable them until you want to clear your commands list in the MCP client." class="header-description" />
+            <ui:Label text="Prompts" class="header-title" tooltip="Browse and control all MCP prompts. Prompts are slash-commands the user can invoke from the AI client. They do not passively consume context — only when explicitly invoked. Disable prompts you don't need to keep your commands list clean." />
             <ui:VisualElement class="filter-row">
                 <ui:Label text="Filter:" class="filter-label" />
-                <ui:TextField name="filter-textfield" class="filter-textfield" />
+                <ui:TextField name="filter-textfield" class="filter-textfield styled-text-field" />
             </ui:VisualElement>
             <ui:VisualElement class="filter-row">
                 <ui:Label text="Type:" class="filter-label" />
-                <ui:DropdownField name="type-dropdown" index="0" class="type-dropdown" />
+                <ui:DropdownField name="type-dropdown" index="0" class="type-dropdown styled-dropdown" />
                 <ui:Label text="Filtered: 0, Total: 0" name="filter-stats-label" class="filter-stats-label" />
             </ui:VisualElement>
         </ui:VisualElement>
