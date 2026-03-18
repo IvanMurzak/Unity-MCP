@@ -65,8 +65,8 @@ UserSettings/AI-Game-Developer-Config.json
 kernelsCache/*
 
 # Procedural Skills
-SKILLS
 .github/skills
+.agent/skills
 
 # AI agents
 opencode.json
