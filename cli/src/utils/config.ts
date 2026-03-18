@@ -19,7 +19,6 @@ export interface UnityConnectionConfig {
   transportMethod?: string;
   authOption?: string;
   connectionMode?: string | number;
-  cloudServerUrl?: string;
   cloudToken?: string;
   tools?: McpFeature[];
   prompts?: McpFeature[];
@@ -45,7 +44,6 @@ export function createDefaultConfig(projectPath: string): UnityConnectionConfig 
     transportMethod: 'streamableHttp',
     authOption: 'none',
     connectionMode: 'Custom',
-    cloudServerUrl: 'https://ai-game.dev',
     tools: [],
     prompts: [],
     resources: [],
@@ -169,10 +167,12 @@ export function isCloudMode(config: UnityConnectionConfig): boolean {
   return mode === 'Cloud' || mode === 1;
 }
 
+export const CLOUD_SERVER_URL = 'https://ai-game.dev/mcp';
+
 /**
  * Resolve the server URL and auth token from a project config based on connectionMode.
  * - Custom mode (string "Custom" or integer 0): uses `host` and `token`
- * - Cloud mode (string "Cloud" or integer 1): uses `cloudServerUrl` and `cloudToken`
+ * - Cloud mode (string "Cloud" or integer 1): uses hardcoded cloud URL and `cloudToken`
  * Returns undefined values when the config or relevant fields are not set.
  */
 export function resolveConnectionFromConfig(config: UnityConnectionConfig): {
@@ -181,13 +181,8 @@ export function resolveConnectionFromConfig(config: UnityConnectionConfig): {
 } {
   const cloud = isCloudMode(config);
 
-  const rawCloudUrl = config.cloudServerUrl?.replace(/\/$/, '');
-  const cloudUrl = rawCloudUrl
-    ? rawCloudUrl.endsWith('/mcp') ? rawCloudUrl : rawCloudUrl + '/mcp'
-    : undefined;
-
   return {
-    url: cloud ? cloudUrl : config.host,
+    url: cloud ? CLOUD_SERVER_URL : config.host,
     token: cloud ? config.cloudToken : config.token,
   };
 }

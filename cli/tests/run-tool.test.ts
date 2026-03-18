@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { fileURLToPath } from 'url';
-import { resolveConnectionFromConfig, isCloudMode, type UnityConnectionConfig } from '../src/utils/config.js';
+import { resolveConnectionFromConfig, isCloudMode, CLOUD_SERVER_URL, type UnityConnectionConfig } from '../src/utils/config.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CLI_PATH = path.resolve(__dirname, '..', 'bin', 'unity-mcp-cli.js');
@@ -34,7 +34,6 @@ describe('resolveConnectionFromConfig', () => {
       connectionMode: 'Custom',
       host: 'http://localhost:55000',
       token: 'custom-secret',
-      cloudServerUrl: 'https://cloud.example.com',
       cloudToken: 'cloud-secret',
     };
     const result = resolveConnectionFromConfig(config);
@@ -42,16 +41,15 @@ describe('resolveConnectionFromConfig', () => {
     expect(result.token).toBe('custom-secret');
   });
 
-  it('returns cloudServerUrl with /mcp suffix and cloudToken in Cloud mode', () => {
+  it('returns hardcoded cloud URL and cloudToken in Cloud mode', () => {
     const config: UnityConnectionConfig = {
       connectionMode: 'Cloud',
       host: 'http://localhost:55000',
       token: 'custom-secret',
-      cloudServerUrl: 'https://cloud.example.com',
       cloudToken: 'cloud-secret',
     };
     const result = resolveConnectionFromConfig(config);
-    expect(result.url).toBe('https://cloud.example.com/mcp');
+    expect(result.url).toBe(CLOUD_SERVER_URL);
     expect(result.token).toBe('cloud-secret');
   });
 
@@ -74,12 +72,12 @@ describe('resolveConnectionFromConfig', () => {
     expect(result.token).toBeUndefined();
   });
 
-  it('returns undefined url and token when fields are missing in Cloud mode', () => {
+  it('returns hardcoded cloud URL and undefined token when fields are missing in Cloud mode', () => {
     const config: UnityConnectionConfig = {
       connectionMode: 'Cloud',
     };
     const result = resolveConnectionFromConfig(config);
-    expect(result.url).toBeUndefined();
+    expect(result.url).toBe(CLOUD_SERVER_URL);
     expect(result.token).toBeUndefined();
   });
 
@@ -110,7 +108,6 @@ describe('resolveConnectionFromConfig', () => {
       connectionMode: 0,
       host: 'http://localhost:55000',
       token: 'custom-secret',
-      cloudServerUrl: 'https://cloud.example.com',
       cloudToken: 'cloud-secret',
     };
     const result = resolveConnectionFromConfig(config);
@@ -118,16 +115,15 @@ describe('resolveConnectionFromConfig', () => {
     expect(result.token).toBe('custom-secret');
   });
 
-  it('handles legacy integer 1 as Cloud mode with /mcp suffix', () => {
+  it('handles legacy integer 1 as Cloud mode with hardcoded URL', () => {
     const config: UnityConnectionConfig = {
       connectionMode: 1,
       host: 'http://localhost:55000',
       token: 'custom-secret',
-      cloudServerUrl: 'https://cloud.example.com',
       cloudToken: 'cloud-secret',
     };
     const result = resolveConnectionFromConfig(config);
-    expect(result.url).toBe('https://cloud.example.com/mcp');
+    expect(result.url).toBe(CLOUD_SERVER_URL);
     expect(result.token).toBe('cloud-secret');
   });
 });
@@ -235,11 +231,10 @@ describe('run-tool config resolution', () => {
     expect(stdout).toContain('http://localhost:55555');
   });
 
-  it('reads URL from config in Cloud mode with /mcp suffix (--verbose shows config URL)', () => {
+  it('reads hardcoded cloud URL in Cloud mode (--verbose shows config URL)', () => {
     writeProjectConfig({
       connectionMode: 'Cloud',
       host: 'http://localhost:55555',
-      cloudServerUrl: 'http://localhost:55556',
       authOption: 'none',
     });
     const { stdout } = runCli([
@@ -249,7 +244,7 @@ describe('run-tool config resolution', () => {
       '--raw',
     ]);
     expect(stdout).toContain('Cloud mode');
-    expect(stdout).toContain('http://localhost:55556/mcp');
+    expect(stdout).toContain('https://ai-game.dev/mcp');
   });
 
   it('--url flag overrides config URL', () => {
@@ -298,7 +293,6 @@ describe('run-tool config resolution', () => {
   it('reads cloudToken from config in Cloud mode (--verbose shows hasToken)', () => {
     writeProjectConfig({
       connectionMode: 'Cloud',
-      cloudServerUrl: 'https://cloud.example.com',
       cloudToken: 'cloud-token-123',
     });
     const { stdout } = runCli([

@@ -32,7 +32,7 @@ function resolveProjectPath(positionalPath: string | undefined, options: RunTool
  *
  * URL priority:
  *   1. --url flag (explicit override)
- *   2. Config file connectionMode → Custom: host, Cloud: cloudServerUrl
+ *   2. Config file connectionMode → Custom: host, Cloud: hardcoded cloud URL
  *   3. Deterministic port from project path
  *
  * Token priority:

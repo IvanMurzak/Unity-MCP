@@ -176,12 +176,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private void SetupCloudAuthSection(VisualElement root)
         {
-            var inputCloudUrl = root.Q<TextField>("inputCloudServerUrl");
             var inputCloudToken = root.Q<TextField>("inputCloudToken");
             var btnRevoke = root.Q<Button>("btnCloudRevoke");
             var btnAuthorize = root.Q<Button>("btnCloudAuthorize");
             var statusLabel = root.Q<Label>("labelCloudAuthStatus");
-            if (inputCloudUrl == null || inputCloudToken == null || btnAuthorize == null) return;
+            if (inputCloudToken == null || btnAuthorize == null) return;
 
             _btnAuthorize = btnAuthorize;
 
@@ -193,20 +192,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 inputCloudToken.EnableInClassList("token-placeholder", isEmpty);
             }
 
-            inputCloudUrl.value = UnityMcpPluginEditor.CloudServerUrl;
             SetTokenValue(UnityMcpPluginEditor.CloudToken);
             UpdateCloudAuthState();
-
-            SubscribeToConnectionState((state, keepConnected) =>
-            {
-                var isReadOnly = keepConnected || state != HubConnectionState.Disconnected;
-                inputCloudUrl.isReadOnly = isReadOnly;
-                inputCloudUrl.EnableInClassList("disabled-text-field", isReadOnly);
-                inputCloudUrl.EnableInClassList("enabled-text-field", !isReadOnly);
-                inputCloudUrl.tooltip = isReadOnly
-                    ? "Editable only when Unity disconnected from the MCP Server."
-                    : "The cloud server URL to connect to.";
-            });
 
             void UpdateRevokeButtonVisibility()
             {
@@ -239,22 +226,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 if (UnityMcpPluginEditor.ConnectionMode == ConnectionMode.Cloud
                     && UnityMcpPluginEditor.Instance.HasMcpPluginInstance)
                     _ = UnityMcpPluginEditor.Instance.Disconnect();
-            });
-
-            inputCloudUrl.RegisterCallback<FocusOutEvent>(_ =>
-            {
-                var newValue = inputCloudUrl.value;
-                if (UnityMcpPluginEditor.CloudServerUrl == newValue) return;
-                UnityMcpPluginEditor.CloudServerUrl = newValue;
-                SaveChanges($"[AI Game Developer] Cloud URL Changed: {newValue}");
-
-                // Invalidate cached AI agent configs so they pick up the new cloud URL
-                InvalidateAndReloadAgentUI();
-
-                // Reconnect to the new cloud URL if currently in Cloud mode (only if authorized)
-                if (UnityMcpPluginEditor.ConnectionMode == ConnectionMode.Cloud
-                    && !string.IsNullOrEmpty(UnityMcpPluginEditor.CloudToken))
-                    ReconnectAfterModeSwitch();
             });
 
             btnAuthorize.RegisterCallback<ClickEvent>(async _ =>
@@ -310,7 +281,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     });
                 };
 
-                await capturedFlow.StartAsync(UnityMcpPluginEditor.CloudServerUrl, "Unity Editor");
+                await capturedFlow.StartAsync(UnityMcpPlugin.UnityConnectionConfig.CloudServerBaseUrl, "Unity Editor");
             });
         }
     }
