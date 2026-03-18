@@ -77,8 +77,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected VisualElement? ContainerSkills { get; private set; }
         protected Toggle? ToggleOptionHttp { get; private set; }
         protected Toggle? ToggleOptionStdio { get; private set; }
-        protected Button? BtnRemoveConfig { get; private set; }
-
         /// <summary>
         /// Gets the icon paths for this agent.
         /// </summary>
@@ -223,7 +221,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             ContainerHttp = root.Q<VisualElement>("containerHttp") ?? throw new NullReferenceException("VisualElement 'containerHttp' not found in UI.");
             ContainerStdio = root.Q<VisualElement>("containerStdio") ?? throw new NullReferenceException("VisualElement 'containerStdio' not found in UI.");
             ContainerSkills = root.Q<VisualElement>("containerSkills") ?? throw new NullReferenceException("VisualElement 'containerSkills' not found in UI.");
-            BtnRemoveConfig = root.Q<Button>("btnRemoveConfig");
 
             OnUICreated(root);
             SetupSkillsUI();
@@ -243,24 +240,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             SetTutorialUrl(TutorialUrl);
             SetConfigureStatusIndicator();
             SetTransportMethod(UnityMcpPluginEditor.TransportMethod);
-
-            BtnRemoveConfig?.RegisterCallback<ClickEvent>(evt =>
-            {
-                var activeConfig = UnityMcpPluginEditor.TransportMethod == TransportMethod.stdio ? ConfigStdio : ConfigHttp;
-                activeConfig.Unconfigure();
-                _configElementStdio?.UpdateStatus();
-                _configElementHttp?.UpdateStatus();
-                UpdateRemoveButton();
-            });
-        }
-
-        protected virtual void UpdateRemoveButton()
-        {
-            if (BtnRemoveConfig == null)
-                return;
-
-            var activeConfig = UnityMcpPluginEditor.TransportMethod == TransportMethod.stdio ? ConfigStdio : ConfigHttp;
-            BtnRemoveConfig.style.display = activeConfig.IsDetected() ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         protected virtual AiAgentConfigurator SetAgentName(string name)
@@ -344,19 +323,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             _subscriptionStdio = _configElementStdio.OnConfigured.Subscribe(_ =>
             {
-                _configElementHttp.UpdateStatus();
-                UpdateRemoveButton();
+                var anyConfigured = ConfigStdio.IsDetected() || ConfigHttp.IsDetected();
+                _configElementStdio.UpdateStatus(isAnyConfigured: anyConfigured);
+                _configElementHttp.UpdateStatus(isAnyConfigured: anyConfigured);
             });
             _subscriptionHttp = _configElementHttp.OnConfigured.Subscribe(_ =>
             {
-                _configElementStdio.UpdateStatus();
-                UpdateRemoveButton();
+                var anyConfigured = ConfigStdio.IsDetected() || ConfigHttp.IsDetected();
+                _configElementStdio.UpdateStatus(isAnyConfigured: anyConfigured);
+                _configElementHttp.UpdateStatus(isAnyConfigured: anyConfigured);
             });
 
             ContainerStdio!.Add(_configElementStdio.Root);
             ContainerHttp!.Add(_configElementHttp.Root);
 
-            UpdateRemoveButton();
+            // Cross-update so Remove buttons reflect any config across both transports
+            var anyConfigured = ConfigStdio.IsDetected() || ConfigHttp.IsDetected();
+            _configElementStdio.UpdateStatus(isAnyConfigured: anyConfigured);
+            _configElementHttp.UpdateStatus(isAnyConfigured: anyConfigured);
 
             return this;
         }
@@ -386,7 +370,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 ? DisplayStyle.Flex
                 : DisplayStyle.None;
 
-            UpdateRemoveButton();
             return this;
         }
 

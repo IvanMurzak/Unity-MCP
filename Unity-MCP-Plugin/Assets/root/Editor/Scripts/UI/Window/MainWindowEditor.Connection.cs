@@ -16,6 +16,7 @@ using com.IvanMurzak.Unity.MCP.Editor.UI.Controls;
 using Microsoft.AspNetCore.SignalR.Client;
 using UnityEngine;
 using UnityEngine.UIElements;
+using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
@@ -194,6 +195,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 else
                 {
                     UnityMcpPluginEditor.ConnectionMode = ConnectionMode.Cloud;
+
+                    // Cloud requires streamableHttp + authorization
+                    UnityMcpPluginEditor.TransportMethod = TransportMethod.streamableHttp;
+                    UnityMcpPluginEditor.AuthOption = AuthOption.required;
+
                     UnityMcpPluginEditor.Instance.Save();
                     UpdateModeVisibility(ConnectionMode.Cloud);
                     UpdateCloudAuthState();

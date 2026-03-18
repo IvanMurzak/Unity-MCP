@@ -7,7 +7,10 @@
             </ui:VisualElement>
             <ui:VisualElement style="flex-direction: row; align-items: center; justify-content: space-between; margin-top: 2px;">
                 <ui:Label text="Not configured" name="configureStatusText" class="section-desc" style="margin-bottom: 0;" />
-                <ui:Button name="btnConfigure" text="Configure" class="btn-compact" />
+                <ui:VisualElement style="flex-direction: row;">
+                    <ui:Button name="btnRemoveConfig" text="Remove" class="btn-compact btn-alert" style="display: none;" />
+                    <ui:Button name="btnConfigure" text="Configure" class="btn-compact" />
+                </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>

@@ -22,13 +22,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public VisualElement Root { get; }
         public Label StatusText { get; }
         public Button BtnConfigure { get; }
+        public Button BtnRemove { get; }
 
         private readonly Subject<bool> onConfigured = new();
         public Observable<bool> OnConfigured => onConfigured;
 
         private readonly AiAgentConfig _config;
         private readonly TransportMethod _transportMode;
-        private readonly EventCallback<ClickEvent> _clickCallback;
+        private readonly EventCallback<ClickEvent> _configureCallback;
+        private readonly EventCallback<ClickEvent> _removeCallback;
 
         public ConfigurationElements(AiAgentConfig config, TransportMethod transportMode)
         {
@@ -38,6 +40,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             Root = new UITemplate<VisualElement>("Editor/UI/uxml/agents/elements/TemplateConfigureStatus.uxml").Value;
             StatusText = Root.Q<Label>("configureStatusText") ?? throw new NullReferenceException("Label 'configureStatusText' not found in UI.");
             BtnConfigure = Root.Q<Button>("btnConfigure") ?? throw new NullReferenceException("Button 'btnConfigure' not found in UI.");
+            BtnRemove = Root.Q<Button>("btnRemoveConfig") ?? throw new NullReferenceException("Button 'btnRemoveConfig' not found in UI.");
 
             var pathLabel = Root.Q<Label>("labelConfigPath");
             if (pathLabel != null)
@@ -48,28 +51,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             UpdateStatus();
 
-            _clickCallback = new EventCallback<ClickEvent>(evt =>
+            _configureCallback = new EventCallback<ClickEvent>(evt =>
             {
-                var isCurrentlyConfigured = _config.IsConfigured();
-                if (isCurrentlyConfigured)
-                {
-                    _config.Unconfigure();
-                    UpdateStatus(false);
-                    onConfigured.OnNext(false);
-                }
-                else
-                {
-                    var result = _config.Configure();
-                    UpdateStatus(result);
-                    onConfigured.OnNext(result);
-                }
+                var result = _config.Configure();
+                UpdateStatus(result);
+                onConfigured.OnNext(result);
             });
-            BtnConfigure.RegisterCallback(_clickCallback);
+            BtnConfigure.RegisterCallback(_configureCallback);
+
+            _removeCallback = new EventCallback<ClickEvent>(evt =>
+            {
+                _config.Unconfigure();
+                UpdateStatus(false);
+                onConfigured.OnNext(false);
+            });
+            BtnRemove.RegisterCallback(_removeCallback);
         }
 
-        public void UpdateStatus(bool? isConfigured = null)
+        public void UpdateStatus(bool? isConfigured = null, bool? isAnyConfigured = null)
         {
             var isConfiguredValue = isConfigured ?? _config.IsConfigured();
+            var showRemove = isAnyConfigured ?? isConfiguredValue;
             var transportText = _transportMode switch
             {
                 TransportMethod.stdio => "stdio",
@@ -77,16 +79,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 _ => "unknown"
             };
 
-            StatusText.text = isConfiguredValue ? $"Configured ({transportText})" : "Not Configured";
+            StatusText.text = isConfiguredValue ? $"Configured ({transportText})" : "Not configured";
 
-            BtnConfigure.text = isConfiguredValue ? "Remove" : "Configure";
+            BtnConfigure.text = isConfiguredValue ? "Reconfigure" : "Configure";
             BtnConfigure.EnableInClassList("btn-primary", !isConfiguredValue);
-            BtnConfigure.EnableInClassList("btn-alert", isConfiguredValue);
+            BtnRemove.style.display = showRemove ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         public void Dispose()
         {
-            BtnConfigure.UnregisterCallback(_clickCallback);
+            BtnConfigure.UnregisterCallback(_configureCallback);
+            BtnRemove.UnregisterCallback(_removeCallback);
             onConfigured.OnCompleted();
             onConfigured.Dispose();
         }

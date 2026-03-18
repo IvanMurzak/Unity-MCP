@@ -128,6 +128,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     currentAiAgentConfigurator?.SetTransportMethod(TransportMethod.streamableHttp);
                 }
                 UpdateMcpServerState();
+
+                // Refresh AI agent config UI so the MCP status reflects the new transport
+                InvalidateAndReloadAgentUI();
             });
         }
 
