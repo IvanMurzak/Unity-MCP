@@ -1,7 +1,17 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
-    <ui:VisualElement name="templateConfigurationStatus" class="row" style="margin-top: 0px; margin-left: 7px;">
-        <ui:VisualElement name="configureStatusCircle" class="status-indicator-circle status-indicator-circle-disconnected" />
-        <ui:Label text="Not configured" name="configureStatusText" style="flex-grow: 1;" />
-        <ui:Button name="btnConfigure" text="Configure" class="btn-primary" />
+    <ui:VisualElement class="row" style="margin-top: 0px; margin-bottom: 6px;">
+        <ui:VisualElement name="templateConfigurationStatus" style="flex-grow: 1;">
+            <ui:VisualElement style="flex-direction: row; align-items: center; justify-content: space-between;">
+                <ui:Label name="labelMcpHeader" text="Model Context Protocol (MCP)" class="timeline-label" />
+                <ui:Label name="labelConfigPath" class="section-desc" style="margin-bottom: 0; -unity-text-align: middle-right; overflow: hidden; text-overflow: ellipsis; flex-shrink: 1; white-space: nowrap;" />
+            </ui:VisualElement>
+            <ui:VisualElement style="flex-direction: row; align-items: center; justify-content: space-between; margin-top: 2px;">
+                <ui:Label text="Not configured" name="configureStatusText" class="section-desc" style="margin-bottom: 0;" />
+                <ui:VisualElement style="flex-direction: row;">
+                    <ui:Button name="btnRemoveConfig" text="Remove" class="btn-compact btn-alert" style="display: none;" />
+                    <ui:Button name="btnConfigure" text="Configure" class="btn-compact" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

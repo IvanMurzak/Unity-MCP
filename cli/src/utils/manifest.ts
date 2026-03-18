@@ -14,9 +14,6 @@ const REQUIRED_SCOPES = [
   'org.nuget.r3',
 ];
 
-// Hardcoded fallback version (updated on each release)
-const FALLBACK_VERSION = '0.53.1';
-
 interface ScopedRegistry {
   name: string;
   url: string;
@@ -30,36 +27,43 @@ interface Manifest {
 }
 
 /**
- * Resolve the latest plugin version. Tries OpenUPM API first, falls back to hardcoded version.
+ * Resolve the latest plugin version from the OpenUPM registry.
+ * Throws an error with actionable suggestions if the network request fails.
  */
 export async function resolveLatestVersion(): Promise<string> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 5000);
+
   try {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 5000);
+    const res = await fetch(`https://package.openupm.com/${PACKAGE_ID}`, {
+      signal: controller.signal,
+      headers: { Accept: 'application/json' },
+    });
 
-    try {
-      const res = await fetch(`https://package.openupm.com/${PACKAGE_ID}`, {
-        signal: controller.signal,
-        headers: { Accept: 'application/json' },
-      });
-
-      if (res.ok) {
-        const data = (await res.json()) as { 'dist-tags'?: { latest?: string } };
-        const latest = data?.['dist-tags']?.latest;
-        if (latest) {
-          ui.info(`Resolved latest version from OpenUPM: ${latest}`);
-          return latest;
-        }
+    if (res.ok) {
+      const data = (await res.json()) as { 'dist-tags'?: { latest?: string } };
+      const latest = data?.['dist-tags']?.latest;
+      if (latest) {
+        ui.info(`Resolved latest version from OpenUPM: ${latest}`);
+        return latest;
       }
-    } finally {
-      clearTimeout(timeout);
     }
-  } catch {
-    // Network error or timeout — fall through to hardcoded version
-  }
 
-  ui.warn(`Using fallback version: ${FALLBACK_VERSION}`);
-  return FALLBACK_VERSION;
+    throw new Error(
+      `OpenUPM returned status ${res.status}. ` +
+      'Check your network connection and retry, or specify a version manually with --plugin-version <version>'
+    );
+  } catch (err) {
+    if (err instanceof Error && err.message.includes('--plugin-version')) {
+      throw err;
+    }
+    throw new Error(
+      'Failed to resolve latest plugin version from OpenUPM. ' +
+      'Check your network connection and retry, or specify a version manually with --plugin-version <version>'
+    );
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 /**
@@ -97,9 +101,11 @@ export function shouldUpdateVersion(currentVersion: string, newVersion: string):
  * Add Unity-MCP plugin to a Unity project's Packages/manifest.json.
  * Ports the C# Installer.Manifest.cs logic:
  * - Adds OpenUPM scoped registry with required scopes
- * - Adds/updates the plugin dependency (never downgrades)
+ * - Adds/updates the plugin dependency
+ * - When force is false (auto-resolved version): never downgrades
+ * - When force is true (user-specified --plugin-version): allows downgrade
  */
-export function addPluginToManifest(projectPath: string, version: string): void {
+export function addPluginToManifest(projectPath: string, version: string, force = false): void {
   const manifestPath = path.join(projectPath, 'Packages', 'manifest.json');
 
   if (!fs.existsSync(manifestPath)) {
@@ -151,12 +157,12 @@ export function addPluginToManifest(projectPath: string, version: string): void 
   }
 
   const currentVersion = manifest.dependencies[PACKAGE_ID];
-  if (!currentVersion || shouldUpdateVersion(currentVersion, version)) {
+  if (!currentVersion || force || shouldUpdateVersion(currentVersion, version)) {
     manifest.dependencies[PACKAGE_ID] = version;
     modified = true;
   } else {
     ui.info(
-      `Plugin already at version ${currentVersion} (>= ${version}). Skipping version update.`
+      `Plugin already at version ${currentVersion} (>= ${version}). Skipping version update. Use --plugin-version to force a specific version.`
     );
   }
 

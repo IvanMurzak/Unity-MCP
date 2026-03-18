@@ -39,7 +39,21 @@ describe('CLI integration', () => {
       expect(stdout).toContain('install-plugin');
       expect(stdout).toContain('remove-plugin');
       expect(stdout).toContain('configure');
-      expect(stdout).toContain('connect');
+      expect(stdout).toContain('run-tool');
+      // connect command was merged into open — no separate 'connect' command listed
+      // (the word 'connect' may appear in descriptions, but not as a standalone command)
+    });
+
+    it('lists commands in alphabetical order', () => {
+      const { stdout, exitCode } = runCli(['--help']);
+      expect(exitCode).toBe(0);
+      // Extract command names from help output
+      const commandNames = ['configure', 'create-project', 'install-plugin', 'install-unity', 'open', 'remove-plugin', 'run-tool'];
+      const positions = commandNames.map(name => stdout.indexOf(name));
+      // Verify each command appears after the previous one (alphabetical order)
+      for (let i = 1; i < positions.length; i++) {
+        expect(positions[i]).toBeGreaterThan(positions[i - 1]);
+      }
     });
 
     it('shows version with --version', () => {
@@ -231,34 +245,28 @@ describe('CLI integration', () => {
     });
   });
 
-  // --- connect command ---
+  // --- open command (merged open + connect) ---
 
-  describe('connect', () => {
-    it('shows help with --help', () => {
-      const { stdout, exitCode } = runCli(['connect', '--help']);
+  describe('open', () => {
+    it('shows help with --help including connection options', () => {
+      const { stdout, exitCode } = runCli(['open', '--help']);
       expect(exitCode).toBe(0);
+      expect(stdout).toContain('--path');
+      expect(stdout).toContain('--unity');
+      expect(stdout).toContain('--no-connect');
       expect(stdout).toContain('--url');
       expect(stdout).toContain('--tools');
       expect(stdout).toContain('--token');
       expect(stdout).toContain('--auth');
       expect(stdout).toContain('--keep-connected');
+      expect(stdout).toContain('--transport');
+      expect(stdout).toContain('--start-server');
     });
 
-    it('requires --path and --url', () => {
-      const { exitCode, stdout } = runCli(['connect']);
+    it('requires a project path', () => {
+      const { exitCode, stdout } = runCli(['open']);
       expect(exitCode).toBe(1);
-      expect(stdout).toContain('--path');
-    });
-  });
-
-  // --- open command ---
-
-  describe('open', () => {
-    it('shows help with --help', () => {
-      const { stdout, exitCode } = runCli(['open', '--help']);
-      expect(exitCode).toBe(0);
-      expect(stdout).toContain('--path');
-      expect(stdout).toContain('--unity');
+      expect(stdout).toContain('Path is required');
     });
   });
 

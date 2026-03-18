@@ -8,6 +8,21 @@
 
   <img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/promo/ai-developer-banner-glitch.gif" alt="AI Game Developer" title="Unity MCP CLI" width="100%">
 
+  <p>
+    <a href="https://claude.ai/download"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/claude-64.png" alt="Claude" title="Claude" height="36"></a>&nbsp;&nbsp;
+    <a href="https://openai.com/index/introducing-codex/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/codex-64.png" alt="Codex" title="Codex" height="36"></a>&nbsp;&nbsp;
+    <a href="https://www.cursor.com/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/cursor-64.png" alt="Cursor" title="Cursor" height="36"></a>&nbsp;&nbsp;
+    <a href="https://code.visualstudio.com/docs/copilot/overview"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/github-copilot-64.png" alt="GitHub Copilot" title="GitHub Copilot" height="36"></a>&nbsp;&nbsp;
+    <a href="https://gemini.google.com/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/gemini-64.png" alt="Gemini" title="Gemini" height="36"></a>&nbsp;&nbsp;
+    <a href="https://antigravity.google/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/antigravity-64.png" alt="Antigravity" title="Antigravity" height="36"></a>&nbsp;&nbsp;
+    <a href="https://code.visualstudio.com/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/vs-code-64.png" alt="VS Code" title="VS Code" height="36"></a>&nbsp;&nbsp;
+    <a href="https://www.jetbrains.com/rider/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/rider-64.png" alt="Rider" title="Rider" height="36"></a>&nbsp;&nbsp;
+    <a href="https://visualstudio.microsoft.com/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/visual-studio-64.png" alt="Visual Studio" title="Visual Studio" height="36"></a>&nbsp;&nbsp;
+    <a href="https://github.com/anthropics/claude-code"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/open-code-64.png" alt="Open Code" title="Open Code" height="36"></a>&nbsp;&nbsp;
+    <a href="https://github.com/cline/cline"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/cline-64.png" alt="Cline" title="Cline" height="36"></a>&nbsp;&nbsp;
+    <a href="https://github.com/Kilo-Org/kilocode"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/kilo-code-64.png" alt="Kilo Code" title="Kilo Code" height="36"></a>
+  </p>
+
 </div>
 
 <b>[English](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) | [日本語](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.ja.md) | [Español](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.es.md)</b>
@@ -50,129 +65,19 @@ unity-mcp-cli install-plugin /path/to/unity/project
 
 - [快速开始](#快速开始)
 - [命令](#命令)
-  - [`create-project`](#create-project) — 创建新 Unity 项目
-  - [`install-unity`](#install-unity) — 通过 Unity Hub 安装 Unity Editor
-  - [`open`](#open) — 在编辑器中打开 Unity 项目
-  - [`install-plugin`](#install-plugin) — 将 Unity-MCP 插件安装到项目中
-  - [`remove-plugin`](#remove-plugin) — 从项目中移除 Unity-MCP 插件
   - [`configure`](#configure) — 配置 MCP 工具、提示词和资源
   - [`connect`](#connect) — 启动 Unity 并建立 MCP 连接
+  - [`create-project`](#create-project) — 创建新 Unity 项目
+  - [`install-plugin`](#install-plugin) — 将 Unity-MCP 插件安装到项目中
+  - [`install-unity`](#install-unity) — 通过 Unity Hub 安装 Unity Editor
+  - [`open`](#open) — 在编辑器中打开 Unity 项目
+  - [`remove-plugin`](#remove-plugin) — 从项目中移除 Unity-MCP 插件
 - [完整自动化示例](#完整自动化示例)
 - [工作原理](#工作原理)
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 # 命令
-
-## `create-project`
-
-使用 Unity Editor 创建新的 Unity 项目。
-
-```bash
-npx unity-mcp-cli create-project /path/to/new/project
-```
-
-| 选项 | 必需 | 描述 |
-|---|---|---|
-| `[path]` | 是 | 项目将被创建的路径（位置参数或 `--path`） |
-| `--unity <version>` | 否 | 要使用的 Unity Editor 版本（默认为已安装的最高版本） |
-
-**示例 — 使用指定编辑器版本创建项目：**
-
-```bash
-npx unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
-```
-
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
-
-## `install-unity`
-
-通过 Unity Hub CLI 安装指定版本的 Unity Editor。
-
-```bash
-npx unity-mcp-cli install-unity 6000.3.1f1
-```
-
-| 参数 / 选项 | 必需 | 描述 |
-|---|---|---|
-| `[version]` | 否 | 要安装的 Unity Editor 版本（例如 `6000.3.1f1`） |
-| `--path <path>` | 否 | 从现有项目中读取所需版本 |
-
-若参数和选项均未提供，命令将从 Unity Hub 发布列表中安装最新稳定版本。
-
-**示例 — 安装项目所需的编辑器版本：**
-
-```bash
-npx unity-mcp-cli install-unity --path ./MyGame
-```
-
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
-
-## `open`
-
-在 Unity Editor 中打开 Unity 项目。
-
-```bash
-npx unity-mcp-cli open ./MyGame
-```
-
-| 选项 | 必需 | 描述 |
-|---|---|---|
-| `[path]` | 是 | Unity 项目的路径（位置参数或 `--path`） |
-| `--unity <version>` | 否 | 要使用的特定 Unity Editor 版本（默认为项目设置中的版本，回退为已安装的最高版本） |
-
-编辑器进程以分离模式启动 — CLI 会立即返回。
-
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
-
-## `install-plugin`
-
-将 Unity-MCP 插件安装到 Unity 项目的 `Packages/manifest.json` 中。
-
-```bash
-npx unity-mcp-cli install-plugin ./MyGame
-```
-
-| 选项 | 必需 | 描述 |
-|---|---|---|
-| `[path]` | 是 | Unity 项目的路径（位置参数或 `--path`） |
-| `--plugin-version <version>` | 否 | 要安装的插件版本（默认为来自 [OpenUPM](https://openupm.com/packages/com.ivanmurzak.unity.mcp/) 的最新版本） |
-
-此命令将：
-1. 添加 **OpenUPM 作用域注册表**及所有必要的作用域
-2. 将 `com.ivanmurzak.unity.mcp` 添加到 `dependencies`
-3. **从不降级** — 若已安装更高版本，则保留现有版本
-
-**示例 — 安装指定插件版本：**
-
-```bash
-npx unity-mcp-cli install-plugin ./MyGame --plugin-version 0.52.0
-```
-
-> 运行此命令后，请在 Unity Editor 中打开项目以完成包安装。
-
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
-
-## `remove-plugin`
-
-从 Unity 项目的 `Packages/manifest.json` 中移除 Unity-MCP 插件。
-
-```bash
-npx unity-mcp-cli remove-plugin ./MyGame
-```
-
-| 选项 | 必需 | 描述 |
-|---|---|---|
-| `[path]` | 是 | Unity 项目的路径（位置参数或 `--path`） |
-
-此命令将：
-1. 从 `dependencies` 中移除 `com.ivanmurzak.unity.mcp`
-2. **保留作用域注册表和作用域** — 其他包可能依赖它们
-3. 若插件未安装，则**不执行任何操作**
-
-> 运行此命令后，请在 Unity Editor 中打开项目以应用更改。
-
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 ## `configure`
 
@@ -277,6 +182,116 @@ npx unity-mcp-cli connect \
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
+## `create-project`
+
+使用 Unity Editor 创建新的 Unity 项目。
+
+```bash
+npx unity-mcp-cli create-project /path/to/new/project
+```
+
+| 选项 | 必需 | 描述 |
+|---|---|---|
+| `[path]` | 是 | 项目将被创建的路径（位置参数或 `--path`） |
+| `--unity <version>` | 否 | 要使用的 Unity Editor 版本（默认为已安装的最高版本） |
+
+**示例 — 使用指定编辑器版本创建项目：**
+
+```bash
+npx unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
+```
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `install-plugin`
+
+将 Unity-MCP 插件安装到 Unity 项目的 `Packages/manifest.json` 中。
+
+```bash
+npx unity-mcp-cli install-plugin ./MyGame
+```
+
+| 选项 | 必需 | 描述 |
+|---|---|---|
+| `[path]` | 是 | Unity 项目的路径（位置参数或 `--path`） |
+| `--plugin-version <version>` | 否 | 要安装的插件版本（默认为来自 [OpenUPM](https://openupm.com/packages/com.ivanmurzak.unity.mcp/) 的最新版本） |
+
+此命令将：
+1. 添加 **OpenUPM 作用域注册表**及所有必要的作用域
+2. 将 `com.ivanmurzak.unity.mcp` 添加到 `dependencies`
+3. **从不降级** — 若已安装更高版本，则保留现有版本
+
+**示例 — 安装指定插件版本：**
+
+```bash
+npx unity-mcp-cli install-plugin ./MyGame --plugin-version 0.52.0
+```
+
+> 运行此命令后，请在 Unity Editor 中打开项目以完成包安装。
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `install-unity`
+
+通过 Unity Hub CLI 安装指定版本的 Unity Editor。
+
+```bash
+npx unity-mcp-cli install-unity 6000.3.1f1
+```
+
+| 参数 / 选项 | 必需 | 描述 |
+|---|---|---|
+| `[version]` | 否 | 要安装的 Unity Editor 版本（例如 `6000.3.1f1`） |
+| `--path <path>` | 否 | 从现有项目中读取所需版本 |
+
+若参数和选项均未提供，命令将从 Unity Hub 发布列表中安装最新稳定版本。
+
+**示例 — 安装项目所需的编辑器版本：**
+
+```bash
+npx unity-mcp-cli install-unity --path ./MyGame
+```
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `open`
+
+在 Unity Editor 中打开 Unity 项目。
+
+```bash
+npx unity-mcp-cli open ./MyGame
+```
+
+| 选项 | 必需 | 描述 |
+|---|---|---|
+| `[path]` | 是 | Unity 项目的路径（位置参数或 `--path`） |
+| `--unity <version>` | 否 | 要使用的特定 Unity Editor 版本（默认为项目设置中的版本，回退为已安装的最高版本） |
+
+编辑器进程以分离模式启动 — CLI 会立即返回。
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `remove-plugin`
+
+从 Unity 项目的 `Packages/manifest.json` 中移除 Unity-MCP 插件。
+
+```bash
+npx unity-mcp-cli remove-plugin ./MyGame
+```
+
+| 选项 | 必需 | 描述 |
+|---|---|---|
+| `[path]` | 是 | Unity 项目的路径（位置参数或 `--path`） |
+
+此命令将：
+1. 从 `dependencies` 中移除 `com.ivanmurzak.unity.mcp`
+2. **保留作用域注册表和作用域** — 其他包可能依赖它们
+3. 若插件未安装，则**不执行任何操作**
+
+> 运行此命令后，请在 Unity Editor 中打开项目以应用更改。
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
 # 完整自动化示例
 
 通过一个脚本从零搭建完整的 Unity MCP 项目：
@@ -304,7 +319,7 @@ npx unity-mcp-cli connect \
 
 ### 确定性端口
 
-CLI 根据 Unity 项目的目录路径生成**确定性端口**（SHA256 哈希值映射到端口范围 50000–59999）。该端口生成机制与 Unity 插件中的实现完全一致，确保服务器与插件无需手动配置即可自动协商使用同一端口。
+CLI 根据 Unity 项目的目录路径生成**确定性端口**（SHA256 哈希值映射到端口范围 20000–29999）。该端口生成机制与 Unity 插件中的实现完全一致，确保服务器与插件无需手动配置即可自动协商使用同一端口。
 
 ### 插件安装
 

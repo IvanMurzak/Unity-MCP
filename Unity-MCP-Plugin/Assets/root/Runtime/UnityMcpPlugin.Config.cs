@@ -46,15 +46,18 @@ namespace com.IvanMurzak.Unity.MCP
             [JsonPropertyName("token")]
             public string? LocalToken { get; set; }
 
+            public const string CloudServerBaseUrl = "https://ai-game.dev";
+            public const string CloudServerUrl = CloudServerBaseUrl + "/mcp";
+
             /// <summary>
             /// Returns the active connection host based on <see cref="ConnectionMode"/>.
-            /// In Cloud mode, returns <see cref="CloudServerUrl"/> + "/mcp".
+            /// In Cloud mode, returns <see cref="CloudServerUrl"/>.
             /// In Local mode, returns <see cref="LocalHost"/>.
             /// </summary>
             [JsonIgnore]
             public override string Host
             {
-                get => ConnectionMode == ConnectionMode.Cloud ? CloudServerUrl + "/mcp" : LocalHost;
+                get => ConnectionMode == ConnectionMode.Cloud ? CloudServerUrl : LocalHost;
                 set => LocalHost = value;
             }
 
@@ -75,11 +78,11 @@ namespace com.IvanMurzak.Unity.MCP
             public TransportMethod TransportMethod { get; set; } = TransportMethod.streamableHttp;
             public AuthOption AuthOption { get; set; } = AuthOption.none;
             public ConnectionMode ConnectionMode { get; set; } = ConnectionMode.Custom;
-            public string CloudServerUrl { get; set; } = "https://ai-game.dev";
             public string? CloudToken { get; set; }
             public List<McpFeature> Tools { get; set; } = new();
             public List<McpFeature> Prompts { get; set; } = new();
             public List<McpFeature> Resources { get; set; } = new();
+            public Dictionary<string, bool> SkillAutoGenerate { get; set; } = new();
 
             /// <summary>
             /// When non-null, only the tools whose names appear in this list are enabled;
@@ -101,10 +104,11 @@ namespace com.IvanMurzak.Unity.MCP
                 KeepConnected = !isCi;
                 KeepServerRunning = !isCi;
                 GenerateSkillFiles = false;
+                SkillsPath = ".claude/skills"; // default skills location for Claude Code
+                SkillAutoGenerate = new();
                 TransportMethod = TransportMethod.streamableHttp;
                 AuthOption = AuthOption.none;
                 ConnectionMode = ConnectionMode.Custom;
-                CloudServerUrl = "https://ai-game.dev";
                 CloudToken = null;
                 LogLevel = LogLevel.Warning;
                 TimeoutMs = Consts.Hub.DefaultTimeoutMs;

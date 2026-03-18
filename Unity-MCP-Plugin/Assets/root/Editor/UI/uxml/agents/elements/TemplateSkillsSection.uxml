@@ -1,0 +1,20 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement class="row" style="margin-top: 0px; margin-bottom: 6px;">
+        <ui:VisualElement name="templateSkillsSection" style="flex-grow: 1;">
+            <ui:VisualElement style="flex-direction: row; align-items: center; justify-content: space-between;">
+                <ui:Label name="labelSkillsHeader" text="Skills" class="timeline-label" tooltip="Skills give the AI specialized procedural knowledge to handle complex tasks. They work by providing structured guides (Markdown files) that the AI reads to understand exactly how to execute workflows." />
+                <ui:Label name="labelSkillsPath" class="section-desc" style="margin-bottom: 0; -unity-text-align: middle-right; overflow: hidden; text-overflow: ellipsis; flex-shrink: 1; white-space: nowrap;" />
+            </ui:VisualElement>
+            <!-- Auto-generate toggle + Generate button row -->
+            <ui:VisualElement style="flex-direction: row; align-items: center; justify-content: space-between; margin-top: 2px;">
+                <ui:VisualElement style="flex-direction: row; align-items: center;">
+                    <ui:Label text="Auto-generate" class="section-desc" style="margin-bottom: 0;" tooltip="Automatically regenerate skill files each time the Unity Editor reloads domain." />
+                    <ui:Toggle name="toggleAutoGenerateSkills" tooltip="Automatically regenerate skill files each time the Unity Editor reloads domain." style="margin-left: 4px;" />
+                </ui:VisualElement>
+                <ui:Button name="btnGenerateSkills" text="Generate" class="btn-compact" tooltip="Manually generate skill files." />
+            </ui:VisualElement>
+            <!-- Unsupported label (hidden by default, shown when agent doesn't support skills) -->
+            <ui:Label name="labelSkillsUnsupported" text="Skills not supported by this agent" class="section-desc" style="display: none;" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

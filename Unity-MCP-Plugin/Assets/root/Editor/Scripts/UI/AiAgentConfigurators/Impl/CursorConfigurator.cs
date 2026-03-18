@@ -26,6 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public override string AgentId => "cursor";
         public override string DownloadUrl => "https://cursor.com/download";
         public override string TutorialUrl => "https://www.youtube.com/watch?v=dyk-4gTolSU";
+        public override string? SkillsPath => ".cursor/skills";
 
         protected override string? IconFileName => "cursor-64.png";
 

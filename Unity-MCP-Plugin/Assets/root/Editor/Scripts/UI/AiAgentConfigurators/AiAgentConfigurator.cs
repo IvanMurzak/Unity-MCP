@@ -49,6 +49,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public abstract string DownloadUrl { get; }
 
         /// <summary>
+        /// The relative (or absolute) path where skill files should be generated for this agent.
+        /// Return null if the agent does not support skills.
+        /// </summary>
+        public virtual string? SkillsPath => null;
+
+        /// <summary>
+        /// Whether this agent supports skill file generation.
+        /// </summary>
+        public bool SupportsSkills => SkillsPath != null;
+
+        /// <summary>
         /// The tutorial URL for configuring the AI agent.
         /// </summary>
         public virtual string TutorialUrl => string.Empty;
@@ -63,10 +74,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected VisualElement? ContainerUnderHeader { get; private set; }
         protected VisualElement? ContainerHttp { get; private set; }
         protected VisualElement? ContainerStdio { get; private set; }
+        protected VisualElement? ContainerSkills { get; private set; }
         protected Toggle? ToggleOptionHttp { get; private set; }
         protected Toggle? ToggleOptionStdio { get; private set; }
-        protected Button? BtnRemoveConfig { get; private set; }
-
         /// <summary>
         /// Gets the icon paths for this agent.
         /// </summary>
@@ -210,9 +220,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             ContainerUnderHeader = root.Q<VisualElement>("containerUnderHeader") ?? throw new NullReferenceException("VisualElement 'containerUnderHeader' not found in UI.");
             ContainerHttp = root.Q<VisualElement>("containerHttp") ?? throw new NullReferenceException("VisualElement 'containerHttp' not found in UI.");
             ContainerStdio = root.Q<VisualElement>("containerStdio") ?? throw new NullReferenceException("VisualElement 'containerStdio' not found in UI.");
-            BtnRemoveConfig = root.Q<Button>("btnRemoveConfig");
+            ContainerSkills = root.Q<VisualElement>("containerSkills") ?? throw new NullReferenceException("VisualElement 'containerSkills' not found in UI.");
 
             OnUICreated(root);
+            SetupSkillsUI();
             McpWindowBase.EnableSmoothFoldoutTransitions(root);
             return root;
         }
@@ -229,24 +240,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             SetTutorialUrl(TutorialUrl);
             SetConfigureStatusIndicator();
             SetTransportMethod(UnityMcpPluginEditor.TransportMethod);
-
-            BtnRemoveConfig?.RegisterCallback<ClickEvent>(evt =>
-            {
-                var activeConfig = UnityMcpPluginEditor.TransportMethod == TransportMethod.stdio ? ConfigStdio : ConfigHttp;
-                activeConfig.Unconfigure();
-                _configElementStdio?.UpdateStatus();
-                _configElementHttp?.UpdateStatus();
-                UpdateRemoveButton();
-            });
-        }
-
-        protected virtual void UpdateRemoveButton()
-        {
-            if (BtnRemoveConfig == null)
-                return;
-
-            var activeConfig = UnityMcpPluginEditor.TransportMethod == TransportMethod.stdio ? ConfigStdio : ConfigHttp;
-            BtnRemoveConfig.style.display = activeConfig.IsDetected() ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         protected virtual AiAgentConfigurator SetAgentName(string name)
@@ -330,19 +323,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             _subscriptionStdio = _configElementStdio.OnConfigured.Subscribe(_ =>
             {
-                _configElementHttp.UpdateStatus();
-                UpdateRemoveButton();
+                var anyConfigured = ConfigStdio.IsDetected() || ConfigHttp.IsDetected();
+                _configElementStdio.UpdateStatus(isAnyConfigured: anyConfigured);
+                _configElementHttp.UpdateStatus(isAnyConfigured: anyConfigured);
             });
             _subscriptionHttp = _configElementHttp.OnConfigured.Subscribe(_ =>
             {
-                _configElementStdio.UpdateStatus();
-                UpdateRemoveButton();
+                var anyConfigured = ConfigStdio.IsDetected() || ConfigHttp.IsDetected();
+                _configElementStdio.UpdateStatus(isAnyConfigured: anyConfigured);
+                _configElementHttp.UpdateStatus(isAnyConfigured: anyConfigured);
             });
 
             ContainerStdio!.Add(_configElementStdio.Root);
             ContainerHttp!.Add(_configElementHttp.Root);
 
-            UpdateRemoveButton();
+            // Cross-update so Remove buttons reflect any config across both transports
+            var anyConfigured = ConfigStdio.IsDetected() || ConfigHttp.IsDetected();
+            _configElementStdio.UpdateStatus(isAnyConfigured: anyConfigured);
+            _configElementHttp.UpdateStatus(isAnyConfigured: anyConfigured);
 
             return this;
         }
@@ -372,8 +370,66 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 ? DisplayStyle.Flex
                 : DisplayStyle.None;
 
-            UpdateRemoveButton();
             return this;
+        }
+
+        protected VisualElement TemplateSkillsSection() =>
+            new UITemplate<VisualElement>("Editor/UI/uxml/agents/elements/TemplateSkillsSection.uxml").Value;
+
+        /// <summary>
+        /// Builds the skills UI inside <see cref="ContainerSkills"/>.
+        /// Override in subclasses that need a custom layout (e.g. editable path field).
+        /// </summary>
+        protected virtual void SetupSkillsUI()
+        {
+            if (ContainerSkills == null)
+                return;
+
+            var section = TemplateSkillsSection();
+            var pathLabel = section.Q<Label>("labelSkillsPath");
+            var toggleAutoGenerate = section.Q<Toggle>("toggleAutoGenerateSkills");
+            var btnGenerate = section.Q<Button>("btnGenerateSkills");
+            var unsupportedLabel = section.Q<Label>("labelSkillsUnsupported");
+
+            if (!SupportsSkills)
+            {
+                // Hide the normal controls, show the unsupported label
+                pathLabel.parent.style.display = DisplayStyle.None;
+                toggleAutoGenerate.parent.parent.style.display = DisplayStyle.None;
+                unsupportedLabel.style.display = DisplayStyle.Flex;
+                unsupportedLabel.SetEnabled(false);
+                ContainerSkills.Add(section);
+                return;
+            }
+
+            // Hide the unsupported label
+            unsupportedLabel.style.display = DisplayStyle.None;
+
+            // Show the skills output path
+            pathLabel.text = SkillsPath;
+            pathLabel.tooltip = SkillsPath;
+
+            // Configure toggle (per-agent)
+            toggleAutoGenerate.SetValueWithoutNotify(UnityMcpPluginEditor.IsAutoGenerateSkills(AgentId));
+            toggleAutoGenerate.RegisterValueChangedCallback(evt =>
+            {
+                UnityMcpPluginEditor.SetAutoGenerateSkills(AgentId, evt.newValue);
+                UnityMcpPluginEditor.SkillsPath = SkillsPath!;
+                UnityMcpPluginEditor.Instance.Save();
+
+                if (evt.newValue)
+                    UnityMcpPluginEditor.Instance.McpPluginInstance!.GenerateSkillFiles(UnityMcpPluginEditor.ProjectRootPath);
+            });
+
+            // Configure generate button
+            btnGenerate.RegisterCallback<ClickEvent>(evt =>
+            {
+                UnityMcpPluginEditor.SkillsPath = SkillsPath!;
+                UnityMcpPluginEditor.Instance.Save();
+                UnityMcpPluginEditor.Instance.McpPluginInstance!.GenerateSkillFiles(UnityMcpPluginEditor.ProjectRootPath);
+            });
+
+            ContainerSkills.Add(section);
         }
 
         #endregion

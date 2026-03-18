@@ -27,6 +27,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public override string AgentName => "Cline";
         public override string AgentId => "cline";
         public override string DownloadUrl => "https://cline.bot/";
+        public override string? SkillsPath => ".cline/skills"; // https://docs.cline.bot/customization/skills
 
         protected override string? IconFileName => "cline-64.png";
 

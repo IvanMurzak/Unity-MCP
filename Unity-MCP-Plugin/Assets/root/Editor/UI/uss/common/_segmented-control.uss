@@ -1,0 +1,52 @@
+/* ==========================================================================
+   Segmented Control — tab-like toggle with sliding highlight
+   ========================================================================== */
+
+.segmented-control {
+    flex-direction: row;
+    flex-shrink: 0;
+    margin-right: 3px;
+}
+
+.segmented-control__track {
+    flex-direction: row;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    padding: 2px;
+}
+
+.segmented-control__highlight {
+    position: absolute;
+    top: 2px;
+    bottom: 2px;
+    background-color: rgba(0, 0, 0, 0.4);
+    border-radius: 4px;
+    transition-property: left, width;
+    transition-duration: 200ms, 200ms;
+}
+
+.segmented-control__highlight--no-transition {
+    transition-duration: 0s, 0s;
+}
+
+.segmented-control__segment {
+    color: rgb(140, 140, 140);
+    font-size: 12px;
+    padding: 2px 8px;
+    margin: 0;
+    min-width: 40px;
+    -unity-text-align: middle-center;
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.segmented-control__segment:hover {
+    color: rgb(180, 180, 180);
+}
+
+.segmented-control__segment--selected {
+    color: rgb(175, 232, 230);
+}
+
+.segmented-control__segment--selected:hover {
+    color: rgb(200, 245, 243);
+}

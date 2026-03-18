@@ -4,12 +4,14 @@ import * as fs from 'fs';
 import { ensureUnityHub, installEditor, listInstalledEditors, listAvailableReleases, findLatestStableRelease } from '../utils/unity-hub.js';
 import { getProjectEditorVersion } from '../utils/unity-editor.js';
 import * as ui from '../utils/ui.js';
+import { verbose } from '../utils/ui.js';
 
 export const installUnityCommand = new Command('install-unity')
   .description('Install Unity Editor via Unity Hub')
   .argument('[version]', 'Unity Editor version to install (e.g. 6000.3.1f1). Omit to install latest stable release.')
   .option('--path <path>', 'Read version from an existing Unity project')
   .action(async (positionalVersion: string | undefined, options: { path?: string }) => {
+    verbose(`install-unity invoked with version=${positionalVersion ?? '(auto)'}, path=${options.path ?? '(none)'}`);
     const spinner = ui.startSpinner('Locating Unity Hub...');
     let hubPath: string;
     try {
@@ -19,6 +21,7 @@ export const installUnityCommand = new Command('install-unity')
       throw err;
     }
     spinner.success('Unity Hub located');
+    verbose(`Unity Hub path: ${hubPath}`);
 
     let version = positionalVersion;
 
@@ -69,6 +72,7 @@ export const installUnityCommand = new Command('install-unity')
       return;
     }
 
+    verbose(`Installing Unity Editor version: ${version}`);
     await installEditor(hubPath, version, releases);
     ui.success(`Unity Editor ${version} installed successfully`);
   });

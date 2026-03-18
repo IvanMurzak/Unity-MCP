@@ -4,9 +4,9 @@
             <!-- Header Section -->
             <ui:Box name="contHeader" style="background-color: rgba(222, 222, 222, 0); flex-direction: row; flex-shrink: 0;">
                 <ui:VisualElement style="flex-grow: 1; background-color: rgba(0, 0, 0, 0);">
-                    <ui:EnumField label="Log Level" name="dropdownLogLevel" type="com.IvanMurzak.Unity.MCP.Runtime.Utils.LogLevel, com.IvanMurzak.Unity.MCP.Runtime" value="Warning" class="content-item" style="align-self: flex-start;" />
-                    <ui:IntegerField label="Timeout (ms)" name="inputTimeoutMs" value="10000" class="content-item" style="align-self: flex-start;" />
-                    <ui:TextField picking-mode="Ignore" label="Version" value="0.0.0" readonly="true" name="currentVersion" focusable="false" class="content-item transparent-text-field" style="align-self: flex-start;" />
+                    <ui:EnumField label="Log Level" name="dropdownLogLevel" type="com.IvanMurzak.Unity.MCP.Runtime.Utils.LogLevel, com.IvanMurzak.Unity.MCP.Runtime" value="Warning" class="content-item styled-dropdown" />
+                    <ui:IntegerField label="Timeout (ms)" name="inputTimeoutMs" value="10000" class="content-item" />
+                    <ui:TextField picking-mode="Ignore" label="Version" value="0.0.0" readonly="true" name="currentVersion" focusable="false" class="content-item transparent-text-field" />
                 </ui:VisualElement>
                 <ui:VisualElement name="imgLogoPivot" class="animated-selectable" style="flex-grow: 0; height: 60px; width: 60px; right: 0; margin-left: 15px; flex-shrink: 0; margin-right: 0px; margin-top: 2px; flex-direction: row;">
                     <ui:VisualElement name="imgLogo" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); background-image: url(&quot;project://database/Assets/root/Editor/Gizmos/logo_512.png?fileID=2800000&amp;guid=bbb0f64bd8f15164781e01168cd6fa4f&amp;type=3#logo_512&quot;); -unity-background-scale-mode: stretch-to-fill; align-self: stretch;" />
@@ -16,17 +16,13 @@
             <!-- Connection Section ============================== -->
             <ui:VisualElement class="row" style="margin-top: 0; align-items: center;">
                 <ui:Label text="Connection" class="header" />
-                <ui:VisualElement style="flex-direction: row; flex-grow: 1; justify-content: flex-end; margin-right: 0;">
-                    <ui:Toggle name="toggleModeCustom" label="Custom" tooltip="Connect to your own MCP server. The plugin starts a local MCP server automatically and manages its lifecycle. Use this when you want full control over the server configuration, port, transport, and authorization settings." class="toggle-text-button" />
-                    <ui:Toggle name="toggleModeCloud" label="Cloud" tooltip="Connect to a remote MCP server hosted in the cloud (e.g. ai-game.dev). No local server is started — the plugin connects directly to the specified Cloud URL. Requires authorization via device code flow." class="toggle-text-button" />
-                </ui:VisualElement>
+                <ui:VisualElement name="segmentConnectionMode" style="flex-direction: row; flex-grow: 1; justify-content: flex-end; margin-right: 0;" />
             </ui:VisualElement>
-            <ui:TextField picking-mode="Ignore" label="Server URL" value="http://localhost:8080" name="InputServerURL" class="content-item" />
+            <ui:TextField picking-mode="Ignore" label="Server URL" value="http://localhost:8080" name="InputServerURL" class="content-item styled-text-field" />
             <!-- Cloud Authorization (visible in Cloud mode only) -->
             <ui:VisualElement name="cloudAuthSection" style="flex-direction: column; margin-bottom: 8px; display: none;">
-                <ui:TextField name="inputCloudServerUrl" label="Cloud URL" value="https://ai-game.dev" class="content-item" />
                 <ui:VisualElement style="flex-direction: row; margin-top: 2px; align-items: center;">
-                    <ui:TextField name="inputCloudToken" label="" placeholder-text="Cloud Token" readonly="true" style="flex-grow: 1;" class="token-input" />
+                    <ui:TextField name="inputCloudToken" label="" placeholder-text="Cloud Token" readonly="true" password="true" style="flex-grow: 1;" class="token-input" />
                     <ui:Button name="btnCloudRevoke" text="Revoke" tooltip="Logout from the Cloud server. Clears the stored authentication token and disconnects Unity from the cloud." class="btn-compact btn-alert" style="display: none;" />
                     <ui:Button name="btnCloudAuthorize" text="Authorize" tooltip="Authenticate with the Cloud server using device code flow. Opens a browser to complete authorization." class="btn-compact" />
                 </ui:VisualElement>
@@ -60,23 +56,17 @@
                         <!-- Row 2: Transport -->
                         <ui:VisualElement style="flex-direction: row; align-items: center; justify-content: space-between; margin-top: 2px; margin-bottom: 2px;">
                             <ui:Label name="labelTransport" text="Transport" class="section-desc" style="margin-bottom: 0;" />
-                            <ui:VisualElement style="flex-direction: row;">
-                                <ui:Toggle name="toggleOptionStdio" label="stdio" class="toggle-text-button" />
-                                <ui:Toggle name="toggleOptionHttp" label="http" class="toggle-text-button" />
-                            </ui:VisualElement>
+                            <ui:VisualElement name="segmentTransport" />
                         </ui:VisualElement>
                         <!-- Row 3: Authorization -->
                         <ui:VisualElement style="flex-direction: row; align-items: center; justify-content: space-between; margin-top: 2px; margin-bottom: 2px;">
                             <ui:Label name="labelAuthorizationToken" text="Authorization Token" class="section-desc" style="margin-bottom: 0;" />
-                            <ui:VisualElement style="flex-direction: row;">
-                                <ui:Toggle name="toggleAuthorizationNone" label="none" class="toggle-text-button" />
-                                <ui:Toggle name="toggleAuthorizationRequired" label="required" class="toggle-text-button" />
-                            </ui:VisualElement>
+                            <ui:VisualElement name="segmentAuthorization" />
                         </ui:VisualElement>
                         <!-- Row 4: Authorization Token -->
                         <ui:VisualElement name="tokenSection" style="flex-direction: column; margin-top: 2px; margin-bottom: 2px;">
                             <ui:VisualElement style="flex-direction: row;">
-                                <ui:TextField name="inputAuthorizationToken" label="" placeholder-text="Token" readonly="true" class="token-input" />
+                                <ui:TextField name="inputAuthorizationToken" label="" placeholder-text="Token" readonly="true" password="true" class="token-input" />
                                 <ui:Button name="btnGenerateToken" text="New" class="btn-compact" />
                             </ui:VisualElement>
                         </ui:VisualElement>
@@ -96,7 +86,7 @@
             <!-- AI Agent Section ============================== -->
             <ui:VisualElement class="row" style="margin-top: 0; align-items: center;">
                 <ui:Label text="AI agent" class="header" />
-                <ui:DropdownField name="aiAgentDropdown" class="content-item" style="flex-grow: 1; flex-shrink: 1; min-width: 0; padding-top: 4px; margin-right: 0px;" />
+                <ui:DropdownField name="aiAgentDropdown" class="content-item styled-dropdown" style="flex-grow: 1; flex-shrink: 1; min-width: 0; padding-top: 4px; margin-right: 0px;" />
             </ui:VisualElement>
             <ui:VisualElement name="ConfigureAgentsContainer" />
             <ui:VisualElement class="divider" />
@@ -109,23 +99,6 @@
                         <ui:Label name="toolsTokenCountLabel" text="~0 tokens total" tooltip="Total tokens consumed by active tools in the AI context. Fewer tokens means more free context for AI to reason, leading to better and more accurate responses. Disable unused tools to reduce token usage." style="font-size: 11px; color: rgb(150, 150, 150); margin-top: 2px;" />
                     </ui:VisualElement>
                     <ui:Button name="btnOpenTools" text="Open" class="btn-secondary" />
-                </ui:VisualElement>
-                <!-- Skills Sub-section -->
-                <ui:VisualElement name="SkillsSection" style="margin-top: 6px;">
-                    <ui:Label text="SKILLS (procedural)" class="timeline-label" style="align-self: flex-start;" tooltip="Skills give the AI specialized procedural knowledge to handle complex tasks. They work by providing structured guides (Markdown files) that the AI reads to understand exactly how to execute workflows. This helps the AI act more autonomously and accurately without needing constant detailed prompts." />
-                    <!-- Output Path row -->
-                    <ui:VisualElement style="flex-direction: row; align-items: center; margin-top: 4px; margin-bottom: 2px;">
-                        <ui:Label name="labelSkillsOutputPath" text="Output Path" class="section-desc" style="margin-bottom: 0; flex-shrink: 0;" />
-                        <ui:TextField name="inputSkillsRootFolder" style="flex-grow: 1; flex-shrink: 1; min-width: 0; margin-left: 47px;" />
-                    </ui:VisualElement>
-                    <!-- Auto-generate toggle + Generate button row -->
-                    <ui:VisualElement style="flex-direction: row; align-items: center; justify-content: space-between; margin-top: 2px;">
-                        <ui:VisualElement style="flex-direction: row; align-items: center;">
-                            <ui:Label text="Automatic generate" class="section-desc" style="margin-bottom: 0;" tooltip="Automatically regenerate skill files each time the Unity Editor reloads domain." />
-                            <ui:Toggle name="toggleAutoGenerateSkills" tooltip="Automatically regenerate skill files each time the Unity Editor reloads domain." style="margin-left: 4px;" />
-                        </ui:VisualElement>
-                        <ui:Button name="btnGenerateSkills" text="Generate" class="btn-compact" tooltip="Manually generate skill files." />
-                    </ui:VisualElement>
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement class="divider" />

@@ -22,6 +22,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public override string AgentName => "Other - Custom";
         public override string AgentId => "other-custom";
         public override string DownloadUrl => "NA";
+        public override string? SkillsPath => UnityMcpPluginEditor.SkillsPath;
 
         protected override string? IconFileName => null;
 
@@ -49,11 +50,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         {
             // Custom configurator doesn't have configure status indicator
             return this;
-        }
-
-        protected override void UpdateRemoveButton()
-        {
-            // Custom configurator doesn't have a remove button, so we can skip this
         }
 
         protected override void OnUICreated(VisualElement root)
@@ -89,6 +85,54 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             ContainerHttp!.Add(TemplateLabelDescription("4. (Optional) Stop and remove the MCP server using Docker when you are done."));
             ContainerHttp!.Add(TemplateTextFieldReadOnly(McpServerManager.DockerStopCommand()));
             ContainerHttp!.Add(TemplateTextFieldReadOnly(McpServerManager.DockerRemoveCommand()));
+        }
+
+        protected override void SetupSkillsUI()
+        {
+            if (ContainerSkills == null)
+                return;
+
+            var section = TemplateSkillsSection();
+            var pathLabel = section.Q<Label>("labelSkillsPath");
+            var toggleAutoGenerate = section.Q<Toggle>("toggleAutoGenerateSkills");
+            var btnGenerate = section.Q<Button>("btnGenerateSkills");
+            var unsupportedLabel = section.Q<Label>("labelSkillsUnsupported");
+
+            // Hide the unsupported label
+            unsupportedLabel.style.display = DisplayStyle.None;
+
+            // Replace the read-only path label with an editable TextField for custom configurator
+            var headerRow = pathLabel.parent;
+            var inputPath = new TextField { value = UnityMcpPluginEditor.SkillsPath };
+            inputPath.style.flexGrow = 1;
+            inputPath.style.flexShrink = 1;
+            inputPath.style.minWidth = 0;
+            inputPath.RegisterValueChangedCallback(evt =>
+            {
+                UnityMcpPluginEditor.SkillsPath = evt.newValue;
+                UnityMcpPluginEditor.Instance.Save();
+            });
+            headerRow.Remove(pathLabel);
+            headerRow.Add(inputPath);
+
+            // Configure toggle (per-agent)
+            toggleAutoGenerate.SetValueWithoutNotify(UnityMcpPluginEditor.IsAutoGenerateSkills(AgentId));
+            toggleAutoGenerate.RegisterValueChangedCallback(evt =>
+            {
+                UnityMcpPluginEditor.SetAutoGenerateSkills(AgentId, evt.newValue);
+                UnityMcpPluginEditor.Instance.Save();
+
+                if (evt.newValue)
+                    UnityMcpPluginEditor.Instance.McpPluginInstance!.GenerateSkillFiles(UnityMcpPluginEditor.ProjectRootPath);
+            });
+
+            // Configure generate button
+            btnGenerate.RegisterCallback<ClickEvent>(evt =>
+            {
+                UnityMcpPluginEditor.Instance.McpPluginInstance!.GenerateSkillFiles(UnityMcpPluginEditor.ProjectRootPath);
+            });
+
+            ContainerSkills.Add(section);
         }
     }
 }

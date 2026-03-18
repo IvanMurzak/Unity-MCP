@@ -11,17 +11,19 @@
                     <ui:Label name="tutorialLink" text="YouTube Tutorial" class="section-desc link-label" />
                 </ui:VisualElement>
             </ui:VisualElement>
-            <ui:Button name="btnRemoveConfig" text="✕" class="btn-remove-circle" style="align-self: flex-start;" tooltip="Remove MCP server from the AI agent configuration" />
         </ui:VisualElement>
 
         <!-- Under header container -->
         <ui:VisualElement name="containerUnderHeader" />
 
+        <!-- Skills container -->
+        <ui:VisualElement name="containerSkills" />
+
         <!-- Transport mode container: HTTP -->
-        <ui:VisualElement name="containerHttp" />
+        <ui:VisualElement name="containerHttp" style="margin-top: 4px;" />
 
         <!-- Transport mode container: STDIO -->
-        <ui:VisualElement name="containerStdio" />
+        <ui:VisualElement name="containerStdio" style="margin-top: 4px;" />
 
     </ui:VisualElement>
 </ui:UXML>

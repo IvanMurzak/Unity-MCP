@@ -9,10 +9,9 @@
 */
 
 #nullable enable
-using com.IvanMurzak.McpPlugin.Skills;
+using com.IvanMurzak.Unity.MCP.Editor.UI;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
-using Microsoft.Extensions.Logging;
 using UnityEditor;
 using UnityEngine;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
@@ -39,7 +38,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             UpdateChecker.Init();
             PackageUtils.Init();
 
-            UnityMcpPluginEditor.Instance.McpPluginInstance!.GenerateSkillFilesIfNeeded(UnityMcpPluginEditor.ProjectRootPath);
+            // Auto-generate skill files for the selected agent if enabled
+            var savedAgentId = MainWindowEditor.selectedAiAgentId.Value;
+            var agent = AiAgentConfiguratorRegistry.GetByAgentId(savedAgentId);
+            if (agent?.SupportsSkills == true && UnityMcpPluginEditor.IsAutoGenerateSkills(agent.AgentId))
+            {
+                UnityMcpPluginEditor.SkillsPath = agent.SkillsPath!;
+                UnityMcpPluginEditor.Instance.McpPluginInstance!.GenerateSkillFiles(UnityMcpPluginEditor.ProjectRootPath);
+            }
         }
     }
 }

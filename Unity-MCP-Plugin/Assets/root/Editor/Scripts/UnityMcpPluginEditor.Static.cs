@@ -181,15 +181,7 @@ namespace com.IvanMurzak.Unity.MCP
                 NotifyChanged(Instance.unityConnectionConfig);
             }
         }
-        public static string CloudServerUrl
-        {
-            get => Instance.unityConnectionConfig.CloudServerUrl;
-            set
-            {
-                Instance.unityConnectionConfig.CloudServerUrl = value;
-                NotifyChanged(Instance.unityConnectionConfig);
-            }
-        }
+        public static string CloudServerUrl => UnityMcpPlugin.UnityConnectionConfig.CloudServerUrl;
         public static string? CloudToken
         {
             get => Instance.unityConnectionConfig.CloudToken;
@@ -200,15 +192,18 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
-        public static bool GenerateSkillFiles
+        public static bool IsAutoGenerateSkills(string agentId)
         {
-            get => Instance.unityConnectionConfig.GenerateSkillFiles;
-            set
-            {
-                Instance.unityConnectionConfig.GenerateSkillFiles = value;
-                NotifyChanged(Instance.unityConnectionConfig);
-            }
+            var dict = Instance.unityConnectionConfig.SkillAutoGenerate;
+            return dict.TryGetValue(agentId, out var enabled) && enabled;
         }
+
+        public static void SetAutoGenerateSkills(string agentId, bool enabled)
+        {
+            Instance.unityConnectionConfig.SkillAutoGenerate[agentId] = enabled;
+            NotifyChanged(Instance.unityConnectionConfig);
+        }
+
         public static string SkillsPath
         {
             get => Instance.unityConnectionConfig.SkillsPath;

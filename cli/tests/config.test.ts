@@ -31,11 +31,11 @@ describe('config', () => {
       expect(config.host).toMatch(/^http:\/\/localhost:\d+$/);
     });
 
-    it('returns a config with a port in range 50000-59999', () => {
+    it('returns a config with a port in range 20000-29999', () => {
       const config = createDefaultConfig(tmpDir);
       const port = parseInt(config.host!.split(':').pop()!, 10);
-      expect(port).toBeGreaterThanOrEqual(50000);
-      expect(port).toBeLessThanOrEqual(59999);
+      expect(port).toBeGreaterThanOrEqual(20000);
+      expect(port).toBeLessThanOrEqual(29999);
     });
 
     it('returns correct default values', () => {
@@ -47,7 +47,6 @@ describe('config', () => {
       expect(config.transportMethod).toBe('streamableHttp');
       expect(config.authOption).toBe('none');
       expect(config.connectionMode).toBe('Custom');
-      expect(config.cloudServerUrl).toBe('https://ai-game.dev');
       expect(config.tools).toEqual([]);
       expect(config.prompts).toEqual([]);
       expect(config.resources).toEqual([]);

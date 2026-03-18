@@ -12,19 +12,26 @@
 using System;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.Services;
+using com.IvanMurzak.Unity.MCP.Editor.UI.Controls;
 using Microsoft.AspNetCore.SignalR.Client;
+using UnityEngine;
 using UnityEngine.UIElements;
+using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
     public partial class MainWindowEditor
     {
+        private TextField? _inputFieldHost;
+        private VisualElement? _connectionStatusCircle;
+        private Label? _connectionStatusText;
+
         private void SetupConnectionSection(VisualElement root)
         {
-            var inputFieldHost = root.Q<TextField>("InputServerURL");
+            _inputFieldHost = root.Q<TextField>("InputServerURL");
             var btnConnect = root.Q<Button>("btnConnectOrDisconnect");
-            var statusCircle = root.Q<VisualElement>("connectionStatusCircle");
-            var statusText = root.Q<Label>("connectionStatusText");
+            _connectionStatusCircle = root.Q<VisualElement>("connectionStatusCircle");
+            _connectionStatusText = root.Q<Label>("connectionStatusText");
 
             _btnConnect = btnConnect;
             _timelinePointUnity = root.Q<VisualElement>("TimelinePointUnity");
@@ -32,10 +39,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             _aiAgentLabelsContainer = root.Q<VisualElement>("aiAgentLabelsContainer");
             _aiAgentStatusCircle = root.Q<VisualElement>("aiAgentStatusCircle");
 
-            inputFieldHost.value = UnityMcpPluginEditor.LocalHost;
-            inputFieldHost.RegisterCallback<FocusOutEvent>(evt =>
+            _inputFieldHost.value = UnityMcpPluginEditor.LocalHost;
+            _inputFieldHost.RegisterCallback<FocusOutEvent>(evt =>
             {
-                var newValue = inputFieldHost.value;
+                var newValue = _inputFieldHost.value;
                 if (UnityMcpPluginEditor.LocalHost == newValue)
                     return;
 
@@ -49,21 +56,51 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             SubscribeToConnectionState((state, keepConnected) =>
             {
-                UpdateHostFieldState(inputFieldHost, UnityMcpPluginEditor.PluginProperty.CurrentValue!.KeepConnected.CurrentValue, state);
-                statusText.text = "Unity: " + GetConnectionStatusText(state, keepConnected);
-                btnConnect.text = GetButtonText(state, keepConnected);
-                var isConnect = btnConnect.text == ServerButtonText_Connect;
-                btnConnect.EnableInClassList("btn-primary", isConnect);
-                btnConnect.EnableInClassList("btn-secondary", !isConnect);
-                SetStatusIndicator(statusCircle, GetConnectionStatusClass(state, keepConnected));
-
-                if (!(state == HubConnectionState.Connected && keepConnected))
-                    SetAiAgentStatus(false);
-
-                UpdateCloudAuthState();
+                UpdateConnectionUI(state, keepConnected);
             });
 
             btnConnect.RegisterCallback<ClickEvent>(evt => HandleConnectButton(btnConnect.text));
+        }
+
+        private void UpdateConnectionUI(HubConnectionState state, bool keepConnected)
+        {
+            if (_inputFieldHost == null || _connectionStatusText == null
+                || _btnConnect == null || _connectionStatusCircle == null)
+                return;
+
+            UpdateHostFieldState(_inputFieldHost, keepConnected, state);
+            _connectionStatusText.text = "Unity: " + GetConnectionStatusText(state, keepConnected);
+            _btnConnect.text = GetButtonText(state, keepConnected);
+            var isConnect = _btnConnect.text == ServerButtonText_Connect;
+            _btnConnect.EnableInClassList("btn-primary", isConnect);
+            _btnConnect.EnableInClassList("btn-secondary", !isConnect);
+            SetStatusIndicator(_connectionStatusCircle, GetConnectionStatusClass(state, keepConnected));
+
+            if (!(state == HubConnectionState.Connected && keepConnected))
+                SetAiAgentStatus(false);
+
+            UpdateCloudAuthState();
+        }
+
+        /// <summary>
+        /// Reads the current connection state and refreshes the Unity connection row UI.
+        /// Call this whenever the UI might be stale (e.g. after mode switch).
+        /// </summary>
+        private void RefreshConnectionUI()
+        {
+            var state = UnityMcpPluginEditor.ConnectionState.CurrentValue;
+            var keepConnected = UnityMcpPluginEditor.KeepConnected;
+            UpdateConnectionUI(state, keepConnected);
+        }
+
+        /// <summary>
+        /// Schedules a delayed <see cref="RefreshConnectionUI"/> to catch state changes
+        /// that arrive after a mode switch or reconnect (e.g. async SignalR handshake).
+        /// </summary>
+        private void ScheduleConnectionUIRefresh()
+        {
+            rootVisualElement?.schedule.Execute(() => RefreshConnectionUI()).ExecuteLater(500);
+            rootVisualElement?.schedule.Execute(() => RefreshConnectionUI()).ExecuteLater(2000);
         }
 
         internal static bool IsHostFieldReadOnly(bool keepConnected, HubConnectionState state) =>
@@ -82,8 +119,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             field.EnableInClassList("enabled-text-field", !isReadOnly);
         }
 
-        private static void HandleConnectButton(string buttonText)
+        private void HandleConnectButton(string buttonText)
         {
+            // Check if the UI is stale: the button says "Connect" but we're actually connected (or vice versa).
+            var actualState = UnityMcpPluginEditor.ConnectionState.CurrentValue;
+            var actualKeepConnected = UnityMcpPluginEditor.KeepConnected;
+            var expectedButtonText = GetButtonText(actualState, actualKeepConnected);
+
+            if (!buttonText.Equals(expectedButtonText, StringComparison.OrdinalIgnoreCase))
+            {
+                // UI is stale — refresh it to show the real state
+                RefreshConnectionUI();
+                return;
+            }
+
             if (buttonText.Equals(ServerButtonText_Connect, StringComparison.OrdinalIgnoreCase))
             {
                 UnityMcpPluginEditor.KeepConnected = true;
@@ -101,9 +150,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private void SetupConnectionModeToggle(VisualElement root)
         {
-            var toggleCustom = root.Q<Toggle>("toggleModeCustom");
-            var toggleCloud = root.Q<Toggle>("toggleModeCloud");
-            if (toggleCustom == null || toggleCloud == null) return;
+            var container = root.Q<VisualElement>("segmentConnectionMode");
+            if (container == null) return;
+
+            var control = new SegmentedControl("Custom", "Cloud");
+            control.SetTooltips(
+                "Connect to your own MCP server. The plugin starts a local MCP server automatically and manages its lifecycle. Use this when you want full control over the server configuration, port, transport, and authorization settings.",
+                "Connect to a remote MCP server hosted in the cloud (e.g. ai-game.dev). No local server is started — the plugin connects directly to a built-in cloud endpoint (Cloud URL is predefined and not configurable). Requires authorization via device code flow.");
+            container.Add(control);
 
             var inputServerUrl = root.Q<TextField>("InputServerURL");
             var mcpServerPoint = root.Q<VisualElement>("TimelinePointMcpServer");
@@ -118,12 +172,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             }
 
             var currentMode = UnityMcpPluginEditor.ConnectionMode;
-            toggleCustom.SetValueWithoutNotify(currentMode == ConnectionMode.Custom);
-            toggleCloud.SetValueWithoutNotify(currentMode == ConnectionMode.Cloud);
+            control.SetValueWithoutNotify(currentMode == ConnectionMode.Custom ? 0 : 1);
             UpdateModeVisibility(currentMode);
 
-            SetupMutuallyExclusiveToggles(toggleCustom, toggleCloud,
-                onASelected: () =>
+            control.RegisterCallback<ChangeEvent<int>>(evt =>
+            {
+                if (evt.newValue == 0)
                 {
                     UnityMcpPluginEditor.ConnectionMode = ConnectionMode.Custom;
                     UnityMcpPluginEditor.Instance.Save();
@@ -136,10 +190,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     // Start local server if configured and reconnect to it
                     McpServerManager.StartServerIfNeeded();
                     ReconnectAfterModeSwitch();
-                },
-                onBSelected: () =>
+                    ScheduleConnectionUIRefresh();
+                }
+                else
                 {
                     UnityMcpPluginEditor.ConnectionMode = ConnectionMode.Cloud;
+
+                    // Cloud requires streamableHttp + authorization
+                    UnityMcpPluginEditor.TransportMethod = TransportMethod.streamableHttp;
+                    UnityMcpPluginEditor.AuthOption = AuthOption.required;
+
                     UnityMcpPluginEditor.Instance.Save();
                     UpdateModeVisibility(ConnectionMode.Cloud);
                     UpdateCloudAuthState();
@@ -154,7 +214,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     // Reconnect to cloud server (only if authorized)
                     if (!string.IsNullOrEmpty(UnityMcpPluginEditor.CloudToken))
                         ReconnectAfterModeSwitch();
-                });
+                    ScheduleConnectionUIRefresh();
+                }
+            });
         }
 
         internal static bool IsAuthFlowRunning(DeviceAuthFlowState state) =>
@@ -176,14 +238,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private void SetupCloudAuthSection(VisualElement root)
         {
-            var inputCloudUrl = root.Q<TextField>("inputCloudServerUrl");
             var inputCloudToken = root.Q<TextField>("inputCloudToken");
             var btnRevoke = root.Q<Button>("btnCloudRevoke");
             var btnAuthorize = root.Q<Button>("btnCloudAuthorize");
             var statusLabel = root.Q<Label>("labelCloudAuthStatus");
-            if (inputCloudUrl == null || inputCloudToken == null || btnAuthorize == null) return;
+            if (inputCloudToken == null || btnAuthorize == null) return;
 
             _btnAuthorize = btnAuthorize;
+
+            inputCloudToken.isPasswordField = true;
+            inputCloudToken.RegisterCallback<KeyDownEvent>(evt =>
+            {
+                if (evt.keyCode == KeyCode.C && (evt.ctrlKey || evt.commandKey))
+                {
+                    GUIUtility.systemCopyBuffer = inputCloudToken.value;
+                    evt.StopPropagation();
+                    evt.PreventDefault();
+                }
+            });
 
             const string tokenPlaceholder = "Token — press Authorize";
             void SetTokenValue(string? token)
@@ -193,20 +265,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 inputCloudToken.EnableInClassList("token-placeholder", isEmpty);
             }
 
-            inputCloudUrl.value = UnityMcpPluginEditor.CloudServerUrl;
             SetTokenValue(UnityMcpPluginEditor.CloudToken);
             UpdateCloudAuthState();
-
-            SubscribeToConnectionState((state, keepConnected) =>
-            {
-                var isReadOnly = keepConnected || state != HubConnectionState.Disconnected;
-                inputCloudUrl.isReadOnly = isReadOnly;
-                inputCloudUrl.EnableInClassList("disabled-text-field", isReadOnly);
-                inputCloudUrl.EnableInClassList("enabled-text-field", !isReadOnly);
-                inputCloudUrl.tooltip = isReadOnly
-                    ? "Editable only when Unity disconnected from the MCP Server."
-                    : "The cloud server URL to connect to.";
-            });
 
             void UpdateRevokeButtonVisibility()
             {
@@ -239,22 +299,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 if (UnityMcpPluginEditor.ConnectionMode == ConnectionMode.Cloud
                     && UnityMcpPluginEditor.Instance.HasMcpPluginInstance)
                     _ = UnityMcpPluginEditor.Instance.Disconnect();
-            });
-
-            inputCloudUrl.RegisterCallback<FocusOutEvent>(_ =>
-            {
-                var newValue = inputCloudUrl.value;
-                if (UnityMcpPluginEditor.CloudServerUrl == newValue) return;
-                UnityMcpPluginEditor.CloudServerUrl = newValue;
-                SaveChanges($"[AI Game Developer] Cloud URL Changed: {newValue}");
-
-                // Invalidate cached AI agent configs so they pick up the new cloud URL
-                InvalidateAndReloadAgentUI();
-
-                // Reconnect to the new cloud URL if currently in Cloud mode (only if authorized)
-                if (UnityMcpPluginEditor.ConnectionMode == ConnectionMode.Cloud
-                    && !string.IsNullOrEmpty(UnityMcpPluginEditor.CloudToken))
-                    ReconnectAfterModeSwitch();
             });
 
             btnAuthorize.RegisterCallback<ClickEvent>(async _ =>
@@ -310,7 +354,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     });
                 };
 
-                await capturedFlow.StartAsync(UnityMcpPluginEditor.CloudServerUrl, "Unity Editor");
+                await capturedFlow.StartAsync(UnityMcpPlugin.UnityConnectionConfig.CloudServerBaseUrl, "Unity Editor");
             });
         }
     }

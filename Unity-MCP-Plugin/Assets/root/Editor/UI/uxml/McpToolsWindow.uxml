@@ -1,15 +1,14 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
     <ui:VisualElement class="root-container" style="min-width: 320px;">
         <ui:VisualElement class="header-container">
-            <ui:Label text="MCP Tools" class="header-title" />
-            <ui:Label text="See and control all MCP tools. Disable not needed tools for saving LLM context." class="header-description" />
+            <ui:Label text="Tools" class="header-title" tooltip="Browse and control all MCP tools. Each tool is exposed as a skill accessible from the command line and HTTP API. Disable unused tools to save LLM context — fewer active tools means more room for the AI to reason." />
             <ui:VisualElement class="filter-row">
                 <ui:Label text="Filter:" class="filter-label" />
-                <ui:TextField name="filter-textfield" class="filter-textfield" />
+                <ui:TextField name="filter-textfield" class="filter-textfield styled-text-field" />
             </ui:VisualElement>
             <ui:VisualElement class="filter-row">
                 <ui:Label text="Type:" class="filter-label" />
-                <ui:DropdownField name="type-dropdown" index="0" class="type-dropdown" />
+                <ui:DropdownField name="type-dropdown" index="0" class="type-dropdown styled-dropdown" />
                 <ui:Label text="Filtered: 0, Total: 0" name="filter-stats-label" class="filter-stats-label" />
             </ui:VisualElement>
         </ui:VisualElement>

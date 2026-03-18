@@ -1,0 +1,102 @@
+﻿---
+name: scene-unload
+description: Unload scene from the Opened scenes in Unity Editor. Use 'scene-list-opened' tool to get the list of all opened scenes.
+---
+
+# Scene / Unload
+
+## How to Call
+
+### CLI (Direct Tool Execution)
+
+Execute this tool directly via command line:
+
+```bash
+npx unity-mcp-cli run-tool scene-unload --input '{
+  "name": "string_value"
+}'
+```
+
+## Input
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `name` | `string` | Yes | Name of the loaded scene. |
+
+### Input JSON Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name"
+  ]
+}
+```
+
+## Output
+
+### Output JSON Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "result": {
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Scene+UnloadSceneResult"
+    }
+  },
+  "$defs": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef": {
+      "type": "object",
+      "properties": {
+        "instanceID": {
+          "type": "integer",
+          "description": "instanceID of the UnityEngine.Object. If this is '0' and 'assetPath' and 'assetGuid' is not provided, empty or null, then it will be used as 'null'."
+        },
+        "assetType": {
+          "$ref": "#/$defs/System.Type",
+          "description": "Type of the asset."
+        },
+        "assetPath": {
+          "type": "string",
+          "description": "Path to the asset within the project. Starts with 'Assets/'"
+        },
+        "assetGuid": {
+          "type": "string",
+          "description": "Unique identifier for the asset."
+        }
+      },
+      "required": [
+        "instanceID"
+      ],
+      "description": "Reference to UnityEngine.Object asset instance. It could be Material, ScriptableObject, Prefab, and any other Asset. Anything located in the Assets and Packages folders."
+    },
+    "System.Type": {
+      "type": "string"
+    },
+    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Scene+UnloadSceneResult": {
+      "type": "object",
+      "properties": {
+        "Name": {
+          "type": "string",
+          "description": "Name of the unloaded scene."
+        },
+        "AssetObjectRef": {
+          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef",
+          "description": "Reference to the unloaded scene asset."
+        }
+      }
+    }
+  },
+  "required": [
+    "result"
+  ]
+}
+```
+
