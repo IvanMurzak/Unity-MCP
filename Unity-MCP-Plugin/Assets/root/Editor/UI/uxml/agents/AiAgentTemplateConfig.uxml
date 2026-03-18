@@ -21,10 +21,10 @@
         <ui:VisualElement name="containerSkills" />
 
         <!-- Transport mode container: HTTP -->
-        <ui:VisualElement name="containerHttp" />
+        <ui:VisualElement name="containerHttp" style="margin-top: 4px;" />
 
         <!-- Transport mode container: STDIO -->
-        <ui:VisualElement name="containerStdio" />
+        <ui:VisualElement name="containerStdio" style="margin-top: 4px;" />
 
     </ui:VisualElement>
 </ui:UXML>

@@ -20,7 +20,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
     public class ConfigurationElements : IDisposable
     {
         public VisualElement Root { get; }
-        public VisualElement StatusCircle { get; }
         public Label StatusText { get; }
         public Button BtnConfigure { get; }
 
@@ -37,17 +36,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             _transportMode = transportMode;
 
             Root = new UITemplate<VisualElement>("Editor/UI/uxml/agents/elements/TemplateConfigureStatus.uxml").Value;
-            StatusCircle = Root.Q<VisualElement>("configureStatusCircle") ?? throw new NullReferenceException("VisualElement 'configureStatusCircle' not found in UI.");
             StatusText = Root.Q<Label>("configureStatusText") ?? throw new NullReferenceException("Label 'configureStatusText' not found in UI.");
             BtnConfigure = Root.Q<Button>("btnConfigure") ?? throw new NullReferenceException("Button 'btnConfigure' not found in UI.");
+
+            var pathLabel = Root.Q<Label>("labelConfigPath");
+            if (pathLabel != null)
+            {
+                pathLabel.text = _config.ConfigPath;
+                pathLabel.tooltip = _config.ConfigPath;
+            }
 
             UpdateStatus();
 
             _clickCallback = new EventCallback<ClickEvent>(evt =>
             {
-                var result = _config.Configure();
-                UpdateStatus(result);
-                onConfigured.OnNext(result);
+                var isCurrentlyConfigured = _config.IsConfigured();
+                if (isCurrentlyConfigured)
+                {
+                    _config.Unconfigure();
+                    UpdateStatus(false);
+                    onConfigured.OnNext(false);
+                }
+                else
+                {
+                    var result = _config.Configure();
+                    UpdateStatus(result);
+                    onConfigured.OnNext(result);
+                }
             });
             BtnConfigure.RegisterCallback(_clickCallback);
         }
@@ -64,16 +79,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             StatusText.text = isConfiguredValue ? $"Configured ({transportText})" : "Not Configured";
 
-            StatusCircle.RemoveFromClassList(MainWindowEditor.USS_Connected);
-            StatusCircle.RemoveFromClassList(MainWindowEditor.USS_Connecting);
-            StatusCircle.RemoveFromClassList(MainWindowEditor.USS_Disconnected);
-            StatusCircle.AddToClassList(isConfiguredValue
-                ? MainWindowEditor.USS_Connected
-                : MainWindowEditor.USS_Disconnected);
-
-            BtnConfigure.text = isConfiguredValue ? "Reconfigure" : "Configure";
+            BtnConfigure.text = isConfiguredValue ? "Remove" : "Configure";
             BtnConfigure.EnableInClassList("btn-primary", !isConfiguredValue);
-            BtnConfigure.EnableInClassList("btn-secondary", isConfiguredValue);
+            BtnConfigure.EnableInClassList("btn-alert", isConfiguredValue);
         }
 
         public void Dispose()

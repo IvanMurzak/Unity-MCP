@@ -424,6 +424,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             // Show the skills output path
             pathLabel.text = SkillsPath;
+            pathLabel.tooltip = SkillsPath;
 
             // Configure toggle (per-agent)
             toggleAutoGenerate.SetValueWithoutNotify(UnityMcpPluginEditor.IsAutoGenerateSkills(AgentId));

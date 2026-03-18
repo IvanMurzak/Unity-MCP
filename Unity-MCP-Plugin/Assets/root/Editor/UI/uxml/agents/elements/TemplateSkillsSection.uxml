@@ -3,7 +3,7 @@
         <ui:VisualElement name="templateSkillsSection" style="flex-grow: 1;">
             <ui:VisualElement style="flex-direction: row; align-items: center; justify-content: space-between;">
                 <ui:Label name="labelSkillsHeader" text="Skills" class="timeline-label" tooltip="Skills give the AI specialized procedural knowledge to handle complex tasks. They work by providing structured guides (Markdown files) that the AI reads to understand exactly how to execute workflows." />
-                <ui:Label name="labelSkillsPath" class="section-desc" style="margin-bottom: 0; -unity-text-align: middle-right;" />
+                <ui:Label name="labelSkillsPath" class="section-desc" style="margin-bottom: 0; -unity-text-align: middle-right; overflow: hidden; text-overflow: ellipsis; flex-shrink: 1; white-space: nowrap;" />
             </ui:VisualElement>
             <!-- Auto-generate toggle + Generate button row -->
             <ui:VisualElement style="flex-direction: row; align-items: center; justify-content: space-between; margin-top: 2px;">
