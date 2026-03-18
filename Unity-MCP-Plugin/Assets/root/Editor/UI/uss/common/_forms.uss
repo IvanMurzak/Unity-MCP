@@ -50,33 +50,18 @@
 
 .content-item .unity-integer-field__input {
     width: 65px;
+    padding-left: 8px;
+}
+
+.content-item > .unity-label {
+    padding-top: 2px;
+}
+
+.content-item.transparent-text-field .unity-text-field__input {
+    padding-left: 8px;
 }
 
 /* Text field states */
-.disabled-text-field {
-}
-
-.disabled-text-field .unity-text-field__input {
-    border-color: rgba(0, 0, 0, 0);
-    background-color: rgba(255, 255, 255, 0.03);
-    color: rgb(110, 110, 110);
-    transition-duration: 200ms;
-}
-
-.disabled-text-field .unity-label {
-    color: rgb(110, 110, 110);
-    transition-duration: 200ms;
-}
-
-.transparent-text-field {
-}
-
-.transparent-text-field .unity-text-field__input {
-    border-width: 0;
-    margin: 1px;
-    background-color: rgba(0, 0, 0, 0);
-}
-
 .enabled-text-field .unity-text-field__input {
     background-color: rgba(0, 0, 0, 0.2);
     transition-duration: 200ms;
@@ -84,6 +69,31 @@
 
 .enabled-text-field .unity-label {
     transition-duration: 200ms;
+}
+
+.disabled-text-field.styled-text-field .unity-text-field__input,
+.disabled-text-field .unity-text-field__input {
+    border-color: rgba(0, 0, 0, 0);
+    background-color: rgba(255, 255, 255, 0.03);
+    color: rgb(110, 110, 110);
+    transition-duration: 200ms;
+}
+
+.disabled-text-field.styled-text-field:hover .unity-text-field__input,
+.disabled-text-field:hover .unity-text-field__input {
+    border-color: rgba(0, 0, 0, 0);
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.disabled-text-field .unity-label {
+    color: rgb(110, 110, 110);
+    transition-duration: 200ms;
+}
+
+.transparent-text-field .unity-text-field__input {
+    border-width: 0;
+    margin: 1px;
+    background-color: rgba(0, 0, 0, 0);
 }
 
 /* Styled Dropdown (DropdownField + EnumField) */
@@ -97,11 +107,18 @@
     transition-duration: 200ms;
 }
 
-.styled-dropdown .unity-popup-field__input:hover,
-.styled-dropdown .unity-enum-field__input:hover {
+.styled-dropdown:hover .unity-popup-field__input,
+.styled-dropdown:hover .unity-enum-field__input {
     background-color: rgba(0, 0, 0, 0.35);
     border-color: rgba(175, 232, 230, 0.25);
     transition-duration: 200ms;
+}
+
+.styled-dropdown:active .unity-popup-field__input,
+.styled-dropdown:active .unity-enum-field__input {
+    background-color: rgba(0, 0, 0, 0.5);
+    border-color: rgba(175, 232, 230, 0.4);
+    transition-duration: 50ms;
 }
 
 .styled-dropdown > .unity-label {
@@ -112,6 +129,58 @@
     color: rgb(200, 200, 200);
     font-size: 12px;
     -unity-text-align: middle-left;
+}
+
+
+/* Styled Text Field */
+.styled-text-field .unity-text-field__input {
+    background-color: rgba(0, 0, 0, 0.25);
+    border-radius: 6px;
+    border-color: rgba(255, 255, 255, 0.08);
+    border-width: 1px;
+    padding: 3px 8px;
+    color: rgb(200, 200, 200);
+    transition-duration: 200ms;
+}
+
+.styled-text-field:hover .unity-text-field__input {
+    background-color: rgba(0, 0, 0, 0.35);
+    border-color: rgba(175, 232, 230, 0.25);
+    transition-duration: 200ms;
+}
+
+.styled-text-field > .unity-label {
+    padding-top: 5px;
+}
+
+.styled-text-field:active .unity-text-field__input {
+    background-color: rgba(0, 0, 0, 0.5);
+    border-color: rgba(175, 232, 230, 0.4);
+    transition-duration: 50ms;
+}
+
+
+/* Styled Integer Field */
+.styled-integer-field .unity-integer-field__input {
+    background-color: rgba(0, 0, 0, 0.25);
+    border-radius: 6px;
+    border-color: rgba(255, 255, 255, 0.08);
+    border-width: 1px;
+    padding: 3px 8px;
+    color: rgb(200, 200, 200);
+    transition-duration: 200ms;
+}
+
+.styled-integer-field:hover .unity-integer-field__input {
+    background-color: rgba(0, 0, 0, 0.35);
+    border-color: rgba(175, 232, 230, 0.25);
+    transition-duration: 200ms;
+}
+
+.styled-integer-field:active .unity-integer-field__input {
+    background-color: rgba(0, 0, 0, 0.5);
+    border-color: rgba(175, 232, 230, 0.4);
+    transition-duration: 50ms;
 }
 
 

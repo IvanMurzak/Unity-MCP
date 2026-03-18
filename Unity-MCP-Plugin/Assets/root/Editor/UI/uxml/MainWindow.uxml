@@ -4,9 +4,9 @@
             <!-- Header Section -->
             <ui:Box name="contHeader" style="background-color: rgba(222, 222, 222, 0); flex-direction: row; flex-shrink: 0;">
                 <ui:VisualElement style="flex-grow: 1; background-color: rgba(0, 0, 0, 0);">
-                    <ui:EnumField label="Log Level" name="dropdownLogLevel" type="com.IvanMurzak.Unity.MCP.Runtime.Utils.LogLevel, com.IvanMurzak.Unity.MCP.Runtime" value="Warning" class="content-item styled-dropdown" style="align-self: flex-start;" />
-                    <ui:IntegerField label="Timeout (ms)" name="inputTimeoutMs" value="10000" class="content-item" style="align-self: flex-start;" />
-                    <ui:TextField picking-mode="Ignore" label="Version" value="0.0.0" readonly="true" name="currentVersion" focusable="false" class="content-item transparent-text-field" style="align-self: flex-start;" />
+                    <ui:EnumField label="Log Level" name="dropdownLogLevel" type="com.IvanMurzak.Unity.MCP.Runtime.Utils.LogLevel, com.IvanMurzak.Unity.MCP.Runtime" value="Warning" class="content-item styled-dropdown" />
+                    <ui:IntegerField label="Timeout (ms)" name="inputTimeoutMs" value="10000" class="content-item" />
+                    <ui:TextField picking-mode="Ignore" label="Version" value="0.0.0" readonly="true" name="currentVersion" focusable="false" class="content-item transparent-text-field" />
                 </ui:VisualElement>
                 <ui:VisualElement name="imgLogoPivot" class="animated-selectable" style="flex-grow: 0; height: 60px; width: 60px; right: 0; margin-left: 15px; flex-shrink: 0; margin-right: 0px; margin-top: 2px; flex-direction: row;">
                     <ui:VisualElement name="imgLogo" style="flex-grow: 1; background-color: rgba(0, 0, 0, 0); background-image: url(&quot;project://database/Assets/root/Editor/Gizmos/logo_512.png?fileID=2800000&amp;guid=bbb0f64bd8f15164781e01168cd6fa4f&amp;type=3#logo_512&quot;); -unity-background-scale-mode: stretch-to-fill; align-self: stretch;" />
@@ -18,7 +18,7 @@
                 <ui:Label text="Connection" class="header" />
                 <ui:VisualElement name="segmentConnectionMode" style="flex-direction: row; flex-grow: 1; justify-content: flex-end; margin-right: 0;" />
             </ui:VisualElement>
-            <ui:TextField picking-mode="Ignore" label="Server URL" value="http://localhost:8080" name="InputServerURL" class="content-item" />
+            <ui:TextField picking-mode="Ignore" label="Server URL" value="http://localhost:8080" name="InputServerURL" class="content-item styled-text-field" />
             <!-- Cloud Authorization (visible in Cloud mode only) -->
             <ui:VisualElement name="cloudAuthSection" style="flex-direction: column; margin-bottom: 8px; display: none;">
                 <ui:VisualElement style="flex-direction: row; margin-top: 2px; align-items: center;">
