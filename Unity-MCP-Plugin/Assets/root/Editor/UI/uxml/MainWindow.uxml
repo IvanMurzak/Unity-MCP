@@ -4,7 +4,7 @@
             <!-- Header Section -->
             <ui:Box name="contHeader" style="background-color: rgba(222, 222, 222, 0); flex-direction: row; flex-shrink: 0;">
                 <ui:VisualElement style="flex-grow: 1; background-color: rgba(0, 0, 0, 0);">
-                    <ui:EnumField label="Log Level" name="dropdownLogLevel" type="com.IvanMurzak.Unity.MCP.Runtime.Utils.LogLevel, com.IvanMurzak.Unity.MCP.Runtime" value="Warning" class="content-item" style="align-self: flex-start;" />
+                    <ui:EnumField label="Log Level" name="dropdownLogLevel" type="com.IvanMurzak.Unity.MCP.Runtime.Utils.LogLevel, com.IvanMurzak.Unity.MCP.Runtime" value="Warning" class="content-item styled-dropdown" style="align-self: flex-start;" />
                     <ui:IntegerField label="Timeout (ms)" name="inputTimeoutMs" value="10000" class="content-item" style="align-self: flex-start;" />
                     <ui:TextField picking-mode="Ignore" label="Version" value="0.0.0" readonly="true" name="currentVersion" focusable="false" class="content-item transparent-text-field" style="align-self: flex-start;" />
                 </ui:VisualElement>

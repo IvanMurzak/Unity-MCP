@@ -86,8 +86,9 @@
     transition-duration: 200ms;
 }
 
-/* Styled Dropdown */
-.styled-dropdown .unity-popup-field__input {
+/* Styled Dropdown (DropdownField + EnumField) */
+.styled-dropdown .unity-popup-field__input,
+.styled-dropdown .unity-enum-field__input {
     background-color: rgba(0, 0, 0, 0.25);
     border-radius: 6px;
     border-color: rgba(255, 255, 255, 0.08);
@@ -96,10 +97,15 @@
     transition-duration: 200ms;
 }
 
-.styled-dropdown .unity-popup-field__input:hover {
+.styled-dropdown .unity-popup-field__input:hover,
+.styled-dropdown .unity-enum-field__input:hover {
     background-color: rgba(0, 0, 0, 0.35);
     border-color: rgba(175, 232, 230, 0.25);
     transition-duration: 200ms;
+}
+
+.styled-dropdown > .unity-label {
+    padding-top: 5px;
 }
 
 .styled-dropdown .unity-base-popup-field__text {
@@ -108,9 +114,6 @@
     -unity-text-align: middle-left;
 }
 
-.styled-dropdown .unity-base-popup-field__arrow {
-    -unity-background-image-tint-color: rgb(175, 232, 230);
-}
 
 /* Argument items (form-like display) */
 .argument-item {
