@@ -180,18 +180,21 @@ export function resolveEditorPath(editorDir: string, os: string): string {
     return editorDir;
   }
 
+  // Use platform-appropriate path joining: posix for non-Windows, native for Windows
+  const join = os === 'win32' ? path.join : path.posix.join;
+
   switch (os) {
     case 'win32':
-      return path.join(editorDir, 'Editor', 'Unity.exe');
+      return join(editorDir, 'Editor', 'Unity.exe');
     case 'darwin':
       // If path already ends with .app (e.g. Unity Hub returns ".../Unity.app"),
       // go directly into Contents/MacOS/Unity instead of appending another Unity.app
       if (editorDir.endsWith('.app')) {
-        return path.join(editorDir, 'Contents', 'MacOS', 'Unity');
+        return join(editorDir, 'Contents', 'MacOS', 'Unity');
       }
-      return path.join(editorDir, 'Unity.app', 'Contents', 'MacOS', 'Unity');
+      return join(editorDir, 'Unity.app', 'Contents', 'MacOS', 'Unity');
     default:
-      return path.join(editorDir, 'Editor', 'Unity');
+      return join(editorDir, 'Editor', 'Unity');
   }
 }
 
