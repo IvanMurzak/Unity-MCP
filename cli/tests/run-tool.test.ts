@@ -231,7 +231,7 @@ describe('run-tool config resolution', () => {
     expect(stdout).toContain('http://localhost:55555');
   });
 
-  it('reads hardcoded cloud URL in Cloud mode (--verbose shows config URL)', () => {
+  it('reads hardcoded cloud URL in Cloud mode (--verbose shows resolved URL)', () => {
     writeProjectConfig({
       connectionMode: 'Cloud',
       host: 'http://localhost:55555',
