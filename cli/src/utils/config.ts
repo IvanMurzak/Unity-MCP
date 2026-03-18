@@ -173,7 +173,8 @@ export const CLOUD_SERVER_URL = 'https://ai-game.dev/mcp';
  * Resolve the server URL and auth token from a project config based on connectionMode.
  * - Custom mode (string "Custom" or integer 0): uses `host` and `token`
  * - Cloud mode (string "Cloud" or integer 1): uses hardcoded cloud URL and `cloudToken`
- * Returns undefined values when the config or relevant fields are not set.
+ * In Custom mode, `url` and `token` may be undefined if the corresponding config fields are not set.
+ * In Cloud mode, `url` is always the hardcoded cloud URL, while `token` comes from `cloudToken` and may be undefined.
  */
 export function resolveConnectionFromConfig(config: UnityConnectionConfig): {
   url: string | undefined;
