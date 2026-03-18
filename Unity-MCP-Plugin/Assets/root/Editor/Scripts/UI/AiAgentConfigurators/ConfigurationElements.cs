@@ -45,7 +45,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var pathLabel = Root.Q<Label>("labelConfigPath");
             if (pathLabel != null)
             {
-                pathLabel.text = _config.ConfigPath;
+                pathLabel.text = AiAgentConfigurator.ToDisplayPath(_config.ConfigPath);
                 pathLabel.tooltip = _config.ConfigPath;
             }
 

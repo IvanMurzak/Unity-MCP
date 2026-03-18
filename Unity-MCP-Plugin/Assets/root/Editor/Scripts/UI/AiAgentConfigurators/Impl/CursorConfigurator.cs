@@ -26,16 +26,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public override string AgentId => "cursor";
         public override string DownloadUrl => "https://cursor.com/download";
         public override string TutorialUrl => "https://www.youtube.com/watch?v=dyk-4gTolSU";
-        public override string? SkillsPath => ".cursor/skills";
+        public override string? SkillsPath => Path.Combine(ProjectRootPath, ".cursor", "skills");
 
         protected override string? IconFileName => "cursor-64.png";
 
+        private static string LocalConfigPath => Path.Combine(ProjectRootPath, ".cursor", "mcp.json");
+
         protected override AiAgentConfig CreateConfigStdioWindows() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(
-                ".cursor",
-                "mcp.json"
-            ),
+            configPath: LocalConfigPath,
             bodyPath: DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
@@ -51,10 +50,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(
-                ".cursor",
-                "mcp.json"
-            ),
+            configPath: LocalConfigPath,
             bodyPath: DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
@@ -70,10 +66,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(
-                ".cursor",
-                "mcp.json"
-            ),
+            configPath: LocalConfigPath,
             bodyPath: DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
@@ -83,10 +76,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigHttpMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(
-                ".cursor",
-                "mcp.json"
-            ),
+            configPath: LocalConfigPath,
             bodyPath: DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)

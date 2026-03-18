@@ -26,17 +26,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public override string AgentName => "GitHub Copilot CLI";
         public override string AgentId => "github-copilot-cli";
         public override string DownloadUrl => "https://github.com/features/copilot/cli";
-        public override string? SkillsPath => ".github/skills";
+        public override string? SkillsPath => Path.Combine(ProjectRootPath, ".github", "skills");
 
         protected override string? IconFileName => "github-copilot-64.png";
 
+        private static string GlobalConfigPath => Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            ".copilot",
+            "mcp-config.json"
+        );
+
         protected override AiAgentConfig CreateConfigStdioWindows() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                ".copilot",
-                "mcp-config.json"
-            ),
+            configPath: GlobalConfigPath,
             bodyPath: DefaultBodyPath
         )
         .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
@@ -53,11 +55,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                ".copilot",
-                "mcp-config.json"
-            ),
+            configPath: GlobalConfigPath,
             bodyPath: DefaultBodyPath
         )
         .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
@@ -74,11 +72,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                ".copilot",
-                "mcp-config.json"
-            ),
+            configPath: GlobalConfigPath,
             bodyPath: DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
@@ -89,11 +83,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigHttpMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                ".copilot",
-                "mcp-config.json"
-            ),
+            configPath: GlobalConfigPath,
             bodyPath: DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
