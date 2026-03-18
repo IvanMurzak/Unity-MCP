@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEditor.PackageManager;
 using UnityEngine.UIElements;
 
@@ -16,6 +17,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
     public partial class MainWindowEditor
     {
+        private static readonly string[] _extensionItemUxmlPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/ExtensionItem.uxml");
+
         private static readonly (string name, string description, string gitUrl)[] _extensions =
         {
             (
@@ -41,40 +44,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             if (container == null)
                 return;
 
+            var itemTemplate = EditorAssetLoader.LoadAssetAtPath<VisualTreeAsset>(_extensionItemUxmlPaths);
+            if (itemTemplate == null)
+                return;
+
             foreach (var (name, description, gitUrl) in _extensions)
             {
-                var row = new VisualElement();
-                row.style.flexDirection = FlexDirection.Row;
-                row.style.alignItems = Align.Center;
-                row.style.marginTop = 2;
-                row.style.marginBottom = 2;
+                var item = itemTemplate.CloneTree();
 
-                var nameLabel = new Label(name);
-                nameLabel.AddToClassList("header");
-                nameLabel.style.flexShrink = 0;
-                nameLabel.style.marginBottom = 0;
+                item.Q<Label>("extension-name").text = name;
+                item.Q<Label>("extension-desc").text = description;
 
-                var descLabel = new Label(description);
-                descLabel.AddToClassList("section-desc");
-                descLabel.style.flexGrow = 1;
-                descLabel.style.flexShrink = 1;
-                descLabel.style.marginBottom = 0;
-                descLabel.style.marginLeft = 6;
-
-                var installBtn = new Button();
-                installBtn.text = "Install";
-                installBtn.AddToClassList("btn-compact");
-                installBtn.AddToClassList("btn-secondary");
+                var installBtn = item.Q<Button>("extension-install-btn");
                 installBtn.tooltip = $"Install {name} extension via Unity Package Manager.\nPackage: {gitUrl}";
 
                 var capturedUrl = gitUrl;
                 installBtn.RegisterCallback<ClickEvent>(_ => Client.Add(capturedUrl));
 
-                row.Add(nameLabel);
-                row.Add(descLabel);
-                row.Add(installBtn);
-
-                container.Add(row);
+                container.Add(item);
             }
         }
     }
