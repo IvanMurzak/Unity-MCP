@@ -86,6 +86,32 @@
     transition-duration: 200ms;
 }
 
+/* Styled Dropdown */
+.styled-dropdown .unity-popup-field__input {
+    background-color: rgba(0, 0, 0, 0.25);
+    border-radius: 6px;
+    border-color: rgba(255, 255, 255, 0.08);
+    border-width: 1px;
+    padding: 3px 8px;
+    transition-duration: 200ms;
+}
+
+.styled-dropdown .unity-popup-field__input:hover {
+    background-color: rgba(0, 0, 0, 0.35);
+    border-color: rgba(175, 232, 230, 0.25);
+    transition-duration: 200ms;
+}
+
+.styled-dropdown .unity-base-popup-field__text {
+    color: rgb(200, 200, 200);
+    font-size: 12px;
+    -unity-text-align: middle-left;
+}
+
+.styled-dropdown .unity-base-popup-field__arrow {
+    -unity-background-image-tint-color: rgb(175, 232, 230);
+}
+
 /* Argument items (form-like display) */
 .argument-item {
     margin-left: 15px;
