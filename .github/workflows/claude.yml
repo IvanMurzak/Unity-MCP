@@ -96,6 +96,8 @@ jobs:
               }
             }
 
+          model: claude-opus-4-6
+
           claude_args: >-
             --mcp-config ${{ github.workspace }}/.github/configs/mcp-servers.json
 
