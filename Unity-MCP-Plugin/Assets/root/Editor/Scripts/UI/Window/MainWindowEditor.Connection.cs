@@ -156,7 +156,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var control = new SegmentedControl("Custom", "Cloud");
             control.SetTooltips(
                 "Connect to your own MCP server. The plugin starts a local MCP server automatically and manages its lifecycle. Use this when you want full control over the server configuration, port, transport, and authorization settings.",
-                "Connect to a remote MCP server hosted in the cloud (e.g. ai-game.dev). No local server is started — the plugin connects directly to the specified Cloud URL. Requires authorization via device code flow.");
+                "Connect to a remote MCP server hosted in the cloud (e.g. ai-game.dev). No local server is started — the plugin connects directly to a built-in cloud endpoint (Cloud URL is predefined and not configurable). Requires authorization via device code flow.");
             container.Add(control);
 
             var inputServerUrl = root.Q<TextField>("InputServerURL");
