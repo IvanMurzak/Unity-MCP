@@ -62,6 +62,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 return;
             }
 
+            inputAuthorizationToken.isPasswordField = true;
+            inputAuthorizationToken.RegisterCallback<KeyDownEvent>(evt =>
+            {
+                if (evt.keyCode == KeyCode.C && (evt.ctrlKey || evt.commandKey))
+                {
+                    GUIUtility.systemCopyBuffer = inputAuthorizationToken.value;
+                    evt.StopPropagation();
+                    evt.PreventDefault();
+                }
+            });
+
             if (labelAuthorizationToken != null) labelAuthorizationToken.tooltip = Tooltip_LabelAuthorizationToken;
             toggleAuthorizationNone.tooltip = Tooltip_ToggleAuthNone;
             toggleAuthorizationRequired.tooltip = Tooltip_ToggleAuthRequired;

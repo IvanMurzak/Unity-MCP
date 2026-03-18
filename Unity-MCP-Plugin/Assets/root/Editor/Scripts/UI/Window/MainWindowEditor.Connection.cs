@@ -13,6 +13,7 @@ using System;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.Services;
 using Microsoft.AspNetCore.SignalR.Client;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
@@ -183,6 +184,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             if (inputCloudToken == null || btnAuthorize == null) return;
 
             _btnAuthorize = btnAuthorize;
+
+            inputCloudToken.isPasswordField = true;
+            inputCloudToken.RegisterCallback<KeyDownEvent>(evt =>
+            {
+                if (evt.keyCode == KeyCode.C && (evt.ctrlKey || evt.commandKey))
+                {
+                    GUIUtility.systemCopyBuffer = inputCloudToken.value;
+                    evt.StopPropagation();
+                    evt.PreventDefault();
+                }
+            });
 
             const string tokenPlaceholder = "Token — press Authorize";
             void SetTokenValue(string? token)
