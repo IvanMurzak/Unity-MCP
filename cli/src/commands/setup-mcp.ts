@@ -6,9 +6,9 @@ import { verbose } from '../utils/ui.js';
 import { generatePortFromDirectory } from '../utils/port.js';
 import { readConfig, resolveConnectionFromConfig } from '../utils/config.js';
 import {
-  agentRegistry,
   getAgentById,
   getAgentIds,
+  listAgentTable,
   resolveServerBinaryPath,
   writeJsonAgentConfig,
   writeTomlAgentConfig,
@@ -23,14 +23,7 @@ interface SetupMcpOptions {
 }
 
 function listAgents(): void {
-  ui.heading('Available AI Agents');
-  console.log('');
-  const maxId = Math.max(...agentRegistry.map((a) => a.id.length));
-  for (const agent of agentRegistry) {
-    const format = agent.configFormat === 'toml' ? ' (TOML)' : '';
-    console.log(`  ${agent.id.padEnd(maxId + 2)} ${agent.name}${format}`);
-  }
-  console.log('');
+  listAgentTable('Available AI Agents', 'Config Path', (a) => a.configPathDisplay);
 }
 
 export const setupMcpCommand = new Command('setup-mcp')

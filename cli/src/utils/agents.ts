@@ -1,3 +1,4 @@
+import chalk from 'chalk';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -10,6 +11,7 @@ export interface AgentDefinition {
   id: string;
   name: string;
   skillsPath: string | null;
+  configPathDisplay: string;
   configFormat: 'json' | 'toml';
   bodyPath: string;
   getConfigPath(projectPath: string): string;
@@ -90,6 +92,7 @@ export const agentRegistry: readonly AgentDefinition[] = [
     id: 'claude-code',
     name: 'Claude Code',
     skillsPath: '.claude/skills',
+    configPathDisplay: '.mcp.json',
     configFormat: 'json',
     bodyPath: 'mcpServers',
     getConfigPath: (p) => path.join(p, '.mcp.json'),
@@ -113,6 +116,7 @@ export const agentRegistry: readonly AgentDefinition[] = [
     id: 'claude-desktop',
     name: 'Claude Desktop',
     skillsPath: null,
+    configPathDisplay: '~/Claude/claude_desktop_config.json',
     configFormat: 'json',
     bodyPath: 'mcpServers',
     getConfigPath: () =>
@@ -146,6 +150,7 @@ export const agentRegistry: readonly AgentDefinition[] = [
     id: 'cursor',
     name: 'Cursor',
     skillsPath: '.cursor/skills',
+    configPathDisplay: '.cursor/mcp.json',
     configFormat: 'json',
     bodyPath: 'mcpServers',
     getConfigPath: (p) => path.join(p, '.cursor', 'mcp.json'),
@@ -170,6 +175,7 @@ export const agentRegistry: readonly AgentDefinition[] = [
     id: 'vscode-copilot',
     name: 'Visual Studio Code (Copilot)',
     skillsPath: '.github/skills',
+    configPathDisplay: '.vscode/mcp.json',
     configFormat: 'json',
     bodyPath: 'servers',
     getConfigPath: (p) => path.join(p, '.vscode', 'mcp.json'),
@@ -194,6 +200,7 @@ export const agentRegistry: readonly AgentDefinition[] = [
     id: 'vs-copilot',
     name: 'Visual Studio (Copilot)',
     skillsPath: '.github/skills',
+    configPathDisplay: '.vs/mcp.json',
     configFormat: 'json',
     bodyPath: 'servers',
     getConfigPath: (p) => path.join(p, '.vs', 'mcp.json'),
@@ -218,6 +225,7 @@ export const agentRegistry: readonly AgentDefinition[] = [
     id: 'rider-junie',
     name: 'Rider (Junie)',
     skillsPath: '.junie/skills',
+    configPathDisplay: '.junie/mcp/mcp.json',
     configFormat: 'json',
     bodyPath: 'mcpServers',
     getConfigPath: (p) => path.join(p, '.junie', 'mcp', 'mcp.json'),
@@ -244,6 +252,7 @@ export const agentRegistry: readonly AgentDefinition[] = [
     id: 'github-copilot-cli',
     name: 'GitHub Copilot CLI',
     skillsPath: '.github/skills',
+    configPathDisplay: '~/.copilot/mcp-config.json',
     configFormat: 'json',
     bodyPath: 'mcpServers',
     getConfigPath: () => path.join(home(), '.copilot', 'mcp-config.json'),
@@ -269,6 +278,7 @@ export const agentRegistry: readonly AgentDefinition[] = [
     id: 'gemini',
     name: 'Gemini',
     skillsPath: '.gemini/skills',
+    configPathDisplay: '.gemini/settings.json',
     configFormat: 'json',
     bodyPath: 'mcpServers',
     getConfigPath: (p) => path.join(p, '.gemini', 'settings.json'),
@@ -293,6 +303,7 @@ export const agentRegistry: readonly AgentDefinition[] = [
     id: 'antigravity',
     name: 'Antigravity',
     skillsPath: '.agent/skills',
+    configPathDisplay: '~/.gemini/antigravity/mcp_config.json',
     configFormat: 'json',
     bodyPath: 'mcpServers',
     getConfigPath: () =>
@@ -315,6 +326,7 @@ export const agentRegistry: readonly AgentDefinition[] = [
     id: 'cline',
     name: 'Cline',
     skillsPath: '.cline/skills',
+    configPathDisplay: '~/Code/globalStorage/.../cline_mcp_settings.json',
     configFormat: 'json',
     bodyPath: 'mcpServers',
     getConfigPath: () => {
@@ -367,6 +379,7 @@ export const agentRegistry: readonly AgentDefinition[] = [
     id: 'open-code',
     name: 'Open Code',
     skillsPath: '.opencode/skills',
+    configPathDisplay: 'opencode.json',
     configFormat: 'json',
     bodyPath: 'mcp',
     getConfigPath: (p) => path.join(p, 'opencode.json'),
@@ -395,6 +408,7 @@ export const agentRegistry: readonly AgentDefinition[] = [
     id: 'codex',
     name: 'Codex',
     skillsPath: '.agents/skills',
+    configPathDisplay: '.codex/config.toml',
     configFormat: 'toml',
     bodyPath: 'mcp_servers',
     getConfigPath: (p) => path.join(p, '.codex', 'config.toml'),
@@ -424,6 +438,7 @@ export const agentRegistry: readonly AgentDefinition[] = [
     id: 'kilo-code',
     name: 'Kilo Code',
     skillsPath: '.kilocode/skills',
+    configPathDisplay: '.kilocode/mcp.json',
     configFormat: 'json',
     bodyPath: 'mcpServers',
     getConfigPath: (p) => path.join(p, '.kilocode', 'mcp.json'),
@@ -450,6 +465,7 @@ export const agentRegistry: readonly AgentDefinition[] = [
     id: 'unity-ai',
     name: 'Unity AI',
     skillsPath: null,
+    configPathDisplay: 'UserSettings/mcp.json',
     configFormat: 'json',
     bodyPath: 'mcpServers',
     getConfigPath: (p) => path.join(p, 'UserSettings', 'mcp.json'),
@@ -480,6 +496,50 @@ export function getAgentById(id: string): AgentDefinition | undefined {
 
 export function getAgentIds(): string[] {
   return agentRegistry.map((a) => a.id);
+}
+
+export function listAgentTable(
+  heading: string,
+  locationLabel: string,
+  locationFn: (agent: AgentDefinition) => string,
+): void {
+  const sorted = [...agentRegistry].sort((a, b) => a.id.localeCompare(b.id));
+
+  const colId = 'ID';
+  const colLoc = locationLabel;
+
+  const wId = Math.max(colId.length, ...sorted.map((a) => a.id.length));
+  const wLoc = Math.max(colLoc.length, ...sorted.map((a) => locationFn(a).length));
+
+  const sep = chalk.dim;
+  const hBar = (w: number) => '\u2500'.repeat(w);
+
+  console.log(`\n${chalk.bold.cyan(heading)}\n`);
+
+  // Header
+  console.log(
+    sep('  \u250C\u2500') + sep(hBar(wId)) + sep('\u2500\u252C\u2500') + sep(hBar(wLoc)) + sep('\u2500\u2510'),
+  );
+  console.log(
+    sep('  \u2502 ') + chalk.bold.white(colId.padEnd(wId)) + sep(' \u2502 ') + chalk.bold.white(colLoc.padEnd(wLoc)) + sep(' \u2502'),
+  );
+  console.log(
+    sep('  \u251C\u2500') + sep(hBar(wId)) + sep('\u2500\u253C\u2500') + sep(hBar(wLoc)) + sep('\u2500\u2524'),
+  );
+
+  // Rows
+  for (const agent of sorted) {
+    const loc = locationFn(agent);
+    console.log(
+      sep('  \u2502 ') + chalk.yellow(agent.id.padEnd(wId)) + sep(' \u2502 ') + chalk.green(loc.padEnd(wLoc)) + sep(' \u2502'),
+    );
+  }
+
+  // Footer
+  console.log(
+    sep('  \u2514\u2500') + sep(hBar(wId)) + sep('\u2500\u2534\u2500') + sep(hBar(wLoc)) + sep('\u2500\u2518'),
+  );
+  console.log('');
 }
 
 // ---------------------------------------------------------------------------

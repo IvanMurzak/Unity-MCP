@@ -5,7 +5,7 @@ import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
 import { generatePortFromDirectory } from '../utils/port.js';
 import { readConfig, resolveConnectionFromConfig } from '../utils/config.js';
-import { agentRegistry, getAgentById, getAgentIds } from '../utils/agents.js';
+import { getAgentById, getAgentIds, listAgentTable } from '../utils/agents.js';
 
 interface SetupSkillsOptions {
   url?: string;
@@ -14,15 +14,7 @@ interface SetupSkillsOptions {
 }
 
 function listAgentsWithSkills(): void {
-  ui.heading('AI Agents — Skills Support');
-  console.log('');
-  const maxId = Math.max(...agentRegistry.map((a) => a.id.length));
-  for (const agent of agentRegistry) {
-    const skills = agent.skillsPath ? `skills: ${agent.skillsPath}` : 'no skills support';
-    const badge = agent.skillsPath ? '\u2714' : '\u2716';
-    console.log(`  ${badge} ${agent.id.padEnd(maxId + 2)} ${skills}`);
-  }
-  console.log('');
+  listAgentTable('AI Agents \u2014 Skills Support', 'Skills Path', (a) => a.skillsPath ?? '\u2014');
 }
 
 export const setupSkillsCommand = new Command('setup-skills')
@@ -92,7 +84,7 @@ export const setupSkillsCommand = new Command('setup-skills')
       const token = options.token ?? fromConfig.token;
 
       // Call the MCP server to generate skills
-      const endpoint = `${serverUrl}/api/tools/skills-generate`;
+      const endpoint = `${serverUrl}/api/system-tools/skills-generate`;
       verbose(`Endpoint: ${endpoint}`);
 
       const headers: Record<string, string> = {
