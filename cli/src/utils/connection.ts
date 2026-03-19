@@ -12,6 +12,13 @@ export interface ConnectionOptions {
 }
 
 /**
+ * Returns true if the given directory looks like a Unity project (has an Assets subfolder).
+ */
+export function isUnityProject(dir: string): boolean {
+  return fs.existsSync(path.join(dir, 'Assets'));
+}
+
+/**
  * Resolve the project path from positional arg, --path option, or cwd.
  */
 export function resolveProjectPath(positionalPath: string | undefined, options: ConnectionOptions): string {
@@ -20,6 +27,27 @@ export function resolveProjectPath(positionalPath: string | undefined, options: 
     ui.error(`Project path does not exist: ${resolved}`);
     process.exit(1);
   }
+  return resolved;
+}
+
+/**
+ * Resolve the project path and validate it is a Unity project.
+ * Skips validation when --url is provided (explicit server override).
+ */
+export function resolveAndValidateProjectPath(positionalPath: string | undefined, options: ConnectionOptions): string {
+  const resolved = resolveProjectPath(positionalPath, options);
+
+  // Skip Unity project validation when --url is explicitly provided
+  if (options.url) {
+    return resolved;
+  }
+
+  if (!isUnityProject(resolved)) {
+    ui.error(`Not a Unity project (missing Assets folder): ${resolved}`);
+    ui.info('Provide a Unity project path as an argument, or use --url to connect to a server directly.');
+    process.exit(1);
+  }
+
   return resolved;
 }
 

@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
 import { parseJsonRobust, JsonParseError } from '../utils/json-parse.js';
-import { resolveProjectPath, resolveConnection } from '../utils/connection.js';
+import { resolveAndValidateProjectPath, resolveConnection } from '../utils/connection.js';
 
 interface RunToolOptions {
   path?: string;
@@ -72,7 +72,7 @@ export const runToolCommand = new Command('run-tool')
   .option('--raw', 'Output raw JSON (no formatting)')
   .option('--timeout <ms>', 'Request timeout in milliseconds (default: 60000)', '60000')
   .action(async (toolName: string, positionalPath: string | undefined, options: RunToolOptions) => {
-    const projectPath = resolveProjectPath(positionalPath, options);
+    const projectPath = resolveAndValidateProjectPath(positionalPath, options);
     const { url: baseUrl, token } = resolveConnection(projectPath, options);
     const body = parseInput(options);
     const endpoint = `${baseUrl}/api/tools/${encodeURIComponent(toolName)}`;
