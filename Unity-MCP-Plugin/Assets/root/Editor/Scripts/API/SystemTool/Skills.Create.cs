@@ -133,8 +133,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "using System;\n" +
             "using System.ComponentModel;\n" +
             "using com.IvanMurzak.McpPlugin;\n" +
+            "using com.IvanMurzak.ReflectorNet.Utils;\n" +
+            "using com.IvanMurzak.Unity.MCP.Editor.Utils;\n" +
             "using com.IvanMurzak.Unity.MCP.Runtime.Data;\n" +
-            "using com.IvanMurzak.Unity.MCP.Runtime.Utils;\n" +
             "using UnityEditor;\n" +
             "using UnityEngine;\n" +
             "\n" +
