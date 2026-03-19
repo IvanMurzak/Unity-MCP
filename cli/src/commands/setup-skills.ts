@@ -11,6 +11,7 @@ interface SetupSkillsOptions {
   url?: string;
   token?: string;
   list?: boolean;
+  timeout?: string;
 }
 
 function listAgentsWithSkills(): void {
@@ -24,6 +25,7 @@ export const setupSkillsCommand = new Command('setup-skills')
   .option('--url <url>', 'Server URL override')
   .option('--token <token>', 'Auth token override')
   .option('--list', 'List all agents with skills support status')
+  .option('--timeout <ms>', 'Request timeout in milliseconds (default: 60000)', '60000')
   .action(
     async (
       agentId: string | undefined,
@@ -106,8 +108,9 @@ export const setupSkillsCommand = new Command('setup-skills')
         `Generating skills for ${agent.name}...`,
       );
 
+      const timeoutMs = parseInt(options.timeout ?? '60000', 10);
       const controller = new AbortController();
-      const fetchTimeout = setTimeout(() => controller.abort(), 30000);
+      const fetchTimeout = setTimeout(() => controller.abort(), timeoutMs);
 
       try {
         const response = await fetch(endpoint, {
@@ -146,7 +149,7 @@ export const setupSkillsCommand = new Command('setup-skills')
           message.includes('ECONNREFUSED') || message.includes('fetch failed');
 
         if (isTimeout) {
-          ui.error('Request timed out after 30 seconds.');
+          ui.error(`Request timed out after ${timeoutMs / 1000} seconds.`);
         } else if (isConnectionRefused) {
           ui.error(
             'MCP Server is not running. Please start Unity Editor with the Unity-MCP plugin installed, then retry.',

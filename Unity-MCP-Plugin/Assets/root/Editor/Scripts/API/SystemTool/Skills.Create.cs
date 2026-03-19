@@ -204,6 +204,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 return ResponseCallTool.Error($"Invalid C# syntax:\n{string.Join("\n", errors)}").SetRequestID(requestId);
 
             var dirPath = Path.GetDirectoryName(path);
+            if (string.IsNullOrEmpty(dirPath))
+                return ResponseCallTool.Error("Path must include a directory component (e.g. 'Assets/Skills/MySkill.cs').").SetRequestID(requestId);
+
             if (!Directory.Exists(dirPath))
                 Directory.CreateDirectory(dirPath);
 

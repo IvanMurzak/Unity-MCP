@@ -13,6 +13,7 @@ interface RunToolOptions {
   input?: string;
   inputFile?: string;
   raw?: boolean;
+  timeout?: string;
 }
 
 /**
@@ -109,6 +110,7 @@ export const runToolCommand = new Command('run-tool')
   .option('--input <json>', 'JSON string of tool arguments')
   .option('--input-file <file>', 'Read JSON arguments from file')
   .option('--raw', 'Output raw JSON (no formatting)')
+  .option('--timeout <ms>', 'Request timeout in milliseconds (default: 60000)', '60000')
   .action(async (toolName: string, positionalPath: string | undefined, options: RunToolOptions) => {
     const projectPath = resolveProjectPath(positionalPath, options);
     const { url: baseUrl, token } = resolveConnection(projectPath, options);
@@ -142,8 +144,9 @@ export const runToolCommand = new Command('run-tool')
 
     const spinner = options.raw ? null : ui.startSpinner(`Calling ${toolName}...`);
 
+    const timeoutMs = parseInt(options.timeout ?? '60000', 10);
     const controller = new AbortController();
-    const fetchTimeout = setTimeout(() => controller.abort(), 30000);
+    const fetchTimeout = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
       const response = await fetch(endpoint, {
@@ -190,7 +193,7 @@ export const runToolCommand = new Command('run-tool')
       spinner?.stop();
       const message = err instanceof Error ? err.message : String(err);
       const isTimeout = err instanceof Error && err.name === 'AbortError';
-      const displayMessage = isTimeout ? `Tool call timed out after 30 seconds: ${toolName}` : message;
+      const displayMessage = isTimeout ? `Tool call timed out after ${timeoutMs / 1000} seconds: ${toolName}` : message;
       if (options.raw) {
         process.stderr.write(displayMessage + '\n');
       } else {
