@@ -69,7 +69,7 @@ export const setupMcpCommand = new Command('setup-mcp')
         process.exit(1);
       }
 
-      const transport = options.transport ?? 'stdio';
+      const transport = options.transport ?? 'http';
       if (transport !== 'stdio' && transport !== 'http') {
         ui.error(`Invalid transport: "${transport}". Must be "stdio" or "http".`);
         process.exit(1);
@@ -89,10 +89,14 @@ export const setupMcpCommand = new Command('setup-mcp')
         ? resolveConnectionFromConfig(config)
         : { url: undefined, token: undefined };
 
-      const port =
-        config?.host
-          ? parseInt(new URL(config.host).port, 10) || generatePortFromDirectory(projectPath)
-          : generatePortFromDirectory(projectPath);
+      const port = (() => {
+        if (!config?.host) return generatePortFromDirectory(projectPath);
+        try {
+          return parseInt(new URL(config.host).port, 10) || generatePortFromDirectory(projectPath);
+        } catch {
+          return generatePortFromDirectory(projectPath);
+        }
+      })();
 
       const timeout = (config?.timeoutMs as number) ?? 10000;
       const auth = (config?.authOption as string) ?? 'none';

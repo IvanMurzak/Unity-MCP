@@ -537,7 +537,7 @@ export function writeJsonAgentConfig(
 
   // Navigate/create bodyPath
   let body = root[bodyPath] as Record<string, unknown> | undefined;
-  if (!body || typeof body !== 'object') {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
     body = {};
     root[bodyPath] = body;
   }
@@ -547,7 +547,7 @@ export function writeJsonAgentConfig(
 
   // Get or create the server entry
   let entry = body[serverName] as Record<string, unknown> | undefined;
-  if (!entry || typeof entry !== 'object') {
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) {
     entry = {};
   }
 
