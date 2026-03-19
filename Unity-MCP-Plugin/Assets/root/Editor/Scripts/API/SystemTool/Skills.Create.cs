@@ -22,7 +22,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Skills
     {
-        public const string SkillsCreateToolId = "skill-create";
+        public const string SkillsCreateToolId = "unity-skill-create";
         [McpPluginTool
         (
             SkillsCreateToolId,

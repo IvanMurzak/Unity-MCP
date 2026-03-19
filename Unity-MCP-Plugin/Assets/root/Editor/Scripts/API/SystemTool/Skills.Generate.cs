@@ -19,10 +19,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Skills
     {
-        public const string AssetsDeleteToolId = "skill-generate";
+        public const string SkillsGenerateToolId = "unity-skill-generate";
         [McpPluginTool
         (
-            AssetsDeleteToolId,
+            SkillsGenerateToolId,
             Title = "Skill (Tool) / Generate All",
             DestructiveHint = false,
             Enabled = false,

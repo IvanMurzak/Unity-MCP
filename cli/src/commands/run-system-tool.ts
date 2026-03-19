@@ -6,7 +6,7 @@ import { verbose } from '../utils/ui.js';
 import { parseJsonRobust, JsonParseError } from '../utils/json-parse.js';
 import { resolveProjectPath, resolveConnection } from '../utils/connection.js';
 
-interface RunToolOptions {
+interface RunSystemToolOptions {
   path?: string;
   url?: string;
   token?: string;
@@ -16,7 +16,7 @@ interface RunToolOptions {
   timeout?: string;
 }
 
-function parseInput(options: RunToolOptions): string {
+function parseInput(options: RunSystemToolOptions): string {
   if (options.inputFile) {
     const filePath = path.resolve(options.inputFile);
     if (!fs.existsSync(filePath)) {
@@ -60,9 +60,9 @@ function parseInput(options: RunToolOptions): string {
   return '{}';
 }
 
-export const runToolCommand = new Command('run-tool')
-  .description('Execute an MCP tool via the HTTP API')
-  .argument('<tool-name>', 'Name of the MCP tool to execute')
+export const runSystemToolCommand = new Command('run-system-tool')
+  .description('Execute a system tool via the HTTP API (not exposed to MCP clients)')
+  .argument('<tool-name>', 'Name of the system tool to execute')
   .argument('[path]', 'Unity project path (used for config and auto port detection)')
   .option('--path <path>', 'Unity project path (config and auto port detection)')
   .option('--url <url>', 'Direct server URL override (bypasses config)')
@@ -71,13 +71,13 @@ export const runToolCommand = new Command('run-tool')
   .option('--input-file <file>', 'Read JSON arguments from file')
   .option('--raw', 'Output raw JSON (no formatting)')
   .option('--timeout <ms>', 'Request timeout in milliseconds (default: 60000)', '60000')
-  .action(async (toolName: string, positionalPath: string | undefined, options: RunToolOptions) => {
+  .action(async (toolName: string, positionalPath: string | undefined, options: RunSystemToolOptions) => {
     const projectPath = resolveProjectPath(positionalPath, options);
     const { url: baseUrl, token } = resolveConnection(projectPath, options);
     const body = parseInput(options);
-    const endpoint = `${baseUrl}/api/tools/${encodeURIComponent(toolName)}`;
+    const endpoint = `${baseUrl}/api/system-tools/${encodeURIComponent(toolName)}`;
 
-    verbose(`Tool: ${toolName}`);
+    verbose(`System tool: ${toolName}`);
     verbose(`Endpoint: ${endpoint}`);
     verbose(`Body: ${body}`);
 
@@ -93,7 +93,7 @@ export const runToolCommand = new Command('run-tool')
     const authSource = options.token ? '--token flag' : 'config';
 
     if (!options.raw) {
-      ui.heading('Run Tool');
+      ui.heading('Run System Tool');
       ui.label('Tool', toolName);
       ui.label('URL', endpoint);
       if (token) {
@@ -162,7 +162,7 @@ export const runToolCommand = new Command('run-tool')
 
       let displayMessage: string;
       if (isTimeout) {
-        displayMessage = `Tool call timed out after ${timeoutMs / 1000} seconds: ${toolName}`;
+        displayMessage = `System tool call timed out after ${timeoutMs / 1000} seconds: ${toolName}`;
       } else if (isConnectionRefused) {
         displayMessage = `Connection refused at ${endpoint}. Is the MCP server running? Start Unity Editor with the MCP plugin first.`;
       } else if (isConnectionReset) {
@@ -179,7 +179,7 @@ export const runToolCommand = new Command('run-tool')
       if (options.raw) {
         process.stderr.write(displayMessage + '\n');
       } else {
-        ui.error(`Failed to call tool: ${displayMessage}`);
+        ui.error(`Failed to call system tool: ${displayMessage}`);
       }
       process.exit(1);
     } finally {

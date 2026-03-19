@@ -1,5 +1,5 @@
 ﻿---
-name: skill-create
+name: unity-skill-create
 description: "Create a new skill using C# code. It will be added into the project as a .cs file and compiled by Unity. The skill will be available for use after compilation.
 
 ## Suggestions
@@ -80,7 +80,7 @@ All Unity API calls (including `GameObject.Find`, `AssetDatabase`, `EditorUtilit
 Execute this tool directly via command line:
 
 ```bash
-npx unity-mcp-cli run-system-tool skill-create --input '{
+npx unity-mcp-cli run-system-tool unity-skill-create --input '{
   "path": "string_value",
   "code": "string_value"
 }'
