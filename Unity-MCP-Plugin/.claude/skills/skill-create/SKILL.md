@@ -80,7 +80,7 @@ All Unity API calls (including `GameObject.Find`, `AssetDatabase`, `EditorUtilit
 Execute this tool directly via command line:
 
 ```bash
-npx unity-mcp-cli run-tool skill-create --input '{
+npx unity-mcp-cli run-system-tool skill-create --input '{
   "path": "string_value",
   "code": "string_value"
 }'

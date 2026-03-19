@@ -12,7 +12,7 @@ description: Generate all skills from the existed Tools in the Unity Project.
 Execute this tool directly via command line:
 
 ```bash
-npx unity-mcp-cli run-tool skill-generate --input '{
+npx unity-mcp-cli run-system-tool skill-generate --input '{
   "path": "string_value"
 }'
 ```

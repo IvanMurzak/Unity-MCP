@@ -61,8 +61,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// <inheritdoc/>
         protected override void BuildToolCommand(StringBuilder sb, IRunTool tool, string host, string inputExample)
         {
+            var command = tool.ToolType == McpToolType.System
+                ? "run-system-tool"
+                : "run-tool";
             sb.AppendLine("```bash");
-            sb.AppendLine($"npx unity-mcp-cli run-tool {tool.Name} --input '{inputExample}'");
+            sb.AppendLine($"npx unity-mcp-cli {command} {tool.Name} --input '{inputExample}'");
             sb.AppendLine("```");
             sb.AppendLine();
         }
