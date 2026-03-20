@@ -77,7 +77,7 @@ namespace com.IvanMurzak.Unity.MCP
             public bool KeepServerRunning { get; set; } = false;
             public TransportMethod TransportMethod { get; set; } = TransportMethod.streamableHttp;
             public AuthOption AuthOption { get; set; } = AuthOption.none;
-            public ConnectionMode ConnectionMode { get; set; } = ConnectionMode.Custom;
+            public ConnectionMode ConnectionMode { get; set; } = ConnectionMode.Cloud;
             public string? CloudToken { get; set; }
             public List<McpFeature> Tools { get; set; } = new();
             public List<McpFeature> Prompts { get; set; } = new();
@@ -108,7 +108,7 @@ namespace com.IvanMurzak.Unity.MCP
                 SkillAutoGenerate = new();
                 TransportMethod = TransportMethod.streamableHttp;
                 AuthOption = AuthOption.none;
-                ConnectionMode = ConnectionMode.Custom;
+                ConnectionMode = ConnectionMode.Cloud;
                 CloudToken = null;
                 LogLevel = LogLevel.Warning;
                 TimeoutMs = Consts.Hub.DefaultTimeoutMs;
