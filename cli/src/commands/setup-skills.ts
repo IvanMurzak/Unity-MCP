@@ -104,15 +104,15 @@ export const setupSkillsCommand = new Command('setup-skills')
       ui.label('Server', serverUrl);
       ui.divider();
 
-      const spinner = ui.startSpinner(
-        `Generating skills for ${agent.name}...`,
-      );
-
       const timeoutMs = parseInt(options.timeout ?? '60000', 10);
       if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
         ui.error(`Invalid timeout value: "${options.timeout}". Must be a positive integer (milliseconds).`);
         process.exit(1);
       }
+
+      const spinner = ui.startSpinner(
+        `Generating skills for ${agent.name}...`,
+      );
       const controller = new AbortController();
       const fetchTimeout = setTimeout(() => controller.abort(), timeoutMs);
 

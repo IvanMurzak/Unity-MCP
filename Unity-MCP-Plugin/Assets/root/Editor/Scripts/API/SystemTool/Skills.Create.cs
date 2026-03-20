@@ -210,7 +210,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 return ResponseCallTool.Error("Path must be a relative path inside the Unity project (e.g. 'Assets/Skills/MySkill.cs'). Absolute paths are not allowed.").SetRequestID(requestId);
 
             var normalizedPath = path.Replace('\\', '/');
-            if (normalizedPath.Contains("../") || normalizedPath.Contains("..\\"))
+            if (normalizedPath.Contains("../") || normalizedPath.EndsWith(".."))
                 return ResponseCallTool.Error("Path must not contain '..' traversal segments. Use a path relative to the project root starting with 'Assets/'.").SetRequestID(requestId);
 
             if (!normalizedPath.StartsWith("Assets/"))

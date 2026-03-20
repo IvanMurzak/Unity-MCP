@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System;
 using System.ComponentModel;
 using System.IO;
 using com.IvanMurzak.McpPlugin;
@@ -37,7 +38,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         {
             var logger = UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_Skills>();
 
-            if (string.IsNullOrEmpty(path))
+            if (path == null || string.IsNullOrEmpty(path))
                 path = UnityMcpPluginEditor.SkillsRootFolderAbsolutePath;
 
             if (!Directory.Exists(path))
@@ -48,8 +49,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             logger.LogInformation("Generating all skills in folder: {Path}", path);
 
-            UnityMcpPluginEditor.SkillsPath = path;
-            UnityMcpPluginEditor.Instance.McpPluginInstance!.GenerateSkillFiles(UnityMcpPluginEditor.ProjectRootPath);
+            var mcpPlugin = UnityMcpPluginEditor.Instance.McpPluginInstance
+                ?? throw new InvalidOperationException(
+                    "McpPluginInstance is null. The Unity-MCP plugin may not be fully initialized. " +
+                    "Ensure the plugin has completed startup before calling unity-skill-generate.");
+
+            var originalSkillsPath = UnityMcpPluginEditor.SkillsPath;
+            try
+            {
+                UnityMcpPluginEditor.SkillsPath = path;
+                mcpPlugin.GenerateSkillFiles(UnityMcpPluginEditor.ProjectRootPath);
+            }
+            finally
+            {
+                UnityMcpPluginEditor.SkillsPath = originalSkillsPath;
+            }
         }
     }
 }
