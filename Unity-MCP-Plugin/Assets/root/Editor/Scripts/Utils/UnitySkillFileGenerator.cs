@@ -66,11 +66,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             sb.AppendLine($"npx unity-mcp-cli {command} {tool.Name} --input '{inputExample}'");
             sb.AppendLine("```");
             sb.AppendLine();
-            AppendInputFileHint(sb, tool, inputExample);
+            AppendInputFileHint(sb, tool, host, inputExample);
         }
 
         /// <inheritdoc/>
-        protected override void AppendInputFileHint(StringBuilder sb, IRunTool tool, string inputExample)
+        protected override void AppendInputFileHint(StringBuilder sb, IRunTool tool, string host, string inputExample)
         {
             if (inputExample == "{}")
                 return;
