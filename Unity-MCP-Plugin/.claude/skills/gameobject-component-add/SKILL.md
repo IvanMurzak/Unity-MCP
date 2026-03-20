@@ -16,7 +16,7 @@ npx unity-mcp-cli run-tool gameobject-component-add --input '{
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> npx unity-mcp-cli {command} {tool.Name} --input-file args.json
+> npx unity-mcp-cli run-tool gameobject-component-add --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
