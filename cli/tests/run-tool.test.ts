@@ -199,6 +199,7 @@ describe('run-tool config resolution', () => {
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-run-tool-test-'));
+    fs.mkdirSync(path.join(tmpDir, 'Assets'));
   });
 
   afterEach(() => {
