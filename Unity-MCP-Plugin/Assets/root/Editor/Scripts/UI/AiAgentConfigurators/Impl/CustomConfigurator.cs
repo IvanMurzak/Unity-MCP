@@ -52,12 +52,50 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             return this;
         }
 
+        protected override void SetupAlertPanel()
+        {
+            if (ContainerAlert == null)
+                return;
+
+            ContainerAlert.Clear();
+
+            var title = new Label("Setup Required") { name = "alertTitle" };
+            title.AddToClassList("alert-frame-title");
+
+            var message = new Label("Skills should be configured for AI agents to work properly:") { name = "alertMessage" };
+            message.AddToClassList("alert-frame-message");
+
+            var skillsItem = new Label("\u2022 Enable Auto-generate Skills below") { name = "alertItemSkills" };
+            skillsItem.AddToClassList("alert-frame-item");
+            skillsItem.AddToClassList("alert-frame-item-recommended");
+
+            ContainerAlert.Add(title);
+            ContainerAlert.Add(message);
+            ContainerAlert.Add(skillsItem);
+
+            ContainerAlert.AddToClassList("alert-frame");
+            UpdateAlertPanel();
+        }
+
+        protected override void UpdateAlertPanel()
+        {
+            if (ContainerAlert == null)
+                return;
+
+            // Custom configurator can only validate skills (no MCP config detection)
+            var hasSkills = SupportsSkills && UnityMcpPluginEditor.IsAutoGenerateSkills(AgentId);
+            ContainerAlert.style.display = hasSkills ? DisplayStyle.None : DisplayStyle.Flex;
+        }
+
         protected override void OnUICreated(VisualElement root)
         {
             SetAgentIcon();
             SetTransportMethod(UnityMcpPluginEditor.TransportMethod);
             SetAgentName(AgentName);
             DisableLinksContainer();
+
+            // Add spacing between title and skills section
+            ContainerUnderHeader!.style.marginBottom = 4;
 
             // STDIO Configuration
 
@@ -124,6 +162,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
                 if (evt.newValue)
                     UnityMcpPluginEditor.Instance.McpPluginInstance!.GenerateSkillFiles(UnityMcpPluginEditor.ProjectRootPath);
+
+                UpdateAlertPanel();
             });
 
             // Configure generate button

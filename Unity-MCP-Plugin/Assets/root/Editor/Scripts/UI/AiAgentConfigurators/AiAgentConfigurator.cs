@@ -73,6 +73,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected VisualElement? Root { get; private set; }
         protected VisualElement? ContainerUnderHeader { get; private set; }
+        protected VisualElement? ContainerAlert { get; private set; }
         protected VisualElement? ContainerHttp { get; private set; }
         protected VisualElement? ContainerStdio { get; private set; }
         protected VisualElement? ContainerSkills { get; private set; }
@@ -238,12 +239,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             Root = root;
             ContainerUnderHeader = root.Q<VisualElement>("containerUnderHeader") ?? throw new NullReferenceException("VisualElement 'containerUnderHeader' not found in UI.");
+            ContainerAlert = root.Q<VisualElement>("containerAlert") ?? throw new NullReferenceException("VisualElement 'containerAlert' not found in UI.");
             ContainerHttp = root.Q<VisualElement>("containerHttp") ?? throw new NullReferenceException("VisualElement 'containerHttp' not found in UI.");
             ContainerStdio = root.Q<VisualElement>("containerStdio") ?? throw new NullReferenceException("VisualElement 'containerStdio' not found in UI.");
             ContainerSkills = root.Q<VisualElement>("containerSkills") ?? throw new NullReferenceException("VisualElement 'containerSkills' not found in UI.");
 
             OnUICreated(root);
             SetupSkillsUI();
+            SetupAlertPanel();
             McpWindowBase.EnableSmoothFoldoutTransitions(root);
             return root;
         }
@@ -288,7 +291,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             return this;
         }
 
-        protected virtual AiAgentConfigurator SetTutorialUrl(string url, string label = "YouTube")
+        protected virtual AiAgentConfigurator SetTutorialUrl(string url, string label = "YouTube Tutorial")
         {
             ThrowIfRootNotSet();
             var tutorialLink = Root!.Q<Label>("tutorialLink");
@@ -346,12 +349,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 var anyConfigured = ConfigStdio.IsDetected() || ConfigHttp.IsDetected();
                 _configElementStdio.UpdateStatus(isAnyConfigured: anyConfigured);
                 _configElementHttp.UpdateStatus(isAnyConfigured: anyConfigured);
+                UpdateAlertPanel();
             });
             _subscriptionHttp = _configElementHttp.OnConfigured.Subscribe(_ =>
             {
                 var anyConfigured = ConfigStdio.IsDetected() || ConfigHttp.IsDetected();
                 _configElementStdio.UpdateStatus(isAnyConfigured: anyConfigured);
                 _configElementHttp.UpdateStatus(isAnyConfigured: anyConfigured);
+                UpdateAlertPanel();
             });
 
             ContainerStdio!.Add(_configElementStdio.Root);
@@ -397,6 +402,58 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             new UITemplate<VisualElement>("Editor/UI/uxml/agents/elements/TemplateSkillsSection.uxml").Value;
 
         /// <summary>
+        /// Builds the setup alert panel inside <see cref="ContainerAlert"/>.
+        /// Shows a warning when neither skills nor MCP configuration is set up.
+        /// Override in subclasses to suppress (e.g. Custom configurator).
+        /// </summary>
+        protected virtual void SetupAlertPanel()
+        {
+            if (ContainerAlert == null)
+                return;
+
+            ContainerAlert.Clear();
+
+            var title = new Label("Setup Required") { name = "alertTitle" };
+            title.AddToClassList("alert-frame-title");
+
+            var message = new Label("At least one of the following must be configured:") { name = "alertMessage" };
+            message.AddToClassList("alert-frame-message");
+
+            ContainerAlert.Add(title);
+            ContainerAlert.Add(message);
+
+            if (SupportsSkills)
+            {
+                var skillsItem = new Label("\u2022 Skills (Recommended)") { name = "alertItemSkills" };
+                skillsItem.AddToClassList("alert-frame-item");
+                skillsItem.AddToClassList("alert-frame-item-recommended");
+                ContainerAlert.Add(skillsItem);
+            }
+
+            var mcpItem = new Label("\u2022 MCP Configuration") { name = "alertItemMcp" };
+            mcpItem.AddToClassList("alert-frame-item");
+            ContainerAlert.Add(mcpItem);
+
+            ContainerAlert.AddToClassList("alert-frame");
+            UpdateAlertPanel();
+        }
+
+        /// <summary>
+        /// Updates the visibility of the alert panel based on current configuration state.
+        /// </summary>
+        protected virtual void UpdateAlertPanel()
+        {
+            if (ContainerAlert == null)
+                return;
+
+            var isMcpConfigured = ConfigStdio.IsDetected() || ConfigHttp.IsDetected();
+            var hasSkills = SupportsSkills && UnityMcpPluginEditor.IsAutoGenerateSkills(AgentId);
+            var isSetupComplete = isMcpConfigured || hasSkills;
+
+            ContainerAlert.style.display = isSetupComplete ? DisplayStyle.None : DisplayStyle.Flex;
+        }
+
+        /// <summary>
         /// Builds the skills UI inside <see cref="ContainerSkills"/>.
         /// Override in subclasses that need a custom layout (e.g. editable path field).
         /// </summary>
@@ -439,6 +496,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
                 if (evt.newValue)
                     UnityMcpPluginEditor.Instance.McpPluginInstance!.GenerateSkillFiles(UnityMcpPluginEditor.ProjectRootPath);
+
+                UpdateAlertPanel();
             });
 
             // Configure generate button
