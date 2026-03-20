@@ -49,20 +49,20 @@ Cross-platform CLI tool for **[Unity MCP](https://github.com/IvanMurzak/Unity-MC
 
 # Quick Start
 
-Run any command instantly with `npx` — no installation required:
-
-```bash
-unity-mcp-cli install-plugin /path/to/unity/project
-```
-
-Or install globally:
+Install globally and run:
 
 ```bash
 npm install -g unity-mcp-cli
 unity-mcp-cli install-plugin /path/to/unity/project
 ```
 
-> **Requirements:** [Node.js](https://nodejs.org/) >= 18. [Unity Hub](https://unity.com/download) is installed automatically if not found.
+Or run any command instantly with `npx` — no global installation required:
+
+```bash
+npx unity-mcp-cli install-plugin /path/to/unity/project
+```
+
+> **Requirements:** [Node.js](https://nodejs.org/) ^20.19.0 || >=22.12.0. [Unity Hub](https://unity.com/download) is installed automatically if not found.
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 

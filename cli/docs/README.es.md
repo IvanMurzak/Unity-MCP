@@ -27,53 +27,66 @@
 
 <b>[English](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) | [中文](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.zh-CN.md) | [日本語](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.ja.md)</b>
 
-Herramienta CLI multiplataforma para **[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** — crea proyectos, instala plugins, configura herramientas MCP e inicia Unity con conexiones MCP activas. Todo desde una sola línea de comandos.
+Herramienta CLI multiplataforma para **[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** — crea proyectos, instala plugins, configura herramientas MCP e inicia Unity con conexiones MCP activas. Todo desde una sola linea de comandos.
 
 ## ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-features.svg?raw=true)
 
 - :white_check_mark: **Create projects** — crea nuevos proyectos de Unity mediante el Editor de Unity
-- :white_check_mark: **Install editors** — instala cualquier versión del Editor de Unity desde la línea de comandos
-- :white_check_mark: **Install plugin** — añade el plugin Unity-MCP a `manifest.json` con todos los registros de ámbito requeridos
+- :white_check_mark: **Install editors** — instala cualquier version del Editor de Unity desde la linea de comandos
+- :white_check_mark: **Install plugin** — agrega el plugin Unity-MCP a `manifest.json` con todos los registros de ambito requeridos
 - :white_check_mark: **Remove plugin** — elimina el plugin Unity-MCP de `manifest.json`
 - :white_check_mark: **Configure** — activa/desactiva herramientas, prompts y recursos MCP
-- :white_check_mark: **Connect** — inicia Unity con variables de entorno MCP para la conexión automática al servidor
+- :white_check_mark: **Run tools** — ejecuta herramientas MCP directamente desde la linea de comandos
+- :white_check_mark: **Setup MCP** — escribe archivos de configuracion MCP para agentes de IA en cualquiera de los 14 agentes soportados
+- :white_check_mark: **Setup skills** — genera archivos de habilidades para agentes de IA a traves del servidor MCP
+- :white_check_mark: **Open & Connect** — inicia Unity con variables de entorno MCP opcionales para la conexion automatica al servidor
 - :white_check_mark: **Cross-platform** — Windows, macOS y Linux
-- :white_check_mark: **Version-aware** — nunca degrada versiones del plugin; resuelve la última versión desde OpenUPM
+- :white_check_mark: **CI-friendly** — detecta automaticamente terminales no interactivas y desactiva spinners/colores
+- :white_check_mark: **Verbose mode** — usa `--verbose` en cualquier comando para obtener salida de diagnostico detallada
+- :white_check_mark: **Version-aware** — nunca degrada versiones del plugin; resuelve la ultima version desde OpenUPM
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
-# Inicio Rápido
+# Inicio Rapido
 
-Ejecuta cualquier comando al instante con `npx` — sin necesidad de instalación:
-
-```bash
-unity-mcp-cli install-plugin /path/to/unity/project
-```
-
-O instala globalmente:
+Instala globalmente y ejecuta:
 
 ```bash
 npm install -g unity-mcp-cli
 unity-mcp-cli install-plugin /path/to/unity/project
 ```
 
-> **Requisitos:** [Node.js](https://nodejs.org/) ^20.19.0 || >=22.12.0. [Unity Hub](https://unity.com/download) se instala automáticamente si no se encuentra.
+O ejecuta cualquier comando al instante con `npx` — sin necesidad de instalacion global:
+
+```bash
+npx unity-mcp-cli install-plugin /path/to/unity/project
+```
+
+> **Requisitos:** [Node.js](https://nodejs.org/) ^20.19.0 || >=22.12.0. [Unity Hub](https://unity.com/download) se instala automaticamente si no se encuentra.
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 # Contenidos
 
-- [Inicio Rápido](#inicio-rápido)
+- [Inicio Rapido](#inicio-rapido)
+- [Contenidos](#contenidos)
 - [Comandos](#comandos)
-  - [`configure`](#configure) — Configurar herramientas, prompts y recursos MCP
-  - [`connect`](#connect) — Iniciar Unity con conexión MCP
-  - [`create-project`](#create-project) — Crear un nuevo proyecto de Unity
-  - [`install-plugin`](#install-plugin) — Instalar el plugin Unity-MCP en un proyecto
-  - [`install-unity`](#install-unity) — Instalar el Editor de Unity mediante Unity Hub
-  - [`open`](#open) — Abrir un proyecto de Unity en el Editor
-  - [`remove-plugin`](#remove-plugin) — Eliminar el plugin Unity-MCP de un proyecto
-- [Ejemplo de Automatización Completa](#ejemplo-de-automatización-completa)
-- [Cómo Funciona](#cómo-funciona)
+  - [`configure`](#configure)
+  - [`create-project`](#create-project)
+  - [`install-plugin`](#install-plugin)
+  - [`install-unity`](#install-unity)
+  - [`open`](#open)
+  - [`run-tool`](#run-tool)
+  - [`setup-mcp`](#setup-mcp)
+  - [`setup-skills`](#setup-skills)
+  - [`remove-plugin`](#remove-plugin)
+  - [Opciones Globales](#opciones-globales)
+- [Ejemplo de Automatizacion Completa](#ejemplo-de-automatizacion-completa)
+- [Como Funciona](#como-funciona)
+    - [Puerto Determinista](#puerto-determinista)
+    - [Instalacion del Plugin](#instalacion-del-plugin)
+    - [Archivo de Configuracion](#archivo-de-configuracion)
+    - [Integracion con Unity Hub](#integracion-con-unity-hub)
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
@@ -87,24 +100,24 @@ Configura herramientas, prompts y recursos MCP en `UserSettings/AI-Game-Develope
 unity-mcp-cli configure ./MyGame --list
 ```
 
-| Opción | Requerido | Descripción |
+| Opcion | Requerido | Descripcion |
 |---|---|---|
-| `[path]` | Sí | Ruta al proyecto de Unity (posicional o `--path`) |
-| `--list` | No | Muestra la configuración actual y termina |
-| `--enable-tools <names>` | No | Activa herramientas específicas (separadas por comas) |
-| `--disable-tools <names>` | No | Desactiva herramientas específicas (separadas por comas) |
+| `[path]` | Si | Ruta al proyecto de Unity (posicional o `--path`) |
+| `--list` | No | Muestra la configuracion actual y termina |
+| `--enable-tools <names>` | No | Activa herramientas especificas (separadas por comas) |
+| `--disable-tools <names>` | No | Desactiva herramientas especificas (separadas por comas) |
 | `--enable-all-tools` | No | Activa todas las herramientas |
 | `--disable-all-tools` | No | Desactiva todas las herramientas |
-| `--enable-prompts <names>` | No | Activa prompts específicos (separados por comas) |
-| `--disable-prompts <names>` | No | Desactiva prompts específicos (separados por comas) |
+| `--enable-prompts <names>` | No | Activa prompts especificos (separados por comas) |
+| `--disable-prompts <names>` | No | Desactiva prompts especificos (separados por comas) |
 | `--enable-all-prompts` | No | Activa todos los prompts |
 | `--disable-all-prompts` | No | Desactiva todos los prompts |
-| `--enable-resources <names>` | No | Activa recursos específicos (separados por comas) |
-| `--disable-resources <names>` | No | Desactiva recursos específicos (separados por comas) |
+| `--enable-resources <names>` | No | Activa recursos especificos (separados por comas) |
+| `--disable-resources <names>` | No | Desactiva recursos especificos (separados por comas) |
 | `--enable-all-resources` | No | Activa todos los recursos |
 | `--disable-all-resources` | No | Desactiva todos los recursos |
 
-**Ejemplo — activar herramientas específicas y desactivar todos los prompts:**
+**Ejemplo — activar herramientas especificas y desactivar todos los prompts:**
 
 ```bash
 unity-mcp-cli configure ./MyGame \
@@ -123,65 +136,6 @@ unity-mcp-cli configure ./MyGame \
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
-## `connect`
-
-Abre un proyecto de Unity y lo conecta a un servidor MCP específico mediante variables de entorno. Cada opción se corresponde con una variable de entorno `UNITY_MCP_*` que el plugin de Unity lee al arrancar.
-
-```bash
-unity-mcp-cli connect \
-  --path ./MyGame \
-  --url http://localhost:8080
-```
-
-| Opción | Variable de Entorno | Requerido | Descripción |
-|---|---|---|---|
-| `--url <url>` | `UNITY_MCP_HOST` | Sí | URL del servidor MCP al que conectarse |
-| `--path <path>` | — | Sí | Ruta al proyecto de Unity |
-| `--keep-connected` | `UNITY_MCP_KEEP_CONNECTED` | No | Fuerza mantener la conexión activa |
-| `--token <token>` | `UNITY_MCP_TOKEN` | No | Token de autenticación |
-| `--auth <option>` | `UNITY_MCP_AUTH_OPTION` | No | Modo de autenticación: `none` o `required` |
-| `--tools <names>` | `UNITY_MCP_TOOLS` | No | Lista de herramientas a activar, separadas por comas |
-| `--transport <method>` | `UNITY_MCP_TRANSPORT` | No | Método de transporte: `streamableHttp` o `stdio` |
-| `--start-server <value>` | `UNITY_MCP_START_SERVER` | No | Establece `true` o `false` para controlar el inicio automático del servidor MCP en el Editor de Unity (solo aplica al transporte `streamableHttp`) |
-| `--unity <version>` | — | No | Versión específica del Editor de Unity a utilizar (por defecto, la versión de la configuración del proyecto; si no está disponible, la más alta instalada) |
-
-Este comando inicia el Editor de Unity con las variables de entorno `UNITY_MCP_*` correspondientes para que el plugin las recoja automáticamente al arrancar. Las variables de entorno anulan los valores del archivo de configuración `UserSettings/AI-Game-Developer-Config.json` del proyecto en tiempo de ejecución.
-
-**Ejemplo — conectar con autenticación y herramientas específicas:**
-
-```bash
-unity-mcp-cli connect \
-  --path ./MyGame \
-  --url http://my-server:8080 \
-  --token my-secret-token \
-  --auth required \
-  --keep-connected \
-  --tools gameobject-create,gameobject-find,script-execute
-```
-
-**Ejemplo — conectar con transporte stdio (servidor gestionado por el agente de IA):**
-
-```bash
-unity-mcp-cli connect \
-  --path ./MyGame \
-  --url http://localhost:8080 \
-  --transport stdio \
-  --start-server false
-```
-
-**Ejemplo — conectar con streamableHttp e inicio automático del servidor:**
-
-```bash
-unity-mcp-cli connect \
-  --path ./MyGame \
-  --url http://localhost:8080 \
-  --transport streamableHttp \
-  --start-server true \
-  --keep-connected
-```
-
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
-
 ## `create-project`
 
 Crea un nuevo proyecto de Unity utilizando el Editor de Unity.
@@ -190,12 +144,12 @@ Crea un nuevo proyecto de Unity utilizando el Editor de Unity.
 unity-mcp-cli create-project /path/to/new/project
 ```
 
-| Opción | Requerido | Descripción |
+| Opcion | Requerido | Descripcion |
 |---|---|---|
-| `[path]` | Sí | Ruta donde se creará el proyecto (posicional o `--path`) |
-| `--unity <version>` | No | Versión del Editor de Unity a utilizar (por defecto, la más alta instalada) |
+| `[path]` | Si | Ruta donde se creara el proyecto (posicional o `--path`) |
+| `--unity <version>` | No | Version del Editor de Unity a utilizar (por defecto, la mas alta instalada) |
 
-**Ejemplo — crear un proyecto con una versión específica del editor:**
+**Ejemplo — crear un proyecto con una version especifica del editor:**
 
 ```bash
 unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
@@ -211,42 +165,42 @@ Instala el plugin Unity-MCP en el archivo `Packages/manifest.json` de un proyect
 unity-mcp-cli install-plugin ./MyGame
 ```
 
-| Opción | Requerido | Descripción |
+| Opcion | Requerido | Descripcion |
 |---|---|---|
-| `[path]` | Sí | Ruta al proyecto de Unity (posicional o `--path`) |
-| `--plugin-version <version>` | No | Versión del plugin a instalar (por defecto, la última desde [OpenUPM](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)) |
+| `[path]` | Si | Ruta al proyecto de Unity (posicional o `--path`) |
+| `--plugin-version <version>` | No | Version del plugin a instalar (por defecto, la ultima desde [OpenUPM](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)) |
 
 Este comando:
-1. Añade el **registro de ámbito de OpenUPM** con todos los ámbitos requeridos
-2. Añade `com.ivanmurzak.unity.mcp` a `dependencies`
-3. **Nunca degrada** — si ya hay instalada una versión superior, se conserva
+1. Agrega el **registro de ambito de OpenUPM** con todos los ambitos requeridos
+2. Agrega `com.ivanmurzak.unity.mcp` a `dependencies`
+3. **Nunca degrada** — si ya hay instalada una version superior, se conserva
 
-**Ejemplo — instalar una versión específica del plugin:**
+**Ejemplo — instalar una version especifica del plugin:**
 
 ```bash
-unity-mcp-cli install-plugin ./MyGame --plugin-version 0.52.0
+unity-mcp-cli install-plugin ./MyGame --plugin-version 0.51.6
 ```
 
-> Después de ejecutar este comando, abre el proyecto en el Editor de Unity para completar la instalación del paquete.
+> Despues de ejecutar este comando, abre el proyecto en el Editor de Unity para completar la instalacion del paquete.
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 ## `install-unity`
 
-Instala una versión del Editor de Unity mediante la CLI de Unity Hub.
+Instala una version del Editor de Unity mediante la CLI de Unity Hub.
 
 ```bash
 unity-mcp-cli install-unity 6000.3.1f1
 ```
 
-| Argumento / Opción | Requerido | Descripción |
+| Argumento / Opcion | Requerido | Descripcion |
 |---|---|---|
-| `[version]` | No | Versión del Editor de Unity a instalar (ej. `6000.3.1f1`) |
-| `--path <path>` | No | Lee la versión requerida desde un proyecto existente |
+| `[version]` | No | Version del Editor de Unity a instalar (ej. `6000.3.1f1`) |
+| `--path <path>` | No | Lee la version requerida desde un proyecto existente |
 
-Si no se proporciona ningún argumento ni opción, el comando instala la última versión estable desde la lista de lanzamientos de Unity Hub.
+Si no se proporciona ningun argumento ni opcion, el comando instala la ultima version estable desde la lista de lanzamientos de Unity Hub.
 
-**Ejemplo — instalar la versión del editor que necesita un proyecto:**
+**Ejemplo — instalar la version del editor que necesita un proyecto:**
 
 ```bash
 unity-mcp-cli install-unity --path ./MyGame
@@ -256,18 +210,152 @@ unity-mcp-cli install-unity --path ./MyGame
 
 ## `open`
 
-Abre un proyecto de Unity en el Editor de Unity.
+Abre un proyecto de Unity en el Editor de Unity. Por defecto, establece variables de entorno de conexion MCP si se proporcionan opciones de conexion. Usa `--no-connect` para abrir sin conexion MCP.
 
 ```bash
 unity-mcp-cli open ./MyGame
 ```
 
-| Opción | Requerido | Descripción |
-|---|---|---|
-| `[path]` | Sí | Ruta al proyecto de Unity (posicional o `--path`) |
-| `--unity <version>` | No | Versión específica del Editor de Unity a utilizar (por defecto, la versión de la configuración del proyecto; si no está disponible, la más alta instalada) |
+| Opcion | Variable de Entorno | Requerido | Descripcion |
+|---|---|---|---|
+| `[path]` | — | Si | Ruta al proyecto de Unity (posicional o `--path`) |
+| `--unity <version>` | — | No | Version especifica del Editor de Unity a utilizar (por defecto, la version de la configuracion del proyecto; si no esta disponible, la mas alta instalada) |
+| `--no-connect` | — | No | Abrir sin variables de entorno de conexion MCP |
+| `--url <url>` | `UNITY_MCP_HOST` | No | URL del servidor MCP al que conectarse |
+| `--keep-connected` | `UNITY_MCP_KEEP_CONNECTED` | No | Fuerza mantener la conexion activa |
+| `--token <token>` | `UNITY_MCP_TOKEN` | No | Token de autenticacion |
+| `--auth <option>` | `UNITY_MCP_AUTH_OPTION` | No | Modo de autenticacion: `none` o `required` |
+| `--tools <names>` | `UNITY_MCP_TOOLS` | No | Lista de herramientas a activar, separadas por comas |
+| `--transport <method>` | `UNITY_MCP_TRANSPORT` | No | Metodo de transporte: `streamableHttp` o `stdio` |
+| `--start-server <value>` | `UNITY_MCP_START_SERVER` | No | Establece `true` o `false` para controlar el inicio automatico del servidor MCP |
 
 El proceso del editor se lanza en modo desacoplado — la CLI regresa inmediatamente.
+
+**Ejemplo — abrir con conexion MCP:**
+
+```bash
+unity-mcp-cli open ./MyGame \
+  --url http://localhost:8080 \
+  --keep-connected
+```
+
+**Ejemplo — abrir sin conexion MCP (apertura simple):**
+
+```bash
+unity-mcp-cli open ./MyGame --no-connect
+```
+
+**Ejemplo — abrir con autenticacion y herramientas especificas:**
+
+```bash
+unity-mcp-cli open ./MyGame \
+  --url http://my-server:8080 \
+  --token my-secret-token \
+  --auth required \
+  --tools gameobject-create,gameobject-find
+```
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `run-tool`
+
+Ejecuta una herramienta MCP directamente a traves de la API HTTP. La URL del servidor y el token de autorizacion se **resuelven automaticamente** desde el archivo de configuracion del proyecto (`UserSettings/AI-Game-Developer-Config.json`), basandose en el modo de conexion actual (Custom o Cloud).
+
+```bash
+unity-mcp-cli run-tool gameobject-create ./MyGame --input '{"name":"Cube"}'
+```
+
+| Opcion | Requerido | Descripcion |
+|---|---|---|
+| `<tool-name>` | Si | Nombre de la herramienta MCP a ejecutar |
+| `[path]` | No | Ruta al proyecto de Unity (posicional o `--path`) — se usa para leer la configuracion y detectar el puerto |
+| `--url <url>` | No | URL directa del servidor (omite la configuracion) |
+| `--token <token>` | No | Token Bearer (omite la configuracion) |
+| `--input <json>` | No | Cadena JSON con los argumentos de la herramienta (por defecto `{}`) |
+| `--input-file <file>` | No | Lee los argumentos JSON desde un archivo |
+| `--raw` | No | Salida JSON sin formato (sin formato visual, sin spinner) |
+| `--timeout <ms>` | No | Tiempo de espera de la solicitud en milisegundos (por defecto: 60000) |
+
+**Prioridad de resolucion de URL:**
+1. `--url` → se usa directamente
+2. Archivo de configuracion → `host` (modo Custom) o `cloudServerUrl` (modo Cloud)
+3. Puerto determinista a partir de la ruta del proyecto
+
+**La autorizacion** se lee automaticamente desde la configuracion del proyecto (`token` en modo Custom, `cloudToken` en modo Cloud). Usa `--token` para reemplazar explicitamente el token derivado de la configuracion.
+
+**Ejemplo — llamar a una herramienta (URL y autenticacion desde la configuracion):**
+
+```bash
+unity-mcp-cli run-tool gameobject-find ./MyGame --input '{"query":"Player"}'
+```
+
+**Ejemplo — URL explicita:**
+
+```bash
+unity-mcp-cli run-tool scene-save --url http://localhost:8080
+```
+
+**Ejemplo — redirigir salida JSON sin formato:**
+
+```bash
+unity-mcp-cli run-tool assets-list ./MyGame --raw | jq '.results'
+```
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `setup-mcp`
+
+Escribe archivos de configuracion MCP para agentes de IA, permitiendo la configuracion headless/CI sin la interfaz del Editor de Unity. Soporta los 14 agentes (Claude Code, Cursor, Gemini, Codex, etc.).
+
+```bash
+unity-mcp-cli setup-mcp claude-code ./MyGame
+```
+
+| Opcion | Requerido | Descripcion |
+|---|---|---|
+| `[agent-id]` | Si | Agente a configurar (usa `--list` para ver todos) |
+| `[path]` | No | Ruta al proyecto de Unity (por defecto, el directorio actual) |
+| `--transport <transport>` | No | Metodo de transporte: `stdio` o `http` (por defecto: `http`) |
+| `--url <url>` | No | URL del servidor (para transporte http) |
+| `--token <token>` | No | Token de autenticacion |
+| `--list` | No | Lista todos los IDs de agentes disponibles |
+
+**Ejemplo — listar todos los agentes soportados:**
+
+```bash
+unity-mcp-cli setup-mcp --list
+```
+
+**Ejemplo — configurar Cursor con transporte stdio:**
+
+```bash
+unity-mcp-cli setup-mcp cursor ./MyGame --transport stdio
+```
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `setup-skills`
+
+Genera archivos de habilidades para un agente de IA llamando a la API de herramientas del sistema del servidor MCP. Requiere que el Editor de Unity este en ejecucion con el plugin MCP instalado.
+
+```bash
+unity-mcp-cli setup-skills claude-code ./MyGame
+```
+
+| Opcion | Requerido | Descripcion |
+|---|---|---|
+| `[agent-id]` | Si | Agente para el que generar habilidades (usa `--list` para ver todos) |
+| `[path]` | No | Ruta al proyecto de Unity (por defecto, el directorio actual) |
+| `--url <url>` | No | URL del servidor |
+| `--token <token>` | No | Token de autenticacion |
+| `--list` | No | Lista todos los agentes con el estado de soporte de habilidades |
+| `--timeout <ms>` | No | Tiempo de espera de la solicitud en milisegundos (por defecto: 60000) |
+
+**Ejemplo — listar agentes con soporte de habilidades:**
+
+```bash
+unity-mcp-cli setup-skills --list
+```
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
@@ -279,20 +367,38 @@ Elimina el plugin Unity-MCP del archivo `Packages/manifest.json` de un proyecto 
 unity-mcp-cli remove-plugin ./MyGame
 ```
 
-| Opción | Requerido | Descripción |
+| Opcion | Requerido | Descripcion |
 |---|---|---|
-| `[path]` | Sí | Ruta al proyecto de Unity (posicional o `--path`) |
+| `[path]` | Si | Ruta al proyecto de Unity (posicional o `--path`) |
 
 Este comando:
 1. Elimina `com.ivanmurzak.unity.mcp` de `dependencies`
-2. **Conserva los registros de ámbito y sus ámbitos** — otros paquetes pueden depender de ellos
-3. **No realiza ninguna acción** si el plugin no está instalado
+2. **Conserva los registros de ambito y sus ambitos** — otros paquetes pueden depender de ellos
+3. **No realiza ninguna accion** si el plugin no esta instalado
 
-> Después de ejecutar este comando, abre el proyecto en el Editor de Unity para aplicar el cambio.
+> Despues de ejecutar este comando, abre el proyecto en el Editor de Unity para aplicar el cambio.
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
-# Ejemplo de Automatización Completa
+## Opciones Globales
+
+Estas opciones estan disponibles en todos los comandos:
+
+| Opcion | Descripcion |
+|---|---|
+| `-v, --verbose` | Activa la salida de diagnostico detallada para resolucion de problemas |
+| `--version` | Muestra la version de la CLI |
+| `--help` | Muestra la ayuda del comando |
+
+**Ejemplo — ejecutar cualquier comando con salida detallada:**
+
+```bash
+unity-mcp-cli install-plugin ./MyGame --verbose
+```
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+# Ejemplo de Automatizacion Completa
 
 Configura un proyecto Unity MCP completo desde cero con un solo script:
 
@@ -306,43 +412,45 @@ unity-mcp-cli install-plugin ./MyAIGame
 # 3. Activar todas las herramientas MCP
 unity-mcp-cli configure ./MyAIGame --enable-all-tools
 
-# 4. Abrir el proyecto con conexión MCP
-unity-mcp-cli connect \
-  --path ./MyAIGame \
+# 4. Configurar la integracion MCP de Claude Code
+unity-mcp-cli setup-mcp claude-code ./MyAIGame
+
+# 5. Abrir el proyecto con conexion MCP
+unity-mcp-cli open ./MyAIGame \
   --url http://localhost:8080 \
   --keep-connected
 ```
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
-# Cómo Funciona
+# Como Funciona
 
 ### Puerto Determinista
 
-La CLI genera un **puerto determinista** para cada proyecto de Unity basándose en la ruta de su directorio (hash SHA256 mapeado al rango de puertos 20000–29999). Esto coincide con la generación de puertos del plugin de Unity, garantizando que el servidor y el plugin acuerden automáticamente el mismo puerto sin necesidad de configuración manual.
+La CLI genera un **puerto determinista** para cada proyecto de Unity basandose en la ruta de su directorio (hash SHA256 mapeado al rango de puertos 20000–29999). Esto coincide con la generacion de puertos del plugin de Unity, garantizando que el servidor y el plugin acuerden automaticamente el mismo puerto sin necesidad de configuracion manual.
 
-### Instalación del Plugin
+### Instalacion del Plugin
 
 El comando `install-plugin` modifica `Packages/manifest.json` directamente:
-- Añade el registro de ámbito de [OpenUPM](https://openupm.com/) (`package.openupm.com`)
-- Registra todos los ámbitos requeridos (`com.ivanmurzak`, `extensions.unity`, `org.nuget.*`)
-- Añade la dependencia `com.ivanmurzak.unity.mcp` con actualizaciones que respetan la versión (nunca degrada)
+- Agrega el registro de ambito de [OpenUPM](https://openupm.com/) (`package.openupm.com`)
+- Registra todos los ambitos requeridos (`com.ivanmurzak`, `extensions.unity`, `org.nuget.*`)
+- Agrega la dependencia `com.ivanmurzak.unity.mcp` con actualizaciones que respetan la version (nunca degrada)
 
-### Archivo de Configuración
+### Archivo de Configuracion
 
 El comando `configure` lee y escribe `UserSettings/AI-Game-Developer-Config.json`, que controla:
 - **Tools** — herramientas MCP disponibles para los agentes de IA
 - **Prompts** — prompts predefinidos inyectados en las conversaciones con el LLM
 - **Resources** — datos de solo lectura expuestos a los agentes de IA
-- **Connection settings** — URL del host, token de autenticación, método de transporte, tiempos de espera
+- **Connection settings** — URL del host, token de autenticacion, metodo de transporte, tiempos de espera
 
-### Integración con Unity Hub
+### Integracion con Unity Hub
 
-Los comandos que gestionan editores o crean proyectos usan la **CLI de Unity Hub** (modo `--headless`). Si Unity Hub no está instalado, la CLI **lo descarga e instala automáticamente**:
-- **Windows** — instalación silenciosa mediante `UnityHubSetup.exe /S` (puede requerir privilegios de administrador)
+Los comandos que gestionan editores o crean proyectos usan la **CLI de Unity Hub** (modo `--headless`). Si Unity Hub no esta instalado, la CLI **lo descarga e instala automaticamente**:
+- **Windows** — instalacion silenciosa mediante `UnityHubSetup.exe /S` (puede requerir privilegios de administrador)
 - **macOS** — descarga el DMG, lo monta y copia `Unity Hub.app` en `/Applications`
 - **Linux** — descarga `UnityHub.AppImage` en `~/Applications/`
 
-> Para la documentación completa del proyecto Unity-MCP, consulta el [README principal](https://github.com/IvanMurzak/Unity-MCP/blob/main/README.md).
+> Para la documentacion completa del proyecto Unity-MCP, consulta el [README principal](https://github.com/IvanMurzak/Unity-MCP/blob/main/README.md).
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)

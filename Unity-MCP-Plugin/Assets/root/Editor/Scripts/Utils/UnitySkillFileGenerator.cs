@@ -71,7 +71,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             sb.AppendLine();
             sb.AppendLine("### Troubleshooting");
             sb.AppendLine();
-            sb.AppendLine("If you encounter issues, such as `unity-mcp-cli` not being found:");
+            sb.AppendLine("If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.");
             sb.AppendLine($"- Read the /{Skill_InitialSetup.SkillId} for detailed installation instructions.");
             sb.AppendLine();
         }
