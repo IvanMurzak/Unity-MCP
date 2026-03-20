@@ -278,7 +278,7 @@ unity-mcp-cli run-tool gameobject-create ./MyGame --input '{"name":"Cube"}'
 
 **URL 解決の優先順位:**
 1. `--url` → 直接使用
-2. 設定ファイル → `host`（Custom モード）または `cloudServerUrl`（Cloud モード）
+2. 設定ファイル → `host`（Custom モード）またはハードコードされたクラウドエンドポイント（Cloud モード）
 3. プロジェクトパスからの決定論的ポート
 
 **認証**はプロジェクト設定から自動的に読み取られます（Custom モードでは `token`、Cloud モードでは `cloudToken`）。設定から導出されたトークンを明示的に上書きするには `--token` を使用します。

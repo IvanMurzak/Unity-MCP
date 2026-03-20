@@ -2,7 +2,7 @@
   <h1>Unity MCP — <i>CLI</i></h1>
 
 [![npm](https://img.shields.io/npm/v/unity-mcp-cli?label=npm&labelColor=333A41 'npm package')](https://www.npmjs.com/package/unity-mcp-cli)
-[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D18-5FA04E?logo=nodedotjs&labelColor=333A41 'Node.js')](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-%5E20.19.0%20%7C%7C%20%3E%3D22.12.0-5FA04E?logo=nodedotjs&labelColor=333A41 'Node.js')](https://nodejs.org/)
 [![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&labelColor=333A41)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
@@ -278,7 +278,7 @@ unity-mcp-cli run-tool gameobject-create ./MyGame --input '{"name":"Cube"}'
 
 **URL 解析优先级：**
 1. `--url` → 直接使用
-2. 配置文件 → `host`（自定义模式）或 `cloudServerUrl`（云端模式）
+2. 配置文件 → `host`（自定义模式）或硬编码的云端点（云端模式）
 3. 根据项目路径生成的确定性端口
 
 **授权**会从项目配置中自动读取（自定义模式使用 `token`，云端模式使用 `cloudToken`）。使用 `--token` 可显式覆盖从配置派生的令牌。

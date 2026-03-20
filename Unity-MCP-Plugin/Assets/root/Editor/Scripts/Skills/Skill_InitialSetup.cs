@@ -21,7 +21,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
         [McpPluginSkill(SkillId,
 @"Provides an initial setup for AI Skills, `unity-mcp-cli` command line tool installation
-and everything else what is helpful to setup at the start of the project. Essential packages,
+and everything else that is helpful to set up at the start of the project. Essential packages,
 and basic configurations.")]
         public static string Markdown
         {
