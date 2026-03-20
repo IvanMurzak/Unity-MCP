@@ -26,13 +26,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public override string AgentId => "vscode-copilot";
         public override string DownloadUrl => "https://code.visualstudio.com/download";
         public override string TutorialUrl => "https://www.youtube.com/watch?v=ZhP7Ju91mOE";
-        public override string? SkillsPath => ".github/skills";
+        public override string? SkillsPath => Path.Combine(ProjectRootPath, ".github", "skills");
 
         protected override string? IconFileName => "vs-code-64.png";
 
+        private static string LocalConfigPath => Path.Combine(ProjectRootPath, ".vscode", "mcp.json");
+
         protected override AiAgentConfig CreateConfigStdioWindows() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(".vscode", "mcp.json"),
+            configPath: LocalConfigPath,
             bodyPath: "servers"
         )
         .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
@@ -48,7 +50,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(".vscode", "mcp.json"),
+            configPath: LocalConfigPath,
             bodyPath: "servers"
         )
         .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
@@ -64,7 +66,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(".vscode", "mcp.json"),
+            configPath: LocalConfigPath,
             bodyPath: "servers"
         )
         .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
@@ -74,7 +76,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigHttpMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(".vscode", "mcp.json"),
+            configPath: LocalConfigPath,
             bodyPath: "servers"
         )
         .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)

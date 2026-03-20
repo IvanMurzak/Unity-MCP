@@ -26,18 +26,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public override string AgentName => "Antigravity";
         public override string AgentId => "antigravity";
         public override string DownloadUrl => "https://antigravity.google/download";
-        public override string? SkillsPath => ".agent/skills"; // https://codelabs.developers.google.com/getting-started-with-antigravity-skills#3
+        public override string? SkillsPath => Path.Combine(ProjectRootPath, ".agent", "skills"); // https://codelabs.developers.google.com/getting-started-with-antigravity-skills#3
 
         protected override string? IconFileName => "antigravity-64.png";
 
+        private static string GlobalConfigPath => Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            ".gemini",
+            "antigravity",
+            "mcp_config.json"
+        );
+
         protected override AiAgentConfig CreateConfigStdioWindows() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                ".gemini",
-                "antigravity",
-                "mcp_config.json"
-            ),
+            configPath: GlobalConfigPath,
             bodyPath: DefaultBodyPath
         )
         .AddIdentityKey("serverUrl")
@@ -56,12 +58,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                ".gemini",
-                "antigravity",
-                "mcp_config.json"
-            ),
+            configPath: GlobalConfigPath,
             bodyPath: DefaultBodyPath
         )
         .AddIdentityKey("serverUrl")
@@ -80,12 +77,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                ".gemini",
-                "antigravity",
-                "mcp_config.json"
-            ),
+            configPath: GlobalConfigPath,
             bodyPath: DefaultBodyPath
         )
         .AddIdentityKey("serverUrl")
@@ -98,12 +90,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigHttpMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                ".gemini",
-                "antigravity",
-                "mcp_config.json"
-            ),
+            configPath: GlobalConfigPath,
             bodyPath: DefaultBodyPath
         )
         .AddIdentityKey("serverUrl")

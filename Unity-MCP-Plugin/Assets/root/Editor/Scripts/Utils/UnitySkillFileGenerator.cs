@@ -52,18 +52,43 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// <inheritdoc/>
         protected override void BuildHowToCallHeading(StringBuilder sb)
         {
-            sb.AppendLine("### CLI (Direct Tool Execution)");
-            sb.AppendLine();
-            sb.AppendLine("Execute this tool directly via command line:");
-            sb.AppendLine();
+            // sb.AppendLine("## Use command line");
+            // sb.AppendLine();
         }
 
         /// <inheritdoc/>
         protected override void BuildToolCommand(StringBuilder sb, IRunTool tool, string host, string inputExample)
         {
+            var command = tool.ToolType == McpToolType.System
+                ? "run-system-tool"
+                : "run-tool";
             sb.AppendLine("```bash");
-            sb.AppendLine($"npx unity-mcp-cli run-tool {tool.Name} --input '{inputExample}'");
+            sb.AppendLine($"npx unity-mcp-cli {command} {tool.Name} --input '{inputExample}'");
             sb.AppendLine("```");
+            sb.AppendLine();
+            AppendInputFileHint(sb, tool, host, inputExample);
+        }
+
+        /// <inheritdoc/>
+        protected override void AppendInputFileHint(StringBuilder sb, IRunTool tool, string host, string inputExample)
+        {
+            if (inputExample == "{}")
+                return;
+            var command = tool.ToolType == McpToolType.System
+                ? "run-system-tool"
+                : "run-tool";
+
+            sb.AppendLine($"> For complex input (multi-line strings, code), save the JSON to a file and use:");
+            sb.AppendLine("> ```bash");
+            sb.AppendLine($"> npx unity-mcp-cli {command} {tool.Name} --input-file args.json");
+            sb.AppendLine("> ```");
+            sb.AppendLine(">");
+            sb.AppendLine("> Or pipe via stdin (recommended):");
+            sb.AppendLine("> ```bash");
+            sb.AppendLine($"> npx unity-mcp-cli {command} {tool.Name} --input-file - <<'EOF'");
+            sb.AppendLine("> {\"param\": \"value\"}");
+            sb.AppendLine("> EOF");
+            sb.AppendLine("> ```");
             sb.AppendLine();
         }
     }

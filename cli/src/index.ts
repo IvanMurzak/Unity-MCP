@@ -7,6 +7,9 @@ import { installPluginCommand } from './commands/install-plugin.js';
 import { configureCommand } from './commands/configure.js';
 import { removePluginCommand } from './commands/remove-plugin.js';
 import { runToolCommand } from './commands/run-tool.js';
+import { runSystemToolCommand } from './commands/run-system-tool.js';
+import { setupMcpCommand } from './commands/setup-mcp.js';
+import { setupSkillsCommand } from './commands/setup-skills.js';
 import { configureStyledHelp, error as uiError, setVerbose } from './utils/ui.js';
 
 const require = createRequire(import.meta.url);
@@ -29,6 +32,9 @@ const subcommands = [
   openCommand,
   removePluginCommand,
   runToolCommand,
+  runSystemToolCommand,
+  setupMcpCommand,
+  setupSkillsCommand,
 ];
 
 for (const cmd of subcommands) {

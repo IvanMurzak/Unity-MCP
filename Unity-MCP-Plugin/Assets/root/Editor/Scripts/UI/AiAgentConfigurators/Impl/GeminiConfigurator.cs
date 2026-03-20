@@ -25,13 +25,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public override string AgentName => "Gemini";
         public override string AgentId => "gemini";
         public override string DownloadUrl => "https://geminicli.com/docs/get-started/installation/";
-        public override string? SkillsPath => ".gemini/skills";
+        public override string? SkillsPath => Path.Combine(ProjectRootPath, ".gemini", "skills");
 
         protected override string? IconFileName => "gemini-64.png";
 
+        private static string LocalConfigPath => Path.Combine(ProjectRootPath, ".gemini", "settings.json");
+
         protected override AiAgentConfig CreateConfigStdioWindows() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(".gemini", "settings.json"),
+            configPath: LocalConfigPath,
             bodyPath: DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
@@ -47,7 +49,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(".gemini", "settings.json"),
+            configPath: LocalConfigPath,
             bodyPath: DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
@@ -63,7 +65,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(".gemini", "settings.json"),
+            configPath: LocalConfigPath,
             bodyPath: DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
@@ -73,7 +75,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigHttpMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(".gemini", "settings.json"),
+            configPath: LocalConfigPath,
             bodyPath: DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)

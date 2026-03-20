@@ -7,10 +7,6 @@ description: Captures a screenshot from a camera and returns it as an image. If 
 
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
 npx unity-mcp-cli run-tool screenshot-camera --input '{
   "cameraRef": "string_value",
@@ -18,6 +14,18 @@ npx unity-mcp-cli run-tool screenshot-camera --input '{
   "height": 0
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> npx unity-mcp-cli run-tool screenshot-camera --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> npx unity-mcp-cli run-tool screenshot-camera --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
 
 ## Input
 

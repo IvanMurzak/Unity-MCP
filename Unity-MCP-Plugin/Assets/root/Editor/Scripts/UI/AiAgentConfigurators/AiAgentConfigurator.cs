@@ -10,6 +10,7 @@
 
 #nullable enable
 using System;
+using System.IO;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using R3;
 using UnityEngine;
@@ -127,9 +128,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         /// <summary>
         /// Gets the Unity project root path (without /Assets suffix).
         /// </summary>
-        protected static string ProjectRootPath => Application.dataPath.EndsWith("/Assets")
-            ? Application.dataPath.Substring(0, Application.dataPath.Length - "/Assets".Length)
-            : Application.dataPath;
+        protected static string ProjectRootPath
+        {
+            get
+            {
+                var dataPath = Application.dataPath.Replace('\\', Path.DirectorySeparatorChar)
+                                                   .Replace('/', Path.DirectorySeparatorChar);
+                var suffix = $"{Path.DirectorySeparatorChar}Assets";
+                return dataPath.EndsWith(suffix)
+                    ? dataPath.Substring(0, dataPath.Length - suffix.Length)
+                    : dataPath;
+            }
+        }
+
+        /// <summary>
+        /// Returns a shortened display path relative to the project root.
+        /// </summary>
+        public static string ToDisplayPath(string fullPath)
+        {
+            var root = ProjectRootPath.Replace('\\', '/').TrimEnd('/') + '/';
+            var normalized = fullPath.Replace('\\', '/');
+            return normalized.StartsWith(root) ? normalized[root.Length..] : normalized;
+        }
 
         #endregion
 
@@ -406,7 +426,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             unsupportedLabel.style.display = DisplayStyle.None;
 
             // Show the skills output path
-            pathLabel.text = SkillsPath;
+            pathLabel.text = ToDisplayPath(SkillsPath!);
             pathLabel.tooltip = SkillsPath;
 
             // Configure toggle (per-agent)

@@ -26,7 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public override string AgentName => "Rider (Junie)";
         public override string AgentId => "rider-junie";
         public override string DownloadUrl => "https://www.jetbrains.com/rider/download/";
-        public override string? SkillsPath => ".junie/skills";
+        public override string? SkillsPath => Path.Combine(ProjectRootPath, ".junie", "skills");
 
         protected override string? IconFileName => "rider-64.png";
 

@@ -1,10 +1,8 @@
 import { Command } from 'commander';
-import * as fs from 'fs';
-import * as path from 'path';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
-import { generatePortFromDirectory } from '../utils/port.js';
-import { readConfig, resolveConnectionFromConfig } from '../utils/config.js';
+import { resolveAndValidateProjectPath, resolveConnection } from '../utils/connection.js';
+import { parseInput } from '../utils/input.js';
 
 interface RunToolOptions {
   path?: string;
@@ -13,90 +11,7 @@ interface RunToolOptions {
   input?: string;
   inputFile?: string;
   raw?: boolean;
-}
-
-/**
- * Resolve the project path from positional arg, --path option, or cwd.
- */
-function resolveProjectPath(positionalPath: string | undefined, options: RunToolOptions): string {
-  const resolved = path.resolve(positionalPath ?? options.path ?? process.cwd());
-  if ((positionalPath !== undefined || options.path !== undefined) && !fs.existsSync(resolved)) {
-    ui.error(`Project path does not exist: ${resolved}`);
-    process.exit(1);
-  }
-  return resolved;
-}
-
-/**
- * Resolve the server URL and auth token.
- *
- * URL priority:
- *   1. --url flag (explicit override)
- *   2. Config file connectionMode → Custom: host, Cloud: hardcoded cloud URL
- *   3. Deterministic port from project path
- *
- * Token priority:
- *   1. --token flag (explicit override)
- *   2. Config file token
- */
-function resolveConnection(
-  projectPath: string,
-  options: RunToolOptions
-): { url: string; token: string | undefined } {
-  const config = readConfig(projectPath);
-  const fromConfig = config ? resolveConnectionFromConfig(config) : { url: undefined, token: undefined };
-
-  verbose(`Config loaded: connectionMode=${config?.connectionMode ?? 'N/A'}, configUrl=${fromConfig.url ?? 'N/A'}, hasToken=${!!fromConfig.token}`);
-
-  let url: string;
-  if (options.url) {
-    url = options.url.replace(/\/$/, '');
-    verbose(`Using explicit --url: ${url}`);
-  } else if (fromConfig.url) {
-    url = fromConfig.url.replace(/\/$/, '');
-    verbose(`Using URL from config (${config?.connectionMode} mode): ${url}`);
-  } else {
-    const port = generatePortFromDirectory(projectPath);
-    url = `http://localhost:${port}`;
-    verbose(`Using deterministic port URL: ${url}`);
-  }
-
-  const token = options.token ?? fromConfig.token;
-  if (options.token) {
-    verbose('Using explicit --token');
-  }
-
-  return { url, token };
-}
-
-function parseInput(options: RunToolOptions): string {
-  if (options.inputFile) {
-    const filePath = path.resolve(options.inputFile);
-    if (!fs.existsSync(filePath)) {
-      ui.error(`Input file does not exist: ${filePath}`);
-      process.exit(1);
-    }
-    const content = fs.readFileSync(filePath, 'utf-8');
-    try {
-      JSON.parse(content);
-    } catch {
-      ui.error(`Input file does not contain valid JSON: ${filePath}`);
-      process.exit(1);
-    }
-    return content;
-  }
-
-  if (options.input) {
-    try {
-      JSON.parse(options.input);
-    } catch {
-      ui.error('--input must be valid JSON');
-      process.exit(1);
-    }
-    return options.input;
-  }
-
-  return '{}';
+  timeout?: string;
 }
 
 export const runToolCommand = new Command('run-tool')
@@ -109,8 +24,9 @@ export const runToolCommand = new Command('run-tool')
   .option('--input <json>', 'JSON string of tool arguments')
   .option('--input-file <file>', 'Read JSON arguments from file')
   .option('--raw', 'Output raw JSON (no formatting)')
+  .option('--timeout <ms>', 'Request timeout in milliseconds (default: 60000)', '60000')
   .action(async (toolName: string, positionalPath: string | undefined, options: RunToolOptions) => {
-    const projectPath = resolveProjectPath(positionalPath, options);
+    const projectPath = resolveAndValidateProjectPath(positionalPath, options);
     const { url: baseUrl, token } = resolveConnection(projectPath, options);
     const body = parseInput(options);
     const endpoint = `${baseUrl}/api/tools/${encodeURIComponent(toolName)}`;
@@ -142,8 +58,13 @@ export const runToolCommand = new Command('run-tool')
 
     const spinner = options.raw ? null : ui.startSpinner(`Calling ${toolName}...`);
 
+    const timeoutMs = parseInt(options.timeout ?? '60000', 10);
+    if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
+      ui.error(`Invalid --timeout value: "${options.timeout}". Must be a positive integer (milliseconds).`);
+      process.exit(1);
+    }
     const controller = new AbortController();
-    const fetchTimeout = setTimeout(() => controller.abort(), 30000);
+    const fetchTimeout = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
       const response = await fetch(endpoint, {
@@ -188,9 +109,31 @@ export const runToolCommand = new Command('run-tool')
       }
     } catch (err) {
       spinner?.stop();
-      const message = err instanceof Error ? err.message : String(err);
       const isTimeout = err instanceof Error && err.name === 'AbortError';
-      const displayMessage = isTimeout ? `Tool call timed out after 30 seconds: ${toolName}` : message;
+      const cause = err instanceof Error && 'cause' in err ? (err.cause as Error & { code?: string }) : null;
+      const causeCode = cause?.code ?? '';
+      const rootMessage = cause?.message || causeCode || (err instanceof Error ? err.message : String(err));
+      const errorSignature = `${rootMessage} ${causeCode}`;
+      const isConnectionRefused = errorSignature.includes('ECONNREFUSED');
+      const isConnectionReset = errorSignature.includes('ECONNRESET');
+      const isNetworkError = errorSignature.includes('EAI_AGAIN') || errorSignature.includes('ENOTFOUND');
+
+      let displayMessage: string;
+      if (isTimeout) {
+        displayMessage = `Tool call timed out after ${timeoutMs / 1000} seconds: ${toolName}`;
+      } else if (isConnectionRefused) {
+        displayMessage = `Connection refused at ${endpoint}. Is the MCP server running? Start Unity Editor with the MCP plugin first.`;
+      } else if (isConnectionReset) {
+        displayMessage = `Connection was reset by the server at ${endpoint}. The server may have crashed or restarted.`;
+      } else if (isNetworkError) {
+        displayMessage = `Cannot reach ${endpoint}. Check your network connection and server URL.`;
+      } else {
+        displayMessage = `${rootMessage}`;
+        if (cause && cause.message !== rootMessage) {
+          displayMessage += ` (${cause.message})`;
+        }
+      }
+
       if (options.raw) {
         process.stderr.write(displayMessage + '\n');
       } else {

@@ -7,10 +7,6 @@ description: "Search for packages in both Unity Package Manager registry and ins
 
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
 npx unity-mcp-cli run-tool package-search --input '{
   "query": "string_value",
@@ -18,6 +14,18 @@ npx unity-mcp-cli run-tool package-search --input '{
   "offlineMode": false
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> npx unity-mcp-cli run-tool package-search --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> npx unity-mcp-cli run-tool package-search --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
 
 ## Input
 

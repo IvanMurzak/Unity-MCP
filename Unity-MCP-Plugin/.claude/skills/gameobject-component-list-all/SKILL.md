@@ -7,10 +7,6 @@ description: List C# class names extended from UnityEngine.Component. Use this t
 
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
 npx unity-mcp-cli run-tool gameobject-component-list-all --input '{
   "search": "string_value",
@@ -18,6 +14,18 @@ npx unity-mcp-cli run-tool gameobject-component-list-all --input '{
   "pageSize": 0
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> npx unity-mcp-cli run-tool gameobject-component-list-all --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> npx unity-mcp-cli run-tool gameobject-component-list-all --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
 
 ## Input
 

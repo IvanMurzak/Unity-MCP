@@ -7,10 +7,6 @@ description: Reads the content of a script file and returns it as a string. Use 
 
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
 npx unity-mcp-cli run-tool script-read --input '{
   "filePath": "string_value",
@@ -18,6 +14,18 @@ npx unity-mcp-cli run-tool script-read --input '{
   "lineTo": 0
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> npx unity-mcp-cli run-tool script-read --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> npx unity-mcp-cli run-tool script-read --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
 
 ## Input
 
