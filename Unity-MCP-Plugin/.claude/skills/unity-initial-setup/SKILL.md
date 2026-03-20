@@ -17,7 +17,7 @@ up a Unity project with AI Skills and MCP integration.
 
 ### Install Node.js
 
-`unity-mcp-cli` requires **Node.js >= 20.19.0** (or >= 22.12.0). If you don't have Node.js installed:
+`unity-mcp-cli` requires **Node.js ^20.19.0 || >=22.12.0** (Node 21.x is not supported). If you don't have Node.js installed:
 
 Download the installer from https://nodejs.org/ and run it, or use a package manager:
 ```
@@ -120,6 +120,5 @@ Add `--verbose` to any command for detailed diagnostic output.
 ## Troubleshooting
 
 - **`npm` not found**: Node.js is not installed or not in your PATH. Reinstall Node.js and restart your terminal.
-
 - **Plugin not appearing in Unity**: After `install-plugin`, open the project in Unity Editor. The package manager resolves dependencies on project open.
 - **Skills generation fails**: Ensure Unity Editor is running with the MCP plugin installed and connected before running `setup-skills`.

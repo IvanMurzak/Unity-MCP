@@ -33,8 +33,8 @@ unity-mcp-cli run-tool gameobject-find --input '{
 
 ### Troubleshooting
 
-If you encounter issues, such as `unity-mcp-cli` not being found:
-- Read the /unity-initial-setup for detailed installation instructions.
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 
