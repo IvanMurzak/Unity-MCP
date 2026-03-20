@@ -35,6 +35,69 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "It will be added into the project as a .cs file and compiled by Unity. " +
             "The skill will be available for use after compilation.\n" +
             "\n" +
+            "It must be a partial class decorated with [McpPluginToolType]. Each tool method must be decorated with [McpPluginTool]. " +
+            "The class name should match the file name. " +
+            "All Unity API calls must use com.IvanMurzak.ReflectorNet.Utils.MainThread.Instance.Run(). " +
+            "Return a data model for structured output, or void for side-effect-only operations. " +
+            "\n\nFull sample:\n" +
+            "```csharp\n" +
+            "#nullable enable\n" +
+            "using System;\n" +
+            "using System.ComponentModel;\n" +
+            "using com.IvanMurzak.McpPlugin;\n" +
+            "using com.IvanMurzak.ReflectorNet.Utils;\n" +
+            "using com.IvanMurzak.Unity.MCP.Editor.Utils;\n" +
+            "using com.IvanMurzak.Unity.MCP.Runtime.Data;\n" +
+            "using UnityEditor;\n" +
+            "using UnityEngine;\n" +
+            "\n" +
+            "namespace com.IvanMurzak.Unity.MCP.Editor.API\n" +
+            "{\n" +
+            "    [McpPluginToolType]\n" +
+            "    public partial class Tool_Sample\n" +
+            "    {\n" +
+            "        [McpPluginTool(\"sample-get\", Title = \"Sample / Get\")]\n" +
+            "        [Description(\"Finds a GameObject and returns its ref data.\")]\n" +
+            "        public GameObjectRef Get\n" +
+            "        (\n" +
+            "            [Description(\"Name of the GameObject to find.\")]\n" +
+            "            string name\n" +
+            "        )\n" +
+            "        {\n" +
+            "            return MainThread.Instance.Run(() =>\n" +
+            "            {\n" +
+            "                var go = GameObject.Find(name)\n" +
+            "                    ?? throw new ArgumentException($\"GameObject '{name}' not found.\", nameof(name));\n" +
+            "\n" +
+            "                return new GameObjectRef(go);\n" +
+            "            });\n" +
+            "        }\n" +
+            "\n" +
+            "        [McpPluginTool(\"sample-rename\", Title = \"Sample / Rename\")]\n" +
+            "        [Description(\"Renames a GameObject.\")]\n" +
+            "        public void Rename\n" +
+            "        (\n" +
+            "            [Description(\"Current name of the GameObject.\")]\n" +
+            "            string name,\n" +
+            "            [Description(\"New name to assign.\")]\n" +
+            "            string newName\n" +
+            "        )\n" +
+            "        {\n" +
+            "            MainThread.Instance.Run(() =>\n" +
+            "            {\n" +
+            "                var go = GameObject.Find(name)\n" +
+            "                    ?? throw new ArgumentException($\"GameObject '{name}' not found.\", nameof(name));\n" +
+            "\n" +
+            "                go.name = newName;\n" +
+            "                EditorUtility.SetDirty(go);\n" +
+            "                AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);\n" +
+            "                EditorUtils.RepaintAllEditorWindows();\n" +
+            "            });\n" +
+            "        }\n" +
+            "    }\n" +
+            "}\n" +
+            "```" +
+            "\n" +
             "## Suggestions\n" +
             "\n" +
             "### Refresh UI after visual changes\n" +
@@ -127,69 +190,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 "Before choosing a path, inspect existing .asmdef files with the assets-find tool to identify the correct assembly folder.")]
             string path,
 
-            [Description("C# code for the skill tool. " +
-                "It must be a partial class decorated with [McpPluginToolType]. Each tool method must be decorated with [McpPluginTool]. " +
-                "The class name should match the file name. " +
-                "All Unity API calls must use MainThread.Instance.Run(). " +
-                "Return a data model for structured output, or void for side-effect-only operations. " +
-                "\n\nFull sample:\n" +
-                "```csharp\n" +
-                "#nullable enable\n" +
-                "using System;\n" +
-                "using System.ComponentModel;\n" +
-                "using com.IvanMurzak.McpPlugin;\n" +
-                "using com.IvanMurzak.ReflectorNet.Utils;\n" +
-                "using com.IvanMurzak.Unity.MCP.Editor.Utils;\n" +
-                "using com.IvanMurzak.Unity.MCP.Runtime.Data;\n" +
-                "using UnityEditor;\n" +
-                "using UnityEngine;\n" +
-                "\n" +
-                "namespace com.IvanMurzak.Unity.MCP.Editor.API\n" +
-                "{\n" +
-                "    [McpPluginToolType]\n" +
-                "    public partial class Tool_Sample\n" +
-                "    {\n" +
-                "        [McpPluginTool(\"sample-get\", Title = \"Sample / Get\")]\n" +
-                "        [Description(\"Finds a GameObject and returns its ref data.\")]\n" +
-                "        public GameObjectRef Get\n" +
-                "        (\n" +
-                "            [Description(\"Name of the GameObject to find.\")]\n" +
-                "            string name\n" +
-                "        )\n" +
-                "        {\n" +
-                "            return MainThread.Instance.Run(() =>\n" +
-                "            {\n" +
-                "                var go = GameObject.Find(name)\n" +
-                "                    ?? throw new ArgumentException($\"GameObject '{name}' not found.\", nameof(name));\n" +
-                "\n" +
-                "                return new GameObjectRef(go);\n" +
-                "            });\n" +
-                "        }\n" +
-                "\n" +
-                "        [McpPluginTool(\"sample-rename\", Title = \"Sample / Rename\")]\n" +
-                "        [Description(\"Renames a GameObject.\")]\n" +
-                "        public void Rename\n" +
-                "        (\n" +
-                "            [Description(\"Current name of the GameObject.\")]\n" +
-                "            string name,\n" +
-                "            [Description(\"New name to assign.\")]\n" +
-                "            string newName\n" +
-                "        )\n" +
-                "        {\n" +
-                "            MainThread.Instance.Run(() =>\n" +
-                "            {\n" +
-                "                var go = GameObject.Find(name)\n" +
-                "                    ?? throw new ArgumentException($\"GameObject '{name}' not found.\", nameof(name));\n" +
-                "\n" +
-                "                go.name = newName;\n" +
-                "                EditorUtility.SetDirty(go);\n" +
-                "                AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);\n" +
-                "                EditorUtils.RepaintAllEditorWindows();\n" +
-                "            });\n" +
-                "        }\n" +
-                "    }\n" +
-                "}\n" +
-                "```")]
+            [Description("C# code for the skill tool.")]
             string code,
 
             [RequestID]
