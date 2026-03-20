@@ -38,8 +38,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         {
             var logger = UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_Skills>();
 
-            if (path == null || string.IsNullOrEmpty(path))
+            var userProvidedPath = !string.IsNullOrEmpty(path);
+            if (!userProvidedPath)
                 path = UnityMcpPluginEditor.SkillsRootFolderAbsolutePath;
+
+            if (userProvidedPath)
+            {
+                if (Path.IsPathRooted(path))
+                    throw new ArgumentException(
+                        "Path must be a relative path inside the Unity project (e.g. '.claude/skills'). Absolute paths are not allowed.",
+                        nameof(path));
+
+                var normalizedPath = path!.Replace('\\', '/');
+                if (normalizedPath.Contains("../") || normalizedPath.EndsWith(".."))
+                    throw new ArgumentException(
+                        "Path must not contain '..' traversal segments. Use a path relative to the project root.",
+                        nameof(path));
+
+                path = Path.Combine(UnityMcpPluginEditor.ProjectRootPath, path);
+            }
 
             if (!Directory.Exists(path))
             {

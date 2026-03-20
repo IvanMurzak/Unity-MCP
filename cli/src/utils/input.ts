@@ -43,6 +43,18 @@ export function parseInput(options: InputOptions): string {
       content = fs.readFileSync(filePath, 'utf-8');
     }
 
+    try {
+      parseJsonStrict(content);
+    } catch (err) {
+      const source = isStdin ? 'stdin' : options.inputFile;
+      if (err instanceof JsonParseError) {
+        ui.error(`--input-file content from '${source}' must be valid JSON\n${err.message}`);
+      } else {
+        ui.error(`--input-file content from '${source}' must be valid JSON`);
+      }
+      process.exit(1);
+    }
+
     return content;
   }
 

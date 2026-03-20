@@ -1,10 +1,8 @@
 import { Command } from 'commander';
-import * as fs from 'fs';
 import * as path from 'path';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
-import { generatePortFromDirectory } from '../utils/port.js';
-import { readConfig, resolveConnectionFromConfig } from '../utils/config.js';
+import { resolveAndValidateProjectPath, resolveConnection } from '../utils/connection.js';
 import { getAgentById, getAgentIds, listAgentTable } from '../utils/agents.js';
 
 interface SetupSkillsOptions {
@@ -55,12 +53,8 @@ export const setupSkillsCommand = new Command('setup-skills')
         process.exit(1);
       }
 
-      // Resolve project path
-      const projectPath = path.resolve(positionalPath ?? process.cwd());
-      if (positionalPath && !fs.existsSync(projectPath)) {
-        ui.error(`Project path does not exist: ${projectPath}`);
-        process.exit(1);
-      }
+      // Resolve project path and validate it is a Unity project
+      const projectPath = resolveAndValidateProjectPath(positionalPath, options);
       verbose(`Project path: ${projectPath}`);
 
       // Resolve skills path (absolute)
@@ -68,22 +62,7 @@ export const setupSkillsCommand = new Command('setup-skills')
       verbose(`Skills path: ${skillsPath}`);
 
       // Resolve server connection
-      const config = readConfig(projectPath);
-      const fromConfig = config
-        ? resolveConnectionFromConfig(config)
-        : { url: undefined, token: undefined };
-
-      let serverUrl: string;
-      if (options.url) {
-        serverUrl = options.url.replace(/\/$/, '');
-      } else if (fromConfig.url) {
-        serverUrl = fromConfig.url.replace(/\/$/, '');
-      } else {
-        const port = generatePortFromDirectory(projectPath);
-        serverUrl = `http://localhost:${port}`;
-      }
-
-      const token = options.token ?? fromConfig.token;
+      const { url: serverUrl, token } = resolveConnection(projectPath, options);
 
       // Call the MCP server to generate skills
       const endpoint = `${serverUrl}/api/system-tools/unity-skill-generate`;
@@ -130,7 +109,7 @@ export const setupSkillsCommand = new Command('setup-skills')
 
           if (response.status === 404) {
             ui.error(
-              'The skills-generate tool is not yet available. Please update the Unity-MCP plugin to the latest version.',
+              'The unity-skill-generate tool is not yet available. Please update the Unity-MCP plugin to the latest version.',
             );
           } else {
             ui.error(`HTTP ${response.status}: ${response.statusText}`);
