@@ -206,6 +206,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (!path.EndsWith(".cs"))
                 return ResponseCallTool.Error("Path must end with '.cs'.").SetRequestID(requestId);
 
+            if (Path.IsPathRooted(path))
+                return ResponseCallTool.Error("Path must be a relative path inside the Unity project (e.g. 'Assets/Skills/MySkill.cs'). Absolute paths are not allowed.").SetRequestID(requestId);
+
+            var normalizedPath = path.Replace('\\', '/');
+            if (normalizedPath.Contains("../") || normalizedPath.Contains("..\\"))
+                return ResponseCallTool.Error("Path must not contain '..' traversal segments. Use a path relative to the project root starting with 'Assets/'.").SetRequestID(requestId);
+
+            if (!normalizedPath.StartsWith("Assets/"))
+                return ResponseCallTool.Error("Path must start with 'Assets/' (e.g. 'Assets/Skills/MySkill.cs'). Writing outside the Assets folder is not allowed.").SetRequestID(requestId);
+
             if (!ScriptUtils.IsValidCSharpSyntax(code, out var errors))
                 return ResponseCallTool.Error($"Invalid C# syntax:\n{string.Join("\n", errors)}").SetRequestID(requestId);
 

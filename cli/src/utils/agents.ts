@@ -593,6 +593,9 @@ export function writeJsonAgentConfig(
       // If the file is malformed, start fresh
       root = {};
     }
+    if (!root || typeof root !== 'object' || Array.isArray(root)) {
+      root = {};
+    }
   }
 
   // Navigate/create bodyPath

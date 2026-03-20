@@ -80,7 +80,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
             sb.AppendLine($"> For complex input (multi-line strings, code), save the JSON to a file and use:");
             sb.AppendLine("> ```bash");
-            sb.AppendLine("> npx unity-mcp-cli {command} {tool.Name} --input-file args.json");
+            sb.AppendLine($"> npx unity-mcp-cli {command} {tool.Name} --input-file args.json");
             sb.AppendLine("> ```");
             sb.AppendLine(">");
             sb.AppendLine("> Or pipe via stdin (recommended):");

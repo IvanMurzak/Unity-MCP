@@ -48,6 +48,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             logger.LogInformation("Generating all skills in folder: {Path}", path);
 
+            UnityMcpPluginEditor.SkillsPath = path;
             UnityMcpPluginEditor.Instance.McpPluginInstance!.GenerateSkillFiles(UnityMcpPluginEditor.ProjectRootPath);
         }
     }

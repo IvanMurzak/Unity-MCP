@@ -86,7 +86,7 @@ export const setupSkillsCommand = new Command('setup-skills')
       const token = options.token ?? fromConfig.token;
 
       // Call the MCP server to generate skills
-      const endpoint = `${serverUrl}/api/system-tools/skills-generate`;
+      const endpoint = `${serverUrl}/api/system-tools/unity-skill-generate`;
       verbose(`Endpoint: ${endpoint}`);
 
       const headers: Record<string, string> = {
@@ -96,7 +96,7 @@ export const setupSkillsCommand = new Command('setup-skills')
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const body = JSON.stringify({ skillsPath });
+      const body = JSON.stringify({ path: skillsPath });
 
       ui.heading('Generate Skills');
       ui.label('Agent', agent.name);
@@ -109,6 +109,10 @@ export const setupSkillsCommand = new Command('setup-skills')
       );
 
       const timeoutMs = parseInt(options.timeout ?? '60000', 10);
+      if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
+        ui.error(`Invalid timeout value: "${options.timeout}". Must be a positive integer (milliseconds).`);
+        process.exit(1);
+      }
       const controller = new AbortController();
       const fetchTimeout = setTimeout(() => controller.abort(), timeoutMs);
 

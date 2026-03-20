@@ -45,14 +45,16 @@ export function parseInput(options: InputOptions): string {
 
     try {
       const result = parseJsonRobust(content);
+      const source = isStdin ? 'stdin' : options.inputFile;
       if (result.wasStringified) {
-        verbose('Input JSON was auto-stringified to become valid');
+        ui.error(`Input from ${source} does not contain valid JSON`);
+        process.exit(1);
       }
       return result.raw;
     } catch (err) {
       const source = isStdin ? 'stdin' : options.inputFile;
       if (err instanceof JsonParseError) {
-        ui.error(`Input from ${source} does not contain valid JSON:\n${err.message}`);
+        ui.error(`Input from ${source}: ${err.message}`);
       } else {
         ui.error(`Input from ${source} does not contain valid JSON`);
       }
