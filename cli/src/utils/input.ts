@@ -64,7 +64,8 @@ export function parseInput(options: InputOptions): string {
     try {
       const result = parseJsonRobust(options.input);
       if (result.wasStringified) {
-        verbose('--input was auto-stringified to become valid JSON');
+        ui.error('--input must be valid JSON');
+        process.exit(1);
       }
       return result.raw;
     } catch (err) {
