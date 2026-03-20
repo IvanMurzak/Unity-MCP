@@ -26,7 +26,7 @@ namespace com.IvanMurzak.Unity.MCP
 
     public partial class UnityMcpPlugin : IDisposable
     {
-        public const string Version = "0.56.0";
+        public const string Version = "0.57.0";
 
         private static int _singletonCount = 0;
         public static bool HasAnyInstance => _singletonCount > 0;
