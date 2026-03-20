@@ -17,6 +17,8 @@ npx unity-mcp-cli run-tool editor-selection-set --input '{
 }'
 ```
 
+> For complex input (multi-line strings, code), save the JSON to a file and use `npx unity-mcp-cli run-tool editor-selection-set --input-file args.json`.
+
 ## Input
 
 | Name | Type | Required | Description |

@@ -146,6 +146,8 @@ npx unity-mcp-cli run-system-tool unity-skill-create --input '{
 }'
 ```
 
+> For complex input (multi-line strings, code), save the JSON to a file and use `npx unity-mcp-cli run-system-tool unity-skill-create --input-file args.json`.
+
 ## Input
 
 | Name | Type | Required | Description |

@@ -68,6 +68,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             sb.AppendLine($"npx unity-mcp-cli {command} {tool.Name} --input '{inputExample}'");
             sb.AppendLine("```");
             sb.AppendLine();
+            AppendInputFileHint(sb, tool, inputExample);
+        }
+
+        /// <inheritdoc/>
+        protected override void AppendInputFileHint(StringBuilder sb, IRunTool tool, string inputExample)
+        {
+            if (inputExample == "{}")
+                return;
+            var command = tool.ToolType == McpToolType.System
+                ? "run-system-tool"
+                : "run-tool";
+            sb.AppendLine($"> For complex input (multi-line strings, code), save the JSON to a file and use `npx unity-mcp-cli {command} {tool.Name} --input-file args.json`.");
+            sb.AppendLine();
         }
     }
 }

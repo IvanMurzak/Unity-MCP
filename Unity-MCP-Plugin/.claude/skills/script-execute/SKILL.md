@@ -20,6 +20,8 @@ npx unity-mcp-cli run-tool script-execute --input '{
 }'
 ```
 
+> For complex input (multi-line strings, code), save the JSON to a file and use `npx unity-mcp-cli run-tool script-execute --input-file args.json`.
+
 ## Input
 
 | Name | Type | Required | Description |

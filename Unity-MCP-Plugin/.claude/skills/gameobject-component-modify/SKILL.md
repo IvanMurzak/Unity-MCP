@@ -19,6 +19,8 @@ npx unity-mcp-cli run-tool gameobject-component-modify --input '{
 }'
 ```
 
+> For complex input (multi-line strings, code), save the JSON to a file and use `npx unity-mcp-cli run-tool gameobject-component-modify --input-file args.json`.
+
 ## Input
 
 | Name | Type | Required | Description |
