@@ -8,7 +8,7 @@ description: Create new scene in the project assets. Use 'scene-list-opened' too
 ## How to Call
 
 ```bash
-npx unity-mcp-cli run-tool scene-create --input '{
+unity-mcp-cli run-tool scene-create --input '{
   "path": "string_value",
   "newSceneSetup": "string_value",
   "newSceneMode": "string_value"
@@ -17,15 +17,21 @@ npx unity-mcp-cli run-tool scene-create --input '{
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> npx unity-mcp-cli run-tool scene-create --input-file args.json
+> unity-mcp-cli run-tool scene-create --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
 > ```bash
-> npx unity-mcp-cli run-tool scene-create --input-file - <<'EOF'
+> unity-mcp-cli run-tool scene-create --input-file - <<'EOF'
 > {"param": "value"}
 > EOF
 > ```
+
+
+### Troubleshooting
+
+If you encounter issues, such as `unity-mcp-cli` not being found:
+- Read the /unity-initial-setup for detailed installation instructions.
 
 ## Input
 

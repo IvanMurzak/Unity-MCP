@@ -8,7 +8,7 @@ description: Copy assets at given paths and store them at new paths. Does AssetD
 ## How to Call
 
 ```bash
-npx unity-mcp-cli run-tool assets-copy --input '{
+unity-mcp-cli run-tool assets-copy --input '{
   "sourcePaths": "string_value",
   "destinationPaths": "string_value"
 }'
@@ -16,15 +16,21 @@ npx unity-mcp-cli run-tool assets-copy --input '{
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> npx unity-mcp-cli run-tool assets-copy --input-file args.json
+> unity-mcp-cli run-tool assets-copy --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
 > ```bash
-> npx unity-mcp-cli run-tool assets-copy --input-file - <<'EOF'
+> unity-mcp-cli run-tool assets-copy --input-file - <<'EOF'
 > {"param": "value"}
 > EOF
 > ```
+
+
+### Troubleshooting
+
+If you encounter issues, such as `unity-mcp-cli` not being found:
+- Read the /unity-initial-setup for detailed installation instructions.
 
 ## Input
 

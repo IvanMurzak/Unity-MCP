@@ -8,22 +8,28 @@ description: Save a prefab. Use it when you are in prefab editing mode in Unity 
 ## How to Call
 
 ```bash
-npx unity-mcp-cli run-tool assets-prefab-save --input '{
+unity-mcp-cli run-tool assets-prefab-save --input '{
   "nothing": "string_value"
 }'
 ```
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> npx unity-mcp-cli run-tool assets-prefab-save --input-file args.json
+> unity-mcp-cli run-tool assets-prefab-save --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
 > ```bash
-> npx unity-mcp-cli run-tool assets-prefab-save --input-file - <<'EOF'
+> unity-mcp-cli run-tool assets-prefab-save --input-file - <<'EOF'
 > {"param": "value"}
 > EOF
 > ```
+
+
+### Troubleshooting
+
+If you encounter issues, such as `unity-mcp-cli` not being found:
+- Read the /unity-initial-setup for detailed installation instructions.
 
 ## Input
 

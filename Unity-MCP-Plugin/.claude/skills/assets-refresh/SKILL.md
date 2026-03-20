@@ -8,22 +8,28 @@ description: Refreshes the AssetDatabase. Use it if any file was added or update
 ## How to Call
 
 ```bash
-npx unity-mcp-cli run-tool assets-refresh --input '{
+unity-mcp-cli run-tool assets-refresh --input '{
   "options": "string_value"
 }'
 ```
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> npx unity-mcp-cli run-tool assets-refresh --input-file args.json
+> unity-mcp-cli run-tool assets-refresh --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
 > ```bash
-> npx unity-mcp-cli run-tool assets-refresh --input-file - <<'EOF'
+> unity-mcp-cli run-tool assets-refresh --input-file - <<'EOF'
 > {"param": "value"}
 > EOF
 > ```
+
+
+### Troubleshooting
+
+If you encounter issues, such as `unity-mcp-cli` not being found:
+- Read the /unity-initial-setup for detailed installation instructions.
 
 ## Input
 

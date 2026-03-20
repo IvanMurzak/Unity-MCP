@@ -8,7 +8,7 @@ description: Add Component to GameObject in opened Prefab or in a Scene. Use 'ga
 ## How to Call
 
 ```bash
-npx unity-mcp-cli run-tool gameobject-component-add --input '{
+unity-mcp-cli run-tool gameobject-component-add --input '{
   "componentNames": "string_value",
   "gameObjectRef": "string_value"
 }'
@@ -16,15 +16,21 @@ npx unity-mcp-cli run-tool gameobject-component-add --input '{
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> npx unity-mcp-cli run-tool gameobject-component-add --input-file args.json
+> unity-mcp-cli run-tool gameobject-component-add --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
 > ```bash
-> npx unity-mcp-cli run-tool gameobject-component-add --input-file - <<'EOF'
+> unity-mcp-cli run-tool gameobject-component-add --input-file - <<'EOF'
 > {"param": "value"}
 > EOF
 > ```
+
+
+### Troubleshooting
+
+If you encounter issues, such as `unity-mcp-cli` not being found:
+- Read the /unity-initial-setup for detailed installation instructions.
 
 ## Input
 

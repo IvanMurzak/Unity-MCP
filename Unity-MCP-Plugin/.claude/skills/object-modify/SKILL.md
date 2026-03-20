@@ -8,7 +8,7 @@ description: Modify the specified Unity Object. Allows direct modification of ob
 ## How to Call
 
 ```bash
-npx unity-mcp-cli run-tool object-modify --input '{
+unity-mcp-cli run-tool object-modify --input '{
   "objectRef": "string_value",
   "objectDiff": "string_value"
 }'
@@ -16,15 +16,21 @@ npx unity-mcp-cli run-tool object-modify --input '{
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> npx unity-mcp-cli run-tool object-modify --input-file args.json
+> unity-mcp-cli run-tool object-modify --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
 > ```bash
-> npx unity-mcp-cli run-tool object-modify --input-file - <<'EOF'
+> unity-mcp-cli run-tool object-modify --input-file - <<'EOF'
 > {"param": "value"}
 > EOF
 > ```
+
+
+### Troubleshooting
+
+If you encounter issues, such as `unity-mcp-cli` not being found:
+- Read the /unity-initial-setup for detailed installation instructions.
 
 ## Input
 

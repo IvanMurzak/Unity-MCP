@@ -8,22 +8,28 @@ description: Set the specified opened scene as the active scene. Use 'scene-list
 ## How to Call
 
 ```bash
-npx unity-mcp-cli run-tool scene-set-active --input '{
+unity-mcp-cli run-tool scene-set-active --input '{
   "sceneRef": "string_value"
 }'
 ```
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> npx unity-mcp-cli run-tool scene-set-active --input-file args.json
+> unity-mcp-cli run-tool scene-set-active --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
 > ```bash
-> npx unity-mcp-cli run-tool scene-set-active --input-file - <<'EOF'
+> unity-mcp-cli run-tool scene-set-active --input-file - <<'EOF'
 > {"param": "value"}
 > EOF
 > ```
+
+
+### Troubleshooting
+
+If you encounter issues, such as `unity-mcp-cli` not being found:
+- Read the /unity-initial-setup for detailed installation instructions.
 
 ## Input
 

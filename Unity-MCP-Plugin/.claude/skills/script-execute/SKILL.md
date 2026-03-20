@@ -8,7 +8,7 @@ description: Compiles and executes C# code dynamically using Roslyn. The provide
 ## How to Call
 
 ```bash
-npx unity-mcp-cli run-tool script-execute --input '{
+unity-mcp-cli run-tool script-execute --input '{
   "csharpCode": "string_value",
   "className": "string_value",
   "methodName": "string_value",
@@ -18,15 +18,21 @@ npx unity-mcp-cli run-tool script-execute --input '{
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> npx unity-mcp-cli run-tool script-execute --input-file args.json
+> unity-mcp-cli run-tool script-execute --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
 > ```bash
-> npx unity-mcp-cli run-tool script-execute --input-file - <<'EOF'
+> unity-mcp-cli run-tool script-execute --input-file - <<'EOF'
 > {"param": "value"}
 > EOF
 > ```
+
+
+### Troubleshooting
+
+If you encounter issues, such as `unity-mcp-cli` not being found:
+- Read the /unity-initial-setup for detailed installation instructions.
 
 ## Input
 

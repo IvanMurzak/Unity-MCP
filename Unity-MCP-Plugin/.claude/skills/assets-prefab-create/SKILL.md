@@ -8,7 +8,7 @@ description: Create a prefab from a GameObject in the current active scene. The 
 ## How to Call
 
 ```bash
-npx unity-mcp-cli run-tool assets-prefab-create --input '{
+unity-mcp-cli run-tool assets-prefab-create --input '{
   "prefabAssetPath": "string_value",
   "gameObjectRef": "string_value",
   "replaceGameObjectWithPrefab": false
@@ -17,15 +17,21 @@ npx unity-mcp-cli run-tool assets-prefab-create --input '{
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> npx unity-mcp-cli run-tool assets-prefab-create --input-file args.json
+> unity-mcp-cli run-tool assets-prefab-create --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
 > ```bash
-> npx unity-mcp-cli run-tool assets-prefab-create --input-file - <<'EOF'
+> unity-mcp-cli run-tool assets-prefab-create --input-file - <<'EOF'
 > {"param": "value"}
 > EOF
 > ```
+
+
+### Troubleshooting
+
+If you encounter issues, such as `unity-mcp-cli` not being found:
+- Read the /unity-initial-setup for detailed installation instructions.
 
 ## Input
 

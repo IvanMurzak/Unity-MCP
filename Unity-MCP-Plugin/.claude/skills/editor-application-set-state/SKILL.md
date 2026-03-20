@@ -8,7 +8,7 @@ description: Control the Unity Editor application state. You can start, stop, or
 ## How to Call
 
 ```bash
-npx unity-mcp-cli run-tool editor-application-set-state --input '{
+unity-mcp-cli run-tool editor-application-set-state --input '{
   "isPlaying": false,
   "isPaused": false
 }'
@@ -16,15 +16,21 @@ npx unity-mcp-cli run-tool editor-application-set-state --input '{
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> npx unity-mcp-cli run-tool editor-application-set-state --input-file args.json
+> unity-mcp-cli run-tool editor-application-set-state --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
 > ```bash
-> npx unity-mcp-cli run-tool editor-application-set-state --input-file - <<'EOF'
+> unity-mcp-cli run-tool editor-application-set-state --input-file - <<'EOF'
 > {"param": "value"}
 > EOF
 > ```
+
+
+### Troubleshooting
+
+If you encounter issues, such as `unity-mcp-cli` not being found:
+- Read the /unity-initial-setup for detailed installation instructions.
 
 ## Input
 

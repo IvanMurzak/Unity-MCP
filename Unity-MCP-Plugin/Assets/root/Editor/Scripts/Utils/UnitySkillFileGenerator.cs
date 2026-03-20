@@ -12,6 +12,7 @@
 using System.Text;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Skills;
+using com.IvanMurzak.Unity.MCP.Editor.API;
 using Microsoft.Extensions.Logging;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
@@ -63,10 +64,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 ? "run-system-tool"
                 : "run-tool";
             sb.AppendLine("```bash");
-            sb.AppendLine($"npx unity-mcp-cli {command} {tool.Name} --input '{inputExample}'");
+            sb.AppendLine($"unity-mcp-cli {command} {tool.Name} --input '{inputExample}'");
             sb.AppendLine("```");
             sb.AppendLine();
             AppendInputFileHint(sb, tool, host, inputExample);
+            sb.AppendLine();
+            sb.AppendLine("### Troubleshooting");
+            sb.AppendLine();
+            sb.AppendLine("If you encounter issues, such as `unity-mcp-cli` not being found:");
+            sb.AppendLine($"- Read the /{Skill_InitialSetup.SkillId} for detailed installation instructions.");
+            sb.AppendLine();
         }
 
         /// <inheritdoc/>
@@ -80,12 +87,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
             sb.AppendLine($"> For complex input (multi-line strings, code), save the JSON to a file and use:");
             sb.AppendLine("> ```bash");
-            sb.AppendLine($"> npx unity-mcp-cli {command} {tool.Name} --input-file args.json");
+            sb.AppendLine($"> unity-mcp-cli {command} {tool.Name} --input-file args.json");
             sb.AppendLine("> ```");
             sb.AppendLine(">");
             sb.AppendLine("> Or pipe via stdin (recommended):");
             sb.AppendLine("> ```bash");
-            sb.AppendLine($"> npx unity-mcp-cli {command} {tool.Name} --input-file - <<'EOF'");
+            sb.AppendLine($"> unity-mcp-cli {command} {tool.Name} --input-file - <<'EOF'");
             sb.AppendLine("> {\"param\": \"value\"}");
             sb.AppendLine("> EOF");
             sb.AppendLine("> ```");
