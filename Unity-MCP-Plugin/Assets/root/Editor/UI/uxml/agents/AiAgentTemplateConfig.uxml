@@ -16,6 +16,9 @@
         <!-- Under header container -->
         <ui:VisualElement name="containerUnderHeader" />
 
+        <!-- Alert container - shown when setup is incomplete -->
+        <ui:VisualElement name="containerAlert" style="display: none;" />
+
         <!-- Skills container -->
         <ui:VisualElement name="containerSkills" />
 

@@ -129,6 +129,47 @@
     -unity-font-style: italic;
 }
 
+/* ==========================================================================
+   Alert Frame - Setup required notification panel
+   ========================================================================== */
+
+.alert-frame {
+    background-color: rgba(180, 120, 40, 0.12);
+    border-radius: 10px;
+    border-width: 1px;
+    border-color: rgba(220, 160, 60, 0.45);
+    padding: 10px 12px;
+    margin-top: 8px;
+    margin-bottom: 4px;
+}
+
+.alert-frame-title {
+    font-size: 13px;
+    -unity-font-style: bold;
+    color: rgb(255, 200, 100);
+    margin-bottom: 4px;
+}
+
+.alert-frame-message {
+    font-size: 12px;
+    color: rgb(210, 180, 130);
+    white-space: normal;
+    margin-bottom: 2px;
+}
+
+.alert-frame-item {
+    font-size: 12px;
+    color: rgb(210, 180, 130);
+    white-space: normal;
+    padding-left: 8px;
+    margin-bottom: 1px;
+}
+
+.alert-frame-item-recommended {
+    color: rgb(255, 200, 100);
+    -unity-font-style: bold;
+}
+
 .frame-mcp-server {
     /* background-color: rgba(20, 40, 69, 0.2); */
     border-radius: 10px;
