@@ -7,17 +7,23 @@ description: Creates a new folder in the specified parent folder. The parent fol
 
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
 npx unity-mcp-cli run-tool assets-create-folder --input '{
   "inputs": "string_value"
 }'
 ```
 
-> For complex input (multi-line strings, code), save the JSON to a file and use `npx unity-mcp-cli run-tool assets-create-folder --input-file args.json`.
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> npx unity-mcp-cli {command} {tool.Name} --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> npx unity-mcp-cli run-tool assets-create-folder --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
 
 ## Input
 

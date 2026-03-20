@@ -1,10 +1,8 @@
 import { Command } from 'commander';
-import * as fs from 'fs';
-import * as path from 'path';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
-import { parseJsonRobust, JsonParseError } from '../utils/json-parse.js';
 import { resolveAndValidateProjectPath, resolveConnection } from '../utils/connection.js';
+import { parseInput } from '../utils/input.js';
 
 interface RunToolOptions {
   path?: string;
@@ -14,50 +12,6 @@ interface RunToolOptions {
   inputFile?: string;
   raw?: boolean;
   timeout?: string;
-}
-
-function parseInput(options: RunToolOptions): string {
-  if (options.inputFile) {
-    const filePath = path.resolve(options.inputFile);
-    if (!fs.existsSync(filePath)) {
-      ui.error(`Input file does not exist: ${filePath}`);
-      process.exit(1);
-    }
-    const content = fs.readFileSync(filePath, 'utf-8');
-    try {
-      const result = parseJsonRobust(content);
-      if (result.wasStringified) {
-        verbose(`Input file JSON was auto-stringified to become valid`);
-      }
-      return result.raw;
-    } catch (err) {
-      if (err instanceof JsonParseError) {
-        ui.error(`Input file does not contain valid JSON: ${filePath}\n${err.message}`);
-      } else {
-        ui.error(`Input file does not contain valid JSON: ${filePath}`);
-      }
-      process.exit(1);
-    }
-  }
-
-  if (options.input) {
-    try {
-      const result = parseJsonRobust(options.input);
-      if (result.wasStringified) {
-        verbose(`--input was auto-stringified to become valid JSON`);
-      }
-      return result.raw;
-    } catch (err) {
-      if (err instanceof JsonParseError) {
-        ui.error(`--input must be valid JSON\n${err.message}`);
-      } else {
-        ui.error('--input must be valid JSON');
-      }
-      process.exit(1);
-    }
-  }
-
-  return '{}';
 }
 
 export const runToolCommand = new Command('run-tool')

@@ -7,17 +7,23 @@ description: Refreshes the AssetDatabase. Use it if any file was added or update
 
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
 npx unity-mcp-cli run-tool assets-refresh --input '{
   "options": "string_value"
 }'
 ```
 
-> For complex input (multi-line strings, code), save the JSON to a file and use `npx unity-mcp-cli run-tool assets-refresh --input-file args.json`.
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> npx unity-mcp-cli {command} {tool.Name} --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> npx unity-mcp-cli run-tool assets-refresh --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
 
 ## Input
 

@@ -7,10 +7,6 @@ description: Search the asset database using the search filter string. Allows yo
 
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
 npx unity-mcp-cli run-tool assets-find --input '{
   "filter": "string_value",
@@ -19,7 +15,17 @@ npx unity-mcp-cli run-tool assets-find --input '{
 }'
 ```
 
-> For complex input (multi-line strings, code), save the JSON to a file and use `npx unity-mcp-cli run-tool assets-find --input-file args.json`.
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> npx unity-mcp-cli {command} {tool.Name} --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> npx unity-mcp-cli run-tool assets-find --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
 
 ## Input
 

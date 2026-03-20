@@ -7,17 +7,23 @@ description: Generate all skills from the existed Tools in the Unity Project.
 
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
 npx unity-mcp-cli run-system-tool unity-skill-generate --input '{
   "path": "string_value"
 }'
 ```
 
-> For complex input (multi-line strings, code), save the JSON to a file and use `npx unity-mcp-cli run-system-tool unity-skill-generate --input-file args.json`.
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> npx unity-mcp-cli {command} {tool.Name} --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> npx unity-mcp-cli run-system-tool unity-skill-generate --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
 
 ## Input
 

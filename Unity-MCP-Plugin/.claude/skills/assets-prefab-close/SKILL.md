@@ -7,17 +7,23 @@ description: Close currently opened prefab. Use it when you are in prefab editin
 
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
 npx unity-mcp-cli run-tool assets-prefab-close --input '{
   "save": false
 }'
 ```
 
-> For complex input (multi-line strings, code), save the JSON to a file and use `npx unity-mcp-cli run-tool assets-prefab-close --input-file args.json`.
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> npx unity-mcp-cli {command} {tool.Name} --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> npx unity-mcp-cli run-tool assets-prefab-close --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
 
 ## Input
 

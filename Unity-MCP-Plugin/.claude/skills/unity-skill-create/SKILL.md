@@ -135,10 +135,6 @@ All Unity API calls (including `GameObject.Find`, `AssetDatabase`, `EditorUtilit
 
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
 npx unity-mcp-cli run-system-tool unity-skill-create --input '{
   "path": "string_value",
@@ -146,7 +142,17 @@ npx unity-mcp-cli run-system-tool unity-skill-create --input '{
 }'
 ```
 
-> For complex input (multi-line strings, code), save the JSON to a file and use `npx unity-mcp-cli run-system-tool unity-skill-create --input-file args.json`.
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> npx unity-mcp-cli {command} {tool.Name} --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> npx unity-mcp-cli run-system-tool unity-skill-create --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
 
 ## Input
 
