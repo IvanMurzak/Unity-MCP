@@ -27,7 +27,7 @@
 
 <b>[English](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) | [中文](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.zh-CN.md) | [Español](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/README.es.md)</b>
 
-**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** 向けのクロスプラットフォーム CLI ツールです — プロジェクトの作成、プラグインのインストール、MCP ツールの設定、アクティブな MCP 接続で Unity を起動するまで、すべてを単一のコマンドラインから実行できます。
+**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** 向けのクロスプラットフォーム CLI ツールです — プロジェクトの作成、プラグインのインストール、MCP ツールの設定、アクティブな MCP 接続での Unity の起動まで、すべてを単一のコマンドラインから実行できます。
 
 ## ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-features.svg?raw=true)
 
@@ -36,44 +36,57 @@
 - :white_check_mark: **プラグインのインストール** — 必要なすべてのスコープ付きレジストリとともに Unity-MCP プラグインを `manifest.json` に追加する
 - :white_check_mark: **プラグインの削除** — Unity-MCP プラグインを `manifest.json` から削除する
 - :white_check_mark: **設定** — MCP ツール、プロンプト、リソースの有効化・無効化を行う
-- :white_check_mark: **接続** — 自動サーバー接続のための MCP 環境変数を設定して Unity を起動する
+- :white_check_mark: **ツールの実行** — MCP ツールをコマンドラインから直接実行する
+- :white_check_mark: **MCP セットアップ** — サポートされている 14 のエージェントに対して AI エージェント MCP 設定ファイルを書き出す
+- :white_check_mark: **スキルのセットアップ** — MCP サーバーを通じて AI エージェント向けのスキルファイルを生成する
+- :white_check_mark: **オープン＆接続** — オプションの MCP 環境変数を設定して Unity を起動し、自動サーバー接続を実現する
 - :white_check_mark: **クロスプラットフォーム** — Windows、macOS、Linux に対応
+- :white_check_mark: **CI 対応** — 非対話型ターミナルを自動検出し、スピナーやカラーを無効化する
+- :white_check_mark: **詳細モード** — 任意のコマンドに `--verbose` を付けて詳細な診断出力を取得する
 - :white_check_mark: **バージョン対応** — プラグインのバージョンをダウングレードせず、OpenUPM から最新バージョンを解決する
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 # クイックスタート
 
-インストール不要で `npx` を使って任意のコマンドをすぐに実行できます:
-
-```bash
-npx unity-mcp-cli install-plugin /path/to/unity/project
-```
-
-またはグローバルにインストール:
+グローバルにインストールして実行:
 
 ```bash
 npm install -g unity-mcp-cli
 unity-mcp-cli install-plugin /path/to/unity/project
 ```
 
-> **動作要件:** [Node.js](https://nodejs.org/) ^20.19.0 または >=22.12.0。[Unity Hub](https://unity.com/download) は見つからない場合に自動的にインストールされます。
+または `npx` を使えばグローバルインストール不要で任意のコマンドをすぐに実行できます:
+
+```bash
+npx unity-mcp-cli install-plugin /path/to/unity/project
+```
+
+> **動作要件:** [Node.js](https://nodejs.org/) ^20.19.0 || >=22.12.0。[Unity Hub](https://unity.com/download) は見つからない場合に自動的にインストールされます。
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 # 目次
 
 - [クイックスタート](#クイックスタート)
+- [目次](#目次)
 - [コマンド](#コマンド)
-  - [`configure`](#configure) — MCP ツール、プロンプト、リソースを設定する
-  - [`connect`](#connect) — MCP 接続を確立して Unity を起動する
-  - [`create-project`](#create-project) — 新しい Unity プロジェクトを作成する
-  - [`install-plugin`](#install-plugin) — Unity-MCP プラグインをプロジェクトにインストールする
-  - [`install-unity`](#install-unity) — Unity Hub 経由で Unity Editor をインストールする
-  - [`open`](#open) — Unity プロジェクトをエディターで開く
-  - [`remove-plugin`](#remove-plugin) — Unity-MCP プラグインをプロジェクトから削除する
+  - [`configure`](#configure)
+  - [`create-project`](#create-project)
+  - [`install-plugin`](#install-plugin)
+  - [`install-unity`](#install-unity)
+  - [`open`](#open)
+  - [`run-tool`](#run-tool)
+  - [`setup-mcp`](#setup-mcp)
+  - [`setup-skills`](#setup-skills)
+  - [`remove-plugin`](#remove-plugin)
+  - [グローバルオプション](#グローバルオプション)
 - [完全自動化の例](#完全自動化の例)
 - [仕組み](#仕組み)
+    - [決定論的ポート](#決定論的ポート)
+    - [プラグインインストール](#プラグインインストール)
+    - [設定ファイル](#設定ファイル)
+    - [Unity Hub 統合](#unity-hub-統合)
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
@@ -84,7 +97,7 @@ unity-mcp-cli install-plugin /path/to/unity/project
 `UserSettings/AI-Game-Developer-Config.json` 内の MCP ツール、プロンプト、リソースを設定します。
 
 ```bash
-npx unity-mcp-cli configure ./MyGame --list
+unity-mcp-cli configure ./MyGame --list
 ```
 
 | オプション | 必須 | 説明 |
@@ -107,7 +120,7 @@ npx unity-mcp-cli configure ./MyGame --list
 **例 — 特定のツールを有効化してすべてのプロンプトを無効化:**
 
 ```bash
-npx unity-mcp-cli configure ./MyGame \
+unity-mcp-cli configure ./MyGame \
   --enable-tools gameobject-create,gameobject-find \
   --disable-all-prompts
 ```
@@ -115,69 +128,10 @@ npx unity-mcp-cli configure ./MyGame \
 **例 — すべてを有効化:**
 
 ```bash
-npx unity-mcp-cli configure ./MyGame \
+unity-mcp-cli configure ./MyGame \
   --enable-all-tools \
   --enable-all-prompts \
   --enable-all-resources
-```
-
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
-
-## `connect`
-
-環境変数を通じて特定の MCP サーバーに接続した状態で Unity プロジェクトを開きます。各オプションは、Unity プラグインが起動時に読み取る `UNITY_MCP_*` 環境変数に対応しています。
-
-```bash
-npx unity-mcp-cli connect \
-  --path ./MyGame \
-  --url http://localhost:8080
-```
-
-| オプション | 環境変数 | 必須 | 説明 |
-|---|---|---|---|
-| `--url <url>` | `UNITY_MCP_HOST` | はい | 接続先の MCP サーバー URL |
-| `--path <path>` | — | はい | Unity プロジェクトへのパス |
-| `--keep-connected` | `UNITY_MCP_KEEP_CONNECTED` | いいえ | 接続を強制的に維持する |
-| `--token <token>` | `UNITY_MCP_TOKEN` | いいえ | 認証トークン |
-| `--auth <option>` | `UNITY_MCP_AUTH_OPTION` | いいえ | 認証モード: `none` または `required` |
-| `--tools <names>` | `UNITY_MCP_TOOLS` | いいえ | 有効にするツールのカンマ区切りリスト |
-| `--transport <method>` | `UNITY_MCP_TRANSPORT` | いいえ | トランスポートメソッド: `streamableHttp` または `stdio` |
-| `--start-server <value>` | `UNITY_MCP_START_SERVER` | いいえ | `true` または `false` を指定して Unity Editor での MCP サーバー自動起動を制御する（`streamableHttp` トランスポートにのみ適用） |
-| `--unity <version>` | — | いいえ | 使用する Unity Editor の特定バージョン（デフォルトはプロジェクト設定のバージョン、次に最も高いインストール済みバージョン） |
-
-このコマンドは対応する `UNITY_MCP_*` 環境変数を設定した状態で Unity Editor を起動し、プラグインが起動時に自動的にそれらを読み取れるようにします。環境変数は実行時にプロジェクトの `UserSettings/AI-Game-Developer-Config.json` 設定ファイルの値を上書きします。
-
-**例 — 認証と特定ツールを指定して接続:**
-
-```bash
-npx unity-mcp-cli connect \
-  --path ./MyGame \
-  --url http://my-server:8080 \
-  --token my-secret-token \
-  --auth required \
-  --keep-connected \
-  --tools gameobject-create,gameobject-find,script-execute
-```
-
-**例 — stdio トランスポートで接続（サーバーは AI エージェントが管理）:**
-
-```bash
-npx unity-mcp-cli connect \
-  --path ./MyGame \
-  --url http://localhost:8080 \
-  --transport stdio \
-  --start-server false
-```
-
-**例 — streamableHttp とサーバー自動起動で接続:**
-
-```bash
-npx unity-mcp-cli connect \
-  --path ./MyGame \
-  --url http://localhost:8080 \
-  --transport streamableHttp \
-  --start-server true \
-  --keep-connected
 ```
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
@@ -187,18 +141,18 @@ npx unity-mcp-cli connect \
 Unity Editor を使用して新しい Unity プロジェクトを作成します。
 
 ```bash
-npx unity-mcp-cli create-project /path/to/new/project
+unity-mcp-cli create-project /path/to/new/project
 ```
 
 | オプション | 必須 | 説明 |
 |---|---|---|
 | `[path]` | はい | プロジェクトの作成先パス（位置引数または `--path`） |
-| `--unity <version>` | いいえ | 使用する Unity Editor バージョン（デフォルトは最も高いバージョン） |
+| `--unity <version>` | いいえ | 使用する Unity Editor バージョン（デフォルトは最も高いインストール済みバージョン） |
 
 **例 — 特定のエディターバージョンでプロジェクトを作成:**
 
 ```bash
-npx unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
+unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
 ```
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
@@ -208,7 +162,7 @@ npx unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
 Unity-MCP プラグインを Unity プロジェクトの `Packages/manifest.json` にインストールします。
 
 ```bash
-npx unity-mcp-cli install-plugin ./MyGame
+unity-mcp-cli install-plugin ./MyGame
 ```
 
 | オプション | 必須 | 説明 |
@@ -224,7 +178,7 @@ npx unity-mcp-cli install-plugin ./MyGame
 **例 — 特定のプラグインバージョンをインストール:**
 
 ```bash
-npx unity-mcp-cli install-plugin ./MyGame --plugin-version 0.52.0
+unity-mcp-cli install-plugin ./MyGame --plugin-version 0.51.6
 ```
 
 > このコマンドを実行した後、Unity Editor でプロジェクトを開いてパッケージのインストールを完了してください。
@@ -236,7 +190,7 @@ npx unity-mcp-cli install-plugin ./MyGame --plugin-version 0.52.0
 Unity Hub CLI を通じて Unity Editor のバージョンをインストールします。
 
 ```bash
-npx unity-mcp-cli install-unity 6000.3.1f1
+unity-mcp-cli install-unity 6000.3.1f1
 ```
 
 | 引数 / オプション | 必須 | 説明 |
@@ -249,25 +203,159 @@ npx unity-mcp-cli install-unity 6000.3.1f1
 **例 — プロジェクトが必要とするエディターバージョンをインストール:**
 
 ```bash
-npx unity-mcp-cli install-unity --path ./MyGame
+unity-mcp-cli install-unity --path ./MyGame
 ```
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 ## `open`
 
-Unity プロジェクトを Unity Editor で開きます。
+Unity プロジェクトを Unity Editor で開きます。デフォルトでは、接続オプションが指定された場合に MCP 接続環境変数を設定します。MCP 接続なしで開くには `--no-connect` を使用します。
 
 ```bash
-npx unity-mcp-cli open ./MyGame
+unity-mcp-cli open ./MyGame
+```
+
+| オプション | 環境変数 | 必須 | 説明 |
+|---|---|---|---|
+| `[path]` | — | はい | Unity プロジェクトへのパス（位置引数または `--path`） |
+| `--unity <version>` | — | いいえ | 使用する Unity Editor の特定バージョン（デフォルトはプロジェクト設定のバージョン、次に最も高いインストール済みバージョン） |
+| `--no-connect` | — | いいえ | MCP 接続環境変数なしで開く |
+| `--url <url>` | `UNITY_MCP_HOST` | いいえ | 接続先の MCP サーバー URL |
+| `--keep-connected` | `UNITY_MCP_KEEP_CONNECTED` | いいえ | 接続を強制的に維持する |
+| `--token <token>` | `UNITY_MCP_TOKEN` | いいえ | 認証トークン |
+| `--auth <option>` | `UNITY_MCP_AUTH_OPTION` | いいえ | 認証モード: `none` または `required` |
+| `--tools <names>` | `UNITY_MCP_TOOLS` | いいえ | 有効にするツールのカンマ区切りリスト |
+| `--transport <method>` | `UNITY_MCP_TRANSPORT` | いいえ | トランスポートメソッド: `streamableHttp` または `stdio` |
+| `--start-server <value>` | `UNITY_MCP_START_SERVER` | いいえ | `true` または `false` を指定して MCP サーバー自動起動を制御する |
+
+エディターのプロセスはデタッチモードで起動されるため、CLI はすぐに制御を返します。
+
+**例 — MCP 接続でオープン:**
+
+```bash
+unity-mcp-cli open ./MyGame \
+  --url http://localhost:8080 \
+  --keep-connected
+```
+
+**例 — MCP 接続なしでオープン（シンプルオープン）:**
+
+```bash
+unity-mcp-cli open ./MyGame --no-connect
+```
+
+**例 — 認証と特定ツールを指定してオープン:**
+
+```bash
+unity-mcp-cli open ./MyGame \
+  --url http://my-server:8080 \
+  --token my-secret-token \
+  --auth required \
+  --tools gameobject-create,gameobject-find
+```
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `run-tool`
+
+HTTP API を通じて MCP ツールを直接実行します。サーバー URL と認証トークンは、現在の接続モード（Custom または Cloud）に基づいてプロジェクトの設定ファイル（`UserSettings/AI-Game-Developer-Config.json`）から**自動的に解決**されます。
+
+```bash
+unity-mcp-cli run-tool gameobject-create ./MyGame --input '{"name":"Cube"}'
 ```
 
 | オプション | 必須 | 説明 |
 |---|---|---|
-| `[path]` | はい | Unity プロジェクトへのパス（位置引数または `--path`） |
-| `--unity <version>` | いいえ | 使用する Unity Editor の特定バージョン（デフォルトはプロジェクト設定のバージョン、次に最も高いインストール済みバージョン） |
+| `<tool-name>` | はい | 実行する MCP ツールの名前 |
+| `[path]` | いいえ | Unity プロジェクトパス（位置引数または `--path`） — 設定の読み取りとポート検出に使用 |
+| `--url <url>` | いいえ | サーバー URL の直接指定（設定をバイパス） |
+| `--token <token>` | いいえ | Bearer トークンの直接指定（設定をバイパス） |
+| `--input <json>` | いいえ | ツール引数の JSON 文字列（デフォルトは `{}`） |
+| `--input-file <file>` | いいえ | ファイルから JSON 引数を読み込む |
+| `--raw` | いいえ | 生の JSON を出力する（フォーマットやスピナーなし） |
+| `--timeout <ms>` | いいえ | リクエストタイムアウト（ミリ秒単位、デフォルト: 60000） |
 
-エディターのプロセスはデタッチモードで起動されるため、CLI はすぐに制御を返します。
+**URL 解決の優先順位:**
+1. `--url` → 直接使用
+2. 設定ファイル → `host`（Custom モード）またはハードコードされたクラウドエンドポイント（Cloud モード）
+3. プロジェクトパスからの決定論的ポート
+
+**認証**はプロジェクト設定から自動的に読み取られます（Custom モードでは `token`、Cloud モードでは `cloudToken`）。設定から導出されたトークンを明示的に上書きするには `--token` を使用します。
+
+**例 — ツールを呼び出す（URL と認証は設定から）:**
+
+```bash
+unity-mcp-cli run-tool gameobject-find ./MyGame --input '{"query":"Player"}'
+```
+
+**例 — URL を明示的に指定:**
+
+```bash
+unity-mcp-cli run-tool scene-save --url http://localhost:8080
+```
+
+**例 — 生の JSON 出力をパイプ:**
+
+```bash
+unity-mcp-cli run-tool assets-list ./MyGame --raw | jq '.results'
+```
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `setup-mcp`
+
+AI エージェント向けの MCP 設定ファイルを書き出します。Unity Editor の UI を使わずにヘッドレス/CI セットアップが可能です。14 のエージェント（Claude Code、Cursor、Gemini、Codex など）すべてに対応しています。
+
+```bash
+unity-mcp-cli setup-mcp claude-code ./MyGame
+```
+
+| オプション | 必須 | 説明 |
+|---|---|---|
+| `[agent-id]` | はい | 設定するエージェント（`--list` で一覧表示） |
+| `[path]` | いいえ | Unity プロジェクトパス（デフォルトは cwd） |
+| `--transport <transport>` | いいえ | トランスポートメソッド: `stdio` または `http`（デフォルト: `http`） |
+| `--url <url>` | いいえ | サーバー URL の上書き（http トランスポート用） |
+| `--token <token>` | いいえ | 認証トークンの上書き |
+| `--list` | いいえ | 利用可能なすべてのエージェント ID を一覧表示する |
+
+**例 — サポートされているすべてのエージェントを一覧表示:**
+
+```bash
+unity-mcp-cli setup-mcp --list
+```
+
+**例 — Cursor を stdio トランスポートで設定:**
+
+```bash
+unity-mcp-cli setup-mcp cursor ./MyGame --transport stdio
+```
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `setup-skills`
+
+MCP サーバーのシステムツール API を呼び出して、AI エージェント向けのスキルファイルを生成します。MCP プラグインがインストールされた Unity Editor が実行中である必要があります。
+
+```bash
+unity-mcp-cli setup-skills claude-code ./MyGame
+```
+
+| オプション | 必須 | 説明 |
+|---|---|---|
+| `[agent-id]` | はい | スキルを生成するエージェント（`--list` で一覧表示） |
+| `[path]` | いいえ | Unity プロジェクトパス（デフォルトは cwd） |
+| `--url <url>` | いいえ | サーバー URL の上書き |
+| `--token <token>` | いいえ | 認証トークンの上書き |
+| `--list` | いいえ | スキルサポート状況とともにすべてのエージェントを一覧表示する |
+| `--timeout <ms>` | いいえ | リクエストタイムアウト（ミリ秒単位、デフォルト: 60000） |
+
+**例 — スキルサポートのあるエージェントを一覧表示:**
+
+```bash
+unity-mcp-cli setup-skills --list
+```
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
@@ -276,7 +364,7 @@ npx unity-mcp-cli open ./MyGame
 Unity-MCP プラグインを Unity プロジェクトの `Packages/manifest.json` から削除します。
 
 ```bash
-npx unity-mcp-cli remove-plugin ./MyGame
+unity-mcp-cli remove-plugin ./MyGame
 ```
 
 | オプション | 必須 | 説明 |
@@ -292,23 +380,43 @@ npx unity-mcp-cli remove-plugin ./MyGame
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
+## グローバルオプション
+
+以下のオプションはすべてのコマンドで利用可能です:
+
+| オプション | 説明 |
+|---|---|
+| `-v, --verbose` | トラブルシューティング用の詳細な診断出力を有効化する |
+| `--version` | CLI バージョンを表示する |
+| `--help` | コマンドのヘルプを表示する |
+
+**例 — 任意のコマンドを詳細出力で実行:**
+
+```bash
+unity-mcp-cli install-plugin ./MyGame --verbose
+```
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
 # 完全自動化の例
 
 1つのスクリプトで Unity MCP プロジェクトをゼロから完全セットアップします:
 
 ```bash
 # 1. 新しい Unity プロジェクトを作成する
-npx unity-mcp-cli create-project ./MyAIGame --unity 6000.3.1f1
+unity-mcp-cli create-project ./MyAIGame --unity 6000.3.1f1
 
 # 2. Unity-MCP プラグインをインストールする
-npx unity-mcp-cli install-plugin ./MyAIGame
+unity-mcp-cli install-plugin ./MyAIGame
 
 # 3. すべての MCP ツールを有効化する
-npx unity-mcp-cli configure ./MyAIGame --enable-all-tools
+unity-mcp-cli configure ./MyAIGame --enable-all-tools
 
-# 4. MCP 接続でプロジェクトを開く
-npx unity-mcp-cli connect \
-  --path ./MyAIGame \
+# 4. Claude Code の MCP 統合を設定する
+unity-mcp-cli setup-mcp claude-code ./MyAIGame
+
+# 5. MCP 接続でプロジェクトを開く
+unity-mcp-cli open ./MyAIGame \
   --url http://localhost:8080 \
   --keep-connected
 ```
@@ -319,7 +427,7 @@ npx unity-mcp-cli connect \
 
 ### 決定論的ポート
 
-CLI は各 Unity プロジェクトのディレクトリパスに基づいて**決定論的なポート**を生成します（SHA256 ハッシュをポート範囲 20000–29999 にマッピング）。これは Unity プラグイン内のポート生成と一致しており、手動設定なしでサーバーとプラグインが自動的に同じポートに合意できます。
+CLI は各 Unity プロジェクトのディレクトリパスに基づいて**決定論的なポート**を生成します（SHA256 ハッシュをポート範囲 20000-29999 にマッピング）。これは Unity プラグイン内のポート生成と一致しており、手動設定なしでサーバーとプラグインが自動的に同じポートに合意できます。
 
 ### プラグインインストール
 

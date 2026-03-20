@@ -1,4 +1,4 @@
-﻿---
+---
 name: assets-refresh
 description: Refreshes the AssetDatabase. Use it if any file was added or updated in the project outside of Unity API. Use it if need to force scripts recompilation when '.cs' file changed.
 ---
@@ -8,22 +8,28 @@ description: Refreshes the AssetDatabase. Use it if any file was added or update
 ## How to Call
 
 ```bash
-npx unity-mcp-cli run-tool assets-refresh --input '{
+unity-mcp-cli run-tool assets-refresh --input '{
   "options": "string_value"
 }'
 ```
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> npx unity-mcp-cli run-tool assets-refresh --input-file args.json
+> unity-mcp-cli run-tool assets-refresh --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
 > ```bash
-> npx unity-mcp-cli run-tool assets-refresh --input-file - <<'EOF'
+> unity-mcp-cli run-tool assets-refresh --input-file - <<'EOF'
 > {"param": "value"}
 > EOF
 > ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 

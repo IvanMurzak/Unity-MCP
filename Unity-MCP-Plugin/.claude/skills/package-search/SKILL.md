@@ -1,4 +1,4 @@
-﻿---
+---
 name: package-search
 description: "Search for packages in both Unity Package Manager registry and installed packages. Use this to find packages by name before installing them. Returns available versions and installation status. Searches both the Unity registry and locally installed packages (including Git, local, and embedded sources). Results are prioritized: exact name match, exact display name match, name substring, display name substring, description substring. Note: Online mode fetches exact matches from live registry, then supplements with cached substring matches."
 ---
@@ -8,7 +8,7 @@ description: "Search for packages in both Unity Package Manager registry and ins
 ## How to Call
 
 ```bash
-npx unity-mcp-cli run-tool package-search --input '{
+unity-mcp-cli run-tool package-search --input '{
   "query": "string_value",
   "maxResults": 0,
   "offlineMode": false
@@ -17,15 +17,21 @@ npx unity-mcp-cli run-tool package-search --input '{
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> npx unity-mcp-cli run-tool package-search --input-file args.json
+> unity-mcp-cli run-tool package-search --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
 > ```bash
-> npx unity-mcp-cli run-tool package-search --input-file - <<'EOF'
+> unity-mcp-cli run-tool package-search --input-file - <<'EOF'
 > {"param": "value"}
 > EOF
 > ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 

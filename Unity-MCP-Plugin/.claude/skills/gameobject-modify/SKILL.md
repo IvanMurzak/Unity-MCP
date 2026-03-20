@@ -1,4 +1,4 @@
-﻿---
+---
 name: gameobject-modify
 description: Modify GameObject fields and properties in opened Prefab or in a Scene. You can modify multiple GameObjects at once. Just provide the same number of GameObject references and SerializedMember objects.
 ---
@@ -8,7 +8,7 @@ description: Modify GameObject fields and properties in opened Prefab or in a Sc
 ## How to Call
 
 ```bash
-npx unity-mcp-cli run-tool gameobject-modify --input '{
+unity-mcp-cli run-tool gameobject-modify --input '{
   "gameObjectRefs": "string_value",
   "gameObjectDiffs": "string_value"
 }'
@@ -16,15 +16,21 @@ npx unity-mcp-cli run-tool gameobject-modify --input '{
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> npx unity-mcp-cli run-tool gameobject-modify --input-file args.json
+> unity-mcp-cli run-tool gameobject-modify --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
 > ```bash
-> npx unity-mcp-cli run-tool gameobject-modify --input-file - <<'EOF'
+> unity-mcp-cli run-tool gameobject-modify --input-file - <<'EOF'
 > {"param": "value"}
 > EOF
 > ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 

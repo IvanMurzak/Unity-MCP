@@ -1,4 +1,4 @@
-﻿---
+---
 name: gameobject-create
 description: Create a new GameObject in opened Prefab or in a Scene. If needed - provide proper 'position', 'rotation' and 'scale' to reduce amount of operations.
 ---
@@ -8,7 +8,7 @@ description: Create a new GameObject in opened Prefab or in a Scene. If needed -
 ## How to Call
 
 ```bash
-npx unity-mcp-cli run-tool gameobject-create --input '{
+unity-mcp-cli run-tool gameobject-create --input '{
   "name": "string_value",
   "parentGameObjectRef": "string_value",
   "position": "string_value",
@@ -21,15 +21,21 @@ npx unity-mcp-cli run-tool gameobject-create --input '{
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> npx unity-mcp-cli run-tool gameobject-create --input-file args.json
+> unity-mcp-cli run-tool gameobject-create --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
 > ```bash
-> npx unity-mcp-cli run-tool gameobject-create --input-file - <<'EOF'
+> unity-mcp-cli run-tool gameobject-create --input-file - <<'EOF'
 > {"param": "value"}
 > EOF
 > ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 

@@ -1,4 +1,4 @@
-﻿---
+---
 name: assets-prefab-open
 description: "Open prefab edit mode for a specific GameObject. In the Edit mode you can modify the prefab. The modification will be applied to all instances of the prefab across the project. Note: Please use 'assets-prefab-close' tool later to exit prefab editing mode."
 ---
@@ -8,22 +8,28 @@ description: "Open prefab edit mode for a specific GameObject. In the Edit mode 
 ## How to Call
 
 ```bash
-npx unity-mcp-cli run-tool assets-prefab-open --input '{
+unity-mcp-cli run-tool assets-prefab-open --input '{
   "gameObjectRef": "string_value"
 }'
 ```
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> npx unity-mcp-cli run-tool assets-prefab-open --input-file args.json
+> unity-mcp-cli run-tool assets-prefab-open --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
 > ```bash
-> npx unity-mcp-cli run-tool assets-prefab-open --input-file - <<'EOF'
+> unity-mcp-cli run-tool assets-prefab-open --input-file - <<'EOF'
 > {"param": "value"}
 > EOF
 > ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 

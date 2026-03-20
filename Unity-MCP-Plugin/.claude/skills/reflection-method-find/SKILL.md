@@ -1,4 +1,4 @@
-﻿---
+---
 name: reflection-method-find
 description: Find method in the project using C# Reflection. It looks for all assemblies in the project and finds method by its name, class name and parameters. Even private methods are available. Use 'reflection-method-call' to call the method after finding it.
 ---
@@ -8,7 +8,7 @@ description: Find method in the project using C# Reflection. It looks for all as
 ## How to Call
 
 ```bash
-npx unity-mcp-cli run-tool reflection-method-find --input '{
+unity-mcp-cli run-tool reflection-method-find --input '{
   "filter": "string_value",
   "knownNamespace": false,
   "typeNameMatchLevel": 0,
@@ -19,15 +19,21 @@ npx unity-mcp-cli run-tool reflection-method-find --input '{
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> npx unity-mcp-cli run-tool reflection-method-find --input-file args.json
+> unity-mcp-cli run-tool reflection-method-find --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
 > ```bash
-> npx unity-mcp-cli run-tool reflection-method-find --input-file - <<'EOF'
+> unity-mcp-cli run-tool reflection-method-find --input-file - <<'EOF'
 > {"param": "value"}
 > EOF
 > ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 

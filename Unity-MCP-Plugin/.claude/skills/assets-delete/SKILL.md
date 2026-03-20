@@ -1,4 +1,4 @@
-﻿---
+---
 name: assets-delete
 description: Delete the assets at paths from the project. Does AssetDatabase.Refresh() at the end. Use 'assets-find' tool to find assets before deleting.
 ---
@@ -8,22 +8,28 @@ description: Delete the assets at paths from the project. Does AssetDatabase.Ref
 ## How to Call
 
 ```bash
-npx unity-mcp-cli run-tool assets-delete --input '{
+unity-mcp-cli run-tool assets-delete --input '{
   "paths": "string_value"
 }'
 ```
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> npx unity-mcp-cli run-tool assets-delete --input-file args.json
+> unity-mcp-cli run-tool assets-delete --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
 > ```bash
-> npx unity-mcp-cli run-tool assets-delete --input-file - <<'EOF'
+> unity-mcp-cli run-tool assets-delete --input-file - <<'EOF'
 > {"param": "value"}
 > EOF
 > ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 
