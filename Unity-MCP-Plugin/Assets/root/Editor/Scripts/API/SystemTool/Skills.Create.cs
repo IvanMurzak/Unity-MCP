@@ -119,7 +119,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "operations, or `MainThread.Instance.RunAsync(async () => { ... })` when you need to await inside.")]
         public ResponseCallTool Create
         (
-            [Description("Path for the C# (.cs) file to be created. Sample: \"Assets/Skills/MySkill.cs\".")]
+            [Description("Path for the C# (.cs) file to be created. Sample: \"Assets/Skills/MySkill.cs\".\n" +
+                "CRITICAL — Assembly Definition placement: If the project uses Assembly Definition files (.asmdef), " +
+                "you MUST place the script inside a folder that belongs to an assembly definition which already references " +
+                "all required dependencies (e.g. com.IvanMurzak.McpPlugin, UnityEditor, UnityEngine). " +
+                "Placing the file in the wrong assembly will cause compile errors due to missing type references. " +
+                "Before choosing a path, inspect existing .asmdef files with the assets-find tool to identify the correct assembly folder.")]
             string path,
 
             [Description("C# code for the skill tool. " +

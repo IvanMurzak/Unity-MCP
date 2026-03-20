@@ -90,7 +90,8 @@ npx unity-mcp-cli run-system-tool unity-skill-create --input '{
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| `path` | `string` | Yes | Path for the C# (.cs) file to be created. Sample: "Assets/Skills/MySkill.cs". |
+| `path` | `string` | Yes | Path for the C# (.cs) file to be created. Sample: "Assets/Skills/MySkill.cs".
+CRITICAL — Assembly Definition placement: If the project uses Assembly Definition files (.asmdef), you MUST place the script inside a folder that belongs to an assembly definition which already references all required dependencies (e.g. com.IvanMurzak.McpPlugin, UnityEditor, UnityEngine). Placing the file in the wrong assembly will cause compile errors due to missing type references. Before choosing a path, inspect existing .asmdef files with the assets-find tool to identify the correct assembly folder. |
 | `code` | `string` | Yes | C# code for the skill tool. It must be a partial class decorated with [McpPluginToolType]. Each tool method must be decorated with [McpPluginTool]. The class name should match the file name. All Unity API calls must use MainThread.Instance.Run(). Return a data model for structured output, or void for side-effect-only operations. 
 
 Full sample:
