@@ -25,7 +25,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public override string AgentName => "Kilo Code";
         public override string AgentId => "kilo-code";
         public override string DownloadUrl => "https://app.kilo.ai/get-started";
-        public override string? SkillsPath => ".kilocode/skills"; // https://kilo.ai/docs/customize/skills
+        public override string? SkillsPath => Path.Combine(ProjectRootPath, ".kilocode", "skills"); // https://kilo.ai/docs/customize/skills
 
         protected override string? IconFileName => "kilo-code-64.png";
 

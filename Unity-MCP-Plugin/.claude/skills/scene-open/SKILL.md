@@ -7,16 +7,24 @@ description: Open scene from the project asset file. Use 'assets-find' tool to f
 
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
 npx unity-mcp-cli run-tool scene-open --input '{
   "sceneRef": "string_value",
   "loadSceneMode": "string_value"
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> npx unity-mcp-cli run-tool scene-open --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> npx unity-mcp-cli run-tool scene-open --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
 
 ## Input
 

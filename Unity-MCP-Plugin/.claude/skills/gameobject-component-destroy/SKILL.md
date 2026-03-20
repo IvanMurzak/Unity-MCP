@@ -7,16 +7,24 @@ description: Destroy one or many components from target GameObject. Can't destro
 
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
 npx unity-mcp-cli run-tool gameobject-component-destroy --input '{
   "gameObjectRef": "string_value",
   "destroyComponentRefs": "string_value"
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> npx unity-mcp-cli run-tool gameobject-component-destroy --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> npx unity-mcp-cli run-tool gameobject-component-destroy --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
 
 ## Input
 

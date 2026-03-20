@@ -29,13 +29,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override string? IconFileName => "claude-64.png";
 
+        private static string ConfigPathWindows => Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
+            "Claude",
+            "claude_desktop_config.json"
+        );
+        private static string ConfigPathMacLinux => Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            "Library",
+            "Application Support",
+            "Claude",
+            "claude_desktop_config.json"
+        );
+
         protected override AiAgentConfig CreateConfigStdioWindows() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "Claude",
-                "claude_desktop_config.json"
-            ),
+            configPath: ConfigPathWindows,
             bodyPath: DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
@@ -51,13 +60,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                "Library",
-                "Application Support",
-                "Claude",
-                "claude_desktop_config.json"
-            ),
+            configPath: ConfigPathMacLinux,
             bodyPath: DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
@@ -73,11 +76,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "Claude",
-                "claude_desktop_config.json"
-            ),
+            configPath: ConfigPathWindows,
             bodyPath: DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
@@ -87,13 +86,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigHttpMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(
-                Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-                "Library",
-                "Application Support",
-                "Claude",
-                "claude_desktop_config.json"
-            ),
+            configPath: ConfigPathMacLinux,
             bodyPath: DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)

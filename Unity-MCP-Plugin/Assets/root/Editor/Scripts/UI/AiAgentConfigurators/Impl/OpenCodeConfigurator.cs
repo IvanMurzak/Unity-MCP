@@ -25,13 +25,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public override string AgentName => "Open Code";
         public override string AgentId => "open-code";
         public override string DownloadUrl => "https://opencode.ai/download";
-        public override string? SkillsPath => ".opencode/skills"; // https://opencode.ai/docs/skills/
+        public override string? SkillsPath => Path.Combine(ProjectRootPath, ".opencode", "skills"); // https://opencode.ai/docs/skills/
 
         protected override string? IconFileName => "open-code-64.png";
 
+        private static string LocalConfigPath => Path.Combine(ProjectRootPath, "opencode.json");
+
         protected override AiAgentConfig CreateConfigStdioWindows() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine("opencode.json"),
+            configPath: LocalConfigPath,
             bodyPath: "mcp"
         )
         .SetProperty("type", JsonValue.Create("local"), requiredForConfiguration: true)
@@ -49,7 +51,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine("opencode.json"),
+            configPath: LocalConfigPath,
             bodyPath: "mcp"
         )
         .SetProperty("type", JsonValue.Create("local"), requiredForConfiguration: true)
@@ -67,7 +69,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine("opencode.json"),
+            configPath: LocalConfigPath,
             bodyPath: "mcp"
         )
         .SetProperty("type", JsonValue.Create("remote"), requiredForConfiguration: true)
@@ -78,7 +80,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigHttpMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine("opencode.json"),
+            configPath: LocalConfigPath,
             bodyPath: "mcp"
         )
         .SetProperty("type", JsonValue.Create("remote"), requiredForConfiguration: true)

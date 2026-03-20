@@ -7,10 +7,6 @@ description: Retrieves Unity Editor logs. Useful for debugging and monitoring Un
 
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
 npx unity-mcp-cli run-tool console-get-logs --input '{
   "maxEntries": 0,
@@ -19,6 +15,18 @@ npx unity-mcp-cli run-tool console-get-logs --input '{
   "lastMinutes": 0
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> npx unity-mcp-cli run-tool console-get-logs --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> npx unity-mcp-cli run-tool console-get-logs --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
 
 ## Input
 

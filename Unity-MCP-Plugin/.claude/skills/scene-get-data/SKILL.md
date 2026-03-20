@@ -7,10 +7,6 @@ description: This tool retrieves the list of root GameObjects in the specified s
 
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
 npx unity-mcp-cli run-tool scene-get-data --input '{
   "openedSceneName": "string_value",
@@ -20,6 +16,18 @@ npx unity-mcp-cli run-tool scene-get-data --input '{
   "includeData": false
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> npx unity-mcp-cli run-tool scene-get-data --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> npx unity-mcp-cli run-tool scene-get-data --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
 
 ## Input
 

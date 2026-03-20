@@ -7,15 +7,23 @@ description: Set the current Selection in the Unity Editor to the provided objec
 
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
 npx unity-mcp-cli run-tool editor-selection-set --input '{
   "select": "string_value"
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> npx unity-mcp-cli run-tool editor-selection-set --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> npx unity-mcp-cli run-tool editor-selection-set --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
 
 ## Input
 

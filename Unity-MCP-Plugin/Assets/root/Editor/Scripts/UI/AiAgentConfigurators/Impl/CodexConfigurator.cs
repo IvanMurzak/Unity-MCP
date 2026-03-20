@@ -25,19 +25,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
     {
         const string EnvVarNameAuthToken = "GAME_DEV_AUTH_TOKEN";
 
-        public override string? SkillsPath => ".agents/skills";
+        public override string? SkillsPath => Path.Combine(ProjectRootPath, ".agents", "skills");
         public override string AgentName => "Codex";
         public override string AgentId => "codex";
         public override string DownloadUrl => "https://openai.com/codex/";
 
         protected override string? IconFileName => "codex-64.png";
 
+        private static string LocalConfigPath => Path.Combine(ProjectRootPath, ".codex", "config.toml");
+
         protected override AiAgentConfig CreateConfigStdioWindows() => new TomlAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(
-                ".codex",
-                "config.toml"
-            ),
+            configPath: LocalConfigPath,
             bodyPath: "mcp_servers"
         )
         .SetProperty("enabled", true, requiredForConfiguration: true) // Codex requires an "enabled" property
@@ -56,10 +55,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new TomlAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(
-                ".codex",
-                "config.toml"
-            ),
+            configPath: LocalConfigPath,
             bodyPath: "mcp_servers"
         )
         .SetProperty("enabled", true, requiredForConfiguration: true) // Codex requires an "enabled" property
@@ -78,10 +74,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new TomlAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(
-                ".codex",
-                "config.toml"
-            ),
+            configPath: LocalConfigPath,
             bodyPath: "mcp_servers"
         )
         .SetProperty("enabled", true, requiredForConfiguration: true) // Codex requires an "enabled" property
@@ -94,10 +87,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigHttpMacLinux() => new TomlAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(
-                ".codex",
-                "config.toml"
-            ),
+            configPath: LocalConfigPath,
             bodyPath: "mcp_servers"
         )
         .SetProperty("enabled", true, requiredForConfiguration: true) // Codex requires an "enabled" property

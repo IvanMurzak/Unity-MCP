@@ -28,12 +28,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override string? IconFileName => "unity-64.png";
 
+        private static string LocalConfigPath => Path.Combine(ProjectRootPath, "UserSettings", "mcp.json");
+
         protected override AiAgentConfig CreateConfigStdioWindows() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(
-                "UserSettings",
-                "mcp.json"
-            ),
+            configPath: LocalConfigPath,
             bodyPath: DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
@@ -49,10 +48,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(
-                "UserSettings",
-                "mcp.json"
-            ),
+            configPath: LocalConfigPath,
             bodyPath: DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("stdio"), requiredForConfiguration: true)
@@ -68,10 +64,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(
-                "UserSettings",
-                "mcp.json"
-            ),
+            configPath: LocalConfigPath,
             bodyPath: DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
@@ -81,10 +74,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override AiAgentConfig CreateConfigHttpMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: Path.Combine(
-                "UserSettings",
-                "mcp.json"
-            ),
+            configPath: LocalConfigPath,
             bodyPath: DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)

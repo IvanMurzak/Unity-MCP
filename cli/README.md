@@ -37,6 +37,8 @@ Cross-platform CLI tool for **[Unity MCP](https://github.com/IvanMurzak/Unity-MC
 - :white_check_mark: **Remove plugin** — remove Unity-MCP plugin from `manifest.json`
 - :white_check_mark: **Configure** — enable/disable MCP tools, prompts, and resources
 - :white_check_mark: **Run tools** — execute MCP tools directly from the command line
+- :white_check_mark: **Setup MCP** — write AI agent MCP config files for any of 14 supported agents
+- :white_check_mark: **Setup skills** — generate skill files for AI agents via the MCP server
 - :white_check_mark: **Open & Connect** — launch Unity with optional MCP environment variables for automated server connection
 - :white_check_mark: **Cross-platform** — Windows, macOS, and Linux
 - :white_check_mark: **CI-friendly** — auto-detects non-interactive terminals and disables spinners/colors
@@ -75,6 +77,8 @@ unity-mcp-cli install-plugin /path/to/unity/project
   - [`open`](#open) — Open a Unity project in the Editor
   - [`remove-plugin`](#remove-plugin) — Remove Unity-MCP plugin from a project
   - [`run-tool`](#run-tool) — Execute an MCP tool via the HTTP API
+  - [`setup-mcp`](#setup-mcp) — Write MCP config for an AI agent
+  - [`setup-skills`](#setup-skills) — Generate skill files for an AI agent
 - [Global Options](#global-options)
 - [Full Automation Example](#full-automation-example)
 - [How It Works](#how-it-works)
@@ -265,6 +269,7 @@ npx unity-mcp-cli run-tool gameobject-create ./MyGame --input '{"name":"Cube"}'
 | `--input <json>` | No | JSON string of tool arguments (defaults to `{}`) |
 | `--input-file <file>` | No | Read JSON arguments from a file |
 | `--raw` | No | Output raw JSON (no formatting, no spinner) |
+| `--timeout <ms>` | No | Request timeout in milliseconds (default: 60000) |
 
 **URL resolution priority:**
 1. `--url` → use directly
@@ -289,6 +294,62 @@ npx unity-mcp-cli run-tool scene-save --url http://localhost:8080
 
 ```bash
 npx unity-mcp-cli run-tool assets-list ./MyGame --raw | jq '.results'
+```
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `setup-mcp`
+
+Write MCP config files for AI agents, enabling headless/CI setup without the Unity Editor UI. Supports all 14 agents (Claude Code, Cursor, Gemini, Codex, etc.).
+
+```bash
+npx unity-mcp-cli setup-mcp claude-code ./MyGame
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `[agent-id]` | Yes | Agent to configure (use `--list` to see all) |
+| `[path]` | No | Unity project path (defaults to cwd) |
+| `--transport <transport>` | No | Transport method: `stdio` or `http` (default: `http`) |
+| `--url <url>` | No | Server URL override (for http transport) |
+| `--token <token>` | No | Auth token override |
+| `--list` | No | List all available agent IDs |
+
+**Example — list all supported agents:**
+
+```bash
+npx unity-mcp-cli setup-mcp --list
+```
+
+**Example — configure Cursor with stdio transport:**
+
+```bash
+npx unity-mcp-cli setup-mcp cursor ./MyGame --transport stdio
+```
+
+![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `setup-skills`
+
+Generate skill files for an AI agent by calling the MCP server's system tool API. Requires Unity Editor to be running with the MCP plugin installed.
+
+```bash
+npx unity-mcp-cli setup-skills claude-code ./MyGame
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `[agent-id]` | Yes | Agent to generate skills for (use `--list` to see all) |
+| `[path]` | No | Unity project path (defaults to cwd) |
+| `--url <url>` | No | Server URL override |
+| `--token <token>` | No | Auth token override |
+| `--list` | No | List all agents with skills support status |
+| `--timeout <ms>` | No | Request timeout in milliseconds (default: 60000) |
+
+**Example — list agents with skills support:**
+
+```bash
+npx unity-mcp-cli setup-skills --list
 ```
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
@@ -346,7 +407,10 @@ npx unity-mcp-cli install-plugin ./MyAIGame
 # 3. Enable all MCP tools
 npx unity-mcp-cli configure ./MyAIGame --enable-all-tools
 
-# 4. Open the project with MCP connection
+# 4. Configure Claude Code MCP integration
+npx unity-mcp-cli setup-mcp claude-code ./MyAIGame
+
+# 5. Open the project with MCP connection
 npx unity-mcp-cli open ./MyAIGame \
   --url http://localhost:8080 \
   --keep-connected

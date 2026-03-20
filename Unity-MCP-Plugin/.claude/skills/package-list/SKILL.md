@@ -7,10 +7,6 @@ description: List all packages installed in the Unity project (UPM packages). Re
 
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
 npx unity-mcp-cli run-tool package-list --input '{
   "sourceFilter": "string_value",
@@ -18,6 +14,18 @@ npx unity-mcp-cli run-tool package-list --input '{
   "directDependenciesOnly": false
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> npx unity-mcp-cli run-tool package-list --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> npx unity-mcp-cli run-tool package-list --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
 
 ## Input
 
