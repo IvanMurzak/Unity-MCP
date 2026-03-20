@@ -1,4 +1,4 @@
-﻿---
+---
 name: console-clear-logs
 description: Clears the MCP log cache (used by console-get-logs) and the Unity Editor Console window. Useful for isolating errors related to a specific action by clearing logs before performing the action.
 ---

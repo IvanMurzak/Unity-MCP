@@ -1,4 +1,4 @@
-﻿---
+---
 name: gameobject-set-parent
 description: Set parent GameObject to list of GameObjects in opened Prefab or in a Scene. Use 'gameobject-find' tool to find the target GameObjects first.
 ---

@@ -1,4 +1,4 @@
-﻿---
+---
 name: gameobject-duplicate
 description: Duplicate GameObjects in opened Prefab or in a Scene. Use 'gameobject-find' tool to find the target GameObjects first.
 ---

@@ -1,4 +1,4 @@
-﻿---
+---
 name: assets-prefab-open
 description: "Open prefab edit mode for a specific GameObject. In the Edit mode you can modify the prefab. The modification will be applied to all instances of the prefab across the project. Note: Please use 'assets-prefab-close' tool later to exit prefab editing mode."
 ---

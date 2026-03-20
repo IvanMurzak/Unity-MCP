@@ -1,4 +1,4 @@
-﻿---
+---
 name: gameobject-component-get
 description: Get detailed information about a specific Component on a GameObject. Returns component type, enabled state, and optionally serialized fields and properties. Use this to inspect component data before modifying it. Use 'gameobject-find' tool to get the list of all components on the GameObject.
 ---

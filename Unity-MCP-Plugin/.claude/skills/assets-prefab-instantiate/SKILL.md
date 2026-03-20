@@ -1,4 +1,4 @@
-﻿---
+---
 name: assets-prefab-instantiate
 description: Instantiates prefab in the current active scene. Use 'assets-find' tool to find prefab assets in the project.
 ---

@@ -1,4 +1,4 @@
-﻿---
+---
 name: script-update-or-create
 description: Updates or creates script file with the provided C# code. Does AssetDatabase.Refresh() at the end. Provides compilation error details if the code has syntax errors. Use 'script-read' tool to read existing script files first.
 ---

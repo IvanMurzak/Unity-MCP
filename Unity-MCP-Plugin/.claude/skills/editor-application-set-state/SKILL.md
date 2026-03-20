@@ -1,4 +1,4 @@
-﻿---
+---
 name: editor-application-set-state
 description: Control the Unity Editor application state. You can start, stop, or pause the 'playmode'. Use 'editor-application-get-state' tool to get the current state first.
 ---

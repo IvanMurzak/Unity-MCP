@@ -1,4 +1,4 @@
-﻿---
+---
 name: package-list
 description: List all packages installed in the Unity project (UPM packages). Returns information about each installed package including name, version, source, and description. Use this to check which packages are currently installed before adding or removing packages.
 ---

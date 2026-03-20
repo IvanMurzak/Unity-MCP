@@ -1,4 +1,4 @@
-﻿---
+---
 name: assets-material-create
 description: Create new material asset with default parameters. Creates folders recursively if they do not exist. Provide proper 'shaderName' - use 'assets-shader-list-all' tool to find available shaders.
 ---

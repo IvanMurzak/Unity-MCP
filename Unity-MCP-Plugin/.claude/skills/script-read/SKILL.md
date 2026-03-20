@@ -1,4 +1,4 @@
-﻿---
+---
 name: script-read
 description: Reads the content of a script file and returns it as a string. Use 'script-update-or-create' tool to update or create script files.
 ---

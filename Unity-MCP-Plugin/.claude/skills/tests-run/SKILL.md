@@ -1,4 +1,4 @@
-﻿---
+---
 name: tests-run
 description: Execute Unity tests and return detailed results. Supports filtering by test mode, assembly, namespace, class, and method. Recommended to use 'EditMode' for faster iteration during development.
 ---

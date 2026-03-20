@@ -1,4 +1,4 @@
-﻿---
+---
 name: screenshot-camera
 description: Captures a screenshot from a camera and returns it as an image. If no camera is specified, uses the Main Camera. Returns the image directly for visual inspection by the LLM.
 ---

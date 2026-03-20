@@ -1,4 +1,4 @@
-﻿---
+---
 name: gameobject-component-destroy
 description: Destroy one or many components from target GameObject. Can't destroy missed components. Use 'gameobject-find' tool to find the target GameObject and 'gameobject-component-get' to get component details first.
 ---

@@ -1,4 +1,4 @@
-﻿---
+---
 name: assets-find
 description: Search the asset database using the search filter string. Allows you to search for Assets. The string argument can provide names, labels or types (classnames).
 ---

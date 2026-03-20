@@ -1,4 +1,4 @@
-﻿---
+---
 name: object-modify
 description: Modify the specified Unity Object. Allows direct modification of object fields and properties. Use 'object-get-data' first to inspect the object structure before modifying.
 ---

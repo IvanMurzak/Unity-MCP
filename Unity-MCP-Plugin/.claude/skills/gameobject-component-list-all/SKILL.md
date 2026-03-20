@@ -1,4 +1,4 @@
-﻿---
+---
 name: gameobject-component-list-all
 description: List C# class names extended from UnityEngine.Component. Use this to find component type names for 'gameobject-component-add' tool. Results are paginated to avoid overwhelming responses.
 ---

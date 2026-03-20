@@ -1,4 +1,4 @@
-﻿---
+---
 name: editor-selection-get
 description: Get information about the current Selection in the Unity Editor. Use 'editor-selection-set' tool to set the selection.
 ---

@@ -1,4 +1,4 @@
-﻿---
+---
 name: type-get-json-schema
 description: Generates a JSON Schema for a given C# type name using reflection. Supports primitives, enums, arrays, generic collections, dictionaries, and complex objects. The type must be present in any loaded assembly. Use the full type name (e.g. 'UnityEngine.Vector3') for best results.
 ---

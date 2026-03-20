@@ -1,4 +1,4 @@
-﻿---
+---
 name: scene-save
 description: Save Opened scene to the asset file. Use 'scene-list-opened' tool to get the list of all opened scenes.
 ---

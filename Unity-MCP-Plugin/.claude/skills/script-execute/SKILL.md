@@ -1,4 +1,4 @@
-﻿---
+---
 name: script-execute
 description: Compiles and executes C# code dynamically using Roslyn. The provided code must define a class with a static method to execute.
 ---

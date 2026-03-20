@@ -1,4 +1,4 @@
-﻿---
+---
 name: assets-prefab-close
 description: Close currently opened prefab. Use it when you are in prefab editing mode in Unity Editor. Use 'assets-prefab-open' tool to open a prefab first.
 ---

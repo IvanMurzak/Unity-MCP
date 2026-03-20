@@ -1,4 +1,4 @@
-﻿---
+---
 name: assets-delete
 description: Delete the assets at paths from the project. Does AssetDatabase.Refresh() at the end. Use 'assets-find' tool to find assets before deleting.
 ---

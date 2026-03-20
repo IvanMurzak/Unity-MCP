@@ -1,4 +1,4 @@
-﻿---
+---
 name: scene-unload
 description: Unload scene from the Opened scenes in Unity Editor. Use 'scene-list-opened' tool to get the list of all opened scenes.
 ---

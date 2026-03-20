@@ -1,4 +1,4 @@
-﻿---
+---
 name: screenshot-scene-view
 description: Captures a screenshot from the Unity Editor Scene View and returns it as an image. Returns the image directly for visual inspection by the LLM.
 ---

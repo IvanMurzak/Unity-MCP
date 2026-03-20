@@ -1,4 +1,4 @@
-﻿---
+---
 name: unity-skill-generate
 description: Generate all skills from the existed Tools in the Unity Project.
 ---

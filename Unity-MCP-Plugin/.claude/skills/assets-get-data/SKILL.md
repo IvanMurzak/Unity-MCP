@@ -1,4 +1,4 @@
-﻿---
+---
 name: assets-get-data
 description: Get asset data from the asset file in the Unity project. It includes all serializable fields and properties of the asset. Use 'assets-find' tool to find asset before using this tool.
 ---

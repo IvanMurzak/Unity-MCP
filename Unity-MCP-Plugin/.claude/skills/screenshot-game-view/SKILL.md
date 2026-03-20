@@ -1,4 +1,4 @@
-﻿---
+---
 name: screenshot-game-view
 description: Captures a screenshot from the Unity Editor Game View and returns it as an image. Reads the Game View's own render texture directly via the Unity Editor API. The image size matches the current Game View resolution. Returns the image directly for visual inspection by the LLM.
 ---

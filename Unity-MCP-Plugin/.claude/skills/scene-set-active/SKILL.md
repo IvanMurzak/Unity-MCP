@@ -1,4 +1,4 @@
-﻿---
+---
 name: scene-set-active
 description: Set the specified opened scene as the active scene. Use 'scene-list-opened' tool to get the list of all opened scenes.
 ---

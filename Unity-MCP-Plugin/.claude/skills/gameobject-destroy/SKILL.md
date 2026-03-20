@@ -1,4 +1,4 @@
-﻿---
+---
 name: gameobject-destroy
 description: Destroy GameObject and all nested GameObjects recursively in opened Prefab or in a Scene. Use 'gameobject-find' tool to find the target GameObject first.
 ---

@@ -1,4 +1,4 @@
-﻿---
+---
 name: scene-open
 description: Open scene from the project asset file. Use 'assets-find' tool to find the scene asset first.
 ---

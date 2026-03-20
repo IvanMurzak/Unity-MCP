@@ -1,4 +1,4 @@
-﻿---
+---
 name: object-get-data
 description: Get data of the specified Unity Object. Returns serialized data of the object including its properties and fields. If need to modify the data use 'object-modify' tool.
 ---

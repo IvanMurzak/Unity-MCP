@@ -1,4 +1,4 @@
-﻿---
+---
 name: assets-copy
 description: Copy assets at given paths and store them at new paths. Does AssetDatabase.Refresh() at the end. Use 'assets-find' tool to find assets before copying.
 ---

@@ -1,4 +1,4 @@
-﻿---
+---
 name: scene-get-data
 description: This tool retrieves the list of root GameObjects in the specified scene. Use 'scene-list-opened' tool to get the list of all opened scenes.
 ---

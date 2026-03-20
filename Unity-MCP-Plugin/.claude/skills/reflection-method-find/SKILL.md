@@ -1,4 +1,4 @@
-﻿---
+---
 name: reflection-method-find
 description: Find method in the project using C# Reflection. It looks for all assemblies in the project and finds method by its name, class name and parameters. Even private methods are available. Use 'reflection-method-call' to call the method after finding it.
 ---

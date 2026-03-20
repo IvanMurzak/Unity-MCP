@@ -1,4 +1,4 @@
-﻿---
+---
 name: console-get-logs
 description: Retrieves Unity Editor logs. Useful for debugging and monitoring Unity Editor activity.
 ---

@@ -1,4 +1,4 @@
-﻿---
+---
 name: scene-create
 description: Create new scene in the project assets. Use 'scene-list-opened' tool to list all opened scenes after creation.
 ---

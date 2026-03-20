@@ -1,4 +1,4 @@
-﻿---
+---
 name: scene-list-opened
 description: Returns the list of currently opened scenes in Unity Editor. Use 'scene-get-data' tool to get detailed information about a specific scene.
 ---

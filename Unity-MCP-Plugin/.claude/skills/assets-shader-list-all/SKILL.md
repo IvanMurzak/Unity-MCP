@@ -1,4 +1,4 @@
-﻿---
+---
 name: assets-shader-list-all
 description: List all available shaders in the project assets and packages. Returns their names. Use this to find a shader name for 'assets-material-create' tool.
 ---

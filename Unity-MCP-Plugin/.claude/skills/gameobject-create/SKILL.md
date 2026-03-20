@@ -1,4 +1,4 @@
-﻿---
+---
 name: gameobject-create
 description: Create a new GameObject in opened Prefab or in a Scene. If needed - provide proper 'position', 'rotation' and 'scale' to reduce amount of operations.
 ---

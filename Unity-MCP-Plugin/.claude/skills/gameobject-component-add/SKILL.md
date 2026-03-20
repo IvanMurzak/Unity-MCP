@@ -1,4 +1,4 @@
-﻿---
+---
 name: gameobject-component-add
 description: Add Component to GameObject in opened Prefab or in a Scene. Use 'gameobject-find' tool to find the target GameObject first. Use 'gameobject-component-list-all' tool to find the component type names to add.
 ---

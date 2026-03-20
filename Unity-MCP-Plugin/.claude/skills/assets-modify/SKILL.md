@@ -1,4 +1,4 @@
-﻿---
+---
 name: assets-modify
 description: Modify asset file in the project. Use 'assets-get-data' tool first to inspect the asset structure before modifying. Not allowed to modify asset file in 'Packages/' folder. Please modify it in 'Assets/' folder.
 ---

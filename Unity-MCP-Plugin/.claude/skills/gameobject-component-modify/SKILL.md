@@ -1,4 +1,4 @@
-﻿---
+---
 name: gameobject-component-modify
 description: Modify a specific Component on a GameObject in opened Prefab or in a Scene. Allows direct modification of component fields and properties without wrapping in GameObject structure. Use 'gameobject-component-get' first to inspect the component structure before modifying.
 ---

@@ -1,4 +1,4 @@
-﻿---
+---
 name: assets-find-built-in
 description: "Search the built-in assets of the Unity Editor located in the built-in resources: Resources/unity_builtin_extra. Doesn't support GUIDs since built-in assets do not have them."
 ---

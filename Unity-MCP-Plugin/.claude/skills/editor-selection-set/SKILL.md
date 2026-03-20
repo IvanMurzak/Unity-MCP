@@ -1,4 +1,4 @@
-﻿---
+---
 name: editor-selection-set
 description: Set the current Selection in the Unity Editor to the provided objects. Use 'editor-selection-get' tool to get the current selection first.
 ---

@@ -1,4 +1,4 @@
-﻿---
+---
 name: gameobject-modify
 description: Modify GameObject fields and properties in opened Prefab or in a Scene. You can modify multiple GameObjects at once. Just provide the same number of GameObject references and SerializedMember objects.
 ---

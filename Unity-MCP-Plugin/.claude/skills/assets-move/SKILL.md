@@ -1,4 +1,4 @@
-﻿---
+---
 name: assets-move
 description: Move the assets at paths in the project. Should be used for asset rename. Does AssetDatabase.Refresh() at the end. Use 'assets-find' tool to find assets before moving.
 ---
