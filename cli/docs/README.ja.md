@@ -47,7 +47,7 @@
 インストール不要で `npx` を使って任意のコマンドをすぐに実行できます:
 
 ```bash
-npx unity-mcp-cli install-plugin /path/to/unity/project
+unity-mcp-cli install-plugin /path/to/unity/project
 ```
 
 またはグローバルにインストール:
@@ -84,7 +84,7 @@ unity-mcp-cli install-plugin /path/to/unity/project
 `UserSettings/AI-Game-Developer-Config.json` 内の MCP ツール、プロンプト、リソースを設定します。
 
 ```bash
-npx unity-mcp-cli configure ./MyGame --list
+unity-mcp-cli configure ./MyGame --list
 ```
 
 | オプション | 必須 | 説明 |
@@ -107,7 +107,7 @@ npx unity-mcp-cli configure ./MyGame --list
 **例 — 特定のツールを有効化してすべてのプロンプトを無効化:**
 
 ```bash
-npx unity-mcp-cli configure ./MyGame \
+unity-mcp-cli configure ./MyGame \
   --enable-tools gameobject-create,gameobject-find \
   --disable-all-prompts
 ```
@@ -115,7 +115,7 @@ npx unity-mcp-cli configure ./MyGame \
 **例 — すべてを有効化:**
 
 ```bash
-npx unity-mcp-cli configure ./MyGame \
+unity-mcp-cli configure ./MyGame \
   --enable-all-tools \
   --enable-all-prompts \
   --enable-all-resources
@@ -128,7 +128,7 @@ npx unity-mcp-cli configure ./MyGame \
 環境変数を通じて特定の MCP サーバーに接続した状態で Unity プロジェクトを開きます。各オプションは、Unity プラグインが起動時に読み取る `UNITY_MCP_*` 環境変数に対応しています。
 
 ```bash
-npx unity-mcp-cli connect \
+unity-mcp-cli connect \
   --path ./MyGame \
   --url http://localhost:8080
 ```
@@ -150,7 +150,7 @@ npx unity-mcp-cli connect \
 **例 — 認証と特定ツールを指定して接続:**
 
 ```bash
-npx unity-mcp-cli connect \
+unity-mcp-cli connect \
   --path ./MyGame \
   --url http://my-server:8080 \
   --token my-secret-token \
@@ -162,7 +162,7 @@ npx unity-mcp-cli connect \
 **例 — stdio トランスポートで接続（サーバーは AI エージェントが管理）:**
 
 ```bash
-npx unity-mcp-cli connect \
+unity-mcp-cli connect \
   --path ./MyGame \
   --url http://localhost:8080 \
   --transport stdio \
@@ -172,7 +172,7 @@ npx unity-mcp-cli connect \
 **例 — streamableHttp とサーバー自動起動で接続:**
 
 ```bash
-npx unity-mcp-cli connect \
+unity-mcp-cli connect \
   --path ./MyGame \
   --url http://localhost:8080 \
   --transport streamableHttp \
@@ -187,7 +187,7 @@ npx unity-mcp-cli connect \
 Unity Editor を使用して新しい Unity プロジェクトを作成します。
 
 ```bash
-npx unity-mcp-cli create-project /path/to/new/project
+unity-mcp-cli create-project /path/to/new/project
 ```
 
 | オプション | 必須 | 説明 |
@@ -198,7 +198,7 @@ npx unity-mcp-cli create-project /path/to/new/project
 **例 — 特定のエディターバージョンでプロジェクトを作成:**
 
 ```bash
-npx unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
+unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
 ```
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
@@ -208,7 +208,7 @@ npx unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
 Unity-MCP プラグインを Unity プロジェクトの `Packages/manifest.json` にインストールします。
 
 ```bash
-npx unity-mcp-cli install-plugin ./MyGame
+unity-mcp-cli install-plugin ./MyGame
 ```
 
 | オプション | 必須 | 説明 |
@@ -224,7 +224,7 @@ npx unity-mcp-cli install-plugin ./MyGame
 **例 — 特定のプラグインバージョンをインストール:**
 
 ```bash
-npx unity-mcp-cli install-plugin ./MyGame --plugin-version 0.52.0
+unity-mcp-cli install-plugin ./MyGame --plugin-version 0.52.0
 ```
 
 > このコマンドを実行した後、Unity Editor でプロジェクトを開いてパッケージのインストールを完了してください。
@@ -236,7 +236,7 @@ npx unity-mcp-cli install-plugin ./MyGame --plugin-version 0.52.0
 Unity Hub CLI を通じて Unity Editor のバージョンをインストールします。
 
 ```bash
-npx unity-mcp-cli install-unity 6000.3.1f1
+unity-mcp-cli install-unity 6000.3.1f1
 ```
 
 | 引数 / オプション | 必須 | 説明 |
@@ -249,7 +249,7 @@ npx unity-mcp-cli install-unity 6000.3.1f1
 **例 — プロジェクトが必要とするエディターバージョンをインストール:**
 
 ```bash
-npx unity-mcp-cli install-unity --path ./MyGame
+unity-mcp-cli install-unity --path ./MyGame
 ```
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
@@ -259,7 +259,7 @@ npx unity-mcp-cli install-unity --path ./MyGame
 Unity プロジェクトを Unity Editor で開きます。
 
 ```bash
-npx unity-mcp-cli open ./MyGame
+unity-mcp-cli open ./MyGame
 ```
 
 | オプション | 必須 | 説明 |
@@ -276,7 +276,7 @@ npx unity-mcp-cli open ./MyGame
 Unity-MCP プラグインを Unity プロジェクトの `Packages/manifest.json` から削除します。
 
 ```bash
-npx unity-mcp-cli remove-plugin ./MyGame
+unity-mcp-cli remove-plugin ./MyGame
 ```
 
 | オプション | 必須 | 説明 |
@@ -298,16 +298,16 @@ npx unity-mcp-cli remove-plugin ./MyGame
 
 ```bash
 # 1. 新しい Unity プロジェクトを作成する
-npx unity-mcp-cli create-project ./MyAIGame --unity 6000.3.1f1
+unity-mcp-cli create-project ./MyAIGame --unity 6000.3.1f1
 
 # 2. Unity-MCP プラグインをインストールする
-npx unity-mcp-cli install-plugin ./MyAIGame
+unity-mcp-cli install-plugin ./MyAIGame
 
 # 3. すべての MCP ツールを有効化する
-npx unity-mcp-cli configure ./MyAIGame --enable-all-tools
+unity-mcp-cli configure ./MyAIGame --enable-all-tools
 
 # 4. MCP 接続でプロジェクトを開く
-npx unity-mcp-cli connect \
+unity-mcp-cli connect \
   --path ./MyAIGame \
   --url http://localhost:8080 \
   --keep-connected

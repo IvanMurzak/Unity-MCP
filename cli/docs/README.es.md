@@ -47,7 +47,7 @@ Herramienta CLI multiplataforma para **[Unity MCP](https://github.com/IvanMurzak
 Ejecuta cualquier comando al instante con `npx` — sin necesidad de instalación:
 
 ```bash
-npx unity-mcp-cli install-plugin /path/to/unity/project
+unity-mcp-cli install-plugin /path/to/unity/project
 ```
 
 O instala globalmente:
@@ -84,7 +84,7 @@ unity-mcp-cli install-plugin /path/to/unity/project
 Configura herramientas, prompts y recursos MCP en `UserSettings/AI-Game-Developer-Config.json`.
 
 ```bash
-npx unity-mcp-cli configure ./MyGame --list
+unity-mcp-cli configure ./MyGame --list
 ```
 
 | Opción | Requerido | Descripción |
@@ -107,7 +107,7 @@ npx unity-mcp-cli configure ./MyGame --list
 **Ejemplo — activar herramientas específicas y desactivar todos los prompts:**
 
 ```bash
-npx unity-mcp-cli configure ./MyGame \
+unity-mcp-cli configure ./MyGame \
   --enable-tools gameobject-create,gameobject-find \
   --disable-all-prompts
 ```
@@ -115,7 +115,7 @@ npx unity-mcp-cli configure ./MyGame \
 **Ejemplo — activar todo:**
 
 ```bash
-npx unity-mcp-cli configure ./MyGame \
+unity-mcp-cli configure ./MyGame \
   --enable-all-tools \
   --enable-all-prompts \
   --enable-all-resources
@@ -128,7 +128,7 @@ npx unity-mcp-cli configure ./MyGame \
 Abre un proyecto de Unity y lo conecta a un servidor MCP específico mediante variables de entorno. Cada opción se corresponde con una variable de entorno `UNITY_MCP_*` que el plugin de Unity lee al arrancar.
 
 ```bash
-npx unity-mcp-cli connect \
+unity-mcp-cli connect \
   --path ./MyGame \
   --url http://localhost:8080
 ```
@@ -150,7 +150,7 @@ Este comando inicia el Editor de Unity con las variables de entorno `UNITY_MCP_*
 **Ejemplo — conectar con autenticación y herramientas específicas:**
 
 ```bash
-npx unity-mcp-cli connect \
+unity-mcp-cli connect \
   --path ./MyGame \
   --url http://my-server:8080 \
   --token my-secret-token \
@@ -162,7 +162,7 @@ npx unity-mcp-cli connect \
 **Ejemplo — conectar con transporte stdio (servidor gestionado por el agente de IA):**
 
 ```bash
-npx unity-mcp-cli connect \
+unity-mcp-cli connect \
   --path ./MyGame \
   --url http://localhost:8080 \
   --transport stdio \
@@ -172,7 +172,7 @@ npx unity-mcp-cli connect \
 **Ejemplo — conectar con streamableHttp e inicio automático del servidor:**
 
 ```bash
-npx unity-mcp-cli connect \
+unity-mcp-cli connect \
   --path ./MyGame \
   --url http://localhost:8080 \
   --transport streamableHttp \
@@ -187,7 +187,7 @@ npx unity-mcp-cli connect \
 Crea un nuevo proyecto de Unity utilizando el Editor de Unity.
 
 ```bash
-npx unity-mcp-cli create-project /path/to/new/project
+unity-mcp-cli create-project /path/to/new/project
 ```
 
 | Opción | Requerido | Descripción |
@@ -198,7 +198,7 @@ npx unity-mcp-cli create-project /path/to/new/project
 **Ejemplo — crear un proyecto con una versión específica del editor:**
 
 ```bash
-npx unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
+unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
 ```
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
@@ -208,7 +208,7 @@ npx unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
 Instala el plugin Unity-MCP en el archivo `Packages/manifest.json` de un proyecto de Unity.
 
 ```bash
-npx unity-mcp-cli install-plugin ./MyGame
+unity-mcp-cli install-plugin ./MyGame
 ```
 
 | Opción | Requerido | Descripción |
@@ -224,7 +224,7 @@ Este comando:
 **Ejemplo — instalar una versión específica del plugin:**
 
 ```bash
-npx unity-mcp-cli install-plugin ./MyGame --plugin-version 0.52.0
+unity-mcp-cli install-plugin ./MyGame --plugin-version 0.52.0
 ```
 
 > Después de ejecutar este comando, abre el proyecto en el Editor de Unity para completar la instalación del paquete.
@@ -236,7 +236,7 @@ npx unity-mcp-cli install-plugin ./MyGame --plugin-version 0.52.0
 Instala una versión del Editor de Unity mediante la CLI de Unity Hub.
 
 ```bash
-npx unity-mcp-cli install-unity 6000.3.1f1
+unity-mcp-cli install-unity 6000.3.1f1
 ```
 
 | Argumento / Opción | Requerido | Descripción |
@@ -249,7 +249,7 @@ Si no se proporciona ningún argumento ni opción, el comando instala la última
 **Ejemplo — instalar la versión del editor que necesita un proyecto:**
 
 ```bash
-npx unity-mcp-cli install-unity --path ./MyGame
+unity-mcp-cli install-unity --path ./MyGame
 ```
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
@@ -259,7 +259,7 @@ npx unity-mcp-cli install-unity --path ./MyGame
 Abre un proyecto de Unity en el Editor de Unity.
 
 ```bash
-npx unity-mcp-cli open ./MyGame
+unity-mcp-cli open ./MyGame
 ```
 
 | Opción | Requerido | Descripción |
@@ -276,7 +276,7 @@ El proceso del editor se lanza en modo desacoplado — la CLI regresa inmediatam
 Elimina el plugin Unity-MCP del archivo `Packages/manifest.json` de un proyecto de Unity.
 
 ```bash
-npx unity-mcp-cli remove-plugin ./MyGame
+unity-mcp-cli remove-plugin ./MyGame
 ```
 
 | Opción | Requerido | Descripción |
@@ -298,16 +298,16 @@ Configura un proyecto Unity MCP completo desde cero con un solo script:
 
 ```bash
 # 1. Crear un nuevo proyecto de Unity
-npx unity-mcp-cli create-project ./MyAIGame --unity 6000.3.1f1
+unity-mcp-cli create-project ./MyAIGame --unity 6000.3.1f1
 
 # 2. Instalar el plugin Unity-MCP
-npx unity-mcp-cli install-plugin ./MyAIGame
+unity-mcp-cli install-plugin ./MyAIGame
 
 # 3. Activar todas las herramientas MCP
-npx unity-mcp-cli configure ./MyAIGame --enable-all-tools
+unity-mcp-cli configure ./MyAIGame --enable-all-tools
 
 # 4. Abrir el proyecto con conexión MCP
-npx unity-mcp-cli connect \
+unity-mcp-cli connect \
   --path ./MyAIGame \
   --url http://localhost:8080 \
   --keep-connected

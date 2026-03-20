@@ -47,7 +47,7 @@
 使用 `npx` 即时运行任意命令，无需安装：
 
 ```bash
-npx unity-mcp-cli install-plugin /path/to/unity/project
+unity-mcp-cli install-plugin /path/to/unity/project
 ```
 
 或全局安装：
@@ -84,7 +84,7 @@ unity-mcp-cli install-plugin /path/to/unity/project
 在 `UserSettings/AI-Game-Developer-Config.json` 中配置 MCP 工具、提示词和资源。
 
 ```bash
-npx unity-mcp-cli configure ./MyGame --list
+unity-mcp-cli configure ./MyGame --list
 ```
 
 | 选项 | 必需 | 描述 |
@@ -107,7 +107,7 @@ npx unity-mcp-cli configure ./MyGame --list
 **示例 — 启用指定工具并禁用所有提示词：**
 
 ```bash
-npx unity-mcp-cli configure ./MyGame \
+unity-mcp-cli configure ./MyGame \
   --enable-tools gameobject-create,gameobject-find \
   --disable-all-prompts
 ```
@@ -115,7 +115,7 @@ npx unity-mcp-cli configure ./MyGame \
 **示例 — 启用所有功能：**
 
 ```bash
-npx unity-mcp-cli configure ./MyGame \
+unity-mcp-cli configure ./MyGame \
   --enable-all-tools \
   --enable-all-prompts \
   --enable-all-resources
@@ -128,7 +128,7 @@ npx unity-mcp-cli configure ./MyGame \
 打开 Unity 项目并通过环境变量将其连接到指定的 MCP 服务器。每个选项均对应一个 `UNITY_MCP_*` 环境变量，Unity 插件将在启动时读取这些变量。
 
 ```bash
-npx unity-mcp-cli connect \
+unity-mcp-cli connect \
   --path ./MyGame \
   --url http://localhost:8080
 ```
@@ -150,7 +150,7 @@ npx unity-mcp-cli connect \
 **示例 — 携带身份验证和指定工具连接：**
 
 ```bash
-npx unity-mcp-cli connect \
+unity-mcp-cli connect \
   --path ./MyGame \
   --url http://my-server:8080 \
   --token my-secret-token \
@@ -162,7 +162,7 @@ npx unity-mcp-cli connect \
 **示例 — 使用 stdio 传输方式连接（服务器由 AI 代理管理）：**
 
 ```bash
-npx unity-mcp-cli connect \
+unity-mcp-cli connect \
   --path ./MyGame \
   --url http://localhost:8080 \
   --transport stdio \
@@ -172,7 +172,7 @@ npx unity-mcp-cli connect \
 **示例 — 使用 streamableHttp 连接并自动启动服务器：**
 
 ```bash
-npx unity-mcp-cli connect \
+unity-mcp-cli connect \
   --path ./MyGame \
   --url http://localhost:8080 \
   --transport streamableHttp \
@@ -187,7 +187,7 @@ npx unity-mcp-cli connect \
 使用 Unity Editor 创建新的 Unity 项目。
 
 ```bash
-npx unity-mcp-cli create-project /path/to/new/project
+unity-mcp-cli create-project /path/to/new/project
 ```
 
 | 选项 | 必需 | 描述 |
@@ -198,7 +198,7 @@ npx unity-mcp-cli create-project /path/to/new/project
 **示例 — 使用指定编辑器版本创建项目：**
 
 ```bash
-npx unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
+unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
 ```
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
@@ -208,7 +208,7 @@ npx unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
 将 Unity-MCP 插件安装到 Unity 项目的 `Packages/manifest.json` 中。
 
 ```bash
-npx unity-mcp-cli install-plugin ./MyGame
+unity-mcp-cli install-plugin ./MyGame
 ```
 
 | 选项 | 必需 | 描述 |
@@ -224,7 +224,7 @@ npx unity-mcp-cli install-plugin ./MyGame
 **示例 — 安装指定插件版本：**
 
 ```bash
-npx unity-mcp-cli install-plugin ./MyGame --plugin-version 0.52.0
+unity-mcp-cli install-plugin ./MyGame --plugin-version 0.52.0
 ```
 
 > 运行此命令后，请在 Unity Editor 中打开项目以完成包安装。
@@ -236,7 +236,7 @@ npx unity-mcp-cli install-plugin ./MyGame --plugin-version 0.52.0
 通过 Unity Hub CLI 安装指定版本的 Unity Editor。
 
 ```bash
-npx unity-mcp-cli install-unity 6000.3.1f1
+unity-mcp-cli install-unity 6000.3.1f1
 ```
 
 | 参数 / 选项 | 必需 | 描述 |
@@ -249,7 +249,7 @@ npx unity-mcp-cli install-unity 6000.3.1f1
 **示例 — 安装项目所需的编辑器版本：**
 
 ```bash
-npx unity-mcp-cli install-unity --path ./MyGame
+unity-mcp-cli install-unity --path ./MyGame
 ```
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
@@ -259,7 +259,7 @@ npx unity-mcp-cli install-unity --path ./MyGame
 在 Unity Editor 中打开 Unity 项目。
 
 ```bash
-npx unity-mcp-cli open ./MyGame
+unity-mcp-cli open ./MyGame
 ```
 
 | 选项 | 必需 | 描述 |
@@ -276,7 +276,7 @@ npx unity-mcp-cli open ./MyGame
 从 Unity 项目的 `Packages/manifest.json` 中移除 Unity-MCP 插件。
 
 ```bash
-npx unity-mcp-cli remove-plugin ./MyGame
+unity-mcp-cli remove-plugin ./MyGame
 ```
 
 | 选项 | 必需 | 描述 |
@@ -298,16 +298,16 @@ npx unity-mcp-cli remove-plugin ./MyGame
 
 ```bash
 # 1. 创建新的 Unity 项目
-npx unity-mcp-cli create-project ./MyAIGame --unity 6000.3.1f1
+unity-mcp-cli create-project ./MyAIGame --unity 6000.3.1f1
 
 # 2. 安装 Unity-MCP 插件
-npx unity-mcp-cli install-plugin ./MyAIGame
+unity-mcp-cli install-plugin ./MyAIGame
 
 # 3. 启用所有 MCP 工具
-npx unity-mcp-cli configure ./MyAIGame --enable-all-tools
+unity-mcp-cli configure ./MyAIGame --enable-all-tools
 
 # 4. 打开项目并建立 MCP 连接
-npx unity-mcp-cli connect \
+unity-mcp-cli connect \
   --path ./MyAIGame \
   --url http://localhost:8080 \
   --keep-connected
