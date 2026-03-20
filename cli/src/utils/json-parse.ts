@@ -92,32 +92,41 @@ function buildDetailedError(input: string, error: SyntaxError): JsonParseError {
 }
 
 /**
- * Parse a string as JSON with auto-stringify fallback and detailed errors.
+ * Parse a string as strict JSON. Throws {@link JsonParseError} with
+ * position and snippet on failure.
  *
  * @param input  The raw string to parse as JSON.
  * @returns      A result containing the parsed value.
  * @throws       {@link JsonParseError} with position and snippet on failure.
  */
-export function parseJsonRobust(input: string): JsonParseResult {
-  // Attempt 1: parse as-is
+export function parseJsonStrict(input: string): JsonParseResult {
   try {
     const value = JSON.parse(input);
     return { value, raw: input, wasStringified: false };
-  } catch (firstError) {
-    // Attempt 2: wrap in quotes (stringify the raw input) and re-parse
-    const stringified = JSON.stringify(input);
-    try {
-      const value = JSON.parse(stringified);
-      return { value, raw: stringified, wasStringified: true };
-    } catch {
-      // stringified JSON.stringify output should always parse, but if it
-      // somehow fails, fall through to report the original error.
+  } catch (error) {
+    if (error instanceof SyntaxError) {
+      throw buildDetailedError(input, error);
     }
+    throw error;
+  }
+}
 
-    // Both attempts failed — report the *original* error with detail
-    if (firstError instanceof SyntaxError) {
-      throw buildDetailedError(input, firstError);
-    }
-    throw firstError;
+/**
+ * Parse a string as JSON with auto-stringify fallback.
+ * If the input is not valid JSON, it wraps the raw string via
+ * `JSON.stringify` so it becomes a valid JSON string literal.
+ * Check {@link JsonParseResult.wasStringified} to detect this case.
+ *
+ * @param input  The raw string to parse as JSON.
+ * @returns      A result containing the parsed value (never throws).
+ */
+export function parseJsonRobust(input: string): JsonParseResult {
+  try {
+    const value = JSON.parse(input);
+    return { value, raw: input, wasStringified: false };
+  } catch {
+    const stringified = JSON.stringify(input);
+    const value = JSON.parse(stringified);
+    return { value, raw: stringified, wasStringified: true };
   }
 }

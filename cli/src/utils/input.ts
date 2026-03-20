@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as ui from './ui.js';
 import { verbose } from './ui.js';
-import { parseJsonRobust, JsonParseError } from './json-parse.js';
+import { parseJsonStrict, JsonParseError } from './json-parse.js';
 
 export interface InputOptions {
   input?: string;
@@ -43,32 +43,12 @@ export function parseInput(options: InputOptions): string {
       content = fs.readFileSync(filePath, 'utf-8');
     }
 
-    try {
-      const result = parseJsonRobust(content);
-      const source = isStdin ? 'stdin' : options.inputFile;
-      if (result.wasStringified) {
-        ui.error(`Input from ${source} does not contain valid JSON`);
-        process.exit(1);
-      }
-      return result.raw;
-    } catch (err) {
-      const source = isStdin ? 'stdin' : options.inputFile;
-      if (err instanceof JsonParseError) {
-        ui.error(`Input from ${source}: ${err.message}`);
-      } else {
-        ui.error(`Input from ${source} does not contain valid JSON`);
-      }
-      process.exit(1);
-    }
+    return content;
   }
 
   if (options.input) {
     try {
-      const result = parseJsonRobust(options.input);
-      if (result.wasStringified) {
-        ui.error('--input must be valid JSON');
-        process.exit(1);
-      }
+      const result = parseJsonStrict(options.input);
       return result.raw;
     } catch (err) {
       if (err instanceof JsonParseError) {
