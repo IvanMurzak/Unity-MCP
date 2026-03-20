@@ -143,7 +143,8 @@ namespace com.IvanMurzak.Unity.MCP
                     "com.IvanMurzak.Unity.MCP.Tests")
                 .WithToolsFromAssembly(assemblies)
                 .WithPromptsFromAssembly(assemblies)
-                .WithResourcesFromAssembly(assemblies);
+                .WithResourcesFromAssembly(assemblies)
+                .WithSkillsFromAssembly(assemblies);
 
             configure?.Invoke(mcpPluginBuilder);
 
