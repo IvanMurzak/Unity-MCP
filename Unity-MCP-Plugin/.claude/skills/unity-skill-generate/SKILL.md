@@ -1,4 +1,4 @@
-﻿---
+---
 name: unity-skill-generate
 description: Generate all skills from the existed Tools in the Unity Project.
 ---
@@ -8,22 +8,28 @@ description: Generate all skills from the existed Tools in the Unity Project.
 ## How to Call
 
 ```bash
-npx unity-mcp-cli run-system-tool unity-skill-generate --input '{
+unity-mcp-cli run-system-tool unity-skill-generate --input '{
   "path": "string_value"
 }'
 ```
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> npx unity-mcp-cli run-system-tool unity-skill-generate --input-file args.json
+> unity-mcp-cli run-system-tool unity-skill-generate --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
 > ```bash
-> npx unity-mcp-cli run-system-tool unity-skill-generate --input-file - <<'EOF'
+> unity-mcp-cli run-system-tool unity-skill-generate --input-file - <<'EOF'
 > {"param": "value"}
 > EOF
 > ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 

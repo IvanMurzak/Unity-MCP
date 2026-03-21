@@ -1,4 +1,4 @@
-﻿---
+---
 name: assets-find-built-in
 description: "Search the built-in assets of the Unity Editor located in the built-in resources: Resources/unity_builtin_extra. Doesn't support GUIDs since built-in assets do not have them."
 ---
@@ -8,7 +8,7 @@ description: "Search the built-in assets of the Unity Editor located in the buil
 ## How to Call
 
 ```bash
-npx unity-mcp-cli run-tool assets-find-built-in --input '{
+unity-mcp-cli run-tool assets-find-built-in --input '{
   "name": "string_value",
   "type": "string_value",
   "maxResults": 0
@@ -17,15 +17,21 @@ npx unity-mcp-cli run-tool assets-find-built-in --input '{
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> npx unity-mcp-cli run-tool assets-find-built-in --input-file args.json
+> unity-mcp-cli run-tool assets-find-built-in --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
 > ```bash
-> npx unity-mcp-cli run-tool assets-find-built-in --input-file - <<'EOF'
+> unity-mcp-cli run-tool assets-find-built-in --input-file - <<'EOF'
 > {"param": "value"}
 > EOF
 > ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 

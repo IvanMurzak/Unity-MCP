@@ -1,4 +1,4 @@
-﻿---
+---
 name: screenshot-camera
 description: Captures a screenshot from a camera and returns it as an image. If no camera is specified, uses the Main Camera. Returns the image directly for visual inspection by the LLM.
 ---
@@ -8,7 +8,7 @@ description: Captures a screenshot from a camera and returns it as an image. If 
 ## How to Call
 
 ```bash
-npx unity-mcp-cli run-tool screenshot-camera --input '{
+unity-mcp-cli run-tool screenshot-camera --input '{
   "cameraRef": "string_value",
   "width": 0,
   "height": 0
@@ -17,15 +17,21 @@ npx unity-mcp-cli run-tool screenshot-camera --input '{
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> npx unity-mcp-cli run-tool screenshot-camera --input-file args.json
+> unity-mcp-cli run-tool screenshot-camera --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
 > ```bash
-> npx unity-mcp-cli run-tool screenshot-camera --input-file - <<'EOF'
+> unity-mcp-cli run-tool screenshot-camera --input-file - <<'EOF'
 > {"param": "value"}
 > EOF
 > ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 

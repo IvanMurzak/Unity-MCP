@@ -1,4 +1,4 @@
-﻿---
+---
 name: scene-unload
 description: Unload scene from the Opened scenes in Unity Editor. Use 'scene-list-opened' tool to get the list of all opened scenes.
 ---
@@ -8,22 +8,28 @@ description: Unload scene from the Opened scenes in Unity Editor. Use 'scene-lis
 ## How to Call
 
 ```bash
-npx unity-mcp-cli run-tool scene-unload --input '{
+unity-mcp-cli run-tool scene-unload --input '{
   "name": "string_value"
 }'
 ```
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> npx unity-mcp-cli run-tool scene-unload --input-file args.json
+> unity-mcp-cli run-tool scene-unload --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
 > ```bash
-> npx unity-mcp-cli run-tool scene-unload --input-file - <<'EOF'
+> unity-mcp-cli run-tool scene-unload --input-file - <<'EOF'
 > {"param": "value"}
 > EOF
 > ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 

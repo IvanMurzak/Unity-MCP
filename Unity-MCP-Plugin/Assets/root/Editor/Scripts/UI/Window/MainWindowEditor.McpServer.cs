@@ -32,6 +32,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var statusCircle = root.Q<VisualElement>("mcpServerStatusCircle") ?? throw new InvalidOperationException("MCP Server status circle not found.");
             var statusLabel = root.Q<Label>("mcpServerLabel") ?? throw new InvalidOperationException("MCP Server status label not found.");
 
+            var timelinePointMcpServer = root.Q<VisualElement>("TimelinePointMcpServer");
+            if (timelinePointMcpServer != null)
+                timelinePointMcpServer.tooltip = Tooltip_McpServerTimelineLabel;
+            statusCircle.tooltip = Tooltip_McpServerTimelineLabel;
+            statusLabel.tooltip = Tooltip_McpServerTimelineLabel;
+
             Observable.CombineLatest(
                     source1: McpServerManager.ServerStatus,
                     source2: UnityMcpPluginEditor.IsConnected,

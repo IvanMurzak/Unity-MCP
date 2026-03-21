@@ -1,4 +1,4 @@
-﻿---
+---
 name: assets-prefab-instantiate
 description: Instantiates prefab in the current active scene. Use 'assets-find' tool to find prefab assets in the project.
 ---
@@ -8,7 +8,7 @@ description: Instantiates prefab in the current active scene. Use 'assets-find' 
 ## How to Call
 
 ```bash
-npx unity-mcp-cli run-tool assets-prefab-instantiate --input '{
+unity-mcp-cli run-tool assets-prefab-instantiate --input '{
   "prefabAssetPath": "string_value",
   "gameObjectPath": "string_value",
   "position": "string_value",
@@ -20,15 +20,21 @@ npx unity-mcp-cli run-tool assets-prefab-instantiate --input '{
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> npx unity-mcp-cli run-tool assets-prefab-instantiate --input-file args.json
+> unity-mcp-cli run-tool assets-prefab-instantiate --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
 > ```bash
-> npx unity-mcp-cli run-tool assets-prefab-instantiate --input-file - <<'EOF'
+> unity-mcp-cli run-tool assets-prefab-instantiate --input-file - <<'EOF'
 > {"param": "value"}
 > EOF
 > ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 

@@ -35,9 +35,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             _btnConnect = btnConnect;
             _timelinePointUnity = root.Q<VisualElement>("TimelinePointUnity");
+            if (_timelinePointUnity != null)
+                _timelinePointUnity.tooltip = Tooltip_UnityTimelineLabel;
+            if (_connectionStatusCircle != null)
+                _connectionStatusCircle.tooltip = Tooltip_UnityTimelineLabel;
+            if (_connectionStatusText != null)
+                _connectionStatusText.tooltip = Tooltip_UnityTimelineLabel;
 
             _aiAgentLabelsContainer = root.Q<VisualElement>("aiAgentLabelsContainer");
             _aiAgentStatusCircle = root.Q<VisualElement>("aiAgentStatusCircle");
+
+            var timelinePointAiAgent = root.Q<VisualElement>("TimelinePointAiAgent");
+            if (timelinePointAiAgent != null)
+                timelinePointAiAgent.tooltip = Tooltip_AiAgentTimelineLabel;
 
             _inputFieldHost.value = UnityMcpPluginEditor.LocalHost;
             _inputFieldHost.RegisterCallback<FocusOutEvent>(evt =>

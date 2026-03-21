@@ -1,4 +1,4 @@
-﻿---
+---
 name: editor-selection-get
 description: Get information about the current Selection in the Unity Editor. Use 'editor-selection-set' tool to set the selection.
 ---
@@ -8,7 +8,7 @@ description: Get information about the current Selection in the Unity Editor. Us
 ## How to Call
 
 ```bash
-npx unity-mcp-cli run-tool editor-selection-get --input '{
+unity-mcp-cli run-tool editor-selection-get --input '{
   "includeGameObjects": false,
   "includeTransforms": false,
   "includeInstanceIDs": false,
@@ -20,15 +20,21 @@ npx unity-mcp-cli run-tool editor-selection-get --input '{
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> npx unity-mcp-cli run-tool editor-selection-get --input-file args.json
+> unity-mcp-cli run-tool editor-selection-get --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
 > ```bash
-> npx unity-mcp-cli run-tool editor-selection-get --input-file - <<'EOF'
+> unity-mcp-cli run-tool editor-selection-get --input-file - <<'EOF'
 > {"param": "value"}
 > EOF
 > ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 

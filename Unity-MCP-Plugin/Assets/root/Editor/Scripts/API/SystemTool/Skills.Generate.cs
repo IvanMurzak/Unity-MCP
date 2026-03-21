@@ -74,7 +74,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             var originalSkillsPath = UnityMcpPluginEditor.SkillsPath;
             try
             {
-                UnityMcpPluginEditor.SkillsPath = path;
+                UnityMcpPluginEditor.SkillsPath = path!;
                 mcpPlugin.GenerateSkillFiles(UnityMcpPluginEditor.ProjectRootPath);
             }
             finally

@@ -1,4 +1,4 @@
-﻿---
+---
 name: scene-save
 description: Save Opened scene to the asset file. Use 'scene-list-opened' tool to get the list of all opened scenes.
 ---
@@ -8,7 +8,7 @@ description: Save Opened scene to the asset file. Use 'scene-list-opened' tool t
 ## How to Call
 
 ```bash
-npx unity-mcp-cli run-tool scene-save --input '{
+unity-mcp-cli run-tool scene-save --input '{
   "openedSceneName": "string_value",
   "path": "string_value"
 }'
@@ -16,15 +16,21 @@ npx unity-mcp-cli run-tool scene-save --input '{
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> npx unity-mcp-cli run-tool scene-save --input-file args.json
+> unity-mcp-cli run-tool scene-save --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
 > ```bash
-> npx unity-mcp-cli run-tool scene-save --input-file - <<'EOF'
+> unity-mcp-cli run-tool scene-save --input-file - <<'EOF'
 > {"param": "value"}
 > EOF
 > ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 

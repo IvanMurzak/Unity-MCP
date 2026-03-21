@@ -1,4 +1,4 @@
-﻿---
+---
 name: package-list
 description: List all packages installed in the Unity project (UPM packages). Returns information about each installed package including name, version, source, and description. Use this to check which packages are currently installed before adding or removing packages.
 ---
@@ -8,7 +8,7 @@ description: List all packages installed in the Unity project (UPM packages). Re
 ## How to Call
 
 ```bash
-npx unity-mcp-cli run-tool package-list --input '{
+unity-mcp-cli run-tool package-list --input '{
   "sourceFilter": "string_value",
   "nameFilter": "string_value",
   "directDependenciesOnly": false
@@ -17,15 +17,21 @@ npx unity-mcp-cli run-tool package-list --input '{
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> npx unity-mcp-cli run-tool package-list --input-file args.json
+> unity-mcp-cli run-tool package-list --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
 > ```bash
-> npx unity-mcp-cli run-tool package-list --input-file - <<'EOF'
+> unity-mcp-cli run-tool package-list --input-file - <<'EOF'
 > {"param": "value"}
 > EOF
 > ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 

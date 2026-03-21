@@ -160,6 +160,40 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             "Resources are fetched on-demand when the AI needs specific project information. " +
             "Unlike tools, they never modify any state.";
 
+        private const string Tooltip_UnityTimelineLabel =
+            "Unity Editor connection status. This indicates whether the Unity Editor is connected " +
+            "to the MCP server.\n\n" +
+            "Unity must stay connected for any AI interaction to work. When connected, the AI agent " +
+            "can invoke tools, read resources, and execute operations inside your Unity project.\n\n" +
+            "If Unity is disconnected, no AI client will be able to reach the Editor — tools will " +
+            "fail and the AI agent will have no way to interact with your project.\n\n" +
+            "Use the Connect / Disconnect button to control the connection manually.";
+
+        private const string Tooltip_McpServerTimelineLabel =
+            "The MCP server is the gateway between AI and Unity. Every AI operation that interacts " +
+            "with Unity — tools, prompts, resources, and skills — goes through this server.\n\n" +
+            "It translates AI requests into Unity API calls, enabling the AI agent to create " +
+            "GameObjects, modify assets, run scripts, read scene data, execute tests, and more.\n\n" +
+            "The server runs as a local process managed by the plugin. It starts automatically " +
+            "when Unity opens and can be controlled manually with the Start / Stop button.\n\n" +
+            "Without a running MCP server, no AI client can interact with your Unity project.";
+
+        private const string Tooltip_AiAgentTimelineLabel =
+            "The AI agent connection indicator shows whether an external AI client (Claude, Cursor, " +
+            "Copilot, etc.) is currently connected to the MCP server.\n\n" +
+            "It is completely normal for the AI agent to appear disconnected:\n" +
+            "  • With 'Cloud' connection mode the AI agent connects on-demand and may disconnect " +
+            "between interactions.\n" +
+            "  • With 'HTTP' transport the AI agent connects only when it needs to invoke a tool " +
+            "or read a resource, then may drop the session.\n\n" +
+            "The AI agent will always reconnect automatically whenever it needs to perform an " +
+            "action in Unity — no manual intervention is required.\n\n" +
+            "If you use AI Skills (slash-commands like /setup-basic-scene), the AI agent connection " +
+            "is not needed at all — skills are injected directly into the AI context without an " +
+            "active MCP session.\n\n" +
+            "Important: Unity itself should always remain connected to the MCP server (the top " +
+            "'Unity' indicator). The AI agent indicator is informational only.";
+
         private const string Tooltip_BtnGenerateToken =
             "Generate a new cryptographically secure random token.\n\n" +
             "Uses a cryptographic RNG to produce 32 bytes (256 bits) of randomness encoded as " +
@@ -247,13 +281,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             }
 
             SetStatusIndicator(_aiAgentStatusCircle, isConnected ? USS_Connected : USS_Disconnected);
+            _aiAgentStatusCircle.tooltip = Tooltip_AiAgentTimelineLabel;
 
+            _aiAgentLabelsContainer.tooltip = Tooltip_AiAgentTimelineLabel;
             _aiAgentLabelsContainer.Clear();
             var labelList = labels?.ToList();
             if (labelList == null || labelList.Count == 0)
             {
                 var lbl = new Label("AI agent");
                 lbl.AddToClassList("timeline-label");
+                lbl.tooltip = Tooltip_AiAgentTimelineLabel;
                 _aiAgentLabelsContainer.Add(lbl);
             }
             else
@@ -262,6 +299,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 {
                     var lbl = new Label(text);
                     lbl.AddToClassList("timeline-label");
+                    lbl.tooltip = Tooltip_AiAgentTimelineLabel;
                     _aiAgentLabelsContainer.Add(lbl);
                 }
             }

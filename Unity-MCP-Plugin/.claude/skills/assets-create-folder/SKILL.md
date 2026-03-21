@@ -1,4 +1,4 @@
-﻿---
+---
 name: assets-create-folder
 description: Creates a new folder in the specified parent folder. The parent folder string must start with the 'Assets' folder, and all folders within the parent folder string must already exist. For example, when specifying 'Assets/ParentFolder1/ParentFolder2/', the new folder will be created in 'ParentFolder2' only if ParentFolder1 and ParentFolder2 already exist. Use it to organize scripts and assets in the project. Does AssetDatabase.Refresh() at the end. Returns the GUID of the newly created folder, if successful.
 ---
@@ -8,22 +8,28 @@ description: Creates a new folder in the specified parent folder. The parent fol
 ## How to Call
 
 ```bash
-npx unity-mcp-cli run-tool assets-create-folder --input '{
+unity-mcp-cli run-tool assets-create-folder --input '{
   "inputs": "string_value"
 }'
 ```
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> npx unity-mcp-cli run-tool assets-create-folder --input-file args.json
+> unity-mcp-cli run-tool assets-create-folder --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
 > ```bash
-> npx unity-mcp-cli run-tool assets-create-folder --input-file - <<'EOF'
+> unity-mcp-cli run-tool assets-create-folder --input-file - <<'EOF'
 > {"param": "value"}
 > EOF
 > ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 

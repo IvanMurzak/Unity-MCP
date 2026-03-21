@@ -1,4 +1,4 @@
-﻿---
+---
 name: assets-prefab-close
 description: Close currently opened prefab. Use it when you are in prefab editing mode in Unity Editor. Use 'assets-prefab-open' tool to open a prefab first.
 ---
@@ -8,22 +8,28 @@ description: Close currently opened prefab. Use it when you are in prefab editin
 ## How to Call
 
 ```bash
-npx unity-mcp-cli run-tool assets-prefab-close --input '{
+unity-mcp-cli run-tool assets-prefab-close --input '{
   "save": false
 }'
 ```
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> npx unity-mcp-cli run-tool assets-prefab-close --input-file args.json
+> unity-mcp-cli run-tool assets-prefab-close --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
 > ```bash
-> npx unity-mcp-cli run-tool assets-prefab-close --input-file - <<'EOF'
+> unity-mcp-cli run-tool assets-prefab-close --input-file - <<'EOF'
 > {"param": "value"}
 > EOF
 > ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 
