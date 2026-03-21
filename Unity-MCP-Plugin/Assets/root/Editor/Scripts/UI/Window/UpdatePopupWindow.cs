@@ -123,10 +123,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             installButton.SetEnabled(false);
 
-            if (McpServerManager.IsRunning)
+            var currentStatus = McpServerManager.ServerStatus.CurrentValue;
+            if (currentStatus == McpServerStatus.Running || currentStatus == McpServerStatus.Starting ||
+                currentStatus == McpServerStatus.Stopping)
             {
                 installButton.text = "Stopping server...";
-                McpServerManager.StopServer();
+                if (currentStatus != McpServerStatus.Stopping)
+                    McpServerManager.StopServer();
                 _stopSubscription = McpServerManager.ServerStatus
                     .Where(status => status == McpServerStatus.Stopped)
                     .Take(1)
