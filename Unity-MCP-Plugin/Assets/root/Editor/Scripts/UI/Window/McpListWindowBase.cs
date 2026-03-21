@@ -13,8 +13,10 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using Microsoft.Extensions.Logging;
+using R3;
 using UnityEditor;
 using UnityEngine.UIElements;
 
@@ -42,6 +44,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected abstract string[] ItemUxmlPaths { get; }
         protected abstract string MissingTemplateMessage { get; }
 
+        protected readonly CompositeDisposable _disposables = new();
+
         protected VisualTreeAsset? itemTemplate;
         protected List<TViewModel> allItems = new();
 
@@ -54,6 +58,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public override void CreateGUI()
         {
             rootVisualElement.Clear();
+            _disposables.Clear();
 
             InitializePlugin();
 
@@ -69,6 +74,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             RefreshItems();
             PopulateList();
+            SubscribeToUpdates();
+        }
+
+        protected virtual void OnDisable()
+        {
+            _disposables.Clear();
+        }
+
+        protected virtual Observable<Unit>? GetOnUpdatedObservable(IMcpPlugin plugin) => null;
+
+        private void SubscribeToUpdates()
+        {
+            UnityMcpPluginEditor.PluginProperty
+                .WhereNotNull()
+                .Subscribe(plugin =>
+                {
+                    GetOnUpdatedObservable(plugin)?
+                        .ObserveOnCurrentSynchronizationContext()
+                        .Subscribe(_ =>
+                        {
+                            RefreshItems();
+                            PopulateList();
+                        })
+                        .AddTo(_disposables);
+                }).AddTo(_disposables);
         }
 
         protected void InitializePlugin()
