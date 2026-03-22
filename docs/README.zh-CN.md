@@ -54,7 +54,7 @@
 
 [![下载安装器](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/latest/download/AI-Game-Dev-Installer.unitypackage)
 
-<video src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/video/ai-game-dropship-flying.mp4?raw=true" controls autoplay muted loop>AI 游戏开发者 Windows</video>
+https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
 
 ### 或者使用 CLI
 
