@@ -40,7 +40,7 @@
 
 > **[💬 Discord サーバーに参加](https://discord.gg/cfbdMZX99G)** — 質問したり、作品を披露したり、他の開発者とつながりましょう！
 
-## ![AI ゲーム開発者 — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-features.svg?raw=true)
+## ![AI ゲーム開発者 — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-features.ja.svg?raw=true)
 
 - ✔️ **AI エージェント** — **Anthropic**、**OpenAI**、**Microsoft** など、ベンダーロックインなしで最高のエージェントを利用可能
 - ✔️ **ツール** — Unity Editor で操作するための豊富なデフォルト [MCP ツール](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)
@@ -52,7 +52,7 @@
 - ✔️ **柔軟なデプロイ** — 設定によりローカル（stdio）でもリモート（http）でも動作
 - ✔️ **拡張可能** — [プロジェクトコード内にカスタムツールを作成](#add-custom-tool)
 
-[![インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/latest/download/AI-Game-Dev-Installer.unitypackage)
+[![インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download_ja.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/latest/download/AI-Game-Dev-Installer.unitypackage)
 
 https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
 

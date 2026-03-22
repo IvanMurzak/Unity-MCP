@@ -29,7 +29,7 @@
 
 **[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** 用のクロスプラットフォームCLIツール — プロジェクトの作成、プラグインのインストール、MCPツールの設定、MCP接続を有効にしたUnityの起動まで、すべてを単一のコマンドラインから実行できます。
 
-## ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-features.svg?raw=true)
+## ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-features.ja.svg?raw=true)
 
 - :white_check_mark: **プロジェクト作成** — Unity Editorを使用して新しいUnityプロジェクトをスキャフォールド
 - :white_check_mark: **エディターのインストール** — コマンドラインから任意のバージョンのUnity Editorをインストール

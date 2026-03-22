@@ -29,7 +29,7 @@
 
 Herramienta CLI multiplataforma para **[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** — crea proyectos, instala plugins, configura herramientas MCP e inicia Unity con conexiones MCP activas. Todo desde una sola linea de comandos.
 
-## ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-features.svg?raw=true)
+## ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-features.es.svg?raw=true)
 
 - :white_check_mark: **Crear proyectos** — crea nuevos proyectos de Unity mediante el Editor de Unity
 - :white_check_mark: **Instalar editores** — instala cualquier version del Editor de Unity desde la linea de comandos

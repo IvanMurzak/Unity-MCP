@@ -29,7 +29,7 @@
 
 跨平台 CLI 工具，适用于 **[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** — 创建项目、安装插件、配置 MCP 工具，以及启动带有活跃 MCP 连接的 Unity。所有操作只需一行命令。
 
-## ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-features.svg?raw=true)
+## ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-features.zh-CN.svg?raw=true)
 
 - :white_check_mark: **创建项目** — 通过 Unity 编辑器搭建新的 Unity 项目
 - :white_check_mark: **安装编辑器** — 从命令行安装任意版本的 Unity 编辑器

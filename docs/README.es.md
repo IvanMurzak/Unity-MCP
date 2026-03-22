@@ -40,7 +40,7 @@ A diferencia de otras herramientas, este plugin funciona **dentro de tu juego co
 
 > **[💬 Únete a nuestro servidor de Discord](https://discord.gg/cfbdMZX99G)** - ¡Haz preguntas, muestra tu trabajo y conecta con otros desarrolladores!
 
-## ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-features.svg?raw=true)
+## ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-features.es.svg?raw=true)
 
 - ✔️ **Agentes de IA** - Usa los mejores agentes de **Anthropic**, **OpenAI**, **Microsoft** o cualquier otro proveedor sin dependencia de un solo proveedor
 - ✔️ **Herramientas** - Una amplia gama de [Herramientas MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md) predeterminadas para operar en Unity Editor
@@ -52,7 +52,7 @@ A diferencia de otras herramientas, este plugin funciona **dentro de tu juego co
 - ✔️ **Despliegue flexible** - Funciona localmente (stdio) y de forma remota (http) mediante configuración
 - ✔️ **Extensible** - [Crea herramientas personalizadas en el código de tu proyecto](#add-custom-tool)
 
-[![DESCARGAR INSTALADOR](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/latest/download/AI-Game-Dev-Installer.unitypackage)
+[![DESCARGAR INSTALADOR](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download_es.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/latest/download/AI-Game-Dev-Installer.unitypackage)
 
 https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
 

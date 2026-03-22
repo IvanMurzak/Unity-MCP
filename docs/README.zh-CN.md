@@ -40,7 +40,7 @@
 
 > **[💬 加入我们的 Discord 服务器](https://discord.gg/cfbdMZX99G)** — 提问、展示作品，与其他开发者交流！
 
-## ![AI 游戏开发者 — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-features.svg?raw=true)
+## ![AI 游戏开发者 — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-features.zh-CN.svg?raw=true)
 
 - ✔️ **AI 智能体** — 无供应商锁定，自由使用来自 **Anthropic**、**OpenAI**、**Microsoft** 或任何其他服务商的最优秀智能体
 - ✔️ **工具** — 丰富的默认 [MCP 工具](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)，用于在 Unity 编辑器中操作
@@ -52,7 +52,7 @@
 - ✔️ **灵活部署** — 支持本地（stdio）和远程（http）两种配置方式
 - ✔️ **可扩展** — 在项目代码中[创建自定义工具](#add-custom-tool)
 
-[![下载安装器](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/latest/download/AI-Game-Dev-Installer.unitypackage)
+[![下载安装器](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download_zh-CN.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/latest/download/AI-Game-Dev-Installer.unitypackage)
 
 https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
 
