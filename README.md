@@ -1,5 +1,5 @@
 <div align="center" width="100%">
-  <h1>✨ AI Game Developer — <i>Unity MCP</i></h1>
+  <h1>✨ AI Game Developer — <i>Unity SKILLS, MCP</i></h1>
 
 [![MCP](https://badge.mcpx.dev 'MCP Server')](https://modelcontextprotocol.io/introduction)
 [![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&labelColor=333A41 'OpenUPM package')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
@@ -42,38 +42,57 @@ Unlike other tools, this plugin works **inside your compiled game**, allowing fo
 
 ## ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-features.svg?raw=true)
 
-- ✔️ **AI agents** - Use the best agents from **Anthropic**, **OpenAI**, **Microsoft**, or any other provider with no limits
-- ✔️ **TOOLS** - A wide range of default [MCP Tools](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md) for operating in Unity Editor
-- ✔️ **SKILLS** - Automatically generates skills for each MCP tool
-- ✔️ **Code and Tests** - Ask AI to write code and run tests
+- ✔️ **AI agents** - Use the best agents from **Anthropic**, **OpenAI**, **Microsoft**, or any other provider with no vendor lock-in
+- ✔️ **Tools** - A wide range of default [MCP Tools](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md) for operating in Unity Editor
+- ✔️ **Skills** - Generate skills for AI based on operating system, Unity version, plugins in the project
+- ✔️ **Code and Tests** - Develop game mechanics and test them with AI agents
 - ✔️ **Runtime (in-game)** - Use LLMs directly inside your compiled game for dynamic NPC behavior or debugging
-- ✔️ **Debug support** - Ask AI to get logs and fix errors
+- ✔️ **Debug support** - Let AI debug and fix the problems in a project
 - ✔️ **Natural conversation** - Chat with AI like you would with a human
 - ✔️ **Flexible deployment** - Works locally (stdio) and remotely (http) via configuration
-- ✔️ **Extensible** - Create [custom MCP Tools in your project code](#add-custom-mcp-tool)
+- ✔️ **Extensible** - [Create custom Tools in your project code](#add-custom-tool)
 
 [![DOWNLOAD INSTALLER](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/latest/download/AI-Game-Dev-Installer.unitypackage)
 
+<video src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/video/ai-game-dropship-flying.mp4?raw=true" controls autoplay muted loop>AI Game Developer Windows</video>
+
+### OR use cli
+
+```bash
+# 1. Install unity-mcp-cli
+npm install -g unity-mcp-cli
+
+# 2. Install "AI Game Developer" in Unity project
+unity-mcp-cli install-plugin ./MyUnityProject
+
+# 3 Setup Skills for Claude Code
+unity-mcp-cli setup-skills claude-code ./MyUnityProject
+
+# (Optional) Open Unity project
+unity-mcp-cli open ./MyUnityProject
+```
+
 ![AI Game Developer Windows](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/ai-game-developer-windows.png?raw=true)
 
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 # Quick Start
 
 Get up and running in three steps:
 
-1. **[Install the Plugin](#step-1-install-unity-mcp-plugin)** — download the `.unitypackage` installer or run `openupm add com.ivanmurzak.unity.mcp`
+1. **[Install plugin](#step-1-install-unity-mcp-plugin)** — download the `.unitypackage` installer or run `openupm add com.ivanmurzak.unity.mcp`
    > **Alternative:** `npx unity-mcp-cli install-plugin ./MyUnityProject` — see [CLI documentation](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md)
-2. **[Pick an MCP Client](#step-2-install-mcp-client)** — Claude Code, Claude Desktop, GitHub Copilot, Cursor, or any other
-3. **[Configure the client](#step-3-configure-mcp-client)** — open `Window/AI Game Developer — MCP` in Unity and click **Configure**
+2. **[Pick an AI agent](#step-2-install-ai-agent)** — Claude Code, Claude Desktop, GitHub Copilot, Cursor, or any other
+3. **[Setup AI agent](#step-3-configure-ai-agent)** — open `Window/AI Game Developer` in Unity and click **Auto-generate skills** (recommended) or **Configure MCP**
+   > **Alternative:** `npx unity-mcp-cli setup-skills claude-code ./MyUnityProject` — see [CLI documentation](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md)
 
 That's it. Ask your AI *"Create 3 cubes in a circle with radius 2"* and watch it happen. ✨
 
 ---
 
-# Tools Reference
+# Skills and Tools Reference
 
-The plugin ships with 50+ built-in tools across three categories. All tools are available immediately after installation — no extra configuration required. See [docs/default-mcp-tools.md](docs/default-mcp-tools.md) for the full reference with detailed descriptions.
+The plugin ships with 100+ built-in tools across three categories. Each tool brings AI skill. All tools are available immediately after installation — no extra configuration required. See [docs/default-mcp-tools.md](docs/default-mcp-tools.md) for the full reference with detailed descriptions.
 
 <details>
   <summary>Project & Assets</summary>
@@ -148,39 +167,40 @@ The plugin ships with 50+ built-in tools across three categories. All tools are 
 
 </details>
 
-#### Additional tools
+## Install Additional Skills and Tools
 
-Install extensions when need more tools or [create your own](#add-custom-mcp-tool).
+Install extensions when need more tools or [create your own tools](#add-custom-tool).
 
-- [Animation](https://github.com/IvanMurzak/Unity-AI-Animation/)
-- [ParticleSystem](https://github.com/IvanMurzak/Unity-AI-ParticleSystem/)
-- [ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)
+| Extension | Description |
+| --- | --- |
+| **[AI Animation](https://github.com/IvanMurzak/Unity-AI-Animation/)** | Set of additional tools for Unity Animations |
+| **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-AI-ParticleSystem/)** | Set of additional tools for Unity Particle System |
+| **[AI ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)** | Set of additional tools for Unity ProBuilder |
 
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 # Contents
 
 - [Quick Start](#quick-start)
-- [Tools Reference](#tools-reference)
-      - [Additional tools](#additional-tools)
+- [Skills and Tools Reference](#skills-and-tools-reference)
+  - [Install Additional Skills and Tools](#install-additional-skills-and-tools)
 - [Contents](#contents)
   - [More Documentation](#more-documentation)
 - [Installation](#installation)
   - [Step 1: Install `Unity MCP Plugin`](#step-1-install-unity-mcp-plugin)
     - [Option 1 - Installer](#option-1---installer)
-    - [Option 2 - OpenUPM-CLI](#option-2---openupm-cli)
-    - [Option 3 - CLI](#option-3---cli)
-  - [Step 2: Install `MCP Client`](#step-2-install-mcp-client)
-  - [Step 3: Configure `MCP Client`](#step-3-configure-mcp-client)
+    - [Option 2 - CLI (recommended)](#option-2---cli-recommended)
+  - [Step 2: Install `AI agent`](#step-2-install-ai-agent)
+  - [Step 3: Configure `AI agent`](#step-3-configure-ai-agent)
     - [Automatic configuration](#automatic-configuration)
     - [Manual configuration](#manual-configuration)
       - [Command line configuration](#command-line-configuration)
-- [AI Workflow Examples: Claude \& Gemini](#ai-workflow-examples-claude--gemini)
+- [AI Workflow Examples](#ai-workflow-examples)
   - [Advanced Features for LLM](#advanced-features-for-llm)
     - [Core Capabilities](#core-capabilities)
     - [Reflection-Powered Features](#reflection-powered-features)
-- [Customize MCP](#customize-mcp)
-  - [Add custom `MCP Tool`](#add-custom-mcp-tool)
+- [Customize Tools](#customize-tools)
+  - [Add custom `Tool`](#add-custom-tool)
   - [Add custom `MCP Prompt`](#add-custom-mcp-prompt)
 - [Runtime usage (in-game)](#runtime-usage-in-game)
   - [Sample: AI powered Chess game bot](#sample-ai-powered-chess-game-bot)
@@ -195,10 +215,10 @@ Install extensions when need more tools or [create your own](#add-custom-mcp-too
   - [Binary executable](#binary-executable)
 - [How Unity MCP Architecture Works](#how-unity-mcp-architecture-works)
   - [What is `MCP`](#what-is-mcp)
-  - [What is `MCP Client`](#what-is-mcp-client)
+  - [What is `AI agent`](#what-is-ai-agent)
   - [What is `MCP Server`](#what-is-mcp-server)
   - [What is `MCP Tool`](#what-is-mcp-tool)
-    - [When to use `MCP Tool`](#when-to-use-mcp-tool)
+    - [When to use `Tool`](#when-to-use-tool)
   - [What is `MCP Resource`](#what-is-mcp-resource)
     - [When to use `MCP Resource`](#when-to-use-mcp-resource)
   - [What is `MCP Prompt`](#what-is-mcp-prompt)
@@ -216,7 +236,7 @@ Install extensions when need more tools or [create your own](#add-custom-mcp-too
 | [Wiki](https://github.com/IvanMurzak/Unity-MCP/wiki) | Getting started, tutorials, API reference, FAQ |
 | [CLI Tool](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) | Install plugins, configure, and connect via command line |
 
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 # Installation
 
@@ -228,8 +248,10 @@ Install extensions when need more tools or [create your own](#add-custom-mcp-too
 > [!IMPORTANT]
 > **Project path cannot contain spaces**
 >
-> - ✅ `C:/MyProjects/Project`
-> - ❌ `C:/My Projects/Project`
+> - ✅ `C:/MyProjects/MyProject`
+> - ❌ `C:/My Projects/MyProject`
+> - ❌ `C:/My Projects/My Project`
+> - ❌ `C:/MyProjects/My Project`
 
 </details>
 
@@ -240,36 +262,40 @@ Install extensions when need more tools or [create your own](#add-custom-mcp-too
   > - You can double-click on the file - Unity will open it automatically
   > - OR: Open Unity Editor first, then click on `Assets/Import Package/Custom Package`, and choose the file
 
-### Option 2 - OpenUPM-CLI
-
-- [⬇️ Install OpenUPM-CLI](https://github.com/openupm/openupm-cli#installation)
-- 📟 Open the command line in your Unity project folder
-
-```bash
-openupm add com.ivanmurzak.unity.mcp
-```
-
-### Option 3 - CLI
+### Option 2 - CLI (recommended)
 
 Install the plugin via [`unity-mcp-cli`](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) — no Unity Editor needed:
 
 ```bash
-npx unity-mcp-cli install-plugin ./MyUnityProject
-```
-
-Launch Unity with an active MCP connection:
-
-```bash
-npx unity-mcp-cli connect --path ./MyUnityProject --url http://localhost:8080
+# 1.1 Install unity-mcp-cli                                #  ┌────────────────────┐
+npm install -g unity-mcp-cli                               #  │ Available AI agent │
+                                                           #  ├────────────────────┤
+# 1.2 (Optional) Install Unity                             #  │ antigravity        │
+unity-mcp-cli install-unity                                #  │ claude-code        │
+                                                           #  │ claude-desktop     │
+# 1.3 (Optional) Create Unity project                      #  │ cline              │
+unity-mcp-cli create-project ./MyUnityProject              #  │ codex              │
+                                                           #  │ cursor             │
+# 2. Install "AI Game Developer" in Unity project          #  │ gemini             │
+unity-mcp-cli install-plugin ./MyUnityProject              #  │ github-copilot-cli │
+                                                           #  │ kilo-code          │
+# 3. Setup Skills for Claude Code                          #  │ open-code          │
+unity-mcp-cli setup-skills claude-code ./MyUnityProject    #  │ rider-junie        │
+                                                           #  │ unity-ai           │
+# (Optional) Setup MCP for Claude Code                     #  │ vs-copilot         │
+unity-mcp-cli setup-mcp claude-code ./MyUnityProject       #  │ vscode-copilot     │
+                                                           #  └────────────────────┘
+# (It depends...) Open Unity project
+unity-mcp-cli open ./MyUnityProject
 ```
 
 > See [full CLI documentation](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) for all available commands.
 
-## Step 2: Install `MCP Client`
+## Step 2: Install `AI agent`
 
-Choose a single `MCP Client` you prefer - you don't need to install all of them. This will be your main chat window to communicate with the LLM.
+Choose a single `AI agent` you prefer - you don't need to install all of them. This will be your main chat window to communicate with the LLM.
 
-- [Claude Code](https://github.com/anthropics/claude-code) (highly recommended)
+- [Claude Code](https://github.com/anthropics/claude-code) **(recommended)**
 - [Claude Desktop](https://claude.ai/download)
 - [GitHub Copilot in VS Code](https://code.visualstudio.com/docs/copilot/overview)
 - [Antigravity](https://antigravity.google/)
@@ -277,15 +303,16 @@ Choose a single `MCP Client` you prefer - you don't need to install all of them.
 - [Windsurf](https://windsurf.com)
 - Any other supported
 
-> The MCP protocol is quite universal, which is why you may use any MCP client you prefer - it will work as smoothly as any other. The only important requirement is that the MCP client must support dynamic MCP Tool updates.
+> The AI Game Developer is quite universal, which is why you may use any AI agent you prefer - it will work as smoothly as any other. The only important requirement is that the AI agent must support Skills or dynamic MCP Tool updates.
 
-## Step 3: Configure `MCP Client`
+## Step 3: Configure `AI agent`
 
 ### Automatic configuration
 
 - Open Unity project
-- Open `Window/AI Game Developer (Unity-MCP)`
-- Click `Configure` at your MCP client
+- Open `Window/AI Game Developer`
+- Option 1: Click `Auto-generate` Skills **(recommended)**
+- Option 2: Click `Configure` Model Context Protocol (MCP)
 
 ![Unity_AI](https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/ai-connector-window.gif)
 
@@ -357,29 +384,29 @@ If automatic configuration doesn't work for you for any reason, use the JSON fro
   > Replace `<command>` from the table above
 </details>
 
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
-# AI Workflow Examples: Claude & Gemini
+# AI Workflow Examples
 
-Communicate with the AI (LLM) in your `MCP Client`. Ask it to do anything you want. The better you describe your task or idea, the better it will perform the job.
+Communicate with the AI (LLM) in your `AI agent`. Ask it to do anything you want. The better you describe your task or idea, the better it will perform the job.
 
-Some `MCP Clients` allow you to choose different LLM models. Pay attention to this feature, as some models may work much better than others.
+Some `AI agents` allow you to choose different LLM models. Pay attention to this feature, as some models may work much better than others.
 
-**Example commands:**
+**Example prompts:**
 
 ```text
 Explain my scene hierarchy
 ```
 
 ```text
-Create 3 cubes in a circle with radius 2
+Create 3 spheres on top of each other
 ```
 
 ```text
-Create metallic golden material and attach it to a sphere gameObject
+Create metallic golden material and attach it to a new sphere gameObject
 ```
 
-> Make sure `Agent` mode is turned on in your MCP client
+> Make sure `Agent` mode is enabled if using VS Code with Copilot
 
 ## Advanced Features for LLM
 
@@ -403,15 +430,15 @@ Unity MCP provides advanced tools that enable the LLM to work faster and more ef
 - ✔️ **Live Unity API** - Unity API instantly available - even when Unity changes, you get the fresh API
 - ✔️ **Self-documenting** - Access human-readable descriptions of any `class`, `method`, or `property` via `Description` attributes
 
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
-# Customize MCP
+# Customize Tools
 
 **[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** supports custom `MCP Tool`, `MCP Resource`, and `MCP Prompt` development by project owners. The MCP server takes data from the `Unity MCP Plugin` and exposes it to a client. Anyone in the MCP communication chain will receive information about new MCP features, which the LLM may decide to use at some point.
 
-## Add custom `MCP Tool`
+## Add custom `Tool`
 
-To add a custom `MCP Tool`, you need:
+To add a custom `Tool`, you need:
 
 1. A class with the `McpPluginToolType` attribute
 2. A method in the class with the `McpPluginTool` attribute
@@ -465,7 +492,7 @@ public static class Prompt_ScriptingCode
 }
 ```
 
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 # Runtime usage (in-game)
 
@@ -518,7 +545,7 @@ public static class ChessGameAI
 
 There are many use cases, lets imagine you are working on a Chess game with bot. You may outsource the bot decision making to LLM by writing few lines of code.
 
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 # Unity `MCP Server` setup
 
@@ -677,7 +704,7 @@ You may launch Unity `MCP Server` directly from a binary file. You would need to
 
 </details>
 
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 # How Unity MCP Architecture Works
 
@@ -691,7 +718,7 @@ The system is highly extensible - you can define custom `MCP Tools`, `MCP Resour
 
 MCP - Model Context Protocol. In a few words, that is `USB Type-C` for AI, specifically for LLM (Large Language Model). It teaches LLM how to use external features. Such as Unity Engine in this case, or even your custom C# method in your code. [Official documentation](https://modelcontextprotocol.io/).
 
-## What is `MCP Client`
+## What is `AI agent`
 
 It is an application with a chat window. It may have smart agents to operate better, it may have embedded advanced MCP Tools. In general well done MCP Client is 50% of the AI success of executing a task. That is why it is very important to choose the best one for usage.
 
@@ -710,7 +737,7 @@ It is a bridge between `MCP Client` and "something else", in this particular cas
 - **Return values** that give feedback about the operation's success or failure
 - **Thread-aware** - can run on main thread for Unity API calls or background thread for heavy processing
 
-### When to use `MCP Tool`
+### When to use `Tool`
 
 - **Automate repetitive tasks** - Create tools for common operations you do frequently
 - **Complex operations** - Bundle multiple Unity API calls into a single, easy-to-use tool
@@ -780,11 +807,11 @@ It is a bridge between `MCP Client` and "something else", in this particular cas
 - "Performance is critical - prefer object pooling for frequently instantiated objects"
 - "This project follows SOLID principles - explain any architecture decisions"
 
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 # Contribution 💙💛
 
-Contributions are highly appreciated. Bring your ideas and let's make game development simpler than ever before! Do you have an idea for a new `MCP Tool` or feature, or did you spot a bug and know how to fix it?
+Contributions are highly appreciated. Bring your ideas and let's make game development simpler than ever before! Do you have an idea for a new `Tool` or feature, or did you spot a bug and know how to fix it?
 
 **Please give this project a star 🌟 if you find it useful!**
 
@@ -794,4 +821,4 @@ Contributions are highly appreciated. Bring your ideas and let's make game devel
 4. Implement new things in the project, commit, push it to GitHub
 5. Create Pull Request targeting original [Unity-MCP](https://github.com/IvanMurzak/Unity-MCP/compare) repository, `main` branch.
 
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
