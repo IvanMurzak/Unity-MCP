@@ -29,7 +29,7 @@
 
 Cross-platform CLI tool for **[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** — create projects, install plugins, configure MCP tools, and launch Unity with active MCP connections. All from a single command line.
 
-## ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-features.svg?raw=true)
+## ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-features.svg?raw=true)
 
 - :white_check_mark: **Create projects** — scaffold new Unity projects via Unity Editor
 - :white_check_mark: **Install editors** — install any Unity Editor version from the command line
@@ -45,15 +45,33 @@ Cross-platform CLI tool for **[Unity MCP](https://github.com/IvanMurzak/Unity-MC
 - :white_check_mark: **Verbose mode** — use `--verbose` on any command for detailed diagnostic output
 - :white_check_mark: **Version-aware** — never downgrades plugin versions, resolves latest from OpenUPM
 
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 # Quick Start
 
 Install globally and run:
 
 ```bash
-npm install -g unity-mcp-cli
-unity-mcp-cli install-plugin /path/to/unity/project
+# 1.1 Install unity-mcp-cli                                #  ┌────────────────────┐
+npm install -g unity-mcp-cli                               #  │ Available AI agent │
+                                                           #  ├────────────────────┤
+# 1.2 (Optional) Install Unity                             #  │ antigravity        │
+unity-mcp-cli install-unity                                #  │ claude-code        │
+                                                           #  │ claude-desktop     │
+# 1.3 (Optional) Create Unity project                      #  │ cline              │
+unity-mcp-cli create-project ./MyUnityProject              #  │ codex              │
+                                                           #  │ cursor             │
+# 2. Install "AI Game Developer" in Unity project          #  │ gemini             │
+unity-mcp-cli install-plugin ./MyUnityProject              #  │ github-copilot-cli │
+                                                           #  │ kilo-code          │
+# 3. Setup Skills for Claude Code                          #  │ open-code          │
+unity-mcp-cli setup-skills claude-code ./MyUnityProject    #  │ rider-junie        │
+                                                           #  │ unity-ai           │
+# (Optional) Setup MCP for Claude Code                     #  │ vs-copilot         │
+unity-mcp-cli setup-mcp claude-code ./MyUnityProject       #  │ vscode-copilot     │
+                                                           #  └────────────────────┘
+# (It depends...) Open Unity project
+unity-mcp-cli open ./MyUnityProject
 ```
 
 Or run any command instantly with `npx` — no global installation required:
@@ -64,7 +82,7 @@ npx unity-mcp-cli install-plugin /path/to/unity/project
 
 > **Requirements:** [Node.js](https://nodejs.org/) ^20.19.0 || >=22.12.0. [Unity Hub](https://unity.com/download) is installed automatically if not found.
 
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 # Contents
 
@@ -87,7 +105,7 @@ npx unity-mcp-cli install-plugin /path/to/unity/project
     - [Configuration File](#configuration-file)
     - [Unity Hub Integration](#unity-hub-integration)
 
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 # Commands
 
@@ -133,7 +151,7 @@ unity-mcp-cli configure ./MyGame \
   --enable-all-resources
 ```
 
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 ## `create-project`
 
@@ -154,7 +172,7 @@ unity-mcp-cli create-project /path/to/new/project
 unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
 ```
 
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 ## `install-plugin`
 
@@ -182,7 +200,7 @@ unity-mcp-cli install-plugin ./MyGame --plugin-version 0.51.6
 
 > After running this command, open the project in Unity Editor to complete the package installation.
 
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 ## `install-unity`
 
@@ -205,7 +223,7 @@ If neither argument nor option is provided, the command installs the latest stab
 unity-mcp-cli install-unity --path ./MyGame
 ```
 
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 ## `open`
 
@@ -254,7 +272,7 @@ unity-mcp-cli open ./MyGame \
   --tools gameobject-create,gameobject-find
 ```
 
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 ## `run-tool`
 
@@ -300,7 +318,7 @@ unity-mcp-cli run-tool scene-save --url http://localhost:8080
 unity-mcp-cli run-tool assets-list ./MyGame --raw | jq '.results'
 ```
 
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 ## `setup-mcp`
 
@@ -331,7 +349,7 @@ unity-mcp-cli setup-mcp --list
 unity-mcp-cli setup-mcp cursor ./MyGame --transport stdio
 ```
 
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 ## `setup-skills`
 
@@ -356,7 +374,7 @@ unity-mcp-cli setup-skills claude-code ./MyGame
 unity-mcp-cli setup-skills --list
 ```
 
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 ## `remove-plugin`
 
@@ -377,7 +395,7 @@ This command:
 
 > After running this command, open the project in Unity Editor to apply the change.
 
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 ## Global Options
 
@@ -395,7 +413,7 @@ These options are available on all commands:
 unity-mcp-cli install-plugin ./MyGame --verbose
 ```
 
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 # Full Automation Example
 
@@ -411,16 +429,19 @@ unity-mcp-cli install-plugin ./MyAIGame
 # 3. Enable all MCP tools
 unity-mcp-cli configure ./MyAIGame --enable-all-tools
 
-# 4. Configure Claude Code MCP integration
+# 4. Setup Skills for Claude Code (requires Unity Editor running)
+unity-mcp-cli setup-skills claude-code ./MyAIGame
+
+# 5. Configure Claude Code MCP integration
 unity-mcp-cli setup-mcp claude-code ./MyAIGame
 
-# 5. Open the project with MCP connection
+# 6. Open the project with MCP connection
 unity-mcp-cli open ./MyAIGame \
   --url http://localhost:8080 \
   --keep-connected
 ```
 
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 # How It Works
 
@@ -452,4 +473,4 @@ Commands that manage editors or create projects use the **Unity Hub CLI** (`--he
 
 > For the full Unity-MCP project documentation, see the [main README](https://github.com/IvanMurzak/Unity-MCP/blob/main/README.md).
 
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
