@@ -46,7 +46,7 @@ namespace com.IvanMurzak.Unity.MCP
             [JsonPropertyName("token")]
             public string? LocalToken { get; set; }
 
-            public const string CloudServerBaseUrl = "https://ai-game.dev";
+            public const string CloudServerBaseUrl = "http://localhost"; // "http://localhost"; // "https://ai-game.dev";
             public const string CloudServerUrl = CloudServerBaseUrl + "/mcp";
 
             /// <summary>

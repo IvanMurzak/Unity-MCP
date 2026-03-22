@@ -12,6 +12,7 @@
 
 using System;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
+using R3;
 using UnityEditor;
 using UnityEditor.PackageManager;
 using UnityEditor.PackageManager.Requests;
@@ -38,6 +39,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         private string currentVersion = string.Empty;
         private string latestVersion = string.Empty;
         private AddRequest? addRequest;
+        private IDisposable? _stopSubscription;
 
         /// <summary>
         /// Shows the update popup window with version information.
@@ -112,19 +114,45 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private void OnInstallUpdateClicked()
         {
-            if (addRequest != null)
+            if (addRequest != null || _stopSubscription != null)
                 return; // Already in progress
 
-            addRequest = Client.Add($"{PackageId}@{latestVersion}");
-            EditorApplication.update += OnPackageInstallProgress;
-
-            // Disable the button to prevent multiple clicks
             var installButton = rootVisualElement.Q<Button>("btn-install-update");
             if (installButton == null)
                 throw new InvalidOperationException("btn-install-update Button not found in UXML");
 
             installButton.SetEnabled(false);
-            installButton.text = "Installing...";
+
+            var currentStatus = McpServerManager.ServerStatus.CurrentValue;
+            if (currentStatus == McpServerStatus.Running || currentStatus == McpServerStatus.Starting ||
+                currentStatus == McpServerStatus.Stopping)
+            {
+                installButton.text = "Stopping server...";
+                if (currentStatus != McpServerStatus.Stopping)
+                    McpServerManager.StopServer();
+                _stopSubscription = McpServerManager.ServerStatus
+                    .Where(status => status == McpServerStatus.Stopped)
+                    .Take(1)
+                    .ObserveOnCurrentSynchronizationContext()
+                    .Subscribe(_ => StartPackageInstall());
+            }
+            else
+            {
+                StartPackageInstall();
+            }
+        }
+
+        private void StartPackageInstall()
+        {
+            _stopSubscription?.Dispose();
+            _stopSubscription = null;
+
+            var installButton = rootVisualElement.Q<Button>("btn-install-update");
+            if (installButton != null)
+                installButton.text = "Installing...";
+
+            addRequest = Client.Add($"{PackageId}@{latestVersion}");
+            EditorApplication.update += OnPackageInstallProgress;
         }
 
         private void OnPackageInstallProgress()
@@ -190,6 +218,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         void OnDestroy()
         {
             EditorApplication.update -= OnPackageInstallProgress;
+            _stopSubscription?.Dispose();
+            _stopSubscription = null;
         }
     }
 }
