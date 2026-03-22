@@ -367,5 +367,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 await capturedFlow.StartAsync(UnityMcpPlugin.UnityConnectionConfig.CloudServerBaseUrl, "Unity Editor");
             });
         }
+
+        private void SetupConnectionAuthAlert(VisualElement root)
+        {
+            var container = root.Q<VisualElement>("connectionAlertContainer");
+            if (container == null) return;
+
+            var btnCloudAuthorize = root.Q<Button>("btnCloudAuthorize");
+
+            _connectionAuthAlert = new AlertPanel(
+                "Authorization Required",
+                "Cloud mode requires authentication to connect. Press the button below to authorize your device."
+            );
+            _connectionAuthAlert.SetButton("Authorize", () =>
+            {
+                if (btnCloudAuthorize == null) return;
+                using var evt = ClickEvent.GetPooled();
+                evt.target = btnCloudAuthorize;
+                btnCloudAuthorize.SendEvent(evt);
+            });
+
+            container.Add(_connectionAuthAlert.Root);
+
+            // Initial visibility based on current auth state
+            var (needsAuth, _, _) = ComputeCloudAuthState(UnityMcpPluginEditor.ConnectionMode, UnityMcpPluginEditor.CloudToken);
+            _connectionAuthAlert.SetVisible(needsAuth);
+        }
     }
 }

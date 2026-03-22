@@ -223,6 +223,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             SetupConnectionSection(root);
             SetupConnectionModeToggle(root);
             SetupCloudAuthSection(root);
+            SetupConnectionAuthAlert(root);
             SetupMcpServerSection(root);
             SetupAiAgentSection(root);
             SetupToolsSection(root);

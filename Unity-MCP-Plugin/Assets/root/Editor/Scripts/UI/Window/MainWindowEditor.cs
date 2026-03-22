@@ -23,6 +23,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         Button? _btnConnect;
         Button? _btnAuthorize;
         VisualElement? _timelinePointUnity;
+        AlertPanel? _connectionAuthAlert;
 
         protected override string WindowTitle => "Game Developer";
         protected override string[] WindowUxmlPaths => _windowUxmlPaths;
@@ -106,6 +107,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             {
                 _btnAuthorize.EnableInClassList("btn-primary", !hasToken);
             }
+            _connectionAuthAlert?.SetVisible(needsAuth);
         }
 
         private static void UnityBuildAndConnect()

@@ -33,6 +33,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected ConfigurationElements? _configElementHttp;
         protected IDisposable? _subscriptionStdio;
         protected IDisposable? _subscriptionHttp;
+        protected AlertPanel? _alertPanel;
 
         /// <summary>
         /// The display name of the AI agent.
@@ -413,28 +414,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             ContainerAlert.Clear();
 
-            var title = new Label("Setup Required") { name = "alertTitle" };
-            title.AddToClassList("alert-frame-title");
-
-            var message = new Label("At least one of the following must be configured:") { name = "alertMessage" };
-            message.AddToClassList("alert-frame-message");
-
-            ContainerAlert.Add(title);
-            ContainerAlert.Add(message);
+            _alertPanel = new AlertPanel(
+                "Setup Required",
+                "At least one of the following must be configured:"
+            );
 
             if (SupportsSkills)
-            {
-                var skillsItem = new Label("\u2022 Skills (Recommended)") { name = "alertItemSkills" };
-                skillsItem.AddToClassList("alert-frame-item");
-                skillsItem.AddToClassList("alert-frame-item-recommended");
-                ContainerAlert.Add(skillsItem);
-            }
+                _alertPanel.AddItem("\u2022 Skills (Recommended)", "alert-frame-item-recommended");
 
-            var mcpItem = new Label("\u2022 MCP Configuration") { name = "alertItemMcp" };
-            mcpItem.AddToClassList("alert-frame-item");
-            ContainerAlert.Add(mcpItem);
+            _alertPanel.AddItem("\u2022 MCP Configuration");
 
-            ContainerAlert.AddToClassList("alert-frame");
+            ContainerAlert.Add(_alertPanel.Root);
             UpdateAlertPanel();
         }
 
@@ -443,14 +433,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         /// </summary>
         protected virtual void UpdateAlertPanel()
         {
-            if (ContainerAlert == null)
+            if (_alertPanel == null)
                 return;
 
             var isMcpConfigured = ConfigStdio.IsDetected() || ConfigHttp.IsDetected();
             var hasSkills = SupportsSkills && UnityMcpPluginEditor.IsAutoGenerateSkills(AgentId);
             var isSetupComplete = isMcpConfigured || hasSkills;
 
-            ContainerAlert.style.display = isSetupComplete ? DisplayStyle.None : DisplayStyle.Flex;
+            _alertPanel.SetVisible(!isSetupComplete);
         }
 
         /// <summary>
