@@ -33,6 +33,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected ConfigurationElements? _configElementHttp;
         protected IDisposable? _subscriptionStdio;
         protected IDisposable? _subscriptionHttp;
+        protected AlertPanel? _alertPanel;
+        protected AlertPanel? _reconfigureAlertPanel;
 
         /// <summary>
         /// The display name of the AI agent.
@@ -344,28 +346,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             _configElementStdio = TemplateConfigurationElements(ConfigStdio, TransportMethod.stdio);
             _configElementHttp = TemplateConfigurationElements(ConfigHttp, TransportMethod.streamableHttp);
 
-            _subscriptionStdio = _configElementStdio.OnConfigured.Subscribe(_ =>
-            {
-                var anyConfigured = ConfigStdio.IsDetected() || ConfigHttp.IsDetected();
-                _configElementStdio.UpdateStatus(isAnyConfigured: anyConfigured);
-                _configElementHttp.UpdateStatus(isAnyConfigured: anyConfigured);
-                UpdateAlertPanel();
-            });
-            _subscriptionHttp = _configElementHttp.OnConfigured.Subscribe(_ =>
-            {
-                var anyConfigured = ConfigStdio.IsDetected() || ConfigHttp.IsDetected();
-                _configElementStdio.UpdateStatus(isAnyConfigured: anyConfigured);
-                _configElementHttp.UpdateStatus(isAnyConfigured: anyConfigured);
-                UpdateAlertPanel();
-            });
+            _subscriptionStdio = _configElementStdio.OnConfigured.Subscribe(_ => RefreshConfigurationUI());
+            _subscriptionHttp = _configElementHttp.OnConfigured.Subscribe(_ => RefreshConfigurationUI());
 
             ContainerStdio!.Add(_configElementStdio.Root);
             ContainerHttp!.Add(_configElementHttp.Root);
 
-            // Cross-update so Remove buttons reflect any config across both transports
-            var anyConfigured = ConfigStdio.IsDetected() || ConfigHttp.IsDetected();
-            _configElementStdio.UpdateStatus(isAnyConfigured: anyConfigured);
-            _configElementHttp.UpdateStatus(isAnyConfigured: anyConfigured);
+            // Initial status so Remove buttons reflect any config across both transports
+            RefreshConfigurationUI();
 
             return this;
         }
@@ -404,6 +392,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         /// <summary>
         /// Builds the setup alert panel inside <see cref="ContainerAlert"/>.
         /// Shows a warning when neither skills nor MCP configuration is set up.
+        /// Also adds a reconfiguration alert shown when a config exists but is outdated.
         /// Override in subclasses to suppress (e.g. Custom configurator).
         /// </summary>
         protected virtual void SetupAlertPanel()
@@ -413,28 +402,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             ContainerAlert.Clear();
 
-            var title = new Label("Setup Required") { name = "alertTitle" };
-            title.AddToClassList("alert-frame-title");
-
-            var message = new Label("At least one of the following must be configured:") { name = "alertMessage" };
-            message.AddToClassList("alert-frame-message");
-
-            ContainerAlert.Add(title);
-            ContainerAlert.Add(message);
+            _alertPanel = new AlertPanel(
+                "Setup Required",
+                "At least one of the following must be configured:"
+            );
 
             if (SupportsSkills)
             {
-                var skillsItem = new Label("\u2022 Skills (Recommended)") { name = "alertItemSkills" };
-                skillsItem.AddToClassList("alert-frame-item");
-                skillsItem.AddToClassList("alert-frame-item-recommended");
-                ContainerAlert.Add(skillsItem);
+                _alertPanel.AddItem("\u2022 Skills (Recommended)", "alert-frame-item-recommended");
+                _alertPanel.AddItem("\u2022 MCP Configuration");
+                _alertPanel.SetButton("Enable Skills", EnableAutoGenerateSkills);
+            }
+            else
+            {
+                _alertPanel.AddItem("\u2022 MCP Configuration");
+                _alertPanel.SetButton("Configure", ConfigureActiveTransport);
             }
 
-            var mcpItem = new Label("\u2022 MCP Configuration") { name = "alertItemMcp" };
-            mcpItem.AddToClassList("alert-frame-item");
-            ContainerAlert.Add(mcpItem);
+            ContainerAlert.Add(_alertPanel.Root);
 
-            ContainerAlert.AddToClassList("alert-frame");
+            _reconfigureAlertPanel = new AlertPanel(
+                "Reconfiguration Required",
+                "Connection settings have changed. The existing MCP configuration is outdated and needs to be updated."
+            );
+            _reconfigureAlertPanel.SetButton("Reconfigure", ReconfigureDetectedConfigs);
+
+            ContainerAlert.Add(_reconfigureAlertPanel.Root);
+
             UpdateAlertPanel();
         }
 
@@ -443,14 +437,95 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         /// </summary>
         protected virtual void UpdateAlertPanel()
         {
-            if (ContainerAlert == null)
+            if (_alertPanel == null)
                 return;
 
             var isMcpConfigured = ConfigStdio.IsDetected() || ConfigHttp.IsDetected();
             var hasSkills = SupportsSkills && UnityMcpPluginEditor.IsAutoGenerateSkills(AgentId);
             var isSetupComplete = isMcpConfigured || hasSkills;
+            var needsReconfigure = IsReconfigureNeeded();
 
-            ContainerAlert.style.display = isSetupComplete ? DisplayStyle.None : DisplayStyle.Flex;
+            _alertPanel.SetVisible(!isSetupComplete);
+            _reconfigureAlertPanel?.SetVisible(needsReconfigure);
+
+            if (ContainerAlert != null)
+                ContainerAlert.style.display = (!isSetupComplete || needsReconfigure)
+                    ? DisplayStyle.Flex
+                    : DisplayStyle.None;
+        }
+
+        /// <summary>
+        /// Returns true when a detected MCP config exists but no longer matches the current settings.
+        /// Only checks the transport config that matches the current transport method, because
+        /// both configs share the same server name — a correctly configured HTTP entry would
+        /// cause the STDIO check to false-positive (and vice versa).
+        /// </summary>
+        private bool IsReconfigureNeeded()
+        {
+            var isStdio = UnityMcpPluginEditor.TransportMethod == TransportMethod.stdio;
+
+            var activeConfig = isStdio ? ConfigStdio : ConfigHttp;
+
+            return activeConfig.IsDetected() && !activeConfig.IsConfigured();
+        }
+
+        /// <summary>
+        /// Reconfigures the active transport MCP config by writing the current settings to its config file.
+        /// Called when the user clicks the "Reconfigure" button on the reconfigure alert.
+        /// </summary>
+        protected virtual void ReconfigureDetectedConfigs()
+        {
+            var isStdio = UnityMcpPluginEditor.TransportMethod == TransportMethod.stdio;
+            var activeConfig = isStdio ? ConfigStdio : ConfigHttp;
+
+            if (activeConfig.IsDetected()) activeConfig.Configure();
+            RefreshConfigurationUI();
+        }
+
+        /// <summary>
+        /// Configures the MCP entry for the currently active transport method.
+        /// Called from the "Configure" button on the setup alert when skills are not supported.
+        /// </summary>
+        protected void ConfigureActiveTransport()
+        {
+            var isStdio = UnityMcpPluginEditor.TransportMethod == TransportMethod.stdio;
+            var activeConfig = isStdio ? ConfigStdio : ConfigHttp;
+            activeConfig.Configure();
+            RefreshConfigurationUI();
+        }
+
+        /// <summary>
+        /// Enables auto-generate skills for this agent, generates skill files, and refreshes the UI.
+        /// Called from the "Enable Skills" button on the setup alert.
+        /// </summary>
+        protected void EnableAutoGenerateSkills()
+        {
+            UnityMcpPluginEditor.SetAutoGenerateSkills(AgentId, true);
+            UnityMcpPluginEditor.SkillsPath = SkillsPath!;
+            UnityMcpPluginEditor.Instance.Save();
+
+            var mcpPluginInstance = UnityMcpPluginEditor.Instance.McpPluginInstance;
+            if (mcpPluginInstance != null)
+                mcpPluginInstance.GenerateSkillFiles(UnityMcpPluginEditor.ProjectRootPath);
+
+            // Refresh the skills toggle checkbox in the UI
+            var toggleAutoGenerate = Root?.Q<Toggle>("toggleAutoGenerateSkills");
+            toggleAutoGenerate?.SetValueWithoutNotify(true);
+
+            RefreshConfigurationUI();
+        }
+
+        /// <summary>
+        /// Refreshes all configuration-related UI: alert panel visibility and
+        /// configure button status indicators for both transport modes.
+        /// Called after any configuration change (alert Reconfigure, small Configure, or Remove).
+        /// </summary>
+        protected void RefreshConfigurationUI()
+        {
+            var anyConfigured = ConfigStdio.IsDetected() || ConfigHttp.IsDetected();
+            _configElementStdio?.UpdateStatus(isAnyConfigured: anyConfigured);
+            _configElementHttp?.UpdateStatus(isAnyConfigured: anyConfigured);
+            UpdateAlertPanel();
         }
 
         /// <summary>

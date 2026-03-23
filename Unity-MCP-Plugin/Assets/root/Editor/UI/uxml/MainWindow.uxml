@@ -28,6 +28,8 @@
                 </ui:VisualElement>
                 <ui:Label name="labelCloudAuthStatus" text="" class="section-desc" style="margin-top: 2px; display: none;" />
             </ui:VisualElement>
+            <!-- Connection Auth Alert (visible in Cloud mode when not authorized) -->
+            <ui:VisualElement name="connectionAlertContainer" />
             <!-- Connection Timeline -->
             <ui:VisualElement name="ConnectionTimeline" class="connection-timeline">
                 <!-- Point 1: Unity -->

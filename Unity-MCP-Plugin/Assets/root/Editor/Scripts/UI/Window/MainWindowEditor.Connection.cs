@@ -145,9 +145,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             if (buttonText.Equals(ServerButtonText_Connect, StringComparison.OrdinalIgnoreCase))
             {
-                UnityMcpPluginEditor.KeepConnected = true;
-                UnityMcpPluginEditor.Instance.Save();
-                UnityBuildAndConnect();
+                ConnectToServer();
             }
             else
             {
@@ -156,6 +154,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 if (UnityMcpPluginEditor.Instance.HasMcpPluginInstance)
                     _ = UnityMcpPluginEditor.Instance.Disconnect();
             }
+        }
+
+        /// <summary>
+        /// Initiates connection to the server. Called by both the Connect button and the
+        /// connection alert panel's Connect button.
+        /// </summary>
+        private static void ConnectToServer()
+        {
+            UnityMcpPluginEditor.KeepConnected = true;
+            UnityMcpPluginEditor.Instance.Save();
+            UnityBuildAndConnect();
         }
 
         private void SetupConnectionModeToggle(VisualElement root)
@@ -311,7 +320,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     _ = UnityMcpPluginEditor.Instance.Disconnect();
             });
 
-            btnAuthorize.RegisterCallback<ClickEvent>(async _ =>
+            _startAuthorizeAction = async () =>
             {
                 // If currently running, cancel
                 if (_deviceAuthFlow != null && IsAuthFlowRunning(_deviceAuthFlow.State))
@@ -365,7 +374,34 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 };
 
                 await capturedFlow.StartAsync(UnityMcpPlugin.UnityConnectionConfig.CloudServerBaseUrl, "Unity Editor");
-            });
+            };
+
+            btnAuthorize.RegisterCallback<ClickEvent>(_ => _startAuthorizeAction?.Invoke());
+        }
+
+        private void SetupConnectionAlerts(VisualElement root)
+        {
+            var container = root.Q<VisualElement>("connectionAlertContainer");
+            if (container == null) return;
+
+            // Auth alert — shown when Cloud mode is active but no token
+            _connectionAuthAlert = new AlertPanel(
+                "Authorization Required",
+                "Cloud mode requires authentication to connect. Press the button below to authorize your device."
+            );
+            _connectionAuthAlert.SetButton("Authorize", () => _startAuthorizeAction?.Invoke());
+            container.Add(_connectionAuthAlert.Root);
+
+            // Connect alert — shown when authorized but Unity is not connected
+            _connectionConnectAlert = new AlertPanel(
+                "Connection Required",
+                "Cloud authorization is complete but Unity is not connected to the server."
+            );
+            _connectionConnectAlert.SetButton("Connect", ConnectToServer);
+            container.Add(_connectionConnectAlert.Root);
+
+            // Initial visibility
+            UpdateCloudAuthState();
         }
     }
 }
