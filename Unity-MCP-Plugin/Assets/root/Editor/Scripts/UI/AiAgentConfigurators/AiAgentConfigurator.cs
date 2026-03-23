@@ -470,7 +470,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         }
 
         /// <summary>
-        /// Reconfigures all detected MCP configs by writing the current settings to their respective config files.
+        /// Reconfigures the active transport MCP config by writing the current settings to its config file.
         /// Called when the user clicks the "Reconfigure" button on the reconfigure alert.
         /// </summary>
         protected virtual void ReconfigureDetectedConfigs()
@@ -504,7 +504,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             UnityMcpPluginEditor.SkillsPath = SkillsPath!;
             UnityMcpPluginEditor.Instance.Save();
 
-            UnityMcpPluginEditor.Instance.McpPluginInstance!.GenerateSkillFiles(UnityMcpPluginEditor.ProjectRootPath);
+            var mcpPluginInstance = UnityMcpPluginEditor.Instance.McpPluginInstance;
+            if (mcpPluginInstance != null)
+                mcpPluginInstance.GenerateSkillFiles(UnityMcpPluginEditor.ProjectRootPath);
 
             // Refresh the skills toggle checkbox in the UI
             var toggleAutoGenerate = Root?.Q<Toggle>("toggleAutoGenerateSkills");
