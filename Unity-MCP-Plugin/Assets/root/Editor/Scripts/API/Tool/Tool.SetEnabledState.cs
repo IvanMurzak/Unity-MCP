@@ -30,8 +30,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Enabled = false
         )]
         [Description("Enable or disable MCP tools by name. " +
-            "Allows controlling which tools are available for the AI agent. " +
-            "Tool names are matched with case-insensitive comparison.")]
+            "Allows controlling which tools are available for the AI agent.")]
         public ResultData SetEnabledState
         (
             [Description("Array of tools with their desired enabled state.")]
