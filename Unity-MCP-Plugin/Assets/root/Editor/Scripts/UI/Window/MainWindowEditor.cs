@@ -11,6 +11,7 @@
 #nullable enable
 using System;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
+using Microsoft.AspNetCore.SignalR.Client;
 using R3;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -26,6 +27,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         Action? _startAuthorizeAction;
         VisualElement? _timelinePointUnity;
         AlertPanel? _connectionAuthAlert;
+        AlertPanel? _connectionConnectAlert;
 
         protected override string WindowTitle => "Game Developer";
         protected override string[] WindowUxmlPaths => _windowUxmlPaths;
@@ -110,6 +112,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 _btnAuthorize.EnableInClassList("btn-primary", !hasToken);
             }
             _connectionAuthAlert?.SetVisible(needsAuth);
+
+            // Show connect alert when authorized in Cloud mode but not connected and not trying
+            if (_connectionConnectAlert != null)
+            {
+                var connectionState = UnityMcpPluginEditor.ConnectionState.CurrentValue;
+                var keepConnected = UnityMcpPluginEditor.KeepConnected;
+                var isDisconnected = connectionState == HubConnectionState.Disconnected;
+                var needsConnect = isCloud && hasToken && isDisconnected && !keepConnected;
+                _connectionConnectAlert.SetVisible(needsConnect);
+            }
         }
 
         private static void UnityBuildAndConnect()
