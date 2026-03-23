@@ -26,6 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         private readonly Label _message;
         private readonly VisualElement _itemsContainer;
         private readonly Button _button;
+        private EventCallback<ClickEvent>? _buttonClickCallback;
 
         /// <summary>
         /// The root visual element of the alert panel. Add this to a parent container.
@@ -77,7 +78,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         {
             _button.text = text;
             _button.style.display = DisplayStyle.Flex;
-            _button.RegisterCallback<ClickEvent>(_ => onClick());
+
+            if (_buttonClickCallback != null)
+                _button.UnregisterCallback(_buttonClickCallback);
+
+            _buttonClickCallback = _ => onClick();
+            _button.RegisterCallback(_buttonClickCallback);
+
             foreach (var cls in cssClasses)
                 _button.AddToClassList(cls);
             return this;

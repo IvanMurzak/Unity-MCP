@@ -77,6 +77,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             // Custom configurator can only validate skills (no MCP config detection)
             var hasSkills = SupportsSkills && UnityMcpPluginEditor.IsAutoGenerateSkills(AgentId);
             _alertPanel.SetVisible(!hasSkills);
+
+            if (ContainerAlert != null)
+                ContainerAlert.style.display = !hasSkills ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         protected override void OnUICreated(VisualElement root)

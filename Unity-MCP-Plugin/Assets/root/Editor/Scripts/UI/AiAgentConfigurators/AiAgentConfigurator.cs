@@ -34,6 +34,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected IDisposable? _subscriptionStdio;
         protected IDisposable? _subscriptionHttp;
         protected AlertPanel? _alertPanel;
+        protected AlertPanel? _reconfigureAlertPanel;
 
         /// <summary>
         /// The display name of the AI agent.
@@ -405,6 +406,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         /// <summary>
         /// Builds the setup alert panel inside <see cref="ContainerAlert"/>.
         /// Shows a warning when neither skills nor MCP configuration is set up.
+        /// Also adds a reconfiguration alert shown when a config exists but is outdated.
         /// Override in subclasses to suppress (e.g. Custom configurator).
         /// </summary>
         protected virtual void SetupAlertPanel()
@@ -425,6 +427,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             _alertPanel.AddItem("\u2022 MCP Configuration");
 
             ContainerAlert.Add(_alertPanel.Root);
+
+            _reconfigureAlertPanel = new AlertPanel(
+                "Reconfiguration Required",
+                "Connection settings have changed. The existing MCP configuration is outdated and needs to be updated."
+            );
+            _reconfigureAlertPanel.SetButton("Reconfigure", ReconfigureDetectedConfigs);
+
+            ContainerAlert.Add(_reconfigureAlertPanel.Root);
+
             UpdateAlertPanel();
         }
 
@@ -439,8 +450,45 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var isMcpConfigured = ConfigStdio.IsDetected() || ConfigHttp.IsDetected();
             var hasSkills = SupportsSkills && UnityMcpPluginEditor.IsAutoGenerateSkills(AgentId);
             var isSetupComplete = isMcpConfigured || hasSkills;
+            var needsReconfigure = IsReconfigureNeeded();
 
             _alertPanel.SetVisible(!isSetupComplete);
+            _reconfigureAlertPanel?.SetVisible(needsReconfigure);
+
+            if (ContainerAlert != null)
+                ContainerAlert.style.display = (!isSetupComplete || needsReconfigure)
+                    ? DisplayStyle.Flex
+                    : DisplayStyle.None;
+        }
+
+        /// <summary>
+        /// Returns true when a detected MCP config exists but no longer matches the current settings.
+        /// </summary>
+        private bool IsReconfigureNeeded()
+        {
+            var stdioDetected = ConfigStdio.IsDetected();
+            var httpDetected = ConfigHttp.IsDetected();
+
+            if (!stdioDetected && !httpDetected)
+                return false;
+
+            if (stdioDetected && !ConfigStdio.IsConfigured())
+                return true;
+            if (httpDetected && !ConfigHttp.IsConfigured())
+                return true;
+
+            return false;
+        }
+
+        /// <summary>
+        /// Reconfigures all detected MCP configs by writing the current settings to their respective config files.
+        /// Called when the user clicks the "Reconfigure" button on the reconfigure alert.
+        /// </summary>
+        protected virtual void ReconfigureDetectedConfigs()
+        {
+            if (ConfigStdio.IsDetected()) ConfigStdio.Configure();
+            if (ConfigHttp.IsDetected()) ConfigHttp.Configure();
+            UpdateAlertPanel();
         }
 
         /// <summary>
