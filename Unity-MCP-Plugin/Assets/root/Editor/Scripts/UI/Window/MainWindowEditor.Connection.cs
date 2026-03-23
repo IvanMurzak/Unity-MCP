@@ -14,6 +14,7 @@ using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.Services;
 using com.IvanMurzak.Unity.MCP.Editor.UI.Controls;
 using Microsoft.AspNetCore.SignalR.Client;
+using R3;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
@@ -69,7 +70,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 UpdateConnectionUI(state, keepConnected);
             });
 
+            UnityMcpPluginEditor.PluginProperty
+                .WhereNotNull()
+                .Subscribe(plugin =>
+                {
+                    plugin.OnAuthorizationRejected
+                        .ObserveOnCurrentSynchronizationContext()
+                        .Subscribe(_ => OnAuthorizationRejected())
+                        .AddTo(_disposables);
+                })
+                .AddTo(_disposables);
+
             btnConnect.RegisterCallback<ClickEvent>(evt => HandleConnectButton(btnConnect.text));
+        }
+
+        private void OnAuthorizationRejected()
+        {
+            Debug.LogWarning("[AI Game Developer] The cloud server rejected the connection. " +
+                "This may indicate an expired or revoked authorization token. " +
+                "Try clicking 'Connect' to retry, or 'Authorize' to obtain a new token.");
+
+            RefreshConnectionUI();
         }
 
         private void UpdateConnectionUI(HubConnectionState state, bool keepConnected)

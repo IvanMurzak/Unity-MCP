@@ -32,7 +32,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         }
         static void OnApplicationUnloading() => TryDisconnectAndCleanup(nameof(OnApplicationUnloading));
         static void OnApplicationQuitting() => TryDisconnectAndCleanup(nameof(OnApplicationQuitting));
-        static void OnBeforeAssemblyReload() => TryDisconnectAndCleanup(nameof(OnBeforeAssemblyReload), onlyIfConnected: true);
+        static void OnBeforeAssemblyReload() => TryDisconnectAndCleanup(nameof(OnBeforeAssemblyReload));
 
         /// <summary>
         /// Safely disconnects and cleans up the MCP plugin instance.
