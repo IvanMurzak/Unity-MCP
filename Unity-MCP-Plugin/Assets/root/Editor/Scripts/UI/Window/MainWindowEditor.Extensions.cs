@@ -9,32 +9,59 @@
 */
 
 #nullable enable
-using com.IvanMurzak.Unity.MCP.Editor.Utils;
+using System.Collections.Generic;
+using System.Linq;
+using UnityEditor;
 using UnityEditor.PackageManager;
 using UnityEngine.UIElements;
+
+using PackageInfo = UnityEditor.PackageManager.PackageInfo;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
     public partial class MainWindowEditor
     {
-        private static readonly string[] _extensionItemUxmlPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/ExtensionItem.uxml");
-
-        private static readonly (string name, string description, string gitUrl)[] _extensions =
+        private static readonly ExtensionPanel.ExtensionData[] _extensions =
         {
-            (
-                "Animation",
-                "AI-driven animation control and playback tools.",
-                "https://github.com/IvanMurzak/Unity-AI-Animation.git"
+            new(
+                name:        "Animation",
+                description: "AI-driven animation control and playback tools.",
+                packageId:   "com.ivanmurzak.unity.mcp.animation",
+                gitUrl:      "https://github.com/IvanMurzak/Unity-AI-Animation.git",
+                tools: new[]
+                {
+                    ("animation-create",   "Create AnimationClip assets with keyframes"),
+                    ("animation-get-data", "Inspect clip curves, events, and properties"),
+                    ("animation-modify",   "Edit curves, events, and settings on a clip"),
+                    ("animator-create",    "Create AnimatorController assets"),
+                    ("animator-get-data",  "Inspect controller layers, states, and parameters"),
+                    ("animator-modify",    "Edit parameters, states, and transitions"),
+                }
             ),
-            (
-                "ParticleSystem",
-                "AI-powered particle system creation and control tools.",
-                "https://github.com/IvanMurzak/Unity-AI-ParticleSystem.git"
+            new(
+                name:        "ParticleSystem",
+                description: "AI-powered particle system creation and control tools.",
+                packageId:   "com.ivanmurzak.unity.mcp.particlesystem",
+                gitUrl:      "https://github.com/IvanMurzak/Unity-AI-ParticleSystem.git",
+                tools: new[]
+                {
+                    ("particle-system-get",    "Inspect ParticleSystem modules and settings"),
+                    ("particle-system-modify", "Modify emission, shape, color, noise, and more"),
+                }
             ),
-            (
-                "ProBuilder",
-                "AI-assisted ProBuilder geometry modeling tools.",
-                "https://github.com/IvanMurzak/Unity-AI-ProBuilder.git"
+            new(
+                name:        "ProBuilder",
+                description: "AI-assisted ProBuilder geometry modeling tools.",
+                packageId:   "com.ivanmurzak.unity.mcp.probuilder",
+                gitUrl:      "https://github.com/IvanMurzak/Unity-AI-ProBuilder.git",
+                tools: new[]
+                {
+                    ("probuilder-create-shape",     "Create editable 3D primitives in the scene"),
+                    ("probuilder-get-mesh-info",     "Retrieve faces, vertices, and edges data"),
+                    ("probuilder-extrude",           "Extrude faces along their normals"),
+                    ("probuilder-delete-faces",      "Remove faces to create holes or trim geometry"),
+                    ("probuilder-set-face-material", "Assign materials to individual faces"),
+                }
             ),
         };
 
@@ -44,24 +71,39 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             if (container == null)
                 return;
 
-            var itemTemplate = EditorAssetLoader.LoadAssetAtPath<VisualTreeAsset>(_extensionItemUxmlPaths);
-            if (itemTemplate == null)
-                return;
-
-            foreach (var (name, description, gitUrl) in _extensions)
+            var panels = new List<ExtensionPanel>(_extensions.Length);
+            foreach (var extension in _extensions)
             {
-                var item = itemTemplate.CloneTree();
+                var panel = new ExtensionPanel(extension);
+                container.Add(panel.Root);
+                panels.Add(panel);
+            }
 
-                item.Q<Label>("extension-name").text = name;
-                item.Q<Label>("extension-desc").text = description;
+            var listRequest = Client.List();
+            EditorApplication.update += OnListComplete;
 
-                var installBtn = item.Q<Button>("extension-install-btn");
-                installBtn.tooltip = $"Install {name} extension via Unity Package Manager.\nPackage: {gitUrl}";
+            void OnListComplete()
+            {
+                if (!listRequest.IsCompleted)
+                    return;
 
-                var capturedUrl = gitUrl;
-                installBtn.RegisterCallback<ClickEvent>(_ => Client.Add(capturedUrl));
+                EditorApplication.update -= OnListComplete;
 
-                container.Add(item);
+                Dictionary<string, PackageInfo> installedByName;
+                if (listRequest.Status == StatusCode.Success)
+                    installedByName = listRequest.Result.ToDictionary(p => p.name, p => p);
+                else
+                    installedByName = new Dictionary<string, PackageInfo>();
+
+                for (var i = 0; i < _extensions.Length; i++)
+                {
+                    var packageId = _extensions[i].PackageId;
+                    var installedVersion = installedByName.TryGetValue(packageId, out var pkg)
+                        ? pkg.version
+                        : null;
+
+                    panels[i].RefreshStatus(installedVersion);
+                }
             }
         }
     }

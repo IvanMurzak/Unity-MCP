@@ -21,11 +21,42 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI.Controls
     /// Implements <see cref="INotifyValueChanged{T}"/> for UI Toolkit integration.
     /// All visual styling is defined in <c>_segmented-control.uss</c>.
     /// </summary>
+#if UNITY_2023_2_OR_NEWER
+    [UxmlElement]
+    public partial class SegmentedControl : VisualElement, INotifyValueChanged<int>
+#else
     public class SegmentedControl : VisualElement, INotifyValueChanged<int>
+#endif
     {
         private static readonly string[] UssPaths =
             EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uss/common/_segmented-control.uss");
 
+#if UNITY_2023_2_OR_NEWER
+        [UxmlAttribute("choices")]
+        public string Choices
+        {
+            get => string.Join(",", _segmentLabels);
+            set
+            {
+                if (!string.IsNullOrEmpty(value))
+                {
+                    var labels = value.Split(',');
+                    for (var i = 0; i < labels.Length; i++)
+                        labels[i] = labels[i].Trim();
+                    _segmentLabels = labels;
+                    BuildSegments(labels);
+                }
+            }
+        }
+        private string[] _segmentLabels = Array.Empty<string>();
+
+        [UxmlAttribute("default-index")]
+        public int DefaultIndex
+        {
+            get => _selectedIndex;
+            set => SetValueWithoutNotify(value);
+        }
+#else
         public new class UxmlFactory : UxmlFactory<SegmentedControl, UxmlTraits> { }
 
         public new class UxmlTraits : VisualElement.UxmlTraits
@@ -50,6 +81,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI.Controls
                 }
             }
         }
+#endif
 
         private readonly VisualElement _track;
         private readonly VisualElement _highlight;

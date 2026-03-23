@@ -78,7 +78,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 {
                     GUIUtility.systemCopyBuffer = inputAuthorizationToken.value;
                     evt.StopPropagation();
-                    evt.PreventDefault();
                 }
             });
 

@@ -272,7 +272,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 {
                     GUIUtility.systemCopyBuffer = inputCloudToken.value;
                     evt.StopPropagation();
-                    evt.PreventDefault();
                 }
             });
 
