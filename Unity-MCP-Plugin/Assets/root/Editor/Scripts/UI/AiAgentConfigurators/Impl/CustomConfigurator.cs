@@ -59,32 +59,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             ContainerAlert.Clear();
 
-            var title = new Label("Setup Required") { name = "alertTitle" };
-            title.AddToClassList("alert-frame-title");
+            _alertPanel = new AlertPanel(
+                "Setup Required",
+                "Skills should be configured for AI agents to work properly:"
+            );
+            _alertPanel.AddItem("\u2022 Enable Auto-generate Skills below", "alert-frame-item-recommended");
+            _alertPanel.SetButton("Enable Skills", EnableAutoGenerateSkills);
 
-            var message = new Label("Skills should be configured for AI agents to work properly:") { name = "alertMessage" };
-            message.AddToClassList("alert-frame-message");
-
-            var skillsItem = new Label("\u2022 Enable Auto-generate Skills below") { name = "alertItemSkills" };
-            skillsItem.AddToClassList("alert-frame-item");
-            skillsItem.AddToClassList("alert-frame-item-recommended");
-
-            ContainerAlert.Add(title);
-            ContainerAlert.Add(message);
-            ContainerAlert.Add(skillsItem);
-
-            ContainerAlert.AddToClassList("alert-frame");
+            ContainerAlert.Add(_alertPanel.Root);
             UpdateAlertPanel();
         }
 
         protected override void UpdateAlertPanel()
         {
-            if (ContainerAlert == null)
+            if (_alertPanel == null)
                 return;
 
             // Custom configurator can only validate skills (no MCP config detection)
             var hasSkills = SupportsSkills && UnityMcpPluginEditor.IsAutoGenerateSkills(AgentId);
-            ContainerAlert.style.display = hasSkills ? DisplayStyle.None : DisplayStyle.Flex;
+            _alertPanel.SetVisible(!hasSkills);
+
+            if (ContainerAlert != null)
+                ContainerAlert.style.display = !hasSkills ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
         protected override void OnUICreated(VisualElement root)
