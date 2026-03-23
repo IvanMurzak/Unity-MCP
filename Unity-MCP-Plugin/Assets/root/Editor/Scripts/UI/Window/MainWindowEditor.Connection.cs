@@ -86,10 +86,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private void OnAuthorizationRejected()
         {
-            Debug.LogWarning("[AI Game Developer] The cloud server rejected the connection. " +
-                "This may indicate an expired or revoked authorization token. " +
-                "Try clicking 'Connect' to retry, or 'Authorize' to obtain a new token.");
+            if (UnityMcpPluginEditor.ConnectionMode != ConnectionMode.Cloud)
+                return;
 
+            Debug.LogWarning("[AI Game Developer] The server rejected the authorization token. " +
+                "The token has been cleared. Please click 'Authorize' to obtain a new token.");
+
+            UnityMcpPluginEditor.CloudToken = null;
+            UnityMcpPluginEditor.Instance.Save();
+
+            UpdateCloudAuthState();
             RefreshConnectionUI();
         }
 
@@ -152,18 +158,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private void HandleConnectButton(string buttonText)
         {
-            // Check if the UI is stale: the button says "Connect" but we're actually connected (or vice versa).
-            var actualState = UnityMcpPluginEditor.ConnectionState.CurrentValue;
-            var actualKeepConnected = UnityMcpPluginEditor.KeepConnected;
-            var expectedButtonText = GetButtonText(actualState, actualKeepConnected);
-
-            if (!buttonText.Equals(expectedButtonText, StringComparison.OrdinalIgnoreCase))
-            {
-                // UI is stale — refresh it to show the real state
-                RefreshConnectionUI();
-                return;
-            }
-
             if (buttonText.Equals(ServerButtonText_Connect, StringComparison.OrdinalIgnoreCase))
             {
                 ConnectToServer();
@@ -175,6 +169,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 if (UnityMcpPluginEditor.Instance.HasMcpPluginInstance)
                     _ = UnityMcpPluginEditor.Instance.Disconnect();
             }
+            ScheduleConnectionUIRefresh();
         }
 
         /// <summary>
