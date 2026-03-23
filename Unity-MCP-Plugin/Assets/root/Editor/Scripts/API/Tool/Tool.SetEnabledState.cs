@@ -52,6 +52,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 var logs = includeLogs == true ? new Logs() : null;
                 var success = new Dictionary<string, bool>();
                 var changed = false;
+                var (exactLookup, caseInsensitiveLookup) = BuildToolLookup(toolManager);
 
                 foreach (var input in tools)
                 {
@@ -63,7 +64,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         continue;
                     }
 
-                    var resolvedName = ResolveToolName(toolManager, input.Name, logs);
+                    var resolvedName = ResolveToolName(exactLookup, caseInsensitiveLookup, input.Name, logs);
                     if (resolvedName == null)
                     {
                         success[input.Name] = false;

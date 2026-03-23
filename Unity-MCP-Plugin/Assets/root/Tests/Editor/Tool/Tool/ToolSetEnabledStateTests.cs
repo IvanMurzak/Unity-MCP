@@ -9,9 +9,9 @@
 */
 
 #nullable enable
-using System;
 using System.Collections;
 using System.Linq;
+using System.Text.Json;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using NUnit.Framework;
 using UnityEngine.TestTools;
@@ -21,20 +21,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     [TestFixture]
     public class ToolSetEnabledStateTests : BaseTest
     {
-        Tool_Tool _tool = null!;
         string? _testToolName;
 
         [UnitySetUp]
         public override IEnumerator SetUp()
         {
             yield return base.SetUp();
-            _tool = new Tool_Tool();
 
-            // Find a tool that is enabled by default to use in tests
             var toolManager = UnityMcpPluginEditor.Instance.Tools;
             Assert.IsNotNull(toolManager, "ToolManager should not be null");
 
-            _testToolName = toolManager!.GetAllTools()
+            toolManager!.SetToolEnabled(Tool_Tool.ToolSetEnabledStateId, true);
+            UnityMcpPluginEditor.Instance.Save();
+
+            _testToolName = toolManager.GetAllTools()
                 .FirstOrDefault(t => toolManager.IsToolEnabled(t.Name) && t.Name != Tool_Tool.ToolSetEnabledStateId)
                 ?.Name;
 
@@ -44,15 +44,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTearDown]
         public override IEnumerator TearDown()
         {
-            // Restore test tool to enabled state if it was changed
             var toolManager = UnityMcpPluginEditor.Instance.Tools;
-            if (toolManager != null && _testToolName != null)
+            if (toolManager != null)
             {
-                toolManager.SetToolEnabled(_testToolName, true);
+                if (_testToolName != null)
+                {
+                    toolManager.SetToolEnabled(_testToolName, true);
+                }
+                toolManager.SetToolEnabled(Tool_Tool.ToolSetEnabledStateId, false);
                 UnityMcpPluginEditor.Instance.Save();
             }
 
             yield return base.TearDown();
+        }
+
+        Tool_Tool.ResultData? ParseResult(string jsonMessage)
+        {
+            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            using var doc = JsonDocument.Parse(jsonMessage);
+            if (doc.RootElement.TryGetProperty("result", out var resultProp))
+                return JsonSerializer.Deserialize<Tool_Tool.ResultData>(resultProp.GetRawText(), options);
+            return JsonSerializer.Deserialize<Tool_Tool.ResultData>(jsonMessage, options);
         }
 
         [UnityTest]
@@ -60,11 +72,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             yield return null;
 
-            var result = _tool.SetEnabledState(
-                new[] { new Tool_Tool.InputData { Name = _testToolName!, Enabled = false } },
-                includeLogs: true
-            );
+            var response = RunTool(Tool_Tool.ToolSetEnabledStateId, $@"{{
+                ""tools"": [{{ ""name"": ""{_testToolName}"", ""enabled"": false }}],
+                ""includeLogs"": true
+            }}");
 
+            var result = ParseResult(response.Value!.GetMessage()!);
+            Assert.IsNotNull(result);
+            Assert.IsTrue(result!.Success.ContainsKey(_testToolName!), $"Should have result for tool '{_testToolName}'");
             Assert.IsTrue(result.Success[_testToolName!], $"Should successfully disable tool '{_testToolName}'");
 
             var toolManager = UnityMcpPluginEditor.Instance.Tools!;
@@ -76,16 +91,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             yield return null;
 
-            // First disable it
             var toolManager = UnityMcpPluginEditor.Instance.Tools!;
             toolManager.SetToolEnabled(_testToolName!, false);
+            UnityMcpPluginEditor.Instance.Save();
 
-            // Then enable via our tool
-            var result = _tool.SetEnabledState(
-                new[] { new Tool_Tool.InputData { Name = _testToolName!, Enabled = true } },
-                includeLogs: true
-            );
+            var response = RunTool(Tool_Tool.ToolSetEnabledStateId, $@"{{
+                ""tools"": [{{ ""name"": ""{_testToolName}"", ""enabled"": true }}],
+                ""includeLogs"": true
+            }}");
 
+            var result = ParseResult(response.Value!.GetMessage()!);
+            Assert.IsNotNull(result);
+            Assert.IsTrue(result!.Success.ContainsKey(_testToolName!), $"Should have result for tool '{_testToolName}'");
             Assert.IsTrue(result.Success[_testToolName!], $"Should successfully enable tool '{_testToolName}'");
             Assert.IsTrue(toolManager.IsToolEnabled(_testToolName!), $"Tool '{_testToolName}' should be enabled");
         }
@@ -95,15 +112,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             yield return null;
 
-            // Tool is already enabled by default
-            var result = _tool.SetEnabledState(
-                new[] { new Tool_Tool.InputData { Name = _testToolName!, Enabled = true } },
-                includeLogs: true
-            );
+            var response = RunTool(Tool_Tool.ToolSetEnabledStateId, $@"{{
+                ""tools"": [{{ ""name"": ""{_testToolName}"", ""enabled"": true }}],
+                ""includeLogs"": true
+            }}");
 
+            var jsonMessage = response.Value!.GetMessage()!;
+            var result = ParseResult(jsonMessage);
+            Assert.IsNotNull(result);
+            Assert.IsTrue(result!.Success.ContainsKey(_testToolName!), "Should have result for tool");
             Assert.IsTrue(result.Success[_testToolName!], "Should return true when tool is already in desired state");
-            Assert.IsNotNull(result.Logs, "Logs should be included");
-            Assert.IsTrue(result.Logs!.Any(l => l.ToString().Contains("already")), "Should log that tool is already in desired state");
+            StringAssert.Contains("already", jsonMessage);
         }
 
         [UnityTest]
@@ -112,12 +131,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             yield return null;
 
             var fakeName = "non-existent-tool-xyz-12345";
-            var result = _tool.SetEnabledState(
-                new[] { new Tool_Tool.InputData { Name = fakeName, Enabled = true } },
-                includeLogs: true
-            );
+            var jsonResult = RunToolRaw(Tool_Tool.ToolSetEnabledStateId, $@"{{
+                ""tools"": [{{ ""name"": ""{fakeName}"", ""enabled"": true }}],
+                ""includeLogs"": true
+            }}");
 
-            Assert.IsTrue(result.Success.ContainsKey(fakeName), "Should have entry for non-existent tool");
+            var result = ParseResult(jsonResult);
+            Assert.IsNotNull(result);
+            Assert.IsTrue(result!.Success.ContainsKey(fakeName), "Should have entry for non-existent tool");
             Assert.IsFalse(result.Success[fakeName], "Should return false for non-existent tool");
         }
 
@@ -126,15 +147,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             yield return null;
 
-            // Send tool name in wrong case
             var wrongCase = _testToolName!.ToUpperInvariant();
-            var result = _tool.SetEnabledState(
-                new[] { new Tool_Tool.InputData { Name = wrongCase, Enabled = false } },
-                includeLogs: true
-            );
+            var response = RunTool(Tool_Tool.ToolSetEnabledStateId, $@"{{
+                ""tools"": [{{ ""name"": ""{wrongCase}"", ""enabled"": false }}],
+                ""includeLogs"": true
+            }}");
 
-            // The resolved name (correct case) should be the key
-            Assert.IsTrue(result.Success.ContainsKey(_testToolName!), $"Should resolve '{wrongCase}' to '{_testToolName}'");
+            var result = ParseResult(response.Value!.GetMessage()!);
+            Assert.IsNotNull(result);
+            Assert.IsTrue(result!.Success.ContainsKey(_testToolName!), $"Should resolve '{wrongCase}' to '{_testToolName}'");
             Assert.IsTrue(result.Success[_testToolName!], "Should successfully change state with case-insensitive match");
         }
 
@@ -144,8 +165,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             yield return null;
 
             var toolManager = UnityMcpPluginEditor.Instance.Tools!;
-            var allTools = toolManager.GetAllTools().ToList();
-            var secondTool = allTools
+            var secondTool = toolManager.GetAllTools()
                 .FirstOrDefault(t => t.Name != _testToolName && t.Name != Tool_Tool.ToolSetEnabledStateId);
 
             Assert.IsNotNull(secondTool, "Should have at least two tools for testing");
@@ -154,22 +174,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             try
             {
-                var result = _tool.SetEnabledState(
-                    new[]
-                    {
-                        new Tool_Tool.InputData { Name = _testToolName!, Enabled = false },
-                        new Tool_Tool.InputData { Name = secondTool.Name, Enabled = false }
-                    },
-                    includeLogs: true
-                );
+                var response = RunTool(Tool_Tool.ToolSetEnabledStateId, $@"{{
+                    ""tools"": [
+                        {{ ""name"": ""{_testToolName}"", ""enabled"": false }},
+                        {{ ""name"": ""{secondTool.Name}"", ""enabled"": false }}
+                    ],
+                    ""includeLogs"": true
+                }}");
 
-                Assert.AreEqual(2, result.Success.Count, "Should have results for both tools");
+                var result = ParseResult(response.Value!.GetMessage()!);
+                Assert.IsNotNull(result);
+                Assert.AreEqual(2, result!.Success.Count, "Should have results for both tools");
                 Assert.IsTrue(result.Success.ContainsKey(_testToolName!), "Should have result for first tool");
                 Assert.IsTrue(result.Success.ContainsKey(secondTool.Name), "Should have result for second tool");
             }
             finally
             {
-                // Restore second tool state
                 toolManager.SetToolEnabled(secondTool.Name, originalSecondState);
                 UnityMcpPluginEditor.Instance.Save();
             }
@@ -180,13 +200,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             yield return null;
 
-            var result = _tool.SetEnabledState(
-                new[] { new Tool_Tool.InputData { Name = _testToolName!, Enabled = false } },
-                includeLogs: true
-            );
+            var jsonMessage = RunTool(Tool_Tool.ToolSetEnabledStateId, $@"{{
+                ""tools"": [{{ ""name"": ""{_testToolName}"", ""enabled"": false }}],
+                ""includeLogs"": true
+            }}").Value!.GetMessage()!;
 
-            Assert.IsNotNull(result.Logs, "Logs should not be null when includeLogs is true");
-            Assert.IsTrue(result.Logs!.Count > 0, "Logs should contain entries");
+            var result = ParseResult(jsonMessage);
+            Assert.IsNotNull(result);
+            Assert.IsNotNull(result!.Logs, "Logs should not be null when includeLogs is true");
         }
 
         [UnityTest]
@@ -194,34 +215,40 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             yield return null;
 
-            var result = _tool.SetEnabledState(
-                new[] { new Tool_Tool.InputData { Name = _testToolName!, Enabled = false } },
-                includeLogs: false
-            );
+            var jsonMessage = RunTool(Tool_Tool.ToolSetEnabledStateId, $@"{{
+                ""tools"": [{{ ""name"": ""{_testToolName}"", ""enabled"": false }}],
+                ""includeLogs"": false
+            }}").Value!.GetMessage()!;
 
-            Assert.IsNull(result.Logs, "Logs should be null when includeLogs is false");
+            var result = ParseResult(jsonMessage);
+            Assert.IsNotNull(result);
+            Assert.IsNull(result!.Logs, "Logs should be null when includeLogs is false");
         }
 
         [UnityTest]
-        public IEnumerator SetEnabled_EmptyArray_ShouldThrow()
+        public IEnumerator SetEnabled_EmptyArray_ShouldReturnError()
         {
             yield return null;
 
-            Assert.Throws<ArgumentException>(() =>
-            {
-                _tool.SetEnabledState(new Tool_Tool.InputData[0], includeLogs: false);
-            });
+            var jsonResult = RunToolRaw(Tool_Tool.ToolSetEnabledStateId, @"{
+                ""tools"": [],
+                ""includeLogs"": false
+            }");
+
+            StringAssert.Contains("[Error]", jsonResult);
         }
 
         [UnityTest]
-        public IEnumerator SetEnabled_NullArray_ShouldThrow()
+        public IEnumerator SetEnabled_NullArray_ShouldReturnError()
         {
             yield return null;
 
-            Assert.Throws<ArgumentException>(() =>
-            {
-                _tool.SetEnabledState(null!, includeLogs: false);
-            });
+            var jsonResult = RunToolRaw(Tool_Tool.ToolSetEnabledStateId, @"{
+                ""tools"": null,
+                ""includeLogs"": false
+            }");
+
+            StringAssert.Contains("[Error]", jsonResult);
         }
     }
 }

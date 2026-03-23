@@ -45,6 +45,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected abstract string MissingTemplateMessage { get; }
 
         protected readonly CompositeDisposable _disposables = new();
+        private IDisposable? _innerSubscription;
 
         protected VisualTreeAsset? itemTemplate;
         protected List<TViewModel> allItems = new();
@@ -79,6 +80,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected virtual void OnDisable()
         {
+            _innerSubscription?.Dispose();
+            _innerSubscription = null;
             _disposables.Clear();
         }
 
@@ -90,14 +93,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 .WhereNotNull()
                 .Subscribe(plugin =>
                 {
-                    GetOnUpdatedObservable(plugin)?
+                    _innerSubscription?.Dispose();
+                    _innerSubscription = GetOnUpdatedObservable(plugin)?
                         .ObserveOnCurrentSynchronizationContext()
                         .Subscribe(_ =>
                         {
                             RefreshItems();
                             PopulateList();
-                        })
-                        .AddTo(_disposables);
+                        });
                 }).AddTo(_disposables);
         }
 

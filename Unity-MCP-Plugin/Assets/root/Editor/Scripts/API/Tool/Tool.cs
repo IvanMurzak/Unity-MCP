@@ -39,32 +39,39 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             public Dictionary<string, bool> Success { get; set; } = new();
         }
 
-        static string? ResolveToolName(IToolManager toolManager, string input, Logs? logs)
+        static (Dictionary<string, string> exact, Dictionary<string, List<string>> caseInsensitive) BuildToolLookup(IToolManager toolManager)
         {
+            var exact = new Dictionary<string, string>(StringComparer.Ordinal);
+            var caseInsensitive = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
+
             var allTools = toolManager.GetAllTools();
             if (allTools == null)
-                return null;
-
-            string? caseInsensitiveMatch = null;
-            var caseInsensitiveCount = 0;
+                return (exact, caseInsensitive);
 
             foreach (var tool in allTools)
             {
-                if (tool.Name.Equals(input, StringComparison.Ordinal))
-                    return tool.Name;
-
-                if (tool.Name.Equals(input, StringComparison.OrdinalIgnoreCase))
+                exact[tool.Name] = tool.Name;
+                if (!caseInsensitive.TryGetValue(tool.Name, out var list))
                 {
-                    caseInsensitiveMatch = tool.Name;
-                    caseInsensitiveCount++;
+                    list = new List<string>();
+                    caseInsensitive[tool.Name] = list;
                 }
+                list.Add(tool.Name);
             }
 
-            if (caseInsensitiveCount == 1)
-                return caseInsensitiveMatch;
+            return (exact, caseInsensitive);
+        }
 
-            if (caseInsensitiveCount > 1)
+        static string? ResolveToolName(Dictionary<string, string> exact, Dictionary<string, List<string>> caseInsensitive, string input, Logs? logs)
+        {
+            if (exact.TryGetValue(input, out var exactMatch))
+                return exactMatch;
+
+            if (caseInsensitive.TryGetValue(input, out var matches))
             {
+                if (matches.Count == 1)
+                    return matches[0];
+
                 logs?.Warning($"Tool '{input}' is ambiguous. Multiple case-insensitive matches found.");
                 return null;
             }
