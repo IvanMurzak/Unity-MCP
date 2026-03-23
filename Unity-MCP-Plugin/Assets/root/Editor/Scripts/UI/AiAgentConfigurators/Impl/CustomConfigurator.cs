@@ -64,6 +64,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 "Skills should be configured for AI agents to work properly:"
             );
             _alertPanel.AddItem("\u2022 Enable Auto-generate Skills below", "alert-frame-item-recommended");
+            _alertPanel.SetButton("Enable Skills", EnableAutoGenerateSkills);
 
             ContainerAlert.Add(_alertPanel.Root);
             UpdateAlertPanel();

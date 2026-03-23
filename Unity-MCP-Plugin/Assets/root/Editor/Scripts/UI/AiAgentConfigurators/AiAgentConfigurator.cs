@@ -346,28 +346,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             _configElementStdio = TemplateConfigurationElements(ConfigStdio, TransportMethod.stdio);
             _configElementHttp = TemplateConfigurationElements(ConfigHttp, TransportMethod.streamableHttp);
 
-            _subscriptionStdio = _configElementStdio.OnConfigured.Subscribe(_ =>
-            {
-                var anyConfigured = ConfigStdio.IsDetected() || ConfigHttp.IsDetected();
-                _configElementStdio.UpdateStatus(isAnyConfigured: anyConfigured);
-                _configElementHttp.UpdateStatus(isAnyConfigured: anyConfigured);
-                UpdateAlertPanel();
-            });
-            _subscriptionHttp = _configElementHttp.OnConfigured.Subscribe(_ =>
-            {
-                var anyConfigured = ConfigStdio.IsDetected() || ConfigHttp.IsDetected();
-                _configElementStdio.UpdateStatus(isAnyConfigured: anyConfigured);
-                _configElementHttp.UpdateStatus(isAnyConfigured: anyConfigured);
-                UpdateAlertPanel();
-            });
+            _subscriptionStdio = _configElementStdio.OnConfigured.Subscribe(_ => RefreshConfigurationUI());
+            _subscriptionHttp = _configElementHttp.OnConfigured.Subscribe(_ => RefreshConfigurationUI());
 
             ContainerStdio!.Add(_configElementStdio.Root);
             ContainerHttp!.Add(_configElementHttp.Root);
 
-            // Cross-update so Remove buttons reflect any config across both transports
-            var anyConfigured = ConfigStdio.IsDetected() || ConfigHttp.IsDetected();
-            _configElementStdio.UpdateStatus(isAnyConfigured: anyConfigured);
-            _configElementHttp.UpdateStatus(isAnyConfigured: anyConfigured);
+            // Initial status so Remove buttons reflect any config across both transports
+            RefreshConfigurationUI();
 
             return this;
         }
@@ -422,9 +408,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             );
 
             if (SupportsSkills)
+            {
                 _alertPanel.AddItem("\u2022 Skills (Recommended)", "alert-frame-item-recommended");
-
-            _alertPanel.AddItem("\u2022 MCP Configuration");
+                _alertPanel.AddItem("\u2022 MCP Configuration");
+                _alertPanel.SetButton("Enable Skills", EnableAutoGenerateSkills);
+            }
+            else
+            {
+                _alertPanel.AddItem("\u2022 MCP Configuration");
+                _alertPanel.SetButton("Configure", ConfigureActiveTransport);
+            }
 
             ContainerAlert.Add(_alertPanel.Root);
 
@@ -463,21 +456,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         /// <summary>
         /// Returns true when a detected MCP config exists but no longer matches the current settings.
+        /// Only checks the transport config that matches the current transport method, because
+        /// both configs share the same server name — a correctly configured HTTP entry would
+        /// cause the STDIO check to false-positive (and vice versa).
         /// </summary>
         private bool IsReconfigureNeeded()
         {
-            var stdioDetected = ConfigStdio.IsDetected();
-            var httpDetected = ConfigHttp.IsDetected();
+            var isStdio = UnityMcpPluginEditor.TransportMethod == TransportMethod.stdio;
 
-            if (!stdioDetected && !httpDetected)
-                return false;
+            var activeConfig = isStdio ? ConfigStdio : ConfigHttp;
 
-            if (stdioDetected && !ConfigStdio.IsConfigured())
-                return true;
-            if (httpDetected && !ConfigHttp.IsConfigured())
-                return true;
-
-            return false;
+            return activeConfig.IsDetected() && !activeConfig.IsConfigured();
         }
 
         /// <summary>
@@ -486,8 +475,54 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         /// </summary>
         protected virtual void ReconfigureDetectedConfigs()
         {
-            if (ConfigStdio.IsDetected()) ConfigStdio.Configure();
-            if (ConfigHttp.IsDetected()) ConfigHttp.Configure();
+            var isStdio = UnityMcpPluginEditor.TransportMethod == TransportMethod.stdio;
+            var activeConfig = isStdio ? ConfigStdio : ConfigHttp;
+
+            if (activeConfig.IsDetected()) activeConfig.Configure();
+            RefreshConfigurationUI();
+        }
+
+        /// <summary>
+        /// Configures the MCP entry for the currently active transport method.
+        /// Called from the "Configure" button on the setup alert when skills are not supported.
+        /// </summary>
+        protected void ConfigureActiveTransport()
+        {
+            var isStdio = UnityMcpPluginEditor.TransportMethod == TransportMethod.stdio;
+            var activeConfig = isStdio ? ConfigStdio : ConfigHttp;
+            activeConfig.Configure();
+            RefreshConfigurationUI();
+        }
+
+        /// <summary>
+        /// Enables auto-generate skills for this agent, generates skill files, and refreshes the UI.
+        /// Called from the "Enable Skills" button on the setup alert.
+        /// </summary>
+        protected void EnableAutoGenerateSkills()
+        {
+            UnityMcpPluginEditor.SetAutoGenerateSkills(AgentId, true);
+            UnityMcpPluginEditor.SkillsPath = SkillsPath!;
+            UnityMcpPluginEditor.Instance.Save();
+
+            UnityMcpPluginEditor.Instance.McpPluginInstance!.GenerateSkillFiles(UnityMcpPluginEditor.ProjectRootPath);
+
+            // Refresh the skills toggle checkbox in the UI
+            var toggleAutoGenerate = Root?.Q<Toggle>("toggleAutoGenerateSkills");
+            toggleAutoGenerate?.SetValueWithoutNotify(true);
+
+            RefreshConfigurationUI();
+        }
+
+        /// <summary>
+        /// Refreshes all configuration-related UI: alert panel visibility and
+        /// configure button status indicators for both transport modes.
+        /// Called after any configuration change (alert Reconfigure, small Configure, or Remove).
+        /// </summary>
+        protected void RefreshConfigurationUI()
+        {
+            var anyConfigured = ConfigStdio.IsDetected() || ConfigHttp.IsDetected();
+            _configElementStdio?.UpdateStatus(isAnyConfigured: anyConfigured);
+            _configElementHttp?.UpdateStatus(isAnyConfigured: anyConfigured);
             UpdateAlertPanel();
         }
 

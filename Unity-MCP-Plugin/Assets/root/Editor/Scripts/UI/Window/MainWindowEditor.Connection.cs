@@ -311,7 +311,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     _ = UnityMcpPluginEditor.Instance.Disconnect();
             });
 
-            btnAuthorize.RegisterCallback<ClickEvent>(async _ =>
+            _startAuthorizeAction = async () =>
             {
                 // If currently running, cancel
                 if (_deviceAuthFlow != null && IsAuthFlowRunning(_deviceAuthFlow.State))
@@ -365,7 +365,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 };
 
                 await capturedFlow.StartAsync(UnityMcpPlugin.UnityConnectionConfig.CloudServerBaseUrl, "Unity Editor");
-            });
+            };
+
+            btnAuthorize.RegisterCallback<ClickEvent>(_ => _startAuthorizeAction?.Invoke());
         }
 
         private void SetupConnectionAuthAlert(VisualElement root)
@@ -373,19 +375,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var container = root.Q<VisualElement>("connectionAlertContainer");
             if (container == null) return;
 
-            var btnCloudAuthorize = root.Q<Button>("btnCloudAuthorize");
-
             _connectionAuthAlert = new AlertPanel(
                 "Authorization Required",
                 "Cloud mode requires authentication to connect. Press the button below to authorize your device."
             );
-            _connectionAuthAlert.SetButton("Authorize", () =>
-            {
-                if (btnCloudAuthorize == null) return;
-                using var evt = ClickEvent.GetPooled();
-                evt.target = btnCloudAuthorize;
-                btnCloudAuthorize.SendEvent(evt);
-            });
+            _connectionAuthAlert.SetButton("Authorize", () => _startAuthorizeAction?.Invoke());
 
             container.Add(_connectionAuthAlert.Root);
 

@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using R3;
 using UnityEngine;
@@ -22,6 +23,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         Button? _btnConnect;
         Button? _btnAuthorize;
+        Action? _startAuthorizeAction;
         VisualElement? _timelinePointUnity;
         AlertPanel? _connectionAuthAlert;
 
