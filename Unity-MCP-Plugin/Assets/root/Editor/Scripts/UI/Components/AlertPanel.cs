@@ -10,6 +10,7 @@
 
 #nullable enable
 using System;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEngine.UIElements;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
@@ -20,7 +21,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
     /// </summary>
     public class AlertPanel
     {
-        private const string TemplatePath = "Editor/UI/uxml/agents/elements/TemplateAlertPanel.uxml";
+        private static readonly string[] TemplatePaths = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/agents/elements/TemplateAlertPanel.uxml");
 
         private readonly Label _title;
         private readonly Label _message;
@@ -40,7 +41,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         /// <param name="message">The alert message text.</param>
         public AlertPanel(string title, string message)
         {
-            Root = new UITemplate<VisualElement>(TemplatePath).Value;
+            var template = EditorAssetLoader.LoadAssetAtPath<VisualTreeAsset>(TemplatePaths)
+                ?? throw new NullReferenceException($"Failed to load TemplateAlertPanel.uxml. Checked: {string.Join(", ", TemplatePaths)}");
+
+            var tree = template.CloneTree();
+            Root = tree.Q<VisualElement>("alertPanel")
+                ?? throw new NullReferenceException("VisualElement 'alertPanel' not found in TemplateAlertPanel.uxml.");
 
             _title = Root.Q<Label>("alertTitle") ?? throw new NullReferenceException("Label 'alertTitle' not found in TemplateAlertPanel.uxml.");
             _message = Root.Q<Label>("alertMessage") ?? throw new NullReferenceException("Label 'alertMessage' not found in TemplateAlertPanel.uxml.");
