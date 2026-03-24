@@ -71,6 +71,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         private void OnDisable()
         {
             _disposables.Clear();
+            _authRejectedSubscription.Dispose();
         }
 
         internal static (bool needsAuth, bool hasToken, bool isCloud) ComputeCloudAuthState(ConnectionMode mode, string? token)

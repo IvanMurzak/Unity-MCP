@@ -229,6 +229,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             SetupToolsSection(root);
             SetupPromptsSection(root);
             SetupResourcesSection(root);
+            SetupExtensionsSection(root);
             ConfigureAgents(root);
             SetupSocialButtons(root);
             SetupDebugButtons(root);

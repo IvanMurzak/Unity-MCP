@@ -14,6 +14,7 @@ using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.Services;
 using com.IvanMurzak.Unity.MCP.Editor.UI.Controls;
 using Microsoft.AspNetCore.SignalR.Client;
+using R3;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
@@ -25,6 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         private TextField? _inputFieldHost;
         private VisualElement? _connectionStatusCircle;
         private Label? _connectionStatusText;
+        private readonly SerialDisposable _authRejectedSubscription = new();
 
         private void SetupConnectionSection(VisualElement root)
         {
@@ -69,7 +71,32 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 UpdateConnectionUI(state, keepConnected);
             });
 
+            UnityMcpPluginEditor.PluginProperty
+                .WhereNotNull()
+                .Subscribe(plugin =>
+                {
+                    _authRejectedSubscription.Disposable = plugin.OnAuthorizationRejected
+                        .ObserveOnCurrentSynchronizationContext()
+                        .Subscribe(_ => OnAuthorizationRejected());
+                })
+                .AddTo(_disposables);
+
             btnConnect.RegisterCallback<ClickEvent>(evt => HandleConnectButton(btnConnect.text));
+        }
+
+        private void OnAuthorizationRejected()
+        {
+            if (UnityMcpPluginEditor.ConnectionMode != ConnectionMode.Cloud)
+                return;
+
+            Debug.LogWarning("[AI Game Developer] The server rejected the authorization token. " +
+                "The token has been cleared. Please click 'Authorize' to obtain a new token.");
+
+            UnityMcpPluginEditor.CloudToken = null;
+            UnityMcpPluginEditor.Instance.Save();
+
+            UpdateCloudAuthState();
+            RefreshConnectionUI();
         }
 
         private void UpdateConnectionUI(HubConnectionState state, bool keepConnected)
@@ -131,18 +158,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private void HandleConnectButton(string buttonText)
         {
-            // Check if the UI is stale: the button says "Connect" but we're actually connected (or vice versa).
-            var actualState = UnityMcpPluginEditor.ConnectionState.CurrentValue;
-            var actualKeepConnected = UnityMcpPluginEditor.KeepConnected;
-            var expectedButtonText = GetButtonText(actualState, actualKeepConnected);
-
-            if (!buttonText.Equals(expectedButtonText, StringComparison.OrdinalIgnoreCase))
-            {
-                // UI is stale — refresh it to show the real state
-                RefreshConnectionUI();
-                return;
-            }
-
             if (buttonText.Equals(ServerButtonText_Connect, StringComparison.OrdinalIgnoreCase))
             {
                 ConnectToServer();
@@ -154,6 +169,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 if (UnityMcpPluginEditor.Instance.HasMcpPluginInstance)
                     _ = UnityMcpPluginEditor.Instance.Disconnect();
             }
+            ScheduleConnectionUIRefresh();
         }
 
         /// <summary>
@@ -272,7 +288,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 {
                     GUIUtility.systemCopyBuffer = inputCloudToken.value;
                     evt.StopPropagation();
-                    evt.PreventDefault();
                 }
             });
 
