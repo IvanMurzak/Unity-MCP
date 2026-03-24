@@ -28,6 +28,11 @@ export const statusCommand = new Command('status')
 
     const timeoutMs = parseInt(options.timeout ?? '5000', 10);
 
+    if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
+      ui.error(`Invalid --timeout value: "${options.timeout}". Must be a positive integer (milliseconds).`);
+      process.exit(1);
+    }
+
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };

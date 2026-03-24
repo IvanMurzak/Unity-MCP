@@ -21,7 +21,7 @@ unity-mcp-cli run-system-tool ping --input '{
 > Or pipe via stdin (recommended):
 > ```bash
 > unity-mcp-cli run-system-tool ping --input-file - <<'EOF'
-> {"param": "value"}
+> {"message": "value"}
 > EOF
 > ```
 
