@@ -36,9 +36,11 @@
 - :white_check_mark: **安装插件** — 将 Unity-MCP 插件连同所有必需的作用域注册表添加到 `manifest.json`
 - :white_check_mark: **移除插件** — 从 `manifest.json` 中移除 Unity-MCP 插件
 - :white_check_mark: **配置** — 启用/禁用 MCP 工具、提示和资源
+- :white_check_mark: **状态检查** — 一目了然查看 Unity 进程、本地服务器和云服务器的连接状态
 - :white_check_mark: **运行工具** — 直接从命令行执行 MCP 工具
 - :white_check_mark: **设置 MCP** — 为 14 个受支持的 AI 代理中的任何一个编写 MCP 配置文件
 - :white_check_mark: **设置技能** — 通过 MCP 服务器为 AI 代理生成技能文件
+- :white_check_mark: **等待就绪** — 轮询直到 Unity 编辑器和 MCP 服务器已连接并可接受工具调用
 - :white_check_mark: **打开并连接** — 启动 Unity，可选设置 MCP 环境变量以实现自动服务器连接
 - :white_check_mark: **跨平台** — 支持 Windows、macOS 和 Linux
 - :white_check_mark: **CI 友好** — 自动检测非交互式终端并禁用加载动画/颜色
@@ -94,9 +96,11 @@ npx unity-mcp-cli install-plugin /path/to/unity/project
   - [`install-unity`](#install-unity)
   - [`open`](#open)
   - [`run-tool`](#run-tool)
+  - [`wait-for-ready`](#wait-for-ready)
   - [`setup-mcp`](#setup-mcp)
   - [`setup-skills`](#setup-skills)
   - [`remove-plugin`](#remove-plugin)
+  - [`status`](#status)
   - [全局选项](#global-options)
 - [完整自动化示例](#full-automation-example)
 - [工作原理](#how-it-works)
@@ -320,6 +324,44 @@ unity-mcp-cli run-tool assets-list ./MyGame --raw | jq '.results'
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
+## `wait-for-ready`
+
+等待 Unity 编辑器和 MCP 服务器连接就绪并可接受工具调用。以可配置的间隔轮询服务器，直到成功响应或达到超时时间。适用于自动化脚本和 AI 代理编排场景，其中 `open` 启动 Unity 后代理需要知道何时可以开始调用工具。
+
+```bash
+unity-mcp-cli wait-for-ready ./MyGame
+```
+
+| 选项 | 必需 | 描述 |
+|---|---|---|
+| `[path]` | 否 | Unity 项目路径（位置参数或 `--path`）— 用于读取配置和检测端口 |
+| `--url <url>` | 否 | 直接覆盖服务器 URL（绕过配置） |
+| `--token <token>` | 否 | 覆盖 Bearer 令牌（绕过配置） |
+| `--timeout <ms>` | 否 | 最大等待时间（毫秒）（默认：120000） |
+| `--interval <ms>` | 否 | 轮询间隔（毫秒）（默认：3000） |
+
+**示例 — 使用默认超时（120秒）等待：**
+
+```bash
+unity-mcp-cli open ./MyGame
+unity-mcp-cli wait-for-ready ./MyGame
+unity-mcp-cli run-tool tests-run ./MyGame --input '{"testMode":"EditMode"}'
+```
+
+**示例 — CI 环境使用更短的超时：**
+
+```bash
+unity-mcp-cli wait-for-ready ./MyGame --timeout 60000 --interval 2000
+```
+
+**示例 — 显式指定服务器 URL：**
+
+```bash
+unity-mcp-cli wait-for-ready --url http://localhost:8080 --timeout 30000
+```
+
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
 ## `setup-mcp`
 
 为 AI 代理编写 MCP 配置文件，支持无界面/CI 环境设置，无需 Unity 编辑器 UI。支持全部 14 个代理（Claude Code、Cursor、Gemini、Codex 等）。
@@ -397,6 +439,23 @@ unity-mcp-cli remove-plugin ./MyGame
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
+## `status`
+
+检查 Unity 编辑器和 MCP 服务器的连接状态。显示 Unity 是否正在运行、本地 MCP 服务器是否可达、以及配置的服务器（例如云端）是否可达。
+
+```bash
+unity-mcp-cli status ./MyGame
+```
+
+| 选项 | 必需 | 描述 |
+|---|---|---|
+| `[path]` | 否 | Unity 项目路径（位置参数或 `--path`） |
+| `--url <url>` | 否 | 直接覆盖服务器 URL（绕过配置） |
+| `--token <token>` | 否 | 覆盖 Bearer 令牌（绕过配置） |
+| `--timeout <ms>` | 否 | 探测超时时间（毫秒）（默认：5000） |
+
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
 ## 全局选项
 
 以下选项适用于所有命令：
@@ -439,6 +498,12 @@ unity-mcp-cli setup-mcp claude-code ./MyAIGame
 unity-mcp-cli open ./MyAIGame \
   --url http://localhost:8080 \
   --keep-connected
+
+# 7. Wait for Unity Editor and MCP server to be ready
+unity-mcp-cli wait-for-ready ./MyAIGame
+
+# 8. Run tests to verify everything works
+unity-mcp-cli run-tool tests-run ./MyAIGame --input '{"testMode":"EditMode"}'
 ```
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)

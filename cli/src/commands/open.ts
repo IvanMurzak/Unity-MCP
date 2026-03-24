@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import * as path from 'path';
 import * as fs from 'fs';
 import { findEditorPath, getProjectEditorVersion, launchEditor, printEditorNotFoundHelp } from '../utils/unity-editor.js';
+import { findUnityProcess } from '../utils/unity-process.js';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
 
@@ -44,6 +45,14 @@ export const openCommand = new Command('open')
 
     verbose(`open invoked for project: ${projectPath}`);
     verbose(`--no-connect: ${options.connect === false}`);
+
+    // Check if Unity is already running with this project
+    const existingProcess = findUnityProcess(projectPath);
+    if (existingProcess) {
+      ui.success(`Unity is already running with this project (PID: ${existingProcess.pid})`);
+      ui.info('Skipping launch. Use the running instance or close it first.');
+      process.exit(0);
+    }
 
     // Determine editor version
     let version = options.unity;

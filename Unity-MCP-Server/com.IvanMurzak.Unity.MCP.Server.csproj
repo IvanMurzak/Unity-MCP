@@ -35,10 +35,26 @@
     <ErrorOnDuplicatePublishOutputFiles>false</ErrorOnDuplicatePublishOutputFiles>
   </PropertyGroup>
 
-  <ItemGroup>
-    <!-- <ProjectReference Include="./../../MCP-Plugin-dotnet/McpPlugin.Server/McpPlugin.Server.csproj" /> -->
+  <!--
+    Local development toggle: build with /p:UseLocalMcpPlugin=true to reference
+    MCP-Plugin-dotnet source instead of NuGet packages. Useful for verifying
+    cross-project changes before publishing.
+  -->
+  <PropertyGroup>
+    <UseLocalMcpPlugin Condition="'$(UseLocalMcpPlugin)' == ''">false</UseLocalMcpPlugin>
+  </PropertyGroup>
+
+  <ItemGroup Condition="'$(UseLocalMcpPlugin)' != 'true'">
     <PackageReference Include="com.IvanMurzak.ReflectorNet" Version="4.0.0" />
     <PackageReference Include="com.IvanMurzak.McpPlugin.Server" Version="5.7.0" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(UseLocalMcpPlugin)' == 'true'">
+    <ProjectReference Include="./../../MCP-Plugin-dotnet/McpPlugin.Server/McpPlugin.Server.csproj" />
+    <ProjectReference Include="./../../ReflectorNet/ReflectorNet/ReflectorNet.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="10.0.3" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.3" />
     <PackageReference Include="NLog.Web.AspNetCore" Version="6.1.2" />

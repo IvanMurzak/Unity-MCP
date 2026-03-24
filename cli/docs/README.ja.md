@@ -36,9 +36,11 @@
 - :white_check_mark: **プラグインのインストール** — 必要なスコープレジストリとともにUnity-MCPプラグインを`manifest.json`に追加
 - :white_check_mark: **プラグインの削除** — Unity-MCPプラグインを`manifest.json`から削除
 - :white_check_mark: **設定** — MCPツール、プロンプト、リソースの有効化/無効化
+- :white_check_mark: **ステータス確認** — Unityプロセス、ローカルサーバー、クラウドサーバーの接続状態を一目で確認
 - :white_check_mark: **ツールの実行** — コマンドラインからMCPツールを直接実行
 - :white_check_mark: **MCPのセットアップ** — 14種類のサポート対象エージェントのAIエージェントMCP設定ファイルを書き出し
 - :white_check_mark: **スキルのセットアップ** — MCPサーバー経由でAIエージェント用のスキルファイルを生成
+- :white_check_mark: **準備完了待機** — Unity EditorとMCPサーバーが接続されてツール呼び出しを受け付けるまでポーリング
 - :white_check_mark: **起動と接続** — MCP環境変数を設定してUnityを起動し、自動的にサーバーに接続
 - :white_check_mark: **クロスプラットフォーム** — Windows、macOS、Linuxに対応
 - :white_check_mark: **CI対応** — 非インタラクティブターミナルを自動検出し、スピナーやカラーを無効化
@@ -94,9 +96,11 @@ npx unity-mcp-cli install-plugin /path/to/unity/project
   - [`install-unity`](#install-unity)
   - [`open`](#open)
   - [`run-tool`](#run-tool)
+  - [`wait-for-ready`](#wait-for-ready)
   - [`setup-mcp`](#setup-mcp)
   - [`setup-skills`](#setup-skills)
   - [`remove-plugin`](#remove-plugin)
+  - [`status`](#status)
   - [グローバルオプション](#global-options)
 - [完全自動化の例](#full-automation-example)
 - [仕組み](#how-it-works)
@@ -320,6 +324,44 @@ unity-mcp-cli run-tool assets-list ./MyGame --raw | jq '.results'
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
+## `wait-for-ready`
+
+Unity EditorとMCPサーバーが接続され、ツール呼び出しを受け付ける準備ができるまで待機します。設定可能な間隔でサーバーをポーリングし、正常に応答するかタイムアウトに達するまで待ちます。`open`でUnityを起動した後、エージェントがツールの呼び出しを開始できるタイミングを知る必要がある自動化スクリプトやAIエージェントのオーケストレーションに便利です。
+
+```bash
+unity-mcp-cli wait-for-ready ./MyGame
+```
+
+| オプション | 必須 | 説明 |
+|---|---|---|
+| `[path]` | いいえ | Unityプロジェクトのパス（位置引数または`--path`）— 設定の読み取りとポートの検出に使用 |
+| `--url <url>` | いいえ | サーバーURLの直接指定（設定をバイパス） |
+| `--token <token>` | いいえ | Bearerトークンの直接指定（設定をバイパス） |
+| `--timeout <ms>` | いいえ | 最大待機時間（ミリ秒単位、デフォルト：120000） |
+| `--interval <ms>` | いいえ | ポーリング間隔（ミリ秒単位、デフォルト：3000） |
+
+**例 — デフォルトタイムアウト（120秒）で待機：**
+
+```bash
+unity-mcp-cli open ./MyGame
+unity-mcp-cli wait-for-ready ./MyGame
+unity-mcp-cli run-tool tests-run ./MyGame --input '{"testMode":"EditMode"}'
+```
+
+**例 — CI用の短いタイムアウト：**
+
+```bash
+unity-mcp-cli wait-for-ready ./MyGame --timeout 60000 --interval 2000
+```
+
+**例 — サーバーURLを明示的に指定：**
+
+```bash
+unity-mcp-cli wait-for-ready --url http://localhost:8080 --timeout 30000
+```
+
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
 ## `setup-mcp`
 
 AIエージェント用のMCP設定ファイルを書き出し、Unity Editor UIなしでヘッドレス/CIセットアップを可能にします。14種類すべてのエージェント（Claude Code、Cursor、Geminiなど）をサポートしています。
@@ -397,6 +439,23 @@ unity-mcp-cli remove-plugin ./MyGame
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
+## `status`
+
+Unity EditorとMCPサーバーの接続状態を確認します。Unityが実行中かどうか、ローカルMCPサーバーが到達可能かどうか、設定されたサーバー（例：クラウド）が到達可能かどうかを表示します。
+
+```bash
+unity-mcp-cli status ./MyGame
+```
+
+| オプション | 必須 | 説明 |
+|---|---|---|
+| `[path]` | いいえ | Unityプロジェクトのパス（位置引数または`--path`） |
+| `--url <url>` | いいえ | サーバーURLの直接指定（設定をバイパス） |
+| `--token <token>` | いいえ | Bearerトークンの直接指定（設定をバイパス） |
+| `--timeout <ms>` | いいえ | プローブタイムアウト（ミリ秒単位、デフォルト：5000） |
+
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
 ## グローバルオプション
 
 以下のオプションはすべてのコマンドで使用できます：
@@ -439,6 +498,12 @@ unity-mcp-cli setup-mcp claude-code ./MyAIGame
 unity-mcp-cli open ./MyAIGame \
   --url http://localhost:8080 \
   --keep-connected
+
+# 7. Wait for Unity Editor and MCP server to be ready
+unity-mcp-cli wait-for-ready ./MyAIGame
+
+# 8. Run tests to verify everything works
+unity-mcp-cli run-tool tests-run ./MyAIGame --input '{"testMode":"EditMode"}'
 ```
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
