@@ -36,9 +36,11 @@ Cross-platform CLI tool for **[Unity MCP](https://github.com/IvanMurzak/Unity-MC
 - :white_check_mark: **Install plugin** — add Unity-MCP plugin to `manifest.json` with all required scoped registries
 - :white_check_mark: **Remove plugin** — remove Unity-MCP plugin from `manifest.json`
 - :white_check_mark: **Configure** — enable/disable MCP tools, prompts, and resources
+- :white_check_mark: **Status check** — see Unity process, local server, and cloud server connection status at a glance
 - :white_check_mark: **Run tools** — execute MCP tools directly from the command line
 - :white_check_mark: **Setup MCP** — write AI agent MCP config files for any of 14 supported agents
 - :white_check_mark: **Setup skills** — generate skill files for AI agents via the MCP server
+- :white_check_mark: **Wait for ready** — poll until Unity Editor and MCP server are connected and accepting tool calls
 - :white_check_mark: **Open & Connect** — launch Unity with optional MCP environment variables for automated server connection
 - :white_check_mark: **Cross-platform** — Windows, macOS, and Linux
 - :white_check_mark: **CI-friendly** — auto-detects non-interactive terminals and disables spinners/colors
@@ -94,9 +96,11 @@ npx unity-mcp-cli install-plugin /path/to/unity/project
   - [`install-unity`](#install-unity)
   - [`open`](#open)
   - [`run-tool`](#run-tool)
+  - [`wait-for-ready`](#wait-for-ready)
   - [`setup-mcp`](#setup-mcp)
   - [`setup-skills`](#setup-skills)
   - [`remove-plugin`](#remove-plugin)
+  - [`status`](#status)
   - [Global Options](#global-options)
 - [Full Automation Example](#full-automation-example)
 - [How It Works](#how-it-works)
@@ -320,6 +324,44 @@ unity-mcp-cli run-tool assets-list ./MyGame --raw | jq '.results'
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
+## `wait-for-ready`
+
+Wait until Unity Editor and MCP server are connected and ready to accept tool calls. Polls the server at a configurable interval until it responds successfully or the timeout is reached. Useful for automation scripts and AI agent orchestration where `open` launches Unity but the agent needs to know when it can start calling tools.
+
+```bash
+unity-mcp-cli wait-for-ready ./MyGame
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `[path]` | No | Unity project path (positional or `--path`) — used to read config and detect port |
+| `--url <url>` | No | Direct server URL override (bypasses config) |
+| `--token <token>` | No | Bearer token override (bypasses config) |
+| `--timeout <ms>` | No | Maximum time to wait in milliseconds (default: 120000) |
+| `--interval <ms>` | No | Polling interval in milliseconds (default: 3000) |
+
+**Example — wait with default timeout (120s):**
+
+```bash
+unity-mcp-cli open ./MyGame
+unity-mcp-cli wait-for-ready ./MyGame
+unity-mcp-cli run-tool tests-run ./MyGame --input '{"testMode":"EditMode"}'
+```
+
+**Example — shorter timeout for CI:**
+
+```bash
+unity-mcp-cli wait-for-ready ./MyGame --timeout 60000 --interval 2000
+```
+
+**Example — explicit server URL:**
+
+```bash
+unity-mcp-cli wait-for-ready --url http://localhost:8080 --timeout 30000
+```
+
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
 ## `setup-mcp`
 
 Write MCP config files for AI agents, enabling headless/CI setup without the Unity Editor UI. Supports all 14 agents (Claude Code, Cursor, Gemini, Codex, etc.).
@@ -397,6 +439,41 @@ This command:
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
+## `status`
+
+Check Unity Editor and MCP server connection status. Shows whether Unity is running, whether the local MCP server is reachable, and whether the config-resolved server (e.g., cloud) is reachable.
+
+```bash
+unity-mcp-cli status ./MyGame
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `[path]` | No | Unity project path (positional or `--path`) |
+| `--url <url>` | No | Direct server URL override (bypasses config) |
+| `--token <token>` | No | Bearer token override (bypasses config) |
+| `--timeout <ms>` | No | Probe timeout in milliseconds (default: 5000) |
+
+**Example output:**
+
+```
+Unity-MCP Status
+  Project: /path/to/MyGame
+──────────────────────────────────────────────────
+Unity Editor Process
+✔  Unity is running (PID: 53740)
+Local MCP Server
+  URL: http://localhost:22958
+✖  Not available (connection refused)
+Config Server
+  URL: https://ai-game.dev/mcp
+✔  Connected
+──────────────────────────────────────────────────
+✔  MCP server is reachable — ready for tool calls
+```
+
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
 ## Global Options
 
 These options are available on all commands:
@@ -439,6 +516,12 @@ unity-mcp-cli setup-mcp claude-code ./MyAIGame
 unity-mcp-cli open ./MyAIGame \
   --url http://localhost:8080 \
   --keep-connected
+
+# 7. Wait for Unity Editor and MCP server to be ready
+unity-mcp-cli wait-for-ready ./MyAIGame
+
+# 8. Run tests to verify everything works
+unity-mcp-cli run-tool tests-run ./MyAIGame --input '{"testMode":"EditMode"}'
 ```
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
