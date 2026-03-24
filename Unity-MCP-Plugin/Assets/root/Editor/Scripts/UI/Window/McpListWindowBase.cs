@@ -90,10 +90,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         private void SubscribeToUpdates()
         {
             UnityMcpPluginEditor.PluginProperty
-                .WhereNotNull()
                 .Subscribe(plugin =>
                 {
                     _innerSubscription?.Dispose();
+                    _innerSubscription = null;
+
+                    if (plugin == null)
+                        return;
+
                     _innerSubscription = GetOnUpdatedObservable(plugin)?
                         .ObserveOnCurrentSynchronizationContext()
                         .Subscribe(_ =>

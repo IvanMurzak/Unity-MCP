@@ -73,13 +73,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     var currentState = toolManager.IsToolEnabled(resolvedName);
                     if (currentState == input.Enabled)
                     {
-                        success[resolvedName] = true;
+                        success[input.Name!] = true;
                         logs?.Info($"Tool '{resolvedName}' is already {(input.Enabled ? "enabled" : "disabled")}.");
                         continue;
                     }
 
                     toolManager.SetToolEnabled(resolvedName, input.Enabled);
-                    success[resolvedName] = true;
+                    success[input.Name!] = true;
                     changed = true;
                     logs?.Info($"Tool '{resolvedName}' has been {(input.Enabled ? "enabled" : "disabled")}.");
                 }
