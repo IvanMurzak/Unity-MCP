@@ -3,7 +3,7 @@ import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
 import { resolveAndValidateProjectPath, resolveConnection } from '../utils/connection.js';
 import { generatePortFromDirectory } from '../utils/port.js';
-import { probe } from '../utils/probe.js';
+import { probe, type ProbeResult } from '../utils/probe.js';
 
 const MAX_PROBE_TIMEOUT_MS = 10_000;
 
@@ -91,12 +91,19 @@ export const waitForReadyCommand = new Command('wait-for-ready')
       spinner.text = `Waiting for Unity Editor and MCP server... (${remaining}s remaining)`;
 
       const probeTimeout = Math.min(intervalMs, MAX_PROBE_TIMEOUT_MS);
-      const results = await Promise.all(
-        probeUrls.map(url => probe(url, headers, probeTimeout))
-      );
 
-      const ready = results.find(r => r.ok);
-      if (ready && ready.ok) {
+      // Race probes: resolve as soon as any succeeds, don't wait for slow ones
+      const ready = await new Promise<ProbeResult | null>(resolve => {
+        let pending = probeUrls.length;
+        for (const url of probeUrls) {
+          probe(url, headers, probeTimeout).then(result => {
+            if (result.ok) resolve(result);
+            else if (--pending === 0) resolve(null);
+          });
+        }
+      });
+
+      if (ready?.ok) {
         const totalSeconds = ((Date.now() - startTime) / 1000).toFixed(1);
         spinner.success(`MCP server is ready at ${ready.baseUrl} (connected in ${totalSeconds}s)`);
         process.exit(0);
