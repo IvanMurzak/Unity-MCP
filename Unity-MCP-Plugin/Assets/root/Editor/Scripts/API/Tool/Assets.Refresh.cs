@@ -55,7 +55,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 if (EditorUtility.scriptCompilationFailed)
                 {
                     var errorDetails = ScriptUtils.GetCompilationErrorDetails();
-                    return ResponseCallTool.Error($"AssetDatabase refreshed, but compilation errors exist:\n\n{errorDetails}").SetRequestID(requestId);
+                    return ResponseCallTool.Success($"[Warning] AssetDatabase refreshed, but compilation errors exist:\n\n{errorDetails}").SetRequestID(requestId);
                 }
 
                 return ResponseCallTool.Success("AssetDatabase refreshed successfully.").SetRequestID(requestId);
