@@ -17,6 +17,7 @@ using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using Extensions.Unity.PlayerPrefsEx;
 using Microsoft.Extensions.Logging;
+using R3;
 using UnityEngine.UIElements;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
@@ -42,6 +43,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             window.Focus();
             return window;
         }
+
+        protected override Observable<Unit>? GetOnUpdatedObservable(IMcpPlugin plugin)
+            => plugin.McpManager.ResourceManager?.OnResourcesUpdated;
 
         protected override void RefreshItems()
         {
