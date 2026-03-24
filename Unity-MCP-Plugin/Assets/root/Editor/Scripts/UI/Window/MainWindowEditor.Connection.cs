@@ -26,6 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         private TextField? _inputFieldHost;
         private VisualElement? _connectionStatusCircle;
         private Label? _connectionStatusText;
+        private readonly SerialDisposable _authRejectedSubscription = new();
 
         private void SetupConnectionSection(VisualElement root)
         {
@@ -74,10 +75,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 .WhereNotNull()
                 .Subscribe(plugin =>
                 {
-                    plugin.OnAuthorizationRejected
+                    _authRejectedSubscription.Disposable = plugin.OnAuthorizationRejected
                         .ObserveOnCurrentSynchronizationContext()
-                        .Subscribe(_ => OnAuthorizationRejected())
-                        .AddTo(_disposables);
+                        .Subscribe(_ => OnAuthorizationRejected());
                 })
                 .AddTo(_disposables);
 

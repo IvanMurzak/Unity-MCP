@@ -126,6 +126,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI.Controls
 
         private void BuildSegments(string[] labels)
         {
+#if UNITY_2023_2_OR_NEWER
+            _segmentLabels = labels;
+#endif
             // Remove old segments (keep highlight at index 0)
             foreach (var seg in _segments)
                 _track.Remove(seg);
