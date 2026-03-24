@@ -3,8 +3,8 @@ import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
 import { resolveAndValidateProjectPath, resolveConnection } from '../utils/connection.js';
 import { generatePortFromDirectory } from '../utils/port.js';
+import { probe } from '../utils/probe.js';
 
-const PING_ENDPOINT = '/api/system-tools/ping';
 const MAX_PROBE_TIMEOUT_MS = 10_000;
 
 interface WaitForReadyOptions {
@@ -38,53 +38,6 @@ function resolveProbeUrls(
   }
 
   return urls;
-}
-
-/**
- * Probe a single endpoint. Returns the base URL on success, null on failure.
- */
-async function probeEndpoint(
-  baseUrl: string,
-  headers: Record<string, string>,
-  timeoutMs: number,
-): Promise<string | null> {
-  const endpoint = `${baseUrl}${PING_ENDPOINT}`;
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers,
-      body: '{}',
-      signal: controller.signal,
-    });
-
-    if (response.ok) {
-      await response.text();
-      return baseUrl;
-    }
-
-    verbose(`[${baseUrl}] HTTP ${response.status} — not ready yet`);
-    return null;
-  } catch (err) {
-    const cause = err instanceof Error && 'cause' in err ? (err.cause as Error & { code?: string }) : null;
-    const code = cause?.code ?? '';
-    const isAbort = err instanceof Error && err.name === 'AbortError';
-
-    if (isAbort) {
-      verbose(`[${baseUrl}] probe timed out`);
-    } else if (code === 'ECONNREFUSED') {
-      verbose(`[${baseUrl}] connection refused`);
-    } else if (code === 'ECONNRESET') {
-      verbose(`[${baseUrl}] connection reset`);
-    } else {
-      verbose(`[${baseUrl}] probe failed: ${err instanceof Error ? err.message : String(err)}`);
-    }
-    return null;
-  } finally {
-    clearTimeout(timer);
-  }
 }
 
 export const waitForReadyCommand = new Command('wait-for-ready')
@@ -139,13 +92,13 @@ export const waitForReadyCommand = new Command('wait-for-ready')
 
       const probeTimeout = Math.min(intervalMs, MAX_PROBE_TIMEOUT_MS);
       const results = await Promise.all(
-        probeUrls.map(url => probeEndpoint(url, headers, probeTimeout))
+        probeUrls.map(url => probe(url, headers, probeTimeout))
       );
 
-      const readyUrl = results.find(r => r !== null);
-      if (readyUrl) {
+      const ready = results.find(r => r.ok);
+      if (ready && ready.ok) {
         const totalSeconds = ((Date.now() - startTime) / 1000).toFixed(1);
-        spinner.success(`MCP server is ready at ${readyUrl} (connected in ${totalSeconds}s)`);
+        spinner.success(`MCP server is ready at ${ready.baseUrl} (connected in ${totalSeconds}s)`);
         process.exit(0);
       }
 

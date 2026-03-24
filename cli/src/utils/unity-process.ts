@@ -43,7 +43,7 @@ function listUnityProcesses(): UnityProcess[] {
       const psCommand = `powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \\"Name='Unity.exe'\\" | Select-Object ProcessId,CommandLine | ForEach-Object { $_.ProcessId.ToString() + '|||' + $_.CommandLine }"`;
       const output = execSync(
         psCommand,
-        { encoding: 'utf-8', timeout: 10000, stdio: ['pipe', 'pipe', 'pipe'] }
+        { encoding: 'utf-8', timeout: 3000, stdio: ['pipe', 'pipe', 'pipe'] }
       );
       lines = output.split('\n').filter(l => l.trim().length > 0);
 
