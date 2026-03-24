@@ -10,6 +10,8 @@ import { runToolCommand } from './commands/run-tool.js';
 import { runSystemToolCommand } from './commands/run-system-tool.js';
 import { setupMcpCommand } from './commands/setup-mcp.js';
 import { setupSkillsCommand } from './commands/setup-skills.js';
+import { statusCommand } from './commands/status.js';
+import { waitForReadyCommand } from './commands/wait-for-ready.js';
 import { configureStyledHelp, error as uiError, setVerbose } from './utils/ui.js';
 
 const require = createRequire(import.meta.url);
@@ -35,6 +37,8 @@ const subcommands = [
   runSystemToolCommand,
   setupMcpCommand,
   setupSkillsCommand,
+  statusCommand,
+  waitForReadyCommand,
 ];
 
 for (const cmd of subcommands) {
