@@ -120,6 +120,10 @@
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:VisualElement class="divider" />
+            <!-- Extensions Section ============================== -->
+            <ui:Label text="Extensions" class="header" />
+            <ui:VisualElement name="ExtensionsSection" />
+            <ui:VisualElement class="divider" />
             <!-- Support Section ============================== -->
             <ui:VisualElement>
                 <ui:VisualElement>
