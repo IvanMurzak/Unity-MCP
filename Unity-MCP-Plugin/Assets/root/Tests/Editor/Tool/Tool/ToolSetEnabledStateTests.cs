@@ -164,7 +164,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 ""includeLogs"": false
             }}").Value!.GetMessage()!;
 
-            Assert.IsTrue(GetSuccessValue(json, _testToolName!), $"Should resolve '{wrongCase}' to '{_testToolName}'");
+            Assert.IsTrue(GetSuccessValue(json, wrongCase), $"Should resolve '{wrongCase}' to '{_testToolName}'");
         }
 
         [UnityTest]

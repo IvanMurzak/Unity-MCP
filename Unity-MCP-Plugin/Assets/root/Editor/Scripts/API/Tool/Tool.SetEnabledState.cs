@@ -66,7 +66,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     var resolvedName = ResolveToolName(exactLookup, caseInsensitiveLookup, input.Name!, logs);
                     if (resolvedName == null)
                     {
-                        success[input.Name] = false;
+                        success[input.Name!] = false;
                         continue;
                     }
 
