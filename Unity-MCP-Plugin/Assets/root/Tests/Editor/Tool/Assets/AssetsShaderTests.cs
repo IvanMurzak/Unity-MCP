@@ -11,6 +11,7 @@
 #nullable enable
 using System.Collections.Generic;
 using com.IvanMurzak.McpPlugin.Common.Model;
+using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Editor.Tests.Utils;
 using NUnit.Framework;
