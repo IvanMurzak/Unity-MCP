@@ -38,13 +38,32 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "Returns shader properties, subshaders, passes, compilation errors, and supported status. " +
             "Use '" + Tool_Assets.AssetsFindToolId + "' tool with filter 't:Shader' to find shaders, " +
             "or '" + AssetsShaderListAllToolId + "' tool to list all shader names.")]
-        public ShaderData GetData(AssetObjectRef assetRef)
+        public ShaderData GetData
+        (
+            AssetObjectRef assetRef,
+            [Description("Include compilation error and warning messages. Default: true")]
+            bool? includeMessages = true,
+            [Description("Include shader properties (uniforms) list. Default: false")]
+            bool? includeProperties = false,
+            [Description("Include subshader and pass structure. Default: false")]
+            bool? includeSubshaders = false,
+            [Description("Include pass source code in subshader data. Requires 'includeSubshaders' to be true. Can produce very large responses. Default: false")]
+            bool? includeSourceCode = false
+        )
         {
             if (assetRef == null)
                 throw new ArgumentNullException(nameof(assetRef));
 
             if (!assetRef.IsValid(out var error))
                 throw new ArgumentException(error, nameof(assetRef));
+
+            var options = new ShaderDataOptions
+            {
+                IncludeMessages = includeMessages ?? false,
+                IncludeProperties = includeProperties ?? false,
+                IncludeSubshaders = includeSubshaders ?? false,
+                IncludeSourceCode = includeSourceCode ?? false
+            };
 
             return MainThread.Instance.Run(() =>
             {
@@ -56,11 +75,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 if (shader == null)
                     throw new ArgumentException($"Asset at '{assetRef.AssetPath}' is not a Shader. It is a '{asset.GetType().Name}'.", nameof(assetRef));
 
-                return BuildShaderData(shader);
+                return BuildShaderData(shader, options);
             });
         }
 
-        static ShaderData BuildShaderData(Shader shader)
+        static ShaderData BuildShaderData(Shader shader, ShaderDataOptions options)
         {
             var data = new ShaderData
             {
@@ -73,87 +92,96 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 PassCount = shader.passCount
             };
 
-            var messages = ShaderUtil.GetShaderMessages(shader);
-            if (messages != null && messages.Length > 0)
+            if (options.IncludeMessages)
             {
-                data.Messages = messages.Select(msg => new ShaderMessageData
+                var messages = ShaderUtil.GetShaderMessages(shader);
+                if (messages != null && messages.Length > 0)
                 {
-                    Message = msg.message,
-                    Line = msg.line,
-                    Severity = msg.severity.ToString(),
-                    Platform = msg.platform.ToString()
-                }).ToList();
-            }
-
-            var propertyCount = data.PropertyCount;
-            if (propertyCount > 0)
-            {
-                data.Properties = new List<ShaderPropertyData>(propertyCount);
-                for (var i = 0; i < propertyCount; i++)
-                {
-                    var propType = shader.GetPropertyType(i);
-                    var prop = new ShaderPropertyData
+                    data.Messages = messages.Select(msg => new ShaderMessageData
                     {
-                        Name = shader.GetPropertyName(i),
-                        Description = shader.GetPropertyDescription(i),
-                        Type = propType.ToString(),
-                        Flags = shader.GetPropertyFlags(i).ToString(),
-                        NameId = shader.GetPropertyNameId(i)
-                    };
-                    if (propType == ShaderPropertyType.Range)
-                    {
-                        var rangeLimits = shader.GetPropertyRangeLimits(i);
-                        prop.RangeMin = rangeLimits.x;
-                        prop.RangeMax = rangeLimits.y;
-                    }
-
-                    if (propType == ShaderPropertyType.Texture)
-                    {
-                        var defaultTextureName = shader.GetPropertyTextureDefaultName(i);
-                        if (!string.IsNullOrEmpty(defaultTextureName))
-                            prop.DefaultTextureName = defaultTextureName;
-                    }
-
-                    var attributes = shader.GetPropertyAttributes(i);
-                    if (attributes != null && attributes.Length > 0)
-                        prop.Attributes = attributes.ToList();
-
-                    data.Properties.Add(prop);
+                        Message = msg.message,
+                        Line = msg.line,
+                        Severity = msg.severity.ToString(),
+                        Platform = msg.platform.ToString()
+                    }).ToList();
                 }
             }
 
-            var shaderData = ShaderUtil.GetShaderData(shader);
-            if (shaderData != null)
+            if (options.IncludeProperties)
             {
-                var subshaderCount = shaderData.SubshaderCount;
-                if (subshaderCount > 0)
+                var propertyCount = data.PropertyCount;
+                if (propertyCount > 0)
                 {
-                    data.Subshaders = new List<SubshaderData>(subshaderCount);
-                    for (var s = 0; s < subshaderCount; s++)
+                    data.Properties = new List<ShaderPropertyData>(propertyCount);
+                    for (var i = 0; i < propertyCount; i++)
                     {
-                        var subshader = shaderData.GetSubshader(s);
-                        var subshaderData = new SubshaderData
+                        var propType = shader.GetPropertyType(i);
+                        var prop = new ShaderPropertyData
                         {
-                            Index = s,
-                            PassCount = subshader.PassCount
+                            Name = shader.GetPropertyName(i),
+                            Description = shader.GetPropertyDescription(i),
+                            Type = propType.ToString(),
+                            Flags = shader.GetPropertyFlags(i).ToString(),
+                            NameId = shader.GetPropertyNameId(i)
                         };
-
-                        if (subshader.PassCount > 0)
+                        if (propType == ShaderPropertyType.Range)
                         {
-                            subshaderData.Passes = new List<PassData>(subshader.PassCount);
-                            for (var p = 0; p < subshader.PassCount; p++)
-                            {
-                                var pass = subshader.GetPass(p);
-                                subshaderData.Passes.Add(new PassData
-                                {
-                                    Index = p,
-                                    Name = string.IsNullOrEmpty(pass.Name) ? null : pass.Name,
-                                    SourceCode = pass.SourceCode
-                                });
-                            }
+                            var rangeLimits = shader.GetPropertyRangeLimits(i);
+                            prop.RangeMin = rangeLimits.x;
+                            prop.RangeMax = rangeLimits.y;
                         }
 
-                        data.Subshaders.Add(subshaderData);
+                        if (propType == ShaderPropertyType.Texture)
+                        {
+                            var defaultTextureName = shader.GetPropertyTextureDefaultName(i);
+                            if (!string.IsNullOrEmpty(defaultTextureName))
+                                prop.DefaultTextureName = defaultTextureName;
+                        }
+
+                        var attributes = shader.GetPropertyAttributes(i);
+                        if (attributes != null && attributes.Length > 0)
+                            prop.Attributes = attributes.ToList();
+
+                        data.Properties.Add(prop);
+                    }
+                }
+            }
+
+            if (options.IncludeSubshaders)
+            {
+                var shaderData = ShaderUtil.GetShaderData(shader);
+                if (shaderData != null)
+                {
+                    var subshaderCount = shaderData.SubshaderCount;
+                    if (subshaderCount > 0)
+                    {
+                        data.Subshaders = new List<SubshaderData>(subshaderCount);
+                        for (var s = 0; s < subshaderCount; s++)
+                        {
+                            var subshader = shaderData.GetSubshader(s);
+                            var subshaderData = new SubshaderData
+                            {
+                                Index = s,
+                                PassCount = subshader.PassCount
+                            };
+
+                            if (subshader.PassCount > 0)
+                            {
+                                subshaderData.Passes = new List<PassData>(subshader.PassCount);
+                                for (var p = 0; p < subshader.PassCount; p++)
+                                {
+                                    var pass = subshader.GetPass(p);
+                                    subshaderData.Passes.Add(new PassData
+                                    {
+                                        Index = p,
+                                        Name = string.IsNullOrEmpty(pass.Name) ? null : pass.Name,
+                                        SourceCode = options.IncludeSourceCode ? pass.SourceCode : null
+                                    });
+                                }
+                            }
+
+                            data.Subshaders.Add(subshaderData);
+                        }
                     }
                 }
             }
@@ -165,6 +193,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             }
 
             return data;
+        }
+
+        struct ShaderDataOptions
+        {
+            public bool IncludeMessages;
+            public bool IncludeProperties;
+            public bool IncludeSubshaders;
+            public bool IncludeSourceCode;
         }
 
         public class ShaderData

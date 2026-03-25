@@ -114,7 +114,8 @@ Shader ""Test/BrokenShader""
                     json: JsonTestUtils.Fill(@"{
                         ""assetRef"": {
                             ""assetPath"": ""{assetPath}""
-                        }
+                        },
+                        ""includeProperties"": true
                     }",
                     new Dictionary<string, object?>
                     {
