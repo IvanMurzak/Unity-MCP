@@ -65,10 +65,10 @@ npm install -g unity-mcp-cli
 # 2. Install "AI Game Developer" in Unity project
 unity-mcp-cli install-plugin ./MyUnityProject
 
-# 3 Setup Skills for Claude Code
-unity-mcp-cli setup-skills claude-code ./MyUnityProject
+# 3. Login to cloud server
+unity-mcp-cli login ./MyUnityProject
 
-# (Optional) Open Unity project
+# 4. Open Unity project (auto-connects and generates skills)
 unity-mcp-cli open ./MyUnityProject
 ```
 
@@ -279,14 +279,14 @@ unity-mcp-cli create-project ./MyUnityProject              #  │ codex         
 # 2. Install "AI Game Developer" in Unity project          #  │ gemini             │
 unity-mcp-cli install-plugin ./MyUnityProject              #  │ github-copilot-cli │
                                                            #  │ kilo-code          │
-# 3. Setup Skills for Claude Code                          #  │ open-code          │
-unity-mcp-cli setup-skills claude-code ./MyUnityProject    #  │ rider-junie        │
+# 3. Login to cloud server                                 #  │ open-code          │
+unity-mcp-cli login ./MyUnityProject                       #  │ rider-junie        │
                                                            #  │ unity-ai           │
-# (Optional) Setup MCP for Claude Code                     #  │ vs-copilot         │
-unity-mcp-cli setup-mcp claude-code ./MyUnityProject       #  │ vscode-copilot     │
+# 4. Open Unity project (auto-connects and generates skills)  │ vs-copilot         │
+unity-mcp-cli open ./MyUnityProject                        #  │ vscode-copilot     │
                                                            #  └────────────────────┘
-# (It depends...) Open Unity project
-unity-mcp-cli open ./MyUnityProject
+# 5. Wait for Unity Editor to be ready
+unity-mcp-cli wait-for-ready ./MyUnityProject
 ```
 
 > See [full CLI documentation](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) for all available commands.

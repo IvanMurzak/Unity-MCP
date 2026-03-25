@@ -5,6 +5,7 @@ import { findEditorPath, getProjectEditorVersion, launchEditor, printEditorNotFo
 import { findUnityProcess } from '../utils/unity-process.js';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
+import { readConfig, isCloudMode, writeConfig } from '../utils/config.js';
 
 export const openCommand = new Command('open')
   .description('Open a Unity project in Unity Editor, optionally passing MCP connection env vars when connection options (--url, --token, etc.) are provided. Use --no-connect to suppress all MCP env vars.')
@@ -73,6 +74,26 @@ export const openCommand = new Command('open')
     }
     spinner.success('Unity Editor located');
     verbose(`Editor path: ${editorPath}`);
+
+    // Auto-detect Cloud mode: if project has cloudToken, ensure keep-connected
+    // so the Unity plugin connects to the cloud server on startup.
+    // Also enable auto-generate skills for claude-code by default.
+    {
+      const config = readConfig(projectPath);
+      if (config && isCloudMode(config) && config.cloudToken) {
+        if (!options.keepConnected) {
+          options.keepConnected = true;
+          verbose('Cloud mode with token detected — auto-enabling keep-connected');
+        }
+
+        const skillAutoGenerate = (config.skillAutoGenerate ?? {}) as Record<string, boolean>;
+        if (!skillAutoGenerate['claude-code']) {
+          skillAutoGenerate['claude-code'] = true;
+          writeConfig(projectPath, { ...config, skillAutoGenerate });
+          verbose('Auto-enabled skill generation for claude-code');
+        }
+      }
+    }
 
     // Build environment variables for MCP connection (unless --no-connect)
     const useConnect = options.connect !== false;

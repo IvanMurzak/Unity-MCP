@@ -65,10 +65,10 @@ npm install -g unity-mcp-cli
 # 2. Unity プロジェクトに「AI Game Developer」をインストール
 unity-mcp-cli install-plugin ./MyUnityProject
 
-# 3 Claude Code 用のスキルをセットアップ
-unity-mcp-cli setup-skills claude-code ./MyUnityProject
+# 3. クラウドサーバーにログイン
+unity-mcp-cli login ./MyUnityProject
 
-# （オプション）Unity プロジェクトを開く
+# 4. Unity プロジェクトを開く（自動接続・スキル生成）
 unity-mcp-cli open ./MyUnityProject
 ```
 
@@ -181,49 +181,49 @@ unity-mcp-cli open ./MyUnityProject
 
 # 目次
 
-- [クイックスタート](#quick-start)
-- [スキルとツールリファレンス](#skills-and-tools-reference)
-  - [追加のスキルとツールをインストール](#install-additional-skills-and-tools)
-- [目次](#contents)
-  - [その他のドキュメント](#more-documentation)
-- [インストール](#installation)
-  - [ステップ1: `Unity MCP Plugin` をインストール](#step-1-install-unity-mcp-plugin)
-    - [オプション1 - インストーラー](#option-1---installer)
-    - [オプション2 - CLI（推奨）](#option-2---cli-recommended)
-  - [ステップ2: `AI エージェント` をインストール](#step-2-install-ai-agent)
-  - [ステップ3: `AI エージェント` を設定](#step-3-configure-ai-agent)
-    - [自動設定](#automatic-configuration)
-    - [手動設定](#manual-configuration)
-      - [コマンドライン設定](#command-line-configuration)
-- [AI ワークフロー例](#ai-workflow-examples)
-  - [LLM 向け高度な機能](#advanced-features-for-llm)
-    - [コア機能](#core-capabilities)
-    - [リフレクション駆動の機能](#reflection-powered-features)
-- [ツールのカスタマイズ](#customize-tools)
-  - [カスタム `ツール` を追加](#add-custom-tool)
-  - [カスタム `MCP Prompt` を追加](#add-custom-mcp-prompt)
-- [ランタイム使用（ゲーム内）](#runtime-usage-in-game)
-  - [サンプル: AI チェスゲームボット](#sample-ai-powered-chess-game-bot)
-  - [ランタイム使用が必要な理由](#why-runtime-usage-is-needed)
-- [Unity `MCP Server` セットアップ](#unity-mcp-server-setup)
-  - [変数](#variables)
-  - [プラグイン変数](#plugin-variables)
+- [クイックスタート](#クイックスタート)
+- [スキルとツールリファレンス](#スキルとツールリファレンス)
+  - [追加のスキルとツールをインストール](#追加のスキルとツールをインストール)
+- [目次](#目次)
+  - [その他のドキュメント](#その他のドキュメント)
+- [インストール](#インストール)
+  - [ステップ1: `Unity MCP Plugin` をインストール](#ステップ1-unity-mcp-plugin-をインストール)
+    - [オプション1 - インストーラー](#オプション1---インストーラー)
+    - [オプション2 - CLI（推奨）](#オプション2---cli推奨)
+  - [ステップ2: `AI エージェント` をインストール](#ステップ2-ai-エージェント-をインストール)
+  - [ステップ3: `AI エージェント` を設定](#ステップ3-ai-エージェント-を設定)
+    - [自動設定](#自動設定)
+    - [手動設定](#手動設定)
+      - [コマンドライン設定](#コマンドライン設定)
+- [AI ワークフロー例](#ai-ワークフロー例)
+  - [LLM 向け高度な機能](#llm-向け高度な機能)
+    - [コア機能](#コア機能)
+    - [リフレクション駆動の機能](#リフレクション駆動の機能)
+- [ツールのカスタマイズ](#ツールのカスタマイズ)
+  - [カスタム `Tool` を追加](#カスタム-tool-を追加)
+  - [カスタム `MCP Prompt` を追加](#カスタム-mcp-prompt-を追加)
+- [ランタイム使用（ゲーム内）](#ランタイム使用ゲーム内)
+  - [サンプル: AI チェスゲームボット](#サンプル-ai-チェスゲームボット)
+  - [ランタイム使用が必要な理由](#ランタイム使用が必要な理由)
+- [Unity `MCP Server` セットアップ](#unity-mcp-server-セットアップ)
+  - [変数](#変数)
+  - [プラグイン変数](#プラグイン変数)
   - [Docker 📦](#docker-)
-    - [`streamableHttp` トランスポート](#streamablehttp-transport)
-    - [`stdio` トランスポート](#stdio-transport)
-    - [カスタム `port`](#custom-port)
-  - [バイナリ実行ファイル](#binary-executable)
-- [Unity MCP アーキテクチャの仕組み](#how-unity-mcp-architecture-works)
-  - [`MCP` とは](#what-is-mcp)
-  - [`AI エージェント` とは](#what-is-ai-agent)
-  - [`MCP Server` とは](#what-is-mcp-server)
-  - [`MCP Tool` とは](#what-is-mcp-tool)
-    - [`Tool` を使うタイミング](#when-to-use-tool)
-  - [`MCP Resource` とは](#what-is-mcp-resource)
-    - [`MCP Resource` を使うタイミング](#when-to-use-mcp-resource)
-  - [`MCP Prompt` とは](#what-is-mcp-prompt)
-    - [`MCP Prompt` を使うタイミング](#when-to-use-mcp-prompt)
-- [コントリビューション 💙💛](#contribution-)
+    - [`streamableHttp` トランスポート](#streamablehttp-トランスポート)
+    - [`stdio` トランスポート](#stdio-トランスポート)
+    - [カスタム `port`](#カスタム-port)
+  - [バイナリ実行ファイル](#バイナリ実行ファイル)
+- [Unity MCP アーキテクチャの仕組み](#unity-mcp-アーキテクチャの仕組み)
+  - [`MCP` とは](#mcp-とは)
+  - [`AI エージェント` とは](#ai-エージェント-とは)
+  - [`MCP Server` とは](#mcp-server-とは)
+  - [`MCP Tool` とは](#mcp-tool-とは)
+    - [`Tool` を使うタイミング](#tool-を使うタイミング)
+  - [`MCP Resource` とは](#mcp-resource-とは)
+    - [`MCP Resource` を使うタイミング](#mcp-resource-を使うタイミング)
+  - [`MCP Prompt` とは](#mcp-prompt-とは)
+    - [`MCP Prompt` を使うタイミング](#mcp-prompt-を使うタイミング)
+- [コントリビューション 💙💛](#コントリビューション-)
 
 ## その他のドキュメント
 
@@ -267,26 +267,26 @@ unity-mcp-cli open ./MyUnityProject
 [`unity-mcp-cli`](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) でプラグインをインストール — Unity Editor は不要です：
 
 ```bash
-# 1.1 unity-mcp-cli をインストール                              #  ┌────────────────────┐
+# 1.1 unity-mcp-cli をインストール                          #  ┌────────────────────┐
 npm install -g unity-mcp-cli                               #  │ Available AI agent │
                                                            #  ├────────────────────┤
-# 1.2 (オプション) Unity をインストール                          #  │ antigravity        │
+# 1.2 (オプション) Unity をインストール                      #  │ antigravity        │
 unity-mcp-cli install-unity                                #  │ claude-code        │
                                                            #  │ claude-desktop     │
-# 1.3 (オプション) Unity プロジェクトを作成                      #  │ cline              │
+# 1.3 (オプション) Unity プロジェクトを作成                   #  │ cline              │
 unity-mcp-cli create-project ./MyUnityProject              #  │ codex              │
                                                            #  │ cursor             │
-# 2. Unity プロジェクトに「AI Game Developer」をインストール     #  │ gemini             │
+# 2. Unity プロジェクトに「AI Game Developer」をインストール  #  │ gemini             │
 unity-mcp-cli install-plugin ./MyUnityProject              #  │ github-copilot-cli │
                                                            #  │ kilo-code          │
-# 3. Claude Code 用のスキルをセットアップ                       #  │ open-code          │
-unity-mcp-cli setup-skills claude-code ./MyUnityProject    #  │ rider-junie        │
+# 3. クラウドサーバーにログイン                              #  │ open-code          │
+unity-mcp-cli login ./MyUnityProject                       #  │ rider-junie        │
                                                            #  │ unity-ai           │
-# (オプション) Claude Code 用の MCP をセットアップ               #  │ vs-copilot         │
-unity-mcp-cli setup-mcp claude-code ./MyUnityProject       #  │ vscode-copilot     │
+# 4. Unity プロジェクトを開く（自動接続・スキル生成）          #  │ vs-copilot         │
+unity-mcp-cli open ./MyUnityProject                        #  │ vscode-copilot     │
                                                            #  └────────────────────┘
-# (必要に応じて) Unity プロジェクトを開く
-unity-mcp-cli open ./MyUnityProject
+# 5. Unity Editor の準備完了を待機
+unity-mcp-cli wait-for-ready ./MyUnityProject
 ```
 
 > すべての利用可能なコマンドについては [CLI の完全なドキュメント](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md)をご覧ください。

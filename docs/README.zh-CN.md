@@ -65,10 +65,10 @@ npm install -g unity-mcp-cli
 # 2. 在 Unity 项目中安装 "AI Game Developer"
 unity-mcp-cli install-plugin ./MyUnityProject
 
-# 3 为 Claude Code 配置技能
-unity-mcp-cli setup-skills claude-code ./MyUnityProject
+# 3. 登录云服务器
+unity-mcp-cli login ./MyUnityProject
 
-# （可选）打开 Unity 项目
+# 4. 打开 Unity 项目（自动连接并生成技能）
 unity-mcp-cli open ./MyUnityProject
 ```
 
@@ -181,49 +181,49 @@ unity-mcp-cli open ./MyUnityProject
 
 # 目录
 
-- [快速开始](#quick-start)
-- [技能和工具参考](#skills-and-tools-reference)
-  - [安装更多技能和工具](#install-additional-skills-and-tools)
-- [目录](#contents)
-  - [更多文档](#more-documentation)
-- [安装](#installation)
-  - [第一步：安装 `Unity MCP 插件`](#step-1-install-unity-mcp-plugin)
-    - [选项 1 — 安装器](#option-1---installer)
-    - [选项 2 — CLI（推荐）](#option-2---cli-recommended)
-  - [第二步：安装 `AI 智能体`](#step-2-install-ai-agent)
-  - [第三步：配置 `AI 智能体`](#step-3-configure-ai-agent)
-    - [自动配置](#automatic-configuration)
-    - [手动配置](#manual-configuration)
-      - [命令行配置](#command-line-configuration)
-- [AI 工作流示例](#ai-workflow-examples)
-  - [LLM 高级功能](#advanced-features-for-llm)
-    - [核心能力](#core-capabilities)
-    - [反射驱动功能](#reflection-powered-features)
-- [自定义工具](#customize-tools)
-  - [添加自定义 `Tool`](#add-custom-tool)
-  - [添加自定义 `MCP Prompt`](#add-custom-mcp-prompt)
-- [运行时使用（游戏内）](#runtime-usage-in-game)
-  - [示例：AI 驱动的国际象棋机器人](#sample-ai-powered-chess-game-bot)
-  - [为什么需要运行时使用？](#why-runtime-usage-is-needed)
-- [Unity `MCP Server` 设置](#unity-mcp-server-setup)
-  - [变量](#variables)
-  - [插件变量](#plugin-variables)
+- [快速开始](#快速开始)
+- [技能和工具参考](#技能和工具参考)
+  - [安装更多技能和工具](#安装更多技能和工具)
+- [目录](#目录)
+  - [更多文档](#更多文档)
+- [安装](#安装)
+  - [第一步：安装 `Unity MCP 插件`](#第一步安装-unity-mcp-插件)
+    - [选项 1 — 安装器](#选项-1--安装器)
+    - [选项 2 — CLI（推荐）](#选项-2--cli推荐)
+  - [第二步：安装 `AI 智能体`](#第二步安装-ai-智能体)
+  - [第三步：配置 `AI 智能体`](#第三步配置-ai-智能体)
+    - [自动配置](#自动配置)
+    - [手动配置](#手动配置)
+      - [命令行配置](#命令行配置)
+- [AI 工作流示例](#ai-工作流示例)
+  - [LLM 高级功能](#llm-高级功能)
+    - [核心能力](#核心能力)
+    - [反射驱动功能](#反射驱动功能)
+- [自定义工具](#自定义工具)
+  - [添加自定义 `Tool`](#添加自定义-tool)
+  - [添加自定义 `MCP Prompt`](#添加自定义-mcp-prompt)
+- [运行时使用（游戏内）](#运行时使用游戏内)
+  - [示例：AI 驱动的国际象棋机器人](#示例ai-驱动的国际象棋机器人)
+  - [为什么需要运行时使用？](#为什么需要运行时使用)
+- [Unity `MCP Server` 设置](#unity-mcp-server-设置)
+  - [变量](#变量)
+  - [插件变量](#插件变量)
   - [Docker 📦](#docker-)
-    - [`streamableHttp` 传输](#streamablehttp-transport)
-    - [`stdio` 传输](#stdio-transport)
-    - [自定义 `端口`](#custom-port)
-  - [二进制可执行文件](#binary-executable)
-- [Unity MCP 架构工作原理](#how-unity-mcp-architecture-works)
-  - [什么是 `MCP`](#what-is-mcp)
-  - [什么是 `AI 智能体`](#what-is-ai-agent)
-  - [什么是 `MCP Server`](#what-is-mcp-server)
-  - [什么是 `MCP Tool`](#what-is-mcp-tool)
-    - [何时使用 `Tool`](#when-to-use-tool)
-  - [什么是 `MCP Resource`](#what-is-mcp-resource)
-    - [何时使用 `MCP Resource`](#when-to-use-mcp-resource)
-  - [什么是 `MCP Prompt`](#what-is-mcp-prompt)
-    - [何时使用 `MCP Prompt`](#when-to-use-mcp-prompt)
-- [贡献 💙💛](#contribution-)
+    - [`streamableHttp` 传输](#streamablehttp-传输)
+    - [`stdio` 传输](#stdio-传输)
+    - [自定义 `端口`](#自定义-端口)
+  - [二进制可执行文件](#二进制可执行文件)
+- [Unity MCP 架构工作原理](#unity-mcp-架构工作原理)
+  - [什么是 `MCP`](#什么是-mcp)
+  - [什么是 `AI 智能体`](#什么是-ai-智能体)
+  - [什么是 `MCP Server`](#什么是-mcp-server)
+  - [什么是 `MCP Tool`](#什么是-mcp-tool)
+    - [何时使用 `Tool`](#何时使用-tool)
+  - [什么是 `MCP Resource`](#什么是-mcp-resource)
+    - [何时使用 `MCP Resource`](#何时使用-mcp-resource)
+  - [什么是 `MCP Prompt`](#什么是-mcp-prompt)
+    - [何时使用 `MCP Prompt`](#何时使用-mcp-prompt)
+- [贡献 💙💛](#贡献-)
 
 ## 更多文档
 
@@ -267,26 +267,26 @@ unity-mcp-cli open ./MyUnityProject
 通过 [`unity-mcp-cli`](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) 安装插件 — 无需 Unity 编辑器：
 
 ```bash
-# 1.1 安装 unity-mcp-cli                                      #  ┌────────────────────┐
+# 1.1 安装 unity-mcp-cli                                   #  ┌────────────────────┐
 npm install -g unity-mcp-cli                               #  │ Available AI agent │
                                                            #  ├────────────────────┤
-# 1.2 （可选）安装 Unity                                      #  │ antigravity        │
+# 1.2 （可选）安装 Unity                                    #  │ antigravity        │
 unity-mcp-cli install-unity                                #  │ claude-code        │
                                                            #  │ claude-desktop     │
-# 1.3 （可选）创建 Unity 项目                                  #  │ cline              │
+# 1.3 （可选）创建 Unity 项目                                #  │ cline              │
 unity-mcp-cli create-project ./MyUnityProject              #  │ codex              │
                                                            #  │ cursor             │
-# 2. 在 Unity 项目中安装 "AI Game Developer"                   #  │ gemini             │
+# 2. 在 Unity 项目中安装 "AI Game Developer"                #  │ gemini             │
 unity-mcp-cli install-plugin ./MyUnityProject              #  │ github-copilot-cli │
                                                            #  │ kilo-code          │
-# 3. 为 Claude Code 配置技能                                   #  │ open-code          │
-unity-mcp-cli setup-skills claude-code ./MyUnityProject    #  │ rider-junie        │
+# 3. 登录云服务器                                           #  │ open-code          │
+unity-mcp-cli login ./MyUnityProject                       #  │ rider-junie        │
                                                            #  │ unity-ai           │
-# （可选）为 Claude Code 配置 MCP                               #  │ vs-copilot         │
-unity-mcp-cli setup-mcp claude-code ./MyUnityProject       #  │ vscode-copilot     │
+# 4. 打开 Unity 项目（自动连接并生成技能）                    #  │ vs-copilot         │
+unity-mcp-cli open ./MyUnityProject                        #  │ vscode-copilot     │
                                                            #  └────────────────────┘
-# （视情况而定...）打开 Unity 项目
-unity-mcp-cli open ./MyUnityProject
+# 5. 等待 Unity Editor 准备就绪
+unity-mcp-cli wait-for-ready ./MyUnityProject
 ```
 
 > 查看[完整 CLI 文档](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md)了解所有可用命令。
