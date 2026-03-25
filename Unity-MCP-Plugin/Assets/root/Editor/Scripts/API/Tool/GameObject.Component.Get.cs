@@ -35,9 +35,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             IdempotentHint = true
         )]
         [Description("Get detailed information about a specific Component on a GameObject. " +
-        "Returns component type, enabled state, and optionally serialized fields and properties. " +
-        "Use this to inspect component data before modifying it. " +
-        "Use '" + GameObjectFindToolId + "' tool to get the list of all components on the GameObject.")]
+            "Returns component type, enabled state, and optionally serialized fields and properties. " +
+            "Use this to inspect component data before modifying it. " +
+            "Use '" + GameObjectFindToolId + "' tool to get the list of all components on the GameObject.")]
         public GetComponentResponse GetComponent
         (
             GameObjectRef gameObjectRef,
@@ -50,6 +50,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             bool deepSerialization = false
         )
         {
+            if (gameObjectRef == null)
+                throw new ArgumentNullException(nameof(gameObjectRef));
+
+            if (componentRef == null)
+                throw new ArgumentNullException(nameof(componentRef));
+
             if (!gameObjectRef.IsValid(out var gameObjectValidationError))
                 throw new ArgumentException(gameObjectValidationError, nameof(gameObjectRef));
 
