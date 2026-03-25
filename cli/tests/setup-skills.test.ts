@@ -25,7 +25,7 @@ interface CapturedRequest {
 
 interface CaptureServer {
   port: number;
-  waitForRequest: () => Promise<CapturedRequest>;
+  waitForRequest: (timeoutMs?: number) => Promise<CapturedRequest>;
   close: () => Promise<void>;
 }
 
@@ -53,7 +53,14 @@ function startCaptureServer(): Promise<CaptureServer> {
       const addr = server.address() as net.AddressInfo;
       resolve({
         port: addr.port,
-        waitForRequest: () => requestPromise,
+        waitForRequest: (timeoutMs = 10000) => {
+          return Promise.race([
+            requestPromise,
+            new Promise<never>((_, reject) => {
+              setTimeout(() => reject(new Error(`waitForRequest timed out after ${timeoutMs}ms`)), timeoutMs);
+            }),
+          ]);
+        },
         close: () => new Promise<void>((res) => server.close(() => res())),
       });
     });
@@ -65,10 +72,30 @@ function runCliAsync(args: string[]): Promise<{ stdout: string; exitCode: number
   return new Promise((resolve) => {
     const child = spawn('node', [CLI_PATH, ...args], { stdio: 'pipe' });
     let stdout = '';
+    let settled = false;
+    const timeoutMs = 30000;
+
+    const timeout = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      try { child.kill(); } catch { /* ignore kill errors */ }
+      stdout += '\n[runCliAsync] Process timed out.\n';
+      resolve({ stdout, exitCode: 1 });
+    }, timeoutMs);
+
+    const finish = (exitCode: number) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      resolve({ stdout, exitCode });
+    };
+
     child.stdout?.on('data', (d: Buffer) => { stdout += d.toString(); });
     child.stderr?.on('data', (d: Buffer) => { stdout += d.toString(); });
-    child.on('close', (code) => {
-      resolve({ stdout, exitCode: code ?? 0 });
+    child.on('close', (code) => { finish(code ?? 0); });
+    child.on('error', (err) => {
+      stdout += `\n[runCliAsync] Error: ${String(err)}\n`;
+      finish(1);
     });
   });
 }
