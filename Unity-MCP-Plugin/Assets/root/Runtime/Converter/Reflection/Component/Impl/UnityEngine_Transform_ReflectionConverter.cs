@@ -11,6 +11,8 @@
 #nullable enable
 
 using System.Collections.Generic;
+using System.Linq;
+using com.IvanMurzak.ReflectorNet;
 
 namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
@@ -22,6 +24,19 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 yield return property;
 
             yield return "parentInternal";
+        }
+
+        protected override IEnumerable<string> GetKnownSerializableProperties(Reflector reflector, object? obj)
+        {
+            return base.GetKnownSerializableProperties(reflector, obj).Concat(new[]
+            {
+                nameof(UnityEngine.Transform.position),
+                nameof(UnityEngine.Transform.localPosition),
+                nameof(UnityEngine.Transform.eulerAngles),
+                nameof(UnityEngine.Transform.localEulerAngles),
+                nameof(UnityEngine.Transform.localScale),
+                nameof(UnityEngine.Transform.childCount),
+            });
         }
     }
 }
