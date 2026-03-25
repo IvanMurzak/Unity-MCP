@@ -34,6 +34,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.JsonConverter
                 Color c => CompareColor(c, (Color)(object)deserializedValue!),
                 Rect r => CompareRect(r, (Rect)(object)deserializedValue!),
                 Bounds b => CompareBounds(b, (Bounds)(object)deserializedValue!),
+                Gradient g => CompareGradient(g, (Gradient)(object)deserializedValue!),
+                GradientColorKey gck => CompareGradientColorKey(gck, (GradientColorKey)(object)deserializedValue!),
+                GradientAlphaKey gak => CompareGradientAlphaKey(gak, (GradientAlphaKey)(object)deserializedValue!),
                 _ => sourceValue!.Equals(deserializedValue)
             };
 
@@ -58,6 +61,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.JsonConverter
         static bool CompareColor(Color a, Color b) => CompareFloats(a.r, b.r) && CompareFloats(a.g, b.g) && CompareFloats(a.b, b.b) && CompareFloats(a.a, b.a);
         static bool CompareRect(Rect a, Rect b) => CompareFloats(a.x, b.x) && CompareFloats(a.y, b.y) && CompareFloats(a.width, b.width) && CompareFloats(a.height, b.height);
         static bool CompareBounds(Bounds a, Bounds b) => CompareVector3(a.center, b.center) && CompareVector3(a.size, b.size);
+        static bool CompareGradientColorKey(GradientColorKey a, GradientColorKey b) => CompareColor(a.color, b.color) && CompareFloats(a.time, b.time);
+        static bool CompareGradientAlphaKey(GradientAlphaKey a, GradientAlphaKey b) => CompareFloats(a.alpha, b.alpha) && CompareFloats(a.time, b.time);
+
+        static bool CompareGradient(Gradient a, Gradient b)
+        {
+            if (a.mode != b.mode) return false;
+            if (a.colorKeys.Length != b.colorKeys.Length) return false;
+            if (a.alphaKeys.Length != b.alphaKeys.Length) return false;
+            for (int i = 0; i < a.colorKeys.Length; i++)
+                if (!CompareGradientColorKey(a.colorKeys[i], b.colorKeys[i])) return false;
+            for (int i = 0; i < a.alphaKeys.Length; i++)
+                if (!CompareGradientAlphaKey(a.alphaKeys[i], b.alphaKeys[i])) return false;
+            return true;
+        }
 
         static bool CompareMatrix4x4(Matrix4x4 a, Matrix4x4 b)
         {

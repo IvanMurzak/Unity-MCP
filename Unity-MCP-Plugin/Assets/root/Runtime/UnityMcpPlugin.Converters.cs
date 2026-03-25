@@ -48,6 +48,9 @@ namespace com.IvanMurzak.Unity.MCP
             reflector.Converters.Add(new UnityEngine_BoundsInt_ReflectionConverter());
             reflector.Converters.Add(new UnityEngine_Rect_ReflectionConverter());
             reflector.Converters.Add(new UnityEngine_RectInt_ReflectionConverter());
+            reflector.Converters.Add(new UnityEngine_Gradient_ReflectionConverter());
+            reflector.Converters.Add(new UnityEngine_GradientColorKey_ReflectionConverter());
+            reflector.Converters.Add(new UnityEngine_GradientAlphaKey_ReflectionConverter());
 
             // Unity objects
             reflector.Converters.Add(new UnityEngine_Object_ReflectionConverter());
@@ -140,6 +143,9 @@ namespace com.IvanMurzak.Unity.MCP
             reflector.JsonSerializer.AddConverter(new BoundsIntConverter());
             reflector.JsonSerializer.AddConverter(new RectConverter());
             reflector.JsonSerializer.AddConverter(new RectIntConverter());
+            reflector.JsonSerializer.AddConverter(new GradientConverter());
+            reflector.JsonSerializer.AddConverter(new GradientColorKeyConverter());
+            reflector.JsonSerializer.AddConverter(new GradientAlphaKeyConverter());
 
             // Reference types
             reflector.JsonSerializer.AddConverter(new ObjectRefConverter());
