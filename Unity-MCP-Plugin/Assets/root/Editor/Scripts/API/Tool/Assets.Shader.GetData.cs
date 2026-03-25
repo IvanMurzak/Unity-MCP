@@ -57,12 +57,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (!assetRef.IsValid(out var error))
                 throw new ArgumentException(error, nameof(assetRef));
 
+            var resolvedIncludeSourceCode = includeSourceCode ?? false;
             var options = new ShaderDataOptions
             {
                 IncludeMessages = includeMessages ?? false,
                 IncludeProperties = includeProperties ?? false,
-                IncludeSubshaders = includeSubshaders ?? false,
-                IncludeSourceCode = includeSourceCode ?? false
+                IncludeSubshaders = (includeSubshaders ?? false) || resolvedIncludeSourceCode,
+                IncludeSourceCode = resolvedIncludeSourceCode
             };
 
             return MainThread.Instance.Run(() =>
