@@ -52,7 +52,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                     return true;
                 }
 
-                logs?.Error($"Failed to deserialize Gradient from JSON.", depth);
+                logs?.Error("Failed to deserialize Gradient from JSON.", depth);
                 return false;
             }
             catch (Exception ex)

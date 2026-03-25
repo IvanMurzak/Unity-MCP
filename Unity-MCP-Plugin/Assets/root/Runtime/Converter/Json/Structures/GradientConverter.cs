@@ -107,6 +107,10 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
                                     throw new JsonException($"Unknown GradientMode value: {modeInt}.");
                                 mode = (GradientMode)modeInt;
                             }
+                            else
+                            {
+                                throw new JsonException($"Invalid JSON token type for 'mode': {reader.TokenType}. Expected String or Number.");
+                            }
                             break;
                         default:
                             throw new JsonException($"Unexpected property name: {propertyName}. "
