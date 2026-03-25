@@ -14,11 +14,13 @@ export interface UnityProcess {
  * Returns process info if found, null otherwise.
  */
 export function findUnityProcess(projectPath: string): UnityProcess | null {
-  const normalizedTarget = path.resolve(projectPath).toLowerCase();
+  const isWindows = platform() === 'win32';
+  const resolvedTarget = path.resolve(projectPath);
+  const normalizedTarget = isWindows ? resolvedTarget.toLowerCase() : resolvedTarget;
   const processes = listUnityProcesses();
 
   for (const proc of processes) {
-    const normalizedProc = proc.projectPath.toLowerCase();
+    const normalizedProc = isWindows ? proc.projectPath.toLowerCase() : proc.projectPath;
     if (normalizedProc === normalizedTarget) {
       verbose(`Found Unity process PID ${proc.pid} with project: ${proc.projectPath}`);
       return proc;
@@ -43,7 +45,7 @@ function listUnityProcesses(): UnityProcess[] {
       const psCommand = `powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \\"Name='Unity.exe'\\" | Select-Object ProcessId,CommandLine | ForEach-Object { $_.ProcessId.ToString() + '|||' + $_.CommandLine }"`;
       const output = execSync(
         psCommand,
-        { encoding: 'utf-8', timeout: 10000, stdio: ['pipe', 'pipe', 'pipe'] }
+        { encoding: 'utf-8', timeout: 3000, stdio: ['pipe', 'pipe', 'pipe'] }
       );
       lines = output.split('\n').filter(l => l.trim().length > 0);
 
@@ -84,7 +86,7 @@ function listUnityProcesses(): UnityProcess[] {
 
         if (!commandLine.includes('-projectPath')) continue;
 
-        const projectPathMatch = commandLine.match(/-projectPath\s+"?([^"]+)"?/)
+        const projectPathMatch = commandLine.match(/-projectPath\s+"([^"]+)"/)
           ?? commandLine.match(/-projectPath\s+(\S+)/);
 
         if (projectPathMatch) {

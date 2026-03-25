@@ -44,6 +44,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             SerializedMember componentDiff
         )
         {
+            if (componentDiff == null)
+                throw new ArgumentNullException(nameof(componentDiff),
+                    "The 'componentDiff' parameter is required. Make sure the JSON input uses 'componentDiff' as the key (not 'fields' or 'props' directly).");
+
             if (!gameObjectRef.IsValid(out var gameObjectValidationError))
                 throw new ArgumentException(gameObjectValidationError, nameof(gameObjectRef));
 

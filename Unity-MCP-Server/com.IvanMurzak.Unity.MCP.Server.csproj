@@ -13,7 +13,7 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>unity-mcp-server</ToolCommandName>
     <PackageId>com.IvanMurzak.Unity.MCP.Server</PackageId>
-    <Version>0.58.0</Version>
+    <Version>0.60.0</Version>
     <Authors>Ivan Murzak</Authors>
     <Company>Ivan Murzak</Company>
     <Copyright>Copyright © 2025 Ivan Murzak</Copyright>
@@ -45,8 +45,8 @@
   </PropertyGroup>
 
   <ItemGroup Condition="'$(UseLocalMcpPlugin)' != 'true'">
-    <PackageReference Include="com.IvanMurzak.ReflectorNet" Version="4.0.0" />
-    <PackageReference Include="com.IvanMurzak.McpPlugin.Server" Version="5.7.0" />
+    <PackageReference Include="com.IvanMurzak.ReflectorNet" Version="4.1.0" />
+    <PackageReference Include="com.IvanMurzak.McpPlugin.Server" Version="5.8.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(UseLocalMcpPlugin)' == 'true'">

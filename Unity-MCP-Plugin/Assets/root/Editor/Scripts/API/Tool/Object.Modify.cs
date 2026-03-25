@@ -50,7 +50,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 throw new ArgumentException(error, nameof(objectRef));
 
             if (objectDiff == null)
-                throw new ArgumentNullException(nameof(objectDiff), "No object data provided to modify.");
+                throw new ArgumentNullException(nameof(objectDiff),
+                    "The 'objectDiff' parameter is required. Make sure the JSON input uses 'objectDiff' as the key wrapping the SerializedMember object.");
 
             return MainThread.Instance.Run(() =>
             {

@@ -35,7 +35,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| `options` | `any` | No |  |
+| `options` | `any` | No | Asset import options. |
 
 ### Input JSON Schema
 
