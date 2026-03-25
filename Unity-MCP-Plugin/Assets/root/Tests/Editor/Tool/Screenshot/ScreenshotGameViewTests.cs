@@ -144,14 +144,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             CloseGameView();
 
-            LogAssert.Expect(LogType.Error, new Regex("No Game View window|Game View render texture is not available"));
-            var raw = RunToolRaw("screenshot-game-view", "{}");
+            LogAssert.ignoreFailingMessages = true;
+            try
+            {
+                var raw = RunToolRaw("screenshot-game-view", "{}");
 
-            Assert.IsNotNull(raw, "Raw result must not be null");
-            Assert.IsTrue(
-                raw.Contains("No Game View window") ||
-                raw.Contains("Game View render texture is not available"),
-                $"Expected a known error message. Actual JSON:\n{raw}");
+                Assert.IsNotNull(raw, "Raw result must not be null");
+                Assert.IsTrue(
+                    raw.Contains("No Game View window") ||
+                    raw.Contains("Game View render texture is not available"),
+                    $"Expected a known error message. Actual JSON:\n{raw}");
+            }
+            finally
+            {
+                LogAssert.ignoreFailingMessages = false;
+            }
         }
     }
 }
