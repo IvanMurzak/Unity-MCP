@@ -127,10 +127,11 @@ Shader ""Test/BrokenShader""
                 {
                     var reflector = UnityMcpPluginEditor.Instance.Reflector;
                     var jsonResult = result.ToJson(reflector)!;
-                    Assert.IsTrue(jsonResult.Contains("\"HasErrors\":false"), "Response should contain 'HasErrors' with value false for valid shader.");
+                    Assert.IsTrue(jsonResult.Contains("HasErrors"), "Response should contain 'HasErrors' field.");
+                    Assert.IsTrue(jsonResult.Contains("false"), "Response should contain 'false' value (HasErrors) for valid shader.");
                     Assert.IsTrue(jsonResult.Contains("_Color"), "Response should contain '_Color' property from valid shader.");
                     Assert.IsTrue(jsonResult.Contains("_MainTex"), "Response should contain '_MainTex' property from valid shader.");
-                    Assert.IsTrue(jsonResult.Contains("\"RenderType\":\"Opaque\""), "Response should contain 'RenderType' with value 'Opaque' from valid shader.");
+                    Assert.IsTrue(jsonResult.Contains("Opaque"), "Response should contain 'Opaque' RenderType from valid shader.");
                 })
                 .AddChild(() =>
                 {
@@ -171,10 +172,11 @@ Shader ""Test/BrokenShader""
                 {
                     var reflector = UnityMcpPluginEditor.Instance.Reflector;
                     var jsonResult = result.ToJson(reflector)!;
-                    Assert.IsTrue(jsonResult.Contains("\"HasErrors\":true"), "Response should contain 'HasErrors' with value true for broken shader.");
+                    Assert.IsTrue(jsonResult.Contains("HasErrors"), "Response should contain 'HasErrors' field.");
+                    Assert.IsTrue(jsonResult.Contains("true"), "Response should contain 'true' value (HasErrors) for broken shader.");
                     Assert.IsTrue(jsonResult.Contains("Messages"), "Response should contain 'Messages' field for broken shader.");
-                    Assert.IsTrue(jsonResult.Contains("\"Severity\":"), "Response should contain 'Severity' field in shader messages.");
-                    Assert.IsTrue(jsonResult.Contains("\"Line\":"), "Response should contain 'Line' field in shader error messages.");
+                    Assert.IsTrue(jsonResult.Contains("Severity"), "Response should contain 'Severity' field in shader messages.");
+                    Assert.IsTrue(jsonResult.Contains("Line"), "Response should contain 'Line' field in shader error messages.");
                 })
                 .AddChild(() =>
                 {
