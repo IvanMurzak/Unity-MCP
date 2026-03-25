@@ -66,14 +66,14 @@ unity-mcp-cli create-project ./MyUnityProject              #  │ codex         
 # 2. Install "AI Game Developer" in Unity project          #  │ gemini             │
 unity-mcp-cli install-plugin ./MyUnityProject              #  │ github-copilot-cli │
                                                            #  │ kilo-code          │
-# 3. Setup Skills for Claude Code                          #  │ open-code          │
-unity-mcp-cli setup-skills claude-code ./MyUnityProject    #  │ rider-junie        │
+# 3. Login to cloud server                                 #  │ open-code          │
+unity-mcp-cli login ./MyUnityProject                       #  │ rider-junie        │
                                                            #  │ unity-ai           │
-# (Optional) Setup MCP for Claude Code                     #  │ vs-copilot         │
-unity-mcp-cli setup-mcp claude-code ./MyUnityProject       #  │ vscode-copilot     │
+# 4. Open Unity project (auto-connects and generates skills)  │ vs-copilot         │
+unity-mcp-cli open ./MyUnityProject                        #  │ vscode-copilot     │
                                                            #  └────────────────────┘
-# (It depends...) Open Unity project
-unity-mcp-cli open ./MyUnityProject
+# 5. Wait for Unity Editor to be ready
+unity-mcp-cli wait-for-ready ./MyUnityProject
 ```
 
 或使用 `npx` 即时运行任何命令 — 无需全局安装：
@@ -88,8 +88,9 @@ npx unity-mcp-cli install-plugin /path/to/unity/project
 
 # 目录
 
-- [快速开始](#quick-start)
-- [命令](#commands)
+- [快速开始](#快速开始)
+- [目录](#目录)
+- [命令](#命令)
   - [`configure`](#configure)
   - [`create-project`](#create-project)
   - [`install-plugin`](#install-plugin)
@@ -101,13 +102,13 @@ npx unity-mcp-cli install-plugin /path/to/unity/project
   - [`setup-skills`](#setup-skills)
   - [`remove-plugin`](#remove-plugin)
   - [`status`](#status)
-  - [全局选项](#global-options)
-- [完整自动化示例](#full-automation-example)
-- [工作原理](#how-it-works)
-    - [确定性端口](#deterministic-port)
-    - [插件安装](#plugin-installation)
-    - [配置文件](#configuration-file)
-    - [Unity Hub 集成](#unity-hub-integration)
+  - [全局选项](#全局选项)
+- [完整自动化示例](#完整自动化示例)
+- [工作原理](#工作原理)
+    - [确定性端口](#确定性端口)
+    - [插件安装](#插件安装)
+    - [配置文件](#配置文件)
+    - [Unity Hub 集成](#unity-hub-集成)
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
@@ -488,21 +489,16 @@ unity-mcp-cli install-plugin ./MyAIGame
 # 3. Enable all MCP tools
 unity-mcp-cli configure ./MyAIGame --enable-all-tools
 
-# 4. Setup Skills for Claude Code (requires Unity Editor running)
-unity-mcp-cli setup-skills claude-code ./MyAIGame
+# 4. Login to cloud server (authenticates and saves token)
+unity-mcp-cli login ./MyAIGame
 
-# 5. Configure Claude Code MCP integration
-unity-mcp-cli setup-mcp claude-code ./MyAIGame
+# 5. Open the project (auto-connects and generates skills for claude-code)
+unity-mcp-cli open ./MyAIGame
 
-# 6. Open the project with MCP connection
-unity-mcp-cli open ./MyAIGame \
-  --url http://localhost:8080 \
-  --keep-connected
-
-# 7. Wait for Unity Editor and MCP server to be ready
+# 6. Wait for Unity Editor and MCP server to be ready
 unity-mcp-cli wait-for-ready ./MyAIGame
 
-# 8. Run tests to verify everything works
+# 7. Run tests to verify everything works
 unity-mcp-cli run-tool tests-run ./MyAIGame --input '{"testMode":"EditMode"}'
 ```
 

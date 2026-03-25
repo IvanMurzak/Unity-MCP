@@ -65,10 +65,10 @@ npm install -g unity-mcp-cli
 # 2. Instalar "AI Game Developer" en el proyecto de Unity
 unity-mcp-cli install-plugin ./MyUnityProject
 
-# 3 Configurar Skills para Claude Code
-unity-mcp-cli setup-skills claude-code ./MyUnityProject
+# 3. Iniciar sesión en el servidor cloud
+unity-mcp-cli login ./MyUnityProject
 
-# (Opcional) Abrir proyecto de Unity
+# 4. Abrir proyecto de Unity (auto-conecta y genera skills)
 unity-mcp-cli open ./MyUnityProject
 ```
 
@@ -181,49 +181,49 @@ Instala extensiones cuando necesites más herramientas o [crea tus propias herra
 
 # Contenidos
 
-- [Inicio rápido](#quick-start)
-- [Referencia de Skills y herramientas](#skills-and-tools-reference)
-  - [Instalar skills y herramientas adicionales](#install-additional-skills-and-tools)
-- [Contenidos](#contents)
-  - [Más documentación](#more-documentation)
-- [Instalación](#installation)
-  - [Paso 1: Instalar `Unity MCP Plugin`](#step-1-install-unity-mcp-plugin)
-    - [Opción 1 - Instalador](#option-1---installer)
-    - [Opción 2 - CLI (recomendado)](#option-2---cli-recommended)
-  - [Paso 2: Instalar `agente de IA`](#step-2-install-ai-agent)
-  - [Paso 3: Configurar `agente de IA`](#step-3-configure-ai-agent)
-    - [Configuración automática](#automatic-configuration)
-    - [Configuración manual](#manual-configuration)
-      - [Configuración por línea de comandos](#command-line-configuration)
-- [Ejemplos de flujo de trabajo con IA](#ai-workflow-examples)
-  - [Funcionalidades avanzadas para LLM](#advanced-features-for-llm)
-    - [Capacidades principales](#core-capabilities)
-    - [Funcionalidades impulsadas por Reflection](#reflection-powered-features)
-- [Personalizar herramientas](#customize-tools)
-  - [Añadir `Tool` personalizada](#add-custom-tool)
-  - [Añadir `MCP Prompt` personalizado](#add-custom-mcp-prompt)
-- [Uso en Runtime (en el juego)](#runtime-usage-in-game)
-  - [Ejemplo: Bot de ajedrez impulsado por IA](#sample-ai-powered-chess-game-bot)
-  - [¿Por qué se necesita el uso en Runtime?](#why-runtime-usage-is-needed)
-- [Configuración del `MCP Server` de Unity](#unity-mcp-server-setup)
+- [Inicio rápido](#inicio-rápido)
+- [Referencia de Skills y herramientas](#referencia-de-skills-y-herramientas)
+  - [Instalar skills y herramientas adicionales](#instalar-skills-y-herramientas-adicionales)
+- [Contenidos](#contenidos)
+  - [Más documentación](#más-documentación)
+- [Instalación](#instalación)
+  - [Paso 1: Instalar `Unity MCP Plugin`](#paso-1-instalar-unity-mcp-plugin)
+    - [Opción 1 - Instalador](#opción-1---instalador)
+    - [Opción 2 - CLI (recomendado)](#opción-2---cli-recomendado)
+  - [Paso 2: Instalar `agente de IA`](#paso-2-instalar-agente-de-ia)
+  - [Paso 3: Configurar `agente de IA`](#paso-3-configurar-agente-de-ia)
+    - [Configuración automática](#configuración-automática)
+    - [Configuración manual](#configuración-manual)
+      - [Configuración por línea de comandos](#configuración-por-línea-de-comandos)
+- [Ejemplos de flujo de trabajo con IA](#ejemplos-de-flujo-de-trabajo-con-ia)
+  - [Funcionalidades avanzadas para LLM](#funcionalidades-avanzadas-para-llm)
+    - [Capacidades principales](#capacidades-principales)
+    - [Funcionalidades impulsadas por Reflection](#funcionalidades-impulsadas-por-reflection)
+- [Personalizar herramientas](#personalizar-herramientas)
+  - [Añadir `Tool` personalizada](#añadir-tool-personalizada)
+  - [Añadir `MCP Prompt` personalizado](#añadir-mcp-prompt-personalizado)
+- [Uso en Runtime (en el juego)](#uso-en-runtime-en-el-juego)
+  - [Ejemplo: Bot de ajedrez impulsado por IA](#ejemplo-bot-de-ajedrez-impulsado-por-ia)
+  - [¿Por qué se necesita el uso en Runtime?](#por-qué-se-necesita-el-uso-en-runtime)
+- [Configuración del `MCP Server` de Unity](#configuración-del-mcp-server-de-unity)
   - [Variables](#variables)
-  - [Variables del Plugin](#plugin-variables)
+  - [Variables del Plugin](#variables-del-plugin)
   - [Docker 📦](#docker-)
-    - [Transporte `streamableHttp`](#streamablehttp-transport)
-    - [Transporte `stdio`](#stdio-transport)
-    - [`port` personalizado](#custom-port)
-  - [Ejecutable binario](#binary-executable)
-- [Cómo funciona la arquitectura de Unity MCP](#how-unity-mcp-architecture-works)
-  - [¿Qué es `MCP`?](#what-is-mcp)
-  - [¿Qué es un `agente de IA`?](#what-is-ai-agent)
-  - [¿Qué es el `MCP Server`?](#what-is-mcp-server)
-  - [¿Qué es un `MCP Tool`?](#what-is-mcp-tool)
-    - [Cuándo usar un `Tool`](#when-to-use-tool)
-  - [¿Qué es un `MCP Resource`?](#what-is-mcp-resource)
-    - [Cuándo usar un `MCP Resource`](#when-to-use-mcp-resource)
-  - [¿Qué es un `MCP Prompt`?](#what-is-mcp-prompt)
-    - [Cuándo usar un `MCP Prompt`](#when-to-use-mcp-prompt)
-- [Contribución 💙💛](#contribution-)
+    - [Transporte `streamableHttp`](#transporte-streamablehttp)
+    - [Transporte `stdio`](#transporte-stdio)
+    - [`port` personalizado](#port-personalizado)
+  - [Ejecutable binario](#ejecutable-binario)
+- [Cómo funciona la arquitectura de Unity MCP](#cómo-funciona-la-arquitectura-de-unity-mcp)
+  - [¿Qué es `MCP`?](#qué-es-mcp)
+  - [¿Qué es un `agente de IA`?](#qué-es-un-agente-de-ia)
+  - [¿Qué es el `MCP Server`?](#qué-es-el-mcp-server)
+  - [¿Qué es un `MCP Tool`?](#qué-es-un-mcp-tool)
+    - [Cuándo usar un `Tool`](#cuándo-usar-un-tool)
+  - [¿Qué es un `MCP Resource`?](#qué-es-un-mcp-resource)
+    - [Cuándo usar un `MCP Resource`](#cuándo-usar-un-mcp-resource)
+  - [¿Qué es un `MCP Prompt`?](#qué-es-un-mcp-prompt)
+    - [Cuándo usar un `MCP Prompt`](#cuándo-usar-un-mcp-prompt)
+- [Contribución 💙💛](#contribución-)
 
 ## Más documentación
 
@@ -273,20 +273,20 @@ npm install -g unity-mcp-cli                               #  │ Available AI a
 # 1.2 (Opcional) Instalar Unity                               #  │ antigravity        │
 unity-mcp-cli install-unity                                #  │ claude-code        │
                                                            #  │ claude-desktop     │
-# 1.3 (Opcional) Crear proyecto de Unity                       #  │ cline              │
+# 1.3 (Opcional) Crear proyecto de Unity                   #  │ cline              │
 unity-mcp-cli create-project ./MyUnityProject              #  │ codex              │
                                                            #  │ cursor             │
-# 2. Instalar "AI Game Developer" en el proyecto de Unity     #  │ gemini             │
+# 2. Instalar "AI Game Developer" en el proyecto de Unity  #  │ gemini             │
 unity-mcp-cli install-plugin ./MyUnityProject              #  │ github-copilot-cli │
                                                            #  │ kilo-code          │
-# 3. Configurar Skills para Claude Code                       #  │ open-code          │
-unity-mcp-cli setup-skills claude-code ./MyUnityProject    #  │ rider-junie        │
+# 3. Iniciar sesión en el servidor cloud                   #  │ open-code          │
+unity-mcp-cli login ./MyUnityProject                       #  │ rider-junie        │
                                                            #  │ unity-ai           │
-# (Opcional) Configurar MCP para Claude Code                  #  │ vs-copilot         │
-unity-mcp-cli setup-mcp claude-code ./MyUnityProject       #  │ vscode-copilot     │
+# 4. Abrir proyecto (auto-conecta y genera skills)         #  │ vs-copilot         │
+unity-mcp-cli open ./MyUnityProject                        #  │ vscode-copilot     │
                                                            #  └────────────────────┘
-# (Depende...) Abrir proyecto de Unity
-unity-mcp-cli open ./MyUnityProject
+# 5. Esperar a que Unity Editor esté listo
+unity-mcp-cli wait-for-ready ./MyUnityProject
 ```
 
 > Consulta la [documentación completa de la CLI](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) para ver todos los comandos disponibles.

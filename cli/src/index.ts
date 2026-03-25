@@ -4,6 +4,7 @@ import { createProjectCommand } from './commands/create-project.js';
 import { installUnityCommand } from './commands/install-unity.js';
 import { openCommand } from './commands/open.js';
 import { installPluginCommand } from './commands/install-plugin.js';
+import { loginCommand } from './commands/login.js';
 import { configureCommand } from './commands/configure.js';
 import { removePluginCommand } from './commands/remove-plugin.js';
 import { runToolCommand } from './commands/run-tool.js';
@@ -31,6 +32,7 @@ const subcommands = [
   createProjectCommand,
   installPluginCommand,
   installUnityCommand,
+  loginCommand,
   openCommand,
   removePluginCommand,
   runToolCommand,

@@ -167,6 +167,7 @@ export function isCloudMode(config: UnityConnectionConfig): boolean {
   return mode === 'Cloud' || mode === 1;
 }
 
+export const CLOUD_SERVER_BASE_URL = 'https://ai-game.dev';
 export const CLOUD_SERVER_URL = 'https://ai-game.dev/mcp';
 
 /**
