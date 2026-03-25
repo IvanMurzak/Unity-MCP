@@ -43,6 +43,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             SerializedMember content
         )
         {
+            if (content == null)
+                throw new ArgumentNullException(nameof(content),
+                    "The 'content' parameter is required. Make sure the JSON input uses 'content' as the key wrapping the SerializedMember object.");
+
             if (assetRef == null)
                 throw new ArgumentNullException(nameof(assetRef));
 
