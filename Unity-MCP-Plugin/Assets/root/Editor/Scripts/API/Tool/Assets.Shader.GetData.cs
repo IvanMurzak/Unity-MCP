@@ -187,7 +187,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             [Description("Number of properties exposed by the shader.")]
             public int PropertyCount { get; set; }
 
-            [Description("Total number of passes in the first subshader.")]
+            [Description("Total number of passes in the shader.")]
             public int PassCount { get; set; }
 
             [Description("The RenderType tag value from the first pass, if set.")]

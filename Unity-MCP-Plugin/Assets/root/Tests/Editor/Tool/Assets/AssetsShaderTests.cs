@@ -10,6 +10,7 @@
 
 #nullable enable
 using System.Collections.Generic;
+using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Editor.Tests.Utils;
 using NUnit.Framework;
@@ -120,6 +121,15 @@ Shader ""Test/BrokenShader""
                     }))
                 )
                 .AddChild(new ValidateToolResultExecutor())
+                .AddChild<ResponseData<ResponseCallTool>>(result =>
+                {
+                    var reflector = UnityMcpPluginEditor.Instance.Reflector;
+                    var jsonResult = result.ToJson(reflector)!;
+                    Assert.IsTrue(jsonResult.Contains("HasErrors"), "Response should contain 'HasErrors' field.");
+                    Assert.IsTrue(jsonResult.Contains("_Color"), "Response should contain '_Color' property from valid shader.");
+                    Assert.IsTrue(jsonResult.Contains("_MainTex"), "Response should contain '_MainTex' property from valid shader.");
+                    Assert.IsTrue(jsonResult.Contains("Opaque"), "Response should contain 'Opaque' RenderType from valid shader.");
+                })
                 .AddChild(() =>
                 {
                     var shader = AssetDatabase.LoadAssetAtPath<UnityEngine.Shader>(shaderEx.AssetPath);
@@ -155,6 +165,14 @@ Shader ""Test/BrokenShader""
                     }))
                 )
                 .AddChild(new ValidateToolResultExecutor())
+                .AddChild<ResponseData<ResponseCallTool>>(result =>
+                {
+                    var reflector = UnityMcpPluginEditor.Instance.Reflector;
+                    var jsonResult = result.ToJson(reflector)!;
+                    Assert.IsTrue(jsonResult.Contains("HasErrors"), "Response should contain 'HasErrors' field.");
+                    Assert.IsTrue(jsonResult.Contains("Messages"), "Response should contain 'Messages' field for broken shader.");
+                    Assert.IsTrue(jsonResult.Contains("Severity"), "Response should contain 'Severity' in shader messages.");
+                })
                 .AddChild(() =>
                 {
                     var shader = AssetDatabase.LoadAssetAtPath<UnityEngine.Shader>(shaderEx.AssetPath);
