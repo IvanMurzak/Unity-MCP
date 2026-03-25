@@ -20,6 +20,9 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
 {
     public class GradientConverter : JsonSchemaConverter<Gradient>, IJsonSchemaConverter
     {
+        static readonly GradientColorKey[] DefaultColorKeys = { new GradientColorKey(Color.white, 0), new GradientColorKey(Color.white, 1) };
+        static readonly GradientAlphaKey[] DefaultAlphaKeys = { new GradientAlphaKey(1, 0), new GradientAlphaKey(1, 1) };
+
         public override JsonNode GetSchema() => new JsonObject
         {
             [JsonSchema.Type] = JsonSchema.Object,
@@ -71,8 +74,8 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
                     var gradient = new Gradient();
                     gradient.mode = mode;
                     gradient.SetKeys(
-                        colorKeys ?? new GradientColorKey[] { new GradientColorKey(Color.white, 0), new GradientColorKey(Color.white, 1) },
-                        alphaKeys ?? new GradientAlphaKey[] { new GradientAlphaKey(1, 0), new GradientAlphaKey(1, 1) }
+                        colorKeys ?? DefaultColorKeys,
+                        alphaKeys ?? DefaultAlphaKeys
                     );
                     return gradient;
                 }
@@ -99,12 +102,15 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
                             }
                             else if (reader.TokenType == JsonTokenType.Number)
                             {
-                                mode = (GradientMode)reader.GetInt32();
+                                var modeInt = reader.GetInt32();
+                                if (!System.Enum.IsDefined(typeof(GradientMode), modeInt))
+                                    throw new JsonException($"Unknown GradientMode value: {modeInt}.");
+                                mode = (GradientMode)modeInt;
                             }
                             break;
                         default:
-                            reader.Skip();
-                            break;
+                            throw new JsonException($"Unexpected property name: {propertyName}. "
+                                + "Expected 'colorKeys', 'alphaKeys', or 'mode'.");
                     }
                 }
             }

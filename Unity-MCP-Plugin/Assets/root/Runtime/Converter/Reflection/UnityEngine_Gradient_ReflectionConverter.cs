@@ -45,7 +45,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 
             try
             {
-                var gradient = JsonSerializer.Deserialize<Gradient>(value.Value.GetRawText(), reflector.JsonSerializerOptions);
+                var gradient = value.Value.Deserialize<Gradient>(reflector.JsonSerializerOptions);
                 if (gradient != null)
                 {
                     obj = gradient;

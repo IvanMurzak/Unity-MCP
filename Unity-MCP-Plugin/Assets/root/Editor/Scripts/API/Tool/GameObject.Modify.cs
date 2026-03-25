@@ -62,6 +62,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             return MainThread.Instance.Run(() =>
             {
                 var logs = new Logs();
+                var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
                 for (int i = 0; i < gameObjectRefs.Count; i++)
                 {
@@ -84,7 +85,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     }
 
                     var objToModify = (object)go;
-                    var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
                     var modified = reflector.TryModify(
                         ref objToModify,
