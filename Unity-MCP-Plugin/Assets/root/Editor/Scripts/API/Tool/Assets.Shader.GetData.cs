@@ -56,11 +56,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 if (shader == null)
                     throw new ArgumentException($"Asset at '{assetRef.AssetPath}' is not a Shader. It is a '{asset.GetType().Name}'.", nameof(assetRef));
 
-                return BuildShaderData(shader, assetRef);
+                return BuildShaderData(shader);
             });
         }
 
-        static ShaderData BuildShaderData(Shader shader, AssetObjectRef assetRef)
+        static ShaderData BuildShaderData(Shader shader)
         {
             var data = new ShaderData
             {
@@ -73,7 +73,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 PassCount = shader.passCount
             };
 
-            // Shader messages (errors/warnings)
             var messages = ShaderUtil.GetShaderMessages(shader);
             if (messages != null && messages.Length > 0)
             {
@@ -86,23 +85,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 }).ToList();
             }
 
-            // Shader properties
-            var propertyCount = shader.GetPropertyCount();
+            var propertyCount = data.PropertyCount;
             if (propertyCount > 0)
             {
                 data.Properties = new List<ShaderPropertyData>(propertyCount);
                 for (var i = 0; i < propertyCount; i++)
                 {
+                    var propType = shader.GetPropertyType(i);
                     var prop = new ShaderPropertyData
                     {
                         Name = shader.GetPropertyName(i),
                         Description = shader.GetPropertyDescription(i),
-                        Type = shader.GetPropertyType(i).ToString(),
+                        Type = propType.ToString(),
                         Flags = shader.GetPropertyFlags(i).ToString(),
                         NameId = shader.GetPropertyNameId(i)
                     };
-
-                    var propType = shader.GetPropertyType(i);
                     if (propType == ShaderPropertyType.Range)
                     {
                         var rangeLimits = shader.GetPropertyRangeLimits(i);
@@ -125,7 +122,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 }
             }
 
-            // Subshader and pass data via ShaderUtil.GetShaderData
             var shaderData = ShaderUtil.GetShaderData(shader);
             if (shaderData != null)
             {
@@ -162,7 +158,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 }
             }
 
-            // Render type tag (only if shader has passes)
             if (shader.passCount > 0)
             {
                 var renderType = shader.FindPassTagValue(0, new ShaderTagId("RenderType")).name;
