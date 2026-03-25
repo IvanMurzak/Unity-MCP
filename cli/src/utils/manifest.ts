@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { isNewerVersion, isValidVersion } from './semver.js';
 import * as ui from './ui.js';
 
 const PACKAGE_ID = 'com.ivanmurzak.unity.mcp';
@@ -81,17 +82,8 @@ export function shouldUpdateVersion(currentVersion: string, newVersion: string):
     return false;
   }
 
-  const numericOnly = /^\d+(\.\d+)*$/;
-  if (numericOnly.test(currentVersion) && numericOnly.test(newVersion)) {
-    const currentParts = currentVersion.split('.').map(Number);
-    const targetParts = newVersion.split('.').map(Number);
-    const len = Math.max(currentParts.length, targetParts.length);
-    for (let i = 0; i < len; i++) {
-      const c = currentParts[i] ?? 0;
-      const t = targetParts[i] ?? 0;
-      if (t !== c) return t > c;
-    }
-    return false;
+  if (isValidVersion(currentVersion) && isValidVersion(newVersion)) {
+    return isNewerVersion(currentVersion, newVersion);
   }
 
   return newVersion.toLowerCase() > currentVersion.toLowerCase();

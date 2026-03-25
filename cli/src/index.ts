@@ -12,8 +12,10 @@ import { runSystemToolCommand } from './commands/run-system-tool.js';
 import { setupMcpCommand } from './commands/setup-mcp.js';
 import { setupSkillsCommand } from './commands/setup-skills.js';
 import { statusCommand } from './commands/status.js';
+import { createUpdateCommand } from './commands/update.js';
 import { waitForReadyCommand } from './commands/wait-for-ready.js';
 import { configureStyledHelp, error as uiError, setVerbose } from './utils/ui.js';
+import { checkForUpdate, isRunningViaNpx, printUpdateNotification } from './utils/update-check.js';
 
 const require = createRequire(import.meta.url);
 const pkg = require('../package.json') as { version: string };
@@ -40,6 +42,7 @@ const subcommands = [
   setupMcpCommand,
   setupSkillsCommand,
   statusCommand,
+  createUpdateCommand(pkg.version),
   waitForReadyCommand,
 ];
 
@@ -65,7 +68,17 @@ program.action(() => {
   program.outputHelp();
 });
 
-program.parseAsync().catch((err) => {
-  uiError((err as Error).message || String(err));
-  process.exit(1);
-});
+// Start update check in background (non-blocking, parallel with command execution)
+const updateCheckPromise = isRunningViaNpx() ? Promise.resolve(null) : checkForUpdate(pkg.version);
+
+program.parseAsync()
+  .then(async () => {
+    const update = await updateCheckPromise;
+    if (update) {
+      printUpdateNotification(update.current, update.latest);
+    }
+  })
+  .catch((err) => {
+    uiError((err as Error).message || String(err));
+    process.exit(1);
+  });
