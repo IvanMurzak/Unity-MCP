@@ -30,4 +30,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 
     public partial class UnityEngine_Rect_ReflectionConverter : UnityStructReflectionConverter<UnityEngine.Rect> { }
     public partial class UnityEngine_RectInt_ReflectionConverter : UnityStructReflectionConverter<UnityEngine.RectInt> { }
+
+    public partial class UnityEngine_GradientColorKey_ReflectionConverter : UnityStructReflectionConverter<UnityEngine.GradientColorKey> { }
+    public partial class UnityEngine_GradientAlphaKey_ReflectionConverter : UnityStructReflectionConverter<UnityEngine.GradientAlphaKey> { }
 }

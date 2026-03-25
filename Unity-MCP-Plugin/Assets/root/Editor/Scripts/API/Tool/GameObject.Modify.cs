@@ -44,6 +44,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             SerializedMemberList gameObjectDiffs
         )
         {
+            if (gameObjectRefs == null)
+                throw new ArgumentNullException(nameof(gameObjectRefs),
+                    "The 'gameObjectRefs' parameter is required. Make sure the JSON input uses 'gameObjectRefs' as the key.");
+
+            if (gameObjectDiffs == null)
+                throw new ArgumentNullException(nameof(gameObjectDiffs),
+                    "The 'gameObjectDiffs' parameter is required. Make sure the JSON input uses 'gameObjectDiffs' as the key wrapping the SerializedMember array.");
+
             if (gameObjectRefs.Count == 0)
                 throw new ArgumentException("No GameObject references provided. Please provide at least one GameObject reference.", nameof(gameObjectRefs));
 
@@ -66,6 +74,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     if (go == null)
                     {
                         logs.Error($"GameObject by {nameof(gameObjectRefs)}[{i}] not found.");
+                        continue;
+                    }
+
+                    if (gameObjectDiffs[i] == null)
+                    {
+                        logs.Error($"'{nameof(gameObjectDiffs)}[{i}]' is null. Each entry in the array must be a valid SerializedMember object.");
                         continue;
                     }
 
