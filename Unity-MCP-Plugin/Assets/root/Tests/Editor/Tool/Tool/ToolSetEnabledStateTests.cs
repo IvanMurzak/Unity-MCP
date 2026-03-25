@@ -10,10 +10,12 @@
 
 #nullable enable
 using System.Collections;
+using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using com.IvanMurzak.Unity.MCP.Editor.API;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -24,6 +26,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     public class ToolSetEnabledStateTests : BaseTest
     {
         string? _testToolName;
+        bool? _originalTestToolEnabled;
+        bool? _originalSetEnabledStateEnabled;
 
         [UnitySetUp]
         public override IEnumerator SetUp()
@@ -33,14 +37,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var toolManager = UnityMcpPluginEditor.Instance.Tools;
             Assert.IsNotNull(toolManager, "ToolManager should not be null");
 
-            toolManager!.SetToolEnabled(Tool_Tool.ToolSetEnabledStateId, true);
+            var testTool = toolManager!.GetAllTools()
+                .FirstOrDefault(t => t.Name != Tool_Tool.ToolSetEnabledStateId);
+
+            Assert.IsNotNull(testTool, "Should have at least one tool other than SetEnabledState");
+
+            _testToolName = testTool!.Name;
+            _originalTestToolEnabled = toolManager.IsToolEnabled(_testToolName);
+            _originalSetEnabledStateEnabled = toolManager.IsToolEnabled(Tool_Tool.ToolSetEnabledStateId);
+
+            toolManager.SetToolEnabled(_testToolName, true);
+            toolManager.SetToolEnabled(Tool_Tool.ToolSetEnabledStateId, true);
             UnityMcpPluginEditor.Instance.Save();
-
-            _testToolName = toolManager.GetAllTools()
-                .FirstOrDefault(t => toolManager.IsToolEnabled(t.Name) && t.Name != Tool_Tool.ToolSetEnabledStateId)
-                ?.Name;
-
-            Assert.IsNotNull(_testToolName, "Should have at least one enabled tool for testing");
         }
 
         [UnityTearDown]
@@ -49,10 +57,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var toolManager = UnityMcpPluginEditor.Instance.Tools;
             if (toolManager != null)
             {
-                if (_testToolName != null)
-                    toolManager.SetToolEnabled(_testToolName, true);
+                if (_testToolName != null && _originalTestToolEnabled.HasValue)
+                    toolManager.SetToolEnabled(_testToolName, _originalTestToolEnabled.Value);
 
-                toolManager.SetToolEnabled(Tool_Tool.ToolSetEnabledStateId, false);
+                if (_originalSetEnabledStateEnabled.HasValue)
+                    toolManager.SetToolEnabled(Tool_Tool.ToolSetEnabledStateId, _originalSetEnabledStateEnabled.Value);
+
                 UnityMcpPluginEditor.Instance.Save();
             }
 
@@ -247,16 +257,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             yield return null;
 
-            LogAssert.Expect(LogType.Exception, new Regex("ArgumentException"));
-            LogAssert.Expect(LogType.Error, new Regex("Tool execution failed"));
-            LogAssert.Expect(LogType.Error, new Regex("Error Response to AI"));
+            var originalLogLevel = UnityMcpPluginEditor.LogLevel;
+            try
+            {
+                // Ensure log level allows error logs so LogAssert.Expect works
+                if (originalLogLevel == LogLevel.None)
+                    UnityMcpPluginEditor.LogLevel = LogLevel.Error;
 
-            var jsonResult = RunToolRaw(Tool_Tool.ToolSetEnabledStateId, @"{
-                ""tools"": [],
-                ""includeLogs"": false
-            }");
+                LogAssert.Expect(LogType.Exception, new Regex("ArgumentException"));
+                LogAssert.Expect(LogType.Error, new Regex("Tool execution failed"));
+                LogAssert.Expect(LogType.Error, new Regex("Error Response to AI"));
 
-            StringAssert.Contains("Tools array is null or empty", jsonResult);
+                var jsonResult = RunToolRaw(Tool_Tool.ToolSetEnabledStateId, @"{
+                    ""tools"": [],
+                    ""includeLogs"": false
+                }");
+
+                StringAssert.Contains("Tools array is null or empty", jsonResult);
+            }
+            finally
+            {
+                UnityMcpPluginEditor.LogLevel = originalLogLevel;
+            }
         }
 
         [UnityTest]
@@ -264,16 +286,128 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             yield return null;
 
-            LogAssert.Expect(LogType.Exception, new Regex("ArgumentException"));
-            LogAssert.Expect(LogType.Error, new Regex("Tool execution failed"));
-            LogAssert.Expect(LogType.Error, new Regex("Error Response to AI"));
+            var originalLogLevel = UnityMcpPluginEditor.LogLevel;
+            try
+            {
+                // Ensure log level allows error logs so LogAssert.Expect works
+                if (originalLogLevel == LogLevel.None)
+                    UnityMcpPluginEditor.LogLevel = LogLevel.Error;
 
-            var jsonResult = RunToolRaw(Tool_Tool.ToolSetEnabledStateId, @"{
-                ""tools"": null,
-                ""includeLogs"": false
-            }");
+                LogAssert.Expect(LogType.Exception, new Regex("ArgumentException"));
+                LogAssert.Expect(LogType.Error, new Regex("Tool execution failed"));
+                LogAssert.Expect(LogType.Error, new Regex("Error Response to AI"));
 
-            StringAssert.Contains("Tools array is null or empty", jsonResult);
+                var jsonResult = RunToolRaw(Tool_Tool.ToolSetEnabledStateId, @"{
+                    ""tools"": null,
+                    ""includeLogs"": false
+                }");
+
+                StringAssert.Contains("Tools array is null or empty", jsonResult);
+            }
+            finally
+            {
+                UnityMcpPluginEditor.LogLevel = originalLogLevel;
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator SetEnabled_AllToolsDisabled_ShouldStillWork()
+        {
+            yield return null;
+
+            var toolManager = UnityMcpPluginEditor.Instance.Tools!;
+            var allTools = toolManager.GetAllTools().ToList();
+            var originalStates = allTools.ToDictionary(t => t.Name, t => toolManager.IsToolEnabled(t.Name));
+
+            try
+            {
+                // Disable ALL tools (simulates "disable all" in AI Game Developer window)
+                foreach (var tool in allTools)
+                    toolManager.SetToolEnabled(tool.Name, false);
+                UnityMcpPluginEditor.Instance.Save();
+
+                // Re-enable only SetEnabledState so we can call it
+                toolManager.SetToolEnabled(Tool_Tool.ToolSetEnabledStateId, true);
+
+                // SetEnabledState should still work and be able to enable a tool
+                var json = RunTool(Tool_Tool.ToolSetEnabledStateId, $@"{{
+                    ""tools"": [{{ ""name"": ""{_testToolName}"", ""enabled"": true }}],
+                    ""includeLogs"": false
+                }}").Value!.GetMessage()!;
+
+                Assert.IsTrue(GetSuccessValue(json, _testToolName!), $"Should enable tool '{_testToolName}' even when all tools start disabled");
+                Assert.IsTrue(toolManager.IsToolEnabled(_testToolName!), $"Tool '{_testToolName}' should be enabled after operation");
+            }
+            finally
+            {
+                foreach (var kvp in originalStates)
+                    toolManager.SetToolEnabled(kvp.Key, kvp.Value);
+                UnityMcpPluginEditor.Instance.Save();
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator SetEnabled_LogLevelNone_ShouldStillWork()
+        {
+            yield return null;
+
+            var originalLogLevel = UnityMcpPluginEditor.LogLevel;
+
+            try
+            {
+                // Set log level to None (suppresses all ILogger output)
+                UnityMcpPluginEditor.LogLevel = LogLevel.None;
+
+                var json = RunTool(Tool_Tool.ToolSetEnabledStateId, $@"{{
+                    ""tools"": [{{ ""name"": ""{_testToolName}"", ""enabled"": false }}],
+                    ""includeLogs"": false
+                }}").Value!.GetMessage()!;
+
+                Assert.IsTrue(GetSuccessValue(json, _testToolName!), $"Should disable tool '{_testToolName}' even with LogLevel.None");
+                Assert.IsFalse(UnityMcpPluginEditor.Instance.Tools!.IsToolEnabled(_testToolName!), $"Tool '{_testToolName}' should be disabled");
+            }
+            finally
+            {
+                UnityMcpPluginEditor.LogLevel = originalLogLevel;
+            }
+        }
+
+        [UnityTest]
+        public IEnumerator SetEnabled_LogLevelNone_AllToolsDisabled_ShouldStillWork()
+        {
+            yield return null;
+
+            var toolManager = UnityMcpPluginEditor.Instance.Tools!;
+            var allTools = toolManager.GetAllTools().ToList();
+            var originalStates = allTools.ToDictionary(t => t.Name, t => toolManager.IsToolEnabled(t.Name));
+            var originalLogLevel = UnityMcpPluginEditor.LogLevel;
+
+            try
+            {
+                // Simulate real user scenario: LogLevel.None + all tools disabled
+                UnityMcpPluginEditor.LogLevel = LogLevel.None;
+                foreach (var tool in allTools)
+                    toolManager.SetToolEnabled(tool.Name, false);
+                UnityMcpPluginEditor.Instance.Save();
+
+                // Re-enable only SetEnabledState so we can call it
+                toolManager.SetToolEnabled(Tool_Tool.ToolSetEnabledStateId, true);
+
+                var json = RunTool(Tool_Tool.ToolSetEnabledStateId, $@"{{
+                    ""tools"": [{{ ""name"": ""{_testToolName}"", ""enabled"": true }}],
+                    ""includeLogs"": false
+                }}").Value!.GetMessage()!;
+
+                Assert.IsTrue(GetSuccessValue(json, _testToolName!), $"Should enable tool '{_testToolName}' with LogLevel.None and all tools disabled");
+                Assert.IsTrue(toolManager.IsToolEnabled(_testToolName!), $"Tool '{_testToolName}' should be enabled after operation");
+            }
+            finally
+            {
+                UnityMcpPluginEditor.LogLevel = originalLogLevel;
+                foreach (var kvp in originalStates)
+                    toolManager.SetToolEnabled(kvp.Key, kvp.Value);
+                UnityMcpPluginEditor.Instance.Save();
+            }
         }
     }
 }
