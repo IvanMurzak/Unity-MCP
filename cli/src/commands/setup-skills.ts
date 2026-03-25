@@ -75,7 +75,7 @@ export const setupSkillsCommand = new Command('setup-skills')
         headers['Authorization'] = `Bearer ${token}`;
       }
 
-      const body = JSON.stringify({ path: skillsPath });
+      const body = JSON.stringify({ path: agent.skillsPath });
 
       ui.heading('Generate Skills');
       ui.label('Agent', agent.name);
