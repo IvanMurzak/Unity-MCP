@@ -54,10 +54,11 @@ function startCaptureServer(): Promise<CaptureServer> {
       resolve({
         port: addr.port,
         waitForRequest: (timeoutMs = 10000) => {
+          let handle: ReturnType<typeof setTimeout>;
           return Promise.race([
-            requestPromise,
+            requestPromise.then((v) => { clearTimeout(handle); return v; }),
             new Promise<never>((_, reject) => {
-              setTimeout(() => reject(new Error(`waitForRequest timed out after ${timeoutMs}ms`)), timeoutMs);
+              handle = setTimeout(() => reject(new Error(`waitForRequest timed out after ${timeoutMs}ms`)), timeoutMs);
             }),
           ]);
         },
@@ -78,7 +79,7 @@ function runCliAsync(args: string[]): Promise<{ stdout: string; exitCode: number
     const timeout = setTimeout(() => {
       if (settled) return;
       settled = true;
-      try { child.kill(); } catch { /* ignore kill errors */ }
+      try { child.kill(); } catch { /* noop */ }
       stdout += '\n[runCliAsync] Process timed out.\n';
       resolve({ stdout, exitCode: 1 });
     }, timeoutMs);
@@ -168,58 +169,22 @@ describe('setup-skills command', () => {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     });
 
-    it('sends relative path for claude-code (.claude/skills)', async () => {
+    it.each([
+      ['claude-code', '.claude/skills'],
+      ['cursor', '.cursor/skills'],
+      ['vscode-copilot', '.github/skills'],
+    ])('sends relative path for %s (%s)', async (agentId, expectedPath) => {
       const serverUrl = `http://127.0.0.1:${captureServer.port}`;
-      // Path is passed as positional arg (not --path); --url skips Unity project validation
       const [{ body }, { exitCode }] = await Promise.all([
         captureServer.waitForRequest(),
-        runCliAsync(['setup-skills', 'claude-code', tmpDir, '--url', serverUrl]),
+        runCliAsync(['setup-skills', agentId, tmpDir, '--url', serverUrl]),
       ]);
 
       expect(exitCode).toBe(0);
-      expect(body).toMatchObject({ path: '.claude/skills' });
-
-      // Must NOT be an absolute path
       const sentPath = (body as Record<string, string>).path;
+      expect(sentPath).toBe(expectedPath);
       expect(path.isAbsolute(sentPath)).toBe(false);
-    }, 15000);
-
-    it('sent path does not include the project directory', async () => {
-      const serverUrl = `http://127.0.0.1:${captureServer.port}`;
-      const [{ body }] = await Promise.all([
-        captureServer.waitForRequest(),
-        runCliAsync(['setup-skills', 'claude-code', tmpDir, '--url', serverUrl]),
-      ]);
-
-      const sentPath = (body as Record<string, string>).path;
-      // The absolute joined path would contain the tmpDir prefix — it must not
       expect(sentPath).not.toContain(tmpDir);
-    }, 15000);
-
-    it('sends relative path for cursor (.cursor/skills)', async () => {
-      const serverUrl = `http://127.0.0.1:${captureServer.port}`;
-      const [{ body }, { exitCode }] = await Promise.all([
-        captureServer.waitForRequest(),
-        runCliAsync(['setup-skills', 'cursor', tmpDir, '--url', serverUrl]),
-      ]);
-
-      expect(exitCode).toBe(0);
-      expect(body).toMatchObject({ path: '.cursor/skills' });
-      const sentPath = (body as Record<string, string>).path;
-      expect(path.isAbsolute(sentPath)).toBe(false);
-    }, 15000);
-
-    it('sends relative path for vscode-copilot (.github/skills)', async () => {
-      const serverUrl = `http://127.0.0.1:${captureServer.port}`;
-      const [{ body }, { exitCode }] = await Promise.all([
-        captureServer.waitForRequest(),
-        runCliAsync(['setup-skills', 'vscode-copilot', tmpDir, '--url', serverUrl]),
-      ]);
-
-      expect(exitCode).toBe(0);
-      expect(body).toMatchObject({ path: '.github/skills' });
-      const sentPath = (body as Record<string, string>).path;
-      expect(path.isAbsolute(sentPath)).toBe(false);
     }, 15000);
 
     it('POSTs to the correct endpoint', async () => {
