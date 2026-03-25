@@ -1,0 +1,31 @@
+Unity-MCP-Plugin/Assets/root/Editor/UI/uxml/agents/elements/TemplateAlertPanel.uxml
+  acc79df1bbe16118 1
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/Window/MainWindowEditor.Connection.cs
+  acc79df1bbe16118 314,368-370,382
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/AiAgentConfigurators/AiAgentConfigurator.cs
+  acc79df1bbe16118 349-350,355-356,411,413-420,459-461,465,467,469,478-525
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/Window/MainWindowEditor.cs
+  acc79df1bbe16118 12,26
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/AiAgentConfigurators/Impl/CustomConfigurator.cs
+  acc79df1bbe16118 67
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "ac25817862505751a8584f440b43f3c17a79e7d2",
+  "prompts": {
+    "acc79df1bbe16118": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "61088a18-ed49-4213-8844-82deef296867",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 1375,
+      "total_deletions": 1343,
+      "accepted_lines": 1342,
+      "overriden_lines": 0
+    }
+  }
+}

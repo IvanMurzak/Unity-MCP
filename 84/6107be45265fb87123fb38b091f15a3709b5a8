@@ -1,0 +1,23 @@
+Unity-MCP-Plugin/Assets/root/Editor/UI/uxml/MainWindow.uxml
+  3a4d2e55422b88f8 102
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.5",
+  "base_commit_sha": "846107be45265fb87123fb38b091f15a3709b5a8",
+  "prompts": {
+    "3a4d2e55422b88f8": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "aaaea305-743d-4e8a-800f-5b60cc53c851",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}

@@ -1,0 +1,23 @@
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/AiAgentConfigurators/Impl/ClaudeCodeConfigurator.cs
+  4003d8a0052f4fa0 110-111,140,144-145
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.6",
+  "base_commit_sha": "120279d167400742fcd9c4266f20905cc19d1139",
+  "prompts": {
+    "4003d8a0052f4fa0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ee206ff3-bc7b-4f6e-892d-668c1d02c969",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 160,
+      "total_deletions": 156,
+      "accepted_lines": 34,
+      "overriden_lines": 0
+    }
+  }
+}
