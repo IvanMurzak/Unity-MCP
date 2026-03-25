@@ -46,17 +46,20 @@ export async function deviceAuthFlow(
   baseUrl: string,
   clientLabel: string,
   callbacks: DeviceAuthCallbacks,
-  _minIntervalMs?: number,
+  minIntervalMs?: number,
 ): Promise<DeviceAuthResult> {
-  // ── Step 1: Initiate ──────────────────────────────────────────────────────
   const authorizeUrl = `${baseUrl}/api/auth/device/authorize`;
   verbose(`POST ${authorizeUrl}`);
 
-  const initResponse = await fetch(authorizeUrl, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ client_label: clientLabel }),
-  });
+  const initResponse = await fetchWithTimeout(
+    authorizeUrl,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ client_label: clientLabel }),
+    },
+    30_000,
+  );
 
   if (!initResponse.ok) {
     const text = await initResponse.text();
@@ -70,15 +73,13 @@ export async function deviceAuthFlow(
   const auth = (await initResponse.json()) as DeviceAuthorizeResponse;
   verbose(`Device code received, user code: ${auth.user_code}, expires in ${auth.expires_in}s`);
 
-  // ── Step 2: Notify caller ─────────────────────────────────────────────────
   callbacks.onUserCode(auth.user_code, auth.verification_uri_complete);
   callbacks.onPolling?.();
 
-  // ── Step 3: Poll for token ────────────────────────────────────────────────
   const tokenUrl = `${baseUrl}/api/auth/device/token`;
   const deadline = Date.now() + auth.expires_in * 1000;
-  const minInterval = _minIntervalMs ?? 5000;
-  let interval = Math.max(auth.interval * 1000, minInterval); // min 5s by default
+  const effectiveMinInterval = minIntervalMs ?? 5000;
+  let interval = Math.max(auth.interval * 1000, effectiveMinInterval);
 
   while (Date.now() < deadline) {
     await sleep(interval);
@@ -87,30 +88,42 @@ export async function deviceAuthFlow(
 
     verbose(`Polling ${tokenUrl} (interval=${interval / 1000}s)`);
 
-    const pollResponse = await fetch(tokenUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        device_code: auth.device_code,
-        grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
-      }),
-    });
+    const pollResponse = await fetchWithTimeout(
+      tokenUrl,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          device_code: auth.device_code,
+          grant_type: 'urn:ietf:params:oauth:grant-type:device_code',
+        }),
+      },
+      15_000,
+    );
 
     if (pollResponse.ok) {
       const data = (await pollResponse.json()) as DeviceTokenSuccessResponse;
       return { success: true, accessToken: data.access_token };
     }
 
-    const errorData = (await pollResponse.json()) as DeviceTokenErrorResponse;
+    let errorData: DeviceTokenErrorResponse;
+    try {
+      errorData = (await pollResponse.json()) as DeviceTokenErrorResponse;
+    } catch {
+      return {
+        success: false,
+        reason: 'error',
+        message: `Unexpected response from token endpoint (HTTP ${pollResponse.status})`,
+      };
+    }
     verbose(`Poll response: ${errorData.error} — ${errorData.error_description ?? ''}`);
 
     switch (errorData.error) {
       case 'authorization_pending':
-        // Keep polling
         break;
 
       case 'slow_down':
-        interval = Math.min(interval + 5000, Math.max(30000, minInterval));
+        interval = Math.min(interval + 5000, 30000);
         verbose(`Slowing down, new interval: ${interval / 1000}s`);
         break;
 
@@ -146,4 +159,18 @@ export async function deviceAuthFlow(
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function fetchWithTimeout(
+  url: string,
+  options: RequestInit,
+  timeoutMs: number,
+): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
 }

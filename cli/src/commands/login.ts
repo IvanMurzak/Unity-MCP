@@ -5,9 +5,8 @@ import { Command } from 'commander';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
 import { resolveProjectPath } from '../utils/connection.js';
-import { getOrCreateConfig, writeConfig, CLOUD_SERVER_BASE_URL } from '../utils/config.js';
-import { deviceAuthFlow } from '../utils/auth.js';
-import { openBrowser } from '../utils/browser.js';
+import { getOrCreateConfig, CLOUD_SERVER_BASE_URL } from '../utils/config.js';
+import { runCloudLogin } from '../utils/cloud-login.js';
 
 interface LoginOptions {
   path?: string;
@@ -38,49 +37,10 @@ export const loginCommand = new Command('login')
       ui.label('Server', CLOUD_SERVER_BASE_URL);
       ui.divider();
 
-      let spinner: ReturnType<typeof ui.startSpinner> | undefined;
-
-      try {
-        const result = await deviceAuthFlow(
-          CLOUD_SERVER_BASE_URL,
-          'Unity-MCP CLI',
-          {
-            onUserCode: (userCode, verificationUrl) => {
-              ui.info(`Open this URL to authorize:`);
-              console.log();
-              console.log(`  ${verificationUrl}`);
-              console.log();
-              ui.label('Code', userCode);
-              openBrowser(verificationUrl);
-            },
-            onPolling: () => {
-              spinner = ui.startSpinner('Waiting for authorization...');
-            },
-          },
-        );
-
-        if (result.success) {
-          spinner?.success('Authorized');
-          const updatedConfig = {
-            ...config,
-            cloudToken: result.accessToken,
-            connectionMode: 'Cloud' as const,
-          };
-          writeConfig(projectPath, updatedConfig);
-          ui.success('Authentication complete. Cloud token saved to project config.');
-        } else {
-          spinner?.stop();
-          ui.error(result.message);
-          process.exit(1);
-        }
-      } catch (err) {
-        spinner?.stop();
-        const message = err instanceof Error ? err.message : String(err);
-        if (message.includes('ECONNREFUSED') || message.includes('fetch failed')) {
-          ui.error(`Cannot reach cloud server at ${CLOUD_SERVER_BASE_URL}`);
-        } else {
-          ui.error(`Authentication failed: ${message}`);
-        }
+      const token = await runCloudLogin(projectPath);
+      if (token) {
+        ui.success('Authentication complete. Cloud token saved to project config.');
+      } else {
         process.exit(1);
       }
     },

@@ -86,7 +86,7 @@ export const openCommand = new Command('open')
           verbose('Cloud mode with token detected — auto-enabling keep-connected');
         }
 
-        const skillAutoGenerate = (config.skillAutoGenerate ?? {}) as Record<string, boolean>;
+        const skillAutoGenerate = { ...(config.skillAutoGenerate ?? {}) } as Record<string, boolean>;
         if (!skillAutoGenerate['claude-code']) {
           skillAutoGenerate['claude-code'] = true;
           writeConfig(projectPath, { ...config, skillAutoGenerate });

@@ -4,9 +4,8 @@ import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
 import { resolveAndValidateProjectPath, resolveConnection } from '../utils/connection.js';
 import { getAgentById, getAgentIds, listAgentTable } from '../utils/agents.js';
-import { readConfig, isCloudMode, writeConfig, CLOUD_SERVER_BASE_URL } from '../utils/config.js';
-import { deviceAuthFlow } from '../utils/auth.js';
-import { openBrowser } from '../utils/browser.js';
+import { readConfig, isCloudMode } from '../utils/config.js';
+import { runCloudLogin } from '../utils/cloud-login.js';
 
 interface SetupSkillsOptions {
   url?: string;
@@ -47,61 +46,6 @@ async function callGenerateSkills(
     });
   } finally {
     clearTimeout(fetchTimeout);
-  }
-}
-
-/**
- * Run the inline cloud login flow. Returns the new token on success, or null on failure.
- */
-async function inlineCloudLogin(projectPath: string): Promise<string | null> {
-  ui.info('Cloud authentication required. Starting login...');
-  console.log();
-
-  let spinner: ReturnType<typeof ui.startSpinner> | undefined;
-
-  try {
-    const result = await deviceAuthFlow(
-      CLOUD_SERVER_BASE_URL,
-      'Unity-MCP CLI',
-      {
-        onUserCode: (userCode, verificationUrl) => {
-          ui.info('Open this URL to authorize:');
-          console.log();
-          console.log(`  ${verificationUrl}`);
-          console.log();
-          ui.label('Code', userCode);
-          openBrowser(verificationUrl);
-        },
-        onPolling: () => {
-          spinner = ui.startSpinner('Waiting for authorization...');
-        },
-      },
-    );
-
-    if (result.success) {
-      spinner?.success('Authorized');
-
-      const config = readConfig(projectPath) ?? {};
-      const updatedConfig = {
-        ...config,
-        cloudToken: result.accessToken,
-        connectionMode: 'Cloud' as const,
-      };
-      writeConfig(projectPath, updatedConfig);
-      ui.success('Authentication complete. Cloud token saved.');
-      console.log();
-
-      return result.accessToken;
-    }
-
-    spinner?.stop();
-    ui.error(result.message);
-    return null;
-  } catch (err) {
-    spinner?.stop();
-    const message = err instanceof Error ? err.message : String(err);
-    ui.error(`Authentication failed: ${message}`);
-    return null;
   }
 }
 
@@ -188,8 +132,9 @@ export const setupSkillsCommand = new Command('setup-skills')
           const hadToken = !!token;
 
           if (cloud && !options.token && !hadToken) {
-            // No token at all — run inline device auth to get one
-            const newToken = await inlineCloudLogin(projectPath);
+            ui.info('Cloud authentication required. Starting login...');
+            console.log();
+            const newToken = await runCloudLogin(projectPath);
             if (!newToken) {
               process.exit(1);
             }
