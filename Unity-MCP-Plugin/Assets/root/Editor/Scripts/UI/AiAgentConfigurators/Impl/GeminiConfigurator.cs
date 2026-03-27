@@ -1,4 +1,4 @@
-﻿/*
+/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -28,6 +28,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public override string? SkillsPath => ".gemini/skills";
 
         protected override string? IconFileName => "gemini-64.png";
+        protected override string? OpenCommand => "gemini";
+        protected override string? OpenButtonText => "Open Gemini";
 
         protected override AiAgentConfig CreateConfigStdioWindows() => new JsonAiAgentConfig(
             name: AgentName,

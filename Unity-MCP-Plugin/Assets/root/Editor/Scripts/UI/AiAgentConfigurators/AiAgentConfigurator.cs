@@ -1,4 +1,4 @@
-﻿/*
+/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -78,6 +78,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected Toggle? ToggleOptionHttp { get; private set; }
         protected Toggle? ToggleOptionStdio { get; private set; }
         protected Button? BtnRemoveConfig { get; private set; }
+        protected virtual string? OpenCommand => null;
+        protected virtual string? OpenButtonText => null;
 
         /// <summary>
         /// Gets the icon paths for this agent.
@@ -252,6 +254,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 _configElementHttp?.UpdateStatus();
                 UpdateRemoveButton();
             });
+
+            if(OpenCommand != null)
+            {
+                var btn = new Button(() => OpenAgentInFolder(OpenCommand));
+                btn.text = OpenButtonText ?? $"Open {AgentName}";
+                ContainerUnderHeader!.Add(btn);
+            }
         }
 
         protected virtual void UpdateRemoveButton()
@@ -492,6 +501,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             if (Root == null)
                 throw new InvalidOperationException("Root visual element is not set. Ensure CreateUI has been called.");
         }
+
+        private void OpenAgentInFolder(string command)
+        {
+            try
+            {
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = command,
+                    Arguments = $"\"{ProjectRootPath}\"",
+                    UseShellExecute = true
+                });
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[Unity MCP] Failed to open {AgentName}: {ex.Message}");
+            }
+        }
+
 
         #endregion
     }

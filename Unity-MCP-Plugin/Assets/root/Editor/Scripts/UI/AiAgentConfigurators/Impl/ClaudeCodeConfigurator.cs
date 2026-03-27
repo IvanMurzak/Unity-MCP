@@ -29,6 +29,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public override string? SkillsPath => ".claude/skills";
 
         protected override string? IconFileName => "claude-64.png";
+        protected override string? OpenCommand => "Claude";
+        protected override string? OpenButtonText => "Open Claude Code";
 
         protected override AiAgentConfig CreateConfigStdioWindows() => new JsonAiAgentConfig(
             name: AgentName,

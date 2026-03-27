@@ -1,4 +1,4 @@
-﻿/*
+/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -29,6 +29,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public override string? SkillsPath => ".cursor/skills";
 
         protected override string? IconFileName => "cursor-64.png";
+        protected override string? OpenCommand => "cursor";
+        protected override string? OpenButtonText => "Open Cursor";
 
         protected override AiAgentConfig CreateConfigStdioWindows() => new JsonAiAgentConfig(
             name: AgentName,

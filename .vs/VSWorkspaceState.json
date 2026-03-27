@@ -1,0 +1,16 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\Unity-MCP-Plugin",
+    "\\Unity-MCP-Plugin\\Assets",
+    "\\Unity-MCP-Plugin\\Assets\\root",
+    "\\Unity-MCP-Plugin\\Assets\\root\\Editor",
+    "\\Unity-MCP-Plugin\\Assets\\root\\Editor\\Scripts",
+    "\\Unity-MCP-Plugin\\Assets\\root\\Editor\\Scripts\\UI",
+    "\\Unity-MCP-Plugin\\Assets\\root\\Editor\\Scripts\\UI\\AiAgentConfigurators",
+    "\\Unity-MCP-Plugin\\Assets\\root\\Editor\\Scripts\\UI\\AiAgentConfigurators\\Impl",
+    "\\Unity-MCP-Plugin\\Assets\\root\\Editor\\Scripts\\UI\\Window"
+  ],
+  "SelectedNode": "\\Unity-MCP-Plugin\\Assets\\root\\Editor\\Scripts\\UI\\AiAgentConfigurators\\Impl\\ClineConfigurator.cs",
+  "PreviewInSolutionExplorer": false
+}
