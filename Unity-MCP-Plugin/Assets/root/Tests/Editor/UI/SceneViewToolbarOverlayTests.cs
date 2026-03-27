@@ -20,6 +20,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
     public class SceneViewToolbarOverlayTests : BaseTest
     {
+        [UnityTearDown]
         public override IEnumerator TearDown()
         {
             var windows = Resources.FindObjectsOfTypeAll<MainWindowEditor>();
