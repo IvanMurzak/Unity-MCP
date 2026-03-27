@@ -12,12 +12,11 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
-using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Utils;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -25,6 +24,49 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Tool
     {
         public const string ToolListId = "tool-list";
+
+        static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(200);
+
+        [Description("Specifies what to include for tool input arguments.")]
+        public enum InputRequest
+        {
+            [Description("Do not include input arguments.")]
+            None = 0,
+
+            [Description("Include input argument names only.")]
+            Inputs = 1,
+
+            [Description("Include input argument names and descriptions.")]
+            InputsWithDescription = 2
+        }
+
+        [Description("MCP tool information.")]
+        public class ToolInfoData
+        {
+            [JsonInclude, JsonPropertyName("name")]
+            [Description("Tool name.")]
+            public string Name { get; set; } = string.Empty;
+
+            [JsonInclude, JsonPropertyName("description")]
+            [Description("Tool description.")]
+            public string? Description { get; set; }
+
+            [JsonInclude, JsonPropertyName("inputs")]
+            [Description("Tool input arguments.")]
+            public ToolInputData[]? Inputs { get; set; }
+        }
+
+        [Description("MCP tool input argument.")]
+        public class ToolInputData
+        {
+            [JsonInclude, JsonPropertyName("name")]
+            [Description("Argument name.")]
+            public string Name { get; set; } = string.Empty;
+
+            [JsonInclude, JsonPropertyName("description")]
+            [Description("Argument description.")]
+            public string? Description { get; set; }
+        }
 
         [McpPluginTool
         (
@@ -60,7 +102,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 Regex? regex = null;
                 if (!string.IsNullOrWhiteSpace(regexSearch))
                 {
-                    try { regex = new Regex(regexSearch!, RegexOptions.IgnoreCase); }
+                    try { regex = new Regex(regexSearch!, RegexOptions.IgnoreCase, RegexTimeout); }
                     catch (ArgumentException ex)
                     {
                         throw new ArgumentException($"Invalid regex pattern '{regexSearch}': {ex.Message}", nameof(regexSearch));
@@ -69,33 +111,29 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 var inputsRequested = includeInputs ?? InputRequest.None;
                 var descriptionRequested = includeDescription == true;
-                var needInputParsing = regex != null || inputsRequested != InputRequest.None;
+                var needInputs = regex != null || inputsRequested != InputRequest.None;
 
                 var results = new List<ToolInfoData>();
 
                 foreach (var tool in allTools)
                 {
-                    var inputs = needInputParsing ? ParseInputs(tool.InputSchema) : null;
+                    List<ToolInputData>? inputs = null;
 
-                    if (regex != null && !MatchesTool(regex, tool, inputs ?? EmptyInputs))
-                        continue;
+                    if (regex != null)
+                    {
+                        if (!MatchesTool(regex, tool, needInputs ? tool.InputSchema : null, out inputs))
+                            continue;
+                    }
 
                     var info = new ToolInfoData { Name = tool.Name };
 
                     if (descriptionRequested)
                         info.Description = tool.Description;
 
-                    if (inputsRequested != InputRequest.None && inputs != null)
+                    if (inputsRequested != InputRequest.None)
                     {
-                        info.Inputs = inputs
-                            .Select(i => new ToolInputData
-                            {
-                                Name = i.Name,
-                                Description = inputsRequested == InputRequest.InputsWithDescription
-                                    ? i.Description
-                                    : null
-                            })
-                            .ToArray();
+                        inputs ??= ParseInputs(tool.InputSchema);
+                        info.Inputs = BuildInputResults(inputs, inputsRequested);
                     }
 
                     results.Add(info);
@@ -105,17 +143,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             });
         }
 
-        static readonly List<ToolInputData> EmptyInputs = new();
-
-        static bool MatchesTool(Regex regex, IRunTool tool, List<ToolInputData> inputs)
+        static bool MatchesTool(Regex regex, IRunTool tool, JsonNode? schema, out List<ToolInputData>? parsedInputs)
         {
+            parsedInputs = null;
+
             if (regex.IsMatch(tool.Name ?? string.Empty))
                 return true;
 
             if (tool.Description != null && regex.IsMatch(tool.Description))
                 return true;
 
-            foreach (var input in inputs)
+            if (schema == null)
+                return false;
+
+            parsedInputs = ParseInputs(schema);
+            foreach (var input in parsedInputs)
             {
                 if (regex.IsMatch(input.Name))
                     return true;
@@ -127,6 +169,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             return false;
         }
 
+        static ToolInputData[] BuildInputResults(List<ToolInputData> inputs, InputRequest request)
+        {
+            var result = new ToolInputData[inputs.Count];
+            for (int i = 0; i < inputs.Count; i++)
+            {
+                result[i] = new ToolInputData
+                {
+                    Name = inputs[i].Name,
+                    Description = request == InputRequest.InputsWithDescription
+                        ? inputs[i].Description
+                        : null
+                };
+            }
+            return result;
+        }
+
         static List<ToolInputData> ParseInputs(JsonNode? schema)
         {
             var result = new List<ToolInputData>();
@@ -134,7 +192,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (schema is not JsonObject schemaObject)
                 return result;
 
-            if (!schemaObject.TryGetPropertyValue("properties", out var propertiesNode))
+            if (!schemaObject.TryGetPropertyValue(JsonSchema.Properties, out var propertiesNode))
                 return result;
 
             if (propertiesNode is not JsonObject propertiesObject)
@@ -144,7 +202,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             {
                 string? description = null;
                 if (element is JsonObject propertyObject &&
-                    propertyObject.TryGetPropertyValue("description", out var descriptionNode) &&
+                    propertyObject.TryGetPropertyValue(JsonSchema.Description, out var descriptionNode) &&
                     descriptionNode != null)
                 {
                     description = descriptionNode.ToString();
