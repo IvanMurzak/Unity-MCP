@@ -23,8 +23,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
     {
         private const string PackagePathPrefix = "Packages/com.ivanmurzak.unity.mcp/";
         private const string AssetsPathPrefix = "Assets/root/";
+        private const string LogoIconRelativePath = "Editor/Gizmos/logo_window_icon.png";
 
-        public static readonly string[] PackageLogoIcon = GetEditorAssetPaths("Editor/Gizmos/logo_window_icon.png");
+        /// <summary>
+        /// Full package path to the logo icon. Usable in compile-time attributes (e.g., [Icon]).
+        /// </summary>
+        public const string PackageLogoIconPath = PackagePathPrefix + LogoIconRelativePath;
+
+        public static readonly string[] PackageLogoIcon = GetEditorAssetPaths(LogoIconRelativePath);
 
         /// <summary>
         /// Generates an array of paths for an editor asset, with both package and development paths.
