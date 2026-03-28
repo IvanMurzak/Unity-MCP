@@ -44,7 +44,64 @@ jobs:
           lfs: false
 
       # --------------------------------------------------------------------- #
-      # 2-b. Activate Unity license
+      # 2-b. Free disk space
+      # --------------------------------------------------------------------- #
+      - name: Disk space BEFORE cleanup
+        id: disk_before
+        run: |
+          free_kb=$(df --output=avail / | tail -1 | tr -d ' ')
+          echo "free_kb=$free_kb" >> $GITHUB_OUTPUT
+          echo "### Disk space BEFORE cleanup"
+          df -h /
+        shell: bash
+
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          swap-storage: true
+
+      - name: Disk space AFTER cleanup
+        id: disk_after
+        run: |
+          free_kb=$(df --output=avail / | tail -1 | tr -d ' ')
+          echo "free_kb=$free_kb" >> $GITHUB_OUTPUT
+          echo "### Disk space AFTER cleanup"
+          df -h /
+        shell: bash
+
+      # DIAGNOSTIC — remove before merge (see #618)
+      - name: Report disk space to summary
+        if: always()
+        run: |
+          before_kb=${{ steps.disk_before.outputs.free_kb }}
+          after_kb=${{ steps.disk_after.outputs.free_kb }}
+          freed_kb=$((after_kb - before_kb))
+          before_gb=$(awk "BEGIN {printf \"%.2f\", $before_kb / 1024 / 1024}")
+          after_gb=$(awk "BEGIN {printf \"%.2f\", $after_kb / 1024 / 1024}")
+          freed_gb=$(awk "BEGIN {printf \"%.2f\", $freed_kb / 1024 / 1024}")
+
+          cat >> "$GITHUB_STEP_SUMMARY" <<EOF
+          ## Disk Cleanup Report
+
+          | | Free Space |
+          |---|---|
+          | **Before** cleanup | ${before_gb} GB |
+          | **After** cleanup  | ${after_gb} GB |
+          | **Freed**          | ${freed_gb} GB |
+
+          - **Unity version:** \`${{ inputs.unityVersion }}\`
+          - **Test mode:** \`${{ inputs.testMode }}\`
+          - **Platform:** \`${{ matrix.platform }}\`
+          EOF
+        shell: bash
+
+      # --------------------------------------------------------------------- #
+      # 2-c. Activate Unity license
       # --------------------------------------------------------------------- #
       - name: Activate Unity license
         id: activate
