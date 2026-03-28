@@ -43,15 +43,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [Description("MCP tool information.")]
         public class ToolInfoData
         {
-            [JsonInclude, JsonPropertyName("name")]
+            [JsonPropertyName("name")]
             [Description("Tool name.")]
             public string Name { get; set; } = string.Empty;
 
-            [JsonInclude, JsonPropertyName("description")]
+            [JsonPropertyName("description")]
             [Description("Tool description.")]
             public string? Description { get; set; }
 
-            [JsonInclude, JsonPropertyName("inputs")]
+            [JsonPropertyName("inputs")]
             [Description("Tool input arguments.")]
             public ToolInputData[]? Inputs { get; set; }
         }
@@ -59,11 +59,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [Description("MCP tool input argument.")]
         public class ToolInputData
         {
-            [JsonInclude, JsonPropertyName("name")]
+            [JsonPropertyName("name")]
             [Description("Argument name.")]
             public string Name { get; set; } = string.Empty;
 
-            [JsonInclude, JsonPropertyName("description")]
+            [JsonPropertyName("description")]
             [Description("Argument description.")]
             public string? Description { get; set; }
         }
