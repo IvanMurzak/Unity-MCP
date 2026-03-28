@@ -44,7 +44,20 @@ jobs:
           lfs: false
 
       # --------------------------------------------------------------------- #
-      # 2-b. Activate Unity license
+      # 2-b. Free disk space
+      # --------------------------------------------------------------------- #
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@main
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          swap-storage: true
+
+      # --------------------------------------------------------------------- #
+      # 2-c. Activate Unity license
       # --------------------------------------------------------------------- #
       - name: Activate Unity license
         id: activate
