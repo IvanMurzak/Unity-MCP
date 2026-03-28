@@ -13,7 +13,6 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text.Json.Nodes;
-using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
@@ -43,15 +42,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [Description("MCP tool information.")]
         public class ToolInfoData
         {
-            [JsonPropertyName("name")]
             [Description("Tool name.")]
             public string Name { get; set; } = string.Empty;
 
-            [JsonPropertyName("description")]
             [Description("Tool description.")]
             public string? Description { get; set; }
 
-            [JsonPropertyName("inputs")]
             [Description("Tool input arguments.")]
             public ToolInputData[]? Inputs { get; set; }
         }
@@ -59,11 +55,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [Description("MCP tool input argument.")]
         public class ToolInputData
         {
-            [JsonPropertyName("name")]
             [Description("Argument name.")]
             public string Name { get; set; } = string.Empty;
 
-            [JsonPropertyName("description")]
             [Description("Argument description.")]
             public string? Description { get; set; }
         }
