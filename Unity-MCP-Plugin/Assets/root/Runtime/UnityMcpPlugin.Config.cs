@@ -57,9 +57,23 @@ namespace com.IvanMurzak.Unity.MCP
                     var args = ArgsUtils.ParseCommandLineArguments();
                     var envValue = args.GetValueOrDefault(EnvironmentUtils.EnvCloudUrl)
                         ?? Environment.GetEnvironmentVariable(EnvironmentUtils.EnvCloudUrl);
-                    return string.IsNullOrWhiteSpace(envValue)
-                        ? DefaultCloudServerBaseUrl
-                        : envValue.Trim().TrimEnd('/');
+
+                    if (string.IsNullOrWhiteSpace(envValue))
+                        return DefaultCloudServerBaseUrl;
+
+                    var normalized = envValue.Trim().Trim('"').TrimEnd('/');
+
+                    if (!Uri.TryCreate(normalized, UriKind.Absolute, out var uri) ||
+                        (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+                    {
+                        return DefaultCloudServerBaseUrl;
+                    }
+
+                    // Strip trailing "/mcp" so CloudServerUrl doesn't produce "/mcp/mcp"
+                    if (normalized.EndsWith("/mcp", StringComparison.OrdinalIgnoreCase))
+                        normalized = normalized[..^4];
+
+                    return normalized;
                 }
             }
 
