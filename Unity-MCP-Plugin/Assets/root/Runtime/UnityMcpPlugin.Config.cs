@@ -9,10 +9,12 @@
 */
 
 #nullable enable
+using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common;
+using com.IvanMurzak.McpPlugin.Common.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
@@ -46,8 +48,36 @@ namespace com.IvanMurzak.Unity.MCP
             [JsonPropertyName("token")]
             public string? LocalToken { get; set; }
 
-            public const string CloudServerBaseUrl = "https://ai-game.dev";
-            public const string CloudServerUrl = CloudServerBaseUrl + "/mcp";
+            public const string DefaultCloudServerBaseUrl = "https://ai-game.dev";
+
+            public static string CloudServerBaseUrl
+            {
+                get
+                {
+                    var args = ArgsUtils.ParseCommandLineArguments();
+                    var envValue = args.GetValueOrDefault(EnvironmentUtils.EnvCloudUrl)
+                        ?? Environment.GetEnvironmentVariable(EnvironmentUtils.EnvCloudUrl);
+
+                    if (string.IsNullOrWhiteSpace(envValue))
+                        return DefaultCloudServerBaseUrl;
+
+                    var normalized = envValue.Trim().Trim('"').TrimEnd('/');
+
+                    if (!Uri.TryCreate(normalized, UriKind.Absolute, out var uri) ||
+                        (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+                    {
+                        return DefaultCloudServerBaseUrl;
+                    }
+
+                    // Strip trailing "/mcp" so CloudServerUrl doesn't produce "/mcp/mcp"
+                    if (normalized.EndsWith("/mcp", StringComparison.OrdinalIgnoreCase))
+                        normalized = normalized[..^4];
+
+                    return normalized;
+                }
+            }
+
+            public static string CloudServerUrl => CloudServerBaseUrl + "/mcp";
 
             /// <summary>
             /// Returns the active connection host based on <see cref="ConnectionMode"/>.

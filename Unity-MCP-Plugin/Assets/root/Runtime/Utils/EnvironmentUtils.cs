@@ -33,6 +33,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         public const string EnvTools = "UNITY_MCP_TOOLS";
         public const string EnvStartServer = "UNITY_MCP_START_SERVER";
         public const string EnvTransport = "UNITY_MCP_TRANSPORT";
+        public const string EnvCloudUrl = "UNITY_MCP_CLOUD_URL";
 
         /// <summary>
         /// Checks if the current environment is a CI environment.
