@@ -14,11 +14,13 @@ using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.McpPlugin.Common.Utils;
 using com.IvanMurzak.McpPlugin.Server;
+using com.IvanMurzak.Unity.MCP.Server.Utils;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using ModelContextProtocol.Server;
 using NLog;
 using NLog.Extensions.Logging;
 
@@ -70,6 +72,32 @@ namespace com.IvanMurzak.Unity.MCP.Server
                 builder.Services
                     .WithMcpServer(dataArguments, logger)
                     .WithMcpPluginServer(dataArguments);
+
+                // Sanitize JSON Schema $defs/$ref identifiers so that strict
+                // MCP clients (e.g. GPT-based) don't choke on raw C# type
+                // names containing [], <>, +, or commas.
+                builder.Services.PostConfigure<McpServerOptions>(options =>
+                {
+                    var originalListTools = options.Handlers.ListToolsHandler;
+                    if (originalListTools != null)
+                    {
+                        options.Handlers.ListToolsHandler = async (request, ct) =>
+                        {
+                            var result = await originalListTools(request, ct);
+                            if (result?.Tools != null)
+                            {
+                                for (var i = 0; i < result.Tools.Count; i++)
+                                {
+                                    var tool = result.Tools[i];
+                                    tool.InputSchema  = JsonSchemaSanitizer.SanitizeSchema(tool.InputSchema);
+                                    if (tool.OutputSchema.HasValue)
+                                        tool.OutputSchema = JsonSchemaSanitizer.SanitizeSchema(tool.OutputSchema.Value);
+                                }
+                            }
+                            return result!;
+                        };
+                    }
+                });
 
                 // builder.WebHost.UseUrls(Consts.Hub.DefaultEndpoint);
 
