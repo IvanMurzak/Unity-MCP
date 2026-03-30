@@ -34,7 +34,7 @@ namespace com.IvanMurzak.Unity.MCP.Server.Utils
         /// Sanitizes a raw C# type name into a safe schema-definition identifier.
         /// The result contains only <c>[a-zA-Z0-9._-]</c> characters.
         /// </summary>
-        public static string SanitizeTypeName(string typeName)
+        public static string? SanitizeTypeName(string? typeName)
         {
             if (string.IsNullOrEmpty(typeName))
                 return typeName;
@@ -69,6 +69,10 @@ namespace com.IvanMurzak.Unity.MCP.Server.Utils
             if (schema.ValueKind != JsonValueKind.Object)
                 return schema;
 
+            // Fast-path: skip allocation when there is no $defs or all keys are already safe.
+            if (!NeedsSanitization(schema))
+                return schema;
+
             var node = JsonNode.Parse(schema.GetRawText());
             if (node is not JsonObject rootObj)
                 return schema;
@@ -84,6 +88,27 @@ namespace com.IvanMurzak.Unity.MCP.Server.Utils
 
             // Round-trip back to JsonElement.
             return JsonSerializer.Deserialize<JsonElement>(rootObj.ToJsonString());
+        }
+
+        /// <summary>
+        /// Lightweight check using <see cref="JsonElement"/> (no allocation) to
+        /// determine whether any <c>$defs</c> key contains unsafe characters.
+        /// </summary>
+        private static bool NeedsSanitization(JsonElement schema)
+        {
+            if (!schema.TryGetProperty(DefsProperty, out var defs))
+                return false;
+
+            if (defs.ValueKind != JsonValueKind.Object)
+                return false;
+
+            foreach (var property in defs.EnumerateObject())
+            {
+                if (SanitizeTypeName(property.Name) != property.Name)
+                    return true;
+            }
+
+            return false;
         }
 
         // -----------------------------------------------------------------
@@ -109,7 +134,7 @@ namespace com.IvanMurzak.Unity.MCP.Server.Utils
             foreach (var kvp in defs)
             {
                 var original  = kvp.Key;
-                var sanitized = SanitizeTypeName(original);
+                var sanitized = SanitizeTypeName(original)!;
 
                 if (sanitized == original)
                 {

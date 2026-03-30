@@ -48,17 +48,17 @@ jobs:
       - name: Restore dependencies
         run: |
           cd Unity-MCP-Server
-          dotnet restore com.IvanMurzak.Unity.MCP.Server.csproj
+          dotnet restore Unity-MCP-Server.sln
 
       - name: Build
         run: |
           cd Unity-MCP-Server
-          dotnet build com.IvanMurzak.Unity.MCP.Server.csproj --no-restore --configuration Release
+          dotnet build Unity-MCP-Server.sln --no-restore --configuration Release
 
       - name: Test
         run: |
           cd Unity-MCP-Server
-          dotnet test com.IvanMurzak.Unity.MCP.Server.csproj --no-build --verbosity normal --configuration Release
+          dotnet test Unity-MCP-Server.sln --no-build --verbosity normal --configuration Release
 
       - name: Pack NuGet package
         run: |
