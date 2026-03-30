@@ -822,3 +822,8 @@ Contributions are highly appreciated. Bring your ideas and let's make game devel
 5. Create Pull Request targeting original [Unity-MCP](https://github.com/IvanMurzak/Unity-MCP/compare) repository, `main` branch.
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## Hosted deployment
+
+A hosted deployment is available on [Fronteir AI](https://fronteir.ai/mcp/ivanmurzak-unity-mcp).
+
