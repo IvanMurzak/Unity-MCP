@@ -84,7 +84,9 @@ Get up and running in three steps:
    > **Alternative:** `npx unity-mcp-cli install-plugin ./MyUnityProject` — see [CLI documentation](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md)
 2. **[Pick an AI agent](#step-2-install-ai-agent)** — Claude Code, Claude Desktop, GitHub Copilot, Cursor, or any other
 3. **[Setup AI agent](#step-3-configure-ai-agent)** — open `Window/AI Game Developer` in Unity and click **Auto-generate skills** (recommended) or **Configure MCP**
+  ![Setup AI Skills](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/setup-skills.jpg?raw=true)
    > **Alternative:** `npx unity-mcp-cli setup-skills claude-code ./MyUnityProject` — see [CLI documentation](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md)
+
 
 That's it. Ask your AI *"Create 3 cubes in a circle with radius 2"* and watch it happen. ✨
 

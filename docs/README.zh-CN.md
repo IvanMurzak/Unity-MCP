@@ -84,7 +84,9 @@ unity-mcp-cli open ./MyUnityProject
    > **替代方式：** `npx unity-mcp-cli install-plugin ./MyUnityProject` — 参见 [CLI 文档](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md)
 2. **[选择 AI 智能体](#step-2-install-ai-agent)** — Claude Code、Claude Desktop、GitHub Copilot、Cursor 或其他
 3. **[配置 AI 智能体](#step-3-configure-ai-agent)** — 在 Unity 中打开 `Window/AI Game Developer`，点击**自动生成技能**（推荐）或**配置 MCP**
+  ![Setup AI Skills](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/setup-skills.jpg?raw=true)
    > **替代方式：** `npx unity-mcp-cli setup-skills claude-code ./MyUnityProject` — 参见 [CLI 文档](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md)
+
 
 就是这样。询问 AI *"以半径 2 圆形排列创建 3 个立方体"*，然后看它实现。✨
 
