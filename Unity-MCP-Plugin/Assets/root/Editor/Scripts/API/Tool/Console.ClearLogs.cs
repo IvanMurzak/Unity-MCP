@@ -12,6 +12,7 @@
 using System;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.ReflectorNet.Utils;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -31,16 +32,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "Useful for isolating errors related to a specific action by clearing logs before performing the action.")]
         public void ClearLogs(string? nothing = null)
         {
-            Debug.ClearDeveloperConsole();
+            MainThread.Instance.Run(() =>
+            {
+                Debug.ClearDeveloperConsole();
 
-            if (!UnityMcpPluginEditor.HasInstance)
-                throw new InvalidOperationException("UnityMcpPluginEditor is not initialized.");
+                if (!UnityMcpPluginEditor.HasInstance)
+                    throw new InvalidOperationException("UnityMcpPluginEditor is not initialized.");
 
-            var logCollector = UnityMcpPluginEditor.Instance.LogCollector;
-            if (logCollector == null)
-                throw new InvalidOperationException("LogCollector is not initialized.");
+                var logCollector = UnityMcpPluginEditor.Instance.LogCollector;
+                if (logCollector == null)
+                    throw new InvalidOperationException("LogCollector is not initialized.");
 
-            logCollector.Clear();
+                logCollector.Clear();
+            });
         }
     }
 }
