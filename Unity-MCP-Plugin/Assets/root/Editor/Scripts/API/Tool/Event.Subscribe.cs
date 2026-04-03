@@ -42,7 +42,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "Do NOT use hierarchy_changed as a proxy for server responses — it fires on unrelated changes.\n\n" +
             "BEST: Dynamic hook via script-execute (NO source code modification, auto-cleanup on play mode exit):\n" +
             "  Step 1 — Hook game event to McpEventBus (run once before test):\n" +
-            "    script-execute:\n" +
+            "    script-execute (IMPORTANT: add 'using com.IvanMurzak.Unity.MCP.Editor.API;' for McpEventBus):\n" +
             "      SomeManager.Instance.OnDataLoaded += () => McpEventBus.Push(\"data_loaded\");\n" +
             "      SomePopup.OnClosed += () => McpEventBus.Push(\"popup_closed\");\n" +
             "  Step 2 — Trigger action + subscribe in parallel:\n" +

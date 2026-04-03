@@ -82,6 +82,8 @@ Built-in events cover Unity Editor events only. For game-specific events
 ### Step 1: Hook game event to McpEventBus (via script-execute, no code changes needed)
 ```
 script-execute:
+  using com.IvanMurzak.Unity.MCP.Editor.API;
+
   class Script {
     public static object Main() {
       SomeManager.Instance.OnDataLoaded += () =>
@@ -90,6 +92,8 @@ script-execute:
     }
   }
 ```
+
+NOTE: `using com.IvanMurzak.Unity.MCP.Editor.API;` is required in script-execute for McpEventBus access.
 
 ### Step 2: Subscribe + trigger in parallel
 ```
