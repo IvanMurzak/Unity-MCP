@@ -1,0 +1,25 @@
+Unity-MCP-Plugin/Assets/root/Tests/Editor/Tool/ToolThreadSafetyTests.cs
+  ca51fe2b5dd4d554 1-129,131-148,150-160,162-173,175-185,187-209,211-286,288-313,315-337,339-347,349-359,361-372,374-386,388-389,391-418,420-432,434-435,437-470,472-481,483-525,532-580,590-604
+Unity-MCP-Plugin/Assets/root/Tests/Editor/BaseTest.cs
+  ca51fe2b5dd4d554 202-208,229-232,246-251,261-264
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "03e960df27530f139c446203ffad5a81139f161c",
+  "prompts": {
+    "ca51fe2b5dd4d554": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5ad79546-e9c6-4b15-b049-4c051380598d",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 835,
+      "total_deletions": 190,
+      "accepted_lines": 658,
+      "overriden_lines": 34
+    }
+  }
+}
