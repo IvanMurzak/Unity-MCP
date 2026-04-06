@@ -372,6 +372,53 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             }
         }
 
+        // ── background thread tests ───────────────────────────────────────
+
+        [UnityTest]
+        public IEnumerator SetEnabled_FromBackgroundThread_DisablesTool()
+        {
+            yield return null;
+
+            yield return RunOnBackgroundThread(() =>
+            {
+                var json = RunTool(Tool_Tool.ToolSetEnabledStateId, $@"{{
+                    ""tools"": [{{ ""name"": ""{_testToolName}"", ""enabled"": false }}],
+                    ""includeLogs"": false
+                }}").Value!.GetMessage()!;
+
+                Assert.IsTrue(GetSuccessValue(json, _testToolName!),
+                    $"Should successfully disable tool '{_testToolName}' from background thread");
+            });
+
+            var toolManager = UnityMcpPluginEditor.Instance.Tools!;
+            Assert.IsFalse(toolManager.IsToolEnabled(_testToolName!),
+                $"Tool '{_testToolName}' should be disabled after background thread call");
+        }
+
+        [UnityTest]
+        public IEnumerator SetEnabled_FromBackgroundThread_MultipleTimes_Succeeds()
+        {
+            yield return null;
+
+            // Disable from background thread
+            yield return RunOnBackgroundThread(() =>
+                RunTool(Tool_Tool.ToolSetEnabledStateId, $@"{{
+                    ""tools"": [{{ ""name"": ""{_testToolName}"", ""enabled"": false }}],
+                    ""includeLogs"": false
+                }}"));
+
+            // Re-enable from background thread
+            yield return RunOnBackgroundThread(() =>
+                RunTool(Tool_Tool.ToolSetEnabledStateId, $@"{{
+                    ""tools"": [{{ ""name"": ""{_testToolName}"", ""enabled"": true }}],
+                    ""includeLogs"": false
+                }}"));
+
+            var toolManager = UnityMcpPluginEditor.Instance.Tools!;
+            Assert.IsTrue(toolManager.IsToolEnabled(_testToolName!),
+                $"Tool '{_testToolName}' should be enabled after background thread re-enable");
+        }
+
         [UnityTest]
         public IEnumerator SetEnabled_LogLevelNone_AllToolsDisabled_ShouldStillWork()
         {

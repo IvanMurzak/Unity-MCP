@@ -9,10 +9,12 @@
 */
 
 #nullable enable
+using System.Collections;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Editor.Tests.Utils;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
@@ -112,6 +114,29 @@ public class Script
                     Assert.IsTrue(gameObjectEx.GameObject!.activeSelf, "GameObject should be enabled after script execution");
                 })
                 .Execute();
+        }
+
+        // ── background thread tests ───────────────────────────────────────
+
+        [UnityTest]
+        public IEnumerator Script_Execute_FromBackgroundThread_Succeeds()
+        {
+            var csharpCode = @"using UnityEngine;
+public class Script
+{
+    public static void Main()
+    {
+        Debug.Log(""Background thread script execution test"");
+    }
+}";
+            var go = new GameObject(GO_ABC + "_BG");
+
+            yield return RunOnBackgroundThread(() =>
+                RunTool("script-execute", $@"{{
+                    ""csharpCode"": {JsonEscape(csharpCode)},
+                    ""className"": ""Script"",
+                    ""methodName"": ""Main""
+                }}"));
         }
 
         private static string JsonEscape(string value)

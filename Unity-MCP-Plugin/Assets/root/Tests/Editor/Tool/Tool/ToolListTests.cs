@@ -348,6 +348,40 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             }
         }
 
+        // ── background thread tests ───────────────────────────────────────
+
+        [UnityTest]
+        public IEnumerator List_FromBackgroundThread_ReturnsTools()
+        {
+            yield return null;
+
+            yield return RunOnBackgroundThread(() =>
+            {
+                var json = RunTool(Tool_Tool.ToolListId, "{}").Value!.GetMessage()!;
+                using var doc = JsonDocument.Parse(json);
+                var arr = GetResultArray(doc);
+                Assert.Greater(arr.GetArrayLength(), 0, "Should return tools from background thread");
+            });
+        }
+
+        [UnityTest]
+        public IEnumerator List_WithRegex_FromBackgroundThread_FiltersTools()
+        {
+            yield return null;
+
+            yield return RunOnBackgroundThread(() =>
+            {
+                var json = RunTool(Tool_Tool.ToolListId, @"{
+                    ""regexSearch"": ""^tool-list$""
+                }").Value!.GetMessage()!;
+
+                using var doc = JsonDocument.Parse(json);
+                var arr = GetResultArray(doc);
+                Assert.AreEqual(1, arr.GetArrayLength(), "Exact regex should match one tool from background thread");
+                Assert.AreEqual("tool-list", arr[0].GetProperty("name").GetString());
+            });
+        }
+
         static JsonElement GetResultArray(JsonDocument doc)
         {
             var root = doc.RootElement;

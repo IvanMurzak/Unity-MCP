@@ -14,6 +14,7 @@ using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Editor.Tests.Utils;
 using NUnit.Framework;
 using UnityEditor;
+using UnityEngine;
 using UnityEngine.TestTools;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
@@ -168,6 +169,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             StringAssert.Contains("folder name is empty or whitespace", jsonResult);
             yield return null;
+        }
+
+        // ── background thread tests ───────────────────────────────────────
+
+        [UnityTest]
+        public IEnumerator CreateFolder_FromBackgroundThread_Succeeds()
+        {
+            // Setup parent folder on main thread first
+            new CreateFolderExecutor("Assets", TestFolderName).Execute();
+            yield return null;
+
+            // Create child folder from background thread
+            yield return RunOnBackgroundThread(() =>
+                RunTool(Tool_Assets.AssetsCreateFolderToolId, $@"{{
+                    ""inputs"": [{{
+                        ""parentFolderPath"": ""Assets/{TestFolderName}"",
+                        ""newFolderName"": ""BGThreadFolder""
+                    }}]
+                }}"));
+
+            // Verify on main thread
+            AssetDatabase.Refresh();
+            Assert.IsTrue(AssetDatabase.IsValidFolder($"Assets/{TestFolderName}/BGThreadFolder"),
+                "Folder created from background thread should exist");
         }
 
         [UnityTest]

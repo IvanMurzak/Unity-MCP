@@ -16,6 +16,7 @@ using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using NUnit.Framework;
 using UnityEngine.TestTools;
 using static com.IvanMurzak.Unity.MCP.Editor.API.Tool_Type;
@@ -315,6 +316,32 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 Assert.IsNotNull(ItemsDescription(schema));
 
             yield return null;
+        }
+
+        // ── background thread tests ───────────────────────────────────────
+
+        [UnityTest]
+        public IEnumerator GetJsonSchema_FromBackgroundThread_ReturnsSchema()
+        {
+            yield return null;
+
+            yield return RunOnBackgroundThread(() =>
+            {
+                var result = _tool.GetJsonSchema(AssetObjectRefName);
+                Assert.IsNotNull(result, "Should return schema from background thread");
+                Assert.IsNotEmpty(result, "Schema should not be empty from background thread");
+            });
+        }
+
+        [UnityTest]
+        public IEnumerator GetJsonSchema_ViaRunTool_FromBackgroundThread_Succeeds()
+        {
+            yield return null;
+
+            yield return RunOnBackgroundThread(() =>
+                RunTool("type-get-json-schema", $@"{{
+                    ""typeName"": ""{typeof(UnityEngine.Vector3).AssemblyQualifiedName}""
+                }}"));
         }
     }
 }

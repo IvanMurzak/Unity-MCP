@@ -9,9 +9,11 @@
 */
 
 #nullable enable
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text.Json;
+using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.Unity.MCP.Utils;
@@ -95,6 +97,40 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsFalse(jsonResult.Contains("[Warning]"), $"Tool call contains warnings in JSON: {jsonResult}");
 
             return result;
+        }
+
+        /// <summary>
+        /// Runs an action on a background thread and yields frames until completion.
+        /// This is used to test that tools correctly dispatch to the main thread via MainThread.Instance.Run().
+        /// Between each yield return null, Unity processes EditorApplication.update callbacks,
+        /// which is the mechanism tools use to dispatch work from background threads to the main thread.
+        /// </summary>
+        protected IEnumerator RunOnBackgroundThread(Action action, float timeoutSeconds = 30f)
+        {
+            Exception? capturedException = null;
+
+            var task = Task.Run(() =>
+            {
+                try
+                {
+                    action();
+                }
+                catch (Exception ex)
+                {
+                    capturedException = ex;
+                }
+            });
+
+            var startTime = Time.realtimeSinceStartup;
+            while (!task.IsCompleted && (Time.realtimeSinceStartup - startTime) < timeoutSeconds)
+                yield return null;
+
+            Assert.IsTrue(task.IsCompleted,
+                $"Background thread task did not complete within {timeoutSeconds} seconds. " +
+                "Ensure the tool dispatches work to the main thread via MainThread.Instance.Run().");
+
+            if (capturedException != null)
+                System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(capturedException).Throw();
         }
     }
 }

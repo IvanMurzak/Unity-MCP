@@ -10,10 +10,12 @@
 
 #nullable enable
 using System;
+using System.Collections;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
@@ -291,6 +293,37 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 // Cleanup
                 UnityEngine.Object.DestroyImmediate(material);
             }
+        }
+
+        // ── background thread tests ───────────────────────────────────────
+
+        [UnityTest]
+        public IEnumerator GetData_FromBackgroundThread_ValidGameObject_ReturnsSerializedData()
+        {
+            var go = new GameObject("BGThreadObject");
+            var objectRef = new ObjectRef(go);
+
+            yield return RunOnBackgroundThread(() =>
+            {
+                var tool = new Tool_Object();
+                var result = tool.GetData(objectRef);
+                Assert.IsNotNull(result, "Result should not be null from background thread");
+                Assert.AreEqual("BGThreadObject", result!.name, "Name should match from background thread");
+            });
+        }
+
+        [UnityTest]
+        public IEnumerator GetData_ViaRunTool_FromBackgroundThread_Succeeds()
+        {
+            var go = new GameObject("BGRunToolObject");
+            var objectRef = new ObjectRef(go);
+
+            yield return RunOnBackgroundThread(() =>
+                RunTool("object-get-data", $@"{{
+                    ""objectRef"": {{
+                        ""instanceID"": {go.GetInstanceID()}
+                    }}
+                }}"));
         }
     }
 }

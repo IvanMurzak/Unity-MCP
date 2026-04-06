@@ -475,6 +475,45 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsTrue(result.Contains("'InvalidType'"), "Should contain the invalid value");
             Assert.IsTrue(result.Contains("Valid values:"), "Should list valid values");
         }
+
+        // ── background thread tests ───────────────────────────────────────
+
+        [UnityTest]
+        public IEnumerator GetLogs_FromBackgroundThread_ReturnsLogs()
+        {
+            Debug.Log("[BG-Thread-Test] Log entry for background thread test");
+            yield return null; // Let the log be captured
+
+            yield return RunOnBackgroundThread(() =>
+            {
+                var result = _tool.GetLogs();
+                Assert.IsNotNull(result, "GetLogs() should return non-null from background thread");
+            });
+        }
+
+        [UnityTest]
+        public IEnumerator GetLogs_ViaRunTool_FromBackgroundThread_Succeeds()
+        {
+            yield return null;
+
+            yield return RunOnBackgroundThread(() =>
+                RunTool("console-get-logs", "{}"));
+        }
+
+        [UnityTest]
+        public IEnumerator ClearLogs_FromBackgroundThread_Succeeds()
+        {
+            yield return null;
+
+            yield return RunOnBackgroundThread(() =>
+            {
+                _tool.ClearLogs();
+                // Verify logs are cleared
+                var result = _tool.GetLogs();
+                Assert.IsNotNull(result, "GetLogs() after clear should return non-null");
+                Assert.AreEqual(0, result.Length, "Logs should be empty after clear from background thread");
+            });
+        }
     }
 }
 

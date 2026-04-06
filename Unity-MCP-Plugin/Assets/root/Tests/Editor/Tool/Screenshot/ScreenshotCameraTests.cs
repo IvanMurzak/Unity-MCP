@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System.Collections;
 using System.Text.RegularExpressions;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API;
@@ -147,6 +148,40 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 ""width"": 16,
                 ""height"": 16
             }}");
+        }
+
+        // ── background thread tests ───────────────────────────────────────
+
+        [UnityTest]
+        public IEnumerator ScreenshotCamera_DirectMethod_FromBackgroundThread_ReturnsImage()
+        {
+            var go = new GameObject("BGThreadCamera");
+            go.AddComponent<Camera>();
+            var cameraRef = new GameObjectRef { InstanceID = go.GetInstanceID() };
+
+            yield return RunOnBackgroundThread(() =>
+            {
+                var result = new Tool_Screenshot().ScreenshotCamera(cameraRef: cameraRef, width: 64, height: 64);
+                Assert.IsNotNull(result, "Should return non-null result from background thread");
+                Assert.AreNotEqual(ResponseStatus.Error, result.Status,
+                    "Should succeed when camera is valid, called from background thread");
+            });
+        }
+
+        [UnityTest]
+        public IEnumerator ScreenshotCamera_ViaRunTool_FromBackgroundThread_Succeeds()
+        {
+            var go = new GameObject("BGRunToolCamera");
+            go.AddComponent<Camera>();
+
+            yield return RunOnBackgroundThread(() =>
+                RunTool("screenshot-camera", $@"{{
+                    ""cameraRef"": {{
+                        ""instanceID"": {go.GetInstanceID()}
+                    }},
+                    ""width"": 16,
+                    ""height"": 16
+                }}"));
         }
     }
 }
