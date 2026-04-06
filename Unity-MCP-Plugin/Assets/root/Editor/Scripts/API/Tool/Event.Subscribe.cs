@@ -26,9 +26,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         )]
         [Description(
             "Waits for a Unity event and returns it. BLOCKING — holds response until event fires or timeout.\n\n" +
-            "IMPORTANT: This is a BLOCKING call. Use PARALLEL tool calls to subscribe and trigger simultaneously:\n" +
-            "  [parallel] event-subscribe(type='my_event', timeoutMs=15000) + script-execute(trigger action)\n" +
-            "  The subscribe waits while the action executes; when the event fires, subscribe returns immediately.\n\n" +
             "== BUILT-IN EVENTS (no code changes needed) ==\n" +
             "- play_mode_changed: Play/Pause/Stop transitions\n" +
             "- scene_loaded / scene_opened: Scene loading\n" +
@@ -40,27 +37,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "== CUSTOM EVENTS (for game logic — RECOMMENDED) ==\n" +
             "Built-in events CANNOT detect game-specific moments like 'server callback done' or 'popup closed'.\n" +
             "Do NOT use hierarchy_changed as a proxy for server responses — it fires on unrelated changes.\n\n" +
-            "BEST: Dynamic hook via script-execute (NO source code modification, auto-cleanup on play mode exit):\n" +
+            "Dynamic hook via script-execute (NO source code modification, auto-cleanup on play mode exit):\n" +
             "  Step 1 — Hook game event to McpEventBus (run once before test):\n" +
             "    script-execute (IMPORTANT: add 'using com.IvanMurzak.Unity.MCP.Editor.API;' for McpEventBus):\n" +
             "      SomeManager.Instance.OnDataLoaded += () => McpEventBus.Push(\"data_loaded\");\n" +
-            "      SomePopup.OnClosed += () => McpEventBus.Push(\"popup_closed\");\n" +
-            "  Step 2 — Trigger action + subscribe in parallel:\n" +
-            "    [parallel] event-subscribe(type='data_loaded') + script-execute(trigger action)\n" +
-            "  Step 3 — Hooks die automatically when play mode stops. No cleanup needed.\n\n" +
+            "  Step 2 — Trigger async action (e.g. server request, UI navigation):\n" +
+            "    script-execute(trigger the action that will eventually fire the callback)\n" +
+            "  Step 3 — Subscribe and wait for the callback event:\n" +
+            "    event-subscribe(type='data_loaded', timeoutMs=30000)\n" +
+            "  Step 4 — Hooks die automatically when play mode stops. No cleanup needed.\n\n" +
             "ALTERNATIVE: Add McpEventBus.Push() directly in game code (persistent, survives sessions):\n" +
             "  #if UNITY_EDITOR\n" +
             "  McpEventBus.Push(\"friend_data_loaded\", source: \"FriendManager\");\n" +
             "  #endif\n\n" +
             "Custom events appear in event-list(filter='custom') after first Push.\n\n" +
             "== USAGE PATTERNS ==\n" +
-            "1. Dynamic hook + parallel subscribe (RECOMMENDED for playtesting):\n" +
-            "   script-execute(hook game events to McpEventBus)\n" +
-            "   [parallel] event-subscribe(type='my_event') + script-execute(trigger action)\n" +
-            "2. Parallel subscribe + trigger (for built-in events):\n" +
-            "   [parallel] event-subscribe(type='compilation_finished') + script-update-or-create(...)\n" +
-            "3. Sequential drain (when event already happened):\n" +
-            "   script-execute(action) → event-subscribe(type='x', timeoutMs=0) to drain pending\n" +
+            "1. Custom game events (RECOMMENDED — sequential, callback is async):\n" +
+            "   script-execute(hook + trigger async action) → event-subscribe(type='custom_event')\n" +
+            "2. Built-in events (parallel subscribe + trigger):\n" +
+            "   [parallel] event-subscribe(type='play_mode_changed') + editor-application-set-state(...)\n" +
+            "3. Compilation wait:\n" +
+            "   script-update-or-create(...) → event-subscribe(type='compilation_finished')\n" +
             "4. Background monitoring (non-blocking): use event-watch instead"
         )]
         public async Task<McpEventSubscribeResult> Subscribe
@@ -92,7 +89,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 return McpEventBus.DrainPending(type);
 
             if (timeoutMs < 1000 || timeoutMs > 120000)
-                throw new ArgumentException(Error.InvalidTimeout(timeoutMs));
+                throw new ArgumentException(Error.InvalidSubscribeTimeout(timeoutMs));
 
             using var cts = new CancellationTokenSource(timeoutMs + 1000); // Grace period
             return await McpEventBus.WaitAsync(type, timeoutMs, collectAll, cts.Token);

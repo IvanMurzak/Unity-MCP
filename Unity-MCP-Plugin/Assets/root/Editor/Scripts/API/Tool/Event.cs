@@ -16,8 +16,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         public static class Error
         {
-            public static string InvalidTimeout(int timeoutMs)
+            public static string InvalidSubscribeTimeout(int timeoutMs)
                 => $"Invalid timeout value '{timeoutMs}'. Must be between 1000 and 120000 milliseconds.";
+
+            public static string InvalidWatchTimeout(int timeoutMs)
+                => $"Invalid timeout value '{timeoutMs}'. Must be between 5000 and 120000 milliseconds.";
 
             public static string EventBusNotAvailable()
                 => "McpEventBus is not available.";
