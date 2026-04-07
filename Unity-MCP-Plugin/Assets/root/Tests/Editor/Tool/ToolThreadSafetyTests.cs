@@ -45,7 +45,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     /// </summary>
     public class ToolThreadSafetyTests : BaseTest
     {
-        const string TmpFolder = "Assets/BgThreadTests_TMP";
+        const string TmpFolderName = "BgThreadTests_TMP";
+        const string TmpFolder = "Assets/" + TmpFolderName;
 
         [SetUp]
         public void BgSetUp()
@@ -56,9 +57,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // These tests only assert on the tool-call result, not on unrelated console
             // noise, so ignore log-noise failures here.
             LogAssert.ignoreFailingMessages = true;
-
-            if (!AssetDatabase.IsValidFolder(TmpFolder))
-                AssetDatabase.CreateFolder("Assets", "BgThreadTests_TMP");
         }
 
         [TearDown]
@@ -66,7 +64,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             if (AssetDatabase.IsValidFolder(TmpFolder))
                 AssetDatabase.DeleteAsset(TmpFolder);
-            AssetDatabase.Refresh();
         }
 
         // ================================================================
@@ -284,6 +281,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator AssetsCreateFolder_BothThreads()
         {
+            EnsureTmpFolder();
             yield return RunToolMainThreadCoop(Tool_Assets.AssetsCreateFolderToolId,
                 $@"{{""inputs"":[{{""parentFolderPath"":""{TmpFolder}"",""newFolderName"":""a""}}]}}");
             yield return RunToolFromBackgroundThread(Tool_Assets.AssetsCreateFolderToolId,
@@ -293,8 +291,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator AssetsGetData_BothThreads()
         {
-            // Use a readily-available existing asset: the package's root README manifest
-            // GUID query via finding the plugin package.json — fall back to any .json.
             var assetPath = CreateTmpTextAsset("get_data.txt", "hello");
             yield return RunToolBothThreads(Tool_Assets.AssetsGetDataToolId,
                 $@"{{""assetRef"":{{""assetPath"":""{assetPath}""}}}}");
@@ -311,6 +307,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator AssetsMaterialCreate_BothThreads()
         {
+            EnsureTmpFolder();
             yield return RunToolMainThreadCoop(Tool_Assets.AssetsMaterialCreateToolId,
                 $@"{{""assetPath"":""{TmpFolder}/mat_main.mat"",""shaderName"":""Standard""}}");
             yield return RunToolFromBackgroundThread(Tool_Assets.AssetsMaterialCreateToolId,
@@ -369,6 +366,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator AssetsPrefabCreate_BothThreads()
         {
+            EnsureTmpFolder();
             var idA = new GameObject("bg_prefab_a").GetInstanceID();
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
                 $@"{{""prefabAssetPath"":""{TmpFolder}/prefab_a.prefab"",""gameObjectRef"":{{""instanceID"":{idA}}}}}");
@@ -381,7 +379,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator AssetsPrefabInstantiate_BothThreads()
         {
-            // Seed a prefab to instantiate.
+            EnsureTmpFolder();
             var seedId = new GameObject("bg_seed_prefab").GetInstanceID();
             var prefabPath = $"{TmpFolder}/seed.prefab";
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
@@ -415,6 +413,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator SceneCreate_BothThreads()
         {
+            EnsureTmpFolder();
             var startingActive = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
             yield return RunToolMainThreadCoop(Tool_Scene.SceneCreateToolId,
                 $@"{{""path"":""{TmpFolder}/scene_main.unity""}}");
@@ -429,6 +428,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator SceneOpenSaveSetActive_BothThreads()
         {
+            EnsureTmpFolder();
             var scenePath = $"{TmpFolder}/reopen.unity";
             yield return RunToolMainThreadCoop(Tool_Scene.SceneCreateToolId, $@"{{""path"":""{scenePath}""}}");
 
@@ -462,6 +462,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator ScriptUpdateOrCreate_ReadDelete_BothThreads()
         {
+            EnsureTmpFolder();
             var pathA = $"{TmpFolder}/S_a.cs";
             var pathB = $"{TmpFolder}/S_b.cs";
             const string SrcA = "public class BgSa { public static void M() {} }";
@@ -545,15 +546,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
         [UnityTest]
         public IEnumerator ScreenshotCamera_ThreadSafetyOnly()
-            => RunToolExpectNoThreadViolation("screenshot-camera", @"{""width"":64,""height"":64}");
+            => RunToolExpectNoThreadViolation(Tool_Screenshot.ScreenshotCameraToolId, @"{""width"":64,""height"":64}");
 
         [UnityTest]
         public IEnumerator ScreenshotGameView_ThreadSafetyOnly()
-            => RunToolExpectNoThreadViolation("screenshot-game-view", "{}");
+            => RunToolExpectNoThreadViolation(Tool_Screenshot.ScreenshotGameViewToolId, "{}");
 
         [UnityTest]
         public IEnumerator ScreenshotSceneView_ThreadSafetyOnly()
-            => RunToolExpectNoThreadViolation("screenshot-scene-view", @"{""width"":64,""height"":64}");
+            => RunToolExpectNoThreadViolation(Tool_Screenshot.ScreenshotSceneViewToolId, @"{""width"":64,""height"":64}");
 
         // ================================================================
         // TESTS — recursive; skip deliberately.
@@ -566,12 +567,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         // Helpers
         // ================================================================
 
-        string CreateTmpTextAsset(string fileName, string contents)
+        static void EnsureTmpFolder()
         {
+            if (!AssetDatabase.IsValidFolder(TmpFolder))
+                AssetDatabase.CreateFolder("Assets", TmpFolderName);
+        }
+
+        static string CreateTmpTextAsset(string fileName, string contents)
+        {
+            EnsureTmpFolder();
             var path = $"{TmpFolder}/{fileName}";
-            var fullPath = Path.Combine(Application.dataPath, "..", path);
-            Directory.CreateDirectory(Path.GetDirectoryName(fullPath)!);
-            File.WriteAllText(fullPath, contents);
+            File.WriteAllText(path, contents);
             AssetDatabase.ImportAsset(path);
             return path;
         }
