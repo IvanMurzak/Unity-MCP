@@ -1,0 +1,55 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Project/VersionTest.cs
+  8d4d689498114267 73
+Unity-Tests/2022.3.62f3/Packages/manifest.json
+  8d4d689498114267 3
+.github/copilot-instructions.md
+  8d4d689498114267 29,34-36,47,59
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Window/McpResourcesWindow.cs
+  8d4d689498114267 36
+Unity-MCP-Plugin/UserSettings/EditorUserSettings.asset
+  8d4d689498114267 9,12,15,18,21,24,27,30,33,36
+.github/workflows/release.yml
+  8d4d689498114267 37
+commands/bump-version.ps1
+  8d4d689498114267 59,65,103
+CLAUDE.md
+  8d4d689498114267 33,62
+docs/dev/Development.md
+  8d4d689498114267 224,230,234,239,245,252,260,264,270,275,281,540-541,600
+Unity-Tests/6000.3.1f1/Packages/manifest.json
+  8d4d689498114267 3
+Unity-Tests/2023.2.22f1/Packages/manifest.json
+  8d4d689498114267 3
+docs/dev/Development.ja.md
+  8d4d689498114267 223,229,233,238,244,251,259,263,269,274,280,539-540,599
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Window/McpToolsWindow.cs
+  8d4d689498114267 38
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Window/McpPromptsWindow.cs
+  8d4d689498114267 38
+Unity-MCP-Plugin/Packages/manifest.json
+  8d4d689498114267 14
+docs/dev/Development.es.md
+  8d4d689498114267 222,224,230,234,239,245,252,260,264,270,275,281,540-541,600
+docs/dev/Development.zh-CN.md
+  8d4d689498114267 222,224,230,234,239,245,252,260,264,270,275,281,540-541,600
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "37e6b1ff9b18ada46b9279edcda67f5b6fc3f6b2",
+  "prompts": {
+    "8d4d689498114267": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "36761876-bbce-477d-9fbd-04b51c7ad534",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 9013,
+      "total_deletions": 9025,
+      "accepted_lines": 4543,
+      "overriden_lines": 0
+    }
+  }
+}
