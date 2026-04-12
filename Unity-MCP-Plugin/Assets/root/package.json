@@ -15,7 +15,7 @@
     "Unity MCP",
     "Unity Skills"
   ],
-  "version": "0.63.4",
+  "version": "0.64.0",
   "unity": "2022.3",
   "description": "AI Skills, MCP Tools, and CLI for Unity Engine. Full AI develop and test loop. Use cli for quick setup. Efficient token usage, advanced tools. Any C# method may be turned into a tool by a single line. Works with Claude Code, Gemini, Copilot, Cursor and any other absolutely for free.",
   "documentationUrl": "https://github.com/IvanMurzak/Unity-MCP/blob/main/README.md",
@@ -24,17 +24,16 @@
     "com.unity.test-framework": "1.1.33",
     "com.unity.modules.uielements": "1.0.0",
     "extensions.unity.playerprefsex": "2.1.3",
-    "org.nuget.microsoft.bcl.memory": "10.0.3",
-    "org.nuget.microsoft.aspnetcore.signalr.client": "10.0.3",
-    "org.nuget.microsoft.aspnetcore.signalr.protocols.json": "10.0.3",
+    "org.nuget.microsoft.aspnetcore.signalr.client": "8.0.15",
+    "org.nuget.microsoft.aspnetcore.signalr.protocols.json": "8.0.15",
     "org.nuget.microsoft.codeanalysis.csharp": "4.14.0",
-    "org.nuget.microsoft.extensions.caching.abstractions": "10.0.3",
-    "org.nuget.microsoft.extensions.dependencyinjection.abstractions": "10.0.3",
-    "org.nuget.microsoft.extensions.hosting.abstractions": "10.0.3",
-    "org.nuget.microsoft.extensions.logging": "10.0.3",
-    "org.nuget.microsoft.extensions.logging.abstractions": "10.0.3",
+    "org.nuget.microsoft.extensions.caching.abstractions": "8.0.1",
+    "org.nuget.microsoft.extensions.dependencyinjection.abstractions": "8.0.2",
+    "org.nuget.microsoft.extensions.hosting.abstractions": "8.0.1",
+    "org.nuget.microsoft.extensions.logging": "8.0.1",
+    "org.nuget.microsoft.extensions.logging.abstractions": "8.0.2",
     "org.nuget.r3": "1.3.0",
-    "org.nuget.system.text.json": "10.0.3"
+    "org.nuget.system.text.json": "8.0.5"
   },
   "scopedRegistries": [
     {

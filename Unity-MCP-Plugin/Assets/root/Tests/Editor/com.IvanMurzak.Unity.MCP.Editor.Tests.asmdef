@@ -25,7 +25,9 @@
         "R3.dll"
     ],
     "autoReferenced": true,
-    "defineConstraints": [],
+    "defineConstraints": [
+        "UNITY_MCP_READY"
+    ],
     "versionDefines": [],
     "noEngineReferences": false
 }
