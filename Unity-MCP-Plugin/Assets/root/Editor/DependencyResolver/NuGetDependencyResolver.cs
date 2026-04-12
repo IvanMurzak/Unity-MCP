@@ -17,6 +17,7 @@ using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Compilation;
 using UnityEngine;
+using static UnityEditor.Compilation.CompilationPipeline;
 
 namespace com.IvanMurzak.Unity.MCP.DependencyResolver
 {
@@ -33,9 +34,9 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
     [InitializeOnLoad]
     static class NuGetDependencyResolver
     {
-        const string Tag              = "[Unity-MCP DependencyResolver]";
-        const string ReadyDefine      = "UNITY_MCP_READY";
-        const string ResolvingKey     = "NuGetDependencyResolver_Resolving";
+        const string Tag = "[Unity-MCP DependencyResolver]";
+        const string ReadyDefine = "UNITY_MCP_READY";
+        const string ResolvingKey = "NuGetDependencyResolver_Resolving";
         const string ResolvedCountKey = "NuGetDependencyResolver_ResolvedCount";
 
         static NuGetDependencyResolver()
@@ -58,7 +59,7 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
             try
             {
                 var conflicts = DetectConflicts();
-                var changed   = DisableConflictingDlls(conflicts);
+                var changed = DisableConflictingDlls(conflicts);
 
                 EnsureScriptingDefine();
 
@@ -114,7 +115,7 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
                     conflicts.Add(new ConflictInfo
                     {
                         AssemblyName = assemblyName,
-                        UserDllPath  = userDllPath
+                        UserDllPath = userDllPath
                     });
                 }
             }
