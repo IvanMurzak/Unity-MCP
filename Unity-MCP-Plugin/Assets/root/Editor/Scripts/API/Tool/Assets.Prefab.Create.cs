@@ -84,7 +84,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     // Create a Prefab Variant from an existing prefab asset
                     var sourcePrefab = AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>(sourcePrefabAssetPath);
                     if (sourcePrefab == null)
-                        throw new ArgumentException(Error.NotFoundPrefabAtPath(sourcePrefabAssetPath), nameof(sourcePrefabAssetPath));
+                        throw new ArgumentException(Error.NotFoundPrefabAtPath(sourcePrefabAssetPath!), nameof(sourcePrefabAssetPath));
 
                     var tempInstance = PrefabUtility.InstantiatePrefab(sourcePrefab) as UnityEngine.GameObject;
                     if (tempInstance == null)
