@@ -20,9 +20,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Screenshot
     {
+        public const string ScreenshotSceneViewToolId = "screenshot-scene-view";
         [McpPluginTool
         (
-            "screenshot-scene-view",
+            ScreenshotSceneViewToolId,
             Title = "Screenshot / Scene View",
             ReadOnlyHint = true,
             IdempotentHint = true,
