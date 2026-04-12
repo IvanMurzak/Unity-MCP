@@ -67,7 +67,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }
             }
 
-            // Fallback: try to read from Packages/AI-Game-Developer/package.json (for source project testing)
+            // Fallback: try to read from Packages/com.ivanmurzak.unity.mcp/package.json (for source project testing)
             if (string.IsNullOrEmpty(packageJsonContent))
             {
                 var fallbackPath = Path.Combine(Application.dataPath, "..", "Packages", "AI-Game-Developer", "package.json");
@@ -81,7 +81,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             // Ensure we found a package.json file
             Assert.IsFalse(string.IsNullOrEmpty(packageJsonContent),
-                $"package.json not found. Tried PackageManager location and fallback path: Packages/AI-Game-Developer/package.json");
+                $"package.json not found. Tried PackageManager location and fallback path: Packages/com.ivanmurzak.unity.mcp/package.json");
 
             // Parse JSON to extract version
             var packageJson = JsonUtility.FromJson<PackageJsonData>(packageJsonContent);
