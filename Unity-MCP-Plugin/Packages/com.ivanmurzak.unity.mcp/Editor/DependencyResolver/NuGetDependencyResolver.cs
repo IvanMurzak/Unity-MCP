@@ -27,7 +27,7 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
     ///
     /// Flow:
     ///   1. [InitializeOnLoad] fires on domain reload
-    ///   2. Deferred via EditorApplication.delayCall (safe timing)
+    ///   2. Deferred via EditorApplication.update (runs without editor focus, unlike delayCall)
     ///   3. NuGetPackageRestorer checks if all packages are installed
     ///   4. Downloads and installs any missing packages
     ///   5. Sets UNITY_MCP_READY scripting define
@@ -51,11 +51,12 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
                 return;
             }
 
-            EditorApplication.delayCall += Resolve;
+            EditorApplication.update += ResolveOnce;
         }
 
-        static void Resolve()
+        static void ResolveOnce()
         {
+            EditorApplication.update -= ResolveOnce;
             try
             {
                 // Quick check: if all packages are already installed, just ensure the define is set.
@@ -75,7 +76,7 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
                 {
                     SessionState.SetBool(ResolvingKey, true);
                     Debug.Log($"{Tag} Packages restored. Triggering domain reload...");
-                    EditorApplication.delayCall += () => AssetDatabase.Refresh();
+                    AssetDatabase.Refresh();
                 }
             }
             catch (Exception ex)
