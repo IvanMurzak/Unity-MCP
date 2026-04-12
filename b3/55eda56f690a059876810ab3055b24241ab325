@@ -1,0 +1,45 @@
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/Screenshot.SceneView.cs
+  ca51fe2b5dd4d554 23,26
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/Screenshot.Camera.cs
+  ca51fe2b5dd4d554 25,28
+Unity-MCP-Plugin/Assets/root/Tests/Editor/BaseTest.cs
+  ca51fe2b5dd4d554 12,16,19,57,60,63-64,66-67,69-78,80-89,93-96,98-101,103-106,110-124,126-134,141-147,152-159,161-164,189,193,198-208,224,229-231
+Unity-MCP-Plugin/Assets/root/Tests/Editor/Tool/ToolThreadSafetyTests.cs
+  ca51fe2b5dd4d554 1-22,24-33,37-129,131-148,150-160,162-173,175-185,187-209,211-286,288-313,315-337,339-347,349-359,361-372,374-386,389,391,424-432,434-435,437-466,468,489-525,532-552,554,560-580,590-604
+  c821f449c614b7f1 23,34-36,388,390,392-423,467,469-488,553,555-559,584-588
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/Screenshot.GameView.cs
+  ca51fe2b5dd4d554 25,28
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "b355eda56f690a059876810ab3055b24241ab325",
+  "prompts": {
+    "c821f449c614b7f1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8197769f-dd4f-4a50-ad23-d579199bc6d6",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 408,
+      "total_deletions": 371,
+      "accepted_lines": 70,
+      "overriden_lines": 0
+    },
+    "ca51fe2b5dd4d554": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5ad79546-e9c6-4b15-b049-4c051380598d",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 411,
+      "total_deletions": 118,
+      "accepted_lines": 606,
+      "overriden_lines": 0
+    }
+  }
+}
