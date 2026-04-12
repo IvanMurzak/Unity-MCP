@@ -271,15 +271,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         // Error cases
         // ================================================================
 
+        static void ExpectToolErrorLogs()
+        {
+            LogAssert.Expect(LogType.Exception, new Regex("ArgumentException"));
+            LogAssert.Expect(LogType.Error, new Regex("Tool execution failed"));
+            LogAssert.Expect(LogType.Error, new Regex("Error Response to AI"));
+        }
+
         [UnityTest]
         public IEnumerator Prefab_Create_EmptyPath_ReturnsError()
         {
             var go = new GameObject("TestGO_EmptyPath");
             var id = go.GetInstanceID();
 
-            LogAssert.Expect(LogType.Exception, new Regex("ArgumentException"));
-            LogAssert.Expect(LogType.Error, new Regex("Tool execution failed"));
-            LogAssert.Expect(LogType.Error, new Regex("Error Response to AI"));
+            ExpectToolErrorLogs();
 
             var jsonResult = RunToolRaw(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
                 $@"{{""prefabAssetPath"":"""",""gameObjectRef"":{{""instanceID"":{id}}}}}");
@@ -295,9 +300,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var go = new GameObject("TestGO_InvalidExt");
             var id = go.GetInstanceID();
 
-            LogAssert.Expect(LogType.Exception, new Regex("ArgumentException"));
-            LogAssert.Expect(LogType.Error, new Regex("Tool execution failed"));
-            LogAssert.Expect(LogType.Error, new Regex("Error Response to AI"));
+            ExpectToolErrorLogs();
 
             var jsonResult = RunToolRaw(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
                 $@"{{""prefabAssetPath"":""{TestFolder}/NotAPrefab.txt"",""gameObjectRef"":{{""instanceID"":{id}}}}}");
@@ -311,15 +314,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             EnsureTestFolder();
 
-            LogAssert.Expect(LogType.Exception, new Regex("ArgumentException"));
-            LogAssert.Expect(LogType.Error, new Regex("Tool execution failed"));
-            LogAssert.Expect(LogType.Error, new Regex("Error Response to AI"));
+            ExpectToolErrorLogs();
 
             var jsonResult = RunToolRaw(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
                 $@"{{""prefabAssetPath"":""{TestFolder}/ShouldFail.prefab"",""gameObjectRef"":{{""instanceID"":-999999}}}}");
 
-            Assert.IsTrue(jsonResult.Contains("[Error]") || jsonResult.Contains("not found") || jsonResult.Contains("Error"),
-                $"Expected error for invalid gameObjectRef, got: {jsonResult}");
+            StringAssert.Contains("Not found", jsonResult);
             yield return null;
         }
 
@@ -328,15 +328,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             EnsureTestFolder();
 
-            LogAssert.Expect(LogType.Exception, new Regex("ArgumentException"));
-            LogAssert.Expect(LogType.Error, new Regex("Tool execution failed"));
-            LogAssert.Expect(LogType.Error, new Regex("Error Response to AI"));
+            ExpectToolErrorLogs();
 
             var jsonResult = RunToolRaw(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
                 $@"{{""prefabAssetPath"":""{TestFolder}/ShouldFail.prefab""}}");
 
-            Assert.IsTrue(jsonResult.Contains("[Error]") || jsonResult.Contains("must be provided") || jsonResult.Contains("Error"),
-                $"Expected error when neither gameObjectRef nor sourcePrefabAssetPath is provided, got: {jsonResult}");
+            StringAssert.Contains("must be provided", jsonResult);
             yield return null;
         }
 
@@ -345,15 +342,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             EnsureTestFolder();
 
-            LogAssert.Expect(LogType.Exception, new Regex("ArgumentException"));
-            LogAssert.Expect(LogType.Error, new Regex("Tool execution failed"));
-            LogAssert.Expect(LogType.Error, new Regex("Error Response to AI"));
+            ExpectToolErrorLogs();
 
             var jsonResult = RunToolRaw(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
                 $@"{{""prefabAssetPath"":""{TestFolder}/ShouldFail.prefab"",""sourcePrefabAssetPath"":""{TestFolder}/NonExistent.prefab""}}");
 
-            Assert.IsTrue(jsonResult.Contains("[Error]") || jsonResult.Contains("not found") || jsonResult.Contains("Error"),
-                $"Expected error for invalid sourcePrefabAssetPath, got: {jsonResult}");
+            StringAssert.Contains("not found", jsonResult);
             yield return null;
         }
     }

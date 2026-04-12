@@ -61,14 +61,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 if (!prefabAssetPath.EndsWith(".prefab"))
                     throw new ArgumentException(Error.PrefabPathIsInvalid(prefabAssetPath), nameof(prefabAssetPath));
 
-                // Create all folders in the path recursively if they do not exist
-                var segments = prefabAssetPath.Split('/');
-                for (int i = 1; i < segments.Length - 1; i++) // skip "Assets" (index 0) and filename (last)
+                // Create parent folders recursively if they do not exist
+                var lastSlash = prefabAssetPath.LastIndexOf('/');
+                var directoryPath = lastSlash > 0 ? prefabAssetPath.Substring(0, lastSlash) : null;
+                if (directoryPath != null && !AssetDatabase.IsValidFolder(directoryPath))
                 {
-                    var parentPath = string.Join("/", segments, 0, i);
-                    var folderName = segments[i];
-                    if (!AssetDatabase.IsValidFolder(parentPath + "/" + folderName))
-                        AssetDatabase.CreateFolder(parentPath, folderName);
+                    var segments = prefabAssetPath.Split('/');
+                    var currentPath = segments[0]; // "Assets"
+                    for (int i = 1; i < segments.Length - 1; i++)
+                    {
+                        var nextPath = currentPath + "/" + segments[i];
+                        if (!AssetDatabase.IsValidFolder(nextPath))
+                            AssetDatabase.CreateFolder(currentPath, segments[i]);
+                        currentPath = nextPath;
+                    }
                 }
 
                 UnityEngine.GameObject prefabGo;
@@ -117,8 +123,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 EditorUtils.RepaintAllEditorWindows();
 
-                var assetPrefab = AssetDatabase.LoadAssetAtPath<UnityEngine.GameObject>(prefabAssetPath);
-                return new AssetObjectRef(assetPrefab);
+                return new AssetObjectRef(prefabGo);
             });
         }
     }
