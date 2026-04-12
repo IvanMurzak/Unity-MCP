@@ -58,8 +58,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 if (string.IsNullOrEmpty(prefabAssetPath))
                     throw new ArgumentException(Error.PrefabPathIsEmpty(), nameof(prefabAssetPath));
 
+                if (!prefabAssetPath.StartsWith("Assets/"))
+                    throw new ArgumentException(Error.PrefabPathIsInvalid(prefabAssetPath), nameof(prefabAssetPath));
+
                 if (!prefabAssetPath.EndsWith(".prefab"))
                     throw new ArgumentException(Error.PrefabPathIsInvalid(prefabAssetPath), nameof(prefabAssetPath));
+
+                if (gameObjectRef != null && !string.IsNullOrEmpty(sourcePrefabAssetPath))
+                    throw new ArgumentException("Provide either 'gameObjectRef' or 'sourcePrefabAssetPath', not both.", nameof(sourcePrefabAssetPath));
 
                 // Create parent folders recursively if they do not exist
                 var lastSlash = prefabAssetPath.LastIndexOf('/');
@@ -88,7 +94,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                     var tempInstance = PrefabUtility.InstantiatePrefab(sourcePrefab) as UnityEngine.GameObject;
                     if (tempInstance == null)
-                        throw new Exception($"Failed to instantiate prefab from '{sourcePrefabAssetPath}'.");
+                        throw new InvalidOperationException($"Failed to instantiate prefab from '{sourcePrefabAssetPath}'.");
 
                     try
                     {
@@ -114,7 +120,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         ? PrefabUtility.SaveAsPrefabAssetAndConnect(go, prefabAssetPath, InteractionMode.UserAction, out _)
                         : PrefabUtility.SaveAsPrefabAsset(go, prefabAssetPath);
 
-                    if (prefabGo != null)
+                    if (connectGameObjectToPrefab && prefabGo != null)
                         EditorUtility.SetDirty(go);
                 }
 
