@@ -41,8 +41,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         {
             return new[]
             {
-                PackagePathPrefix + relativePath,
-                AssetsPathPrefix + relativePath
+                PackagePathPrefix + relativePath//,
+                //AssetsPathPrefix + relativePath
             };
         }
 
