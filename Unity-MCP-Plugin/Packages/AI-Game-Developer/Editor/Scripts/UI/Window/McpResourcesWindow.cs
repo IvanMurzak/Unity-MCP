@@ -33,7 +33,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected override string[] WindowUssPaths => _windowUssPaths;
         protected override string WindowTitle => "MCP Resources";
         protected override string MissingTemplateMessage =>
-            "ResourceItem template is missing. Please ensure ResourceItem.uxml exists in the package or the Assets/root folder.";
+            "ResourceItem template is missing. Please ensure ResourceItem.uxml exists in the package or the Packages/AI-Game-Developer folder.";
 
         public static McpResourcesWindow ShowWindow()
         {

@@ -35,7 +35,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected override string[] WindowUssPaths => _windowUssPaths;
         protected override string WindowTitle => "MCP Prompts";
         protected override string MissingTemplateMessage =>
-            "PromptItem template is missing. Please ensure PromptItem.uxml exists in the package or the Assets/root folder.";
+            "PromptItem template is missing. Please ensure PromptItem.uxml exists in the package or the Packages/AI-Game-Developer folder.";
 
         public static McpPromptsWindow ShowWindow()
         {

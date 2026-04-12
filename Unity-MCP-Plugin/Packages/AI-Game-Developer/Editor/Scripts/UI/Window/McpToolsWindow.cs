@@ -35,7 +35,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected override string[] WindowUssPaths => _windowUssPaths;
         protected override string WindowTitle => "MCP Tools";
         protected override string MissingTemplateMessage =>
-            "ToolItem template is missing. Please ensure ToolItem.uxml exists in the package or the Assets/root folder.";
+            "ToolItem template is missing. Please ensure ToolItem.uxml exists in the package or the Packages/AI-Game-Developer folder.";
 
         public static McpToolsWindow ShowWindow()
         {

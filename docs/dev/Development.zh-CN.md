@@ -219,37 +219,37 @@ graph LR
 
 ### UPM 包
 
-`Unity-MCP-Plugin` 是一个 UPM 包，包的根目录位于 `Unity-MCP-Plugin/Assets/root`。它包含 `package.json`，用于将包直接从 GitHub 发布版上传到 [OpenUPM](https://openupm.com/)。
+`Unity-MCP-Plugin` 是一个 UPM 包，包的根目录位于 `Unity-MCP-Plugin/Packages/AI-Game-Developer`。它包含 `package.json`，用于将包直接从 GitHub 发布版上传到 [OpenUPM](https://openupm.com/)。
 
-> 位置：`Unity-MCP-Plugin/Assets/root`
+> 位置：`Unity-MCP-Plugin/Packages/AI-Game-Developer`
 
 ### 编辑器
 
 编辑器组件提供 Unity 编辑器集成，实现 MCP 功能（Tools、Prompts、Resources）并管理 `Unity-MCP-Server` 的生命周期。
 
-> 位置：`Unity-MCP-Plugin/Assets/root/Editor`
+> 位置：`Unity-MCP-Plugin/Packages/AI-Game-Developer/Editor`
 
 **主要职责：**
 
-1. **插件生命周期管理** ([Startup.cs](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/Startup.cs))
+1. **插件生命周期管理** ([Startup.cs](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Editor/Scripts/Startup.cs))
    - 通过 `[InitializeOnLoad]` 在 Unity 编辑器加载时自动初始化
    - 在编辑器生命周期事件（程序集重载、播放模式转换）期间管理连接持久性
    - 域重载或退出播放模式后自动重新连接
 
-2. **MCP Server 二进制文件管理** ([McpServerManager.cs](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/McpServerManager.cs))
+2. **MCP Server 二进制文件管理** ([McpServerManager.cs](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Editor/Scripts/McpServerManager.cs))
    - 从 GitHub 发布版下载和管理 `Unity-MCP-Server` 可执行文件
    - 跨平台二进制文件选择（Windows/macOS/Linux，x86/x64/ARM/ARM64）
    - 强制执行服务器与插件之间的版本兼容性
    - 为 AI 代理生成配置（包含可执行文件路径和连接设置的 JSON）
 
-3. **MCP API 实现** ([Scripts/API/](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/))
+3. **MCP API 实现** ([Scripts/API/](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Editor/Scripts/API/))
    - **Tools**（50+个）：GameObject、Scene、Assets、Prefabs、Scripts、Components、Editor Control、Test Runner、Console、Reflection
    - **Prompts**：用于常见 Unity 开发任务的预构建模板
    - **Resources**：通过 URI 访问 Unity 编辑器数据，支持 JSON 序列化
    - 所有操作在 Unity 主线程上执行以确保线程安全
    - 使用 `[McpPluginTool]`、`[McpPluginPrompt]`、`[McpPluginResource]` 进行基于特性的发现
 
-4. **编辑器 UI** ([Scripts/UI/](../../Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/))
+4. **编辑器 UI** ([Scripts/UI/](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Editor/Scripts/UI/))
    - 用于连接管理的配置窗口（`Window > AI Game Developer`）
    - 通过 Unity 菜单项进行服务器二进制文件管理和日志访问
 
@@ -257,28 +257,28 @@ graph LR
 
 运行时组件提供编辑器和运行时模式之间共享的核心基础设施，负责处理 SignalR 通信、序列化以及线程安全的 Unity API 访问。
 
-> 位置：`Unity-MCP-Plugin/Assets/root/Runtime`
+> 位置：`Unity-MCP-Plugin/Packages/AI-Game-Developer/Runtime`
 
 **主要职责：**
 
-1. **插件核心与 SignalR 连接** ([UnityMcpPlugin.cs](../../Unity-MCP-Plugin/Assets/root/Runtime/UnityMcpPlugin.cs))
+1. **插件核心与 SignalR 连接** ([UnityMcpPlugin.cs](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Runtime/UnityMcpPlugin.cs))
    - 通过 `BuildAndStart()` 管理插件生命周期的线程安全单例
    - 使用反射从程序集中发现 MCP Tools/Prompts/Resources
    - 使用响应式状态监控（R3 库）建立与 Unity-MCP-Server 的 SignalR 连接
    - 配置管理：主机、端口、超时、版本兼容性
 
-2. **主线程调度器** ([MainThreadDispatcher.cs](../../Unity-MCP-Plugin/Assets/root/Runtime/Utils/MainThreadDispatcher.cs))
+2. **主线程调度器** ([MainThreadDispatcher.cs](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Runtime/Utils/MainThreadDispatcher.cs))
    - 将 SignalR 后台线程中的 Unity API 调用编组到 Unity 主线程
    - 基于队列在 Unity 的 Update 循环中执行
    - 对于线程安全的 MCP 操作执行至关重要
 
-3. **Unity 类型序列化** ([ReflectionConverters/](../../Unity-MCP-Plugin/Assets/root/Runtime/ReflectionConverters/)、[JsonConverters/](../../Unity-MCP-Plugin/Assets/root/Runtime/JsonConverters/))
+3. **Unity 类型序列化** ([ReflectionConverters/](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Runtime/ReflectionConverters/)、[JsonConverters/](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Runtime/JsonConverters/))
    - Unity 类型的自定义 JSON 序列化（GameObject、Component、Transform、Vector3、Quaternion 等）
    - 将 Unity 对象转换为引用格式（`GameObjectRef`、`ComponentRef`），并跟踪 instanceID
    - 与 ReflectorNet 集成，用于对象自省和组件序列化
    - 为 MCP 协议类型定义提供 JSON Schema
 
-4. **日志与诊断** ([Logger/](../../Unity-MCP-Plugin/Assets/root/Runtime/Logger/)、[Unity/Logs/](../../Unity-MCP-Plugin/Assets/root/Runtime/Unity/Logs/))
+4. **日志与诊断** ([Logger/](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Runtime/Logger/)、[Unity/Logs/](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Runtime/Unity/Logs/))
    - 将 Microsoft.Extensions.Logging 桥接到带有颜色编码级别的 Unity 控制台
    - 收集 Unity 控制台日志，供 AI 通过 MCP Tools 获取上下文
 
@@ -537,8 +537,8 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 
 | 模式 | 测试内容 | 位置 |
 | ---- | ------------- | -------- |
-| **EditMode** | 工具逻辑、序列化、编辑器工具——无需播放模式 | `Assets/root/Tests/Editor` |
-| **PlayMode** | 运行时插件、SignalR 连接、主线程调度 | `Assets/root/Tests/Runtime` |
+| **EditMode** | 工具逻辑、序列化、编辑器工具——无需播放模式 | `Packages/AI-Game-Developer/Tests/Editor` |
+| **PlayMode** | 运行时插件、SignalR 连接、主线程调度 | `Packages/AI-Game-Developer/Tests/Runtime` |
 | **Standalone** | 内嵌插件的完整播放器构建 | 需要播放器构建步骤 |
 
 ## 在 Test Runner 中包含包测试（testables）
@@ -597,7 +597,7 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 
 **流程：**
 
-1. **版本检查** - 从 [package.json](../../Unity-MCP-Plugin/Assets/root/package.json) 提取版本并检查发布标签是否已存在
+1. **版本检查** - 从 [package.json](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/package.json) 提取版本并检查发布标签是否已存在
 2. **构建 Unity Installer** - 测试并导出 Unity 包安装程序（`AI-Game-Dev-Installer.unitypackage`）
 3. **构建 MCP Server** - 使用 [build-all.sh](../../Unity-MCP-Server/build-all.sh) 编译跨平台可执行文件（Windows、macOS、Linux）
 4. **Unity 插件测试** - 跨以下组合运行全面测试：

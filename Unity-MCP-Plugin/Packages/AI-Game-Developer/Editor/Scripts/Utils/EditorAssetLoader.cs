@@ -22,7 +22,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
     public static class EditorAssetLoader
     {
         private const string PackagePathPrefix = "Packages/com.ivanmurzak.unity.mcp/";
-        private const string AssetsPathPrefix = "Assets/root/";
+        private const string AssetsPathPrefix = "Packages/AI-Game-Developer/";
         private const string LogoIconRelativePath = "Editor/Gizmos/logo_window_icon.png";
 
         /// <summary>
