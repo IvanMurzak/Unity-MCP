@@ -20,7 +20,7 @@ using UnityEngine.TestTools;
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
     /// <summary>
-    /// Full thread-safety coverage for every registered MCP tool — regression for
+    /// Thread-safety coverage for MCP tools — regression for
     /// <see href="https://github.com/IvanMurzak/Unity-MCP/issues/633">#633</see>.
     ///
     /// For each tool we want to guarantee the tool's body handles invocation from any
@@ -30,6 +30,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     /// <see href="https://github.com/IvanMurzak/Unity-MCP/issues/632">#632</see> /
     /// <see href="https://github.com/IvanMurzak/Unity-MCP/pull/637">#637</see>
     /// (<c>console-clear-logs</c>).
+    ///
+    /// <b>Excluded tools</b>: <c>package-add</c>/<c>package-remove</c> (trigger domain
+    /// reload), <c>tests-run</c> (recursive hang), system tools (<c>ping</c>,
+    /// <c>unity-skill-*</c>). See inline comments for rationale.
     ///
     /// Two helpers from <see cref="BaseTest"/> are used:
     /// <list type="bullet">
@@ -47,17 +51,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     {
         const string TmpFolderName = "BgThreadTests_TMP";
         const string TmpFolder = "Assets/" + TmpFolderName;
-
-        [SetUp]
-        public void BgSetUp()
-        {
-            // The MCP plugin asynchronously attempts to reconnect to its server during
-            // tests. In a test environment the server is not reachable and Unity surfaces
-            // a SocketException on the log bus that LogAssert flags as a test failure.
-            // These tests only assert on the tool-call result, not on unrelated console
-            // noise, so ignore log-noise failures here.
-            LogAssert.ignoreFailingMessages = true;
-        }
 
         [TearDown]
         public void BgTearDown()
@@ -392,18 +385,42 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         [UnityTest]
-        public IEnumerator AssetsPrefabOpenCloseSave_ThreadSafetyOnly()
+        public IEnumerator AssetsPrefabOpenSaveClose_BothThreads()
         {
-            // Prefab stage is a heavyweight/singleton Editor state machine; verify thread
-            // safety only and tolerate business errors (e.g. "no open prefab").
-            yield return RunToolExpectNoThreadViolation(Tool_Assets_Prefab.AssetsPrefabSaveToolId, "{}");
-            yield return RunToolExpectNoThreadViolation(Tool_Assets_Prefab.AssetsPrefabCloseToolId, @"{""save"":false}");
+            EnsureTmpFolder();
 
-            // prefab-open requires a prefab instance GameObjectRef; pass a scene GO which
-            // will produce a business error but will not throw on a background thread.
-            var id = new GameObject("bg_open").GetInstanceID();
-            yield return RunToolExpectNoThreadViolation(Tool_Assets_Prefab.AssetsPrefabOpenToolId,
-                $@"{{""gameObjectRef"":{{""instanceID"":{id}}}}}");
+            // Create a prefab asset from a scene GameObject.
+            var seedA = new GameObject("bg_prefab_osc_a").GetInstanceID();
+            var prefabPathA = $"{TmpFolder}/osc_a.prefab";
+            yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
+                $@"{{""prefabAssetPath"":""{prefabPathA}"",""gameObjectRef"":{{""instanceID"":{seedA}}}}}");
+
+            // Instantiate it so we get a prefab instance to open.
+            yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabInstantiateToolId,
+                $@"{{""prefabAssetPath"":""{prefabPathA}"",""gameObjectPath"":""bg_osc_inst_a""}}");
+            var instanceA = GameObject.Find("bg_osc_inst_a");
+            Assert.IsNotNull(instanceA, "Prefab instance not found after instantiate.");
+
+            // Open → Save → Close (main thread).
+            yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabOpenToolId,
+                $@"{{""gameObjectRef"":{{""instanceID"":{instanceA!.GetInstanceID()}}}}}");
+            yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabSaveToolId, "{}");
+            yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCloseToolId, @"{""save"":false}");
+
+            // Same sequence from a background thread.
+            var seedB = new GameObject("bg_prefab_osc_b").GetInstanceID();
+            var prefabPathB = $"{TmpFolder}/osc_b.prefab";
+            yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
+                $@"{{""prefabAssetPath"":""{prefabPathB}"",""gameObjectRef"":{{""instanceID"":{seedB}}}}}");
+            yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabInstantiateToolId,
+                $@"{{""prefabAssetPath"":""{prefabPathB}"",""gameObjectPath"":""bg_osc_inst_b""}}");
+            var instanceB = GameObject.Find("bg_osc_inst_b");
+            Assert.IsNotNull(instanceB, "Prefab instance not found after instantiate.");
+
+            yield return RunToolFromBackgroundThread(Tool_Assets_Prefab.AssetsPrefabOpenToolId,
+                $@"{{""gameObjectRef"":{{""instanceID"":{instanceB!.GetInstanceID()}}}}}");
+            yield return RunToolFromBackgroundThread(Tool_Assets_Prefab.AssetsPrefabSaveToolId, "{}");
+            yield return RunToolFromBackgroundThread(Tool_Assets_Prefab.AssetsPrefabCloseToolId, @"{""save"":false}");
         }
 
         // ================================================================
@@ -447,12 +464,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         [UnityTest]
-        public IEnumerator SceneUnload_ThreadSafetyOnly()
+        public IEnumerator SceneUnload_BothThreads()
         {
-            // Unloading scenes can invalidate the test runner's own active scene in
-            // batch mode — verify thread safety only.
-            yield return RunToolExpectNoThreadViolation(Tool_Scene.SceneUnloadToolId,
-                @"{""name"":""__definitely_not_loaded__""}");
+            EnsureTmpFolder();
+
+            // Create a saved scene so we can open additional scenes additively.
+            var basePath = $"{TmpFolder}/unload_base.unity";
+            yield return RunToolMainThreadCoop(Tool_Scene.SceneCreateToolId,
+                $@"{{""path"":""{basePath}""}}");
+
+            // Create two extra scenes additively (allowed now because base is saved).
+            var mainPath = $"{TmpFolder}/unload_main.unity";
+            var bgPath = $"{TmpFolder}/unload_bg.unity";
+            yield return RunToolMainThreadCoop(Tool_Scene.SceneCreateToolId,
+                $@"{{""path"":""{mainPath}"",""newSceneMode"":""Additive""}}");
+            yield return RunToolMainThreadCoop(Tool_Scene.SceneCreateToolId,
+                $@"{{""path"":""{bgPath}"",""newSceneMode"":""Additive""}}");
+
+            // Unload each additive scene from both threads (tool takes scene name, not path).
+            yield return RunToolMainThreadCoop(Tool_Scene.SceneUnloadToolId,
+                @"{""name"":""unload_main""}");
+            yield return RunToolFromBackgroundThread(Tool_Scene.SceneUnloadToolId,
+                @"{""name"":""unload_bg""}");
         }
 
         // ================================================================
@@ -517,10 +550,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         [UnityTest]
-        public IEnumerator ReflectionMethodCall_ThreadSafetyOnly()
+        public IEnumerator ReflectionMethodCall_BothThreads()
         {
-            yield return RunToolExpectNoThreadViolation(Tool_Reflection.ReflectionMethodCallToolId,
-                @"{""filter"":{""Namespace"":""UnityEngine"",""TypeName"":""Debug"",""MethodName"":""DoesNotExistXyz""}}");
+            // Call a static method on a test-scoped GameObject's Transform via instance method.
+            var go = new GameObject("bg_reflect");
+            var id = go.GetInstanceID();
+            yield return RunToolBothThreads(Tool_Reflection.ReflectionMethodCallToolId,
+                $@"{{""filter"":{{""Namespace"":""UnityEngine"",""TypeName"":""GameObject"",""MethodName"":""Find"",""InputParameters"":[{{""TypeName"":""System.String"",""Name"":""name""}}]}},""inputParameters"":[{{""typeName"":""System.String"",""name"":""name"",""value"":""bg_reflect""}}]}}");
         }
 
         // ================================================================
@@ -545,8 +581,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         // ================================================================
 
         [UnityTest]
-        public IEnumerator ScreenshotCamera_ThreadSafetyOnly()
-            => RunToolExpectNoThreadViolation(Tool_Screenshot.ScreenshotCameraToolId, @"{""width"":64,""height"":64}");
+        public IEnumerator ScreenshotCamera_BothThreads()
+        {
+            new GameObject("TestCamera").AddComponent<Camera>();
+            yield return RunToolBothThreads(Tool_Screenshot.ScreenshotCameraToolId, @"{""width"":64,""height"":64}");
+        }
 
         [UnityTest]
         public IEnumerator ScreenshotGameView_ThreadSafetyOnly()

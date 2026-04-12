@@ -187,8 +187,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // checking for main-thread violations here. Re-asserted at every helper
             // call because Unity's test framework resets this between SetUp and the
             // test body.
-            LogAssert.ignoreFailingMessages = true;
-
             string? mainJson = null;
             yield return CallToolOnMainThreadCoop(toolName, json, (_, j) => mainJson = j);
             Assert.IsNotNull(mainJson, $"[{toolName}] main-thread call produced no JSON.");
