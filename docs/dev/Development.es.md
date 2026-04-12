@@ -219,37 +219,37 @@ Se integra en el entorno de Unity. Utiliza `Unity-MCP-Common` para buscar *Tools
 
 ### Paquete UPM
 
-`Unity-MCP-Plugin` es un paquete UPM. La carpeta raíz del paquete se encuentra en `Unity-MCP-Plugin/Packages/AI-Game-Developer` y contiene el archivo `package.json`, que se utiliza para publicar el paquete directamente desde una release de GitHub en [OpenUPM](https://openupm.com/).
+`Unity-MCP-Plugin` es un paquete UPM. La carpeta raíz del paquete se encuentra en `Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp` y contiene el archivo `package.json`, que se utiliza para publicar el paquete directamente desde una release de GitHub en [OpenUPM](https://openupm.com/).
 
-> Ubicación: `Unity-MCP-Plugin/Packages/AI-Game-Developer`
+> Ubicación: `Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp`
 
 ### Editor
 
 El componente Editor proporciona integración con Unity Editor, implementando capacidades MCP (Tools, Prompts, Resources) y gestionando el ciclo de vida de `Unity-MCP-Server`.
 
-> Ubicación: `Unity-MCP-Plugin/Packages/AI-Game-Developer/Editor`
+> Ubicación: `Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor`
 
 **Responsabilidades principales:**
 
-1. **Gestión del ciclo de vida del Plugin** ([Startup.cs](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Editor/Scripts/Startup.cs))
+1. **Gestión del ciclo de vida del Plugin** ([Startup.cs](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Startup.cs))
    - Se auto-inicializa al cargar Unity Editor mediante `[InitializeOnLoad]`
    - Gestiona la persistencia de la conexión a lo largo del ciclo de vida del Editor (recarga de ensamblados, transiciones de modo Play)
    - Reconexión automática tras la recarga del dominio o la salida del modo Play
 
-2. **Gestión del binario del servidor MCP** ([McpServerManager.cs](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Editor/Scripts/McpServerManager.cs))
+2. **Gestión del binario del servidor MCP** ([McpServerManager.cs](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/McpServerManager.cs))
    - Descarga y gestiona el ejecutable de `Unity-MCP-Server` desde las releases de GitHub
    - Selección de binario multiplataforma (Windows/macOS/Linux, x86/x64/ARM/ARM64)
    - Aplicación de compatibilidad de versiones entre el servidor y el plugin
    - Generación de configuración para agentes de IA (JSON con rutas de ejecutables y ajustes de conexión)
 
-3. **Implementación de la API MCP** ([Scripts/API/](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Editor/Scripts/API/))
+3. **Implementación de la API MCP** ([Scripts/API/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/))
    - **Tools** (50+): GameObject, Scene, Assets, Prefabs, Scripts, Components, Editor Control, Test Runner, Console, Reflection
    - **Prompts**: Plantillas predefinidas para tareas comunes de desarrollo en Unity
    - **Resources**: Acceso basado en URI a datos del Unity Editor con serialización JSON
    - Todas las operaciones se ejecutan en el hilo principal de Unity para garantizar la seguridad de hilos
    - Descubrimiento basado en atributos mediante `[McpPluginTool]`, `[McpPluginPrompt]`, `[McpPluginResource]`
 
-4. **Interfaz del Editor** ([Scripts/UI/](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Editor/Scripts/UI/))
+4. **Interfaz del Editor** ([Scripts/UI/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/))
    - Ventana de configuración para la gestión de conexiones (`Window > AI Game Developer`)
    - Gestión del binario del servidor y acceso a logs mediante elementos del menú de Unity
 
@@ -257,28 +257,28 @@ El componente Editor proporciona integración con Unity Editor, implementando ca
 
 El componente Runtime proporciona la infraestructura principal compartida entre los modos Editor y Runtime, gestionando la comunicación SignalR, la serialización y el acceso seguro a la API de Unity desde múltiples hilos.
 
-> Ubicación: `Unity-MCP-Plugin/Packages/AI-Game-Developer/Runtime`
+> Ubicación: `Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime`
 
 **Responsabilidades principales:**
 
-1. **Núcleo del Plugin y conexión SignalR** ([UnityMcpPlugin.cs](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Runtime/UnityMcpPlugin.cs))
+1. **Núcleo del Plugin y conexión SignalR** ([UnityMcpPlugin.cs](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/UnityMcpPlugin.cs))
    - Singleton thread-safe que gestiona el ciclo de vida del plugin mediante `BuildAndStart()`
    - Descubre MCP Tools/Prompts/Resources de los ensamblados usando reflexión
    - Establece la conexión SignalR con Unity-MCP-Server con monitoreo de estado reactivo (biblioteca R3)
    - Gestión de configuración: host, puerto, tiempo de espera, compatibilidad de versiones
 
-2. **Dispatcher del hilo principal** ([MainThreadDispatcher.cs](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Runtime/Utils/MainThreadDispatcher.cs))
+2. **Dispatcher del hilo principal** ([MainThreadDispatcher.cs](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Utils/MainThreadDispatcher.cs))
    - Redirige las llamadas a la API de Unity desde hilos en segundo plano de SignalR al hilo principal de Unity
    - Ejecución basada en cola en el bucle Update de Unity
    - Fundamental para la ejecución segura de operaciones MCP
 
-3. **Serialización de tipos Unity** ([ReflectionConverters/](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Runtime/ReflectionConverters/), [JsonConverters/](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Runtime/JsonConverters/))
+3. **Serialización de tipos Unity** ([ReflectionConverters/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/ReflectionConverters/), [JsonConverters/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/JsonConverters/))
    - Serialización JSON personalizada para tipos de Unity (GameObject, Component, Transform, Vector3, Quaternion, etc.)
    - Convierte objetos de Unity a formato de referencia (`GameObjectRef`, `ComponentRef`) con seguimiento de instanceID
    - Se integra con ReflectorNet para la introspección de objetos y la serialización de componentes
    - Proporciona esquemas JSON para las definiciones de tipos del protocolo MCP
 
-4. **Registro y diagnósticos** ([Logger/](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Runtime/Logger/), [Unity/Logs/](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Runtime/Unity/Logs/))
+4. **Registro y diagnósticos** ([Logger/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Logger/), [Unity/Logs/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Unity/Logs/))
    - Conecta Microsoft.Extensions.Logging con la consola de Unity con niveles codificados por color
    - Recopila logs de la consola de Unity para su recuperación por parte de la IA a través de MCP Tools
 
@@ -537,8 +537,8 @@ Las pruebas cubren tres modos en tres versiones de Unity (2022, 2023, 6000) y do
 
 | Modo | Qué prueba | Ubicación |
 | ---- | ------------- | -------- |
-| **EditMode** | Lógica de tools, serialización, utilidades del editor — sin necesidad de modo Play | `Packages/AI-Game-Developer/Tests/Editor` |
-| **PlayMode** | Plugin en runtime, conexión SignalR, dispatch al hilo principal | `Packages/AI-Game-Developer/Tests/Runtime` |
+| **EditMode** | Lógica de tools, serialización, utilidades del editor — sin necesidad de modo Play | `Packages/com.ivanmurzak.unity.mcp/Tests/Editor` |
+| **PlayMode** | Plugin en runtime, conexión SignalR, dispatch al hilo principal | `Packages/com.ivanmurzak.unity.mcp/Tests/Runtime` |
 | **Standalone** | Build de player completo con plugin embebido | Requiere un paso de build de player |
 
 ## Incluir tests de paquetes en el Test Runner (testables)
@@ -597,7 +597,7 @@ Esto es lo que necesitas saber al trabajar con CI como colaborador:
 
 **Proceso:**
 
-1. **Verificación de versión** - Extrae la versión de [package.json](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/package.json) y comprueba si ya existe el tag de release
+1. **Verificación de versión** - Extrae la versión de [package.json](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json) y comprueba si ya existe el tag de release
 2. **Compilación del Installer de Unity** - Prueba y exporta el instalador del paquete Unity (`AI-Game-Dev-Installer.unitypackage`)
 3. **Compilación del servidor MCP** - Compila ejecutables multiplataforma (Windows, macOS, Linux) usando [build-all.sh](../../Unity-MCP-Server/build-all.sh)
 4. **Pruebas del Plugin de Unity** - Ejecuta pruebas completas en:

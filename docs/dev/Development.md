@@ -221,35 +221,35 @@ Integrates into Unity environment. Uses `Unity-MCP-Common` for searching for MCP
 
 `Unity-MCP-Plugin` is a UPM package, the root folder of the package is located at . It contains `package.json`. Which is used for uploading the package directly from GitHub release to [OpenUPM](https://openupm.com/).
 
-> Location `Unity-MCP-Plugin/Packages/AI-Game-Developer`
+> Location `Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp`
 
 ### Editor
 
 The Editor component provides Unity Editor integration, implementing MCP capabilities (Tools, Prompts, Resources) and managing the `Unity-MCP-Server` lifecycle.
 
-> Location `Unity-MCP-Plugin/Packages/AI-Game-Developer/Editor`
+> Location `Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor`
 
 **Main Responsibilities:**
 
-1. **Plugin Lifecycle Management** ([Startup.cs](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Editor/Scripts/Startup.cs))
+1. **Plugin Lifecycle Management** ([Startup.cs](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Startup.cs))
    - Auto-initializes on Unity Editor load via `[InitializeOnLoad]`
    - Manages connection persistence across Editor lifecycle events (assembly reload, play mode transitions)
    - Automatic reconnection after domain reload or Play mode exit
 
-2. **MCP Server Binary Management** ([McpServerManager.cs](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Editor/Scripts/McpServerManager.cs))
+2. **MCP Server Binary Management** ([McpServerManager.cs](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/McpServerManager.cs))
    - Downloads and manages `Unity-MCP-Server` executable from GitHub releases
    - Cross-platform binary selection (Windows/macOS/Linux, x86/x64/ARM/ARM64)
    - Version compatibility enforcement between server and plugin
    - Configuration generation for AI agents (JSON with executable paths and connection settings)
 
-3. **MCP API Implementation** ([Scripts/API/](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Editor/Scripts/API/))
+3. **MCP API Implementation** ([Scripts/API/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/))
    - **Tools** (50+): GameObject, Scene, Assets, Prefabs, Scripts, Components, Editor Control, Test Runner, Console, Reflection
    - **Prompts**: Pre-built templates for common Unity development tasks
    - **Resources**: URI-based access to Unity Editor data with JSON serialization
    - All operations execute on Unity's main thread for thread safety
    - Attribute-based discovery using `[McpPluginTool]`, `[McpPluginPrompt]`, `[McpPluginResource]`
 
-4. **Editor UI** ([Scripts/UI/](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Editor/Scripts/UI/))
+4. **Editor UI** ([Scripts/UI/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/))
    - Configuration window for connection management (`Window > AI Game Developer`)
    - Server binary management and log access via Unity menu items
 
@@ -257,28 +257,28 @@ The Editor component provides Unity Editor integration, implementing MCP capabil
 
 The Runtime component provides core infrastructure shared between Editor and Runtime modes, handling SignalR communication, serialization, and thread-safe Unity API access.
 
-> Location `Unity-MCP-Plugin/Packages/AI-Game-Developer/Runtime`
+> Location `Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime`
 
 **Main Responsibilities:**
 
-1. **Plugin Core & SignalR Connection** ([UnityMcpPlugin.cs](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Runtime/UnityMcpPlugin.cs))
+1. **Plugin Core & SignalR Connection** ([UnityMcpPlugin.cs](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/UnityMcpPlugin.cs))
    - Thread-safe singleton managing plugin lifecycle via `BuildAndStart()`
    - Discovers MCP Tools/Prompts/Resources from assemblies using reflection
    - Establishes SignalR connection to Unity-MCP-Server with reactive state monitoring (R3 library)
    - Configuration management: host, port, timeout, version compatibility
 
-2. **Main Thread Dispatcher** ([MainThreadDispatcher.cs](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Runtime/Utils/MainThreadDispatcher.cs))
+2. **Main Thread Dispatcher** ([MainThreadDispatcher.cs](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Utils/MainThreadDispatcher.cs))
    - Marshals Unity API calls from SignalR background threads to Unity's main thread
    - Queue-based execution in Unity's Update loop
    - Critical for thread-safe MCP operation execution
 
-3. **Unity Type Serialization** ([ReflectionConverters/](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Runtime/ReflectionConverters/), [JsonConverters/](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Runtime/JsonConverters/))
+3. **Unity Type Serialization** ([ReflectionConverters/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/ReflectionConverters/), [JsonConverters/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/JsonConverters/))
    - Custom JSON serialization for Unity types (GameObject, Component, Transform, Vector3, Quaternion, etc.)
    - Converts Unity objects to reference format (`GameObjectRef`, `ComponentRef`) with instanceID tracking
    - Integrates with ReflectorNet for object introspection and component serialization
    - Provides JSON schemas for MCP protocol type definitions
 
-4. **Logging & Diagnostics** ([Logger/](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Runtime/Logger/), [Unity/Logs/](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/Runtime/Unity/Logs/))
+4. **Logging & Diagnostics** ([Logger/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Logger/), [Unity/Logs/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Unity/Logs/))
    - Bridges Microsoft.Extensions.Logging to Unity Console with color-coded levels
    - Collects Unity Console logs for AI context retrieval via MCP Tools
 
@@ -537,8 +537,8 @@ Tests cover three modes across three Unity versions (2022, 2023, 6000) and two O
 
 | Mode | What it tests | Location |
 | ---- | ------------- | -------- |
-| **EditMode** | Tool logic, serialization, editor utilities — no Play mode needed | `Packages/AI-Game-Developer/Tests/Editor` |
-| **PlayMode** | Runtime plugin, SignalR connection, main thread dispatch | `Packages/AI-Game-Developer/Tests/Runtime` |
+| **EditMode** | Tool logic, serialization, editor utilities — no Play mode needed | `Packages/com.ivanmurzak.unity.mcp/Tests/Editor` |
+| **PlayMode** | Runtime plugin, SignalR connection, main thread dispatch | `Packages/com.ivanmurzak.unity.mcp/Tests/Runtime` |
 | **Standalone** | Full player build with embedded plugin | Requires a player build step |
 
 ## Including package tests (testables)
@@ -597,7 +597,7 @@ Here is what you need to know when working with CI as a contributor:
 
 **Process:**
 
-1. **Version Check** - Extracts version from [package.json](../../Unity-MCP-Plugin/Packages/AI-Game-Developer/package.json) and checks if release tag already exists
+1. **Version Check** - Extracts version from [package.json](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json) and checks if release tag already exists
 2. **Build Unity Installer** - Tests and exports Unity package installer (`AI-Game-Dev-Installer.unitypackage`)
 3. **Build MCP Server** - Compiles cross-platform executables (Windows, macOS, Linux) using [build-all.sh](../../Unity-MCP-Server/build-all.sh)
 4. **Unity Plugin Testing** - Runs comprehensive tests across:

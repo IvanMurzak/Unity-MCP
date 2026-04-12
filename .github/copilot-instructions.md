@@ -26,14 +26,14 @@ Before performing any code review, you **MUST** read the project constitution: [
 ## Code Style
 - **C#**: Use 4 spaces indentation. PascalCase for classes/methods/properties, `_camelCase` for private readonly fields.
     - Namespace: `com.IvanMurzak.Unity.MCP`.
-    - Example: [UnityMcpPlugin.cs](Unity-MCP-Plugin/Packages/AI-Game-Developer/Runtime/UnityMcpPlugin.cs).
+    - Example: [UnityMcpPlugin.cs](Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/UnityMcpPlugin.cs).
 - **PowerShell**: Use K&R brace style.
 
 ## Architecture
 - **Unity-MCP-Plugin**: Main Unity package.
-    - Core logic: [Packages/AI-Game-Developer/Runtime](Unity-MCP-Plugin/Packages/AI-Game-Developer/Runtime).
-    - Editor logic: `Packages/AI-Game-Developer/Editor`.
-    - Tests: `Packages/AI-Game-Developer/Tests`.
+    - Core logic: [Packages/com.ivanmurzak.unity.mcp/Runtime](Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime).
+    - Editor logic: `Packages/com.ivanmurzak.unity.mcp/Editor`.
+    - Tests: `Packages/com.ivanmurzak.unity.mcp/Tests`.
 - **Unity-MCP-Server**: ASP.NET Core bridging LLMs and Unity.
     - Entry point: [Program.cs](Unity-MCP-Server/src/Program.cs) (or similar in project root/src).
     - SignalR Hub: `RemoteApp` (referenced in CLAUDE.md).
@@ -44,7 +44,7 @@ Before performing any code review, you **MUST** read the project constitution: [
 - **Plugin**:
     - Auto-compiles in Unity.
     - Run tests: [commands/run-unity-tests.ps1](commands/run-unity-tests.ps1).
-    - Editor Tests: `Packages/AI-Game-Developer/Tests/Editor`.
+    - Editor Tests: `Packages/com.ivanmurzak.unity.mcp/Tests/Editor`.
 - **Server**:
     - Build: `.\Unity-MCP-Server\build-all.ps1`.
     - Run: `dotnet run --project Unity-MCP-Server/com.IvanMurzak.Unity.MCP.Server.csproj`.
@@ -56,7 +56,7 @@ Before performing any code review, you **MUST** read the project constitution: [
     - [Unity-MCP.wiki](Unity-MCP.wiki/) for user docs.
     - [docs/](docs/) for translations and repo docs.
     - See `CLAUDE.md` in subdirectories for specific agent notes.
-- **Versioning**: `package.json` in `Unity-MCP-Plugin/Packages/AI-Game-Developer/package.json`.
+- **Versioning**: `package.json` in `Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json`.
 
 ## Integration Points
 - **Communication**: SignalR between Server and Plugin.

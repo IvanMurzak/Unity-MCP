@@ -70,7 +70,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Fallback: try to read from Packages/com.ivanmurzak.unity.mcp/package.json (for source project testing)
             if (string.IsNullOrEmpty(packageJsonContent))
             {
-                var fallbackPath = Path.Combine(Application.dataPath, "..", "Packages", "AI-Game-Developer", "package.json");
+                var fallbackPath = Path.Combine(Application.dataPath, "..", "Packages", "com.ivanmurzak.unity.mcp", "package.json");
                 if (File.Exists(fallbackPath))
                 {
                     packageJsonContent = File.ReadAllText(fallbackPath);

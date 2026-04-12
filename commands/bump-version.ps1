@@ -56,13 +56,13 @@ $VersionFiles = @(
         Description = "Installer C# version constant"
     },
     @{
-        Path        = "Unity-MCP-Plugin/Packages/AI-Game-Developer/package.json"
+        Path        = "Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json"
         Pattern     = '"version":\s*"[\d\.]+"'
         Replace     = '"version": "{VERSION}"'
         Description = "Unity package version"
     },
     @{
-        Path        = "Unity-MCP-Plugin/Packages/AI-Game-Developer/Runtime/UnityMcpPlugin.cs"
+        Path        = "Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/UnityMcpPlugin.cs"
         Pattern     = 'public const string Version = "[\d\.]+";'
         Replace     = 'public const string Version = "{VERSION}";'
         Description = "Plugin C# version constant"
@@ -100,7 +100,7 @@ function Test-SemanticVersion {
 
 function Get-CurrentVersion {
     # Extract current version from package.json
-    $packageJsonPath = "Unity-MCP-Plugin/Packages/AI-Game-Developer/package.json"
+    $packageJsonPath = "Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json"
     if (-not (Test-Path $packageJsonPath)) {
         throw "Could not find package.json at: $packageJsonPath"
     }
