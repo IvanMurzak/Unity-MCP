@@ -71,23 +71,32 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
         /// <summary>
         /// Determines if a DLL should be included in game builds based on the package config.
         /// Checks the parent directory name to match against NuGetConfig.Packages.
+        ///
+        /// Logic:
+        ///   - Packages explicitly listed in NuGetConfig use their IncludeInBuild flag.
+        ///   - Transitive dependencies default to INCLUDED in builds (true).
+        ///     This is necessary because runtime packages (SignalR, Logging, etc.)
+        ///     depend on transitive DLLs like System.Diagnostics.DiagnosticSource
+        ///     that must be present at runtime.
+        ///   - Only explicitly editor-only packages are excluded from builds.
         /// </summary>
         static bool ShouldIncludeInBuild(string dllPath)
         {
             // Path format: Assets/Plugins/NuGet/{PackageId}.{Version}/{dll}
             var dirName = Path.GetFileName(Path.GetDirectoryName(dllPath));
             if (dirName == null)
-                return false;
+                return true;
 
+            // Check if this is an explicitly configured package
             foreach (var package in NuGetConfig.Packages)
             {
-                if (dirName.StartsWith(package.Id, System.StringComparison.OrdinalIgnoreCase))
+                if (dirName.StartsWith(package.Id + ".", System.StringComparison.OrdinalIgnoreCase))
                     return package.IncludeInBuild;
             }
 
-            // Transitive dependency — check if any runtime-required package depends on it
-            // Default: editor-only (safer — don't pollute builds with unnecessary DLLs)
-            return false;
+            // Transitive dependency — include in builds by default.
+            // Runtime packages depend on transitive DLLs that must be available at runtime.
+            return true;
         }
     }
 }

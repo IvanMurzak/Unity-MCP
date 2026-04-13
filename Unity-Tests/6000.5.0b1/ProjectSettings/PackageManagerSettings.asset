@@ -38,7 +38,6 @@ MonoBehaviour:
     m_Scopes:
     - com.ivanmurzak
     - extensions.unity
-    - org.nuget
     m_IsDefault: 0
     m_IsUnityRegistry: 0
     m_Capabilities: 0
