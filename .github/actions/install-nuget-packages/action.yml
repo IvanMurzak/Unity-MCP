@@ -1,0 +1,120 @@
+# ┌──────────────────────────────────────────────────────────────────┐
+# │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
+# │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
+# │  Copyright (c) 2025 Ivan Murzak                                  │
+# │  Licensed under the Apache License, Version 2.0.                 │
+# │  See the LICENSE file in the project root for more information.  │
+# └──────────────────────────────────────────────────────────────────┘
+
+name: "Install NuGet Packages"
+description: >
+  Pre-installs NuGet DLLs for Unity projects that use the Unity-MCP NuGet resolver.
+  In CI, Unity runs in batch mode with -runTests which doesn't support the two-reload
+  cycle needed by the runtime resolver. This action downloads packages before Unity starts.
+
+inputs:
+  project-path:
+    description: "Path to the Unity project (must contain Assets/ folder)"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Install NuGet packages for Unity
+      shell: bash
+      run: |
+        PROJECT_PATH="${{ inputs.project-path }}"
+        INSTALL_DIR="${PROJECT_PATH}/Assets/Plugins/NuGet"
+        CACHE_DIR="/tmp/nuget-cache"
+        NUGET_BASE="https://api.nuget.org/v3-flatcontainer"
+
+        # Read package list from the resolver's C# config file
+        CONFIG_FILE="Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetConfig.cs"
+        if [ ! -f "$CONFIG_FILE" ]; then
+          echo "::warning::NuGetConfig.cs not found at $CONFIG_FILE — skipping NuGet install"
+          exit 0
+        fi
+
+        # Parse NuGetPackage entries: new NuGetPackage("Id", "Version" ...)
+        PACKAGES=$(grep -oP 'new NuGetPackage\(\s*"([^"]+)",\s*"([^"]+)"' "$CONFIG_FILE" | \
+          sed 's/new NuGetPackage("//' | sed 's/",\s*"/ /' | sed 's/"//')
+
+        if [ -z "$PACKAGES" ]; then
+          echo "::warning::No packages found in NuGetConfig.cs"
+          exit 0
+        fi
+
+        mkdir -p "$CACHE_DIR" "$INSTALL_DIR"
+
+        install_package() {
+          local ID="$1"
+          local VERSION="$2"
+          local ID_LOWER=$(echo "$ID" | tr '[:upper:]' '[:lower:]')
+          local VERSION_LOWER=$(echo "$VERSION" | tr '[:upper:]' '[:lower:]')
+          local PKG_DIR="${INSTALL_DIR}/${ID}.${VERSION}"
+          local NUPKG_PATH="${CACHE_DIR}/${ID_LOWER}.${VERSION_LOWER}.nupkg"
+
+          # Skip if already installed
+          if [ -d "$PKG_DIR" ] && ls "$PKG_DIR"/*.dll >/dev/null 2>&1; then
+            return
+          fi
+
+          # Download .nupkg
+          if [ ! -f "$NUPKG_PATH" ]; then
+            local URL="${NUGET_BASE}/${ID_LOWER}/${VERSION_LOWER}/${ID_LOWER}.${VERSION_LOWER}.nupkg"
+            echo "  Downloading ${ID} ${VERSION}..."
+            curl -sL "$URL" -o "$NUPKG_PATH" || { echo "::error::Failed to download $URL"; return 1; }
+          fi
+
+          # Extract DLLs — try frameworks in priority order
+          mkdir -p "$PKG_DIR"
+          local EXTRACTED=false
+          for TFM in netstandard2.1 netstandard2.0 net48 net472 net462 net461 net46 net45; do
+            local DLLS=$(unzip -l "$NUPKG_PATH" "lib/${TFM}/*.dll" 2>/dev/null | grep "\.dll$" | grep -v "/ref/" | awk '{print $NF}')
+            if [ -n "$DLLS" ]; then
+              unzip -o -j "$NUPKG_PATH" "lib/${TFM}/*.dll" -d "$PKG_DIR" >/dev/null 2>&1
+              EXTRACTED=true
+              break
+            fi
+          done
+
+          if [ "$EXTRACTED" = true ]; then
+            local COUNT=$(ls "$PKG_DIR"/*.dll 2>/dev/null | wc -l)
+            echo "  Installed ${ID} ${VERSION} (${COUNT} DLL(s), ${TFM})"
+          fi
+
+          # Resolve transitive dependencies from .nuspec
+          local NUSPEC=$(unzip -l "$NUPKG_PATH" "*.nuspec" 2>/dev/null | grep "\.nuspec$" | head -1 | awk '{print $NF}')
+          if [ -n "$NUSPEC" ]; then
+            unzip -o -p "$NUPKG_PATH" "$NUSPEC" 2>/dev/null | \
+              grep -oP '<dependency id="([^"]+)" version="([^"]*)"' | \
+              sed 's/<dependency id="//;s/" version="/ /;s/"//' | \
+              while read DEP_ID DEP_VERSION; do
+                # Clean version range: [1.0.0, ) → 1.0.0
+                DEP_VERSION=$(echo "$DEP_VERSION" | sed 's/[\[\]()]//g' | sed 's/,.*//' | xargs)
+                if [ -n "$DEP_ID" ] && [ -n "$DEP_VERSION" ]; then
+                  install_package "$DEP_ID" "$DEP_VERSION"
+                fi
+              done
+          fi
+        }
+
+        echo "Installing NuGet packages to ${INSTALL_DIR}..."
+        echo "$PACKAGES" | while read ID VERSION; do
+          install_package "$ID" "$VERSION"
+        done
+
+        # Also set UNITY_MCP_READY scripting define in ProjectSettings
+        SETTINGS_FILE="${PROJECT_PATH}/ProjectSettings/ProjectSettings.asset"
+        if [ -f "$SETTINGS_FILE" ]; then
+          if ! grep -q "UNITY_MCP_READY" "$SETTINGS_FILE"; then
+            # Add UNITY_MCP_READY to the first scriptingDefineSymbols entry
+            sed -i 's/scriptingDefineSymbols: {}/scriptingDefineSymbols:\n    1: UNITY_MCP_READY/' "$SETTINGS_FILE" 2>/dev/null || true
+            # For existing defines, append
+            sed -i '/scriptingDefineSymbols:/,/^  [^ ]/{s/^\(    [0-9]*: .*\)$/\1;UNITY_MCP_READY/}' "$SETTINGS_FILE" 2>/dev/null || true
+            echo "Added UNITY_MCP_READY scripting define to ProjectSettings"
+          fi
+        fi
+
+        TOTAL=$(find "$INSTALL_DIR" -name "*.dll" | wc -l)
+        echo "NuGet install complete: ${TOTAL} DLL(s) in ${INSTALL_DIR}"
