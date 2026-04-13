@@ -21,36 +21,46 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
     /// Detects assemblies that Unity already provides (built-in BCL, engine modules, other packages).
     /// Uses the same approach as NuGetForUnity's UnityPreImportedLibraryResolver:
     ///   1. Get all player assembly references via CompilationPipeline
-    ///   2. Subtract assemblies we bundled ourselves
-    ///   3. Result = assemblies Unity provides natively
+    ///   2. Subtract assemblies we installed ourselves
+    ///   3. Result = assemblies Unity provides — these should NOT be installed from NuGet
+    ///
+    /// This prevents conflicts like CS1705 (version mismatch) and "multiple assemblies" errors.
     /// </summary>
     static class UnityAssemblyResolver
     {
         static HashSet<string>? cachedUnityAssemblies;
 
         /// <summary>
-        /// Paths where our bundled NuGet DLLs live.
+        /// Returns true if the given assembly name is already provided by Unity
+        /// (either as a BCL assembly or from another installed package).
         /// </summary>
-        static readonly string[] BundledDllPaths =
-        {
-            "Packages/com.ivanmurzak.unity.mcp/Plugins/NuGet",
-            "Packages/com.ivanmurzak.unity.mcp/Plugins/com.IvanMurzak.McpPlugin",
-            "Packages/com.ivanmurzak.unity.mcp/Plugins/com.IvanMurzak.ReflectorNet",
-            "Assets/Plugins/NuGet",
-        };
-
         public static bool IsAlreadyImported(string assemblyName)
         {
             return GetUnityProvidedAssemblies().Contains(assemblyName);
         }
 
+        /// <summary>
+        /// Invalidates the cached set of Unity-provided assemblies.
+        /// Call this after installing or removing packages.
+        /// </summary>
+        public static void InvalidateCache()
+        {
+            cachedUnityAssemblies = null;
+        }
+
+        /// <summary>
+        /// Gets the set of assembly names that Unity already provides.
+        /// Caches the result for performance (invalidated between domain reloads).
+        /// </summary>
         public static HashSet<string> GetUnityProvidedAssemblies()
         {
             if (cachedUnityAssemblies != null)
                 return cachedUnityAssemblies;
 
-            var bundledByUs = GetBundledAssemblyNames();
+            // Get assemblies we've installed ourselves (to exclude them)
+            var installedByUs = GetInstalledAssemblyNames();
 
+            // Get all assemblies referenced by player builds (includes BCL, engine, other packages)
             var playerAssemblies = CompilationPipeline.GetAssemblies(AssembliesType.PlayerWithoutTestAssemblies)
                 .Where(a => a.flags != AssemblyFlags.EditorAssembly);
 
@@ -61,11 +71,12 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
                 foreach (var reference in assembly.allReferences)
                 {
                     var name = Path.GetFileNameWithoutExtension(reference);
-                    if (!bundledByUs.Contains(name))
+                    if (!installedByUs.Contains(name))
                         unityProvided.Add(name);
                 }
             }
 
+            // Hard-coded additions (following NuGetForUnity's pattern)
             var compatLevel = PlayerSettings.GetApiCompatibilityLevel(
                 UnityEditor.Build.NamedBuildTarget.FromBuildTargetGroup(
                     EditorUserBuildSettings.selectedBuildTargetGroup));
@@ -81,19 +92,20 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
             return unityProvided;
         }
 
-        static HashSet<string> GetBundledAssemblyNames()
+        /// <summary>
+        /// Gets the set of assembly names that we've installed into Assets/Plugins/NuGet/.
+        /// </summary>
+        static HashSet<string> GetInstalledAssemblyNames()
         {
-            var bundled = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+            var installed = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
 
-            foreach (var path in BundledDllPaths)
-            {
-                if (!Directory.Exists(path))
-                    continue;
-                foreach (var dll in Directory.EnumerateFiles(path, "*.dll", SearchOption.AllDirectories))
-                    bundled.Add(Path.GetFileNameWithoutExtension(dll));
-            }
+            if (!Directory.Exists(NuGetConfig.InstallPath))
+                return installed;
 
-            return bundled;
+            foreach (var dll in Directory.EnumerateFiles(NuGetConfig.InstallPath, "*.dll", SearchOption.AllDirectories))
+                installed.Add(Path.GetFileNameWithoutExtension(dll));
+
+            return installed;
         }
     }
 }

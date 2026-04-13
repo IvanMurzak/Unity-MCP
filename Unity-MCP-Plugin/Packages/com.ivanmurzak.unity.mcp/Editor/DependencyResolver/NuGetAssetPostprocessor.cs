@@ -10,52 +10,50 @@
 
 #nullable enable
 using System.IO;
-using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.DependencyResolver
 {
     /// <summary>
-    /// Configures PluginImporter settings for bundled NuGet DLLs.
+    /// Configures PluginImporter settings for NuGet DLLs.
     ///
-    /// Handles the key conflict scenario: Unity may ship a DLL as a built-in BCL assembly
-    /// (e.g., System.Text.Json in Unity 6.5). When we bundle the same DLL, we must:
-    ///   - Exclude our copy from the editor (Unity's built-in is used there)
-    ///   - Include our copy in builds (Unity doesn't include it in player builds)
+    /// Handles four cases:
+    ///   1. Unity provides the DLL + we need it in builds → include in builds, exclude from editor
+    ///   2. Unity provides the DLL + editor-only → disable entirely
+    ///   3. We provide the DLL + we need it in builds → include everywhere
+    ///   4. We provide the DLL + editor-only → editor only
     ///
-    /// Scans all DLLs in Plugins/NuGet/ and sets PluginImporter properties
-    /// based on whether Unity already provides each assembly.
+    /// Case 1 is critical: assemblies like System.Diagnostics.DiagnosticSource are
+    /// available in the Unity Editor but NOT included in player builds automatically.
+    /// Our NuGet copy must be included in builds while excluded from editor to avoid duplicates.
     /// </summary>
     static class NuGetPluginConfigurator
     {
         const string Tag = "[NuGet]";
 
-        // Paths where bundled NuGet DLLs live (relative to project root).
-        // Check both the package location and the Assets fallback.
-        static readonly string[] SearchPaths =
-        {
-            "Packages/com.ivanmurzak.unity.mcp/Plugins/NuGet",
-            "Assets/Plugins/NuGet",
-        };
-
+        /// <summary>
+        /// Configures PluginImporter for all DLLs in the NuGet install directory.
+        /// Called after packages are installed/restored.
+        /// </summary>
         public static void ConfigureAll()
         {
-            foreach (var searchPath in SearchPaths)
-            {
-                if (!Directory.Exists(searchPath))
-                    continue;
+            if (!Directory.Exists(NuGetConfig.InstallPath))
+                return;
 
-                var dlls = Directory.GetFiles(searchPath, "*.dll", SearchOption.AllDirectories);
-                foreach (var dllPath in dlls)
-                {
-                    var assetPath = dllPath.Replace('\\', '/');
-                    ConfigureDll(assetPath);
-                }
+            var dlls = Directory.GetFiles(NuGetConfig.InstallPath, "*.dll", SearchOption.AllDirectories);
+            foreach (var dllPath in dlls)
+            {
+                // Convert to Unity asset path (forward slashes, relative to project)
+                var assetPath = dllPath.Replace('\\', '/');
+                ConfigureDll(assetPath);
             }
         }
 
-        static void ConfigureDll(string assetPath)
+        /// <summary>
+        /// Configures a single DLL's PluginImporter settings.
+        /// </summary>
+        public static void ConfigureDll(string assetPath)
         {
             var importer = AssetImporter.GetAtPath(assetPath) as PluginImporter;
             if (importer == null)
@@ -63,32 +61,48 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
 
             var dllName = Path.GetFileNameWithoutExtension(assetPath);
             var unityProvidesIt = UnityAssemblyResolver.IsAlreadyImported(dllName);
+            var includeInBuild = ShouldIncludeInBuild(assetPath);
 
-            bool anyPlatform, excludeEditor, editorOnly;
+            bool anyPlatform;
+            bool excludeEditor;
+            bool editorOnly;
 
-            if (unityProvidesIt)
+            if (unityProvidesIt && includeInBuild)
             {
-                // Unity provides this DLL in the editor.
-                // Include in builds (Unity doesn't ship it in player builds),
-                // exclude from editor (avoid duplicate assemblies).
+                // Unity provides this DLL in the editor, but builds need our copy.
                 anyPlatform = true;
                 excludeEditor = true;
                 editorOnly = false;
             }
-            else
+            else if (unityProvidesIt)
             {
-                // Not provided by Unity — include everywhere.
+                // Unity provides it and we don't need it in builds — disable entirely.
+                anyPlatform = false;
+                excludeEditor = false;
+                editorOnly = false;
+            }
+            else if (includeInBuild)
+            {
+                // Runtime DLL not provided by Unity: include everywhere.
                 anyPlatform = true;
                 excludeEditor = false;
                 editorOnly = false;
             }
+            else
+            {
+                // Editor-only DLL not provided by Unity.
+                anyPlatform = false;
+                excludeEditor = false;
+                editorOnly = true;
+            }
 
-            var currentAny = importer.GetCompatibleWithAnyPlatform();
+            // Check if settings need to change
+            var currentAnyPlatform = importer.GetCompatibleWithAnyPlatform();
             var currentEditor = importer.GetCompatibleWithEditor();
-            var currentExclude = importer.GetExcludeEditorFromAnyPlatform();
+            var currentExcludeEditor = importer.GetExcludeEditorFromAnyPlatform();
 
-            var needsChange = currentAny != anyPlatform
-                           || currentExclude != excludeEditor
+            var needsChange = currentAnyPlatform != anyPlatform
+                           || currentExcludeEditor != excludeEditor
                            || (!anyPlatform && currentEditor != editorOnly);
 
             if (!needsChange)
@@ -106,7 +120,28 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
             }
 
             importer.SaveAndReimport();
-            Debug.Log($"{Tag} Configured '{dllName}': excludeEditor={excludeEditor}");
+            Debug.Log($"{Tag} Configured '{dllName}': anyPlatform={anyPlatform}, excludeEditor={excludeEditor}, editorOnly={editorOnly}");
+        }
+
+        /// <summary>
+        /// Determines if a DLL should be included in game builds.
+        /// Explicitly configured packages use their IncludeInBuild flag.
+        /// Transitive dependencies default to included (runtime packages depend on them).
+        /// </summary>
+        static bool ShouldIncludeInBuild(string dllPath)
+        {
+            var dirName = Path.GetFileName(Path.GetDirectoryName(dllPath));
+            if (dirName == null)
+                return true;
+
+            foreach (var package in NuGetConfig.Packages)
+            {
+                if (dirName.StartsWith(package.Id + ".", System.StringComparison.OrdinalIgnoreCase))
+                    return package.IncludeInBuild;
+            }
+
+            // Transitive dependency — include in builds by default.
+            return true;
         }
     }
 }
