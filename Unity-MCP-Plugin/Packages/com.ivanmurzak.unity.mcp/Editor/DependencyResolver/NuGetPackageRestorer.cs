@@ -79,10 +79,6 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
 
             foreach (var package in NuGetConfig.Packages)
             {
-                // Skip packages Unity provides
-                if (UnityAssemblyResolver.IsAlreadyImported(package.Id))
-                    continue;
-
                 var installDir = Path.Combine(NuGetConfig.InstallPath, package.InstallDirectoryName);
                 if (!Directory.Exists(installDir) || Directory.GetFiles(installDir, "*.dll").Length == 0)
                     return false;

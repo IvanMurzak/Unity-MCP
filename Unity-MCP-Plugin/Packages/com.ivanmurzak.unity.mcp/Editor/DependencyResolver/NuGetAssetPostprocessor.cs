@@ -46,18 +46,32 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
             if (AssetDatabase.GetLabels(importer).Contains(ProcessedLabel))
                 return;
 
-            // Determine if this DLL should be included in builds
+            var dllName = Path.GetFileNameWithoutExtension(assetPath);
+            var unityProvidesIt = UnityAssemblyResolver.IsAlreadyImported(dllName);
             var includeInBuild = ShouldIncludeInBuild(assetPath);
 
-            if (includeInBuild)
+            if (unityProvidesIt && includeInBuild)
             {
-                // Runtime DLL: include in all platforms
+                // Unity provides this DLL in the editor, but builds need our copy.
+                // NuGetForUnity pattern: include in builds, exclude from editor to avoid duplicates.
+                importer.SetCompatibleWithAnyPlatform(true);
+                importer.SetExcludeEditorFromAnyPlatform(true);
+            }
+            else if (unityProvidesIt && !includeInBuild)
+            {
+                // Unity provides it and we don't need it in builds — disable entirely.
+                importer.SetCompatibleWithAnyPlatform(false);
+                importer.SetCompatibleWithEditor(false);
+            }
+            else if (includeInBuild)
+            {
+                // Runtime DLL not provided by Unity: include everywhere.
                 importer.SetCompatibleWithAnyPlatform(true);
                 importer.SetExcludeEditorFromAnyPlatform(false);
             }
             else
             {
-                // Editor-only DLL: exclude from builds
+                // Editor-only DLL not provided by Unity: editor only.
                 importer.SetCompatibleWithAnyPlatform(false);
                 importer.SetCompatibleWithEditor(true);
             }

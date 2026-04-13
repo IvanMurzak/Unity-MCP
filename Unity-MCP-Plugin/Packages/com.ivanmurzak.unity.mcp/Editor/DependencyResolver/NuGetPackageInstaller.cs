@@ -48,19 +48,12 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
 
             try
             {
-                // 1. Skip if Unity already provides this assembly
-                if (UnityAssemblyResolver.IsAlreadyImported(package.Id))
-                {
-                    Debug.Log($"{Tag} Skipping {package.Id} — Unity already provides it.");
-                    return false;
-                }
-
-                // 2. Skip if already installed at the correct version
+                // 1. Skip if already installed at the correct version
                 var installDir = Path.Combine(NuGetConfig.InstallPath, package.InstallDirectoryName);
                 if (Directory.Exists(installDir) && Directory.GetFiles(installDir, "*.dll").Length > 0)
                     return false; // Already installed
 
-                // 3. Skip if we've already processed this package in this session (higher version wins)
+                // 2. Skip if we've already processed this package in this session (higher version wins)
                 if (installedThisSession.TryGetValue(package.Id, out var existingVersion))
                 {
                     if (CompareVersions(existingVersion, package.Version) >= 0)
@@ -72,22 +65,15 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
                         Directory.Delete(oldDir, recursive: true);
                 }
 
-                // 4. Download .nupkg
+                // 3. Download .nupkg
                 var nupkgPath = NuGetDownloader.Download(package);
 
-                // 5. Resolve and install transitive dependencies FIRST
+                // 4. Resolve and install transitive dependencies FIRST
                 var dependencies = NuGetExtractor.GetDependencies(nupkgPath);
                 foreach (var dep in dependencies)
                     anyInstalled |= Install(dep, visitedIds);
 
-                // 6. Re-check if Unity provides it (dependencies may have changed the state)
-                if (UnityAssemblyResolver.IsAlreadyImported(package.Id))
-                {
-                    Debug.Log($"{Tag} Skipping {package.Id} — Unity already provides it (detected after dependency resolution).");
-                    return anyInstalled;
-                }
-
-                // 7. Extract DLLs
+                // 5. Extract DLLs
                 var extractedDlls = NuGetExtractor.ExtractDlls(nupkgPath, installDir);
                 if (extractedDlls.Count > 0)
                 {
