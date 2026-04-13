@@ -67,5 +67,3 @@ UserSettings/
 
 # Claude
 .claude/
-# NuGet packages installed by Unity-MCP dependency resolver
-[Aa]ssets/Plugins/NuGet/
