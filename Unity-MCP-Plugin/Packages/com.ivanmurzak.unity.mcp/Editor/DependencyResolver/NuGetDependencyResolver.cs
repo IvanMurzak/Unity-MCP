@@ -10,7 +10,9 @@
 
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using com.IvanMurzak.McpPlugin.Utils;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEngine;
@@ -43,6 +45,16 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
 
         static NuGetDependencyResolver()
         {
+            // In CI, skip runtime resolution — DLLs are committed to git
+            // and UNITY_MCP_READY should already be in ProjectSettings.
+            // Setting defines at runtime in batch mode causes "Error building Player
+            // because scripts are compiling" when the test runner races the recompilation.
+            if (IsCi())
+            {
+                EnsureScriptingDefine();
+                return;
+            }
+
             // After a resolver-triggered reload, just set the define and exit.
             if (SessionState.GetBool(ResolvingKey, false))
             {
@@ -89,6 +101,71 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
                 // Set the define even on error so the plugin can attempt to compile.
                 EnsureScriptingDefine();
             }
+        }
+
+        /// <summary>
+        /// Checks if the current environment is a CI environment.
+        /// Mirrors EnvironmentUtils.IsCi() but without external dependencies,
+        /// since this assembly must compile standalone.
+        /// Checks both command-line arguments and environment variables for
+        /// CI, GITHUB_ACTIONS, and TF_BUILD (Azure Pipelines).
+        /// </summary>
+        static bool IsCi()
+        {
+            var args = ParseCommandLineArguments();
+
+            var ci  = GetArgOrEnv(args, "CI");
+            var gha = GetArgOrEnv(args, "GITHUB_ACTIONS");
+            var az  = GetArgOrEnv(args, "TF_BUILD");
+
+            return IsTrue(ci) || IsTrue(gha) || IsTrue(az);
+
+            static string? GetArgOrEnv(Dictionary<string, string?> args, string key)
+                => args.TryGetValue(key, out var v) ? v : Environment.GetEnvironmentVariable(key);
+
+            static bool IsTrue(string? value)
+                => string.Equals(value?.Trim()?.Trim('"'), "true", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Parses Unity command-line arguments into a dictionary.
+        /// Handles both "-key value" and "-key=value" forms, plus bare flags like "-batchmode".
+        /// Keys are stored WITHOUT the leading dash.
+        /// </summary>
+        static Dictionary<string, string?> ParseCommandLineArguments()
+        {
+            var result = new Dictionary<string, string?>(StringComparer.OrdinalIgnoreCase);
+            var rawArgs = Environment.GetCommandLineArgs();
+
+            for (var i = 0; i < rawArgs.Length; i++)
+            {
+                var arg = rawArgs[i];
+                if (!arg.StartsWith("-"))
+                    continue;
+
+                var key = arg.TrimStart('-');
+
+                // Handle -key=value form
+                var eqIndex = key.IndexOf('=');
+                if (eqIndex >= 0)
+                {
+                    result[key.Substring(0, eqIndex)] = key.Substring(eqIndex + 1);
+                    continue;
+                }
+
+                // Handle -key value form (next arg is value if it doesn't start with -)
+                if (i + 1 < rawArgs.Length && !rawArgs[i + 1].StartsWith("-"))
+                {
+                    result[key] = rawArgs[++i];
+                }
+                else
+                {
+                    // Bare flag like -batchmode
+                    result[key] = null;
+                }
+            }
+
+            return result;
         }
 
         /// <summary>

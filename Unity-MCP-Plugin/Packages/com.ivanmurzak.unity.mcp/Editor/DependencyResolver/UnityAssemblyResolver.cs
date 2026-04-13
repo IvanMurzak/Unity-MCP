@@ -62,7 +62,7 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
 
             // Get all assemblies referenced by player builds (includes BCL, engine, other packages)
             var playerAssemblies = CompilationPipeline.GetAssemblies(AssembliesType.PlayerWithoutTestAssemblies)
-                .Where(a => a.flags != AssemblyFlags.EditorAssembly);
+                .Where(a => (a.flags & AssemblyFlags.EditorAssembly) == 0);
 
             var unityProvided = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
 
