@@ -68,15 +68,7 @@ jobs:
           unity-password: ${{ secrets.UNITY_PASSWORD || 'ZUq3YR6qM1' }}
 
       # --------------------------------------------------------------------- #
-      # 2-c. Pre-install NuGet packages (before Unity starts)
-      # --------------------------------------------------------------------- #
-      - name: Install NuGet packages
-        uses: ./.github/actions/install-nuget-packages
-        with:
-          project-path: ${{ inputs.projectPath }}
-
-      # --------------------------------------------------------------------- #
-      # 2-d. Cache & run the Unity test-runner
+      # 2-c. Cache & run the Unity test-runner
       # --------------------------------------------------------------------- #
       - name: Generate cache key
         id: cache_key

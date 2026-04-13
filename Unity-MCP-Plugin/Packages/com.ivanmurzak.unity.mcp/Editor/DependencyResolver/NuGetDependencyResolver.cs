@@ -20,81 +20,42 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
     /// <summary>
     /// Entry point for NuGet dependency management. Runs on every domain reload via [InitializeOnLoad].
     ///
-    /// This assembly has ZERO external dependencies — it always compiles, even when the main plugin
-    /// fails due to missing or conflicting DLLs. It downloads NuGet packages directly from nuget.org,
-    /// extracts DLLs, skips assemblies Unity already provides, and sets the UNITY_MCP_READY define
-    /// so the main plugin assemblies can compile.
+    /// NuGet DLLs are bundled directly in the package (Plugins/NuGet/).
+    /// This resolver handles:
+    ///   1. Detecting Unity-provided assemblies that overlap with bundled DLLs
+    ///   2. Configuring PluginImporter settings (editor-only vs builds, conflict resolution)
+    ///   3. Setting the UNITY_MCP_READY scripting define so main assemblies can compile
     ///
-    /// Flow:
-    ///   1. [InitializeOnLoad] fires on domain reload
-    ///   2. Deferred via EditorApplication.update (runs without editor focus, unlike delayCall)
-    ///   3. NuGetPackageRestorer checks if all packages are installed
-    ///   4. Downloads and installs any missing packages
-    ///   5. Sets UNITY_MCP_READY scripting define
-    ///   6. If packages were installed: triggers AssetDatabase.Refresh() → domain reload
-    ///   7. On next reload: everything is in place, main plugin compiles
+    /// This assembly has ZERO external dependencies — it always compiles, even when the
+    /// main plugin fails due to missing or conflicting DLLs.
     /// </summary>
     [InitializeOnLoad]
     static class NuGetDependencyResolver
     {
         const string Tag = "[Unity-MCP DependencyResolver]";
         const string ReadyDefine = "UNITY_MCP_READY";
-        const string ResolvingKey = "NuGetDependencyResolver_Resolving";
 
         static NuGetDependencyResolver()
         {
-            // After a resolver-triggered reload, just set the define and exit.
-            if (SessionState.GetBool(ResolvingKey, false))
-            {
-                SessionState.SetBool(ResolvingKey, false);
-                EnsureScriptingDefine();
-                return;
-            }
-
             EditorApplication.update += ResolveOnce;
         }
 
         static void ResolveOnce()
         {
             EditorApplication.update -= ResolveOnce;
+
             try
             {
-                // Quick check: if all packages are already installed, reconfigure and set define.
-                if (NuGetPackageRestorer.AllPackagesInstalled())
-                {
-                    NuGetPluginConfigurator.ConfigureAll();
-                    EnsureScriptingDefine();
-                    return;
-                }
-
-                // Full restore: download and install missing packages.
-                Debug.Log($"{Tag} Restoring NuGet packages...");
-                var changed = NuGetPackageRestorer.Restore();
-
-                // Configure PluginImporter settings for all installed DLLs.
                 NuGetPluginConfigurator.ConfigureAll();
-
                 EnsureScriptingDefine();
-
-                if (changed)
-                {
-                    SessionState.SetBool(ResolvingKey, true);
-                    Debug.Log($"{Tag} Packages restored. Triggering domain reload...");
-                    AssetDatabase.Refresh();
-                }
             }
             catch (Exception ex)
             {
                 Debug.LogError($"{Tag} Failed: {ex.Message}\n{ex.StackTrace}");
-                // Set the define even on error so the plugin can attempt to compile.
                 EnsureScriptingDefine();
             }
         }
 
-        /// <summary>
-        /// Ensures the UNITY_MCP_READY scripting define is set.
-        /// This define gates the main plugin assemblies via defineConstraints.
-        /// </summary>
         static void EnsureScriptingDefine()
         {
             var buildTarget = NamedBuildTarget.FromBuildTargetGroup(
