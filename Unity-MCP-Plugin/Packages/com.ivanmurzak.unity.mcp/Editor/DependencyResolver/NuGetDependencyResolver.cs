@@ -59,9 +59,10 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
             EditorApplication.update -= ResolveOnce;
             try
             {
-                // Quick check: if all packages are already installed, just ensure the define is set.
+                // Quick check: if all packages are already installed, reconfigure and set define.
                 if (NuGetPackageRestorer.AllPackagesInstalled())
                 {
+                    NuGetPluginConfigurator.ConfigureAll();
                     EnsureScriptingDefine();
                     return;
                 }
@@ -69,6 +70,9 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
                 // Full restore: download and install missing packages.
                 Debug.Log($"{Tag} Restoring NuGet packages...");
                 var changed = NuGetPackageRestorer.Restore();
+
+                // Configure PluginImporter settings for all installed DLLs.
+                NuGetPluginConfigurator.ConfigureAll();
 
                 EnsureScriptingDefine();
 

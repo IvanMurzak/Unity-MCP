@@ -10,98 +10,130 @@
 
 #nullable enable
 using System.IO;
-using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.DependencyResolver
 {
     /// <summary>
-    /// AssetPostprocessor that configures PluginImporter settings for NuGet DLLs.
-    /// When Unity imports a DLL from Assets/Plugins/NuGet/, this postprocessor:
-    ///   - Sets platform compatibility (editor-only vs all platforms) based on NuGetConfig
-    ///   - Marks the asset as processed to avoid re-processing
+    /// Configures PluginImporter settings for NuGet DLLs.
     ///
-    /// This runs during Unity's import phase, BEFORE compilation — the ideal time
-    /// to configure DLL settings (NuGetForUnity uses the same pattern).
+    /// Handles four cases:
+    ///   1. Unity provides the DLL + we need it in builds → include in builds, exclude from editor
+    ///   2. Unity provides the DLL + editor-only → disable entirely
+    ///   3. We provide the DLL + we need it in builds → include everywhere
+    ///   4. We provide the DLL + editor-only → editor only
+    ///
+    /// Case 1 is critical: assemblies like System.Diagnostics.DiagnosticSource are
+    /// available in the Unity Editor but NOT included in player builds automatically.
+    /// Our NuGet copy must be included in builds while excluded from editor to avoid duplicates.
     /// </summary>
-    class NuGetAssetPostprocessor : AssetPostprocessor
+    static class NuGetPluginConfigurator
     {
-        const string ProcessedLabel = "UnityMCP-NuGet";
+        const string Tag = "[NuGet]";
 
-        void OnPreprocessAsset()
+        /// <summary>
+        /// Configures PluginImporter for all DLLs in the NuGet install directory.
+        /// Called after packages are installed/restored.
+        /// </summary>
+        public static void ConfigureAll()
         {
-            // Only process DLLs in our NuGet install directory
-            if (!assetPath.StartsWith(NuGetConfig.InstallPath + "/"))
+            if (!Directory.Exists(NuGetConfig.InstallPath))
                 return;
 
-            if (!assetPath.EndsWith(".dll"))
-                return;
+            var dlls = Directory.GetFiles(NuGetConfig.InstallPath, "*.dll", SearchOption.AllDirectories);
+            foreach (var dllPath in dlls)
+            {
+                // Convert to Unity asset path (forward slashes, relative to project)
+                var assetPath = dllPath.Replace('\\', '/');
+                ConfigureDll(assetPath);
+            }
+        }
 
-            var importer = assetImporter as PluginImporter;
+        /// <summary>
+        /// Configures a single DLL's PluginImporter settings.
+        /// </summary>
+        public static void ConfigureDll(string assetPath)
+        {
+            var importer = AssetImporter.GetAtPath(assetPath) as PluginImporter;
             if (importer == null)
-                return;
-
-            // Skip if already processed
-            if (AssetDatabase.GetLabels(importer).Contains(ProcessedLabel))
                 return;
 
             var dllName = Path.GetFileNameWithoutExtension(assetPath);
             var unityProvidesIt = UnityAssemblyResolver.IsAlreadyImported(dllName);
             var includeInBuild = ShouldIncludeInBuild(assetPath);
 
+            bool anyPlatform;
+            bool excludeEditor;
+            bool editorOnly;
+
             if (unityProvidesIt && includeInBuild)
             {
                 // Unity provides this DLL in the editor, but builds need our copy.
-                // NuGetForUnity pattern: include in builds, exclude from editor to avoid duplicates.
-                importer.SetCompatibleWithAnyPlatform(true);
-                importer.SetExcludeEditorFromAnyPlatform(true);
+                anyPlatform = true;
+                excludeEditor = true;
+                editorOnly = false;
             }
-            else if (unityProvidesIt && !includeInBuild)
+            else if (unityProvidesIt)
             {
                 // Unity provides it and we don't need it in builds — disable entirely.
-                importer.SetCompatibleWithAnyPlatform(false);
-                importer.SetCompatibleWithEditor(false);
+                anyPlatform = false;
+                excludeEditor = false;
+                editorOnly = false;
             }
             else if (includeInBuild)
             {
                 // Runtime DLL not provided by Unity: include everywhere.
-                importer.SetCompatibleWithAnyPlatform(true);
-                importer.SetExcludeEditorFromAnyPlatform(false);
+                anyPlatform = true;
+                excludeEditor = false;
+                editorOnly = false;
             }
             else
             {
-                // Editor-only DLL not provided by Unity: editor only.
-                importer.SetCompatibleWithAnyPlatform(false);
-                importer.SetCompatibleWithEditor(true);
+                // Editor-only DLL not provided by Unity.
+                anyPlatform = false;
+                excludeEditor = false;
+                editorOnly = true;
             }
 
-            // Mark as processed
-            var labels = AssetDatabase.GetLabels(importer).ToList();
-            labels.Add(ProcessedLabel);
-            AssetDatabase.SetLabels(importer, labels.ToArray());
+            // Check if settings need to change
+            var currentAnyPlatform = importer.GetCompatibleWithAnyPlatform();
+            var currentEditor = importer.GetCompatibleWithEditor();
+            var currentExcludeEditor = importer.GetExcludeEditorFromAnyPlatform();
+
+            var needsChange = currentAnyPlatform != anyPlatform
+                           || currentExcludeEditor != excludeEditor
+                           || (!anyPlatform && currentEditor != editorOnly);
+
+            if (!needsChange)
+                return;
+
+            if (anyPlatform)
+            {
+                importer.SetCompatibleWithAnyPlatform(true);
+                importer.SetExcludeEditorFromAnyPlatform(excludeEditor);
+            }
+            else
+            {
+                importer.SetCompatibleWithAnyPlatform(false);
+                importer.SetCompatibleWithEditor(editorOnly);
+            }
+
+            importer.SaveAndReimport();
+            Debug.Log($"{Tag} Configured '{dllName}': anyPlatform={anyPlatform}, excludeEditor={excludeEditor}, editorOnly={editorOnly}");
         }
 
         /// <summary>
-        /// Determines if a DLL should be included in game builds based on the package config.
-        /// Checks the parent directory name to match against NuGetConfig.Packages.
-        ///
-        /// Logic:
-        ///   - Packages explicitly listed in NuGetConfig use their IncludeInBuild flag.
-        ///   - Transitive dependencies default to INCLUDED in builds (true).
-        ///     This is necessary because runtime packages (SignalR, Logging, etc.)
-        ///     depend on transitive DLLs like System.Diagnostics.DiagnosticSource
-        ///     that must be present at runtime.
-        ///   - Only explicitly editor-only packages are excluded from builds.
+        /// Determines if a DLL should be included in game builds.
+        /// Explicitly configured packages use their IncludeInBuild flag.
+        /// Transitive dependencies default to included (runtime packages depend on them).
         /// </summary>
         static bool ShouldIncludeInBuild(string dllPath)
         {
-            // Path format: Assets/Plugins/NuGet/{PackageId}.{Version}/{dll}
             var dirName = Path.GetFileName(Path.GetDirectoryName(dllPath));
             if (dirName == null)
                 return true;
 
-            // Check if this is an explicitly configured package
             foreach (var package in NuGetConfig.Packages)
             {
                 if (dirName.StartsWith(package.Id + ".", System.StringComparison.OrdinalIgnoreCase))
@@ -109,7 +141,6 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
             }
 
             // Transitive dependency — include in builds by default.
-            // Runtime packages depend on transitive DLLs that must be available at runtime.
             return true;
         }
     }
