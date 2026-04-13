@@ -46,8 +46,7 @@
       "url": "https://package.openupm.com",
       "scopes": [
         "com.ivanmurzak",
-        "extensions.unity",
-        "org.nuget"
+        "extensions.unity"
       ]
     }
   ]
