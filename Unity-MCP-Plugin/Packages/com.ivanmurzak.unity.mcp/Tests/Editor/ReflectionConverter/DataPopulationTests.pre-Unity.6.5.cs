@@ -1,5 +1,5 @@
-﻿#nullable enable
-#if UNITY_6000_5_OR_NEWER
+#nullable enable
+#if !UNITY_6000_5_OR_NEWER
 using System.Collections;
 using System.Collections.Generic;
 using com.IvanMurzak.ReflectorNet;
@@ -108,7 +108,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     var texRef = new AssetObjectRef() { AssetPath = textureEx.AssetPath };
                     var soRef = new AssetObjectRef() { AssetPath = soEx.AssetPath };
                     var prefabRef = new AssetObjectRef() { AssetPath = prefabEx.AssetPath };
-                    var goRef = new ObjectRef(targetGoEx.GameObject!.GetEntityId());
+                    var goRef = new ObjectRef(targetGoEx.GameObject!.GetInstanceID());
                     var spriteRef = new AssetObjectRef() { AssetPath = spriteEx.AssetPath };
 
                     var componentDiff = SerializedMember.FromValue(
@@ -128,7 +128,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     componentDiff.AddField(SerializedMember.FromValue(reflector: reflector, name: "stringField", type: typeof(string), value: "Hello World"));
 
                     var matRefArrayItem = new AssetObjectRef(materialEx.AssetPath!);
-                    var goRefArrayItem = new ObjectRef(targetGoEx.GameObject!.GetEntityId());
+                    var goRefArrayItem = new ObjectRef(targetGoEx.GameObject!.GetInstanceID());
                     var prefabRefArrayItem = new AssetObjectRef(prefabEx.AssetPath!);
 
                     componentDiff.AddField(SerializedMember.FromValue(reflector: reflector, name: "materialArray", type: typeof(Material[]), value: new object[] { matRefArrayItem, matRefArrayItem }));
@@ -139,7 +139,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
                     var options = new System.Text.Json.JsonSerializerOptions { WriteIndented = true };
                     var gameObjectRefJson = System.Text.Json.JsonSerializer.Serialize(targetGoRef, options);
-                    var componentRefJson = System.Text.Json.JsonSerializer.Serialize(new ComponentRef(addCompEx.Component!.GetEntityId()), options);
+                    var componentRefJson = System.Text.Json.JsonSerializer.Serialize(new ComponentRef(addCompEx.Component!.GetInstanceID()), options);
                     var componentDiffJson = System.Text.Json.JsonSerializer.Serialize(componentDiff, options);
 
                     var json = JsonTestUtils.Fill(@"{

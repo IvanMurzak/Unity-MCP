@@ -9,7 +9,7 @@
 */
 
 #nullable enable
-#if UNITY_6000_5_OR_NEWER
+#if !UNITY_6000_5_OR_NEWER
 using System;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
@@ -78,7 +78,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Arrange
             var tool = new Tool_Object();
-            var objectRef = new ObjectRef(UnityEngine.EntityId.None);
+            var objectRef = new ObjectRef(0);
 
             // Act & Assert
             var ex = Assert.Throws<ArgumentException>(() => tool.GetData(objectRef));
@@ -93,7 +93,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var tool = new Tool_Object();
             // Use a very large instance ID that doesn't exist
-            var objectRef = new ObjectRef(UnityEngine.EntityId.FromULong(999999999));
+            var objectRef = new ObjectRef(999999999);
 
             // Act & Assert
             var ex = Assert.Throws<Exception>(() => tool.GetData(objectRef));

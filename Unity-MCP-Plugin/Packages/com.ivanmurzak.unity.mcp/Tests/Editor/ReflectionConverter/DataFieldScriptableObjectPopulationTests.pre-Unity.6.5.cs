@@ -1,5 +1,5 @@
-﻿#nullable enable
-#if UNITY_6000_5_OR_NEWER
+#nullable enable
+#if !UNITY_6000_5_OR_NEWER
 using System.Collections;
 using System.Collections.Generic;
 using com.IvanMurzak.ReflectorNet.Model;
@@ -103,7 +103,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     var texRef = new AssetObjectRef() { AssetPath = textureEx.AssetPath };
                     var soRef = new AssetObjectRef() { AssetPath = soEx.AssetPath };
                     var prefabRef = new AssetObjectRef() { AssetPath = prefabEx.AssetPath };
-                    var goRef = new ObjectRef(targetGoEx.GameObject!.GetEntityId());
+                    var goRef = new ObjectRef(targetGoEx.GameObject!.GetInstanceID());
                     var spriteRef = new AssetObjectRef() { AssetPath = spriteEx.AssetPath };
 
                     var soModification = SerializedMember.FromValue(
@@ -123,7 +123,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     soModification.AddField(SerializedMember.FromValue(reflector: reflector, name: nameof(DataFieldPopulationTestScriptableObject.stringField), type: typeof(string), value: "Hello World"));
 
                     var matRefArrayItem = new AssetObjectRef(materialEx.AssetPath!);
-                    var goRefArrayItem = new ObjectRef(targetGoEx.GameObject!.GetEntityId());
+                    var goRefArrayItem = new ObjectRef(targetGoEx.GameObject!.GetInstanceID());
                     var prefabRefArrayItem = new AssetObjectRef(prefabEx.AssetPath!);
 
                     soModification.AddField(SerializedMember.FromValue(reflector: reflector, name: nameof(DataFieldPopulationTestScriptableObject.materialArray), type: typeof(Material[]), value: new object[] { matRefArrayItem, matRefArrayItem }));

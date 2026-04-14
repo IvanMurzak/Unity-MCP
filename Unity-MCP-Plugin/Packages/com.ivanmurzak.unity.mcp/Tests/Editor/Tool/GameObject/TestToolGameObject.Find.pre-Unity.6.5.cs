@@ -9,7 +9,7 @@
 */
 
 #nullable enable
-#if UNITY_6000_5_OR_NEWER
+#if !UNITY_6000_5_OR_NEWER
 using System;
 using System.Text.Json;
 using com.IvanMurzak.McpPlugin.Common.Model;
@@ -35,7 +35,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var response = new Tool_GameObject().Find(
                 gameObjectRef: new GameObjectRef
                 {
-                    InstanceID = child!.GetEntityId()
+                    InstanceID = child!.GetInstanceID()
                 },
                 includeHierarchy: true);
 
@@ -93,7 +93,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var response = new Tool_GameObject().Find(
                 gameObjectRef: new GameObjectRef
                 {
-                    InstanceID = go.GetEntityId()
+                    InstanceID = go.GetInstanceID()
                 },
                 includeHierarchy: true,
                 includeComponents: true,
@@ -117,7 +117,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var response = new Tool_GameObject().Find(
                 gameObjectRef: new GameObjectRef
                 {
-                    InstanceID = go.GetEntityId()
+                    InstanceID = go.GetInstanceID()
                 },
                 includeData: true,
                 includeComponents: false);
@@ -146,7 +146,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var deepResponse = new Tool_GameObject().Find(
                 gameObjectRef: new GameObjectRef
                 {
-                    InstanceID = go.GetEntityId()
+                    InstanceID = go.GetInstanceID()
                 },
                 includeData: true,
                 includeComponents: true);
@@ -157,7 +157,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var shallowResponse = new Tool_GameObject().Find(
                 gameObjectRef: new GameObjectRef
                 {
-                    InstanceID = go.GetEntityId()
+                    InstanceID = go.GetInstanceID()
                 },
                 includeData: true,
                 includeComponents: false);
@@ -186,7 +186,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     toolMethod: typeof(Tool_GameObject).GetMethod(nameof(Tool_GameObject.Find)),
                     jsonProvider: () => $@"{{
                         ""gameObjectRef"": {{
-                            ""instanceID"": {gameObjectEx.GameObject!.GetEntityId()}
+                            ""instanceID"": {gameObjectEx.GameObject!.GetInstanceID()}
                         }}
                     }}"))
                 .AddChild(new ValidateToolResultExecutor())
@@ -208,7 +208,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     toolMethod: typeof(Tool_GameObject).GetMethod(nameof(Tool_GameObject.Find)),
                     jsonProvider: () => $@"{{
                         ""gameObjectRef"": {{
-                            ""instanceID"": {gameObjectEx.GameObject!.GetEntityId()}
+                            ""instanceID"": {gameObjectEx.GameObject!.GetInstanceID()}
                         }}
                     }}"))
                 .AddChild(new ValidateToolResultExecutor())
@@ -329,7 +329,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [Test]
         public void FindByInstanceId_NonExistent_ThrowsException()
         {
-            var nonExistentInstanceId = UnityEngine.EntityId.FromULong(999999999);
+            var nonExistentInstanceId = 999999999;
 
             var ex = Assert.Throws<System.Exception>(() =>
             {
@@ -387,7 +387,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var json = $@"
             {{
               ""gameObjectRef"": {{
-                ""instanceID"": {go.GetEntityId()}
+                ""instanceID"": {go.GetInstanceID()}
               }},
               ""hierarchyDepth"": 0,
               ""deepSerialization"": false
@@ -402,7 +402,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var json = $@"
             {{
               ""gameObjectRef"": {{
-                ""instanceID"": {go.GetEntityId()}
+                ""instanceID"": {go.GetInstanceID()}
               }},
               ""hierarchyDepth"": 0,
               ""deepSerialization"": true
@@ -417,7 +417,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var json = $@"
             {{
               ""gameObjectRef"": {{
-                ""instanceID"": {go.GetEntityId()}
+                ""instanceID"": {go.GetInstanceID()}
               }},
               ""hierarchyDepth"": 0
             }}";

@@ -9,7 +9,7 @@
 */
 
 #nullable enable
-#if UNITY_6000_5_OR_NEWER
+#if !UNITY_6000_5_OR_NEWER
 using System;
 using System.Collections;
 using com.IvanMurzak.ReflectorNet;
@@ -51,15 +51,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     reflector: reflector,
                     name: null,
                     type: typeof(GradientTest),
-                    value: new ComponentRef(component.GetEntityId()))
+                    value: new ComponentRef(component.GetInstanceID()))
                 .AddField(SerializedMember.FromValue(
                     reflector: reflector,
                     name: nameof(GradientTest.gradient),
                     value: expectedGradient));
 
             var response = new Tool_GameObject().ModifyComponent(
-                gameObjectRef: new GameObjectRef(go.GetEntityId()),
-                componentRef: new ComponentRef(component.GetEntityId()),
+                gameObjectRef: new GameObjectRef(go.GetInstanceID()),
+                componentRef: new ComponentRef(component.GetInstanceID()),
                 componentDiff: componentDiff);
 
             Assert.IsTrue(response.Success, $"Modification should be successful. Logs:\n{string.Join("\n", response.Logs ?? Array.Empty<string>())}");
@@ -122,15 +122,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     reflector: reflector,
                     name: null,
                     type: typeof(GradientTest),
-                    value: new ComponentRef(component.GetEntityId()))
+                    value: new ComponentRef(component.GetInstanceID()))
                 .AddField(SerializedMember.FromValue(
                     reflector: reflector,
                     name: nameof(GradientTest.gradient),
                     value: expectedGradient));
 
             var response = new Tool_GameObject().ModifyComponent(
-                gameObjectRef: new GameObjectRef(go.GetEntityId()),
-                componentRef: new ComponentRef(component.GetEntityId()),
+                gameObjectRef: new GameObjectRef(go.GetInstanceID()),
+                componentRef: new ComponentRef(component.GetInstanceID()),
                 componentDiff: componentDiff);
 
             Assert.IsTrue(response.Success, $"Modification should be successful. Logs:\n{string.Join("\n", response.Logs ?? Array.Empty<string>())}");

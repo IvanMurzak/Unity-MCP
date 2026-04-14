@@ -9,7 +9,7 @@
 */
 
 #nullable enable
-#if UNITY_6000_5_OR_NEWER
+#if !UNITY_6000_5_OR_NEWER
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -46,26 +46,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
               reflector: reflector,
               name: nameof(child.transform),
               type: typeof(Transform),
-              value: new ComponentRef(child!.transform.GetEntityId()))
+              value: new ComponentRef(child!.transform.GetInstanceID()))
           .AddProperty(SerializedMember.FromValue(
               reflector: reflector,
               name: nameof(child.transform.position),
               value: newPosition));
 
       var result = new Tool_GameObject().ModifyComponent(
-          gameObjectRef: new GameObjectRef(child!.GetEntityId()),
-          componentRef: new ComponentRef(child!.transform.GetEntityId()),
+          gameObjectRef: new GameObjectRef(child!.GetInstanceID()),
+          componentRef: new ComponentRef(child!.transform.GetInstanceID()),
           componentDiff: componentDiff);
 
       Assert.IsTrue(result.Success, "Modification should be successful");
 
       Assert.AreEqual(child!.transform.position, newPosition, "Position should be changed");
 
-      UnityEngine.EntityId? dataInstanceID = componentDiff.TryGetInstanceID(out var tempDataInstanceId)
+      int? dataInstanceID = componentDiff.TryGetInstanceID(out var tempDataInstanceId)
           ? tempDataInstanceId
-          : (UnityEngine.EntityId?)null;
+          : null;
 
-      Assert.AreEqual(child!.transform.GetEntityId(), dataInstanceID, "InstanceID should be the same");
+      Assert.AreEqual(child!.transform.GetInstanceID(), dataInstanceID, "InstanceID should be the same");
       yield return null;
     }
     [UnityTest]
@@ -84,23 +84,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
               reflector: reflector,
               name: null,
               type: typeof(MeshRenderer),
-              value: new ComponentRef(component.GetEntityId()))
+              value: new ComponentRef(component.GetInstanceID()))
           .AddProperty(SerializedMember.FromValue(
               reflector: reflector,
               name: nameof(component.sharedMaterial),
               type: typeof(Material),
-              value: new ObjectRef(sharedMaterial.GetEntityId())));
+              value: new ObjectRef(sharedMaterial.GetInstanceID())));
 
       Debug.Log($"Data:\n{componentDiff.ToJson(reflector)}\n");
 
       var response = new Tool_GameObject().ModifyComponent(
-          gameObjectRef: new GameObjectRef(go.GetEntityId()),
-          componentRef: new ComponentRef(component.GetEntityId()),
+          gameObjectRef: new GameObjectRef(go.GetInstanceID()),
+          componentRef: new ComponentRef(component.GetInstanceID()),
           componentDiff: componentDiff);
 
       Assert.IsTrue(response.Success, "Modification should be successful");
 
-      Assert.AreEqual(sharedMaterial.GetEntityId(), component.sharedMaterial.GetEntityId(), "Materials InstanceIDs should be the same.");
+      Assert.AreEqual(sharedMaterial.GetInstanceID(), component.sharedMaterial.GetInstanceID(), "Materials InstanceIDs should be the same.");
       yield return null;
     }
 
@@ -141,7 +141,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                       ""typeName"": ""UnityEngine.GameObject"",
                       ""name"": ""sun"",
                       ""value"": {{
-                        ""instanceID"": {sunGo.GetEntityId()}
+                        ""instanceID"": {sunGo.GetInstanceID()}
                       }}
                     }}
                   ]
@@ -177,7 +177,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                       ""typeName"": ""UnityEngine.GameObject"",
                       ""name"": ""sun"",
                       ""value"": {{
-                        ""instanceID"": {sunGo.GetEntityId()}
+                        ""instanceID"": {sunGo.GetInstanceID()}
                       }}
                     }}
                   ]
@@ -229,7 +229,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                                   ""name"": ""planet"",
                                   ""typeName"": ""UnityEngine.GameObject"",
                                   ""value"": {{
-                                    ""instanceID"": {planets[0].GetEntityId()}
+                                    ""instanceID"": {planets[0].GetInstanceID()}
                                   }}
                                 }},
                                 {{
@@ -265,7 +265,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                                   ""name"": ""planet"",
                                   ""typeName"": ""UnityEngine.GameObject"",
                                   ""value"": {{
-                                    ""instanceID"": {planets[1].GetEntityId()}
+                                    ""instanceID"": {planets[1].GetInstanceID()}
                                   }}
                                 }},
                                 {{
@@ -301,7 +301,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                                   ""name"": ""planet"",
                                   ""typeName"": ""UnityEngine.GameObject"",
                                   ""value"": {{
-                                    ""instanceID"": {planets[2].GetEntityId()}
+                                    ""instanceID"": {planets[2].GetInstanceID()}
                                   }}
                                 }},
                                 {{
@@ -337,7 +337,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                                   ""name"": ""planet"",
                                   ""typeName"": ""UnityEngine.GameObject"",
                                   ""value"": {{
-                                    ""instanceID"": {planets[3].GetEntityId()}
+                                    ""instanceID"": {planets[3].GetInstanceID()}
                                   }}
                                 }},
                                 {{
@@ -375,7 +375,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
       var parameters = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
       Assert.IsNotNull(parameters, "Parameters should be deserialized.");
 
-      var firstPlaneInstanceId = UnityEngine.EntityId.FromULong((ulong)parameters!["componentDiff"]
+      var firstPlaneInstanceId = parameters!["componentDiff"]
           .GetProperty("fields")
           .EnumerateArray().First() // planets field
           .GetProperty("value")     // planets array value
@@ -383,9 +383,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
           .GetProperty("fields")    // planet fields
           .EnumerateArray().First() // first field (planet GameObject)
           .GetProperty("value")
-          .GetProperty("instanceID").GetInt64()); // go instanceID
+          .GetProperty("instanceID").GetInt32(); // go instanceID
 
-      Assert.AreEqual(planets[0].GetEntityId(), firstPlaneInstanceId, "Planet InstanceID should match the input data.");
+      Assert.AreEqual(planets[0].GetInstanceID(), firstPlaneInstanceId, "Planet InstanceID should match the input data.");
 
       var serializedMemberJson = parameters["componentDiff"].GetRawText();
       var serializedMember = reflector.JsonSerializer.Deserialize<SerializedMember>(serializedMemberJson);
@@ -397,10 +397,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
           .GetField("planets") // planets field
           ?.GetValue<SerializedMember[]>(reflector)?.FirstOrDefault() // first planet
           ?.GetField("planet") // planet GameObject field
-          ?.GetValue<ObjectRef>(reflector)?.InstanceID ?? UnityEngine.EntityId.None; // instanceID
+          ?.GetValue<ObjectRef>(reflector)?.InstanceID ?? 0; // instanceID
 
       Assert.AreEqual(firstPlaneInstanceId, firstPlaneInstanceIdFromSerialized, "InstanceID from JSON parsing and SerializedMember should match.");
-      Assert.AreEqual(planets[0].GetEntityId(), firstPlaneInstanceIdFromSerialized, "Planet InstanceID should match the serialized member data.");
+      Assert.AreEqual(planets[0].GetInstanceID(), firstPlaneInstanceIdFromSerialized, "Planet InstanceID should match the serialized member data.");
 
       var result = ModifyComponentByJson(json);
       ValidateResult(result);
@@ -419,7 +419,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
       for (int i = 0; i < planets.Length; i++)
       {
-        Assert.AreEqual(planets[i].GetEntityId(), solarSystem.planets[i].planet.GetEntityId(),
+        Assert.AreEqual(planets[i].GetInstanceID(), solarSystem.planets[i].planet.GetInstanceID(),
             $"Planet[{i}] InstanceID should match the input data.");
       }
 
@@ -446,7 +446,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         var json = $@"
 {{
   ""gameObjectRef"": {{
-                  ""instanceID"": {go.GetEntityId()}
+                  ""instanceID"": {go.GetInstanceID()}
               }},
               ""componentRef"": {{
                   ""typeName"": ""UnityEngine.MeshRenderer""
@@ -459,7 +459,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             ""typeName"": ""UnityEngine.Material"",
             ""value"":
               {{
-                  ""instanceID"": {material.GetEntityId()}
+                  ""instanceID"": {material.GetInstanceID()}
               }}
             }}
           ]

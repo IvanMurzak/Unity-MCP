@@ -9,7 +9,7 @@
 */
 
 #nullable enable
-#if UNITY_6000_5_OR_NEWER
+#if !UNITY_6000_5_OR_NEWER
 using System;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
@@ -110,12 +110,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
                 GameObject.SetActive(_isActive);
 
                 // Create GameObjectRef
-                GameObjectRef = new GameObjectRef(GameObject.GetEntityId());
+                GameObjectRef = new GameObjectRef(GameObject.GetInstanceID());
 
                 EditorUtility.SetDirty(GameObject);
                 EditorUtils.RepaintAllEditorWindows();
 
-                Debug.Log($"Created GameObject: {_name} (InstanceID: {GameObject.GetEntityId()})");
+                Debug.Log($"Created GameObject: {_name} (InstanceID: {GameObject.GetInstanceID()})");
 
                 return GameObject;
             });

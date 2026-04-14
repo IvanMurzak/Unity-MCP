@@ -9,7 +9,7 @@
 */
 
 #nullable enable
-#if UNITY_6000_5_OR_NEWER
+#if !UNITY_6000_5_OR_NEWER
 using System;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
@@ -60,7 +60,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
 
                 EditorUtility.SetDirty(GameObject);
 
-                Debug.Log($"Added component {componentTypeName} to GameObject '{GameObject.name}' (Component InstanceID: {Component.GetEntityId()})");
+                Debug.Log($"Added component {componentTypeName} to GameObject '{GameObject.name}' (Component InstanceID: {Component.GetInstanceID()})");
 
                 return Component;
             });

@@ -9,7 +9,7 @@
 */
 
 #nullable enable
-#if UNITY_6000_5_OR_NEWER
+#if !UNITY_6000_5_OR_NEWER
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
@@ -34,7 +34,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             var json = $@"
             {{
-              ""gameObjectRef"": ""{{ \""instanceID\"": {child!.GetEntityId()} }}"",
+              ""gameObjectRef"": ""{{ \""instanceID\"": {child!.GetInstanceID()} }}"",
               ""briefData"": false,
               ""requestId"": ""test-req-id""
             }}";
@@ -74,7 +74,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var response = new Tool_GameObject().Find(
                 gameObjectRef: new Runtime.Data.GameObjectRef
                 {
-                    InstanceID = child.GetEntityId()
+                    InstanceID = child.GetInstanceID()
                 },
                 includeHierarchy: true,
                 includeComponents: true);

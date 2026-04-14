@@ -9,7 +9,7 @@
 */
 
 #nullable enable
-#if UNITY_6000_5_OR_NEWER
+#if !UNITY_6000_5_OR_NEWER
 using System.Collections;
 using System.IO;
 using com.IvanMurzak.Unity.MCP.Editor.API;
@@ -128,7 +128,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public IEnumerator GameObjectFind_BothThreads()
         {
             var go = new GameObject("bg_find");
-            var id = go.GetEntityId();
+            var id = go.GetInstanceID();
             yield return RunToolBothThreads(Tool_GameObject.GameObjectFindToolId,
                 $@"{{""gameObjectRef"":{{""instanceID"":{id}}}}}");
         }
@@ -136,11 +136,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator GameObjectDestroy_BothThreads()
         {
-            var a = new GameObject("bg_destroy_a").GetEntityId();
+            var a = new GameObject("bg_destroy_a").GetInstanceID();
             yield return RunToolMainThreadCoop(Tool_GameObject.GameObjectDestroyToolId,
                 $@"{{""gameObjectRef"":{{""instanceID"":{a}}}}}");
 
-            var b = new GameObject("bg_destroy_b").GetEntityId();
+            var b = new GameObject("bg_destroy_b").GetInstanceID();
             yield return RunToolFromBackgroundThread(Tool_GameObject.GameObjectDestroyToolId,
                 $@"{{""gameObjectRef"":{{""instanceID"":{b}}}}}");
         }
@@ -148,11 +148,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator GameObjectDuplicate_BothThreads()
         {
-            var a = new GameObject("bg_dup_a").GetEntityId();
+            var a = new GameObject("bg_dup_a").GetInstanceID();
             yield return RunToolMainThreadCoop(Tool_GameObject.GameObjectDuplicateToolId,
                 $@"{{""gameObjectRefs"":[{{""instanceID"":{a}}}]}}");
 
-            var b = new GameObject("bg_dup_b").GetEntityId();
+            var b = new GameObject("bg_dup_b").GetInstanceID();
             yield return RunToolFromBackgroundThread(Tool_GameObject.GameObjectDuplicateToolId,
                 $@"{{""gameObjectRefs"":[{{""instanceID"":{b}}}]}}");
         }
@@ -160,12 +160,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator GameObjectSetParent_BothThreads()
         {
-            var parent = new GameObject("bg_parent").GetEntityId();
-            var child1 = new GameObject("bg_child_a").GetEntityId();
+            var parent = new GameObject("bg_parent").GetInstanceID();
+            var child1 = new GameObject("bg_child_a").GetInstanceID();
             yield return RunToolMainThreadCoop(Tool_GameObject.GameObjectSetParentToolId,
                 $@"{{""gameObjectRefs"":[{{""instanceID"":{child1}}}],""parentGameObjectRef"":{{""instanceID"":{parent}}}}}");
 
-            var child2 = new GameObject("bg_child_b").GetEntityId();
+            var child2 = new GameObject("bg_child_b").GetInstanceID();
             yield return RunToolFromBackgroundThread(Tool_GameObject.GameObjectSetParentToolId,
                 $@"{{""gameObjectRefs"":[{{""instanceID"":{child2}}}],""parentGameObjectRef"":{{""instanceID"":{parent}}}}}");
         }
@@ -173,11 +173,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator GameObjectComponentAdd_BothThreads()
         {
-            var a = new GameObject("bg_addc_a").GetEntityId();
+            var a = new GameObject("bg_addc_a").GetInstanceID();
             yield return RunToolMainThreadCoop(Tool_GameObject.GameObjectComponentAddToolId,
                 $@"{{""gameObjectRef"":{{""instanceID"":{a}}},""componentNames"":[""UnityEngine.BoxCollider""]}}");
 
-            var b = new GameObject("bg_addc_b").GetEntityId();
+            var b = new GameObject("bg_addc_b").GetInstanceID();
             yield return RunToolFromBackgroundThread(Tool_GameObject.GameObjectComponentAddToolId,
                 $@"{{""gameObjectRef"":{{""instanceID"":{b}}},""componentNames"":[""UnityEngine.SphereCollider""]}}");
         }
@@ -186,7 +186,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public IEnumerator GameObjectComponentGet_BothThreads()
         {
             var go = new GameObject("bg_getc");
-            var id = go.GetEntityId();
+            var id = go.GetInstanceID();
             // Transform lives at component index 0 on every GameObject.
             yield return RunToolBothThreads(Tool_GameObject.GameObjectComponentGetToolId,
                 $@"{{""gameObjectRef"":{{""instanceID"":{id}}},""componentRef"":{{""index"":0}}}}");
@@ -197,13 +197,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             var a = new GameObject("bg_destc_a");
             a.AddComponent<BoxCollider>();
-            var idA = a.GetEntityId();
+            var idA = a.GetInstanceID();
             yield return RunToolMainThreadCoop(Tool_GameObject.GameObjectComponentDestroyToolId,
                 $@"{{""gameObjectRef"":{{""instanceID"":{idA}}},""destroyComponentRefs"":[{{""typeName"":""UnityEngine.BoxCollider""}}]}}");
 
             var b = new GameObject("bg_destc_b");
             b.AddComponent<SphereCollider>();
-            var idB = b.GetEntityId();
+            var idB = b.GetInstanceID();
             yield return RunToolFromBackgroundThread(Tool_GameObject.GameObjectComponentDestroyToolId,
                 $@"{{""gameObjectRef"":{{""instanceID"":{idB}}},""destroyComponentRefs"":[{{""typeName"":""UnityEngine.SphereCollider""}}]}}");
         }
@@ -213,7 +213,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // gameobject-modify requires a SerializedMember tree — we cover thread safety
             // only (business errors from an empty diff are tolerated).
-            var id = new GameObject("bg_modify").GetEntityId();
+            var id = new GameObject("bg_modify").GetInstanceID();
             yield return RunToolExpectNoThreadViolation(Tool_GameObject.GameObjectModifyToolId,
                 $@"{{""gameObjectRefs"":[{{""instanceID"":{id}}}],""gameObjectDiffs"":[{{""name"":""root""}}]}}");
         }
@@ -223,7 +223,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             var go = new GameObject("bg_cmodify");
             go.AddComponent<BoxCollider>();
-            var id = go.GetEntityId();
+            var id = go.GetInstanceID();
             yield return RunToolExpectNoThreadViolation(Tool_GameObject.GameObjectComponentModifyToolId,
                 $@"{{""gameObjectRef"":{{""instanceID"":{id}}},""componentRef"":{{""typeName"":""UnityEngine.BoxCollider""}},""componentDiff"":{{""name"":""root""}}}}");
         }
@@ -235,7 +235,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator ObjectGetData_BothThreads()
         {
-            var id = new GameObject("bg_obj").GetEntityId();
+            var id = new GameObject("bg_obj").GetInstanceID();
             yield return RunToolBothThreads(Tool_Object.ObjectGetDataToolId,
                 $@"{{""objectRef"":{{""instanceID"":{id}}}}}");
         }
@@ -243,7 +243,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator ObjectModify_ThreadSafetyOnly()
         {
-            var id = new GameObject("bg_objmod").GetEntityId();
+            var id = new GameObject("bg_objmod").GetInstanceID();
             yield return RunToolExpectNoThreadViolation(Tool_Object.ObjectModifyToolId,
                 $@"{{""objectRef"":{{""instanceID"":{id}}},""objectDiff"":{{""name"":""root""}}}}");
         }
@@ -255,7 +255,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator EditorSelectionSet_BothThreads()
         {
-            var id = new GameObject("bg_select").GetEntityId();
+            var id = new GameObject("bg_select").GetInstanceID();
             yield return RunToolBothThreads(Tool_Editor_Selection.EditorSelectionSetToolId,
                 $@"{{""select"":[{{""instanceID"":{id}}}]}}");
         }
@@ -361,11 +361,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public IEnumerator AssetsPrefabCreate_BothThreads()
         {
             EnsureTmpFolder();
-            var idA = new GameObject("bg_prefab_a").GetEntityId();
+            var idA = new GameObject("bg_prefab_a").GetInstanceID();
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
                 $@"{{""prefabAssetPath"":""{TmpFolder}/prefab_a.prefab"",""gameObjectRef"":{{""instanceID"":{idA}}}}}");
 
-            var idB = new GameObject("bg_prefab_b").GetEntityId();
+            var idB = new GameObject("bg_prefab_b").GetInstanceID();
             yield return RunToolFromBackgroundThread(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
                 $@"{{""prefabAssetPath"":""{TmpFolder}/prefab_b.prefab"",""gameObjectRef"":{{""instanceID"":{idB}}}}}");
         }
@@ -374,7 +374,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public IEnumerator AssetsPrefabInstantiate_BothThreads()
         {
             EnsureTmpFolder();
-            var seedId = new GameObject("bg_seed_prefab").GetEntityId();
+            var seedId = new GameObject("bg_seed_prefab").GetInstanceID();
             var prefabPath = $"{TmpFolder}/seed.prefab";
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
                 $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectRef"":{{""instanceID"":{seedId}}}}}");
@@ -391,7 +391,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             EnsureTmpFolder();
 
             // Create a prefab asset from a scene GameObject.
-            var seedA = new GameObject("bg_prefab_osc_a").GetEntityId();
+            var seedA = new GameObject("bg_prefab_osc_a").GetInstanceID();
             var prefabPathA = $"{TmpFolder}/osc_a.prefab";
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
                 $@"{{""prefabAssetPath"":""{prefabPathA}"",""gameObjectRef"":{{""instanceID"":{seedA}}}}}");
@@ -404,12 +404,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             // Open → Save → Close (main thread).
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabOpenToolId,
-                $@"{{""gameObjectRef"":{{""instanceID"":{instanceA!.GetEntityId()}}}}}");
+                $@"{{""gameObjectRef"":{{""instanceID"":{instanceA!.GetInstanceID()}}}}}");
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabSaveToolId, "{}");
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCloseToolId, @"{""save"":false}");
 
             // Same sequence from a background thread.
-            var seedB = new GameObject("bg_prefab_osc_b").GetEntityId();
+            var seedB = new GameObject("bg_prefab_osc_b").GetInstanceID();
             var prefabPathB = $"{TmpFolder}/osc_b.prefab";
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
                 $@"{{""prefabAssetPath"":""{prefabPathB}"",""gameObjectRef"":{{""instanceID"":{seedB}}}}}");
@@ -419,7 +419,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNotNull(instanceB, "Prefab instance not found after instantiate.");
 
             yield return RunToolFromBackgroundThread(Tool_Assets_Prefab.AssetsPrefabOpenToolId,
-                $@"{{""gameObjectRef"":{{""instanceID"":{instanceB!.GetEntityId()}}}}}");
+                $@"{{""gameObjectRef"":{{""instanceID"":{instanceB!.GetInstanceID()}}}}}");
             yield return RunToolFromBackgroundThread(Tool_Assets_Prefab.AssetsPrefabSaveToolId, "{}");
             yield return RunToolFromBackgroundThread(Tool_Assets_Prefab.AssetsPrefabCloseToolId, @"{""save"":false}");
         }
@@ -555,7 +555,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Call a static method on a test-scoped GameObject's Transform via instance method.
             var go = new GameObject("bg_reflect");
-            var id = go.GetEntityId();
+            var id = go.GetInstanceID();
             yield return RunToolBothThreads(Tool_Reflection.ReflectionMethodCallToolId,
                 $@"{{""filter"":{{""Namespace"":""UnityEngine"",""TypeName"":""GameObject"",""MethodName"":""Find"",""InputParameters"":[{{""TypeName"":""System.String"",""Name"":""name""}}]}},""inputParameters"":[{{""typeName"":""System.String"",""name"":""name"",""value"":""bg_reflect""}}]}}");
         }

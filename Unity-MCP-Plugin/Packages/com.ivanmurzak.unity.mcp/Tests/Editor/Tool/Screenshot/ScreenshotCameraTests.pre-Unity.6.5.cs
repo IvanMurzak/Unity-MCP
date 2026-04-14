@@ -9,7 +9,7 @@
 */
 
 #nullable enable
-#if UNITY_6000_5_OR_NEWER
+#if !UNITY_6000_5_OR_NEWER
 using System.Text.RegularExpressions;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API;
@@ -28,7 +28,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var go = new GameObject("TestCamera");
             go.AddComponent<Camera>();
-            var cameraRef = new GameObjectRef { InstanceID = go.GetEntityId() };
+            var cameraRef = new GameObjectRef { InstanceID = go.GetInstanceID() };
 
             // Act
             var result = new Tool_Screenshot().ScreenshotCamera(cameraRef: cameraRef, width: 320, height: 240);
@@ -44,7 +44,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var go = new GameObject("DefaultDimsCamera");
             go.AddComponent<Camera>();
-            var cameraRef = new GameObjectRef { InstanceID = go.GetEntityId() };
+            var cameraRef = new GameObjectRef { InstanceID = go.GetInstanceID() };
 
             // Act — uses default 1920×1080
             var result = new Tool_Screenshot().ScreenshotCamera(cameraRef: cameraRef);
@@ -60,7 +60,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var go = new GameObject("CustomDimsCamera");
             go.AddComponent<Camera>();
-            var cameraRef = new GameObjectRef { InstanceID = go.GetEntityId() };
+            var cameraRef = new GameObjectRef { InstanceID = go.GetInstanceID() };
 
             // Act
             var result = new Tool_Screenshot().ScreenshotCamera(cameraRef: cameraRef, width: 640, height: 480);
@@ -126,7 +126,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Act — exercises the full MCP framework path
             RunTool("screenshot-camera", $@"{{
                 ""cameraRef"": {{
-                    ""instanceID"": {go.GetEntityId()}
+                    ""instanceID"": {go.GetInstanceID()}
                 }},
                 ""width"": 320,
                 ""height"": 240
@@ -143,7 +143,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Act — small render texture to keep the test fast
             RunTool("screenshot-camera", $@"{{
                 ""cameraRef"": {{
-                    ""instanceID"": {go.GetEntityId()}
+                    ""instanceID"": {go.GetInstanceID()}
                 }},
                 ""width"": 16,
                 ""height"": 16

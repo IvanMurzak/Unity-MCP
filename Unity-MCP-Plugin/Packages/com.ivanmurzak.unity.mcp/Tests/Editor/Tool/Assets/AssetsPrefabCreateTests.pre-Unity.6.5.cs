@@ -9,7 +9,7 @@
 */
 
 #nullable enable
-#if UNITY_6000_5_OR_NEWER
+#if !UNITY_6000_5_OR_NEWER
 using System.Collections;
 using System.Text.RegularExpressions;
 using com.IvanMurzak.Unity.MCP.Editor.API;
@@ -48,7 +48,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             EnsureTestFolder();
             var prefabPath = $"{TestFolder}/Connected_Main.prefab";
             var go = new GameObject("TestGO_Connected_Main");
-            var id = go.GetEntityId();
+            var id = go.GetInstanceID();
 
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
                 $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectRef"":{{""instanceID"":{id}}},""connectGameObjectToPrefab"":true}}");
@@ -65,7 +65,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             EnsureTestFolder();
             var prefabPath = $"{TestFolder}/Disconnected_Main.prefab";
             var go = new GameObject("TestGO_Disconnected_Main");
-            var id = go.GetEntityId();
+            var id = go.GetInstanceID();
 
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
                 $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectRef"":{{""instanceID"":{id}}},""connectGameObjectToPrefab"":false}}");
@@ -82,7 +82,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             EnsureTestFolder();
             var prefabPath = $"{TestFolder}/Default_Main.prefab";
             var go = new GameObject("TestGO_Default_Main");
-            var id = go.GetEntityId();
+            var id = go.GetInstanceID();
 
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
                 $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectRef"":{{""instanceID"":{id}}}}}");
@@ -99,7 +99,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             EnsureTestFolder();
             var prefabPath = $"{TestFolder}/Nested/Deep/Folder/AutoCreated.prefab";
             var go = new GameObject("TestGO_Nested_Main");
-            var id = go.GetEntityId();
+            var id = go.GetInstanceID();
 
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
                 $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectRef"":{{""instanceID"":{id}}}}}");
@@ -118,7 +118,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var go = new GameObject("TestGO_Components_Main");
             go.AddComponent<BoxCollider>();
             go.AddComponent<Rigidbody>();
-            var id = go.GetEntityId();
+            var id = go.GetInstanceID();
 
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
                 $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectRef"":{{""instanceID"":{id}}},""connectGameObjectToPrefab"":false}}");
@@ -142,7 +142,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var basePath = $"{TestFolder}/Base_Variant.prefab";
             var baseGo = new GameObject("TestGO_Base_Variant");
             baseGo.AddComponent<BoxCollider>();
-            var baseId = baseGo.GetEntityId();
+            var baseId = baseGo.GetInstanceID();
 
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
                 $@"{{""prefabAssetPath"":""{basePath}"",""gameObjectRef"":{{""instanceID"":{baseId}}},""connectGameObjectToPrefab"":true}}");
@@ -173,7 +173,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var basePath = $"{TestFolder}/Base_AssetVariant.prefab";
             var baseGo = new GameObject("TestGO_Base_AssetVariant");
             baseGo.AddComponent<BoxCollider>();
-            var baseId = baseGo.GetEntityId();
+            var baseId = baseGo.GetInstanceID();
 
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
                 $@"{{""prefabAssetPath"":""{basePath}"",""gameObjectRef"":{{""instanceID"":{baseId}}},""connectGameObjectToPrefab"":false}}");
@@ -201,7 +201,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             EnsureTestFolder();
             var prefabPath = $"{TestFolder}/Connected_Bg.prefab";
             var go = new GameObject("TestGO_Connected_Bg");
-            var id = go.GetEntityId();
+            var id = go.GetInstanceID();
 
             yield return RunToolFromBackgroundThread(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
                 $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectRef"":{{""instanceID"":{id}}},""connectGameObjectToPrefab"":true}}");
@@ -218,7 +218,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             EnsureTestFolder();
             var prefabPath = $"{TestFolder}/Disconnected_Bg.prefab";
             var go = new GameObject("TestGO_Disconnected_Bg");
-            var id = go.GetEntityId();
+            var id = go.GetInstanceID();
 
             yield return RunToolFromBackgroundThread(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
                 $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectRef"":{{""instanceID"":{id}}},""connectGameObjectToPrefab"":false}}");
@@ -235,7 +235,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             EnsureTestFolder();
             var prefabPath = $"{TestFolder}/NestedBg/DeepBg/AutoCreatedBg.prefab";
             var go = new GameObject("TestGO_Nested_Bg");
-            var id = go.GetEntityId();
+            var id = go.GetInstanceID();
 
             yield return RunToolFromBackgroundThread(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
                 $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectRef"":{{""instanceID"":{id}}}}}");
@@ -252,7 +252,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Step 1: create a base prefab (on main thread for setup)
             var basePath = $"{TestFolder}/Base_AssetVariant_Bg.prefab";
             var baseGo = new GameObject("TestGO_Base_AssetVariant_Bg");
-            var baseId = baseGo.GetEntityId();
+            var baseId = baseGo.GetInstanceID();
 
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
                 $@"{{""prefabAssetPath"":""{basePath}"",""gameObjectRef"":{{""instanceID"":{baseId}}},""connectGameObjectToPrefab"":false}}");
@@ -283,7 +283,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public IEnumerator Prefab_Create_EmptyPath_ReturnsError()
         {
             var go = new GameObject("TestGO_EmptyPath");
-            var id = go.GetEntityId();
+            var id = go.GetInstanceID();
 
             ExpectToolErrorLogs();
 
@@ -299,7 +299,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             EnsureTestFolder();
             var go = new GameObject("TestGO_InvalidExt");
-            var id = go.GetEntityId();
+            var id = go.GetInstanceID();
 
             ExpectToolErrorLogs();
 
