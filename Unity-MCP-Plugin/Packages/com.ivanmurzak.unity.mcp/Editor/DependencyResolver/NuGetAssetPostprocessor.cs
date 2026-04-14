@@ -134,7 +134,7 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
             if (dirName == null)
                 return true;
 
-            // Extract the package ID from the directory name (e.g., "System.Text.Json.10.0.3" → "System.Text.Json")
+            // Extract the package ID from the directory name (e.g., "System.Text.Json.8.0.5" → "System.Text.Json")
             // so we match the exact package ID rather than any prefix (which would confuse
             // "Microsoft.Extensions.Logging" with "Microsoft.Extensions.Logging.Abstractions").
             var extractedId = NuGetPackageInstaller.ExtractPackageIdFromDirName(dirName);

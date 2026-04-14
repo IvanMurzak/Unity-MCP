@@ -193,8 +193,8 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
         }
 
         /// <summary>
-        /// Extracts the package ID from a directory name like "System.Text.Json.10.0.3"
-        /// or "Microsoft.AspNetCore.SignalR.Protocols.Json.10.0.3".
+        /// Extracts the package ID from a directory name like "System.Text.Json.8.0.5"
+        /// or "Microsoft.AspNetCore.SignalR.Protocols.Json.8.0.15".
         /// Scans left-to-right for the FIRST (leftmost) segment that starts with a digit AND
         /// where all segments from there to the end parse as a System.Version. This greedily
         /// consumes the entire version tail (e.g., "10.0.3") rather than a shorter suffix

@@ -46,12 +46,17 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
         public static readonly NuGetPackage[] Packages =
         {
             // --- Runtime dependencies (included in game builds) ---
+            // v8 pinned to match what McpPlugin.dll (netstandard2.1) is compiled against.
+            // Higher versions cause MissingMethodException at runtime in Unity versions
+            // whose built-in BCL doesn't override our NuGet install (e.g. Unity 6.5).
             new NuGetPackage("System.Text.Json",                                      "8.0.5",  includeInBuild: true),
-            new NuGetPackage("Microsoft.AspNetCore.SignalR.Client",                   "10.0.3", includeInBuild: true),
-            new NuGetPackage("Microsoft.AspNetCore.SignalR.Protocols.Json",           "10.0.3", includeInBuild: true),
-            new NuGetPackage("Microsoft.Extensions.Logging",                          "10.0.3", includeInBuild: true),
-            new NuGetPackage("Microsoft.Extensions.Logging.Abstractions",             "10.0.3", includeInBuild: true),
-            new NuGetPackage("Microsoft.Extensions.DependencyInjection.Abstractions", "10.0.3", includeInBuild: true),
+            new NuGetPackage("Microsoft.AspNetCore.SignalR.Client",                   "8.0.15", includeInBuild: true),
+            new NuGetPackage("Microsoft.AspNetCore.SignalR.Protocols.Json",           "8.0.15", includeInBuild: true),
+            new NuGetPackage("Microsoft.Extensions.Logging",                          "8.0.1",  includeInBuild: true),
+            new NuGetPackage("Microsoft.Extensions.Logging.Abstractions",             "8.0.2",  includeInBuild: true),
+            new NuGetPackage("Microsoft.Extensions.DependencyInjection",              "8.0.1",  includeInBuild: true),
+            new NuGetPackage("Microsoft.Extensions.DependencyInjection.Abstractions", "8.0.2",  includeInBuild: true),
+            new NuGetPackage("Microsoft.Extensions.Options",                          "8.0.2",  includeInBuild: true),
             new NuGetPackage("R3",                                                    "1.3.0",  includeInBuild: true),
 
             // --- Editor-only dependencies (excluded from builds) ---
