@@ -1,7 +1,5 @@
 fileFormatVersion: 2
-guid: 352d89a48a13de74987abf09dc78cb52
-labels:
-- UnityMCP-NuGet
+guid: c35ae7d8e94efd14b8cef8147e4e469e
 PluginImporter:
   externalObjects: {}
   serializedVersion: 2
@@ -14,12 +12,6 @@ PluginImporter:
   validateReferences: 1
   platformData:
   - first:
-      : Any
-    second:
-      enabled: 0
-      settings:
-        Exclude Editor: 0
-  - first:
       Any: 
     second:
       enabled: 1
@@ -30,6 +22,12 @@ PluginImporter:
       enabled: 0
       settings:
         DefaultValueInitialized: true
+  - first:
+      Windows Store Apps: WindowsStoreApps
+    second:
+      enabled: 0
+      settings:
+        CPU: AnyCPU
   userData: 
   assetBundleName: 
   assetBundleVariant: 

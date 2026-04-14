@@ -134,9 +134,16 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
             if (dirName == null)
                 return true;
 
+            // Extract the package ID from the directory name (e.g., "System.Text.Json.10.0.3" → "System.Text.Json")
+            // so we match the exact package ID rather than any prefix (which would confuse
+            // "Microsoft.Extensions.Logging" with "Microsoft.Extensions.Logging.Abstractions").
+            var extractedId = NuGetPackageInstaller.ExtractPackageIdFromDirName(dirName);
+            if (extractedId == null)
+                return true;
+
             foreach (var package in NuGetConfig.Packages)
             {
-                if (dirName.StartsWith(package.Id + ".", System.StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(extractedId, package.Id, System.StringComparison.OrdinalIgnoreCase))
                     return package.IncludeInBuild;
             }
 

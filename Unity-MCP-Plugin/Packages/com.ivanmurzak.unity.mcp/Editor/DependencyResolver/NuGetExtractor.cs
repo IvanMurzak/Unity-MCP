@@ -166,7 +166,9 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
         /// </summary>
         static string? SelectBestFramework(IEnumerable<string> availableFrameworks)
         {
-            var available = new HashSet<string>(availableFrameworks, StringComparer.OrdinalIgnoreCase);
+            // Materialize once to preserve a stable ordering for deterministic fallback.
+            var availableList = availableFrameworks.ToList();
+            var available = new HashSet<string>(availableList, StringComparer.OrdinalIgnoreCase);
 
             foreach (var preferred in NuGetConfig.TargetFrameworkPriority)
             {
@@ -174,8 +176,11 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
                     return preferred;
             }
 
-            // Fallback: return first available
-            return available.FirstOrDefault();
+            // Deterministic fallback: lexicographically smallest framework (case-insensitive)
+            // to keep installs stable across machines/runs regardless of HashSet enumeration order.
+            return availableList
+                .OrderBy(f => f, StringComparer.OrdinalIgnoreCase)
+                .FirstOrDefault();
         }
 
         /// <summary>
@@ -266,10 +271,6 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
         {
             // Skip non-DLL files (we only need assemblies)
             if (!entryPath.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
-                return true;
-
-            // Skip reference assemblies (ref/) — they cause "multiple assemblies" errors
-            if (entryPath.StartsWith("ref/", StringComparison.OrdinalIgnoreCase))
                 return true;
 
             // Skip localization satellite assemblies (lib/{framework}/{lang-code}/*.dll)

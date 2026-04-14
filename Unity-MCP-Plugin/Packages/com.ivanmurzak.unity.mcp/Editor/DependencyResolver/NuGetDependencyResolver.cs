@@ -41,7 +41,6 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
     {
         const string Tag = "[Unity-MCP DependencyResolver]";
         const string ReadyDefine = "UNITY_MCP_READY";
-        const string ResolvingKey = "NuGetDependencyResolver_Resolving";
 
         static NuGetDependencyResolver()
         {
@@ -51,14 +50,6 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
             // because scripts are compiling" when the test runner races the recompilation.
             if (IsCi())
             {
-                EnsureScriptingDefine();
-                return;
-            }
-
-            // After a resolver-triggered reload, just set the define and exit.
-            if (SessionState.GetBool(ResolvingKey, false))
-            {
-                SessionState.SetBool(ResolvingKey, false);
                 EnsureScriptingDefine();
                 return;
             }
@@ -90,14 +81,13 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
 
                 if (changed)
                 {
-                    SessionState.SetBool(ResolvingKey, true);
-                    Debug.Log($"{Tag} Packages restored. Triggering domain reload...");
+                    Debug.Log($"{Tag} Packages restored. Refreshing AssetDatabase...");
                     AssetDatabase.Refresh();
                 }
             }
             catch (Exception ex)
             {
-                Debug.LogError($"{Tag} Failed: {ex.Message}\n{ex.StackTrace}");
+                Debug.LogError($"{Tag} Failed: {ex}");
                 // Set the define even on error so the plugin can attempt to compile.
                 EnsureScriptingDefine();
             }
@@ -169,25 +159,61 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
         }
 
         /// <summary>
-        /// Ensures the UNITY_MCP_READY scripting define is set.
-        /// This define gates the main plugin assemblies via defineConstraints.
+        /// Ensures the UNITY_MCP_READY scripting define is set for every supported
+        /// build target group. Applying it only to the currently selected group would let
+        /// target switching (e.g., Standalone → Android) reintroduce compilation failures
+        /// in assemblies gated by defineConstraints.
         /// </summary>
         static void EnsureScriptingDefine()
         {
-            var buildTarget = NamedBuildTarget.FromBuildTargetGroup(
-                EditorUserBuildSettings.selectedBuildTargetGroup);
+            var added = new List<string>();
 
-            PlayerSettings.GetScriptingDefineSymbols(buildTarget, out var defines);
+            foreach (BuildTargetGroup group in Enum.GetValues(typeof(BuildTargetGroup)))
+            {
+                if (group == BuildTargetGroup.Unknown)
+                    continue;
 
-            if (defines.Contains(ReadyDefine))
-                return;
+                NamedBuildTarget target;
+                try
+                {
+                    target = NamedBuildTarget.FromBuildTargetGroup(group);
+                }
+                catch
+                {
+                    continue;
+                }
 
-            var newDefines = new string[defines.Length + 1];
-            Array.Copy(defines, newDefines, defines.Length);
-            newDefines[defines.Length] = ReadyDefine;
+                if (TryAddDefine(target))
+                    added.Add(target.TargetName);
+            }
 
-            PlayerSettings.SetScriptingDefineSymbols(buildTarget, newDefines);
-            Debug.Log($"{Tag} Added '{ReadyDefine}' scripting define.");
+            // Server is a distinct NamedBuildTarget not reachable via BuildTargetGroup.
+            if (TryAddDefine(NamedBuildTarget.Server))
+                added.Add(NamedBuildTarget.Server.TargetName);
+
+            if (added.Count > 0)
+                Debug.Log($"{Tag} Added '{ReadyDefine}' scripting define for: {string.Join(", ", added)}.");
+        }
+
+        static bool TryAddDefine(NamedBuildTarget target)
+        {
+            try
+            {
+                PlayerSettings.GetScriptingDefineSymbols(target, out var defines);
+                if (defines.Contains(ReadyDefine))
+                    return false;
+
+                var newDefines = new string[defines.Length + 1];
+                Array.Copy(defines, newDefines, defines.Length);
+                newDefines[defines.Length] = ReadyDefine;
+
+                PlayerSettings.SetScriptingDefineSymbols(target, newDefines);
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
         }
     }
 }

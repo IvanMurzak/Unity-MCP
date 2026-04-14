@@ -1,7 +1,5 @@
 fileFormatVersion: 2
-guid: 771d7af3a0797724489e2a8295137d33
-labels:
-- UnityMCP-NuGet
+guid: a20f1241648cd8c4fb9ed435633737d8
 PluginImporter:
   externalObjects: {}
   serializedVersion: 2
@@ -14,12 +12,6 @@ PluginImporter:
   validateReferences: 1
   platformData:
   - first:
-      : Any
-    second:
-      enabled: 0
-      settings:
-        Exclude Editor: 0
-  - first:
       Any: 
     second:
       enabled: 1
@@ -27,7 +19,7 @@ PluginImporter:
   - first:
       Editor: Editor
     second:
-      enabled: 1
+      enabled: 0
       settings:
         DefaultValueInitialized: true
   - first:

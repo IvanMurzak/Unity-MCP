@@ -27,20 +27,29 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
         const string Tag = "[NuGet]";
 
         /// <summary>
-        /// Tracks installed packages during a single install session to avoid re-processing.
-        /// Key: lowercase package ID, Value: installed version.
+        /// Resolved (id → version) closure for the current session, including both top-level
+        /// configured packages and their transitive dependencies. Populated by Install() for
+        /// every package it processes, whether newly extracted or already on disk. Used by
+        /// RemoveUnnecessaryPackages() as the authoritative "keep list".
         /// </summary>
         static readonly Dictionary<string, string> installedThisSession = new(StringComparer.OrdinalIgnoreCase);
 
+        public static IReadOnlyDictionary<string, string> InstalledThisSession => installedThisSession;
+
         /// <summary>
         /// Installs a package and its transitive dependencies.
-        /// Returns true if any new DLLs were installed (requires domain reload).
+        /// Returns true if any new DLLs were extracted (requires domain reload).
+        /// Always reads the dependency graph (from the cached .nupkg) and records the resolved
+        /// (id, version) in <see cref="installedThisSession"/>, even when the package is already
+        /// present on disk — otherwise transitive deps of already-installed packages would be
+        /// missing from the closure, and stale-version directories of those transitives would
+        /// be kept by RemoveUnnecessaryPackages.
         /// </summary>
         public static bool Install(NuGetPackage package, HashSet<string>? visitedIds = null)
         {
             visitedIds ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            // Prevent circular dependencies
+            // Prevent circular dependencies.
             if (!visitedIds.Add(package.Id))
                 return false;
 
@@ -48,43 +57,56 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
 
             try
             {
-                // 1. Skip if already installed at the correct version
-                var installDir = Path.Combine(NuGetConfig.InstallPath, package.InstallDirectoryName);
-                if (Directory.Exists(installDir) && Directory.GetFiles(installDir, "*.dll").Length > 0)
-                    return false; // Already installed
-
-                // 2. Skip if we've already processed this package in this session (higher version wins)
-                if (installedThisSession.TryGetValue(package.Id, out var existingVersion))
+                // Higher-version-wins when a second chain requests the same Id at a lower version.
+                if (installedThisSession.TryGetValue(package.Id, out var existingVersion)
+                    && CompareVersions(existingVersion, package.Version) >= 0)
                 {
-                    if (CompareVersions(existingVersion, package.Version) >= 0)
-                        return false; // Already have same or higher version
-
-                    // Remove old version, install new one
-                    var oldDir = Path.Combine(NuGetConfig.InstallPath, $"{package.Id}.{existingVersion}");
-                    if (Directory.Exists(oldDir))
-                        Directory.Delete(oldDir, recursive: true);
+                    return false;
                 }
 
-                // 3. Download .nupkg
+                var installDir = Path.Combine(NuGetConfig.InstallPath, package.InstallDirectoryName);
+                var alreadyOnDisk = Directory.Exists(installDir)
+                                 && Directory.GetFiles(installDir, "*.dll").Length > 0;
+
+                // Download (cached in Library/NuGetCache across sessions). Needed even when
+                // the package is already on disk, so GetDependencies() can build the full closure.
                 var nupkgPath = NuGetDownloader.Download(package);
 
-                // 4. Resolve and install transitive dependencies FIRST
+                // Resolve and install transitive dependencies FIRST.
                 var dependencies = NuGetExtractor.GetDependencies(nupkgPath);
                 foreach (var dep in dependencies)
                     anyInstalled |= Install(dep, visitedIds);
 
-                // 5. Extract DLLs
-                var extractedDlls = NuGetExtractor.ExtractDlls(nupkgPath, installDir);
-                if (extractedDlls.Count > 0)
+                // If a previous version of the same Id is installed this session (higher-wins path),
+                // remove its directory before extracting the new one.
+                if (existingVersion != null)
                 {
-                    Debug.Log($"{Tag} Installed {package.Id} {package.Version} ({extractedDlls.Count} DLL(s))");
-                    installedThisSession[package.Id] = package.Version;
-                    anyInstalled = true;
+                    var oldDir = Path.Combine(NuGetConfig.InstallPath, $"{package.Id}.{existingVersion}");
+                    if (Directory.Exists(oldDir))
+                    {
+                        Directory.Delete(oldDir, recursive: true);
+                        var oldDirMeta = oldDir + ".meta";
+                        if (File.Exists(oldDirMeta))
+                            File.Delete(oldDirMeta);
+                    }
                 }
-                else
+
+                // Extract DLLs only when not already on disk at this exact version.
+                if (!alreadyOnDisk)
                 {
-                    Debug.LogWarning($"{Tag} No DLLs extracted for {package.Id} {package.Version}");
+                    var extractedDlls = NuGetExtractor.ExtractDlls(nupkgPath, installDir);
+                    if (extractedDlls.Count > 0)
+                    {
+                        Debug.Log($"{Tag} Installed {package.Id} {package.Version} ({extractedDlls.Count} DLL(s))");
+                        anyInstalled = true;
+                    }
+                    else
+                    {
+                        Debug.LogWarning($"{Tag} No DLLs extracted for {package.Id} {package.Version}");
+                    }
                 }
+
+                installedThisSession[package.Id] = package.Version;
             }
             catch (Exception ex)
             {
@@ -95,13 +117,25 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
         }
 
         /// <summary>
-        /// Removes packages that are installed but no longer needed
-        /// (not in the config and not a transitive dependency).
+        /// Removes previously-installed NuGet package directories that should no longer exist:
+        ///   1. Stale-version directories for any package in the resolved session closure —
+        ///      both configured packages AND their transitive dependencies
+        ///      (e.g., a leftover "Microsoft.AspNetCore.SignalR.Common.10.0.3" when the current
+        ///      closure resolves that transitive to "8.0.15"). Keeping both produces
+        ///      duplicate-assembly conflicts.
+        ///   2. Directories whose DLLs are now all provided by Unity (e.g., after a Unity
+        ///      upgrade that bundled the BCL assembly) and whose package ID is not in the closure.
+        ///
+        /// <paramref name="requiredVersionByPackageId"/> must contain the full resolved closure
+        /// (pass <see cref="InstalledThisSession"/> from the restorer after Install() calls).
+        /// Returns true if any installed package directories were removed.
         /// </summary>
-        public static void RemoveUnnecessaryPackages(HashSet<string> requiredPackageIds)
+        public static bool RemoveUnnecessaryPackages(IReadOnlyDictionary<string, string> requiredVersionByPackageId)
         {
             if (!Directory.Exists(NuGetConfig.InstallPath))
-                return;
+                return false;
+
+            var anyRemoved = false;
 
             foreach (var dir in Directory.GetDirectories(NuGetConfig.InstallPath))
             {
@@ -113,38 +147,70 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
                 // Try to parse as {packageId}.{version}
                 // Find the split point: package IDs can contain dots, version starts with a digit
                 var packageId = ExtractPackageIdFromDirName(dirName);
-                if (packageId == null || requiredPackageIds.Contains(packageId))
+                if (packageId == null)
                     continue;
 
-                // Check if Unity now provides this assembly
-                if (UnityAssemblyResolver.IsAlreadyImported(packageId))
+                // Case 1: configured package with a stale on-disk version — delete the stale one.
+                if (requiredVersionByPackageId.TryGetValue(packageId, out var requiredVersion))
                 {
-                    Debug.Log($"{Tag} Removing {dirName} — Unity now provides this assembly.");
-                    Directory.Delete(dir, recursive: true);
-                    // Also delete .meta file
-                    var metaFile = dir + ".meta";
-                    if (File.Exists(metaFile))
-                        File.Delete(metaFile);
+                    var dirVersion = dirName.Substring(packageId.Length + 1);
+                    if (string.Equals(dirVersion, requiredVersion, StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    Debug.Log($"{Tag} Removing {dirName} — stale version; config requires {packageId} {requiredVersion}.");
+                    DeleteDirAndMeta(dir);
+                    anyRemoved = true;
+                    continue;
                 }
+
+                // Case 2: unrequired package — remove only when Unity provides every DLL it ships.
+                // Using the NuGet package ID directly is unreliable because a package often ships
+                // DLLs with names that differ from the package ID (e.g., Microsoft.Bcl.Memory
+                // ships System.Memory / System.Buffers / System.Runtime.CompilerServices.Unsafe).
+                var dllFiles = Directory.GetFiles(dir, "*.dll", SearchOption.AllDirectories);
+                if (dllFiles.Length == 0)
+                    continue;
+
+                var allProvidedByUnity = dllFiles.All(dll =>
+                    UnityAssemblyResolver.IsAlreadyImported(Path.GetFileNameWithoutExtension(dll)));
+                if (!allProvidedByUnity)
+                    continue;
+
+                Debug.Log($"{Tag} Removing {dirName} — Unity now provides all of its assemblies.");
+                DeleteDirAndMeta(dir);
+                anyRemoved = true;
             }
+
+            return anyRemoved;
+        }
+
+        static void DeleteDirAndMeta(string dir)
+        {
+            Directory.Delete(dir, recursive: true);
+            var metaFile = dir + ".meta";
+            if (File.Exists(metaFile))
+                File.Delete(metaFile);
         }
 
         /// <summary>
-        /// Extracts the package ID from a directory name like "System.Text.Json.10.0.3".
-        /// The version starts after the last segment that begins with a digit.
+        /// Extracts the package ID from a directory name like "System.Text.Json.10.0.3"
+        /// or "Microsoft.AspNetCore.SignalR.Protocols.Json.10.0.3".
+        /// Scans left-to-right for the FIRST (leftmost) segment that starts with a digit AND
+        /// where all segments from there to the end parse as a System.Version. This greedily
+        /// consumes the entire version tail (e.g., "10.0.3") rather than a shorter suffix
+        /// (e.g., "0.3") that would also satisfy System.Version.TryParse.
         /// </summary>
-        static string? ExtractPackageIdFromDirName(string dirName)
+        internal static string? ExtractPackageIdFromDirName(string dirName)
         {
             var parts = dirName.Split('.');
-            for (var i = parts.Length - 1; i >= 1; i--)
+            for (var i = 1; i < parts.Length; i++)
             {
-                if (parts[i].Length > 0 && char.IsDigit(parts[i][0]))
-                {
-                    // Check if this and all remaining parts form a valid version
-                    var versionPart = string.Join(".", parts.Skip(i));
-                    if (System.Version.TryParse(versionPart, out _))
-                        return string.Join(".", parts.Take(i));
-                }
+                if (parts[i].Length == 0 || !char.IsDigit(parts[i][0]))
+                    continue;
+
+                var versionPart = string.Join(".", parts.Skip(i));
+                if (System.Version.TryParse(versionPart, out _))
+                    return string.Join(".", parts.Take(i));
             }
             return null;
         }

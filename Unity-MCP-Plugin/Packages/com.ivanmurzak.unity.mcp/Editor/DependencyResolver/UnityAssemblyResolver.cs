@@ -21,7 +21,7 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
     /// Detects assemblies that Unity already provides (built-in BCL, engine modules, other packages).
     /// Uses the same approach as NuGetForUnity's UnityPreImportedLibraryResolver:
     ///   1. Get all player assembly references via CompilationPipeline
-    ///   2. Subtract assemblies we installed ourselves
+    ///   2. Skip references that resolve from our NuGet install folder (those are our own duplicates)
     ///   3. Result = assemblies Unity provides — these should NOT be installed from NuGet
     ///
     /// This prevents conflicts like CS1705 (version mismatch) and "multiple assemblies" errors.
@@ -52,13 +52,10 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
         /// Gets the set of assembly names that Unity already provides.
         /// Caches the result for performance (invalidated between domain reloads).
         /// </summary>
-        public static HashSet<string> GetUnityProvidedAssemblies()
+        public static IReadOnlyCollection<string> GetUnityProvidedAssemblies()
         {
             if (cachedUnityAssemblies != null)
                 return cachedUnityAssemblies;
-
-            // Get assemblies we've installed ourselves (to exclude them)
-            var installedByUs = GetInstalledAssemblyNames();
 
             // Get all assemblies referenced by player builds (includes BCL, engine, other packages)
             var playerAssemblies = CompilationPipeline.GetAssemblies(AssembliesType.PlayerWithoutTestAssemblies)
@@ -71,8 +68,18 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
                 foreach (var reference in assembly.allReferences)
                 {
                     var name = Path.GetFileNameWithoutExtension(reference);
-                    if (!installedByUs.Contains(name))
-                        unityProvided.Add(name);
+
+                    // Resolve references whose path is outside our NuGet install folder
+                    // (these are genuinely Unity-provided and would conflict with NuGet duplicates).
+                    // If the reference path points into our NuGet install folder we skip it here —
+                    // but we still want to detect the *name* as Unity-provided if any other
+                    // reference resolves the same name outside our install folder.
+                    var normalized = reference.Replace('\\', '/');
+                    var installRoot = NuGetConfig.InstallPath.Replace('\\', '/');
+                    if (normalized.StartsWith(installRoot, System.StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    unityProvided.Add(name);
                 }
             }
 
@@ -92,20 +99,5 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
             return unityProvided;
         }
 
-        /// <summary>
-        /// Gets the set of assembly names that we've installed into Assets/Plugins/NuGet/.
-        /// </summary>
-        static HashSet<string> GetInstalledAssemblyNames()
-        {
-            var installed = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
-
-            if (!Directory.Exists(NuGetConfig.InstallPath))
-                return installed;
-
-            foreach (var dll in Directory.EnumerateFiles(NuGetConfig.InstallPath, "*.dll", SearchOption.AllDirectories))
-                installed.Add(Path.GetFileNameWithoutExtension(dll));
-
-            return installed;
-        }
     }
 }

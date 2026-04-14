@@ -44,19 +44,20 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
                 if (!Directory.Exists(NuGetConfig.InstallPath))
                     Directory.CreateDirectory(NuGetConfig.InstallPath);
 
-                // Install missing packages
-                var requiredIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                // Install configured packages. Install() populates InstalledThisSession with the
+                // full resolved closure (direct + transitive) by always reading the dep graph,
+                // including for packages already on disk from a previous session.
                 foreach (var package in NuGetConfig.Packages)
-                {
-                    requiredIds.Add(package.Id);
                     anyChanged |= NuGetPackageInstaller.Install(package);
-                }
 
-                // Remove packages that Unity now provides
-                NuGetPackageInstaller.RemoveUnnecessaryPackages(requiredIds);
+                // Remove stale-version directories of anything in the closure
+                // and packages whose DLLs are now all provided by Unity.
+                var anyRemoved = NuGetPackageInstaller.RemoveUnnecessaryPackages(
+                    NuGetPackageInstaller.InstalledThisSession);
+                anyChanged |= anyRemoved;
 
                 if (anyChanged)
-                    Debug.Log($"{Tag} Package restore complete. New packages were installed.");
+                    Debug.Log($"{Tag} Package restore complete. Changes applied (installed and/or removed packages).");
                 else
                     Debug.Log($"{Tag} All packages up to date.");
             }
@@ -69,18 +70,42 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
         }
 
         /// <summary>
-        /// Quick check: are all configured packages already installed?
-        /// Used to skip the full restore when everything is up to date.
+        /// Quick check: are all configured packages already installed at their configured version,
+        /// with no stale-version directories of configured packages present on disk?
+        /// Used to skip the full restore when everything is up to date. Returning false here forces
+        /// the full Restore() path, which deletes stale-version directories via RemoveUnnecessaryPackages.
         /// </summary>
         public static bool AllPackagesInstalled()
         {
             if (!Directory.Exists(NuGetConfig.InstallPath))
                 return false;
 
+            // Every configured package must be installed at the configured version.
             foreach (var package in NuGetConfig.Packages)
             {
                 var installDir = Path.Combine(NuGetConfig.InstallPath, package.InstallDirectoryName);
                 if (!Directory.Exists(installDir) || Directory.GetFiles(installDir, "*.dll").Length == 0)
+                    return false;
+            }
+
+            // No package ID may have multiple version directories on disk. This catches stale
+            // versions of BOTH configured packages and transitive dependencies
+            // (e.g., "Microsoft.AspNetCore.SignalR.Common.8.0.15" + ".10.0.3") — any duplicate
+            // (id → multiple versions) would produce duplicate-assembly conflicts in Unity.
+            var dirCountByPackageId = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            foreach (var dir in Directory.GetDirectories(NuGetConfig.InstallPath))
+            {
+                var packageId = NuGetPackageInstaller.ExtractPackageIdFromDirName(Path.GetFileName(dir));
+                if (packageId == null)
+                    continue;
+
+                dirCountByPackageId.TryGetValue(packageId, out var count);
+                dirCountByPackageId[packageId] = count + 1;
+            }
+
+            foreach (var count in dirCountByPackageId.Values)
+            {
+                if (count > 1)
                     return false;
             }
 

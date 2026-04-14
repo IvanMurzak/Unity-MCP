@@ -39,10 +39,6 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
         /// <summary>
         /// Top-level NuGet package dependencies.
         /// Transitive dependencies are resolved automatically from .nuspec metadata.
-        /// </summary>
-        /// <summary>
-        /// Top-level NuGet package dependencies.
-        /// Transitive dependencies are resolved automatically from .nuspec metadata.
         ///
         /// includeInBuild: true  = DLL included in game builds (runtime dependency)
         /// includeInBuild: false = editor-only DLL (excluded from builds)
@@ -50,19 +46,19 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
         public static readonly NuGetPackage[] Packages =
         {
             // --- Runtime dependencies (included in game builds) ---
-            new NuGetPackage("System.Text.Json",                                   "10.0.3", includeInBuild: true),
-            new NuGetPackage("Microsoft.AspNetCore.SignalR.Client",                 "10.0.3", includeInBuild: true),
-            new NuGetPackage("Microsoft.AspNetCore.SignalR.Protocols.Json",         "10.0.3", includeInBuild: true),
-            new NuGetPackage("Microsoft.Extensions.Logging",                       "10.0.3", includeInBuild: true),
-            new NuGetPackage("Microsoft.Extensions.Logging.Abstractions",          "10.0.3", includeInBuild: true),
+            new NuGetPackage("System.Text.Json",                                      "8.0.5",  includeInBuild: true),
+            new NuGetPackage("Microsoft.AspNetCore.SignalR.Client",                   "10.0.3", includeInBuild: true),
+            new NuGetPackage("Microsoft.AspNetCore.SignalR.Protocols.Json",           "10.0.3", includeInBuild: true),
+            new NuGetPackage("Microsoft.Extensions.Logging",                          "10.0.3", includeInBuild: true),
+            new NuGetPackage("Microsoft.Extensions.Logging.Abstractions",             "10.0.3", includeInBuild: true),
             new NuGetPackage("Microsoft.Extensions.DependencyInjection.Abstractions", "10.0.3", includeInBuild: true),
-            new NuGetPackage("R3",                                                 "1.3.0",  includeInBuild: true),
+            new NuGetPackage("R3",                                                    "1.3.0",  includeInBuild: true),
 
             // --- Editor-only dependencies (excluded from builds) ---
-            new NuGetPackage("Microsoft.Bcl.Memory",                               "10.0.3"),
-            new NuGetPackage("Microsoft.CodeAnalysis.CSharp",                      "4.14.0"),
-            new NuGetPackage("Microsoft.Extensions.Caching.Abstractions",          "10.0.3"),
-            new NuGetPackage("Microsoft.Extensions.Hosting.Abstractions",          "10.0.3"),
+            new NuGetPackage("Microsoft.Bcl.Memory",                                  "10.0.3"),
+            new NuGetPackage("Microsoft.CodeAnalysis.CSharp",                         "4.14.0"),
+            new NuGetPackage("Microsoft.Extensions.Caching.Abstractions",             "8.0.0"),
+            new NuGetPackage("Microsoft.Extensions.Hosting.Abstractions",             "8.0.1"),
         };
 
         /// <summary>
