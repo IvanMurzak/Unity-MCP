@@ -9,7 +9,7 @@
 */
 
 #nullable enable
-#if UNITY_6000_5_OR_NEWER
+#if !UNITY_6000_5_OR_NEWER
 using System.ComponentModel;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;

@@ -9,7 +9,7 @@
 */
 
 #nullable enable
-#if UNITY_6000_5_OR_NEWER
+#if !UNITY_6000_5_OR_NEWER
 using System;
 using System.ComponentModel;
 using System.Linq;
@@ -67,7 +67,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     throw new Exception($"Asset not found using the reference:\n{assetRef}");
 
                 // Fixing instanceID - inject expected instance ID into the valueJsonElement
-                content.valueJsonElement.SetProperty(ObjectRef.ObjectRefProperty.InstanceID, UnityEngine.EntityId.ToULong(asset.GetEntityId()));
+                content.valueJsonElement.SetProperty(ObjectRef.ObjectRefProperty.InstanceID, asset.GetInstanceID());
 
                 var obj = (object)asset;
                 var logs = new Logs();

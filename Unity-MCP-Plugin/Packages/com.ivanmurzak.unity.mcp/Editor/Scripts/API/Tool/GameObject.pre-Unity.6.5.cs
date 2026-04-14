@@ -9,7 +9,7 @@
 */
 
 #nullable enable
-#if UNITY_6000_5_OR_NEWER
+#if !UNITY_6000_5_OR_NEWER
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,7 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         public static class Error
         {
-            public static string NotFoundComponent(UnityEngine.EntityId componentEntityID, IEnumerable<UnityEngine.Component> allComponents)
+            public static string NotFoundComponent(int componentInstanceID, IEnumerable<UnityEngine.Component> allComponents)
             {
                 var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
                 var availableComponentsPreview = allComponents
@@ -40,9 +40,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 var previewJson = availableComponentsPreview.ToJson(reflector);
 
                 var instanceIdSample = new { componentData = availableComponentsPreview[0] }.ToJson(reflector);
-                var helpMessage = $"Use 'name=[index]' to specify the component. Or use 'entityId' to specify the component.\n{instanceIdSample}";
+                var helpMessage = $"Use 'name=[index]' to specify the component. Or use 'instanceID' to specify the component.\n{instanceIdSample}";
 
-                return $"No component with entityId '{componentEntityID}' found in GameObject.\n{helpMessage}\nAvailable components preview:\n{previewJson}";
+                return $"No component with instanceID '{componentInstanceID}' found in GameObject.\n{helpMessage}\nAvailable components preview:\n{previewJson}";
             }
             public static string NotFoundComponents(ComponentRefList componentRefs, IEnumerable<UnityEngine.Component> allComponents)
             {

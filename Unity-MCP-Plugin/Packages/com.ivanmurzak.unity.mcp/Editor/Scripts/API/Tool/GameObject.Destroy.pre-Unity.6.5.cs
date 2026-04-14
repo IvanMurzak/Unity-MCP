@@ -9,7 +9,7 @@
 */
 
 #nullable enable
-#if UNITY_6000_5_OR_NEWER
+#if !UNITY_6000_5_OR_NEWER
 using System;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
@@ -52,7 +52,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 var destroyedName = go!.name;
                 var destroyedPath = go.GetPath();
-                var destroyedInstanceId = go.GetEntityId();
+                var destroyedInstanceId = go.GetInstanceID();
 
                 logger.LogInformation("Destroying GameObject '{Name}' (InstanceID: {InstanceId}) at path '{Path}'",
                     destroyedName, destroyedInstanceId, destroyedPath);
@@ -82,7 +82,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             public string? DestroyedPath { get; set; }
 
             [Description("Instance ID of the destroyed GameObject.")]
-            public UnityEngine.EntityId DestroyedInstanceId { get; set; }
+            public int DestroyedInstanceId { get; set; }
         }
     }
 }

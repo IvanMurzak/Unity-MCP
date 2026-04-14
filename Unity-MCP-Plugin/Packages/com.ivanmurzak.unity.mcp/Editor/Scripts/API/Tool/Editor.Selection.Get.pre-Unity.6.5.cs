@@ -9,7 +9,7 @@
 */
 
 #nullable enable
-#if UNITY_6000_5_OR_NEWER
+#if !UNITY_6000_5_OR_NEWER
 using System.ComponentModel;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
@@ -47,7 +47,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     ActiveGameObject = Selection.activeGameObject != null
                         ? new GameObjectRef(Selection.activeGameObject)
                         : null,
-                    ActiveInstanceID = Selection.activeEntityId
+#if UNITY_6000_3_OR_NEWER
+                    ActiveInstanceID = (int)Selection.activeEntityId
+#else
+                    ActiveInstanceID = Selection.activeInstanceID
+#endif
                 };
 
                 if (includeGameObjects)
@@ -57,7 +61,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     response.Transforms = Selection.transforms?.Select(t => new ComponentRef(t)).ToArray();
 
                 if (includeInstanceIDs)
-                    response.InstanceIDs = Selection.entityIds.Select(x => x).ToArray();
+#if UNITY_6000_3_OR_NEWER
+                    response.InstanceIDs = Selection.entityIds.Select(x => (int)x).ToArray();
+#else
+                    response.InstanceIDs = Selection.instanceIDs;
+#endif
 
                 if (includeAssetGUIDs)
                     response.AssetGUIDs = Selection.assetGUIDs;

@@ -9,21 +9,20 @@
 */
 
 #nullable enable
-#if UNITY_6000_5_OR_NEWER
+#if !UNITY_6000_5_OR_NEWER
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
-using R3;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Extensions
 {
     public static class ExtensionsSerializedMember
     {
-        public static bool TryGetInstanceID(this SerializedMember member, out UnityEngine.EntityId entityId)
+        public static bool TryGetInstanceID(this SerializedMember member, out int instanceID)
         {
             var reflector = UnityMcpPluginEditor.Instance.Reflector;
             if (reflector == null)
             {
-                entityId = UnityEngine.EntityId.None;
+                instanceID = 0;
                 return false;
             }
 
@@ -32,7 +31,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Extensions
                 var objectRef = member.GetValue<ObjectRef>(reflector);
                 if (objectRef != null)
                 {
-                    entityId = objectRef.InstanceID;
+                    instanceID = objectRef.InstanceID;
                     return true;
                 }
             }
@@ -46,7 +45,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Extensions
                 var fieldValue = member.GetField(ObjectRef.ObjectRefProperty.InstanceID);
                 if (fieldValue != null)
                 {
-                    entityId = fieldValue.GetValue<UnityEngine.EntityId>(reflector);
+                    instanceID = fieldValue.GetValue<int>(reflector);
                     return true;
                 }
             }
@@ -55,15 +54,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Extensions
                 // Ignore exceptions, fallback to instanceID field
             }
 
-            entityId = UnityEngine.EntityId.None;
+            instanceID = 0;
             return false;
         }
-        public static bool TryGetGameObjectInstanceID(this SerializedMember member, out UnityEngine.EntityId entityId)
+        public static bool TryGetGameObjectInstanceID(this SerializedMember member, out int instanceID)
         {
             var reflector = UnityMcpPluginEditor.Instance.Reflector;
             if (reflector == null)
             {
-                entityId = UnityEngine.EntityId.None;
+                instanceID = 0;
                 return false;
             }
 
@@ -72,7 +71,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Extensions
                 var objectRef = member.GetValue<GameObjectRef>(reflector);
                 if (objectRef != null)
                 {
-                    entityId = objectRef.InstanceID;
+                    instanceID = objectRef.InstanceID;
                     return true;
                 }
             }
@@ -86,7 +85,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Extensions
                 var fieldValue = member.GetField(ObjectRef.ObjectRefProperty.InstanceID);
                 if (fieldValue != null)
                 {
-                    entityId = fieldValue.GetValue<UnityEngine.EntityId>(reflector);
+                    instanceID = fieldValue.GetValue<int>(reflector);
                     return true;
                 }
             }
@@ -95,7 +94,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Extensions
                 // Ignore exceptions, fallback to instanceID field
             }
 
-            entityId = UnityEngine.EntityId.None;
+            instanceID = 0;
             return false;
         }
     }
