@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+#if UNITY_6000_5_OR_NEWER
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -252,7 +253,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                     obj = null;
                     return true;
                 }
-                if (material.GetInstanceID() == unityObject.GetInstanceID())
+                if (material.GetEntityId() == unityObject.GetEntityId())
                 {
                     // Recognized as a command to update material
                     return base.TryModify(
@@ -388,3 +389,4 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
         }
     }
 }
+#endif

@@ -9,13 +9,13 @@
 */
 
 #nullable enable
+#if UNITY_6000_5_OR_NEWER
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using System.Text.Json.Serialization;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
-using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
@@ -41,7 +41,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
             + AssetObjectRefProperty.AssetPath + "' and '"
             + AssetObjectRefProperty.AssetGuid
             + "' is not provided, empty or null, then it will be used as 'null'. Priority: 1 (Recommended)")]
-        public override int InstanceID { get; set; } = 0;
+        public override UnityEngine.EntityId InstanceID { get; set; } = UnityEngine.EntityId.None;
 
         [JsonInclude, JsonPropertyName(GameObjectRefProperty.Path)]
         [Description("Path of a GameObject in the hierarchy Sample 'character/hand/finger/particle'. Priority: 2.")]
@@ -74,11 +74,11 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
         }
 
         public GameObjectRef() { }
-        public GameObjectRef(int instanceID)
+        public GameObjectRef(UnityEngine.EntityId entityId)
         {
-            this.InstanceID = instanceID;
+            this.InstanceID = entityId;
         }
-        public GameObjectRef(GameObject? go) : base(go, throwIfNotAnAsset: false)
+        public GameObjectRef(UnityEngine.GameObject? go) : base(go, throwIfNotAnAsset: false)
         {
             this.Name = go?.name;
             this.Path = go?.GetPath();
@@ -86,7 +86,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 
         public override string ToString()
         {
-            if (InstanceID != 0)
+            if (InstanceID != UnityEngine.EntityId.None)
                 return $"GameObject {ObjectRefProperty.InstanceID}='{InstanceID}'";
             if (!string.IsNullOrEmpty(Path))
                 return $"GameObject {GameObjectRefProperty.Path}='{Path}'";
@@ -100,3 +100,4 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
         }
     }
 }
+#endif

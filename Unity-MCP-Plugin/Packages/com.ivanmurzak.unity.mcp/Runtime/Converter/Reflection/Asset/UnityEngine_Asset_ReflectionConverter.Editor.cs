@@ -8,7 +8,7 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 
-#if UNITY_EDITOR
+#if UNITY_EDITOR && UNITY_6000_5_OR_NEWER
 #nullable enable
 using System;
 using System.Reflection;
@@ -53,19 +53,19 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 return false;
             }
 
-            var instanceID = objectRef.InstanceID;
-            if (instanceID != 0)
+            var entityId = objectRef.InstanceID;
+            if (entityId != UnityEngine.EntityId.None)
             {
-                var loadedObj = LoadFromInstanceID(instanceID);
+                var loadedObj = LoadFromEntityId(entityId);
                 if (loadedObj != null)
                 {
                     obj = loadedObj;
-                    logs?.Success($"Assigned asset from InstanceID: '{instanceID}'. Converter: {GetType().GetTypeShortName()}", depth);
+                    logs?.Success($"Assigned asset from EntityId: '{entityId}'. Converter: {GetType().GetTypeShortName()}", depth);
                     return true;
                 }
 
                 if (logger?.IsEnabled(LogLevel.Warning) == true)
-                    logger.LogWarning($"{padding}InstanceID '{instanceID}' found but failed to load asset. Converter: {GetType().GetTypeShortName()}");
+                    logger.LogWarning($"{padding}EntityId '{entityId}' found but failed to load asset. Converter: {GetType().GetTypeShortName()}");
             }
 
             if (!string.IsNullOrEmpty(objectRef.AssetPath))
@@ -108,13 +108,9 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             return true;
         }
 
-        protected virtual T? LoadFromInstanceID(int instanceID)
+        protected virtual T? LoadFromEntityId(UnityEngine.EntityId entityId)
         {
-#if UNITY_6000_3_OR_NEWER
-            var obj = UnityEditor.EditorUtility.EntityIdToObject((UnityEngine.EntityId)instanceID);
-#else
-            var obj = UnityEditor.EditorUtility.InstanceIDToObject(instanceID);
-#endif
+            var obj = UnityEditor.EditorUtility.EntityIdToObject(entityId);
             return obj as T;
         }
 

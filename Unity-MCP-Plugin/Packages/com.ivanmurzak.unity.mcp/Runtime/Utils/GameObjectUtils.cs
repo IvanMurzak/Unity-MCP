@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+#if UNITY_6000_5_OR_NEWER
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -21,7 +22,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
 {
     public static partial class GameObjectUtils
     {
-        public static GameObject? FindBy(GameObjectRef? gameObjectRef, out string? error)
+        public static UnityEngine.GameObject? FindBy(GameObjectRef? gameObjectRef, out string? error)
         {
             if (gameObjectRef == null)
             {
@@ -34,24 +35,24 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
                 return null;
             }
             return FindBy(
-                instanceID: gameObjectRef.InstanceID,
+                entityId: gameObjectRef.InstanceID,
                 path: gameObjectRef.Path,
                 name: gameObjectRef.Name,
                 error: out error);
         }
 
-        public static GameObject? FindBy(int? instanceID, string? path, string? name, out string? error)
+        public static GameObject? FindBy(EntityId entityId, string? path, string? name, out string? error)
         {
             path = StringUtils.TrimPath(path);
             var go = default(GameObject);
 
             // Find by 'instanceID' (int). Priority: 1. (Recommended)
-            if (instanceID.HasValue && instanceID.Value != 0)
+            if (entityId != EntityId.None)
             {
-                go = FindByInstanceID(instanceID.Value);
+                go = FindByInstanceID(entityId);
                 if (go == null)
                 {
-                    error = $"Not found GameObject with instanceID '{instanceID.Value}'";
+                    error = $"Not found GameObject with instanceID '{entityId}'";
                     return null;
                 }
             }
@@ -288,3 +289,4 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         }
     }
 }
+#endif

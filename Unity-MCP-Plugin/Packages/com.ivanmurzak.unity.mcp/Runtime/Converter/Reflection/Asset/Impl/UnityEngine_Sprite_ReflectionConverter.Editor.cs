@@ -9,13 +9,12 @@
 */
 
 #nullable enable
-#if UNITY_EDITOR
+#if UNITY_EDITOR && UNITY_6000_5_OR_NEWER
 using System;
 using System.Linq;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
 using Microsoft.Extensions.Logging;
-using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 {
@@ -44,8 +43,8 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 
             if (result is UnityEngine.Texture2D texture)
             {
-                var path = AssetDatabase.GetAssetPath(texture);
-                result = AssetDatabase.LoadAllAssetRepresentationsAtPath(path)
+                var path = UnityEditor.AssetDatabase.GetAssetPath(texture);
+                result = UnityEditor.AssetDatabase.LoadAllAssetRepresentationsAtPath(path)
                     .OfType<UnityEngine.Sprite>()
                     .FirstOrDefault();
                 return result != null;
@@ -53,13 +52,9 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             return baseResult;
         }
 
-        protected override UnityEngine.Sprite? LoadFromInstanceID(int instanceID)
+        protected override UnityEngine.Sprite? LoadFromEntityId(UnityEngine.EntityId entityId)
         {
-#if UNITY_6000_3_OR_NEWER
-            var textureOrSprite = UnityEditor.EditorUtility.EntityIdToObject((UnityEngine.EntityId)instanceID);
-#else
-            var textureOrSprite = UnityEditor.EditorUtility.InstanceIDToObject(instanceID);
-#endif
+            var textureOrSprite = UnityEditor.EditorUtility.EntityIdToObject(entityId);
             if (textureOrSprite == null) return null;
 
             if (textureOrSprite is UnityEngine.Sprite sprite)
@@ -67,8 +62,8 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 
             if (textureOrSprite is UnityEngine.Texture2D texture)
             {
-                var path = AssetDatabase.GetAssetPath(texture);
-                return AssetDatabase.LoadAllAssetRepresentationsAtPath(path)
+                var path = UnityEditor.AssetDatabase.GetAssetPath(texture);
+                return UnityEditor.AssetDatabase.LoadAllAssetRepresentationsAtPath(path)
                     .OfType<UnityEngine.Sprite>()
                     .FirstOrDefault();
             }
@@ -77,7 +72,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 
         protected override UnityEngine.Sprite? LoadFromAssetPath(string path)
         {
-            var allAssets = AssetDatabase.LoadAllAssetRepresentationsAtPath(path);
+            var allAssets = UnityEditor.AssetDatabase.LoadAllAssetRepresentationsAtPath(path);
             return allAssets
                .OfType<UnityEngine.Sprite>()
                .FirstOrDefault();

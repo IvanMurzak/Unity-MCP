@@ -9,7 +9,7 @@
 */
 
 #nullable enable
-#if UNITY_EDITOR
+#if UNITY_EDITOR && UNITY_6000_5_OR_NEWER
 using System;
 using System.Linq;
 using com.IvanMurzak.ReflectorNet;
@@ -53,13 +53,9 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             return baseResult;
         }
 
-        protected override UnityEngine.Texture? LoadFromInstanceID(int instanceID)
+        protected override UnityEngine.Texture? LoadFromEntityId(UnityEngine.EntityId entityId)
         {
-#if UNITY_6000_3_OR_NEWER
-            var textureOrSprite = UnityEditor.EditorUtility.EntityIdToObject((UnityEngine.EntityId)instanceID);
-#else
-            var textureOrSprite = UnityEditor.EditorUtility.InstanceIDToObject(instanceID);
-#endif
+            var textureOrSprite = UnityEditor.EditorUtility.EntityIdToObject(entityId);
             if (textureOrSprite == null) return null;
 
             if (textureOrSprite is UnityEngine.Texture texture)

@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+#if UNITY_6000_5_OR_NEWER
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -67,7 +68,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                 return SerializedMember.Null(type, name);
             }
 
-            var objectRef = new GameObjectRef(unityObject.GetInstanceID());
+            var objectRef = new GameObjectRef(unityObject.GetEntityId());
 
             if (depth >= 1 || !recursive)
             {
@@ -188,6 +189,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
             {
                 if (obj is UnityEngine.GameObject go)
                 {
+#if !UNITY_6000_5_OR_NEWER
 #pragma warning disable CS0618 // Type or member is obsolete
                     if (member.name == nameof(GameObject.active))
                     {
@@ -195,6 +197,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
                         return true;
                     }
 #pragma warning restore CS0618 // Type or member is obsolete
+#endif
                     if (member.name == nameof(GameObject.activeSelf))
                     {
                         go.SetActive(member.GetValue<bool>(reflector));
@@ -227,3 +230,4 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
         }
     }
 }
+#endif

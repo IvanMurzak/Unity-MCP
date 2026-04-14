@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+#if UNITY_6000_5_OR_NEWER
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -41,7 +42,7 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
                     switch (propertyName)
                     {
                         case ObjectRef.ObjectRefProperty.InstanceID:
-                            objectRef.InstanceID = reader.GetInt32();
+                            objectRef.InstanceID = UnityEngine.EntityId.FromULong(reader.GetUInt64());
                             break;
                         default:
                             throw new JsonException($"Unexpected property name: {propertyName}. "
@@ -69,9 +70,10 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
             writer.WriteStartObject();
 
             // Write the "instanceID" property
-            writer.WriteNumber(ObjectRef.ObjectRefProperty.InstanceID, value.InstanceID);
+            writer.WriteNumber(ObjectRef.ObjectRefProperty.InstanceID, UnityEngine.EntityId.ToULong(value.InstanceID));
 
             writer.WriteEndObject();
         }
     }
 }
+#endif

@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+#if UNITY_6000_5_OR_NEWER
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -42,7 +43,7 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
                     switch (propertyName)
                     {
                         case ObjectRef.ObjectRefProperty.InstanceID:
-                            result.InstanceID = reader.GetInt32();
+                            result.InstanceID = UnityEngine.EntityId.FromULong(reader.GetUInt64());
                             break;
                         case ComponentRef.ComponentRefProperty.Index:
                             result.Index = reader.GetInt32();
@@ -75,7 +76,7 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
 
             writer.WriteStartObject();
 
-            writer.WriteNumber(ObjectRef.ObjectRefProperty.InstanceID, value.InstanceID);
+            writer.WriteNumber(ObjectRef.ObjectRefProperty.InstanceID, UnityEngine.EntityId.ToULong(value.InstanceID));
 
             if (value.Index != -1)
                 writer.WriteNumber(ComponentRef.ComponentRefProperty.Index, value.Index);
@@ -87,4 +88,4 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
         }
     }
 }
-
+#endif

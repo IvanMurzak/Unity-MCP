@@ -9,9 +9,8 @@
 */
 
 #nullable enable
-#if UNITY_EDITOR
+#if UNITY_EDITOR && UNITY_6000_5_OR_NEWER
 using com.IvanMurzak.McpPlugin.Common;
-using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
@@ -23,7 +22,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         /// </summary>
         /// <param name="scene">Scene for the search, if null the current active scene would be used</param>
         /// <returns>Array of root GameObjects</returns>
-        public static GameObject[] FindRootGameObjects(Scene? scene = null)
+        public static UnityEngine.GameObject[] FindRootGameObjects(Scene? scene = null)
         {
             var prefabStage = UnityEditor.SceneManagement.PrefabStageUtility.GetCurrentPrefabStage();
             if (prefabStage != null)
@@ -42,17 +41,13 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
                 return scene.Value.GetRootGameObjects();
             }
         }
-        public static GameObject? FindByInstanceID(int instanceID)
+        public static UnityEngine.GameObject? FindByInstanceID(UnityEngine.EntityId instanceID)
         {
-            if (instanceID == 0)
+            if (instanceID == UnityEngine.EntityId.None)
                 return null;
 
-#if UNITY_6000_3_OR_NEWER
-            var obj = UnityEditor.EditorUtility.EntityIdToObject((UnityEngine.EntityId)instanceID);
-#else
-            var obj = UnityEditor.EditorUtility.InstanceIDToObject(instanceID);
-#endif
-            if (obj is not GameObject go)
+            var obj = UnityEditor.EditorUtility.EntityIdToObject(instanceID);
+            if (obj is not UnityEngine.GameObject go)
                 return null;
 
             return go;

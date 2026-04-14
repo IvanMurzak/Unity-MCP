@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+#if UNITY_6000_5_OR_NEWER
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -44,7 +45,7 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
                     switch (propertyName)
                     {
                         case ObjectRef.ObjectRefProperty.InstanceID:
-                            assetObjectRef.InstanceID = reader.GetInt32();
+                            assetObjectRef.InstanceID = UnityEngine.EntityId.FromULong(reader.GetUInt64());
                             break;
                         case AssetObjectRef.AssetObjectRefProperty.AssetType:
                             assetObjectRef.AssetType = TypeUtils.GetType(reader.GetString());
@@ -81,7 +82,7 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
             writer.WriteStartObject();
 
             // Write the "instanceID" property
-            writer.WriteNumber(ObjectRef.ObjectRefProperty.InstanceID, value.InstanceID);
+            writer.WriteNumber(ObjectRef.ObjectRefProperty.InstanceID, UnityEngine.EntityId.ToULong(value.InstanceID));
 
             // Write the "assetType" property
             if (value.AssetType != null)
@@ -99,3 +100,4 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
         }
     }
 }
+#endif

@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+#if UNITY_6000_5_OR_NEWER
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text.Json.Serialization;
@@ -27,27 +28,28 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 
             public static IEnumerable<string> All => new[] { InstanceID };
         }
+
         [JsonInclude, JsonPropertyName(ObjectRefProperty.InstanceID)]
         [Description("instanceID of the UnityEngine.Object. If this is '0', then it will be used as 'null'.")]
-        public virtual int InstanceID { get; set; } = 0;
+        public virtual UnityEngine.EntityId InstanceID { get; set; } = UnityEngine.EntityId.None;
 
-        public ObjectRef() : this(instanceID: 0) { }
-        public ObjectRef(int instanceID) => InstanceID = instanceID;
+        public ObjectRef() : this(entityId: UnityEngine.EntityId.None) { }
+        public ObjectRef(UnityEngine.EntityId entityId) => InstanceID = entityId;
         public ObjectRef(UnityEngine.Object? obj)
         {
-            InstanceID = obj?.GetInstanceID() ?? 0;
+            InstanceID = obj?.GetEntityId() ?? UnityEngine.EntityId.None;
         }
 
         public virtual bool IsValid() => IsValid(out var error);
         public virtual bool IsValid(out string? error)
         {
-            if (InstanceID != 0)
+            if (InstanceID != UnityEngine.EntityId.None)
             {
                 error = null;
                 return true;
             }
 
-            error = $"'{nameof(InstanceID)}' is '0', this is invalid value for any UnityEngine.Object.";
+            error = $"'{nameof(InstanceID)}' is 'EntityId.None', this is invalid value for any UnityEngine.Object.";
             return false;
         }
 
@@ -57,3 +59,4 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
         }
     }
 }
+#endif

@@ -90,7 +90,9 @@ namespace com.IvanMurzak.Unity.MCP
             reflector.Converters.BlacklistType(typeof(UnityEngine.LowLevelPhysics.GeometryHolder));
 #endif
             // Redundant text data
+#pragma warning disable CS0618 // Type or member is obsolete
             reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.Text.FontFeatureTable));
+#pragma warning restore CS0618 // Type or member is obsolete
             reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.Glyph));
             reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.GlyphRect));
             reflector.Converters.BlacklistType(typeof(UnityEngine.TextCore.GlyphMetrics));

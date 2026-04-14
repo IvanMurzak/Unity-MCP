@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+#if UNITY_6000_5_OR_NEWER
 using System.Collections.Generic;
 using System.Text;
 using com.IvanMurzak.ReflectorNet.Utils;
@@ -19,7 +20,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
     public class GameObjectMetadata
     {
-        public int instanceID;
+        public UnityEngine.EntityId instanceID = UnityEngine.EntityId.None;
         public string? path;
         public string? name;
         public string? sceneName;
@@ -82,7 +83,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
             // Create metadata for the GameObject
             var metadata = new GameObjectMetadata
             {
-                instanceID = go.GetInstanceID(),
+                instanceID = go.GetEntityId(),
                 path = go.GetPath(),
                 name = go.name,
                 sceneName = go.scene.name,
@@ -106,3 +107,4 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
         }
     }
 }
+#endif

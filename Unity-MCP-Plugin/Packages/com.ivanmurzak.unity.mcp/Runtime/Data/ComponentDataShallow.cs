@@ -9,7 +9,7 @@
 */
 
 #nullable enable
-
+#if UNITY_6000_5_OR_NEWER
 using com.IvanMurzak.ReflectorNet;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Data
@@ -17,14 +17,14 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
     [System.Serializable]
     public class ComponentDataShallow
     {
-        public int instanceID { get; set; }
+        public UnityEngine.EntityId instanceID { get; set; } = UnityEngine.EntityId.None;
         public string typeName { get; set; } = string.Empty;
         public Enabled isEnabled { get; set; }
 
         public ComponentDataShallow() { }
         public ComponentDataShallow(UnityEngine.Component component)
         {
-            instanceID = component.GetInstanceID();
+            instanceID = component.GetEntityId();
             typeName = component.GetType().GetTypeId();
             isEnabled = component is UnityEngine.Behaviour behaviour
                 ? (behaviour.enabled ? Enabled.True : Enabled.False)
@@ -49,3 +49,4 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
             => enabled == ComponentDataShallow.Enabled.True;
     }
 }
+#endif

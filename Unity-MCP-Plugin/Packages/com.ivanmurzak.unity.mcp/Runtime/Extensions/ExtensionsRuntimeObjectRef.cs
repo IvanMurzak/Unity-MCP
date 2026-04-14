@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+#if UNITY_6000_5_OR_NEWER
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
@@ -21,13 +22,9 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
                 return null;
 
 #if UNITY_EDITOR
-            if (objectRef.InstanceID != 0)
+            if (objectRef.InstanceID != UnityEngine.EntityId.None)
             {
-#if UNITY_6000_3_OR_NEWER
-                return UnityEditor.EditorUtility.EntityIdToObject((UnityEngine.EntityId)objectRef.InstanceID);
-#else
-                return UnityEditor.EditorUtility.InstanceIDToObject(objectRef.InstanceID);
-#endif
+                return UnityEditor.EditorUtility.EntityIdToObject(objectRef.InstanceID);
             }
 #endif
             return null;
@@ -38,3 +35,4 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
         }
     }
 }
+#endif

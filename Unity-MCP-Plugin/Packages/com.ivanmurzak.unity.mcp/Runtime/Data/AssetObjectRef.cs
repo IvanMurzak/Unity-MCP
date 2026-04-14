@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+#if UNITY_6000_5_OR_NEWER
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -42,7 +43,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
         }
         [JsonInclude, JsonPropertyName(ObjectRefProperty.InstanceID)]
         [Description("instanceID of the UnityEngine.Object. If this is '0' and 'assetPath' and 'assetGuid' is not provided, empty or null, then it will be used as 'null'.")]
-        public override int InstanceID { get; set; } = 0;
+        public override UnityEngine.EntityId InstanceID { get; set; } = UnityEngine.EntityId.None;
 
         [JsonInclude, JsonPropertyName(AssetObjectRefProperty.AssetType)]
         [Description("Type of the asset.")]
@@ -56,8 +57,8 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
         [Description("Unique identifier for the asset.")]
         public string? AssetGuid { get; set; }
 
-        public AssetObjectRef() : this(id: 0) { }
-        public AssetObjectRef(int id) => InstanceID = id;
+        public AssetObjectRef() : this(id: UnityEngine.EntityId.None) { }
+        public AssetObjectRef(UnityEngine.EntityId id) => InstanceID = id;
 #if UNITY_EDITOR
         public AssetObjectRef(string assetPath) : this(
             UnityEditor.AssetDatabase.LoadAssetAtPath(
@@ -81,7 +82,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
                 if (!obj.IsAsset())
                 {
                     if (throwIfNotAnAsset)
-                        throw new ArgumentException($"Provided object (InstanceID={obj.GetInstanceID()}) is not an asset. Type: {obj.GetType().GetTypeId()}");
+                        throw new ArgumentException($"Provided object (InstanceID={obj.GetEntityId()}) is not an asset. Type: {obj.GetType().GetTypeId()}");
                     return;
                 }
                 AssetType = obj.GetType();
@@ -95,7 +96,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 
         public override bool IsValid(out string? error)
         {
-            if (InstanceID != 0)
+            if (InstanceID != UnityEngine.EntityId.None)
             {
                 error = null;
                 return true;
@@ -121,7 +122,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
         public override string ToString()
         {
             var stringBuilder = new StringBuilder();
-            if (InstanceID != 0)
+            if (InstanceID != UnityEngine.EntityId.None)
                 stringBuilder.Append($"{ObjectRefProperty.InstanceID}={InstanceID}");
 
             if (!StringUtils.IsNullOrEmpty(AssetPath))
@@ -144,3 +145,4 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
         }
     }
 }
+#endif

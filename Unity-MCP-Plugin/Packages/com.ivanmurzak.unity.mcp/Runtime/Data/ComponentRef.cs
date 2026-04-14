@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+#if UNITY_6000_5_OR_NEWER
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -42,7 +43,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 
         public override bool IsValid(out string? error)
         {
-            if (InstanceID != 0)
+            if (InstanceID != UnityEngine.EntityId.None)
             {
                 error = null;
                 return true;
@@ -62,9 +63,9 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
         }
 
         public ComponentRef() { }
-        public ComponentRef(int instanceID)
+        public ComponentRef(UnityEngine.EntityId entityId)
         {
-            this.InstanceID = instanceID;
+            this.InstanceID = entityId;
         }
         public ComponentRef(UnityEngine.Component? component) : base(component)
         {
@@ -79,7 +80,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 
         public override string ToString()
         {
-            if (InstanceID != 0)
+            if (InstanceID != UnityEngine.EntityId.None)
                 return $"Component {ObjectRefProperty.InstanceID}='{InstanceID}'";
             if (Index >= 0)
                 return $"Component {ComponentRefProperty.Index}='{Index}'";
@@ -89,3 +90,4 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
         }
     }
 }
+#endif

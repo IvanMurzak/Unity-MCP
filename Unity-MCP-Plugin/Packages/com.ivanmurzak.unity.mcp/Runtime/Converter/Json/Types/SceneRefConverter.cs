@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+#if UNITY_6000_5_OR_NEWER
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -42,7 +43,7 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
                     switch (propertyName)
                     {
                         case ObjectRef.ObjectRefProperty.InstanceID:
-                            sceneRef.InstanceID = reader.GetInt32();
+                            sceneRef.InstanceID = UnityEngine.EntityId.FromULong(reader.GetUInt64());
                             break;
                         case SceneRef.SceneRefProperty.Path:
                             sceneRef.Path = reader.GetString() ?? string.Empty;
@@ -76,7 +77,7 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
             writer.WriteStartObject();
 
             // Write the "instanceID" property
-            writer.WriteNumber(ObjectRef.ObjectRefProperty.InstanceID, value.InstanceID);
+            writer.WriteNumber(ObjectRef.ObjectRefProperty.InstanceID, UnityEngine.EntityId.ToULong(value.InstanceID));
 
             // Write the "path" property
             if (!string.IsNullOrEmpty(value.Path))
@@ -89,3 +90,4 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
         }
     }
 }
+#endif

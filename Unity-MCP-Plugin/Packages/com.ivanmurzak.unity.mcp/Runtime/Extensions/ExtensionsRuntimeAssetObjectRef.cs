@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+#if UNITY_6000_5_OR_NEWER
 using System.Linq;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using UnityEngine;
@@ -31,21 +32,13 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
                 throw new System.ArgumentNullException(nameof(type));
 
 #if UNITY_EDITOR
-            if (assetObjectRef.InstanceID != 0)
+            if (assetObjectRef.InstanceID != UnityEngine.EntityId.None)
             {
-#if UNITY_6000_3_OR_NEWER
-                var obj = UnityEditor.EditorUtility.EntityIdToObject((UnityEngine.EntityId)assetObjectRef.InstanceID);
-#else
-                var obj = UnityEditor.EditorUtility.InstanceIDToObject(assetObjectRef.InstanceID);
-#endif
+                var obj = UnityEditor.EditorUtility.EntityIdToObject(assetObjectRef.InstanceID);
                 if (obj != null && type.IsAssignableFrom(obj.GetType()))
                     return obj;
 
-#if UNITY_6000_3_OR_NEWER
-                var assetPath = UnityEditor.AssetDatabase.GetAssetPath((UnityEngine.EntityId)assetObjectRef.InstanceID);
-#else
                 var assetPath = UnityEditor.AssetDatabase.GetAssetPath(assetObjectRef.InstanceID);
-#endif
                 var asset = UnityEditor.AssetDatabase.LoadAllAssetsAtPath(assetPath)
                     .FirstOrDefault(asset => asset != null && type.IsAssignableFrom(asset.GetType()));
                 if (asset != null)
@@ -85,13 +78,9 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
                 return null;
 
 #if UNITY_EDITOR
-            if (assetObjectRef.InstanceID != 0)
+            if (assetObjectRef.InstanceID != UnityEngine.EntityId.None)
             {
-#if UNITY_6000_3_OR_NEWER
-                var obj = UnityEditor.EditorUtility.EntityIdToObject((UnityEngine.EntityId)assetObjectRef.InstanceID);
-#else
-                var obj = UnityEditor.EditorUtility.InstanceIDToObject(assetObjectRef.InstanceID);
-#endif
+                var obj = UnityEditor.EditorUtility.EntityIdToObject(assetObjectRef.InstanceID);
                 return obj as T;
             }
 
@@ -133,3 +122,4 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
         }
     }
 }
+#endif

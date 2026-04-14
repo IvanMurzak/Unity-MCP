@@ -9,14 +9,14 @@
 */
 
 #nullable enable
+#if UNITY_6000_5_OR_NEWER
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text.Json.Serialization;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
-    [Description("Scene reference. " +
-        "Used to find a Scene.")]
+    [Description("Scene reference. Used to find a Scene.")]
     public class SceneRef : ObjectRef
     {
         public static partial class SceneRefProperty
@@ -36,15 +36,16 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
         public int BuildIndex { get; set; } = -1;
 
         public SceneRef() { }
-        public SceneRef(int instanceID)
+        public SceneRef(UnityEngine.EntityId entityId)
         {
-            this.InstanceID = instanceID;
+            this.InstanceID = entityId;
         }
         public SceneRef(UnityEngine.SceneManagement.Scene scene)
         {
-            this.InstanceID = scene.GetHashCode();
+            this.InstanceID = UnityEngine.EntityId.FromULong((ulong)scene.GetHashCode());
             this.Path = scene.path;
             this.BuildIndex = scene.buildIndex;
         }
     }
 }
+#endif
