@@ -375,7 +375,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
       var parameters = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
       Assert.IsNotNull(parameters, "Parameters should be deserialized.");
 
-      var firstPlaneInstanceId = UnityEngine.EntityId.FromULong((ulong)parameters!["componentDiff"]
+      var firstPlaneInstanceId = EntityIdUtils.FromNumber(parameters!["componentDiff"]
           .GetProperty("fields")
           .EnumerateArray().First() // planets field
           .GetProperty("value")     // planets array value
