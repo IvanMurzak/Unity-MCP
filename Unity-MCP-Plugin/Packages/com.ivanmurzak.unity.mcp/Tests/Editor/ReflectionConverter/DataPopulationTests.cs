@@ -137,10 +137,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     componentDiff.AddField(SerializedMember.FromValue(reflector: reflector, name: "materialList", type: typeof(List<Material>), value: new object[] { matRefArrayItem, matRefArrayItem }));
                     componentDiff.AddField(SerializedMember.FromValue(reflector: reflector, name: "gameObjectList", type: typeof(List<GameObject>), value: new object[] { goRefArrayItem, prefabRefArrayItem }));
 
-                    var options = new System.Text.Json.JsonSerializerOptions { WriteIndented = true };
-                    var gameObjectRefJson = System.Text.Json.JsonSerializer.Serialize(targetGoRef, options);
-                    var componentRefJson = System.Text.Json.JsonSerializer.Serialize(new ComponentRef(addCompEx.Component!.GetEntityId()), options);
-                    var componentDiffJson = System.Text.Json.JsonSerializer.Serialize(componentDiff, options);
+                    // Use the reflector's JsonSerializer so custom converters
+                    // (EntityIdConverter, GameObjectRefConverter, etc.) are applied —
+                    // otherwise EntityId serializes as "{}" because its only field
+                    // (m_rawData) is private.
+                    var gameObjectRefJson = reflector.JsonSerializer.Serialize(targetGoRef);
+                    var componentRefJson = reflector.JsonSerializer.Serialize(new ComponentRef(addCompEx.Component!.GetEntityId()));
+                    var componentDiffJson = reflector.JsonSerializer.Serialize(componentDiff);
 
                     var json = JsonTestUtils.Fill(@"{
                             ""gameObjectRef"": {gameObjectRef},

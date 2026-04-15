@@ -131,9 +131,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
                     soModification.AddField(SerializedMember.FromValue(reflector: reflector, name: nameof(DataFieldPopulationTestScriptableObject.materialList), type: typeof(List<Material>), value: new object[] { matRefArrayItem, matRefArrayItem }));
                     soModification.AddField(SerializedMember.FromValue(reflector: reflector, name: nameof(DataFieldPopulationTestScriptableObject.gameObjectList), type: typeof(List<GameObject>), value: new object[] { goRefArrayItem, prefabRefArrayItem }));
-                    var options = new System.Text.Json.JsonSerializerOptions { WriteIndented = true };
-                    var assetRefJson = System.Text.Json.JsonSerializer.Serialize(new AssetObjectRef() { AssetPath = soEx.AssetPath }, options);
-                    var contentJson = System.Text.Json.JsonSerializer.Serialize(soModification, options);
+                    // Use the reflector's JsonSerializer so custom converters
+                    // (EntityIdConverter, AssetObjectRefConverter, etc.) are applied —
+                    // otherwise EntityId serializes as "{}" because its only field
+                    // (m_rawData) is private.
+                    var assetRefJson = reflector.JsonSerializer.Serialize(new AssetObjectRef() { AssetPath = soEx.AssetPath });
+                    var contentJson = reflector.JsonSerializer.Serialize(soModification);
 
                     var json = JsonTestUtils.Fill(@"{
                             ""assetRef"": {assetRef},

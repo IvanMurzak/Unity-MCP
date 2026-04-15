@@ -38,9 +38,13 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         /// <summary>
         /// Builds an <see cref="EntityId"/> from a legacy int instance ID
         /// (the form produced by <see cref="EntityId.ToString"/>).
+        /// Zero maps to <see cref="EntityId.None"/> — both serialization forms
+        /// (legacy int "0" and raw ulong 0) represent the null entity.
         /// </summary>
         public static EntityId FromLegacyInstanceId(int instanceId)
-            => EntityId.FromULong(EntityIdMagic | (uint)instanceId);
+            => instanceId == 0
+                ? EntityId.None
+                : EntityId.FromULong(EntityIdMagic | (uint)instanceId);
 
         /// <summary>
         /// Builds an <see cref="EntityId"/> from a numeric value that may be either:
@@ -58,6 +62,41 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         /// (<see cref="EntityId.ToULong"/>).
         /// </summary>
         public static EntityId FromRawValue(ulong value) => EntityId.FromULong(value);
+
+        /// <summary>
+        /// Builds an <see cref="EntityId"/> from a textual numeric representation.
+        /// Accepts legacy int form ("-4996"), raw ulong form ("568105584918790144"),
+        /// and JSON floating-point variants ("568105584918790144.0", "5.6810558E+17")
+        /// that STJ can produce when round-tripping large integers through
+        /// <see cref="System.Text.Json.JsonElement"/>.
+        /// </summary>
+        public static EntityId FromString(string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                return EntityId.None;
+
+            const System.Globalization.NumberStyles IntStyle = System.Globalization.NumberStyles.Integer;
+            const System.Globalization.NumberStyles FloatStyle = System.Globalization.NumberStyles.Float;
+            var culture = System.Globalization.CultureInfo.InvariantCulture;
+
+            if (long.TryParse(value, IntStyle, culture, out var signed))
+                return FromNumber(signed);
+
+            if (ulong.TryParse(value, IntStyle, culture, out var unsigned))
+                return FromRawValue(unsigned);
+
+            // Decimal / exponent form — parse via decimal to preserve integer
+            // precision up to 28 digits (more than enough for any EntityId).
+            if (decimal.TryParse(value, FloatStyle, culture, out var dec) && dec == decimal.Truncate(dec))
+            {
+                if (dec >= long.MinValue && dec <= long.MaxValue)
+                    return FromNumber((long)dec);
+                if (dec >= 0 && dec <= ulong.MaxValue)
+                    return FromRawValue((ulong)dec);
+            }
+
+            throw new System.FormatException($"EntityId value '{value}' is not a valid integer.");
+        }
     }
 }
 #endif

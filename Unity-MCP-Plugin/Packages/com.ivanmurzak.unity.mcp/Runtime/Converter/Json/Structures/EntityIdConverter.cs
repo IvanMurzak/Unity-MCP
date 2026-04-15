@@ -47,13 +47,32 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
         // from EntityId.ToULong) both round-trip correctly.
         internal static EntityId ReadEntityIdValue(ref Utf8JsonReader reader)
         {
-            if (reader.TryGetInt32(out var intValue))
-                return EntityIdUtils.FromLegacyInstanceId(intValue);
+            if (reader.TryGetInt64(out var signedValue))
+                return EntityIdUtils.FromNumber(signedValue);
 
             if (reader.TryGetUInt64(out var unsignedValue))
                 return EntityIdUtils.FromRawValue(unsignedValue);
 
-            return EntityIdUtils.FromNumber(reader.GetInt64());
+            // Fallback for numeric tokens STJ 8's TryGet* helpers reject
+            // (e.g. numbers re-serialized through JsonElement that end up with
+            // a fractional trailing zero). Parse the raw token text ourselves.
+            byte[] rawBytes;
+            if (reader.HasValueSequence)
+            {
+                var seq = reader.ValueSequence;
+                rawBytes = new byte[seq.Length];
+                var offset = 0;
+                foreach (var mem in seq)
+                {
+                    mem.Span.CopyTo(new Span<byte>(rawBytes, offset, mem.Length));
+                    offset += mem.Length;
+                }
+            }
+            else
+            {
+                rawBytes = reader.ValueSpan.ToArray();
+            }
+            return EntityIdUtils.FromString(System.Text.Encoding.UTF8.GetString(rawBytes));
         }
 
         public override void Write(Utf8JsonWriter writer, EntityId value, JsonSerializerOptions options)
