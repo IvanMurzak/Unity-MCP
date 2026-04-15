@@ -13,6 +13,7 @@ using System;
 using System.ComponentModel;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization.Metadata;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 
@@ -132,7 +133,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     }
                 }
             }
-            return schema.ToJsonString(new JsonSerializerOptions { WriteIndented = writeIndented });
+            return schema.ToJsonString(new JsonSerializerOptions
+            {
+                WriteIndented = writeIndented,
+                TypeInfoResolver = new DefaultJsonTypeInfoResolver()
+            });
         }
     }
 }

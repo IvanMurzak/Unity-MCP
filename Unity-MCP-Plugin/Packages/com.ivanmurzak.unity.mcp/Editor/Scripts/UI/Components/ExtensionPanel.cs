@@ -16,6 +16,7 @@ using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization.Metadata;
 using System.Threading.Tasks;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEditor;
@@ -246,7 +247,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             }
             dependencies[packageId] = version;
 
-            var options = new JsonSerializerOptions { WriteIndented = true };
+            var options = new JsonSerializerOptions
+            {
+                WriteIndented = true,
+                TypeInfoResolver = new DefaultJsonTypeInfoResolver()
+            };
             File.WriteAllText(manifestPath, manifest.ToJsonString(options));
             return true;
         }
