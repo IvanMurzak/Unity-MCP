@@ -45,7 +45,7 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
                     switch (propertyName)
                     {
                         case ObjectRef.ObjectRefProperty.InstanceID:
-                            result.InstanceID = UnityEngine.EntityId.FromULong(reader.GetUInt64());
+                            result.InstanceID = EntityIdConverter.ReadEntityIdValue(ref reader);
                             break;
                         case GameObjectRef.GameObjectRefProperty.Path:
                             result.Path = reader.GetString();

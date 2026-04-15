@@ -42,7 +42,7 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
                     switch (propertyName)
                     {
                         case ObjectRef.ObjectRefProperty.InstanceID:
-                            objectRef.InstanceID = UnityEngine.EntityId.FromULong(reader.GetUInt64());
+                            objectRef.InstanceID = EntityIdConverter.ReadEntityIdValue(ref reader);
                             break;
                         default:
                             throw new JsonException($"Unexpected property name: {propertyName}. "
