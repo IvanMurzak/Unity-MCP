@@ -49,6 +49,7 @@ namespace com.IvanMurzak.Unity.MCP
             reflector.Converters.Add(new UnityEngine_Rect_ReflectionConverter());
             reflector.Converters.Add(new UnityEngine_RectInt_ReflectionConverter());
             reflector.Converters.Add(new UnityEngine_Gradient_ReflectionConverter());
+            reflector.Converters.Add(new UnityEngine_Scene_ReflectionConverter());
             reflector.Converters.Add(new UnityEngine_GradientColorKey_ReflectionConverter());
             reflector.Converters.Add(new UnityEngine_GradientAlphaKey_ReflectionConverter());
 #if UNITY_6000_5_OR_NEWER
