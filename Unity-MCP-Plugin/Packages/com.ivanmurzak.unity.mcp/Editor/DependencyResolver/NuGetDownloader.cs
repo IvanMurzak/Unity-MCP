@@ -23,6 +23,8 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
     /// </summary>
     static class NuGetDownloader
     {
+        const string Tag = NuGetConfig.LogTag;
+
         static readonly HttpClient httpClient = CreateHttpClient();
 
         static HttpClient CreateHttpClient()
@@ -47,11 +49,11 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
             NuGetCache.EnsureCacheDirectory();
             var cachedPath = NuGetCache.GetCachedPath(package);
 
-            if (NuGetCache.IsCached(package))
+            if (File.Exists(cachedPath))
                 return cachedPath;
 
             var url = package.DownloadUrl;
-            Debug.Log($"[NuGet] Downloading {package.Id} {package.Version} from {url}");
+            Debug.Log($"{Tag} Downloading {package.Id} {package.Version} from {url}");
 
             try
             {
@@ -64,12 +66,11 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
                         stream.CopyTo(fileStream);
                     }
                 }
-                Debug.Log($"[NuGet] Downloaded {package.Id} {package.Version} ({new FileInfo(cachedPath).Length / 1024} KB)");
+                Debug.Log($"{Tag} Downloaded {package.Id} {package.Version} ({new FileInfo(cachedPath).Length / 1024} KB)");
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[NuGet] Failed to download {package}: {ex.Message}");
-                // Clean up partial download
+                Debug.LogError($"{Tag} Failed to download {package}: {ex.Message}");
                 if (File.Exists(cachedPath))
                     File.Delete(cachedPath);
                 throw;

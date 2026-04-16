@@ -40,7 +40,14 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
         /// The .nupkg download URL from NuGet v3 flat container API.
         /// </summary>
         public string DownloadUrl
-            => $"{NuGetConfig.NuGetBaseUrl}/{Id.ToLowerInvariant()}/{Version.ToLowerInvariant()}/{Id.ToLowerInvariant()}.{Version.ToLowerInvariant()}.nupkg";
+        {
+            get
+            {
+                var lowerId = Id.ToLowerInvariant();
+                var lowerVersion = Version.ToLowerInvariant();
+                return $"{NuGetConfig.NuGetBaseUrl}/{lowerId}/{lowerVersion}/{lowerId}.{lowerVersion}.nupkg";
+            }
+        }
 
         /// <summary>
         /// Cached .nupkg filename.

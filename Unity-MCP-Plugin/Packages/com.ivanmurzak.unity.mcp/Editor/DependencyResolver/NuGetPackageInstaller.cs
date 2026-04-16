@@ -24,7 +24,7 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
     /// </summary>
     static class NuGetPackageInstaller
     {
-        const string Tag = "[NuGet]";
+        const string Tag = NuGetConfig.LogTag;
 
         /// <summary>
         /// Resolved (id → version) closure for the current session, including both top-level
@@ -72,7 +72,6 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
                 // the package is already on disk, so GetDependencies() can build the full closure.
                 var nupkgPath = NuGetDownloader.Download(package);
 
-                // Resolve and install transitive dependencies FIRST.
                 var dependencies = NuGetExtractor.GetDependencies(nupkgPath);
                 foreach (var dep in dependencies)
                     anyInstalled |= Install(dep, visitedIds);

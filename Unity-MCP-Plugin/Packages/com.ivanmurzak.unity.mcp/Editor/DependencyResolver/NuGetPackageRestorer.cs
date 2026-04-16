@@ -25,7 +25,7 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
     /// </summary>
     static class NuGetPackageRestorer
     {
-        const string Tag = "[NuGet]";
+        const string Tag = NuGetConfig.LogTag;
 
         /// <summary>
         /// Performs a full package restore. Returns true if any packages were installed
@@ -38,7 +38,6 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
             try
             {
                 NuGetPackageInstaller.ResetSession();
-                UnityAssemblyResolver.InvalidateCache();
 
                 // Ensure install directory exists
                 if (!Directory.Exists(NuGetConfig.InstallPath))
@@ -49,6 +48,11 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
                 // including for packages already on disk from a previous session.
                 foreach (var package in NuGetConfig.Packages)
                     anyChanged |= NuGetPackageInstaller.Install(package);
+
+                // Invalidate assembly cache only after packages may have changed,
+                // so RemoveUnnecessaryPackages sees the current state.
+                if (anyChanged)
+                    UnityAssemblyResolver.InvalidateCache();
 
                 // Remove stale-version directories of anything in the closure
                 // and packages whose DLLs are now all provided by Unity.
@@ -92,20 +96,11 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
             // versions of BOTH configured packages and transitive dependencies
             // (e.g., "Microsoft.AspNetCore.SignalR.Common.8.0.15" + ".10.0.3") — any duplicate
             // (id → multiple versions) would produce duplicate-assembly conflicts in Unity.
-            var dirCountByPackageId = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            var seenPackageIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var dir in Directory.GetDirectories(NuGetConfig.InstallPath))
             {
                 var packageId = NuGetPackageInstaller.ExtractPackageIdFromDirName(Path.GetFileName(dir));
-                if (packageId == null)
-                    continue;
-
-                dirCountByPackageId.TryGetValue(packageId, out var count);
-                dirCountByPackageId[packageId] = count + 1;
-            }
-
-            foreach (var count in dirCountByPackageId.Values)
-            {
-                if (count > 1)
+                if (packageId != null && !seenPackageIds.Add(packageId))
                     return false;
             }
 

@@ -46,7 +46,6 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
                 {
                     var entryName = entry.FullName.Replace('\\', '/');
 
-                    // Only process lib/ entries
                     if (!entryName.StartsWith("lib/", StringComparison.OrdinalIgnoreCase))
                         continue;
 
@@ -54,7 +53,6 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
                     if (string.IsNullOrEmpty(entry.Name) || ShouldSkip(entryName))
                         continue;
 
-                    // Parse framework from path: lib/{framework}/{file}
                     var parts = entryName.Split('/');
                     if (parts.Length < 3)
                         continue;
@@ -127,33 +125,11 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
                     {
                         var bestGroup = SelectBestDependencyGroup(groups, ns);
                         if (bestGroup != null)
-                        {
-                            foreach (var dep in bestGroup.Elements(ns + "dependency"))
-                            {
-                                var id = dep.Attribute("id")?.Value;
-                                var version = dep.Attribute("version")?.Value;
-                                if (id != null && version != null)
-                                {
-                                    // Clean version range syntax: [1.0.0, ) → 1.0.0
-                                    version = CleanVersionRange(version);
-                                    dependencies.Add(new NuGetPackage(id, version));
-                                }
-                            }
-                        }
+                            AddDependenciesFromElements(bestGroup.Elements(ns + "dependency"), dependencies);
                     }
                     else
                     {
-                        // No groups — flat dependency list
-                        foreach (var dep in dependenciesElement.Elements(ns + "dependency"))
-                        {
-                            var id = dep.Attribute("id")?.Value;
-                            var version = dep.Attribute("version")?.Value;
-                            if (id != null && version != null)
-                            {
-                                version = CleanVersionRange(version);
-                                dependencies.Add(new NuGetPackage(id, version));
-                            }
-                        }
+                        AddDependenciesFromElements(dependenciesElement.Elements(ns + "dependency"), dependencies);
                     }
                 }
             }
@@ -188,14 +164,19 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
         /// </summary>
         static XElement? SelectBestDependencyGroup(List<XElement> groups, XNamespace ns)
         {
+            // Pre-compute normalized TFMs to avoid repeated NormalizeTfm calls in the inner loop.
+            var normalizedGroups = new List<(string tfm, XElement group)>(groups.Count);
+            foreach (var group in groups)
+            {
+                var tfm = group.Attribute("targetFramework")?.Value ?? "";
+                normalizedGroups.Add((NormalizeTfm(tfm), group));
+            }
+
             foreach (var preferred in NuGetConfig.TargetFrameworkPriority)
             {
-                foreach (var group in groups)
+                foreach (var (tfm, group) in normalizedGroups)
                 {
-                    var tfm = group.Attribute("targetFramework")?.Value ?? "";
-                    // NuSpec uses format like ".NETStandard2.1" or "netstandard2.1"
-                    var normalized = NormalizeTfm(tfm);
-                    if (string.Equals(normalized, preferred, StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(tfm, preferred, StringComparison.OrdinalIgnoreCase))
                         return group;
                 }
             }
@@ -214,10 +195,6 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
             if (string.IsNullOrEmpty(tfm))
                 return "";
 
-            // Already in short format
-            if (tfm.StartsWith("net", StringComparison.OrdinalIgnoreCase) && !tfm.StartsWith(".NET", StringComparison.Ordinal))
-                return tfm.ToLowerInvariant();
-
             // .NETStandard,Version=v2.1 or .NETStandard2.1
             if (tfm.StartsWith(".NETStandard", StringComparison.OrdinalIgnoreCase))
             {
@@ -235,6 +212,17 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
             }
 
             return tfm.ToLowerInvariant();
+        }
+
+        static void AddDependenciesFromElements(IEnumerable<XElement> elements, List<NuGetPackage> dependencies)
+        {
+            foreach (var dep in elements)
+            {
+                var id = dep.Attribute("id")?.Value;
+                var version = dep.Attribute("version")?.Value;
+                if (id != null && version != null)
+                    dependencies.Add(new NuGetPackage(id, CleanVersionRange(version)));
+            }
         }
 
         /// <summary>

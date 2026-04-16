@@ -18,6 +18,9 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
     /// </summary>
     static class NuGetConfig
     {
+        /// <summary>Log tag shared across all DependencyResolver classes.</summary>
+        public const string LogTag = "[NuGet]";
+
         /// <summary>
         /// NuGet v3 flat container base URL.
         /// Download URL pattern: {base}/{id}/{version}/{id}.{version}.nupkg

@@ -30,7 +30,7 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
     /// </summary>
     static class NuGetPluginConfigurator
     {
-        const string Tag = "[NuGet]";
+        const string Tag = NuGetConfig.LogTag;
 
         /// <summary>
         /// Configures PluginImporter for all DLLs in the NuGet install directory.
