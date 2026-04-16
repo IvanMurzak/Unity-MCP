@@ -9,7 +9,7 @@
 */
 
 #nullable enable
-#if !UNITY_EDITOR && UNITY_6000_5_OR_NEWER
+#if !UNITY_EDITOR && !UNITY_6000_5_OR_NEWER
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -33,9 +33,9 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
                 return scene.Value.GetRootGameObjects();
             }
         }
-        public static GameObject? FindByInstanceID(EntityId instanceID)
+        public static GameObject? FindByInstanceID(int instanceID)
         {
-            if (instanceID == EntityId.None)
+            if (instanceID == 0)
                 return null;
 
             // Not supported in runtime build
