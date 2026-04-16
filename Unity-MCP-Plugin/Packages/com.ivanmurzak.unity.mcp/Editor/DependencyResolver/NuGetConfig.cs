@@ -69,8 +69,8 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
             // (forward-compatible with Unity 6.6's built-in 8.0.0). Roslyn 4.14 requires
             // SCI 9.0.0 which clashes with Unity's built-in.
             new NuGetPackage("Microsoft.CodeAnalysis.CSharp",                         "4.8.0"),
-            new NuGetPackage("Microsoft.Extensions.Caching.Abstractions",             "8.0.0"),
-            new NuGetPackage("Microsoft.Extensions.Hosting.Abstractions",             "8.0.1"),
+            new NuGetPackage("Microsoft.Extensions.Caching.Abstractions",             "8.0.0",  includeInBuild: true),
+            new NuGetPackage("Microsoft.Extensions.Hosting.Abstractions",             "8.0.1",  includeInBuild: true),
         };
 
         /// <summary>
