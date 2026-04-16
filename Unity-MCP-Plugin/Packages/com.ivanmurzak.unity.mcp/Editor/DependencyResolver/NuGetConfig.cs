@@ -49,6 +49,7 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
             // v8 pinned to match what McpPlugin.dll (netstandard2.1) is compiled against.
             // Higher versions cause MissingMethodException at runtime in Unity versions
             // whose built-in BCL doesn't override our NuGet install (e.g. Unity 6.5).
+            new NuGetPackage("com.IvanMurzak.McpPlugin",                              "6.0.0",  includeInBuild: true),
             new NuGetPackage("System.Text.Json",                                      "8.0.5",  includeInBuild: true),
             new NuGetPackage("Microsoft.AspNetCore.SignalR.Client",                   "8.0.15", includeInBuild: true),
             new NuGetPackage("Microsoft.AspNetCore.SignalR.Protocols.Json",           "8.0.15", includeInBuild: true),
