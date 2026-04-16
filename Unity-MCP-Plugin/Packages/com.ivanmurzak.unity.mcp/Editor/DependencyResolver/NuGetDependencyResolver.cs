@@ -12,7 +12,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using com.IvanMurzak.McpPlugin.Utils;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEngine;
@@ -104,9 +103,9 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
         {
             var args = ParseCommandLineArguments();
 
-            var ci  = GetArgOrEnv(args, "CI");
+            var ci = GetArgOrEnv(args, "CI");
             var gha = GetArgOrEnv(args, "GITHUB_ACTIONS");
-            var az  = GetArgOrEnv(args, "TF_BUILD");
+            var az = GetArgOrEnv(args, "TF_BUILD");
 
             return IsTrue(ci) || IsTrue(gha) || IsTrue(az);
 
