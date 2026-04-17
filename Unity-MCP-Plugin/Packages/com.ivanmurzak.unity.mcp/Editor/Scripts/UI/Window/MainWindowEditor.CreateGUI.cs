@@ -312,12 +312,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private void SetupSettingsSection(VisualElement root)
         {
-            var dropdownLogLevel = root.Q<EnumField>("dropdownLogLevel");
-            dropdownLogLevel.value = UnityMcpPluginEditor.LogLevel;
+            // Populate in code rather than via UXML type="..." so the UXML importer
+            // doesn't need to resolve com.IvanMurzak.Unity.MCP.Runtime at asset-import
+            // time (the Runtime asmdef is gated by UNITY_MCP_READY, which is set later
+            // by the NuGet resolver — resolving it during UXML import produces a
+            // TypeLoadException on the very first package import).
+            var dropdownLogLevel = root.Q<DropdownField>("dropdownLogLevel");
+            dropdownLogLevel.choices = Enum.GetNames(typeof(LogLevel)).ToList();
+            dropdownLogLevel.value = UnityMcpPluginEditor.LogLevel.ToString();
             dropdownLogLevel.tooltip = "The minimum level of messages to log. Debug includes all messages, while Critical includes only the most severe.";
             dropdownLogLevel.RegisterValueChangedCallback(evt =>
             {
-                UnityMcpPluginEditor.LogLevel = evt.newValue as LogLevel? ?? LogLevel.Warning;
+                UnityMcpPluginEditor.LogLevel = Enum.TryParse<LogLevel>(evt.newValue, out var parsed)
+                    ? parsed
+                    : LogLevel.Warning;
                 SaveChanges($"[AI Game Developer] LogLevel Changed: {evt.newValue}");
             });
 
