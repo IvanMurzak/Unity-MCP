@@ -11,7 +11,7 @@
 #nullable enable
 using System.IO;
 
-namespace com.IvanMurzak.Unity.MCP.DependencyResolver
+namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 {
     /// <summary>
     /// Manages the local .nupkg file cache in Library/NuGetCache/.

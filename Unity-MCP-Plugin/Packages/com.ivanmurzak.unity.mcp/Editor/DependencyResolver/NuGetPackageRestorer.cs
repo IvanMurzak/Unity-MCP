@@ -15,7 +15,7 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 
-namespace com.IvanMurzak.Unity.MCP.DependencyResolver
+namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 {
     /// <summary>
     /// Restores NuGet packages on domain reload.

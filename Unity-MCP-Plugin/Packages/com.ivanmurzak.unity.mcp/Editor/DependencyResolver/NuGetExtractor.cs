@@ -17,7 +17,7 @@ using System.Linq;
 using System.Xml.Linq;
 using UnityEngine;
 
-namespace com.IvanMurzak.Unity.MCP.DependencyResolver
+namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 {
     /// <summary>
     /// Extracts DLLs from .nupkg files (which are zip archives).
@@ -28,7 +28,8 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
     {
         /// <summary>
         /// Extracts DLLs from a .nupkg file to the install directory.
-        /// Returns the list of extracted DLL file paths (relative to project root).
+        /// Returns the list of extracted DLL file paths, joined under <paramref name="installDirectory"/>
+        /// (so the result is relative or absolute in the same form as the caller's install directory).
         /// </summary>
         public static List<string> ExtractDlls(string nupkgPath, string installDirectory)
         {

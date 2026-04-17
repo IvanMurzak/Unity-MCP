@@ -10,7 +10,7 @@
 
 #nullable enable
 
-namespace com.IvanMurzak.Unity.MCP.DependencyResolver
+namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 {
     /// <summary>
     /// Configuration for the NuGet dependency resolver.
@@ -63,6 +63,8 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
             new NuGetPackage("Microsoft.Extensions.DependencyInjection",              "8.0.1",  includeInBuild: true),
             new NuGetPackage("Microsoft.Extensions.DependencyInjection.Abstractions", "8.0.2",  includeInBuild: true),
             new NuGetPackage("Microsoft.Extensions.Options",                          "8.0.2",  includeInBuild: true),
+            new NuGetPackage("Microsoft.Extensions.Caching.Abstractions",             "8.0.0",  includeInBuild: true),
+            new NuGetPackage("Microsoft.Extensions.Hosting.Abstractions",             "8.0.1",  includeInBuild: true),
             new NuGetPackage("R3",                                                    "1.3.0",  includeInBuild: true),
 
             // --- Editor-only dependencies (excluded from builds) ---
@@ -71,8 +73,6 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
             // (forward-compatible with Unity 6.6's built-in 8.0.0). Roslyn 4.14 requires
             // SCI 9.0.0 which clashes with Unity's built-in.
             new NuGetPackage("Microsoft.CodeAnalysis.CSharp",                         "4.8.0"),
-            new NuGetPackage("Microsoft.Extensions.Caching.Abstractions",             "8.0.0",  includeInBuild: true),
-            new NuGetPackage("Microsoft.Extensions.Hosting.Abstractions",             "8.0.1",  includeInBuild: true),
         };
 
         /// <summary>

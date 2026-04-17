@@ -13,7 +13,7 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 
-namespace com.IvanMurzak.Unity.MCP.DependencyResolver
+namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 {
     /// <summary>
     /// Configures PluginImporter settings for NuGet DLLs.
@@ -42,11 +42,23 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
                 return;
 
             var dlls = Directory.GetFiles(NuGetConfig.InstallPath, "*.dll", SearchOption.AllDirectories);
-            foreach (var dllPath in dlls)
+
+            // Batch importer changes so Unity performs a single reimport pass at the end
+            // instead of one reimport per DLL (which was dominating editor startup time
+            // on projects with many NuGet packages).
+            AssetDatabase.StartAssetEditing();
+            try
             {
-                // Convert to Unity asset path (forward slashes, relative to project)
-                var assetPath = dllPath.Replace('\\', '/');
-                ConfigureDll(assetPath);
+                foreach (var dllPath in dlls)
+                {
+                    // Convert to Unity asset path (forward slashes, relative to project)
+                    var assetPath = dllPath.Replace('\\', '/');
+                    ConfigureDll(assetPath);
+                }
+            }
+            finally
+            {
+                AssetDatabase.StopAssetEditing();
             }
         }
 

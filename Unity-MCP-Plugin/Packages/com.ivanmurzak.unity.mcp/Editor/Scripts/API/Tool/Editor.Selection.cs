@@ -33,13 +33,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             public GameObjectRef[]? GameObjects { get; set; }
             [Description("Returns the top level selection, excluding Prefabs.")]
             public ComponentRef[]? Transforms { get; set; }
-            [Description("The actual unfiltered selection from the Scene returned as instance ids instead of objects.")]
+            [Description("The actual unfiltered selection from the Scene returned as entity IDs instead of objects.")]
             public UnityEngine.EntityId[]? InstanceIDs { get; set; }
             [Description("Returns the guids of the selected assets.")]
             public string[]? AssetGUIDs { get; set; }
             [Description("Returns the active game object. (The one shown in the inspector).")]
             public GameObjectRef? ActiveGameObject { get; set; }
-            [Description("Returns the instanceID of the actual object selection. Includes Prefabs, non-modifiable objects")]
+            [Description("Returns the entity ID of the actual object selection. Includes Prefabs, non-modifiable objects")]
             public UnityEngine.EntityId ActiveInstanceID { get; set; }
             [Description("Returns the actual object selection. Includes Prefabs, non-modifiable objects.")]
             public ObjectRef? ActiveObject { get; set; }
@@ -52,12 +52,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 {
                     GameObjects = Selection.gameObjects?.Select(go => new GameObjectRef(go)).ToArray(),
                     Transforms = Selection.transforms?.Select(t => new ComponentRef(t)).ToArray(),
-                    InstanceIDs = Selection.entityIds.Select(x => x).ToArray(),
+                    InstanceIDs = Selection.entityIds.ToArray(),
                     AssetGUIDs = Selection.assetGUIDs,
-                    ActiveGameObject = new GameObjectRef(Selection.activeGameObject),
+                    ActiveGameObject = Selection.activeGameObject != null
+                        ? new GameObjectRef(Selection.activeGameObject)
+                        : null,
                     ActiveInstanceID = Selection.activeEntityId,
-                    ActiveObject = new ObjectRef(Selection.activeObject),
-                    ActiveTransform = new ComponentRef(Selection.activeTransform)
+                    ActiveObject = Selection.activeObject != null
+                        ? new ObjectRef(Selection.activeObject)
+                        : null,
+                    ActiveTransform = Selection.activeTransform != null
+                        ? new ComponentRef(Selection.activeTransform)
+                        : null
                 };
             }
         }

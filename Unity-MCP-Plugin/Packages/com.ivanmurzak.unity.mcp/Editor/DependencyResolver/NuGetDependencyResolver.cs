@@ -16,7 +16,7 @@ using UnityEditor;
 using UnityEditor.Build;
 using UnityEngine;
 
-namespace com.IvanMurzak.Unity.MCP.DependencyResolver
+namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 {
     /// <summary>
     /// Entry point for NuGet dependency management. Runs on every domain reload via [InitializeOnLoad].
@@ -86,9 +86,13 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
             }
             catch (Exception ex)
             {
+                // Do NOT set UNITY_MCP_READY here: if restore/configuration failed, the DLL
+                // layout is unknown/inconsistent, and letting main-plugin assemblies compile
+                // against a partial/mismatched set (via defineConstraints) produces hard-to-
+                // diagnose MissingMethodException / TypeLoadException at runtime. Surface the
+                // failure loud and clear instead, so the user fixes the underlying problem
+                // and retries (the next domain reload will run Restore again).
                 Debug.LogError($"{Tag} Failed: {ex}");
-                // Set the define even on error so the plugin can attempt to compile.
-                EnsureScriptingDefine();
             }
         }
 

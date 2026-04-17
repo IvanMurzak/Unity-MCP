@@ -14,7 +14,7 @@ using System.IO;
 using System.Net.Http;
 using UnityEngine;
 
-namespace com.IvanMurzak.Unity.MCP.DependencyResolver
+namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 {
     /// <summary>
     /// Downloads .nupkg files from the NuGet v3 flat container API.

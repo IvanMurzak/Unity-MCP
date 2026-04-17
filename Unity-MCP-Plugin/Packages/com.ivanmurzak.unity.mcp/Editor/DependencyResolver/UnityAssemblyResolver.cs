@@ -15,7 +15,7 @@ using System.Linq;
 using UnityEditor;
 using UnityEditor.Compilation;
 
-namespace com.IvanMurzak.Unity.MCP.DependencyResolver
+namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 {
     /// <summary>
     /// Detects assemblies that Unity already provides (built-in BCL, engine modules, other packages).
@@ -63,6 +63,14 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
 
             var unityProvided = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
 
+            // Canonicalize the install root to an absolute path once. `assembly.allReferences`
+            // paths are typically absolute, while NuGetConfig.InstallPath is project-relative,
+            // so a plain StartsWith comparison would never match for our own NuGet DLLs —
+            // we'd incorrectly record them as Unity-provided and later disable them.
+            var installRootAbs = Path.GetFullPath(NuGetConfig.InstallPath).Replace('\\', '/');
+            if (!installRootAbs.EndsWith("/"))
+                installRootAbs += "/";
+
             foreach (var assembly in playerAssemblies)
             {
                 foreach (var reference in assembly.allReferences)
@@ -74,9 +82,8 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
                     // If the reference path points into our NuGet install folder we skip it here —
                     // but we still want to detect the *name* as Unity-provided if any other
                     // reference resolves the same name outside our install folder.
-                    var normalized = reference.Replace('\\', '/');
-                    var installRoot = NuGetConfig.InstallPath.Replace('\\', '/');
-                    if (normalized.StartsWith(installRoot, System.StringComparison.OrdinalIgnoreCase))
+                    var fullRef = Path.GetFullPath(reference).Replace('\\', '/');
+                    if (fullRef.StartsWith(installRootAbs, System.StringComparison.OrdinalIgnoreCase))
                         continue;
 
                     unityProvided.Add(name);

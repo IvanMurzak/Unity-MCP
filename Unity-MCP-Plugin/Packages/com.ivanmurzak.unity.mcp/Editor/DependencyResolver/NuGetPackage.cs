@@ -10,7 +10,7 @@
 
 #nullable enable
 
-namespace com.IvanMurzak.Unity.MCP.DependencyResolver
+namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 {
     /// <summary>
     /// Represents a NuGet package dependency with its ID and version.

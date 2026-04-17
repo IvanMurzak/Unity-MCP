@@ -54,10 +54,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (!assetRef.IsValid(out var assetValidationError))
                 throw new ArgumentException(assetValidationError, nameof(assetRef));
 
-            if (assetRef.AssetPath?.StartsWith("Packages/") == true)
+            if (assetRef.AssetPath?.StartsWith("Packages/", StringComparison.OrdinalIgnoreCase) == true)
                 throw new ArgumentException($"Not allowed to modify asset in '/Packages' folder. Please modify it in '/Assets' folder. Path: '{assetRef.AssetPath}'.", nameof(assetRef));
 
-            if (assetRef.AssetPath?.StartsWith(ExtensionsRuntimeObject.UnityEditorBuiltInResourcesPath) == true)
+            if (assetRef.AssetPath?.StartsWith(ExtensionsRuntimeObject.UnityEditorBuiltInResourcesPath, StringComparison.OrdinalIgnoreCase) == true)
                 throw new ArgumentException($"Not allowed to modify built-in asset. Path: '{assetRef.AssetPath}'.", nameof(assetRef));
 
             return MainThread.Instance.Run(() =>

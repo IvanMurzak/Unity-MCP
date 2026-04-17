@@ -15,7 +15,7 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 
-namespace com.IvanMurzak.Unity.MCP.DependencyResolver
+namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 {
     /// <summary>
     /// Installs NuGet packages: downloads .nupkg, extracts DLLs, resolves transitive dependencies.
@@ -49,8 +49,10 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
         {
             visitedIds ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
-            // Prevent circular dependencies.
-            if (!visitedIds.Add(package.Id))
+            // Prevent circular dependencies while still allowing the same package Id to be
+            // re-entered at a *different* version (so higher-version-wins can replace an
+            // already-installed lower version encountered earlier in the graph).
+            if (!visitedIds.Add($"{package.Id}:{package.Version}"))
                 return false;
 
             // Skip packages explicitly excluded from the dependency closure.
@@ -84,16 +86,16 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
                     anyInstalled |= Install(dep, visitedIds);
 
                 // If a previous version of the same Id is installed this session (higher-wins path),
-                // remove its directory before extracting the new one.
+                // remove its directory before extracting the new one. Deletion is a material
+                // Asset change that must trigger a domain reload, so flip anyInstalled here —
+                // otherwise a restore cycle whose only change is cleanup would skip the reload.
                 if (existingVersion != null)
                 {
                     var oldDir = Path.Combine(NuGetConfig.InstallPath, $"{package.Id}.{existingVersion}");
                     if (Directory.Exists(oldDir))
                     {
-                        Directory.Delete(oldDir, recursive: true);
-                        var oldDirMeta = oldDir + ".meta";
-                        if (File.Exists(oldDirMeta))
-                            File.Delete(oldDirMeta);
+                        DeleteDirAndMeta(oldDir);
+                        anyInstalled = true;
                     }
                 }
 
@@ -201,10 +203,30 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
 
         static void DeleteDirAndMeta(string dir)
         {
-            Directory.Delete(dir, recursive: true);
+            // Directory.Delete and File.Delete can throw in Unity due to file locks (antivirus,
+            // the importer pipeline holding handles, Windows sharing violations). Log and
+            // continue so a single failure doesn't abort the rest of the cleanup pass.
+            try
+            {
+                Directory.Delete(dir, recursive: true);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"{Tag} Failed to delete directory '{dir}': {ex.Message}");
+            }
+
             var metaFile = dir + ".meta";
             if (File.Exists(metaFile))
-                File.Delete(metaFile);
+            {
+                try
+                {
+                    File.Delete(metaFile);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"{Tag} Failed to delete meta file '{metaFile}': {ex.Message}");
+                }
+            }
         }
 
         /// <summary>
