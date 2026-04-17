@@ -51,20 +51,43 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 var rtField = gameViewType.GetField("m_RenderTexture",
                     BindingFlags.NonPublic | BindingFlags.Instance);
-                var rt = rtField?.GetValue(gameView) as RenderTexture;
+                var sourceRt = rtField?.GetValue(gameView) as RenderTexture;
 
-                if (rt == null || !rt.IsCreated())
+                if (sourceRt == null || !sourceRt.IsCreated())
                     return ResponseCallTool.Error("Game View render texture is not available. " +
                         "Ensure the Game View window is open and visible.");
+
+                // Read pixels from the GameView's internal render texture, then correct the
+                // orientation for graphics APIs that render with the origin at the top-left.
+                // Reading directly from the GameView RT produces a vertically flipped image on
+                // DirectX/Metal because Unity performs a Y-flip at display-blit time — a step
+                // bypassed when ReadPixels runs against the GameView RT directly.
+                // `SystemInfo.graphicsUVStartsAtTop` identifies the APIs that need the flip.
+                var width = sourceRt.width;
+                var height = sourceRt.height;
 
                 var prevActive = RenderTexture.active;
                 Texture2D? tex = null;
                 byte[]? pngBytes = null;
                 try
                 {
-                    RenderTexture.active = rt;
-                    tex = new Texture2D(rt.width, rt.height, TextureFormat.RGB24, false);
-                    tex.ReadPixels(new Rect(0, 0, rt.width, rt.height), 0, 0);
+                    RenderTexture.active = sourceRt;
+                    tex = new Texture2D(width, height, TextureFormat.RGB24, false);
+                    tex.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+
+                    if (SystemInfo.graphicsUVStartsAtTop)
+                    {
+                        var pixels = tex.GetPixels32();
+                        var flipped = new Color32[pixels.Length];
+                        for (var y = 0; y < height; y++)
+                        {
+                            var srcRow = y * width;
+                            var dstRow = (height - 1 - y) * width;
+                            Array.Copy(pixels, srcRow, flipped, dstRow, width);
+                        }
+                        tex.SetPixels32(flipped);
+                    }
+
                     tex.Apply();
                     pngBytes = tex.EncodeToPNG();
                 }
@@ -76,7 +99,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 }
 
                 return ResponseCallTool.Image(pngBytes, McpPlugin.Common.Consts.MimeType.ImagePng,
-                    $"Screenshot from Game View ({rt.width}x{rt.height})");
+                    $"Screenshot from Game View ({width}x{height})");
             });
         }
     }
