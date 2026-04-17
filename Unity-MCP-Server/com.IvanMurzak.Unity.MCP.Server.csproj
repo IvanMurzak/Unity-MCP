@@ -45,8 +45,8 @@
   </PropertyGroup>
 
   <ItemGroup Condition="'$(UseLocalMcpPlugin)' != 'true'">
-    <PackageReference Include="com.IvanMurzak.ReflectorNet" Version="4.1.0" />
-    <PackageReference Include="com.IvanMurzak.McpPlugin.Server" Version="5.10.0" />
+    <PackageReference Include="com.IvanMurzak.ReflectorNet" Version="5.0.0" />
+    <PackageReference Include="com.IvanMurzak.McpPlugin.Server" Version="6.1.0" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(UseLocalMcpPlugin)' == 'true'">
