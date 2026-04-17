@@ -7,13 +7,13 @@ Unity-MCP Plugin — Unity Editor/Runtime side of the MCP bridge. Attribute-base
 ## Development
 
 - **Open**: `Unity-MCP-Plugin` folder in Unity Editor (compiles automatically)
-- **Tests**: Unity Test Runner (`Window > General > Test Runner`) — EditMode in `Assets/root/Tests/Editor`, PlayMode in `Assets/root/Tests/Runtime`
+- **Tests**: Unity Test Runner (`Window > General > Test Runner`) — EditMode in `Packages/com.ivanmurzak.unity.mcp/Tests/Editor`, PlayMode in `Packages/com.ivanmurzak.unity.mcp/Tests/Runtime`
 - **MCP Inspector**: `Commands/start_mcp_inspector.bat` (requires Node.js)
 
 ## Directory Structure
 
 ```
-Assets/root/
+Packages/com.ivanmurzak.unity.mcp/
 ├── Runtime/
 │   ├── UnityMcpPluginRuntime.cs      # Runtime singleton (+ .Static.cs)
 │   ├── Data/                         # ObjectRef hierarchy, GameObjectData, etc.

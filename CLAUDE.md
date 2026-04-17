@@ -30,7 +30,7 @@ Unity Engine
 
 ## Release & Versioning
 
-Version is sourced from [Unity-MCP-Plugin/Assets/root/package.json](Unity-MCP-Plugin/Assets/root/package.json). Bump with `.\commands\bump-version.ps1 <version>`.
+Version is sourced from [Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json](Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json). Bump with `.\commands\bump-version.ps1 <version>`.
 
 ## CI/CD
 
@@ -59,7 +59,7 @@ Non-negotiable principles and architecture constraints: [`.specify/memory/consti
 
 ```
 README.md                                                        ← Root project documentation
-Unity-MCP-Plugin/Assets/root/README.md                           ← Copy of root README.md *
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/README.md                           ← Copy of root README.md *
 Installer/Assets/com.IvanMurzak/AI Game Dev Installer/README.md  ← Copy of root README.md *
 docs/
 ├── README.es.md                                                 ← Spanish translation of root README *

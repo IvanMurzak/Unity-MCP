@@ -1,0 +1,561 @@
+/*
+┌──────────────────────────────────────────────────────────────────┐
+│  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
+│  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
+│  Copyright (c) 2025 Ivan Murzak                                  │
+│  Licensed under the Apache License, Version 2.0.                 │
+│  See the LICENSE file in the project root for more information.  │
+└──────────────────────────────────────────────────────────────────┘
+*/
+
+#nullable enable
+#if UNITY_6000_5_OR_NEWER
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
+using com.IvanMurzak.McpPlugin.Common.Model;
+using com.IvanMurzak.ReflectorNet;
+using com.IvanMurzak.ReflectorNet.Model;
+using com.IvanMurzak.Unity.MCP.Editor.API;
+using com.IvanMurzak.Unity.MCP.Editor.Extensions;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
+using NUnit.Framework;
+using UnityEditor;
+using UnityEngine;
+using UnityEngine.TestTools;
+
+namespace com.IvanMurzak.Unity.MCP.Editor.Tests
+{
+  public partial class TestToolGameObject : BaseTest
+  {
+    [UnityTest]
+    public IEnumerator ModifyComponent_Vector3()
+    {
+      var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
+
+      var child = new GameObject(GO_ParentName).AddChild(GO_Child1Name);
+      Assert.IsNotNull(child, "Child GameObject should be created");
+
+      var newPosition = new Vector3(1, 2, 3);
+
+      var componentDiff = SerializedMember.FromValue(
+              reflector: reflector,
+              name: nameof(child.transform),
+              type: typeof(Transform),
+              value: new ComponentRef(child!.transform.GetEntityId()))
+          .AddProperty(SerializedMember.FromValue(
+              reflector: reflector,
+              name: nameof(child.transform.position),
+              value: newPosition));
+
+      var result = new Tool_GameObject().ModifyComponent(
+          gameObjectRef: new GameObjectRef(child!.GetEntityId()),
+          componentRef: new ComponentRef(child!.transform.GetEntityId()),
+          componentDiff: componentDiff);
+
+      Assert.IsTrue(result.Success, "Modification should be successful");
+
+      Assert.AreEqual(child!.transform.position, newPosition, "Position should be changed");
+
+      UnityEngine.EntityId? dataInstanceID = componentDiff.TryGetInstanceID(out var tempDataInstanceId)
+          ? tempDataInstanceId
+          : (UnityEngine.EntityId?)null;
+
+      Assert.AreEqual(child!.transform.GetEntityId(), dataInstanceID, "InstanceID should be the same");
+      yield return null;
+    }
+    [UnityTest]
+    public IEnumerator ModifyComponent_Material()
+    {
+      var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
+
+      // "Standard" shader is always available in a Unity project.
+      // Doesn't matter whether it's built-in or URP/HDRP.
+      var sharedMaterial = new Material(Shader.Find("Standard"));
+
+      var go = new GameObject(GO_ParentName);
+      var component = go.AddComponent<MeshRenderer>();
+
+      var componentDiff = SerializedMember.FromValue(
+              reflector: reflector,
+              name: null,
+              type: typeof(MeshRenderer),
+              value: new ComponentRef(component.GetEntityId()))
+          .AddProperty(SerializedMember.FromValue(
+              reflector: reflector,
+              name: nameof(component.sharedMaterial),
+              type: typeof(Material),
+              value: new ObjectRef(sharedMaterial.GetEntityId())));
+
+      Debug.Log($"Data:\n{componentDiff.ToJson(reflector)}\n");
+
+      var response = new Tool_GameObject().ModifyComponent(
+          gameObjectRef: new GameObjectRef(go.GetEntityId()),
+          componentRef: new ComponentRef(component.GetEntityId()),
+          componentDiff: componentDiff);
+
+      Assert.IsTrue(response.Success, "Modification should be successful");
+
+      Assert.AreEqual(sharedMaterial.GetEntityId(), component.sharedMaterial.GetEntityId(), "Materials InstanceIDs should be the same.");
+      yield return null;
+    }
+
+    ResponseData<ResponseCallTool> ModifyByJson(string json) => RunTool("gameobject-modify", json);
+    ResponseData<ResponseCallTool> ModifyComponentByJson(string json) => RunTool("gameobject-component-modify", json);
+    ResponseData<ResponseCallTool> CreateGameObjectByJson(string json) => RunTool("gameobject-create", json);
+    void ValidateResult(ResponseData<ResponseCallTool> result, bool shouldContainSuccessMessage = true)
+    {
+      Assert.IsNotNull(result);
+      Assert.IsFalse(result.Status == ResponseStatus.Error, "Modification failed");
+      if (shouldContainSuccessMessage)
+      {
+        Assert.IsNotNull(result.Message, "Result message should not be null.");
+        Assert.IsTrue(result.Message!.Contains("[Success]"), "Result should contain success message.");
+        Assert.IsFalse(result.Message!.Contains("[Error]"), "Result should not contain error message.");
+      }
+    }
+
+    [UnityTest]
+    public IEnumerator ModifyJson_SolarSystem_Sun_NameComponent()
+    {
+      var go = new GameObject(GO_ParentName);
+      var solarSystem = go.AddComponent<SolarSystem>();
+      var sunGo = new GameObject("Sun");
+
+      var json = $@"
+            {{
+              ""gameObjectRef"": {{
+                  ""path"": ""{go.name}""
+              }},
+              ""componentRef"": {{
+                  ""typeName"": ""com.IvanMurzak.Unity.MCP.SolarSystem""
+              }},
+              ""componentDiff"": {{
+                  ""typeName"": ""com.IvanMurzak.Unity.MCP.SolarSystem"",
+                  ""fields"": [
+                    {{
+                      ""typeName"": ""UnityEngine.GameObject"",
+                      ""name"": ""sun"",
+                      ""value"": {{
+                        ""instanceID"": {sunGo.GetEntityId()}
+                      }}
+                    }}
+                  ]
+              }}
+            }}";
+      var result = ModifyComponentByJson(json);
+      ValidateResult(result);
+
+      Assert.IsTrue(solarSystem.sun == sunGo, $"SolarSystem.sun should be set to the GameObject with name 'Sun'. Expected: {sunGo.name}, Actual: {solarSystem.sun?.name}");
+      yield return null;
+    }
+
+    [UnityTest]
+    public IEnumerator ModifyJson_SolarSystem_Sun_NameIndex()
+    {
+      var go = new GameObject(GO_ParentName);
+      var solarSystem = go.AddComponent<SolarSystem>();
+      var sunGo = new GameObject("Sun");
+
+      var json = $@"
+            {{
+              ""gameObjectRef"": {{
+                  ""path"": ""{go.name}""
+              }},
+              ""componentRef"": {{
+                  ""typeName"": ""com.IvanMurzak.Unity.MCP.SolarSystem"",
+                  ""index"": 1
+              }},
+              ""componentDiff"": {{
+                  ""typeName"": ""com.IvanMurzak.Unity.MCP.SolarSystem"",
+                  ""fields"": [
+                    {{
+                      ""typeName"": ""UnityEngine.GameObject"",
+                      ""name"": ""sun"",
+                      ""value"": {{
+                        ""instanceID"": {sunGo.GetEntityId()}
+                      }}
+                    }}
+                  ]
+              }}
+            }}";
+      var result = ModifyComponentByJson(json);
+      ValidateResult(result);
+
+      Assert.IsTrue(solarSystem.sun == sunGo, $"SolarSystem.sun should be set to the GameObject with name 'Sun'. Expected: {sunGo.name}, Actual: {solarSystem.sun?.name}");
+      yield return null;
+    }
+    [UnityTest]
+    public IEnumerator ModifyJson_SolarSystem_PlanetsArray()
+    {
+      var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
+      var goName = "Solar System";
+      var go = new GameObject(goName);
+      var solarSystem = go.AddComponent<SolarSystem>();
+      var planets = new[]
+      {
+                new GameObject("Mercury"),
+                new GameObject("Venus"),
+                new GameObject("Earth"),
+                new GameObject("Mars")
+            };
+
+      var orbitRadius = 3.87f;
+      var orbitTilt = new Vector3(7, 0, 0);
+
+      var json = $@"
+            {{
+              ""gameObjectRef"": {{
+                  ""path"": ""{goName}""
+              }},
+              ""componentRef"": {{
+                  ""typeName"": ""com.IvanMurzak.Unity.MCP.SolarSystem""
+              }},
+              ""componentDiff"": {{
+                  ""typeName"": ""com.IvanMurzak.Unity.MCP.SolarSystem"",
+                  ""fields"": [
+                        {{
+                          ""name"": ""planets"",
+                          ""typeName"": ""com.IvanMurzak.Unity.MCP.SolarSystem+PlanetData[]"",
+                          ""value"": [
+                            {{
+                              ""typeName"": ""com.IvanMurzak.Unity.MCP.SolarSystem+PlanetData"",
+                              ""fields"": [
+                                {{
+                                  ""name"": ""planet"",
+                                  ""typeName"": ""UnityEngine.GameObject"",
+                                  ""value"": {{
+                                    ""instanceID"": {planets[0].GetEntityId()}
+                                  }}
+                                }},
+                                {{
+                                  ""name"": ""orbitRadius"",
+                                  ""typeName"": ""System.Single"",
+                                  ""value"": {orbitRadius}
+                                }},
+                                {{
+                                  ""name"": ""orbitSpeed"",
+                                  ""typeName"": ""System.Single"",
+                                  ""value"": 4.15
+                                }},
+                                {{
+                                  ""name"": ""rotationSpeed"",
+                                  ""typeName"": ""System.Single"",
+                                  ""value"": 0.017
+                                }},
+                                {{
+                                  ""name"": ""orbitTilt"",
+                                  ""typeName"": ""UnityEngine.Vector3"",
+                                  ""value"": {{
+                                    ""x"": {orbitTilt.x},
+                                    ""y"": {orbitTilt.y},
+                                    ""z"": {orbitTilt.z}
+                                  }}
+                                }}
+                              ]
+                            }},
+                            {{
+                              ""typeName"": ""com.IvanMurzak.Unity.MCP.SolarSystem+PlanetData"",
+                              ""fields"": [
+                                {{
+                                  ""name"": ""planet"",
+                                  ""typeName"": ""UnityEngine.GameObject"",
+                                  ""value"": {{
+                                    ""instanceID"": {planets[1].GetEntityId()}
+                                  }}
+                                }},
+                                {{
+                                  ""name"": ""orbitRadius"",
+                                  ""typeName"": ""System.Single"",
+                                  ""value"": 7.23
+                                }},
+                                {{
+                                  ""name"": ""orbitSpeed"",
+                                  ""typeName"": ""System.Single"",
+                                  ""value"": 1.62
+                                }},
+                                {{
+                                  ""name"": ""rotationSpeed"",
+                                  ""typeName"": ""System.Single"",
+                                  ""value"": 0.004
+                                }},
+                                {{
+                                  ""name"": ""orbitTilt"",
+                                  ""typeName"": ""UnityEngine.Vector3"",
+                                  ""value"": {{
+                                    ""x"": 3.4,
+                                    ""y"": 0,
+                                    ""z"": 0
+                                  }}
+                                }}
+                              ]
+                            }},
+                            {{
+                              ""typeName"": ""com.IvanMurzak.Unity.MCP.SolarSystem+PlanetData"",
+                              ""fields"": [
+                                {{
+                                  ""name"": ""planet"",
+                                  ""typeName"": ""UnityEngine.GameObject"",
+                                  ""value"": {{
+                                    ""instanceID"": {planets[2].GetEntityId()}
+                                  }}
+                                }},
+                                {{
+                                  ""name"": ""orbitRadius"",
+                                  ""typeName"": ""System.Single"",
+                                  ""value"": 10
+                                }},
+                                {{
+                                  ""name"": ""orbitSpeed"",
+                                  ""typeName"": ""System.Single"",
+                                  ""value"": 1
+                                }},
+                                {{
+                                  ""name"": ""rotationSpeed"",
+                                  ""typeName"": ""System.Single"",
+                                  ""value"": 1
+                                }},
+                                {{
+                                  ""name"": ""orbitTilt"",
+                                  ""typeName"": ""UnityEngine.Vector3"",
+                                  ""value"": {{
+                                    ""x"": 23.5,
+                                    ""y"": 0,
+                                    ""z"": 0
+                                  }}
+                                }}
+                              ]
+                            }},
+                            {{
+                              ""typeName"": ""com.IvanMurzak.Unity.MCP.SolarSystem+PlanetData"",
+                              ""fields"": [
+                                {{
+                                  ""name"": ""planet"",
+                                  ""typeName"": ""UnityEngine.GameObject"",
+                                  ""value"": {{
+                                    ""instanceID"": {planets[3].GetEntityId()}
+                                  }}
+                                }},
+                                {{
+                                  ""name"": ""orbitRadius"",
+                                  ""typeName"": ""System.Single"",
+                                  ""value"": 15.24
+                                }},
+                                {{
+                                  ""name"": ""orbitSpeed"",
+                                  ""typeName"": ""System.Single"",
+                                  ""value"": 0.53
+                                }},
+                                {{
+                                  ""name"": ""rotationSpeed"",
+                                  ""typeName"": ""System.Single"",
+                                  ""value"": 0.98
+                                }},
+                                {{
+                                  ""name"": ""orbitTilt"",
+                                  ""typeName"": ""UnityEngine.Vector3"",
+                                  ""value"": {{
+                                    ""x"": 25.2,
+                                    ""y"": 0,
+                                    ""z"": 0
+                                  }}
+                                }}
+                              ]
+                            }}
+                          ]
+                        }}
+                  ]
+              }}
+            }}";
+
+      var parameters = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json);
+      Assert.IsNotNull(parameters, "Parameters should be deserialized.");
+
+      var firstPlaneInstanceId = EntityIdUtils.FromNumber(parameters!["componentDiff"]
+          .GetProperty("fields")
+          .EnumerateArray().First() // planets field
+          .GetProperty("value")     // planets array value
+          .EnumerateArray().First() // first planet item
+          .GetProperty("fields")    // planet fields
+          .EnumerateArray().First() // first field (planet GameObject)
+          .GetProperty("value")
+          .GetProperty("instanceID").GetInt64()); // go instanceID
+
+      Assert.AreEqual(planets[0].GetEntityId(), firstPlaneInstanceId, "Planet InstanceID should match the input data.");
+
+      var serializedMemberJson = parameters["componentDiff"].GetRawText();
+      var serializedMember = reflector.JsonSerializer.Deserialize<SerializedMember>(serializedMemberJson);
+
+      Assert.IsNotNull(serializedMember, "SerializedMember should be deserialized.");
+
+      // Get the same instanceID but from serializedMember structure
+      var firstPlaneInstanceIdFromSerialized = serializedMember!
+          .GetField("planets") // planets field
+          ?.GetValue<SerializedMember[]>(reflector)?.FirstOrDefault() // first planet
+          ?.GetField("planet") // planet GameObject field
+          ?.GetValue<ObjectRef>(reflector)?.InstanceID ?? UnityEngine.EntityId.None; // instanceID
+
+      Assert.AreEqual(firstPlaneInstanceId, firstPlaneInstanceIdFromSerialized, "InstanceID from JSON parsing and SerializedMember should match.");
+      Assert.AreEqual(planets[0].GetEntityId(), firstPlaneInstanceIdFromSerialized, "Planet InstanceID should match the serialized member data.");
+
+      var result = ModifyComponentByJson(json);
+      ValidateResult(result);
+
+      Assert.NotNull(solarSystem.planets);
+      Assert.AreEqual(planets.Length, solarSystem.planets.Length, "Planets array length should match the input data.");
+
+      for (int i = 0; i < planets.Length; i++)
+      {
+        Assert.NotNull(solarSystem.planets[i], $"Planet[{i}] should not be null.");
+        Assert.IsTrue(solarSystem.planets[i].planet == planets[i], $"Planet[{i}] GameObject should match the input data.");
+      }
+
+      Assert.AreEqual(orbitRadius, solarSystem.planets[0].orbitRadius, "First planet's orbit radius should match the input data.");
+      Assert.AreEqual(orbitTilt, solarSystem.planets[0].orbitTilt, "First planet's orbit tilt should match the input data.");
+
+      for (int i = 0; i < planets.Length; i++)
+      {
+        Assert.AreEqual(planets[i].GetEntityId(), solarSystem.planets[i].planet.GetEntityId(),
+            $"Planet[{i}] InstanceID should match the input data.");
+      }
+
+      yield return null;
+    }
+
+    [UnityTest]
+    public IEnumerator SetMaterial()
+    {
+      var folder = "Assets/TestMaterials";
+      var assetPath = $"{folder}/TestMaterial.mat";
+      var material = new Material(Shader.Find("Standard"));
+
+      if (!AssetDatabase.IsValidFolder(folder))
+        AssetDatabase.CreateFolder("Assets", "TestMaterials");
+
+      AssetDatabase.CreateAsset(material, assetPath);
+      AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+      try
+      {
+        var go = new GameObject("TestGameObject");
+        var meshRenderer = go.AddComponent<MeshRenderer>();
+
+        var json = $@"
+{{
+  ""gameObjectRef"": {{
+                  ""instanceID"": {go.GetEntityId()}
+              }},
+              ""componentRef"": {{
+                  ""typeName"": ""UnityEngine.MeshRenderer""
+              }},
+              ""componentDiff"": {{
+                  ""typeName"": ""UnityEngine.MeshRenderer"",
+                  ""props"": [
+          {{
+            ""name"": ""{nameof(MeshRenderer.sharedMaterial)}"",
+            ""typeName"": ""UnityEngine.Material"",
+            ""value"":
+              {{
+                  ""instanceID"": {material.GetEntityId()}
+              }}
+            }}
+          ]
+              }}
+}}";
+
+        var result = ModifyComponentByJson(json);
+        ValidateResult(result);
+
+        Assert.IsTrue(meshRenderer.sharedMaterial == material, $"MeshRenderer.sharedMaterial should be set to the created material. Expected: {material.name}, Actual: {meshRenderer.sharedMaterial.name}");
+      }
+      finally
+      {
+        AssetDatabase.DeleteAsset(assetPath);
+        AssetDatabase.DeleteAsset(folder);
+        AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+      }
+      yield return null;
+    }
+
+    [UnityTest]
+    public IEnumerator CreateGameObject_Default()
+    {
+      var goName = "TestGameObject";
+      var json = $@"{{
+                ""name"": ""{goName}""
+            }}";
+
+      var result = CreateGameObjectByJson(json);
+      ValidateResult(result, shouldContainSuccessMessage: false);
+
+      var go = new GameObjectRef() { Name = goName }.FindGameObject();
+
+      Assert.IsTrue(go != null, $"GameObject '{goName}' should be created.");
+      Assert.IsTrue(go!.transform.position == Vector3.zero, $"GameObject '{goName}' position should be (0, 0, 0). Actual: {go.transform.position}");
+      Assert.IsTrue(go!.transform.rotation == Quaternion.identity, $"GameObject '{goName}' rotation should be (0, 0, 0). Actual: {go.transform.rotation.eulerAngles}");
+      Assert.IsTrue(go!.transform.localScale == Vector3.one, $"GameObject '{goName}' scale should be (1, 1, 1). Actual: {go.transform.localScale}");
+
+      yield return null;
+    }
+
+    [UnityTest]
+    public IEnumerator CreateGameObject_ExplicitDefaultTransform()
+    {
+      var goName = "TestGameObject";
+      int pX = 0, pY = 0, pZ = 0;
+      int rX = 0, rY = 0, rZ = 0;
+      int sX = 1, sY = 1, sZ = 1;
+
+      var json = $@"{{
+                ""name"": ""{goName}"",
+                ""position"": {{ ""x"": {pX}, ""y"": {pY}, ""z"": {pZ} }},
+                ""rotation"": {{ ""x"": {rX}, ""y"": {rY}, ""z"": {rZ} }},
+                ""scale"": {{ ""x"": {sX}, ""y"": {sY}, ""z"": {sZ} }}
+            }}";
+
+      var result = CreateGameObjectByJson(json);
+      ValidateResult(result, shouldContainSuccessMessage: false);
+
+      var go = new GameObjectRef() { Name = goName }.FindGameObject();
+
+      Assert.IsTrue(go != null, $"GameObject '{goName}' should be created.");
+      Assert.IsTrue(go!.transform.position == new Vector3(pX, pY, pZ), $"GameObject '{goName}' position should be ({pX}, {pY}, {pZ}). Actual: {go.transform.position}");
+      Assert.IsTrue(go!.transform.rotation == Quaternion.Euler(rX, rY, rZ), $"GameObject '{goName}' rotation should be ({rX}, {rY}, {rZ}). Actual: {go.transform.rotation.eulerAngles}");
+      Assert.IsTrue(go!.transform.localScale == new Vector3(sX, sY, sZ), $"GameObject '{goName}' scale should be ({sX}, {sY}, {sZ}). Actual: {go.transform.localScale}");
+
+      yield return null;
+    }
+
+    [UnityTest]
+    public IEnumerator CreateGameObject_ExplicitTransform()
+    {
+      var goName = "TestGameObject";
+      int pX = 1, pY = 2, pZ = 3;
+      int rX = 0, rY = 90, rZ = 0;
+      int sX = 2, sY = 2, sZ = 2;
+
+      var json = $@"{{
+                ""name"": ""{goName}"",
+                ""position"": {{ ""x"": {pX}, ""y"": {pY}, ""z"": {pZ} }},
+                ""rotation"": {{ ""x"": {rX}, ""y"": {rY}, ""z"": {rZ} }},
+                ""scale"": {{ ""x"": {sX}, ""y"": {sY}, ""z"": {sZ} }}
+            }}";
+
+      var result = CreateGameObjectByJson(json);
+      ValidateResult(result, shouldContainSuccessMessage: false);
+
+      var go = new GameObjectRef() { Name = goName }.FindGameObject();
+
+      Assert.IsTrue(go != null, $"GameObject '{goName}' should be created.");
+      Assert.IsTrue(go!.transform.position == new Vector3(pX, pY, pZ), $"GameObject '{goName}' position should be ({pX}, {pY}, {pZ}). Actual: {go.transform.position}");
+      Assert.IsTrue(go!.transform.rotation == Quaternion.Euler(rX, rY, rZ), $"GameObject '{goName}' rotation should be ({rX}, {rY}, {rZ}). Actual: {go.transform.rotation.eulerAngles}");
+      Assert.IsTrue(go!.transform.localScale == new Vector3(sX, sY, sZ), $"GameObject '{goName}' scale should be ({sX}, {sY}, {sZ}). Actual: {go.transform.localScale}");
+
+      yield return null;
+    }
+  }
+}
+#endif

@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "com.ivanmurzak.unity.mcp": "file:./../../../Unity-MCP-Plugin/Assets/root",
+    "com.ivanmurzak.unity.mcp": "file:./../../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp",
     "com.unity.feature.development": "1.0.1",
     "com.unity.ide.visualstudio": "2.0.25",
     "com.unity.test-framework": "1.6.0",
@@ -47,8 +47,7 @@
       "url": "https://package.openupm.com",
       "scopes": [
         "com.ivanmurzak",
-        "extensions.unity",
-        "org.nuget"
+        "extensions.unity"
       ]
     }
   ]
