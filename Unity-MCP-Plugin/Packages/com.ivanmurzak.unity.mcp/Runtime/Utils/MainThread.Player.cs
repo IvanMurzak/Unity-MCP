@@ -8,60 +8,50 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 #if !UNITY_EDITOR
+#nullable enable
 using System;
 using System.Threading.Tasks;
 using com.IvanMurzak.ReflectorNet.Utils;
+using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
 {
     public static class MainThreadInstaller
     {
-        public static void Init()
-        {
-            MainThread.Instance = new UnityMainThread();
-        }
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        public static void Init() => MainThread.Instance = new UnityMainThread();
     }
     public class UnityMainThread : MainThread
     {
         public override bool IsMainThread => MainThreadDispatcher.IsMainThread;
 
+        public override Task RunAsync(Task task)
+            => MainThreadDispatcher.IsMainThread ? task : Dispatch(() => { task.Wait(); return true; });
+
+        public override Task<T> RunAsync<T>(Task<T> task)
+            => MainThreadDispatcher.IsMainThread ? task : Dispatch(() => task.Result);
+
         public override Task<T> RunAsync<T>(Func<T> func)
-        {
-            var tcs = new TaskCompletionSource<T>();
-
-            MainThreadDispatcher.Enqueue(() =>
-            {
-                try
-                {
-                    T result = func();
-                    tcs.SetResult(result);
-                }
-                catch (Exception ex)
-                {
-                    tcs.SetException(ex);
-                }
-            });
-
-            return tcs.Task;
-        }
+            => MainThreadDispatcher.IsMainThread ? Task.FromResult(func()) : Dispatch(func);
 
         public override Task RunAsync(Action action)
         {
-            var tcs = new TaskCompletionSource<bool>();
+            if (MainThreadDispatcher.IsMainThread)
+            {
+                action();
+                return Task.CompletedTask;
+            }
+            return Dispatch(() => { action(); return true; });
+        }
 
+        static Task<T> Dispatch<T>(Func<T> body)
+        {
+            var tcs = new TaskCompletionSource<T>();
             MainThreadDispatcher.Enqueue(() =>
             {
-                try
-                {
-                    action();
-                    tcs.SetResult(true);
-                }
-                catch (Exception ex)
-                {
-                    tcs.SetException(ex);
-                }
+                try { tcs.SetResult(body()); }
+                catch (Exception ex) { tcs.SetException(ex); }
             });
-
             return tcs.Task;
         }
     }
