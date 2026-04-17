@@ -17,9 +17,11 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
 {
     public static class MainThreadInstaller
     {
+        [InitializeOnLoadMethod]
         public static void Init()
         {
-            MainThread.Instance ??= new UnityMainThread();
+            if (MainThread.Instance is not UnityMainThread)
+                MainThread.Instance = new UnityMainThread();
         }
     }
     public class UnityMainThread : MainThread
