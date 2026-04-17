@@ -1,6 +1,6 @@
 ---
 name: tests-run
-description: Execute Unity tests and return detailed results. Supports filtering by test mode, assembly, namespace, class, and method. Recommended to use 'EditMode' for faster iteration during development.
+description: "Execute Unity tests and return detailed results. Supports filtering by test mode, assembly, namespace, class, and method. Recommended to use 'EditMode' for faster iteration during development. Precondition: every open scene MUST be saved (no unsaved changes). If any open scene is dirty, this tool throws an InvalidOperationException listing the dirty scenes; save them and retry."
 ---
 
 # Tests / Run
