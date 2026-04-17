@@ -101,9 +101,13 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
             var currentEditor = importer.GetCompatibleWithEditor();
             var currentExcludeEditor = importer.GetExcludeEditorFromAnyPlatform();
 
+            // When Any Platform is on, the Editor flag must also track !excludeEditor —
+            // otherwise a stale Editor=0 left over from Unity's initial import silently
+            // survives (this was the cause of "Unloading broken assembly" on startup).
+            var expectedEditor = anyPlatform ? !excludeEditor : editorOnly;
             var needsChange = currentAnyPlatform != anyPlatform
                            || currentExcludeEditor != excludeEditor
-                           || (!anyPlatform && currentEditor != editorOnly);
+                           || currentEditor != expectedEditor;
 
             if (!needsChange)
                 return;
@@ -112,6 +116,12 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
             {
                 importer.SetCompatibleWithAnyPlatform(true);
                 importer.SetExcludeEditorFromAnyPlatform(excludeEditor);
+                // Explicitly sync the individual Editor platform flag. Unity's initial import
+                // sometimes leaves Editor at enabled=0 even when Any Platform is on without
+                // Exclude Editor; without this call, the stale 0 persists in the .meta and
+                // Editor-side loading fails (e.g., "Unloading broken assembly ..." for DLLs
+                // whose transitive deps are also editor-disabled).
+                importer.SetCompatibleWithEditor(!excludeEditor);
             }
             else
             {

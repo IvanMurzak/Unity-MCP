@@ -53,6 +53,13 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
             if (!visitedIds.Add(package.Id))
                 return false;
 
+            // Skip packages explicitly excluded from the dependency closure.
+            // We do NOT recurse into their transitive deps — anything only they need is also
+            // unwanted. Packages legitimately needed by other chains will still resolve via
+            // those chains.
+            if (IsSkipped(package.Id))
+                return false;
+
             var anyInstalled = false;
 
             try
@@ -149,6 +156,15 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
                 if (packageId == null)
                     continue;
 
+                // Case 0: explicitly skipped package — always remove from disk.
+                if (IsSkipped(packageId))
+                {
+                    Debug.Log($"{Tag} Removing {dirName} — package is in SkipPackages exclusion list.");
+                    DeleteDirAndMeta(dir);
+                    anyRemoved = true;
+                    continue;
+                }
+
                 // Case 1: configured package with a stale on-disk version — delete the stale one.
                 if (requiredVersionByPackageId.TryGetValue(packageId, out var requiredVersion))
                 {
@@ -230,6 +246,16 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
         public static void ResetSession()
         {
             installedThisSession.Clear();
+        }
+
+        static bool IsSkipped(string packageId)
+        {
+            foreach (var skip in NuGetConfig.SkipPackages)
+            {
+                if (string.Equals(packageId, skip, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+            return false;
         }
     }
 }

@@ -52,7 +52,9 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
             // v8 pinned to match what McpPlugin.dll (netstandard2.1) is compiled against.
             // Higher versions cause MissingMethodException at runtime in Unity versions
             // whose built-in BCL doesn't override our NuGet install (e.g. Unity 6.5).
-            new NuGetPackage("com.IvanMurzak.McpPlugin",                              "6.0.0",  includeInBuild: true),
+            // 6.1.0 drops the unused ModelContextProtocol dep; earlier versions drag in a
+            // v10 BCL stack via MCP.Core.1.2.0 that collides with our v8 pins in Unity.
+            new NuGetPackage("com.IvanMurzak.McpPlugin",                              "6.1.0",  includeInBuild: true),
             new NuGetPackage("System.Text.Json",                                      "8.0.5",  includeInBuild: true),
             new NuGetPackage("Microsoft.AspNetCore.SignalR.Client",                   "8.0.15", includeInBuild: true),
             new NuGetPackage("Microsoft.AspNetCore.SignalR.Protocols.Json",           "8.0.15", includeInBuild: true),
@@ -72,6 +74,22 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
             new NuGetPackage("Microsoft.Extensions.Caching.Abstractions",             "8.0.0",  includeInBuild: true),
             new NuGetPackage("Microsoft.Extensions.Hosting.Abstractions",             "8.0.1",  includeInBuild: true),
         };
+
+        /// <summary>
+        /// Package IDs to exclude from transitive dependency resolution. Matched
+        /// case-insensitively against the NuGet package ID (not the DLL filename).
+        ///
+        /// When a package ID appears here:
+        ///   - the resolver skips it (and its transitive deps) during Install()
+        ///   - RemoveUnnecessaryPackages() deletes its install directory if present
+        ///   - AllPackagesInstalled() forces a full restore while it's still on disk
+        ///
+        /// Use this when a top-level package's nuspec pulls in a transitive dep that
+        /// is unused by your project's source AND whose own dependency chain conflicts
+        /// with your pinned versions (e.g., a netstandard2.0 package targeting a newer
+        /// BCL than Unity's runtime provides).
+        /// </summary>
+        public static readonly string[] SkipPackages = { };
 
         /// <summary>
         /// Target framework priority for selecting DLLs from .nupkg lib/ folders.

@@ -96,11 +96,18 @@ namespace com.IvanMurzak.Unity.MCP.DependencyResolver
             // versions of BOTH configured packages and transitive dependencies
             // (e.g., "Microsoft.AspNetCore.SignalR.Common.8.0.15" + ".10.0.3") — any duplicate
             // (id → multiple versions) would produce duplicate-assembly conflicts in Unity.
+            // Also force the full restore path if any skip-listed package is still on disk,
+            // so RemoveUnnecessaryPackages gets a chance to delete it.
             var seenPackageIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var skipSet = new HashSet<string>(NuGetConfig.SkipPackages, StringComparer.OrdinalIgnoreCase);
             foreach (var dir in Directory.GetDirectories(NuGetConfig.InstallPath))
             {
                 var packageId = NuGetPackageInstaller.ExtractPackageIdFromDirName(Path.GetFileName(dir));
-                if (packageId != null && !seenPackageIds.Add(packageId))
+                if (packageId == null)
+                    continue;
+                if (!seenPackageIds.Add(packageId))
+                    return false;
+                if (skipSet.Contains(packageId))
                     return false;
             }
 
