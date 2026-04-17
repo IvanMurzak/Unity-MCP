@@ -75,9 +75,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 
         /// <summary>
         /// Quick check: are all configured packages already installed at their configured version,
-        /// with no stale-version directories of configured packages present on disk?
+        /// with no stale-version directories of configured packages present on disk, AND is the
+        /// full transitive closure present?
         /// Used to skip the full restore when everything is up to date. Returning false here forces
-        /// the full Restore() path, which deletes stale-version directories via RemoveUnnecessaryPackages.
+        /// the full Restore() path, which deletes stale-version directories via RemoveUnnecessaryPackages
+        /// and re-installs any missing transitive dependencies.
         /// </summary>
         public static bool AllPackagesInstalled()
         {
@@ -92,12 +94,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     return false;
             }
 
-            // No package ID may have multiple version directories on disk. This catches stale
-            // versions of BOTH configured packages and transitive dependencies
-            // (e.g., "Microsoft.AspNetCore.SignalR.Common.8.0.15" + ".10.0.3") — any duplicate
-            // (id → multiple versions) would produce duplicate-assembly conflicts in Unity.
-            // Also force the full restore path if any skip-listed package is still on disk,
-            // so RemoveUnnecessaryPackages gets a chance to delete it.
+            // Collect all package IDs present on disk (at any version). Also detect duplicate-version
+            // collisions and skip-listed packages, which both force a full restore:
+            //   - duplicate versions (e.g., "SignalR.Common.8.0.15" + ".10.0.3") produce
+            //     duplicate-assembly conflicts in Unity
+            //   - skip-listed packages must be deleted by RemoveUnnecessaryPackages
+            var installedPackageIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var seenPackageIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             var skipSet = new HashSet<string>(NuGetConfig.SkipPackages, StringComparer.OrdinalIgnoreCase);
             foreach (var dir in Directory.GetDirectories(NuGetConfig.InstallPath))
@@ -109,8 +111,74 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     return false;
                 if (skipSet.Contains(packageId))
                     return false;
+                installedPackageIds.Add(packageId);
             }
 
+            // Walk the transitive closure from each configured top-level package via cached
+            // .nuspec files and verify every declared dep has SOME install dir on disk.
+            // This catches the case where a transitive-dep folder was deleted externally or
+            // a prior restore failed mid-install; without this check we'd incorrectly return
+            // true and skip the fix-up pass in Restore().
+            var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var package in NuGetConfig.Packages)
+            {
+                if (!HasTransitiveClosure(package, visited, installedPackageIds, skipSet))
+                    return false;
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Recursively verifies that <paramref name="package"/> and every package reachable
+        /// through its cached .nuspec dependency list has SOME install directory on disk
+        /// (any version — the resolved version may differ from the declared one due to
+        /// highest-version-wins, but the ID must be present).
+        ///
+        /// Returns false when any required package is missing, or when we can't read a
+        /// cached .nuspec we were expected to find — forcing the caller to run the full
+        /// Restore() path.
+        /// </summary>
+        static bool HasTransitiveClosure(
+            NuGetPackage package,
+            HashSet<string> visited,
+            HashSet<string> installedPackageIds,
+            HashSet<string> skipSet)
+        {
+            if (!visited.Add(package.Id))
+                return true;
+
+            // Skip-listed packages are expected to be absent from disk.
+            if (skipSet.Contains(package.Id))
+                return true;
+
+            if (!installedPackageIds.Contains(package.Id))
+                return false;
+
+            // If this specific version's .nupkg isn't cached, the package may have been
+            // superseded by a higher version from another chain (which caused Install() to
+            // early-return without downloading this version). The install-dir check above
+            // already confirmed some version is present, so stop recursing here rather than
+            // forcing an unnecessary restore.
+            if (!NuGetCache.IsCached(package))
+                return true;
+
+            List<NuGetPackage> deps;
+            try
+            {
+                deps = NuGetExtractor.GetDependencies(NuGetCache.GetCachedPath(package));
+            }
+            catch
+            {
+                // Corrupted cache — let Restore() re-download and re-validate.
+                return false;
+            }
+
+            foreach (var dep in deps)
+            {
+                if (!HasTransitiveClosure(dep, visited, installedPackageIds, skipSet))
+                    return false;
+            }
             return true;
         }
     }
