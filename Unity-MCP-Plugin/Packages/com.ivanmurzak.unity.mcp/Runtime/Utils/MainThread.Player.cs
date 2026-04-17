@@ -8,6 +8,7 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 #if !UNITY_EDITOR
+#nullable enable
 using System;
 using System.Threading.Tasks;
 using com.IvanMurzak.ReflectorNet.Utils;
@@ -18,84 +19,20 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
     public static class MainThreadInstaller
     {
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        public static void Init()
-        {
-            if (MainThread.Instance is not UnityMainThread)
-                MainThread.Instance = new UnityMainThread();
-        }
+        public static void Init() => MainThread.Instance = new UnityMainThread();
     }
     public class UnityMainThread : MainThread
     {
         public override bool IsMainThread => MainThreadDispatcher.IsMainThread;
 
         public override Task RunAsync(Task task)
-        {
-            if (MainThreadDispatcher.IsMainThread)
-                return task;
-
-            var tcs = new TaskCompletionSource<bool>();
-
-            MainThreadDispatcher.Enqueue(() =>
-            {
-                try
-                {
-                    task.Wait();
-                    tcs.SetResult(true);
-                }
-                catch (Exception ex)
-                {
-                    tcs.SetException(ex);
-                }
-            });
-
-            return tcs.Task;
-        }
+            => MainThreadDispatcher.IsMainThread ? task : Dispatch(() => { task.Wait(); return true; });
 
         public override Task<T> RunAsync<T>(Task<T> task)
-        {
-            if (MainThreadDispatcher.IsMainThread)
-                return task;
-
-            var tcs = new TaskCompletionSource<T>();
-
-            MainThreadDispatcher.Enqueue(() =>
-            {
-                try
-                {
-                    T result = task.Result;
-                    tcs.SetResult(result);
-                }
-                catch (Exception ex)
-                {
-                    tcs.SetException(ex);
-                }
-            });
-
-            return tcs.Task;
-        }
+            => MainThreadDispatcher.IsMainThread ? task : Dispatch(() => task.Result);
 
         public override Task<T> RunAsync<T>(Func<T> func)
-        {
-            if (MainThreadDispatcher.IsMainThread)
-                return Task.FromResult(func());
-
-            var tcs = new TaskCompletionSource<T>();
-
-            MainThreadDispatcher.Enqueue(() =>
-            {
-                try
-                {
-                    T result = func();
-                    tcs.SetResult(result);
-                }
-                catch (Exception ex)
-                {
-                    tcs.SetException(ex);
-                }
-            });
-
-            return tcs.Task;
-        }
+            => MainThreadDispatcher.IsMainThread ? Task.FromResult(func()) : Dispatch(func);
 
         public override Task RunAsync(Action action)
         {
@@ -104,22 +41,17 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
                 action();
                 return Task.CompletedTask;
             }
+            return Dispatch(() => { action(); return true; });
+        }
 
-            var tcs = new TaskCompletionSource<bool>();
-
+        static Task<T> Dispatch<T>(Func<T> body)
+        {
+            var tcs = new TaskCompletionSource<T>();
             MainThreadDispatcher.Enqueue(() =>
             {
-                try
-                {
-                    action();
-                    tcs.SetResult(true);
-                }
-                catch (Exception ex)
-                {
-                    tcs.SetException(ex);
-                }
+                try { tcs.SetResult(body()); }
+                catch (Exception ex) { tcs.SetException(ex); }
             });
-
             return tcs.Task;
         }
     }
