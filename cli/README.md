@@ -235,12 +235,16 @@ unity-mcp-cli install-unity --path ./MyGame
 Open a Unity project in the Unity Editor. By default, sets MCP connection environment variables if connection options are provided. Use `--no-connect` to open without MCP connection.
 
 ```bash
+# Explicit path
 unity-mcp-cli open ./MyGame
+
+# From inside the Unity project folder — path defaults to the current directory
+cd ./MyGame && unity-mcp-cli open
 ```
 
 | Option | Env Variable | Required | Description |
 |---|---|---|---|
-| `[path]` | — | Yes | Path to the Unity project (positional or `--path`) |
+| `[path]` | — | No | Path to the Unity project (positional or `--path`). Defaults to the current working directory. |
 | `--unity <version>` | — | No | Specific Unity Editor version to use (defaults to version from project settings, falls back to highest installed) |
 | `--no-connect` | — | No | Open without MCP connection environment variables |
 | `--url <url>` | `UNITY_MCP_HOST` | No | MCP server URL to connect to |

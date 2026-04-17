@@ -7,10 +7,50 @@ import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
 import { readConfig, isCloudMode, writeConfig } from '../utils/config.js';
 
+export interface ResolveProjectPathResult {
+  /** Absolute, resolved path to the project directory. */
+  projectPath: string;
+  /** True if no path was supplied and we fell back to `process.cwd()`. */
+  usedCwdFallback: boolean;
+}
+
+/**
+ * Resolve the project path from the positional argument, `--path` option, or
+ * the current working directory when neither is provided.
+ *
+ * Exported for unit testing.
+ */
+export function resolveOpenProjectPath(
+  positionalPath: string | undefined,
+  optionPath: string | undefined,
+  cwd: string,
+): ResolveProjectPathResult {
+  const explicit = positionalPath ?? optionPath;
+  const resolvedPath = explicit ?? cwd;
+  return {
+    projectPath: path.resolve(resolvedPath),
+    usedCwdFallback: explicit === undefined,
+  };
+}
+
+/**
+ * Returns true if `projectPath` looks like a Unity project — i.e. it contains
+ * an `Assets/` directory and a `ProjectSettings/ProjectVersion.txt` file.
+ *
+ * Exported for unit testing.
+ */
+export function isUnityProjectDir(projectPath: string): boolean {
+  const hasAssets = fs.existsSync(path.join(projectPath, 'Assets'));
+  const hasProjectVersion = fs.existsSync(
+    path.join(projectPath, 'ProjectSettings', 'ProjectVersion.txt'),
+  );
+  return hasAssets && hasProjectVersion;
+}
+
 export const openCommand = new Command('open')
   .description('Open a Unity project in Unity Editor, optionally passing MCP connection env vars when connection options (--url, --token, etc.) are provided. Use --no-connect to suppress all MCP env vars.')
-  .argument('[path]', 'Path to the Unity project')
-  .option('--path <path>', 'Path to the Unity project')
+  .argument('[path]', 'Path to the Unity project (defaults to current directory)')
+  .option('--path <path>', 'Path to the Unity project (defaults to current directory)')
   .option('--unity <version>', 'Specific Unity Editor version to use')
   .option('--no-connect', 'Open without MCP connection environment variables')
   .option('--url <url>', 'MCP server URL to connect to (sets UNITY_MCP_HOST)')
@@ -32,18 +72,34 @@ export const openCommand = new Command('open')
     transport?: string;
     startServer?: string;
   }) => {
-    const resolvedPath = positionalPath ?? options.path;
-    if (!resolvedPath) {
-      ui.error('Path is required. Usage: unity-mcp-cli open <path> or --path <path>');
-      process.exit(1);
-    }
-    const projectPath = path.resolve(resolvedPath);
+    const { projectPath, usedCwdFallback } = resolveOpenProjectPath(
+      positionalPath,
+      options.path,
+      process.cwd(),
+    );
 
     if (!fs.existsSync(projectPath)) {
       ui.error(`Project path does not exist: ${projectPath}`);
       process.exit(1);
     }
 
+    // Validate the directory looks like a Unity project. We require the
+    // presence of both `Assets/` and `ProjectSettings/ProjectVersion.txt`
+    // to avoid launching the Editor against an unrelated folder — this
+    // matters most when the user omits the path and we fall back to cwd.
+    if (!isUnityProjectDir(projectPath)) {
+      if (usedCwdFallback) {
+        ui.error(`Current directory is not a Unity project: ${projectPath}`);
+        ui.info('Run this command from a Unity project folder, or pass a path: unity-mcp-cli open <path>');
+      } else {
+        ui.error(`Not a Unity project (missing Assets/ or ProjectSettings/ProjectVersion.txt): ${projectPath}`);
+      }
+      process.exit(1);
+    }
+
+    if (usedCwdFallback) {
+      verbose(`No path provided — using current directory: ${projectPath}`);
+    }
     verbose(`open invoked for project: ${projectPath}`);
     verbose(`--no-connect: ${options.connect === false}`);
 
