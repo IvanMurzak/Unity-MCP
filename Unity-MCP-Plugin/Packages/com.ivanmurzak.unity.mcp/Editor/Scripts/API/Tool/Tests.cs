@@ -9,15 +9,19 @@
 */
 
 #nullable enable
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API.TestRunner;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -166,6 +170,61 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             var filter = CreateTestFilter(testMode, filterParams);
             TestRunnerApi.Execute(new ExecutionSettings(filter));
+        }
+
+        /// <summary>
+        /// Throws <see cref="InvalidOperationException"/> if any currently open scene has unsaved
+        /// changes (<see cref="Scene.isDirty"/>). The exception message lists every dirty scene's
+        /// name and path so the caller (LLM agent or human) can save them and retry.
+        ///
+        /// Running tests while a scene is dirty is unsafe: Unity may reload the scene when
+        /// entering play mode, silently discarding the unsaved edits and producing a test run
+        /// against a scene state that does not match either the in-memory scene or the asset
+        /// on disk. This check aborts before any state is mutated (no PlayerPrefs, no
+        /// AssetDatabase.Refresh, no domain reload is triggered).
+        ///
+        /// MUST be called on the Unity main thread.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">
+        /// Thrown if one or more open scenes have unsaved changes.
+        /// </exception>
+        internal static void ThrowIfAnyOpenSceneIsDirty()
+        {
+            var dirtyScenes = GetDirtyOpenScenes();
+            if (dirtyScenes.Count == 0)
+                return;
+
+            throw new InvalidOperationException(FormatDirtyScenesMessage(dirtyScenes));
+        }
+
+        /// <summary>
+        /// Returns every open scene whose <see cref="Scene.isDirty"/> is true.
+        /// MUST be called on the Unity main thread.
+        /// </summary>
+        internal static List<Scene> GetDirtyOpenScenes()
+        {
+            var result = new List<Scene>(capacity: EditorSceneManager.sceneCount);
+            for (var i = 0; i < EditorSceneManager.sceneCount; i++)
+            {
+                var scene = EditorSceneManager.GetSceneAt(i);
+                if (scene.isDirty)
+                    result.Add(scene);
+            }
+            return result;
+        }
+
+        internal static string FormatDirtyScenesMessage(IReadOnlyList<Scene> dirtyScenes)
+        {
+            var details = string.Join(", ", dirtyScenes.Select(FormatSceneForMessage));
+            return $"Cannot run tests: {dirtyScenes.Count} open scene(s) have unsaved changes: {details}. " +
+                "Save the scene(s) and try again.";
+        }
+
+        static string FormatSceneForMessage(Scene scene)
+        {
+            var name = string.IsNullOrEmpty(scene.name) ? "(untitled)" : scene.name;
+            var path = string.IsNullOrEmpty(scene.path) ? "(unsaved)" : scene.path;
+            return $"'{name}' ({path})";
         }
 
         private static class Error

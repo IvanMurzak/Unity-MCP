@@ -37,7 +37,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         )]
         [Description("Execute Unity tests and return detailed results. " +
             "Supports filtering by test mode, assembly, namespace, class, and method. " +
-            "Recommended to use '" + nameof(TestMode.EditMode) + "' for faster iteration during development.")]
+            "Recommended to use '" + nameof(TestMode.EditMode) + "' for faster iteration during development. " +
+            "Precondition: every open scene MUST be saved (no unsaved changes). If any open scene is dirty, " +
+            "this tool throws an InvalidOperationException listing the dirty scenes; save them and retry.")]
         public static async Task<ResponseCallValueTool<TestRunResponse>> Run
         (
             [Description("Test mode to run. Options: '" + nameof(TestMode.EditMode) + "', '" + nameof(TestMode.PlayMode) + "'. Default: '" + nameof(TestMode.EditMode) + "'")]
@@ -74,6 +76,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             return await MainThread.Instance.RunAsync(async () =>
             {
+                // Abort before any state mutation if any open scene has unsaved changes.
+                // Running tests against a dirty scene is unsafe: Unity may reload the scene on
+                // play-mode entry, silently discarding edits and producing non-reproducible
+                // results. Throws InvalidOperationException listing every dirty scene so the
+                // caller can save and retry. MUST run before PlayerPrefs writes and before
+                // AssetDatabase.Refresh so nothing is side-effected on abort.
+                ThrowIfAnyOpenSceneIsDirty();
+
                 // Save display options to PlayerPrefs BEFORE AssetDatabase.Refresh —
                 // these must be persisted before a potential domain reload
                 TestResultCollector.TestCallRequestID.Value = requestId;
