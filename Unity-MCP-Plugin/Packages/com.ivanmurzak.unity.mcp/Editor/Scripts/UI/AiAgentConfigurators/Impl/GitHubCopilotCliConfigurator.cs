@@ -9,7 +9,6 @@
 */
 
 #nullable enable
-using System;
 using System.IO;
 using System.Text.Json.Nodes;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
@@ -20,6 +19,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
     /// <summary>
     /// Configurator for Copilot CLI AI agent.
+    /// Uses project-local `.mcp.json` in the Unity project root. Copilot CLI v1.0.12+
+    /// discovers workspace-local MCP configs from the working directory up to the git
+    /// root, so the same `.mcp.json` is shared with Claude Code.
     /// </summary>
     public class GitHubCopilotCliConfigurator : AiAgentConfigurator
     {
@@ -30,15 +32,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         protected override string? IconFileName => "github-copilot-64.png";
 
-        private static string GlobalConfigPath => Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
-            ".copilot",
-            "mcp-config.json"
-        );
+        private static string LocalConfigPath => Path.Combine(ProjectRootPath, ".mcp.json");
 
         protected override AiAgentConfig CreateConfigStdioWindows() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: GlobalConfigPath,
+            configPath: LocalConfigPath,
             bodyPath: DefaultBodyPath
         )
         .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
@@ -49,13 +47,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             $"{Args.Authorization}={UnityMcpPluginEditor.AuthOption}",
             $"{Args.Token}={UnityMcpPluginEditor.Token}"
         }, requiredForConfiguration: true)
-        .SetProperty("tools", new JsonArray { "*" }, requiredForConfiguration: false)
         .SetPropertyToRemove("url")
         .SetPropertyToRemove("type");
 
         protected override AiAgentConfig CreateConfigStdioMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: GlobalConfigPath,
+            configPath: LocalConfigPath,
             bodyPath: DefaultBodyPath
         )
         .SetProperty("command", JsonValue.Create(McpServerManager.ExecutableFullPath.Replace('\\', '/')), requiredForConfiguration: true, comparison: ValueComparisonMode.Path)
@@ -66,29 +63,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             $"{Args.Authorization}={UnityMcpPluginEditor.AuthOption}",
             $"{Args.Token}={UnityMcpPluginEditor.Token}"
         }, requiredForConfiguration: true)
-        .SetProperty("tools", new JsonArray { "*" }, requiredForConfiguration: false)
         .SetPropertyToRemove("url")
         .SetPropertyToRemove("type");
 
         protected override AiAgentConfig CreateConfigHttpWindows() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: GlobalConfigPath,
+            configPath: LocalConfigPath,
             bodyPath: DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
         .SetProperty("url", JsonValue.Create(UnityMcpPluginEditor.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
-        .SetProperty("tools", new JsonArray { "*" }, requiredForConfiguration: false)
         .SetPropertyToRemove("command")
         .SetPropertyToRemove("args");
 
         protected override AiAgentConfig CreateConfigHttpMacLinux() => new JsonAiAgentConfig(
             name: AgentName,
-            configPath: GlobalConfigPath,
+            configPath: LocalConfigPath,
             bodyPath: DefaultBodyPath
         )
         .SetProperty("type", JsonValue.Create("http"), requiredForConfiguration: true)
         .SetProperty("url", JsonValue.Create(UnityMcpPluginEditor.Host), requiredForConfiguration: true, comparison: ValueComparisonMode.Url)
-        .SetProperty("tools", new JsonArray { "*" }, requiredForConfiguration: false)
         .SetPropertyToRemove("command")
         .SetPropertyToRemove("args");
 
@@ -107,7 +101,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             var manualStepsContainer = TemplateFoldout("Manual Configuration Steps");
 
-            manualStepsContainer!.Add(TemplateLabelDescription("1. Open or create file '%User%/.copilot/mcp-config.json'"));
+            manualStepsContainer!.Add(TemplateLabelDescription("1. Open or create file '.mcp.json' in the Unity project root"));
             manualStepsContainer!.Add(TemplateLabelDescription("2. Copy and paste the configuration json into the file."));
             manualStepsContainer!.Add(TemplateTextFieldReadOnly(ConfigStdio.ExpectedFileContent));
 
@@ -115,6 +109,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             var troubleshootingContainerStdio = TemplateFoldout("Troubleshooting");
 
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Ensure Copilot CLI is launched from the Unity project root (the folder containing '.mcp.json')"));
+            troubleshootingContainerStdio.Add(TemplateLabelDescription("- Requires GitHub Copilot CLI v1.0.12+ which discovers '.mcp.json' at project level"));
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Ensure MCP configuration file doesn't have syntax errors"));
             troubleshootingContainerStdio.Add(TemplateLabelDescription("- Restart Copilot CLI after configuration changes"));
 
@@ -131,7 +127,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             var manualStepsContainerHttp = TemplateFoldout("Manual Configuration Steps");
 
-            manualStepsContainerHttp!.Add(TemplateLabelDescription("1. Open or create file '%User%/.copilot/mcp-config.json'"));
+            manualStepsContainerHttp!.Add(TemplateLabelDescription("1. Open or create file '.mcp.json' in the Unity project root"));
             manualStepsContainerHttp!.Add(TemplateLabelDescription("2. Copy and paste the configuration json into the file."));
             manualStepsContainerHttp!.Add(TemplateTextFieldReadOnly(ConfigHttp.ExpectedFileContent));
 
@@ -139,6 +135,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             var troubleshootingContainerHttp = TemplateFoldout("Troubleshooting");
 
+            troubleshootingContainerHttp.Add(TemplateLabelDescription("- Ensure Copilot CLI is launched from the Unity project root (the folder containing '.mcp.json')"));
+            troubleshootingContainerHttp.Add(TemplateLabelDescription("- Requires GitHub Copilot CLI v1.0.12+ which discovers '.mcp.json' at project level"));
             troubleshootingContainerHttp.Add(TemplateLabelDescription("- Ensure MCP configuration file doesn't have syntax errors"));
             troubleshootingContainerHttp.Add(TemplateLabelDescription("- Restart Copilot CLI after configuration changes"));
 
