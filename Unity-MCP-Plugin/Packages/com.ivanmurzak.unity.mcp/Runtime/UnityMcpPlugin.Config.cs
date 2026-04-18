@@ -92,15 +92,23 @@ namespace com.IvanMurzak.Unity.MCP
             }
 
             /// <summary>
-            /// Returns the active auth token based on <see cref="ConnectionMode"/>.
-            /// In Cloud mode, returns <see cref="CloudToken"/>.
-            /// In Local mode, returns <see cref="LocalToken"/>.
+            /// Gets/sets the active auth token based on <see cref="ConnectionMode"/>.
+            /// In Cloud mode, routes to <see cref="CloudToken"/>.
+            /// In Local mode, routes to <see cref="LocalToken"/>.
+            /// Setter mirrors the getter so env-var / CLI overrides (which write via
+            /// the generic Token property) land on the right field regardless of mode.
             /// </summary>
             [JsonIgnore]
             public override string? Token
             {
                 get => ConnectionMode == ConnectionMode.Cloud ? CloudToken : LocalToken;
-                set => LocalToken = value;
+                set
+                {
+                    if (ConnectionMode == ConnectionMode.Cloud)
+                        CloudToken = value;
+                    else
+                        LocalToken = value;
+                }
             }
 
             public LogLevel LogLevel { get; set; } = LogLevel.Warning;
