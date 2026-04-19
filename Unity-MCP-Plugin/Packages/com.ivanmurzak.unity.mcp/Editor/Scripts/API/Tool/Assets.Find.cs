@@ -43,7 +43,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 "Note: Searching is case insensitive.")]
             string? filter = null,
             [Description("The folders where the search will start. If null, the search will be performed in all folders.")]
-            List<string>? searchInFolders = null,  // fixed: was string[]?
+            List<string>? searchInFolders = null,
             [Description("Maximum number of assets to return. If the number of found assets exceeds this limit, the result will be truncated.")]
             int maxResults = 10
         )
