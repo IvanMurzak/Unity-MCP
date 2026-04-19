@@ -43,7 +43,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 "Note: Searching is case insensitive.")]
             string? filter = null,
             [Description("The folders where the search will start. If null, the search will be performed in all folders.")]
-            string[]? searchInFolders = null,
+            List<string>? searchInFolders = null,  // fixed: was string[]?
             [Description("Maximum number of assets to return. If the number of found assets exceeds this limit, the result will be truncated.")]
             int maxResults = 10
         )
@@ -53,9 +53,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             return MainThread.Instance.Run(() =>
             {
-                var assetGuids = (searchInFolders?.Length ?? 0) == 0
+                var folders = searchInFolders?.ToArray();
+                var assetGuids = (folders?.Length ?? 0) == 0
                     ? AssetDatabase.FindAssets(filter ?? string.Empty)
-                    : AssetDatabase.FindAssets(filter ?? string.Empty, searchInFolders);
+                    : AssetDatabase.FindAssets(filter ?? string.Empty, folders);
 
                 var response = new List<AssetObjectRef>();
 
