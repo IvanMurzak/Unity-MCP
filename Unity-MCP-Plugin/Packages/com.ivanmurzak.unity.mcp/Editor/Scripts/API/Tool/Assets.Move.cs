@@ -34,34 +34,39 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "Use '" + AssetsFindToolId + "' tool to find assets before moving.")]
         public MoveAssetsResponse Move
         (
-            [Description("The paths of the assets to move.")]
-            string[] sourcePaths,
-            [Description("The paths of moved assets.")]
-            string[] destinationPaths
+            [Description("The paths of the assets to move. Separate multiple paths with '|' character. " +
+                "Example: 'Assets/Foo.mat|Assets/Bar.prefab'.")]
+            string sourcePaths,
+            [Description("The paths of moved assets. Separate multiple paths with '|' character. " +
+                "Must match the number of source paths. Example: 'Assets/NewFoo.mat|Assets/NewBar.prefab'.")]
+            string destinationPaths
         )
         {
+            var sourcePathList = sourcePaths.Split('|');
+            var destinationPathList = destinationPaths.Split('|');
+
             return MainThread.Instance.Run(() =>
             {
-                if (sourcePaths.Length == 0)
+                if (sourcePathList.Length == 0)
                     throw new ArgumentException(Error.SourcePathsArrayIsEmpty(), nameof(sourcePaths));
 
-                if (sourcePaths.Length != destinationPaths.Length)
+                if (sourcePathList.Length != destinationPathList.Length)
                     throw new ArgumentException(Error.SourceAndDestinationPathsArrayMustBeOfTheSameLength());
 
                 var response = new MoveAssetsResponse();
 
-                for (int i = 0; i < sourcePaths.Length; i++)
+                for (int i = 0; i < sourcePathList.Length; i++)
                 {
-                    var error = AssetDatabase.MoveAsset(sourcePaths[i], destinationPaths[i]);
+                    var error = AssetDatabase.MoveAsset(sourcePathList[i], destinationPathList[i]);
                     if (string.IsNullOrEmpty(error))
                     {
                         response.MovedPaths ??= new();
-                        response.MovedPaths.Add(destinationPaths[i]);
+                        response.MovedPaths.Add(destinationPathList[i]);
                     }
                     else
                     {
                         response.Errors ??= new();
-                        response.Errors.Add($"Failed to move asset from {sourcePaths[i]} to {destinationPaths[i]}: {error}.");
+                        response.Errors.Add($"Failed to move asset from {sourcePathList[i]} to {destinationPathList[i]}: {error}.");
                     }
                 }
                 AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
