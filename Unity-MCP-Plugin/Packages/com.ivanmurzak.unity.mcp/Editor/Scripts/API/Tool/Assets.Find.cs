@@ -42,8 +42,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 "Globbing (glob:): Use globbing to match specific rules. " +
                 "Note: Searching is case insensitive.")]
             string? filter = null,
-            [Description("The folders where the search will start. If null, the search will be performed in all folders.")]
-            List<string>? searchInFolders = null,
+            [Description("The folders where the search will start. Separate multiple folders with '|' character. " +
+                "Example: 'Assets/Scripts|Assets/Prefabs'. If null or empty, the search will be performed in all folders.")]
+            string? searchInFolders = null,
             [Description("Maximum number of assets to return. If the number of found assets exceeds this limit, the result will be truncated.")]
             int maxResults = 10
         )
@@ -53,7 +54,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             return MainThread.Instance.Run(() =>
             {
-                var folders = searchInFolders?.ToArray();
+                var folders = string.IsNullOrEmpty(searchInFolders)
+                    ? null
+                    : searchInFolders.Split('|');
+
                 var assetGuids = (folders?.Length ?? 0) == 0
                     ? AssetDatabase.FindAssets(filter ?? string.Empty)
                     : AssetDatabase.FindAssets(filter ?? string.Empty, folders);
