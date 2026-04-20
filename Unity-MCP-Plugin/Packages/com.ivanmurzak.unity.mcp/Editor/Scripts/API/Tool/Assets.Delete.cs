@@ -35,22 +35,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "Use '" + AssetsFindToolId + "' tool to find assets before deleting.")]
         public DeleteAssetsResponse Delete
         (
-            [Description("The paths of the assets")]
-            string[] paths
+            [Description("The paths of the assets to delete. Separate multiple paths with '|' character. " +
+                "Example: 'Assets/Foo.mat|Assets/Bar.prefab'.")]
+            string paths
         )
         {
+            var pathList = paths.Split('|');
+
             return MainThread.Instance.Run(() =>
             {
                 var logger = UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_Assets>();
 
-                if (paths.Length == 0)
+                if (pathList.Length == 0)
                     throw new System.Exception(Error.SourcePathsArrayIsEmpty());
 
-                logger.LogInformation("Deleting {Count} asset(s): {Paths}", paths.Length, string.Join(", ", paths));
+                logger.LogInformation("Deleting {Count} asset(s): {Paths}", pathList.Length, string.Join(", ", pathList));
 
                 var response = new DeleteAssetsResponse();
                 var outFailedPaths = new List<string>();
-                var success = AssetDatabase.DeleteAssets(paths, outFailedPaths);
+                var success = AssetDatabase.DeleteAssets(pathList, outFailedPaths);
 
                 if (!success)
                 {
@@ -63,7 +66,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 }
 
                 // Add successfully deleted paths
-                foreach (var path in paths)
+                foreach (var path in pathList)
                 {
                     if (!outFailedPaths.Contains(path))
                     {
