@@ -36,8 +36,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "Use '" + ScriptReadToolId + "' tool to read existing script files first.")]
         public static ResponseCallTool Delete
         (
-            [Description("File paths to the files. Sample: \"Assets/Scripts/MyScript.cs\".")]
-            string[] files,
+            [Description("File paths to the files, separated by '|' character. " +
+                "Example: 'Assets/Scripts/MyScript.cs|Assets/Scripts/OtherScript.cs'.")]
+            string files,
             [RequestID]
             string? requestId = null
         )
@@ -45,20 +46,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (requestId == null || string.IsNullOrWhiteSpace(requestId))
                 return ResponseCallTool.Error("Original request with valid RequestID must be provided.");
 
-            if (files == null || files.Length == 0)
+            if (string.IsNullOrEmpty(files))
                 return ResponseCallTool.Error(Error.ScriptPathIsEmpty()).SetRequestID(requestId);
 
-            if (files.Any(f => string.IsNullOrEmpty(f)))
+            var fileList = files.Split('|');
+
+            if (fileList.Length == 0)
                 return ResponseCallTool.Error(Error.ScriptPathIsEmpty()).SetRequestID(requestId);
 
-            if (!files.All(f => f.EndsWith(".cs")))
+            if (fileList.Any(f => string.IsNullOrEmpty(f)))
+                return ResponseCallTool.Error(Error.ScriptPathIsEmpty()).SetRequestID(requestId);
+
+            if (!fileList.All(f => f.EndsWith(".cs")))
                 return ResponseCallTool.Error(Error.FilePathMustEndsWithCs()).SetRequestID(requestId);
 
-            var invalidFiles = files.Where(f => !File.Exists(f)).ToArray();
+            var invalidFiles = fileList.Where(f => !File.Exists(f)).ToArray();
             if (invalidFiles.Length > 0)
                 return ResponseCallTool.Error(Error.ScriptFileNotFound(invalidFiles)).SetRequestID(requestId);
 
-            foreach (var f in files)
+            foreach (var f in fileList)
             {
                 File.Delete(f);
                 if (File.Exists(f + ".meta"))
@@ -69,12 +75,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             {
                 await Task.Yield();
                 // Schedule notification to be sent after compilation completes (survives domain reload)
-                ScriptUtils.SchedulePostCompilationNotification(requestId, string.Join(",", files), "Script deletion");
+                ScriptUtils.SchedulePostCompilationNotification(requestId, string.Join(",", fileList), "Script deletion");
 
                 AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
             });
 
-            var scriptWord = files.Length > 1 ? "Scripts" : "Script";
+            var scriptWord = fileList.Length > 1 ? "Scripts" : "Script";
             return ResponseCallTool.Processing($"{scriptWord} deleted. Refreshing AssetDatabase and waiting for compilation to complete...").SetRequestID(requestId);
         }
     }
