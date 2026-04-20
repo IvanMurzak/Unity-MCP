@@ -33,26 +33,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "Use '" + AssetsFindToolId + "' tool to find assets before copying.")]
         public CopyAssetsResponse Copy
         (
-            [Description("The paths of the assets to copy.")]
-            string[] sourcePaths,
-            [Description("The paths to store the copied assets.")]
-            string[] destinationPaths
+            [Description("The paths of the assets to copy. Separate multiple paths with '|' character. " +
+                "Example: 'Assets/Foo.mat|Assets/Bar.prefab'.")]
+            string sourcePaths,
+            [Description("The paths to store the copied assets. Separate multiple paths with '|' character. " +
+                "Must match the number of source paths. Example: 'Assets/Foo_Copy.mat|Assets/Bar_Copy.prefab'.")]
+            string destinationPaths
         )
         {
+            var sourcePathList = sourcePaths.Split('|');
+            var destinationPathList = destinationPaths.Split('|');
+
             return MainThread.Instance.Run(() =>
             {
-                if (sourcePaths.Length == 0)
+                if (sourcePathList.Length == 0)
                     throw new System.Exception(Error.SourcePathsArrayIsEmpty());
 
-                if (sourcePaths.Length != destinationPaths.Length)
+                if (sourcePathList.Length != destinationPathList.Length)
                     throw new System.Exception(Error.SourceAndDestinationPathsArrayMustBeOfTheSameLength());
 
                 var response = new CopyAssetsResponse();
 
-                for (var i = 0; i < sourcePaths.Length; i++)
+                for (var i = 0; i < sourcePathList.Length; i++)
                 {
-                    var sourcePath = sourcePaths[i];
-                    var destinationPath = destinationPaths[i];
+                    var sourcePath = sourcePathList[i];
+                    var destinationPath = destinationPathList[i];
 
                     if (string.IsNullOrEmpty(sourcePath) || string.IsNullOrEmpty(destinationPath))
                     {
