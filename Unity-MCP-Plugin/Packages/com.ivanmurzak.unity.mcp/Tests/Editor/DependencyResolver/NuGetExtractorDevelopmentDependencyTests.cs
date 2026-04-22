@@ -93,7 +93,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
         [Test]
         public void IsDevelopmentDependency_ReturnsFalse_WhenNupkgIsCorrupt()
         {
-            // A zero-byte file is not a valid zip archive; the helper must swallow the
+            // An invalid zip header is not a valid zip archive; the helper must swallow the
             // exception and return false so the caller falls back to normal extraction.
             var bogus = Path.Combine(_tempDir, "corrupt.nupkg");
             File.WriteAllBytes(bogus, new byte[] { 0, 0, 0, 0 });

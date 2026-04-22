@@ -107,9 +107,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 using var zip = ZipFile.OpenRead(nupkgPath);
 
                 // .nuspec is always at the archive root (exactly one per package).
+                // Normalize backslashes to forward slashes so archives that use '\' as the
+                // path separator are matched the same way as ExtractDlls() treats them.
                 var nuspecEntry = zip.Entries.FirstOrDefault(e =>
-                    e.FullName.EndsWith(".nuspec", StringComparison.OrdinalIgnoreCase) &&
-                    !e.FullName.Contains('/'));
+                {
+                    var fullName = e.FullName.Replace('\\', '/');
+                    return fullName.EndsWith(".nuspec", StringComparison.OrdinalIgnoreCase) &&
+                           !fullName.Contains('/');
+                });
 
                 if (nuspecEntry == null)
                     return false;

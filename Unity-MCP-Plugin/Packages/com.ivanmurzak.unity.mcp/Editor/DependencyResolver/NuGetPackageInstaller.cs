@@ -140,15 +140,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 
         /// <summary>
         /// Removes previously-installed NuGet package directories that should no longer exist:
-        ///   1. Stale-version directories for any package in the resolved session closure —
-        ///      both configured packages AND their transitive dependencies
-        ///      (e.g., a leftover "Microsoft.AspNetCore.SignalR.Common.10.0.3" when the current
-        ///      closure resolves that transitive to "8.0.15"). Keeping both produces
-        ///      duplicate-assembly conflicts.
-        ///   2a. Empty package directories (no DLLs) that aren't in the current closure —
-        ///       typically migration cruft from a pre-fix install of a development-only
-        ///       dependency (Roslyn analyzer, source generator, build tooling).
-        ///   2b. Directories whose DLLs are now all provided by Unity (e.g., after a Unity
+        ///   1a. Empty package directories (no DLLs anywhere under them) — typically migration
+        ///       cruft from a pre-fix install of a development-only dependency (Roslyn analyzer,
+        ///       source generator, build tooling). Always deleted, regardless of whether the
+        ///       package ID is in the current closure, so stale empty dirs don't keep forcing
+        ///       AllPackagesInstalled() to return false.
+        ///   1b. Stale-version directories for any package in the resolved session closure —
+        ///       both configured packages AND their transitive dependencies
+        ///       (e.g., a leftover "Microsoft.AspNetCore.SignalR.Common.10.0.3" when the current
+        ///       closure resolves that transitive to "8.0.15"). Keeping both produces
+        ///       duplicate-assembly conflicts.
+        ///   2.  Directories whose DLLs are now all provided by Unity (e.g., after a Unity
         ///       upgrade that bundled the BCL assembly) and whose package ID is not in the closure.
         ///
         /// <paramref name="requiredVersionByPackageId"/> must contain the full resolved closure
@@ -184,7 +186,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     continue;
                 }
 
-                // Case 1: configured package with a stale on-disk version — delete the stale one.
+                // Case 1a: empty directory left behind by a pre-fix install of a development-only
+                // dependency (e.g. Roslyn analyzer) — the installer used to create an empty dir
+                // and .meta before recognising that dev-deps have no lib/<tfm>/ payload. Run
+                // this check BEFORE the stale-version / closure-membership branches so empty
+                // dirs get cleaned up even when the package is still in the current closure
+                // (otherwise the AllPackagesInstalled() empty-dir check would force a full
+                // restore on every domain reload).
+                var dllFiles = Directory.GetFiles(dir, "*.dll", SearchOption.AllDirectories);
+                if (dllFiles.Length == 0)
+                {
+                    Debug.Log($"{Tag} Removing {dirName} — empty package directory (no DLL payload).");
+                    DeleteDirAndMeta(dir);
+                    anyRemoved = true;
+                    continue;
+                }
+
+                // Case 1b: configured package with a stale on-disk version — delete the stale one.
                 if (requiredVersionByPackageId.TryGetValue(packageId, out var requiredVersion))
                 {
                     var dirVersion = dirName.Substring(packageId.Length + 1);
@@ -197,20 +215,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     continue;
                 }
 
-                // Case 2a: empty directory left behind by a pre-fix install of a development-only
-                // dependency (e.g. Roslyn analyzer) — the installer used to create an empty dir
-                // and .meta before recognising that dev-deps have no lib/<tfm>/ payload. Also
-                // cleans up any other unrequired empty directory so strays don't accumulate.
-                var dllFiles = Directory.GetFiles(dir, "*.dll", SearchOption.AllDirectories);
-                if (dllFiles.Length == 0)
-                {
-                    Debug.Log($"{Tag} Removing {dirName} — empty package directory (not in current closure).");
-                    DeleteDirAndMeta(dir);
-                    anyRemoved = true;
-                    continue;
-                }
-
-                // Case 2b: unrequired package — remove only when Unity provides every DLL it ships.
+                // Case 2: unrequired package — remove only when Unity provides every DLL it ships.
                 // Using the NuGet package ID directly is unreliable because a package often ships
                 // DLLs with names that differ from the package ID (e.g., Microsoft.Bcl.Memory
                 // ships System.Memory / System.Buffers / System.Runtime.CompilerServices.Unsafe).
