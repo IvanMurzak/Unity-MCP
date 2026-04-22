@@ -160,6 +160,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             if (skipSet.Contains(package.Id))
                 return true;
 
+            var cachedPath = NuGetCache.IsCached(package)
+                ? NuGetCache.GetCachedPath(package)
+                : null;
+
             // Development-only dependencies (analyzers, source generators, build tooling)
             // are legitimately absent from the install directory — they ship their payload
             // under analyzers/, build/, tools/ etc. and the installer intentionally does not
@@ -167,11 +171,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // requiring an install-dir match; otherwise AllPackagesInstalled() would return
             // false every session for any closure containing a dev dep, forcing a needless
             // full restore.
-            if (NuGetCache.IsCached(package)
-                && NuGetExtractor.IsDevelopmentDependency(NuGetCache.GetCachedPath(package)))
-            {
+            if (cachedPath != null && NuGetExtractor.IsDevelopmentDependency(cachedPath))
                 return true;
-            }
 
             if (!installedPackageIds.Contains(package.Id))
                 return false;
@@ -181,13 +182,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // early-return without downloading this version). The install-dir check above
             // already confirmed some version is present, so stop recursing here rather than
             // forcing an unnecessary restore.
-            if (!NuGetCache.IsCached(package))
+            if (cachedPath == null)
                 return true;
 
             List<NuGetPackage> deps;
             try
             {
-                deps = NuGetExtractor.GetDependencies(NuGetCache.GetCachedPath(package));
+                deps = NuGetExtractor.GetDependencies(cachedPath);
             }
             catch
             {
