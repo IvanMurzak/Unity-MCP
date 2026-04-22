@@ -99,6 +99,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     }
                 }
 
+                // Development-only dependencies (e.g. Roslyn analyzers, source generators,
+                // build-time tooling) ship their payload under analyzers/, build/, tools/ etc.
+                // — never under lib/<tfm>/ — so there are no runtime DLLs for the resolver
+                // to extract and the "No DLLs extracted" warning would be a false positive.
+                // Record them in the session closure so transitive resolution stays complete,
+                // but do not create an install directory or extract anything. Any stale
+                // empty dir/.meta left over from a pre-fix install is cleaned up by
+                // RemoveUnnecessaryPackages().
+                if (NuGetExtractor.IsDevelopmentDependency(nupkgPath))
+                {
+                    installedThisSession[package.Id] = package.Version;
+                    return anyInstalled;
+                }
+
                 // Extract DLLs only when not already on disk at this exact version.
                 if (!alreadyOnDisk)
                 {
@@ -180,14 +194,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     continue;
                 }
 
-                // Case 2: unrequired package — remove only when Unity provides every DLL it ships.
+                // Case 2a: empty directory left behind by a pre-fix install of a development-only
+                // dependency (e.g. Roslyn analyzer) — the installer used to create an empty dir
+                // and .meta before recognising that dev-deps have no lib/<tfm>/ payload. Also
+                // cleans up any other unrequired empty directory so strays don't accumulate.
+                var dllFiles = Directory.GetFiles(dir, "*.dll", SearchOption.AllDirectories);
+                if (dllFiles.Length == 0)
+                {
+                    Debug.Log($"{Tag} Removing {dirName} — empty package directory (not in current closure).");
+                    DeleteDirAndMeta(dir);
+                    anyRemoved = true;
+                    continue;
+                }
+
+                // Case 2b: unrequired package — remove only when Unity provides every DLL it ships.
                 // Using the NuGet package ID directly is unreliable because a package often ships
                 // DLLs with names that differ from the package ID (e.g., Microsoft.Bcl.Memory
                 // ships System.Memory / System.Buffers / System.Runtime.CompilerServices.Unsafe).
-                var dllFiles = Directory.GetFiles(dir, "*.dll", SearchOption.AllDirectories);
-                if (dllFiles.Length == 0)
-                    continue;
-
                 var allProvidedByUnity = dllFiles.All(dll =>
                     UnityAssemblyResolver.IsAlreadyImported(Path.GetFileNameWithoutExtension(dll)));
                 if (!allProvidedByUnity)

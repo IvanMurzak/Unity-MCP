@@ -92,6 +92,48 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         }
 
         /// <summary>
+        /// Returns true if the .nupkg is marked as a development-only dependency
+        /// (<c>&lt;developmentDependency&gt;true&lt;/developmentDependency&gt;</c> in its .nuspec).
+        /// These packages ship analyzers, source generators, or build-time assets under
+        /// <c>analyzers/</c>, <c>build/</c>, <c>tools/</c> etc. — never runtime DLLs under
+        /// <c>lib/&lt;tfm&gt;/</c>. They are legitimately empty from the resolver's point of view
+        /// and should not trigger "No compatible framework" / "No DLLs extracted" warnings.
+        /// Returns false on any parse error so callers fall back to the normal extraction path.
+        /// </summary>
+        public static bool IsDevelopmentDependency(string nupkgPath)
+        {
+            try
+            {
+                using var zip = ZipFile.OpenRead(nupkgPath);
+
+                // .nuspec is always at the archive root (exactly one per package).
+                var nuspecEntry = zip.Entries.FirstOrDefault(e =>
+                    e.FullName.EndsWith(".nuspec", StringComparison.OrdinalIgnoreCase) &&
+                    !e.FullName.Contains('/'));
+
+                if (nuspecEntry == null)
+                    return false;
+
+                using var stream = nuspecEntry.Open();
+                var doc = XDocument.Load(stream);
+                var ns = doc.Root?.Name.Namespace ?? XNamespace.None;
+
+                var devDep = doc.Root?
+                    .Element(ns + "metadata")?
+                    .Element(ns + "developmentDependency")?
+                    .Value;
+
+                return string.Equals(devDep?.Trim(), "true", StringComparison.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                // Corrupt / unreadable nupkg — treat as "not a dev dep" so the normal
+                // extraction path runs and surfaces the real error.
+                return false;
+            }
+        }
+
+        /// <summary>
         /// Reads the .nuspec from a .nupkg and returns the transitive dependencies
         /// for the best matching target framework group.
         /// </summary>

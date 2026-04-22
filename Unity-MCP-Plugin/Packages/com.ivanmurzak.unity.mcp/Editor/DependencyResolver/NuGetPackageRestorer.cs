@@ -111,6 +111,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     return false;
                 if (skipSet.Contains(packageId))
                     return false;
+
+                // Empty package directories are cruft — typically left behind by a pre-fix
+                // install of a development-only dependency (analyzers, source generators)
+                // that never had any lib/<tfm>/ payload. Force a full restore so
+                // RemoveUnnecessaryPackages() cleans them up.
+                if (Directory.GetFiles(dir, "*.dll", SearchOption.AllDirectories).Length == 0)
+                    return false;
+
                 installedPackageIds.Add(packageId);
             }
 
@@ -151,6 +159,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // Skip-listed packages are expected to be absent from disk.
             if (skipSet.Contains(package.Id))
                 return true;
+
+            // Development-only dependencies (analyzers, source generators, build tooling)
+            // are legitimately absent from the install directory — they ship their payload
+            // under analyzers/, build/, tools/ etc. and the installer intentionally does not
+            // create a lib/ directory for them. Detect this via the cached .nuspec before
+            // requiring an install-dir match; otherwise AllPackagesInstalled() would return
+            // false every session for any closure containing a dev dep, forcing a needless
+            // full restore.
+            if (NuGetCache.IsCached(package)
+                && NuGetExtractor.IsDevelopmentDependency(NuGetCache.GetCachedPath(package)))
+            {
+                return true;
+            }
 
             if (!installedPackageIds.Contains(package.Id))
                 return false;
