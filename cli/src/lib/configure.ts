@@ -7,25 +7,15 @@ import {
   type McpFeature,
   type UnityConnectionConfig,
 } from '../utils/config.js';
+import { emitProgress } from './progress.js';
 import type {
   ConfigureOptions,
   ConfigureResult,
   FeatureAction,
   McpFeatureSnapshot,
-  ProgressCallback,
 } from './types.js';
 
 const CONFIG_RELATIVE_PATH = 'UserSettings/AI-Game-Developer-Config.json';
-
-function emit(onProgress: ProgressCallback | undefined, event: Parameters<ProgressCallback>[0]): void {
-  if (onProgress) {
-    try {
-      onProgress(event);
-    } catch {
-      // A broken progress callback must not abort the operation.
-    }
-  }
-}
 
 function hasAnyAction(action: FeatureAction | undefined): boolean {
   if (!action) return false;
@@ -79,7 +69,7 @@ export async function configure(opts: ConfigureOptions): Promise<ConfigureResult
 
     const configPath = path.join(projectPath, CONFIG_RELATIVE_PATH);
 
-    emit(opts.onProgress, { phase: 'start', message: `Configuring Unity-MCP features for ${projectPath}` });
+    emitProgress(opts.onProgress, { phase: 'start', message: `Configuring Unity-MCP features for ${projectPath}` });
 
     const config = getOrCreateConfig(projectPath);
 
@@ -99,14 +89,14 @@ export async function configure(opts: ConfigureOptions): Promise<ConfigureResult
 
     if (hasToolsAction || hasPromptsAction || hasResourcesAction) {
       writeConfig(projectPath, config);
-      emit(opts.onProgress, {
+      emitProgress(opts.onProgress, {
         phase: 'manifest-patched',
         message: `Wrote ${configPath}`,
         manifestPath: configPath,
       });
     }
 
-    emit(opts.onProgress, { phase: 'done', message: 'Configure complete.' });
+    emitProgress(opts.onProgress, { phase: 'done', message: 'Configure complete.' });
 
     return {
       success: true,

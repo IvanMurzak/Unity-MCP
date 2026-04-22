@@ -2,17 +2,8 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { removePluginFromManifest } from '../utils/manifest.js';
 import { silentLogger } from './logger.js';
-import type { RemovePluginOptions, RemoveResult, ProgressCallback } from './types.js';
-
-function emit(onProgress: ProgressCallback | undefined, event: Parameters<ProgressCallback>[0]): void {
-  if (onProgress) {
-    try {
-      onProgress(event);
-    } catch {
-      // A broken progress callback must not abort the operation.
-    }
-  }
-}
+import { emitProgress } from './progress.js';
+import type { RemovePluginOptions, RemoveResult } from './types.js';
 
 /**
  * Remove the Unity-MCP plugin from a Unity project. Library-safe:
@@ -43,7 +34,7 @@ export async function removePlugin(opts: RemovePluginOptions): Promise<RemoveRes
       };
     }
 
-    emit(opts.onProgress, { phase: 'start', message: `Removing Unity-MCP plugin from ${projectPath}` });
+    emitProgress(opts.onProgress, { phase: 'start', message: `Removing Unity-MCP plugin from ${projectPath}` });
 
     const result = removePluginFromManifest(projectPath, silentLogger);
 
@@ -51,7 +42,7 @@ export async function removePlugin(opts: RemovePluginOptions): Promise<RemoveRes
       warnings.push('Unity-MCP plugin was not installed. Nothing was removed.');
     }
 
-    emit(opts.onProgress, {
+    emitProgress(opts.onProgress, {
       phase: 'manifest-patched',
       message: result.removed
         ? `Removed plugin from ${result.manifestPath}`
@@ -59,7 +50,7 @@ export async function removePlugin(opts: RemovePluginOptions): Promise<RemoveRes
       manifestPath: result.manifestPath,
     });
 
-    emit(opts.onProgress, { phase: 'done', message: 'Remove complete.' });
+    emitProgress(opts.onProgress, { phase: 'done', message: 'Remove complete.' });
 
     return {
       success: true,

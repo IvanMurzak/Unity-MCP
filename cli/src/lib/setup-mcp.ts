@@ -10,22 +10,12 @@ import {
   writeTomlAgentConfig,
   MCP_SERVER_NAME,
 } from '../utils/agents.js';
+import { emitProgress } from './progress.js';
 import type {
   SetupMcpOptions,
   SetupMcpResult,
-  ProgressCallback,
   McpTransport,
 } from './types.js';
-
-function emit(onProgress: ProgressCallback | undefined, event: Parameters<ProgressCallback>[0]): void {
-  if (onProgress) {
-    try {
-      onProgress(event);
-    } catch {
-      // A broken progress callback must not abort the operation.
-    }
-  }
-}
 
 function isValidTransport(t: string | undefined): t is McpTransport {
   return t === 'stdio' || t === 'http';
@@ -85,7 +75,7 @@ export async function setupMcp(opts: SetupMcpOptions): Promise<SetupMcpResult> {
       };
     }
 
-    emit(opts.onProgress, {
+    emitProgress(opts.onProgress, {
       phase: 'start',
       message: `Configuring ${agent.name} (${transport}) for ${projectPath}`,
     });
@@ -140,7 +130,7 @@ export async function setupMcp(opts: SetupMcpOptions): Promise<SetupMcpResult> {
       writeJsonAgentConfig(configPath, agent.bodyPath, MCP_SERVER_NAME, props, removeKeys);
     }
 
-    emit(opts.onProgress, {
+    emitProgress(opts.onProgress, {
       phase: 'manifest-patched',
       message: `Wrote ${configPath}`,
       manifestPath: configPath,
@@ -152,7 +142,7 @@ export async function setupMcp(opts: SetupMcpOptions): Promise<SetupMcpResult> {
       );
     }
 
-    emit(opts.onProgress, { phase: 'done', message: `${agent.name} configured successfully.` });
+    emitProgress(opts.onProgress, { phase: 'done', message: `${agent.name} configured successfully.` });
 
     return {
       success: true,

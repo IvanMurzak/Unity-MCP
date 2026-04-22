@@ -2,17 +2,8 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { addPluginToManifest, resolveLatestVersion } from '../utils/manifest.js';
 import { silentLogger } from './logger.js';
-import type { InstallPluginOptions, InstallResult, ProgressCallback } from './types.js';
-
-function emit(onProgress: ProgressCallback | undefined, event: Parameters<ProgressCallback>[0]): void {
-  if (onProgress) {
-    try {
-      onProgress(event);
-    } catch {
-      // A broken progress callback must not abort the operation.
-    }
-  }
-}
+import { emitProgress } from './progress.js';
+import type { InstallPluginOptions, InstallResult } from './types.js';
 
 /**
  * Install the Unity-MCP plugin into a Unity project. Library-safe:
@@ -47,13 +38,13 @@ export async function installPlugin(opts: InstallPluginOptions): Promise<Install
       };
     }
 
-    emit(opts.onProgress, { phase: 'start', message: `Installing Unity-MCP plugin into ${projectPath}` });
+    emitProgress(opts.onProgress, { phase: 'start', message: `Installing Unity-MCP plugin into ${projectPath}` });
 
     let version = opts.version;
     const isExplicitVersion = !!version;
     if (!version) {
       version = await resolveLatestVersion(silentLogger);
-      emit(opts.onProgress, {
+      emitProgress(opts.onProgress, {
         phase: 'dependencies-resolved',
         message: `Resolved latest plugin version: ${version}`,
         version,
@@ -69,7 +60,7 @@ export async function installPlugin(opts: InstallPluginOptions): Promise<Install
       );
     }
 
-    emit(opts.onProgress, {
+    emitProgress(opts.onProgress, {
       phase: 'manifest-patched',
       message: result.modified
         ? `Updated ${result.manifestPath}`
@@ -79,7 +70,7 @@ export async function installPlugin(opts: InstallPluginOptions): Promise<Install
 
     nextSteps.push('Open the Unity project in the Editor to complete installation.');
 
-    emit(opts.onProgress, { phase: 'done', message: 'Install complete.' });
+    emitProgress(opts.onProgress, { phase: 'done', message: 'Install complete.' });
 
     return {
       success: true,
