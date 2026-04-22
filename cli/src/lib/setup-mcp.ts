@@ -11,6 +11,7 @@ import {
   MCP_SERVER_NAME,
 } from '../utils/agents.js';
 import { emitProgress } from './progress.js';
+import { requireExistingPath } from './validation.js';
 import type {
   SetupMcpOptions,
   SetupMcpResult,
@@ -19,6 +20,19 @@ import type {
 
 function isValidTransport(t: string | undefined): t is McpTransport {
   return t === 'stdio' || t === 'http';
+}
+
+/**
+ * Extract a port from a `host` URL string, falling back to the
+ * project-directory-derived deterministic port on any parse failure.
+ */
+function portFromHost(host: string | undefined, projectPath: string): number {
+  if (!host) return generatePortFromDirectory(projectPath);
+  try {
+    return parseInt(new URL(host).port, 10) || generatePortFromDirectory(projectPath);
+  } catch {
+    return generatePortFromDirectory(projectPath);
+  }
 }
 
 /**
@@ -64,15 +78,17 @@ export async function setupMcp(opts: SetupMcpOptions): Promise<SetupMcpResult> {
       };
     }
 
-    // Resolve project path (defaults to cwd, matching CLI behaviour)
-    const projectPath = path.resolve(opts.unityProjectPath ?? process.cwd());
-    if (opts.unityProjectPath && !fs.existsSync(projectPath)) {
-      return {
-        success: false,
-        warnings,
-        nextSteps,
-        error: new Error(`Project path does not exist: ${projectPath}`),
-      };
+    // Resolve project path. If the caller supplied one explicitly it
+    // must exist; otherwise fall back to cwd (matches CLI behaviour).
+    let projectPath: string;
+    if (opts.unityProjectPath) {
+      const validated = requireExistingPath(opts.unityProjectPath);
+      if (!validated.ok) {
+        return { success: false, warnings, nextSteps, error: validated.error };
+      }
+      projectPath = validated.projectPath;
+    } else {
+      projectPath = path.resolve(process.cwd());
     }
 
     emitProgress(opts.onProgress, {
@@ -85,14 +101,7 @@ export async function setupMcp(opts: SetupMcpOptions): Promise<SetupMcpResult> {
       ? resolveConnectionFromConfig(config)
       : { url: undefined, token: undefined };
 
-    const port = (() => {
-      if (!config?.host) return generatePortFromDirectory(projectPath);
-      try {
-        return parseInt(new URL(config.host).port, 10) || generatePortFromDirectory(projectPath);
-      } catch {
-        return generatePortFromDirectory(projectPath);
-      }
-    })();
+    const port = portFromHost(config?.host, projectPath);
 
     const timeout = (config?.timeoutMs as number) ?? 10000;
     const auth = (config?.authOption as string) ?? 'none';
@@ -101,15 +110,9 @@ export async function setupMcp(opts: SetupMcpOptions): Promise<SetupMcpResult> {
 
     const serverPath = resolveServerBinaryPath(projectPath).replace(/\\/g, '/');
 
-    // Resolve URL for HTTP
-    let serverUrl: string;
-    if (opts.url) {
-      serverUrl = opts.url.replace(/\/$/, '');
-    } else if (fromConfig.url) {
-      serverUrl = fromConfig.url.replace(/\/$/, '');
-    } else {
-      serverUrl = `http://localhost:${port}`;
-    }
+    // Resolve URL for HTTP — explicit override, then config, then
+    // deterministic localhost fallback. Trailing slash stripped.
+    const serverUrl = (opts.url ?? fromConfig.url ?? `http://localhost:${port}`).replace(/\/$/, '');
 
     const configPath = agent.getConfigPath(projectPath);
 

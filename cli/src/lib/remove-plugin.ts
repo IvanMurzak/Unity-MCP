@@ -1,8 +1,7 @@
-import * as path from 'path';
-import * as fs from 'fs';
 import { removePluginFromManifest } from '../utils/manifest.js';
 import { silentLogger } from './logger.js';
 import { emitProgress } from './progress.js';
+import { requireUnityProject } from './validation.js';
 import type { RemovePluginOptions, RemoveResult } from './types.js';
 
 /**
@@ -14,25 +13,16 @@ export async function removePlugin(opts: RemovePluginOptions): Promise<RemoveRes
   const warnings: string[] = [];
 
   try {
-    if (!opts || typeof opts.unityProjectPath !== 'string' || opts.unityProjectPath.length === 0) {
+    const validated = requireUnityProject(opts?.unityProjectPath);
+    if (!validated.ok) {
       return {
         success: false,
+        manifestPath: validated.manifestPath,
         warnings,
-        error: new Error('unityProjectPath is required and must be a non-empty string.'),
+        error: validated.error,
       };
     }
-
-    const projectPath = path.resolve(opts.unityProjectPath);
-    const manifestPath = path.join(projectPath, 'Packages', 'manifest.json');
-
-    if (!fs.existsSync(manifestPath)) {
-      return {
-        success: false,
-        manifestPath,
-        warnings,
-        error: new Error(`Not a valid Unity project (missing Packages/manifest.json): ${projectPath}`),
-      };
-    }
+    const { projectPath } = validated;
 
     emitProgress(opts.onProgress, { phase: 'start', message: `Removing Unity-MCP plugin from ${projectPath}` });
 

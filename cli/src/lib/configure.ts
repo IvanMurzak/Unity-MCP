@@ -1,5 +1,4 @@
 import * as path from 'path';
-import * as fs from 'fs';
 import {
   getOrCreateConfig,
   writeConfig,
@@ -8,6 +7,7 @@ import {
   type UnityConnectionConfig,
 } from '../utils/config.js';
 import { emitProgress } from './progress.js';
+import { requireExistingPath } from './validation.js';
 import type {
   ConfigureOptions,
   ConfigureResult,
@@ -50,22 +50,11 @@ export async function configure(opts: ConfigureOptions): Promise<ConfigureResult
   const warnings: string[] = [];
 
   try {
-    if (!opts || typeof opts.unityProjectPath !== 'string' || opts.unityProjectPath.length === 0) {
-      return {
-        success: false,
-        warnings,
-        error: new Error('unityProjectPath is required and must be a non-empty string.'),
-      };
+    const validated = requireExistingPath(opts?.unityProjectPath);
+    if (!validated.ok) {
+      return { success: false, warnings, error: validated.error };
     }
-
-    const projectPath = path.resolve(opts.unityProjectPath);
-    if (!fs.existsSync(projectPath)) {
-      return {
-        success: false,
-        warnings,
-        error: new Error(`Project path does not exist: ${projectPath}`),
-      };
-    }
+    const { projectPath } = validated;
 
     const configPath = path.join(projectPath, CONFIG_RELATIVE_PATH);
 
