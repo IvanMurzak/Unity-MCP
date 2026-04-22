@@ -1,12 +1,27 @@
 import { Command } from 'commander';
 import * as path from 'path';
-import * as fs from 'fs';
-import { getOrCreateConfig, writeConfig, updateFeatures } from '../utils/config.js';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
+import { configure } from '../lib/configure.js';
+import type { FeatureAction } from '../lib/types.js';
 
 function parseCommaSeparated(value: string): string[] {
   return value.split(',').map((s) => s.trim()).filter(Boolean);
+}
+
+function buildAction(
+  enable: string[] | undefined,
+  disable: string[] | undefined,
+  enableAll: boolean | undefined,
+  disableAll: boolean | undefined,
+): FeatureAction | undefined {
+  if (!enable && !disable && !enableAll && !disableAll) return undefined;
+  return {
+    enableNames: enable,
+    disableNames: disable,
+    enableAll,
+    disableAll,
+  };
 }
 
 export const configureCommand = new Command('configure')
@@ -47,72 +62,47 @@ export const configureCommand = new Command('configure')
       ui.error('Path is required. Usage: unity-mcp-cli configure <path> or --path <path>');
       process.exit(1);
     }
+
     const projectPath = path.resolve(resolvedPath);
 
-    if (!fs.existsSync(projectPath)) {
-      ui.error(`Project path does not exist: ${projectPath}`);
+    verbose(`Loading config for project: ${projectPath}`);
+
+    const result = await configure({
+      unityProjectPath: projectPath,
+      tools: buildAction(options.enableTools, options.disableTools, options.enableAllTools, options.disableAllTools),
+      prompts: buildAction(options.enablePrompts, options.disablePrompts, options.enableAllPrompts, options.disableAllPrompts),
+      resources: buildAction(options.enableResources, options.disableResources, options.enableAllResources, options.disableAllResources),
+    });
+
+    if (!result.success) {
+      ui.error(result.error?.message ?? 'Unknown error');
       process.exit(1);
     }
 
-    verbose(`Loading config for project: ${projectPath}`);
-    const config = getOrCreateConfig(projectPath);
-
-    if (options.list) {
+    if (options.list && result.snapshot) {
       ui.heading('Current configuration');
-      ui.label('Host', config.host ?? 'not set');
-      ui.label('Keep Connected', String(config.keepConnected ?? false));
-      ui.label('Transport', config.transportMethod ?? 'streamableHttp');
-      ui.label('Auth', config.authOption ?? 'none');
+      ui.label('Host', result.snapshot.host ?? 'not set');
+      ui.label('Keep Connected', String(result.snapshot.keepConnected ?? false));
+      ui.label('Transport', result.snapshot.transportMethod ?? 'streamableHttp');
+      ui.label('Auth', result.snapshot.authOption ?? 'none');
 
-      const printFeatures = (featureLabel: string, features: { name: string; enabled: boolean }[] | undefined) => {
-        if (!features || features.length === 0) {
-          ui.heading(featureLabel);
+      const printFeatures = (featureLabel: string, features: { name: string; enabled: boolean }[]) => {
+        ui.heading(featureLabel);
+        if (features.length === 0) {
           ui.info('(none configured - all enabled by default)');
           return;
         }
-        ui.heading(featureLabel);
         for (const f of features) {
           ui.featureRow(f.name, f.enabled);
         }
       };
 
-      printFeatures('Tools', config.tools);
-      printFeatures('Prompts', config.prompts);
-      printFeatures('Resources', config.resources);
+      printFeatures('Tools', result.snapshot.tools);
+      printFeatures('Prompts', result.snapshot.prompts);
+      printFeatures('Resources', result.snapshot.resources);
       return;
     }
 
-    // Apply tool changes
-    if (options.enableTools || options.disableTools || options.enableAllTools || options.disableAllTools) {
-      updateFeatures(config, 'tools', {
-        enableNames: options.enableTools,
-        disableNames: options.disableTools,
-        enableAll: options.enableAllTools,
-        disableAll: options.disableAllTools,
-      });
-    }
-
-    // Apply prompt changes
-    if (options.enablePrompts || options.disablePrompts || options.enableAllPrompts || options.disableAllPrompts) {
-      updateFeatures(config, 'prompts', {
-        enableNames: options.enablePrompts,
-        disableNames: options.disablePrompts,
-        enableAll: options.enableAllPrompts,
-        disableAll: options.disableAllPrompts,
-      });
-    }
-
-    // Apply resource changes
-    if (options.enableResources || options.disableResources || options.enableAllResources || options.disableAllResources) {
-      updateFeatures(config, 'resources', {
-        enableNames: options.enableResources,
-        disableNames: options.disableResources,
-        enableAll: options.enableAllResources,
-        disableAll: options.disableAllResources,
-      });
-    }
-
     verbose('Writing updated configuration');
-    writeConfig(projectPath, config);
     ui.success('Configuration updated successfully.');
   });

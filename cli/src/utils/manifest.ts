@@ -2,6 +2,18 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { isNewerVersion, isValidVersion } from './semver.js';
 import * as ui from './ui.js';
+import type { LibLogger } from '../lib/logger.js';
+
+/**
+ * Default logger used by CLI call sites. Mirrors the historical
+ * chalk-styled output. Library callers pass `silentLogger` instead.
+ */
+const defaultLogger: LibLogger = {
+  info: (msg) => ui.info(msg),
+  success: (msg) => ui.success(msg),
+  warn: (msg) => ui.warn(msg),
+  error: (msg) => ui.error(msg),
+};
 
 const PACKAGE_ID = 'com.ivanmurzak.unity.mcp';
 const REGISTRY_NAME = 'package.openupm.com';
@@ -30,8 +42,11 @@ interface Manifest {
 /**
  * Resolve the latest plugin version from the OpenUPM registry.
  * Throws an error with actionable suggestions if the network request fails.
+ *
+ * @param logger Optional logger. Defaults to chalk-styled CLI output;
+ *   pass `silentLogger` from library call sites to suppress all output.
  */
-export async function resolveLatestVersion(): Promise<string> {
+export async function resolveLatestVersion(logger: LibLogger = defaultLogger): Promise<string> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 5000);
 
@@ -45,7 +60,7 @@ export async function resolveLatestVersion(): Promise<string> {
       const data = (await res.json()) as { 'dist-tags'?: { latest?: string } };
       const latest = data?.['dist-tags']?.latest;
       if (latest) {
-        ui.info(`Resolved latest version from OpenUPM: ${latest}`);
+        logger.info(`Resolved latest version from OpenUPM: ${latest}`);
         return latest;
       }
     }
@@ -89,6 +104,16 @@ export function shouldUpdateVersion(currentVersion: string, newVersion: string):
   return newVersion.toLowerCase() > currentVersion.toLowerCase();
 }
 
+export interface AddPluginResult {
+  /** Whether the file was modified on disk (false = already up to date). */
+  modified: boolean;
+  /** Final plugin version in the manifest (may differ from the requested
+   *  version if the existing version was higher and force was false). */
+  resolvedVersion: string;
+  /** Absolute path to the manifest.json that was inspected / written. */
+  manifestPath: string;
+}
+
 /**
  * Add Unity-MCP plugin to a Unity project's Packages/manifest.json.
  * Ports the C# Installer.Manifest.cs logic:
@@ -96,8 +121,16 @@ export function shouldUpdateVersion(currentVersion: string, newVersion: string):
  * - Adds/updates the plugin dependency
  * - When force is false (auto-resolved version): never downgrades
  * - When force is true (user-specified --plugin-version): allows downgrade
+ *
+ * @param logger Optional logger. Defaults to chalk-styled CLI output;
+ *   pass `silentLogger` from library call sites to suppress all output.
  */
-export function addPluginToManifest(projectPath: string, version: string, force = false): void {
+export function addPluginToManifest(
+  projectPath: string,
+  version: string,
+  force = false,
+  logger: LibLogger = defaultLogger,
+): AddPluginResult {
   const manifestPath = path.join(projectPath, 'Packages', 'manifest.json');
 
   if (!fs.existsSync(manifestPath)) {
@@ -149,11 +182,13 @@ export function addPluginToManifest(projectPath: string, version: string, force 
   }
 
   const currentVersion = manifest.dependencies[PACKAGE_ID];
+  let resolvedVersion = version;
   if (!currentVersion || force || shouldUpdateVersion(currentVersion, version)) {
     manifest.dependencies[PACKAGE_ID] = version;
     modified = true;
   } else {
-    ui.info(
+    resolvedVersion = currentVersion;
+    logger.info(
       `Plugin already at version ${currentVersion} (>= ${version}). Skipping version update. Use --plugin-version to force a specific version.`
     );
   }
@@ -161,18 +196,33 @@ export function addPluginToManifest(projectPath: string, version: string, force 
   // --- Write back
   if (modified) {
     fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
-    ui.success(`Updated ${manifestPath}`);
+    logger.success(`Updated ${manifestPath}`);
   } else {
-    ui.info('manifest.json is already up to date.');
+    logger.info('manifest.json is already up to date.');
   }
+
+  return { modified, resolvedVersion, manifestPath };
+}
+
+export interface RemovePluginResult {
+  /** Whether the plugin was present and has been removed. */
+  removed: boolean;
+  /** Absolute path to the manifest.json that was inspected. */
+  manifestPath: string;
 }
 
 /**
  * Remove Unity-MCP plugin from a Unity project's Packages/manifest.json.
  * Only removes the plugin dependency — scoped registries and scopes are
  * left untouched because other packages may depend on them.
+ *
+ * @param logger Optional logger. Defaults to chalk-styled CLI output;
+ *   pass `silentLogger` from library call sites to suppress all output.
  */
-export function removePluginFromManifest(projectPath: string): void {
+export function removePluginFromManifest(
+  projectPath: string,
+  logger: LibLogger = defaultLogger,
+): RemovePluginResult {
   const manifestPath = path.join(projectPath, 'Packages', 'manifest.json');
 
   if (!fs.existsSync(manifestPath)) {
@@ -183,11 +233,12 @@ export function removePluginFromManifest(projectPath: string): void {
   const manifest: Manifest = JSON.parse(rawJson);
 
   if (!manifest.dependencies || !(PACKAGE_ID in manifest.dependencies)) {
-    ui.info('Unity-MCP plugin is not installed. Nothing to remove.');
-    return;
+    logger.info('Unity-MCP plugin is not installed. Nothing to remove.');
+    return { removed: false, manifestPath };
   }
 
   delete manifest.dependencies[PACKAGE_ID];
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
-  ui.success(`Removed ${PACKAGE_ID} from ${manifestPath}`);
+  logger.success(`Removed ${PACKAGE_ID} from ${manifestPath}`);
+  return { removed: true, manifestPath };
 }

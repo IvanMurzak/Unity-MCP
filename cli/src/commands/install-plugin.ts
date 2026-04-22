@@ -1,9 +1,8 @@
 import { Command } from 'commander';
 import * as path from 'path';
-import * as fs from 'fs';
-import { addPluginToManifest, resolveLatestVersion } from '../utils/manifest.js';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
+import { installPlugin } from '../lib/install-plugin.js';
 
 export const installPluginCommand = new Command('install-plugin')
   .description('Install Unity-MCP plugin into a Unity project')
@@ -16,33 +15,45 @@ export const installPluginCommand = new Command('install-plugin')
       ui.error('Path is required. Usage: unity-mcp-cli install-plugin <path> or --path <path>');
       process.exit(1);
     }
+
     const projectPath = path.resolve(resolvedPath);
 
-    // Validate project exists
-    const manifestPath = path.join(projectPath, 'Packages', 'manifest.json');
-    if (!fs.existsSync(manifestPath)) {
-      ui.error(`Not a valid Unity project (missing Packages/manifest.json): ${projectPath}`);
+    // Wire the library's progress events back into the CLI's chalk-
+    // styled ui so the terminal experience stays identical.
+    let spinner: ReturnType<typeof ui.startSpinner> | undefined;
+    if (!options.pluginVersion) {
+      spinner = ui.startSpinner('Resolving latest plugin version...');
+    }
+
+    const result = await installPlugin({
+      unityProjectPath: projectPath,
+      version: options.pluginVersion,
+      onProgress: (event) => {
+        if (event.phase === 'dependencies-resolved' && spinner) {
+          spinner.success(`Resolved plugin version: ${event.version}`);
+          spinner = undefined;
+        }
+      },
+    });
+
+    if (!result.success) {
+      if (spinner) {
+        spinner.error('Failed to resolve plugin version');
+        spinner = undefined;
+      }
+      ui.error(result.error?.message ?? 'Unknown error');
       process.exit(1);
     }
 
-    // Resolve version
-    let version = options.pluginVersion;
-    const isExplicitVersion = !!version;
-    if (!version) {
-      const spinner = ui.startSpinner('Resolving latest plugin version...');
-      try {
-        version = await resolveLatestVersion();
-        spinner.success(`Resolved plugin version: ${version}`);
-      } catch (err) {
-        spinner.error('Failed to resolve plugin version');
-        ui.error((err as Error).message);
-        process.exit(1);
-      }
+    verbose(`Plugin version: ${result.installedVersion} (explicit: ${!!options.pluginVersion})`);
+    if (result.manifestPath) {
+      verbose(`Manifest path: ${result.manifestPath}`);
+    }
+    ui.info(`Installing Unity-MCP plugin v${result.installedVersion} into: ${projectPath}`);
+
+    for (const warning of result.warnings) {
+      ui.warn(warning);
     }
 
-    verbose(`Plugin version: ${version} (explicit: ${isExplicitVersion})`);
-    verbose(`Manifest path: ${manifestPath}`);
-    ui.info(`Installing Unity-MCP plugin v${version} into: ${projectPath}`);
-    addPluginToManifest(projectPath, version, isExplicitVersion);
     ui.success('Done! Open the project in Unity Editor to complete installation.');
   });
