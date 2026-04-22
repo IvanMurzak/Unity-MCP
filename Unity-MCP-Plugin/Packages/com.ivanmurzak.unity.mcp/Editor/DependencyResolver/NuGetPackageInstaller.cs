@@ -145,8 +145,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         ///      (e.g., a leftover "Microsoft.AspNetCore.SignalR.Common.10.0.3" when the current
         ///      closure resolves that transitive to "8.0.15"). Keeping both produces
         ///      duplicate-assembly conflicts.
-        ///   2. Directories whose DLLs are now all provided by Unity (e.g., after a Unity
-        ///      upgrade that bundled the BCL assembly) and whose package ID is not in the closure.
+        ///   2a. Empty package directories (no DLLs) that aren't in the current closure —
+        ///       typically migration cruft from a pre-fix install of a development-only
+        ///       dependency (Roslyn analyzer, source generator, build tooling).
+        ///   2b. Directories whose DLLs are now all provided by Unity (e.g., after a Unity
+        ///       upgrade that bundled the BCL assembly) and whose package ID is not in the closure.
         ///
         /// <paramref name="requiredVersionByPackageId"/> must contain the full resolved closure
         /// (pass <see cref="InstalledThisSession"/> from the restorer after Install() calls).

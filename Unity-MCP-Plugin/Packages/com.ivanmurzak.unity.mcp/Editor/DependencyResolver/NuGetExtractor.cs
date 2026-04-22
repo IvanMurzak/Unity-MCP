@@ -100,7 +100,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// and should not trigger "No compatible framework" / "No DLLs extracted" warnings.
         /// Returns false on any parse error so callers fall back to the normal extraction path.
         /// </summary>
-        public static bool IsDevelopmentDependency(string nupkgPath)
+        internal static bool IsDevelopmentDependency(string nupkgPath)
         {
             try
             {
