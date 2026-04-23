@@ -10,7 +10,6 @@ import { resolveAndValidateProjectPath } from '../utils/connection.js';
 import {
   readConfig,
   writeConfig,
-  isCloudMode,
   type UnityConnectionConfig,
 } from '../utils/config.js';
 
@@ -51,11 +50,10 @@ export function isAlreadyPinned(
   url: string,
   token: string,
 ): boolean {
-  if (isCloudMode(current)) return false;
   // Accept both "Custom" (string) and 0 (legacy int) as already-local.
+  // Anything else (including "Cloud", 1, or unset) means we still need to pin.
   const mode = current.connectionMode;
-  const isLocalMode = mode === 'Custom' || mode === 0;
-  if (!isLocalMode) return false;
+  if (mode !== 'Custom' && mode !== 0) return false;
   return current.host === url && current.token === token;
 }
 
