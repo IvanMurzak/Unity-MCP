@@ -557,3 +557,33 @@ Commands that manage editors or create projects use the **Unity Hub CLI** (`--he
 > For the full Unity-MCP project documentation, see the [main README](https://github.com/IvanMurzak/Unity-MCP/blob/main/README.md).
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+# Library API (v0.67.0+)
+
+In addition to the CLI binary, `unity-mcp-cli` exposes its core commands as a typed, side-effect-free library so other Node.js / TypeScript tools can embed the same install / configure flow without shelling out.
+
+```ts
+import { installPlugin, removePlugin, configure, setupMcp } from 'unity-mcp-cli';
+
+const result = await installPlugin({
+  unityProjectPath: './MyUnityProject',
+  // version: '0.67.0',        // optional — defaults to latest from OpenUPM
+  onProgress: (event) => {
+    // phase is one of: 'start' | 'dependencies-resolved' | 'manifest-patched' | 'done'
+    console.log(event.phase, event.message);
+  },
+});
+
+if (!result.success) {
+  console.error('Install failed:', result.error?.message);
+  return;
+}
+
+console.log(`Installed v${result.installedVersion}`);
+for (const warning of result.warnings) console.warn(warning);
+for (const step of result.nextSteps) console.log(step);
+```
+
+Each function returns a typed `{ success, ... }` result object; errors are never thrown past the public boundary. The library entry has no top-level side effects — `import 'unity-mcp-cli'` never parses argv and never writes to stdout or stderr.
+
+See [`CHANGELOG.md`](CHANGELOG.md#0670---2026-04-21) for the full list of exported functions and types.
