@@ -367,6 +367,54 @@ unity-mcp-cli wait-for-ready --url http://localhost:8080 --timeout 30000
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
+## `team`
+
+Launch and inspect a local tmux-based team session for a Unity project. Milestone 1 is intentionally local-only: it creates a deterministic four-pane tmux layout, persists session metadata under `.unity-mcp/team-state/`, and exposes basic lifecycle commands. It does **not** provide OMX parity, remote orchestration, or cloud coordination.
+
+```bash
+unity-mcp-cli team launch ./MyGame
+```
+
+### `team launch`
+
+Create a tmux session with the built-in `leader`, `builder`, `verifier`, and `notes` panes.
+
+| Option | Required | Description |
+|---|---|---|
+| `[path]` | No | Unity project path (defaults to current directory) |
+| `--path <path>` | No | Unity project path (defaults to current directory) |
+| `--layout <name>` | No | Layout preset name (`default` only in milestone 1) |
+| `--session-name <name>` | No | Override the generated tmux session name |
+
+### `team status`
+
+Inspect persisted state and reconcile it with the live tmux session.
+
+```bash
+unity-mcp-cli team status ./MyGame
+unity-mcp-cli team status mygame-team-20260423t050000z --path ./MyGame
+```
+
+### `team list`
+
+List saved team sessions for a project and summarize whether each session is `ready`, `degraded`, or `stopped`.
+
+```bash
+unity-mcp-cli team list ./MyGame
+```
+
+### `team stop`
+
+Stop a tmux team session and mark its saved state as `stopped`.
+
+```bash
+unity-mcp-cli team stop mygame-team-20260423t050000z --path ./MyGame
+```
+
+If `tmux` is not installed or is missing from `PATH`, the launcher exits with an actionable error telling you to install tmux before using team orchestration commands.
+
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
 ## `setup-mcp`
 
 Write MCP config files for AI agents, enabling headless/CI setup without the Unity Editor UI. Supports all 14 agents (Claude Code, Cursor, Gemini, Codex, etc.).

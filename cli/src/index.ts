@@ -12,6 +12,7 @@ import { runSystemToolCommand } from './commands/run-system-tool.js';
 import { setupMcpCommand } from './commands/setup-mcp.js';
 import { setupSkillsCommand } from './commands/setup-skills.js';
 import { statusCommand } from './commands/status.js';
+import { createTeamCommand } from './commands/team.js';
 import { createUpdateCommand } from './commands/update.js';
 import { waitForReadyCommand } from './commands/wait-for-ready.js';
 import { configureStyledHelp, error as uiError, setVerbose } from './utils/ui.js';
@@ -42,6 +43,7 @@ const subcommands = [
   setupMcpCommand,
   setupSkillsCommand,
   statusCommand,
+  createTeamCommand(pkg.version),
   createUpdateCommand(pkg.version),
   waitForReadyCommand,
 ];
