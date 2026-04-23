@@ -67,11 +67,34 @@ export const configureCommand = new Command('configure')
 
     verbose(`Loading config for project: ${projectPath}`);
 
+    // `--list` must be read-only: previously this command short-
+    // circuited before applying any enable/disable flags. Preserve
+    // that semantics by suppressing the mutating actions whenever
+    // `options.list` is set, regardless of other flags.
+    const toolsAction = buildAction(
+      options.enableTools,
+      options.disableTools,
+      options.enableAllTools,
+      options.disableAllTools,
+    );
+    const promptsAction = buildAction(
+      options.enablePrompts,
+      options.disablePrompts,
+      options.enableAllPrompts,
+      options.disableAllPrompts,
+    );
+    const resourcesAction = buildAction(
+      options.enableResources,
+      options.disableResources,
+      options.enableAllResources,
+      options.disableAllResources,
+    );
+
     const result = await configure({
       unityProjectPath: projectPath,
-      tools: buildAction(options.enableTools, options.disableTools, options.enableAllTools, options.disableAllTools),
-      prompts: buildAction(options.enablePrompts, options.disablePrompts, options.enableAllPrompts, options.disableAllPrompts),
-      resources: buildAction(options.enableResources, options.disableResources, options.enableAllResources, options.disableAllResources),
+      tools: options.list ? undefined : toolsAction,
+      prompts: options.list ? undefined : promptsAction,
+      resources: options.list ? undefined : resourcesAction,
     });
 
     if (!result.success) {

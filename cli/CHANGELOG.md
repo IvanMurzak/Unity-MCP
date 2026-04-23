@@ -54,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   ./MyProject` and friends still work exactly as before.
 - The library entry point has no top-level side effects: importing
   `unity-mcp-cli` never writes to stdout/stderr and never parses argv.
-  A `require('unity-mcp-cli')` call is safe to do anywhere.
+  An `import 'unity-mcp-cli'` or dynamic `import('unity-mcp-cli')`
+  call is safe to do anywhere.
 
 [0.67.0]: https://github.com/IvanMurzak/Unity-MCP/releases/tag/cli-0.67.0

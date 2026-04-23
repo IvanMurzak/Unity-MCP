@@ -32,6 +32,17 @@ export const installPluginCommand = new Command('install-plugin')
         if (event.phase === 'dependencies-resolved' && spinner) {
           spinner.success(`Resolved plugin version: ${event.version}`);
           spinner = undefined;
+          return;
+        }
+        if (event.phase === 'manifest-patched') {
+          // Preserve the historical `ui.success("Updated …")` vs
+          // `ui.info("manifest.json is already up to date.")` split
+          // that the shared manifest helpers used to print directly.
+          if (event.message.startsWith('Updated ')) {
+            ui.success(event.message);
+          } else {
+            ui.info(event.message);
+          }
         }
       },
     });

@@ -1,19 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { isNewerVersion, isValidVersion } from './semver.js';
-import * as ui from './ui.js';
-import type { LibLogger } from '../lib/logger.js';
-
-/**
- * Default logger used by CLI call sites. Mirrors the historical
- * chalk-styled output. Library callers pass `silentLogger` instead.
- */
-const defaultLogger: LibLogger = {
-  info: (msg) => ui.info(msg),
-  success: (msg) => ui.success(msg),
-  warn: (msg) => ui.warn(msg),
-  error: (msg) => ui.error(msg),
-};
+import { silentLogger, type LibLogger } from '../lib/logger.js';
 
 const PACKAGE_ID = 'com.ivanmurzak.unity.mcp';
 const REGISTRY_NAME = 'package.openupm.com';
@@ -43,10 +31,11 @@ interface Manifest {
  * Resolve the latest plugin version from the OpenUPM registry.
  * Throws an error with actionable suggestions if the network request fails.
  *
- * @param logger Optional logger. Defaults to chalk-styled CLI output;
- *   pass `silentLogger` from library call sites to suppress all output.
+ * @param logger Optional logger. Defaults to `silentLogger` so library
+ *   callers stay side-effect-free; CLI call sites must pass a chalk-
+ *   styled logger adapter explicitly to preserve the historical output.
  */
-export async function resolveLatestVersion(logger: LibLogger = defaultLogger): Promise<string> {
+export async function resolveLatestVersion(logger: LibLogger = silentLogger): Promise<string> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 5000);
 
@@ -122,14 +111,15 @@ export interface AddPluginResult {
  * - When force is false (auto-resolved version): never downgrades
  * - When force is true (user-specified --plugin-version): allows downgrade
  *
- * @param logger Optional logger. Defaults to chalk-styled CLI output;
- *   pass `silentLogger` from library call sites to suppress all output.
+ * @param logger Optional logger. Defaults to `silentLogger` so library
+ *   callers stay side-effect-free; CLI call sites must pass a chalk-
+ *   styled logger adapter explicitly to preserve the historical output.
  */
 export function addPluginToManifest(
   projectPath: string,
   version: string,
   force = false,
-  logger: LibLogger = defaultLogger,
+  logger: LibLogger = silentLogger,
 ): AddPluginResult {
   const manifestPath = path.join(projectPath, 'Packages', 'manifest.json');
 
@@ -216,12 +206,13 @@ export interface RemovePluginResult {
  * Only removes the plugin dependency — scoped registries and scopes are
  * left untouched because other packages may depend on them.
  *
- * @param logger Optional logger. Defaults to chalk-styled CLI output;
- *   pass `silentLogger` from library call sites to suppress all output.
+ * @param logger Optional logger. Defaults to `silentLogger` so library
+ *   callers stay side-effect-free; CLI call sites must pass a chalk-
+ *   styled logger adapter explicitly to preserve the historical output.
  */
 export function removePluginFromManifest(
   projectPath: string,
-  logger: LibLogger = defaultLogger,
+  logger: LibLogger = silentLogger,
 ): RemovePluginResult {
   const manifestPath = path.join(projectPath, 'Packages', 'manifest.json');
 

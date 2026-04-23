@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
 import {
+  getAgentById,
   getAgentIds,
   listAgentTable,
   MCP_SERVER_NAME,
@@ -49,10 +50,22 @@ export const setupMcpCommand = new Command('setup-mcp')
         process.exit(1);
       }
 
+      // Resolve the agent up-front so we can:
+      //   1. Use the display name in user-facing strings (matches the
+      //      historical `Configuring <Name> ...` phrasing).
+      //   2. Preserve the prior `ui.error(...)` + `ui.info("Available
+      //      agent IDs: ...")` split for the unknown-agent error path.
+      const agent = getAgentById(agentId);
+      if (!agent) {
+        ui.error(`Unknown agent: "${agentId}"`);
+        ui.info(`Available agent IDs: ${getAgentIds().join(', ')}`);
+        process.exit(1);
+      }
+
       const transport = (options.transport ?? 'http') as McpTransport;
 
       const spinner = ui.startSpinner(
-        `Configuring ${agentId} (${transport})...`,
+        `Configuring ${agent.name} (${transport})...`,
       );
 
       const result = await setupMcp({
@@ -76,7 +89,7 @@ export const setupMcpCommand = new Command('setup-mcp')
         verbose(`Config file: ${result.configPath}`);
       }
 
-      spinner.success(`${agentId} configured successfully`);
+      spinner.success(`${agent.name} configured successfully`);
 
       console.log('');
       if (result.configPath) ui.label('Config file', result.configPath);

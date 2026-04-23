@@ -2,14 +2,13 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import type { ProgressEvent, InstallResult } from '../src/lib.js';
 import {
   installPlugin,
   removePlugin,
   configure,
   setupMcp,
   listAgentIds,
-  type ProgressEvent,
-  type InstallResult,
 } from '../src/lib.js';
 
 const PACKAGE_ID = 'com.ivanmurzak.unity.mcp';
@@ -39,29 +38,34 @@ function mkEmptyDir(): string {
 
 describe('library entry — no top-level side effects', () => {
   it('importing the library does not write to stdout or stderr', async () => {
+    // Install spies BEFORE the module is evaluated, then force a fresh
+    // evaluation via `vi.resetModules()` + dynamic `import()`. Without
+    // the reset the top-of-file static import would already have been
+    // cached and the spies would be installed too late to observe any
+    // initial side effects.
     const stdout = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
     const stderr = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
+    const errFn = vi.spyOn(console, 'error').mockImplementation(() => undefined);
 
-    // Re-import via dynamic import with a cache-busting query so the
-    // module is guaranteed to re-evaluate in a fresh require context.
-    // Vitest caches ESM imports per worker; we accept that and rely on
-    // the fact that the first import happens at the top of this file —
-    // if that had written anything, the spies installed below would be
-    // too late. So we do a second import just to sanity-check it
-    // remains a pure reference resolution, not a side-effect runtime.
+    vi.resetModules();
     const mod = await import('../src/lib.js');
     expect(typeof mod.installPlugin).toBe('function');
     expect(typeof mod.removePlugin).toBe('function');
     expect(typeof mod.configure).toBe('function');
     expect(typeof mod.setupMcp).toBe('function');
 
-    // None of the above — the mere imports / property reads — should
-    // have produced any output.
+    // None of the above — the fresh module evaluation nor the property
+    // reads — should have produced any output.
     expect(stdout).not.toHaveBeenCalled();
     expect(stderr).not.toHaveBeenCalled();
+    expect(log).not.toHaveBeenCalled();
+    expect(errFn).not.toHaveBeenCalled();
 
     stdout.mockRestore();
     stderr.mockRestore();
+    log.mockRestore();
+    errFn.mockRestore();
   });
 
   it('listAgentIds is a pure function with no console output', () => {
@@ -156,8 +160,12 @@ describe('installPlugin', () => {
     expect(phases).not.toContain('dependencies-resolved');
   });
 
-  it('returns a warning and keeps the higher version when downgrade is skipped', async () => {
-    // Seed the manifest with a higher version.
+  it('explicit-version install is idempotent when the manifest already matches', async () => {
+    // Auto-resolve downgrade-skip (`force=false` path) requires
+    // stubbing the OpenUPM network call, so we cover the related
+    // idempotent behaviour of the explicit-version path instead:
+    // installing the exact version that's already pinned is a no-op
+    // and does NOT emit a warning.
     fs.writeFileSync(
       path.join(tmpDir, 'Packages', 'manifest.json'),
       JSON.stringify({ dependencies: { [PACKAGE_ID]: '99.0.0' } }, null, 2),
@@ -165,12 +173,6 @@ describe('installPlugin', () => {
 
     const result: InstallResult = await installPlugin({
       unityProjectPath: tmpDir,
-      // no `version` — auto-resolve; the library will hit the OpenUPM
-      // network call. To keep this test offline, we pass an explicit
-      // lower version and rely on `force=false` semantics… but the lib
-      // only passes force=true when version is explicit. So use the
-      // low-level path: we can't test auto-downgrade-skip offline
-      // without a stub. Instead, test the explicit-version upgrade path:
       version: '99.0.0',
     });
 
