@@ -71,17 +71,9 @@ export const bootstrapLocalCommand = new Command('bootstrap-local')
   .action(async (positionalPath: string | undefined, options: BootstrapLocalOptions) => {
     const projectPath = resolveAndValidateProjectPath(positionalPath, options);
 
-    const url = options.url?.replace(/\/$/, '');
-    const token = options.token;
-
-    if (!url) {
-      ui.error('--url is required');
-      process.exit(1);
-    }
-    if (!token) {
-      ui.error('--token is required');
-      process.exit(1);
-    }
+    // commander's requiredOption guarantees url/token are defined before the action runs.
+    const url = options.url!.replace(/\/$/, '');
+    const token = options.token!;
 
     verbose(`Project path: ${projectPath}`);
     verbose(`Target URL: ${url}`);
