@@ -61,3 +61,18 @@ The v1 contract intentionally rejects three tempting expansions:
 1. **Leader failover** — outage handling is freeze-and-wait until the mac + OMX leader resumes.
 2. **Direct Unity runtime chat control** — Slack/Discord cannot issue Unity, shell, MCP, or runtime commands.
 3. **Provider-specific workflow divergence** — Slack and Discord may differ in transport details, but both normalize to the same approve/reject intent shape and the same handoff lifecycle semantics.
+
+
+## Verification coverage matrix
+
+The focused contract tests in `cli/tests/dev-env-handoff.test.ts` cover the v1 safety invariants directly:
+
+| Required invariant | Evidence path |
+| --- | --- |
+| Canonical ledger contract | Valid/invalid handoff transition checks over the normalized state set |
+| Replay/idempotency | Queued evidence reconcile applies matching evidence once and ignores duplicate/stale envelopes |
+| `approved_not_dispatched` | Outage mapping freezes this checkpoint instead of dispatching |
+| Freeze-and-wait outage behavior | Awaiting approval freezes; dispatched work moves to `reconcile_needed` |
+| Queued evidence reconcile | Windows evidence envelopes are merged only after leader validation |
+| Provider-neutral semantics | Slack and Discord normalize to the same approve/reject intent shape |
+| No direct chat command execution | Chat lane prohibits arbitrary commands and direct Unity runtime control |

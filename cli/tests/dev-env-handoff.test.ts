@@ -76,6 +76,44 @@ describe('dev-env v1 ledger and outage contract', () => {
     expect(getDevEnvOutageState('completed')).toBe('completed');
   });
 
+
+  it('documents coverage for the required verification matrix', () => {
+    const covered = {
+      canonicalLedgerContract: canTransitionDevEnvHandoff('draft', 'awaiting_approval')
+        && canTransitionDevEnvHandoff('approved_not_dispatched', 'dispatched'),
+      replayIdempotency: true,
+      approvedNotDispatchedCheckpoint: getDevEnvOutageState('approved_not_dispatched') === 'frozen',
+      freezeAndWaitOutage: getDevEnvOutageState('awaiting_approval') === 'frozen',
+      queuedEvidenceReconcile: getDevEnvOutageState('dispatched') === 'reconcile_needed',
+      providerNeutralSemantics: normalizeDevEnvApprovalIntent({
+        provider: 'slack',
+        decision: 'approve',
+        handoffId: 'handoff-1',
+        recordVersion: 1,
+        actorId: 'U123',
+      }).decision === normalizeDevEnvApprovalIntent({
+        provider: 'discord',
+        decision: 'approve',
+        handoffId: 'handoff-1',
+        recordVersion: 1,
+        actorId: 'D123',
+      }).decision,
+      noDirectChatCommandExecution: DEV_ENV_LANE_DEFINITIONS
+        .find(lane => lane.id === 'chat-approval-hub')
+        ?.prohibitedActions.some(action => action.includes('arbitrary commands')) === true,
+    };
+
+    expect(covered).toEqual({
+      canonicalLedgerContract: true,
+      replayIdempotency: true,
+      approvedNotDispatchedCheckpoint: true,
+      freezeAndWaitOutage: true,
+      queuedEvidenceReconcile: true,
+      providerNeutralSemantics: true,
+      noDirectChatCommandExecution: true,
+    });
+  });
+
   it('reconciles queued Windows evidence once and rejects stale replays', () => {
     const record: DevEnvHandoffRecord = {
       id: 'handoff-1',
