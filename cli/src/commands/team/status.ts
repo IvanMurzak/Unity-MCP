@@ -10,15 +10,15 @@ interface TeamStatusCommandOptions {
 
 export function createTeamStatusCommand(): Command {
   return new Command('status')
-    .description('Show saved and live runtime status for a local team session')
-    .argument('[session-or-path]', 'Session id/name or Unity project path (defaults to latest session in cwd project)')
+    .description('Show saved and live runtime status for a local Unity project session')
+    .argument('[session-or-path]', 'Session id/name or Unity project path (defaults to latest saved session in cwd project)')
     .option('--path <path>', 'Unity project path when looking up a specific session id/name')
     .action((target: string | undefined, options: TeamStatusCommandOptions) => {
       try {
         const { projectPath, sessionRef } = resolveTeamProjectAndSession(target, options);
         const inspection = getTeamSessionStatus(projectPath, createTeamRuntime(), sessionRef);
 
-        ui.heading('Unity-MCP Team Status');
+        ui.heading('Unity-MCP Project Session Status');
         ui.label('Project', inspection.state.projectPath);
         ui.label('Session', inspection.state.sessionId);
         ui.label('Runtime', `${inspection.state.runtime.kind} (${inspection.state.runtime.sessionHandle})`);

@@ -369,7 +369,20 @@ unity-mcp-cli wait-for-ready --url http://localhost:8080 --timeout 30000
 
 ## `team`
 
-Launch and inspect a local team session for a Unity project. The command surface is now **runtime-backed** so the CLI/state/lifecycle contract can evolve beyond tmux, while the currently shipped backend remains tmux. The feature is still intentionally local-only and does **not** provide OMX parity, remote orchestration, or cloud coordination.
+Manage a local **Unity project session lifecycle**. The command surface is **runtime-backed** so Unity-MCP can keep one project-facing lifecycle contract while choosing an OS-appropriate local backend internally. The currently shipped backend remains tmux, but the product goal is **standalone Unity lifecycle management first**, not OMX parity or a generic orchestration replacement.
+
+What this feature is for:
+
+- launch and inspect a project-scoped local session
+- persist project-local session state under `.unity-mcp/team-state/`
+- reconcile saved state with live runtime state
+- keep the core lifecycle usable **without OMX installed**
+
+What this feature is not:
+
+- a replacement for `omx team`
+- a generic worker task-dispatch/mailbox system
+- remote/cloud or multi-machine orchestration
 
 Helpful references:
 
@@ -382,7 +395,7 @@ unity-mcp-cli team launch ./MyGame
 
 ### `team launch`
 
-Create a local team session with the built-in `leader`, `builder`, `verifier`, and `notes` roles. Today that session is created by the tmux backend.
+Create a local Unity project session with the built-in `leader`, `builder`, `verifier`, and `notes` roles. Today that session is created by the tmux backend.
 
 | Option | Required | Description |
 |---|---|---|
@@ -393,7 +406,7 @@ Create a local team session with the built-in `leader`, `builder`, `verifier`, a
 
 ### `team status`
 
-Inspect persisted state and reconcile it with the live runtime session.
+Inspect persisted project session state and reconcile it with the live runtime session.
 
 ```bash
 unity-mcp-cli team status ./MyGame
@@ -402,7 +415,7 @@ unity-mcp-cli team status mygame-team-20260423t050000z --path ./MyGame
 
 ### `team list`
 
-List saved team sessions for a project and summarize whether each session is `ready`, `degraded`, or `stopped`.
+List saved project sessions and summarize whether each session is `ready`, `degraded`, or `stopped`.
 
 ```bash
 unity-mcp-cli team list ./MyGame
@@ -410,13 +423,13 @@ unity-mcp-cli team list ./MyGame
 
 ### `team stop`
 
-Stop a team session and mark its saved state as `stopped`.
+Stop a project session and mark its saved state as `stopped`.
 
 ```bash
 unity-mcp-cli team stop mygame-team-20260423t050000z --path ./MyGame
 ```
 
-If the currently selected runtime is not installed or is missing from `PATH`, the launcher exits with an actionable error. Today that usually means `tmux` must be installed before using the shipped team backend.
+If the currently selected runtime is not installed or is missing from `PATH`, the launcher exits with an actionable error. Today that usually means `tmux` must be installed before using the shipped backend. OMX remains optional: use it only if you want additional generic multi-agent coordination on top of Unity-MCP's standalone lifecycle flow.
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 

@@ -1,14 +1,14 @@
-# Team Runtime Architecture and Cross-platform Direction
+# Project Session Runtime Architecture and Cross-platform Direction
 
-This document captures the post-milestone-1 runtime direction for `unity-mcp-cli team`.
+This document captures the runtime direction for `unity-mcp-cli team` after clarifying its product role as a **Unity project session lifecycle** feature.
 
 ## Why this exists
 
-Milestone 1 proved that the CLI/state/lifecycle surface is useful, but it also proved that a tmux-only implementation is too narrow for the long-term goal of local multi-agent orchestration across macOS, Windows, and Linux.
+Milestone 1 proved that the CLI/state/lifecycle surface is useful, but it also proved that a tmux-only implementation is too narrow for the long-term goal of a cross-platform **Unity project session lifecycle** across macOS, Windows, and Linux.
 
-The current code now treats tmux as a **backend**, not as the governing architecture.
+The current code now treats tmux as a **backend**, not as the governing architecture. That matters because Unity-MCP should complement OMX rather than turning itself into a second general-purpose orchestrator.
 
-## Shared semantics that remain stable
+## Shared lifecycle semantics that remain stable
 
 These semantics stay common across operating systems and future backends:
 
@@ -23,7 +23,7 @@ These semantics stay common across operating systems and future backends:
   - `ready`
   - `degraded`
   - `stopped`
-- role model:
+- default role model:
   - `leader`
   - `builder`
   - `verifier`
@@ -70,14 +70,32 @@ Every backend should be able to answer:
 
 ### Backend-specific differences that are acceptable
 
-These may vary by backend without breaking the operator model:
+These may vary by backend without breaking the project-session operator model:
 
 - whether roles have pane ids
 - whether pane titles exist
 - whether split layouts are native concepts
 - whether session visibility is pane-oriented or process-oriented
 
-Pane semantics are therefore **preferred UX**, not a hard architectural requirement.
+Pane semantics are therefore **preferred UX**, not a hard architectural requirement or product identity.
+
+## Product boundary relative to OMX
+
+Unity-MCP should own:
+
+- project-aware lifecycle commands
+- project-local saved state
+- Unity-aware readiness, recovery, and reconciliation
+- backend/runtime selection as an implementation detail
+
+Unity-MCP should **not** own:
+
+- generic worker task dispatch
+- mailbox/inbox routing between workers
+- broad non-Unity multi-agent coordination
+- remote/cloud orchestration for this release
+
+OMX can still be layered on top when a user wants those broader coordination features.
 
 ## Windows-oriented backend evaluation
 
@@ -143,7 +161,7 @@ The current recommendation is:
 3. prototype a **Windows-native process/state-first backend** next
 4. optionally add a terminal/view layer later for pane-friendly UX
 
-This ordering best matches the clarified success criterion: **Windows-native Unity development flow must win over tmux parity**.
+This ordering best matches the clarified success criterion: **users should be able to manage the core Unity project session lifecycle without needing OMX**, while Windows-native Unity development flow still wins over tmux parity.
 
 ## Evaluation matrix
 
@@ -167,5 +185,6 @@ When verifying this runtime abstraction work:
 
 - **Do not** keep tmux as the architecture center
 - **Do** keep tmux as one backend
+- **Do** treat the runtime layer as support for Unity project lifecycle semantics, not as a generic orchestration pitch
 - **Do** prioritize Windows-native Unity workflow for the next backend decision
 - **Do** keep pane semantics as best-effort UX rather than a universal invariant

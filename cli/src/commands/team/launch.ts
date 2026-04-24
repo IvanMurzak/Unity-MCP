@@ -13,7 +13,7 @@ interface TeamLaunchCommandOptions {
 
 export function createTeamLaunchCommand(launcherVersion: string): Command {
   return new Command('launch')
-    .description('Launch a local team session for a Unity project (tmux backend currently shipped)')
+    .description('Launch a local Unity project session (tmux backend currently shipped)')
     .argument('[path]', 'Unity project path (defaults to current directory)')
     .option('--path <path>', 'Unity project path (defaults to current directory)')
     .option('--layout <name>', 'Layout preset name (milestone 1 supports only: default)', 'default')
@@ -24,7 +24,7 @@ export function createTeamLaunchCommand(launcherVersion: string): Command {
         const runtime = createTeamRuntime();
         const state = launchTeamSession(projectPath, launcherVersion, runtime, options);
 
-        ui.heading('Unity-MCP Team Launch');
+        ui.heading('Unity-MCP Project Session Launch');
         ui.label('Project', state.projectPath);
         ui.label('Session', state.sessionId);
         ui.label('Runtime', `${state.runtime.kind} (${state.runtime.sessionHandle})`);
@@ -35,7 +35,7 @@ export function createTeamLaunchCommand(launcherVersion: string): Command {
           ui.label(role.roleName, `${role.runtimeHandle || 'unassigned'} (${role.paneTitle})`);
         }
         ui.divider();
-        ui.success(`Team session ${state.sessionId} is ready.`);
+        ui.success(`Project session ${state.sessionId} is ready.`);
       } catch (err) {
         ui.error((err as Error).message || String(err));
         process.exit(1);

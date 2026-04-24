@@ -10,7 +10,7 @@ interface TeamListCommandOptions {
 
 export function createTeamListCommand(): Command {
   return new Command('list')
-    .description('List saved team sessions for a Unity project')
+    .description('List saved Unity project sessions')
     .argument('[path]', 'Unity project path (defaults to current directory)')
     .option('--path <path>', 'Unity project path (defaults to current directory)')
     .action((positionalPath: string | undefined, options: TeamListCommandOptions) => {
@@ -18,7 +18,7 @@ export function createTeamListCommand(): Command {
         const projectPath = resolveTeamProjectPath(positionalPath, options);
         const result = listTeamSessions(projectPath, createTeamRuntime());
 
-        ui.heading('Unity-MCP Team Sessions');
+        ui.heading('Unity-MCP Project Sessions');
         ui.label('Project', projectPath);
         if (result.runtimeUnavailableMessage) {
           ui.warn(result.runtimeUnavailableMessage);
@@ -26,7 +26,7 @@ export function createTeamListCommand(): Command {
         ui.divider();
 
         if (result.inspections.length === 0) {
-          ui.info('No saved team sessions found.');
+          ui.info('No saved project sessions found.');
         } else {
           for (const inspection of result.inspections) {
             const roleSummary = inspection.state.roles.map(role => `${role.roleName}:${role.status}`).join(', ');
