@@ -19,6 +19,12 @@ Every v1 handoff lifecycle mutation must be made by the mac + OMX leader. If ano
 | Slack or Discord | approval hub | no | signed approve/reject intents for known handoff IDs and versions |
 | Bot CI/CD bridge | dispatch relay | no | dispatch provenance/results for leader reconciliation |
 
+## Windows Codex lane contract
+
+Windows Codex CLI is a Windows-native execution and validation lane. It may run delegated implementation, Unity, and validation work on Windows, then submit evidence envelopes back to the mac + OMX leader. It is not a standby leader and must not open, approve, promote, dispatch, or close handoffs.
+
+Evidence from Windows Codex must include the handoff ID and record version it belongs to. If the leader has advanced or superseded the record, the evidence is queued for manual reconcile instead of changing lifecycle state directly.
+
 ## Canonical ledger contract
 
 The mac + OMX leader owns one append-only ledger for v1 handoffs. Records use the normalized state set:

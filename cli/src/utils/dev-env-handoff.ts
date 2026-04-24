@@ -180,6 +180,21 @@ export function isDevEnvControlPlane(laneId: DevEnvLaneId): boolean {
   return laneId === DEV_ENV_CONTROL_PLANE_LANE_ID;
 }
 
+
+export function isDevEnvExecutionValidationLane(laneId: DevEnvLaneId): boolean {
+  return getDevEnvLaneDefinition(laneId).role === 'execution-validation';
+}
+
+export function assertDevEnvExecutionLaneEvidenceOnly(laneId: DevEnvLaneId): void {
+  const lane = getDevEnvLaneDefinition(laneId);
+  if (lane.role !== 'execution-validation') {
+    throw new DevEnvHandoffContractError(`${lane.displayName} is not a v1 execution/validation lane`);
+  }
+  if (lane.canMutateLifecycleState) {
+    throw new DevEnvHandoffContractError(`${lane.displayName} must not be configured as an alternate lifecycle leader`);
+  }
+}
+
 export function canTransitionDevEnvHandoff(from: DevEnvHandoffState, to: DevEnvHandoffState): boolean {
   return from === to || DEV_ENV_HANDOFF_TRANSITIONS[from].includes(to);
 }

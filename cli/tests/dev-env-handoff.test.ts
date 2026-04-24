@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest';
 import {
   DEV_ENV_CONTROL_PLANE_LANE_ID,
   DEV_ENV_LANE_DEFINITIONS,
+  assertDevEnvExecutionLaneEvidenceOnly,
   assertDevEnvHandoffTransition,
   assertDevEnvLifecycleMutationAllowed,
   canTransitionDevEnvHandoff,
   getDevEnvLifecycleMutator,
   getDevEnvOutageState,
   isDevEnvControlPlane,
+  isDevEnvExecutionValidationLane,
   reconcileDevEnvQueuedEvidence,
   type DevEnvEvidenceEnvelope,
   type DevEnvHandoffRecord,
@@ -36,6 +38,13 @@ describe('dev-env v1 control plane contract', () => {
     expect(nonLeaderLanes.length).toBeGreaterThan(0);
     expect(nonLeaderLanes.every(lane => !lane.canMutateLifecycleState)).toBe(true);
     expect(nonLeaderLanes.every(lane => !isDevEnvControlPlane(lane.id))).toBe(true);
+  });
+
+  it('treats Windows Codex as evidence-only execution and validation, not leadership', () => {
+    expect(isDevEnvExecutionValidationLane('windows-codex')).toBe(true);
+    expect(isDevEnvControlPlane('windows-codex')).toBe(false);
+    expect(() => assertDevEnvExecutionLaneEvidenceOnly('windows-codex')).not.toThrow();
+    expect(() => assertDevEnvExecutionLaneEvidenceOnly(DEV_ENV_CONTROL_PLANE_LANE_ID)).toThrowError(/not a v1 execution\/validation lane/);
   });
 });
 
