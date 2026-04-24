@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "handoffId": "verification-handoff-1",
+  "recordVersion": 4,
+  "state": "reconcile_needed",
+  "sourceLane": "windows-codex",
+  "targetLane": "mac-omx-leader",
+  "requestedAction": "Run Windows validation and reconcile bounded evidence.",
+  "evidenceRefs": [
+    "log:file:///C:/unity-mcp-agent/logs/verification-handoff-1-20260424T142933Z-runner.log",
+    "note:file:///C:/unity-mcp-agent/outbox/verification-handoff-1-20260424T142933Z-summary.md"
+  ],
+  "approverIdentity": null,
+  "approvalVersion": null,
+  "downstreamDispatchTarget": null,
+  "dispatchProvenance": null,
+  "createdAt": "2026-04-24T14:46:29.566Z",
+  "updatedAt": "2026-04-24T14:46:29.661Z",
+  "audit": [
+    {
+      "sequence": 1,
+      "actor": "mac-omx-leader",
+      "action": "created",
+      "toState": "draft",
+      "recordVersion": 1,
+      "createdAt": "2026-04-24T14:46:29.566Z"
+    },
+    {
+      "sequence": 2,
+      "actor": "mac-omx-leader",
+      "action": "state_transition",
+      "fromState": "draft",
+      "toState": "awaiting_approval",
+      "recordVersion": 2,
+      "createdAt": "2026-04-24T14:46:29.566Z"
+    },
+    {
+      "sequence": 3,
+      "actor": "mac-omx-leader",
+      "action": "state_transition",
+      "fromState": "awaiting_approval",
+      "toState": "reconcile_needed",
+      "recordVersion": 3,
+      "createdAt": "2026-04-24T14:46:29.566Z"
+    },
+    {
+      "sequence": 4,
+      "actor": "mac-omx-leader",
+      "action": "evidence_applied",
+      "recordVersion": 4,
+      "createdAt": "2026-04-24T14:46:29.661Z",
+      "notes": "accepted evidence from windows:windows-runner-1 (windows-codex)"
+    }
+  ]
+}
