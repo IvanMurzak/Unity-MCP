@@ -390,6 +390,7 @@ Helpful references:
 - Windows validation checklist: [`cli/docs/team-windows-testing-guide.md`](docs/team-windows-testing-guide.md)
 - runtime architecture + Windows backend evaluation: [`cli/docs/team-runtime-architecture.md`](docs/team-runtime-architecture.md)
 - mixed mac/Windows approval + CI/CD handoff runbook: [`cli/docs/dev-env-cicd-handoff-runbook.md`](docs/dev-env-cicd-handoff-runbook.md)
+- Windows Codex bounded lane contract: [`cli/docs/windows-codex-lane-v1.md`](docs/windows-codex-lane-v1.md)
 
 ```bash
 unity-mcp-cli team launch ./MyGame
@@ -445,6 +446,7 @@ Current v1 scope:
 - signed interaction verification
 - leader-owned ledger apply to `approved_not_dispatched` / `rejected`
 - local spool persistence under `.unity-mcp/handoff-spool/`
+- bounded Windows evidence queue + leader reconcile
 
 Required env vars (direct env or `--env-file`):
 
@@ -483,7 +485,26 @@ Dispatch an already-approved `verification_to_cicd` handoff to GitHub Actions wi
 unity-mcp-cli handoff dispatch-approved verification-handoff-1 ./MyGame --env-file .unity-mcp/handoff.env
 ```
 
+### `handoff submit-windows-evidence`
+
+Queue a bounded `windows_lane_evidence_envelope` from an external Windows runner (for example `psmux + Codex CLI + Unity-MCP`). This validates the envelope and stores it under `.unity-mcp/handoff-spool/windows-evidence/` without mutating lifecycle state.
+
+```bash
+unity-mcp-cli handoff submit-windows-evidence ./MyGame --input-file windows-evidence.json
+```
+
+### `handoff reconcile-windows-evidence`
+
+Leader-only replay step that applies queued Windows evidence to the canonical ledger and leaves stale/error cases pending for a later reconcile pass.
+
+```bash
+unity-mcp-cli handoff reconcile-windows-evidence ./MyGame --leader-actor mac-omx-leader
+unity-mcp-cli handoff reconcile-windows-evidence ./MyGame --handoff-id verification-handoff-1
+```
+
 The Discord interaction endpoint must acknowledge `PING` requests and validate `X-Signature-Ed25519` plus `X-Signature-Timestamp` before consuming a button interaction. When an approval is accepted, the bridge writes a queued approval-intent spool record and then applies the decision through the leader-owned ledger. Dispatching the approved verification handoff then records GitHub dispatch provenance back into the same leader-owned ledger.
+
+The Windows lane stays bounded: Unity-MCP still does not own a generic task mailbox/runner. Instead, an external Windows runtime can emit bounded evidence JSON and hand it to `submit-windows-evidence`, while the leader later reconciles that evidence with `reconcile-windows-evidence`.
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 

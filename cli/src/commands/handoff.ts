@@ -1,7 +1,9 @@
 import { Command } from 'commander';
 import { createHandoffDispatchApprovedCommand } from './handoff/dispatch-approved.js';
 import { createHandoffNotifyDiscordCommand } from './handoff/notify-discord.js';
+import { createHandoffReconcileWindowsEvidenceCommand } from './handoff/reconcile-windows-evidence.js';
 import { createHandoffServeCommand } from './handoff/serve.js';
+import { createHandoffSubmitWindowsEvidenceCommand } from './handoff/submit-windows-evidence.js';
 
 export function createHandoffCommand(): Command {
   const command = new Command('handoff')
@@ -10,6 +12,8 @@ export function createHandoffCommand(): Command {
   command.addCommand(createHandoffServeCommand());
   command.addCommand(createHandoffNotifyDiscordCommand());
   command.addCommand(createHandoffDispatchApprovedCommand());
+  command.addCommand(createHandoffSubmitWindowsEvidenceCommand());
+  command.addCommand(createHandoffReconcileWindowsEvidenceCommand());
 
   return command;
 }
