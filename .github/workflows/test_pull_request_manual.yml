@@ -9,7 +9,39 @@
 name: test-pull-request-manual
 
 on:
+  # Machine bridge: the approval bot dispatches this event only after the
+  # leader-owned handoff ledger reaches approved_not_dispatched.
+  repository_dispatch:
+    types:
+      - unity-mcp-verification-approved
+
+  # Operator fallback: keeps the existing manual button available without
+  # making GitHub UI dispatch the primary CI/CD bridge.
   workflow_dispatch:
+    inputs:
+      handoff_id:
+        description: "Approved handoff id (optional for manual fallback)"
+        required: false
+        type: string
+      record_version:
+        description: "Approved handoff record version (optional for manual fallback)"
+        required: false
+        type: string
+      approved_by:
+        description: "Approver identity captured outside GitHub (optional)"
+        required: false
+        type: string
+      evidence_ref:
+        description: "Evidence reference from the handoff ledger (optional)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+env:
+  APPROVED_REPOSITORY_DISPATCH_TYPE: unity-mcp-verification-approved
+  APPROVED_DISPATCH_TARGET: test_pull_request_manual
 
   repository_dispatch:
     types: [unity-mcp-approved-verification]
@@ -76,6 +108,7 @@ jobs:
   # --- PLAY MODE ---
 
   # test-unity-2022-3-62f3-playmode:
+  #   needs: dispatch-context
   #   uses: ./.github/workflows/test_unity_plugin.yml
   #   with:
   #     projectPath: "./Unity-Tests/2022.3.62f3"
@@ -84,6 +117,7 @@ jobs:
   #   secrets: inherit
 
   # test-unity-2023-2-22f1-playmode:
+  #   needs: dispatch-context
   #   uses: ./.github/workflows/test_unity_plugin.yml
   #   with:
   #     projectPath: "./Unity-Tests/2023.2.22f1"
@@ -92,6 +126,7 @@ jobs:
   #   secrets: inherit
 
   # test-unity-6000-3-1f1-playmode:
+  #   needs: dispatch-context
   #   uses: ./.github/workflows/test_unity_plugin.yml
   #   with:
   #     projectPath: "./Unity-Tests/6000.3.1f1"
