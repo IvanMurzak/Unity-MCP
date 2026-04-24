@@ -387,6 +387,7 @@ What this feature is not:
 Helpful references:
 
 - manual verification: [`cli/docs/team-testing-guide.md`](docs/team-testing-guide.md)
+- Windows validation checklist: [`cli/docs/team-windows-testing-guide.md`](docs/team-windows-testing-guide.md)
 - runtime architecture + Windows backend evaluation: [`cli/docs/team-runtime-architecture.md`](docs/team-runtime-architecture.md)
 
 ```bash
