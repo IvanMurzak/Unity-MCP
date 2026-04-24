@@ -80,10 +80,11 @@ Planner outputs feed the existing `plan -> execution` gate through leader review
 
 The Windows lane is still intentionally external to Unity-MCP. A practical v1 setup is:
 
+- external coordination may provide a passive snapshot for reference
 - `psmux` (or similar) supervises Codex CLI worker processes
 - Codex CLI uses Unity-MCP against the local Windows Unity project
 - the worker emits a bounded evidence JSON file
 - Unity-MCP queues that file with `submit-windows-evidence`
 - the mac leader later runs `reconcile-windows-evidence`
 
-See [`cli/docs/windows-codex-lane-v1.md`](windows-codex-lane-v1.md) for the concrete queue/reconcile contract.
+See [`cli/docs/windows-codex-lane-v1.md`](windows-codex-lane-v1.md) for the passive snapshot + queue/reconcile contract and [`cli/docs/windows-codex-runner-companion-v1.md`](windows-codex-runner-companion-v1.md) for external runner ownership.

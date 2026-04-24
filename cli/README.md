@@ -391,6 +391,7 @@ Helpful references:
 - runtime architecture + Windows backend evaluation: [`cli/docs/team-runtime-architecture.md`](docs/team-runtime-architecture.md)
 - mixed mac/Windows approval + CI/CD handoff runbook: [`cli/docs/dev-env-cicd-handoff-runbook.md`](docs/dev-env-cicd-handoff-runbook.md)
 - Windows Codex bounded lane contract: [`cli/docs/windows-codex-lane-v1.md`](docs/windows-codex-lane-v1.md)
+- Windows Codex companion runbook: [`cli/docs/windows-codex-runner-companion-v1.md`](docs/windows-codex-runner-companion-v1.md)
 
 ```bash
 unity-mcp-cli team launch ./MyGame

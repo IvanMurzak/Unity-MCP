@@ -1,0 +1,35 @@
+{
+  "snapshotId": "snapshot-verification-handoff-1-v3",
+  "handoffId": "verification-handoff-1",
+  "handoffRecordVersion": 3,
+  "requestedAction": "Run Windows validation and produce bounded evidence for leader reconcile.",
+  "sourceLane": "mac-omx-leader",
+  "targetLane": "windows-codex",
+  "createdAt": "2026-04-24T11:50:00.000Z",
+  "evidenceExpectations": [
+    {
+      "evidenceType": "log",
+      "description": "Unity/worker log for the run.",
+      "required": true,
+      "exampleUri": "file:///C:/unity-mcp-agent/logs/worker-1.log"
+    },
+    {
+      "evidenceType": "test_report",
+      "description": "Validation test report when available."
+    }
+  ],
+  "projectHints": {
+    "projectPathHint": "D:\\workSpace\\Unity-MCP\\Unity-MCP-Plugin",
+    "unityProjectPathHint": "D:\\workSpace\\Unity-MCP\\Unity-MCP-Plugin",
+    "unityEditorVersionHint": "6000.3.6f1"
+  },
+  "workspaceHints": {
+    "workingDirectoryHint": "D:\\workSpace\\Unity-MCP",
+    "artifactDirectoryHint": "C:\\unity-mcp-agent\\outbox",
+    "logDirectoryHint": "C:\\unity-mcp-agent\\logs",
+    "branchHint": "codex/tmux-team-orchestration"
+  },
+  "notes": [
+    "Reference-only snapshot; Unity-MCP does not ingest it directly."
+  ]
+}

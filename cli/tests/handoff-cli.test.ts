@@ -31,6 +31,8 @@ describe('handoff command surface', () => {
     expect(result.stdout).toContain('submit-windows-evidence');
     expect(result.stdout).toContain('list-windows-evidence');
     expect(result.stdout).toContain('reconcile-windows-evidence');
+    expect(result.stdout).not.toContain('submit-assignment');
+    expect(result.stdout).not.toContain('poll-windows-evidence');
   });
 
   it('queues and reconciles Windows evidence through the CLI', async () => {
