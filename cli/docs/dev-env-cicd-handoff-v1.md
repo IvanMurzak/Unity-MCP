@@ -26,12 +26,13 @@ If the mac + OMX leader is unavailable, promotions freeze. In-flight lanes may f
 
 ## Current CLI bridge surface
 
-The repository now exposes five bounded handoff commands:
+The repository now exposes six bounded handoff commands:
 
 - `unity-mcp-cli handoff notify-discord <handoff-id> <project-path>`
 - `unity-mcp-cli handoff serve <project-path>`
 - `unity-mcp-cli handoff dispatch-approved <handoff-id> <project-path>`
 - `unity-mcp-cli handoff submit-windows-evidence <project-path>`
+- `unity-mcp-cli handoff list-windows-evidence <project-path>`
 - `unity-mcp-cli handoff reconcile-windows-evidence <project-path>`
 
 `notify-discord` reads a leader-owned handoff record that is already `awaiting_approval`, sends a Discord approval message with approve/reject buttons, and persists message metadata under `.unity-mcp/handoff-spool/discord-notifications/`.
@@ -58,6 +59,8 @@ The bridge reads direct environment variables or an optional `--env-file` contai
 `dispatch-approved` is the bounded GitHub relay path for v1. It requires an already `approved_not_dispatched` `verification_to_cicd` handoff, emits `repository_dispatch` with event type `unity-mcp-approved-verification` by default, and records GitHub dispatch provenance back into the leader-owned ledger as the handoff moves to `dispatched`.
 
 `submit-windows-evidence` is the bounded Windows lane intake path. It validates a `windows_lane_evidence_envelope` JSON payload and stores it under `.unity-mcp/handoff-spool/windows-evidence/` without mutating lifecycle state.
+
+`list-windows-evidence` gives operators visibility into queued/applied/pending-error Windows evidence spool records without inspecting the spool directory manually.
 
 `reconcile-windows-evidence` is the leader-only replay step. It reads queued Windows evidence spool records, normalizes the structured evidence refs into the existing string-based handoff ledger, applies them through the leader-owned ledger, and leaves stale/error cases queued with a recorded `lastError`.
 

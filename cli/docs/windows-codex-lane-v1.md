@@ -2,6 +2,11 @@
 
 This document describes the **bounded** Windows lane for the mixed mac/Windows handoff model.
 
+Concrete starter artifacts live under:
+
+- `cli/examples/windows-codex-lane/sample-windows-evidence.json`
+- `cli/examples/windows-codex-lane/submit-windows-evidence.ps1`
+
 ## Boundary
 
 Unity-MCP still does **not** own a generic worker task-dispatch system. The Windows lane is intentionally narrower:
@@ -66,6 +71,13 @@ This step is safe to run on Windows because it only validates and stores the bou
 unity-mcp-cli handoff submit-windows-evidence ./MyGame --input-file windows-evidence.json
 ```
 
+To inspect the queue before the leader reconciles:
+
+```bash
+unity-mcp-cli handoff list-windows-evidence ./MyGame
+unity-mcp-cli handoff list-windows-evidence ./MyGame --handoff-id verification-handoff-1
+```
+
 ### 3. Reconcile from the mac leader
 
 Later, the leader applies queued evidence into the canonical ledger:
@@ -124,6 +136,15 @@ The external Windows runner can be very small. A practical shape is:
 3. run the Windows-native validation
 4. write a bounded evidence JSON file
 5. call `unity-mcp-cli handoff submit-windows-evidence ...`
+
+The included PowerShell example shows one simple pattern:
+
+```powershell
+pwsh -File cli/examples/windows-codex-lane/submit-windows-evidence.ps1 `
+  -ProjectPath D:\workSpace\Unity-MCP\Unity-MCP-Plugin `
+  -HandoffId verification-handoff-1 `
+  -HandoffVersion 3
+```
 
 That means Unity-MCP stays responsible for:
 

@@ -493,6 +493,15 @@ Queue a bounded `windows_lane_evidence_envelope` from an external Windows runner
 unity-mcp-cli handoff submit-windows-evidence ./MyGame --input-file windows-evidence.json
 ```
 
+### `handoff list-windows-evidence`
+
+Inspect the bounded Windows evidence spool without opening `.unity-mcp/handoff-spool/windows-evidence/` manually.
+
+```bash
+unity-mcp-cli handoff list-windows-evidence ./MyGame
+unity-mcp-cli handoff list-windows-evidence ./MyGame --handoff-id verification-handoff-1
+```
+
 ### `handoff reconcile-windows-evidence`
 
 Leader-only replay step that applies queued Windows evidence to the canonical ledger and leaves stale/error cases pending for a later reconcile pass.
@@ -505,6 +514,11 @@ unity-mcp-cli handoff reconcile-windows-evidence ./MyGame --handoff-id verificat
 The Discord interaction endpoint must acknowledge `PING` requests and validate `X-Signature-Ed25519` plus `X-Signature-Timestamp` before consuming a button interaction. When an approval is accepted, the bridge writes a queued approval-intent spool record and then applies the decision through the leader-owned ledger. Dispatching the approved verification handoff then records GitHub dispatch provenance back into the same leader-owned ledger.
 
 The Windows lane stays bounded: Unity-MCP still does not own a generic task mailbox/runner. Instead, an external Windows runtime can emit bounded evidence JSON and hand it to `submit-windows-evidence`, while the leader later reconciles that evidence with `reconcile-windows-evidence`.
+
+Starter artifacts for that external runner live under:
+
+- `cli/examples/windows-codex-lane/sample-windows-evidence.json`
+- `cli/examples/windows-codex-lane/submit-windows-evidence.ps1`
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "kind": "windows_lane_evidence_envelope",
+  "handoffId": "verification-handoff-1",
+  "handoffVersion": 3,
+  "sourceLane": {
+    "kind": "windows_codex",
+    "laneId": "windows-runner-1"
+  },
+  "submittedAt": "2026-04-24T12:00:00.000Z",
+  "outcome": "passed",
+  "summary": "Windows validation passed after Unity smoke + tests.",
+  "evidenceRefs": [
+    {
+      "type": "log",
+      "uri": "file:///C:/unity-mcp-agent/logs/worker-1.log"
+    },
+    {
+      "type": "test_report",
+      "uri": "file:///C:/unity-mcp-agent/outbox/vitest.xml"
+    }
+  ]
+}
