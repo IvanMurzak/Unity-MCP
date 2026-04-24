@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 2,
+  "sessionId": "verification-handoff-1-windows-validation-smoke",
+  "projectPath": "D:\\workSpace\\Unity-MCP\\Unity-MCP-Plugin",
+  "createdAt": "2026-04-24T14:30:00.957Z",
+  "updatedAt": "2026-04-24T14:30:02.792Z",
+  "launcherVersion": "0.66.0",
+  "runtime": {
+    "kind": "process",
+    "sessionHandle": "verification-handoff-1-windows-validation-smoke"
+  },
+  "status": "stopped",
+  "layoutPreset": "default",
+  "roles": [
+    {
+      "roleName": "leader",
+      "paneTitle": "leader",
+      "command": "shell",
+      "workingDirectory": "D:\\workSpace\\Unity-MCP\\Unity-MCP-Plugin",
+      "readinessHint": "Leader pane created and ready for operator commands.",
+      "runtimeHandle": "25884",
+      "status": "stopped"
+    },
+    {
+      "roleName": "builder",
+      "paneTitle": "builder",
+      "command": "shell",
+      "workingDirectory": "D:\\workSpace\\Unity-MCP\\Unity-MCP-Plugin",
+      "readinessHint": "Builder pane created and ready for implementation work.",
+      "runtimeHandle": "5788",
+      "status": "stopped"
+    },
+    {
+      "roleName": "verifier",
+      "paneTitle": "verifier",
+      "command": "shell",
+      "workingDirectory": "D:\\workSpace\\Unity-MCP\\Unity-MCP-Plugin",
+      "readinessHint": "Verifier pane created and ready for test and validation work.",
+      "runtimeHandle": "48556",
+      "status": "stopped"
+    },
+    {
+      "roleName": "notes",
+      "paneTitle": "notes",
+      "command": "shell",
+      "workingDirectory": "D:\\workSpace\\Unity-MCP\\Unity-MCP-Plugin",
+      "readinessHint": "Notes pane created and ready for logs or scratch notes.",
+      "runtimeHandle": "28252",
+      "status": "stopped"
+    }
+  ],
+  "verificationPolicy": "Session is ready when runtime roles exist and persisted state matches the live runtime state.",
+  "notes": [],
+  "templateVersion": "1"
+}
