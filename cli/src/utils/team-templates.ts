@@ -26,7 +26,7 @@ export function createDefaultTeamLayout(projectPath: string): TeamLayoutTemplate
     name: DEFAULT_LAYOUT_NAME,
     templateVersion: DEFAULT_TEMPLATE_VERSION,
     windowName: 'team',
-    verificationPolicy: 'Session is ready when tmux panes exist and persisted state matches the live layout.',
+    verificationPolicy: 'Session is ready when runtime roles exist and persisted state matches the live runtime state.',
     roles: [
       {
         roleName: 'leader',

@@ -426,12 +426,14 @@ describe('tmux adapter', () => {
 
 describe('team templates', () => {
   it('expands the default layout into deterministic role panes', () => {
-    const layout = createDefaultTeamLayout('/tmp/project');
+    const projectPath = '/tmp/project';
+    const layout = createDefaultTeamLayout(projectPath);
     expect(layout.name).toBe('default');
     expect(layout.roles.map(role => role.roleName)).toEqual(['leader', 'builder', 'verifier', 'notes']);
     expect(layout.roles.map(role => role.paneTitle)).toEqual(['leader', 'builder', 'verifier', 'notes']);
     expect(layout.roles.every(role => role.command === 'shell')).toBe(true);
-    expect(layout.roles.every(role => role.workingDirectory === '/tmp/project')).toBe(true);
+    expect(layout.roles.every(role => role.workingDirectory === path.resolve(projectPath))).toBe(true);
+    expect(layout.verificationPolicy).toBe('Session is ready when runtime roles exist and persisted state matches the live runtime state.');
   });
 });
 
