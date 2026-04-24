@@ -424,6 +424,8 @@ If the currently selected runtime is not installed or is missing from `PATH`, th
 
 Write MCP config files for AI agents, enabling headless/CI setup without the Unity Editor UI. Supports all 14 agents (Claude Code, Cursor, Gemini, Codex, etc.).
 
+Note: Codex currently reads MCP configuration from `~/.codex/config.toml`, so `setup-mcp codex` writes to that user-scoped file rather than a project-local `.codex/config.toml`.
+
 ```bash
 unity-mcp-cli setup-mcp claude-code ./MyGame
 ```

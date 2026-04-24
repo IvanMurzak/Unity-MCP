@@ -408,10 +408,10 @@ export const agentRegistry: readonly AgentDefinition[] = [
     id: 'codex',
     name: 'Codex',
     skillsPath: '.agents/skills',
-    configPathDisplay: '.codex/config.toml',
+    configPathDisplay: '~/.codex/config.toml',
     configFormat: 'toml',
     bodyPath: 'mcp_servers',
-    getConfigPath: (p) => path.join(p, '.codex', 'config.toml'),
+    getConfigPath: () => path.join(home(), '.codex', 'config.toml'),
     getStdioProps: (serverPath, port, timeout, auth, _token) => ({
       enabled: true,
       command: serverPath,
