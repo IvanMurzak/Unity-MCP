@@ -21,6 +21,7 @@ import {
   type TeamRuntimeAdapter,
   type TeamRuntimeRoleInspection,
 } from '../src/utils/team-runtime.js';
+import { createProcessTeamRuntime } from '../src/utils/team-runtime-process.js';
 import { createTmuxTeamRuntime } from '../src/utils/team-runtime-tmux.js';
 import { createTmuxAdapter, parseListPanesOutput, TmuxCommandError, type TmuxAdapter, type TmuxPaneSnapshot } from '../src/utils/tmux.js';
 import {
@@ -318,8 +319,7 @@ describe('runtime selection', () => {
     expect(resolveTeamRuntimeSelection('auto', 'win32')).toEqual({
       requestedKind: 'auto',
       preferredKind: 'process',
-      resolvedKind: 'tmux',
-      fallbackReason: 'Preferred runtime "process" is not implemented yet; using "tmux" for now.',
+      resolvedKind: 'process',
     });
   });
 
@@ -327,6 +327,54 @@ describe('runtime selection', () => {
     const runtime = createTeamRuntime('tmux');
     expect(runtime.kind).toBe('tmux');
     expect(runtime.capabilities().paneTitles).toBe(true);
+  });
+
+  it('creates the process runtime when requested explicitly', () => {
+    const runtime = createTeamRuntime('process');
+    expect(runtime.kind).toBe('process');
+    expect(runtime.capabilities().paneTitles).toBe(false);
+  });
+});
+
+describe('process runtime adapter', () => {
+  it('persists launched role handles and inspects/stops them through metadata', () => {
+    let nextPid = 1000;
+    const alive = new Set<number>();
+    const tmpRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-process-runtime-'));
+    const runtime = createProcessTeamRuntime(resolveTeamRuntimeSelection('process', 'win32'), {
+      metadataRoot: tmpRoot,
+      launchRoleProcess: () => {
+        const pid = ++nextPid;
+        alive.add(pid);
+        return { pid };
+      },
+      isProcessAlive: (pid) => alive.has(pid),
+      terminateProcess: (pid) => { alive.delete(pid); },
+    });
+
+    const launched = runtime.launchSession({
+      sessionId: 'process-session',
+      projectPath: '/tmp/project',
+      windowName: 'team',
+      roles: createDefaultTeamLayout('/tmp/project').roles,
+    });
+
+    expect(launched.sessionHandle).toBe('process-session');
+    expect(launched.roles).toHaveLength(4);
+    expect(runtime.hasSession('process-session')).toBe(true);
+
+    const inspection = runtime.inspectSession('process-session');
+    expect(inspection.available).toBe(true);
+    expect(inspection.roles.every(role => role.status === 'ready')).toBe(true);
+
+    runtime.stopSession('process-session');
+
+    expect(runtime.hasSession('process-session')).toBe(false);
+    const stopped = runtime.inspectSession('process-session');
+    expect(stopped.available).toBe(false);
+    expect(stopped.issues[0]).toContain('process session process-session is not available');
+
+    fs.rmSync(tmpRoot, { recursive: true, force: true });
   });
 });
 

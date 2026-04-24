@@ -13,7 +13,7 @@ interface TeamLaunchCommandOptions {
 
 export function createTeamLaunchCommand(launcherVersion: string): Command {
   return new Command('launch')
-    .description('Launch a local Unity project session (tmux backend currently shipped)')
+    .description('Launch a local Unity project session')
     .argument('[path]', 'Unity project path (defaults to current directory)')
     .option('--path <path>', 'Unity project path (defaults to current directory)')
     .option('--layout <name>', 'Layout preset name (milestone 1 supports only: default)', 'default')

@@ -47,14 +47,17 @@ Key shifts:
 - schema-v1 tmux state is migrated on read into the new runtime-neutral shape
 - lifecycle logic reconciles normalized runtime role health instead of directly reading tmux panes
 
-## Current shipped backend
+## Current shipped backends
 
-Today, the shipped backend is still **tmux**.
+Today, the shipped runtime layer includes:
+
+- **tmux** for pane-oriented local sessions
+- **process** for standalone local lifecycle control without pane semantics
 
 That means:
 
 - macOS/Linux can keep the current tmux-oriented workflow
-- Windows can still use tmux manually if the user chooses to provide it
+- Windows-friendly standalone lifecycle can use the process backend without requiring tmux semantics
 - the architecture no longer requires future backends to pretend they are tmux
 
 ## Shared vs backend-specific expectations
@@ -156,9 +159,9 @@ Official docs:
 
 The current recommendation is:
 
-1. keep tmux as the shipping backend for the current milestone
+1. keep tmux and process as the shipped local runtime options
 2. preserve the shared runtime contract in code
-3. prototype a **Windows-native process/state-first backend** next
+3. strengthen the standalone process/state-first backend for Windows-friendly use
 4. optionally add a terminal/view layer later for pane-friendly UX
 
 This ordering best matches the clarified success criterion: **users should be able to manage the core Unity project session lifecycle without needing OMX**, while Windows-native Unity development flow still wins over tmux parity.

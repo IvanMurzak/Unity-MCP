@@ -1,8 +1,9 @@
 import { createTmuxAdapter } from './tmux.js';
+import { createProcessTeamRuntime } from './team-runtime-process.js';
 import { createTmuxTeamRuntime } from './team-runtime-tmux.js';
 import type { TeamRoleTemplate } from './team-templates.js';
 
-export const IMPLEMENTED_TEAM_RUNTIME_KINDS = ['tmux'] as const;
+export const IMPLEMENTED_TEAM_RUNTIME_KINDS = ['tmux', 'process'] as const;
 export const TEAM_RUNTIME_KINDS = [...IMPLEMENTED_TEAM_RUNTIME_KINDS, 'process'] as const;
 
 export type ImplementedTeamRuntimeKind = typeof IMPLEMENTED_TEAM_RUNTIME_KINDS[number];
@@ -119,6 +120,8 @@ export function createTeamRuntime(requestedKind: TeamRuntimeRequest = 'auto'): T
   switch (selection.resolvedKind) {
     case 'tmux':
       return createTmuxTeamRuntime(createTmuxAdapter(), selection);
+    case 'process':
+      return createProcessTeamRuntime(selection);
     default:
       throw new TeamRuntimeSelectionError(`Unsupported resolved runtime: ${selection.resolvedKind}`);
   }

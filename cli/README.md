@@ -369,7 +369,7 @@ unity-mcp-cli wait-for-ready --url http://localhost:8080 --timeout 30000
 
 ## `team`
 
-Manage a local **Unity project session lifecycle**. The command surface is **runtime-backed** so Unity-MCP can keep one project-facing lifecycle contract while choosing an OS-appropriate local backend internally. The currently shipped backend remains tmux, but the product goal is **standalone Unity lifecycle management first**, not OMX parity or a generic orchestration replacement.
+Manage a local **Unity project session lifecycle**. The command surface is **runtime-backed** so Unity-MCP can keep one project-facing lifecycle contract while choosing an OS-appropriate local backend internally. The product goal is **standalone Unity lifecycle management first**, not OMX parity or a generic orchestration replacement.
 
 What this feature is for:
 
@@ -395,7 +395,7 @@ unity-mcp-cli team launch ./MyGame
 
 ### `team launch`
 
-Create a local Unity project session with the built-in `leader`, `builder`, `verifier`, and `notes` roles. Today that session is created by the tmux backend.
+Create a local Unity project session with the built-in `leader`, `builder`, `verifier`, and `notes` roles. The runtime chooses the local backend automatically; tmux remains the current pane-oriented backend, while a standalone process backend can satisfy the same lifecycle contract without pane semantics.
 
 | Option | Required | Description |
 |---|---|---|
@@ -429,7 +429,7 @@ Stop a project session and mark its saved state as `stopped`.
 unity-mcp-cli team stop mygame-team-20260423t050000z --path ./MyGame
 ```
 
-If the currently selected runtime is not installed or is missing from `PATH`, the launcher exits with an actionable error. Today that usually means `tmux` must be installed before using the shipped backend. OMX remains optional: use it only if you want additional generic multi-agent coordination on top of Unity-MCP's standalone lifecycle flow.
+If the currently selected runtime is not installed or is missing from `PATH`, the launcher exits with an actionable error. On tmux-oriented systems that usually means `tmux` must be installed before using that backend. OMX remains optional: use it only if you want additional generic multi-agent coordination on top of Unity-MCP's standalone lifecycle flow.
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 

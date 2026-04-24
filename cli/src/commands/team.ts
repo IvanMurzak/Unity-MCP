@@ -6,7 +6,7 @@ import { createTeamStopCommand } from './team/stop.js';
 
 export function createTeamCommand(launcherVersion: string): Command {
   const command = new Command('team')
-    .description('Project session lifecycle for Unity projects (runtime-backed; local-only; tmux backend currently shipped)');
+    .description('Project session lifecycle for Unity projects (runtime-backed; local-only; backend chosen per runtime)');
 
   command.addCommand(createTeamLaunchCommand(launcherVersion));
   command.addCommand(createTeamListCommand());
