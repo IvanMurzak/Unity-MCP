@@ -518,7 +518,9 @@ The Windows lane stays bounded: Unity-MCP still does not own a generic task mail
 
 Starter artifacts for that external runner live under:
 
+- `cli/examples/windows-codex-lane/sample-windows-handoff-snapshot.json`
 - `cli/examples/windows-codex-lane/sample-windows-evidence.json`
+- `cli/examples/windows-codex-lane/run-windows-validation-runner-v1.ps1`
 - `cli/examples/windows-codex-lane/submit-windows-evidence.ps1`
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)

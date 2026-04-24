@@ -19,18 +19,23 @@ describe('windows codex lane starter artifacts', () => {
     expect(content).toContain('Unity-MCP does **not** receive or store snapshot submissions');
     expect(content).toContain('assignment submission, assignment spool ownership, polling, or dispatch inside Unity-MCP ❌');
     expect(content).toContain('passive snapshot -> external runner -> evidence envelope -> `submit-windows-evidence` -> `reconcile-windows-evidence`');
+    expect(content).toContain('windows_validation_smoke_v1');
+    expect(content).toContain('The runner stops here. It does **not** poll Unity-MCP with `list-windows-evidence`');
+    expect(content).toContain('Companion `outbox/` is not a Unity-MCP queue');
     expect(content).not.toContain('handoff assignment artifact');
   });
 
-  it('provides a companion runbook with explicit external ownership and deferred follow-ups', () => {
+  it('provides a companion runbook with explicit external ownership and validation-first profile details', () => {
     const runbookPath = path.resolve('docs', 'windows-codex-runner-companion-v1.md');
     const content = fs.readFileSync(runbookPath, 'utf-8');
 
     expect(content).toContain('Repo-owned vs companion-owned boundary');
-    expect(content).toContain('Unity-MCP does **not** own companion process supervision, mailbox polling, assignment submission, assignment spool ownership, or dispatch to Windows workers.');
+    expect(content).toContain('running the `windows_validation_smoke_v1` validation recipe');
+    expect(content).toContain('stopping after submit and waiting for the mac leader to reconcile or request another run');
+    expect(content).toContain('Companion `outbox/` is **not** Unity-MCP\'s queue.');
+    expect(content).toContain('Do **not** call `handoff list-windows-evidence` as a runner polling loop.');
     expect(content).toContain('Windows validation hardening / version-matched fixture policy');
-    expect(content).toContain('Discord bridge live-ops validation and deployment runbook');
-    expect(content).toContain('planner/QA executionization on top of the existing bounded role model');
+    expect(content).toContain('broader implementation-lane execution beyond validation-first smoke');
   });
 
   it('ships a passive snapshot example aligned with the boundary validator', () => {
@@ -55,7 +60,23 @@ describe('windows codex lane starter artifacts', () => {
     expect(evidence.sourceLane.kind).toBe('windows_codex');
   });
 
-  it('resolves the CLI path from the PowerShell script location', () => {
+  it('ships a runner example that stays inside the bounded validation path', () => {
+    const scriptPath = path.resolve('examples', 'windows-codex-lane', 'run-windows-validation-runner-v1.ps1');
+    const script = fs.readFileSync(scriptPath, 'utf-8');
+
+    expect(script).toContain('windows_validation_smoke_v1');
+    expect(script).toContain("'team', 'launch'");
+    expect(script).toContain("'team', 'status'");
+    expect(script).toContain("'team', 'list'");
+    expect(script).toContain("'team', 'stop'");
+    expect(script).toContain('Stop-Process -Id');
+    expect(script).toContain('submit-windows-evidence');
+    expect(script).toContain('no list-windows-evidence polling or reconcile call is performed by this runner');
+    expect(script).not.toContain('list-windows-evidence $ProjectPath');
+    expect(script).not.toContain('reconcile-windows-evidence $ProjectPath');
+  });
+
+  it('resolves the CLI path from the PowerShell submit script location', () => {
     const scriptPath = path.resolve('examples', 'windows-codex-lane', 'submit-windows-evidence.ps1');
     const script = fs.readFileSync(scriptPath, 'utf-8');
 

@@ -6,6 +6,7 @@ Concrete starter artifacts live under:
 
 - `cli/examples/windows-codex-lane/sample-windows-handoff-snapshot.json`
 - `cli/examples/windows-codex-lane/sample-windows-evidence.json`
+- `cli/examples/windows-codex-lane/run-windows-validation-runner-v1.ps1`
 - `cli/examples/windows-codex-lane/submit-windows-evidence.ps1`
 
 Companion implementation guidance lives in [`cli/docs/windows-codex-runner-companion-v1.md`](windows-codex-runner-companion-v1.md).
@@ -36,8 +37,10 @@ The recommended v1 Windows runtime remains external to Unity-MCP:
 2. `psmux` (or equivalent Windows process/session manager) keeps Codex workers alive
 3. Codex CLI executes the referenced implementation/validation work
 4. Unity-MCP is exposed to the worker as an MCP tool/client target
-5. the worker emits a bounded evidence envelope JSON file
-6. Unity-MCP queues and later reconciles that evidence through `handoff` commands
+5. the worker runs `windows_validation_smoke_v1`
+6. the worker emits a bounded evidence envelope JSON file
+7. Unity-MCP queues that evidence only through `handoff submit-windows-evidence`
+8. the worker stops and waits for the mac leader to reconcile the evidence later
 
 ## Passive snapshot -> evidence -> reconcile loop
 
@@ -87,6 +90,8 @@ Example payload:
 }
 ```
 
+The runner may validate the schema and required fields, echo `handoffId` / `handoffRecordVersion`, and resolve local path hints. It must not perform authoritative freshness checks, lifecycle interpretation, or post-submit polling.
+
 ### 2. External worker emits a bounded envelope
 
 Example payload:
@@ -117,6 +122,8 @@ Example payload:
 }
 ```
 
+Valid outcomes remain bounded to `passed`, `failed`, or `blocked`.
+
 ### 3. Queue the Windows evidence in Unity-MCP
 
 This step is safe to run on Windows because it only validates and stores the bounded envelope under `.unity-mcp/handoff-spool/windows-evidence/`.
@@ -125,12 +132,7 @@ This step is safe to run on Windows because it only validates and stores the bou
 unity-mcp-cli handoff submit-windows-evidence ./MyGame --input-file windows-evidence.json
 ```
 
-To inspect the queue before the leader reconciles:
-
-```bash
-unity-mcp-cli handoff list-windows-evidence ./MyGame
-unity-mcp-cli handoff list-windows-evidence ./MyGame --handoff-id verification-handoff-1
-```
+The runner stops here. It does **not** poll Unity-MCP with `list-windows-evidence` and it does **not** run `reconcile-windows-evidence`.
 
 ### 4. Reconcile from the mac leader
 
@@ -145,6 +147,30 @@ Optional handoff scoping:
 ```bash
 unity-mcp-cli handoff reconcile-windows-evidence ./MyGame --handoff-id verification-handoff-1
 ```
+
+## Validation-first v1 profile
+
+The external runner's named v1 profile is `windows_validation_smoke_v1`.
+
+1. `npm test` in `cli/`
+2. `npm run build` in `cli/`
+3. `node dist/index.js team --help`
+4. lifecycle smoke with `team launch`, `team status`, saved-state inspection for `runtime.kind = process`, `team list`, and `team stop`
+5. degraded-state smoke by killing one role process and confirming `team status` becomes degraded
+6. optional Unity + MCP end-to-end validation when the local editor/project setup already exists
+
+Evidence stays bounded to `log`, `test_report`, `build_artifact`, `screenshot`, and `note` refs.
+
+## Companion-local directories
+
+The external runner may keep its own local directories such as:
+
+- `snapshots/`
+- `logs/`
+- `outbox/`
+- optional `sessions/`
+
+These remain companion-owned local state only. Companion `outbox/` is not a Unity-MCP queue; `.unity-mcp/handoff-spool/windows-evidence/` remains the only repo-owned evidence spool.
 
 ## Spool layout
 
@@ -190,9 +216,16 @@ The external Windows runner can be very small. A practical shape is:
 3. run the Windows-native validation against the referenced project/workspace hints
 4. write a bounded evidence JSON file
 5. call `unity-mcp-cli handoff submit-windows-evidence ...`
-6. wait for the mac leader to reconcile the evidence
+6. stop and wait for the mac leader to reconcile the evidence
 
-The included PowerShell example shows one simple pattern:
+The included PowerShell examples show one simple pattern:
+
+```powershell
+pwsh -File cli/examples/windows-codex-lane/run-windows-validation-runner-v1.ps1 `
+  -SnapshotPath cli/examples/windows-codex-lane/sample-windows-handoff-snapshot.json `
+  -ProjectPath D:\workSpace\Unity-MCP\Unity-MCP-Plugin `
+  -WorkspacePath D:\workSpace\Unity-MCP
+```
 
 ```powershell
 pwsh -File cli/examples/windows-codex-lane/submit-windows-evidence.ps1 `
@@ -215,6 +248,7 @@ And the external runtime stays responsible for:
 - process/session supervision
 - Windows-native editor/tool usage
 - evidence emission
+- stopping after submit without any post-submit polling loop
 
 ## Non-goals
 
