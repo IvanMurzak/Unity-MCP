@@ -13,10 +13,20 @@ on:
 
 jobs:
   test-cli:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        node-version: [20, 22]
+        include:
+          - os: ubuntu-latest
+            node-version: 20
+            windows-smoke: false
+          - os: ubuntu-latest
+            node-version: 22
+            windows-smoke: false
+          - os: windows-latest
+            node-version: 22
+            windows-smoke: true
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -37,3 +47,43 @@ jobs:
       - name: Run tests
         working-directory: ./cli
         run: npm test
+
+      - name: Smoke test Windows process runtime lifecycle
+        if: matrix.windows-smoke
+        shell: pwsh
+        working-directory: ./cli
+        run: |
+          $Project = Join-Path $env:RUNNER_TEMP ('unity-mcp-team-smoke-' + [guid]::NewGuid().ToString())
+          New-Item -ItemType Directory -Force -Path (Join-Path $Project 'Assets') | Out-Null
+          New-Item -ItemType Directory -Force -Path (Join-Path $Project 'Packages') | Out-Null
+          New-Item -ItemType Directory -Force -Path (Join-Path $Project 'ProjectSettings') | Out-Null
+          Set-Content -Path (Join-Path $Project 'Packages/manifest.json') -Value '{"dependencies":{}}'
+          Set-Content -Path (Join-Path $Project 'ProjectSettings/ProjectVersion.txt') -Value 'm_EditorVersion: 6000.0.0f1'
+
+          node dist/index.js team launch --path $Project --session-name ci-win-smoke
+          if ($LASTEXITCODE -ne 0) { throw 'team launch failed on Windows CI smoke test' }
+
+          $ReadyStatus = (node dist/index.js team status --path $Project ci-win-smoke 2>&1 | Out-String)
+          if ($LASTEXITCODE -ne 0) { throw "team status failed before degradation`n$ReadyStatus" }
+          if ($ReadyStatus -notmatch 'Runtime: process') { throw "Expected process runtime before degradation`n$ReadyStatus" }
+
+          $ListOutput = (node dist/index.js team list --path $Project 2>&1 | Out-String)
+          if ($LASTEXITCODE -ne 0) { throw "team list failed on Windows CI smoke test`n$ListOutput" }
+          if ($ListOutput -notmatch 'process:ci-win-smoke') { throw "Expected ci-win-smoke in list output`n$ListOutput" }
+
+          $StatePath = Join-Path $Project '.unity-mcp/team-state/ci-win-smoke.json'
+          $State = Get-Content $StatePath -Raw | ConvertFrom-Json
+          if ($State.runtime.kind -ne 'process') { throw "Expected runtime.kind=process in saved state, got $($State.runtime.kind)" }
+
+          $Builder = $State.roles | Where-Object roleName -eq 'builder' | Select-Object -First 1
+          if (-not $Builder -or -not $Builder.runtimeHandle) { throw 'Expected a builder runtime handle in saved state' }
+
+          Stop-Process -Id ([int]$Builder.runtimeHandle) -Force
+
+          $DegradedStatus = (node dist/index.js team status --path $Project ci-win-smoke 2>&1 | Out-String)
+          $DegradedExit = $LASTEXITCODE
+          if ($DegradedExit -ne 1) { throw "Expected degraded status exit code 1, got $DegradedExit`n$DegradedStatus" }
+          if ($DegradedStatus -notmatch 'Status: degraded') { throw "Expected degraded status output`n$DegradedStatus" }
+
+          node dist/index.js team stop --path $Project ci-win-smoke
+          if ($LASTEXITCODE -ne 0) { throw 'team stop failed on Windows CI smoke test' }
