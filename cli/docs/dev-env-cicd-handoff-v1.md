@@ -52,3 +52,12 @@ This is freeze-and-wait, not failover.
 Slack or Discord messages may contain status context plus approve/reject controls bound to known handoff IDs and record versions. They must not contain arbitrary command execution or direct Unity runtime controls.
 
 The bot bridge may dispatch only leader-approved snapshots to allowlisted GitHub Actions targets. For v1, `.github/workflows/test_pull_request_manual.yml` is the documented relay target; machine-driven integrations should use `repository_dispatch`, while `workflow_dispatch` remains an operator fallback.
+
+
+## Explicit v1 non-goals
+
+The v1 contract intentionally rejects three tempting expansions:
+
+1. **Leader failover** — outage handling is freeze-and-wait until the mac + OMX leader resumes.
+2. **Direct Unity runtime chat control** — Slack/Discord cannot issue Unity, shell, MCP, or runtime commands.
+3. **Provider-specific workflow divergence** — Slack and Discord may differ in transport details, but both normalize to the same approve/reject intent shape and the same handoff lifecycle semantics.

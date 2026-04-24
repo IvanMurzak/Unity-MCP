@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   DEV_ENV_CONTROL_PLANE_LANE_ID,
   DEV_ENV_LANE_DEFINITIONS,
+  assertNoDevEnvV1NonGoalEnabled,
   assertDevEnvExecutionLaneEvidenceOnly,
   assertDevEnvHandoffTransition,
   assertDevEnvLifecycleMutationAllowed,
@@ -10,6 +11,7 @@ import {
   getDevEnvOutageState,
   isDevEnvControlPlane,
   isDevEnvExecutionValidationLane,
+  normalizeDevEnvApprovalIntent,
   reconcileDevEnvQueuedEvidence,
   type DevEnvEvidenceEnvelope,
   type DevEnvHandoffRecord,
@@ -121,5 +123,42 @@ describe('dev-env v1 ledger and outage contract', () => {
     expect(result.evidenceRefs).toEqual(['log://existing', 'log://windows-run']);
     expect(result.appliedEvidenceIds).toEqual(['evidence-0', 'evidence-1']);
     expect(result.ignoredEvidenceIds).toEqual(['evidence-1', 'evidence-stale-version']);
+  });
+});
+
+
+describe('dev-env v1 non-goal guardrails', () => {
+  it('rejects failover, direct Unity chat control, and provider-specific workflow forks', () => {
+    expect(() => assertNoDevEnvV1NonGoalEnabled('leader_failover')).toThrowError(/out of scope/);
+    expect(() => assertNoDevEnvV1NonGoalEnabled('direct_unity_runtime_chat_control')).toThrowError(/out of scope/);
+    expect(() => assertNoDevEnvV1NonGoalEnabled('provider_specific_workflow_divergence')).toThrowError(/out of scope/);
+    expect(() => assertNoDevEnvV1NonGoalEnabled('approval_notification')).not.toThrow();
+  });
+
+  it('normalizes Slack and Discord to the same approve/reject intent shape', () => {
+    const slack = normalizeDevEnvApprovalIntent({
+      provider: 'slack',
+      decision: 'approve',
+      handoffId: 'handoff-1',
+      recordVersion: 1,
+      actorId: 'U123',
+    });
+    const discord = normalizeDevEnvApprovalIntent({
+      provider: 'discord',
+      decision: 'reject',
+      handoffId: 'handoff-1',
+      recordVersion: 1,
+      actorId: 'D123',
+    });
+
+    expect(slack).toMatchObject({ decision: 'approve', handoffId: 'handoff-1', recordVersion: 1 });
+    expect(discord).toMatchObject({ decision: 'reject', handoffId: 'handoff-1', recordVersion: 1 });
+    expect(() => normalizeDevEnvApprovalIntent({
+      provider: 'slack',
+      decision: 'approve',
+      handoffId: '',
+      recordVersion: 1,
+      actorId: 'U123',
+    })).toThrowError(/handoff ID/);
   });
 });

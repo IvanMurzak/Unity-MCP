@@ -14,6 +14,24 @@ export type DevEnvLaneRole =
   | 'approval-intent'
   | 'dispatch-bridge';
 
+
+export type DevEnvChatProvider = 'slack' | 'discord';
+export type DevEnvChatApprovalDecision = 'approve' | 'reject';
+
+export interface DevEnvApprovalIntent {
+  provider: DevEnvChatProvider;
+  decision: DevEnvChatApprovalDecision;
+  handoffId: string;
+  recordVersion: number;
+  actorId: string;
+}
+
+export const DEV_ENV_V1_NON_GOALS = [
+  'leader_failover',
+  'direct_unity_runtime_chat_control',
+  'provider_specific_workflow_divergence',
+] as const;
+
 export interface DevEnvLaneDefinition {
   id: DevEnvLaneId;
   displayName: string;
@@ -247,4 +265,20 @@ export function reconcileDevEnvQueuedEvidence(
     appliedEvidenceIds: [...appliedEvidenceIds],
     ignoredEvidenceIds,
   };
+}
+
+export function normalizeDevEnvApprovalIntent(input: DevEnvApprovalIntent): DevEnvApprovalIntent {
+  if (input.decision !== 'approve' && input.decision !== 'reject') {
+    throw new DevEnvHandoffContractError('Chat actions are limited to approve/reject intents');
+  }
+  if (input.handoffId.trim().length === 0 || input.actorId.trim().length === 0 || input.recordVersion < 1) {
+    throw new DevEnvHandoffContractError('Approval intents must reference a handoff ID, actor ID, and positive record version');
+  }
+  return { ...input };
+}
+
+export function assertNoDevEnvV1NonGoalEnabled(feature: string): void {
+  if ((DEV_ENV_V1_NON_GOALS as readonly string[]).includes(feature)) {
+    throw new DevEnvHandoffContractError(`Feature is explicitly out of scope for dev-env v1: ${feature}`);
+  }
 }
