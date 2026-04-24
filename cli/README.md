@@ -389,6 +389,7 @@ Helpful references:
 - manual verification: [`cli/docs/team-testing-guide.md`](docs/team-testing-guide.md)
 - Windows validation checklist: [`cli/docs/team-windows-testing-guide.md`](docs/team-windows-testing-guide.md)
 - runtime architecture + Windows backend evaluation: [`cli/docs/team-runtime-architecture.md`](docs/team-runtime-architecture.md)
+- mixed mac/Windows approval + CI/CD handoff runbook: [`cli/docs/dev-env-cicd-handoff-runbook.md`](docs/dev-env-cicd-handoff-runbook.md)
 
 ```bash
 unity-mcp-cli team launch ./MyGame
