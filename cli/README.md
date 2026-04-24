@@ -371,6 +371,8 @@ unity-mcp-cli wait-for-ready --url http://localhost:8080 --timeout 30000
 
 Launch and inspect a local tmux-based team session for a Unity project. Milestone 1 is intentionally local-only: it creates a deterministic four-pane tmux layout, persists session metadata under `.unity-mcp/team-state/`, and exposes basic lifecycle commands. It does **not** provide OMX parity, remote orchestration, or cloud coordination.
 
+For a step-by-step manual verification checklist, see [`cli/docs/team-testing-guide.md`](docs/team-testing-guide.md).
+
 ```bash
 unity-mcp-cli team launch ./MyGame
 ```
