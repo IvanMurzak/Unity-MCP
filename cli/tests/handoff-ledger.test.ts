@@ -125,6 +125,6 @@ describe('handoff ledger single-writer lifecycle', () => {
     expect(parsed.handoffId).toBe('handoff-5');
     expect(parsed.state).toBe('draft');
     expect(parsed.audit).toHaveLength(1);
-    expect(() => parseHandoffRecord('{"schemaVersion":1,"state":"draft"}', 'broken.json')).toThrowError(/handoffId|audit/);
+    expect(() => parseHandoffRecord('{"schemaVersion":1,"state":"draft"}', 'broken.json')).toThrowError(/recordVersion|handoffId|audit/);
   });
 });
