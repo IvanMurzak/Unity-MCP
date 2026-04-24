@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "contractName": "approval-handoff-v1",
+  "concreteChatProvider": "discord",
+  "deferredChatProviders": ["slack"],
+  "chatScope": ["notify", "approve"],
+  "allowedChatDecisions": ["approve", "reject"],
+  "forbiddenChatCapabilities": [
+    "arbitrary_command_execution",
+    "direct_unity_runtime_control",
+    "ledger_state_mutation",
+    "direct_ci_dispatch",
+    "provider_specific_workflow_forks"
+  ],
+  "approvalIntent": {
+    "description": "Provider-neutral event submitted by chat adapters for leader validation; not a ledger mutation.",
+    "requiredFields": [
+      "intent_id",
+      "provider",
+      "handoff_id",
+      "handoff_version",
+      "decision",
+      "actor",
+      "created_at",
+      "provider_event",
+      "verification"
+    ],
+    "providerValuesV1": ["discord"],
+    "decisionValues": ["approve", "reject"],
+    "leaderValidationRules": [
+      "known_handoff_id",
+      "matching_record_version",
+      "awaiting_approval_state",
+      "authorized_actor",
+      "fresh_provider_timestamp",
+      "signature_verified",
+      "idempotency_key_not_consumed",
+      "not_closed_or_superseded"
+    ]
+  },
+  "discordAdapterV1": {
+    "status": "selected_provider",
+    "maySubmit": ["approval_intent"],
+    "mayNotSubmit": ["lifecycle_state_transition", "workflow_dispatch", "runtime_command"],
+    "notificationControls": ["approve_button", "reject_button"],
+    "requiredProviderVerification": ["interaction_signature", "interaction_timestamp"],
+    "adapterMetadataOnly": ["guild_id", "channel_id", "message_id", "interaction_id"],
+    "errorFeedback": ["stale_handoff", "version_mismatch", "unauthorized_actor", "leader_unavailable"]
+  },
+  "humanApprovalGatesV1": ["plan_to_execution", "verification_to_ci_cd"]
+}
