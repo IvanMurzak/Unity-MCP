@@ -29,6 +29,11 @@ function Ensure-Directory([string]$PathValue) {
   New-Item -ItemType Directory -Path $PathValue -Force | Out-Null
 }
 
+function Write-Utf8NoBomFile([string]$PathValue, [string]$Content) {
+  $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+  [System.IO.File]::WriteAllText($PathValue, $Content, $utf8NoBom)
+}
+
 function Get-OptionalNestedString($Object, [string[]]$PathSegments) {
   $current = $Object
   foreach ($segment in $PathSegments) {
@@ -89,15 +94,22 @@ function Invoke-LoggedCommand {
   Write-RunnerLog "COMMAND START: $Name => $Command $($Arguments -join ' ')"
   Push-Location $WorkingDirectory
   try {
-    $output = & $Command @Arguments 2>&1
+    $previousErrorActionPreference = $ErrorActionPreference
+    try {
+      $ErrorActionPreference = 'Continue'
+      $output = & $Command @Arguments 2>&1
+      $exitCode = $LASTEXITCODE
+    }
+    finally {
+      $ErrorActionPreference = $previousErrorActionPreference
+    }
+
     if ($null -ne $output) {
       $text = ($output | Out-String).TrimEnd()
       if (-not [string]::IsNullOrWhiteSpace($text)) {
         $text | Tee-Object -FilePath $script:RunLogPath -Append | Out-Host
       }
     }
-
-    $exitCode = $LASTEXITCODE
   }
   finally {
     Pop-Location
@@ -337,7 +349,7 @@ foreach ($result in $stepResults) {
   $summaryLines += "- $($result.name): $($result.status)"
 }
 
-$summaryLines | Set-Content -Path $summaryPath -Encoding UTF8
+Write-Utf8NoBomFile -PathValue $summaryPath -Content (($summaryLines -join [Environment]::NewLine) + [Environment]::NewLine)
 
 $payload = @{
   schemaVersion = 1
@@ -354,7 +366,7 @@ $payload = @{
   evidenceRefs = $evidenceRefs
 }
 
-$payload | ConvertTo-Json -Depth 8 | Set-Content -Path $payloadPath -Encoding UTF8
+Write-Utf8NoBomFile -PathValue $payloadPath -Content (($payload | ConvertTo-Json -Depth 8) + [Environment]::NewLine)
 Write-RunnerLog "Wrote bounded Windows evidence envelope: $payloadPath"
 
 if ([string]::IsNullOrWhiteSpace($CliPath)) {
