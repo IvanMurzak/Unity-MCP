@@ -11,7 +11,33 @@ name: test-pull-request-manual
 on:
   workflow_dispatch:
 
+  repository_dispatch:
+    types: [unity-mcp-approved-verification]
+
 jobs:
+  approval-relay-context:
+    name: Validate approval relay context
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate repository dispatch approval payload
+        if: github.event_name == 'repository_dispatch'
+        shell: bash
+        env:
+          HANDOFF_ID: ${{ github.event.client_payload.handoff_id }}
+          RECORD_VERSION: ${{ github.event.client_payload.record_version }}
+          APPROVAL_GATE: ${{ github.event.client_payload.approval_gate }}
+          DISPATCH_PROVENANCE: ${{ github.event.client_payload.dispatch_provenance }}
+        run: |
+          test -n "$HANDOFF_ID"
+          test -n "$RECORD_VERSION"
+          test "$APPROVAL_GATE" = "verification_to_cicd"
+          test -n "$DISPATCH_PROVENANCE"
+
+      - name: Note manual fallback dispatch
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "workflow_dispatch is an operator fallback; default v1 relay path is repository_dispatch."
+
+jobs_PLACEHOLDER:
   test-cli:
     uses: ./.github/workflows/test_cli.yml
 
