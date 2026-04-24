@@ -369,9 +369,12 @@ unity-mcp-cli wait-for-ready --url http://localhost:8080 --timeout 30000
 
 ## `team`
 
-Launch and inspect a local tmux-based team session for a Unity project. Milestone 1 is intentionally local-only: it creates a deterministic four-pane tmux layout, persists session metadata under `.unity-mcp/team-state/`, and exposes basic lifecycle commands. It does **not** provide OMX parity, remote orchestration, or cloud coordination.
+Launch and inspect a local team session for a Unity project. The command surface is now **runtime-backed** so the CLI/state/lifecycle contract can evolve beyond tmux, while the currently shipped backend remains tmux. The feature is still intentionally local-only and does **not** provide OMX parity, remote orchestration, or cloud coordination.
 
-For a step-by-step manual verification checklist, see [`cli/docs/team-testing-guide.md`](docs/team-testing-guide.md).
+Helpful references:
+
+- manual verification: [`cli/docs/team-testing-guide.md`](docs/team-testing-guide.md)
+- runtime architecture + Windows backend evaluation: [`cli/docs/team-runtime-architecture.md`](docs/team-runtime-architecture.md)
 
 ```bash
 unity-mcp-cli team launch ./MyGame
@@ -379,18 +382,18 @@ unity-mcp-cli team launch ./MyGame
 
 ### `team launch`
 
-Create a tmux session with the built-in `leader`, `builder`, `verifier`, and `notes` panes.
+Create a local team session with the built-in `leader`, `builder`, `verifier`, and `notes` roles. Today that session is created by the tmux backend.
 
 | Option | Required | Description |
 |---|---|---|
 | `[path]` | No | Unity project path (defaults to current directory) |
 | `--path <path>` | No | Unity project path (defaults to current directory) |
 | `--layout <name>` | No | Layout preset name (`default` only in milestone 1) |
-| `--session-name <name>` | No | Override the generated tmux session name |
+| `--session-name <name>` | No | Override the generated team session name |
 
 ### `team status`
 
-Inspect persisted state and reconcile it with the live tmux session.
+Inspect persisted state and reconcile it with the live runtime session.
 
 ```bash
 unity-mcp-cli team status ./MyGame
@@ -407,13 +410,13 @@ unity-mcp-cli team list ./MyGame
 
 ### `team stop`
 
-Stop a tmux team session and mark its saved state as `stopped`.
+Stop a team session and mark its saved state as `stopped`.
 
 ```bash
 unity-mcp-cli team stop mygame-team-20260423t050000z --path ./MyGame
 ```
 
-If `tmux` is not installed or is missing from `PATH`, the launcher exits with an actionable error telling you to install tmux before using team orchestration commands.
+If the currently selected runtime is not installed or is missing from `PATH`, the launcher exits with an actionable error. Today that usually means `tmux` must be installed before using the shipped team backend.
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 

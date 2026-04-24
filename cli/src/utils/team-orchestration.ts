@@ -11,7 +11,7 @@ import {
   type TeamStateLoadFailure,
 } from './team-state.js';
 import { getTeamLayoutTemplate } from './team-templates.js';
-import type { TmuxAdapter, TmuxPaneSnapshot } from './tmux.js';
+import type { TeamRuntimeAdapter, TeamRuntimeRoleInspection, TeamRuntimeSessionInspection } from './team-runtime.js';
 
 export interface TeamLaunchOptions {
   layout?: string;
@@ -20,14 +20,14 @@ export interface TeamLaunchOptions {
 
 export interface TeamSessionInspection {
   state: TeamSessionState;
-  livePanes: TmuxPaneSnapshot[];
+  runtime: TeamRuntimeSessionInspection;
   issues: string[];
 }
 
 export interface TeamSessionListResult {
   inspections: TeamSessionInspection[];
   invalid: TeamStateLoadFailure[];
-  tmuxUnavailableMessage?: string;
+  runtimeUnavailableMessage?: string;
 }
 
 export class TeamOrchestrationError extends Error {
@@ -83,44 +83,74 @@ function withUpdatedRole(
   };
 }
 
-function determineRoleStatus(role: TeamRoleState, livePanes: TmuxPaneSnapshot[], sessionStatus: TeamSessionStatus): TeamRoleState['status'] {
-  if (sessionStatus === 'stopped') {
-    return 'stopped';
-  }
-
-  return livePanes.some(pane => pane.paneId === role.paneId) ? 'ready' : 'degraded';
+function findLiveRole(role: TeamRoleState, liveRoles: TeamRuntimeRoleInspection[]): TeamRuntimeRoleInspection | undefined {
+  return liveRoles.find(liveRole => liveRole.roleName === role.roleName)
+    ?? (role.runtimeHandle
+      ? liveRoles.find(liveRole => liveRole.runtimeHandle === role.runtimeHandle)
+      : undefined);
 }
 
-function inspectSessionState(state: TeamSessionState, tmux: TmuxAdapter): TeamSessionInspection {
+function determineRoleStatus(
+  liveRole: TeamRuntimeRoleInspection | undefined,
+): TeamRoleState['status'] {
+  if (!liveRole) {
+    return 'degraded';
+  }
+
+  return liveRole.status === 'ready' ? 'ready' : 'degraded';
+}
+
+function describeMissingRole(state: TeamSessionState, role: TeamRoleState): string {
+  const handle = role.runtimeHandle || 'unassigned';
+  const noun = state.runtime.kind === 'tmux' ? 'pane' : 'runtime role';
+  return `missing ${noun} for role ${role.roleName} (${handle})`;
+}
+
+function assertRuntimeCompatibility(state: TeamSessionState, runtime: TeamRuntimeAdapter): void {
+  if (state.runtime.kind !== runtime.kind) {
+    throw new TeamOrchestrationError(
+      `Session ${state.sessionId} was saved for the "${state.runtime.kind}" runtime, but the current CLI resolved "${runtime.kind}". Re-run with a compatible runtime once it is implemented.`,
+    );
+  }
+}
+
+function inspectSessionState(state: TeamSessionState, runtime: TeamRuntimeAdapter): TeamSessionInspection {
+  assertRuntimeCompatibility(state, runtime);
+
   if (state.status === 'stopped') {
     return {
       state,
-      livePanes: [],
+      runtime: {
+        sessionHandle: state.runtime.sessionHandle,
+        available: false,
+        roles: [],
+        issues: [],
+      },
       issues: [],
     };
   }
 
-  const issues: string[] = [];
-  const livePanes = tmux.hasSession(state.tmuxSessionName)
-    ? tmux.listPanes(state.tmuxSessionName)
-    : [];
+  const runtimeInspection = runtime.inspectSession(state.runtime.sessionHandle);
+  const issues = [...runtimeInspection.issues];
+  const updatedAt = new Date().toISOString();
 
-  if (livePanes.length === 0) {
-    issues.push(`tmux session ${state.tmuxSessionName} is not available`);
-  }
+  const nextRoles = state.roles.map(role => {
+    const liveRole = findLiveRole(role, runtimeInspection.roles);
 
-  for (const role of state.roles) {
-    if (!livePanes.some(pane => pane.paneId === role.paneId)) {
-      issues.push(`missing pane for role ${role.roleName} (${role.paneId || 'unassigned'})`);
+    if (!liveRole || liveRole.status === 'missing') {
+      issues.push(describeMissingRole(state, role));
+    } else if (liveRole.status === 'degraded') {
+      const handle = liveRole.displayName || liveRole.runtimeHandle || 'unassigned';
+      issues.push(`runtime reported degraded role ${role.roleName} (${handle})`);
     }
-  }
+
+    return {
+      ...role,
+      status: determineRoleStatus(liveRole),
+    };
+  });
 
   const nextStatus: TeamSessionStatus = issues.length > 0 ? 'degraded' : 'ready';
-  const updatedAt = new Date().toISOString();
-  const nextRoles = state.roles.map(role => ({
-    ...role,
-    status: determineRoleStatus(role, livePanes, nextStatus),
-  }));
 
   return {
     state: {
@@ -129,7 +159,7 @@ function inspectSessionState(state: TeamSessionState, tmux: TmuxAdapter): TeamSe
       updatedAt,
       roles: nextRoles,
     },
-    livePanes,
+    runtime: runtimeInspection,
     issues,
   };
 }
@@ -137,7 +167,7 @@ function inspectSessionState(state: TeamSessionState, tmux: TmuxAdapter): TeamSe
 export function launchTeamSession(
   projectPath: string,
   launcherVersion: string,
-  tmux: TmuxAdapter,
+  runtime: TeamRuntimeAdapter,
   options: TeamLaunchOptions = {},
   now = new Date(),
 ): TeamSessionState {
@@ -145,10 +175,10 @@ export function launchTeamSession(
   const layout = getTeamLayoutTemplate(options.layout, resolvedProjectPath);
   const sessionId = sanitizeSessionName(options.sessionName ?? createDefaultSessionName(resolvedProjectPath, now));
 
-  tmux.ensureAvailable();
+  runtime.ensureAvailable();
 
-  if (tmux.hasSession(sessionId)) {
-    throw new TeamOrchestrationError(`A tmux session named "${sessionId}" already exists. Use --session-name to choose a different name or stop the existing session first.`);
+  if (runtime.hasSession(sessionId)) {
+    throw new TeamOrchestrationError(`A ${runtime.displayName} session named "${sessionId}" already exists. Use --session-name to choose a different name or stop the existing session first.`);
   }
 
   const launchTimestamp = now.toISOString();
@@ -157,7 +187,10 @@ export function launchTeamSession(
     sessionId,
     projectPath: resolvedProjectPath,
     launcherVersion,
-    tmuxSessionName: sessionId,
+    runtime: {
+      kind: runtime.kind,
+      sessionHandle: sessionId,
+    },
     layoutPreset: layout.name,
     verificationPolicy: layout.verificationPolicy,
     templateVersion: layout.templateVersion,
@@ -169,23 +202,29 @@ export function launchTeamSession(
   writeTeamSessionState(resolvedProjectPath, state);
 
   try {
-    const firstPaneId = tmux.createSession(sessionId, resolvedProjectPath, layout.windowName);
-    const paneIds = [
-      firstPaneId,
-      tmux.splitWindow(firstPaneId, resolvedProjectPath, 'horizontal'),
-      tmux.splitWindow(firstPaneId, resolvedProjectPath, 'vertical'),
-      tmux.splitWindow(firstPaneId, resolvedProjectPath, 'vertical'),
-    ];
+    const launchResult = runtime.launchSession({
+      sessionId,
+      projectPath: resolvedProjectPath,
+      windowName: layout.windowName,
+      roles: layout.roles,
+    });
 
-    tmux.selectLayout(sessionId, 'tiled');
+    state = {
+      ...state,
+      runtime: {
+        kind: runtime.kind,
+        sessionHandle: launchResult.sessionHandle,
+      },
+      notes: [...state.notes, ...(launchResult.notes ?? [])],
+      updatedAt: launchTimestamp,
+    };
 
     for (const [index, role] of layout.roles.entries()) {
-      const paneId = paneIds[index] ?? '';
-      if (!paneId) {
-        throw new TeamOrchestrationError(`Unable to assign pane for role ${role.roleName}`);
-      }
-      tmux.setPaneTitle(paneId, role.paneTitle);
-      state = withUpdatedRole(state, index, { paneId, status: 'ready' }, launchTimestamp);
+      const runtimeRole = launchResult.roles.find(candidate => candidate.roleName === role.roleName);
+      state = withUpdatedRole(state, index, {
+        runtimeHandle: runtimeRole?.runtimeHandle ?? '',
+        status: 'ready',
+      }, launchTimestamp);
       writeTeamSessionState(resolvedProjectPath, state);
     }
 
@@ -196,8 +235,8 @@ export function launchTeamSession(
     const message = (err as Error).message || String(err);
 
     try {
-      if (tmux.hasSession(sessionId)) {
-        tmux.killSession(sessionId);
+      if (runtime.hasSession(state.runtime.sessionHandle)) {
+        runtime.stopSession(state.runtime.sessionHandle);
       }
     } catch {
       // best-effort cleanup only
@@ -208,7 +247,7 @@ export function launchTeamSession(
       notes: [...state.notes, `Launch failed: ${message}`],
       roles: state.roles.map(role => ({
         ...role,
-        status: role.paneId ? 'degraded' : role.status,
+        status: role.runtimeHandle ? 'degraded' : role.status,
       })),
     };
     writeTeamSessionState(resolvedProjectPath, state);
@@ -216,21 +255,23 @@ export function launchTeamSession(
   }
 }
 
-export function getTeamSessionStatus(projectPath: string, tmux: TmuxAdapter, sessionRef?: string): TeamSessionInspection {
+export function getTeamSessionStatus(projectPath: string, runtime: TeamRuntimeAdapter, sessionRef?: string): TeamSessionInspection {
   const resolvedProjectPath = path.resolve(projectPath);
   const state = resolveTeamSessionState(resolvedProjectPath, sessionRef);
-  const inspection = inspectSessionState(state, tmux);
+  const inspection = inspectSessionState(state, runtime);
   writeTeamSessionState(resolvedProjectPath, inspection.state);
   return inspection;
 }
 
-export function listTeamSessions(projectPath: string, tmux: TmuxAdapter): TeamSessionListResult {
+export function listTeamSessions(projectPath: string, runtime: TeamRuntimeAdapter): TeamSessionListResult {
   const resolvedProjectPath = path.resolve(projectPath);
   const { sessions, invalid } = listTeamSessionStates(resolvedProjectPath);
 
   try {
+    runtime.ensureAvailable();
     const inspections = sessions.map(session => {
-      const inspection = inspectSessionState(session, tmux);
+      assertRuntimeCompatibility(session, runtime);
+      const inspection = inspectSessionState(session, runtime);
       writeTeamSessionState(resolvedProjectPath, inspection.state);
       return inspection;
     });
@@ -240,21 +281,27 @@ export function listTeamSessions(projectPath: string, tmux: TmuxAdapter): TeamSe
     return {
       inspections: sessions.map(session => ({
         state: session,
-        livePanes: [],
+        runtime: {
+          sessionHandle: session.runtime.sessionHandle,
+          available: false,
+          roles: [],
+          issues: [],
+        },
         issues: [],
       })),
       invalid,
-      tmuxUnavailableMessage: (err as Error).message || String(err),
+      runtimeUnavailableMessage: (err as Error).message || String(err),
     };
   }
 }
 
-export function stopTeamSession(projectPath: string, tmux: TmuxAdapter, sessionRef?: string): TeamSessionState {
+export function stopTeamSession(projectPath: string, runtime: TeamRuntimeAdapter, sessionRef?: string): TeamSessionState {
   const resolvedProjectPath = path.resolve(projectPath);
   const state = resolveTeamSessionState(resolvedProjectPath, sessionRef);
+  assertRuntimeCompatibility(state, runtime);
 
-  if (state.status !== 'stopped' && tmux.hasSession(state.tmuxSessionName)) {
-    tmux.killSession(state.tmuxSessionName);
+  if (state.status !== 'stopped' && runtime.hasSession(state.runtime.sessionHandle)) {
+    runtime.stopSession(state.runtime.sessionHandle);
   }
 
   const updatedAt = new Date().toISOString();

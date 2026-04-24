@@ -15,6 +15,13 @@ import {
   transitionTeamSessionState,
   writeTeamSessionState,
 } from '../src/utils/team-state.js';
+import {
+  createTeamRuntime,
+  resolveTeamRuntimeSelection,
+  type TeamRuntimeAdapter,
+  type TeamRuntimeRoleInspection,
+} from '../src/utils/team-runtime.js';
+import { createTmuxTeamRuntime } from '../src/utils/team-runtime-tmux.js';
 import { createTmuxAdapter, parseListPanesOutput, TmuxCommandError, type TmuxAdapter, type TmuxPaneSnapshot } from '../src/utils/tmux.js';
 import {
   getTeamSessionStatus,
@@ -128,6 +135,73 @@ class FakeTmux implements TmuxAdapter {
   }
 }
 
+class FakeProcessRuntime implements TeamRuntimeAdapter {
+  readonly kind = 'process' as const;
+  readonly displayName = 'process';
+  readonly selection = {
+    requestedKind: 'process' as const,
+    preferredKind: 'process' as const,
+    resolvedKind: 'tmux' as const,
+    fallbackReason: 'test double only',
+  };
+
+  readonly sessions = new Map<string, TeamRuntimeRoleInspection[]>();
+  readonly stoppedSessions: string[] = [];
+
+  ensureAvailable(): void {
+    // no-op
+  }
+
+  capabilities() {
+    return {
+      runtimeKind: 'process' as const,
+      paneTitles: false,
+      roleHandles: false,
+      splitLayout: false,
+      sessionListing: false,
+    };
+  }
+
+  hasSession(sessionHandle: string): boolean {
+    return this.sessions.has(sessionHandle);
+  }
+
+  launchSession(request: { sessionId: string; roles: { roleName: string; workingDirectory: string; command: string }[] }): { sessionHandle: string; roles: { roleName: string; runtimeHandle: string; displayName: string }[] } {
+    const roles = request.roles.map(role => ({
+      roleName: role.roleName,
+      runtimeHandle: '',
+      displayName: role.roleName,
+      status: 'ready' as const,
+      workingDirectory: role.workingDirectory,
+      currentCommand: role.command,
+    }));
+    this.sessions.set(request.sessionId, roles);
+
+    return {
+      sessionHandle: request.sessionId,
+      roles: request.roles.map(role => ({
+        roleName: role.roleName,
+        runtimeHandle: '',
+        displayName: role.roleName,
+      })),
+    };
+  }
+
+  inspectSession(sessionHandle: string) {
+    return {
+      sessionHandle,
+      available: this.sessions.has(sessionHandle),
+      roles: [...(this.sessions.get(sessionHandle) ?? [])],
+      issues: this.sessions.has(sessionHandle) ? [] : [`process session ${sessionHandle} is not available`],
+    };
+  }
+
+  stopSession(sessionHandle: string): void {
+    this.stoppedSessions.push(sessionHandle);
+    this.sessions.delete(sessionHandle);
+  }
+}
+
 describe('team command registration', () => {
   it('lists the team command in global help', () => {
     const { stdout, exitCode } = runCli(['--help']);
@@ -157,14 +231,17 @@ describe('team state helpers', () => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it('serializes and deserializes a team session state', () => {
+  it('serializes and deserializes a backend-neutral team session state', () => {
     const state = createTeamSessionState({
       sessionId: 'demo-session',
       projectPath: tmpDir,
       launcherVersion: '0.66.0',
-      tmuxSessionName: 'demo-session',
+      runtime: {
+        kind: 'tmux',
+        sessionHandle: 'demo-session',
+      },
       layoutPreset: 'default',
-      verificationPolicy: 'ready when panes exist',
+      verificationPolicy: 'ready when roles exist',
       templateVersion: '1',
       roles: createDefaultTeamLayout(tmpDir).roles,
     });
@@ -173,12 +250,43 @@ describe('team state helpers', () => {
     const loaded = readTeamSessionState(tmpDir, 'demo-session');
 
     expect(loaded.sessionId).toBe('demo-session');
+    expect(loaded.runtime.kind).toBe('tmux');
+    expect(loaded.runtime.sessionHandle).toBe('demo-session');
     expect(loaded.roles).toHaveLength(4);
     expect(loaded.roles.every(role => role.status === 'pending')).toBe(true);
   });
 
+  it('migrates schema-v1 tmux state into the runtime-neutral shape', () => {
+    const legacy = {
+      schemaVersion: 1,
+      sessionId: 'legacy-session',
+      projectPath: tmpDir,
+      createdAt: '2026-04-24T00:00:00.000Z',
+      updatedAt: '2026-04-24T00:00:00.000Z',
+      launcherVersion: '0.66.0',
+      tmuxSessionName: 'legacy-session',
+      status: 'ready',
+      layoutPreset: 'default',
+      roles: createDefaultTeamLayout(tmpDir).roles.map((role, index) => ({
+        ...role,
+        paneId: `%${index + 1}`,
+        status: 'ready',
+      })),
+      verificationPolicy: 'ready when panes exist',
+      notes: [],
+      templateVersion: '1',
+    };
+
+    const loaded = parseTeamSessionState(JSON.stringify(legacy), 'legacy.json');
+
+    expect(loaded.schemaVersion).toBe(2);
+    expect(loaded.runtime.kind).toBe('tmux');
+    expect(loaded.runtime.sessionHandle).toBe('legacy-session');
+    expect(loaded.roles[0].runtimeHandle).toBe('%1');
+  });
+
   it('rejects malformed session state payloads', () => {
-    expect(() => parseTeamSessionState('{"schemaVersion":1,"status":"ready"}', 'broken.json'))
+    expect(() => parseTeamSessionState('{"schemaVersion":2,"status":"ready"}', 'broken.json'))
       .toThrowError(/roles/);
   });
 
@@ -191,14 +299,34 @@ describe('team state helpers', () => {
       sessionId: 'demo-session',
       projectPath: tmpDir,
       launcherVersion: '0.66.0',
-      tmuxSessionName: 'demo-session',
+      runtime: {
+        kind: 'tmux',
+        sessionHandle: 'demo-session',
+      },
       layoutPreset: 'default',
-      verificationPolicy: 'ready when panes exist',
+      verificationPolicy: 'ready when roles exist',
       templateVersion: '1',
       roles: createDefaultTeamLayout(tmpDir).roles,
     });
     const ready = transitionTeamSessionState(state, 'ready');
     expect(ready.status).toBe('ready');
+  });
+});
+
+describe('runtime selection', () => {
+  it('makes Windows preference explicit instead of silently assuming tmux', () => {
+    expect(resolveTeamRuntimeSelection('auto', 'win32')).toEqual({
+      requestedKind: 'auto',
+      preferredKind: 'process',
+      resolvedKind: 'tmux',
+      fallbackReason: 'Preferred runtime "process" is not implemented yet; using "tmux" for now.',
+    });
+  });
+
+  it('creates the currently implemented tmux runtime on supported platforms', () => {
+    const runtime = createTeamRuntime('tmux');
+    expect(runtime.kind).toBe('tmux');
+    expect(runtime.capabilities().paneTitles).toBe(true);
   });
 });
 
@@ -259,49 +387,52 @@ describe('team templates', () => {
   });
 });
 
-describe('team lifecycle with mocked tmux', () => {
+describe('team lifecycle with mocked runtimes', () => {
   let tmpDir: string;
   let tmux: FakeTmux;
+  let tmuxRuntime: TeamRuntimeAdapter;
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-team-lifecycle-'));
     makeFakeUnityProject(tmpDir);
     tmux = new FakeTmux();
+    tmuxRuntime = createTmuxTeamRuntime(tmux, resolveTeamRuntimeSelection('tmux'));
   });
 
   afterEach(() => {
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  it('launches a session, writes state, and marks it ready', () => {
-    const state = launchTeamSession(tmpDir, '0.66.0', tmux, { sessionName: 'alpha-team' }, new Date('2026-04-23T05:00:00.000Z'));
+  it('launches a session, writes backend-neutral state, and marks it ready', () => {
+    const state = launchTeamSession(tmpDir, '0.66.0', tmuxRuntime, { sessionName: 'alpha-team' }, new Date('2026-04-23T05:00:00.000Z'));
 
     expect(state.status).toBe('ready');
+    expect(state.runtime.kind).toBe('tmux');
     expect(state.roles).toHaveLength(4);
     expect(state.roles.every(role => role.status === 'ready')).toBe(true);
     expect(fs.existsSync(getTeamStateFilePath(tmpDir, 'alpha-team'))).toBe(true);
 
     const loaded = readTeamSessionState(tmpDir, 'alpha-team');
-    expect(loaded.tmuxSessionName).toBe('alpha-team');
+    expect(loaded.runtime.sessionHandle).toBe('alpha-team');
     expect(loaded.roles.map(role => role.paneTitle)).toEqual(['leader', 'builder', 'verifier', 'notes']);
   });
 
-  it('reconciles status to degraded when tmux panes disappear', () => {
-    launchTeamSession(tmpDir, '0.66.0', tmux, { sessionName: 'alpha-team' }, new Date('2026-04-23T05:00:00.000Z'));
+  it('reconciles status to degraded when runtime roles disappear', () => {
+    launchTeamSession(tmpDir, '0.66.0', tmuxRuntime, { sessionName: 'alpha-team' }, new Date('2026-04-23T05:00:00.000Z'));
     tmux.sessions.set('alpha-team', tmux.listPanes('alpha-team').slice(0, 2));
 
-    const inspection = getTeamSessionStatus(tmpDir, tmux, 'alpha-team');
+    const inspection = getTeamSessionStatus(tmpDir, tmuxRuntime, 'alpha-team');
 
     expect(inspection.state.status).toBe('degraded');
     expect(inspection.issues.some(issue => issue.includes('missing pane for role verifier'))).toBe(true);
   });
 
   it('lists sessions and skips corrupted state files without crashing', () => {
-    launchTeamSession(tmpDir, '0.66.0', tmux, { sessionName: 'alpha-team' }, new Date('2026-04-23T05:00:00.000Z'));
+    launchTeamSession(tmpDir, '0.66.0', tmuxRuntime, { sessionName: 'alpha-team' }, new Date('2026-04-23T05:00:00.000Z'));
     const corruptedPath = path.join(tmpDir, '.unity-mcp', 'team-state', 'broken.json');
     fs.writeFileSync(corruptedPath, '{not-json}\n');
 
-    const result: TeamSessionListResult = listTeamSessions(tmpDir, tmux);
+    const result: TeamSessionListResult = listTeamSessions(tmpDir, tmuxRuntime);
 
     expect(result.inspections).toHaveLength(1);
     expect(result.inspections[0].state.sessionId).toBe('alpha-team');
@@ -310,16 +441,16 @@ describe('team lifecycle with mocked tmux', () => {
   });
 
   it('stops an active session and marks saved state as stopped', () => {
-    launchTeamSession(tmpDir, '0.66.0', tmux, { sessionName: 'alpha-team' }, new Date('2026-04-23T05:00:00.000Z'));
+    launchTeamSession(tmpDir, '0.66.0', tmuxRuntime, { sessionName: 'alpha-team' }, new Date('2026-04-23T05:00:00.000Z'));
 
-    const stopped = stopTeamSession(tmpDir, tmux, 'alpha-team');
+    const stopped = stopTeamSession(tmpDir, tmuxRuntime, 'alpha-team');
 
     expect(stopped.status).toBe('stopped');
     expect(stopped.roles.every(role => role.status === 'stopped')).toBe(true);
     expect(tmux.killedSessions).toEqual(['alpha-team']);
   });
 
-  it('records degraded launch state when pane creation fails mid-launch', () => {
+  it('records degraded launch state when runtime launch fails mid-launch', () => {
     const failingTmux = new FakeTmux();
     const originalSplitWindow = failingTmux.splitWindow.bind(failingTmux);
     let splitCalls = 0;
@@ -331,37 +462,61 @@ describe('team lifecycle with mocked tmux', () => {
       return originalSplitWindow(targetPaneId, workingDirectory, orientation);
     };
 
-    expect(() => launchTeamSession(tmpDir, '0.66.0', failingTmux, { sessionName: 'broken-team' }, new Date('2026-04-23T05:00:00.000Z')))
-      .toThrowError(/split failed/);
+    expect(() => launchTeamSession(
+      tmpDir,
+      '0.66.0',
+      createTmuxTeamRuntime(failingTmux, resolveTeamRuntimeSelection('tmux')),
+      { sessionName: 'broken-team' },
+      new Date('2026-04-23T05:00:00.000Z'),
+    )).toThrowError(/split failed/);
 
     const loaded = readTeamSessionState(tmpDir, 'broken-team');
     expect(loaded.status).toBe('degraded');
     expect(loaded.notes.some(note => note.includes('Launch failed: split failed'))).toBe(true);
   });
 
-  it('returns saved sessions when tmux is unavailable during list', () => {
-    launchTeamSession(tmpDir, '0.66.0', tmux, { sessionName: 'alpha-team' }, new Date('2026-04-23T05:00:00.000Z'));
+  it('returns saved sessions when the runtime is unavailable during list', () => {
+    launchTeamSession(tmpDir, '0.66.0', tmuxRuntime, { sessionName: 'alpha-team' }, new Date('2026-04-23T05:00:00.000Z'));
 
-    const unavailableTmux: TmuxAdapter = {
+    const unavailableRuntime: TeamRuntimeAdapter = {
+      kind: 'tmux',
+      displayName: 'tmux',
+      selection: resolveTeamRuntimeSelection('tmux'),
       ensureAvailable: () => { throw new TmuxCommandError('tmux is required', 'missing'); },
+      capabilities: () => ({ runtimeKind: 'tmux', paneTitles: true, roleHandles: true, splitLayout: true, sessionListing: false }),
       hasSession: () => { throw new TmuxCommandError('tmux is required', 'missing'); },
-      createSession: () => { throw new TmuxCommandError('tmux is required', 'missing'); },
-      splitWindow: () => { throw new TmuxCommandError('tmux is required', 'missing'); },
-      setPaneTitle: () => { throw new TmuxCommandError('tmux is required', 'missing'); },
-      selectLayout: () => { throw new TmuxCommandError('tmux is required', 'missing'); },
-      listPanes: () => { throw new TmuxCommandError('tmux is required', 'missing'); },
-      killSession: () => { throw new TmuxCommandError('tmux is required', 'missing'); },
+      launchSession: () => { throw new TmuxCommandError('tmux is required', 'missing'); },
+      inspectSession: () => { throw new TmuxCommandError('tmux is required', 'missing'); },
+      stopSession: () => { throw new TmuxCommandError('tmux is required', 'missing'); },
     };
 
-    const result = listTeamSessions(tmpDir, unavailableTmux);
+    const result = listTeamSessions(tmpDir, unavailableRuntime);
 
     expect(result.inspections).toHaveLength(1);
-    expect(result.tmuxUnavailableMessage).toContain('tmux is required');
+    expect(result.runtimeUnavailableMessage).toContain('tmux is required');
+  });
+
+  it('supports a runtime without pane handles by matching roles through the shared contract', () => {
+    const processRuntime = new FakeProcessRuntime();
+
+    const state = launchTeamSession(
+      tmpDir,
+      '0.66.0',
+      processRuntime,
+      { sessionName: 'process-team' },
+      new Date('2026-04-24T00:00:00.000Z'),
+    );
+    expect(state.runtime.kind).toBe('process');
+    expect(state.roles.every(role => role.runtimeHandle === '')).toBe(true);
+
+    const inspection = getTeamSessionStatus(tmpDir, processRuntime, 'process-team');
+    expect(inspection.state.status).toBe('ready');
+    expect(inspection.state.roles.every(role => role.status === 'ready')).toBe(true);
   });
 
   it('lists saved team state files newest-first', () => {
-    launchTeamSession(tmpDir, '0.66.0', tmux, { sessionName: 'alpha-team' }, new Date('2026-04-23T05:00:00.000Z'));
-    launchTeamSession(tmpDir, '0.66.0', tmux, { sessionName: 'beta-team' }, new Date('2026-04-23T06:00:00.000Z'));
+    launchTeamSession(tmpDir, '0.66.0', tmuxRuntime, { sessionName: 'alpha-team' }, new Date('2026-04-23T05:00:00.000Z'));
+    launchTeamSession(tmpDir, '0.66.0', tmuxRuntime, { sessionName: 'beta-team' }, new Date('2026-04-23T06:00:00.000Z'));
 
     const listed = listTeamSessionStates(tmpDir);
     expect(listed.sessions.map(session => session.sessionId)).toEqual(['beta-team', 'alpha-team']);

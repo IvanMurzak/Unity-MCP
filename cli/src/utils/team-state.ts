@@ -1,8 +1,10 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import type { TeamRuntimeKind } from './team-runtime.js';
+import { isTeamRuntimeKind } from './team-runtime.js';
 import type { TeamRoleTemplate } from './team-templates.js';
 
-export const TEAM_STATE_SCHEMA_VERSION = 1;
+export const TEAM_STATE_SCHEMA_VERSION = 2;
 const TEAM_STATE_DIR = path.join('.unity-mcp', 'team-state');
 
 const TEAM_SESSION_STATUSES = ['launching', 'ready', 'degraded', 'stopped'] as const;
@@ -11,8 +13,13 @@ const TEAM_ROLE_STATUSES = ['pending', 'ready', 'degraded', 'stopped'] as const;
 export type TeamSessionStatus = typeof TEAM_SESSION_STATUSES[number];
 export type TeamRoleStatus = typeof TEAM_ROLE_STATUSES[number];
 
+export interface TeamRuntimeState {
+  kind: TeamRuntimeKind;
+  sessionHandle: string;
+}
+
 export interface TeamRoleState extends TeamRoleTemplate {
-  paneId: string;
+  runtimeHandle: string;
   status: TeamRoleStatus;
 }
 
@@ -23,7 +30,7 @@ export interface TeamSessionState {
   createdAt: string;
   updatedAt: string;
   launcherVersion: string;
-  tmuxSessionName: string;
+  runtime: TeamRuntimeState;
   status: TeamSessionStatus;
   layoutPreset: string;
   roles: TeamRoleState[];
@@ -75,7 +82,7 @@ export function createTeamSessionState(input: {
   sessionId: string;
   projectPath: string;
   launcherVersion: string;
-  tmuxSessionName: string;
+  runtime: TeamRuntimeState;
   layoutPreset: string;
   verificationPolicy: string;
   templateVersion: string;
@@ -95,12 +102,15 @@ export function createTeamSessionState(input: {
     createdAt,
     updatedAt,
     launcherVersion: input.launcherVersion,
-    tmuxSessionName: input.tmuxSessionName,
+    runtime: {
+      kind: input.runtime.kind,
+      sessionHandle: input.runtime.sessionHandle,
+    },
     status: input.status ?? 'launching',
     layoutPreset: input.layoutPreset,
     roles: input.roles.map(role => ({
       ...role,
-      paneId: '',
+      runtimeHandle: '',
       status: 'pending',
     })),
     verificationPolicy: input.verificationPolicy,
@@ -123,6 +133,23 @@ function assertStringArray(value: unknown, field: string): string[] {
   return value as string[];
 }
 
+function assertRuntimeState(value: unknown, field: string): TeamRuntimeState {
+  if (typeof value !== 'object' || value === null) {
+    throw new InvalidTeamStateError(`Invalid ${field}`);
+  }
+
+  const runtime = value as Record<string, unknown>;
+  const kind = runtime.kind;
+  if (!isTeamRuntimeKind(kind)) {
+    throw new InvalidTeamStateError(`Invalid ${field}.kind`);
+  }
+
+  return {
+    kind,
+    sessionHandle: assertString(runtime.sessionHandle, `${field}.sessionHandle`),
+  };
+}
+
 function assertRoleState(value: unknown, index: number): TeamRoleState {
   if (typeof value !== 'object' || value === null) {
     throw new InvalidTeamStateError(`Invalid roles[${index}] entry`);
@@ -140,8 +167,46 @@ function assertRoleState(value: unknown, index: number): TeamRoleState {
     command: assertString(role.command, `roles[${index}].command`),
     workingDirectory: assertString(role.workingDirectory, `roles[${index}].workingDirectory`),
     readinessHint: assertString(role.readinessHint, `roles[${index}].readinessHint`),
-    paneId: typeof role.paneId === 'string' ? role.paneId : '',
+    runtimeHandle: typeof role.runtimeHandle === 'string' ? role.runtimeHandle : '',
     status,
+  };
+}
+
+function parseLegacyTeamSessionState(record: Record<string, unknown>, source: string): TeamSessionState {
+  const status = record.status;
+  if (!isTeamSessionStatus(status)) {
+    throw new InvalidTeamStateError(`Invalid ${source}.status`);
+  }
+
+  const rolesValue = record.roles;
+  if (!Array.isArray(rolesValue) || rolesValue.length === 0) {
+    throw new InvalidTeamStateError(`Invalid ${source}.roles; expected non-empty array`);
+  }
+
+  return {
+    schemaVersion: TEAM_STATE_SCHEMA_VERSION,
+    sessionId: assertString(record.sessionId, `${source}.sessionId`),
+    projectPath: assertString(record.projectPath, `${source}.projectPath`),
+    createdAt: assertString(record.createdAt, `${source}.createdAt`),
+    updatedAt: assertString(record.updatedAt, `${source}.updatedAt`),
+    launcherVersion: assertString(record.launcherVersion, `${source}.launcherVersion`),
+    runtime: {
+      kind: 'tmux',
+      sessionHandle: assertString(record.tmuxSessionName, `${source}.tmuxSessionName`),
+    },
+    status,
+    layoutPreset: assertString(record.layoutPreset, `${source}.layoutPreset`),
+    roles: rolesValue.map((value, index) => {
+      const role = value as Record<string, unknown>;
+      const migrated = {
+        ...role,
+        runtimeHandle: typeof role.paneId === 'string' ? role.paneId : '',
+      };
+      return assertRoleState(migrated, index);
+    }),
+    verificationPolicy: assertString(record.verificationPolicy, `${source}.verificationPolicy`),
+    notes: assertStringArray(record.notes, `${source}.notes`),
+    templateVersion: assertString(record.templateVersion, `${source}.templateVersion`),
   };
 }
 
@@ -159,6 +224,11 @@ export function parseTeamSessionState(json: string, source = 'team state'): Team
 
   const record = parsed as Record<string, unknown>;
   const schemaVersion = record.schemaVersion;
+
+  if (schemaVersion === 1) {
+    return parseLegacyTeamSessionState(record, source);
+  }
+
   if (schemaVersion !== TEAM_STATE_SCHEMA_VERSION) {
     throw new InvalidTeamStateError(`Unsupported schemaVersion in ${source}: ${String(schemaVersion)}`);
   }
@@ -180,7 +250,7 @@ export function parseTeamSessionState(json: string, source = 'team state'): Team
     createdAt: assertString(record.createdAt, `${source}.createdAt`),
     updatedAt: assertString(record.updatedAt, `${source}.updatedAt`),
     launcherVersion: assertString(record.launcherVersion, `${source}.launcherVersion`),
-    tmuxSessionName: assertString(record.tmuxSessionName, `${source}.tmuxSessionName`),
+    runtime: assertRuntimeState(record.runtime, `${source}.runtime`),
     status,
     layoutPreset: assertString(record.layoutPreset, `${source}.layoutPreset`),
     roles: rolesValue.map((role, index) => assertRoleState(role, index)),
@@ -246,7 +316,7 @@ export function resolveTeamSessionState(projectPath: string, sessionRef?: string
     return active ?? sessions[0];
   }
 
-  const match = sessions.find(session => session.sessionId === sessionRef || session.tmuxSessionName === sessionRef);
+  const match = sessions.find(session => session.sessionId === sessionRef || session.runtime.sessionHandle === sessionRef);
   if (!match) {
     throw new InvalidTeamStateError(`No team session found matching: ${sessionRef}`);
   }
