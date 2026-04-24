@@ -95,3 +95,13 @@ Other handoff transitions may be recorded by the leader but do not require chat 
 - If the leader is unavailable, Discord may receive interactions but they must remain unconsumed until leader recovery and version validation.
 - If an intent is stale or replayed, the leader rejects it and the adapter may notify the actor of the reason.
 - If Discord delivery fails, the handoff remains leader-owned and awaiting approval until the leader retries, expires, or marks it for reconcile.
+
+
+## Planner + QA review placement
+
+Planner and QA are bounded role types inside the existing leader-owned model.
+
+- Planner artifacts may recommend scope, decomposition, or next actions, but the leader alone decides whether that recommendation affects an existing gate.
+- QA artifacts may recommend holds, freezes, or readiness outcomes, but QA does not become a separate approval plane.
+- At medium/high QA risk, the leader may require human QA review or explicit approval before advancing an existing gate.
+- Discord still handles only notify + approve/reject for known handoff records; it does not become a planner/QA task carrier.

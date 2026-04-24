@@ -22,3 +22,47 @@ Every v1 handoff lifecycle mutation must be made by the mac + OMX leader. If ano
 ## Operating invariant
 
 If the mac + OMX leader is unavailable, promotions freeze. In-flight lanes may finish local work and queue evidence, but no downstream handoff or CI/CD dispatch proceeds until the leader resumes and reconciles the queued inputs.
+
+
+## Current CLI bridge surface
+
+The repository now exposes three leader-hosted bridge commands:
+
+- `unity-mcp-cli handoff notify-discord <handoff-id> <project-path>`
+- `unity-mcp-cli handoff serve <project-path>`
+- `unity-mcp-cli handoff dispatch-approved <handoff-id> <project-path>`
+
+`notify-discord` reads a leader-owned handoff record that is already `awaiting_approval`, sends a Discord approval message with approve/reject buttons, and persists message metadata under `.unity-mcp/handoff-spool/discord-notifications/`.
+
+`serve` exposes a local HTTP bridge for Discord interactions:
+
+- `GET /healthz`
+- `POST /discord/interactions`
+
+The bridge validates Discord request signatures (`X-Signature-Ed25519`) and timestamps (`X-Signature-Timestamp`), normalizes the button click into a provider-neutral approval intent, writes a queued approval-intent spool record under `.unity-mcp/handoff-spool/approval-intents/`, and then applies the decision through the leader-owned handoff ledger.
+
+## Bridge env-file keys
+
+The bridge reads direct environment variables or an optional `--env-file` containing:
+
+- `UNITY_MCP_HANDOFF_DISCORD_BOT_TOKEN`
+- `UNITY_MCP_HANDOFF_DISCORD_PUBLIC_KEY`
+- `UNITY_MCP_HANDOFF_DISCORD_APPROVAL_CHANNEL_ID`
+- `UNITY_MCP_HANDOFF_ALLOWED_APPROVER_IDS`
+- `UNITY_MCP_HANDOFF_LEADER_ACTOR`
+- `UNITY_MCP_HANDOFF_PORT`
+
+
+`dispatch-approved` is the bounded GitHub relay path for v1. It requires an already `approved_not_dispatched` `verification_to_cicd` handoff, emits `repository_dispatch` with event type `unity-mcp-approved-verification` by default, and records GitHub dispatch provenance back into the leader-owned ledger as the handoff moves to `dispatched`.
+
+
+## Planner + QA bounded role types
+
+The first multi-discipline slice adds `planner` and `qa` as **bounded role types** inside the current leader-owned model.
+
+- They are not new canonical lanes.
+- They do not mutate lifecycle state.
+- They must reference `relatedHandoffId` and `relatedHandoffRecordVersion` when their outputs can affect promotion or readiness.
+- Discord remains a review/approval surface only, and GitHub Issues remain ops tracking only.
+
+Planner outputs feed the existing `plan -> execution` gate through leader review. QA outputs feed existing leader-owned readiness decisions and may block promotion at medium/high risk without creating a separate QA approval plane.

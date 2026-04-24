@@ -435,6 +435,58 @@ If the currently selected runtime is not installed or is missing from `PATH`, th
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
+## `handoff`
+
+Run the **leader-hosted approval bridge** for mixed mac/Windows workflows. This command family does not replace the leader-owned ledger; it only sends Discord approval notifications and ingests signed Discord approve/reject interactions back into the canonical handoff record.
+
+Current v1 scope:
+
+- Discord notify + approve/reject only
+- signed interaction verification
+- leader-owned ledger apply to `approved_not_dispatched` / `rejected`
+- local spool persistence under `.unity-mcp/handoff-spool/`
+
+Required env vars (direct env or `--env-file`):
+
+- `UNITY_MCP_HANDOFF_DISCORD_BOT_TOKEN`
+- `UNITY_MCP_HANDOFF_DISCORD_PUBLIC_KEY`
+- `UNITY_MCP_HANDOFF_DISCORD_APPROVAL_CHANNEL_ID`
+- `UNITY_MCP_HANDOFF_ALLOWED_APPROVER_IDS` (optional comma-separated allowlist)
+- `UNITY_MCP_HANDOFF_LEADER_ACTOR` (optional; defaults to `mac-omx-leader`)
+- `UNITY_MCP_HANDOFF_PORT` (optional for `handoff serve`; defaults to `8787`)
+
+### `handoff notify-discord`
+
+Send an approval message for a leader-owned handoff that is already in `awaiting_approval`.
+
+```bash
+unity-mcp-cli handoff notify-discord verification-handoff-1 ./MyGame --env-file .unity-mcp/handoff.env
+```
+
+### `handoff serve`
+
+Run the local HTTP bridge that exposes `/healthz` and `/discord/interactions` for a public tunnel or reverse proxy.
+
+```bash
+unity-mcp-cli handoff serve ./MyGame --env-file .unity-mcp/handoff.env --port 8787
+```
+
+### `handoff dispatch-approved`
+
+Dispatch an already-approved `verification_to_cicd` handoff to GitHub Actions with `repository_dispatch`. Additional env vars:
+
+- `UNITY_MCP_HANDOFF_GITHUB_TOKEN`
+- `UNITY_MCP_HANDOFF_GITHUB_REPOSITORY` (falls back to `GITHUB_REPOSITORY`)
+- `UNITY_MCP_HANDOFF_GITHUB_EVENT_TYPE` (optional; defaults to `unity-mcp-approved-verification`)
+
+```bash
+unity-mcp-cli handoff dispatch-approved verification-handoff-1 ./MyGame --env-file .unity-mcp/handoff.env
+```
+
+The Discord interaction endpoint must acknowledge `PING` requests and validate `X-Signature-Ed25519` plus `X-Signature-Timestamp` before consuming a button interaction. When an approval is accepted, the bridge writes a queued approval-intent spool record and then applies the decision through the leader-owned ledger. Dispatching the approved verification handoff then records GitHub dispatch provenance back into the same leader-owned ledger.
+
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
 ## `setup-mcp`
 
 Write MCP config files for AI agents, enabling headless/CI setup without the Unity Editor UI. Supports all 14 agents (Claude Code, Cursor, Gemini, Codex, etc.).

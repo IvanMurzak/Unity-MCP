@@ -23,6 +23,45 @@ export interface DevEnvLaneDefinition {
   prohibitedActions: readonly string[];
 }
 
+
+export const DEV_ENV_BOUNDED_ROLE_TYPES = ['planner', 'qa'] as const;
+
+export type DevEnvBoundedRoleType = typeof DEV_ENV_BOUNDED_ROLE_TYPES[number];
+
+export interface DevEnvBoundedRoleBinding {
+  roleType: DevEnvBoundedRoleType;
+  laneId: typeof DEV_ENV_CONTROL_PLANE_LANE_ID;
+  canMutateLifecycleState: false;
+  lifecycleAuthority: 'leader-only';
+}
+
+export const DEV_ENV_BOUNDED_ROLE_BINDINGS: readonly DevEnvBoundedRoleBinding[] = [
+  {
+    roleType: 'planner',
+    laneId: DEV_ENV_CONTROL_PLANE_LANE_ID,
+    canMutateLifecycleState: false,
+    lifecycleAuthority: 'leader-only',
+  },
+  {
+    roleType: 'qa',
+    laneId: DEV_ENV_CONTROL_PLANE_LANE_ID,
+    canMutateLifecycleState: false,
+    lifecycleAuthority: 'leader-only',
+  },
+] as const;
+
+export function isDevEnvBoundedRoleType(value: unknown): value is DevEnvBoundedRoleType {
+  return typeof value === 'string' && (DEV_ENV_BOUNDED_ROLE_TYPES as readonly string[]).includes(value);
+}
+
+export function getDevEnvBoundedRoleBinding(roleType: DevEnvBoundedRoleType): DevEnvBoundedRoleBinding {
+  const binding = DEV_ENV_BOUNDED_ROLE_BINDINGS.find(entry => entry.roleType === roleType);
+  if (!binding) {
+    throw new DevEnvHandoffContractError(`Unknown bounded dev-env role type: ${roleType}`);
+  }
+  return binding;
+}
+
 export class DevEnvHandoffContractError extends Error {
   constructor(message: string) {
     super(message);

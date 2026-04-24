@@ -13,6 +13,7 @@ import { setupMcpCommand } from './commands/setup-mcp.js';
 import { setupSkillsCommand } from './commands/setup-skills.js';
 import { statusCommand } from './commands/status.js';
 import { createTeamCommand } from './commands/team.js';
+import { createHandoffCommand } from './commands/handoff.js';
 import { createUpdateCommand } from './commands/update.js';
 import { waitForReadyCommand } from './commands/wait-for-ready.js';
 import { configureStyledHelp, error as uiError, setVerbose } from './utils/ui.js';
@@ -44,6 +45,7 @@ const subcommands = [
   setupSkillsCommand,
   statusCommand,
   createTeamCommand(pkg.version),
+  createHandoffCommand(),
   createUpdateCommand(pkg.version),
   waitForReadyCommand,
 ];
