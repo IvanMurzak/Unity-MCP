@@ -72,12 +72,6 @@ $VersionFiles = @(
         Pattern     = '"version":\s*"[\d\.]+(-[a-zA-Z0-9\-\.]+)?(\+[a-zA-Z0-9\-\.]+)?"'
         Replace     = '"version": "{VERSION}"'
         Description = "CLI npm package version"
-    },
-    @{
-        Path        = "cli/src/utils/manifest.ts"
-        Pattern     = "const FALLBACK_VERSION = '[\d\.]+(-[a-zA-Z0-9\-\.]+)?(\+[a-zA-Z0-9\-\.]+)?'"
-        Replace     = "const FALLBACK_VERSION = '{VERSION}'"
-        Description = "CLI OpenUPM fallback version"
     }
 )
 
