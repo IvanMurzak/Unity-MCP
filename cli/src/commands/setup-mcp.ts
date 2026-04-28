@@ -1,21 +1,16 @@
 import { Command } from 'commander';
-import * as fs from 'fs';
-import * as path from 'path';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
-import { generatePortFromDirectory } from '../utils/port.js';
-import { readConfig, resolveConnectionFromConfig } from '../utils/config.js';
 import {
   getAgentById,
   getAgentIds,
   listAgentTable,
-  resolveServerBinaryPath,
-  writeJsonAgentConfig,
-  writeTomlAgentConfig,
   MCP_SERVER_NAME,
 } from '../utils/agents.js';
+import { setupMcp } from '../lib/setup-mcp.js';
+import type { McpTransport } from '../lib/types.js';
 
-interface SetupMcpOptions {
+interface SetupMcpCliOptions {
   transport?: string;
   url?: string;
   token?: string;
@@ -42,7 +37,7 @@ export const setupMcpCommand = new Command('setup-mcp')
     async (
       agentId: string | undefined,
       positionalPath: string | undefined,
-      options: SetupMcpOptions,
+      options: SetupMcpCliOptions,
     ) => {
       if (options.list) {
         listAgents();
@@ -55,6 +50,11 @@ export const setupMcpCommand = new Command('setup-mcp')
         process.exit(1);
       }
 
+      // Resolve the agent up-front so we can:
+      //   1. Use the display name in user-facing strings (matches the
+      //      historical `Configuring <Name> ...` phrasing).
+      //   2. Preserve the prior `ui.error(...)` + `ui.info("Available
+      //      agent IDs: ...")` split for the unknown-agent error path.
       const agent = getAgentById(agentId);
       if (!agent) {
         ui.error(`Unknown agent: "${agentId}"`);
@@ -62,115 +62,43 @@ export const setupMcpCommand = new Command('setup-mcp')
         process.exit(1);
       }
 
-      const transport = options.transport ?? 'http';
-      if (transport !== 'stdio' && transport !== 'http') {
-        ui.error(`Invalid transport: "${transport}". Must be "stdio" or "http".`);
-        process.exit(1);
-      }
+      const transport = (options.transport ?? 'http') as McpTransport;
 
-      // Resolve project path
-      const projectPath = path.resolve(positionalPath ?? process.cwd());
-      if (positionalPath && !fs.existsSync(projectPath)) {
-        ui.error(`Project path does not exist: ${projectPath}`);
-        process.exit(1);
-      }
-      verbose(`Project path: ${projectPath}`);
-
-      // Read project config for port, timeout, auth, token
-      const config = readConfig(projectPath);
-      const fromConfig = config
-        ? resolveConnectionFromConfig(config)
-        : { url: undefined, token: undefined };
-
-      const port = (() => {
-        if (!config?.host) return generatePortFromDirectory(projectPath);
-        try {
-          return parseInt(new URL(config.host).port, 10) || generatePortFromDirectory(projectPath);
-        } catch {
-          return generatePortFromDirectory(projectPath);
-        }
-      })();
-
-      const timeout = (config?.timeoutMs as number) ?? 10000;
-      const auth = (config?.authOption as string) ?? 'none';
-      const token = options.token ?? fromConfig.token ?? '';
-      const authRequired = auth === 'required';
-
-      // Resolve server binary path
-      const serverPath = resolveServerBinaryPath(projectPath).replace(
-        /\\/g,
-        '/',
-      );
-      verbose(`Server binary: ${serverPath}`);
-
-      // Resolve URL for HTTP
-      let serverUrl: string;
-      if (options.url) {
-        serverUrl = options.url.replace(/\/$/, '');
-      } else if (fromConfig.url) {
-        serverUrl = fromConfig.url.replace(/\/$/, '');
-      } else {
-        serverUrl = `http://localhost:${port}`;
-      }
-
-      // Get config path and build properties
-      const configPath = agent.getConfigPath(projectPath);
-      verbose(`Config file: ${configPath}`);
-
-      let props: Record<string, unknown>;
-      let removeKeys: string[];
-
-      if (transport === 'stdio') {
-        props = agent.getStdioProps(serverPath, port, timeout, auth, token);
-        removeKeys = agent.stdioRemoveKeys;
-      } else {
-        props = agent.getHttpProps(serverUrl, token, authRequired);
-        removeKeys = agent.httpRemoveKeys;
-      }
-
-      // Write config
       const spinner = ui.startSpinner(
         `Configuring ${agent.name} (${transport})...`,
       );
 
-      try {
-        if (agent.configFormat === 'toml') {
-          writeTomlAgentConfig(
-            configPath,
-            agent.bodyPath,
-            MCP_SERVER_NAME,
-            props,
-            removeKeys,
-          );
-        } else {
-          writeJsonAgentConfig(
-            configPath,
-            agent.bodyPath,
-            MCP_SERVER_NAME,
-            props,
-            removeKeys,
-          );
-        }
+      const result = await setupMcp({
+        agentId,
+        unityProjectPath: positionalPath,
+        transport,
+        url: options.url,
+        token: options.token,
+      });
 
-        spinner.success(`${agent.name} configured successfully`);
-
-        console.log('');
-        ui.label('Config file', configPath);
-        ui.label('Transport', transport);
-        ui.label('Server name', MCP_SERVER_NAME);
-
-        if (transport === 'stdio' && !fs.existsSync(serverPath.replace(/\//g, path.sep))) {
-          console.log('');
-          ui.warn(
-            'Server binary not found. Open Unity with the MCP plugin to download it automatically.',
-          );
-        }
-      } catch (err) {
+      if (!result.success) {
         spinner.error('Failed to write config');
-        ui.error(
-          err instanceof Error ? err.message : String(err),
-        );
+        ui.error(result.error?.message ?? 'Unknown error');
         process.exit(1);
+      }
+
+      if (positionalPath) {
+        verbose(`Project path: ${positionalPath}`);
+      }
+      if (result.configPath) {
+        verbose(`Config file: ${result.configPath}`);
+      }
+
+      spinner.success(`${agent.name} configured successfully`);
+
+      console.log('');
+      if (result.configPath) ui.label('Config file', result.configPath);
+      if (result.transport) ui.label('Transport', result.transport);
+      ui.label('Server name', MCP_SERVER_NAME);
+
+      for (const warning of result.warnings) {
+        console.log('');
+        ui.warn(warning);
       }
     },
   );

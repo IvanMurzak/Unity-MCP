@@ -3,10 +3,28 @@
   "version": "0.66.0",
   "description": "Cross-platform CLI tool for AI Game Developer (Skills & MCP). Full AI develop and test loop. Efficient token usage, advanced tools. Creates Unity project, installs plugins, configures tools, and manages HTTP connection with Unity Editor and a game made with Unity. Works with Claude Code, Gemini, Copilot, Cursor and any other absolutely for free.",
   "type": "module",
-  "main": "dist/index.js",
+  "main": "dist/lib.js",
+  "types": "dist/lib.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/lib.d.ts",
+      "import": "./dist/lib.js"
+    },
+    "./cli": {
+      "types": "./dist/cli.d.ts",
+      "import": "./dist/cli.js"
+    }
+  },
   "bin": {
     "unity-mcp-cli": "bin/unity-mcp-cli.js"
   },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "CHANGELOG.md",
+    "docs"
+  ],
   "scripts": {
     "build": "tsc",
     "pretest": "npm run build",

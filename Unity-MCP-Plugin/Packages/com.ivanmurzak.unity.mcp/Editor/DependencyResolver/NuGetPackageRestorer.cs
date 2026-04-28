@@ -86,9 +86,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             if (!Directory.Exists(NuGetConfig.InstallPath))
                 return false;
 
-            // Every configured package must be installed at the configured version.
+            // Every configured package must be installed at the configured version, UNLESS the
+            // package is a development-only dependency (analyzers, source generators, build
+            // tooling). The installer intentionally does not create an install dir for those,
+            // so demanding one here would force a needless full restore every session for any
+            // user who configures a dev-dep as a top-level package.
             foreach (var package in NuGetConfig.Packages)
             {
+                if (IsCachedDevelopmentDependency(package))
+                    continue;
+
                 var installDir = Path.Combine(NuGetConfig.InstallPath, package.InstallDirectoryName);
                 if (!Directory.Exists(installDir) || Directory.GetFiles(installDir, "*.dll").Length == 0)
                     return false;
@@ -111,6 +118,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     return false;
                 if (skipSet.Contains(packageId))
                     return false;
+
+                // Empty package directories are cruft — typically left behind by a pre-fix
+                // install of a development-only dependency (analyzers, source generators)
+                // that never had any lib/<tfm>/ payload. Force a full restore so
+                // RemoveUnnecessaryPackages() cleans them up.
+                if (Directory.GetFiles(dir, "*.dll", SearchOption.AllDirectories).Length == 0)
+                    return false;
+
                 installedPackageIds.Add(packageId);
             }
 
@@ -152,6 +167,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             if (skipSet.Contains(package.Id))
                 return true;
 
+            var cachedPath = NuGetCache.IsCached(package)
+                ? NuGetCache.GetCachedPath(package)
+                : null;
+
+            // Development-only dependencies (analyzers, source generators, build tooling)
+            // are legitimately absent from the install directory — they ship their payload
+            // under analyzers/, build/, tools/ etc. and the installer intentionally does not
+            // create a lib/ directory for them.
+            if (cachedPath != null && NuGetExtractor.IsDevelopmentDependency(cachedPath))
+                return true;
+
             if (!installedPackageIds.Contains(package.Id))
                 return false;
 
@@ -160,13 +186,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // early-return without downloading this version). The install-dir check above
             // already confirmed some version is present, so stop recursing here rather than
             // forcing an unnecessary restore.
-            if (!NuGetCache.IsCached(package))
+            if (cachedPath == null)
                 return true;
 
             List<NuGetPackage> deps;
             try
             {
-                deps = NuGetExtractor.GetDependencies(NuGetCache.GetCachedPath(package));
+                deps = NuGetExtractor.GetDependencies(cachedPath);
             }
             catch
             {
@@ -180,6 +206,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     return false;
             }
             return true;
+        }
+
+        /// <summary>
+        /// Returns true when <paramref name="package"/>'s .nupkg is on disk in the NuGet cache
+        /// and its .nuspec declares <c>&lt;developmentDependency&gt;true&lt;/developmentDependency&gt;</c>.
+        /// Returns false when the package isn't cached yet — the caller should then fall back to
+        /// the install-dir check, which will miss on a fresh restore and force Restore() to run
+        /// (at which point Install() downloads the .nupkg and records the dev dep in the closure).
+        /// </summary>
+        static bool IsCachedDevelopmentDependency(NuGetPackage package)
+        {
+            if (!NuGetCache.IsCached(package))
+                return false;
+
+            return NuGetExtractor.IsDevelopmentDependency(NuGetCache.GetCachedPath(package));
         }
     }
 }

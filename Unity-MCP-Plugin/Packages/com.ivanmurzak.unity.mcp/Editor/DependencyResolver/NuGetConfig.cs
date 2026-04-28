@@ -59,7 +59,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             new NuGetPackage("Microsoft.AspNetCore.SignalR.Client",                   "8.0.15", includeInBuild: true),
             new NuGetPackage("Microsoft.AspNetCore.SignalR.Protocols.Json",           "8.0.15", includeInBuild: true),
             new NuGetPackage("Microsoft.Extensions.Logging",                          "8.0.1",  includeInBuild: true),
-            new NuGetPackage("Microsoft.Extensions.Logging.Abstractions",             "8.0.2",  includeInBuild: true),
+            // Pinned to 8.0.3 to match the transitive requirement from
+            // Microsoft.AspNetCore.Http.Connections.Client 8.0.15 (pulled in via
+            // SignalR.Client 8.0.15 → SignalR.Client.Core 8.0.15). Any lower pin
+            // (e.g. 8.0.2) produces an infinite restore loop on every domain reload:
+            // higher-version-wins extracts 8.0.3 to disk while AllPackagesInstalled()
+            // keeps checking for the pinned dir, never finds it, and triggers Restore()
+            // again on the next reload. See Unity-MCP#677.
+            new NuGetPackage("Microsoft.Extensions.Logging.Abstractions",             "8.0.3",  includeInBuild: true),
             new NuGetPackage("Microsoft.Extensions.DependencyInjection",              "8.0.1",  includeInBuild: true),
             new NuGetPackage("Microsoft.Extensions.DependencyInjection.Abstractions", "8.0.2",  includeInBuild: true),
             new NuGetPackage("Microsoft.Extensions.Options",                          "8.0.2",  includeInBuild: true),
