@@ -10,6 +10,7 @@
 
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
@@ -33,26 +34,48 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         )]
         [Description("Modify a specific Component on a GameObject in opened Prefab or in a Scene. " +
             "Allows direct modification of component fields and properties without wrapping in GameObject structure. " +
-            "Use '" + GameObjectComponentGetToolId + "' first to inspect the component structure before modifying.")]
+            "Use '" + GameObjectComponentGetToolId + "' first to inspect the component structure before modifying.\n\n" +
+            "Three modification surfaces (use whichever fits the task):\n" +
+            "  1. '" + "componentDiff" + "' — full SerializedMember diff (legacy, backwards compatible).\n" +
+            "  2. '" + "pathPatches" + "' — list of {path, value} pairs routed through Reflector.TryModifyAt; " +
+            "atomic per-path modification, multiple entries can target different depths.\n" +
+            "  3. '" + "jsonPatch" + "' — a JSON Merge Patch (RFC 7396, extended with [i]/[key] notation) " +
+            "routed through Reflector.TryPatch; multiple fields at any depth in a single call.\n" +
+            "When more than one is supplied they run in this order: jsonPatch → pathPatches → componentDiff. " +
+            "At least one is required.\n" +
+            "Path syntax: 'fieldName', 'nested/field', 'arrayField/[i]', 'dictField/[key]'. Leading '#/' is stripped.")]
         public ModifyComponentResponse ModifyComponent
         (
             GameObjectRef gameObjectRef,
             ComponentRef componentRef,
-            [Description("The component data to apply. Should contain '" + nameof(SerializedMember.fields) + "' and/or '" + nameof(SerializedMember.props) + "' with the values to modify.\n" +
+            [Description("Optional. The full component data to apply (legacy path). Should contain '" + nameof(SerializedMember.fields) + "' and/or '" + nameof(SerializedMember.props) + "' with the values to modify.\n" +
                 "Only include the fields/properties you want to change.\n" +
                 "Any unknown or invalid fields and properties will be reported in the response.")]
-            SerializedMember componentDiff
+            SerializedMember? componentDiff = null,
+            [Description("Optional. List of path-scoped patches routed through Reflector.TryModifyAt. " +
+                "Each entry targets one field/element/entry by path. " +
+                "Path syntax: 'fieldName', 'nested/field', 'arrayField/[i]', 'dictField/[key]'.")]
+            List<PathPatch>? pathPatches = null,
+            [Description("Optional. JSON Merge Patch (RFC 7396, extended with [i]/[key] keys) routed through " +
+                "Reflector.TryPatch. Allows multiple fields at any depth to be updated in a single call. " +
+                "Use '$type' for compatible-subtype replacement.")]
+            string? jsonPatch = null
         )
         {
-            if (componentDiff == null)
-                throw new ArgumentNullException(nameof(componentDiff),
-                    "The 'componentDiff' parameter is required. Make sure the JSON input uses 'componentDiff' as the key (not 'fields' or 'props' directly).");
-
             if (!gameObjectRef.IsValid(out var gameObjectValidationError))
                 throw new ArgumentException(gameObjectValidationError, nameof(gameObjectRef));
 
             if (!componentRef.IsValid(out var componentValidationError))
                 throw new ArgumentException(componentValidationError, nameof(componentRef));
+
+            var hasDiff = componentDiff != null;
+            var hasPathPatches = pathPatches != null && pathPatches.Count > 0;
+            var hasJsonPatch = !string.IsNullOrWhiteSpace(jsonPatch);
+            if (!hasDiff && !hasPathPatches && !hasJsonPatch)
+                throw new ArgumentNullException(nameof(componentDiff),
+                    "At least one of 'componentDiff', 'pathPatches', or 'jsonPatch' is required. " +
+                    "Make sure the JSON input uses 'componentDiff' as the key (not 'fields' or 'props' directly), " +
+                    "or supply 'pathPatches' / 'jsonPatch' for path-scoped modifications.");
 
             return MainThread.Instance.Run(() =>
             {
@@ -87,16 +110,42 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 };
 
                 var logs = new Logs();
-                var objToModify = (object)targetComponent;
+                var objToModify = (object?)targetComponent;
                 var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
+                var logger = UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_GameObject>();
 
-                var success = reflector.TryModify(
-                    ref objToModify,
-                    data: componentDiff,
-                    logs: logs,
-                    logger: UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_GameObject>());
+                var anySuccess = false;
 
-                if (success)
+                // 1) JSON Patch first — applied as a single Reflector.TryPatch
+                if (hasJsonPatch)
+                {
+                    if (reflector.TryPatch(ref objToModify, jsonPatch!, logs: logs, logger: logger))
+                        anySuccess = true;
+                }
+
+                // 2) Path-scoped patches — one Reflector.TryModifyAt per entry
+                if (hasPathPatches)
+                {
+                    foreach (var patch in pathPatches!)
+                    {
+                        if (string.IsNullOrEmpty(patch.Path))
+                        {
+                            logs.Error($"PathPatch with empty path skipped.");
+                            continue;
+                        }
+                        if (reflector.TryModifyAt(ref objToModify, patch.Path, patch.Value, logs: logs, logger: logger))
+                            anySuccess = true;
+                    }
+                }
+
+                // 3) Legacy full SerializedMember diff
+                if (hasDiff)
+                {
+                    if (reflector.TryModify(ref objToModify, data: componentDiff!, logs: logs, logger: logger))
+                        anySuccess = true;
+                }
+
+                if (anySuccess)
                 {
                     UnityEditor.EditorUtility.SetDirty(go);
                     UnityEditor.EditorUtility.SetDirty(targetComponent);

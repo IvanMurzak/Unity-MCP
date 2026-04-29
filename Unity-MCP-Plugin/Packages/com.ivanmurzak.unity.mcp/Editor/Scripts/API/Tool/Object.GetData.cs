@@ -10,6 +10,7 @@
 
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Model;
@@ -33,10 +34,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         )]
         [Description("Get data of the specified Unity Object. " +
             "Returns serialized data of the object including its properties and fields. " +
-            "If need to modify the data use '" + ObjectModifyToolId + "' tool.")]
+            "If need to modify the data use '" + ObjectModifyToolId + "' tool.\n\n" +
+            "Path-scoped reads (token-saving): supply '" + "paths" + "' (a list of paths) to read only the listed " +
+            "fields/elements via Reflector.TryReadAt, or '" + "viewQuery" + "' (a ViewQuery) to navigate to a " +
+            "subtree and/or filter by name regex / max depth / type via Reflector.View. " +
+            "These two parameters are mutually exclusive — supply at most one. " +
+            "When neither is supplied the full object is serialized as before (backwards compatible).\n" +
+            "Path syntax: 'fieldName', 'nested/field', 'arrayField/[i]', 'dictField/[key]'. Leading '#/' is stripped.")]
         public SerializedMember? GetData
         (
-            ObjectRef objectRef
+            ObjectRef objectRef,
+            [Description("Optional. List of paths to read individually via Reflector.TryReadAt. " +
+                "Each path may target a different depth. " +
+                "Path syntax: 'fieldName', 'nested/field', 'arrayField/[i]', 'dictField/[key]'. " +
+                "Mutually exclusive with '" + "viewQuery" + "'.")]
+            List<string>? paths = null,
+            [Description("Optional. View-query filter routed through Reflector.View — combines a starting Path, " +
+                "a case-insensitive NamePattern regex, MaxDepth, and an optional TypeFilter. " +
+                "Mutually exclusive with '" + "paths" + "'.")]
+            ViewQuery? viewQuery = null
         )
         {
             if (objectRef == null)
@@ -45,6 +61,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (!objectRef.IsValid(out var error))
                 throw new ArgumentException(error, nameof(objectRef));
 
+            var hasPaths = paths != null && paths.Count > 0;
+            var hasViewQuery = viewQuery != null;
+            if (hasPaths && hasViewQuery)
+                throw new ArgumentException(
+                    $"'{"paths"}' and '{"viewQuery"}' are mutually exclusive — supply at most one.");
+
             return MainThread.Instance.Run(() =>
             {
                 var obj = objectRef.FindObject();
@@ -52,12 +74,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     throw new Exception("Not found UnityEngine.Object with provided data.");
 
                 var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
+                var logger = UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_Object>();
 
+                if (hasPaths)
+                    return PathReadHelper.BuildPathReadAggregate(reflector, obj, obj.name, paths!, logger);
+
+                if (hasViewQuery)
+                    return reflector.View(obj, viewQuery, logs: null, logger: logger);
+
+                // Backwards-compatible default: full recursive serialization.
                 return reflector.Serialize(
                     obj,
                     name: obj.name,
                     recursive: true,
-                    logger: UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_Object>()
+                    logger: logger
                 );
             });
         }

@@ -38,7 +38,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [Description("Get detailed information about a specific Component on a GameObject. " +
             "Returns component type, enabled state, and optionally serialized fields and properties. " +
             "Use this to inspect component data before modifying it. " +
-            "Use '" + GameObjectFindToolId + "' tool to get the list of all components on the GameObject.")]
+            "Use '" + GameObjectFindToolId + "' tool to get the list of all components on the GameObject.\n\n" +
+            "Path-scoped reads (token-saving): supply '" + "paths" + "' (a list of paths) to read only the listed " +
+            "fields/elements via Reflector.TryReadAt, or '" + "viewQuery" + "' (a ViewQuery) to navigate to a " +
+            "subtree and/or filter by name regex / max depth / type via Reflector.View. The result is returned in the " +
+            "'View' field of the response. These two parameters are mutually exclusive — supply at most one.\n" +
+            "Path syntax: 'fieldName', 'nested/field', 'arrayField/[i]', 'dictField/[key]'. Leading '#/' is stripped.")]
         public GetComponentResponse GetComponent
         (
             GameObjectRef gameObjectRef,
@@ -48,7 +53,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             [Description("Include serialized properties of the component.")]
             bool includeProperties = true,
             [Description("Performs deep serialization including all nested objects. Otherwise, only serializes top-level members.")]
-            bool deepSerialization = false
+            bool deepSerialization = false,
+            [Description("Optional. List of paths to read individually via Reflector.TryReadAt. " +
+                "When supplied, the legacy 'Fields'/'Properties' lists are skipped and the result is returned in 'View'. " +
+                "Path syntax: 'fieldName', 'nested/field', 'arrayField/[i]', 'dictField/[key]'. " +
+                "Mutually exclusive with '" + "viewQuery" + "'.")]
+            List<string>? paths = null,
+            [Description("Optional. View-query filter routed through Reflector.View. " +
+                "When supplied, the legacy 'Fields'/'Properties' lists are skipped and the filtered subtree is " +
+                "returned in 'View'. Mutually exclusive with '" + "paths" + "'.")]
+            ViewQuery? viewQuery = null
         )
         {
             if (gameObjectRef == null)
@@ -62,6 +76,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             if (!componentRef.IsValid(out var componentValidationError))
                 throw new ArgumentException(componentValidationError, nameof(componentRef));
+
+            var hasPaths = paths != null && paths.Count > 0;
+            var hasViewQuery = viewQuery != null;
+            if (hasPaths && hasViewQuery)
+                throw new ArgumentException(
+                    $"'{"paths"}' and '{"viewQuery"}' are mutually exclusive — supply at most one.");
 
             return MainThread.Instance.Run(() =>
             {
@@ -99,7 +119,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
                 var logger = UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_GameObject>();
 
-                if (includeFields || includeProperties)
+                if (hasPaths)
+                {
+                    response.View = PathReadHelper.BuildPathReadAggregate(
+                        reflector, targetComponent, targetComponent.GetType().GetTypeId(), paths!, logger);
+                }
+                else if (hasViewQuery)
+                {
+                    response.View = reflector.View(targetComponent, viewQuery, logs: null, logger: logger);
+                }
+                else if (includeFields || includeProperties)
                 {
                     var serialized = reflector.Serialize(
                         obj: targetComponent,
@@ -138,11 +167,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             [Description("Basic component information (type, enabled state).")]
             public ComponentDataShallow? Component { get; set; }
 
-            [Description("Serialized fields of the component.")]
+            [Description("Serialized fields of the component. Populated only on the legacy code path " +
+                "(no 'paths' / no 'viewQuery').")]
             public List<SerializedMember>? Fields { get; set; }
 
-            [Description("Serialized properties of the component.")]
+            [Description("Serialized properties of the component. Populated only on the legacy code path " +
+                "(no 'paths' / no 'viewQuery').")]
             public List<SerializedMember>? Properties { get; set; }
+
+            [Description("Path-scoped read or view-query result, populated when 'paths' or 'viewQuery' was supplied. " +
+                "Null otherwise.")]
+            public SerializedMember? View { get; set; }
         }
     }
 }

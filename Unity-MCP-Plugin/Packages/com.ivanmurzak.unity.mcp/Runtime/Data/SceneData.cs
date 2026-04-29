@@ -10,8 +10,10 @@
 
 #nullable enable
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using com.IvanMurzak.ReflectorNet;
+using com.IvanMurzak.ReflectorNet.Model;
 using Microsoft.Extensions.Logging;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Data
@@ -19,6 +21,10 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
     public class SceneData : SceneDataShallow
     {
         public List<GameObjectData>? RootGameObjects { get; set; } = null;
+
+        [Description("Path-scoped read or view-query result, populated when 'paths' or 'viewQuery' is supplied " +
+            "to the scene-get-data tool. Null otherwise.")]
+        public SerializedMember? Data { get; set; } = null;
 
         public SceneData() { }
         public SceneData(
