@@ -69,8 +69,10 @@ export function readLockfilePid(projectPath: string): number | null {
     return null;
   }
 
+  // `readUInt32LE` always returns a finite integer in [0, 2^32-1], so a
+  // non-positive check is the only meaningful filter here.
   const pid = buf.readUInt32LE(0);
-  if (!Number.isFinite(pid) || pid <= 0) {
+  if (pid <= 0) {
     verbose(`Unity lockfile holds non-positive PID: ${pid}`);
     return null;
   }
@@ -80,36 +82,65 @@ export function readLockfilePid(projectPath: string): number | null {
 /**
  * Returns true when a process with the given PID is alive.
  *
- * Uses signal 0 on POSIX (no actual signal sent — just permission/existence
- * check) and `tasklist /FI "PID eq <pid>"` on Windows. On any failure the
- * function errs on the side of "not running" and returns false, which keeps
- * the wait loop progressing rather than spinning forever on a transient error.
+ * Both platforms first try `process.kill(pid, 0)` — Node maps it through
+ * `OpenProcess` on Windows, so the check is in-process and effectively free
+ * compared to spawning `tasklist`. At a 250ms `waitForExit` cadence with a
+ * 30s default timeout that's ~120 fewer subprocesses per close on Windows.
+ *
+ * The Windows fallback to `tasklist` is kept as defence-in-depth: if a
+ * future Node release ever changes behaviour or `OpenProcess` denies access
+ * for a process owned by another session, we still get the right answer
+ * (just more slowly).
+ *
+ * On any failure the function errs on the side of "not running" and returns
+ * false, which keeps the wait loop progressing rather than spinning forever
+ * on a transient error.
  */
 export function isProcessAlive(pid: number, platform: SupportedPlatform = nodePlatform() as SupportedPlatform): boolean {
   if (!Number.isFinite(pid) || pid <= 0) return false;
 
-  if (platform === 'win32') {
-    try {
-      const out = execFileSync('tasklist', ['/FI', `PID eq ${pid}`, '/NH', '/FO', 'CSV'], {
-        encoding: 'utf-8',
-        timeout: 3000,
-        stdio: ['pipe', 'pipe', 'pipe'],
-      });
-      // tasklist prints "INFO: No tasks are running ..." when nothing matches.
-      return out.includes(`"${pid}"`);
-    } catch {
-      return false;
-    }
-  }
-
-  // POSIX: signal 0 returns success if the process exists and we can signal it.
   try {
     process.kill(pid, 0);
     return true;
   } catch (err) {
     const code = (err as NodeJS.ErrnoException).code;
     // EPERM means the process exists but we can't signal it — treat as alive.
-    return code === 'EPERM';
+    if (code === 'EPERM') return true;
+    if (code !== 'ESRCH') {
+      // Anything other than ESRCH is unexpected; fall through to the
+      // Windows-only verification path so we don't return a wrong answer
+      // on a transient OS hiccup. POSIX paths just return false.
+      if (platform !== 'win32') return false;
+    }
+  }
+
+  if (platform !== 'win32') return false;
+
+  // Windows fallback: `tasklist /FI "PID eq <pid>" /NH /FO CSV`.
+  // The first CSV column is the image name, the second is the PID. Parse
+  // field-wise so a digit run that happens to appear in another column
+  // (image name, session, memory, status) cannot produce a false positive.
+  try {
+    const out = execFileSync('tasklist', ['/FI', `PID eq ${pid}`, '/NH', '/FO', 'CSV'], {
+      encoding: 'utf-8',
+      timeout: 3000,
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+    // tasklist prints "INFO: No tasks are running ..." when nothing matches.
+    const target = `"${pid}"`;
+    for (const line of out.split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (trimmed.length === 0) continue;
+      // Second CSV field — split on `,` and check column index 1. CSV from
+      // tasklist quotes every field, so a simple split is safe (image names
+      // with embedded commas are exceedingly rare and would still place the
+      // PID in some later column we can scan).
+      const cols = trimmed.split(',');
+      if (cols.length >= 2 && cols[1] === target) return true;
+    }
+    return false;
+  } catch {
+    return false;
   }
 }
 
@@ -119,6 +150,17 @@ export function isProcessAlive(pid: number, platform: SupportedPlatform = nodePl
  * Returns true on apparent success (the OS accepted the signal); false if the
  * underlying call threw. The caller still has to poll `isProcessAlive` — the
  * editor may take seconds to wind down.
+ *
+ * Windows caveat: `taskkill /PID <pid>` (no `/F`) delivers `WM_CLOSE`, which
+ * only reaches processes that own a top-level window on the same desktop /
+ * session as the caller. In headless contexts (Unity launched in session 0
+ * by a Windows service, or another non-interactive desktop) `taskkill` will
+ * exit 0 and this function will report `true`, but the editor will never
+ * receive the message. The `--timeout` will then elapse, and `--force` is
+ * the only path that brings the process down. This is documented in the
+ * close subcommand README and is consistent with the design decision to
+ * stick to OS-level polite-quit (rather than a Unity-side MCP `editor-quit`
+ * tool which would route through SignalR and bypass session walls).
  */
 export function sendGracefulShutdown(pid: number, platform: SupportedPlatform = nodePlatform() as SupportedPlatform): boolean {
   if (!Number.isFinite(pid) || pid <= 0) return false;

@@ -83,7 +83,7 @@ describe('close command — refusals', () => {
     try {
       const { exitCode, stdout } = runCli(['close', tmpDir]);
       expect(exitCode).toBe(1);
-      expect(stdout).toContain('not a Unity project root');
+      expect(stdout).toContain('Not a Unity project root');
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
@@ -364,6 +364,12 @@ liveDescribe('close command — live editor (UMCP_LIVE=1)', () => {
     }
     const { exitCode, stdout } = runCli(['close', liveProject, '--timeout', '60']);
     expect(exitCode).toBe(0);
-    expect(stdout).toMatch(/exited cleanly|no running Editor/);
+    // The whole point of this gated test is to validate the graceful-close
+    // path against a real Editor, so we assert the close-path output
+    // explicitly. The idempotent "no running Editor" branch is NOT acceptable
+    // here — if we hit it the precondition (live editor for liveProject) was
+    // not met and the test must fail loudly rather than silently no-op.
+    expect(stdout).toContain('exited cleanly');
+    expect(stdout).not.toContain('no running Editor');
   }, 90_000);
 });

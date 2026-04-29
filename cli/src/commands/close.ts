@@ -64,6 +64,10 @@ export function isUnityProjectRoot(projectPath: string): boolean {
  * Parse a positive-integer `--timeout` value (seconds). Returns the parsed
  * value, or `null` when the input is not a valid positive integer.
  *
+ * The `undefined` branch falls back to the default for ergonomic
+ * direct-call use (e.g., unit tests). The action handler never reaches it
+ * because commander always materialises the configured default string.
+ *
  * Exported for unit tests.
  */
 export function parseTimeoutSeconds(raw: string | undefined): number | null {
@@ -86,11 +90,12 @@ export function parseTimeoutSeconds(raw: string | undefined): number | null {
  */
 export function resolveEditorPid(projectPath: string, platform: SupportedPlatform = nodePlatform() as SupportedPlatform): number | null {
   const lockPid = readLockfilePid(projectPath);
+  // Enumerate Unity processes once. `findUnityProcess` shells out (3s timeout
+  // on Windows via PowerShell+CIM, 5s on POSIX via `ps`), so calling it twice
+  // on the stale-lockfile path used to roughly double close latency.
+  const proc = findUnityProcess(projectPath);
+
   if (lockPid !== null && isProcessAlive(lockPid, platform)) {
-    // Cross-check: the live PID's project path must match our target. The
-    // unity-process util already does case-insensitive normalisation on
-    // Windows, so reuse it rather than re-implementing comparison here.
-    const proc = findUnityProcess(projectPath);
     if (proc && proc.pid === lockPid) {
       verbose(`Lockfile PID ${lockPid} confirmed via process enumeration`);
       return lockPid;
@@ -98,7 +103,6 @@ export function resolveEditorPid(projectPath: string, platform: SupportedPlatfor
     verbose(`Lockfile PID ${lockPid} did not match enumerated Unity process for project — treating as stale`);
   }
 
-  const proc = findUnityProcess(projectPath);
   return proc ? proc.pid : null;
 }
 
@@ -117,7 +121,7 @@ export const closeCommand = new Command('close')
     }
 
     if (!isUnityProjectRoot(projectPath)) {
-      ui.error(`not a Unity project root: ${projectPath}`);
+      ui.error(`Not a Unity project root: ${projectPath}`);
       process.exit(1);
     }
 
@@ -142,6 +146,13 @@ export const closeCommand = new Command('close')
     ui.label('Force', options.force ? 'yes' : 'no');
     ui.divider();
 
+    // TOCTOU window: between resolveEditorPid returning and the signal call
+    // below, the original Unity process could exit and the OS could reuse
+    // the same numeric PID for an unrelated process (more likely on POSIX,
+    // where PIDs cycle aggressively). We accept the residual risk — the
+    // lockfile cross-check above already narrows it, holding a lock across
+    // a spawned Editor's lifetime is impractical, and the signals we send
+    // (SIGTERM / WM_CLOSE) are politest-effort, not destructive.
     const spinner = ui.startSpinner(`Sending polite-quit to PID ${pid}...`);
     const sent = sendGracefulShutdown(pid, platform);
     if (!sent) {
