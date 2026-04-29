@@ -131,11 +131,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         var perGo = pathPatchesPerGameObject![i];
                         if (perGo != null)
                         {
-                            foreach (var patch in perGo)
+                            for (int j = 0; j < perGo.Count; j++)
                             {
+                                var patch = perGo[j];
                                 if (patch == null || string.IsNullOrEmpty(patch.Path))
                                 {
-                                    logs.Error($"Empty path patch on {nameof(gameObjectRefs)}[{i}] skipped.");
+                                    logs.Error($"{nameof(pathPatchesPerGameObject)}[{i}][{j}] with empty path skipped.");
                                     continue;
                                 }
                                 if (reflector.TryModifyAt(ref objToModify, patch.Path, patch.Value, logs: logs, logger: logger))
