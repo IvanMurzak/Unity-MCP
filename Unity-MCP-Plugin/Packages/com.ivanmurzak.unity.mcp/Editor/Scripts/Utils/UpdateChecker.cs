@@ -10,51 +10,31 @@
 
 #nullable enable
 using System;
-using System.Collections.Generic;
 using System.Net.Http;
-using System.Text.RegularExpressions;
+using System.Text.Json;
 using System.Threading.Tasks;
 using com.IvanMurzak.Unity.MCP.Editor.UI;
 using Extensions.Unity.PlayerPrefsEx;
 using Microsoft.Extensions.Logging;
 using UnityEditor;
-using UnityEngine;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
     /// <summary>
-    /// Represents a single tag from the GitHub API response.
+    /// Utility class for checking if a new version of the package is available on OpenUPM.
     /// </summary>
-    [Serializable]
-    internal class GitHubTag
-    {
-        public string name = string.Empty;
-    }
-
-    /// <summary>
-    /// Wrapper for deserializing GitHub tags array since JsonUtility doesn't support root-level arrays.
-    /// </summary>
-    [Serializable]
-    internal class GitHubTagsWrapper
-    {
-        public List<GitHubTag> tags = new();
-
-        public static GitHubTagsWrapper FromJson(string json)
-        {
-            // JsonUtility doesn't support root-level arrays, so we wrap it
-            var wrappedJson = $"{{\"tags\":{json}}}";
-            return JsonUtility.FromJson<GitHubTagsWrapper>(wrappedJson);
-        }
-    }
-
-    /// <summary>
-    /// Utility class for checking if a new version of the package is available on GitHub.
-    /// </summary>
+    /// <remarks>
+    /// OpenUPM is the source of truth for the version that Unity Package Manager will actually
+    /// install for end users. GitHub releases are published before the OpenUPM build pipeline
+    /// finishes, so polling GitHub releases would prompt users to update to a version that is
+    /// not yet installable. See https://github.com/IvanMurzak/Unity-MCP/issues/694.
+    /// </remarks>
     public static class UpdateChecker
     {
-        private const string GitHubApiUrl = "https://api.github.com/repos/IvanMurzak/Unity-MCP/tags";
-        private const string GitHubReleasesUrl = "https://github.com/IvanMurzak/Unity-MCP/releases";
+        private const string PackageId = "com.ivanmurzak.unity.mcp";
+        private const string OpenUpmRegistryUrl = "https://package.openupm.com";
+        private const string OpenUpmPackageUrl = "https://openupm.com/packages/" + PackageId + "/";
 
         private static PlayerPrefsBool DoNotShowAgain = new("Unity-MCP.UpdateChecker.DoNotShowAgain");
         private static PlayerPrefsString NextCheckTime = new("Unity-MCP.UpdateChecker.NextCheckTime");
@@ -83,9 +63,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         public static string? LatestVersion => latestVersion;
 
         /// <summary>
-        /// Gets the GitHub releases URL for the user to manually check updates.
+        /// Gets the OpenUPM package URL for the user to manually view available versions.
         /// </summary>
-        public static string ReleasesUrl => GitHubReleasesUrl;
+        /// <remarks>
+        /// Points at OpenUPM rather than GitHub releases because OpenUPM is the registry
+        /// Unity Package Manager actually pulls from — the version visible there is the
+        /// version users can actually install at this moment.
+        /// </remarks>
+        public static string ReleasesUrl => OpenUpmPackageUrl;
 
         public static void Init(ILogger? initLogger = null)
         {
@@ -149,7 +134,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         }
 
         /// <summary>
-        /// Asynchronously checks for updates from GitHub.
+        /// Asynchronously checks for updates from OpenUPM.
         /// </summary>
         /// <param name="forceCheck">If true, ignores cooldown and skipped version settings.</param>
         public static async Task CheckForUpdatesAsync(bool forceCheck = false)
@@ -218,73 +203,78 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         }
 
         /// <summary>
-        /// Fetches the latest version tag from GitHub API.
+        /// Fetches the latest version from the OpenUPM registry.
         /// </summary>
+        /// <remarks>
+        /// Uses the npm-style registry endpoint <c>https://package.openupm.com/{packageId}</c>,
+        /// which returns a JSON document whose <c>dist-tags.latest</c> field is the version
+        /// currently installable via Unity Package Manager. On any network or parsing failure
+        /// the method returns <c>null</c> so callers fall back gracefully without prompting.
+        /// </remarks>
         private static async Task<string?> FetchLatestVersionAsync()
         {
             using var client = new HttpClient();
             client.DefaultRequestHeaders.Add("User-Agent", "AI-Game-Developer-UpdateChecker");
+            client.Timeout = TimeSpan.FromSeconds(10);
 
             try
             {
-                var json = await client.GetStringAsync(GitHubApiUrl);
+                var json = await client.GetStringAsync($"{OpenUpmRegistryUrl}/{PackageId}");
                 return ParseLatestVersionFromJson(json);
             }
             catch (HttpRequestException ex)
             {
-                logger?.LogWarning("Failed to fetch tags: {error}", ex.Message);
+                logger?.LogWarning("Failed to fetch package metadata: {error}", ex.Message);
+                return null;
+            }
+            catch (TaskCanceledException ex)
+            {
+                logger?.LogWarning("OpenUPM request timed out: {error}", ex.Message);
                 return null;
             }
             catch (Exception ex)
             {
-                logger?.LogWarning(ex, "Failed to parse response");
+                logger?.LogWarning(ex, "Failed to parse OpenUPM response");
                 return null;
             }
         }
 
         /// <summary>
-        /// Parses the latest version from GitHub tags API JSON response.
+        /// Parses the latest version from an OpenUPM registry JSON response.
         /// </summary>
+        /// <remarks>
+        /// The OpenUPM registry follows the npm registry shape; the latest published version
+        /// is at <c>dist-tags.latest</c>. Returns <c>null</c> if the JSON is empty, malformed,
+        /// or does not contain a <c>dist-tags.latest</c> string.
+        /// </remarks>
         internal static string? ParseLatestVersionFromJson(string json)
         {
             if (string.IsNullOrEmpty(json))
                 return null;
 
-            var versions = new List<string>();
-
             try
             {
-                var wrapper = GitHubTagsWrapper.FromJson(json);
-                if (wrapper?.tags == null || wrapper.tags.Count == 0)
+                using var doc = JsonDocument.Parse(json);
+
+                if (!doc.RootElement.TryGetProperty("dist-tags", out var distTags))
                     return null;
 
-                foreach (var tag in wrapper.tags)
-                {
-                    if (string.IsNullOrEmpty(tag.name))
-                        continue;
+                if (distTags.ValueKind != JsonValueKind.Object)
+                    return null;
 
-                    var tagName = tag.name;
-                    // Remove 'v' prefix if present
-                    if (tagName.StartsWith("v") || tagName.StartsWith("V"))
-                        tagName = tagName.Substring(1);
+                if (!distTags.TryGetProperty("latest", out var latest))
+                    return null;
 
-                    // Validate it looks like a version number
-                    if (Regex.IsMatch(tagName, @"^\d+\.\d+(\.\d+)?"))
-                        versions.Add(tagName);
-                }
+                if (latest.ValueKind != JsonValueKind.String)
+                    return null;
+
+                var version = latest.GetString();
+                return string.IsNullOrEmpty(version) ? null : version;
             }
-            catch
+            catch (JsonException)
             {
-                // If JSON parsing fails, return null
                 return null;
             }
-
-            if (versions.Count == 0)
-                return null;
-
-            // Sort versions and get the latest
-            versions.Sort((a, b) => CompareVersions(b, a)); // Descending order
-            return versions[0];
         }
 
         /// <summary>
