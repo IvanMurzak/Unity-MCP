@@ -114,92 +114,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
         #endregion
 
-        #region JSON Parsing Tests
+        #region OpenUPM JSON Parsing Tests
+
+        // The OpenUPM registry follows the npm registry shape: a JSON document with
+        // a `dist-tags.latest` field that is the published version users can install
+        // right now via Unity Package Manager. These tests cover the happy path plus
+        // the malformed / missing-field cases that must produce a graceful null.
 
         [Test]
-        public void ParseLatestVersionFromJson_ValidJson_ReturnsLatestVersion()
+        public void ParseLatestVersionFromJson_OpenUpmDistTags_ReturnsLatest()
         {
-            var json = @"[{""name"": ""v0.33.1"", ""zipball_url"": ""..."", ""tarball_url"": ""...""}, {""name"": ""v0.33.0"", ""zipball_url"": ""..."", ""tarball_url"": ""...""}]";
+            var json = @"{""name"":""com.ivanmurzak.unity.mcp"",""dist-tags"":{""latest"":""0.67.0""},""versions"":{""0.67.0"":{}}}";
 
             var result = UpdateChecker.ParseLatestVersionFromJson(json);
 
-            Assert.AreEqual("0.33.1", result);
+            Assert.AreEqual("0.67.0", result);
         }
 
         [Test]
-        public void ParseLatestVersionFromJson_SingleTag_ReturnsVersion()
+        public void ParseLatestVersionFromJson_OpenUpmDistTagsTwoPart_ReturnsLatest()
         {
-            var json = @"[{""name"": ""v1.0.0""}]";
-
-            var result = UpdateChecker.ParseLatestVersionFromJson(json);
-
-            Assert.AreEqual("1.0.0", result);
-        }
-
-        [Test]
-        public void ParseLatestVersionFromJson_UnorderedTags_ReturnsLatest()
-        {
-            var json = @"[{""name"": ""v1.0.0""}, {""name"": ""v2.0.0""}, {""name"": ""v1.5.0""}]";
-
-            var result = UpdateChecker.ParseLatestVersionFromJson(json);
-
-            Assert.AreEqual("2.0.0", result);
-        }
-
-        [Test]
-        public void ParseLatestVersionFromJson_WithoutVPrefix_ParsesCorrectly()
-        {
-            var json = @"[{""name"": ""1.0.0""}, {""name"": ""2.0.0""}]";
-
-            var result = UpdateChecker.ParseLatestVersionFromJson(json);
-
-            Assert.AreEqual("2.0.0", result);
-        }
-
-        [Test]
-        public void ParseLatestVersionFromJson_UppercaseVPrefix_ParsesCorrectly()
-        {
-            var json = @"[{""name"": ""V1.0.0""}, {""name"": ""V2.0.0""}]";
-
-            var result = UpdateChecker.ParseLatestVersionFromJson(json);
-
-            Assert.AreEqual("2.0.0", result);
-        }
-
-        [Test]
-        public void ParseLatestVersionFromJson_EmptyArray_ReturnsNull()
-        {
-            var json = @"[]";
-
-            var result = UpdateChecker.ParseLatestVersionFromJson(json);
-
-            Assert.IsNull(result);
-        }
-
-        [Test]
-        public void ParseLatestVersionFromJson_NoValidVersions_ReturnsNull()
-        {
-            var json = @"[{""name"": ""not-a-version""}, {""name"": ""also-not-a-version""}]";
-
-            var result = UpdateChecker.ParseLatestVersionFromJson(json);
-
-            Assert.IsNull(result);
-        }
-
-        [Test]
-        public void ParseLatestVersionFromJson_MixedValidInvalid_ReturnsLatestValid()
-        {
-            var json = @"[{""name"": ""not-a-version""}, {""name"": ""v1.0.0""}, {""name"": ""invalid""}]";
-
-            var result = UpdateChecker.ParseLatestVersionFromJson(json);
-
-            Assert.AreEqual("1.0.0", result);
-        }
-
-        [Test]
-        public void ParseLatestVersionFromJson_TwoPartVersions_ParsesCorrectly()
-        {
-            var json = @"[{""name"": ""v1.0""}, {""name"": ""v1.1""}]";
+            var json = @"{""dist-tags"":{""latest"":""1.1""}}";
 
             var result = UpdateChecker.ParseLatestVersionFromJson(json);
 
@@ -207,17 +142,154 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         [Test]
-        public void ParseLatestVersionFromJson_ComplexGitHubResponse_ParsesCorrectly()
+        public void ParseLatestVersionFromJson_OpenUpmFullShape_ReturnsLatest()
         {
-            var json = @"[
-                {""name"": ""v0.35.0"", ""zipball_url"": ""https://api.github.com/..."", ""tarball_url"": ""https://api.github.com/..."", ""commit"": {""sha"": ""abc123"", ""url"": ""...""}},
-                {""name"": ""v0.34.2"", ""zipball_url"": ""..."", ""tarball_url"": ""..."", ""commit"": {""sha"": ""def456"", ""url"": ""...""}},
-                {""name"": ""v0.34.1"", ""zipball_url"": ""..."", ""tarball_url"": ""..."", ""commit"": {""sha"": ""ghi789"", ""url"": ""...""}}
-            ]";
+            // Realistic abridged shape returned by https://package.openupm.com/com.ivanmurzak.unity.mcp
+            var json = @"{
+                ""name"": ""com.ivanmurzak.unity.mcp"",
+                ""versions"": {
+                    ""0.66.0"": { ""version"": ""0.66.0"" },
+                    ""0.66.1"": { ""version"": ""0.66.1"" },
+                    ""0.67.0"": { ""version"": ""0.67.0"" }
+                },
+                ""time"": {
+                    ""modified"": ""2025-01-01T00:00:00Z"",
+                    ""created"":  ""2024-01-01T00:00:00Z"",
+                    ""0.66.0"":   ""2024-12-01T00:00:00Z"",
+                    ""0.66.1"":   ""2024-12-15T00:00:00Z"",
+                    ""0.67.0"":   ""2025-01-01T00:00:00Z""
+                },
+                ""dist-tags"": { ""latest"": ""0.67.0"" }
+            }";
 
             var result = UpdateChecker.ParseLatestVersionFromJson(json);
 
-            Assert.AreEqual("0.35.0", result);
+            Assert.AreEqual("0.67.0", result);
+        }
+
+        [Test]
+        public void ParseLatestVersionFromJson_MissingDistTags_ReturnsNull()
+        {
+            var json = @"{""name"":""com.ivanmurzak.unity.mcp"",""versions"":{""1.0.0"":{}}}";
+
+            var result = UpdateChecker.ParseLatestVersionFromJson(json);
+
+            Assert.IsNull(result);
+        }
+
+        [Test]
+        public void ParseLatestVersionFromJson_DistTagsWithoutLatest_ReturnsNull()
+        {
+            var json = @"{""dist-tags"":{""beta"":""1.0.0-beta""}}";
+
+            var result = UpdateChecker.ParseLatestVersionFromJson(json);
+
+            Assert.IsNull(result);
+        }
+
+        [Test]
+        public void ParseLatestVersionFromJson_DistTagsLatestEmptyString_ReturnsNull()
+        {
+            var json = @"{""dist-tags"":{""latest"":""""}}";
+
+            var result = UpdateChecker.ParseLatestVersionFromJson(json);
+
+            Assert.IsNull(result);
+        }
+
+        [Test]
+        public void ParseLatestVersionFromJson_DistTagsLatestWrongType_ReturnsNull()
+        {
+            // dist-tags.latest is a number — must NOT crash, must return null.
+            var json = @"{""dist-tags"":{""latest"":42}}";
+
+            var result = UpdateChecker.ParseLatestVersionFromJson(json);
+
+            Assert.IsNull(result);
+        }
+
+        [Test]
+        public void ParseLatestVersionFromJson_DistTagsWrongType_ReturnsNull()
+        {
+            // dist-tags is a string instead of an object — must NOT crash, must return null.
+            var json = @"{""dist-tags"":""1.0.0""}";
+
+            var result = UpdateChecker.ParseLatestVersionFromJson(json);
+
+            Assert.IsNull(result);
+        }
+
+        [Test]
+        public void ParseLatestVersionFromJson_DistTagsLatestObject_ReturnsNull()
+        {
+            // dist-tags.latest is an object — must NOT crash, must return null.
+            var json = @"{""dist-tags"":{""latest"":{""nested"":""1.0.0""}}}";
+
+            var result = UpdateChecker.ParseLatestVersionFromJson(json);
+
+            Assert.IsNull(result);
+        }
+
+        [Test]
+        public void ParseLatestVersionFromJson_DistTagsLatestArray_ReturnsNull()
+        {
+            // dist-tags.latest is an array — must NOT crash, must return null.
+            var json = @"{""dist-tags"":{""latest"":[""1.0.0"",""1.1.0""]}}";
+
+            var result = UpdateChecker.ParseLatestVersionFromJson(json);
+
+            Assert.IsNull(result);
+        }
+
+        [Test]
+        public void ParseLatestVersionFromJson_DistTagsLatestNonNumeric_ReturnsNull()
+        {
+            // Defensive: a non-numeric `latest` string would otherwise leak into the popup
+            // as version "0" because CompareVersions treats non-numeric parts as 0. The
+            // parser must reject it instead.
+            var json = @"{""dist-tags"":{""latest"":""not-a-version""}}";
+
+            var result = UpdateChecker.ParseLatestVersionFromJson(json);
+
+            Assert.IsNull(result);
+        }
+
+        [Test]
+        public void ParseLatestVersionFromJson_DistTagsLatestSemverPreRelease_ReturnsNull()
+        {
+            // Regression: an unanchored VersionPattern would let "1.0.0-preview" pass and
+            // then CompareVersions would parse "0-preview" as 0, making pre-release tags
+            // compare equal to the corresponding final release. The trailing `$` anchor
+            // closes that hole — pre-release suffixes must produce null.
+            var json = @"{""dist-tags"":{""latest"":""1.0.0-preview""}}";
+
+            var result = UpdateChecker.ParseLatestVersionFromJson(json);
+
+            Assert.IsNull(result);
+        }
+
+        [Test]
+        public void ParseLatestVersionFromJson_DistTagsNull_ReturnsNull()
+        {
+            // dist-tags is JSON null — must NOT crash, must return null. Pins the
+            // `distTags.ValueKind != JsonValueKind.Object` guard.
+            var json = @"{""dist-tags"":null}";
+
+            var result = UpdateChecker.ParseLatestVersionFromJson(json);
+
+            Assert.IsNull(result);
+        }
+
+        [Test]
+        public void ParseLatestVersionFromJson_DistTagsLatestNull_ReturnsNull()
+        {
+            // dist-tags.latest is JSON null — must NOT crash, must return null. Pins the
+            // `latest.ValueKind != JsonValueKind.String` guard.
+            var json = @"{""dist-tags"":{""latest"":null}}";
+
+            var result = UpdateChecker.ParseLatestVersionFromJson(json);
+
+            Assert.IsNull(result);
         }
 
         #endregion
@@ -311,13 +383,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         #region ReleasesUrl Tests
 
         [Test]
-        public void ReleasesUrl_ReturnsValidGitHubUrl()
+        public void ReleasesUrl_PointsAtOpenUpm()
         {
-            var url = UpdateChecker.ReleasesUrl;
-
-            Assert.IsNotNull(url);
-            Assert.IsTrue(url.StartsWith("https://github.com/"));
-            Assert.IsTrue(url.Contains("/releases"));
+            // ReleasesUrl is what the popup's "View Releases" button opens. After the
+            // OpenUPM-source migration, sending users to GitHub releases would re-introduce
+            // the original bug (a release tagged on GitHub may not yet be installable via
+            // Unity Package Manager). It must point at the human-readable OpenUPM page,
+            // NOT at the npm-style metadata endpoint (https://package.openupm.com/...) —
+            // that endpoint returns JSON, which is not what the popup button should open.
+            // Pin the exact URL so a regression to either GitHub or the metadata host fails
+            // immediately rather than silently passing a substring check.
+            Assert.AreEqual(
+                "https://openupm.com/packages/com.ivanmurzak.unity.mcp/",
+                UpdateChecker.ReleasesUrl);
         }
 
         #endregion
@@ -355,6 +433,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void ParseLatestVersionFromJson_EmptyString_ReturnsNull()
         {
             var result = UpdateChecker.ParseLatestVersionFromJson("");
+
+            Assert.IsNull(result);
+        }
+
+        [Test]
+        public void ParseLatestVersionFromJson_EmptyObject_ReturnsNull()
+        {
+            var result = UpdateChecker.ParseLatestVersionFromJson("{}");
 
             Assert.IsNull(result);
         }
