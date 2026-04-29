@@ -1,6 +1,14 @@
 ---
 name: gameobject-modify
-description: Modify GameObject fields and properties in opened Prefab or in a Scene. You can modify multiple GameObjects at once. Just provide the same number of GameObject references and SerializedMember objects.
+description: |-
+  Modify GameObject fields and properties in opened Prefab or in a Scene. You can modify multiple GameObjects at once. Just provide the same number of GameObject references and SerializedMember objects.
+  
+  Three modification surfaces (per GameObject — parallel arrays must have the same length as gameObjectRefs):
+    1. 'gameObjectDiffs' — full SerializedMember diff per GameObject (legacy, backwards compatible).
+    2. 'pathPatchesPerGameObject' — list of {path, value} patches per GameObject routed through Reflector.TryModifyAt; atomic per-path modification.
+    3. 'jsonPatchesPerGameObject' — JSON Merge Patch per GameObject routed through Reflector.TryPatch.
+  When more than one is supplied for the same GameObject they run in this order: jsonPatch → pathPatches → diff. At least one of the three is required.
+  Path syntax: 'fieldName', 'nested/field', 'arrayField/[i]', 'dictField/[key]'.
 ---
 
 # GameObject / Modify
@@ -10,7 +18,9 @@ description: Modify GameObject fields and properties in opened Prefab or in a Sc
 ```bash
 unity-mcp-cli run-tool gameobject-modify --input '{
   "gameObjectRefs": "string_value",
-  "gameObjectDiffs": "string_value"
+  "gameObjectDiffs": "string_value",
+  "pathPatchesPerGameObject": "string_value",
+  "jsonPatchesPerGameObject": "string_value"
 }'
 ```
 
@@ -37,7 +47,9 @@ Read the /unity-initial-setup skill for detailed installation instructions.
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 | `gameObjectRefs` | `any` | Yes | Array of GameObjects in opened Prefab or in the active Scene. |
-| `gameObjectDiffs` | `any` | Yes | Each item in the array represents a GameObject modification of the 'gameObjectRefs' at the same index. Usually a GameObject is a container for components. Each component may have fields and properties for modification. If you need to modify components of a GameObject, please use 'gameobject-component-modify' tool. Ignore values that should not be modified. Any unknown or wrong located fields and properties will be ignored. Check the result of this command to see what was changed. The ignored fields and properties will be listed. |
+| `gameObjectDiffs` | `any` | No | Optional. Each item in the array represents a GameObject modification of the 'gameObjectRefs' at the same index. Usually a GameObject is a container for components. Each component may have fields and properties for modification. If you need to modify components of a GameObject, please use 'gameobject-component-modify' tool. Ignore values that should not be modified. Any unknown or wrong located fields and properties will be ignored. Check the result of this command to see what was changed. The ignored fields and properties will be listed. |
+| `pathPatchesPerGameObject` | `any` | No | Optional. Per-GameObject list of path-scoped patches routed through Reflector.TryModifyAt. Outer index aligns with 'gameObjectRefs'; inner list contains {path, value} entries. Pass null or omit for GameObjects that should not receive path patches. |
+| `jsonPatchesPerGameObject` | `any` | No | Optional. Per-GameObject JSON Merge Patch (RFC 7396, extended with [i]/[key] keys) routed through Reflector.TryPatch. Outer index aligns with 'gameObjectRefs'. Pass null or omit for GameObjects that should not receive a JSON patch. |
 
 ### Input JSON Schema
 
@@ -50,6 +62,12 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     },
     "gameObjectDiffs": {
       "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.SerializedMemberList"
+    },
+    "pathPatchesPerGameObject": {
+      "$ref": "#/$defs/System.Collections.Generic.List<System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.PathPatch>>"
+    },
+    "jsonPatchesPerGameObject": {
+      "$ref": "#/$defs/System.Collections.Generic.List<System.String>"
     }
   },
   "$defs": {
@@ -138,11 +156,41 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "typeName"
       ],
       "additionalProperties": false
+    },
+    "System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.PathPatch>": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.PathPatch"
+      }
+    },
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.PathPatch": {
+      "type": "object",
+      "properties": {
+        "Path": {
+          "type": "string",
+          "description": "Slash-delimited path to the target field/element/entry. Plain segment navigates a field or property (e.g. 'admin' or 'admin/name'). Use '[i]' for array/list index (e.g. 'planets/[0]/orbitRadius'). Use '[key]' for dictionary entry (e.g. 'config/[timeout]'). A leading '#/' is stripped automatically. Required."
+        },
+        "Value": {
+          "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.SerializedMember",
+          "description": "The new value to write at the path. Use the standard SerializedMember envelope: 'typeName' + 'value' for primitives, or nested 'fields'/'props' for complex types. Required — omitting it overwrites the target with a default empty SerializedMember."
+        }
+      }
+    },
+    "System.Collections.Generic.List<System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.PathPatch>>": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.PathPatch>"
+      }
+    },
+    "System.Collections.Generic.List<System.String>": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     }
   },
   "required": [
-    "gameObjectRefs",
-    "gameObjectDiffs"
+    "gameObjectRefs"
   ]
 }
 ```

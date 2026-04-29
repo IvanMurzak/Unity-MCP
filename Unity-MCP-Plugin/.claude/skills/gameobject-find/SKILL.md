@@ -1,6 +1,10 @@
 ---
 name: gameobject-find
-description: Finds specific GameObject by provided information in opened Prefab or in a Scene. First it looks for the opened Prefab, if any Prefab is opened it looks only there ignoring a scene. If no opened Prefab it looks into current active scene. Returns GameObject information and its children. Also, it returns Components preview just for the target GameObject.
+description: |-
+  Finds specific GameObject by provided information in opened Prefab or in a Scene. First it looks for the opened Prefab, if any Prefab is opened it looks only there ignoring a scene. If no opened Prefab it looks into current active scene. Returns GameObject information and its children. Also, it returns Components preview just for the target GameObject.
+  
+  Path-scoped reads (token-saving): supply 'paths' (a list of paths) to read only the listed fields/elements via Reflector.TryReadAt, or 'viewQuery' (a ViewQuery) to navigate to a subtree and/or filter by name regex / max depth / type via Reflector.View. When either is supplied, the result populates 'Data' on the returned GameObjectData and overrides 'includeData' (which would otherwise produce a full recursive serialization). These two parameters are mutually exclusive — supply at most one.
+  Path syntax: 'fieldName', 'nested/field', 'arrayField/[i]', 'dictField/[key]'. Leading '#/' is stripped.
 ---
 
 # GameObject / Find
@@ -14,7 +18,9 @@ unity-mcp-cli run-tool gameobject-find --input '{
   "includeComponents": false,
   "includeBounds": false,
   "includeHierarchy": false,
-  "hierarchyDepth": 0
+  "hierarchyDepth": 0,
+  "paths": "string_value",
+  "viewQuery": "string_value"
 }'
 ```
 
@@ -46,6 +52,8 @@ Read the /unity-initial-setup skill for detailed installation instructions.
 | `includeBounds` | `boolean` | No | Include 3D bounds of the GameObject. |
 | `includeHierarchy` | `boolean` | No | Include hierarchy metadata. |
 | `hierarchyDepth` | `integer` | No | Determines the depth of the hierarchy to include. 0 - means only the target GameObject. 1 - means to include one layer below. |
+| `paths` | `any` | No | Optional. List of paths to read individually via Reflector.TryReadAt. When supplied, replaces 'includeData'-style full serialization with a path-scoped aggregate. Path syntax: 'fieldName', 'nested/field', 'arrayField/[i]', 'dictField/[key]'. Mutually exclusive with 'viewQuery'. |
+| `viewQuery` | `any` | No | Optional. View-query filter routed through Reflector.View. When supplied, replaces 'includeData'-style full serialization with the filtered subtree. Mutually exclusive with 'paths'. |
 
 ### Input JSON Schema
 
@@ -70,6 +78,12 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     },
     "hierarchyDepth": {
       "type": "integer"
+    },
+    "paths": {
+      "$ref": "#/$defs/System.Collections.Generic.List<System.String>"
+    },
+    "viewQuery": {
+      "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.ViewQuery"
     }
   },
   "$defs": {
@@ -108,6 +122,33 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "instanceID"
       ],
       "description": "Find GameObject in opened Prefab or in the active Scene."
+    },
+    "System.Collections.Generic.List<System.String>": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "com.IvanMurzak.ReflectorNet.Model.ViewQuery": {
+      "type": "object",
+      "properties": {
+        "Path": {
+          "type": "string",
+          "description": "Navigate to this path first, then serialize only that subtree. Path segments are separated by '/'. Use '[i]' for array/list index (e.g. 'users/[2]/name') and '[key]' for dictionary entry (e.g. 'config/[timeout]'). A leading '#/' is stripped automatically. Examples: 'admin/name', 'users/[0]/email', 'config/[timeout]'. Leave null to start from the root object."
+        },
+        "NamePattern": {
+          "type": "string",
+          "description": "Case-insensitive .NET regex pattern matched against field and property names. Only branches containing at least one match are kept in the result tree. Examples: 'orbitRadius' (exact name), 'orbit.*' (prefix match), 'radius|speed' (either name). When nothing matches, the root envelope is returned with empty fields/props. Leave null to return all fields and properties without filtering."
+        },
+        "MaxDepth": {
+          "type": "integer",
+          "description": "Maximum nesting depth of the returned serialized tree. 0 = root type name and value only — no nested fields or properties. 1 = one level of fields/props visible, their children stripped. 2 = two levels visible, and so on. Leave null (default) for unlimited depth."
+        },
+        "TypeFilter": {
+          "$ref": "#/$defs/System.Type",
+          "description": "When set, prunes the result tree to members whose runtime type is assignable to this type. Non-matching branches are removed; the root envelope is always preserved. Examples: typeof(float) keeps only float fields, typeof(IEnumerable) keeps only collections. Leave null to include members of any type."
+        }
+      }
     }
   },
   "required": [

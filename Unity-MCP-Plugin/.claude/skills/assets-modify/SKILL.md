@@ -1,6 +1,14 @@
 ---
 name: assets-modify
-description: Modify asset file in the project. Use 'assets-get-data' tool first to inspect the asset structure before modifying. Not allowed to modify asset file in 'Packages/' folder. Please modify it in 'Assets/' folder.
+description: |-
+  Modify asset file in the project. Use 'assets-get-data' tool first to inspect the asset structure before modifying. Not allowed to modify asset file in 'Packages/' folder. Please modify it in 'Assets/' folder.
+  
+  Three modification surfaces (use whichever fits the task):
+    1. 'content' — full SerializedMember override (legacy, backwards compatible).
+    2. 'pathPatches' — list of {path, value} pairs routed through Reflector.TryModifyAt.
+    3. 'jsonPatch' — JSON Merge Patch routed through Reflector.TryPatch.
+  When more than one is supplied they run in this order: jsonPatch → pathPatches → content. At least one is required.
+  Path syntax: 'fieldName', 'nested/field', 'arrayField/[i]', 'dictField/[key]'. Leading '#/' is stripped.
 ---
 
 # Assets / Modify
@@ -10,7 +18,9 @@ description: Modify asset file in the project. Use 'assets-get-data' tool first 
 ```bash
 unity-mcp-cli run-tool assets-modify --input '{
   "assetRef": "string_value",
-  "content": "string_value"
+  "content": "string_value",
+  "pathPatches": "string_value",
+  "jsonPatch": "string_value"
 }'
 ```
 
@@ -37,7 +47,9 @@ Read the /unity-initial-setup skill for detailed installation instructions.
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 | `assetRef` | `any` | Yes | Reference to UnityEngine.Object asset instance. It could be Material, ScriptableObject, Prefab, and any other Asset. Anything located in the Assets and Packages folders. |
-| `content` | `any` | Yes | The asset content. It overrides the existing asset content. |
+| `content` | `any` | No | Optional. The asset content. It overrides the existing asset content (legacy path). |
+| `pathPatches` | `any` | No | Optional. List of path-scoped patches routed through Reflector.TryModifyAt. |
+| `jsonPatch` | `string` | No | Optional. JSON Merge Patch (RFC 7396, extended with [i]/[key] keys) routed through Reflector.TryPatch. |
 
 ### Input JSON Schema
 
@@ -50,6 +62,12 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     },
     "content": {
       "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.SerializedMember"
+    },
+    "pathPatches": {
+      "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.PathPatch>"
+    },
+    "jsonPatch": {
+      "type": "string"
     }
   },
   "$defs": {
@@ -122,11 +140,29 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "typeName"
       ],
       "additionalProperties": false
+    },
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.PathPatch": {
+      "type": "object",
+      "properties": {
+        "Path": {
+          "type": "string",
+          "description": "Slash-delimited path to the target field/element/entry. Plain segment navigates a field or property (e.g. 'admin' or 'admin/name'). Use '[i]' for array/list index (e.g. 'planets/[0]/orbitRadius'). Use '[key]' for dictionary entry (e.g. 'config/[timeout]'). A leading '#/' is stripped automatically. Required."
+        },
+        "Value": {
+          "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.SerializedMember",
+          "description": "The new value to write at the path. Use the standard SerializedMember envelope: 'typeName' + 'value' for primitives, or nested 'fields'/'props' for complex types. Required — omitting it overwrites the target with a default empty SerializedMember."
+        }
+      }
+    },
+    "System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.PathPatch>": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.PathPatch"
+      }
     }
   },
   "required": [
-    "assetRef",
-    "content"
+    "assetRef"
   ]
 }
 ```
