@@ -96,6 +96,7 @@ npx unity-mcp-cli install-plugin /path/to/unity/project
   - [`install-plugin`](#install-plugin)
   - [`install-unity`](#install-unity)
   - [`open`](#open)
+  - [`close`](#close)
   - [`run-tool`](#run-tool)
   - [`wait-for-ready`](#wait-for-ready)
   - [`setup-mcp`](#setup-mcp)
@@ -279,6 +280,48 @@ unity-mcp-cli open ./MyGame \
   --token my-secret-token \
   --auth required \
   --tools gameobject-create,gameobject-find
+```
+
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `close`
+
+Gracefully terminate the Unity Editor instance running for a given project path. Symmetric counterpart of [`open`](#open) — for scripted workflows (CI agents, pipeline executors, integration test fixtures) that need a clean tear-down without resorting to OS-level process kills.
+
+```bash
+unity-mcp-cli close ./MyGame
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `[path]` | No | Path to the Unity project (positional, defaults to current directory) |
+| `--timeout <seconds>` | No | Polite-quit timeout in seconds (default: 30) |
+| `--force` | No | Hard-kill the Editor if it does not exit within `--timeout` |
+
+**How it works:**
+
+1. Resolves the running Editor's PID by reading `<project>/Temp/UnityLockfile` (4-byte little-endian uint32) and cross-checking against process enumeration to handle stale lock files.
+2. Sends a polite-quit signal — `SIGTERM` on Linux/macOS, `taskkill` (no `/F`) on Windows — letting Unity finish autosave / asset-import.
+3. Polls every 250ms until the process exits or `--timeout` elapses.
+4. If the timeout expires AND `--force` is set, falls back to `SIGKILL` / `taskkill /F`.
+5. Idempotent — closing an already-closed Editor (or a project whose Editor was never running) exits 0 with `no running Editor for project at <path>`.
+6. Refuses to act on any path that is not a Unity project root (`ProjectSettings/ProjectVersion.txt` must exist) — protects against accidental kill-all-Unity-on-host invocations.
+
+> **Windows headless caveat:** the polite-quit step uses `taskkill` (no `/F`), which delivers `WM_CLOSE`. That message only reaches processes owning a top-level window on the **same desktop/session** as the CLI. If Unity was launched by a Windows service in session 0 (or any other non-interactive desktop), the polite-quit will be silently dropped, the `--timeout` will elapse, and `--force` becomes the only path that brings the Editor down. Plan accordingly in headless CI runners.
+
+**Example — close, fall back to force after 60s:**
+
+```bash
+unity-mcp-cli close ./MyGame --timeout 60 --force
+```
+
+**Example — clean tear-down at the end of an automation script:**
+
+```bash
+unity-mcp-cli open ./MyGame
+unity-mcp-cli wait-for-ready ./MyGame
+unity-mcp-cli run-tool tests-run ./MyGame --input '{"testMode":"EditMode"}'
+unity-mcp-cli close ./MyGame
 ```
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)

@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import { createRequire } from 'module';
 import { bootstrapLocalCommand } from './commands/bootstrap-local.js';
+import { closeCommand } from './commands/close.js';
 import { createProjectCommand } from './commands/create-project.js';
 import { installUnityCommand } from './commands/install-unity.js';
 import { openCommand } from './commands/open.js';
@@ -32,6 +33,7 @@ program
 // Register all subcommands
 const subcommands = [
   bootstrapLocalCommand,
+  closeCommand,
   configureCommand,
   createProjectCommand,
   installPluginCommand,
