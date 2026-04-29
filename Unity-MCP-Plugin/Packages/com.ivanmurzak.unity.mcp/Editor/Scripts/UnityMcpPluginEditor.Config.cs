@@ -14,6 +14,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using Microsoft.Extensions.Logging;
 using UnityEngine;
 
@@ -161,13 +162,30 @@ namespace com.IvanMurzak.Unity.MCP
                         : UnityConnectionConfig.DefaultResources;
                 }
 
-                var json = JsonSerializer.Serialize(unityConnectionConfig, new JsonSerializerOptions
+                // Runtime-only overrides (env vars / CLI flags) MUST NOT be persisted to disk.
+                // Temporarily restore the disk-baseline values for any overridden field, serialize,
+                // then re-apply the overrides so the in-memory config keeps its runtime values.
+                // The "in-memory keeps overrides" property is critical: callers (UI, configurators,
+                // SignalR client) hold references to unityConnectionConfig and continue reading
+                // from it after Save returns. Restoring overrides ensures behaviour is unchanged.
+                var hasRuntimeOverrides = RuntimeOverrides != null && RuntimeOverrides.HasAny;
+                if (hasRuntimeOverrides)
+                    EnvironmentUtils.ApplyBaseline(unityConnectionConfig, RuntimeOverrides!);
+                try
                 {
-                    WriteIndented = true,
-                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-                    Converters = { new JsonStringEnumConverter() }
-                });
-                File.WriteAllText(AssetsFileAbsolutePath, json);
+                    var json = JsonSerializer.Serialize(unityConnectionConfig, new JsonSerializerOptions
+                    {
+                        WriteIndented = true,
+                        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                        Converters = { new JsonStringEnumConverter() }
+                    });
+                    File.WriteAllText(AssetsFileAbsolutePath, json);
+                }
+                finally
+                {
+                    if (hasRuntimeOverrides)
+                        EnvironmentUtils.ApplyOverrides(unityConnectionConfig, RuntimeOverrides!);
+                }
 
                 var assetFile = AssetFile;
                 if (assetFile != null)
