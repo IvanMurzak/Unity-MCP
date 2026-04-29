@@ -61,14 +61,14 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         // Field-name keys used by OverrideRecord to track which fields were overridden
         // by env/flags so the Save flow can restore disk-baseline values before writing.
         public const string FieldHost = nameof(UnityMcpPlugin.UnityConnectionConfig.LocalHost);
-        public const string FieldKeepConnected = "KeepConnected";
-        public const string FieldAuthOption = "AuthOption";
+        public const string FieldKeepConnected = nameof(UnityMcpPlugin.UnityConnectionConfig.KeepConnected);
+        public const string FieldAuthOption = nameof(UnityMcpPlugin.UnityConnectionConfig.AuthOption);
         public const string FieldLocalToken = nameof(UnityMcpPlugin.UnityConnectionConfig.LocalToken);
         public const string FieldCloudToken = nameof(UnityMcpPlugin.UnityConnectionConfig.CloudToken);
-        public const string FieldTools = "EnabledToolsOverride";
-        public const string FieldStartServer = "KeepServerRunning";
-        public const string FieldTransport = "TransportMethod";
-        public const string FieldConnectionMode = "ConnectionMode";
+        public const string FieldTools = nameof(UnityMcpPlugin.UnityConnectionConfig.EnabledToolsOverride);
+        public const string FieldStartServer = nameof(UnityMcpPlugin.UnityConnectionConfig.KeepServerRunning);
+        public const string FieldTransport = nameof(UnityMcpPlugin.UnityConnectionConfig.TransportMethod);
+        public const string FieldConnectionMode = nameof(UnityMcpPlugin.UnityConnectionConfig.ConnectionMode);
 
         /// <summary>
         /// Captures, per overridden field, the disk-baseline value (what was read from JSON)
@@ -78,16 +78,19 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         /// </summary>
         public sealed class OverrideRecord
         {
-            public Dictionary<string, object?> BaselineValues { get; } = new();
-            public Dictionary<string, object?> OverrideValues { get; } = new();
+            readonly Dictionary<string, object?> _baselineValues = new();
+            readonly Dictionary<string, object?> _overrideValues = new();
 
-            public bool HasAny => BaselineValues.Count > 0;
-            public bool Contains(string fieldName) => BaselineValues.ContainsKey(fieldName);
+            public IReadOnlyDictionary<string, object?> BaselineValues => _baselineValues;
+            public IReadOnlyDictionary<string, object?> OverrideValues => _overrideValues;
+
+            public bool HasAny => _baselineValues.Count > 0;
+            public bool Contains(string fieldName) => _baselineValues.ContainsKey(fieldName);
 
             internal void Track(string fieldName, object? baselineValue, object? overrideValue)
             {
-                BaselineValues[fieldName] = baselineValue;
-                OverrideValues[fieldName] = overrideValue;
+                _baselineValues[fieldName] = baselineValue;
+                _overrideValues[fieldName] = overrideValue;
             }
         }
 
@@ -139,20 +142,17 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
             // Returns null if no source provided a non-empty value.
             string? Resolve(string envKey, string? flagAlias)
             {
-                // 1. Short flag alias (e.g. "url", "token", "auth")
                 if (!string.IsNullOrEmpty(flagAlias)
                     && argReader.TryGetValue(flagAlias, out var flagValue)
                     && !string.IsNullOrWhiteSpace(flagValue))
                 {
                     return flagValue;
                 }
-                // 2. UNITY_MCP_* style flag
                 if (argReader.TryGetValue(envKey, out var envFlagValue)
                     && !string.IsNullOrWhiteSpace(envFlagValue))
                 {
                     return envFlagValue;
                 }
-                // 3. Process env var
                 var envValue = envReader(envKey);
                 if (!string.IsNullOrWhiteSpace(envValue))
                     return envValue;
@@ -161,11 +161,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
 
             string Sanitize(string raw) => raw.Trim().Trim('"');
 
-            // --- Host URL override (UNITY_MCP_HOST or UNITY_MCP_CLOUD_URL or --url) ---
-            // UNITY_MCP_CLOUD_URL is the canonical key in the layered loader contract.
-            // UNITY_MCP_HOST is preserved for backward compatibility.
-            // --url is a short alias.
-            // All values are defensively trimmed of trailing slashes.
+            // UNITY_MCP_HOST is the legacy alias for UNITY_MCP_CLOUD_URL.
             string? sanitizedHost = null;
             var rawHost = Resolve(EnvCloudUrl, FlagUrl) ?? Resolve(EnvHost, flagAlias: null);
             if (rawHost != null)
@@ -183,10 +179,8 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
                 }
             }
 
-            // --- Connection mode override (UNITY_MCP_CONNECTION_MODE) ---
-            // Explicit env / flag wins; otherwise, if a host URL was provided and points to
-            // a loopback address, infer Custom mode (worktree / local-dev scenarios). If the
-            // URL points to a remote host, leave the disk-baseline ConnectionMode untouched.
+            // Loopback URLs without an explicit mode infer Custom (worktree / local-dev).
+            // Remote URLs without an explicit mode leave the disk-baseline ConnectionMode untouched.
             var rawMode = Resolve(EnvConnectionMode, flagAlias: null);
             ConnectionMode? targetMode = null;
             if (rawMode != null && Enum.TryParse<ConnectionMode>(Sanitize(rawMode), ignoreCase: true, out var explicitMode))
@@ -204,7 +198,6 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
                 _logger.LogInformation("[MCP] Override: {Key}={Value}", FieldConnectionMode, targetMode.Value);
             }
 
-            // --- KeepConnected override ---
             var rawKeep = Resolve(EnvKeepConnected, flagAlias: null);
             if (rawKeep != null && bool.TryParse(Sanitize(rawKeep), out var keep) && keep != config.KeepConnected)
             {
@@ -213,7 +206,6 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
                 _logger.LogInformation("[MCP] Override: {Key}={Value}", EnvKeepConnected, keep);
             }
 
-            // --- AuthOption override (none / required / optional) ---
             var rawAuth = Resolve(EnvAuthOption, FlagAuth);
             if (rawAuth != null
                 && Enum.TryParse<AuthOption>(Sanitize(rawAuth), ignoreCase: true, out var ao)
@@ -224,7 +216,6 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
                 _logger.LogInformation("[MCP] Override: {Key}={Value}", EnvAuthOption, ao);
             }
 
-            // --- Auth token override ---
             // Resolved AFTER ConnectionMode so we route to the correct underlying field
             // (LocalToken in Custom mode, CloudToken in Cloud mode). We track the specific
             // backing field rather than the abstract Token property because only the backing
@@ -254,7 +245,6 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
                 }
             }
 
-            // --- Transport method override ---
             var rawTransport = Resolve(EnvTransport, flagAlias: null);
             if (rawTransport != null
                 && Enum.TryParse<TransportMethod>(Sanitize(rawTransport), ignoreCase: true, out var tm)
@@ -265,7 +255,6 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
                 _logger.LogInformation("[MCP] Override: {Key}={Value}", EnvTransport, tm);
             }
 
-            // --- Start server override ---
             var rawStart = Resolve(EnvStartServer, flagAlias: null);
             if (rawStart != null && bool.TryParse(Sanitize(rawStart), out var ss) && ss != config.KeepServerRunning)
             {
@@ -274,7 +263,6 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
                 _logger.LogInformation("[MCP] Override: {Key}={Value}", EnvStartServer, ss);
             }
 
-            // --- Enabled tools override (comma-separated) ---
             // EnabledToolsOverride is [JsonIgnore] so it is never persisted regardless of the
             // baseline-restoration logic; we still track it for completeness.
             var rawTools = Resolve(EnvTools, flagAlias: null);
@@ -327,7 +315,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
                 switch (kvp.Key)
                 {
                     case FieldHost:
-                        config.LocalHost = (string?)kvp.Value ?? string.Empty;
+                        config.LocalHost = (string?)kvp.Value ?? UnityMcpPlugin.UnityConnectionConfig.DefaultHost;
                         break;
                     case FieldKeepConnected:
                         if (kvp.Value is bool kc) config.KeepConnected = kc;
@@ -353,6 +341,10 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
                     case FieldConnectionMode:
                         if (kvp.Value is ConnectionMode cm) config.ConnectionMode = cm;
                         break;
+                    default:
+                        // Fail loudly if a new Field* constant is added to Track but forgotten here —
+                        // a silent miss would let runtime overrides leak to disk on Save.
+                        throw new InvalidOperationException($"Unhandled override field: {kvp.Key}");
                 }
             }
         }
