@@ -14,9 +14,12 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
+using com.IvanMurzak.Unity.MCP.Utils;
+using Microsoft.Extensions.Logging;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -37,7 +40,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [Description("Get detailed data about a shader asset in the Unity project. " +
             "Returns shader properties, subshaders, passes, compilation errors, and supported status. " +
             "Use '" + Tool_Assets.AssetsFindToolId + "' tool with filter 't:Shader' to find shaders, " +
-            "or '" + AssetsShaderListAllToolId + "' tool to list all shader names.")]
+            "or '" + AssetsShaderListAllToolId + "' tool to list all shader names.\n\n" +
+            "Path-scoped reads (token-saving): supply '" + "paths" + "' (a list of paths) to read only the listed " +
+            "fields/elements via Reflector.TryReadAt, or '" + "viewQuery" + "' (a ViewQuery) to navigate to a " +
+            "subtree and/or filter by name regex / max depth / type via Reflector.View. The result populates " +
+            "'View' on the returned ShaderData. These two parameters are mutually exclusive.\n" +
+            "Path syntax: 'fieldName', 'nested/field', 'arrayField/[i]', 'dictField/[key]'. Leading '#/' is stripped.")]
         public ShaderData GetData
         (
             AssetObjectRef assetRef,
@@ -48,7 +56,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             [Description("Include subshader and pass structure. Default: false")]
             bool? includeSubshaders = false,
             [Description("Include pass source code in subshader data. Requires 'includeSubshaders' to be true. Can produce very large responses. Default: false")]
-            bool? includeSourceCode = false
+            bool? includeSourceCode = false,
+            [Description("Optional. List of paths to read individually via Reflector.TryReadAt against the underlying Shader asset. " +
+                "Path syntax: 'fieldName', 'nested/field', 'arrayField/[i]', 'dictField/[key]'. " +
+                "Mutually exclusive with '" + "viewQuery" + "'.")]
+            List<string>? paths = null,
+            [Description("Optional. View-query filter routed through Reflector.View against the underlying Shader asset. " +
+                "Mutually exclusive with '" + "paths" + "'.")]
+            ViewQuery? viewQuery = null
         )
         {
             if (assetRef == null)
@@ -56,6 +71,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             if (!assetRef.IsValid(out var error))
                 throw new ArgumentException(error, nameof(assetRef));
+
+            var hasPaths = paths != null && paths.Count > 0;
+            var hasViewQuery = viewQuery != null;
+            if (hasPaths && hasViewQuery)
+                throw new ArgumentException(
+                    $"'{nameof(paths)}' and '{nameof(viewQuery)}' are mutually exclusive — supply at most one.");
 
             var resolvedIncludeSourceCode = includeSourceCode ?? false;
             var options = new ShaderDataOptions
@@ -76,7 +97,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 if (shader == null)
                     throw new ArgumentException($"Asset at '{assetRef.AssetPath}' is not a Shader. It is a '{asset.GetType().Name}'.", nameof(assetRef));
 
-                return BuildShaderData(shader, options);
+                var data = BuildShaderData(shader, options);
+
+                if (hasPaths || hasViewQuery)
+                {
+                    var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
+                    var logger = UnityLoggerFactory.LoggerFactory.CreateLogger<Tool_Assets_Shader>();
+
+                    if (hasPaths)
+                        data.View = PathReadHelper.BuildPathReadAggregate(reflector, shader, shader.name, paths!, logger);
+                    else
+                        data.View = reflector.View(shader, viewQuery, logs: null, logger: logger)
+                            ?? new SerializedMember { name = shader.name, typeName = shader.GetType().FullName ?? string.Empty };
+                }
+
+                return data;
             });
         }
 
@@ -238,6 +273,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             [Description("List of subshaders with their passes. Null if shader data is unavailable.")]
             public List<SubshaderData>? Subshaders { get; set; }
+
+            [Description("Path-scoped read or view-query result, populated when 'paths' or 'viewQuery' is supplied. " +
+                "Null otherwise.")]
+            public SerializedMember? View { get; set; }
         }
 
         public class ShaderMessageData
