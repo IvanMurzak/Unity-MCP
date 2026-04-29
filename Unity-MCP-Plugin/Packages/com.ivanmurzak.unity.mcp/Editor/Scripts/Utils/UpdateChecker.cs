@@ -36,18 +36,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         private const string PackageId = "com.ivanmurzak.unity.mcp";
         // package.openupm.com is the npm-style metadata registry (machine-readable JSON);
         // openupm.com is the human-readable package page the popup links users to.
-        private const string OpenUpmRegistryUrl = "https://package.openupm.com";
-        private const string OpenUpmPackageMetadataUrl = OpenUpmRegistryUrl + "/" + PackageId;
+        private const string OpenUpmPackageMetadataUrl = "https://package.openupm.com/" + PackageId;
         private const string OpenUpmPackageUrl = "https://openupm.com/packages/" + PackageId + "/";
 
-        // Mirrors the prior tag validation: accepts only "N.N" or "N.N.N" prefixes so a
-        // non-numeric `dist-tags.latest` cannot leak into the popup as version "0".
-        private static readonly Regex VersionPattern = new(@"^\d+\.\d+(\.\d+)?", RegexOptions.Compiled);
+        // Anchored at both ends: accepts only complete "N.N" or "N.N.N" strings. Without the
+        // trailing anchor, "1.0.0-preview" would match and CompareVersions would silently
+        // treat the "0-preview" segment as 0, making pre-release tags look equal to the
+        // final release. See https://github.com/IvanMurzak/Unity-MCP/issues/694 review.
+        private static readonly Regex VersionPattern = new(@"^\d+\.\d+(\.\d+)?$", RegexOptions.Compiled);
 
         // Hoisted to a single static instance to avoid socket exhaustion (TIME_WAIT) under
         // repeated update checks. Same pattern used by NuGetDownloader and DeviceAuthService
         // elsewhere in this package. The 10s timeout covers OpenUPM's slowest realistic responses.
-        private static readonly HttpClient httpClient = CreateHttpClient();
+        private static readonly HttpClient HttpClient = CreateHttpClient();
 
         private static PlayerPrefsBool DoNotShowAgain = new("Unity-MCP.UpdateChecker.DoNotShowAgain");
         private static PlayerPrefsString NextCheckTime = new("Unity-MCP.UpdateChecker.NextCheckTime");
@@ -173,31 +174,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
             try
             {
-                var latestVersion = await FetchLatestVersionAsync();
-                if (string.IsNullOrEmpty(latestVersion))
+                var fetched = await FetchLatestVersionAsync();
+                if (string.IsNullOrEmpty(fetched))
                 {
                     if (forceCheck)
                         logger?.LogWarning("Unable to check for updates. Please check your internet connection.");
                     return;
                 }
 
-                UpdateChecker.latestVersion = latestVersion;
+                latestVersion = fetched;
 
                 // Check if this version was skipped
                 var skippedVersion = SkippedVersion.Value;
-                if (!string.IsNullOrEmpty(skippedVersion) && skippedVersion == latestVersion && !forceCheck)
+                if (!string.IsNullOrEmpty(skippedVersion) && skippedVersion == fetched && !forceCheck)
                 {
                     return;
                 }
 
                 // Compare versions
                 var currentVersion = UnityMcpPlugin.Version;
-                if (IsNewerVersion(latestVersion!, currentVersion))
+                if (IsNewerVersion(fetched, currentVersion))
                 {
                     // Show the update popup on the main thread
                     EditorApplication.delayCall += () =>
                     {
-                        UpdatePopupWindow.ShowWindow(currentVersion, latestVersion!);
+                        UpdatePopupWindow.ShowWindow(currentVersion, fetched);
                     };
                 }
                 else if (forceCheck)
@@ -235,7 +236,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         {
             try
             {
-                var json = await httpClient.GetStringAsync(OpenUpmPackageMetadataUrl);
+                var json = await HttpClient.GetStringAsync(OpenUpmPackageMetadataUrl);
                 return ParseLatestVersionFromJson(json);
             }
             catch (HttpRequestException ex)
@@ -250,7 +251,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
             catch (Exception ex)
             {
-                logger?.LogWarning(ex, "Failed to parse OpenUPM response");
+                // ParseLatestVersionFromJson swallows JsonException internally, so anything
+                // reaching here is an unexpected transport / URI / IO failure rather than a
+                // parse error — message must reflect that.
+                logger?.LogWarning(ex, "Unexpected error during OpenUPM update check");
                 return null;
             }
         }

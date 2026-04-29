@@ -254,6 +254,44 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNull(result);
         }
 
+        [Test]
+        public void ParseLatestVersionFromJson_DistTagsLatestSemverPreRelease_ReturnsNull()
+        {
+            // Regression: an unanchored VersionPattern would let "1.0.0-preview" pass and
+            // then CompareVersions would parse "0-preview" as 0, making pre-release tags
+            // compare equal to the corresponding final release. The trailing `$` anchor
+            // closes that hole — pre-release suffixes must produce null.
+            var json = @"{""dist-tags"":{""latest"":""1.0.0-preview""}}";
+
+            var result = UpdateChecker.ParseLatestVersionFromJson(json);
+
+            Assert.IsNull(result);
+        }
+
+        [Test]
+        public void ParseLatestVersionFromJson_DistTagsNull_ReturnsNull()
+        {
+            // dist-tags is JSON null — must NOT crash, must return null. Pins the
+            // `distTags.ValueKind != JsonValueKind.Object` guard.
+            var json = @"{""dist-tags"":null}";
+
+            var result = UpdateChecker.ParseLatestVersionFromJson(json);
+
+            Assert.IsNull(result);
+        }
+
+        [Test]
+        public void ParseLatestVersionFromJson_DistTagsLatestNull_ReturnsNull()
+        {
+            // dist-tags.latest is JSON null — must NOT crash, must return null. Pins the
+            // `latest.ValueKind != JsonValueKind.String` guard.
+            var json = @"{""dist-tags"":{""latest"":null}}";
+
+            var result = UpdateChecker.ParseLatestVersionFromJson(json);
+
+            Assert.IsNull(result);
+        }
+
         #endregion
 
         #region Preference Management Tests
