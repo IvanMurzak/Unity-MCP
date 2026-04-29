@@ -80,11 +80,10 @@ export function parseTimeoutSeconds(raw: string | undefined): number | null {
 /**
  * Resolve the editor PID for a given project path.
  *
- * Strategy (cheapest first):
- *  1. Read `<project>/Temp/UnityLockfile` (4 bytes LE uint32).
- *  2. Verify the PID is alive AND its command line includes `-projectPath <path>`
- *     pointing at the same project — handles stale lockfiles.
- *  3. Fall back to enumerating Unity processes by command line.
+ * Reads `<project>/Temp/UnityLockfile` (4 bytes LE uint32) and enumerates
+ * Unity processes by command line, then prefers the lockfile PID when it
+ * is alive and matches the enumerated process for this project (handles
+ * stale lockfiles); otherwise uses the enumerated PID.
  *
  * Returns `null` when no live editor matches the project. Exported for tests.
  */
