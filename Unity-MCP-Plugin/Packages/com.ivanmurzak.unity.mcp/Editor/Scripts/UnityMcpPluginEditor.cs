@@ -20,12 +20,24 @@ namespace com.IvanMurzak.Unity.MCP
     /// </summary>
     public partial class UnityMcpPluginEditor : UnityMcpPlugin
     {
+        /// <summary>
+        /// Captures runtime overrides (env vars / CLI flags) that were layered on top of the
+        /// on-disk config during construction. Used by <see cref="Save"/> to round-trip the
+        /// disk-baseline values to disk while keeping the runtime overrides on the in-memory
+        /// config — runtime-only overrides MUST NOT leak into the persisted JSON.
+        /// </summary>
+        internal EnvironmentUtils.OverrideRecord RuntimeOverrides { get; private set; }
+            = new EnvironmentUtils.OverrideRecord();
+
         protected UnityMcpPluginEditor() : base()
         {
             var config = GetOrCreateConfig(out var wasCreated);
             unityConnectionConfig = config;
             ApplyLogLevel(unityConnectionConfig.LogLevel);
-            EnvironmentUtils.ApplyEnvironmentOverrides(unityConnectionConfig);
+            // Layered loader: disk values are already on `config`; env vars and CLI flags
+            // are applied here as runtime overrides. The OverrideRecord captures the
+            // disk-baseline values so Save() can persist them without leaking the overrides.
+            RuntimeOverrides = EnvironmentUtils.ApplyEnvironmentOverrides(unityConnectionConfig);
             if (wasCreated)
                 Save();
             IncrementSingletonCount();
