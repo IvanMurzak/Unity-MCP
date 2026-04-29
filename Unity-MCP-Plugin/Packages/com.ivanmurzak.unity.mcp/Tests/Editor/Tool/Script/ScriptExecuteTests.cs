@@ -20,6 +20,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     {
         const string GO_ABC = "ABC";
 
+#if UNITY_6000_5_OR_NEWER
+        static ulong GetGameObjectInstanceId(GameObject go)
+            => UnityEngine.EntityId.ToULong(go.GetEntityId());
+#else
+        static int GetGameObjectInstanceId(GameObject go)
+            => go.GetInstanceID();
+#endif
+
         [Test]
         public void Script_Execute_DisablesGameObject()
         {
@@ -224,7 +232,7 @@ public class Script
                     toolMethod: typeof(Tool_Script).GetMethod(nameof(Tool_Script.Execute)),
                     jsonProvider: () =>
                     {
-                        var instanceId = gameObjectEx.GameObject!.GetInstanceID();
+                        var instanceId = GetGameObjectInstanceId(gameObjectEx.GameObject!);
                         return $@"{{
                             ""csharpCode"": {JsonEscape(csharpCode)},
                             ""className"": ""Script"",
@@ -269,7 +277,7 @@ if (go != null)
                     toolMethod: typeof(Tool_Script).GetMethod(nameof(Tool_Script.Execute)),
                     jsonProvider: () =>
                     {
-                        var instanceId = gameObjectEx.GameObject!.GetInstanceID();
+                        var instanceId = GetGameObjectInstanceId(gameObjectEx.GameObject!);
                         return $@"{{
                             ""csharpCode"": {JsonEscape(methodBody)},
                             ""className"": ""Script"",
@@ -319,7 +327,7 @@ public class Script
                     toolMethod: typeof(Tool_Script).GetMethod(nameof(Tool_Script.Execute)),
                     jsonProvider: () =>
                     {
-                        var instanceId = gameObjectEx.GameObject!.GetInstanceID();
+                        var instanceId = GetGameObjectInstanceId(gameObjectEx.GameObject!);
                         return $@"{{
                             ""csharpCode"": {JsonEscape(csharpCode)},
                             ""className"": ""Script"",
@@ -360,7 +368,7 @@ Debug.Log(""Disabled: "" + go.name);";
                     toolMethod: typeof(Tool_Script).GetMethod(nameof(Tool_Script.Execute)),
                     jsonProvider: () =>
                     {
-                        var instanceId = gameObjectEx.GameObject!.GetInstanceID();
+                        var instanceId = GetGameObjectInstanceId(gameObjectEx.GameObject!);
                         return $@"{{
                             ""csharpCode"": {JsonEscape(methodBody)},
                             ""className"": ""Script"",
