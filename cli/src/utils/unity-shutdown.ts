@@ -132,9 +132,11 @@ export function isProcessAlive(pid: number, platform: SupportedPlatform = nodePl
       const trimmed = line.trim();
       if (trimmed.length === 0) continue;
       // Second CSV field — split on `,` and check column index 1. CSV from
-      // tasklist quotes every field, so a simple split is safe (image names
-      // with embedded commas are exceedingly rare and would still place the
-      // PID in some later column we can scan).
+      // tasklist quotes every field, so a simple split is safe. Image names
+      // with embedded commas would shift the PID into a later column and
+      // produce a false negative; that's an accepted trade-off — Unity
+      // executable names don't contain commas in practice, and any false
+      // negative simply ends the wait loop one tick early.
       const cols = trimmed.split(',');
       if (cols.length >= 2 && cols[1] === target) return true;
     }
@@ -244,5 +246,7 @@ export async function waitForExit(
     }
     await new Promise(resolve => setTimeout(resolve, pollIntervalMs));
   }
+  // One last check after the deadline elapses — the process may have exited
+  // in the trailing poll-interval slice we slept through.
   return !isProcessAlive(pid, platform);
 }
