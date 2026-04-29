@@ -339,10 +339,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 var versionMatches = IsVersionMatches();
                 var success = binaryExists && versionMatches;
 
-                if (success && previousKeepServerRunning)
+                if (success && previousKeepServerRunning && IsAutoStartAllowedForMode(UnityMcpPluginEditor.ConnectionMode))
                 {
                     if (!StartServer())
                         UnityEngine.Debug.LogError($"Failed to start MCP server after updating binary. Please try starting the server manually.");
+                }
+                else if (success && previousKeepServerRunning)
+                {
+                    _logger.LogDebug("DownloadAndUnpackBinary: Cloud mode active, skipping local server auto-start after binary update");
                 }
 
                 NotificationPopupWindow.Show(
@@ -1129,6 +1133,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         }
 
         /// <summary>
+        /// Returns true when the local MCP server may be auto-started for the given connection mode.
+        /// In Cloud mode the plugin connects to a remote MCP endpoint, so the local server is never
+        /// auto-started on Editor launch or after a binary update; in Custom mode the local server
+        /// is the connection target, so auto-start is allowed (subject to other gates such as
+        /// <see cref="UnityMcpPluginEditor.KeepServerRunning"/>).
+        /// Pure (no Unity API access) so it can be unit-tested in EditMode.
+        /// </summary>
+        public static bool IsAutoStartAllowedForMode(ConnectionMode mode)
+            => mode != ConnectionMode.Cloud;
+
+        /// <summary>
         /// Starts the MCP server if KeepServerRunning is enabled and no external server is detected.
         /// This method is called during Unity Editor startup to auto-start the server based on user preference.
         /// The external server check is performed asynchronously to avoid blocking the main thread.
@@ -1138,7 +1153,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             EditorApplication.update -= StartServerIfNeeded;
 
             // Skip local server auto-start in Cloud mode — Unity connects to the cloud server instead
-            if (UnityMcpPluginEditor.ConnectionMode == ConnectionMode.Cloud)
+            if (!IsAutoStartAllowedForMode(UnityMcpPluginEditor.ConnectionMode))
             {
                 _logger.LogDebug("StartServerIfNeeded: Cloud mode active, skipping local server auto-start");
                 return;
