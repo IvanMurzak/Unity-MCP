@@ -241,12 +241,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
             catch (HttpRequestException ex)
             {
-                logger?.LogWarning("Failed to fetch package metadata: {error}", ex.Message);
+                // Use the exception-preserving overload so stack trace and inner exceptions
+                // survive into structured logs — same pattern as the catch-all below.
+                logger?.LogWarning(ex, "Failed to fetch package metadata");
                 return null;
             }
             catch (TaskCanceledException ex)
             {
-                logger?.LogWarning("OpenUPM request timed out: {error}", ex.Message);
+                logger?.LogWarning(ex, "OpenUPM request timed out");
                 return null;
             }
             catch (Exception ex)
@@ -265,7 +267,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// <remarks>
         /// The OpenUPM registry follows the npm registry shape; the latest published version
         /// is at <c>dist-tags.latest</c>. Returns <c>null</c> if the JSON is empty, malformed,
-        /// or does not contain a <c>dist-tags.latest</c> string.
+        /// or does not contain a <c>dist-tags.latest</c> string. Also returns <c>null</c> for
+        /// non-numeric or pre-release version strings (e.g. <c>"1.0.0-preview"</c>) — the
+        /// parser only accepts strict <c>N.N</c> / <c>N.N.N</c> shapes so the popup never
+        /// surfaces a tag that <see cref="CompareVersions"/> would silently misorder.
         /// </remarks>
         internal static string? ParseLatestVersionFromJson(string json)
         {

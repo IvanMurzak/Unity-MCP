@@ -388,14 +388,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // ReleasesUrl is what the popup's "View Releases" button opens. After the
             // OpenUPM-source migration, sending users to GitHub releases would re-introduce
             // the original bug (a release tagged on GitHub may not yet be installable via
-            // Unity Package Manager). The user-facing URL must point at the same registry
-            // the version check now consults.
-            var url = UpdateChecker.ReleasesUrl;
-
-            Assert.IsNotNull(url);
-            Assert.IsTrue(url.StartsWith("https://"));
-            Assert.IsTrue(url.Contains("openupm.com"), $"expected OpenUPM URL, got: {url}");
-            Assert.IsTrue(url.Contains("com.ivanmurzak.unity.mcp"), $"expected package id in URL, got: {url}");
+            // Unity Package Manager). It must point at the human-readable OpenUPM page,
+            // NOT at the npm-style metadata endpoint (https://package.openupm.com/...) —
+            // that endpoint returns JSON, which is not what the popup button should open.
+            // Pin the exact URL so a regression to either GitHub or the metadata host fails
+            // immediately rather than silently passing a substring check.
+            Assert.AreEqual(
+                "https://openupm.com/packages/com.ivanmurzak.unity.mcp/",
+                UpdateChecker.ReleasesUrl);
         }
 
         #endregion
