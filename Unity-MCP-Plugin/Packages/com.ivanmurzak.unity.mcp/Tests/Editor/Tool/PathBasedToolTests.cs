@@ -408,6 +408,153 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 $"Fields={fieldCount} Properties={propCount}");
             yield return null;
         }
+
+        // ─── 13. paths AND viewQuery simultaneously → ArgumentException ────────
+
+        [UnityTest]
+        public IEnumerator ComponentGet_PathsAndViewQueryTogether_ThrowsArgumentException()
+        {
+            var (go, _, _, _) = BuildSolarFixture();
+
+            var ex = Assert.Throws<ArgumentException>(() =>
+                new Tool_GameObject().GetComponent(
+                    gameObjectRef: new GameObjectRef(go.GetEntityId()),
+                    componentRef: new ComponentRef { TypeName = typeof(SolarSystem).FullName! },
+                    paths: new List<string> { "globalOrbitSpeedMultiplier" },
+                    viewQuery: new ViewQuery { NamePattern = "orbit.*" }));
+
+            Assert.IsNotNull(ex);
+            StringAssert.Contains("mutually exclusive", ex!.Message);
+            yield return null;
+        }
+
+        // ─── 14. pathPatches with a null element → no NRE, structured log ─────
+
+        [UnityTest]
+        public IEnumerator ComponentModify_PathPatches_WithNullElement_DoesNotThrow_AndLogsSkip()
+        {
+            var (go, solar, _, _) = BuildSolarFixture();
+
+            var response = new Tool_GameObject().ModifyComponent(
+                gameObjectRef: new GameObjectRef(go.GetEntityId()),
+                componentRef: new ComponentRef { TypeName = typeof(SolarSystem).FullName! },
+                pathPatches: new List<PathPatch>
+                {
+                    null!,
+                    new PathPatch
+                    {
+                        Path = "globalOrbitSpeedMultiplier",
+                        Value = SerializedMember.FromValue<float>(Reflector, 11f)
+                    }
+                });
+
+            Assert.IsTrue(response.Success,
+                $"At least one of the patches succeeded; overall result should be Success. Logs: {string.Join(", ", response.Logs ?? Array.Empty<string>())}");
+            Assert.AreEqual(11f, solar.globalOrbitSpeedMultiplier);
+            var combined = string.Join("\n", response.Logs ?? Array.Empty<string>());
+            StringAssert.Contains("PathPatch[0]", combined,
+                "The skip log must reference the failing patch index, not just say 'a patch was skipped'.");
+            yield return null;
+        }
+
+        // ─── 15. paths with empty/null entry → no full-object dump ────────────
+
+        [UnityTest]
+        public IEnumerator ComponentGet_PathsWithEmptyEntry_DoesNotSerializeWholeObject()
+        {
+            var (go, _, _, _) = BuildSolarFixture();
+
+            var response = new Tool_GameObject().GetComponent(
+                gameObjectRef: new GameObjectRef(go.GetEntityId()),
+                componentRef: new ComponentRef { TypeName = typeof(SolarSystem).FullName! },
+                paths: new List<string> { "", "globalOrbitSpeedMultiplier" });
+
+            Assert.IsNotNull(response.View);
+            Assert.AreEqual(2, response.View!.fields?.Count, "Empty path is reflected as its own sentinel field.");
+            var emptyEntry = response.View!.fields![0];
+            Assert.AreEqual(PathReadHelper.EmptyPathTypeName, emptyEntry.typeName,
+                "Empty path entry must surface the <empty-path> sentinel rather than serializing the whole object.");
+            // Sanity — the second path still resolved
+            var resolved = response.View!.fields![1];
+            Assert.AreEqual("globalOrbitSpeedMultiplier", resolved.name);
+            yield return null;
+        }
+
+        // ─── 16. routing order jsonPatch → pathPatches → diff ─────────────────
+
+        [UnityTest]
+        public IEnumerator ComponentModify_AllThreeSurfaces_ApplyInDocumentedOrder()
+        {
+            var (go, solar, _, _) = BuildSolarFixture();
+            // Three distinct fields, one per surface, so we can assert all three landed
+            // and that none of them stomped on the others.
+
+            // Build the legacy diff via the same factory used by every other ModifyComponent
+            // test in the repo (TestToolGameObject.ModifyComponent.cs#36–53). The component
+            // already exists; we wrap a ComponentRef as the root value and AddField the change.
+            var diff = SerializedMember.FromValue(
+                    reflector: Reflector,
+                    name: null,
+                    type: typeof(SolarSystem),
+                    value: new ComponentRef { TypeName = typeof(SolarSystem).FullName! })
+                .AddField(SerializedMember.FromValue(
+                    reflector: Reflector,
+                    name: "globalSizeMultiplier",
+                    type: typeof(float),
+                    value: 99f));
+
+            var response = new Tool_GameObject().ModifyComponent(
+                gameObjectRef: new GameObjectRef(go.GetEntityId()),
+                componentRef: new ComponentRef { TypeName = typeof(SolarSystem).FullName! },
+                componentDiff: diff,
+                pathPatches: new List<PathPatch>
+                {
+                    new PathPatch
+                    {
+                        Path = "planets/[0]/orbitRadius",
+                        Value = SerializedMember.FromValue<float>(Reflector, 77f)
+                    }
+                },
+                jsonPatch: "{\"globalOrbitSpeedMultiplier\": 33.0}");
+
+            Assert.IsTrue(response.Success, $"Combined modify should succeed. Logs: {string.Join(", ", response.Logs ?? Array.Empty<string>())}");
+            Assert.AreEqual(33f, solar.globalOrbitSpeedMultiplier, "JSON patch should have set the orbit-speed multiplier.");
+            Assert.AreEqual(77f, solar.planets[0].orbitRadius,    "Path patch should have set the planet's orbit radius.");
+            Assert.AreEqual(99f, solar.globalSizeMultiplier,      "Legacy diff should have set the size multiplier.");
+            yield return null;
+        }
+
+        // ─── 17. parallel-array length mismatch on GameObject.Modify ──────────
+
+        [UnityTest]
+        public IEnumerator GameObjectModify_PathPatchesPerGameObject_LengthMismatch_ThrowsArgumentException()
+        {
+            var go1 = new GameObject("First");
+            var go2 = new GameObject("Second");
+            var refs = new GameObjectRefList { new GameObjectRef(go1.GetEntityId()), new GameObjectRef(go2.GetEntityId()) };
+
+            // Only 1 entry for 2 GameObjectRefs — must throw.
+            var perGo = new List<List<PathPatch>?>
+            {
+                new List<PathPatch>
+                {
+                    new PathPatch { Path = "name", Value = SerializedMember.FromValue<string>(Reflector, "Solo") }
+                }
+            };
+
+            var ex = Assert.Throws<ArgumentException>(() =>
+                new Tool_GameObject().Modify(gameObjectRefs: refs, pathPatchesPerGameObject: perGo));
+            Assert.IsNotNull(ex);
+            Assert.AreEqual("pathPatchesPerGameObject", ex!.ParamName);
+
+            // Same for jsonPatchesPerGameObject — supply 1 patch for 2 refs.
+            var jsonPatches = new List<string?> { "{\"name\":\"Solo\"}" };
+            var ex2 = Assert.Throws<ArgumentException>(() =>
+                new Tool_GameObject().Modify(gameObjectRefs: refs, jsonPatchesPerGameObject: jsonPatches));
+            Assert.IsNotNull(ex2);
+            Assert.AreEqual("jsonPatchesPerGameObject", ex2!.ParamName);
+            yield return null;
+        }
     }
 }
 #endif

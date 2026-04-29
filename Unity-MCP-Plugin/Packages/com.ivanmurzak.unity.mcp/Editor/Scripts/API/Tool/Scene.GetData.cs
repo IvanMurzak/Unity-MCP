@@ -64,7 +64,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             var hasViewQuery = viewQuery != null;
             if (hasPaths && hasViewQuery)
                 throw new ArgumentException(
-                    $"'{"paths"}' and '{"viewQuery"}' are mutually exclusive — supply at most one.");
+                    $"'{nameof(paths)}' and '{nameof(viewQuery)}' are mutually exclusive — supply at most one.");
 
             return MainThread.Instance.Run(() =>
             {
@@ -95,7 +95,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         sceneData.Data = PathReadHelper.BuildPathReadAggregate(
                             reflector, rootGos, scene.name, paths!, logger);
                     else
-                        sceneData.Data = reflector.View(rootGos, viewQuery, logs: null, logger: logger);
+                        sceneData.Data = reflector.View(rootGos, viewQuery, logs: null, logger: logger)
+                            ?? new SerializedMember { name = scene.name, typeName = rootGos.GetType().FullName ?? string.Empty };
                 }
 
                 return sceneData;

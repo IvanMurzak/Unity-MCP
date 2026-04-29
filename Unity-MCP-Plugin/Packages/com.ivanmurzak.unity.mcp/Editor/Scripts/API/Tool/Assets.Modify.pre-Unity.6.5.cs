@@ -73,10 +73,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             var hasPathPatches = pathPatches != null && pathPatches.Count > 0;
             var hasJsonPatch = !string.IsNullOrWhiteSpace(jsonPatch);
             if (!hasContent && !hasPathPatches && !hasJsonPatch)
-                throw new ArgumentNullException(nameof(content),
-                    "At least one of 'content', 'pathPatches', or 'jsonPatch' is required. " +
-                    "Make sure the JSON input uses 'content' as the key wrapping the SerializedMember object, " +
-                    "or supply 'pathPatches' / 'jsonPatch' for path-scoped modifications.");
+                throw new ArgumentNullException(paramName: null,
+                    $"At least one of '{nameof(content)}', '{nameof(pathPatches)}', or '{nameof(jsonPatch)}' is required. " +
+                    $"Make sure the JSON input uses '{nameof(content)}' as the key wrapping the SerializedMember object, " +
+                    $"or supply '{nameof(pathPatches)}' / '{nameof(jsonPatch)}' for path-scoped modifications.");
 
             return MainThread.Instance.Run(() =>
             {
@@ -99,11 +99,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 if (hasPathPatches)
                 {
-                    foreach (var patch in pathPatches!)
+                    for (int i = 0; i < pathPatches!.Count; i++)
                     {
-                        if (string.IsNullOrEmpty(patch.Path))
+                        var patch = pathPatches[i];
+                        if (patch == null || string.IsNullOrEmpty(patch.Path))
                         {
-                            logs.Error($"PathPatch with empty path skipped.");
+                            logs.Error($"PathPatch[{i}] with empty path skipped.");
                             continue;
                         }
                         if (reflector.TryModifyAt(ref obj, patch.Path, patch.Value, logs: logs, logger: logger))

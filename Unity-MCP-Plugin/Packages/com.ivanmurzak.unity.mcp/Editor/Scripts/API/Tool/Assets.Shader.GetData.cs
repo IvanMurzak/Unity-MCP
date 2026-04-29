@@ -76,7 +76,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             var hasViewQuery = viewQuery != null;
             if (hasPaths && hasViewQuery)
                 throw new ArgumentException(
-                    $"'{"paths"}' and '{"viewQuery"}' are mutually exclusive — supply at most one.");
+                    $"'{nameof(paths)}' and '{nameof(viewQuery)}' are mutually exclusive — supply at most one.");
 
             var resolvedIncludeSourceCode = includeSourceCode ?? false;
             var options = new ShaderDataOptions
@@ -107,7 +107,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     if (hasPaths)
                         data.View = PathReadHelper.BuildPathReadAggregate(reflector, shader, shader.name, paths!, logger);
                     else
-                        data.View = reflector.View(shader, viewQuery, logs: null, logger: logger);
+                        data.View = reflector.View(shader, viewQuery, logs: null, logger: logger)
+                            ?? new SerializedMember { name = shader.name, typeName = shader.GetType().FullName ?? string.Empty };
                 }
 
                 return data;

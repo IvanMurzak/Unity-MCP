@@ -126,7 +126,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 }
                 else if (hasViewQuery)
                 {
-                    response.View = reflector.View(targetComponent, viewQuery, logs: null, logger: logger);
+                    response.View = reflector.View(targetComponent, viewQuery, logs: null, logger: logger)
+                        ?? new SerializedMember
+                        {
+                            name = targetComponent.GetType().GetTypeId(),
+                            typeName = targetComponent.GetType().FullName ?? string.Empty
+                        };
                 }
                 else if (includeFields || includeProperties)
                 {

@@ -72,10 +72,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             var hasPathPatches = pathPatches != null && pathPatches.Count > 0;
             var hasJsonPatch = !string.IsNullOrWhiteSpace(jsonPatch);
             if (!hasDiff && !hasPathPatches && !hasJsonPatch)
-                throw new ArgumentNullException(nameof(componentDiff),
-                    "At least one of 'componentDiff', 'pathPatches', or 'jsonPatch' is required. " +
-                    "Make sure the JSON input uses 'componentDiff' as the key (not 'fields' or 'props' directly), " +
-                    "or supply 'pathPatches' / 'jsonPatch' for path-scoped modifications.");
+                throw new ArgumentNullException(paramName: null,
+                    $"At least one of '{nameof(componentDiff)}', '{nameof(pathPatches)}', or '{nameof(jsonPatch)}' is required. " +
+                    $"Make sure the JSON input uses '{nameof(componentDiff)}' as the key (not 'fields' or 'props' directly), " +
+                    $"or supply '{nameof(pathPatches)}' / '{nameof(jsonPatch)}' for path-scoped modifications.");
 
             return MainThread.Instance.Run(() =>
             {
@@ -126,11 +126,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 // 2) Path-scoped patches — one Reflector.TryModifyAt per entry
                 if (hasPathPatches)
                 {
-                    foreach (var patch in pathPatches!)
+                    for (int i = 0; i < pathPatches!.Count; i++)
                     {
-                        if (string.IsNullOrEmpty(patch.Path))
+                        var patch = pathPatches[i];
+                        if (patch == null || string.IsNullOrEmpty(patch.Path))
                         {
-                            logs.Error($"PathPatch with empty path skipped.");
+                            logs.Error($"PathPatch[{i}] with empty path skipped.");
                             continue;
                         }
                         if (reflector.TryModifyAt(ref objToModify, patch.Path, patch.Value, logs: logs, logger: logger))

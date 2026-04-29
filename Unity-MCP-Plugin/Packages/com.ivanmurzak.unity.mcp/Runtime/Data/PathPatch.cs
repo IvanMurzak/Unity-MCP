@@ -30,11 +30,22 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
             "Required.")]
         public string Path { get; set; } = string.Empty;
 
+        /// <summary>
+        /// The new value to write at <see cref="Path"/>.
+        /// </summary>
+        /// <remarks>
+        /// Defaults to <c>new SerializedMember()</c> so JSON deserialisation of a payload that
+        /// omits <c>Value</c> still produces a non-null instance — but writing that default is
+        /// almost certainly a mistake (it would replace the target with an empty
+        /// <see cref="SerializedMember"/>). Always populate <see cref="Value"/> explicitly with
+        /// the standard envelope (<c>typeName</c> + <c>value</c> for primitives, or nested
+        /// <c>fields</c>/<c>props</c> for complex types) before passing the patch to a tool.
+        /// </remarks>
         [Description(
             "The new value to write at the path. " +
             "Use the standard SerializedMember envelope: 'typeName' + 'value' for primitives, " +
             "or nested 'fields'/'props' for complex types. " +
-            "Required.")]
+            "Required — omitting it overwrites the target with a default empty SerializedMember.")]
         public SerializedMember Value { get; set; } = new SerializedMember();
     }
 }

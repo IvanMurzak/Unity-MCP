@@ -75,21 +75,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             if (!hasDiffs && !hasPathPatches && !hasJsonPatches)
                 throw new ArgumentException(
-                    $"At least one of '{"gameObjectDiffs"}', '{"pathPatchesPerGameObject"}', or '{"jsonPatchesPerGameObject"}' is required.");
+                    $"At least one of '{nameof(gameObjectDiffs)}', '{nameof(pathPatchesPerGameObject)}', or '{nameof(jsonPatchesPerGameObject)}' is required.");
 
             if (hasDiffs && gameObjectDiffs!.Count != gameObjectRefs.Count)
-                throw new ArgumentException($"The number of {"gameObjectDiffs"} and {nameof(gameObjectRefs)} should be the same. " +
-                    $"{"gameObjectDiffs"}: {gameObjectDiffs.Count}, {nameof(gameObjectRefs)}: {gameObjectRefs.Count}", "gameObjectDiffs");
+                throw new ArgumentException($"The number of {nameof(gameObjectDiffs)} and {nameof(gameObjectRefs)} should be the same. " +
+                    $"{nameof(gameObjectDiffs)}: {gameObjectDiffs.Count}, {nameof(gameObjectRefs)}: {gameObjectRefs.Count}", nameof(gameObjectDiffs));
 
             if (hasPathPatches && pathPatchesPerGameObject!.Count != gameObjectRefs.Count)
-                throw new ArgumentException($"The number of {"pathPatchesPerGameObject"} and {nameof(gameObjectRefs)} should be the same. " +
-                    $"{"pathPatchesPerGameObject"}: {pathPatchesPerGameObject.Count}, {nameof(gameObjectRefs)}: {gameObjectRefs.Count}",
-                    "pathPatchesPerGameObject");
+                throw new ArgumentException($"The number of {nameof(pathPatchesPerGameObject)} and {nameof(gameObjectRefs)} should be the same. " +
+                    $"{nameof(pathPatchesPerGameObject)}: {pathPatchesPerGameObject.Count}, {nameof(gameObjectRefs)}: {gameObjectRefs.Count}",
+                    nameof(pathPatchesPerGameObject));
 
             if (hasJsonPatches && jsonPatchesPerGameObject!.Count != gameObjectRefs.Count)
-                throw new ArgumentException($"The number of {"jsonPatchesPerGameObject"} and {nameof(gameObjectRefs)} should be the same. " +
-                    $"{"jsonPatchesPerGameObject"}: {jsonPatchesPerGameObject.Count}, {nameof(gameObjectRefs)}: {gameObjectRefs.Count}",
-                    "jsonPatchesPerGameObject");
+                throw new ArgumentException($"The number of {nameof(jsonPatchesPerGameObject)} and {nameof(gameObjectRefs)} should be the same. " +
+                    $"{nameof(jsonPatchesPerGameObject)}: {jsonPatchesPerGameObject.Count}, {nameof(gameObjectRefs)}: {gameObjectRefs.Count}",
+                    nameof(jsonPatchesPerGameObject));
 
             return MainThread.Instance.Run(() =>
             {
@@ -144,19 +144,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         }
                     }
 
-                    // 3) Legacy full diff
+                    // 3) Legacy full diff. A null entry at this index means "no legacy diff for
+                    // this GameObject" — perfectly valid when path/json patches cover the change.
                     if (hasDiffs)
                     {
                         var diff = gameObjectDiffs![i];
-                        if (diff == null)
-                        {
-                            logs.Error($"'{"gameObjectDiffs"}[{i}]' is null. Each entry in the array must be a valid SerializedMember object.");
-                        }
-                        else
-                        {
-                            if (reflector.TryModify(ref objToModify, data: diff, logs: logs, logger: logger))
-                                anyChange = true;
-                        }
+                        if (diff != null
+                            && reflector.TryModify(ref objToModify, data: diff, logs: logs, logger: logger))
+                            anyChange = true;
                     }
 
                     if (anyChange)

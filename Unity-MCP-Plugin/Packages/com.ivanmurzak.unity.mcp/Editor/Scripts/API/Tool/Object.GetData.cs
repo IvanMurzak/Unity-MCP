@@ -65,7 +65,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             var hasViewQuery = viewQuery != null;
             if (hasPaths && hasViewQuery)
                 throw new ArgumentException(
-                    $"'{"paths"}' and '{"viewQuery"}' are mutually exclusive — supply at most one.");
+                    $"'{nameof(paths)}' and '{nameof(viewQuery)}' are mutually exclusive — supply at most one.");
 
             return MainThread.Instance.Run(() =>
             {
@@ -80,7 +80,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     return PathReadHelper.BuildPathReadAggregate(reflector, obj, obj.name, paths!, logger);
 
                 if (hasViewQuery)
-                    return reflector.View(obj, viewQuery, logs: null, logger: logger);
+                    return reflector.View(obj, viewQuery, logs: null, logger: logger)
+                        ?? new SerializedMember { name = obj.name, typeName = obj.GetType().FullName ?? string.Empty };
 
                 // Backwards-compatible default: full recursive serialization.
                 return reflector.Serialize(

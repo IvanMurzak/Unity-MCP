@@ -368,6 +368,133 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 $"Fields={fieldCount} Properties={propCount}");
             yield return null;
         }
+
+        [UnityTest]
+        public IEnumerator ComponentGet_PathsAndViewQueryTogether_ThrowsArgumentException()
+        {
+            var (go, _, _, _) = BuildSolarFixture();
+
+            var ex = Assert.Throws<ArgumentException>(() =>
+                new Tool_GameObject().GetComponent(
+                    gameObjectRef: new GameObjectRef(go.GetInstanceID()),
+                    componentRef: new ComponentRef { TypeName = typeof(SolarSystem).FullName! },
+                    paths: new List<string> { "globalOrbitSpeedMultiplier" },
+                    viewQuery: new ViewQuery { NamePattern = "orbit.*" }));
+
+            Assert.IsNotNull(ex);
+            StringAssert.Contains("mutually exclusive", ex!.Message);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator ComponentModify_PathPatches_WithNullElement_DoesNotThrow_AndLogsSkip()
+        {
+            var (go, solar, _, _) = BuildSolarFixture();
+
+            var response = new Tool_GameObject().ModifyComponent(
+                gameObjectRef: new GameObjectRef(go.GetInstanceID()),
+                componentRef: new ComponentRef { TypeName = typeof(SolarSystem).FullName! },
+                pathPatches: new List<PathPatch>
+                {
+                    null!,
+                    new PathPatch
+                    {
+                        Path = "globalOrbitSpeedMultiplier",
+                        Value = SerializedMember.FromValue<float>(Reflector, 11f)
+                    }
+                });
+
+            Assert.IsTrue(response.Success,
+                $"At least one of the patches succeeded; overall result should be Success. Logs: {string.Join(", ", response.Logs ?? Array.Empty<string>())}");
+            Assert.AreEqual(11f, solar.globalOrbitSpeedMultiplier);
+            var combined = string.Join("\n", response.Logs ?? Array.Empty<string>());
+            StringAssert.Contains("PathPatch[0]", combined);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator ComponentGet_PathsWithEmptyEntry_DoesNotSerializeWholeObject()
+        {
+            var (go, _, _, _) = BuildSolarFixture();
+
+            var response = new Tool_GameObject().GetComponent(
+                gameObjectRef: new GameObjectRef(go.GetInstanceID()),
+                componentRef: new ComponentRef { TypeName = typeof(SolarSystem).FullName! },
+                paths: new List<string> { "", "globalOrbitSpeedMultiplier" });
+
+            Assert.IsNotNull(response.View);
+            Assert.AreEqual(2, response.View!.fields?.Count);
+            var emptyEntry = response.View!.fields![0];
+            Assert.AreEqual(PathReadHelper.EmptyPathTypeName, emptyEntry.typeName);
+            var resolved = response.View!.fields![1];
+            Assert.AreEqual("globalOrbitSpeedMultiplier", resolved.name);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator ComponentModify_AllThreeSurfaces_ApplyInDocumentedOrder()
+        {
+            var (go, solar, _, _) = BuildSolarFixture();
+
+            var diff = SerializedMember.FromValue(
+                    reflector: Reflector,
+                    name: null,
+                    type: typeof(SolarSystem),
+                    value: new ComponentRef { TypeName = typeof(SolarSystem).FullName! })
+                .AddField(SerializedMember.FromValue(
+                    reflector: Reflector,
+                    name: "globalSizeMultiplier",
+                    type: typeof(float),
+                    value: 99f));
+
+            var response = new Tool_GameObject().ModifyComponent(
+                gameObjectRef: new GameObjectRef(go.GetInstanceID()),
+                componentRef: new ComponentRef { TypeName = typeof(SolarSystem).FullName! },
+                componentDiff: diff,
+                pathPatches: new List<PathPatch>
+                {
+                    new PathPatch
+                    {
+                        Path = "planets/[0]/orbitRadius",
+                        Value = SerializedMember.FromValue<float>(Reflector, 77f)
+                    }
+                },
+                jsonPatch: "{\"globalOrbitSpeedMultiplier\": 33.0}");
+
+            Assert.IsTrue(response.Success, $"Combined modify should succeed. Logs: {string.Join(", ", response.Logs ?? Array.Empty<string>())}");
+            Assert.AreEqual(33f, solar.globalOrbitSpeedMultiplier);
+            Assert.AreEqual(77f, solar.planets[0].orbitRadius);
+            Assert.AreEqual(99f, solar.globalSizeMultiplier);
+            yield return null;
+        }
+
+        [UnityTest]
+        public IEnumerator GameObjectModify_PathPatchesPerGameObject_LengthMismatch_ThrowsArgumentException()
+        {
+            var go1 = new GameObject("First");
+            var go2 = new GameObject("Second");
+            var refs = new GameObjectRefList { new GameObjectRef(go1.GetInstanceID()), new GameObjectRef(go2.GetInstanceID()) };
+
+            var perGo = new List<List<PathPatch>?>
+            {
+                new List<PathPatch>
+                {
+                    new PathPatch { Path = "name", Value = SerializedMember.FromValue<string>(Reflector, "Solo") }
+                }
+            };
+
+            var ex = Assert.Throws<ArgumentException>(() =>
+                new Tool_GameObject().Modify(gameObjectRefs: refs, pathPatchesPerGameObject: perGo));
+            Assert.IsNotNull(ex);
+            Assert.AreEqual("pathPatchesPerGameObject", ex!.ParamName);
+
+            var jsonPatches = new List<string?> { "{\"name\":\"Solo\"}" };
+            var ex2 = Assert.Throws<ArgumentException>(() =>
+                new Tool_GameObject().Modify(gameObjectRefs: refs, jsonPatchesPerGameObject: jsonPatches));
+            Assert.IsNotNull(ex2);
+            Assert.AreEqual("jsonPatchesPerGameObject", ex2!.ParamName);
+            yield return null;
+        }
     }
 }
 #endif
