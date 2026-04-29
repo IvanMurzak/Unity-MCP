@@ -12,6 +12,7 @@
 using System;
 using System.Net.Http;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using com.IvanMurzak.Unity.MCP.Editor.UI;
 using Extensions.Unity.PlayerPrefsEx;
@@ -33,8 +34,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
     public static class UpdateChecker
     {
         private const string PackageId = "com.ivanmurzak.unity.mcp";
+        // package.openupm.com is the npm-style metadata registry (machine-readable JSON);
+        // openupm.com is the human-readable package page the popup links users to.
         private const string OpenUpmRegistryUrl = "https://package.openupm.com";
+        private const string OpenUpmPackageMetadataUrl = OpenUpmRegistryUrl + "/" + PackageId;
         private const string OpenUpmPackageUrl = "https://openupm.com/packages/" + PackageId + "/";
+
+        // Mirrors the prior tag validation: accepts only "N.N" or "N.N.N" prefixes so a
+        // non-numeric `dist-tags.latest` cannot leak into the popup as version "0".
+        private static readonly Regex VersionPattern = new(@"^\d+\.\d+(\.\d+)?", RegexOptions.Compiled);
+
+        // Hoisted to a single static instance to avoid socket exhaustion (TIME_WAIT) under
+        // repeated update checks. Same pattern used by NuGetDownloader and DeviceAuthService
+        // elsewhere in this package. The 10s timeout covers OpenUPM's slowest realistic responses.
+        private static readonly HttpClient httpClient = CreateHttpClient();
 
         private static PlayerPrefsBool DoNotShowAgain = new("Unity-MCP.UpdateChecker.DoNotShowAgain");
         private static PlayerPrefsString NextCheckTime = new("Unity-MCP.UpdateChecker.NextCheckTime");
@@ -43,6 +56,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         private static bool isChecking = false;
         private static string? latestVersion = null;
         private static ILogger? logger = null;
+
+        private static HttpClient CreateHttpClient()
+        {
+            var client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+            client.DefaultRequestHeaders.Add("User-Agent", "AI-Game-Developer-UpdateChecker");
+            return client;
+        }
 
         /// <summary>
         /// Gets whether the user has chosen to never show the update popup again.
@@ -213,13 +233,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// </remarks>
         private static async Task<string?> FetchLatestVersionAsync()
         {
-            using var client = new HttpClient();
-            client.DefaultRequestHeaders.Add("User-Agent", "AI-Game-Developer-UpdateChecker");
-            client.Timeout = TimeSpan.FromSeconds(10);
-
             try
             {
-                var json = await client.GetStringAsync($"{OpenUpmRegistryUrl}/{PackageId}");
+                var json = await httpClient.GetStringAsync(OpenUpmPackageMetadataUrl);
                 return ParseLatestVersionFromJson(json);
             }
             catch (HttpRequestException ex)
@@ -269,7 +285,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                     return null;
 
                 var version = latest.GetString();
-                return string.IsNullOrEmpty(version) ? null : version;
+                if (string.IsNullOrEmpty(version))
+                    return null;
+
+                // Defensive: only accept numeric semver-shaped strings. Without this guard
+                // CompareVersions would silently treat non-numeric parts as 0, producing a
+                // misleading "version" in the popup if the registry ever returns garbage.
+                return VersionPattern.IsMatch(version) ? version : null;
             }
             catch (JsonException)
             {

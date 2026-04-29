@@ -219,6 +219,41 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNull(result);
         }
 
+        [Test]
+        public void ParseLatestVersionFromJson_DistTagsLatestObject_ReturnsNull()
+        {
+            // dist-tags.latest is an object — must NOT crash, must return null.
+            var json = @"{""dist-tags"":{""latest"":{""nested"":""1.0.0""}}}";
+
+            var result = UpdateChecker.ParseLatestVersionFromJson(json);
+
+            Assert.IsNull(result);
+        }
+
+        [Test]
+        public void ParseLatestVersionFromJson_DistTagsLatestArray_ReturnsNull()
+        {
+            // dist-tags.latest is an array — must NOT crash, must return null.
+            var json = @"{""dist-tags"":{""latest"":[""1.0.0"",""1.1.0""]}}";
+
+            var result = UpdateChecker.ParseLatestVersionFromJson(json);
+
+            Assert.IsNull(result);
+        }
+
+        [Test]
+        public void ParseLatestVersionFromJson_DistTagsLatestNonNumeric_ReturnsNull()
+        {
+            // Defensive: a non-numeric `latest` string would otherwise leak into the popup
+            // as version "0" because CompareVersions treats non-numeric parts as 0. The
+            // parser must reject it instead.
+            var json = @"{""dist-tags"":{""latest"":""not-a-version""}}";
+
+            var result = UpdateChecker.ParseLatestVersionFromJson(json);
+
+            Assert.IsNull(result);
+        }
+
         #endregion
 
         #region Preference Management Tests
