@@ -55,6 +55,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // 6.1.0 drops the unused ModelContextProtocol dep; earlier versions drag in a
             // v10 BCL stack via MCP.Core.1.2.0 that collides with our v8 pins in Unity.
             new NuGetPackage("com.IvanMurzak.McpPlugin",                              "6.1.0",  includeInBuild: true),
+            // Pinned to 5.1.0 explicitly so the resolver doesn't fall back to
+            // McpPlugin 6.1.0's transitive 5.0.0 nuspec. The atomic API surface
+            // (TryModifyAt, TryPatch, TryReadAt, View, Grep) introduced in 5.1.0
+            // is exercised by the EditMode tests under
+            // Tests/Editor/AtomicApi/, which compile-fail against 5.0.0.
+            new NuGetPackage("com.IvanMurzak.ReflectorNet",                           "5.1.0",  includeInBuild: true),
             new NuGetPackage("System.Text.Json",                                      "8.0.5",  includeInBuild: true),
             new NuGetPackage("Microsoft.AspNetCore.SignalR.Client",                   "8.0.15", includeInBuild: true),
             new NuGetPackage("Microsoft.AspNetCore.SignalR.Protocols.Json",           "8.0.15", includeInBuild: true),
