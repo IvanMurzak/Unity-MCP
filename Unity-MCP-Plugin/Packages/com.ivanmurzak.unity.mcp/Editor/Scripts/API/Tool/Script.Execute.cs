@@ -146,7 +146,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             sb.AppendLine("using System.Collections.Generic;");
             sb.AppendLine("using System.Linq;");
             sb.AppendLine("using UnityEngine;");
-            sb.AppendLine("using UnityEngine.UI;");
+            // UnityEngine.UI ships in com.unity.ugui — only emit the using when its assembly
+            // is loaded; otherwise Roslyn fails with CS0234 when the package isn't installed.
+            if (IsAssemblyLoaded("UnityEngine.UI"))
+                sb.AppendLine("using UnityEngine.UI;");
             sb.AppendLine("using UnityEngine.SceneManagement;");
             sb.AppendLine("using com.IvanMurzak.Unity.MCP.Runtime.Data;");
             sb.AppendLine("using com.IvanMurzak.Unity.MCP.Runtime.Extensions;");
@@ -172,6 +175,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             return sb.ToString();
         }
+
+        static bool IsAssemblyLoaded(string assemblyName)
+            => AssemblyUtils.AllAssemblies.Any(a =>
+                string.Equals(a.GetName().Name, assemblyName, StringComparison.Ordinal));
 
         static bool ExecuteCSharpCode(
             string className,
