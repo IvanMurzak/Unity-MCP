@@ -85,6 +85,12 @@ export function parseTimeoutSeconds(raw: string | undefined): number | null {
  * is alive and matches the enumerated process for this project (handles
  * stale lockfiles); otherwise uses the enumerated PID.
  *
+ * Symlink/realpath handling: `resolveCloseProjectPath` canonicalises via
+ * `realpathSync` while `findUnityProcess` only `path.resolve`s the cmdline
+ * `-projectPath` argument. If Unity was launched via a symlink, the first
+ * lookup misses. We retry against the un-canonicalised form so a symlinked
+ * launch path doesn't silently degrade close to a no-op.
+ *
  * Returns `null` when no live editor matches the project. Exported for tests.
  */
 export function resolveEditorPid(projectPath: string, platform: SupportedPlatform = nodePlatform() as SupportedPlatform): number | null {
@@ -92,11 +98,29 @@ export function resolveEditorPid(projectPath: string, platform: SupportedPlatfor
   // Enumerate Unity processes once. `findUnityProcess` shells out (3s timeout
   // on Windows via PowerShell+CIM, 5s on POSIX via `ps`), so calling it twice
   // on the stale-lockfile path used to roughly double close latency.
-  const proc = findUnityProcess(projectPath);
+  let proc = findUnityProcess(projectPath);
+
+  // Symlink fallback: if the canonical realpath form found no process, retry
+  // with `path.resolve` only (no realpath collapse) — that matches what
+  // `findUnityProcess` derives from the cmdline `-projectPath` argument.
+  if (!proc) {
+    const resolvedNoRealpath = path.resolve(projectPath);
+    if (resolvedNoRealpath !== projectPath) {
+      proc = findUnityProcess(resolvedNoRealpath);
+    }
+  }
 
   if (lockPid !== null && isProcessAlive(lockPid, platform)) {
     if (proc && proc.pid === lockPid) {
       verbose(`Lockfile PID ${lockPid} confirmed via process enumeration`);
+      return lockPid;
+    }
+    // Lockfile alive but no matching enumerated process — the lockfile may
+    // still be authoritative if the asymmetry is purely realpath/symlink
+    // related (process listed under symlink path while we queried by realpath).
+    // Trust the live lockfile PID in that case rather than discarding it.
+    if (!proc) {
+      verbose(`Lockfile PID ${lockPid} alive but no enumerated match — using lockfile PID (likely symlink/path mismatch)`);
       return lockPid;
     }
     verbose(`Lockfile PID ${lockPid} did not match enumerated Unity process for project — treating as stale`);
@@ -151,7 +175,7 @@ export const closeCommand = new Command('close')
     // where PIDs cycle aggressively). We accept the residual risk — the
     // lockfile cross-check above already narrows it, holding a lock across
     // a spawned Editor's lifetime is impractical, and the signals we send
-    // (SIGTERM / WM_CLOSE) are politest-effort, not destructive.
+    // (SIGTERM / WM_CLOSE) are best-effort, not destructive.
     const spinner = ui.startSpinner(`Sending polite-quit to PID ${pid}...`);
     const sent = sendGracefulShutdown(pid, platform);
     if (!sent) {

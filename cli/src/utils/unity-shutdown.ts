@@ -178,6 +178,15 @@ export function sendGracefulShutdown(pid: number, platform: SupportedPlatform = 
     process.kill(pid, sig);
     return true;
   } catch (err) {
+    // Race: the editor can exit between PID resolution and signal delivery.
+    // POSIX surfaces this as ESRCH; Windows `taskkill` exits non-zero with
+    // "process … not found". The desired end state (process gone) is already
+    // reached, so we re-check liveness and report success when the PID is
+    // truly absent. This preserves close's idempotency contract.
+    if (!isProcessAlive(pid, platform)) {
+      verbose(`Graceful shutdown: PID ${pid} already gone — treating as success`);
+      return true;
+    }
     verbose(`Graceful shutdown failed: ${err instanceof Error ? err.message : String(err)}`);
     return false;
   }
@@ -203,6 +212,12 @@ export function sendForceKill(pid: number, platform: SupportedPlatform = nodePla
     process.kill(pid, sig);
     return true;
   } catch (err) {
+    // Same race as sendGracefulShutdown — the polite-quit path may have
+    // already won between waitForExit's last poll and our SIGKILL call.
+    if (!isProcessAlive(pid, platform)) {
+      verbose(`Force kill: PID ${pid} already gone — treating as success`);
+      return true;
+    }
     verbose(`Force kill failed: ${err instanceof Error ? err.message : String(err)}`);
     return false;
   }

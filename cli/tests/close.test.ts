@@ -22,13 +22,21 @@ const CLI_PATH = path.resolve(__dirname, '..', 'bin', 'unity-mcp-cli.js');
 
 interface RunCliOptions {
   cwd?: string;
+  /**
+   * `execFileSync` timeout in ms. Default 15s is fine for the unit-test
+   * paths (refusals, no-op exits). The gated live-editor test passes a
+   * larger value because Unity's polite-quit can legitimately take longer
+   * than 15s and we don't want execFileSync to kill the test runner before
+   * the CLI's own --timeout has had a chance to elapse.
+   */
+  timeoutMs?: number;
 }
 
 function runCli(args: string[], opts: RunCliOptions = {}): { stdout: string; exitCode: number } {
   try {
     const stdout = execFileSync('node', [CLI_PATH, ...args], {
       encoding: 'utf-8',
-      timeout: 15000,
+      timeout: opts.timeoutMs ?? 15000,
       cwd: opts.cwd,
     });
     return { stdout, exitCode: 0 };
@@ -308,10 +316,10 @@ describe('isProcessAlive', () => {
     expect(isProcessAlive(process.pid)).toBe(true);
   });
 
-  it('returns false for a sentinel non-existent pid', () => {
-    // PID 0 is special on POSIX; using a very large number that is unlikely
-    // to be assigned. The helper rejects non-positive inputs, so 0 returns
-    // false directly without touching the OS.
+  it('returns false for PID 0 without touching the OS', () => {
+    // The helper rejects non-positive inputs at the guard, so PID 0 returns
+    // false directly without an OS syscall (which would otherwise be
+    // platform-dependent — POSIX treats 0 as the caller's process group).
     expect(isProcessAlive(0)).toBe(false);
   });
 
@@ -362,7 +370,13 @@ liveDescribe('close command — live editor (UMCP_LIVE=1)', () => {
     if (!liveProject) {
       throw new Error('UMCP_LIVE=1 requires UMCP_LIVE_PROJECT to be set to a Unity project path with a live editor');
     }
-    const { exitCode, stdout } = runCli(['close', liveProject, '--timeout', '60']);
+    // execFileSync timeout must exceed the CLI's own --timeout (60s) plus a
+    // generous buffer for force-kill fallback and process reaping. 80s here
+    // pairs with the 90s Vitest test-level timeout below.
+    const { exitCode, stdout } = runCli(
+      ['close', liveProject, '--timeout', '60'],
+      { timeoutMs: 80_000 },
+    );
     expect(exitCode).toBe(0);
     // The whole point of this gated test is to validate the graceful-close
     // path against a real Editor, so we assert the close-path output
