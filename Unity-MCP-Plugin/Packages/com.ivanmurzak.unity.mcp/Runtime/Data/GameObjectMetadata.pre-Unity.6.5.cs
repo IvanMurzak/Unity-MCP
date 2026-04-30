@@ -15,8 +15,9 @@ using System.Text;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEngine;
+using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Plugin;
 
-namespace com.IvanMurzak.Unity.MCP.Runtime.Data
+namespace Unity.MCP.Data
 {
     public class GameObjectMetadata
     {
@@ -29,7 +30,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Data
         public bool activeInHierarchy;
         public List<GameObjectMetadata> children = new();
 
-        public string Print(int limit = McpPlugin.Common.Consts.MCP.Plugin.LinesLimit)
+        public string Print(int limit = LinesLimit)
         {
             var sb = new StringBuilder();
 

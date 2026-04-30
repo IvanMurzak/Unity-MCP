@@ -44,14 +44,14 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "gameObjectRef": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef"
+      "$ref": "#/$defs/Unity.MCP.Data.GameObjectRef"
     }
   },
   "$defs": {
     "System.Type": {
       "type": "string"
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
+    "Unity.MCP.Data.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {

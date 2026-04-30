@@ -9,7 +9,7 @@
 */
 
 #nullable enable
-using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using Unity.MCP.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEngine;
 

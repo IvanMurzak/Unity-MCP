@@ -60,20 +60,20 @@ Any unknown or invalid fields and properties will be reported in the response. |
   "type": "object",
   "properties": {
     "objectRef": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ObjectRef"
+      "$ref": "#/$defs/Unity.MCP.Data.ObjectRef"
     },
     "objectDiff": {
       "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.SerializedMember"
     },
     "pathPatches": {
-      "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.PathPatch>"
+      "$ref": "#/$defs/System.Collections.Generic.List<Unity.MCP.Data.PathPatch>"
     },
     "jsonPatch": {
       "type": "string"
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ObjectRef": {
+    "Unity.MCP.Data.ObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -128,7 +128,7 @@ Any unknown or invalid fields and properties will be reported in the response. |
       ],
       "additionalProperties": false
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.PathPatch": {
+    "Unity.MCP.Data.PathPatch": {
       "type": "object",
       "properties": {
         "Path": {
@@ -141,10 +141,10 @@ Any unknown or invalid fields and properties will be reported in the response. |
         }
       }
     },
-    "System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.PathPatch>": {
+    "System.Collections.Generic.List<Unity.MCP.Data.PathPatch>": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.PathPatch"
+        "$ref": "#/$defs/Unity.MCP.Data.PathPatch"
       }
     }
   },
@@ -167,7 +167,7 @@ Any unknown or invalid fields and properties will be reported in the response. |
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ObjectRef": {
+    "Unity.MCP.Data.ObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -236,7 +236,7 @@ Any unknown or invalid fields and properties will be reported in the response. |
           "description": "Whether the modification was successful."
         },
         "Reference": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ObjectRef",
+          "$ref": "#/$defs/Unity.MCP.Data.ObjectRef",
           "description": "Reference to the modified object."
         },
         "Data": {

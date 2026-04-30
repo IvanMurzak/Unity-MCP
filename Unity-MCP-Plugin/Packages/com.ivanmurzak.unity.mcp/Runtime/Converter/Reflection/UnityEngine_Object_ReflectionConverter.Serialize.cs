@@ -13,7 +13,7 @@ using System;
 using System.Reflection;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
-using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using Unity.MCP.Data;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace com.IvanMurzak.Unity.MCP.Reflection.Converter

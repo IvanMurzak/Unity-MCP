@@ -17,7 +17,7 @@ using System.Text.Json;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
-using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using Unity.MCP.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using Microsoft.Extensions.Logging;
 using UnityEngine;

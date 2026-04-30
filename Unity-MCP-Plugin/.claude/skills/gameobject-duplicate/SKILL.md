@@ -44,11 +44,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "gameObjectRefs": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRefList"
+      "$ref": "#/$defs/Unity.MCP.Data.GameObjectRefList"
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
+    "Unity.MCP.Data.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -84,10 +84,10 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     "System.Type": {
       "type": "string"
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRefList": {
+    "Unity.MCP.Data.GameObjectRefList": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef",
+        "$ref": "#/$defs/Unity.MCP.Data.GameObjectRef",
         "description": "Find GameObject in opened Prefab or in the active Scene."
       },
       "description": "Array of GameObjects in opened Prefab or in the active Scene."
@@ -108,11 +108,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef>"
+      "$ref": "#/$defs/System.Collections.Generic.List<Unity.MCP.Data.GameObjectRef>"
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
+    "Unity.MCP.Data.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -148,10 +148,10 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     "System.Type": {
       "type": "string"
     },
-    "System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef>": {
+    "System.Collections.Generic.List<Unity.MCP.Data.GameObjectRef>": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef",
+        "$ref": "#/$defs/Unity.MCP.Data.GameObjectRef",
         "description": "Find GameObject in opened Prefab or in the active Scene."
       }
     }

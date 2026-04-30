@@ -16,7 +16,7 @@ using System.Linq;
 using System.Text.Json.Serialization;
 using com.IvanMurzak.ReflectorNet;
 
-namespace com.IvanMurzak.Unity.MCP.Runtime.Data
+namespace Unity.MCP.Data
 {
     [Description("Component reference. " +
         "Used to find a Component at GameObject.")]

@@ -60,7 +60,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "assetRef": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef"
+      "$ref": "#/$defs/Unity.MCP.Data.AssetObjectRef"
     },
     "includeMessages": {
       "$ref": "#/$defs/System.Boolean"
@@ -85,7 +85,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     "System.Type": {
       "type": "string"
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef": {
+    "Unity.MCP.Data.AssetObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -160,7 +160,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef": {
+    "Unity.MCP.Data.AssetObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -373,7 +373,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "type": "object",
       "properties": {
         "Reference": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef",
+          "$ref": "#/$defs/Unity.MCP.Data.AssetObjectRef",
           "description": "Reference to the shader asset for future operations."
         },
         "Name": {

@@ -46,7 +46,7 @@ These apply across both C# sub-projects:
 - MCP tools MUST return structured types (data models, `List<T>`, `void`, or `Task`) — avoid raw string returns
 - All Unity API calls must use `MainThread.Instance.Run(() => ...)` or `RunAsync()`
 - Tool/prompt names use **kebab-case** with category prefix (e.g., `gameobject-create`, `assets-find`)
-- Namespace pattern: `com.IvanMurzak.Unity.MCP.[Tier].[Component]`
+- Namespace pattern: `com.IvanMurzak.Unity.MCP.[Tier].[Component]` for all code, except AI-facing data models exposed in JSON Schemas (`Runtime/Data/*` classes) which use the short `Unity.MCP.Data` namespace
 - **No Reflection for private access** — C# Reflection (`System.Reflection`) MUST NOT be used to access private, internal, or non-public members. Exception: `ReflectorNet` library usage is allowed.
 
 ## Project Constitution

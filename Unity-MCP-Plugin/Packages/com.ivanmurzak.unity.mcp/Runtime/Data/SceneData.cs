@@ -16,7 +16,7 @@ using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
 using Microsoft.Extensions.Logging;
 
-namespace com.IvanMurzak.Unity.MCP.Runtime.Data
+namespace Unity.MCP.Data
 {
     public class SceneData : SceneDataShallow
     {

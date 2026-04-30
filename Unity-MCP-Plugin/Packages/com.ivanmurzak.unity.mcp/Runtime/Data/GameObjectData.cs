@@ -17,7 +17,7 @@ using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEngine;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
-namespace com.IvanMurzak.Unity.MCP.Runtime.Data
+namespace Unity.MCP.Data
 {
     public class GameObjectData
     {
