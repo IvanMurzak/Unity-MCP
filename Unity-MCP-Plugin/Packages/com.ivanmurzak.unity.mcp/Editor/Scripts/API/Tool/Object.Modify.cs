@@ -16,7 +16,7 @@ using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
-using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using AIGD;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.Extensions.Logging;
@@ -134,27 +134,5 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             });
         }
 
-        public class ModifyObjectResponse
-        {
-            [Description("Whether the modification was successful.")]
-            public bool Success { get; set; } = false;
-
-            [Description("Reference to the modified object.")]
-            public ObjectRef? Reference { get; set; }
-
-            [Description("Updated object data after modification.")]
-            public SerializedMember? Data { get; set; }
-
-            [Description("Log of modifications made and any warnings/errors encountered.")]
-            public string[]? Logs { get; set; }
-
-            public ModifyObjectResponse(bool success, Logs logs)
-            {
-                Success = success;
-                Logs = logs
-                    .Select(log => log.ToString())
-                    .ToArray();
-            }
-        }
     }
 }

@@ -14,7 +14,7 @@ using com.IvanMurzak.ReflectorNet.Converter;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.Unity.MCP.Editor.Tests.Utils;
 using com.IvanMurzak.Unity.MCP.Reflection.Converter;
-using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using AIGD;
 using NUnit.Framework;
 using UnityEngine;
 

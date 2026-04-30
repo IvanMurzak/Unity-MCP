@@ -60,7 +60,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "assetRef": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef"
+      "$ref": "#/$defs/AIGD.AssetObjectRef"
     },
     "includeMessages": {
       "$ref": "#/$defs/System.Boolean"
@@ -85,7 +85,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     "System.Type": {
       "type": "string"
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef": {
+    "AIGD.AssetObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -156,11 +156,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets_Shader+ShaderData"
+      "$ref": "#/$defs/AIGD.ShaderData"
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef": {
+    "AIGD.AssetObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -188,13 +188,13 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     "System.Type": {
       "type": "string"
     },
-    "System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets_Shader+ShaderMessageData>": {
+    "System.Collections.Generic.List<AIGD.ShaderMessageData>": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets_Shader+ShaderMessageData"
+        "$ref": "#/$defs/AIGD.ShaderMessageData"
       }
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets_Shader+ShaderMessageData": {
+    "AIGD.ShaderMessageData": {
       "type": "object",
       "properties": {
         "Message": {
@@ -218,13 +218,13 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "Line"
       ]
     },
-    "System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets_Shader+ShaderPropertyData>": {
+    "System.Collections.Generic.List<AIGD.ShaderPropertyData>": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets_Shader+ShaderPropertyData"
+        "$ref": "#/$defs/AIGD.ShaderPropertyData"
       }
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets_Shader+ShaderPropertyData": {
+    "AIGD.ShaderPropertyData": {
       "type": "object",
       "properties": {
         "Name": {
@@ -274,13 +274,13 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "type": "string"
       }
     },
-    "System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets_Shader+SubshaderData>": {
+    "System.Collections.Generic.List<AIGD.SubshaderData>": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets_Shader+SubshaderData"
+        "$ref": "#/$defs/AIGD.SubshaderData"
       }
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets_Shader+SubshaderData": {
+    "AIGD.SubshaderData": {
       "type": "object",
       "properties": {
         "Index": {
@@ -292,7 +292,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "description": "Number of passes in this subshader."
         },
         "Passes": {
-          "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets_Shader+PassData>",
+          "$ref": "#/$defs/System.Collections.Generic.List<AIGD.PassData>",
           "description": "List of passes in this subshader. Null if no passes."
         }
       },
@@ -301,13 +301,13 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "PassCount"
       ]
     },
-    "System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets_Shader+PassData>": {
+    "System.Collections.Generic.List<AIGD.PassData>": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets_Shader+PassData"
+        "$ref": "#/$defs/AIGD.PassData"
       }
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets_Shader+PassData": {
+    "AIGD.PassData": {
       "type": "object",
       "properties": {
         "Index": {
@@ -369,11 +369,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.SerializedMember"
       }
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets_Shader+ShaderData": {
+    "AIGD.ShaderData": {
       "type": "object",
       "properties": {
         "Reference": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef",
+          "$ref": "#/$defs/AIGD.AssetObjectRef",
           "description": "Reference to the shader asset for future operations."
         },
         "Name": {
@@ -405,15 +405,15 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "description": "The RenderType tag value from the first pass, if set."
         },
         "Messages": {
-          "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets_Shader+ShaderMessageData>",
+          "$ref": "#/$defs/System.Collections.Generic.List<AIGD.ShaderMessageData>",
           "description": "Compilation messages including errors and warnings. Null if no messages."
         },
         "Properties": {
-          "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets_Shader+ShaderPropertyData>",
+          "$ref": "#/$defs/System.Collections.Generic.List<AIGD.ShaderPropertyData>",
           "description": "List of shader properties (uniforms). Null if the shader has no properties."
         },
         "Subshaders": {
-          "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets_Shader+SubshaderData>",
+          "$ref": "#/$defs/System.Collections.Generic.List<AIGD.SubshaderData>",
           "description": "List of subshaders with their passes. Null if shader data is unavailable."
         },
         "View": {

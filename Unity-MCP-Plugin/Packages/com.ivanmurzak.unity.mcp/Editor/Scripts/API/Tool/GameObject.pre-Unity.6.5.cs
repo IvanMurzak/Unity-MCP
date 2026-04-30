@@ -15,7 +15,7 @@ using System.Collections.Generic;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet;
-using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using AIGD;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.Extensions.Logging;
 

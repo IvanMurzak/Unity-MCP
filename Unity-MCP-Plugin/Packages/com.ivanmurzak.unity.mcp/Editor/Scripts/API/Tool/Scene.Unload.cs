@@ -15,7 +15,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
-using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using AIGD;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.Extensions.Logging;
@@ -74,12 +74,5 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             });
         }
 
-        public class UnloadSceneResult
-        {
-            [Description("Name of the unloaded scene.")]
-            public string? Name { get; set; }
-            [Description("Reference to the unloaded scene asset.")]
-            public AssetObjectRef? AssetObjectRef { get; set; } = null!;
-        }
     }
 }

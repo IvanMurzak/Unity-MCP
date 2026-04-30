@@ -15,7 +15,7 @@ using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
-using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using AIGD;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
@@ -73,17 +73,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             });
         }
 
-        public class DestroyGameObjectResult
-        {
-            [Description("Name of the destroyed GameObject.")]
-            public string? DestroyedName { get; set; }
-
-            [Description("Hierarchy path of the destroyed GameObject.")]
-            public string? DestroyedPath { get; set; }
-
-            [Description("Instance ID of the destroyed GameObject.")]
-            public UnityEngine.EntityId DestroyedInstanceId { get; set; }
-        }
     }
 }
 #endif

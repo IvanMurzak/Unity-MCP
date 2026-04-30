@@ -47,7 +47,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "using com.IvanMurzak.McpPlugin;\n" +
             "using com.IvanMurzak.ReflectorNet.Utils;\n" +
             "using com.IvanMurzak.Unity.MCP.Editor.Utils;\n" +
-            "using com.IvanMurzak.Unity.MCP.Runtime.Data;\n" +
+            "using AIGD;\n" +
             "using UnityEditor;\n" +
             "using UnityEngine;\n" +
             "\n" +
@@ -142,30 +142,46 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "\n" +
             "### Return structured data with a typed response\n" +
             "Prefer returning a structured data model over a plain string so the AI can parse individual fields. " +
-            "Declare a nested class with `[Description]` on each property and use `ResponseCallValueTool<T>` as return type:\n" +
+            "Data models for MCP tools MUST be declared as TOP-LEVEL types in the `AIGD` namespace - " +
+            "never nested inside the tool class. Place each data model in its own `.cs` file (one type per file) " +
+            "and use `ResponseCallValueTool<T>` as the return type. The flat `AIGD` namespace keeps the " +
+            "auto-generated JSON Schema `$defs` keys short and intuitive for AI agents.\n" +
             "```csharp\n" +
-            "// Return type:\n" +
-            "public ResponseCallValueTool<MyResult> MyTool(...)\n" +
+            "// Tool file (Tool/MyTool.cs) - references the data model from AIGD:\n" +
+            "using AIGD;\n" +
+            "\n" +
+            "namespace com.IvanMurzak.Unity.MCP.Editor.API\n" +
             "{\n" +
-            "    return ResponseCallValueTool<MyResult>.Success(new MyResult\n" +
+            "    [McpPluginToolType]\n" +
+            "    public partial class Tool_Sample\n" +
             "    {\n" +
-            "        Name = go.name,\n" +
-            "        InstanceID = go.GetInstanceID()\n" +
-            "    }).SetRequestID(requestId);\n" +
+            "        public ResponseCallValueTool<MyResult> MyTool(...)\n" +
+            "        {\n" +
+            "            return ResponseCallValueTool<MyResult>.Success(new MyResult\n" +
+            "            {\n" +
+            "                Name = go.name,\n" +
+            "                InstanceID = go.GetInstanceID()\n" +
+            "            }).SetRequestID(requestId);\n" +
+            "        }\n" +
+            "    }\n" +
             "}\n" +
             "\n" +
-            "// Data model:\n" +
-            "public class MyResult\n" +
+            "// Data model (Tool/Data/MyResult.cs) - top-level, in AIGD namespace, NOT nested:\n" +
+            "namespace AIGD\n" +
             "{\n" +
-            "    [Description(\"Name of the GameObject.\")]\n" +
-            "    public string? Name { get; set; }\n" +
+            "    public class MyResult\n" +
+            "    {\n" +
+            "        [Description(\"Name of the GameObject.\")]\n" +
+            "        public string? Name { get; set; }\n" +
             "\n" +
-            "    [Description(\"Unity instance ID of the GameObject.\")]\n" +
-            "    public int InstanceID { get; set; }\n" +
+            "        [Description(\"Unity instance ID of the GameObject.\")]\n" +
+            "        public int InstanceID { get; set; }\n" +
+            "    }\n" +
             "}\n" +
             "```\n" +
             "For simpler cases that do not need async/processing, you may return the model directly " +
-            "(without `ResponseCallValueTool<T>`) and Unity-MCP will wrap it automatically.\n" +
+            "(without `ResponseCallValueTool<T>`) and Unity-MCP will wrap it automatically. " +
+            "The data model itself MUST still live as a top-level type in the `AIGD` namespace.\n" +
             "\n" +
             "### Validate inputs early and throw clearly\n" +
             "Always validate required parameters at the top of the method before any Unity API calls. " +

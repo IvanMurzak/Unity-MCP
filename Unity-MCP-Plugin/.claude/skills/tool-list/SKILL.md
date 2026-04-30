@@ -83,11 +83,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Tool+ToolInfoData[]"
+      "$ref": "#/$defs/AIGD.ToolInfoData[]"
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Tool+ToolInfoData": {
+    "AIGD.ToolInfoData": {
       "type": "object",
       "properties": {
         "name": {
@@ -99,20 +99,20 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "description": "Tool description."
         },
         "inputs": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Tool+ToolInputData[]",
+          "$ref": "#/$defs/AIGD.ToolInputData[]",
           "description": "Tool input arguments."
         }
       },
       "description": "MCP tool information."
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Tool+ToolInputData[]": {
+    "AIGD.ToolInputData[]": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Tool+ToolInputData",
+        "$ref": "#/$defs/AIGD.ToolInputData",
         "description": "MCP tool input argument."
       }
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Tool+ToolInputData": {
+    "AIGD.ToolInputData": {
       "type": "object",
       "properties": {
         "name": {
@@ -126,10 +126,10 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       },
       "description": "MCP tool input argument."
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Tool+ToolInfoData[]": {
+    "AIGD.ToolInfoData[]": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Tool+ToolInfoData",
+        "$ref": "#/$defs/AIGD.ToolInfoData",
         "description": "MCP tool information."
       }
     }

@@ -14,7 +14,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Text.Json.Serialization;
 
-namespace com.IvanMurzak.Unity.MCP.Runtime.Data
+namespace AIGD
 {
     [Description("Scene reference. " +
         "Used to find a Scene.")]

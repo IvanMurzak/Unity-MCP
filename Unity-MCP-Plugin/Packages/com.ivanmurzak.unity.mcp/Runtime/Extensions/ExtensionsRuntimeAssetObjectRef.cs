@@ -11,7 +11,7 @@
 #nullable enable
 #if UNITY_6000_5_OR_NEWER
 using System.Linq;
-using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using AIGD;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions

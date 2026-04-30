@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using AIGD;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -38,34 +39,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             [Description("Include input argument names and descriptions.")]
             InputsWithDescription = 2
-        }
-
-        [Description("MCP tool information.")]
-        public class ToolInfoData
-        {
-            [JsonInclude, JsonPropertyName("name")]
-            [Description("Tool name.")]
-            public string Name { get; set; } = string.Empty;
-
-            [JsonInclude, JsonPropertyName("description")]
-            [Description("Tool description.")]
-            public string? Description { get; set; }
-
-            [JsonInclude, JsonPropertyName("inputs")]
-            [Description("Tool input arguments.")]
-            public ToolInputData[]? Inputs { get; set; }
-        }
-
-        [Description("MCP tool input argument.")]
-        public class ToolInputData
-        {
-            [JsonInclude, JsonPropertyName("name")]
-            [Description("Argument name.")]
-            public string Name { get; set; } = string.Empty;
-
-            [JsonInclude, JsonPropertyName("description")]
-            [Description("Argument description.")]
-            public string? Description { get; set; }
         }
 
         [McpPluginTool
