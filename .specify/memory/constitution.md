@@ -1,10 +1,14 @@
 <!--
 Sync Impact Report
 ==================
-- Version change: 1.3.0 → 1.4.0 (mandatory tool input argument added)
-- Modified principles: none
-- Added sections:
-  - IX. `Unity-MCP-Plugin` Mandatory Tool Input Argument
+- Version change: 1.4.0 → 1.5.0 (data model namespace simplification)
+- Modified principles:
+  - IV. `Unity-MCP-Plugin` Naming Conventions — namespace rule clarified
+    to allow the short `Unity.MCP.Data` namespace for AI-facing data
+    models that appear in MCP tool JSON Schema generation. All other
+    namespaces continue to follow the
+    `com.IvanMurzak.Unity.MCP.[Tier].[Component]` pattern.
+- Added sections: none
 - Removed sections: none
 - Templates requiring updates:
   - .specify/templates/plan-template.md — ✅ compatible
@@ -72,7 +76,14 @@ machine-readable feedback without fragile string parsing.
 - Tool classes MUST be `partial` — one operation per file
   (e.g., `Tool_GameObject.Create.cs`).
 - Namespaces MUST follow the pattern
-  `com.IvanMurzak.Unity.MCP.[Tier].[Component]`.
+  `com.IvanMurzak.Unity.MCP.[Tier].[Component]`, with one
+  exception: AI-facing data model classes that appear in MCP tool
+  JSON Schema generation (the `ObjectRef` hierarchy and supporting
+  `*Data`, `*Metadata`, `*List`, `PathPatch` types under
+  `Runtime/Data/`) MUST use the short `Unity.MCP.Data` namespace.
+  These types' fully qualified names appear verbatim as `$defs`
+  keys and `$ref` paths in every tool's JSON Schema; the short
+  namespace keeps schemas compact and intuitive for AI agents.
 - Every file MUST include the copyright box comment header.
 
 Rationale: Consistent naming enables predictable discovery
@@ -221,4 +232,4 @@ preferences when conflicts arise.
 adherence to these principles. Complexity that violates a
 principle MUST be justified in the PR description.
 
-**Version**: 1.4.0 | **Ratified**: 2026-03-13 | **Last Amended**: 2026-03-14
+**Version**: 1.5.0 | **Ratified**: 2026-03-13 | **Last Amended**: 2026-04-29

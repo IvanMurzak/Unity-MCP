@@ -13,7 +13,7 @@
 using System.ComponentModel;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
-using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using Unity.MCP.Data;
 using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API

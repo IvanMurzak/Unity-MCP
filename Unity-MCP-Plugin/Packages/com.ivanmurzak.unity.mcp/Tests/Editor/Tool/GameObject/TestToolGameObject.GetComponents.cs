@@ -72,7 +72,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             meshRenderer.sharedMaterial = new Material(Shader.Find("Standard"));
 
             var response = new Tool_GameObject().Find(
-                gameObjectRef: new Runtime.Data.GameObjectRef
+                gameObjectRef: new global::Unity.MCP.Data.GameObjectRef
                 {
                     InstanceID = child.GetEntityId()
                 },

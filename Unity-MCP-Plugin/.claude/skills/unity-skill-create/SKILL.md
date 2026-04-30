@@ -13,7 +13,7 @@ description: |-
   using com.IvanMurzak.McpPlugin;
   using com.IvanMurzak.ReflectorNet.Utils;
   using com.IvanMurzak.Unity.MCP.Editor.Utils;
-  using com.IvanMurzak.Unity.MCP.Runtime.Data;
+  using Unity.MCP.Data;
   using UnityEditor;
   using UnityEngine;
   

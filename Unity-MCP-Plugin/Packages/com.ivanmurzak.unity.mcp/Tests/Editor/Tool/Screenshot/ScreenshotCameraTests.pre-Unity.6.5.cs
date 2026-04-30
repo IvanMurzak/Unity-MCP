@@ -13,7 +13,7 @@
 using System.Text.RegularExpressions;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API;
-using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using Unity.MCP.Data;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;

@@ -12,7 +12,7 @@
 #if !UNITY_6000_5_OR_NEWER
 using com.IvanMurzak.ReflectorNet;
 
-namespace com.IvanMurzak.Unity.MCP.Runtime.Data
+namespace Unity.MCP.Data
 {
     [System.Serializable]
     public class ComponentDataShallow

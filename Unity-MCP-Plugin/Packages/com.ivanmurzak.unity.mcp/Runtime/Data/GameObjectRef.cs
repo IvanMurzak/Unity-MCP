@@ -17,7 +17,7 @@ using System.Text.Json.Serialization;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 
-namespace com.IvanMurzak.Unity.MCP.Runtime.Data
+namespace Unity.MCP.Data
 {
     [Description("Find GameObject in opened Prefab or in the active Scene.")]
     public class GameObjectRef : AssetObjectRef

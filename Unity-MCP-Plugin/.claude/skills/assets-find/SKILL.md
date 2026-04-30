@@ -77,11 +77,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef>"
+      "$ref": "#/$defs/System.Collections.Generic.List<Unity.MCP.Data.AssetObjectRef>"
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef": {
+    "Unity.MCP.Data.AssetObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -109,10 +109,10 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     "System.Type": {
       "type": "string"
     },
-    "System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef>": {
+    "System.Collections.Generic.List<Unity.MCP.Data.AssetObjectRef>": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef",
+        "$ref": "#/$defs/Unity.MCP.Data.AssetObjectRef",
         "description": "Reference to UnityEngine.Object asset instance. It could be Material, ScriptableObject, Prefab, and any other Asset. Anything located in the Assets and Packages folders."
       }
     }

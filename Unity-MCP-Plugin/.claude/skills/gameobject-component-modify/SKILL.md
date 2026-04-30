@@ -62,16 +62,16 @@ Any unknown or invalid fields and properties will be reported in the response. |
   "type": "object",
   "properties": {
     "gameObjectRef": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef"
+      "$ref": "#/$defs/Unity.MCP.Data.GameObjectRef"
     },
     "componentRef": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef"
+      "$ref": "#/$defs/Unity.MCP.Data.ComponentRef"
     },
     "componentDiff": {
       "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.SerializedMember"
     },
     "pathPatches": {
-      "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.PathPatch>"
+      "$ref": "#/$defs/System.Collections.Generic.List<Unity.MCP.Data.PathPatch>"
     },
     "jsonPatch": {
       "type": "string"
@@ -81,7 +81,7 @@ Any unknown or invalid fields and properties will be reported in the response. |
     "System.Type": {
       "type": "string"
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
+    "Unity.MCP.Data.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -114,7 +114,7 @@ Any unknown or invalid fields and properties will be reported in the response. |
       ],
       "description": "Find GameObject in opened Prefab or in the active Scene."
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef": {
+    "Unity.MCP.Data.ComponentRef": {
       "type": "object",
       "properties": {
         "index": {
@@ -178,7 +178,7 @@ Any unknown or invalid fields and properties will be reported in the response. |
       ],
       "additionalProperties": false
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.PathPatch": {
+    "Unity.MCP.Data.PathPatch": {
       "type": "object",
       "properties": {
         "Path": {
@@ -191,10 +191,10 @@ Any unknown or invalid fields and properties will be reported in the response. |
         }
       }
     },
-    "System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.PathPatch>": {
+    "System.Collections.Generic.List<Unity.MCP.Data.PathPatch>": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.PathPatch"
+        "$ref": "#/$defs/Unity.MCP.Data.PathPatch"
       }
     }
   },
@@ -218,7 +218,7 @@ Any unknown or invalid fields and properties will be reported in the response. |
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef": {
+    "Unity.MCP.Data.ComponentRef": {
       "type": "object",
       "properties": {
         "index": {
@@ -240,7 +240,7 @@ Any unknown or invalid fields and properties will be reported in the response. |
       ],
       "description": "Component reference. Used to find a Component at GameObject."
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentDataShallow": {
+    "Unity.MCP.Data.ComponentDataShallow": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -277,7 +277,7 @@ Any unknown or invalid fields and properties will be reported in the response. |
           "description": "Whether the modification was successful."
         },
         "Reference": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef",
+          "$ref": "#/$defs/Unity.MCP.Data.ComponentRef",
           "description": "Reference to the modified component."
         },
         "Index": {
@@ -285,7 +285,7 @@ Any unknown or invalid fields and properties will be reported in the response. |
           "description": "Index of the component in the GameObject's component list."
         },
         "Component": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentDataShallow",
+          "$ref": "#/$defs/Unity.MCP.Data.ComponentDataShallow",
           "description": "Updated component information after modification."
         },
         "Logs": {

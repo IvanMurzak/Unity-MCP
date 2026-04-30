@@ -12,7 +12,7 @@
 #if !UNITY_6000_5_OR_NEWER
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Utils;
-using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using Unity.MCP.Data;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
 {

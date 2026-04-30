@@ -53,7 +53,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "type": "string"
     },
     "gameObjectRef": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef"
+      "$ref": "#/$defs/Unity.MCP.Data.GameObjectRef"
     },
     "sourcePrefabAssetPath": {
       "type": "string"
@@ -66,7 +66,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     "System.Type": {
       "type": "string"
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
+    "Unity.MCP.Data.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -115,7 +115,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef",
+      "$ref": "#/$defs/Unity.MCP.Data.AssetObjectRef",
       "description": "Reference to UnityEngine.Object asset instance. It could be Material, ScriptableObject, Prefab, and any other Asset. Anything located in the Assets and Packages folders."
     }
   },
@@ -123,7 +123,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     "System.Type": {
       "type": "string"
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef": {
+    "Unity.MCP.Data.AssetObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {

@@ -18,7 +18,7 @@ using System.Reflection;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Converter;
 using com.IvanMurzak.Unity.MCP.Reflection.Converter;
-using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using Unity.MCP.Data;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
