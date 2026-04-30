@@ -191,14 +191,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                     return;
                 }
 
-                // Compare versions
+                // Compare versions. The `!` is required because the Unity Editor C# compiler
+                // does not honor `[NotNullWhen(false)]` on `string.IsNullOrEmpty`, so it does
+                // not narrow `fetched` (declared `string?`) to non-null after the early-return
+                // guard above and would otherwise emit CS8604 here. The runtime check above
+                // already establishes `fetched` is non-null and non-empty at this point.
                 var currentVersion = UnityMcpPlugin.Version;
-                if (IsNewerVersion(fetched, currentVersion))
+                if (IsNewerVersion(fetched!, currentVersion))
                 {
                     // Show the update popup on the main thread
                     EditorApplication.delayCall += () =>
                     {
-                        UpdatePopupWindow.ShowWindow(currentVersion, fetched);
+                        UpdatePopupWindow.ShowWindow(currentVersion, fetched!);
                     };
                 }
                 else if (forceCheck)
