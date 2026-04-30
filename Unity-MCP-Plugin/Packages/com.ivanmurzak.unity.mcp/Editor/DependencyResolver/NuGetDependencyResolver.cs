@@ -14,26 +14,44 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEditor.Build;
+using UnityEditor.PackageManager;
 using UnityEngine;
+using PackageManagerEvents = UnityEditor.PackageManager.Events;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 {
     /// <summary>
-    /// Entry point for NuGet dependency management. Runs on every domain reload via [InitializeOnLoad].
+    /// Entry point for NuGet dependency management. Runs on every domain reload via [InitializeOnLoad]
+    /// AND in response to UPM package upgrades via PackageManager.Events.registeredPackages.
     ///
     /// This assembly has ZERO external dependencies — it always compiles, even when the main plugin
     /// fails due to missing or conflicting DLLs. It downloads NuGet packages directly from nuget.org,
     /// extracts DLLs, skips assemblies Unity already provides, and sets the UNITY_MCP_READY define
     /// so the main plugin assemblies can compile.
     ///
-    /// Flow:
-    ///   1. [InitializeOnLoad] fires on domain reload
+    /// Why both triggers are needed:
+    ///   [InitializeOnLoad] fires after a *successful* project-wide recompile. When a user upgrades
+    ///   the Unity package and the new code references newer NuGet APIs whose DLL is still on disk
+    ///   at the old version, the post-import recompile fails, Unity blocks the domain reload, and
+    ///   the new resolver's static constructor never runs. The previous AppDomain is still alive
+    ///   though — and so are its event subscriptions. registeredPackages fires from the still-alive
+    ///   AppDomain after UPM writes new package files but before the failed recompile, giving us a
+    ///   chance to clean up stale DLLs and unblock the next compile attempt. See Unity-MCP#707.
+    ///
+    /// Flow on domain reload:
+    ///   1. [InitializeOnLoad] fires
     ///   2. Deferred via EditorApplication.update (runs without editor focus, unlike delayCall)
     ///   3. NuGetPackageRestorer checks if all packages are installed
-    ///   4. Downloads and installs any missing packages
+    ///   4. Downloads and installs any missing packages, removes stale-version siblings
     ///   5. Sets UNITY_MCP_READY scripting define
     ///   6. If packages were installed: triggers AssetDatabase.Refresh() → domain reload
     ///   7. On next reload: everything is in place, main plugin compiles
+    ///
+    /// Flow on UPM package change (no domain reload required to invoke):
+    ///   1. registeredPackages fires from the previous AppDomain
+    ///   2. NuGetPackageRestorer.Restore() runs the same install + cleanup logic
+    ///   3. AssetDatabase.Refresh() prompts Unity to retry compilation with the corrected DLL set
+    ///   4. On the resulting successful reload, [InitializeOnLoad] resumes the normal path
     /// </summary>
     [InitializeOnLoad]
     static class NuGetDependencyResolver
@@ -54,6 +72,84 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             }
 
             EditorApplication.update += ResolveOnce;
+
+            // Subscribe to UPM package-change events so that when the user upgrades a package
+            // whose new code references a newer NuGet DLL than the one currently on disk, we
+            // can run the cleanup + restore from the still-alive AppDomain. The compile that
+            // would otherwise fail (and block [InitializeOnLoad] in the next domain) gets
+            // retried by Unity once AssetDatabase.Refresh() picks up the corrected DLL set.
+            // -= before += guards against accidental double-subscription if a hot-reload path
+            // ever re-runs this constructor without a full domain swap.
+            PackageManagerEvents.registeredPackages -= OnRegisteredPackages;
+            PackageManagerEvents.registeredPackages += OnRegisteredPackages;
+        }
+
+        /// <summary>
+        /// Tracks whether a UPM-event-triggered restore is currently in flight, so a second
+        /// event burst (UPM can fire multiple registeredPackages events for a single user
+        /// action) doesn't kick off a parallel restore.
+        /// </summary>
+        static bool isRestoringFromPackageEvent;
+
+        static void OnRegisteredPackages(PackageRegistrationEventArgs args)
+        {
+            if (isRestoringFromPackageEvent)
+                return;
+
+            // Cheap pre-filter: if no packages were added, removed, or upgraded, there is no
+            // possibility of a NuGet-dep version change. Skip the heavier AllPackagesInstalled()
+            // probe to avoid touching disk on every UPM ping.
+            if ((args.added == null || args.added.Count == 0)
+                && (args.removed == null || args.removed.Count == 0)
+                && (args.changedFrom == null || args.changedFrom.Count == 0)
+                && (args.changedTo == null || args.changedTo.Count == 0))
+            {
+                return;
+            }
+
+            isRestoringFromPackageEvent = true;
+            try
+            {
+                Debug.Log($"{Tag} UPM package change detected — running NuGet restore.");
+                RunRestoreAndRefresh();
+            }
+            catch (Exception ex)
+            {
+                // Same rationale as ResolveOnce: do NOT set UNITY_MCP_READY on a failed restore.
+                Debug.LogError($"{Tag} Restore from UPM event failed: {ex}");
+            }
+            finally
+            {
+                isRestoringFromPackageEvent = false;
+            }
+        }
+
+        /// <summary>
+        /// Shared core used by both ResolveOnce (post-domain-reload) and OnRegisteredPackages
+        /// (no-domain-reload UPM event path). AllPackagesInstalled() short-circuits the common
+        /// no-op case without touching the network.
+        /// </summary>
+        static void RunRestoreAndRefresh()
+        {
+            if (NuGetPackageRestorer.AllPackagesInstalled())
+            {
+                NuGetPluginConfigurator.ConfigureAll();
+                EnsureScriptingDefine();
+                return;
+            }
+
+            Debug.Log($"{Tag} Restoring NuGet packages...");
+            var changed = NuGetPackageRestorer.Restore();
+
+            NuGetPluginConfigurator.ConfigureAll();
+
+            EnsureScriptingDefine();
+
+            if (changed)
+            {
+                Debug.Log($"{Tag} Packages restored. Refreshing AssetDatabase...");
+                AssetDatabase.Refresh();
+            }
         }
 
         static void ResolveOnce()
@@ -61,28 +157,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             EditorApplication.update -= ResolveOnce;
             try
             {
-                // Quick check: if all packages are already installed, reconfigure and set define.
-                if (NuGetPackageRestorer.AllPackagesInstalled())
-                {
-                    NuGetPluginConfigurator.ConfigureAll();
-                    EnsureScriptingDefine();
-                    return;
-                }
-
-                // Full restore: download and install missing packages.
-                Debug.Log($"{Tag} Restoring NuGet packages...");
-                var changed = NuGetPackageRestorer.Restore();
-
-                // Configure PluginImporter settings for all installed DLLs.
-                NuGetPluginConfigurator.ConfigureAll();
-
-                EnsureScriptingDefine();
-
-                if (changed)
-                {
-                    Debug.Log($"{Tag} Packages restored. Refreshing AssetDatabase...");
-                    AssetDatabase.Refresh();
-                }
+                RunRestoreAndRefresh();
             }
             catch (Exception ex)
             {
