@@ -38,12 +38,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 
         /// <summary>
         /// Installs a package and its transitive dependencies.
-        /// Returns true if any new DLLs were extracted (requires domain reload).
-        /// Always reads the dependency graph (from the cached .nupkg) and records the resolved
-        /// (id, version) in <see cref="installedThisSession"/>, even when the package is already
-        /// present on disk — otherwise transitive deps of already-installed packages would be
-        /// missing from the closure, and stale-version directories of those transitives would
-        /// be kept by RemoveUnnecessaryPackages.
+        /// Returns true if any new DLLs were extracted, OR if any stale-version sibling
+        /// directories of this package's Id were removed from the install path (both require
+        /// a domain reload). Always reads the dependency graph (from the cached .nupkg) and
+        /// records the resolved (id, version) in <see cref="installedThisSession"/>, even
+        /// when the package is already present on disk — otherwise transitive deps of
+        /// already-installed packages would be missing from the closure, and stale-version
+        /// directories of those transitives would be kept by RemoveUnnecessaryPackages.
         /// </summary>
         public static bool Install(NuGetPackage package, HashSet<string>? visitedIds = null)
         {
@@ -85,19 +86,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 foreach (var dep in dependencies)
                     anyInstalled |= Install(dep, visitedIds);
 
-                // If a previous version of the same Id is installed this session (higher-wins path),
-                // remove its directory before extracting the new one. Deletion is a material
-                // Asset change that must trigger a domain reload, so flip anyInstalled here —
-                // otherwise a restore cycle whose only change is cleanup would skip the reload.
-                if (existingVersion != null)
-                {
-                    var oldDir = Path.Combine(NuGetConfig.InstallPath, $"{package.Id}.{existingVersion}");
-                    if (Directory.Exists(oldDir))
-                    {
-                        DeleteDirAndMeta(oldDir);
-                        anyInstalled = true;
-                    }
-                }
+                // Remove any stale-version sibling directories for this package Id BEFORE
+                // extracting the new payload. Covers two distinct cases that the post-pass in
+                // RemoveUnnecessaryPackages cannot reliably catch in time:
+                //   (a) Cross-session upgrade: a prior session installed {Id}.{OldVer}/ from a
+                //       previous version of the parent Unity package; the user updated the
+                //       Unity package, the new dep graph resolves {Id}.{NewVer}, and the old
+                //       dir is still on disk. Without this scan, both versions remain side by
+                //       side and the C# compiler reports duplicate-assembly errors before
+                //       RemoveUnnecessaryPackages gets to run. See Unity-MCP#703.
+                //   (b) Within-session higher-version-wins: a lower version of the same Id was
+                //       already installed earlier in this restore cycle through a different
+                //       chain, and the current chain resolves a higher version. The disk scan
+                //       subsumes the previous installedThisSession-based cleanup branch by
+                //       deleting whatever sibling versions are actually on disk.
+                // Deletion is a material Asset change that must trigger a domain reload, so
+                // flip anyInstalled here — otherwise a restore cycle whose only change is
+                // cleanup would skip the reload.
+                if (RemoveStaleSiblingVersions(NuGetConfig.InstallPath, package.Id, package.Version))
+                    anyInstalled = true;
 
                 // Development-only dependencies (e.g. Roslyn analyzers, source generators,
                 // build-time tooling) ship their payload under analyzers/, build/, tools/ etc.
@@ -225,6 +232,57 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     continue;
 
                 Debug.Log($"{Tag} Removing {dirName} — Unity now provides all of its assemblies.");
+                DeleteDirAndMeta(dir);
+                anyRemoved = true;
+            }
+
+            return anyRemoved;
+        }
+
+        /// <summary>
+        /// Scans <paramref name="installPath"/> for sibling directories of the form
+        /// <c>{packageId}.&lt;otherVersion&gt;/</c> at any version other than
+        /// <paramref name="keepVersion"/> and removes them (plus their <c>.meta</c> files).
+        /// Returns true when at least one directory was removed.
+        ///
+        /// Matching uses <see cref="ExtractPackageIdFromDirName(string)"/> so that package IDs
+        /// containing dots (e.g. "Microsoft.AspNetCore.SignalR.Common") are split correctly.
+        /// Comparison is case-insensitive on both Id and version to mirror the rest of the
+        /// resolver's casing rules.
+        ///
+        /// Called from <see cref="Install(NuGetPackage, HashSet{string})"/> for every package
+        /// (top-level and transitive) so a NuGet bump in any layer of the graph cleans its
+        /// own stale sibling at install time, without depending on a separate post-pass.
+        ///
+        /// <paramref name="installPath"/> is parameterised (instead of reading
+        /// <see cref="NuGetConfig.InstallPath"/> directly) so EditMode tests can drive the
+        /// scan against a temp directory without touching the real Assets/Plugins/NuGet path.
+        /// </summary>
+        internal static bool RemoveStaleSiblingVersions(string installPath, string packageId, string keepVersion)
+        {
+            if (!Directory.Exists(installPath))
+                return false;
+
+            var keepDirName = $"{packageId}.{keepVersion}";
+            var anyRemoved = false;
+
+            foreach (var dir in Directory.GetDirectories(installPath))
+            {
+                var dirName = Path.GetFileName(dir);
+
+                // Same exact version — keep it. The downstream extraction step is responsible
+                // for that directory; deleting it here would force needless re-extraction.
+                if (string.Equals(dirName, keepDirName, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var dirPackageId = ExtractPackageIdFromDirName(dirName);
+                if (dirPackageId == null)
+                    continue;
+
+                if (!string.Equals(dirPackageId, packageId, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                Debug.Log($"{Tag} Removing stale {dirName} — superseded by {packageId} {keepVersion}.");
                 DeleteDirAndMeta(dir);
                 anyRemoved = true;
             }
