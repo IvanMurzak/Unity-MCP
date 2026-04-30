@@ -36,8 +36,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected override string[] WindowUssPaths => _windowUssPaths;
         protected override string WindowTitle => "Update Available";
 
-        private string currentVersion = string.Empty;
-        private string latestVersion = string.Empty;
+        // [SerializeField] so the version strings survive Unity's domain reload (script
+        // recompile). Without this, after a recompile the EditorWindow instance is recreated,
+        // CreateGUI() is invoked again, and BindUI() re-binds button click handlers — but
+        // these private fields revert to empty, so the labels render empty and "Install
+        // Update" attempts to install "{PackageId}@" (empty version), which silently fails.
+        // See https://github.com/IvanMurzak/Unity-MCP/issues/702.
+        [SerializeField] private string currentVersion = string.Empty;
+        [SerializeField] private string latestVersion = string.Empty;
+
+        // Non-serialized: an in-flight Package Manager AddRequest cannot survive a domain
+        // reload (it holds native handles on the C++ side). After reload it goes back to null
+        // and the user can re-click "Install Update" to start a fresh install. Same applies
+        // to the R3 IDisposable subscription — re-clicking re-establishes it.
         private AddRequest? addRequest;
         private IDisposable? _stopSubscription;
 
