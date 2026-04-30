@@ -20,7 +20,7 @@ using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 
-namespace Unity.MCP.Data
+namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
     [Serializable]
     [Description("Reference to UnityEngine.Object asset instance. " +

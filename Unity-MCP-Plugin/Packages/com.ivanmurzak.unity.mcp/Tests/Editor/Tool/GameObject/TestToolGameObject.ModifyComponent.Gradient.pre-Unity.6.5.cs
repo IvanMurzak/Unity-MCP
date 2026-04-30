@@ -15,7 +15,7 @@ using System.Collections;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API;
-using Unity.MCP.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;

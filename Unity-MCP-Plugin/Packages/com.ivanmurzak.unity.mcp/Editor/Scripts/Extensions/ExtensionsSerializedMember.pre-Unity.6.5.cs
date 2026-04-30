@@ -11,7 +11,7 @@
 #nullable enable
 #if !UNITY_6000_5_OR_NEWER
 using com.IvanMurzak.ReflectorNet.Model;
-using Unity.MCP.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Extensions
 {

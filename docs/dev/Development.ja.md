@@ -396,7 +396,7 @@ using UnityEditor;
 using System;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
-using Unity.MCP.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEngine;
 

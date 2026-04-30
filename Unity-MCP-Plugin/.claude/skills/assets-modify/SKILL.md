@@ -58,13 +58,13 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "assetRef": {
-      "$ref": "#/$defs/Unity.MCP.Data.AssetObjectRef"
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef"
     },
     "content": {
       "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.SerializedMember"
     },
     "pathPatches": {
-      "$ref": "#/$defs/System.Collections.Generic.List<Unity.MCP.Data.PathPatch>"
+      "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.PathPatch>"
     },
     "jsonPatch": {
       "type": "string"
@@ -74,7 +74,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     "System.Type": {
       "type": "string"
     },
-    "Unity.MCP.Data.AssetObjectRef": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -141,7 +141,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       ],
       "additionalProperties": false
     },
-    "Unity.MCP.Data.PathPatch": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.PathPatch": {
       "type": "object",
       "properties": {
         "Path": {
@@ -154,10 +154,10 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         }
       }
     },
-    "System.Collections.Generic.List<Unity.MCP.Data.PathPatch>": {
+    "System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.PathPatch>": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/Unity.MCP.Data.PathPatch"
+        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.PathPatch"
       }
     }
   },

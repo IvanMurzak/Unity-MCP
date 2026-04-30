@@ -61,15 +61,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 "Supported parameter types include primitives, strings, and Unity object references: " +
                 "- 'UnityEngine.GameObject': resolves an actual GameObject from value '{\"instanceID\": N}', '{\"name\": \"...\"}', or '{\"path\": \"...\"}'. " +
                 "- 'UnityEngine.Component' (or any component subtype): resolves from '{\"instanceID\": N}'. " +
-                "- 'Unity.MCP.Data.GameObjectRef': passes a GameObjectRef POCO directly; " +
+                "- 'com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef': passes a GameObjectRef POCO directly; " +
                 "  the method body calls goRef.FindGameObject() to resolve it. " +
-                "- 'Unity.MCP.Data.ComponentRef': passes a ComponentRef POCO. " +
-                "- 'Unity.MCP.Data.ObjectRef': passes a base ObjectRef POCO. " +
+                "- 'com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef': passes a ComponentRef POCO. " +
+                "- 'com.IvanMurzak.Unity.MCP.Runtime.Data.ObjectRef': passes a base ObjectRef POCO. " +
                 "If the method does not require parameters, leave this empty.")]
             SerializedMemberList? parameters = null,
             [Description("When true, 'csharpCode' is treated as just the method body. " +
                 "The tool auto-generates standard using directives (System, UnityEngine, " +
-                "Unity.MCP.Data, com.IvanMurzak.Unity.MCP.Runtime.Extensions, UnityEditor), " +
+                "com.IvanMurzak.Unity.MCP.Runtime.Data, com.IvanMurzak.Unity.MCP.Runtime.Extensions, UnityEditor), " +
                 "the class definition, and the method signature (void return type). " +
                 "Parameters from the 'parameters' list are automatically added to the method signature using their typeName and name. " +
                 "When false (default), 'csharpCode' must be a complete C# compilation unit with class and method definitions.")]
@@ -151,7 +151,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (IsAssemblyLoaded("UnityEngine.UI"))
                 sb.AppendLine("using UnityEngine.UI;");
             sb.AppendLine("using UnityEngine.SceneManagement;");
-            sb.AppendLine("using Unity.MCP.Data;");
+            sb.AppendLine("using com.IvanMurzak.Unity.MCP.Runtime.Data;");
             sb.AppendLine("using com.IvanMurzak.Unity.MCP.Runtime.Extensions;");
             sb.AppendLine("using UnityEditor;");
             sb.AppendLine();

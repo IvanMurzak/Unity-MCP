@@ -12,7 +12,7 @@
 #if UNITY_6000_5_OR_NEWER
 using System;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
-using Unity.MCP.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using UnityEditor;
 using UnityEngine;

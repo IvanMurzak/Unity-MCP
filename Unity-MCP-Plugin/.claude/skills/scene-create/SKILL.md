@@ -88,12 +88,12 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/Unity.MCP.Data.SceneDataShallow",
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.SceneDataShallow",
       "description": "Scene reference. Used to find a Scene."
     }
   },
   "$defs": {
-    "Unity.MCP.Data.SceneDataShallow": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.SceneDataShallow": {
       "type": "object",
       "properties": {
         "Name": {

@@ -58,20 +58,20 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "gameObjectRefs": {
-      "$ref": "#/$defs/Unity.MCP.Data.GameObjectRefList"
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRefList"
     },
     "gameObjectDiffs": {
       "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.SerializedMemberList"
     },
     "pathPatchesPerGameObject": {
-      "$ref": "#/$defs/System.Collections.Generic.List<System.Collections.Generic.List<Unity.MCP.Data.PathPatch>>"
+      "$ref": "#/$defs/System.Collections.Generic.List<System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.PathPatch>>"
     },
     "jsonPatchesPerGameObject": {
       "$ref": "#/$defs/System.Collections.Generic.List<System.String>"
     }
   },
   "$defs": {
-    "Unity.MCP.Data.GameObjectRef": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -107,10 +107,10 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     "System.Type": {
       "type": "string"
     },
-    "Unity.MCP.Data.GameObjectRefList": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRefList": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/Unity.MCP.Data.GameObjectRef",
+        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef",
         "description": "Find GameObject in opened Prefab or in the active Scene."
       },
       "description": "Array of GameObjects in opened Prefab or in the active Scene."
@@ -157,13 +157,13 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       ],
       "additionalProperties": false
     },
-    "System.Collections.Generic.List<Unity.MCP.Data.PathPatch>": {
+    "System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.PathPatch>": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/Unity.MCP.Data.PathPatch"
+        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.PathPatch"
       }
     },
-    "Unity.MCP.Data.PathPatch": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.PathPatch": {
       "type": "object",
       "properties": {
         "Path": {
@@ -176,10 +176,10 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         }
       }
     },
-    "System.Collections.Generic.List<System.Collections.Generic.List<Unity.MCP.Data.PathPatch>>": {
+    "System.Collections.Generic.List<System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.PathPatch>>": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/System.Collections.Generic.List<Unity.MCP.Data.PathPatch>"
+        "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.PathPatch>"
       }
     },
     "System.Collections.Generic.List<System.String>": {

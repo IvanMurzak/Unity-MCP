@@ -12,7 +12,7 @@
 #if UNITY_6000_5_OR_NEWER
 using System;
 using System.Collections;
-using Unity.MCP.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;

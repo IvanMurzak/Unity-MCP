@@ -44,14 +44,14 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "sceneRef": {
-      "$ref": "#/$defs/Unity.MCP.Data.AssetObjectRef"
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef"
     }
   },
   "$defs": {
     "System.Type": {
       "type": "string"
     },
-    "Unity.MCP.Data.AssetObjectRef": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -92,11 +92,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/Unity.MCP.Data.SceneDataShallow[]"
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.SceneDataShallow[]"
     }
   },
   "$defs": {
-    "Unity.MCP.Data.SceneDataShallow": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.SceneDataShallow": {
       "type": "object",
       "properties": {
         "Name": {
@@ -142,10 +142,10 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       ],
       "description": "Scene reference. Used to find a Scene."
     },
-    "Unity.MCP.Data.SceneDataShallow[]": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.SceneDataShallow[]": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/Unity.MCP.Data.SceneDataShallow",
+        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.SceneDataShallow",
         "description": "Scene reference. Used to find a Scene."
       }
     }

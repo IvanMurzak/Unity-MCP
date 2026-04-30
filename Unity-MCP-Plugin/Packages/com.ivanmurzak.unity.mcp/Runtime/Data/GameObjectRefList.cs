@@ -12,7 +12,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 
-namespace Unity.MCP.Data
+namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
     [Description("Array of GameObjects in opened Prefab or in the active Scene.")]
     public class GameObjectRefList : List<GameObjectRef>

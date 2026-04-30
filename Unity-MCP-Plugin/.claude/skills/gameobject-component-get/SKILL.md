@@ -60,10 +60,10 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "gameObjectRef": {
-      "$ref": "#/$defs/Unity.MCP.Data.GameObjectRef"
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef"
     },
     "componentRef": {
-      "$ref": "#/$defs/Unity.MCP.Data.ComponentRef"
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef"
     },
     "includeFields": {
       "type": "boolean"
@@ -85,7 +85,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     "System.Type": {
       "type": "string"
     },
-    "Unity.MCP.Data.GameObjectRef": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -118,7 +118,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       ],
       "description": "Find GameObject in opened Prefab or in the active Scene."
     },
-    "Unity.MCP.Data.ComponentRef": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef": {
       "type": "object",
       "properties": {
         "index": {
@@ -188,7 +188,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     }
   },
   "$defs": {
-    "Unity.MCP.Data.ComponentRef": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef": {
       "type": "object",
       "properties": {
         "index": {
@@ -210,7 +210,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       ],
       "description": "Component reference. Used to find a Component at GameObject."
     },
-    "Unity.MCP.Data.ComponentDataShallow": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentDataShallow": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -285,7 +285,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "type": "object",
       "properties": {
         "Reference": {
-          "$ref": "#/$defs/Unity.MCP.Data.ComponentRef",
+          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef",
           "description": "Reference to the component for future operations."
         },
         "Index": {
@@ -293,7 +293,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "description": "Index of the component in the GameObject's component list."
         },
         "Component": {
-          "$ref": "#/$defs/Unity.MCP.Data.ComponentDataShallow",
+          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentDataShallow",
           "description": "Basic component information (type, enabled state)."
         },
         "Fields": {

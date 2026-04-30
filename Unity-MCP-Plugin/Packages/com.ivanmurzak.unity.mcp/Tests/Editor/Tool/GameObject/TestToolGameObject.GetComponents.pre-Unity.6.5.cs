@@ -19,7 +19,6 @@ using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using NUnit.Framework;
-using Unity.MCP.Data;
 using UnityEngine;
 using UnityEngine.TestTools;
 
@@ -73,7 +72,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             meshRenderer.sharedMaterial = new Material(Shader.Find("Standard"));
 
             var response = new Tool_GameObject().Find(
-                gameObjectRef: new GameObjectRef
+                gameObjectRef: new Runtime.Data.GameObjectRef
                 {
                     InstanceID = child.GetInstanceID()
                 },

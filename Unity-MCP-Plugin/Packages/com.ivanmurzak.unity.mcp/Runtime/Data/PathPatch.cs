@@ -12,7 +12,7 @@
 using System.ComponentModel;
 using com.IvanMurzak.ReflectorNet.Model;
 
-namespace Unity.MCP.Data
+namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
     /// <summary>
     /// A single path-scoped modification routed through

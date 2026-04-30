@@ -13,7 +13,7 @@ using System.Collections.Generic;
 using com.IvanMurzak.ReflectorNet.Model;
 using UnityEngine;
 
-namespace Unity.MCP.Data
+namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
     [System.Serializable]
     public class ComponentData : ComponentDataShallow

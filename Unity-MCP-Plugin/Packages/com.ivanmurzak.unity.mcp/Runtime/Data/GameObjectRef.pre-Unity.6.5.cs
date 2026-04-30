@@ -18,7 +18,7 @@ using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using UnityEngine;
 
-namespace Unity.MCP.Data
+namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
     [Description("Find GameObject in opened Prefab or in the active Scene.")]
     public class GameObjectRef : AssetObjectRef

@@ -49,7 +49,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "$ref": "#/$defs/System.String[]"
     },
     "gameObjectRef": {
-      "$ref": "#/$defs/Unity.MCP.Data.GameObjectRef"
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef"
     }
   },
   "$defs": {
@@ -62,7 +62,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     "System.Type": {
       "type": "string"
     },
-    "Unity.MCP.Data.GameObjectRef": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -116,13 +116,13 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     }
   },
   "$defs": {
-    "System.Collections.Generic.List<Unity.MCP.Data.ComponentDataShallow>": {
+    "System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentDataShallow>": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/Unity.MCP.Data.ComponentDataShallow"
+        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentDataShallow"
       }
     },
-    "Unity.MCP.Data.ComponentDataShallow": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentDataShallow": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -155,7 +155,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "type": "object",
       "properties": {
         "AddedComponents": {
-          "$ref": "#/$defs/System.Collections.Generic.List<Unity.MCP.Data.ComponentDataShallow>",
+          "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentDataShallow>",
           "description": "List of successfully added components."
         },
         "Messages": {

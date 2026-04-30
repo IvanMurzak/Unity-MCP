@@ -59,11 +59,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/Unity.MCP.Data.SceneDataShallow[]"
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.SceneDataShallow[]"
     }
   },
   "$defs": {
-    "Unity.MCP.Data.SceneDataShallow": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.SceneDataShallow": {
       "type": "object",
       "properties": {
         "Name": {
@@ -109,10 +109,10 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       ],
       "description": "Scene reference. Used to find a Scene."
     },
-    "Unity.MCP.Data.SceneDataShallow[]": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.SceneDataShallow[]": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/Unity.MCP.Data.SceneDataShallow",
+        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.SceneDataShallow",
         "description": "Scene reference. Used to find a Scene."
       }
     }

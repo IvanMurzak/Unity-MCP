@@ -59,7 +59,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "type": "string"
     },
     "parentGameObjectRef": {
-      "$ref": "#/$defs/Unity.MCP.Data.GameObjectRef"
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef"
     },
     "position": {
       "$ref": "#/$defs/UnityEngine.Vector3"
@@ -81,7 +81,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     "System.Type": {
       "type": "string"
     },
-    "Unity.MCP.Data.GameObjectRef": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -161,7 +161,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/Unity.MCP.Data.GameObjectRef",
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef",
       "description": "Find GameObject in opened Prefab or in the active Scene."
     }
   },
@@ -169,7 +169,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     "System.Type": {
       "type": "string"
     },
-    "Unity.MCP.Data.GameObjectRef": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {

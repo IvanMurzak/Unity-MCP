@@ -10,7 +10,7 @@
 
 #nullable enable
 using com.IvanMurzak.Unity.MCP.Editor.API;
-using Unity.MCP.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using NUnit.Framework;
 

@@ -46,17 +46,17 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "gameObjectRef": {
-      "$ref": "#/$defs/Unity.MCP.Data.GameObjectRef"
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef"
     },
     "destroyComponentRefs": {
-      "$ref": "#/$defs/Unity.MCP.Data.ComponentRefList"
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRefList"
     }
   },
   "$defs": {
     "System.Type": {
       "type": "string"
     },
-    "Unity.MCP.Data.GameObjectRef": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -89,7 +89,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       ],
       "description": "Find GameObject in opened Prefab or in the active Scene."
     },
-    "Unity.MCP.Data.ComponentRef": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef": {
       "type": "object",
       "properties": {
         "index": {
@@ -111,10 +111,10 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       ],
       "description": "Component reference. Used to find a Component at GameObject."
     },
-    "Unity.MCP.Data.ComponentRefList": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRefList": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/Unity.MCP.Data.ComponentRef",
+        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef",
         "description": "Component reference. Used to find a Component at GameObject."
       },
       "description": "Component reference array. Used to find Component at GameObject."
@@ -140,15 +140,15 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     }
   },
   "$defs": {
-    "Unity.MCP.Data.ComponentRefList": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRefList": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/Unity.MCP.Data.ComponentRef",
+        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef",
         "description": "Component reference. Used to find a Component at GameObject."
       },
       "description": "Component reference array. Used to find Component at GameObject."
     },
-    "Unity.MCP.Data.ComponentRef": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef": {
       "type": "object",
       "properties": {
         "index": {
@@ -174,7 +174,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "type": "object",
       "properties": {
         "DestroyedComponents": {
-          "$ref": "#/$defs/Unity.MCP.Data.ComponentRefList",
+          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRefList",
           "description": "List of destroyed components."
         }
       }

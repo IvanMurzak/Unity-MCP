@@ -203,13 +203,13 @@ foreach (var obj in allObjects)
         [Test]
         public void Script_Execute_WithGameObjectRef_DisablesGameObject()
         {
-            var csharpCode = @"using Unity.MCP.Data;
+            var csharpCode = @"using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using UnityEngine;
 
 public class Script
 {
-    public static void Main(Unity.MCP.Data.GameObjectRef goRef)
+    public static void Main(com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef goRef)
     {
         var go = goRef.FindGameObject();
         if (go != null)
@@ -240,7 +240,7 @@ public class Script
                             ""parameters"": [
                                 {{
                                     ""name"": ""goRef"",
-                                    ""typeName"": ""Unity.MCP.Data.GameObjectRef"",
+                                    ""typeName"": ""com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef"",
                                     ""value"": {{ ""instanceID"": {instanceId} }}
                                 }}
                             ]
@@ -286,7 +286,7 @@ if (go != null)
                             ""parameters"": [
                                 {{
                                     ""name"": ""goRef"",
-                                    ""typeName"": ""Unity.MCP.Data.GameObjectRef"",
+                                    ""typeName"": ""com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef"",
                                     ""value"": {{ ""instanceID"": {instanceId} }}
                                 }}
                             ]

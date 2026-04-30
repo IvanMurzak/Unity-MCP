@@ -14,7 +14,7 @@ using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using com.IvanMurzak.McpPlugin;
-using Unity.MCP.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
 
 namespace com.IvanMurzak.Unity.MCP.JsonConverters
 {

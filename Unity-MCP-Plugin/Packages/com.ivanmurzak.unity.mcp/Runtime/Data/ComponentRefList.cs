@@ -12,7 +12,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 
-namespace Unity.MCP.Data
+namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
     [Description("Component reference array. " +
         "Used to find Component at GameObject.")]

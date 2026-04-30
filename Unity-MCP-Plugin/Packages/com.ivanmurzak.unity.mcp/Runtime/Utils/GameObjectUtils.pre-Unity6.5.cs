@@ -15,7 +15,7 @@ using System.Linq;
 using System.Text;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Utils;
-using Unity.MCP.Data;
+using com.IvanMurzak.Unity.MCP.Runtime.Data;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Utils

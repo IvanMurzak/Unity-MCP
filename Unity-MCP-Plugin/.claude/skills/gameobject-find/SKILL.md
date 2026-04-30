@@ -62,7 +62,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "gameObjectRef": {
-      "$ref": "#/$defs/Unity.MCP.Data.GameObjectRef"
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef"
     },
     "includeData": {
       "type": "boolean"
@@ -90,7 +90,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     "System.Type": {
       "type": "string"
     },
-    "Unity.MCP.Data.GameObjectRef": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -166,11 +166,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/Unity.MCP.Data.GameObjectData"
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectData"
     }
   },
   "$defs": {
-    "Unity.MCP.Data.GameObjectRef": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -296,7 +296,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       ],
       "additionalProperties": false
     },
-    "Unity.MCP.Data.GameObjectMetadata": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectMetadata": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -321,7 +321,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "type": "boolean"
         },
         "children": {
-          "$ref": "#/$defs/System.Collections.Generic.List<Unity.MCP.Data.GameObjectMetadata>"
+          "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectMetadata>"
         }
       },
       "required": [
@@ -330,19 +330,19 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "activeInHierarchy"
       ]
     },
-    "System.Collections.Generic.List<Unity.MCP.Data.GameObjectMetadata>": {
+    "System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectMetadata>": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/Unity.MCP.Data.GameObjectMetadata"
+        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectMetadata"
       }
     },
-    "Unity.MCP.Data.ComponentDataShallow[]": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentDataShallow[]": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/Unity.MCP.Data.ComponentDataShallow"
+        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentDataShallow"
       }
     },
-    "Unity.MCP.Data.ComponentDataShallow": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentDataShallow": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -365,11 +365,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "isEnabled"
       ]
     },
-    "Unity.MCP.Data.GameObjectData": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectData": {
       "type": "object",
       "properties": {
         "Reference": {
-          "$ref": "#/$defs/Unity.MCP.Data.GameObjectRef",
+          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef",
           "description": "Find GameObject in opened Prefab or in the active Scene."
         },
         "Data": {
@@ -381,11 +381,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "description": "Bounds of the GameObject."
         },
         "Hierarchy": {
-          "$ref": "#/$defs/Unity.MCP.Data.GameObjectMetadata",
+          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectMetadata",
           "description": "Hierarchy metadata of the GameObject."
         },
         "Components": {
-          "$ref": "#/$defs/Unity.MCP.Data.ComponentDataShallow[]",
+          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentDataShallow[]",
           "description": "Attached components shallow data of the GameObject (Read-only, use Component modification tool for modification)."
         }
       }

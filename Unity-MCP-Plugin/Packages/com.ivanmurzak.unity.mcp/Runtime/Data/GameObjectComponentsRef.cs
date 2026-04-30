@@ -13,7 +13,7 @@ using System.ComponentModel;
 using System.Text.Json.Serialization;
 using com.IvanMurzak.ReflectorNet.Model;
 
-namespace Unity.MCP.Data
+namespace com.IvanMurzak.Unity.MCP.Runtime.Data
 {
     [System.Serializable]
     [Description("GameObject reference. " +

@@ -52,7 +52,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "objectRef": {
-      "$ref": "#/$defs/Unity.MCP.Data.ObjectRef"
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ObjectRef"
     },
     "paths": {
       "$ref": "#/$defs/System.Collections.Generic.List<System.String>"
@@ -62,7 +62,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     }
   },
   "$defs": {
-    "Unity.MCP.Data.ObjectRef": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.ObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {

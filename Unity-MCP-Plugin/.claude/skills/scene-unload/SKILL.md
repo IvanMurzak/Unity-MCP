@@ -66,7 +66,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     }
   },
   "$defs": {
-    "Unity.MCP.Data.AssetObjectRef": {
+    "com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -102,7 +102,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "description": "Name of the unloaded scene."
         },
         "AssetObjectRef": {
-          "$ref": "#/$defs/Unity.MCP.Data.AssetObjectRef",
+          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef",
           "description": "Reference to the unloaded scene asset."
         }
       }
