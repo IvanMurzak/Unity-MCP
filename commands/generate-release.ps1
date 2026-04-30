@@ -17,6 +17,13 @@ if ($repoUrl -match '^git@github\.com:(.+)') {
     $repoUrl = "https://github.com/$($matches[1])"
 }
 
+# Validate remote URL is a standard GitHub repo path (guard against tampered remotes)
+if ($repoUrl -notmatch '^https://github\.com/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') {
+    Write-Error "Unexpected remote URL '$repoUrl' — aborting to prevent unintended GitHub API calls."
+    Pop-Location
+    exit 1
+}
+
 $filename = "release_${VersionFrom}_to_${VersionTo}.md"
 
 # Clear existing release.md if it exists
@@ -68,8 +75,11 @@ foreach ($sha in $commits) {
     $message = git log -1 --pretty=format:'%s' $sha
     $shortSha = git log -1 --pretty=format:'%h' $sha | ForEach-Object { $_.Substring(0, 6) }
 
+    # Escape markdown special characters in commit message to prevent content injection
+    $safemessage = $message -replace '\[', '\[' -replace '\]', '\]' -replace '<', '&lt;' -replace '>', '&gt;'
+
     # Add commit line to release.md
-    Add-Content -Path $filename -Value "- [``$shortSha``]($repoUrl/commit/$sha) — $message by @$username"
+    Add-Content -Path $filename -Value "- [``$shortSha``]($repoUrl/commit/$sha) — $safemessage by @$username"
 }
 
 Write-Host "Release notes generated successfully in $filename"
