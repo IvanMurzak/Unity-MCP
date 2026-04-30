@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### Changed (BREAKING)
+
+- AI-facing data model types under `Runtime/Data/*` (`ObjectRef`, `AssetObjectRef`, `GameObjectRef`, `ComponentRef`, `SceneRef`, `GameObjectData`, `ComponentData`, `SceneData`, `GameObjectMetadata`, `*Shallow`, `*List`, `PathPatch`, …) moved from namespace `com.IvanMurzak.Unity.MCP.Runtime.Data` to `Unity.MCP.Data`. External code that imports these types must update its `using` directives. The rename keeps MCP tool JSON Schema `$defs` keys and `$ref` paths short and intuitive for AI agents (issue #676).
+
 ## [0.17.1] - 2025-01-XX
 
 ### Fixed

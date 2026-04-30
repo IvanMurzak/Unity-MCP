@@ -77,13 +77,17 @@ machine-readable feedback without fragile string parsing.
   (e.g., `Tool_GameObject.Create.cs`).
 - Namespaces MUST follow the pattern
   `com.IvanMurzak.Unity.MCP.[Tier].[Component]`, with one
-  exception: AI-facing data model classes that appear in MCP tool
-  JSON Schema generation (the `ObjectRef` hierarchy and supporting
-  `*Data`, `*Metadata`, `*List`, `PathPatch` types under
-  `Runtime/Data/`) MUST use the short `Unity.MCP.Data` namespace.
-  These types' fully qualified names appear verbatim as `$defs`
-  keys and `$ref` paths in every tool's JSON Schema; the short
-  namespace keeps schemas compact and intuitive for AI agents.
+  exception: all AI-facing data model classes under
+  `Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Data/`
+  (the `ObjectRef` hierarchy and every supporting type in that
+  folder, including `*Data`, `*DataShallow`, `*Metadata`, `*Ref`,
+  `*RefList`, `PathPatch`, etc.) MUST use the short
+  `Unity.MCP.Data` namespace. These types' fully qualified names
+  appear verbatim as `$defs` keys and `$ref` paths in every MCP
+  tool's JSON Schema; the short namespace keeps schemas compact
+  and intuitive for AI agents. Any new file added to that folder
+  MUST also use `Unity.MCP.Data`, regardless of the asmdef's
+  default `rootNamespace`.
 - Every file MUST include the copyright box comment header.
 
 Rationale: Consistent naming enables predictable discovery
