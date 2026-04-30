@@ -12,7 +12,7 @@
 using System.ComponentModel;
 using com.IvanMurzak.ReflectorNet.Model;
 
-namespace com.IvanMurzak.Unity.MCP.Runtime.Data
+namespace AIGD
 {
     /// <summary>
     /// A single path-scoped modification routed through

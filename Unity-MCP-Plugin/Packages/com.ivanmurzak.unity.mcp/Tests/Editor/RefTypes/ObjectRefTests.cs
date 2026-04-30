@@ -10,7 +10,7 @@
 
 #nullable enable
 using System.Linq;
-using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using AIGD;
 using NUnit.Framework;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests.RefTypes

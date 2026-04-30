@@ -3,7 +3,7 @@
     "type": "object",
     "properties": {
         "assetRef": {
-            "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef",
+            "$ref": "#/$defs/AIGD.AssetObjectRef",
             "description": "Reference to UnityEngine.Object asset instance. It could be Material, ScriptableObject, Prefab, and any other Asset. Anything located in the Assets folder."
         },
         "content": {
@@ -12,7 +12,7 @@
         }
     },
     "$defs": {
-        "com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef": {
+        "AIGD.AssetObjectRef": {
             "type": "object",
             "properties": {
                 "AssetPath": {

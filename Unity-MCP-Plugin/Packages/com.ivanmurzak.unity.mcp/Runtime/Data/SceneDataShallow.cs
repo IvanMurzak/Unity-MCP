@@ -11,7 +11,7 @@
 #nullable enable
 using System.ComponentModel;
 
-namespace com.IvanMurzak.Unity.MCP.Runtime.Data
+namespace AIGD
 {
     public class SceneDataShallow : SceneRef
     {

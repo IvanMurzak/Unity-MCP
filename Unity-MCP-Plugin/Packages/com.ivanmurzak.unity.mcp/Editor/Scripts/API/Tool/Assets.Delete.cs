@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using AIGD;
 using System.Collections.Generic;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
@@ -80,12 +81,5 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             });
         }
 
-        public class DeleteAssetsResponse
-        {
-            [Description("List of paths of deleted assets.")]
-            public List<string>? DeletedPaths { get; set; }
-            [Description("List of errors encountered during delete operations.")]
-            public List<string>? Errors { get; set; }
-        }
     }
 }

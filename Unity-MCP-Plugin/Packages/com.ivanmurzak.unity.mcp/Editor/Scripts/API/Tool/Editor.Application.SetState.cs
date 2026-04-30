@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using AIGD;
 using System;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;

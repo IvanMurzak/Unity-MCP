@@ -16,7 +16,7 @@ using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
-using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using AIGD;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.Extensions.Logging;
@@ -46,7 +46,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "subtree and/or filter by name regex / max depth / type via Reflector.View. The result populates " +
             "'View' on the returned ShaderData. These two parameters are mutually exclusive.\n" +
             "Path syntax: 'fieldName', 'nested/field', 'arrayField/[i]', 'dictField/[key]'. Leading '#/' is stripped.")]
-        public ShaderData GetData
+        public AIGD.ShaderData GetData
         (
             AssetObjectRef assetRef,
             [Description("Include compilation error and warning messages. Default: true")]
@@ -115,9 +115,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             });
         }
 
-        static ShaderData BuildShaderData(Shader shader, ShaderDataOptions options)
+        static AIGD.ShaderData BuildShaderData(Shader shader, ShaderDataOptions options)
         {
-            var data = new ShaderData
+            var data = new AIGD.ShaderData
             {
                 Reference = new AssetObjectRef(shader),
                 Name = shader.name,
@@ -133,7 +133,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 var messages = ShaderUtil.GetShaderMessages(shader);
                 if (messages != null && messages.Length > 0)
                 {
-                    data.Messages = messages.Select(msg => new ShaderMessageData
+                    data.Messages = messages.Select(msg => new AIGD.ShaderMessageData
                     {
                         Message = msg.message,
                         Line = msg.line,
@@ -148,11 +148,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 var propertyCount = data.PropertyCount;
                 if (propertyCount > 0)
                 {
-                    data.Properties = new List<ShaderPropertyData>(propertyCount);
+                    data.Properties = new List<AIGD.ShaderPropertyData>(propertyCount);
                     for (var i = 0; i < propertyCount; i++)
                     {
                         var propType = shader.GetPropertyType(i);
-                        var prop = new ShaderPropertyData
+                        var prop = new AIGD.ShaderPropertyData
                         {
                             Name = shader.GetPropertyName(i),
                             Description = shader.GetPropertyDescription(i),
@@ -191,11 +191,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     var subshaderCount = shaderData.SubshaderCount;
                     if (subshaderCount > 0)
                     {
-                        data.Subshaders = new List<SubshaderData>(subshaderCount);
+                        data.Subshaders = new List<AIGD.SubshaderData>(subshaderCount);
                         for (var s = 0; s < subshaderCount; s++)
                         {
                             var subshader = shaderData.GetSubshader(s);
-                            var subshaderData = new SubshaderData
+                            var subshaderData = new AIGD.SubshaderData
                             {
                                 Index = s,
                                 PassCount = subshader.PassCount
@@ -203,11 +203,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                             if (subshader.PassCount > 0)
                             {
-                                subshaderData.Passes = new List<PassData>(subshader.PassCount);
+                                subshaderData.Passes = new List<AIGD.PassData>(subshader.PassCount);
                                 for (var p = 0; p < subshader.PassCount; p++)
                                 {
                                     var pass = subshader.GetPass(p);
-                                    subshaderData.Passes.Add(new PassData
+                                    subshaderData.Passes.Add(new AIGD.PassData
                                     {
                                         Index = p,
                                         Name = string.IsNullOrEmpty(pass.Name) ? null : pass.Name,
@@ -239,113 +239,5 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             public bool IncludeSourceCode;
         }
 
-        public class ShaderData
-        {
-            [Description("Reference to the shader asset for future operations.")]
-            public AssetObjectRef? Reference { get; set; }
-
-            [Description("Full name of the shader (e.g. 'Standard', 'Universal Render Pipeline/Lit').")]
-            public string? Name { get; set; }
-
-            [Description("Whether the shader is supported on the current GPU and platform.")]
-            public bool IsSupported { get; set; }
-
-            [Description("The render queue value of the shader.")]
-            public int RenderQueue { get; set; }
-
-            [Description("Whether the shader has any compilation errors.")]
-            public bool HasErrors { get; set; }
-
-            [Description("Number of properties exposed by the shader.")]
-            public int PropertyCount { get; set; }
-
-            [Description("Total number of passes in the shader.")]
-            public int PassCount { get; set; }
-
-            [Description("The RenderType tag value from the first pass, if set.")]
-            public string? RenderType { get; set; }
-
-            [Description("Compilation messages including errors and warnings. Null if no messages.")]
-            public List<ShaderMessageData>? Messages { get; set; }
-
-            [Description("List of shader properties (uniforms). Null if the shader has no properties.")]
-            public List<ShaderPropertyData>? Properties { get; set; }
-
-            [Description("List of subshaders with their passes. Null if shader data is unavailable.")]
-            public List<SubshaderData>? Subshaders { get; set; }
-
-            [Description("Path-scoped read or view-query result, populated when 'paths' or 'viewQuery' is supplied. " +
-                "Null otherwise.")]
-            public SerializedMember? View { get; set; }
-        }
-
-        public class ShaderMessageData
-        {
-            [Description("The error or warning message text.")]
-            public string? Message { get; set; }
-
-            [Description("The line number in the shader source where the issue occurs.")]
-            public int Line { get; set; }
-
-            [Description("Severity level (e.g. 'Error', 'Warning').")]
-            public string? Severity { get; set; }
-
-            [Description("The platform on which the error occurs (e.g. 'OpenGLCore', 'D3D11').")]
-            public string? Platform { get; set; }
-        }
-
-        public class ShaderPropertyData
-        {
-            [Description("Property name as used in shader code (e.g. '_MainTex', '_Color').")]
-            public string? Name { get; set; }
-
-            [Description("Human-readable description/display name of the property.")]
-            public string? Description { get; set; }
-
-            [Description("Property type (e.g. 'Color', 'Float', 'Range', 'Texture', 'Vector', 'Int').")]
-            public string? Type { get; set; }
-
-            [Description("Property flags (e.g. 'None', 'HideInInspector', 'PerRendererData').")]
-            public string? Flags { get; set; }
-
-            [Description("The unique name ID for this property.")]
-            public int NameId { get; set; }
-
-            [Description("Minimum value for Range properties. Null for non-range properties.")]
-            public float? RangeMin { get; set; }
-
-            [Description("Maximum value for Range properties. Null for non-range properties.")]
-            public float? RangeMax { get; set; }
-
-            [Description("Default texture name for Texture properties. Null if not applicable.")]
-            public string? DefaultTextureName { get; set; }
-
-            [Description("Custom attributes applied to this property. Null if none.")]
-            public List<string>? Attributes { get; set; }
-        }
-
-        public class SubshaderData
-        {
-            [Description("Index of this subshader within the shader.")]
-            public int Index { get; set; }
-
-            [Description("Number of passes in this subshader.")]
-            public int PassCount { get; set; }
-
-            [Description("List of passes in this subshader. Null if no passes.")]
-            public List<PassData>? Passes { get; set; }
-        }
-
-        public class PassData
-        {
-            [Description("Index of this pass within the subshader.")]
-            public int Index { get; set; }
-
-            [Description("Name of the pass. Null if unnamed.")]
-            public string? Name { get; set; }
-
-            [Description("Source code of the pass. Null if unavailable.")]
-            public string? SourceCode { get; set; }
-        }
     }
 }

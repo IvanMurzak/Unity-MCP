@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using AIGD;
 #if UNITY_6000_5_OR_NEWER
 using System.Collections;
 using System.Collections.Generic;
@@ -72,7 +73,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             meshRenderer.sharedMaterial = new Material(Shader.Find("Standard"));
 
             var response = new Tool_GameObject().Find(
-                gameObjectRef: new Runtime.Data.GameObjectRef
+                gameObjectRef: new GameObjectRef
                 {
                     InstanceID = child.GetEntityId()
                 },

@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using AIGD;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -31,10 +32,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         )]
         [Description("Enable or disable MCP tools by name. " +
             "Allows controlling which tools are available for the AI agent.")]
-        public ResultData SetEnabledState
+        public ToolToggleResult SetEnabledState
         (
             [Description("Array of tools with their desired enabled state.")]
-            InputData[] tools,
+            ToolToggleInput[] tools,
 
             [Description("Include operation logs in the result. Default: false")]
             bool? includeLogs = false
@@ -87,7 +88,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 if (changed)
                     UnityMcpPluginEditor.Instance.Save();
 
-                return new ResultData
+                return new ToolToggleResult
                 {
                     Logs = logs,
                     Success = success

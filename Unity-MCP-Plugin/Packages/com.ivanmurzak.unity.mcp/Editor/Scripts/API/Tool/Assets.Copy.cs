@@ -14,7 +14,7 @@ using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
-using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using AIGD;
 using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -80,12 +80,5 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             });
         }
 
-        public class CopyAssetsResponse
-        {
-            [Description("List of copied assets.")]
-            public List<AssetObjectRef>? CopiedAssets { get; set; }
-            [Description("List of errors encountered during copy operations.")]
-            public List<string>? Errors { get; set; }
-        }
     }
 }
