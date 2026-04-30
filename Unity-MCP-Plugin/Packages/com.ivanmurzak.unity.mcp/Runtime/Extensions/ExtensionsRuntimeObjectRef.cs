@@ -10,7 +10,7 @@
 
 #nullable enable
 #if UNITY_6000_5_OR_NEWER
-using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using AIGD;
 
 namespace com.IvanMurzak.Unity.MCP.Runtime.Extensions
 {

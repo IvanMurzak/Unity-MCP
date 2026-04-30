@@ -44,11 +44,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "inputs": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets+CreateFolderInput[]"
+      "$ref": "#/$defs/AIGD.CreateFolderInput[]"
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets+CreateFolderInput": {
+    "AIGD.CreateFolderInput": {
       "type": "object",
       "properties": {
         "ParentFolderPath": {
@@ -61,10 +61,10 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         }
       }
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets+CreateFolderInput[]": {
+    "AIGD.CreateFolderInput[]": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets+CreateFolderInput"
+        "$ref": "#/$defs/AIGD.CreateFolderInput"
       }
     }
   },
@@ -83,7 +83,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets+CreateFolderResponse"
+      "$ref": "#/$defs/AIGD.CreateFolderResponse"
     }
   },
   "$defs": {
@@ -93,7 +93,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "type": "string"
       }
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets+CreateFolderResponse": {
+    "AIGD.CreateFolderResponse": {
       "type": "object",
       "properties": {
         "CreatedFolderGuids": {

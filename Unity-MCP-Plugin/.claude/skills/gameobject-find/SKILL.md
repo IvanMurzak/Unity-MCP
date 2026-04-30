@@ -62,7 +62,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "gameObjectRef": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef"
+      "$ref": "#/$defs/AIGD.GameObjectRef"
     },
     "includeData": {
       "type": "boolean"
@@ -90,7 +90,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     "System.Type": {
       "type": "string"
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
+    "AIGD.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -166,11 +166,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectData"
+      "$ref": "#/$defs/AIGD.GameObjectData"
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
+    "AIGD.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -296,7 +296,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       ],
       "additionalProperties": false
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectMetadata": {
+    "AIGD.GameObjectMetadata": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -321,7 +321,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "type": "boolean"
         },
         "children": {
-          "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectMetadata>"
+          "$ref": "#/$defs/System.Collections.Generic.List<AIGD.GameObjectMetadata>"
         }
       },
       "required": [
@@ -330,19 +330,19 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "activeInHierarchy"
       ]
     },
-    "System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectMetadata>": {
+    "System.Collections.Generic.List<AIGD.GameObjectMetadata>": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectMetadata"
+        "$ref": "#/$defs/AIGD.GameObjectMetadata"
       }
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentDataShallow[]": {
+    "AIGD.ComponentDataShallow[]": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentDataShallow"
+        "$ref": "#/$defs/AIGD.ComponentDataShallow"
       }
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentDataShallow": {
+    "AIGD.ComponentDataShallow": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -365,11 +365,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "isEnabled"
       ]
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectData": {
+    "AIGD.GameObjectData": {
       "type": "object",
       "properties": {
         "Reference": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef",
+          "$ref": "#/$defs/AIGD.GameObjectRef",
           "description": "Find GameObject in opened Prefab or in the active Scene."
         },
         "Data": {
@@ -381,11 +381,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "description": "Bounds of the GameObject."
         },
         "Hierarchy": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectMetadata",
+          "$ref": "#/$defs/AIGD.GameObjectMetadata",
           "description": "Hierarchy metadata of the GameObject."
         },
         "Components": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentDataShallow[]",
+          "$ref": "#/$defs/AIGD.ComponentDataShallow[]",
           "description": "Attached components shallow data of the GameObject (Read-only, use Component modification tool for modification)."
         }
       }

@@ -14,7 +14,7 @@ using System.ComponentModel;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
-using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using AIGD;
 using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -87,10 +87,5 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             });
         }
 
-        public class DestroyComponentsResponse
-        {
-            [Description("List of destroyed components.")]
-            public ComponentRefList? DestroyedComponents { get; set; }
-        }
     }
 }

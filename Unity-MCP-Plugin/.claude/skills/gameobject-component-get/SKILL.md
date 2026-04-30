@@ -60,10 +60,10 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "gameObjectRef": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef"
+      "$ref": "#/$defs/AIGD.GameObjectRef"
     },
     "componentRef": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef"
+      "$ref": "#/$defs/AIGD.ComponentRef"
     },
     "includeFields": {
       "type": "boolean"
@@ -85,7 +85,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     "System.Type": {
       "type": "string"
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
+    "AIGD.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -118,7 +118,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       ],
       "description": "Find GameObject in opened Prefab or in the active Scene."
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef": {
+    "AIGD.ComponentRef": {
       "type": "object",
       "properties": {
         "index": {
@@ -184,11 +184,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_GameObject+GetComponentResponse"
+      "$ref": "#/$defs/AIGD.GetComponentResponse"
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef": {
+    "AIGD.ComponentRef": {
       "type": "object",
       "properties": {
         "index": {
@@ -210,7 +210,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       ],
       "description": "Component reference. Used to find a Component at GameObject."
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentDataShallow": {
+    "AIGD.ComponentDataShallow": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -281,11 +281,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.SerializedMember"
       }
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_GameObject+GetComponentResponse": {
+    "AIGD.GetComponentResponse": {
       "type": "object",
       "properties": {
         "Reference": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef",
+          "$ref": "#/$defs/AIGD.ComponentRef",
           "description": "Reference to the component for future operations."
         },
         "Index": {
@@ -293,7 +293,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "description": "Index of the component in the GameObject's component list."
         },
         "Component": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentDataShallow",
+          "$ref": "#/$defs/AIGD.ComponentDataShallow",
           "description": "Basic component information (type, enabled state)."
         },
         "Fields": {

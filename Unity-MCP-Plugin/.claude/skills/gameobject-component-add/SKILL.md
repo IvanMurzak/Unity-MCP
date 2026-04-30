@@ -49,7 +49,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "$ref": "#/$defs/System.String[]"
     },
     "gameObjectRef": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef"
+      "$ref": "#/$defs/AIGD.GameObjectRef"
     }
   },
   "$defs": {
@@ -62,7 +62,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     "System.Type": {
       "type": "string"
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
+    "AIGD.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -112,17 +112,17 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_GameObject+AddComponentResponse"
+      "$ref": "#/$defs/AIGD.AddComponentResponse"
     }
   },
   "$defs": {
-    "System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentDataShallow>": {
+    "System.Collections.Generic.List<AIGD.ComponentDataShallow>": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentDataShallow"
+        "$ref": "#/$defs/AIGD.ComponentDataShallow"
       }
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentDataShallow": {
+    "AIGD.ComponentDataShallow": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -151,11 +151,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "type": "string"
       }
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_GameObject+AddComponentResponse": {
+    "AIGD.AddComponentResponse": {
       "type": "object",
       "properties": {
         "AddedComponents": {
-          "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentDataShallow>",
+          "$ref": "#/$defs/System.Collections.Generic.List<AIGD.ComponentDataShallow>",
           "description": "List of successfully added components."
         },
         "Messages": {

@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using AIGD;
 using System.Collections.Generic;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
@@ -112,19 +113,5 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             });
         }
 
-        public class CreateFolderInput
-        {
-            [Description("The parent folder path where the new folder will be created.")]
-            public string ParentFolderPath { get; set; } = string.Empty;
-            [Description("The name of the new folder to create.")]
-            public string NewFolderName { get; set; } = string.Empty;
-        }
-        public class CreateFolderResponse
-        {
-            [Description("List of GUIDs of created folders.")]
-            public List<string>? CreatedFolderGuids { get; set; }
-            [Description("List of errors encountered during folder creation.")]
-            public List<string>? Errors { get; set; }
-        }
     }
 }

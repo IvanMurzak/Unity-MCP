@@ -12,7 +12,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 
-namespace com.IvanMurzak.Unity.MCP.Runtime.Data
+namespace AIGD
 {
     [System.Serializable]
     [Description("GameObject references array. " +

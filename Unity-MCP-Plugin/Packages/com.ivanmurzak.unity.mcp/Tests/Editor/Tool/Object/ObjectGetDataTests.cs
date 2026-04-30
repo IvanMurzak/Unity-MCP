@@ -12,7 +12,7 @@
 #if UNITY_6000_5_OR_NEWER
 using System;
 using com.IvanMurzak.Unity.MCP.Editor.API;
-using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using AIGD;
 using NUnit.Framework;
 using UnityEngine;
 

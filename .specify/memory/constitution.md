@@ -1,15 +1,24 @@
 <!--
 Sync Impact Report
 ==================
-- Version change: 1.3.0 → 1.4.0 (mandatory tool input argument added)
-- Modified principles: none
-- Added sections:
-  - IX. `Unity-MCP-Plugin` Mandatory Tool Input Argument
+- Version change: 1.4.0 → 1.5.0 (data-model namespace flattened to AIGD; nested-data-model rule REVERSED to flat top-level)
+- Modified principles:
+  - IV. `Unity-MCP-Plugin` Naming Conventions — added a clarification that AI-facing data models
+    used as MCP tool inputs/outputs MUST live in the short `AIGD` namespace as TOP-LEVEL types
+    (one type per file). Nested-in-tool data classes are EXPLICITLY FORBIDDEN. The flat
+    `AIGD` namespace keeps auto-generated JSON Schema `$defs` keys compact and intuitive.
+    All other namespaces continue to follow `com.IvanMurzak.Unity.MCP.[Tier].[Component]`.
+- Added sections: none
 - Removed sections: none
 - Templates requiring updates:
   - .specify/templates/plan-template.md — ✅ compatible
   - .specify/templates/spec-template.md — ✅ compatible
   - .specify/templates/tasks-template.md — ✅ compatible
+- Migration notes:
+  - Closes Unity-MCP issue #676. Supersedes reverted PR #701 which used the intermediate
+    `Unity.MCP.Data` namespace; this constitution now codifies the final `AIGD` namespace.
+  - Existing nested data classes inside MCP tool partials have been EXTRACTED into top-level
+    types under `Editor/Scripts/API/Tool/Data/` (in `AIGD`). New tool authors MUST follow this pattern.
 - Follow-up TODOs: none
 -->
 
@@ -72,11 +81,35 @@ machine-readable feedback without fragile string parsing.
 - Tool classes MUST be `partial` — one operation per file
   (e.g., `Tool_GameObject.Create.cs`).
 - Namespaces MUST follow the pattern
-  `com.IvanMurzak.Unity.MCP.[Tier].[Component]`.
+  `com.IvanMurzak.Unity.MCP.[Tier].[Component]`, with ONE
+  exception described below for AI-facing data models.
+- **AI-facing data models** — every type that appears in an MCP tool
+  input or output (the `ObjectRef` hierarchy under
+  `Runtime/Data/`, extracted tool response/input types under
+  `Editor/Scripts/API/Tool/Data/`, and any future `*Data` /
+  `*DataShallow` / `*Metadata` / `*Ref` / `*RefList` /
+  `*Response` / `*Result` / `*Input` types) MUST be declared as
+  TOP-LEVEL types in the short `AIGD` namespace, one type per `.cs` file.
+  Their fully qualified names appear verbatim as `$defs` keys and
+  `$ref` paths in every MCP tool’s auto-generated JSON Schema; the
+  flat `AIGD` namespace keeps schemas compact and intuitive for AI
+  agents. Any new file added to `Runtime/Data/` or `Editor/Scripts/API/Tool/Data/`,
+  or any other AI-facing data model anywhere in the plugin, MUST also use
+  `AIGD`, regardless of the asmdef’s default `rootNamespace`.
+- **Nested data models are FORBIDDEN.** A data model used by an MCP tool
+  MUST NOT be nested inside the tool `partial class`. The previous
+  convention of declaring response/input classes inside the tool class is
+  REVERSED — all such classes have been extracted into top-level types
+  in the `AIGD` namespace and new ones MUST follow the same pattern.
 - Every file MUST include the copyright box comment header.
 
 Rationale: Consistent naming enables predictable discovery
 by AI agents and maintains codebase navigability at scale.
+The flat `AIGD` namespace for data models specifically targets
+JSON Schema readability for LLM consumers — deeply qualified names
+such as `com.IvanMurzak.Unity.MCP.Editor.API.Tool_GameObject+DestroyGameObjectResult`
+are unreadable for AI agents and inflate `$defs` keys; `AIGD.DestroyGameObjectResult`
+is unambiguous, short, and self-describing.
 
 ### V. Test-First Development
 
@@ -221,4 +254,4 @@ preferences when conflicts arise.
 adherence to these principles. Complexity that violates a
 principle MUST be justified in the PR description.
 
-**Version**: 1.4.0 | **Ratified**: 2026-03-13 | **Last Amended**: 2026-03-14
+**Version**: 1.5.0 | **Ratified**: 2026-03-13 | **Last Amended**: 2026-04-29

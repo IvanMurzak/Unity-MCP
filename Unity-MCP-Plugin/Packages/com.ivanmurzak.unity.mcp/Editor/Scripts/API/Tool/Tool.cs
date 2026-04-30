@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using AIGD;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -21,23 +22,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     [McpPluginToolType]
     public partial class Tool_Tool
     {
-        public class InputData
-        {
-            [Description("Name of the MCP tool to enable or disable.")]
-            public string Name { get; set; } = string.Empty;
-
-            [Description("Whether the tool should be enabled (true) or disabled (false).")]
-            public bool Enabled { get; set; }
-        }
-
-        public class ResultData
-        {
-            [Description("Optional operation logs. Only included when 'includeLogs' is true.")]
-            public Logs? Logs { get; set; }
-
-            [Description("Result of each tool operation. Key: original input name as provided by the caller (case preserved as-is). Value: true if the enable/disable operation completed successfully, false if the name was unknown, ambiguous, or empty.")]
-            public Dictionary<string, bool> Success { get; set; } = new();
-        }
 
         static (Dictionary<string, string> exact, Dictionary<string, List<string>> caseInsensitive) BuildToolLookup(IToolManager toolManager)
         {

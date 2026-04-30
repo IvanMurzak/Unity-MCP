@@ -19,7 +19,7 @@ using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
-using com.IvanMurzak.Unity.MCP.Runtime.Data;
+using AIGD;
 using NUnit.Framework;
 using UnityEngine.TestTools;
 

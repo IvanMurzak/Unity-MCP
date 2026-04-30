@@ -44,11 +44,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "select": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ObjectRef[]"
+      "$ref": "#/$defs/AIGD.ObjectRef[]"
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ObjectRef": {
+    "AIGD.ObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -61,10 +61,10 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       ],
       "description": "Reference to UnityEngine.Object instance. It could be GameObject, Component, Asset, etc. Anything extended from UnityEngine.Object."
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ObjectRef[]": {
+    "AIGD.ObjectRef[]": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ObjectRef",
+        "$ref": "#/$defs/AIGD.ObjectRef",
         "description": "Reference to UnityEngine.Object instance. It could be GameObject, Component, Asset, etc. Anything extended from UnityEngine.Object."
       }
     }
@@ -84,18 +84,18 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Editor_Selection+SelectionData"
+      "$ref": "#/$defs/AIGD.SelectionData"
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef[]": {
+    "AIGD.GameObjectRef[]": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef",
+        "$ref": "#/$defs/AIGD.GameObjectRef",
         "description": "Find GameObject in opened Prefab or in the active Scene."
       }
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
+    "AIGD.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -131,14 +131,14 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     "System.Type": {
       "type": "string"
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef[]": {
+    "AIGD.ComponentRef[]": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef",
+        "$ref": "#/$defs/AIGD.ComponentRef",
         "description": "Component reference. Used to find a Component at GameObject."
       }
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef": {
+    "AIGD.ComponentRef": {
       "type": "object",
       "properties": {
         "index": {
@@ -172,7 +172,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "type": "string"
       }
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ObjectRef": {
+    "AIGD.ObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -185,15 +185,15 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       ],
       "description": "Reference to UnityEngine.Object instance. It could be GameObject, Component, Asset, etc. Anything extended from UnityEngine.Object."
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Editor_Selection+SelectionData": {
+    "AIGD.SelectionData": {
       "type": "object",
       "properties": {
         "GameObjects": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef[]",
+          "$ref": "#/$defs/AIGD.GameObjectRef[]",
           "description": "Returns the actual game object selection. Includes Prefabs, non-modifiable objects."
         },
         "Transforms": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef[]",
+          "$ref": "#/$defs/AIGD.ComponentRef[]",
           "description": "Returns the top level selection, excluding Prefabs."
         },
         "InstanceIDs": {
@@ -205,7 +205,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "description": "Returns the guids of the selected assets."
         },
         "ActiveGameObject": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef",
+          "$ref": "#/$defs/AIGD.GameObjectRef",
           "description": "Returns the active game object. (The one shown in the inspector)."
         },
         "ActiveInstanceID": {
@@ -213,11 +213,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "description": "Returns the instanceID of the actual object selection. Includes Prefabs, non-modifiable objects"
         },
         "ActiveObject": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ObjectRef",
+          "$ref": "#/$defs/AIGD.ObjectRef",
           "description": "Returns the actual object selection. Includes Prefabs, non-modifiable objects."
         },
         "ActiveTransform": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef",
+          "$ref": "#/$defs/AIGD.ComponentRef",
           "description": "Returns the active transform. (The one shown in the inspector)."
         }
       },

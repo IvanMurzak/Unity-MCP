@@ -69,7 +69,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_GameObject+ComponentListResult"
+      "$ref": "#/$defs/AIGD.ComponentListResult"
     }
   },
   "$defs": {
@@ -79,7 +79,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "type": "string"
       }
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_GameObject+ComponentListResult": {
+    "AIGD.ComponentListResult": {
       "type": "object",
       "properties": {
         "Items": {
