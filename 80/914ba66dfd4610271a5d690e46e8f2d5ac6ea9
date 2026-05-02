@@ -1,0 +1,36 @@
+docs/claude/release.md
+  eeb5835356aad1c0 1-7
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "80914ba66dfd4610271a5d690e46e8f2d5ac6ea9",
+  "prompts": {
+    "ae16b8890f8f39f8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "89ed2d3d-bdac-4de2-ae40-0b2a85cd58fb",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 107,
+      "total_deletions": 28,
+      "accepted_lines": 423,
+      "overriden_lines": 0
+    },
+    "eeb5835356aad1c0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "31c4fa80-959c-4675-979d-991e8df90743",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 15,
+      "total_deletions": 10027,
+      "accepted_lines": 15,
+      "overriden_lines": 0
+    }
+  }
+}
