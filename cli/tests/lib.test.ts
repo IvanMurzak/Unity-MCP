@@ -105,11 +105,12 @@ describe('installPlugin', () => {
       version: TEST_VERSION,
     });
 
+    expect(result.kind).toBe('success');
     expect(result.success).toBe(true);
+    if (result.kind !== 'success') throw new Error('expected success kind');
     expect(result.installedVersion).toBe(TEST_VERSION);
     expect(result.warnings).toEqual([]);
     expect(result.nextSteps.length).toBeGreaterThan(0);
-    expect(result.error).toBeUndefined();
     expect(result.manifestPath).toContain('manifest.json');
 
     const manifest = JSON.parse(
@@ -119,22 +120,26 @@ describe('installPlugin', () => {
     expect(manifest.scopedRegistries[0].name).toBe('package.openupm.com');
   });
 
-  it('returns success:false with an Error when unityProjectPath is missing', async () => {
+  it('returns kind:"failure" with an Error when unityProjectPath is missing', async () => {
     const result = await installPlugin({ unityProjectPath: '' });
+    expect(result.kind).toBe('failure');
     expect(result.success).toBe(false);
+    if (result.kind !== 'failure') throw new Error('expected failure kind');
     expect(result.error).toBeInstanceOf(Error);
-    expect(result.error?.message).toContain('unityProjectPath is required');
+    expect(result.error.message).toContain('unityProjectPath is required');
   });
 
-  it('returns success:false when manifest.json is missing', async () => {
+  it('returns kind:"failure" when manifest.json is missing', async () => {
     const emptyDir = mkEmptyDir();
     try {
       const result = await installPlugin({
         unityProjectPath: emptyDir,
         version: TEST_VERSION,
       });
+      expect(result.kind).toBe('failure');
       expect(result.success).toBe(false);
-      expect(result.error?.message).toContain('Not a valid Unity project');
+      if (result.kind !== 'failure') throw new Error('expected failure kind');
+      expect(result.error.message).toContain('Not a valid Unity project');
     } finally {
       fs.rmSync(emptyDir, { recursive: true, force: true });
     }
@@ -150,7 +155,7 @@ describe('installPlugin', () => {
       },
     });
 
-    expect(result.success).toBe(true);
+    expect(result.kind).toBe('success');
 
     const phases = events.map((e) => e.phase);
     expect(phases).toContain('start');
@@ -176,7 +181,8 @@ describe('installPlugin', () => {
       version: '99.0.0',
     });
 
-    expect(result.success).toBe(true);
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') throw new Error('expected success kind');
     expect(result.installedVersion).toBe('99.0.0');
     expect(result.warnings).toEqual([]);
   });
@@ -190,7 +196,8 @@ describe('installPlugin', () => {
       },
     });
 
-    expect(result.success).toBe(true);
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') throw new Error('expected success kind');
     expect(result.installedVersion).toBe(TEST_VERSION);
   });
 
@@ -205,7 +212,7 @@ describe('installPlugin', () => {
       version: TEST_VERSION,
     });
 
-    expect(result.success).toBe(true);
+    expect(result.kind).toBe('success');
     expect(log).not.toHaveBeenCalled();
     expect(errFn).not.toHaveBeenCalled();
     expect(stdout).not.toHaveBeenCalled();
@@ -215,6 +222,14 @@ describe('installPlugin', () => {
     errFn.mockRestore();
     stdout.mockRestore();
     stderr.mockRestore();
+  });
+
+  it('wire-compatible: result.success mirrors result.kind === "success"', async () => {
+    const ok = await installPlugin({ unityProjectPath: tmpDir, version: TEST_VERSION });
+    expect(ok.success).toBe(ok.kind === 'success');
+
+    const fail = await installPlugin({ unityProjectPath: '' });
+    expect(fail.success).toBe(fail.kind === 'success');
   });
 });
 
@@ -249,7 +264,9 @@ describe('removePlugin', () => {
     );
 
     const result = await removePlugin({ unityProjectPath: tmpDir });
+    expect(result.kind).toBe('success');
     expect(result.success).toBe(true);
+    if (result.kind !== 'success') throw new Error('expected success kind');
     expect(result.removed).toBe(true);
     expect(result.warnings).toEqual([]);
 
@@ -260,19 +277,21 @@ describe('removePlugin', () => {
     expect(manifest.dependencies['com.unity.ugui']).toBe('1.0.0');
   });
 
-  it('returns success:true with removed=false when plugin is not installed', async () => {
+  it('returns kind:"success" with removed=false when plugin is not installed', async () => {
     const result = await removePlugin({ unityProjectPath: tmpDir });
-    expect(result.success).toBe(true);
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') throw new Error('expected success kind');
     expect(result.removed).toBe(false);
     expect(result.warnings.length).toBeGreaterThan(0);
   });
 
-  it('returns success:false with an Error when manifest is missing', async () => {
+  it('returns kind:"failure" with an Error when manifest is missing', async () => {
     const emptyDir = mkEmptyDir();
     try {
       const result = await removePlugin({ unityProjectPath: emptyDir });
-      expect(result.success).toBe(false);
-      expect(result.error?.message).toContain('Not a valid Unity project');
+      expect(result.kind).toBe('failure');
+      if (result.kind !== 'failure') throw new Error('expected failure kind');
+      expect(result.error.message).toContain('Not a valid Unity project');
     } finally {
       fs.rmSync(emptyDir, { recursive: true, force: true });
     }
@@ -280,8 +299,9 @@ describe('removePlugin', () => {
 
   it('validates unityProjectPath', async () => {
     const result = await removePlugin({ unityProjectPath: '' });
-    expect(result.success).toBe(false);
-    expect(result.error?.message).toContain('unityProjectPath is required');
+    expect(result.kind).toBe('failure');
+    if (result.kind !== 'failure') throw new Error('expected failure kind');
+    expect(result.error.message).toContain('unityProjectPath is required');
   });
 });
 
@@ -303,13 +323,13 @@ describe('configure', () => {
   it('creates a default config when none exists and returns a snapshot', async () => {
     const result = await configure({ unityProjectPath: tmpDir });
 
-    expect(result.success).toBe(true);
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') throw new Error('expected success kind');
     expect(result.configPath).toContain('AI-Game-Developer-Config.json');
-    expect(result.snapshot).toBeDefined();
-    expect(result.snapshot?.host).toContain('localhost');
-    expect(result.snapshot?.tools).toEqual([]);
-    expect(result.snapshot?.prompts).toEqual([]);
-    expect(result.snapshot?.resources).toEqual([]);
+    expect(result.snapshot.host).toContain('localhost');
+    expect(result.snapshot.tools).toEqual([]);
+    expect(result.snapshot.prompts).toEqual([]);
+    expect(result.snapshot.resources).toEqual([]);
   });
 
   it('enables specific tools', async () => {
@@ -318,8 +338,9 @@ describe('configure', () => {
       tools: { enableNames: ['tool-a', 'tool-b'] },
     });
 
-    expect(result.success).toBe(true);
-    const tools = result.snapshot?.tools ?? [];
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') throw new Error('expected success kind');
+    const tools = result.snapshot.tools;
     expect(tools).toContainEqual({ name: 'tool-a', enabled: true });
     expect(tools).toContainEqual({ name: 'tool-b', enabled: true });
   });
@@ -334,23 +355,27 @@ describe('configure', () => {
       tools: { disableNames: ['tool-a'] },
     });
 
-    const tools = result.snapshot?.tools ?? [];
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') throw new Error('expected success kind');
+    const tools = result.snapshot.tools;
     expect(tools).toContainEqual({ name: 'tool-a', enabled: false });
     expect(tools).toContainEqual({ name: 'tool-b', enabled: true });
   });
 
-  it('returns success:false when the project path does not exist', async () => {
+  it('returns kind:"failure" when the project path does not exist', async () => {
     const result = await configure({
       unityProjectPath: path.join(tmpDir, 'does-not-exist'),
     });
-    expect(result.success).toBe(false);
-    expect(result.error?.message).toContain('does not exist');
+    expect(result.kind).toBe('failure');
+    if (result.kind !== 'failure') throw new Error('expected failure kind');
+    expect(result.error.message).toContain('does not exist');
   });
 
   it('validates unityProjectPath', async () => {
     const result = await configure({ unityProjectPath: '' });
-    expect(result.success).toBe(false);
-    expect(result.error?.message).toContain('unityProjectPath is required');
+    expect(result.kind).toBe('failure');
+    if (result.kind !== 'failure') throw new Error('expected failure kind');
+    expect(result.error.message).toContain('unityProjectPath is required');
   });
 
   it('supports prompts and resources independently', async () => {
@@ -359,10 +384,11 @@ describe('configure', () => {
       prompts: { enableNames: ['p1'] },
       resources: { disableNames: ['r1'] },
     });
-    expect(result.success).toBe(true);
-    expect(result.snapshot?.prompts).toContainEqual({ name: 'p1', enabled: true });
-    expect(result.snapshot?.resources).toContainEqual({ name: 'r1', enabled: false });
-    expect(result.snapshot?.tools).toEqual([]);
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') throw new Error('expected success kind');
+    expect(result.snapshot.prompts).toContainEqual({ name: 'p1', enabled: true });
+    expect(result.snapshot.resources).toContainEqual({ name: 'r1', enabled: false });
+    expect(result.snapshot.tools).toEqual([]);
   });
 });
 
@@ -392,11 +418,12 @@ describe('setupMcp', () => {
       transport: 'http',
     });
 
-    expect(result.success).toBe(true);
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') throw new Error('expected success kind');
     expect(result.agentId).toBe(agentId);
     expect(result.transport).toBe('http');
     expect(result.configPath).toBeDefined();
-    expect(fs.existsSync(result.configPath!)).toBe(true);
+    expect(fs.existsSync(result.configPath)).toBe(true);
   });
 
   it('fails with a descriptive error when the agent is unknown', async () => {
@@ -405,8 +432,9 @@ describe('setupMcp', () => {
       unityProjectPath: tmpDir,
     });
 
-    expect(result.success).toBe(false);
-    expect(result.error?.message).toContain('Unknown agent');
+    expect(result.kind).toBe('failure');
+    if (result.kind !== 'failure') throw new Error('expected failure kind');
+    expect(result.error.message).toContain('Unknown agent');
   });
 
   it('fails when agentId is empty', async () => {
@@ -414,8 +442,9 @@ describe('setupMcp', () => {
       agentId: '',
       unityProjectPath: tmpDir,
     });
-    expect(result.success).toBe(false);
-    expect(result.error?.message).toContain('agentId is required');
+    expect(result.kind).toBe('failure');
+    if (result.kind !== 'failure') throw new Error('expected failure kind');
+    expect(result.error.message).toContain('agentId is required');
   });
 
   it('fails when the supplied project path does not exist', async () => {
@@ -423,8 +452,9 @@ describe('setupMcp', () => {
       agentId: listAgentIds()[0],
       unityProjectPath: path.join(tmpDir, 'does-not-exist'),
     });
-    expect(result.success).toBe(false);
-    expect(result.error?.message).toContain('does not exist');
+    expect(result.kind).toBe('failure');
+    if (result.kind !== 'failure') throw new Error('expected failure kind');
+    expect(result.error.message).toContain('does not exist');
   });
 
   it('rejects an invalid transport', async () => {
@@ -433,7 +463,8 @@ describe('setupMcp', () => {
       unityProjectPath: tmpDir,
       transport: 'ftp' as unknown as 'stdio' | 'http',
     });
-    expect(result.success).toBe(false);
-    expect(result.error?.message).toContain('Invalid transport');
+    expect(result.kind).toBe('failure');
+    if (result.kind !== 'failure') throw new Error('expected failure kind');
+    expect(result.error.message).toContain('Invalid transport');
   });
 });

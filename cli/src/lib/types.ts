@@ -24,6 +24,21 @@ export type ProgressEvent =
 export type ProgressCallback = (event: ProgressEvent) => void;
 
 // ---------------------------------------------------------------------------
+// Result discriminator
+// ---------------------------------------------------------------------------
+
+/**
+ * Discriminator literal for every library result type. Consumers should
+ * narrow on `result.kind === 'success'` (or `=== 'failure'`) to access
+ * variant-specific fields with full TypeScript type safety.
+ *
+ * Wire-compatible note: every result object also carries a `success`
+ * boolean that satisfies `success === (kind === 'success')` so existing
+ * consumers reading `result.success` continue to work without changes.
+ */
+export type ResultKind = 'success' | 'failure';
+
+// ---------------------------------------------------------------------------
 // install-plugin
 // ---------------------------------------------------------------------------
 
@@ -43,20 +58,37 @@ export interface InstallPluginOptions {
   onProgress?: ProgressCallback;
 }
 
-export interface InstallResult {
-  /** `true` when the manifest was updated (or already correct); `false` on error. */
-  success: boolean;
-  /** Final plugin version in the manifest. Populated on success. */
-  installedVersion?: string;
+/** Successful `installPlugin` outcome. Narrow with `kind === 'success'`. */
+export interface InstallSuccess {
+  kind: 'success';
+  /** Always `true` for the success variant. Wire-compatible alias for `kind === 'success'`. */
+  success: true;
+  /** Final plugin version in the manifest. */
+  installedVersion: string;
   /** Absolute path to the manifest.json that was inspected / written. */
-  manifestPath?: string;
+  manifestPath: string;
   /** Non-fatal warnings collected during the run (e.g. skipped downgrade). */
   warnings: string[];
   /** Suggested next steps for the caller to surface to a human user. */
   nextSteps: string[];
-  /** Populated when `success === false`. Never thrown past this boundary. */
-  error?: Error;
 }
+
+/** Failed `installPlugin` outcome. Narrow with `kind === 'failure'`. */
+export interface InstallFailure {
+  kind: 'failure';
+  /** Always `false` for the failure variant. Wire-compatible alias for `kind === 'failure'`. */
+  success: false;
+  /** Manifest path may be known even on failure (e.g. when validation reaches the manifest). */
+  manifestPath?: string;
+  /** Non-fatal warnings collected before the failure. */
+  warnings: string[];
+  /** Suggested next steps the caller may surface to a human user. */
+  nextSteps: string[];
+  /** The captured error. Never thrown past this boundary. */
+  error: Error;
+}
+
+export type InstallResult = InstallSuccess | InstallFailure;
 
 // ---------------------------------------------------------------------------
 // remove-plugin
@@ -67,14 +99,24 @@ export interface RemovePluginOptions {
   onProgress?: ProgressCallback;
 }
 
-export interface RemoveResult {
-  success: boolean;
+export interface RemoveSuccess {
+  kind: 'success';
+  success: true;
   /** `true` when the plugin dependency was present and has been removed. */
-  removed?: boolean;
+  removed: boolean;
+  manifestPath: string;
+  warnings: string[];
+}
+
+export interface RemoveFailure {
+  kind: 'failure';
+  success: false;
   manifestPath?: string;
   warnings: string[];
-  error?: Error;
+  error: Error;
 }
+
+export type RemoveResult = RemoveSuccess | RemoveFailure;
 
 // ---------------------------------------------------------------------------
 // configure
@@ -106,23 +148,34 @@ export interface McpFeatureSnapshot {
   enabled: boolean;
 }
 
-export interface ConfigureResult {
-  success: boolean;
-  /** Absolute path to the `AI-Game-Developer-Config.json` that was written. */
-  configPath?: string;
-  /** A read-only snapshot of the post-write config. */
-  snapshot?: {
-    host?: string;
-    keepConnected?: boolean;
-    transportMethod?: string;
-    authOption?: string;
-    tools: McpFeatureSnapshot[];
-    prompts: McpFeatureSnapshot[];
-    resources: McpFeatureSnapshot[];
-  };
-  warnings: string[];
-  error?: Error;
+export interface ConfigureSnapshot {
+  host?: string;
+  keepConnected?: boolean;
+  transportMethod?: string;
+  authOption?: string;
+  tools: McpFeatureSnapshot[];
+  prompts: McpFeatureSnapshot[];
+  resources: McpFeatureSnapshot[];
 }
+
+export interface ConfigureSuccess {
+  kind: 'success';
+  success: true;
+  /** Absolute path to the `AI-Game-Developer-Config.json` that was written. */
+  configPath: string;
+  /** A read-only snapshot of the post-write config. */
+  snapshot: ConfigureSnapshot;
+  warnings: string[];
+}
+
+export interface ConfigureFailure {
+  kind: 'failure';
+  success: false;
+  warnings: string[];
+  error: Error;
+}
+
+export type ConfigureResult = ConfigureSuccess | ConfigureFailure;
 
 // ---------------------------------------------------------------------------
 // setup-mcp
@@ -147,15 +200,25 @@ export interface SetupMcpOptions {
   onProgress?: ProgressCallback;
 }
 
-export interface SetupMcpResult {
-  success: boolean;
-  /** The agent whose config file was written (undefined on error). */
-  agentId?: string;
+export interface SetupMcpSuccess {
+  kind: 'success';
+  success: true;
+  /** The agent whose config file was written. */
+  agentId: string;
   /** Absolute path to the agent config file that was written. */
-  configPath?: string;
+  configPath: string;
   /** Transport actually written. */
-  transport?: McpTransport;
+  transport: McpTransport;
   warnings: string[];
   nextSteps: string[];
-  error?: Error;
 }
+
+export interface SetupMcpFailure {
+  kind: 'failure';
+  success: false;
+  warnings: string[];
+  nextSteps: string[];
+  error: Error;
+}
+
+export type SetupMcpResult = SetupMcpSuccess | SetupMcpFailure;

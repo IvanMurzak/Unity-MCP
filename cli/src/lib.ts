@@ -4,8 +4,8 @@
 // - NO top-level side effects. Importing this file must not open
 //   sockets, spin up spinners, write to stdout/stderr, or parse argv.
 // - NO `commander` import reachable from this file.
-// - Errors are returned in `{ success: false, error }` results — never
-//   thrown past the public boundary.
+// - Errors are returned in `{ kind: 'failure', success: false, error }`
+//   results — never thrown past the public boundary.
 // - Progress is surfaced via an optional `onProgress` callback, not
 //   globals or singletons.
 //
@@ -21,19 +21,29 @@ export type {
   // Shared
   ProgressEvent,
   ProgressCallback,
+  ResultKind,
   // install-plugin
   InstallPluginOptions,
   InstallResult,
+  InstallSuccess,
+  InstallFailure,
   // remove-plugin
   RemovePluginOptions,
   RemoveResult,
+  RemoveSuccess,
+  RemoveFailure,
   // configure
   ConfigureOptions,
   ConfigureResult,
+  ConfigureSuccess,
+  ConfigureFailure,
+  ConfigureSnapshot,
   FeatureAction,
   McpFeatureSnapshot,
   // setup-mcp
   SetupMcpOptions,
   SetupMcpResult,
+  SetupMcpSuccess,
+  SetupMcpFailure,
   McpTransport,
 } from './lib/types.js';

@@ -39,6 +39,10 @@ function portFromHost(host: string | undefined, projectPath: string): number {
  * Write MCP configuration for the given AI agent, so it can talk to
  * Unity-MCP. Library-safe: no stdout noise, no process.exit, no throws
  * past the public boundary.
+ *
+ * The returned `SetupMcpResult` is a discriminated union — narrow with
+ * `result.kind === 'success'` to access `agentId` / `configPath` /
+ * `transport`, or `result.kind === 'failure'` to access `error`.
  */
 export async function setupMcp(opts: SetupMcpOptions): Promise<SetupMcpResult> {
   const warnings: string[] = [];
@@ -47,6 +51,7 @@ export async function setupMcp(opts: SetupMcpOptions): Promise<SetupMcpResult> {
   try {
     if (!opts || typeof opts.agentId !== 'string' || opts.agentId.length === 0) {
       return {
+        kind: 'failure',
         success: false,
         warnings,
         nextSteps,
@@ -59,6 +64,7 @@ export async function setupMcp(opts: SetupMcpOptions): Promise<SetupMcpResult> {
     const agent = getAgentById(opts.agentId);
     if (!agent) {
       return {
+        kind: 'failure',
         success: false,
         warnings,
         nextSteps,
@@ -71,6 +77,7 @@ export async function setupMcp(opts: SetupMcpOptions): Promise<SetupMcpResult> {
     const transport: McpTransport = opts.transport ?? 'http';
     if (!isValidTransport(transport)) {
       return {
+        kind: 'failure',
         success: false,
         warnings,
         nextSteps,
@@ -84,7 +91,7 @@ export async function setupMcp(opts: SetupMcpOptions): Promise<SetupMcpResult> {
     if (opts.unityProjectPath) {
       const validated = requireExistingPath(opts.unityProjectPath);
       if (!validated.ok) {
-        return { success: false, warnings, nextSteps, error: validated.error };
+        return { kind: 'failure', success: false, warnings, nextSteps, error: validated.error };
       }
       projectPath = validated.projectPath;
     } else {
@@ -148,6 +155,7 @@ export async function setupMcp(opts: SetupMcpOptions): Promise<SetupMcpResult> {
     emitProgress(opts.onProgress, { phase: 'done', message: `${agent.name} configured successfully.` });
 
     return {
+      kind: 'success',
       success: true,
       agentId: agent.id,
       configPath,
@@ -157,6 +165,7 @@ export async function setupMcp(opts: SetupMcpOptions): Promise<SetupMcpResult> {
     };
   } catch (err: unknown) {
     return {
+      kind: 'failure',
       success: false,
       warnings,
       nextSteps,

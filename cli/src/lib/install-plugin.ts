@@ -8,7 +8,11 @@ import type { InstallPluginOptions, InstallResult } from './types.js';
  * Install the Unity-MCP plugin into a Unity project. Library-safe:
  * never calls `process.exit`, never prints to stdout / stderr, never
  * throws past the public boundary — errors are returned in
- * `{ success: false, error }`.
+ * `{ kind: 'failure', success: false, error }`.
+ *
+ * The returned `InstallResult` is a discriminated union — narrow with
+ * `result.kind === 'success'` to access `installedVersion` /
+ * `manifestPath`, or `result.kind === 'failure'` to access `error`.
  */
 export async function installPlugin(opts: InstallPluginOptions): Promise<InstallResult> {
   const warnings: string[] = [];
@@ -18,6 +22,7 @@ export async function installPlugin(opts: InstallPluginOptions): Promise<Install
     const validated = requireUnityProject(opts?.unityProjectPath);
     if (!validated.ok) {
       return {
+        kind: 'failure',
         success: false,
         manifestPath: validated.manifestPath,
         warnings,
@@ -62,6 +67,7 @@ export async function installPlugin(opts: InstallPluginOptions): Promise<Install
     emitProgress(opts.onProgress, { phase: 'done', message: 'Install complete.' });
 
     return {
+      kind: 'success',
       success: true,
       installedVersion: result.resolvedVersion,
       manifestPath: result.manifestPath,
@@ -70,6 +76,7 @@ export async function installPlugin(opts: InstallPluginOptions): Promise<Install
     };
   } catch (err: unknown) {
     return {
+      kind: 'failure',
       success: false,
       warnings,
       nextSteps,

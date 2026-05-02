@@ -45,6 +45,10 @@ function snapshotFeatures(config: UnityConnectionConfig, key: 'tools' | 'prompts
  * If none of `tools`/`prompts`/`resources` are supplied, the call is a
  * read-only "create-if-missing and return snapshot" — mirrors the CLI's
  * `--list` behaviour minus the rendering.
+ *
+ * The returned `ConfigureResult` is a discriminated union — narrow with
+ * `result.kind === 'success'` to access `configPath` / `snapshot`, or
+ * `result.kind === 'failure'` to access `error`.
  */
 export async function configure(opts: ConfigureOptions): Promise<ConfigureResult> {
   const warnings: string[] = [];
@@ -52,7 +56,7 @@ export async function configure(opts: ConfigureOptions): Promise<ConfigureResult
   try {
     const validated = requireExistingPath(opts?.unityProjectPath);
     if (!validated.ok) {
-      return { success: false, warnings, error: validated.error };
+      return { kind: 'failure', success: false, warnings, error: validated.error };
     }
     const { projectPath } = validated;
 
@@ -88,6 +92,7 @@ export async function configure(opts: ConfigureOptions): Promise<ConfigureResult
     emitProgress(opts.onProgress, { phase: 'done', message: 'Configure complete.' });
 
     return {
+      kind: 'success',
       success: true,
       configPath,
       snapshot: {
@@ -103,6 +108,7 @@ export async function configure(opts: ConfigureOptions): Promise<ConfigureResult
     };
   } catch (err: unknown) {
     return {
+      kind: 'failure',
       success: false,
       warnings,
       error: err instanceof Error ? err : new Error(String(err)),
