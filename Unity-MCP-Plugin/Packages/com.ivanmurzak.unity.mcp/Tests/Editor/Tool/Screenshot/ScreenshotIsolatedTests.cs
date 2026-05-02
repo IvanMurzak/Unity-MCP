@@ -257,6 +257,35 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 l != null && l.name != null && l.name.StartsWith("__TempIsolation"));
             Assert.AreEqual(0, leftoverLights.Count, "All temporary lights must be destroyed in finally");
         }
+
+        [Test]
+        public void ScreenshotIsolated_Composite_NoTemporaryGameObjectsLeftBehind()
+        {
+            var go = CreateTargetCube("CompositeCleanupTarget");
+            var goRef = new GameObjectRef { InstanceID = go.GetEntityId() };
+
+            var beforeCameras = Object.FindObjectsOfType<Camera>().Length;
+            var beforeLights = Object.FindObjectsOfType<Light>().Length;
+
+            new Tool_Screenshot().ScreenshotIsolated(
+                gameObjectRef: goRef,
+                cameraView: Tool_Screenshot.CameraView.Composite,
+                resolution: 32);
+
+            var afterCameras = Object.FindObjectsOfType<Camera>().Length;
+            Assert.AreEqual(beforeCameras, afterCameras, "All composite-quadrant temporary cameras must be destroyed in finally");
+
+            var leftoverIsolation = new List<GameObject>();
+            foreach (var camera in Object.FindObjectsOfType<Camera>())
+            {
+                if (camera != null && camera.name != null && camera.name.StartsWith("__TempIsolation"))
+                    leftoverIsolation.Add(camera.gameObject);
+            }
+            Assert.AreEqual(0, leftoverIsolation.Count, "No __TempIsolationCamera GameObjects must survive a composite render");
+
+            var afterLights = Object.FindObjectsOfType<Light>().Length;
+            Assert.AreEqual(beforeLights, afterLights, "All composite-quadrant temporary lights must be destroyed in finally");
+        }
     }
 }
 #endif

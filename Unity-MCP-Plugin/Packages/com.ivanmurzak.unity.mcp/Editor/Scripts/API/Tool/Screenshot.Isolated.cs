@@ -34,6 +34,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         private const int IsolationLayer = 31;
         private const int MinResolution = 1;
         private const int MaxResolution = 8192;
+        private const float MinFieldOfView = 1f;
+        private const float MaxFieldOfView = 179f;
+        private const float MinPadding = 0.01f;
+        private const float MaxPadding = 100f;
 
         public enum CameraView
         {
@@ -145,6 +149,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             var resolvedFar = farClipPlane ?? 1000f;
             var resolvedPadding = padding ?? 1.2f;
 
+            if (!float.IsFinite(resolvedFov) || resolvedFov < MinFieldOfView || resolvedFov > MaxFieldOfView)
+                return ResponseCallTool.Error(
+                    $"fieldOfView must be finite and between {MinFieldOfView} and {MaxFieldOfView} degrees. Got {resolvedFov}.");
+
+            if (!float.IsFinite(resolvedPadding) || resolvedPadding < MinPadding || resolvedPadding > MaxPadding)
+                return ResponseCallTool.Error(
+                    $"padding must be finite and between {MinPadding} and {MaxPadding}. Got {resolvedPadding}.");
+
+            if (!float.IsFinite(resolvedNear) || resolvedNear <= 0f)
+                return ResponseCallTool.Error(
+                    $"nearClipPlane must be finite and > 0. Got {resolvedNear}.");
+
+            if (!float.IsFinite(resolvedFar) || resolvedFar <= resolvedNear)
+                return ResponseCallTool.Error(
+                    $"farClipPlane must be finite and > nearClipPlane ({resolvedNear}). Got {resolvedFar}.");
+
             List<IsolatedLightConfig> lightConfigs;
             try
             {
@@ -170,13 +190,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 var renderers = CollectRenderers(target, resolvedIncludeChildren);
                 if (renderers.Count == 0)
-                    return ResponseCallTool.Error("[Error] No Renderers found on target GameObject. Cannot compute bounds.");
+                    return ResponseCallTool.Error(resolvedIncludeChildren
+                        ? "[Error] No Renderers found on target GameObject or its children. Cannot compute bounds."
+                        : "[Error] No Renderers found on target GameObject (includeChildren=false). Set includeChildren=true if renderers live on child objects.");
 
                 var bounds = ComputeBounds(renderers);
 
-                var targetGameObjects = resolvedIncludeChildren
-                    ? CollectAllGameObjects(target)
-                    : new List<GameObject> { target };
+                var targetGameObjects = CollectAllGameObjects(target, resolvedIncludeChildren);
 
                 var originalLayers = new Dictionary<GameObject, int>(targetGameObjects.Count);
                 var originalActiveSelf = new Dictionary<GameObject, bool>(targetGameObjects.Count);
@@ -197,9 +217,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                             go.layer = IsolationLayer;
                     }
 
-                    var rtFormat = resolvedBackgroundMode == BackgroundMode.Transparent
-                        ? RenderTextureFormat.ARGB32
-                        : RenderTextureFormat.ARGB32;
+                    // ARGB32 is required for Transparent (alpha channel) and is acceptable for the
+                    // other modes; alpha is simply ignored when clearFlags fills it opaque.
+                    var rtFormat = RenderTextureFormat.ARGB32;
 
                     byte[] pngBytes;
                     if (resolvedCameraView == CameraView.Composite)
@@ -241,7 +261,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     }
 
                     return ResponseCallTool.Image(pngBytes, McpPlugin.Common.Consts.MimeType.ImagePng,
-                        $"Isolated screenshot of '{target.name}' ({resolvedCameraView}, {resolvedResolution}x{resolvedResolution})");
+                        $"Isolated screenshot of '{target.name}' ({resolvedCameraView}, {resolvedResolution}x{resolvedResolution}, isolated={resolvedIsolated}, backgroundMode={resolvedBackgroundMode})");
                 }
                 finally
                 {
@@ -274,36 +294,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
         private static List<IsolatedLightConfig> ParseLights(string? lights)
         {
+            // Null / whitespace → caller did not specify lights → use default.
+            // Empty array `[]` → caller explicitly disabled extra lights → return empty list.
             if (string.IsNullOrWhiteSpace(lights))
-            {
-                return new List<IsolatedLightConfig>
-                {
-                    new IsolatedLightConfig
-                    {
-                        Type = "Directional",
-                        Color = "#FFFFFF",
-                        Intensity = 1.0f,
-                        Rotation = new[] { 50f, -30f, 0f }
-                    }
-                };
-            }
+                return DefaultLights();
 
             var parsed = System.Text.Json.JsonSerializer.Deserialize<List<IsolatedLightConfig>>(lights!);
-            if (parsed == null || parsed.Count == 0)
-            {
-                return new List<IsolatedLightConfig>
-                {
-                    new IsolatedLightConfig
-                    {
-                        Type = "Directional",
-                        Color = "#FFFFFF",
-                        Intensity = 1.0f,
-                        Rotation = new[] { 50f, -30f, 0f }
-                    }
-                };
-            }
-            return parsed;
+            return parsed ?? DefaultLights();
         }
+
+        private static List<IsolatedLightConfig> DefaultLights() => new List<IsolatedLightConfig>
+        {
+            new IsolatedLightConfig
+            {
+                Type = "Directional",
+                Color = "#FFFFFF",
+                Intensity = 1.0f,
+                Rotation = new[] { 50f, -30f, 0f }
+            }
+        };
 
         private static List<Renderer> CollectRenderers(GameObject target, bool includeChildren)
         {
@@ -321,9 +330,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             return list;
         }
 
-        private static List<GameObject> CollectAllGameObjects(GameObject target)
+        private static List<GameObject> CollectAllGameObjects(GameObject target, bool includeChildren)
         {
             var list = new List<GameObject> { target };
+            if (!includeChildren)
+                return list;
+
             foreach (Transform child in target.GetComponentsInChildren<Transform>(includeInactive: true))
             {
                 if (child != null && child.gameObject != target)
@@ -587,8 +599,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         rt = new RenderTexture(subResolution, subResolution, 24, rtFormat);
                         rt.Create();
 
-                        var localTemps = new List<GameObject>();
-                        var cam = CreateTemporaryCamera(quadrantView, bounds, isolated, backgroundMode, clearColor, fov, near, far, padding, rt, localTemps);
+                        // Per-quadrant temp camera is appended to the outer temporaryObjects so
+                        // the caller's finally is the single source of truth for camera cleanup
+                        // even if anything below throws.
+                        var cam = CreateTemporaryCamera(quadrantView, bounds, isolated, backgroundMode, clearColor, fov, near, far, padding, rt, temporaryObjects);
                         cam.Render();
 
                         var prev = RenderTexture.active;
@@ -607,9 +621,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         var (dstX, dstY) = QuadrantOffset(i, subResolution);
                         var srcPixels = subTex.GetPixels32();
                         compositeTex.SetPixels32(dstX, dstY, subResolution, subResolution, srcPixels);
-
-                        foreach (var go in localTemps)
-                            if (go != null) UnityEngine.Object.DestroyImmediate(go);
                     }
                     finally
                     {
