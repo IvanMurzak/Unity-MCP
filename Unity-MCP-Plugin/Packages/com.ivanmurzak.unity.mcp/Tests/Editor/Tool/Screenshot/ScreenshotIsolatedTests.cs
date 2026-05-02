@@ -286,6 +286,40 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var afterLights = Object.FindObjectsByType<Light>(FindObjectsSortMode.None).Length;
             Assert.AreEqual(beforeLights, afterLights, "All composite-quadrant temporary lights must be destroyed in finally");
         }
+
+        [Test]
+        public void ScreenshotIsolated_Composite_NoRenderTextureReleaseWarning()
+        {
+            // Regression for: per-quadrant RenderTexture was being destroyed in the inner
+            // finally while the temp camera still had it as `targetTexture`, producing
+            // "Releasing render texture that is set as Camera.targetTexture!" warnings.
+            var go = CreateTargetCube("CompositeNoWarningTarget");
+            var goRef = new GameObjectRef { InstanceID = go.GetEntityId() };
+
+            var capturedWarnings = new List<string>();
+            Application.LogCallback handler = (condition, stackTrace, type) =>
+            {
+                if (type == LogType.Warning && condition.Contains("Releasing render texture"))
+                    capturedWarnings.Add(condition);
+            };
+
+            Application.logMessageReceived += handler;
+            try
+            {
+                new Tool_Screenshot().ScreenshotIsolated(
+                    gameObjectRef: goRef,
+                    cameraView: Tool_Screenshot.CameraView.Composite,
+                    resolution: 32);
+            }
+            finally
+            {
+                Application.logMessageReceived -= handler;
+            }
+
+            Assert.AreEqual(0, capturedWarnings.Count,
+                "Composite render must not emit 'Releasing render texture that is set as Camera.targetTexture!' warnings. "
+                + "Captured: " + string.Join("; ", capturedWarnings));
+        }
     }
 }
 #endif
