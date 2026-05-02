@@ -95,7 +95,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Screenshot / Isolated GameObject",
             ReadOnlyHint = true,
             IdempotentHint = true,
-            Enabled = false
+            Enabled = true
         )]
         [Description("Renders a screenshot of a target GameObject with configurable isolation, background, "
                    + "camera angle, and lighting. When isolated=true (default), only the target object is "
@@ -608,6 +608,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     var quadrantView = quadrantViews[i];
                     RenderTexture? rt = null;
                     Texture2D? subTex = null;
+                    Camera? cam = null;
                     try
                     {
                         rt = new RenderTexture(subResolution, subResolution, 24, rtFormat);
@@ -616,7 +617,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         // Per-quadrant temp camera is appended to the outer temporaryObjects so
                         // the caller's finally is the single source of truth for camera cleanup
                         // even if anything below throws.
-                        var cam = CreateTemporaryCamera(quadrantView, bounds, isolated, backgroundMode, clearColor, fov, near, far, padding, rt, temporaryObjects);
+                        cam = CreateTemporaryCamera(quadrantView, bounds, isolated, backgroundMode, clearColor, fov, near, far, padding, rt, temporaryObjects);
                         cam.Render();
 
                         var prev = RenderTexture.active;
@@ -638,6 +639,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     }
                     finally
                     {
+                        // Detach the camera's targetTexture before releasing rt — Unity logs
+                        // "Releasing render texture that is set as Camera.targetTexture!" otherwise.
+                        // The camera GameObject itself is destroyed later in the outer finally
+                        // (it lives in temporaryObjects).
+                        if (cam != null)
+                            cam.targetTexture = null;
                         if (subTex != null)
                             UnityEngine.Object.DestroyImmediate(subTex);
                         if (rt != null)
