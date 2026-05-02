@@ -20,14 +20,14 @@ export const removePluginCommand = new Command('remove-plugin')
 
     const result = await removePlugin({ unityProjectPath: projectPath });
 
-    if (!result.success) {
-      ui.error(result.error?.message ?? 'Unknown error');
+    if (result.kind === 'failure') {
+      ui.error(result.error.message);
       process.exit(1);
     }
 
-    if (result.manifestPath) {
-      verbose(`Manifest path: ${result.manifestPath}`);
-    }
+    // Narrowed: result.kind === 'success' below — `manifestPath` is
+    // non-optional and `removed` is a definite boolean.
+    verbose(`Manifest path: ${result.manifestPath}`);
 
     if (result.removed) {
       ui.success(`Removed com.ivanmurzak.unity.mcp from ${result.manifestPath}`);

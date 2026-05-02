@@ -97,12 +97,14 @@ export const configureCommand = new Command('configure')
       resources: options.list ? undefined : resourcesAction,
     });
 
-    if (!result.success) {
-      ui.error(result.error?.message ?? 'Unknown error');
+    if (result.kind === 'failure') {
+      ui.error(result.error.message);
       process.exit(1);
     }
 
-    if (options.list && result.snapshot) {
+    // Narrowed: result.kind === 'success' below — `snapshot` is
+    // non-optional.
+    if (options.list) {
       ui.heading('Current configuration');
       ui.label('Host', result.snapshot.host ?? 'not set');
       ui.label('Keep Connected', String(result.snapshot.keepConnected ?? false));

@@ -47,19 +47,19 @@ export const installPluginCommand = new Command('install-plugin')
       },
     });
 
-    if (!result.success) {
+    if (result.kind === 'failure') {
       if (spinner) {
         spinner.error('Failed to resolve plugin version');
         spinner = undefined;
       }
-      ui.error(result.error?.message ?? 'Unknown error');
+      ui.error(result.error.message);
       process.exit(1);
     }
 
+    // Narrowed: result.kind === 'success' below — `installedVersion`
+    // and `manifestPath` are non-optional.
     verbose(`Plugin version: ${result.installedVersion} (explicit: ${!!options.pluginVersion})`);
-    if (result.manifestPath) {
-      verbose(`Manifest path: ${result.manifestPath}`);
-    }
+    verbose(`Manifest path: ${result.manifestPath}`);
     ui.info(`Installing Unity-MCP plugin v${result.installedVersion} into: ${projectPath}`);
 
     for (const warning of result.warnings) {

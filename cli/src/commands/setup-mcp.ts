@@ -76,24 +76,24 @@ export const setupMcpCommand = new Command('setup-mcp')
         token: options.token,
       });
 
-      if (!result.success) {
+      if (result.kind === 'failure') {
         spinner.error('Failed to write config');
-        ui.error(result.error?.message ?? 'Unknown error');
+        ui.error(result.error.message);
         process.exit(1);
       }
 
+      // Narrowed: result.kind === 'success' below — `configPath` and
+      // `transport` are non-optional.
       if (positionalPath) {
         verbose(`Project path: ${positionalPath}`);
       }
-      if (result.configPath) {
-        verbose(`Config file: ${result.configPath}`);
-      }
+      verbose(`Config file: ${result.configPath}`);
 
       spinner.success(`${agent.name} configured successfully`);
 
       console.log('');
-      if (result.configPath) ui.label('Config file', result.configPath);
-      if (result.transport) ui.label('Transport', result.transport);
+      ui.label('Config file', result.configPath);
+      ui.label('Transport', result.transport);
       ui.label('Server name', MCP_SERVER_NAME);
 
       for (const warning of result.warnings) {
