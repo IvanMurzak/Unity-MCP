@@ -4,8 +4,12 @@
 // - NO top-level side effects. Importing this file must not open
 //   sockets, spin up spinners, write to stdout/stderr, or parse argv.
 // - NO `commander` import reachable from this file.
-// - Errors are returned in `{ kind: 'failure', success: false, error }`
-//   results — never thrown past the public boundary.
+// - Every result is a discriminated union keyed on `kind`. Successes are
+//   `{ kind: 'success', success: true, ...variant fields }`; failures are
+//   `{ kind: 'failure', success: false, error }`. Errors are never thrown
+//   past the public boundary. Narrow on `kind` for type-safe access to
+//   variant-specific fields; the boolean `success` mirror is preserved
+//   for wire compatibility (`success === (kind === 'success')`).
 // - Progress is surfaced via an optional `onProgress` callback, not
 //   globals or singletons.
 //

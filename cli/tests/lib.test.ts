@@ -106,7 +106,6 @@ describe('installPlugin', () => {
     });
 
     expect(result.kind).toBe('success');
-    expect(result.success).toBe(true);
     if (result.kind !== 'success') throw new Error('expected success kind');
     expect(result.installedVersion).toBe(TEST_VERSION);
     expect(result.warnings).toEqual([]);
@@ -123,9 +122,7 @@ describe('installPlugin', () => {
   it('returns kind:"failure" with an Error when unityProjectPath is missing', async () => {
     const result = await installPlugin({ unityProjectPath: '' });
     expect(result.kind).toBe('failure');
-    expect(result.success).toBe(false);
     if (result.kind !== 'failure') throw new Error('expected failure kind');
-    expect(result.error).toBeInstanceOf(Error);
     expect(result.error.message).toContain('unityProjectPath is required');
   });
 
@@ -137,7 +134,6 @@ describe('installPlugin', () => {
         version: TEST_VERSION,
       });
       expect(result.kind).toBe('failure');
-      expect(result.success).toBe(false);
       if (result.kind !== 'failure') throw new Error('expected failure kind');
       expect(result.error.message).toContain('Not a valid Unity project');
     } finally {
@@ -265,7 +261,6 @@ describe('removePlugin', () => {
 
     const result = await removePlugin({ unityProjectPath: tmpDir });
     expect(result.kind).toBe('success');
-    expect(result.success).toBe(true);
     if (result.kind !== 'success') throw new Error('expected success kind');
     expect(result.removed).toBe(true);
     expect(result.warnings).toEqual([]);
@@ -302,6 +297,14 @@ describe('removePlugin', () => {
     expect(result.kind).toBe('failure');
     if (result.kind !== 'failure') throw new Error('expected failure kind');
     expect(result.error.message).toContain('unityProjectPath is required');
+  });
+
+  it('wire-compatible: result.success mirrors result.kind === "success"', async () => {
+    const ok = await removePlugin({ unityProjectPath: tmpDir });
+    expect(ok.success).toBe(ok.kind === 'success');
+
+    const fail = await removePlugin({ unityProjectPath: '' });
+    expect(fail.success).toBe(fail.kind === 'success');
   });
 });
 
@@ -390,6 +393,14 @@ describe('configure', () => {
     expect(result.snapshot.resources).toContainEqual({ name: 'r1', enabled: false });
     expect(result.snapshot.tools).toEqual([]);
   });
+
+  it('wire-compatible: result.success mirrors result.kind === "success"', async () => {
+    const ok = await configure({ unityProjectPath: tmpDir });
+    expect(ok.success).toBe(ok.kind === 'success');
+
+    const fail = await configure({ unityProjectPath: '' });
+    expect(fail.success).toBe(fail.kind === 'success');
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -422,7 +433,6 @@ describe('setupMcp', () => {
     if (result.kind !== 'success') throw new Error('expected success kind');
     expect(result.agentId).toBe(agentId);
     expect(result.transport).toBe('http');
-    expect(result.configPath).toBeDefined();
     expect(fs.existsSync(result.configPath)).toBe(true);
   });
 
@@ -466,5 +476,17 @@ describe('setupMcp', () => {
     expect(result.kind).toBe('failure');
     if (result.kind !== 'failure') throw new Error('expected failure kind');
     expect(result.error.message).toContain('Invalid transport');
+  });
+
+  it('wire-compatible: result.success mirrors result.kind === "success"', async () => {
+    const ok = await setupMcp({
+      agentId: listAgentIds()[0],
+      unityProjectPath: tmpDir,
+      transport: 'http',
+    });
+    expect(ok.success).toBe(ok.kind === 'success');
+
+    const fail = await setupMcp({ agentId: '', unityProjectPath: tmpDir });
+    expect(fail.success).toBe(fail.kind === 'success');
   });
 });

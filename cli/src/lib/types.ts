@@ -35,6 +35,12 @@ export type ProgressCallback = (event: ProgressEvent) => void;
  * Wire-compatible note: every result object also carries a `success`
  * boolean that satisfies `success === (kind === 'success')` so existing
  * consumers reading `result.success` continue to work without changes.
+ *
+ * Exported for consumer ergonomics (e.g. mapping a `ResultKind` to a UI
+ * label). DO NOT use as a field type on a result variant — every variant
+ * MUST inline the literal (`kind: 'success'` / `kind: 'failure'`) so
+ * TypeScript's discriminated-union narrowing works. Declaring
+ * `kind: ResultKind` on a variant silently collapses narrowing.
  */
 export type ResultKind = 'success' | 'failure';
 
