@@ -38,6 +38,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         private const float MaxFieldOfView = 179f;
         private const float MinPadding = 0.01f;
         private const float MaxPadding = 100f;
+        private const float MaxNearClip = 1000f;
+        private const float MaxFarClip = 1e6f;
 
         public enum CameraView
         {
@@ -96,13 +98,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Enabled = false
         )]
         [Description("Renders a screenshot of a target GameObject with configurable isolation, background, "
-                   + "camera angle, and lighting — without modifying the scene. When isolated=true (default), "
-                   + "only the target object is visible via layer-based culling. Supports custom multi-light "
-                   + "setups via JSON. Returns a base64-encoded PNG.")]
+                   + "camera angle, and lighting. When isolated=true (default), only the target object is "
+                   + "visible via layer-based culling and inactive children of the target are temporarily "
+                   + "activated for the render (their OnEnable callbacks may fire — restored in finally, but "
+                   + "side effects like audio/network/animation events are not undoable). When isolated=false, "
+                   + "the existing scene state is rendered as-is without activating inactive objects. Supports "
+                   + "custom multi-light setups via JSON. Returns a base64-encoded PNG.")]
         public ResponseCallTool ScreenshotIsolated
         (
             [Description("Reference to the target GameObject (by instanceId, path, or name).")]
-            GameObjectRef gameObjectRef,
+            GameObjectRef? gameObjectRef,
             [Description("Include child GameObjects in the render. Default: true.")]
             bool? includeChildren = true,
             [Description("When true, renders only the target object using layer-based culling. "
@@ -157,13 +162,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 return ResponseCallTool.Error(
                     $"padding must be finite and between {MinPadding} and {MaxPadding}. Got {resolvedPadding}.");
 
-            if (!float.IsFinite(resolvedNear) || resolvedNear <= 0f)
+            if (!float.IsFinite(resolvedNear) || resolvedNear <= 0f || resolvedNear > MaxNearClip)
                 return ResponseCallTool.Error(
-                    $"nearClipPlane must be finite and > 0. Got {resolvedNear}.");
+                    $"nearClipPlane must be finite and in (0, {MaxNearClip}]. Got {resolvedNear}.");
 
-            if (!float.IsFinite(resolvedFar) || resolvedFar <= resolvedNear)
+            if (!float.IsFinite(resolvedFar) || resolvedFar <= resolvedNear || resolvedFar > MaxFarClip)
                 return ResponseCallTool.Error(
-                    $"farClipPlane must be finite and > nearClipPlane ({resolvedNear}). Got {resolvedFar}.");
+                    $"farClipPlane must be finite, > nearClipPlane ({resolvedNear}), and <= {MaxFarClip}. Got {resolvedFar}.");
 
             List<IsolatedLightConfig> lightConfigs;
             try
@@ -176,7 +181,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             }
 
             if (!ColorUtility.TryParseHtmlString(resolvedBackgroundColor, out var clearColor))
-                return ResponseCallTool.Error($"[Error] Invalid backgroundColor '{resolvedBackgroundColor}'. Expected hex format like '#404040'.");
+                return ResponseCallTool.Error($"[Error] Invalid backgroundColor '{resolvedBackgroundColor}'. Expected '#RRGGBB', '#RRGGBBAA', or a Unity color name (e.g. 'red').");
 
             return MainThread.Instance.Run(() =>
             {
@@ -211,10 +216,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     {
                         originalLayers[go] = go.layer;
                         originalActiveSelf[go] = go.activeSelf;
-                        if (!go.activeSelf)
-                            go.SetActive(true);
                         if (resolvedIsolated)
+                        {
+                            // Isolation requires the renderer's GameObject (and its hierarchy) to be active so
+                            // its renderer participates in the cull. When isolated=false, leave activeSelf alone
+                            // so we don't fire OnEnable on user scripts that the restore can't undo.
+                            if (!go.activeSelf)
+                                go.SetActive(true);
                             go.layer = IsolationLayer;
+                        }
                     }
 
                     // ARGB32 is required for Transparent (alpha channel) and is acceptable for the
@@ -420,6 +430,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     cam.clearFlags = CameraClearFlags.SolidColor;
                     cam.backgroundColor = new Color(0f, 0f, 0f, 0f);
                     break;
+                default:
+                    throw new ArgumentOutOfRangeException(nameof(backgroundMode), backgroundMode, "Unsupported BackgroundMode.");
             }
 
             cam.cullingMask = isolated ? (1 << IsolationLayer) : ~0;
@@ -428,8 +440,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (radius < 0.0001f)
                 radius = 0.05f;
 
-            var fovRad = Mathf.Max(fov, 1f) * 0.5f * Mathf.Deg2Rad;
-            var distance = (radius * Mathf.Max(padding, 0.01f)) / Mathf.Sin(fovRad);
+            // Upfront validation in ScreenshotIsolated guarantees fov >= MinFieldOfView and padding >= MinPadding,
+            // so no defensive clamp is needed here.
+            var fovRad = fov * 0.5f * Mathf.Deg2Rad;
+            var distance = (radius * padding) / Mathf.Sin(fovRad);
 
             var (dir, up) = GetViewDirectionAndUp(view);
             cameraGo.transform.position = bounds.center + dir * distance;
@@ -654,7 +668,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 case 1: return (sub, sub);     // Right -> top-right
                 case 2: return (0, 0);         // Back  -> bottom-left
                 case 3: return (sub, 0);       // Top   -> bottom-right
-                default: return (0, 0);
+                default: throw new ArgumentOutOfRangeException(nameof(index), index, "Quadrant index must be 0..3.");
             }
         }
     }
