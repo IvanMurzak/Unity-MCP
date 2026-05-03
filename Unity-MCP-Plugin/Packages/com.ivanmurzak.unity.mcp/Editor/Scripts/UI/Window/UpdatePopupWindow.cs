@@ -45,10 +45,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         [SerializeField] private string currentVersion = string.Empty;
         [SerializeField] private string latestVersion = string.Empty;
 
-        // Non-serialized: an in-flight Package Manager AddRequest cannot survive a domain
-        // reload (it holds native handles on the C++ side). After reload it goes back to null
-        // and the user can re-click "Install Update" to start a fresh install. Same applies
-        // to the R3 IDisposable subscription — re-clicking re-establishes it.
+        // The AddRequest holds a native Package Manager handle and the R3 subscription holds
+        // a reactive pipeline; neither survives a domain reload. Unity does, however, carry
+        // these private references over the reload boundary even without [SerializeField], so
+        // OnInstallUpdateClicked's "already in progress" guard would permanently lock the
+        // button. ResetInstallState() (called from OnEnable + OnDestroy) keeps the contract.
         private AddRequest? addRequest;
         private IDisposable? _stopSubscription;
 
@@ -75,6 +76,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             window.Focus();
 
             return window;
+        }
+
+        protected override void OnEnable()
+        {
+            base.OnEnable();
+            ResetInstallState();
         }
 
         protected override void BindUI(VisualElement root)
@@ -226,11 +233,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             Close();
         }
 
-        void OnDestroy()
+        void OnDestroy() => ResetInstallState();
+
+        private void ResetInstallState()
         {
             EditorApplication.update -= OnPackageInstallProgress;
             _stopSubscription?.Dispose();
             _stopSubscription = null;
+            addRequest = null;
         }
     }
 }
