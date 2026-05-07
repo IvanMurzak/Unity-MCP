@@ -39,11 +39,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "structured output or void for side-effect-only operations. See the SKILL.md body for the " +
             "full code template and authoring guidelines (response wrapping, processing mechanic for " +
             "domain-reload operations, AIGD data models, input validation, asset refresh).")]
-        [McpPluginSkillDescription("Create a new MCP tool skill as a C# file in the Unity project. " +
-            "Generates a partial class with [McpPluginToolType] and [McpPluginTool] methods; the file is " +
-            "compiled by Unity and the tool becomes callable after compilation. The SKILL.md body carries " +
-            "the full code template and authoring guidelines.")]
+        [McpPluginSkillDescription("Create a new MCP tool skill as a C# file; Unity compiles it and the tool becomes available after compilation.")]
         [McpPluginSkillBody(
+            "Adds a new MCP tool to the Unity project as a `.cs` file. The file is compiled by Unity " +
+            "and the tool becomes callable after compilation. The file must declare a partial class " +
+            "decorated with `[McpPluginToolType]` and at least one method decorated with `[McpPluginTool]` " +
+            "and `[Description]`. The class name should match the file name. All Unity API calls MUST run " +
+            "on the main thread via `com.IvanMurzak.ReflectorNet.Utils.MainThread.Instance.Run()`. Return " +
+            "a data model for structured output, or `void` for side-effect-only operations. For " +
+            "long-running operations that may trigger a Unity domain reload (writing a `.cs` script, " +
+            "switching play mode, running tests, installing packages), use the processing mechanic " +
+            "described below to avoid blocking. See the suggestions section for response wrapping, " +
+            "AIGD data models, input validation, and asset refresh patterns.\n" +
+            "\n" +
             "## Full sample\n" +
             "\n" +
             "```csharp\n" +
