@@ -31,15 +31,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Enabled = false,
             ToolType = McpToolType.System
         )]
-        [Description("Create a new skill using C# code. " +
-            "It will be added into the project as a .cs file and compiled by Unity. " +
-            "The skill will be available for use after compilation.\n" +
+        [Description("Create a new MCP tool skill as a C# file in the Unity project; the file is " +
+            "compiled by Unity and the tool becomes callable after compilation. The file must declare a " +
+            "partial class marked with [McpPluginToolType] and at least one method marked with " +
+            "[McpPluginTool] + [Description]. All Unity API calls must run on the main thread via " +
+            "com.IvanMurzak.ReflectorNet.Utils.MainThread.Instance.Run(); return a data model for " +
+            "structured output or void for side-effect-only operations. See the SKILL.md body for the " +
+            "full code template and authoring guidelines (response wrapping, processing mechanic for " +
+            "domain-reload operations, AIGD data models, input validation, asset refresh).")]
+        [McpPluginSkillDescription("Create a new MCP tool skill as a C# file in the Unity project. " +
+            "Generates a partial class with [McpPluginToolType] and [McpPluginTool] methods; the file is " +
+            "compiled by Unity and the tool becomes callable after compilation. The SKILL.md body carries " +
+            "the full code template and authoring guidelines.")]
+        [McpPluginSkillBody(
+            "## Full sample\n" +
             "\n" +
-            "It must be a partial class decorated with [McpPluginToolType]. Each tool method must be decorated with [McpPluginTool]. " +
-            "The class name should match the file name. " +
-            "All Unity API calls must use com.IvanMurzak.ReflectorNet.Utils.MainThread.Instance.Run(). " +
-            "Return a data model for structured output, or void for side-effect-only operations. " +
-            "\n\nFull sample:\n" +
             "```csharp\n" +
             "#nullable enable\n" +
             "using System;\n" +
@@ -96,7 +102,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "        }\n" +
             "    }\n" +
             "}\n" +
-            "```" +
+            "```\n" +
             "\n" +
             "## Suggestions\n" +
             "\n" +
