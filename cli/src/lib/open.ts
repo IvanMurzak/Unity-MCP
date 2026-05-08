@@ -305,16 +305,19 @@ export async function openProject(
     // (so the CLI's event loop stays alive until it completes) but
     // never throws — a transient platform error is logged via the
     // progress callback as a warning and the loop continues until
-    // either the dialog is dismissed or the overall timeout elapses.
+    // either the dialog is dismissed and stays dismissed, the abort
+    // signal fires, the no-dialog grace window elapses, or the
+    // overall timeout elapses.
     //
     // When `autoDismissLaunchErrors === false` the loop is skipped
     // entirely; behaviour is identical to the pre-feature baseline.
     if (options.autoDismissLaunchErrors !== false) {
       await pollAndDismissLaunchErrors({
         timeoutMs: options.launchDismissTimeoutMs ?? 30000,
-        intervalMs: options.launchDismissPollIntervalMs ?? 500,
+        intervalMs: options.launchDismissPollIntervalMs ?? 1500,
         onProgress: options.onProgress,
         warnings,
+        abortSignal: options.launchDismissAbortSignal,
       });
     }
 
@@ -348,13 +351,8 @@ export async function openProject(
 }
 
 /**
- * Options for `pollAndDismissLaunchErrors`. All fields are required
- * — the public-API defaulting happens at the `openProject` boundary
- * before this helper is invoked.
- *
- * Exported (with `_` prefix) for unit tests so the polling loop can
- * be exercised without spawning a real Unity Editor / PowerShell /
- * osascript / xdotool. Production code never imports this directly —
+ * Options for `pollAndDismissLaunchErrors`. The `_` prefix marks the
+ * test-only export; production code never imports this directly —
  * `openProject` is the only caller.
  */
 export interface _PollAndDismissOptionsForTests {
@@ -364,6 +362,13 @@ export interface _PollAndDismissOptionsForTests {
   warnings: string[];
   platform?: DismissPlatform;
   probe?: typeof tryDismissLaunchErrorsDialog;
+  abortSignal?: AbortSignal;
+  /**
+   * Grace window (ms) after polling starts: if no dialog has been
+   * observed within this window, exit early. Defaults to 3000.
+   * Test override only — production callers do not configure this.
+   */
+  noDialogGraceMs?: number;
 }
 
 interface PollAndDismissOptions {
@@ -383,21 +388,45 @@ interface PollAndDismissOptions {
    * xdotool. Defaults to `tryDismissLaunchErrorsDialog`.
    */
   probe?: typeof tryDismissLaunchErrorsDialog;
+  /**
+   * When fired, the polling loop exits immediately. Intended for
+   * callers that have an authoritative readiness signal in scope
+   * (e.g. a parallel `wait-for-ready` poll). When omitted, the loop
+   * uses the `noDialogGraceMs` fallback.
+   */
+  abortSignal?: AbortSignal;
+  /**
+   * Grace window in ms after polling starts: if no dialog has been
+   * observed (and no permanent error has been seen) within this
+   * window, exit early. Defaults to 3000. The Unity launch-errors
+   * dialog appears within seconds of editor launch when it appears
+   * at all — running the full timeoutMs in the no-dialog case
+   * contradicts the README's "no extra delay" claim.
+   */
+  noDialogGraceMs?: number;
 }
 
 /**
  * Poll the OS desktop for the Unity "compile errors at launch"
- * dialog and click `Ignore` (or the platform-equivalent) the first
- * time the probe reports it as found. Returns once the dialog has
- * been dismissed OR the overall timeout has elapsed.
+ * dialog and click `Ignore` (or the platform-equivalent) every time
+ * the probe reports it as found. Returns once the abort signal has
+ * fired, the no-dialog grace window has elapsed, the overall timeout
+ * has elapsed, or a permanent platform error has been observed.
+ *
+ * Re-entrant dismissals are supported: when the dialog re-appears
+ * after a successful click (the resolver-fix → dialog-reappears
+ * cycle described in the issue), each subsequent dismissal emits its
+ * own `launch-errors-dismissed` progress event so the user sees the
+ * recurrence in the log.
  *
  * Library-safe: never throws. Transient platform errors (e.g. a
  * missing `xdotool` on Linux, or a momentary syscall failure on
  * Windows) are recorded once as a warning on the supplied
  * `warnings` array; subsequent identical errors are silently
  * suppressed so the warnings array does not balloon over the polling
- * window. The `launch-errors-dismissed` progress event is emitted at
- * most once, on successful dismissal.
+ * window. Permanent errors (e.g. xdotool truly absent) bail out of
+ * the loop after the first occurrence so the helper does not spawn
+ * 60 doomed tool invocations on a 30s budget.
  */
 export async function _pollAndDismissLaunchErrorsForTests(
   opts: _PollAndDismissOptionsForTests,
@@ -405,56 +434,102 @@ export async function _pollAndDismissLaunchErrorsForTests(
   return pollAndDismissLaunchErrors(opts);
 }
 
+/**
+ * Substring markers that identify a `kind: 'error'` outcome as
+ * permanent for this run. When seen, the polling loop bails out
+ * after recording the warning once; ticking again would just respawn
+ * the same doomed tool. Keep this list narrow — only conditions that
+ * cannot self-heal mid-launch belong here.
+ */
+const PERMANENT_DISMISS_ERROR_MARKERS: readonly string[] = [
+  'xdotool not found on PATH',
+  'Unsupported platform',
+];
+
+function isPermanentDismissError(message: string): boolean {
+  return PERMANENT_DISMISS_ERROR_MARKERS.some((m) => message.includes(m));
+}
+
 async function pollAndDismissLaunchErrors(opts: PollAndDismissOptions): Promise<void> {
   const platform = (opts.platform ?? (nodePlatform() as DismissPlatform));
   const probe = opts.probe ?? tryDismissLaunchErrorsDialog;
-  const deadline = Date.now() + Math.max(0, opts.timeoutMs);
+  const start = Date.now();
+  const deadline = start + Math.max(0, opts.timeoutMs);
   const interval = Math.max(50, opts.intervalMs);
+  const graceMs = Math.max(0, opts.noDialogGraceMs ?? 3000);
   const seenErrorMessages = new Set<string>();
-  while (Date.now() < deadline) {
-    const outcome = await probe(platform);
-    if (outcome.kind === 'dismissed') {
-      emitProgress(opts.onProgress, {
-        phase: 'launch-errors-dismissed',
-        message: `[open] dismissed Unity launch-errors dialog (button=${outcome.button}, platform=${platform})`,
-        button: outcome.button,
-        platform,
-      });
-      return;
+  let dismissedAtLeastOnce = false;
+  let aborted = opts.abortSignal?.aborted ?? false;
+  const onAbort = (): void => { aborted = true; };
+  opts.abortSignal?.addEventListener('abort', onAbort, { once: true });
+  try {
+    while (Date.now() < deadline && !aborted) {
+      const outcome = await probe(platform);
+      if (outcome.kind === 'dismissed') {
+        dismissedAtLeastOnce = true;
+        emitProgress(opts.onProgress, {
+          phase: 'launch-errors-dismissed',
+          message: `[open] dismissed Unity launch-errors dialog (button=${outcome.button}, platform=${platform})`,
+          button: outcome.button,
+          platform,
+        });
+        // Keep polling — the dialog may re-appear after the resolver
+        // fixes one error and surfaces the next.
+      } else if (outcome.kind === 'error') {
+        if (!seenErrorMessages.has(outcome.message)) {
+          seenErrorMessages.add(outcome.message);
+          opts.warnings.push(`launch-errors auto-dismiss: ${outcome.message}`);
+        }
+        if (isPermanentDismissError(outcome.message)) {
+          // No point ticking another 59 times — bail out.
+          return;
+        }
+      } else if (
+        // outcome.kind === 'not-found'
+        !dismissedAtLeastOnce &&
+        opts.abortSignal === undefined &&
+        Date.now() - start >= graceMs
+      ) {
+        // No dialog within the grace window AND no caller-supplied
+        // abort signal to wait on. Exit early — the README's "no
+        // extra delay" claim depends on this.
+        return;
+      }
+      const remaining = deadline - Date.now();
+      if (remaining <= 0 || aborted) break;
+      await sleep(Math.min(interval, remaining), opts.abortSignal);
     }
-    if (outcome.kind === 'error' && !seenErrorMessages.has(outcome.message)) {
-      seenErrorMessages.add(outcome.message);
-      opts.warnings.push(`launch-errors auto-dismiss: ${outcome.message}`);
-    }
-    // Sleep until the next tick OR the deadline, whichever comes first.
-    const remaining = deadline - Date.now();
-    if (remaining <= 0) break;
-    await sleep(Math.min(interval, remaining));
+  } finally {
+    opts.abortSignal?.removeEventListener('abort', onAbort);
   }
-  // Timeout elapsed without dismissal — record a warning so the CLI can
-  // surface it. The existing wait-for-ready logic remains responsible
-  // for eventually failing with a clear timeout if Unity never reaches
-  // ready state (the issue's acceptance criterion that the CLI must
-  // continue with the existing wait when dismissal fails).
-  if (seenErrorMessages.size === 0) {
-    // Only push the silent-timeout warning if no platform error was
-    // already pushed — otherwise the warning array repeats the same
-    // story twice. Either way, the underlying assumption is identical:
-    // the dialog either never appeared OR could not be dismissed.
-    return;
+  // Loop exited via deadline. Surface a timeout warning ONLY if a
+  // platform error was actually observed — otherwise the no-dialog
+  // grace window already returned silently and we never reach here.
+  if (seenErrorMessages.size > 0 && !dismissedAtLeastOnce) {
+    opts.warnings.push(
+      `launch-errors auto-dismiss timed out after ${opts.timeoutMs}ms — continuing with wait-for-ready`,
+    );
   }
-  opts.warnings.push(
-    `launch-errors auto-dismiss timed out after ${opts.timeoutMs}ms — continuing with wait-for-ready`,
-  );
 }
 
-function sleep(ms: number): Promise<void> {
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve) => {
-    const t = setTimeout(resolve, ms);
+    if (signal?.aborted) {
+      resolve();
+      return;
+    }
+    const t = setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort);
+      resolve();
+    }, ms);
+    const onAbort = (): void => {
+      clearTimeout(t);
+      resolve();
+    };
+    signal?.addEventListener('abort', onAbort, { once: true });
     // Do NOT unref() — the polling timer is the reason `openProject`
     // is awaiting in the first place, and unref'ing would let Node
     // exit before the loop completes.
-    void t;
   });
 }
 

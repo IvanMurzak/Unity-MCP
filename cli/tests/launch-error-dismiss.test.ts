@@ -10,6 +10,7 @@ import {
   DISMISS_BUTTON_LABEL,
   tryDismissLaunchErrorsDialog,
   _resetXdotoolPresenceForTests,
+  regexEscapeForXdotool,
 } from '../src/utils/launch-error-dismiss.js';
 
 describe('parseDismissOutput', () => {
@@ -51,6 +52,47 @@ describe('parseDismissOutput', () => {
 
   it('treats unrecognised output as not-found (defensive)', () => {
     expect(parseDismissOutput('garbage banana 42')).toEqual({ kind: 'not-found' });
+  });
+
+  it('inspects the LAST non-empty line — earlier chatter does not misclassify', () => {
+    // Real-world shape: a stray PowerShell warning, osascript
+    // deprecation notice, or xdotool stderr leaks ahead of the
+    // contract token. The parser must still classify on the final
+    // line.
+    expect(parseDismissOutput('WARNING: deprecated\ndismissed:Ignore\n')).toEqual({
+      kind: 'dismissed',
+      button: 'Ignore',
+    });
+    expect(parseDismissOutput('some chatter\nnot-found\n')).toEqual({ kind: 'not-found' });
+    expect(parseDismissOutput('chatter\nerror:permission denied\n')).toEqual({
+      kind: 'error',
+      message: 'permission denied',
+    });
+  });
+
+  it('handles CRLF line endings (Windows PowerShell stdout)', () => {
+    expect(parseDismissOutput('WARN\r\ndismissed:Ignore\r\n')).toEqual({
+      kind: 'dismissed',
+      button: 'Ignore',
+    });
+  });
+});
+
+describe('regexEscapeForXdotool', () => {
+  it('escapes regex metacharacters so a fragment is matched literally', () => {
+    expect(regexEscapeForXdotool('Hold On')).toBe('Hold On');
+    expect(regexEscapeForXdotool('(Hold On)')).toBe('\\(Hold On\\)');
+    expect(regexEscapeForXdotool('Compiler Errors v2.0+')).toBe('Compiler Errors v2\\.0\\+');
+    expect(regexEscapeForXdotool('a*b?c[d]')).toBe('a\\*b\\?c\\[d\\]');
+  });
+
+  it('every current LAUNCH_ERROR_DIALOG_TITLE_FRAGMENTS is regex-safe (no escape needed)', () => {
+    // Locks down the contract that current fragments are literal —
+    // a future contributor adding a fragment with metacharacters
+    // gets an immediate failure here pointing at the regex hazard.
+    for (const frag of LAUNCH_ERROR_DIALOG_TITLE_FRAGMENTS) {
+      expect(regexEscapeForXdotool(frag)).toBe(frag);
+    }
   });
 });
 

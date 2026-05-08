@@ -138,8 +138,8 @@ export const openCommand = new Command('open')
   )
   .option(
     '--launch-dismiss-poll-interval-ms <ms>',
-    'Polling tick interval (milliseconds) for the launch-errors auto-dismiss loop (default: 500)',
-    '500',
+    'Polling tick interval (milliseconds) for the launch-errors auto-dismiss loop (default: 1500)',
+    '1500',
   )
   .action(async (positionalPath: string | undefined, options: {
     path?: string;
@@ -223,7 +223,7 @@ export const openCommand = new Command('open')
     const launchDismissPollIntervalMs = parsePositiveIntFlag(
       options.launchDismissPollIntervalMs,
       '--launch-dismiss-poll-interval-ms',
-      500,
+      1500,
     );
     // Commander's `--no-auto-dismiss-launch-errors` produces
     // `autoDismissLaunchErrors: false`; the absence of the flag

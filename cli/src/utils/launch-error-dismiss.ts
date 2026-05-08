@@ -315,6 +315,46 @@ export function _resetXdotoolPresenceForTests(): void {
   xdotoolPresence = undefined;
 }
 
+/**
+ * Escape a literal string for safe use in `xdotool search --name`.
+ * `xdotool search --name` interprets its argument as a regex; without
+ * escaping, a future fragment containing metacharacters (e.g.
+ * `(Hold On)` or `Compiler Errors v2.0+`) would silently change the
+ * match semantics. The current fragments are regex-safe but this
+ * helper is defensive and zero-runtime-cost.
+ *
+ * Exposed for tests so the regex-safety contract is locked down.
+ */
+export function regexEscapeForXdotool(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+/**
+ * Look up currently-running Unity Editor PIDs on the local box.
+ * Used by the Linux/X11 dismiss path to scope the title-fragment
+ * window match to Unity processes only — without this, `xdotool
+ * search --name 'Hold On'` would match any top-level window whose
+ * title contains "Hold On" (browser tab, chat client, etc.).
+ *
+ * Returns an empty array on any failure (missing `pgrep`, no Unity
+ * running, syscall error). Pure / idempotent / never throws.
+ */
+function getUnityPidsLinux(): readonly number[] {
+  try {
+    const stdout = execFileSync('pgrep', ['-x', 'Unity'], {
+      stdio: ['ignore', 'pipe', 'ignore'],
+      timeout: 1000,
+      encoding: 'utf8',
+    });
+    return stdout
+      .split(/\r?\n/)
+      .map((s) => parseInt(s.trim(), 10))
+      .filter((n) => Number.isFinite(n) && n > 0);
+  } catch {
+    return [];
+  }
+}
+
 async function tryDismissLinuxX11(): Promise<DismissOutcome> {
   if (!isXdotoolAvailable()) {
     return {
@@ -323,18 +363,21 @@ async function tryDismissLinuxX11(): Promise<DismissOutcome> {
         'xdotool not found on PATH. Install it (e.g. `sudo apt-get install xdotool`) to enable Unity launch-errors auto-dismiss on Linux/X11. Wayland is not yet supported.',
     };
   }
+  const unityPids = new Set(getUnityPidsLinux());
+  if (unityPids.size === 0) {
+    return { kind: 'not-found' };
+  }
   // Strategy:
-  //   1. `xdotool search --name '<fragment>'` once per fragment, collect
-  //      candidate window IDs. Empty stdout from `xdotool search` is
-  //      reported via a non-zero exit; treat that as "no match".
-  //   2. For each match, try to send the `Ignore` button's accelerator
-  //      (Alt+I) — Unity's "Ignore" button does not always expose an
-  //      accelerator, so we fall back to xdotool's `key Return` after
-  //      activating the dialog window. The dialog defaults its focus
-  //      to the leftmost button, which on this dialog IS `Ignore`.
-  //   3. Activate the window (`windowactivate --sync`) before sending
-  //      keys so the keystrokes route to the dialog rather than
-  //      whichever window currently holds focus.
+  //   1. `xdotool search --name '<regex-escaped fragment>'` once per
+  //      fragment, collect candidate window IDs. Empty stdout from
+  //      `xdotool search` is reported via a non-zero exit; treat that
+  //      as "no match".
+  //   2. Filter candidate windows to those owned by a Unity PID via
+  //      `xdotool getwindowpid <winId>` so we never act on an
+  //      unrelated top-level window with a colliding title.
+  //   3. Activate the window (`windowactivate --sync`) and send Return
+  //      to click the focused button. The Unity launch-errors dialog
+  //      defaults focus to the leftmost button, which IS `Ignore`.
   return new Promise<DismissOutcome>((resolve) => {
     const fragments = LAUNCH_ERROR_DIALOG_TITLE_FRAGMENTS;
     let idx = 0;
@@ -346,39 +389,77 @@ async function tryDismissLinuxX11(): Promise<DismissOutcome> {
       const fragment = fragments[idx++];
       execFile(
         'xdotool',
-        ['search', '--name', fragment],
+        ['search', '--name', regexEscapeForXdotool(fragment)],
         { timeout: 2000 },
         (err, stdout) => {
           if (err || !stdout.trim()) {
             tryNext();
             return;
           }
-          const winId = stdout.trim().split(/\s+/)[0];
-          if (!winId) {
-            tryNext();
-            return;
-          }
-          // Activate then send Return to click the focused (Ignore) button.
-          execFile(
-            'xdotool',
-            ['windowactivate', '--sync', winId, 'key', '--clearmodifiers', 'Return'],
-            { timeout: 2000 },
-            (activateErr) => {
-              if (activateErr) {
-                resolve({
-                  kind: 'error',
-                  message: `xdotool failed to dismiss window ${winId}: ${activateErr.message}`,
-                });
-                return;
-              }
-              resolve({ kind: 'dismissed', button: DISMISS_BUTTON_LABEL });
-            },
-          );
+          const candidateIds = stdout.trim().split(/\s+/).filter(Boolean);
+          findUnityOwnedWindow(candidateIds, unityPids, (winId) => {
+            if (!winId) {
+              tryNext();
+              return;
+            }
+            // Activate then send Return to click the focused (Ignore) button.
+            execFile(
+              'xdotool',
+              ['windowactivate', '--sync', winId, 'key', '--clearmodifiers', 'Return'],
+              { timeout: 2000 },
+              (activateErr) => {
+                if (activateErr) {
+                  resolve({
+                    kind: 'error',
+                    message: `xdotool failed to dismiss window ${winId}: ${activateErr.message}`,
+                  });
+                  return;
+                }
+                resolve({ kind: 'dismissed', button: DISMISS_BUTTON_LABEL });
+              },
+            );
+          });
         },
       );
     };
     tryNext();
   });
+}
+
+/**
+ * Walk `candidateIds` and call `done(winId)` with the first window
+ * owned by a Unity PID, or `done(undefined)` if none match. Each
+ * `xdotool getwindowpid <id>` call has a short timeout so a stalled
+ * lookup cannot stall the polling loop. Sequential, not parallel —
+ * the candidate list is small and parallelism would buy us nothing
+ * meaningful here.
+ */
+function findUnityOwnedWindow(
+  candidateIds: string[],
+  unityPids: ReadonlySet<number>,
+  done: (winId: string | undefined) => void,
+): void {
+  let idx = 0;
+  const next = (): void => {
+    if (idx >= candidateIds.length) {
+      done(undefined);
+      return;
+    }
+    const winId = candidateIds[idx++];
+    execFile('xdotool', ['getwindowpid', winId], { timeout: 1000 }, (err, stdout) => {
+      if (err) {
+        next();
+        return;
+      }
+      const pid = parseInt(stdout.trim(), 10);
+      if (Number.isFinite(pid) && unityPids.has(pid)) {
+        done(winId);
+        return;
+      }
+      next();
+    });
+  };
+  next();
 }
 
 // ---------------------------------------------------------------------------
@@ -390,6 +471,11 @@ async function tryDismissLinuxX11(): Promise<DismissOutcome> {
  * writes to stdout. Exposed for tests so we can exhaustively cover
  * the parser without invoking PowerShell / osascript / xdotool.
  *
+ * Inspects the LAST non-empty line of stdout, not the whole buffer:
+ * a stray PowerShell warning, `osascript` deprecation notice, or
+ * `xdotool` chatter printed before the contract token must not
+ * misclassify the result as `not-found`.
+ *
  * Contract:
  *   - `dismissed:<button>` → `{ kind: 'dismissed', button }`
  *   - `not-found`          → `{ kind: 'not-found' }`
@@ -399,14 +485,16 @@ async function tryDismissLinuxX11(): Promise<DismissOutcome> {
  *     than aborting the polling loop)
  */
 export function parseDismissOutput(stdout: string): DismissOutcome {
-  const trimmed = stdout.trim();
-  if (trimmed === '' || trimmed === 'not-found') return { kind: 'not-found' };
-  if (trimmed.startsWith('dismissed:')) {
-    const button = trimmed.substring('dismissed:'.length);
+  const lines = stdout.split(/\r?\n/).map((l) => l.trim()).filter((l) => l.length > 0);
+  if (lines.length === 0) return { kind: 'not-found' };
+  const last = lines[lines.length - 1];
+  if (last === 'not-found') return { kind: 'not-found' };
+  if (last.startsWith('dismissed:')) {
+    const button = last.substring('dismissed:'.length);
     return { kind: 'dismissed', button: button || DISMISS_BUTTON_LABEL };
   }
-  if (trimmed.startsWith('error:')) {
-    return { kind: 'error', message: trimmed.substring('error:'.length) };
+  if (last.startsWith('error:')) {
+    return { kind: 'error', message: last.substring('error:'.length) };
   }
   return { kind: 'not-found' };
 }

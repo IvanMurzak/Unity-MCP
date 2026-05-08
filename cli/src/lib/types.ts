@@ -319,9 +319,22 @@ export interface OpenProjectOptions {
   launchDismissTimeoutMs?: number;
   /**
    * Polling tick interval (milliseconds) for the launch-errors
-   * dismissal loop. Default `500`.
+   * dismissal loop. Default `1500`.
    */
   launchDismissPollIntervalMs?: number;
+  /**
+   * Optional abort signal that, when fired, stops the launch-errors
+   * dismissal polling loop early. Intended for callers that have an
+   * authoritative "Unity is ready" signal in scope (e.g. a parallel
+   * `wait-for-ready` poll) so the dismissal loop does not keep
+   * ticking after Unity has finished initialising.
+   *
+   * When omitted, the loop falls back to a short grace window after
+   * the editor process is spawned: if no dialog has been observed
+   * within ~3s of polling, the loop exits early on the assumption
+   * that the dialog is not going to appear for this launch.
+   */
+  launchDismissAbortSignal?: AbortSignal;
   /**
    * Optional progress callback — fires for `start`,
    * `detecting-editor-version`, `editors-located`, `editor-resolved`,
