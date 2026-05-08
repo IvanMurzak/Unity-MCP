@@ -19,6 +19,19 @@ export type ProgressEvent =
   | { phase: 'start'; message: string }
   | { phase: 'manifest-patched'; message: string; manifestPath: string }
   | { phase: 'dependencies-resolved'; message: string; version: string }
+  // openProject phases
+  | { phase: 'detecting-editor-version'; message: string }
+  | { phase: 'editors-located'; message: string; found: boolean }
+  | { phase: 'editor-resolved'; message: string; editorPath: string; version?: string }
+  | {
+      phase: 'connection-details';
+      message: string;
+      projectPath: string;
+      editorPath: string;
+      envVars: Record<string, string>;
+    }
+  | { phase: 'launching-editor'; message: string; editorPath: string; projectPath: string }
+  | { phase: 'editor-launched'; message: string; pid?: number }
   | { phase: 'done'; message: string };
 
 export type ProgressCallback = (event: ProgressEvent) => void;
@@ -228,3 +241,126 @@ export interface SetupMcpFailure {
 }
 
 export type SetupMcpResult = SetupMcpSuccess | SetupMcpFailure;
+
+// ---------------------------------------------------------------------------
+// open-project
+// ---------------------------------------------------------------------------
+
+/** Auth option propagated to the Editor as `UNITY_MCP_AUTH_OPTION`. */
+export type OpenProjectAuthOption = 'none' | 'required';
+
+/** Transport propagated to the Editor as `UNITY_MCP_TRANSPORT`. */
+export type OpenProjectTransport = 'streamableHttp' | 'stdio';
+
+export interface OpenProjectOptions {
+  /**
+   * Path to the Unity project to open. Absolute or relative; defaults
+   * to `process.cwd()` if omitted.
+   */
+  projectPath?: string;
+  /** Specific Unity Editor version to use (e.g. `"2022.3.62f3"`). */
+  unityVersion?: string;
+  /**
+   * If `true`, skip wiring the MCP connection environment variables
+   * onto the spawned editor process. Mirrors the CLI's `--no-connect`
+   * flag semantics. Defaults to `false`.
+   */
+  noConnect?: boolean;
+  /** MCP server URL — sets `UNITY_MCP_HOST` on the editor process. */
+  url?: string;
+  /** Auth token — sets `UNITY_MCP_TOKEN` on the editor process. */
+  token?: string;
+  /** Auth option — sets `UNITY_MCP_AUTH_OPTION` on the editor process. */
+  auth?: OpenProjectAuthOption;
+  /** Comma-separated list of tool names — sets `UNITY_MCP_TOOLS`. */
+  tools?: string;
+  /**
+   * If `true`, sets `UNITY_MCP_KEEP_CONNECTED=true`. Auto-enabled by
+   * Cloud-mode auto-detection when a `cloudToken` is present in the
+   * project's config.
+   */
+  keepConnected?: boolean;
+  /** Transport — sets `UNITY_MCP_TRANSPORT`. */
+  transport?: OpenProjectTransport;
+  /**
+   * If set, sets `UNITY_MCP_START_SERVER=true|false`. Use a boolean to
+   * avoid the CLI's stringly-typed `"true"`/`"false"` parse step.
+   */
+  startServer?: boolean;
+  /**
+   * Optional progress callback — fires for `start`,
+   * `detecting-editor-version`, `editors-located`, `editor-resolved`,
+   * `connection-details`, `launching-editor`, `editor-launched`, and
+   * `done`.
+   */
+  onProgress?: ProgressCallback;
+}
+
+/** Successful `openProject` outcome. Narrow with `kind === 'success'`. */
+export interface OpenProjectSuccess {
+  kind: 'success';
+  /** Always `true` for the success variant. */
+  success: true;
+  /** Absolute path to the Unity Editor binary that was launched. */
+  editorPath: string;
+  /**
+   * PID of the spawned editor process. May be `undefined` if the OS
+   * has not yet reported a PID by the time the call returns (rare;
+   * the value is captured asynchronously from the child process's
+   * `spawn` event).
+   */
+  editorPid?: number;
+  /** Editor version string used (e.g. `"2022.3.62f3"`), if known. */
+  unityVersion?: string;
+  /** Resolved absolute project path. */
+  projectPath: string;
+  /** Non-fatal warnings collected during the run. */
+  warnings: string[];
+  /**
+   * `true` when an existing Unity Editor process was already running
+   * with this project and a launch was therefore skipped. The
+   * `editorPid` will be the existing process's PID in that case.
+   */
+  alreadyRunning?: boolean;
+}
+
+/** Failed `openProject` outcome. Narrow with `kind === 'failure'`. */
+export interface OpenProjectFailure {
+  kind: 'failure';
+  /** Always `false` for the failure variant. */
+  success: false;
+  /** Resolved absolute project path, if it could be determined. */
+  projectPath?: string;
+  /** Editor path, if locating the editor succeeded. */
+  editorPath?: string;
+  /** Editor version, if it could be detected before failure. */
+  unityVersion?: string;
+  /** Non-fatal warnings collected before the failure. */
+  warnings: string[];
+  /** Human-readable error message — never thrown past the public boundary. */
+  errorMessage: string;
+  /** The captured error. */
+  error: Error;
+}
+
+export type OpenProjectResult = OpenProjectSuccess | OpenProjectFailure;
+
+/**
+ * Subset of `OpenProjectOptions` consumed by `buildOpenEnv` — every
+ * field on this interface is potentially mapped to a `UNITY_MCP_*`
+ * environment variable. Declared as a dedicated interface (rather
+ * than a `Pick<OpenProjectOptions, …>` re-listed inline) so adding a
+ * new env-bearing option to `OpenProjectOptions` is a one-step change
+ * here that `buildOpenEnv` picks up by signature, with no risk of the
+ * Pick list silently drifting.
+ */
+export interface OpenEnvInputs {
+  noConnect?: OpenProjectOptions['noConnect'];
+  url?: OpenProjectOptions['url'];
+  token?: OpenProjectOptions['token'];
+  auth?: OpenProjectOptions['auth'];
+  tools?: OpenProjectOptions['tools'];
+  keepConnected?: OpenProjectOptions['keepConnected'];
+  transport?: OpenProjectOptions['transport'];
+  startServer?: OpenProjectOptions['startServer'];
+}

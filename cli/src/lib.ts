@@ -20,6 +20,7 @@ export { installPlugin } from './lib/install-plugin.js';
 export { removePlugin } from './lib/remove-plugin.js';
 export { configure } from './lib/configure.js';
 export { setupMcp, listAgentIds } from './lib/setup-mcp.js';
+export { openProject } from './lib/open.js';
 
 export type {
   // Shared
@@ -50,4 +51,11 @@ export type {
   SetupMcpSuccess,
   SetupMcpFailure,
   McpTransport,
+  // open-project
+  OpenProjectOptions,
+  OpenProjectResult,
+  OpenProjectSuccess,
+  OpenProjectFailure,
+  OpenProjectAuthOption,
+  OpenProjectTransport,
 } from './lib/types.js';
