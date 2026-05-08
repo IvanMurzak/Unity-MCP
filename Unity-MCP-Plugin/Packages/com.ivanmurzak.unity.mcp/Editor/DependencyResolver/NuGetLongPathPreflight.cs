@@ -74,21 +74,52 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // We compare against the absolute path the OS will see, not the
             // (possibly project-relative) path the caller passed in, because
             // CreateFileW operates on the absolute form.
-            var absolutePath = Path.GetFullPath(plannedDllPath);
+            //
+            // Path.GetFullPath itself can throw PathTooLongException on legacy
+            // .NET Framework / Mono when the resolved path exceeds the runtime's
+            // own buffer ceiling — convert that into the same actionable
+            // InstallPathTooLongException so callers see one consistent error
+            // class instead of falling into the generic catch (Exception) higher
+            // up the stack.
+            string absolutePath;
+            try
+            {
+                absolutePath = Path.GetFullPath(plannedDllPath);
+            }
+            catch (PathTooLongException ex)
+            {
+                throw new InstallPathTooLongException(
+                    BuildLongPathMessage(packageId, plannedDllPath, plannedDllPath.Length, ex.Message),
+                    plannedDllPath,
+                    plannedDllPath.Length);
+            }
+
             if (absolutePath.Length <= maxAllowedPathLength)
                 return;
 
-            var message =
-                $"{Tag} Cannot install '{packageId}' — the resulting DLL path would exceed Windows' 260-character path limit:\n\n" +
-                $"  {absolutePath}  ({absolutePath.Length} chars; max {MaxPath})\n\n" +
+            throw new InstallPathTooLongException(
+                BuildLongPathMessage(packageId, absolutePath, absolutePath.Length, innerDetail: null),
+                absolutePath,
+                absolutePath.Length);
+        }
+
+        static string BuildLongPathMessage(string packageId, string path, int pathLength, string? innerDetail)
+        {
+            var detail = innerDetail == null
+                ? string.Empty
+                : $"\n\nUnderlying error: {innerDetail}";
+
+            return
+                $"{Tag} Cannot install '{packageId}' — the DLL plus its Unity .meta companion would exceed " +
+                $"Windows' 260-character path limit (the .meta adds {MetaSuffixSlack} chars, so DLLs are " +
+                $"capped at {DefaultMaxAllowedPathLength} chars):\n\n" +
+                $"  {path}  ({pathLength} chars; max {DefaultMaxAllowedPathLength})\n\n" +
                 "Unity's bundled Mono runtime (used by the assembly validator) does NOT honor Windows' " +
                 "\"Enable Win32 long paths\" registry/group-policy setting, so DLLs at long paths appear " +
                 "missing even though they are on disk. This is a known limitation of Unity, not of this plugin.\n\n" +
                 "Move your Unity project to a shorter path and reopen it. For example:\n" +
                 $"  C:\\src\\<project-name>\\\n\n" +
-                $"Project root currently: {TryGetProjectRoot()}";
-
-            throw new InstallPathTooLongException(message, absolutePath, absolutePath.Length);
+                $"Project root currently: {TryGetProjectRoot()}" + detail;
         }
 
         static string TryGetProjectRoot()

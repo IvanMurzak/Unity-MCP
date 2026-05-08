@@ -179,6 +179,132 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
         }
 
         [Test]
+        public void TryRebuildFromDisk_KeysMultiDllPackagesUnderSyntheticStems()
+        {
+            // Microsoft.Bcl.Memory is the canonical multi-DLL package: it ships
+            // System.Memory, System.Buffers, System.Runtime.CompilerServices.Unsafe.
+            // The disaster-recovery rebuild has no way to recover the real owner
+            // from filenames alone, so it MUST key those DLLs under their own
+            // stems as synthetic IDs. The follow-up MigrateSyntheticOwnerEntries
+            // call (driven from NuGetPackageInstaller.Install) reconciles the
+            // synthetic IDs back onto the real package ID — see the
+            // ReconcilesSyntheticEntries_ForMultiDllPackage test below.
+            File.WriteAllText(Path.Combine(_installPath, "System.Memory.10.0.3.dll"), "dummy");
+            File.WriteAllText(Path.Combine(_installPath, "System.Buffers.10.0.3.dll"), "dummy");
+            File.WriteAllText(Path.Combine(_installPath, "System.Runtime.CompilerServices.Unsafe.10.0.3.dll"), "dummy");
+
+            var rebuilt = NuGetInstallManifest.TryRebuildFromDisk(_installPath);
+
+            Assert.AreEqual(3, rebuilt.Packages.Count);
+            Assert.IsTrue(rebuilt.Packages.ContainsKey("System.Memory"));
+            Assert.IsTrue(rebuilt.Packages.ContainsKey("System.Buffers"));
+            Assert.IsTrue(rebuilt.Packages.ContainsKey("System.Runtime.CompilerServices.Unsafe"));
+            Assert.IsFalse(rebuilt.Packages.ContainsKey("Microsoft.Bcl.Memory"),
+                "Filename-only rebuild cannot recover the real owning package id; the test guards the synthetic-id contract that MigrateSyntheticOwnerEntries depends on.");
+        }
+
+        [Test]
+        public void MigrateSyntheticOwnerEntries_ReconcilesMultiDllPackage_AndDoesNotTripCollisionCheck()
+        {
+            // End-to-end coverage of the post-rebuild reconciliation flow:
+            //   1. Seed a multi-DLL package's flat-layout DLLs without a manifest.
+            //   2. Run TryRebuildFromDisk — expect synthetic stem-keyed entries.
+            //   3. Run MigrateSyntheticOwnerEntries with the real package id and a
+            //      planned-DLL list that matches the on-disk filenames.
+            //   4. Assert the synthetic entries are gone and the real package id
+            //      now owns those same DLLs at the same version.
+            // Without this fix, NuGetPackageInstaller.Install would log
+            // "Refusing to install Microsoft.Bcl.Memory ..." and stick the user
+            // on the disaster-recovery path forever.
+            File.WriteAllText(Path.Combine(_installPath, "System.Memory.10.0.3.dll"), "dummy");
+            File.WriteAllText(Path.Combine(_installPath, "System.Buffers.10.0.3.dll"), "dummy");
+            File.WriteAllText(Path.Combine(_installPath, "System.Runtime.CompilerServices.Unsafe.10.0.3.dll"), "dummy");
+
+            var manifest = NuGetInstallManifest.TryRebuildFromDisk(_installPath);
+            // Sanity: the rebuild produced synthetic entries (the [high] reproduction state).
+            Assert.IsTrue(manifest.Packages.ContainsKey("System.Memory"));
+            Assert.IsFalse(manifest.Packages.ContainsKey("Microsoft.Bcl.Memory"));
+
+            var planned = new System.Collections.Generic.List<PlannedDll>
+            {
+                new PlannedDll("lib/net8.0/System.Memory.dll", "System.Memory.10.0.3.dll", Path.Combine(_installPath, "System.Memory.10.0.3.dll")),
+                new PlannedDll("lib/net8.0/System.Buffers.dll", "System.Buffers.10.0.3.dll", Path.Combine(_installPath, "System.Buffers.10.0.3.dll")),
+                new PlannedDll("lib/net8.0/System.Runtime.CompilerServices.Unsafe.dll", "System.Runtime.CompilerServices.Unsafe.10.0.3.dll", Path.Combine(_installPath, "System.Runtime.CompilerServices.Unsafe.10.0.3.dll")),
+            };
+
+            NuGetPackageInstaller.MigrateSyntheticOwnerEntries(manifest, "Microsoft.Bcl.Memory", "10.0.3", planned);
+
+            Assert.IsFalse(manifest.Packages.ContainsKey("System.Memory"),
+                "Synthetic stem-keyed entry must be removed after reconciliation.");
+            Assert.IsFalse(manifest.Packages.ContainsKey("System.Buffers"));
+            Assert.IsFalse(manifest.Packages.ContainsKey("System.Runtime.CompilerServices.Unsafe"));
+            Assert.IsTrue(manifest.Packages.ContainsKey("Microsoft.Bcl.Memory"),
+                "Real package id must own the migrated DLLs after reconciliation.");
+            Assert.AreEqual("10.0.3", manifest.Packages["Microsoft.Bcl.Memory"].Version);
+            CollectionAssert.AreEquivalent(
+                new[]
+                {
+                    "System.Memory.10.0.3.dll",
+                    "System.Buffers.10.0.3.dll",
+                    "System.Runtime.CompilerServices.Unsafe.10.0.3.dll",
+                },
+                manifest.Packages["Microsoft.Bcl.Memory"].Dlls);
+        }
+
+        [Test]
+        public void MigrateSyntheticOwnerEntries_DoesNotTouchUnrelatedPackages()
+        {
+            // Defense: the migrator must only strip entries whose DLL set is a
+            // subset of the planned filenames. A real distinct package that
+            // happens to share a version number must survive untouched.
+            var manifest = new InstallManifest();
+            var unrelatedEntry = new InstalledPackage("10.0.3");
+            unrelatedEntry.Dlls.Add("Newtonsoft.Json.10.0.3.dll");
+            manifest.Packages["Newtonsoft.Json"] = unrelatedEntry;
+
+            var syntheticEntry = new InstalledPackage("10.0.3");
+            syntheticEntry.Dlls.Add("System.Memory.10.0.3.dll");
+            manifest.Packages["System.Memory"] = syntheticEntry;
+
+            var planned = new System.Collections.Generic.List<PlannedDll>
+            {
+                new PlannedDll("lib/net8.0/System.Memory.dll", "System.Memory.10.0.3.dll", "/ignored/System.Memory.10.0.3.dll"),
+            };
+
+            NuGetPackageInstaller.MigrateSyntheticOwnerEntries(manifest, "Microsoft.Bcl.Memory", "10.0.3", planned);
+
+            Assert.IsTrue(manifest.Packages.ContainsKey("Newtonsoft.Json"),
+                "Unrelated same-version package must not be migrated away.");
+            Assert.IsFalse(manifest.Packages.ContainsKey("System.Memory"),
+                "Synthetic same-version entry whose DLLs match the planned set must be migrated.");
+            Assert.IsTrue(manifest.Packages.ContainsKey("Microsoft.Bcl.Memory"));
+        }
+
+        [Test]
+        public void MigrateSyntheticOwnerEntries_IgnoresEntriesAtDifferentVersion()
+        {
+            // A stem-keyed entry left at a DIFFERENT version is not part of the
+            // reconciliation scope; it gets cleaned up by the stale-version
+            // pass instead.
+            var manifest = new InstallManifest();
+            var olderSynthetic = new InstalledPackage("9.0.0");
+            olderSynthetic.Dlls.Add("System.Memory.9.0.0.dll");
+            manifest.Packages["System.Memory"] = olderSynthetic;
+
+            var planned = new System.Collections.Generic.List<PlannedDll>
+            {
+                new PlannedDll("lib/net8.0/System.Memory.dll", "System.Memory.10.0.3.dll", "/ignored/System.Memory.10.0.3.dll"),
+            };
+
+            NuGetPackageInstaller.MigrateSyntheticOwnerEntries(manifest, "Microsoft.Bcl.Memory", "10.0.3", planned);
+
+            Assert.IsTrue(manifest.Packages.ContainsKey("System.Memory"),
+                "Different-version synthetic entry must be left alone (stale-version cleanup handles it).");
+            Assert.IsFalse(manifest.Packages.ContainsKey("Microsoft.Bcl.Memory"),
+                "No real-owner entry should be created when nothing was migrated.");
+        }
+
+        [Test]
         public void TryParseInstalledDllName_GreedilyConsumesEntireVersionTail()
         {
             // Regression check on the parser used by the disaster-recovery

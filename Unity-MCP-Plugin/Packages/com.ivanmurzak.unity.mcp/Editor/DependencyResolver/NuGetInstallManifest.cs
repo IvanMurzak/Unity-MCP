@@ -88,8 +88,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         }
 
         /// <summary>
-        /// Writes the manifest to disk. Creates the install directory if it
-        /// does not exist.
+        /// Writes the manifest to disk atomically. Creates the install directory
+        /// if it does not exist. Writes to a sibling <c>.tmp</c> file first and
+        /// then moves it into place, so a crash or power loss mid-write cannot
+        /// leave a truncated/empty <c>.nuget-installed.json</c> behind.
         /// </summary>
         public static void Save(string installPath, InstallManifest manifest)
         {
@@ -97,8 +99,32 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 Directory.CreateDirectory(installPath);
 
             var path = GetPath(installPath);
+            var tempPath = path + ".tmp";
             var json = ManifestJsonParser.Serialize(manifest);
-            File.WriteAllText(path, json);
+
+            File.WriteAllText(tempPath, json);
+            try
+            {
+                // Atomic rename: delete the destination first so File.Move (the
+                // .NET Standard 2.0-compatible overload that Unity's bundled
+                // Mono ships) does not throw IOException("destination exists").
+                // The delete-then-move sequence is not strictly atomic on
+                // Windows, but it removes the truncated-file failure mode the
+                // bug report calls out (a crash mid-WriteAllText would leave an
+                // empty/partial .nuget-installed.json; the staging-file
+                // approach guarantees the destination is either the previous
+                // valid file or the freshly serialized one — never partial).
+                if (File.Exists(path))
+                    File.Delete(path);
+                File.Move(tempPath, path);
+            }
+            catch
+            {
+                // Best-effort cleanup of the staging file if the rename fails.
+                try { if (File.Exists(tempPath)) File.Delete(tempPath); }
+                catch { /* ignore cleanup error — surface the original failure */ }
+                throw;
+            }
         }
 
         /// <summary>

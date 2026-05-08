@@ -32,6 +32,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
     /// cycle in that case (see <see cref="MigrationAbortedException"/>) — a
     /// partial migration would leave the project in the duplicate-assembly
     /// state we're explicitly trying to prevent.
+    ///
+    /// <para>
+    /// Asset GUIDs in legacy <c>.meta</c> files are intentionally NOT preserved
+    /// onto the new flat-layout meta files: these DLLs are referenced via
+    /// asmdef <c>precompiledReferences</c> (filename-based) rather than via
+    /// GUID, so the link survives the rename without the migration carrying
+    /// per-meta GUID state forward. Unity regenerates fresh meta files on the
+    /// next asset import.
+    /// </para>
     /// </summary>
     static class NuGetLegacyMigration
     {

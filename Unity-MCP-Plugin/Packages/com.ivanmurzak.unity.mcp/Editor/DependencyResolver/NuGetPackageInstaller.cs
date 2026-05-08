@@ -93,15 +93,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     return false;
                 }
 
-                var alreadyOnDisk = false;
-                if (manifest.Packages.TryGetValue(package.Id, out var manifestEntry)
-                    && string.Equals(manifestEntry.Version, package.Version, StringComparison.OrdinalIgnoreCase)
-                    && manifestEntry.Dlls.Count > 0
-                    && manifestEntry.Dlls.All(d => File.Exists(Path.Combine(installPath, d))))
-                {
-                    alreadyOnDisk = true;
-                }
-
                 // Download (cached in Library/NuGetCache across sessions). Needed even when
                 // the package is already on disk, so GetDependencies() can build the full closure.
                 var nupkgPath = NuGetDownloader.Download(package);
@@ -131,6 +122,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     return anyInstalled;
                 }
 
+                // Plan DLL paths up front so synthetic-owner reconciliation (below) can
+                // operate on the same filenames the collision check would compare against.
+                var planned = NuGetExtractor.PlanDllPaths(nupkgPath, installPath, package.Version);
+
+                // Disaster-recovery reconciliation: TryRebuildFromDisk has no way to recover
+                // multi-DLL package IDs from filenames alone (e.g., Microsoft.Bcl.Memory ships
+                // System.Memory.dll / System.Buffers.dll / System.Runtime.CompilerServices.Unsafe.dll),
+                // so it keys those DLLs under their own stems as synthetic package IDs. When the
+                // real owner re-installs at the same version, those synthetic entries would trip
+                // the collision check below; remove them and let the real owner take over.
+                MigrateSyntheticOwnerEntries(manifest, package.Id, package.Version, planned);
+
+                var alreadyOnDisk = false;
+                if (manifest.Packages.TryGetValue(package.Id, out var manifestEntry)
+                    && string.Equals(manifestEntry.Version, package.Version, StringComparison.OrdinalIgnoreCase)
+                    && manifestEntry.Dlls.Count > 0
+                    && manifestEntry.Dlls.All(d => File.Exists(Path.Combine(installPath, d))))
+                {
+                    alreadyOnDisk = true;
+                }
+
                 // Extract DLLs only when not already present at this exact version.
                 if (!alreadyOnDisk)
                 {
@@ -138,8 +150,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     // collision requires two distinct packages shipping the same DLL stem at
                     // the same package version — essentially impossible in practice. Keep the
                     // detection branch anyway so the failure mode is loud rather than silent.
-                    var planned = NuGetExtractor.PlanDllPaths(nupkgPath, installPath, package.Version);
-
                     foreach (var planEntry in planned)
                     {
                         if (TryFindDllOwner(manifest, planEntry.FileName, package.Id, out var owner))
@@ -294,9 +304,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// scan. Removes any DLLs the manifest records under
         /// <paramref name="packageId"/> at a version OTHER than
         /// <paramref name="keepVersion"/>, deletes their <c>.meta</c> sidecars,
-        /// and updates the manifest entry to reflect the now-empty pre-extract
-        /// state (the freshly extracted DLLs at <paramref name="keepVersion"/>
-        /// will be added by the caller).
+        /// and removes the manifest entry — the caller re-adds it after
+        /// extracting the new DLLs at <paramref name="keepVersion"/>.
         ///
         /// Returns true when at least one DLL was removed.
         /// </summary>
@@ -364,6 +373,76 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             }
             owner = null;
             return false;
+        }
+
+        /// <summary>
+        /// Reconciles synthetic manifest entries left behind by
+        /// <see cref="NuGetInstallManifest.TryRebuildFromDisk"/> with the real
+        /// owning package. The rebuild keys multi-DLL packages under each DLL's
+        /// stem (because filenames carry no package-id metadata); when the real
+        /// owner re-installs at the same version, those stem-keyed entries are
+        /// the same physical DLLs we are about to extract — drop them so the
+        /// downstream collision check does not flag the package as a duplicate.
+        ///
+        /// Match criteria for "synthetic owner":
+        ///   * the manifest entry's id is NOT this package's id;
+        ///   * the entry version matches the package version exactly;
+        ///   * every DLL the entry lists is also one of this package's planned
+        ///     filenames (so we never strip a real, distinct package that
+        ///     happens to share a version number).
+        ///
+        /// On a hit we also migrate any DLLs that already exist on disk into a
+        /// real entry under <paramref name="realPackageId"/>, which lets the
+        /// caller's <c>alreadyOnDisk</c> check short-circuit re-extraction.
+        /// </summary>
+        internal static void MigrateSyntheticOwnerEntries(
+            InstallManifest manifest,
+            string realPackageId,
+            string version,
+            IReadOnlyList<PlannedDll> planned)
+        {
+            if (planned.Count == 0)
+                return;
+
+            var plannedFileNames = new HashSet<string>(
+                planned.Select(p => p.FileName),
+                StringComparer.OrdinalIgnoreCase);
+
+            var migratedDlls = new List<string>();
+            foreach (var id in manifest.Packages.Keys.ToList())
+            {
+                if (string.Equals(id, realPackageId, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var entry = manifest.Packages[id];
+                if (!string.Equals(entry.Version, version, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                if (entry.Dlls.Count == 0 || !entry.Dlls.All(d => plannedFileNames.Contains(d)))
+                    continue;
+
+                // Synthetic entry confirmed — surface the reconciliation so a stuck
+                // user can correlate it with the rebuild log.
+                Debug.Log(
+                    $"{Tag} Reconciling disaster-recovery manifest entry '{id}' {version} into real owner '{realPackageId}'.");
+                migratedDlls.AddRange(entry.Dlls);
+                manifest.Packages.Remove(id);
+            }
+
+            if (migratedDlls.Count == 0)
+                return;
+
+            // Merge into any pre-existing real entry rather than overwriting it.
+            if (!manifest.Packages.TryGetValue(realPackageId, out var realEntry)
+                || !string.Equals(realEntry.Version, version, StringComparison.OrdinalIgnoreCase))
+            {
+                realEntry = new InstalledPackage(version);
+                manifest.Packages[realPackageId] = realEntry;
+            }
+            foreach (var dll in migratedDlls)
+            {
+                if (!realEntry.Dlls.Contains(dll, StringComparer.OrdinalIgnoreCase))
+                    realEntry.Dlls.Add(dll);
+            }
         }
 
         static void UpsertManifestEntry(InstallManifest manifest, string packageId, string version, IReadOnlyList<string> dlls)
