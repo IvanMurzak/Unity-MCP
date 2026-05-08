@@ -54,11 +54,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// </summary>
         public string CacheFileName => $"{Id}.{Version}.nupkg";
 
-        /// <summary>
-        /// The install directory name under the install path.
-        /// </summary>
-        public string InstallDirectoryName => $"{Id}.{Version}";
-
         public override string ToString() => $"{Id} {Version}";
     }
 }

@@ -27,13 +27,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
     /// Case 1 is critical: assemblies like System.Diagnostics.DiagnosticSource are
     /// available in the Unity Editor but NOT included in player builds automatically.
     /// Our NuGet copy must be included in builds while excluded from editor to avoid duplicates.
+    ///
+    /// Since #733: DLLs sit FLAT under <see cref="NuGetConfig.InstallPath"/> with the
+    /// versioned filename pattern <c>{stem}.{packageVersion}.dll</c>. The package → DLL
+    /// owner mapping comes from <see cref="NuGetInstallManifest"/> (we can't infer the
+    /// package ID from the on-disk path anymore — every DLL sits in the same folder).
     /// </summary>
     static class NuGetPluginConfigurator
     {
         const string Tag = NuGetConfig.LogTag;
 
         /// <summary>
-        /// Configures PluginImporter for all DLLs in the NuGet install directory.
+        /// Configures PluginImporter for every DLL recorded in the NuGet install manifest.
         /// Called after packages are installed/restored.
         /// </summary>
         public static void ConfigureAll()
@@ -41,7 +46,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             if (!Directory.Exists(NuGetConfig.InstallPath))
                 return;
 
-            var dlls = Directory.GetFiles(NuGetConfig.InstallPath, "*.dll", SearchOption.AllDirectories);
+            var manifest = NuGetInstallManifest.Load(NuGetConfig.InstallPath);
 
             // Batch importer changes so Unity performs a single reimport pass at the end
             // instead of one reimport per DLL (which was dominating editor startup time
@@ -49,11 +54,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             AssetDatabase.StartAssetEditing();
             try
             {
-                foreach (var dllPath in dlls)
+                foreach (var (packageId, entry) in manifest.Packages)
                 {
-                    // Convert to Unity asset path (forward slashes, relative to project)
-                    var assetPath = dllPath.Replace('\\', '/');
-                    ConfigureDll(assetPath);
+                    var includeInBuild = ShouldIncludeInBuild(packageId);
+                    foreach (var dll in entry.Dlls)
+                    {
+                        var dllPath = Path.Combine(NuGetConfig.InstallPath, dll);
+                        if (!File.Exists(dllPath))
+                            continue;
+
+                        // Convert to Unity asset path (forward slashes, relative to project)
+                        var assetPath = dllPath.Replace('\\', '/');
+                        ConfigureDll(assetPath, includeInBuild);
+                    }
                 }
             }
             finally
@@ -65,15 +78,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// <summary>
         /// Configures a single DLL's PluginImporter settings.
         /// </summary>
-        public static void ConfigureDll(string assetPath)
+        public static void ConfigureDll(string assetPath, bool includeInBuild)
         {
             var importer = AssetImporter.GetAtPath(assetPath) as PluginImporter;
             if (importer == null)
                 return;
 
-            var dllName = Path.GetFileNameWithoutExtension(assetPath);
-            var unityProvidesIt = UnityAssemblyResolver.IsAlreadyImported(dllName);
-            var includeInBuild = ShouldIncludeInBuild(assetPath);
+            // DLL filenames remain unversioned in the flat layout (the package
+            // version lives in the manifest), so the on-disk stem IS the
+            // assembly identity Unity's resolver uses.
+            var assemblyName = Path.GetFileNameWithoutExtension(assetPath);
+
+            var unityProvidesIt = UnityAssemblyResolver.IsAlreadyImported(assemblyName);
 
             bool anyPlatform;
             bool excludeEditor;
@@ -142,30 +158,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             }
 
             importer.SaveAndReimport();
-            Debug.Log($"{Tag} Configured '{dllName}': anyPlatform={anyPlatform}, excludeEditor={excludeEditor}, editorOnly={editorOnly}");
+            Debug.Log($"{Tag} Configured '{assemblyName}': anyPlatform={anyPlatform}, excludeEditor={excludeEditor}, editorOnly={editorOnly}");
         }
 
         /// <summary>
-        /// Determines if a DLL should be included in game builds.
-        /// Explicitly configured packages use their IncludeInBuild flag.
+        /// Determines if a DLL should be included in game builds based on its
+        /// owning package ID. Configured packages use their IncludeInBuild flag.
         /// Transitive dependencies default to included (runtime packages depend on them).
         /// </summary>
-        static bool ShouldIncludeInBuild(string dllPath)
+        static bool ShouldIncludeInBuild(string packageId)
         {
-            var dirName = Path.GetFileName(Path.GetDirectoryName(dllPath));
-            if (dirName == null)
-                return true;
-
-            // Extract the package ID from the directory name (e.g., "System.Text.Json.8.0.5" → "System.Text.Json")
-            // so we match the exact package ID rather than any prefix (which would confuse
-            // "Microsoft.Extensions.Logging" with "Microsoft.Extensions.Logging.Abstractions").
-            var extractedId = NuGetPackageInstaller.ExtractPackageIdFromDirName(dirName);
-            if (extractedId == null)
-                return true;
-
             foreach (var package in NuGetConfig.Packages)
             {
-                if (string.Equals(extractedId, package.Id, System.StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(packageId, package.Id, System.StringComparison.OrdinalIgnoreCase))
                     return package.IncludeInBuild;
             }
 

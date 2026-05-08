@@ -19,9 +19,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 {
     /// <summary>
     /// Restores NuGet packages on domain reload.
-    /// Compares the required packages (from NuGetConfig) against what's currently installed
-    /// at Assets/Plugins/NuGet/. Downloads and installs any missing packages.
-    /// Also removes packages that Unity now provides natively.
+    /// Compares the required packages (from NuGetConfig) against the on-disk manifest at
+    /// <c>Assets/Plugins/NuGet/.nuget-installed.json</c>. Downloads and installs any missing
+    /// packages. Also removes packages that Unity now provides natively.
+    ///
+    /// Since #733 the on-disk layout is flat — see <see cref="NuGetExtractor"/> and
+    /// <see cref="NuGetInstallManifest"/>. The restorer also runs the one-shot
+    /// migration from the legacy per-package layout via <see cref="NuGetLegacyMigration"/>
+    /// at the start of every Restore() pass; the migration is idempotent and is a
+    /// no-op once the legacy folders are gone.
     /// </summary>
     static class NuGetPackageRestorer
     {
@@ -43,6 +49,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 if (!Directory.Exists(NuGetConfig.InstallPath))
                     Directory.CreateDirectory(NuGetConfig.InstallPath);
 
+                // One-shot migration from the legacy {Id}.{Version}/ layout. After the first
+                // successful pass this short-circuits at NoLegacyState in O(directory listing).
+                var migration = NuGetLegacyMigration.Run(NuGetConfig.InstallPath);
+                if (migration.Outcome == NuGetLegacyMigration.Outcome.AbortedFileLock)
+                {
+                    // Cannot continue safely — extracting flat-layout DLLs alongside the
+                    // surviving legacy folders would brick the project with duplicate-assembly
+                    // errors. Leave everything where it is and report; the next domain reload
+                    // (after the user closes whatever held the lock) will retry.
+                    return false;
+                }
+                if (migration.Outcome == NuGetLegacyMigration.Outcome.Migrated)
+                    anyChanged = true;
+
+                // Manifest recovery: when .nuget-installed.json is missing the
+                // installer's "alreadyOnDisk" check returns false for every
+                // package, so Install() re-extracts each one from the cached
+                // .nupkg and rewrites the manifest as a side-effect. The user
+                // sees a single restore burst on the next domain reload — no
+                // dangling state.
+
                 // Install configured packages. Install() populates InstalledThisSession with the
                 // full resolved closure (direct + transitive) by always reading the dep graph,
                 // including for packages already on disk from a previous session.
@@ -54,7 +81,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 if (anyChanged)
                     UnityAssemblyResolver.InvalidateCache();
 
-                // Remove stale-version directories of anything in the closure
+                // Remove stale-version manifest entries for anything in the closure
                 // and packages whose DLLs are now all provided by Unity.
                 var anyRemoved = NuGetPackageInstaller.RemoveUnnecessaryPackages(
                     NuGetPackageInstaller.InstalledThisSession);
@@ -75,65 +102,78 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 
         /// <summary>
         /// Quick check: are all configured packages already installed at their configured version,
-        /// with no stale-version directories of configured packages present on disk, AND is the
+        /// with no stale-version entries of configured packages present in the manifest, AND is the
         /// full transitive closure present?
         /// Used to skip the full restore when everything is up to date. Returning false here forces
-        /// the full Restore() path, which deletes stale-version directories via RemoveUnnecessaryPackages
-        /// and re-installs any missing transitive dependencies.
+        /// the full Restore() path, which runs migration + reconciliation.
         /// </summary>
         public static bool AllPackagesInstalled()
         {
             if (!Directory.Exists(NuGetConfig.InstallPath))
                 return false;
 
+            // Legacy per-package directories on disk → migration is pending → force a full restore.
+            // Cheap enough on the steady-state path because there are no legacy directories left
+            // after the first migration run.
+            foreach (var dir in Directory.GetDirectories(NuGetConfig.InstallPath))
+            {
+                var dirName = Path.GetFileName(dir);
+                if (NuGetPackageInstaller.ExtractPackageIdFromDirName(dirName) != null)
+                    return false;
+            }
+
+            // Manifest is the source of truth for the flat layout. If it's missing we need a full
+            // restore — Restore() will rebuild it from on-disk filenames as the first step, then
+            // the closure-completeness check below runs against the rebuilt entries.
+            if (!File.Exists(NuGetInstallManifest.GetPath(NuGetConfig.InstallPath)))
+                return false;
+
+            var manifest = NuGetInstallManifest.Load(NuGetConfig.InstallPath);
+
+            var skipSet = new HashSet<string>(NuGetConfig.SkipPackages, StringComparer.OrdinalIgnoreCase);
+
+            // No skip-listed package may sit in the manifest.
+            foreach (var packageId in manifest.Packages.Keys)
+            {
+                if (skipSet.Contains(packageId))
+                    return false;
+            }
+
             // Every configured package must be installed at the configured version, UNLESS the
             // package is a development-only dependency (analyzers, source generators, build
-            // tooling). The installer intentionally does not create an install dir for those,
-            // so demanding one here would force a needless full restore every session for any
-            // user who configures a dev-dep as a top-level package.
+            // tooling). The installer intentionally leaves an empty-Dlls manifest entry for those.
             foreach (var package in NuGetConfig.Packages)
             {
                 if (IsCachedDevelopmentDependency(package))
+                {
+                    // Dev-deps are still tracked in the manifest with an empty DLL list — that
+                    // marker tells AllPackagesInstalled() to skip the on-disk DLL check for them.
+                    if (!manifest.Packages.TryGetValue(package.Id, out var devEntry))
+                        return false;
+                    if (!string.Equals(devEntry.Version, package.Version, StringComparison.OrdinalIgnoreCase))
+                        return false;
                     continue;
+                }
 
-                var installDir = Path.Combine(NuGetConfig.InstallPath, package.InstallDirectoryName);
-                if (!Directory.Exists(installDir) || Directory.GetFiles(installDir, "*.dll").Length == 0)
+                if (!manifest.Packages.TryGetValue(package.Id, out var entry))
                     return false;
-            }
-
-            // Collect all package IDs present on disk (at any version). Also detect duplicate-version
-            // collisions and skip-listed packages, which both force a full restore:
-            //   - duplicate versions (e.g., "SignalR.Common.8.0.15" + ".10.0.3") produce
-            //     duplicate-assembly conflicts in Unity
-            //   - skip-listed packages must be deleted by RemoveUnnecessaryPackages
-            var installedPackageIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var seenPackageIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            var skipSet = new HashSet<string>(NuGetConfig.SkipPackages, StringComparer.OrdinalIgnoreCase);
-            foreach (var dir in Directory.GetDirectories(NuGetConfig.InstallPath))
-            {
-                var packageId = NuGetPackageInstaller.ExtractPackageIdFromDirName(Path.GetFileName(dir));
-                if (packageId == null)
-                    continue;
-                if (!seenPackageIds.Add(packageId))
-                    return false;
-                if (skipSet.Contains(packageId))
+                if (!string.Equals(entry.Version, package.Version, StringComparison.OrdinalIgnoreCase))
                     return false;
 
-                // Empty package directories are cruft — typically left behind by a pre-fix
-                // install of a development-only dependency (analyzers, source generators)
-                // that never had any lib/<tfm>/ payload. Force a full restore so
-                // RemoveUnnecessaryPackages() cleans them up.
-                if (Directory.GetFiles(dir, "*.dll", SearchOption.AllDirectories).Length == 0)
-                    return false;
-
-                installedPackageIds.Add(packageId);
+                // Every recorded DLL must still be on disk.
+                foreach (var dll in entry.Dlls)
+                {
+                    if (!File.Exists(Path.Combine(NuGetConfig.InstallPath, dll)))
+                        return false;
+                }
             }
 
             // Walk the transitive closure from each configured top-level package via cached
-            // .nuspec files and verify every declared dep has SOME install dir on disk.
-            // This catches the case where a transitive-dep folder was deleted externally or
-            // a prior restore failed mid-install; without this check we'd incorrectly return
-            // true and skip the fix-up pass in Restore().
+            // .nuspec files and verify every declared dep has a manifest entry. Catches the
+            // case where a transitive-dep DLL was deleted externally or a prior restore
+            // failed mid-install; without this we'd incorrectly return true and skip the
+            // fix-up pass in Restore().
+            var installedPackageIds = new HashSet<string>(manifest.Packages.Keys, StringComparer.OrdinalIgnoreCase);
             var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var package in NuGetConfig.Packages)
             {
@@ -146,13 +186,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 
         /// <summary>
         /// Recursively verifies that <paramref name="package"/> and every package reachable
-        /// through its cached .nuspec dependency list has SOME install directory on disk
-        /// (any version — the resolved version may differ from the declared one due to
-        /// highest-version-wins, but the ID must be present).
-        ///
-        /// Returns false when any required package is missing, or when we can't read a
-        /// cached .nuspec we were expected to find — forcing the caller to run the full
-        /// Restore() path.
+        /// through its cached .nuspec dependency list has a manifest entry (any version —
+        /// the resolved version may differ from the declared one due to highest-version-wins,
+        /// but the ID must be present).
         /// </summary>
         static bool HasTransitiveClosure(
             NuGetPackage package,
@@ -163,7 +199,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             if (!visited.Add(package.Id))
                 return true;
 
-            // Skip-listed packages are expected to be absent from disk.
+            // Skip-listed packages are expected to be absent.
             if (skipSet.Contains(package.Id))
                 return true;
 
@@ -172,9 +208,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 : null;
 
             // Development-only dependencies (analyzers, source generators, build tooling)
-            // are legitimately absent from the install directory — they ship their payload
-            // under analyzers/, build/, tools/ etc. and the installer intentionally does not
-            // create a lib/ directory for them.
+            // legitimately have an empty DLL list in the manifest.
             if (cachedPath != null && NuGetExtractor.IsDevelopmentDependency(cachedPath))
                 return true;
 
@@ -183,9 +217,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 
             // If this specific version's .nupkg isn't cached, the package may have been
             // superseded by a higher version from another chain (which caused Install() to
-            // early-return without downloading this version). The install-dir check above
-            // already confirmed some version is present, so stop recursing here rather than
-            // forcing an unnecessary restore.
+            // early-return without downloading this version). The manifest check above
+            // already confirmed the ID is present, so stop recursing here.
             if (cachedPath == null)
                 return true;
 
@@ -211,9 +244,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// <summary>
         /// Returns true when <paramref name="package"/>'s .nupkg is on disk in the NuGet cache
         /// and its .nuspec declares <c>&lt;developmentDependency&gt;true&lt;/developmentDependency&gt;</c>.
-        /// Returns false when the package isn't cached yet — the caller should then fall back to
-        /// the install-dir check, which will miss on a fresh restore and force Restore() to run
-        /// (at which point Install() downloads the .nupkg and records the dev dep in the closure).
         /// </summary>
         static bool IsCachedDevelopmentDependency(NuGetPackage package)
         {

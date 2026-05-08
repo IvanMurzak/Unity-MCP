@@ -21,6 +21,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
     /// Installs NuGet packages: downloads .nupkg, extracts DLLs, resolves transitive dependencies.
     /// Skips packages that Unity already provides (detected by UnityAssemblyResolver).
     /// Uses highest-version-wins strategy for dependency conflicts.
+    ///
+    /// Since #733 the on-disk layout is flat — every DLL sits directly under
+    /// <see cref="NuGetConfig.InstallPath"/> with the versioned filename
+    /// <c>{stem}.{packageVersion}.dll</c>. The package → DLL mapping is
+    /// recorded in <see cref="NuGetInstallManifest"/> at the root of the
+    /// install path; the installer reads/writes that manifest as the
+    /// authoritative source of truth.
     /// </summary>
     static class NuGetPackageInstaller
     {
@@ -38,17 +45,29 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 
         /// <summary>
         /// Installs a package and its transitive dependencies.
-        /// Returns true if any new DLLs were extracted, OR if any stale-version sibling
-        /// directories of this package's Id were removed from the install path (both require
-        /// a domain reload). Always reads the dependency graph (from the cached .nupkg) and
-        /// records the resolved (id, version) in <see cref="installedThisSession"/>, even
-        /// when the package is already present on disk — otherwise transitive deps of
-        /// already-installed packages would be missing from the closure, and stale-version
-        /// directories of those transitives would be kept by RemoveUnnecessaryPackages.
+        /// Returns true if any new DLLs were extracted, OR if any stale-version DLLs of this
+        /// package's Id were removed from the install path (both require a domain reload).
+        /// Always reads the dependency graph (from the cached .nupkg) and records the resolved
+        /// (id, version) in <see cref="installedThisSession"/>, even when the package is already
+        /// present on disk — otherwise transitive deps of already-installed packages would be
+        /// missing from the closure, and stale-version DLLs of those transitives would be kept
+        /// by RemoveUnnecessaryPackages.
         /// </summary>
         public static bool Install(NuGetPackage package, HashSet<string>? visitedIds = null)
         {
+            return Install(package, NuGetConfig.InstallPath, visitedIds, manifest: null);
+        }
+
+        /// <summary>
+        /// Test seam — Install() with the install path and the in-memory manifest
+        /// injected. Production callers use the no-args overload above. Tests
+        /// drive a temp directory and an in-memory manifest so they don't touch
+        /// the real Assets/Plugins/NuGet path.
+        /// </summary>
+        internal static bool Install(NuGetPackage package, string installPath, HashSet<string>? visitedIds, InstallManifest? manifest)
+        {
             visitedIds ??= new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            manifest ??= NuGetInstallManifest.Load(installPath);
 
             // Prevent circular dependencies while still allowing the same package Id to be
             // re-entered at a *different* version (so higher-version-wins can replace an
@@ -74,9 +93,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     return false;
                 }
 
-                var installDir = Path.Combine(NuGetConfig.InstallPath, package.InstallDirectoryName);
-                var alreadyOnDisk = Directory.Exists(installDir)
-                                 && Directory.GetFiles(installDir, "*.dll").Length > 0;
+                var alreadyOnDisk = false;
+                if (manifest.Packages.TryGetValue(package.Id, out var manifestEntry)
+                    && string.Equals(manifestEntry.Version, package.Version, StringComparison.OrdinalIgnoreCase)
+                    && manifestEntry.Dlls.Count > 0
+                    && manifestEntry.Dlls.All(d => File.Exists(Path.Combine(installPath, d))))
+                {
+                    alreadyOnDisk = true;
+                }
 
                 // Download (cached in Library/NuGetCache across sessions). Needed even when
                 // the package is already on disk, so GetDependencies() can build the full closure.
@@ -84,49 +108,63 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 
                 var dependencies = NuGetExtractor.GetDependencies(nupkgPath);
                 foreach (var dep in dependencies)
-                    anyInstalled |= Install(dep, visitedIds);
+                    anyInstalled |= Install(dep, installPath, visitedIds, manifest);
 
-                // Remove any stale-version sibling directories for this package Id BEFORE
-                // extracting the new payload. Covers two distinct cases that the post-pass in
-                // RemoveUnnecessaryPackages cannot reliably catch in time:
-                //   (a) Cross-session upgrade: a prior session installed {Id}.{OldVer}/ from a
-                //       previous version of the parent Unity package; the user updated the
-                //       Unity package, the new dep graph resolves {Id}.{NewVer}, and the old
-                //       dir is still on disk. Without this scan, both versions remain side by
-                //       side and the C# compiler reports duplicate-assembly errors before
-                //       RemoveUnnecessaryPackages gets to run. See Unity-MCP#703.
-                //   (b) Within-session higher-version-wins: a lower version of the same Id was
-                //       already installed earlier in this restore cycle through a different
-                //       chain, and the current chain resolves a higher version. The disk scan
-                //       subsumes the previous installedThisSession-based cleanup branch by
-                //       deleting whatever sibling versions are actually on disk.
-                // Deletion is a material Asset change that must trigger a domain reload, so
-                // flip anyInstalled here — otherwise a restore cycle whose only change is
-                // cleanup would skip the reload.
-                if (RemoveStaleSiblingVersions(NuGetConfig.InstallPath, package.Id, package.Version))
+                // Remove any stale-version DLLs for this package Id BEFORE extracting the new
+                // payload. Mirrors the legacy stale-version cleanup, just driven by the manifest
+                // instead of by directory naming. Still flips anyInstalled because deletion is a
+                // material Asset change that requires a domain reload.
+                if (RemoveStaleSiblingVersions(installPath, package.Id, package.Version, manifest))
                     anyInstalled = true;
 
-                // Development-only dependencies (e.g. Roslyn analyzers, source generators,
-                // build-time tooling) ship their payload under analyzers/, build/, tools/ etc.
-                // — never under lib/<tfm>/ — so there are no runtime DLLs for the resolver
-                // to extract and the "No DLLs extracted" warning would be a false positive.
-                // Record them in the session closure so transitive resolution stays complete,
-                // but do not create an install directory or extract anything. Any stale
-                // empty dir/.meta left over from a pre-fix install is cleaned up by
-                // RemoveUnnecessaryPackages().
+                // Development-only dependencies (Roslyn analyzers, source generators, build
+                // tooling) ship their payload under analyzers/, build/, tools/ etc. — never
+                // under lib/<tfm>/ — so there are no runtime DLLs for the resolver to extract.
+                // Record them in the closure but do not extract anything; the manifest carries
+                // an entry with an empty DLL list so AllPackagesInstalled() short-circuits cleanly
+                // on the next pass.
                 if (NuGetExtractor.IsDevelopmentDependency(nupkgPath))
                 {
                     installedThisSession[package.Id] = package.Version;
+                    UpsertManifestEntry(manifest, package.Id, package.Version, dlls: Array.Empty<string>());
+                    NuGetInstallManifest.Save(installPath, manifest);
                     return anyInstalled;
                 }
 
-                // Extract DLLs only when not already on disk at this exact version.
+                // Extract DLLs only when not already present at this exact version.
                 if (!alreadyOnDisk)
                 {
-                    var extractedDlls = NuGetExtractor.ExtractDlls(nupkgPath, installDir);
+                    // Defense-in-depth: collision detection. If a DLL the new package would write
+                    // is already recorded in the manifest under a different package ID, refuse
+                    // the install. Two distinct packages shipping the same DLL stem is rare but
+                    // legitimate (e.g. Microsoft repackaging) — surface the conflict instead of
+                    // silently overwriting.
+                    var planned = NuGetExtractor.PlanDllPaths(nupkgPath, installPath);
+
+                    foreach (var planEntry in planned)
+                    {
+                        if (TryFindDllOwner(manifest, planEntry.FileName, package.Id, out var owner))
+                        {
+                            Debug.LogError(
+                                $"{Tag} Refusing to install {package.Id} {package.Version}: " +
+                                $"DLL '{planEntry.FileName}' is already owned by package '{owner}' " +
+                                $"in the manifest. Loud failure beats silent overwrite — investigate the conflict.");
+                            return anyInstalled;
+                        }
+                    }
+
+                    // Long-path pre-flight (Windows MAX_PATH). Throws on overflow; the catch
+                    // below logs and continues — the rest of the closure can still install,
+                    // and the user gets a single actionable error in the Console.
+                    foreach (var planEntry in planned)
+                        NuGetLongPathPreflight.Check(planEntry.TargetPath, package.Id);
+
+                    var extractedDlls = NuGetExtractor.ExtractDlls(nupkgPath, installPath);
                     if (extractedDlls.Count > 0)
                     {
                         Debug.Log($"{Tag} Installed {package.Id} {package.Version} ({extractedDlls.Count} DLL(s))");
+                        UpsertManifestEntry(manifest, package.Id, package.Version, extractedDlls);
+                        NuGetInstallManifest.Save(installPath, manifest);
                         anyInstalled = true;
                     }
                     else
@@ -134,8 +172,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                         Debug.LogWarning($"{Tag} No DLLs extracted for {package.Id} {package.Version}");
                     }
                 }
+                else
+                {
+                    // Already on disk at the right version — just keep the manifest entry
+                    // around (it was the source of truth that decided alreadyOnDisk).
+                    UpsertManifestEntry(manifest, package.Id, package.Version, manifestEntry!.Dlls);
+                    NuGetInstallManifest.Save(installPath, manifest);
+                }
 
                 installedThisSession[package.Id] = package.Version;
+            }
+            catch (InstallPathTooLongException ex)
+            {
+                // Pre-flight overflow — the message is fully self-contained.
+                Debug.LogError(ex.Message);
             }
             catch (Exception ex)
             {
@@ -146,78 +196,60 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         }
 
         /// <summary>
-        /// Removes previously-installed NuGet package directories that should no longer exist:
-        ///   1a. Empty package directories (no DLLs anywhere under them) — typically migration
-        ///       cruft from a pre-fix install of a development-only dependency (Roslyn analyzer,
-        ///       source generator, build tooling). Always deleted, regardless of whether the
-        ///       package ID is in the current closure, so stale empty dirs don't keep forcing
-        ///       AllPackagesInstalled() to return false.
-        ///   1b. Stale-version directories for any package in the resolved session closure —
-        ///       both configured packages AND their transitive dependencies
-        ///       (e.g., a leftover "Microsoft.AspNetCore.SignalR.Common.10.0.3" when the current
-        ///       closure resolves that transitive to "8.0.15"). Keeping both produces
+        /// Removes manifest entries (and their on-disk DLLs / .meta files) that
+        /// should no longer exist:
+        ///   1.  Stale-version entries for any package in the resolved session closure
+        ///       (e.g., a leftover "Microsoft.AspNetCore.SignalR.Common" at 10.0.3 when the
+        ///       current closure resolves that transitive to 8.0.15). Keeping both produces
         ///       duplicate-assembly conflicts.
-        ///   2.  Directories whose DLLs are now all provided by Unity (e.g., after a Unity
-        ///       upgrade that bundled the BCL assembly) and whose package ID is not in the closure.
+        ///   2.  Entries whose DLLs are now all provided by Unity (e.g., after a Unity upgrade
+        ///       that bundled the BCL assembly) and whose package ID is not in the closure.
+        ///   3.  Skip-listed packages — always removed regardless of closure membership.
         ///
         /// <paramref name="requiredVersionByPackageId"/> must contain the full resolved closure
         /// (pass <see cref="InstalledThisSession"/> from the restorer after Install() calls).
-        /// Returns true if any installed package directories were removed.
+        /// Returns true if anything was removed.
         /// </summary>
         public static bool RemoveUnnecessaryPackages(IReadOnlyDictionary<string, string> requiredVersionByPackageId)
         {
-            if (!Directory.Exists(NuGetConfig.InstallPath))
+            return RemoveUnnecessaryPackages(requiredVersionByPackageId, NuGetConfig.InstallPath, manifest: null);
+        }
+
+        internal static bool RemoveUnnecessaryPackages(
+            IReadOnlyDictionary<string, string> requiredVersionByPackageId,
+            string installPath,
+            InstallManifest? manifest)
+        {
+            if (!Directory.Exists(installPath))
                 return false;
 
+            manifest ??= NuGetInstallManifest.Load(installPath);
             var anyRemoved = false;
 
-            foreach (var dir in Directory.GetDirectories(NuGetConfig.InstallPath))
+            // Iterate a snapshot so we can mutate the manifest mid-loop.
+            foreach (var packageId in manifest.Packages.Keys.ToList())
             {
-                var dirName = Path.GetFileName(dir);
-                var lastDot = dirName.LastIndexOf('.');
-                if (lastDot <= 0)
-                    continue;
-
-                // Try to parse as {packageId}.{version}
-                // Find the split point: package IDs can contain dots, version starts with a digit
-                var packageId = ExtractPackageIdFromDirName(dirName);
-                if (packageId == null)
-                    continue;
+                var entry = manifest.Packages[packageId];
 
                 // Case 0: explicitly skipped package — always remove from disk.
                 if (IsSkipped(packageId))
                 {
-                    Debug.Log($"{Tag} Removing {dirName} — package is in SkipPackages exclusion list.");
-                    DeleteDirAndMeta(dir);
+                    Debug.Log($"{Tag} Removing {packageId} {entry.Version} — package is in SkipPackages exclusion list.");
+                    DeleteEntryFiles(installPath, entry);
+                    manifest.Packages.Remove(packageId);
                     anyRemoved = true;
                     continue;
                 }
 
-                // Case 1a: empty directory left behind by a pre-fix install of a development-only
-                // dependency (e.g. Roslyn analyzer) — the installer used to create an empty dir
-                // and .meta before recognising that dev-deps have no lib/<tfm>/ payload. Run
-                // this check BEFORE the stale-version / closure-membership branches so empty
-                // dirs get cleaned up even when the package is still in the current closure
-                // (otherwise the AllPackagesInstalled() empty-dir check would force a full
-                // restore on every domain reload).
-                var dllFiles = Directory.GetFiles(dir, "*.dll", SearchOption.AllDirectories);
-                if (dllFiles.Length == 0)
-                {
-                    Debug.Log($"{Tag} Removing {dirName} — empty package directory (no DLL payload).");
-                    DeleteDirAndMeta(dir);
-                    anyRemoved = true;
-                    continue;
-                }
-
-                // Case 1b: configured package with a stale on-disk version — delete the stale one.
+                // Case 1: configured package with a stale version — delete the stale one.
                 if (requiredVersionByPackageId.TryGetValue(packageId, out var requiredVersion))
                 {
-                    var dirVersion = dirName.Substring(packageId.Length + 1);
-                    if (string.Equals(dirVersion, requiredVersion, StringComparison.OrdinalIgnoreCase))
+                    if (string.Equals(entry.Version, requiredVersion, StringComparison.OrdinalIgnoreCase))
                         continue;
 
-                    Debug.Log($"{Tag} Removing {dirName} — stale version; config requires {packageId} {requiredVersion}.");
-                    DeleteDirAndMeta(dir);
+                    Debug.Log($"{Tag} Removing {packageId} {entry.Version} — stale version; closure requires {packageId} {requiredVersion}.");
+                    DeleteEntryFiles(installPath, entry);
+                    manifest.Packages.Remove(packageId);
                     anyRemoved = true;
                     continue;
                 }
@@ -226,96 +258,115 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 // Using the NuGet package ID directly is unreliable because a package often ships
                 // DLLs with names that differ from the package ID (e.g., Microsoft.Bcl.Memory
                 // ships System.Memory / System.Buffers / System.Runtime.CompilerServices.Unsafe).
-                var allProvidedByUnity = dllFiles.All(dll =>
+                if (entry.Dlls.Count == 0)
+                {
+                    // Empty manifest entry (development dependency that's no longer in the closure).
+                    Debug.Log($"{Tag} Removing {packageId} {entry.Version} — package no longer required.");
+                    manifest.Packages.Remove(packageId);
+                    anyRemoved = true;
+                    continue;
+                }
+
+                var allProvidedByUnity = entry.Dlls.All(dll =>
                     UnityAssemblyResolver.IsAlreadyImported(Path.GetFileNameWithoutExtension(dll)));
                 if (!allProvidedByUnity)
                     continue;
 
-                Debug.Log($"{Tag} Removing {dirName} — Unity now provides all of its assemblies.");
-                DeleteDirAndMeta(dir);
+                Debug.Log($"{Tag} Removing {packageId} {entry.Version} — Unity now provides all of its assemblies.");
+                DeleteEntryFiles(installPath, entry);
+                manifest.Packages.Remove(packageId);
                 anyRemoved = true;
             }
+
+            if (anyRemoved)
+                NuGetInstallManifest.Save(installPath, manifest);
 
             return anyRemoved;
         }
 
         /// <summary>
-        /// Scans <paramref name="installPath"/> for sibling directories of the form
-        /// <c>{packageId}.&lt;otherVersion&gt;/</c> at any version other than
-        /// <paramref name="keepVersion"/> and removes them (plus their <c>.meta</c> files).
-        /// Returns true when at least one directory was removed.
+        /// Manifest-driven version of the legacy directory-based stale-sibling
+        /// scan. Removes any DLLs the manifest records under
+        /// <paramref name="packageId"/> at a version OTHER than
+        /// <paramref name="keepVersion"/>, deletes their <c>.meta</c> sidecars,
+        /// and updates the manifest entry to reflect the now-empty pre-extract
+        /// state (the freshly extracted DLLs at <paramref name="keepVersion"/>
+        /// will be added by the caller).
         ///
-        /// Matching uses <see cref="ExtractPackageIdFromDirName(string)"/> so that package IDs
-        /// containing dots (e.g. "Microsoft.AspNetCore.SignalR.Common") are split correctly.
-        /// Comparison is case-insensitive on both Id and version to mirror the rest of the
-        /// resolver's casing rules.
-        ///
-        /// Called from <see cref="Install(NuGetPackage, HashSet{string})"/> for every package
-        /// (top-level and transitive) so a NuGet bump in any layer of the graph cleans its
-        /// own stale sibling at install time, without depending on a separate post-pass.
-        ///
-        /// <paramref name="installPath"/> is parameterised (instead of reading
-        /// <see cref="NuGetConfig.InstallPath"/> directly) so EditMode tests can drive the
-        /// scan against a temp directory without touching the real Assets/Plugins/NuGet path.
+        /// Returns true when at least one DLL was removed.
         /// </summary>
         internal static bool RemoveStaleSiblingVersions(string installPath, string packageId, string keepVersion)
         {
-            if (!Directory.Exists(installPath))
-                return false;
-
-            var keepDirName = $"{packageId}.{keepVersion}";
-            var anyRemoved = false;
-
-            foreach (var dir in Directory.GetDirectories(installPath))
-            {
-                var dirName = Path.GetFileName(dir);
-
-                // Same exact version — keep it. The downstream extraction step is responsible
-                // for that directory; deleting it here would force needless re-extraction.
-                if (string.Equals(dirName, keepDirName, StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                var dirPackageId = ExtractPackageIdFromDirName(dirName);
-                if (dirPackageId == null)
-                    continue;
-
-                if (!string.Equals(dirPackageId, packageId, StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                Debug.Log($"{Tag} Removing stale {dirName} — superseded by {packageId} {keepVersion}.");
-                DeleteDirAndMeta(dir);
-                anyRemoved = true;
-            }
-
-            return anyRemoved;
+            var manifest = NuGetInstallManifest.Load(installPath);
+            var removed = RemoveStaleSiblingVersions(installPath, packageId, keepVersion, manifest);
+            if (removed)
+                NuGetInstallManifest.Save(installPath, manifest);
+            return removed;
         }
 
-        static void DeleteDirAndMeta(string dir)
+        internal static bool RemoveStaleSiblingVersions(string installPath, string packageId, string keepVersion, InstallManifest manifest)
         {
-            // Directory.Delete and File.Delete can throw in Unity due to file locks (antivirus,
-            // the importer pipeline holding handles, Windows sharing violations). Log and
-            // continue so a single failure doesn't abort the rest of the cleanup pass.
+            if (!Directory.Exists(installPath))
+                return false;
+            if (!manifest.Packages.TryGetValue(packageId, out var entry))
+                return false;
+
+            // Same exact version — keep it. Downstream extraction owns this entry.
+            if (string.Equals(entry.Version, keepVersion, StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            Debug.Log($"{Tag} Removing stale {packageId} {entry.Version} — superseded by {packageId} {keepVersion}.");
+            DeleteEntryFiles(installPath, entry);
+            manifest.Packages.Remove(packageId);
+            return true;
+        }
+
+        static void DeleteEntryFiles(string installPath, InstalledPackage entry)
+        {
+            foreach (var dll in entry.Dlls)
+            {
+                var dllPath = Path.Combine(installPath, dll);
+                TryDeleteFile(dllPath);
+                TryDeleteFile(dllPath + ".meta");
+            }
+        }
+
+        static void TryDeleteFile(string path)
+        {
+            if (!File.Exists(path))
+                return;
             try
             {
-                Directory.Delete(dir, recursive: true);
+                File.Delete(path);
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"{Tag} Failed to delete directory '{dir}': {ex.Message}");
+                Debug.LogWarning($"{Tag} Failed to delete '{path}': {ex.Message}");
             }
+        }
 
-            var metaFile = dir + ".meta";
-            if (File.Exists(metaFile))
+        static bool TryFindDllOwner(InstallManifest manifest, string dllFileName, string excludePackageId, out string? owner)
+        {
+            foreach (var (id, entry) in manifest.Packages)
             {
-                try
+                if (string.Equals(id, excludePackageId, StringComparison.OrdinalIgnoreCase))
+                    continue;
+                if (entry.Dlls.Any(d => string.Equals(d, dllFileName, StringComparison.OrdinalIgnoreCase)))
                 {
-                    File.Delete(metaFile);
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogWarning($"{Tag} Failed to delete meta file '{metaFile}': {ex.Message}");
+                    owner = id;
+                    return true;
                 }
             }
+            owner = null;
+            return false;
+        }
+
+        static void UpsertManifestEntry(InstallManifest manifest, string packageId, string version, IReadOnlyList<string> dlls)
+        {
+            var newEntry = new InstalledPackage(version);
+            foreach (var dll in dlls)
+                newEntry.Dlls.Add(dll);
+            manifest.Packages[packageId] = newEntry;
         }
 
         /// <summary>
@@ -325,6 +376,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// where all segments from there to the end parse as a System.Version. This greedily
         /// consumes the entire version tail (e.g., "10.0.3") rather than a shorter suffix
         /// (e.g., "0.3") that would also satisfy System.Version.TryParse.
+        ///
+        /// Retained post-#733 because <see cref="NuGetLegacyMigration"/> needs it
+        /// to detect legacy <c>{Id}.{Version}/</c> directories during the one-time
+        /// migration. Production install paths never use this layout anymore.
         /// </summary>
         internal static string? ExtractPackageIdFromDirName(string dirName)
         {
