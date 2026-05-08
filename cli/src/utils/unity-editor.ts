@@ -4,6 +4,7 @@ import { spawn } from 'child_process';
 import { platform } from 'os';
 import { findUnityHub, ensureUnityHub, listInstalledEditors } from './unity-hub.js';
 import * as ui from './ui.js';
+import { verbose } from './ui.js';
 
 /**
  * Compare two Unity version strings with numeric-aware sorting.
@@ -66,37 +67,64 @@ export function getProjectEditorVersion(projectPath: string): string | null {
  * Uses Unity Hub to locate installed editors. Installs Unity Hub automatically if needed.
  */
 export async function findEditorPath(version?: string): Promise<string | null> {
+  const startedAt = Date.now();
+  verbose(`findEditorPath start (version=${version ?? 'auto'})`);
+
   // Fast path: if we know the version, check common install locations first (instant filesystem check)
   if (version) {
+    const fastStartedAt = Date.now();
     const fastResult = findEditorPathByCommonLocations(version);
-    if (fastResult) return fastResult;
+    verbose(`findEditorPath fast path completed in ${Date.now() - fastStartedAt}ms (${fastResult ? 'hit' : 'miss'})`);
+    if (fastResult) {
+      verbose(`findEditorPath resolved via common locations in ${Date.now() - startedAt}ms`);
+      return fastResult;
+    }
   }
 
   // Slow path: query Unity Hub CLI for installed editors
+  const hubStartedAt = Date.now();
   const hubPath = await ensureUnityHub().catch(() => null);
+  verbose(`findEditorPath ensureUnityHub completed in ${Date.now() - hubStartedAt}ms (${hubPath ? 'found' : 'unavailable'})`);
   if (!hubPath) {
-    return findEditorPathByCommonLocations(version);
+    const fallbackStartedAt = Date.now();
+    const fallback = findEditorPathByCommonLocations(version);
+    verbose(`findEditorPath fallback common-location scan completed in ${Date.now() - fallbackStartedAt}ms (${fallback ? 'hit' : 'miss'})`);
+    verbose(`findEditorPath completed in ${Date.now() - startedAt}ms`);
+    return fallback;
   }
 
+  const listStartedAt = Date.now();
   const editors = listInstalledEditors(hubPath);
+  verbose(`findEditorPath listInstalledEditors completed in ${Date.now() - listStartedAt}ms (count=${editors.length})`);
   if (editors.length === 0) {
-    return findEditorPathByCommonLocations(version);
+    const fallbackStartedAt = Date.now();
+    const fallback = findEditorPathByCommonLocations(version);
+    verbose(`findEditorPath empty-editor fallback completed in ${Date.now() - fallbackStartedAt}ms (${fallback ? 'hit' : 'miss'})`);
+    verbose(`findEditorPath completed in ${Date.now() - startedAt}ms`);
+    return fallback;
   }
 
   if (version) {
     const match = editors.find((e) => e.version === version);
-    if (match) return getEditorBinary(match.path);
+    if (match) {
+      const resolved = getEditorBinary(match.path);
+      verbose(`findEditorPath matched requested version ${version} in ${Date.now() - startedAt}ms`);
+      return resolved;
+    }
   }
 
   // Return the highest installed editor by version-aware sorting
   const sorted = [...editors].sort((a, b) => compareUnityVersions(b.version, a.version));
-  return getEditorBinary(sorted[0].path);
+  const resolved = getEditorBinary(sorted[0].path);
+  verbose(`findEditorPath selected highest installed version ${sorted[0].version} in ${Date.now() - startedAt}ms`);
+  return resolved;
 }
 
 /**
  * Find editor by checking common installation directories.
  */
 function findEditorPathByCommonLocations(version?: string): string | null {
+  const startedAt = Date.now();
   const os = platform();
   const candidates: string[] = [];
 
@@ -157,10 +185,12 @@ function findEditorPathByCommonLocations(version?: string): string | null {
 
   for (const candidate of candidates) {
     if (fs.existsSync(candidate)) {
+      verbose(`findEditorPathByCommonLocations hit ${candidate} after ${Date.now() - startedAt}ms (${candidates.length} candidates)`);      
       return candidate;
     }
   }
 
+  verbose(`findEditorPathByCommonLocations miss after ${Date.now() - startedAt}ms (${candidates.length} candidates)`);
   return null;
 }
 
