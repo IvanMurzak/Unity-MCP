@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import * as path from 'path';
 import { findUnityHub, listInstalledEditors } from '../utils/unity-hub.js';
+import { findUnityProcess } from '../utils/unity-process.js';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
 import {
@@ -158,9 +159,18 @@ export const openCommand = new Command('open')
       startServerBool = val === 'true';
     }
 
+    // Pre-flight already-running check so we don't flash the
+    // "Locating Unity Editor..." spinner when Unity is already open
+    // for this project. The lib does its own check too (single
+    // source of truth for the result shape); this one only suppresses
+    // spinner spam in the common already-open case.
+    const alreadyRunningPid = findUnityProcess(projectPath)?.pid;
+
     // Spinner around editor location for parity with the legacy UX.
     let spinner: ReturnType<typeof ui.startSpinner> | undefined =
-      ui.startSpinner('Locating Unity Editor...');
+      alreadyRunningPid === undefined
+        ? ui.startSpinner('Locating Unity Editor...')
+        : undefined;
 
     const result = await openProject({
       projectPath,
@@ -221,7 +231,7 @@ export const openCommand = new Command('open')
             break;
           }
           case 'editor-launched': {
-            ui.success(`Launched Unity Editor (PID: ${event.pid})`);
+            ui.success(`Launched Unity Editor (PID: ${event.pid ?? 'unknown'})`);
             break;
           }
           default:

@@ -296,7 +296,7 @@ describe('openProject — editor-version detection (mocked)', () => {
 
     const located = events.find((e) => e.phase === 'editors-located');
     if (located && located.phase === 'editors-located') {
-      expect(located.count).toBe(0);
+      expect(located.found).toBe(false);
     }
   });
 

@@ -21,7 +21,7 @@ export type ProgressEvent =
   | { phase: 'dependencies-resolved'; message: string; version: string }
   // openProject phases
   | { phase: 'detecting-editor-version'; message: string }
-  | { phase: 'editors-located'; message: string; count: number }
+  | { phase: 'editors-located'; message: string; found: boolean }
   | { phase: 'editor-resolved'; message: string; editorPath: string; version?: string }
   | {
       phase: 'connection-details';
@@ -31,7 +31,7 @@ export type ProgressEvent =
       envVars: Record<string, string>;
     }
   | { phase: 'launching-editor'; message: string; editorPath: string; projectPath: string }
-  | { phase: 'editor-launched'; message: string; pid: number }
+  | { phase: 'editor-launched'; message: string; pid?: number }
   | { phase: 'done'; message: string };
 
 export type ProgressCallback = (event: ProgressEvent) => void;
@@ -344,3 +344,23 @@ export interface OpenProjectFailure {
 }
 
 export type OpenProjectResult = OpenProjectSuccess | OpenProjectFailure;
+
+/**
+ * Subset of `OpenProjectOptions` consumed by `buildOpenEnv` — every
+ * field on this interface is potentially mapped to a `UNITY_MCP_*`
+ * environment variable. Declared as a dedicated interface (rather
+ * than a `Pick<OpenProjectOptions, …>` re-listed inline) so adding a
+ * new env-bearing option to `OpenProjectOptions` is a one-step change
+ * here that `buildOpenEnv` picks up by signature, with no risk of the
+ * Pick list silently drifting.
+ */
+export interface OpenEnvInputs {
+  noConnect?: OpenProjectOptions['noConnect'];
+  url?: OpenProjectOptions['url'];
+  token?: OpenProjectOptions['token'];
+  auth?: OpenProjectOptions['auth'];
+  tools?: OpenProjectOptions['tools'];
+  keepConnected?: OpenProjectOptions['keepConnected'];
+  transport?: OpenProjectOptions['transport'];
+  startServer?: OpenProjectOptions['startServer'];
+}

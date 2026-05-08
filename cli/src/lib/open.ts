@@ -9,6 +9,7 @@ import { findUnityProcess } from '../utils/unity-process.js';
 import { readConfig, isCloudMode, writeConfig } from '../utils/config.js';
 import { emitProgress } from './progress.js';
 import type {
+  OpenEnvInputs,
   OpenProjectAuthOption,
   OpenProjectOptions,
   OpenProjectResult,
@@ -59,6 +60,22 @@ function isValidTransport(v: unknown): v is OpenProjectTransport {
 }
 
 /**
+ * Extract the leading executable path from a Unity process command
+ * line. Quote-aware: a leading double-quoted token (the typical
+ * Windows CIM `CommandLine` shape for paths containing spaces) is
+ * consumed whole, otherwise the first whitespace-delimited token is
+ * used. Pure / no I/O.
+ */
+function extractEditorPathFromCommandLine(commandLine: string): string {
+  const trimmed = commandLine.trim();
+  if (trimmed.length === 0) return '';
+  const quoted = trimmed.match(/^"([^"]+)"/);
+  if (quoted) return quoted[1];
+  const unquoted = trimmed.match(/^(\S+)/);
+  return unquoted ? unquoted[1] : '';
+}
+
+/**
  * Build the env-var map propagated to the editor process when
  * `noConnect !== true`. Pure (returns a fresh object); validates the
  * `auth` and `transport` enums and throws on bad input — the
@@ -70,17 +87,7 @@ function isValidTransport(v: unknown): v is OpenProjectTransport {
  * without a real editor launch.
  */
 export function buildOpenEnv(
-  options: Pick<
-    OpenProjectOptions,
-    | 'noConnect'
-    | 'url'
-    | 'token'
-    | 'auth'
-    | 'tools'
-    | 'keepConnected'
-    | 'transport'
-    | 'startServer'
-  >,
+  options: OpenEnvInputs,
 ): Record<string, string> | undefined {
   if (options.noConnect === true) return undefined;
 
@@ -157,9 +164,9 @@ export async function openProject(
 
     // Validate auth/transport BEFORE work begins so callers learn of
     // a typo without first paying for editor-discovery I/O. The
-    // call to buildOpenEnv() later does the same validation; this
-    // first call is purely a fast-fail guard.
-    buildOpenEnv(options);
+    // returned env is recomputed below if cloud-mode auto-detect
+    // flips keepConnected; otherwise we reuse this same map.
+    let env = buildOpenEnv(options);
 
     // Already-running short-circuit. Same semantics as the CLI:
     // success, with the existing PID surfaced.
@@ -175,7 +182,7 @@ export async function openProject(
       return {
         kind: 'success',
         success: true,
-        editorPath: existingProcess.commandLine.split(/\s+/)[0] ?? '',
+        editorPath: extractEditorPathFromCommandLine(existingProcess.commandLine),
         editorPid: existingProcess.pid,
         unityVersion: getProjectEditorVersion(projectPath) ?? undefined,
         projectPath,
@@ -199,14 +206,14 @@ export async function openProject(
     // Locate editor binary (Unity Hub / common locations).
     const editorPath = await findEditorPath(version);
 
-    // Surface a count for caller telemetry. We don't need to expose
-    // every editor — only that a search was performed.
+    // Boolean signal for caller telemetry — we surface only whether
+    // editor discovery succeeded, not how many editors are installed.
     emitProgress(options.onProgress, {
       phase: 'editors-located',
       message: editorPath
         ? 'Located Unity Editor candidates'
         : 'Failed to locate any Unity Editor',
-      count: editorPath ? 1 : 0,
+      found: editorPath !== null,
     });
 
     if (!editorPath) {
@@ -227,12 +234,16 @@ export async function openProject(
     // Cloud-mode auto-detect: if the project's config is in Cloud
     // mode AND has a cloudToken, ensure keepConnected so the plugin
     // connects on startup; also enable claude-code skill auto-gen.
+    let effectiveOptions = options;
     {
       const config = readConfig(projectPath);
       if (config && isCloudMode(config) && config.cloudToken) {
-        if (!options.keepConnected) {
-          options = { ...options, keepConnected: true };
+        if (!effectiveOptions.keepConnected) {
+          effectiveOptions = { ...effectiveOptions, keepConnected: true };
           warnings.push('Cloud mode with token detected — auto-enabling keep-connected.');
+          // keepConnected flipped — rebuild the env map so the editor
+          // receives UNITY_MCP_KEEP_CONNECTED=true.
+          env = buildOpenEnv(effectiveOptions);
         }
         const skillAutoGenerate = { ...(config.skillAutoGenerate ?? {}) } as Record<string, boolean>;
         if (!skillAutoGenerate['claude-code']) {
@@ -241,11 +252,6 @@ export async function openProject(
         }
       }
     }
-
-    // Build the env-var bundle for the editor process. This is the
-    // second call — already validated above for fail-fast; this one
-    // produces the actual map.
-    const env = buildOpenEnv(options);
 
     emitProgress(options.onProgress, {
       phase: 'connection-details',
@@ -272,7 +278,7 @@ export async function openProject(
         emitProgress(options.onProgress, {
           phase: 'editor-launched',
           message: `Launched Unity Editor (PID: ${pid ?? 'unknown'})`,
-          pid: pid ?? 0,
+          pid,
         });
       },
       onError: (err) => {
