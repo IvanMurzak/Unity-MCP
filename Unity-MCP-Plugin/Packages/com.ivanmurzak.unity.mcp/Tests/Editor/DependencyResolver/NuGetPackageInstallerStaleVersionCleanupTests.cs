@@ -18,9 +18,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
     /// <summary>
     /// Regression coverage for issue #703 (stale-sibling cleanup) ported to the
     /// post-#733 flat-layout install model. The on-disk layout is now
-    /// <c>{installPath}/{Dll}.dll</c> with a <c>.nuget-installed.json</c>
-    /// manifest at the root that maps package IDs to their owned DLLs and the
-    /// version those DLLs were installed at.
+    /// <c>{installPath}/{stem}.{packageVersion}.dll</c> with a
+    /// <c>.nuget-installed.json</c> manifest at the root that maps package IDs
+    /// to their owned DLLs and the version those DLLs were installed at.
     /// <see cref="NuGetPackageInstaller.RemoveStaleSiblingVersions"/> drives
     /// stale-version removal off that manifest; these tests exercise it
     /// directly against a temp directory.
@@ -55,15 +55,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
             // Issue #703 scenario, ported to flat layout: ReflectorNet 5.0.0 is
             // recorded in the manifest from a previous session, the user upgraded
             // the Unity package, the new dep graph resolves ReflectorNet 5.1.1.
-            CreateFlatPackage("com.IvanMurzak.ReflectorNet", "5.0.0", "ReflectorNet.dll");
+            CreateFlatPackage("com.IvanMurzak.ReflectorNet", "5.0.0", "ReflectorNet.5.0.0.dll");
 
             var removed = NuGetPackageInstaller.RemoveStaleSiblingVersions(
                 _installPath, "com.IvanMurzak.ReflectorNet", "5.1.1");
 
             Assert.IsTrue(removed, "Helper must report that it removed something.");
-            Assert.IsFalse(File.Exists(Path.Combine(_installPath, "ReflectorNet.dll")),
-                "Stale DLL must be removed.");
-            Assert.IsFalse(File.Exists(Path.Combine(_installPath, "ReflectorNet.dll.meta")),
+            Assert.IsFalse(File.Exists(Path.Combine(_installPath, "ReflectorNet.5.0.0.dll")),
+                "Stale versioned DLL must be removed.");
+            Assert.IsFalse(File.Exists(Path.Combine(_installPath, "ReflectorNet.5.0.0.dll.meta")),
                 "Stale .meta sidecar must be removed alongside its DLL.");
             // Manifest must reflect the removal.
             var manifest = NuGetInstallManifest.Load(_installPath);
@@ -76,24 +76,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
             // Idempotency: re-running the resolver on an up-to-date project must NOT delete
             // the entry at the configured version. Otherwise every restore would force
             // a needless re-extraction.
-            CreateFlatPackage("com.IvanMurzak.ReflectorNet", "5.1.1", "ReflectorNet.dll");
+            CreateFlatPackage("com.IvanMurzak.ReflectorNet", "5.1.1", "ReflectorNet.5.1.1.dll");
 
             var removed = NuGetPackageInstaller.RemoveStaleSiblingVersions(
                 _installPath, "com.IvanMurzak.ReflectorNet", "5.1.1");
 
             Assert.IsFalse(removed);
-            Assert.IsTrue(File.Exists(Path.Combine(_installPath, "ReflectorNet.dll")));
-            Assert.IsTrue(File.Exists(Path.Combine(_installPath, "ReflectorNet.dll.meta")));
+            Assert.IsTrue(File.Exists(Path.Combine(_installPath, "ReflectorNet.5.1.1.dll")));
+            Assert.IsTrue(File.Exists(Path.Combine(_installPath, "ReflectorNet.5.1.1.dll.meta")));
         }
 
         [Test]
         public void RemoveStaleSiblingVersions_PreservesOtherPackages()
         {
             // The scan must not touch entries belonging to a different package Id.
-            CreateFlatPackage("com.IvanMurzak.ReflectorNet", "5.0.0", "ReflectorNet.dll");
-            CreateFlatPackage("System.Text.Json", "8.0.5", "System.Text.Json.dll");
+            CreateFlatPackage("com.IvanMurzak.ReflectorNet", "5.0.0", "ReflectorNet.5.0.0.dll");
+            CreateFlatPackage("System.Text.Json", "8.0.5", "System.Text.Json.8.0.5.dll");
             CreateFlatPackage("Microsoft.AspNetCore.SignalR.Client", "8.0.15",
-                "Microsoft.AspNetCore.SignalR.Client.dll");
+                "Microsoft.AspNetCore.SignalR.Client.8.0.15.dll");
 
             var removed = NuGetPackageInstaller.RemoveStaleSiblingVersions(
                 _installPath, "com.IvanMurzak.ReflectorNet", "5.1.1");
@@ -110,7 +110,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
         public void RemoveStaleSiblingVersions_HandlesPackageIdsWithDots()
         {
             CreateFlatPackage("Microsoft.AspNetCore.SignalR.Common", "10.0.3",
-                "Microsoft.AspNetCore.SignalR.Common.dll");
+                "Microsoft.AspNetCore.SignalR.Common.10.0.3.dll");
 
             var removed = NuGetPackageInstaller.RemoveStaleSiblingVersions(
                 _installPath, "Microsoft.AspNetCore.SignalR.Common", "8.0.15");
@@ -125,13 +125,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
         {
             // The cleanup contract is "delete everything that is not the keepVersion", not
             // "delete only lower versions".
-            CreateFlatPackage("com.IvanMurzak.ReflectorNet", "6.0.0", "ReflectorNet.dll");
+            CreateFlatPackage("com.IvanMurzak.ReflectorNet", "6.0.0", "ReflectorNet.6.0.0.dll");
 
             var removed = NuGetPackageInstaller.RemoveStaleSiblingVersions(
                 _installPath, "com.IvanMurzak.ReflectorNet", "5.1.1");
 
             Assert.IsTrue(removed);
-            Assert.IsFalse(File.Exists(Path.Combine(_installPath, "ReflectorNet.dll")));
+            Assert.IsFalse(File.Exists(Path.Combine(_installPath, "ReflectorNet.6.0.0.dll")));
         }
 
         [Test]
@@ -150,9 +150,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
         [Test]
         public void RemoveStaleSiblingVersions_ReturnsFalse_WhenManifestHasNoMatchingEntry()
         {
-            CreateFlatPackage("System.Text.Json", "8.0.5", "System.Text.Json.dll");
+            CreateFlatPackage("System.Text.Json", "8.0.5", "System.Text.Json.8.0.5.dll");
             CreateFlatPackage("Microsoft.AspNetCore.SignalR.Client", "8.0.15",
-                "Microsoft.AspNetCore.SignalR.Client.dll");
+                "Microsoft.AspNetCore.SignalR.Client.8.0.15.dll");
 
             var removed = NuGetPackageInstaller.RemoveStaleSiblingVersions(
                 _installPath, "com.IvanMurzak.ReflectorNet", "5.1.1");
@@ -167,7 +167,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
         public void RemoveStaleSiblingVersions_MatchesPackageIdCaseInsensitively()
         {
             // Comparisons throughout the resolver are case-insensitive on the package ID.
-            CreateFlatPackage("com.ivanmurzak.reflectornet", "5.0.0", "ReflectorNet.dll");
+            CreateFlatPackage("com.ivanmurzak.reflectornet", "5.0.0", "ReflectorNet.5.0.0.dll");
 
             var removed = NuGetPackageInstaller.RemoveStaleSiblingVersions(
                 _installPath, "com.IvanMurzak.ReflectorNet", "5.1.1");
@@ -179,9 +179,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
 
         /// <summary>
         /// Creates a fake flat-layout entry: writes a single DLL named
-        /// <paramref name="dllName"/>, a sibling <c>.meta</c>, and updates the
-        /// manifest to associate it with <paramref name="id"/> at
-        /// <paramref name="version"/>.
+        /// <paramref name="dllName"/> (already in the
+        /// <c>{stem}.{packageVersion}.dll</c> form), a sibling <c>.meta</c>,
+        /// and updates the manifest to associate it with <paramref name="id"/>
+        /// at <paramref name="version"/>.
         /// </summary>
         void CreateFlatPackage(string id, string version, string dllName)
         {

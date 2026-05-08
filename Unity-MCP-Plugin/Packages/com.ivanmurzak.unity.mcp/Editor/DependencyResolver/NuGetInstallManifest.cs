@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
@@ -30,29 +31,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
     ///   "packages": {
     ///     "Microsoft.AspNetCore.Http.Connections.Client": {
     ///       "version": "8.0.15",
-    ///       "dlls": ["Microsoft.AspNetCore.Http.Connections.Client.dll"]
+    ///       "dlls": ["Microsoft.AspNetCore.Http.Connections.Client.8.0.15.dll"]
     ///     },
     ///     "Microsoft.Bcl.Memory": {
     ///       "version": "10.0.3",
     ///       "dlls": [
-    ///         "System.Memory.dll",
-    ///         "System.Buffers.dll",
-    ///         "System.Runtime.CompilerServices.Unsafe.dll"
+    ///         "System.Memory.10.0.3.dll",
+    ///         "System.Buffers.10.0.3.dll",
+    ///         "System.Runtime.CompilerServices.Unsafe.10.0.3.dll"
     ///       ]
     ///     }
     ///   }
     /// }
     /// </code>
     ///
-    /// The manifest is the only source of truth for "which DLL belongs to which
-    /// package at which version". On-disk DLL filenames remain unversioned
-    /// (the assembly's stem) so Unity asmdef <c>precompiledReferences</c>
-    /// entries continue to resolve without per-bump edits.
-    ///
-    /// Recovery from a missing or corrupt manifest is the responsibility of
-    /// <see cref="NuGetPackageRestorer.Restore"/>, which simply runs a full
-    /// reconciliation pass — re-extracting from the cached <c>.nupkg</c> files
-    /// when needed.
+    /// The manifest is the primary source of truth for "which DLL belongs to
+    /// which package at which version". Filename parsing
+    /// (<see cref="TryParseInstalledDllName"/>) is the disaster-recovery
+    /// fallback — even if the manifest is deleted, the on-disk filenames
+    /// carry enough metadata for <see cref="TryRebuildFromDisk"/> to
+    /// reconstruct one.
     /// </summary>
     static class NuGetInstallManifest
     {
@@ -102,6 +100,105 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             var json = ManifestJsonParser.Serialize(manifest);
             File.WriteAllText(path, json);
         }
+
+        /// <summary>
+        /// Rebuilds an in-memory manifest by scanning the install directory
+        /// for versioned DLL filenames (the
+        /// <c>{stem}.{version}.dll</c> shape produced by
+        /// <see cref="NuGetExtractor.ToVersionedFileName"/>).
+        ///
+        /// Used when <c>.nuget-installed.json</c> is missing, corrupt, or
+        /// out-of-sync with disk (the disaster-recovery path). The caller is
+        /// responsible for persisting the rebuilt manifest via <see cref="Save"/>.
+        ///
+        /// <para>
+        /// Filename-only rebuild cannot recover the package ID for multi-DLL
+        /// packages where each DLL stem differs from the package ID (e.g.
+        /// <c>Microsoft.Bcl.Memory</c> ships <c>System.Memory.10.0.3.dll</c>).
+        /// For such DLLs the rebuild treats the DLL stem itself as the package
+        /// ID; the next full restore reconciles the synthetic IDs against the
+        /// dependency closure (the closure is the authoritative source). This
+        /// is enough to satisfy the steady-state "manifest deleted, no
+        /// re-extraction needed" disaster-recovery acceptance criterion.
+        /// </para>
+        /// </summary>
+        public static InstallManifest TryRebuildFromDisk(string installPath)
+        {
+            var manifest = new InstallManifest();
+            if (!Directory.Exists(installPath))
+                return manifest;
+
+            foreach (var dllPath in Directory.GetFiles(installPath, "*.dll", SearchOption.TopDirectoryOnly))
+            {
+                var fileName = Path.GetFileName(dllPath);
+                if (!TryParseInstalledDllName(fileName, out var stem, out var version) || stem == null || version == null)
+                    continue;
+
+                if (!manifest.Packages.TryGetValue(stem, out var entry))
+                {
+                    entry = new InstalledPackage(version);
+                    manifest.Packages[stem] = entry;
+                }
+                else if (!string.Equals(entry.Version, version, StringComparison.OrdinalIgnoreCase))
+                {
+                    // Multiple versions of the same DLL stem on disk shouldn't
+                    // happen in a healthy install. If it does, latest-wins for
+                    // the rebuild and the next Restore() pass will reconcile
+                    // and clean up the loser.
+                    entry = new InstalledPackage(version);
+                    manifest.Packages[stem] = entry;
+                }
+                if (!entry.Dlls.Contains(fileName, StringComparer.OrdinalIgnoreCase))
+                    entry.Dlls.Add(fileName);
+            }
+
+            return manifest;
+        }
+
+        /// <summary>
+        /// Splits a versioned install filename of the form
+        /// <c>{stem}.{version}.dll</c> back into its stem and version parts.
+        /// Returns false for legacy unversioned names (e.g. <c>System.Memory.dll</c>)
+        /// or names whose version-tail does not parse as a System.Version.
+        ///
+        /// The version segment is matched as <c>\d+(\.\d+){1,3}</c> at the
+        /// tail before <c>.dll</c>. The match is greedy on the tail so that
+        /// <c>System.Memory.10.0.3.dll</c> splits as stem=<c>System.Memory</c>
+        /// + version=<c>10.0.3</c>, not stem=<c>System.Memory.10.0</c> +
+        /// version=<c>3</c>.
+        /// </summary>
+        public static bool TryParseInstalledDllName(string fileName, out string? stem, out string? version)
+        {
+            stem = null;
+            version = null;
+
+            if (string.IsNullOrEmpty(fileName))
+                return false;
+            if (!fileName.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            var noExt = fileName.Substring(0, fileName.Length - 4);
+            var match = VersionTailPattern.Match(noExt);
+            if (!match.Success)
+                return false;
+
+            var versionString = match.Groups[1].Value;
+            if (!System.Version.TryParse(versionString, out _))
+                return false;
+
+            var stemEnd = match.Index;
+            if (stemEnd <= 0)
+                return false;
+
+            stem = noExt.Substring(0, stemEnd);
+            version = versionString;
+            return true;
+        }
+
+        // Anchor a 1-4 segment numeric tail (each segment 1-9 digits — System.Version's
+        // ceiling) to the end of the stem. Used to peel the version off filenames
+        // produced by NuGetExtractor.ToVersionedFileName.
+        static readonly Regex VersionTailPattern = new(@"\.(\d+(?:\.\d+){1,3})$", RegexOptions.Compiled);
     }
 
     /// <summary>

@@ -63,12 +63,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 if (migration.Outcome == NuGetLegacyMigration.Outcome.Migrated)
                     anyChanged = true;
 
-                // Manifest recovery: when .nuget-installed.json is missing the
-                // installer's "alreadyOnDisk" check returns false for every
-                // package, so Install() re-extracts each one from the cached
-                // .nupkg and rewrites the manifest as a side-effect. The user
-                // sees a single restore burst on the next domain reload — no
-                // dangling state.
+                // Manifest disaster recovery: rebuild from on-disk versioned
+                // filenames when .nuget-installed.json is missing. The
+                // {stem}.{packageVersion}.dll pattern carries enough metadata
+                // for TryRebuildFromDisk to reconstruct a manifest matching the
+                // steady state, so Install()'s alreadyOnDisk check then short-
+                // circuits and no re-extraction churn happens. Persist the
+                // rebuilt manifest immediately so subsequent passes see it.
+                if (!File.Exists(NuGetInstallManifest.GetPath(NuGetConfig.InstallPath)))
+                {
+                    var rebuilt = NuGetInstallManifest.TryRebuildFromDisk(NuGetConfig.InstallPath);
+                    if (rebuilt.Packages.Count > 0)
+                    {
+                        Debug.Log($"{Tag} Manifest missing — rebuilt {rebuilt.Packages.Count} entries from on-disk filenames.");
+                        NuGetInstallManifest.Save(NuGetConfig.InstallPath, rebuilt);
+                    }
+                }
 
                 // Install configured packages. Install() populates InstalledThisSession with the
                 // full resolved closure (direct + transitive) by always reading the dep graph,

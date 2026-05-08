@@ -134,12 +134,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 // Extract DLLs only when not already present at this exact version.
                 if (!alreadyOnDisk)
                 {
-                    // Defense-in-depth: collision detection. If a DLL the new package would write
-                    // is already recorded in the manifest under a different package ID, refuse
-                    // the install. Two distinct packages shipping the same DLL stem is rare but
-                    // legitimate (e.g. Microsoft repackaging) — surface the conflict instead of
-                    // silently overwriting.
-                    var planned = NuGetExtractor.PlanDllPaths(nupkgPath, installPath);
+                    // Defense-in-depth: collision detection. With versioned filenames a real
+                    // collision requires two distinct packages shipping the same DLL stem at
+                    // the same package version — essentially impossible in practice. Keep the
+                    // detection branch anyway so the failure mode is loud rather than silent.
+                    var planned = NuGetExtractor.PlanDllPaths(nupkgPath, installPath, package.Version);
 
                     foreach (var planEntry in planned)
                     {
@@ -159,7 +158,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     foreach (var planEntry in planned)
                         NuGetLongPathPreflight.Check(planEntry.TargetPath, package.Id);
 
-                    var extractedDlls = NuGetExtractor.ExtractDlls(nupkgPath, installPath);
+                    var extractedDlls = NuGetExtractor.ExtractDlls(nupkgPath, installPath, package.Version);
                     if (extractedDlls.Count > 0)
                     {
                         Debug.Log($"{Tag} Installed {package.Id} {package.Version} ({extractedDlls.Count} DLL(s))");
@@ -268,7 +267,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 }
 
                 var allProvidedByUnity = entry.Dlls.All(dll =>
-                    UnityAssemblyResolver.IsAlreadyImported(Path.GetFileNameWithoutExtension(dll)));
+                {
+                    // Strip the version tail so the lookup matches the assembly's
+                    // manifest name, not the on-disk versioned filename.
+                    if (!NuGetInstallManifest.TryParseInstalledDllName(dll, out var stem, out _) || stem == null)
+                        stem = Path.GetFileNameWithoutExtension(dll);
+                    return UnityAssemblyResolver.IsAlreadyImported(stem!);
+                });
                 if (!allProvidedByUnity)
                     continue;
 

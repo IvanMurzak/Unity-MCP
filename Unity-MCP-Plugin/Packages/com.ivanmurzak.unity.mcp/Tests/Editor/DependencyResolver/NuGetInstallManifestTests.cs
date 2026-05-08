@@ -17,10 +17,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
 {
     /// <summary>
     /// Coverage for the on-disk manifest <c>.nuget-installed.json</c> introduced
-    /// for the flat layout (issue #733). The manifest is the only source of
-    /// truth for "which DLL belongs to which package at which version" — DLL
-    /// filenames stay unversioned so Unity asmdef <c>precompiledReferences</c>
-    /// continue to resolve.
+    /// for the flat layout (issue #733). The manifest is the primary source of
+    /// truth for "which DLL belongs to which package at which version", with
+    /// versioned-filename parsing as the disaster-recovery fallback.
     /// </summary>
     [TestFixture]
     public class NuGetInstallManifestTests
@@ -58,14 +57,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
         {
             var manifest = new InstallManifest();
             var entry = new InstalledPackage("8.0.15");
-            entry.Dlls.Add("Microsoft.AspNetCore.SignalR.Client.dll");
-            entry.Dlls.Add("Microsoft.AspNetCore.SignalR.Client.Core.dll");
+            entry.Dlls.Add("Microsoft.AspNetCore.SignalR.Client.8.0.15.dll");
+            entry.Dlls.Add("Microsoft.AspNetCore.SignalR.Client.Core.8.0.15.dll");
             manifest.Packages["Microsoft.AspNetCore.SignalR.Client"] = entry;
 
             // Multi-DLL package with a different version.
             var multi = new InstalledPackage("10.0.3");
-            multi.Dlls.Add("System.Memory.dll");
-            multi.Dlls.Add("System.Buffers.dll");
+            multi.Dlls.Add("System.Memory.10.0.3.dll");
+            multi.Dlls.Add("System.Buffers.10.0.3.dll");
             manifest.Packages["Microsoft.Bcl.Memory"] = multi;
 
             // Empty-DLL entry (development-only dependency).
@@ -80,7 +79,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
             Assert.AreEqual(2, roundTrip.Packages["Microsoft.AspNetCore.SignalR.Client"].Dlls.Count);
             Assert.AreEqual("10.0.3", roundTrip.Packages["Microsoft.Bcl.Memory"].Version);
             CollectionAssert.AreEquivalent(
-                new[] { "System.Memory.dll", "System.Buffers.dll" },
+                new[] { "System.Memory.10.0.3.dll", "System.Buffers.10.0.3.dll" },
                 roundTrip.Packages["Microsoft.Bcl.Memory"].Dlls);
             Assert.AreEqual("3.11.0", roundTrip.Packages["Microsoft.CodeAnalysis.Analyzers"].Version);
             Assert.AreEqual(0, roundTrip.Packages["Microsoft.CodeAnalysis.Analyzers"].Dlls.Count);
@@ -132,7 +131,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
             // post-restore changes.
             var manifest = new InstallManifest();
             var entry = new InstalledPackage("8.0.5");
-            entry.Dlls.Add("System.Text.Json.dll");
+            entry.Dlls.Add("System.Text.Json.8.0.5.dll");
             manifest.Packages["System.Text.Json"] = entry;
 
             NuGetInstallManifest.Save(_installPath, manifest);
@@ -144,6 +143,93 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
             var second = File.ReadAllBytes(Path.Combine(_installPath, ".nuget-installed.json"));
 
             CollectionAssert.AreEqual(first, second);
+        }
+
+        [Test]
+        public void TryRebuildFromDisk_ReproducesSingleDllPackagesFromVersionedFilenames()
+        {
+            // Disaster recovery (#733 acceptance criterion): user deletes
+            // .nuget-installed.json. The next restore must rebuild the manifest
+            // from on-disk versioned filenames, with no re-extraction needed.
+            File.WriteAllText(Path.Combine(_installPath, "Microsoft.AspNetCore.Http.Connections.Client.8.0.15.dll"), "dummy");
+            File.WriteAllText(Path.Combine(_installPath, "System.Text.Json.8.0.5.dll"), "dummy");
+            File.WriteAllText(Path.Combine(_installPath, "R3.1.3.0.dll"), "dummy");
+            // Plus an unrelated file the rebuild must ignore.
+            File.WriteAllText(Path.Combine(_installPath, "ReadMe.txt"), "user notes");
+
+            var rebuilt = NuGetInstallManifest.TryRebuildFromDisk(_installPath);
+
+            Assert.AreEqual(3, rebuilt.Packages.Count);
+            Assert.AreEqual("8.0.15", rebuilt.Packages["Microsoft.AspNetCore.Http.Connections.Client"].Version);
+            Assert.AreEqual("8.0.5", rebuilt.Packages["System.Text.Json"].Version);
+            Assert.AreEqual("1.3.0", rebuilt.Packages["R3"].Version);
+        }
+
+        [Test]
+        public void TryRebuildFromDisk_IgnoresLegacyUnversionedDllsAndNonDllFiles()
+        {
+            // Pre-flat-layout artifacts the user might still have on disk —
+            // the parser must reject them so the rebuild stays consistent.
+            File.WriteAllText(Path.Combine(_installPath, "System.Memory.dll"), "legacy unversioned");
+            File.WriteAllText(Path.Combine(_installPath, "ReadMe.md"), "notes");
+
+            var rebuilt = NuGetInstallManifest.TryRebuildFromDisk(_installPath);
+
+            Assert.AreEqual(0, rebuilt.Packages.Count);
+        }
+
+        [Test]
+        public void TryParseInstalledDllName_GreedilyConsumesEntireVersionTail()
+        {
+            // Regression check on the parser used by the disaster-recovery
+            // rebuild: for "System.Memory.10.0.3.dll" the version is "10.0.3"
+            // (not "0.3" or "3"), and the stem is "System.Memory".
+            Assert.IsTrue(NuGetInstallManifest.TryParseInstalledDllName(
+                "System.Memory.10.0.3.dll", out var stem, out var version));
+            Assert.AreEqual("System.Memory", stem);
+            Assert.AreEqual("10.0.3", version);
+        }
+
+        [Test]
+        public void TryParseInstalledDllName_HandlesPackageStemsWithDots()
+        {
+            Assert.IsTrue(NuGetInstallManifest.TryParseInstalledDllName(
+                "Microsoft.AspNetCore.Http.Connections.Client.8.0.15.dll", out var stem, out var version));
+            Assert.AreEqual("Microsoft.AspNetCore.Http.Connections.Client", stem);
+            Assert.AreEqual("8.0.15", version);
+        }
+
+        [Test]
+        public void TryParseInstalledDllName_HandlesShortStemAndLongVersion()
+        {
+            // "R3.1.3.0.dll" → stem "R3", version "1.3.0".
+            Assert.IsTrue(NuGetInstallManifest.TryParseInstalledDllName(
+                "R3.1.3.0.dll", out var stem, out var version));
+            Assert.AreEqual("R3", stem);
+            Assert.AreEqual("1.3.0", version);
+        }
+
+        [Test]
+        public void TryParseInstalledDllName_RejectsLegacyUnversionedFilename()
+        {
+            // No version tail → not a flat-layout install entry.
+            Assert.IsFalse(NuGetInstallManifest.TryParseInstalledDllName(
+                "System.Memory.dll", out _, out _));
+        }
+
+        [Test]
+        public void TryParseInstalledDllName_RejectsMalformedTail()
+        {
+            // ".bar" tail isn't a System.Version.
+            Assert.IsFalse(NuGetInstallManifest.TryParseInstalledDllName(
+                "Foo.bar.dll", out _, out _));
+        }
+
+        [Test]
+        public void TryParseInstalledDllName_RejectsNonDllExtension()
+        {
+            Assert.IsFalse(NuGetInstallManifest.TryParseInstalledDllName(
+                "System.Memory.10.0.3.exe", out _, out _));
         }
     }
 }

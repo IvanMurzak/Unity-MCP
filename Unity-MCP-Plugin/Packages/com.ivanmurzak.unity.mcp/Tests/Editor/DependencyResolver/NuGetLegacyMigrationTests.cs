@@ -62,16 +62,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
         [Test]
         public void Run_NoLegacyState_ReturnsNoLegacyState_OnFlatOnlyInstall()
         {
-            // Already-migrated project: only flat-layout DLLs and the manifest
-            // are present. Migration must short-circuit, not delete anything.
-            File.WriteAllText(Path.Combine(_installPath, "System.Memory.dll"), "dummy");
-            File.WriteAllText(Path.Combine(_installPath, "System.Memory.dll.meta"), "meta");
+            // Already-migrated project: only flat-layout (versioned) DLLs and
+            // the manifest are present. Migration must short-circuit, not
+            // delete anything.
+            File.WriteAllText(Path.Combine(_installPath, "System.Memory.10.0.3.dll"), "dummy");
+            File.WriteAllText(Path.Combine(_installPath, "System.Memory.10.0.3.dll.meta"), "meta");
             File.WriteAllText(Path.Combine(_installPath, ".nuget-installed.json"), "{}");
 
             var result = NuGetLegacyMigration.Run(_installPath);
 
             Assert.AreEqual(NuGetLegacyMigration.Outcome.NoLegacyState, result.Outcome);
-            Assert.IsTrue(File.Exists(Path.Combine(_installPath, "System.Memory.dll")));
+            Assert.IsTrue(File.Exists(Path.Combine(_installPath, "System.Memory.10.0.3.dll")));
         }
 
         [Test]
@@ -112,7 +113,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
             // present, plus a non-package directory the user dropped in. The
             // migration must remove only the legacy folders.
             CreateLegacyPackage("System.Text.Json", "8.0.5", "System.Text.Json.dll");
-            File.WriteAllText(Path.Combine(_installPath, "Microsoft.Bcl.Memory.dll"), "flat-already");
+            File.WriteAllText(Path.Combine(_installPath, "Microsoft.Bcl.Memory.10.0.3.dll"), "flat-already");
             Directory.CreateDirectory(Path.Combine(_installPath, "ReadMe"));
             File.WriteAllText(Path.Combine(_installPath, "ReadMe", "notes.txt"), "user notes");
 
@@ -121,7 +122,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
             Assert.AreEqual(NuGetLegacyMigration.Outcome.Migrated, result.Outcome);
             Assert.AreEqual(1, result.RemovedDirectories.Count);
             Assert.IsFalse(Directory.Exists(Path.Combine(_installPath, "System.Text.Json.8.0.5")));
-            Assert.IsTrue(File.Exists(Path.Combine(_installPath, "Microsoft.Bcl.Memory.dll")),
+            Assert.IsTrue(File.Exists(Path.Combine(_installPath, "Microsoft.Bcl.Memory.10.0.3.dll")),
                 "Flat-layout DLLs already present must not be deleted by migration.");
             Assert.IsTrue(Directory.Exists(Path.Combine(_installPath, "ReadMe")),
                 "Non-package directories must not be touched by migration.");

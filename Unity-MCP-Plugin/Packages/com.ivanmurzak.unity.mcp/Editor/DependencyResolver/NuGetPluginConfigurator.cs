@@ -84,10 +84,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             if (importer == null)
                 return;
 
-            // DLL filenames remain unversioned in the flat layout (the package
-            // version lives in the manifest), so the on-disk stem IS the
-            // assembly identity Unity's resolver uses.
-            var assemblyName = Path.GetFileNameWithoutExtension(assetPath);
+            // The DLL filename carries the package version as a tail segment
+            // (e.g. "System.Memory.10.0.3.dll"). Strip it so the assembly-
+            // resolver lookup matches the assembly's manifest name, not the
+            // on-disk filename.
+            var fileName = Path.GetFileName(assetPath);
+            var assemblyName = NuGetInstallManifest.TryParseInstalledDllName(fileName, out var stem, out _) && stem != null
+                ? stem
+                : Path.GetFileNameWithoutExtension(assetPath);
 
             var unityProvidesIt = UnityAssemblyResolver.IsAlreadyImported(assemblyName);
 
