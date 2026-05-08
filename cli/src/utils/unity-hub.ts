@@ -25,6 +25,7 @@ const UNITY_HUB_DOWNLOAD_URLS: Record<string, string> = {
  * Returns the path if found, or null.
  */
 export function findUnityHub(): string | null {
+  const startedAt = Date.now();
   const plat = platform();
   const candidates: string[] = [];
 
@@ -48,14 +49,16 @@ export function findUnityHub(): string | null {
   }
 
   for (const candidate of candidates) {
+    const candidateStartedAt = Date.now();
     verbose(`Checking Unity Hub candidate: ${candidate}`);
     if (candidate && fs.existsSync(candidate)) {
-      verbose(`Found Unity Hub at: ${candidate}`);
+      verbose(`Found Unity Hub at: ${candidate} (${Date.now() - candidateStartedAt}ms for candidate, ${Date.now() - startedAt}ms total)`);
       return candidate;
     }
+    verbose(`Unity Hub candidate missing: ${candidate} (${Date.now() - candidateStartedAt}ms)`);
   }
 
-  verbose('Unity Hub not found in any candidate location');
+  verbose(`Unity Hub not found in any candidate location (${Date.now() - startedAt}ms total)`);
   return null;
 }
 
@@ -177,11 +180,17 @@ export async function installUnityHub(): Promise<string> {
  * Find Unity Hub, or install it automatically if not found.
  */
 export async function ensureUnityHub(): Promise<string> {
+  const startedAt = Date.now();
   const hubPath = findUnityHub();
-  if (hubPath) return hubPath;
+  if (hubPath) {
+    verbose(`ensureUnityHub reused existing installation in ${Date.now() - startedAt}ms`);
+    return hubPath;
+  }
 
   ui.warn('Unity Hub not found. Installing automatically...');
-  return installUnityHub();
+  const installedHubPath = await installUnityHub();
+  verbose(`ensureUnityHub installed Unity Hub in ${Date.now() - startedAt}ms`);
+  return installedHubPath;
 }
 
 export interface InstalledEditor {
@@ -213,12 +222,17 @@ export function parseInstalledEditorsLine(line: string): InstalledEditor | null 
 
 export function listInstalledEditors(hubPath: string): InstalledEditor[] {
   const spinner = ui.startSpinner('Listing installed editors...');
+  const startedAt = Date.now();
   try {
+    verbose(`listInstalledEditors invoking Unity Hub CLI: ${hubPath} -- --headless editors --installed`);
+    const execStartedAt = Date.now();
     const output = execFileSync(hubPath, ['--', '--headless', 'editors', '--installed'], {
       encoding: 'utf-8',
       timeout: 120000,
     });
+    verbose(`listInstalledEditors Unity Hub CLI returned in ${Date.now() - execStartedAt}ms`);
 
+    const parseStartedAt = Date.now();
     const editors: InstalledEditor[] = [];
     for (const line of output.split('\n')) {
       const editor = parseInstalledEditorsLine(line);
@@ -226,11 +240,14 @@ export function listInstalledEditors(hubPath: string): InstalledEditor[] {
         editors.push(editor);
       }
     }
+    verbose(`listInstalledEditors parsed ${editors.length} editor(s) in ${Date.now() - parseStartedAt}ms`);
 
     spinner.success(`Found ${editors.length} installed editor${editors.length !== 1 ? 's' : ''}`);
+    verbose(`listInstalledEditors completed in ${Date.now() - startedAt}ms`);
     return editors;
   } catch (err) {
     spinner.error(`Failed to list installed editors: ${(err as Error).message}`);
+    verbose(`listInstalledEditors failed after ${Date.now() - startedAt}ms`);
     return [];
   }
 }
