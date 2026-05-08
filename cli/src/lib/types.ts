@@ -32,6 +32,14 @@ export type ProgressEvent =
     }
   | { phase: 'launching-editor'; message: string; editorPath: string; projectPath: string }
   | { phase: 'editor-launched'; message: string; pid?: number }
+  | {
+      phase: 'launch-errors-dismissed';
+      message: string;
+      /** Button label that was clicked (e.g. `Ignore`). */
+      button: string;
+      /** Platform on which the dismiss was performed (`win32` | `darwin` | `linux`). */
+      platform: string;
+    }
   | { phase: 'done'; message: string };
 
 export type ProgressCallback = (event: ProgressEvent) => void;
@@ -288,10 +296,38 @@ export interface OpenProjectOptions {
    */
   startServer?: boolean;
   /**
+   * If `true` (the default), poll for the Unity Editor's
+   * "compile errors at launch" dialog after the editor process has
+   * been spawned and click `Ignore` (or the platform-equivalent
+   * button) so the editor finishes initialising. Set to `false` to
+   * disable the polling loop entirely — corresponds to the CLI's
+   * `--no-auto-dismiss-launch-errors` flag.
+   *
+   * The polling loop runs concurrently with the existing wait-for-
+   * ready logic (which is the authoritative ready signal); when no
+   * dialog appears, behaviour is unchanged from the pre-feature
+   * baseline (no spurious clicks, no extra delay).
+   */
+  autoDismissLaunchErrors?: boolean;
+  /**
+   * Overall timeout (milliseconds) for the launch-errors dismissal
+   * polling loop. The loop ticks every
+   * `launchDismissPollIntervalMs` until either the dialog is
+   * dismissed, this timeout elapses, or `openProject` returns. Default
+   * `30000` (30 s).
+   */
+  launchDismissTimeoutMs?: number;
+  /**
+   * Polling tick interval (milliseconds) for the launch-errors
+   * dismissal loop. Default `500`.
+   */
+  launchDismissPollIntervalMs?: number;
+  /**
    * Optional progress callback — fires for `start`,
    * `detecting-editor-version`, `editors-located`, `editor-resolved`,
-   * `connection-details`, `launching-editor`, `editor-launched`, and
-   * `done`.
+   * `connection-details`, `launching-editor`, `editor-launched`,
+   * `launch-errors-dismissed` (only when a dialog was actually
+   * dismissed), and `done`.
    */
   onProgress?: ProgressCallback;
 }

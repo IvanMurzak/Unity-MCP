@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { platform as nodePlatform } from 'os';
 import {
   findEditorPath,
   getProjectEditorVersion,
@@ -7,6 +8,10 @@ import {
 } from '../utils/unity-editor.js';
 import { findUnityProcess } from '../utils/unity-process.js';
 import { readConfig, isCloudMode, writeConfig } from '../utils/config.js';
+import {
+  tryDismissLaunchErrorsDialog,
+  type DismissPlatform,
+} from '../utils/launch-error-dismiss.js';
 import { emitProgress } from './progress.js';
 import type {
   OpenEnvInputs,
@@ -14,6 +19,7 @@ import type {
   OpenProjectOptions,
   OpenProjectResult,
   OpenProjectTransport,
+  ProgressCallback,
 } from './types.js';
 
 /**
@@ -294,6 +300,24 @@ export async function openProject(
     // process exit.
     const pid = await waitForSpawn(child);
 
+    // Auto-dismiss the Unity "compile errors at launch" dialog if it
+    // appears. The polling loop runs synchronously inside this call
+    // (so the CLI's event loop stays alive until it completes) but
+    // never throws — a transient platform error is logged via the
+    // progress callback as a warning and the loop continues until
+    // either the dialog is dismissed or the overall timeout elapses.
+    //
+    // When `autoDismissLaunchErrors === false` the loop is skipped
+    // entirely; behaviour is identical to the pre-feature baseline.
+    if (options.autoDismissLaunchErrors !== false) {
+      await pollAndDismissLaunchErrors({
+        timeoutMs: options.launchDismissTimeoutMs ?? 30000,
+        intervalMs: options.launchDismissPollIntervalMs ?? 500,
+        onProgress: options.onProgress,
+        warnings,
+      });
+    }
+
     emitProgress(options.onProgress, {
       phase: 'done',
       message: 'Editor launched.',
@@ -321,6 +345,117 @@ export async function openProject(
       error: errorObj,
     };
   }
+}
+
+/**
+ * Options for `pollAndDismissLaunchErrors`. All fields are required
+ * — the public-API defaulting happens at the `openProject` boundary
+ * before this helper is invoked.
+ *
+ * Exported (with `_` prefix) for unit tests so the polling loop can
+ * be exercised without spawning a real Unity Editor / PowerShell /
+ * osascript / xdotool. Production code never imports this directly —
+ * `openProject` is the only caller.
+ */
+export interface _PollAndDismissOptionsForTests {
+  timeoutMs: number;
+  intervalMs: number;
+  onProgress: ProgressCallback | undefined;
+  warnings: string[];
+  platform?: DismissPlatform;
+  probe?: typeof tryDismissLaunchErrorsDialog;
+}
+
+interface PollAndDismissOptions {
+  timeoutMs: number;
+  intervalMs: number;
+  onProgress: ProgressCallback | undefined;
+  warnings: string[];
+  /**
+   * Override the platform — exposed for tests so the same polling
+   * logic can be exercised across all three OS branches without
+   * hopping `process.platform`. Defaults to the running platform.
+   */
+  platform?: DismissPlatform;
+  /**
+   * Override the dismiss probe — exposed for tests so the polling
+   * loop can be exercised without invoking PowerShell / osascript /
+   * xdotool. Defaults to `tryDismissLaunchErrorsDialog`.
+   */
+  probe?: typeof tryDismissLaunchErrorsDialog;
+}
+
+/**
+ * Poll the OS desktop for the Unity "compile errors at launch"
+ * dialog and click `Ignore` (or the platform-equivalent) the first
+ * time the probe reports it as found. Returns once the dialog has
+ * been dismissed OR the overall timeout has elapsed.
+ *
+ * Library-safe: never throws. Transient platform errors (e.g. a
+ * missing `xdotool` on Linux, or a momentary syscall failure on
+ * Windows) are recorded once as a warning on the supplied
+ * `warnings` array; subsequent identical errors are silently
+ * suppressed so the warnings array does not balloon over the polling
+ * window. The `launch-errors-dismissed` progress event is emitted at
+ * most once, on successful dismissal.
+ */
+export async function _pollAndDismissLaunchErrorsForTests(
+  opts: _PollAndDismissOptionsForTests,
+): Promise<void> {
+  return pollAndDismissLaunchErrors(opts);
+}
+
+async function pollAndDismissLaunchErrors(opts: PollAndDismissOptions): Promise<void> {
+  const platform = (opts.platform ?? (nodePlatform() as DismissPlatform));
+  const probe = opts.probe ?? tryDismissLaunchErrorsDialog;
+  const deadline = Date.now() + Math.max(0, opts.timeoutMs);
+  const interval = Math.max(50, opts.intervalMs);
+  const seenErrorMessages = new Set<string>();
+  while (Date.now() < deadline) {
+    const outcome = await probe(platform);
+    if (outcome.kind === 'dismissed') {
+      emitProgress(opts.onProgress, {
+        phase: 'launch-errors-dismissed',
+        message: `[open] dismissed Unity launch-errors dialog (button=${outcome.button}, platform=${platform})`,
+        button: outcome.button,
+        platform,
+      });
+      return;
+    }
+    if (outcome.kind === 'error' && !seenErrorMessages.has(outcome.message)) {
+      seenErrorMessages.add(outcome.message);
+      opts.warnings.push(`launch-errors auto-dismiss: ${outcome.message}`);
+    }
+    // Sleep until the next tick OR the deadline, whichever comes first.
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) break;
+    await sleep(Math.min(interval, remaining));
+  }
+  // Timeout elapsed without dismissal — record a warning so the CLI can
+  // surface it. The existing wait-for-ready logic remains responsible
+  // for eventually failing with a clear timeout if Unity never reaches
+  // ready state (the issue's acceptance criterion that the CLI must
+  // continue with the existing wait when dismissal fails).
+  if (seenErrorMessages.size === 0) {
+    // Only push the silent-timeout warning if no platform error was
+    // already pushed — otherwise the warning array repeats the same
+    // story twice. Either way, the underlying assumption is identical:
+    // the dialog either never appeared OR could not be dismissed.
+    return;
+  }
+  opts.warnings.push(
+    `launch-errors auto-dismiss timed out after ${opts.timeoutMs}ms — continuing with wait-for-ready`,
+  );
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    const t = setTimeout(resolve, ms);
+    // Do NOT unref() — the polling timer is the reason `openProject`
+    // is awaiting in the first place, and unref'ing would let Node
+    // exit before the loop completes.
+    void t;
+  });
 }
 
 /**

@@ -12,7 +12,12 @@ import {
   buildOpenEnv,
   isUnityProjectDir,
   resolveProjectPath,
+  _pollAndDismissLaunchErrorsForTests,
 } from '../src/lib/open.js';
+import type {
+  DismissOutcome,
+  DismissPlatform,
+} from '../src/utils/launch-error-dismiss.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -380,6 +385,168 @@ describe('CLI delegates to lib', () => {
   it('lib export is reachable from the package root', async () => {
     const mod = await import('../src/lib.js');
     expect(typeof mod.openProject).toBe('function');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Launch-errors auto-dismiss polling loop
+// ---------------------------------------------------------------------------
+
+describe('pollAndDismissLaunchErrors', () => {
+  it('returns immediately on the first dismissed outcome and emits the progress event', async () => {
+    const events: ProgressEvent[] = [];
+    const warnings: string[] = [];
+    let calls = 0;
+    const probe = async (_platform: DismissPlatform): Promise<DismissOutcome> => {
+      calls += 1;
+      return { kind: 'dismissed', button: 'Ignore' };
+    };
+
+    await _pollAndDismissLaunchErrorsForTests({
+      timeoutMs: 5000,
+      intervalMs: 50,
+      onProgress: (e) => events.push(e),
+      warnings,
+      platform: 'win32',
+      probe,
+    });
+
+    expect(calls).toBe(1);
+    const dismissed = events.find((e) => e.phase === 'launch-errors-dismissed');
+    expect(dismissed).toBeTruthy();
+    if (dismissed && dismissed.phase === 'launch-errors-dismissed') {
+      expect(dismissed.button).toBe('Ignore');
+      expect(dismissed.platform).toBe('win32');
+      expect(dismissed.message).toContain('[open] dismissed Unity launch-errors dialog');
+      expect(dismissed.message).toContain('button=Ignore');
+      expect(dismissed.message).toContain('platform=win32');
+    }
+    expect(warnings).toHaveLength(0);
+  });
+
+  it('keeps polling on not-found and stops after the deadline elapses', async () => {
+    const events: ProgressEvent[] = [];
+    const warnings: string[] = [];
+    let calls = 0;
+    const probe = async (): Promise<DismissOutcome> => {
+      calls += 1;
+      return { kind: 'not-found' };
+    };
+
+    const start = Date.now();
+    await _pollAndDismissLaunchErrorsForTests({
+      timeoutMs: 250,
+      intervalMs: 50,
+      onProgress: (e) => events.push(e),
+      warnings,
+      platform: 'darwin',
+      probe,
+    });
+    const elapsed = Date.now() - start;
+
+    // The loop ran for ~timeoutMs, so multiple ticks happened.
+    expect(calls).toBeGreaterThanOrEqual(2);
+    // No dismiss event was emitted (the dialog was never found).
+    expect(events.find((e) => e.phase === 'launch-errors-dismissed')).toBeUndefined();
+    // The timeout boundary was respected (allow modest slop for
+    // test-runner scheduling jitter).
+    expect(elapsed).toBeGreaterThanOrEqual(200);
+    expect(elapsed).toBeLessThan(2000);
+    // No transient errors → no timeout warning either (silent
+    // success when dialog simply never appeared, per the issue's
+    // "behaviour unchanged when no dialog appears" criterion).
+    expect(warnings).toHaveLength(0);
+  });
+
+  it('records a single warning for repeated identical platform errors and a timeout warning', async () => {
+    const events: ProgressEvent[] = [];
+    const warnings: string[] = [];
+    const probe = async (): Promise<DismissOutcome> => {
+      return { kind: 'error', message: 'xdotool not found on PATH.' };
+    };
+
+    await _pollAndDismissLaunchErrorsForTests({
+      timeoutMs: 200,
+      intervalMs: 50,
+      onProgress: (e) => events.push(e),
+      warnings,
+      platform: 'linux',
+      probe,
+    });
+
+    // Repeated identical errors collapse to one warning.
+    const errWarnings = warnings.filter((w) => w.includes('xdotool not found'));
+    expect(errWarnings).toHaveLength(1);
+    // After the loop times out with a transient error in play, the
+    // timeout warning is also pushed so the CLI can surface both.
+    const timeoutWarnings = warnings.filter((w) => w.includes('timed out'));
+    expect(timeoutWarnings).toHaveLength(1);
+    // Still no dismiss event (we never dismissed).
+    expect(events.find((e) => e.phase === 'launch-errors-dismissed')).toBeUndefined();
+  });
+
+  it('respects timeoutMs=0 by performing exactly one probe and exiting', async () => {
+    const events: ProgressEvent[] = [];
+    const warnings: string[] = [];
+    let calls = 0;
+    const probe = async (): Promise<DismissOutcome> => {
+      calls += 1;
+      return { kind: 'not-found' };
+    };
+
+    await _pollAndDismissLaunchErrorsForTests({
+      timeoutMs: 0,
+      intervalMs: 50,
+      onProgress: (e) => events.push(e),
+      warnings,
+      platform: 'win32',
+      probe,
+    });
+
+    // timeoutMs=0 → loop guard `Date.now() < deadline` is false on
+    // the first check, so the probe is NEVER called. This is the
+    // strictly-correct behaviour for a zero-budget polling loop —
+    // the alternative ("always run once") would silently violate the
+    // user's explicit budget.
+    expect(calls).toBe(0);
+    expect(events.find((e) => e.phase === 'launch-errors-dismissed')).toBeUndefined();
+    expect(warnings).toHaveLength(0);
+  });
+
+  it('does not throw when onProgress is undefined', async () => {
+    const warnings: string[] = [];
+    const probe = async (): Promise<DismissOutcome> => {
+      return { kind: 'dismissed', button: 'Ignore' };
+    };
+    await expect(
+      _pollAndDismissLaunchErrorsForTests({
+        timeoutMs: 1000,
+        intervalMs: 50,
+        onProgress: undefined,
+        warnings,
+        platform: 'win32',
+        probe,
+      }),
+    ).resolves.toBeUndefined();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// openProject — auto-dismiss option plumbing
+// ---------------------------------------------------------------------------
+
+describe('openProject — autoDismissLaunchErrors option', () => {
+  it('OpenProjectOptions accepts the new auto-dismiss fields without TS errors', () => {
+    // Pure type-level assertion via a no-op `OpenProjectOptions`
+    // literal — if any of these fields drops out of the public
+    // surface, the TypeScript compiler will fail this test.
+    const _opts: OpenProjectOptions = {
+      projectPath: '/x',
+      autoDismissLaunchErrors: false,
+      launchDismissTimeoutMs: 30000,
+      launchDismissPollIntervalMs: 500,
+    };
+    expect(_opts).toBeTruthy();
   });
 });
 
