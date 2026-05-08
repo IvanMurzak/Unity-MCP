@@ -53,6 +53,23 @@ export const LAUNCH_ERROR_DIALOG_TITLE_FRAGMENTS: readonly string[] = [
 export const DISMISS_BUTTON_LABEL = 'Ignore';
 
 /**
+ * Producer-side prefixes for error messages that callers treat as
+ * permanent (the polling loop bails out instead of ticking again).
+ *
+ * Exported so the bailout matcher in `lib/open.ts` and the
+ * error-construction sites below reference the SAME literal — a
+ * future re-word lands in both places at once.
+ *
+ * The matcher in `lib/open.ts` uses `String.includes`, so each
+ * constant just needs to be a stable substring of the full message.
+ */
+export const LINUX_XDOTOOL_MISSING_PREFIX =
+  'xdotool not found on PATH';
+
+export const UNSUPPORTED_PLATFORM_PREFIX =
+  'Unsupported platform for launch-errors auto-dismiss';
+
+/**
  * Try once to find and dismiss the Unity launch-errors dialog on the
  * current OS desktop. Pure-ish — performs a single OS call and
  * returns; never blocks past the underlying syscall's own timeout.
@@ -89,7 +106,7 @@ export async function tryDismissLaunchErrorsDialog(
     default:
       return {
         kind: 'error',
-        message: `Unsupported platform for launch-errors auto-dismiss: ${platform as string}`,
+        message: `${UNSUPPORTED_PLATFORM_PREFIX}: ${platform as string}`,
       };
   }
 }
@@ -360,7 +377,7 @@ async function tryDismissLinuxX11(): Promise<DismissOutcome> {
     return {
       kind: 'error',
       message:
-        'xdotool not found on PATH. Install it (e.g. `sudo apt-get install xdotool`) to enable Unity launch-errors auto-dismiss on Linux/X11. Wayland is not yet supported.',
+        `${LINUX_XDOTOOL_MISSING_PREFIX}. Install it (e.g. \`sudo apt-get install xdotool\`) to enable Unity launch-errors auto-dismiss on Linux/X11. Wayland is not yet supported.`,
     };
   }
   const unityPids = new Set(getUnityPidsLinux());

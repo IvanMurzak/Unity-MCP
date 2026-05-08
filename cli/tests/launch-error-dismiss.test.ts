@@ -8,6 +8,8 @@ import {
   WINDOWS_DISMISS_PS_SCRIPT,
   MACOS_DISMISS_APPLESCRIPT,
   DISMISS_BUTTON_LABEL,
+  LINUX_XDOTOOL_MISSING_PREFIX,
+  UNSUPPORTED_PLATFORM_PREFIX,
   tryDismissLaunchErrorsDialog,
   _resetXdotoolPresenceForTests,
   regexEscapeForXdotool,
@@ -194,6 +196,45 @@ describe('tryDismissLaunchErrorsDialog — unknown platform', () => {
     );
     expect(result.kind).toBe('error');
     if (result.kind !== 'error') return;
-    expect(result.message).toContain('Unsupported platform');
+    expect(result.message).toContain(UNSUPPORTED_PLATFORM_PREFIX);
+  });
+});
+
+describe('permanent-error message constants', () => {
+  // The bailout matcher in `lib/open.ts` (PERMANENT_DISMISS_ERROR_MARKERS)
+  // uses `String.includes` to detect permanent errors. To keep the
+  // matcher and the producer-side message in sync, the producers
+  // MUST use these exported constants verbatim — a re-word at the
+  // producer site that drifts from the constant would silently
+  // de-sync the bailout. These tests fail loudly if a future drive-by
+  // edit re-words the producer message but forgets to update the
+  // constant.
+
+  it('LINUX_XDOTOOL_MISSING_PREFIX is the prefix the linux producer emits', async () => {
+    _resetXdotoolPresenceForTests();
+    const originalPath = process.env.PATH;
+    process.env.PATH = '/nonexistent/path/that/will/not/find/xdotool';
+    try {
+      const result = await tryDismissLaunchErrorsDialog('linux');
+      // If xdotool happens to exist system-wide, the test cannot
+      // observe the producer message — skip the substring check
+      // in that case (the unsupported-platform test below already
+      // covers the constants-are-imported angle).
+      if (result.kind === 'error') {
+        expect(result.message).toContain(LINUX_XDOTOOL_MISSING_PREFIX);
+      }
+    } finally {
+      process.env.PATH = originalPath;
+      _resetXdotoolPresenceForTests();
+    }
+  });
+
+  it('UNSUPPORTED_PLATFORM_PREFIX is the prefix the dispatcher emits', async () => {
+    const result = await tryDismissLaunchErrorsDialog(
+      'plan9' as unknown as 'win32' | 'darwin' | 'linux',
+    );
+    expect(result.kind).toBe('error');
+    if (result.kind !== 'error') return;
+    expect(result.message.startsWith(UNSUPPORTED_PLATFORM_PREFIX)).toBe(true);
   });
 });

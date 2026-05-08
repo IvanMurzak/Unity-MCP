@@ -611,6 +611,86 @@ describe('pollAndDismissLaunchErrors', () => {
       }),
     ).resolves.toBeUndefined();
   });
+
+  it('does not surface a "timed out" warning when abort fires after a transient platform error', async () => {
+    // Lock down the gating fix: the post-loop timeout warning must
+    // only fire when the deadline was actually reached, NOT when
+    // the loop exited via the supplied abort signal — even if a
+    // transient (non-permanent) platform error was recorded
+    // earlier. Without this gate, callers see a misleading
+    // "auto-dismiss timed out" warning for what was really a
+    // caller-driven cancellation.
+    const events: ProgressEvent[] = [];
+    const warnings: string[] = [];
+    const controller = new AbortController();
+    let calls = 0;
+    const probe = async (): Promise<DismissOutcome> => {
+      calls += 1;
+      if (calls === 1) {
+        // Schedule the abort AFTER the first transient error has
+        // been recorded so seenErrorMessages.size > 0 at the
+        // post-loop check.
+        setTimeout(() => controller.abort(), 0).unref();
+      }
+      return { kind: 'error', message: 'transient platform glitch' };
+    };
+
+    await _pollAndDismissLaunchErrorsForTests({
+      timeoutMs: 30000,
+      intervalMs: 20,
+      onProgress: (e) => events.push(e),
+      warnings,
+      platform: 'linux',
+      probe,
+      // High grace so the early-exit must come from the abort path.
+      noDialogGraceMs: 30000,
+      abortSignal: controller.signal,
+    });
+
+    expect(warnings.filter((w) => w.includes('transient platform glitch'))).toHaveLength(1);
+    expect(warnings.filter((w) => w.includes('timed out'))).toHaveLength(0);
+  });
+
+  it('does not apply the in-flight probe outcome when abort fires mid-probe', async () => {
+    // Lock down the race fix: when the abort signal fires while an
+    // `await probe(...)` is in flight, the resolved outcome must
+    // be discarded — not emitted as a `launch-errors-dismissed`
+    // progress event nor recorded as a warning. Failing this test
+    // means the loop applied a stale outcome from a probe whose
+    // result the caller already cancelled.
+    const events: ProgressEvent[] = [];
+    const warnings: string[] = [];
+    const controller = new AbortController();
+    let calls = 0;
+    const probe = (): Promise<DismissOutcome> =>
+      new Promise((resolve) => {
+        calls += 1;
+        // Resolve only after the abort fires so the loop is
+        // guaranteed to observe `aborted=true` post-await.
+        setTimeout(() => controller.abort(), 20).unref();
+        setTimeout(
+          () => resolve({ kind: 'dismissed', button: 'Ignore' }),
+          60,
+        ).unref();
+      });
+
+    await _pollAndDismissLaunchErrorsForTests({
+      timeoutMs: 30000,
+      intervalMs: 20,
+      onProgress: (e) => events.push(e),
+      warnings,
+      platform: 'win32',
+      probe,
+      noDialogGraceMs: 30000,
+      abortSignal: controller.signal,
+    });
+
+    // Probe ran exactly once; its post-abort `dismissed` outcome
+    // must be dropped.
+    expect(calls).toBe(1);
+    expect(events.find((e) => e.phase === 'launch-errors-dismissed')).toBeUndefined();
+    expect(warnings.filter((w) => w.includes('timed out'))).toHaveLength(0);
+  });
 });
 
 // ---------------------------------------------------------------------------

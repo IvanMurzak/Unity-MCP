@@ -10,6 +10,8 @@ import { findUnityProcess } from '../utils/unity-process.js';
 import { readConfig, isCloudMode, writeConfig } from '../utils/config.js';
 import {
   tryDismissLaunchErrorsDialog,
+  LINUX_XDOTOOL_MISSING_PREFIX,
+  UNSUPPORTED_PLATFORM_PREFIX,
   type DismissPlatform,
 } from '../utils/launch-error-dismiss.js';
 import { emitProgress } from './progress.js';
@@ -440,10 +442,15 @@ export async function _pollAndDismissLaunchErrorsForTests(
  * after recording the warning once; ticking again would just respawn
  * the same doomed tool. Keep this list narrow — only conditions that
  * cannot self-heal mid-launch belong here.
+ *
+ * The entries reference the producer-side constants in
+ * `launch-error-dismiss.ts` so a re-word at the producer site stays
+ * in sync with the bailout matcher (and the test in
+ * `launch-error-dismiss.test.ts` locks the constants down).
  */
 const PERMANENT_DISMISS_ERROR_MARKERS: readonly string[] = [
-  'xdotool not found on PATH',
-  'Unsupported platform',
+  LINUX_XDOTOOL_MISSING_PREFIX,
+  UNSUPPORTED_PLATFORM_PREFIX,
 ];
 
 function isPermanentDismissError(message: string): boolean {
@@ -465,6 +472,11 @@ async function pollAndDismissLaunchErrors(opts: PollAndDismissOptions): Promise<
   try {
     while (Date.now() < deadline && !aborted) {
       const outcome = await probe(platform);
+      // Re-check the exit conditions BEFORE applying the outcome:
+      // if abort fired (or the deadline lapsed) while `probe` was
+      // in flight, the in-flight result is stale and applying it
+      // would emit a misleading progress event or warning.
+      if (aborted || Date.now() >= deadline) break;
       if (outcome.kind === 'dismissed') {
         dismissedAtLeastOnce = true;
         emitProgress(opts.onProgress, {
@@ -502,10 +514,16 @@ async function pollAndDismissLaunchErrors(opts: PollAndDismissOptions): Promise<
   } finally {
     opts.abortSignal?.removeEventListener('abort', onAbort);
   }
-  // Loop exited via deadline. Surface a timeout warning ONLY if a
-  // platform error was actually observed — otherwise the no-dialog
-  // grace window already returned silently and we never reach here.
-  if (seenErrorMessages.size > 0 && !dismissedAtLeastOnce) {
+  // Surface a timeout warning ONLY when the deadline was actually
+  // reached (not the abort path) AND a platform error was observed.
+  // The grace-window exit returns silently above; the abort path is
+  // a caller-driven cancellation, not a timeout.
+  if (
+    Date.now() >= deadline &&
+    !aborted &&
+    seenErrorMessages.size > 0 &&
+    !dismissedAtLeastOnce
+  ) {
     opts.warnings.push(
       `launch-errors auto-dismiss timed out after ${opts.timeoutMs}ms — continuing with wait-for-ready`,
     );
