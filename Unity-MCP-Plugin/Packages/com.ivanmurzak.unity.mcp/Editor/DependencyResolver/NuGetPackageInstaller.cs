@@ -132,12 +132,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 // so it keys those DLLs under their own stems as synthetic package IDs. When the
                 // real owner re-installs at the same version, those synthetic entries would trip
                 // the collision check below; remove them and let the real owner take over.
-                MigrateSyntheticOwnerEntries(manifest, package.Id, package.Version, planned);
+                // Persist immediately on a successful migration so a downstream halt (collision
+                // check, long-path overflow, extraction failure) cannot leave the manifest
+                // desynced from disk.
+                if (MigrateSyntheticOwnerEntries(manifest, package.Id, package.Version, planned))
+                    NuGetInstallManifest.Save(installPath, manifest);
 
+                // alreadyOnDisk requires a full match against the planned set, not just
+                // "every recorded DLL exists". After MigrateSyntheticOwnerEntries pulls
+                // synthetic stem-keyed entries into the real-owner entry, that entry's
+                // Dlls list only covers whichever DLLs the disaster-recovery rebuild
+                // actually observed on disk. If a strict subset of a multi-DLL package's
+                // files survived (manifest deleted + one DLL lost to AV / partial cleanup),
+                // a recorded-DLLs-only check would short-circuit extraction and leave the
+                // missing files unrecovered. Requiring planned ⊆ manifestEntry.Dlls forces
+                // re-extraction in that case.
                 var alreadyOnDisk = false;
                 if (manifest.Packages.TryGetValue(package.Id, out var manifestEntry)
                     && string.Equals(manifestEntry.Version, package.Version, StringComparison.OrdinalIgnoreCase)
                     && manifestEntry.Dlls.Count > 0
+                    && planned.All(p => manifestEntry.Dlls.Contains(p.FileName, StringComparer.OrdinalIgnoreCase))
                     && manifestEntry.Dlls.All(d => File.Exists(Path.Combine(installPath, d))))
                 {
                     alreadyOnDisk = true;
@@ -394,15 +408,29 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// On a hit we also migrate any DLLs that already exist on disk into a
         /// real entry under <paramref name="realPackageId"/>, which lets the
         /// caller's <c>alreadyOnDisk</c> check short-circuit re-extraction.
+        ///
+        /// Returns <c>true</c> when the manifest was mutated (caller MUST persist
+        /// via <see cref="NuGetInstallManifest.Save"/>); <c>false</c> on a no-op.
+        ///
+        /// <para>
+        /// Same-version cross-package DLL collision: this migrator is the only
+        /// place where a hypothetical legitimate distinct package shipping a
+        /// same-named DLL at the same package version is silently absorbed into
+        /// the real owner — the downstream collision check (in
+        /// <see cref="Install"/>) cannot fire for entries this method already
+        /// migrated. The collision is essentially impossible in practice
+        /// (versioned filenames + the same-version constraint), but the silent
+        /// absorption is intentional for the disaster-recovery scenario.
+        /// </para>
         /// </summary>
-        internal static void MigrateSyntheticOwnerEntries(
+        internal static bool MigrateSyntheticOwnerEntries(
             InstallManifest manifest,
             string realPackageId,
             string version,
             IReadOnlyList<PlannedDll> planned)
         {
             if (planned.Count == 0)
-                return;
+                return false;
 
             var plannedFileNames = new HashSet<string>(
                 planned.Select(p => p.FileName),
@@ -429,7 +457,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             }
 
             if (migratedDlls.Count == 0)
-                return;
+                return false;
 
             // Merge into any pre-existing real entry rather than overwriting it.
             if (!manifest.Packages.TryGetValue(realPackageId, out var realEntry)
@@ -443,6 +471,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 if (!realEntry.Dlls.Contains(dll, StringComparer.OrdinalIgnoreCase))
                     realEntry.Dlls.Add(dll);
             }
+
+            return true;
         }
 
         static void UpsertManifestEntry(InstallManifest manifest, string packageId, string version, IReadOnlyList<string> dlls)

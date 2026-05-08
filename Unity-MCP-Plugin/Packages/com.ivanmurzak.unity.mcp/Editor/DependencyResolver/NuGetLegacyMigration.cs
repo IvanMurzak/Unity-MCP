@@ -41,6 +41,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
     /// per-meta GUID state forward. Unity regenerates fresh meta files on the
     /// next asset import.
     /// </para>
+    ///
+    /// <para>
+    /// <b>Plugin-exclusive directory contract:</b> the install path
+    /// (<see cref="NuGetConfig.InstallPath"/>, by default
+    /// <c>Assets/Plugins/NuGet/</c>) MUST be reserved exclusively for this
+    /// resolver. Any directory directly underneath whose name parses as
+    /// <c>{Id}.{System.Version}</c> is treated as a legacy NuGet artifact and
+    /// removed with <c>Directory.Delete(recursive: true)</c>. A user-authored
+    /// folder dropped here whose name happens to match that pattern (e.g.
+    /// <c>MyTools.1.0/</c>) would be silently destroyed. Do not co-locate
+    /// non-NuGet content with the install path.
+    /// </para>
     /// </summary>
     static class NuGetLegacyMigration
     {

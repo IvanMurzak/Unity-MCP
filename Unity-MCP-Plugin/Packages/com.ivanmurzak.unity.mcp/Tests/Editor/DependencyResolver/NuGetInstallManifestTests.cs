@@ -10,6 +10,7 @@
 
 #nullable enable
 using System.IO;
+using System.Linq;
 using NUnit.Framework;
 using com.IvanMurzak.Unity.MCP.Editor.DependencyResolver;
 
@@ -278,6 +279,80 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
             Assert.IsFalse(manifest.Packages.ContainsKey("System.Memory"),
                 "Synthetic same-version entry whose DLLs match the planned set must be migrated.");
             Assert.IsTrue(manifest.Packages.ContainsKey("Microsoft.Bcl.Memory"));
+        }
+
+        [Test]
+        public void MigrateSyntheticOwnerEntries_PartialDiskState_LeavesPlannedDllsMissingFromManifestEntry()
+        {
+            // Regression for the alreadyOnDisk gate: after MigrateSyntheticOwnerEntries
+            // pulls only the synthetic entries that the disaster-recovery rebuild saw on
+            // disk (a strict subset of the package's planned DLLs), the resulting
+            // real-owner entry must NOT advertise the missing DLLs. NuGetPackageInstaller
+            // gates `alreadyOnDisk` on `planned ⊆ manifestEntry.Dlls`, so an incomplete
+            // migration here MUST yield an entry whose Dlls set fails that superset
+            // check — otherwise extraction would be skipped and the missing files would
+            // never be re-extracted.
+            //
+            // Scenario: Microsoft.Bcl.Memory ships 3 DLLs; only 2 survived on disk
+            // (manifest deleted + one DLL lost to AV / partial cleanup). The user
+            // re-runs at the same package version. The post-migration manifest entry
+            // covers only the 2 surviving stems; planned still has 3.
+            File.WriteAllText(Path.Combine(_installPath, "System.Memory.10.0.3.dll"), "dummy");
+            File.WriteAllText(Path.Combine(_installPath, "System.Buffers.10.0.3.dll"), "dummy");
+            // System.Runtime.CompilerServices.Unsafe.10.0.3.dll intentionally NOT seeded.
+
+            var manifest = NuGetInstallManifest.TryRebuildFromDisk(_installPath);
+            Assert.IsTrue(manifest.Packages.ContainsKey("System.Memory"));
+            Assert.IsTrue(manifest.Packages.ContainsKey("System.Buffers"));
+            Assert.IsFalse(manifest.Packages.ContainsKey("System.Runtime.CompilerServices.Unsafe"),
+                "Sanity: the missing DLL must not appear in the rebuilt manifest.");
+
+            var planned = new System.Collections.Generic.List<PlannedDll>
+            {
+                new PlannedDll("lib/net8.0/System.Memory.dll", "System.Memory.10.0.3.dll", Path.Combine(_installPath, "System.Memory.10.0.3.dll")),
+                new PlannedDll("lib/net8.0/System.Buffers.dll", "System.Buffers.10.0.3.dll", Path.Combine(_installPath, "System.Buffers.10.0.3.dll")),
+                new PlannedDll("lib/net8.0/System.Runtime.CompilerServices.Unsafe.dll", "System.Runtime.CompilerServices.Unsafe.10.0.3.dll", Path.Combine(_installPath, "System.Runtime.CompilerServices.Unsafe.10.0.3.dll")),
+            };
+
+            var migrated = NuGetPackageInstaller.MigrateSyntheticOwnerEntries(
+                manifest, "Microsoft.Bcl.Memory", "10.0.3", planned);
+
+            Assert.IsTrue(migrated, "Migration must signal that the manifest changed (caller must persist).");
+
+            Assert.IsTrue(manifest.Packages.ContainsKey("Microsoft.Bcl.Memory"));
+            var realEntry = manifest.Packages["Microsoft.Bcl.Memory"];
+            CollectionAssert.AreEquivalent(
+                new[] { "System.Memory.10.0.3.dll", "System.Buffers.10.0.3.dll" },
+                realEntry.Dlls,
+                "Migrated entry must reflect on-disk reality (2 of 3 DLLs), not the full planned set.");
+
+            // Cross-check the gate the installer uses: planned ⊄ realEntry.Dlls, so
+            // alreadyOnDisk would return false and the missing DLL gets re-extracted.
+            var allPlannedRecorded = planned.TrueForAll(
+                p => realEntry.Dlls.Contains(p.FileName, System.StringComparer.OrdinalIgnoreCase));
+            Assert.IsFalse(allPlannedRecorded,
+                "alreadyOnDisk gate would short-circuit incorrectly if the planned set were a subset of the migrated entry.");
+        }
+
+        [Test]
+        public void MigrateSyntheticOwnerEntries_ReturnsFalse_WhenNothingMigrated()
+        {
+            // Caller persists only on a true return — ensure we don't churn the manifest
+            // file when the migrator was a no-op.
+            var manifest = new InstallManifest();
+            var unrelatedEntry = new InstalledPackage("9.9.9");
+            unrelatedEntry.Dlls.Add("Unrelated.9.9.9.dll");
+            manifest.Packages["Unrelated"] = unrelatedEntry;
+
+            var planned = new System.Collections.Generic.List<PlannedDll>
+            {
+                new PlannedDll("lib/net8.0/System.Memory.dll", "System.Memory.10.0.3.dll", "/ignored/System.Memory.10.0.3.dll"),
+            };
+
+            var migrated = NuGetPackageInstaller.MigrateSyntheticOwnerEntries(
+                manifest, "Microsoft.Bcl.Memory", "10.0.3", planned);
+
+            Assert.IsFalse(migrated);
         }
 
         [Test]
