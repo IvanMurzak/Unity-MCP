@@ -1,0 +1,47 @@
+cli/src/commands/open.ts
+  s_96a889b2a9ec0f::t_f8c6ed3fd21c73 257-259
+  s_96a889b2a9ec0f::t_6fdb50e0840b0a 214-232
+  s_96a889b2a9ec0f::t_24b577375a4675 43,130-143,155-157
+  s_96a889b2a9ec0f::t_716dd0e7e2ddc2 44-77
+  s_96a889b2a9ec0f::t_fd17c631bfedfd 311-319
+cli/tests/open.test.ts
+  s_96a889b2a9ec0f::t_60296816206dd2 195-240
+  s_96a889b2a9ec0f::t_06bd3ca0cb9779 67-109
+  s_96a889b2a9ec0f::t_36789a04435b1c 7-11
+  s_96a889b2a9ec0f::t_caf5a3f09af1c6 1
+cli/src/lib/open.ts
+  s_96a889b2a9ec0f::t_8e0eeb97f4cc7a 351-353,359,369-401,408-460
+  s_96a889b2a9ec0f::t_5b7e579f79d921 354-358,360-368
+  s_96a889b2a9ec0f::t_81049ae1c28d8b 402-407
+  s_96a889b2a9ec0f::t_5ffb178b292aca 3,11-14,22,350
+  s_96a889b2a9ec0f::t_2239e4f0f81ff5 303-320
+cli/src/lib/types.ts
+  s_96a889b2a9ec0f::t_1e037fd3b62797 299-324,328-330
+  s_96a889b2a9ec0f::t_56f326ced20f4d 35-42,298
+cli/README.md
+  s_96a889b2a9ec0f::t_7fdab36183de7b 258-260,262-272
+cli/tests/open-lib.test.ts
+  s_96a889b2a9ec0f::t_db65670cf35ee6 15,17-20,391
+  s_96a889b2a9ec0f::t_986f8e661fd4c2 392-552
+cli/src/utils/launch-error-dismiss.ts
+  s_96a889b2a9ec0f::t_5bf61165aeb825 126-184,187-188,190-192
+  s_96a889b2a9ec0f::t_6e8a7a4216d31d 1-125,185-186,189,193-412
+cli/tests/launch-error-dismiss.test.ts
+  s_96a889b2a9ec0f::t_61376f18180cfd 1-157
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "7e84ef45c6562268c443880cf002f3b9c3a59a68",
+  "prompts": {},
+  "sessions": {
+    "s_96a889b2a9ec0f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f69faed4-0135-4243-87c8-981a7cb298cc",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
