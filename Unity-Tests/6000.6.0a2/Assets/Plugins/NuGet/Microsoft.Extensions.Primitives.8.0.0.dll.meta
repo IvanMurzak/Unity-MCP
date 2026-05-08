@@ -1,9 +1,5 @@
 fileFormatVersion: 2
-<<<<<<<< HEAD:Unity-Tests/6000.3.1f1/Assets/Plugins/NuGet/com.IvanMurzak.McpPlugin.6.2.1/McpPlugin.dll.meta
-guid: 1183e17c77643564a89f5220dec2cd33
-========
-guid: 0f6fe718a3464d84da86e8d236de2468
->>>>>>>> 2236e7a9 (Update Unity NuGet package layout):Unity-Tests/6000.3.1f1/Assets/Plugins/NuGet/McpPlugin.Common.6.2.0.dll.meta
+guid: 6b5106872085b9442bb4ec210683b185
 PluginImporter:
   externalObjects: {}
   serializedVersion: 3
