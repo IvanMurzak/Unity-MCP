@@ -1,0 +1,21 @@
+cli/src/lib/open.ts
+  s_4acd5791e25067::t_b5082b2cd4c521 370-374
+cli/src/utils/launch-error-dismiss.ts
+  s_4acd5791e25067::t_d598e6cf3b2422 161
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "98167c77b19a913eba35b37b0bd6b56566312bc3",
+  "prompts": {},
+  "sessions": {
+    "s_4acd5791e25067": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "99042a78-ff1a-414b-b26f-b8b9b3602eda",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
