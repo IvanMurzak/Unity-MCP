@@ -154,27 +154,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
         }
 
 #if UNITY_EDITOR_WIN
-        // Windows-only: this test simulates the abort path that Windows' exclusive
-        // file-share lock triggers when a DLL is loaded by another process. Linux
-        // and macOS use advisory locking — `FileShare.None` does not prevent
-        // `Directory.Delete(recursive: true)` there, so the migration completes
-        // successfully and the assertion fails. Unity's CI runs in a Linux Docker
-        // container; gating on `UNITY_EDITOR_WIN` keeps the assertion honest
-        // without adding a runtime branch in production code.
+        // Windows-only: simulates a `FileShare.None` lock that Unity holds on a
+        // DLL it has loaded into the editor AppDomain. Linux/macOS use advisory
+        // locking — `FileShare.None` does not prevent `File.Delete` there — so
+        // gating on `UNITY_EDITOR_WIN` keeps the assertion honest. The
+        // post-best-effort migration no longer aborts the entire restore on a
+        // single locked file: the call returns `AbortedFileLock` to surface
+        // that some directory is still on disk, but the caller may continue
+        // safely (the locked file's PluginImporter is disabled so the next
+        // domain reload unloads it and the next migration pass cleans it up).
         [Test]
-        public void Run_FileLock_AbortsAndLeavesLegacyIntact()
+        public void Run_FileLock_LeavesBlockedFolderIntactAndReportsAbortedFileLock()
         {
-            // Simulate a Windows file-lock failure. The migration must abort,
-            // surface the failure, and leave the legacy directory intact so the
-            // project is in a recoverable state — not partially migrated.
             CreateLegacyPackage("System.Text.Json", "8.0.5", "System.Text.Json.dll");
             var lockedDll = Path.Combine(_installPath, "System.Text.Json.8.0.5", "System.Text.Json.dll");
 
-            // The migration intentionally surfaces the abort via Debug.LogError
-            // so the user sees it in the Unity Console. Unity's test framework
-            // treats ANY error log as a test failure unless it's explicitly
-            // declared expected.
-            LogAssert.Expect(UnityEngine.LogType.Error, new Regex(@"\[NuGet\] Migration to flat layout aborted"));
+            // Best-effort migration logs a warning (not an error) for blocked folders.
+            LogAssert.Expect(UnityEngine.LogType.Warning, new Regex(@"\[NuGet\] Could not fully remove legacy install directory"));
 
             using (var lockHandle = new FileStream(lockedDll, FileMode.Open, FileAccess.Read, FileShare.None))
             {
@@ -183,34 +179,54 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
                 Assert.AreEqual(NuGetLegacyMigration.Outcome.AbortedFileLock, result.Outcome);
                 Assert.IsNotNull(result.FailedDirectory);
                 Assert.IsNotNull(result.FailureMessage);
-                // Legacy folder still on disk — recoverable state.
+                // Blocked folder still on disk — the next reload picks it back up.
                 Assert.IsTrue(Directory.Exists(Path.Combine(_installPath, "System.Text.Json.8.0.5")));
+            }
+        }
+
+        [Test]
+        public void Run_FileLock_OneFolderBlocked_OtherFoldersAreStillRemoved()
+        {
+            // Mixed state: a blocked folder must NOT prevent unblocked folders
+            // from being cleaned up — that's the whole point of best-effort.
+            CreateLegacyPackage("System.Text.Json", "8.0.5", "System.Text.Json.dll");
+            CreateLegacyPackage("R3", "1.3.0", "R3.dll");
+            var lockedDll = Path.Combine(_installPath, "System.Text.Json.8.0.5", "System.Text.Json.dll");
+
+            LogAssert.Expect(UnityEngine.LogType.Warning, new Regex(@"\[NuGet\] Could not fully remove legacy install directory"));
+
+            using (var lockHandle = new FileStream(lockedDll, FileMode.Open, FileAccess.Read, FileShare.None))
+            {
+                var result = NuGetLegacyMigration.Run(_installPath);
+
+                Assert.AreEqual(NuGetLegacyMigration.Outcome.AbortedFileLock, result.Outcome);
+                Assert.AreEqual(1, result.RemovedDirectories.Count,
+                    "The unblocked folder must still be removed even though a sibling folder was locked.");
+                Assert.IsTrue(Directory.Exists(Path.Combine(_installPath, "System.Text.Json.8.0.5")),
+                    "Blocked folder remains on disk for retry on the next pass.");
+                Assert.IsFalse(Directory.Exists(Path.Combine(_installPath, "R3.1.3.0")),
+                    "Unblocked folder must have been removed.");
             }
         }
 #endif
 
 #if !UNITY_EDITOR_WIN
-        // Unix counterpart of Run_FileLock_AbortsAndLeavesLegacyIntact. The migration
-        // catches both `IOException` (Windows file-lock) and `UnauthorizedAccessException`
-        // (Unix permission denial / antivirus / read-only flags) and treats them
-        // identically — both yield `Outcome.AbortedFileLock`. Here we deny write on
-        // the install-path parent via `chmod 0o500`, which makes `Directory.Delete`
-        // throw `UnauthorizedAccessException` on the final rmdir of the now-empty
-        // legacy subdirectory.
-        //
-        // Self-skips when running as root (e.g. inside the GameCI Unity Docker
-        // container), because the kernel bypasses chmod-based denial for uid=0
-        // and the test would falsely fail. Local non-root Unix dev / CI agents
-        // running as a regular user exercise the abort path for real.
+        // Unix counterpart of Run_FileLock_LeavesBlockedFolderIntactAndReportsAbortedFileLock.
+        // The migration catches both `IOException` (Windows file-lock) and
+        // `UnauthorizedAccessException` (Unix permission denial / antivirus /
+        // read-only flags) inside its per-file delete loop. Here we deny write
+        // on the install-path parent via `chmod 0o500`, which makes
+        // `File.Delete` and the trailing `Directory.Delete` both throw
+        // `UnauthorizedAccessException`. Self-skips when running as root.
         [Test]
-        public void Run_PermissionDenied_AbortsAndLeavesLegacyIntact()
+        public void Run_PermissionDenied_LeavesBlockedFolderIntactAndReportsAbortedFileLock()
         {
             if (geteuid() == 0)
                 Assert.Ignore("chmod-based permission denial is bypassed by the kernel for uid=0; run this test as a non-root user.");
 
             CreateLegacyPackage("System.Text.Json", "8.0.5", "System.Text.Json.dll");
 
-            LogAssert.Expect(UnityEngine.LogType.Error, new Regex(@"\[NuGet\] Migration to flat layout aborted"));
+            LogAssert.Expect(UnityEngine.LogType.Warning, new Regex(@"\[NuGet\] Could not fully remove legacy install directory"));
 
             const uint READ_EXEC_ONLY = 0b101_000_000; // 0o500 — r-x------
             const uint READ_WRITE_EXEC = 0b111_000_000; // 0o700 — rwx------ (TearDown-friendly)
@@ -224,9 +240,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
                 Assert.AreEqual(NuGetLegacyMigration.Outcome.AbortedFileLock, result.Outcome);
                 Assert.IsNotNull(result.FailedDirectory);
                 Assert.IsNotNull(result.FailureMessage);
-                // Legacy folder still on disk (possibly emptied of contents, but
-                // the directory entry itself remains because we couldn't unlink
-                // it from a read-only parent) — recoverable state.
                 Assert.IsTrue(Directory.Exists(Path.Combine(_installPath, "System.Text.Json.8.0.5")));
             }
             finally

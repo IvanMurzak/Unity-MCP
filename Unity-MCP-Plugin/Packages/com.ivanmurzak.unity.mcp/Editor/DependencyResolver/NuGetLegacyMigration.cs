@@ -12,6 +12,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using UnityEditor;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
@@ -27,11 +28,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
     /// short-circuit at the detection probe.
     ///
     /// Failure mode (Windows file lock — see issue #733): if a legacy DLL is
-    /// loaded into the editor AppDomain, <c>Directory.Delete</c> may throw
-    /// <see cref="IOException"/>. The migration aborts the entire restore
-    /// cycle in that case (see <see cref="MigrationAbortedException"/>) — a
-    /// partial migration would leave the project in the duplicate-assembly
-    /// state we're explicitly trying to prevent.
+    /// loaded into the editor AppDomain, <c>File.Delete</c> throws
+    /// <see cref="IOException"/>. The migration is best-effort per file —
+    /// the locked file's <see cref="PluginImporter"/> is disabled so the next
+    /// domain reload unloads the assembly and unlocks the file, then the next
+    /// migration pass deletes it. The caller proceeds with the rest of the
+    /// restore regardless: even if a legacy folder still survives, the
+    /// downstream stale-flat sweep + extraction can still make progress on
+    /// whatever the migration freed up.
     ///
     /// <para>
     /// Asset GUIDs in legacy <c>.meta</c> files are intentionally NOT preserved
@@ -70,9 +74,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             Migrated,
 
             /// <summary>
-            /// A legacy directory could not be removed because of a file lock
-            /// or other I/O error. The caller MUST abort the entire restore
-            /// cycle without writing any new DLLs.
+            /// At least one legacy directory could not be fully removed
+            /// because of a file lock or other I/O error. The migration has
+            /// already done what it could (deleted any unlocked siblings,
+            /// disabled the PluginImporter on locked files); the caller may
+            /// proceed and the next migration pass will pick up the rest.
             /// </summary>
             AbortedFileLock,
         }
@@ -98,21 +104,32 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 
         /// <summary>
         /// Detects and removes legacy <c>{Id}.{Version}/</c> directories under
-        /// <paramref name="installPath"/>. The flat-layout DLLs (if any) and
-        /// the manifest are left untouched.
+        /// <paramref name="installPath"/>. Flat-layout DLLs and the manifest
+        /// are left untouched.
         ///
         /// <para>
-        /// On a clean install or on the second run after a successful first
-        /// migration this returns <see cref="Outcome.NoLegacyState"/> and does
-        /// no I/O beyond the directory enumeration.
+        /// Best-effort per-file deletion: a single locked DLL inside one
+        /// legacy folder no longer aborts the entire migration. Files that
+        /// can be deleted are deleted; files that can't (Windows
+        /// <c>FileShare.None</c> lock when Unity has the assembly loaded into
+        /// the editor AppDomain, antivirus quarantine, read-only flags) are
+        /// logged and have their <c>PluginImporter</c> disabled so the next
+        /// domain reload unloads them and unlocks the file — the next
+        /// migration pass then completes the deletion. The caller may always
+        /// continue past this method; the downstream stale-flat sweep
+        /// (<see cref="NuGetPackageInstaller.RemoveStaleVersionDllsByStem"/>)
+        /// and extraction can still make progress on whatever the migration
+        /// freed up.
         /// </para>
         ///
         /// <para>
-        /// On a file-lock failure, this returns <see cref="Outcome.AbortedFileLock"/>
-        /// with the offending directory and message. The caller MUST abort the
-        /// rest of the restore — the legacy DLLs are still on disk and writing
-        /// flat-layout DLLs alongside them would brick the project with
-        /// duplicate-assembly compile errors.
+        /// Outcomes: <see cref="Outcome.NoLegacyState"/> when no legacy
+        /// directory was found; <see cref="Outcome.Migrated"/> when every
+        /// legacy directory was fully removed;
+        /// <see cref="Outcome.AbortedFileLock"/> when at least one directory
+        /// could not be fully removed. <see cref="Result.FailedDirectory"/>
+        /// reports the first such directory; the warning log enumerates them
+        /// all.
         /// </para>
         /// </summary>
         public static Result Run(string installPath)
@@ -139,63 +156,135 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 
             Debug.Log($"{Tag} Legacy install detected: {legacyDirs.Count} directories to migrate to flat layout (issue #733).");
 
+            string? firstFailedDir = null;
+            string? firstFailureMessage = null;
+
             foreach (var dir in legacyDirs)
             {
-                var dirName = Path.GetFileName(dir);
                 Debug.Log($"{Tag} Migrating legacy install: removing {dir} (replaced by flat layout in #733)");
 
-                try
+                if (TryRemoveDirectoryRecursive(dir, out var failureMessage))
                 {
-                    Directory.Delete(dir, recursive: true);
-                }
-                catch (IOException ex)
-                {
-                    // Common on Windows when a DLL inside the legacy directory
-                    // is loaded into the running editor AppDomain.
-                    var message = BuildLockMessage(dir, ex);
-                    Debug.LogError(message);
-                    return new Result(Outcome.AbortedFileLock, removed, dir, message);
-                }
-                catch (UnauthorizedAccessException ex)
-                {
-                    // Antivirus / permissions / read-only flags. Same recovery
-                    // story as a file lock — abort, surface, retry next reload.
-                    var message = BuildLockMessage(dir, ex);
-                    Debug.LogError(message);
-                    return new Result(Outcome.AbortedFileLock, removed, dir, message);
+                    TryDeleteFile(dir + ".meta");
+                    removed.Add(dir);
+                    continue;
                 }
 
-                var metaFile = dir + ".meta";
-                if (File.Exists(metaFile))
+                if (firstFailedDir == null)
                 {
-                    try { File.Delete(metaFile); }
-                    catch (Exception ex)
-                    {
-                        // Losing a .meta file isn't load-bearing on the
-                        // upgrade path — Unity will regenerate it. Log and
-                        // keep going so the rest of the migration can finish.
-                        Debug.LogWarning($"{Tag} Failed to delete legacy meta '{metaFile}': {ex.Message}");
-                    }
+                    firstFailedDir = dir;
+                    firstFailureMessage = failureMessage;
                 }
-
-                removed.Add(dir);
+                Debug.LogWarning(BuildLockMessage(dir, failureMessage));
             }
+
+            if (firstFailedDir != null)
+                return new Result(Outcome.AbortedFileLock, removed, firstFailedDir, firstFailureMessage);
 
             Debug.Log($"{Tag} Migration complete: {removed.Count} legacy directories removed; flat layout active");
             return new Result(Outcome.Migrated, removed);
         }
 
-        static string BuildLockMessage(string directory, Exception ex)
+        /// <summary>
+        /// Best-effort recursive delete that does not throw. Returns true only
+        /// when the directory is gone after the call. On a per-file
+        /// IOException / UnauthorizedAccessException, disables the file's
+        /// <see cref="PluginImporter"/> (when applicable) so the next domain
+        /// reload unloads it and the next migration pass can finish — without
+        /// this, a single locked DLL inside an otherwise-deletable folder
+        /// would keep the user pinned in the duplicate-assembly state forever.
+        /// </summary>
+        static bool TryRemoveDirectoryRecursive(string dir, out string? failureMessage)
+        {
+            failureMessage = null;
+
+            foreach (var subDir in Directory.GetDirectories(dir))
+            {
+                if (!TryRemoveDirectoryRecursive(subDir, out var subFailure))
+                    failureMessage ??= subFailure;
+            }
+
+            foreach (var file in Directory.GetFiles(dir))
+            {
+                try
+                {
+                    File.Delete(file);
+                }
+                catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                {
+                    failureMessage ??= ex.Message;
+                    DisablePluginImporter(file);
+                }
+            }
+
+            try
+            {
+                Directory.Delete(dir);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                failureMessage ??= ex.Message;
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Sets the file's <see cref="PluginImporter"/> compatibility to "no
+        /// platforms" so Unity unloads the DLL on the next domain reload,
+        /// freeing the OS file handle. Safe to call on non-DLL files (no-op).
+        /// </summary>
+        static void DisablePluginImporter(string filePath)
+        {
+            if (!filePath.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
+                return;
+
+            // Asset paths use forward slashes and are project-relative;
+            // installPath is already in that form, so the file path inherits it
+            // on macOS/Linux, but Windows Path APIs may have inserted '\'.
+            var assetPath = filePath.Replace('\\', '/');
+
+            try
+            {
+                if (!(AssetImporter.GetAtPath(assetPath) is PluginImporter importer))
+                    return;
+
+                importer.SetCompatibleWithAnyPlatform(false);
+                importer.SetCompatibleWithEditor(false);
+                importer.SaveAndReimport();
+
+                Debug.Log($"{Tag} Disabled PluginImporter for locked '{assetPath}'; deletion will be retried after the next domain reload.");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"{Tag} Could not disable PluginImporter for '{assetPath}': {ex.Message}");
+            }
+        }
+
+        static void TryDeleteFile(string path)
+        {
+            if (!File.Exists(path))
+                return;
+            try
+            {
+                File.Delete(path);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"{Tag} Failed to delete '{path}': {ex.Message}");
+            }
+        }
+
+        static string BuildLockMessage(string directory, string? reason)
         {
             return
-                $"{Tag} Migration to flat layout aborted — could not remove legacy install directory:\n" +
+                $"{Tag} Could not fully remove legacy install directory:\n" +
                 $"  {directory}\n\n" +
-                $"  Reason: {ex.Message}\n\n" +
-                "On Windows this typically means a DLL inside the legacy folder is loaded into " +
-                "the editor AppDomain. Restart Unity to drop the AppDomain and the migration " +
-                "will retry on the next domain reload. The legacy folders are intentionally left " +
-                "intact; no flat-layout DLLs will be written until migration succeeds (otherwise " +
-                "the project would end up with duplicate copies of every assembly).";
+                (reason != null ? $"  Reason: {reason}\n\n" : "") +
+                "On Windows this typically means a DLL inside the legacy folder is loaded " +
+                "into the editor AppDomain. The PluginImporter for the locked DLL has been " +
+                "disabled so the next domain reload will unload it; the next migration pass " +
+                "will retry the deletion. Restart Unity if the warning persists.";
         }
     }
 }

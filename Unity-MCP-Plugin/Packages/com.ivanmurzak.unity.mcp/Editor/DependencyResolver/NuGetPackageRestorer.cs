@@ -49,19 +49,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 if (!Directory.Exists(NuGetConfig.InstallPath))
                     Directory.CreateDirectory(NuGetConfig.InstallPath);
 
-                // One-shot migration from the legacy {Id}.{Version}/ layout. After the first
-                // successful pass this short-circuits at NoLegacyState in O(directory listing).
+                // One-shot migration from the legacy {Id}.{Version}/ layout. Best-effort:
+                // a locked DLL in one folder no longer aborts the entire restore — the
+                // migration removes whatever it can, disables the PluginImporter on
+                // anything still locked so the next domain reload unloads it, and the
+                // downstream stale-flat sweep + extraction continue regardless. The
+                // legacy folder will finish disappearing on a subsequent migration pass.
                 var migration = NuGetLegacyMigration.Run(NuGetConfig.InstallPath);
-                if (migration.Outcome == NuGetLegacyMigration.Outcome.AbortedFileLock)
+                if (migration.Outcome == NuGetLegacyMigration.Outcome.Migrated
+                    || migration.Outcome == NuGetLegacyMigration.Outcome.AbortedFileLock)
                 {
-                    // Cannot continue safely — extracting flat-layout DLLs alongside the
-                    // surviving legacy folders would brick the project with duplicate-assembly
-                    // errors. Leave everything where it is and report; the next domain reload
-                    // (after the user closes whatever held the lock) will retry.
-                    return false;
-                }
-                if (migration.Outcome == NuGetLegacyMigration.Outcome.Migrated)
                     anyChanged = true;
+                }
 
                 // Manifest disaster recovery: rebuild from on-disk versioned
                 // filenames when .nuget-installed.json is missing. The
