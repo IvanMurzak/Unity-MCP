@@ -367,8 +367,11 @@ export interface _PollAndDismissOptionsForTests {
   abortSignal?: AbortSignal;
   /**
    * Grace window (ms) after polling starts: if no dialog has been
-   * observed within this window, exit early. Defaults to 3000.
-   * Test override only — production callers do not configure this.
+   * observed within this window, exit early. Test override only —
+   * production callers do not configure this.
+   *
+   * @see PollAndDismissOptions.noDialogGraceMs for the production
+   * default and rationale.
    */
   noDialogGraceMs?: number;
 }

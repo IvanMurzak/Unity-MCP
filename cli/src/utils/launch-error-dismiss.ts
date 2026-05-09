@@ -158,7 +158,7 @@ namespace UnityMcp.LaunchErrors {
     [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
     [DllImport("user32.dll", CharSet=CharSet.Unicode)] static extern IntPtr SendMessageW(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
     const uint BM_CLICK = 0x00F5;
-    static readonly string[] TitleFragments = new[] { "Safe Mode", "Compiler Errors", "Hold On", "Compile Errors", "Scripts have compiler errors" };
+    static readonly string[] TitleFragments = new[] { ${LAUNCH_ERROR_DIALOG_TITLE_FRAGMENTS.map((f) => JSON.stringify(f)).join(', ')} };
     static readonly string[] ButtonLabels = new[] { "${DISMISS_BUTTON_LABEL}", "&${DISMISS_BUTTON_LABEL}" };
     public static string TryDismiss(int[] unityPids) {
       var unityPidSet = new HashSet<uint>();
