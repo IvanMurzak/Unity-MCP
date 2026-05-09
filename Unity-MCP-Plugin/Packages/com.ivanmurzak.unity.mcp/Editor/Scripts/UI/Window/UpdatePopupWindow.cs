@@ -11,6 +11,7 @@
 #nullable enable
 
 using System;
+using System.IO;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using R3;
 using UnityEditor;
@@ -169,8 +170,55 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             if (installButton != null)
                 installButton.text = "Installing...";
 
+            // Wipe Library/ScriptAssemblies so Unity recompiles every assembly
+            // from the fresh package source on the post-install reload. Without
+            // this, if user-asmdef compile errors persist long enough that
+            // Unity skips a domain reload, the AppDomain keeps the OLD plugin
+            // assemblies loaded and the new resolver code never starts running
+            // even though it's already on disk.
+            WipeScriptAssembliesCache();
+
             addRequest = Client.Add($"{PackageId}@{latestVersion}");
             EditorApplication.update += OnPackageInstallProgress;
+        }
+
+        /// <summary>
+        /// Best-effort recursive delete of <c>Library/ScriptAssemblies/</c>.
+        /// Tries the atomic <see cref="Directory.Delete(string, bool)"/> first
+        /// and falls back to per-file deletion if any single file is locked
+        /// (the currently-loaded plugin DLLs are mmapped into the editor
+        /// AppDomain, so on Windows the file handle may still be held).
+        /// Whatever survives the wipe will be overwritten by Unity's
+        /// post-install recompile anyway; the goal is just to maximize the
+        /// chance of a clean rebuild without requiring the user to close
+        /// Unity and delete the folder by hand.
+        /// </summary>
+        private static void WipeScriptAssembliesCache()
+        {
+            // Application.dataPath is the absolute path to Assets/; Library/
+            // is its sibling at the project root.
+            var path = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Library", "ScriptAssemblies"));
+            if (!Directory.Exists(path))
+                return;
+
+            try
+            {
+                Directory.Delete(path, recursive: true);
+                Debug.Log($"[Update] Wiped {path} — Unity will recompile every assembly after the update.");
+                return;
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+            {
+                // Fall through to per-file best-effort.
+            }
+
+            var locked = 0;
+            foreach (var file in Directory.GetFiles(path, "*", SearchOption.AllDirectories))
+            {
+                try { File.Delete(file); }
+                catch { locked++; }
+            }
+            Debug.LogWarning($"[Update] Could not fully wipe {path} ({locked} locked file(s) survived); Unity will recompile what it can after the update.");
         }
 
         private void OnPackageInstallProgress()
