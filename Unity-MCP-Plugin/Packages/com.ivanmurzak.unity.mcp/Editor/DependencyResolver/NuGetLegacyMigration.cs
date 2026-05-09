@@ -12,7 +12,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using UnityEditor;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
@@ -213,7 +212,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
                 {
                     failureMessage ??= ex.Message;
-                    DisablePluginImporter(file);
+                    NuGetPluginConfigurator.DisableImporter(file);
                 }
             }
 
@@ -226,38 +225,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             {
                 failureMessage ??= ex.Message;
                 return false;
-            }
-        }
-
-        /// <summary>
-        /// Sets the file's <see cref="PluginImporter"/> compatibility to "no
-        /// platforms" so Unity unloads the DLL on the next domain reload,
-        /// freeing the OS file handle. Safe to call on non-DLL files (no-op).
-        /// </summary>
-        static void DisablePluginImporter(string filePath)
-        {
-            if (!filePath.EndsWith(".dll", StringComparison.OrdinalIgnoreCase))
-                return;
-
-            // Asset paths use forward slashes and are project-relative;
-            // installPath is already in that form, so the file path inherits it
-            // on macOS/Linux, but Windows Path APIs may have inserted '\'.
-            var assetPath = filePath.Replace('\\', '/');
-
-            try
-            {
-                if (!(AssetImporter.GetAtPath(assetPath) is PluginImporter importer))
-                    return;
-
-                importer.SetCompatibleWithAnyPlatform(false);
-                importer.SetCompatibleWithEditor(false);
-                importer.SaveAndReimport();
-
-                Debug.Log($"{Tag} Disabled PluginImporter for locked '{assetPath}'; deletion will be retried after the next domain reload.");
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning($"{Tag} Could not disable PluginImporter for '{assetPath}': {ex.Message}");
             }
         }
 

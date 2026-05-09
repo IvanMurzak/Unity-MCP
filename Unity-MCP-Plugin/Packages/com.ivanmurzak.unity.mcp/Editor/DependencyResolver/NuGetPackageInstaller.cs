@@ -400,9 +400,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     continue;
 
                 Debug.Log($"{Tag} Removing stale '{fileName}' from install path — superseded by {packageId} {keepVersion}.");
-                TryDeleteFile(dllPath);
-                TryDeleteFile(dllPath + ".meta");
-                anyRemoved = true;
+                try
+                {
+                    File.Delete(dllPath);
+                    TryDeleteFile(dllPath + ".meta");
+                    anyRemoved = true;
+                }
+                catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                {
+                    // Stale flat is loaded into the editor AppDomain (this is the
+                    // user's CS1704 scenario where the old version and the
+                    // canonical conflict). Disable the importer so the next
+                    // domain reload unloads the assembly and frees the file
+                    // handle; the next sweep pass on the reload will delete it.
+                    Debug.LogWarning($"{Tag} Could not delete stale '{fileName}': {ex.Message}; disabling its PluginImporter for next-reload retry.");
+                    NuGetPluginConfigurator.DisableImporter(dllPath);
+                }
             }
 
             return anyRemoved;
