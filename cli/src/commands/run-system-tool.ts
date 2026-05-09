@@ -3,6 +3,8 @@ import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
 import { resolveAndValidateProjectPath, resolveConnection } from '../utils/connection.js';
 import { parseInput } from '../utils/input.js';
+import { runSystemTool } from '../lib/run-tool.js';
+import type { RunToolFailure } from '../lib/types.js';
 
 interface RunSystemToolOptions {
   path?: string;
@@ -34,13 +36,7 @@ export const runSystemToolCommand = new Command('run-system-tool')
     verbose(`System tool: ${toolName}`);
     verbose(`Endpoint: ${endpoint}`);
     verbose(`Body: ${body}`);
-
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-
     if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
       verbose(`Authorization header set (source: ${options.token ? '--token flag' : 'config'})`);
     }
 
@@ -63,84 +59,92 @@ export const runSystemToolCommand = new Command('run-system-tool')
       ui.error(`Invalid --timeout value: "${options.timeout}". Must be a positive integer (milliseconds).`);
       process.exit(1);
     }
-    const controller = new AbortController();
-    const fetchTimeout = setTimeout(() => controller.abort(), timeoutMs);
 
-    try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers,
-        body,
-        signal: controller.signal,
-      });
+    const result = await runSystemTool({
+      toolName,
+      url: baseUrl,
+      ...(token ? { token } : {}),
+      input: body,
+      timeoutMs,
+    });
 
-      const responseText = await response.text();
-      let responseData: unknown;
-      try {
-        responseData = JSON.parse(responseText);
-      } catch {
-        responseData = responseText;
-      }
-
-      if (!response.ok) {
-        spinner?.stop();
-        if (options.raw) {
-          process.stdout.write(responseText);
-        } else {
-          ui.error(`HTTP ${response.status}: ${response.statusText}`);
-          if (responseData) {
-            ui.info(typeof responseData === 'string'
-              ? responseData
-              : JSON.stringify(responseData, null, 2));
-          }
-        }
-        process.exit(1);
-      }
-
+    if (result.kind === 'success') {
       spinner?.success(`${toolName} completed`);
-
+      const responseText = stringifyForRaw(result.data);
       if (options.raw) {
         process.stdout.write(responseText);
       } else {
         ui.success('Response:');
-        console.log(typeof responseData === 'string'
-          ? responseData
-          : JSON.stringify(responseData, null, 2));
+        console.log(typeof result.data === 'string'
+          ? result.data
+          : JSON.stringify(result.data, null, 2));
       }
-    } catch (err) {
-      spinner?.stop();
-      const isTimeout = err instanceof Error && err.name === 'AbortError';
-      const cause = err instanceof Error && 'cause' in err ? (err.cause as Error & { code?: string }) : null;
-      const causeCode = cause?.code ?? '';
-      const rootMessage = cause?.message || causeCode || (err instanceof Error ? err.message : String(err));
-      const errorSignature = `${rootMessage} ${causeCode}`;
-      const isConnectionRefused = errorSignature.includes('ECONNREFUSED');
-      const isConnectionReset = errorSignature.includes('ECONNRESET');
-      const isNetworkError = errorSignature.includes('EAI_AGAIN') || errorSignature.includes('ENOTFOUND');
+      return;
+    }
 
-      let displayMessage: string;
-      if (isTimeout) {
-        displayMessage = `System tool call timed out after ${timeoutMs / 1000} seconds: ${toolName}`;
-      } else if (isConnectionRefused) {
-        displayMessage = `Connection refused at ${endpoint}. Is the MCP server running? Start Unity Editor with the MCP plugin first.`;
-      } else if (isConnectionReset) {
-        displayMessage = `Connection was reset by the server at ${endpoint}. The server may have crashed or restarted.`;
-      } else if (isNetworkError) {
-        displayMessage = `Cannot reach ${endpoint}. Check your network connection and server URL.`;
+    spinner?.stop();
+    handleFailure(result, { toolName, endpoint, raw: options.raw, timeoutMs });
+  });
+
+function stringifyForRaw(data: unknown): string {
+  if (typeof data === 'string') return data;
+  if (data === undefined) return '';
+  return JSON.stringify(data);
+}
+
+interface FailureContext {
+  toolName: string;
+  endpoint: string;
+  raw: boolean | undefined;
+  timeoutMs: number;
+}
+
+function handleFailure(failure: RunToolFailure, ctx: FailureContext): never {
+  switch (failure.reason) {
+    case 'http-error': {
+      if (ctx.raw) {
+        process.stdout.write(stringifyForRaw(failure.data));
       } else {
-        displayMessage = `${rootMessage}`;
-        if (cause && cause.message !== rootMessage) {
-          displayMessage += ` (${cause.message})`;
+        ui.error(`HTTP ${failure.httpStatus}: ${failure.message}`);
+        if (failure.data !== undefined) {
+          ui.info(typeof failure.data === 'string'
+            ? failure.data
+            : JSON.stringify(failure.data, null, 2));
         }
       }
-
-      if (options.raw) {
-        process.stderr.write(displayMessage + '\n');
-      } else {
-        ui.error(`Failed to call system tool: ${displayMessage}`);
-      }
       process.exit(1);
-    } finally {
-      clearTimeout(fetchTimeout);
     }
-  });
+    case 'timeout': {
+      const message = `System tool call timed out after ${ctx.timeoutMs / 1000} seconds: ${ctx.toolName}`;
+      if (ctx.raw) process.stderr.write(message + '\n');
+      else ui.error(`Failed to call system tool: ${message}`);
+      process.exit(1);
+    }
+    case 'connection-refused': {
+      const message = `Connection refused at ${ctx.endpoint}. Is the MCP server running? Start Unity Editor with the MCP plugin first.`;
+      if (ctx.raw) process.stderr.write(message + '\n');
+      else ui.error(`Failed to call system tool: ${message}`);
+      process.exit(1);
+    }
+    case 'connection-reset': {
+      const message = `Connection was reset by the server at ${ctx.endpoint}. The server may have crashed or restarted.`;
+      if (ctx.raw) process.stderr.write(message + '\n');
+      else ui.error(`Failed to call system tool: ${message}`);
+      process.exit(1);
+    }
+    case 'network-error': {
+      const message = `Cannot reach ${ctx.endpoint}. Check your network connection and server URL.`;
+      if (ctx.raw) process.stderr.write(message + '\n');
+      else ui.error(`Failed to call system tool: ${message}`);
+      process.exit(1);
+    }
+    case 'invalid-input':
+    case 'unknown':
+    default: {
+      const message = failure.message;
+      if (ctx.raw) process.stderr.write(message + '\n');
+      else ui.error(`Failed to call system tool: ${message}`);
+      process.exit(1);
+    }
+  }
+}

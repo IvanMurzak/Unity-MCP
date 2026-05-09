@@ -21,6 +21,7 @@ export { removePlugin } from './lib/remove-plugin.js';
 export { configure } from './lib/configure.js';
 export { setupMcp, listAgentIds } from './lib/setup-mcp.js';
 export { openProject } from './lib/open.js';
+export { runTool, runSystemTool } from './lib/run-tool.js';
 
 export type {
   // Shared
@@ -58,4 +59,14 @@ export type {
   OpenProjectFailure,
   OpenProjectAuthOption,
   OpenProjectTransport,
+  // run-tool / run-system-tool
+  RunToolOptions,
+  RunToolResult,
+  RunToolSuccess,
+  RunToolFailure,
+  RunToolFailureReason,
+  RunSystemToolOptions,
+  RunSystemToolResult,
+  RunSystemToolSuccess,
+  RunSystemToolFailure,
 } from './lib/types.js';

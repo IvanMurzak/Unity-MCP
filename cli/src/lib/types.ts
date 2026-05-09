@@ -417,3 +417,128 @@ export interface OpenEnvInputs {
   transport?: OpenProjectOptions['transport'];
   startServer?: OpenProjectOptions['startServer'];
 }
+
+// ---------------------------------------------------------------------------
+// run-tool / run-system-tool
+// ---------------------------------------------------------------------------
+
+/**
+ * Coarse failure category for {@link RunToolFailure}. Mirrors the
+ * branches the CLI's `run-tool` command surfaces in its error path so
+ * library consumers can render the same diagnostics without re-deriving
+ * them from the underlying `Error`.
+ */
+export type RunToolFailureReason =
+  | 'invalid-input'
+  | 'connection-refused'
+  | 'connection-reset'
+  | 'network-error'
+  | 'timeout'
+  | 'http-error'
+  | 'unknown';
+
+/**
+ * Options accepted by both {@link runTool} and {@link runSystemTool}.
+ *
+ * Either `unityProjectPath` (preferred — resolves URL + token from the
+ * project's `UserSettings/AI-Game-Developer-Config.json`, falling back
+ * to a deterministic localhost port when the file is absent) or `url`
+ * (explicit endpoint override) MUST be provided.
+ */
+export interface RunToolOptions {
+  /**
+   * Tool name to invoke. Forwarded as the `{name}` segment of the
+   * route — the function URL-encodes it before issuing the request.
+   */
+  toolName: string;
+  /**
+   * Absolute or relative path to the Unity project. Used to read the
+   * project's config (host + token) and, as a last resort, to derive
+   * the deterministic localhost port mirroring the C# plugin's hash.
+   */
+  unityProjectPath?: string;
+  /** Explicit base URL override (no trailing slash required). */
+  url?: string;
+  /** Bearer token override. */
+  token?: string;
+  /**
+   * Tool arguments, serialized as the JSON request body. When omitted,
+   * the body is `{}`. Anything other than `undefined` / `null` /
+   * `object` is rejected with a `kind: 'failure'` result.
+   */
+  input?: unknown;
+  /**
+   * Per-request timeout in milliseconds. Defaults to `60000` (matching
+   * the CLI command's `--timeout` default). Values <= 0 are treated as
+   * the default to keep accidental "0 = disable" mistakes from
+   * stalling polling callers.
+   */
+  timeoutMs?: number;
+  /**
+   * Optional abort signal. When fired, the in-flight fetch is
+   * cancelled and the result resolves to a `kind: 'failure'` with
+   * `reason: 'timeout'`.
+   */
+  signal?: AbortSignal;
+  /**
+   * Optional injection point so tests can swap the `fetch`
+   * implementation. Defaults to the global `fetch`.
+   */
+  fetchImpl?: typeof fetch;
+}
+
+/** Successful `runTool` / `runSystemTool` outcome. Narrow with `kind === 'success'`. */
+export interface RunToolSuccess {
+  kind: 'success';
+  /** Always `true` for the success variant. Wire-compatible alias for `kind === 'success'`. */
+  success: true;
+  /** Resolved endpoint URL that was hit (post URL/token resolution). */
+  endpoint: string;
+  /** HTTP status code returned by the Unity plugin. */
+  httpStatus: number;
+  /**
+   * Parsed response body. The Unity plugin returns
+   * `{ status: "success", structured?: <tool output>, content?: <text blocks[]> }`
+   * — consumers typically read `data.structured` or `data.content`
+   * depending on whether the invoked tool returns structured content.
+   * Non-JSON responses surface the raw text string.
+   */
+  data: unknown;
+}
+
+/** Failed `runTool` / `runSystemTool` outcome. Narrow with `kind === 'failure'`. */
+export interface RunToolFailure {
+  kind: 'failure';
+  /** Always `false` for the failure variant. Wire-compatible alias for `kind === 'failure'`. */
+  success: false;
+  /**
+   * Resolved endpoint URL. Empty string when the failure is
+   * `reason: 'invalid-input'` and resolution never happened.
+   */
+  endpoint: string;
+  /** Coarse cause — see {@link RunToolFailureReason}. */
+  reason: RunToolFailureReason;
+  /** HTTP status code when `reason === 'http-error'`. */
+  httpStatus?: number;
+  /**
+   * Response body for diagnostics on `http-error` (parsed JSON when the
+   * server returned JSON, otherwise the raw text). Omitted on transport
+   * failures where no response was received.
+   */
+  data?: unknown;
+  /** Human-readable failure summary; never thrown past the public boundary. */
+  message: string;
+  /** Captured error, when applicable. */
+  error?: Error;
+}
+
+export type RunToolResult = RunToolSuccess | RunToolFailure;
+
+/** Alias kept for symmetry with `RunToolOptions` — same shape. */
+export type RunSystemToolOptions = RunToolOptions;
+/** Alias for `RunToolResult`; a system tool call returns the same shape. */
+export type RunSystemToolResult = RunToolResult;
+/** Alias for `RunToolSuccess`. */
+export type RunSystemToolSuccess = RunToolSuccess;
+/** Alias for `RunToolFailure`. */
+export type RunSystemToolFailure = RunToolFailure;

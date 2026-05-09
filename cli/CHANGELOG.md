@@ -5,6 +5,37 @@ All notable changes to `unity-mcp-cli` will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **`runTool` / `runSystemTool` library functions.** The HTTP-tool
+  invocation paths previously available only as the `run-tool` /
+  `run-system-tool` CLI commands are now first-class library exports:
+
+  ```ts
+  import { runTool, runSystemTool } from 'unity-mcp-cli';
+
+  const result = await runTool({
+    toolName: 'tool-list',
+    unityProjectPath: '/path/to/Unity/project',
+    input: { regexSearch: 'gameobject', includeDescription: true },
+  });
+  if (result.kind === 'success') {
+    // result.data === parsed JSON body from the Unity plugin
+  }
+  ```
+
+  Same URL/token resolution priority as the CLI commands (explicit
+  override → project config → deterministic localhost port). Returns
+  a discriminated `{ kind: 'success' | 'failure', ... }` union; never
+  throws past the public boundary; emits no console output.
+
+### Changed
+
+- **`run-tool` / `run-system-tool` commands** now delegate to the new
+  library functions internally. CLI behaviour is unchanged.
+
 ## [0.67.0] - 2026-04-21
 
 ### Added
