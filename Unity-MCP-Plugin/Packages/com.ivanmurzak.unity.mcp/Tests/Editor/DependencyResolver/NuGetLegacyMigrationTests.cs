@@ -10,6 +10,7 @@
 
 #nullable enable
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
 using NUnit.Framework;
 using UnityEngine.TestTools;
@@ -129,6 +130,38 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
         }
 
         [Test]
+        public void Run_LegacyDirWithSemVerPrerelease_RemovedAsLegacy()
+        {
+            // NuGet folder names can contain SemVer prerelease / build-metadata
+            // suffixes (e.g. `Microsoft.AspNetCore.SignalR.Client.8.0.15-preview`).
+            // System.Version.TryParse rejects those tails, so an earlier version
+            // of the migration silently left those folders on disk and the user
+            // ended up with both the legacy nested DLL and the new flat-layout
+            // DLL coexisting — duplicate-assembly compile errors. Pin the
+            // SemVer-shape fallback in `ExtractPackageIdFromDirName` so the
+            // migration removes them.
+            CreateLegacyPackage("Foo.Bar", "1.0.0-preview", "Foo.Bar.dll");
+            CreateLegacyPackage("Baz", "2.3.4+build.42", "Baz.dll");
+            CreateLegacyPackage("Qux", "1.0.0-rc.1", "Qux.dll");
+
+            var result = NuGetLegacyMigration.Run(_installPath);
+
+            Assert.AreEqual(NuGetLegacyMigration.Outcome.Migrated, result.Outcome);
+            Assert.AreEqual(3, result.RemovedDirectories.Count);
+            Assert.IsFalse(Directory.Exists(Path.Combine(_installPath, "Foo.Bar.1.0.0-preview")));
+            Assert.IsFalse(Directory.Exists(Path.Combine(_installPath, "Baz.2.3.4+build.42")));
+            Assert.IsFalse(Directory.Exists(Path.Combine(_installPath, "Qux.1.0.0-rc.1")));
+        }
+
+#if UNITY_EDITOR_WIN
+        // Windows-only: this test simulates the abort path that Windows' exclusive
+        // file-share lock triggers when a DLL is loaded by another process. Linux
+        // and macOS use advisory locking — `FileShare.None` does not prevent
+        // `Directory.Delete(recursive: true)` there, so the migration completes
+        // successfully and the assertion fails. Unity's CI runs in a Linux Docker
+        // container; gating on `UNITY_EDITOR_WIN` keeps the assertion honest
+        // without adding a runtime branch in production code.
+        [Test]
         public void Run_FileLock_AbortsAndLeavesLegacyIntact()
         {
             // Simulate a Windows file-lock failure. The migration must abort,
@@ -154,6 +187,61 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
                 Assert.IsTrue(Directory.Exists(Path.Combine(_installPath, "System.Text.Json.8.0.5")));
             }
         }
+#endif
+
+#if !UNITY_EDITOR_WIN
+        // Unix counterpart of Run_FileLock_AbortsAndLeavesLegacyIntact. The migration
+        // catches both `IOException` (Windows file-lock) and `UnauthorizedAccessException`
+        // (Unix permission denial / antivirus / read-only flags) and treats them
+        // identically — both yield `Outcome.AbortedFileLock`. Here we deny write on
+        // the install-path parent via `chmod 0o500`, which makes `Directory.Delete`
+        // throw `UnauthorizedAccessException` on the final rmdir of the now-empty
+        // legacy subdirectory.
+        //
+        // Self-skips when running as root (e.g. inside the GameCI Unity Docker
+        // container), because the kernel bypasses chmod-based denial for uid=0
+        // and the test would falsely fail. Local non-root Unix dev / CI agents
+        // running as a regular user exercise the abort path for real.
+        [Test]
+        public void Run_PermissionDenied_AbortsAndLeavesLegacyIntact()
+        {
+            if (geteuid() == 0)
+                Assert.Ignore("chmod-based permission denial is bypassed by the kernel for uid=0; run this test as a non-root user.");
+
+            CreateLegacyPackage("System.Text.Json", "8.0.5", "System.Text.Json.dll");
+
+            LogAssert.Expect(UnityEngine.LogType.Error, new Regex(@"\[NuGet\] Migration to flat layout aborted"));
+
+            const uint READ_EXEC_ONLY = 0b101_000_000; // 0o500 — r-x------
+            const uint READ_WRITE_EXEC = 0b111_000_000; // 0o700 — rwx------ (TearDown-friendly)
+            if (chmod(_installPath, READ_EXEC_ONLY) != 0)
+                Assert.Inconclusive($"chmod {_installPath} -> 0o500 failed (errno={Marshal.GetLastWin32Error()})");
+
+            try
+            {
+                var result = NuGetLegacyMigration.Run(_installPath);
+
+                Assert.AreEqual(NuGetLegacyMigration.Outcome.AbortedFileLock, result.Outcome);
+                Assert.IsNotNull(result.FailedDirectory);
+                Assert.IsNotNull(result.FailureMessage);
+                // Legacy folder still on disk (possibly emptied of contents, but
+                // the directory entry itself remains because we couldn't unlink
+                // it from a read-only parent) — recoverable state.
+                Assert.IsTrue(Directory.Exists(Path.Combine(_installPath, "System.Text.Json.8.0.5")));
+            }
+            finally
+            {
+                // Always restore so [TearDown]'s recursive delete of `_installPath` succeeds.
+                chmod(_installPath, READ_WRITE_EXEC);
+            }
+        }
+
+        [DllImport("libc", SetLastError = true)]
+        static extern int chmod(string pathname, uint mode);
+
+        [DllImport("libc", SetLastError = true)]
+        static extern uint geteuid();
+#endif
 
         /// <summary>
         /// Creates a fake legacy <c>{Id}.{Version}/</c> directory with the

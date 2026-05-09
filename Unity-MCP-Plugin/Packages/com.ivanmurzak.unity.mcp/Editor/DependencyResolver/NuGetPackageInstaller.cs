@@ -504,11 +504,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     continue;
 
                 var versionPart = string.Join(".", parts.Skip(i));
-                if (System.Version.TryParse(versionPart, out _))
+                // System.Version.TryParse only accepts plain Major.Minor[.Build[.Revision]];
+                // it rejects SemVer prerelease / build-metadata suffixes like
+                // "1.0.0-preview" or "1.2.3+build.42". NuGet packages legitimately use
+                // those (e.g. Microsoft.AspNetCore.SignalR.Client.8.0.15-preview), so
+                // fall through to a SemVer-shape regex when System.Version refuses,
+                // otherwise the migration silently leaves those legacy folders on disk
+                // and the user ends up with duplicate-DLL compile errors.
+                if (System.Version.TryParse(versionPart, out _) || SemVerShape.IsMatch(versionPart))
                     return string.Join(".", parts.Take(i));
             }
             return null;
         }
+
+        // Matches a SemVer 2.0 version tail: at least Major.Minor (numeric, dot-separated),
+        // optionally followed by a `-prerelease` or `+build-metadata` segment whose body
+        // can include word chars, dots, dashes, and pluses. Used as a fallback when
+        // System.Version.TryParse refuses an otherwise-valid NuGet folder version.
+        static readonly System.Text.RegularExpressions.Regex SemVerShape = new System.Text.RegularExpressions.Regex(
+            @"^\d+(\.\d+)+([-+][\w.+-]+)?$",
+            System.Text.RegularExpressions.RegexOptions.CultureInvariant);
 
         /// <summary>
         /// Compares two version strings. Returns -1, 0, or 1.
