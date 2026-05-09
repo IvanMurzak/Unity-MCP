@@ -329,10 +329,14 @@ export interface OpenProjectOptions {
    * `wait-for-ready` poll) so the dismissal loop does not keep
    * ticking after Unity has finished initialising.
    *
-   * When omitted, the loop falls back to a short grace window after
-   * the editor process is spawned: if no dialog has been observed
-   * within ~3s of polling, the loop exits early on the assumption
-   * that the dialog is not going to appear for this launch.
+   * When omitted, the loop falls back to a grace window after the
+   * editor process is spawned: if no dialog has been observed within
+   * ~15s of polling, the loop exits early on the assumption that the
+   * dialog is not going to appear for this launch. The grace window
+   * has to cover Unity's full startup phase (process spawn → Package
+   * Manager connect → first compile pass) because the launch-errors
+   * dialog (`"Enter Safe Mode?"` on Unity 2020.2+) appears at the end
+   * of that phase, not the start of it (issue #737).
    */
   launchDismissAbortSignal?: AbortSignal;
   /**

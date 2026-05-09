@@ -43,6 +43,7 @@ export type DismissOutcome =
  * without grepping the implementation.
  */
 export const LAUNCH_ERROR_DIALOG_TITLE_FRAGMENTS: readonly string[] = [
+  'Safe Mode', // Unity 2020.2+ ("Enter Safe Mode?") — the launch-errors dialog on every modern Unity (2022 LTS, 6000.x)
   'Compiler Errors', // Unity 2020+ ("Hold On" + "Compiler Errors on Launch")
   'Hold On', // Generic Unity progress dialog wrapping the launch-errors variant
   'Compile Errors', // Older Unity dialog spelling
@@ -157,7 +158,7 @@ namespace UnityMcp.LaunchErrors {
     [DllImport("user32.dll")] static extern uint GetWindowThreadProcessId(IntPtr hWnd, out uint lpdwProcessId);
     [DllImport("user32.dll", CharSet=CharSet.Unicode)] static extern IntPtr SendMessageW(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
     const uint BM_CLICK = 0x00F5;
-    static readonly string[] TitleFragments = new[] { "Compiler Errors", "Hold On", "Compile Errors", "Scripts have compiler errors" };
+    static readonly string[] TitleFragments = new[] { "Safe Mode", "Compiler Errors", "Hold On", "Compile Errors", "Scripts have compiler errors" };
     static readonly string[] ButtonLabels = new[] { "${DISMISS_BUTTON_LABEL}", "&${DISMISS_BUTTON_LABEL}" };
     public static string TryDismiss(int[] unityPids) {
       var unityPidSet = new HashSet<uint>();

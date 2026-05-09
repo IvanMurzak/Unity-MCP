@@ -400,10 +400,15 @@ interface PollAndDismissOptions {
   /**
    * Grace window in ms after polling starts: if no dialog has been
    * observed (and no permanent error has been seen) within this
-   * window, exit early. Defaults to 3000. The Unity launch-errors
-   * dialog appears within seconds of editor launch when it appears
-   * at all — running the full timeoutMs in the no-dialog case
-   * contradicts the README's "no extra delay" claim.
+   * window, exit early. Defaults to `15000`. The Unity launch-errors
+   * dialog (`"Enter Safe Mode?"` on Unity 2020.2+) is shown after the
+   * editor process has booted, connected to the Package Manager, and
+   * started compiling — empirically that takes ~6s on a fast machine
+   * and longer on a slow one. The default has to cover that startup
+   * window or the loop exits before Unity has had a chance to surface
+   * the dialog at all (issue #737). Running the full `timeoutMs` in
+   * the no-dialog case is still wasteful, so we keep a grace cutoff
+   * — just one large enough to pass Unity's startup phase.
    */
   noDialogGraceMs?: number;
 }
@@ -463,7 +468,7 @@ async function pollAndDismissLaunchErrors(opts: PollAndDismissOptions): Promise<
   const start = Date.now();
   const deadline = start + Math.max(0, opts.timeoutMs);
   const interval = Math.max(50, opts.intervalMs);
-  const graceMs = Math.max(0, opts.noDialogGraceMs ?? 3000);
+  const graceMs = Math.max(0, opts.noDialogGraceMs ?? 15000);
   const seenErrorMessages = new Set<string>();
   let dismissedAtLeastOnce = false;
   let aborted = opts.abortSignal?.aborted ?? false;

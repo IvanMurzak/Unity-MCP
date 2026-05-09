@@ -107,6 +107,24 @@ describe('LAUNCH_ERROR_DIALOG_TITLE_FRAGMENTS', () => {
     expect(fragments).toContain('compiler errors');
     expect(fragments).toContain('hold on');
     expect(fragments).toContain('compile errors');
+    // Unity 2020.2+ renamed the launch-errors dialog to
+    // `"Enter Safe Mode?"`. The matcher MUST include a fragment that
+    // matches that title or every modern Unity (2022 LTS, 6000.x)
+    // boots straight past the auto-dismiss path (issue #737).
+    expect(fragments).toContain('safe mode');
+  });
+
+  it('matches the actual Unity 2022.3+ "Enter Safe Mode?" dialog title', () => {
+    // Empirically observed title for the launch-errors dialog on
+    // Unity 2022.3.62f3 / Windows. The matcher in the PowerShell
+    // and AppleScript paths is case-insensitive substring, so at
+    // least one fragment MUST be a case-insensitive substring of
+    // this exact title or the dismiss is unreachable.
+    const realTitle = 'Enter Safe Mode?';
+    const matched = LAUNCH_ERROR_DIALOG_TITLE_FRAGMENTS.some((frag) =>
+      realTitle.toLowerCase().includes(frag.toLowerCase()),
+    );
+    expect(matched).toBe(true);
   });
 
   it('is non-empty (a zero-fragment matcher would never match anything)', () => {
