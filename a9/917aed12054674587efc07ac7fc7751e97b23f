@@ -1,0 +1,50 @@
+cli/src/commands/run-tool.ts
+  s_a607bd60fe47ad::t_7c573f5eeb06cb 6-7,31-34,67-77,79,84-86,88-89,91-93,95-112,114-119,123-156
+Unity-Tests/6000.6.0a2/Assets/Plugins/NuGet/McpPlugin.6.2.1.dll.meta
+  s_3aee1071159754::t_4fec7780851b55 2-28
+cli/tests/lib-run-tool.test.ts
+  s_a607bd60fe47ad::t_ca33de492ca8e3 1-467
+cli/src/commands/run-system-tool.ts
+  s_a607bd60fe47ad::t_9c9c7f101b14f5 6-7,63-69,71,73,78-80,82-83,85-87,89-106,108-113,117-150
+cli/package.json
+  s_a607bd60fe47ad::t_bfa19e3533930e 73
+cli/src/lib/run-tool.ts
+  s_a607bd60fe47ad::t_b468fa872f5d55 1-281
+Unity-Tests/6000.6.0a2/Assets/Plugins/NuGet/McpPlugin.Common.6.2.1.dll.meta
+  s_3aee1071159754::t_4fec7780851b55 2-28
+cli/src/lib.ts
+  s_a607bd60fe47ad::t_b71f7e731e1c0d 24,62-71
+cli/CHANGELOG.md
+  s_a607bd60fe47ad::t_d755df9979147b 8-38
+cli/src/lib/types.ts
+  s_a607bd60fe47ad::t_2fa87f87099067 420-544
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "a9917aed12054674587efc07ac7fc7751e97b23f",
+  "prompts": {},
+  "humans": {
+    "h_8325a340bf5897": {
+      "author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  },
+  "sessions": {
+    "s_3aee1071159754": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "61337681-d6e3-4194-8ce1-6c76ad04b962",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_a607bd60fe47ad": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "77cc703e-86c2-4f2c-90c1-a1c6da8da057",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
