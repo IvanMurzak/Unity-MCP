@@ -255,8 +255,21 @@ cd ./MyGame && unity-mcp-cli open
 | `--tools <names>` | `UNITY_MCP_TOOLS` | No | Comma-separated list of tools to enable |
 | `--transport <method>` | `UNITY_MCP_TRANSPORT` | No | Transport method: `streamableHttp` or `stdio` |
 | `--start-server <value>` | `UNITY_MCP_START_SERVER` | No | Set to `true` or `false` to control MCP server auto-start |
+| `--no-auto-dismiss-launch-errors` | — | No | Disable auto-dismissal of the Unity Editor "compile errors at launch" dialog (default: enabled) |
+| `--launch-dismiss-timeout-ms <ms>` | — | No | Overall timeout (milliseconds) for the launch-errors auto-dismiss polling loop (default: `30000`) |
+| `--launch-dismiss-poll-interval-ms <ms>` | — | No | Polling tick interval (milliseconds) for the launch-errors auto-dismiss loop (default: `1500`) |
 
-The editor process is spawned in detached mode — the CLI returns immediately.
+The editor process is spawned in detached mode. By default, after spawning the editor, `open` polls for Unity's "compile errors at launch" dialog and clicks `Ignore` so the editor finishes initialising — without this, any in-Editor automation that needs to run after a state where Unity itself can't compile (e.g. the NuGet dependency resolver) cannot self-heal. The dialog appears within seconds of editor launch when it appears at all, so when no dialog has been seen within a short grace window after polling starts the loop exits early — the no-dialog case adds at most that grace window's delay, never the full `--launch-dismiss-timeout-ms`. If the dialog is observed (and successfully dismissed), polling continues until the overall timeout so a re-appearing dialog (resolver fixes one error → dialog re-surfaces with the next) is dismissed again. Library-mode callers can supply an `AbortSignal` (`launchDismissAbortSignal` on `OpenProjectOptions`) to abort the loop the instant their own readiness signal fires.
+
+### Auto-dismiss platform requirements
+
+| Platform | Requirement | Notes |
+|---|---|---|
+| **Windows** | Built-in (Win32 API) | Uses `EnumWindows` / `EnumChildWindows` / `SendMessageW(BM_CLICK)` driven from PowerShell. No extra setup required. |
+| **macOS** | **Accessibility permission** must be granted to the terminal (or `unity-mcp-cli` binary). System Settings → Privacy & Security → Accessibility. | Implemented via AppleScript / `osascript`. Without this permission, `osascript` reports an error every poll tick and the dialog cannot be dismissed. |
+| **Linux/X11** | `xdotool` on `PATH` (e.g. `sudo apt-get install xdotool`). | Wayland is **not** supported in the first cut — track upstream issues for Wayland support. |
+
+To opt out entirely, pass `--no-auto-dismiss-launch-errors`.
 
 **Example — open with MCP connection:**
 

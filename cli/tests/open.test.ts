@@ -1,10 +1,14 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import { isUnityProjectDir, resolveOpenProjectPath } from '../src/commands/open.js';
+import {
+  isUnityProjectDir,
+  parsePositiveIntFlag,
+  resolveOpenProjectPath,
+} from '../src/commands/open.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CLI_PATH = path.resolve(__dirname, '..', 'bin', 'unity-mcp-cli.js');
@@ -58,6 +62,49 @@ describe('open command (merged open + connect)', () => {
     expect(stdout).toContain('--keep-connected');
     expect(stdout).toContain('--transport');
     expect(stdout).toContain('--start-server');
+  });
+
+  it('exposes the new launch-errors auto-dismiss flags in help', () => {
+    const { stdout, exitCode } = runCli(['open', '--help']);
+    expect(exitCode).toBe(0);
+    // Commander renders `.option('--no-auto-dismiss-launch-errors', ...)`
+    // as `--no-auto-dismiss-launch-errors` in help; the boolean
+    // negation flag is what consumers actually pass to opt out.
+    expect(stdout).toContain('--no-auto-dismiss-launch-errors');
+    expect(stdout).toContain('--launch-dismiss-timeout-ms');
+    expect(stdout).toContain('--launch-dismiss-poll-interval-ms');
+  });
+
+  it('mentions the macOS Accessibility-permission requirement in --help', () => {
+    const { stdout, exitCode } = runCli(['open', '--help']);
+    expect(exitCode).toBe(0);
+    // The issue requires this be visible in --help (not just the
+    // README) so CI runners and humans see it without leaving the
+    // terminal.
+    expect(stdout.toLowerCase()).toContain('accessibility');
+  });
+
+  it('mentions the Linux/X11 xdotool dependency in --help', () => {
+    const { stdout, exitCode } = runCli(['open', '--help']);
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain('xdotool');
+  });
+
+  it('rejects a non-numeric --launch-dismiss-timeout-ms', () => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-bad-flag-'));
+    try {
+      makeFakeUnityProject(tmpDir);
+      const { exitCode, stdout } = runCli([
+        'open',
+        tmpDir,
+        '--launch-dismiss-timeout-ms',
+        'banana',
+      ]);
+      expect(exitCode).toBe(1);
+      expect(stdout).toContain('--launch-dismiss-timeout-ms');
+    } finally {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    }
   });
 
   it('includes --unity option in help', () => {
@@ -142,6 +189,52 @@ describe('resolveOpenProjectPath', () => {
     const result = resolveOpenProjectPath(undefined, undefined, cwd);
     expect(result.projectPath).toBe(cwd);
     expect(result.usedCwdFallback).toBe(true);
+  });
+});
+
+describe('parsePositiveIntFlag', () => {
+  // The helper calls process.exit(1) on bad input, which would kill
+  // the test runner. Spy on it and throw instead so we can assert on
+  // the failure mode.
+  const exitMock = vi.spyOn(process, 'exit').mockImplementation(((code?: number) => {
+    throw new Error(`process.exit(${code})`);
+  }) as never);
+
+  beforeEach(() => {
+    exitMock.mockClear();
+  });
+
+  it('returns the fallback when raw is undefined', () => {
+    expect(parsePositiveIntFlag(undefined, '--foo', 30000)).toBe(30000);
+    expect(exitMock).not.toHaveBeenCalled();
+  });
+
+  it('returns the fallback when raw is empty whitespace', () => {
+    expect(parsePositiveIntFlag('   ', '--foo', 30000)).toBe(30000);
+  });
+
+  it('parses a plain integer string', () => {
+    expect(parsePositiveIntFlag('1234', '--foo', 30000)).toBe(1234);
+  });
+
+  it('parses zero', () => {
+    expect(parsePositiveIntFlag('0', '--foo', 30000)).toBe(0);
+  });
+
+  it('rejects scientific notation', () => {
+    expect(() => parsePositiveIntFlag('3e4', '--foo', 30000)).toThrow(/process\.exit/);
+  });
+
+  it('rejects fractional values', () => {
+    expect(() => parsePositiveIntFlag('3.14', '--foo', 30000)).toThrow(/process\.exit/);
+  });
+
+  it('rejects negative numbers', () => {
+    expect(() => parsePositiveIntFlag('-5', '--foo', 30000)).toThrow(/process\.exit/);
+  });
+
+  it('rejects non-numeric junk', () => {
+    expect(() => parsePositiveIntFlag('banana', '--foo', 30000)).toThrow(/process\.exit/);
   });
 });
 

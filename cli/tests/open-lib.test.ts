@@ -12,7 +12,12 @@ import {
   buildOpenEnv,
   isUnityProjectDir,
   resolveProjectPath,
+  _pollAndDismissLaunchErrorsForTests,
 } from '../src/lib/open.js';
+import type {
+  DismissOutcome,
+  DismissPlatform,
+} from '../src/utils/launch-error-dismiss.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -380,6 +385,332 @@ describe('CLI delegates to lib', () => {
   it('lib export is reachable from the package root', async () => {
     const mod = await import('../src/lib.js');
     expect(typeof mod.openProject).toBe('function');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Launch-errors auto-dismiss polling loop
+// ---------------------------------------------------------------------------
+
+describe('pollAndDismissLaunchErrors', () => {
+  it('emits a dismiss progress event for each dismissal — re-appearances are dismissed again', async () => {
+    const events: ProgressEvent[] = [];
+    const warnings: string[] = [];
+    const controller = new AbortController();
+    let calls = 0;
+    // Two consecutive ticks dismiss (the resolver-fix → dialog-
+    // re-appears cycle); after the second dismissal the test fires
+    // the abort signal so the test can verify the "loop kept going
+    // after the first dismissal" contract without waiting for the
+    // grace window or the deadline.
+    const probe = async (_platform: DismissPlatform): Promise<DismissOutcome> => {
+      calls += 1;
+      if (calls === 2) {
+        // Schedule abort AFTER returning the second dismissal so the
+        // event is emitted and counted before the loop exits.
+        setTimeout(() => controller.abort(), 0).unref();
+      }
+      return { kind: 'dismissed', button: 'Ignore' };
+    };
+
+    const start = Date.now();
+    await _pollAndDismissLaunchErrorsForTests({
+      timeoutMs: 5000,
+      intervalMs: 20,
+      onProgress: (e) => events.push(e),
+      warnings,
+      platform: 'win32',
+      probe,
+      // High grace so the early-exit must come from the abort signal.
+      noDialogGraceMs: 30000,
+      abortSignal: controller.signal,
+    });
+    const elapsed = Date.now() - start;
+
+    expect(calls).toBeGreaterThanOrEqual(2);
+    const dismissEvents = events.filter((e) => e.phase === 'launch-errors-dismissed');
+    expect(dismissEvents.length).toBeGreaterThanOrEqual(2);
+    const first = dismissEvents[0];
+    if (first.phase === 'launch-errors-dismissed') {
+      expect(first.button).toBe('Ignore');
+      expect(first.platform).toBe('win32');
+      expect(first.message).toContain('[open] dismissed Unity launch-errors dialog');
+      expect(first.message).toContain('button=Ignore');
+      expect(first.message).toContain('platform=win32');
+    }
+    expect(warnings).toHaveLength(0);
+    // Abort fired before the deadline → loop must not have run the
+    // full timeoutMs.
+    expect(elapsed).toBeLessThan(2000);
+  });
+
+  it('exits early via the no-dialog grace window when no dialog is observed (no extra delay)', async () => {
+    const events: ProgressEvent[] = [];
+    const warnings: string[] = [];
+    let calls = 0;
+    const probe = async (): Promise<DismissOutcome> => {
+      calls += 1;
+      return { kind: 'not-found' };
+    };
+
+    const start = Date.now();
+    await _pollAndDismissLaunchErrorsForTests({
+      // 30s budget — the README's "no extra delay" claim depends on
+      // the grace window cutting this short when the dialog never
+      // appears.
+      timeoutMs: 30000,
+      intervalMs: 20,
+      onProgress: (e) => events.push(e),
+      warnings,
+      platform: 'darwin',
+      probe,
+      noDialogGraceMs: 100,
+    });
+    const elapsed = Date.now() - start;
+
+    expect(events.find((e) => e.phase === 'launch-errors-dismissed')).toBeUndefined();
+    // Must exit far before the 30s budget.
+    expect(elapsed).toBeLessThan(2000);
+    expect(calls).toBeGreaterThanOrEqual(1);
+    // No errors → no timeout warning (silent grace exit).
+    expect(warnings).toHaveLength(0);
+  });
+
+  it('aborts immediately when the supplied AbortSignal fires', async () => {
+    const events: ProgressEvent[] = [];
+    const warnings: string[] = [];
+    let calls = 0;
+    const probe = async (): Promise<DismissOutcome> => {
+      calls += 1;
+      return { kind: 'not-found' };
+    };
+    const controller = new AbortController();
+    const start = Date.now();
+    // Fire the abort after a short delay so we observe the "loop
+    // currently sleeping" → "abort wakes it" path.
+    setTimeout(() => controller.abort(), 50).unref();
+
+    await _pollAndDismissLaunchErrorsForTests({
+      timeoutMs: 30000,
+      intervalMs: 20,
+      onProgress: (e) => events.push(e),
+      warnings,
+      platform: 'linux',
+      probe,
+      // High grace so we exercise the abort path, not the grace path.
+      noDialogGraceMs: 30000,
+      abortSignal: controller.signal,
+    });
+    const elapsed = Date.now() - start;
+
+    expect(elapsed).toBeLessThan(2000);
+    expect(calls).toBeGreaterThanOrEqual(1);
+    expect(warnings).toHaveLength(0);
+  });
+
+  it('bails out immediately on a permanent platform error (xdotool missing) — single warning, no timeout warning', async () => {
+    const events: ProgressEvent[] = [];
+    const warnings: string[] = [];
+    let calls = 0;
+    const probe = async (): Promise<DismissOutcome> => {
+      calls += 1;
+      return { kind: 'error', message: 'xdotool not found on PATH. Install it.' };
+    };
+
+    const start = Date.now();
+    await _pollAndDismissLaunchErrorsForTests({
+      timeoutMs: 30000,
+      intervalMs: 50,
+      onProgress: (e) => events.push(e),
+      warnings,
+      platform: 'linux',
+      probe,
+      noDialogGraceMs: 30000,
+    });
+    const elapsed = Date.now() - start;
+
+    // Permanent error → loop exits after a single tick (no further
+    // doomed spawns).
+    expect(calls).toBe(1);
+    expect(elapsed).toBeLessThan(2000);
+    const errWarnings = warnings.filter((w) => w.includes('xdotool not found'));
+    expect(errWarnings).toHaveLength(1);
+    // No timeout warning — we bailed, we did not time out.
+    expect(warnings.filter((w) => w.includes('timed out'))).toHaveLength(0);
+    expect(events.find((e) => e.phase === 'launch-errors-dismissed')).toBeUndefined();
+  });
+
+  it('records a single warning for repeated transient errors, then surfaces a timeout warning', async () => {
+    const events: ProgressEvent[] = [];
+    const warnings: string[] = [];
+    // Use a NON-permanent error message so the loop ticks until the
+    // deadline and the timeout warning fires.
+    const probe = async (): Promise<DismissOutcome> => {
+      return { kind: 'error', message: 'transient platform glitch' };
+    };
+
+    await _pollAndDismissLaunchErrorsForTests({
+      timeoutMs: 200,
+      intervalMs: 50,
+      onProgress: (e) => events.push(e),
+      warnings,
+      platform: 'linux',
+      probe,
+      noDialogGraceMs: 30000,
+    });
+
+    const errWarnings = warnings.filter((w) => w.includes('transient platform glitch'));
+    expect(errWarnings).toHaveLength(1);
+    const timeoutWarnings = warnings.filter((w) => w.includes('timed out'));
+    expect(timeoutWarnings).toHaveLength(1);
+    expect(events.find((e) => e.phase === 'launch-errors-dismissed')).toBeUndefined();
+  });
+
+  it('respects timeoutMs=0 by performing zero probes and exiting', async () => {
+    const events: ProgressEvent[] = [];
+    const warnings: string[] = [];
+    let calls = 0;
+    const probe = async (): Promise<DismissOutcome> => {
+      calls += 1;
+      return { kind: 'not-found' };
+    };
+
+    await _pollAndDismissLaunchErrorsForTests({
+      timeoutMs: 0,
+      intervalMs: 50,
+      onProgress: (e) => events.push(e),
+      warnings,
+      platform: 'win32',
+      probe,
+    });
+
+    expect(calls).toBe(0);
+    expect(events.find((e) => e.phase === 'launch-errors-dismissed')).toBeUndefined();
+    expect(warnings).toHaveLength(0);
+  });
+
+  it('does not throw when onProgress is undefined', async () => {
+    const warnings: string[] = [];
+    let calls = 0;
+    const probe = async (): Promise<DismissOutcome> => {
+      calls += 1;
+      // First call dismisses, then not-found so grace exits cleanly.
+      return calls === 1
+        ? { kind: 'dismissed', button: 'Ignore' }
+        : { kind: 'not-found' };
+    };
+    await expect(
+      _pollAndDismissLaunchErrorsForTests({
+        timeoutMs: 1000,
+        intervalMs: 20,
+        onProgress: undefined,
+        warnings,
+        platform: 'win32',
+        probe,
+        noDialogGraceMs: 50,
+      }),
+    ).resolves.toBeUndefined();
+  });
+
+  it('does not surface a "timed out" warning when abort fires after a transient platform error', async () => {
+    // Lock down the gating fix: the post-loop timeout warning must
+    // only fire when the deadline was actually reached, NOT when
+    // the loop exited via the supplied abort signal — even if a
+    // transient (non-permanent) platform error was recorded
+    // earlier. Without this gate, callers see a misleading
+    // "auto-dismiss timed out" warning for what was really a
+    // caller-driven cancellation.
+    const events: ProgressEvent[] = [];
+    const warnings: string[] = [];
+    const controller = new AbortController();
+    let calls = 0;
+    const probe = async (): Promise<DismissOutcome> => {
+      calls += 1;
+      if (calls === 1) {
+        // Schedule the abort AFTER the first transient error has
+        // been recorded so seenErrorMessages.size > 0 at the
+        // post-loop check.
+        setTimeout(() => controller.abort(), 0).unref();
+      }
+      return { kind: 'error', message: 'transient platform glitch' };
+    };
+
+    await _pollAndDismissLaunchErrorsForTests({
+      timeoutMs: 30000,
+      intervalMs: 20,
+      onProgress: (e) => events.push(e),
+      warnings,
+      platform: 'linux',
+      probe,
+      // High grace so the early-exit must come from the abort path.
+      noDialogGraceMs: 30000,
+      abortSignal: controller.signal,
+    });
+
+    expect(warnings.filter((w) => w.includes('transient platform glitch'))).toHaveLength(1);
+    expect(warnings.filter((w) => w.includes('timed out'))).toHaveLength(0);
+  });
+
+  it('does not apply the in-flight probe outcome when abort fires mid-probe', async () => {
+    // Lock down the race fix: when the abort signal fires while an
+    // `await probe(...)` is in flight, the resolved outcome must
+    // be discarded — not emitted as a `launch-errors-dismissed`
+    // progress event nor recorded as a warning. Failing this test
+    // means the loop applied a stale outcome from a probe whose
+    // result the caller already cancelled.
+    const events: ProgressEvent[] = [];
+    const warnings: string[] = [];
+    const controller = new AbortController();
+    let calls = 0;
+    const probe = (): Promise<DismissOutcome> =>
+      new Promise((resolve) => {
+        calls += 1;
+        // Resolve only after the abort fires so the loop is
+        // guaranteed to observe `aborted=true` post-await.
+        setTimeout(() => controller.abort(), 20).unref();
+        setTimeout(
+          () => resolve({ kind: 'dismissed', button: 'Ignore' }),
+          60,
+        ).unref();
+      });
+
+    await _pollAndDismissLaunchErrorsForTests({
+      timeoutMs: 30000,
+      intervalMs: 20,
+      onProgress: (e) => events.push(e),
+      warnings,
+      platform: 'win32',
+      probe,
+      noDialogGraceMs: 30000,
+      abortSignal: controller.signal,
+    });
+
+    // Probe ran exactly once; its post-abort `dismissed` outcome
+    // must be dropped.
+    expect(calls).toBe(1);
+    expect(events.find((e) => e.phase === 'launch-errors-dismissed')).toBeUndefined();
+    expect(warnings.filter((w) => w.includes('timed out'))).toHaveLength(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// openProject — auto-dismiss option plumbing
+// ---------------------------------------------------------------------------
+
+describe('openProject — autoDismissLaunchErrors option', () => {
+  it('OpenProjectOptions accepts the new auto-dismiss fields without TS errors', () => {
+    // Pure type-level assertion via a no-op `OpenProjectOptions`
+    // literal — if any of these fields drops out of the public
+    // surface, the TypeScript compiler will fail this test.
+    const controller = new AbortController();
+    const _opts: OpenProjectOptions = {
+      projectPath: '/x',
+      autoDismissLaunchErrors: false,
+      launchDismissTimeoutMs: 30000,
+      launchDismissPollIntervalMs: 1500,
+      launchDismissAbortSignal: controller.signal,
+    };
+    expect(_opts).toBeTruthy();
   });
 });
 

@@ -41,6 +41,41 @@ export function resolveOpenProjectPath(
 export const isUnityProjectDir = libIsUnityProjectDir;
 
 /**
+ * Parse a `--xxx <ms>` style commander option as a positive integer.
+ * Commander stores the raw string (including the literal default
+ * supplied to `.option()`), so a parse-and-validate step is required
+ * before the value can flow into the library. Exits with code 1 on
+ * a non-numeric / non-positive value — matches the CLI's existing
+ * error-handling pattern for malformed flag values (`--auth`,
+ * `--transport`, `--start-server`).
+ *
+ * Exported for unit tests; the CLI wrapper is the only production
+ * caller.
+ */
+export function parsePositiveIntFlag(
+  raw: string | undefined,
+  flagName: string,
+  fallback: number,
+): number {
+  if (raw === undefined) return fallback;
+  const trimmed = String(raw).trim();
+  if (trimmed === '') return fallback;
+  // Reject scientific notation, fractions, and explicit signs — the
+  // ms value MUST be a positive whole number for the polling loop's
+  // bookkeeping to be sane.
+  if (!/^\d+$/.test(trimmed)) {
+    ui.error(`${flagName} must be a positive integer (got: "${raw}")`);
+    process.exit(1);
+  }
+  const parsed = parseInt(trimmed, 10);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    ui.error(`${flagName} must be a positive integer (got: "${raw}")`);
+    process.exit(1);
+  }
+  return parsed;
+}
+
+/**
  * Print actionable help when a required Unity Editor version is not found.
  * Lists installed editors and suggests install or override commands. Lives
  * here (next to the CLI command) instead of `unity-editor.ts` because it
@@ -92,6 +127,20 @@ export const openCommand = new Command('open')
   .option('--keep-connected', 'Force keep connected (sets UNITY_MCP_KEEP_CONNECTED=true)')
   .option('--transport <method>', 'Transport method: streamableHttp or stdio (sets UNITY_MCP_TRANSPORT)')
   .option('--start-server <value>', 'Set to true/false to control server auto-start (sets UNITY_MCP_START_SERVER)', undefined)
+  .option(
+    '--no-auto-dismiss-launch-errors',
+    'Disable auto-dismissal of the Unity Editor "compile errors at launch" dialog (default: enabled). On macOS, requires Accessibility permission for the terminal / unity-mcp-cli binary. On Linux/X11, requires `xdotool` on PATH (Wayland not supported).',
+  )
+  .option(
+    '--launch-dismiss-timeout-ms <ms>',
+    'Overall timeout (milliseconds) for the launch-errors auto-dismiss polling loop (default: 30000)',
+    '30000',
+  )
+  .option(
+    '--launch-dismiss-poll-interval-ms <ms>',
+    'Polling tick interval (milliseconds) for the launch-errors auto-dismiss loop (default: 1500)',
+    '1500',
+  )
   .action(async (positionalPath: string | undefined, options: {
     path?: string;
     unity?: string;
@@ -103,6 +152,9 @@ export const openCommand = new Command('open')
     keepConnected?: boolean;
     transport?: string;
     startServer?: string;
+    autoDismissLaunchErrors?: boolean;
+    launchDismissTimeoutMs?: string;
+    launchDismissPollIntervalMs?: string;
   }) => {
     // Resolve the path the same way the library does, but also
     // validate the existence + Unity-project shape up front so we
@@ -159,6 +211,25 @@ export const openCommand = new Command('open')
       startServerBool = val === 'true';
     }
 
+    // --launch-dismiss-timeout-ms / --launch-dismiss-poll-interval-ms
+    // are commander string options with numeric defaults. Parse and
+    // validate here so the failure mode is a clear CLI error rather
+    // than a silent NaN that disables the polling loop.
+    const launchDismissTimeoutMs = parsePositiveIntFlag(
+      options.launchDismissTimeoutMs,
+      '--launch-dismiss-timeout-ms',
+      30000,
+    );
+    const launchDismissPollIntervalMs = parsePositiveIntFlag(
+      options.launchDismissPollIntervalMs,
+      '--launch-dismiss-poll-interval-ms',
+      1500,
+    );
+    // Commander's `--no-auto-dismiss-launch-errors` produces
+    // `autoDismissLaunchErrors: false`; the absence of the flag
+    // produces `undefined` (which `openProject` treats as the default
+    // `true`). No additional parsing needed.
+
     // Pre-flight already-running check so we don't flash the
     // "Locating Unity Editor..." spinner when Unity is already open
     // for this project. The lib does its own check too (single
@@ -183,6 +254,9 @@ export const openCommand = new Command('open')
       keepConnected: options.keepConnected,
       transport: options.transport as OpenProjectTransport | undefined,
       startServer: startServerBool,
+      autoDismissLaunchErrors: options.autoDismissLaunchErrors !== false,
+      launchDismissTimeoutMs,
+      launchDismissPollIntervalMs,
       onProgress: (event) => {
         switch (event.phase) {
           case 'detecting-editor-version': {
@@ -232,6 +306,15 @@ export const openCommand = new Command('open')
           }
           case 'editor-launched': {
             ui.success(`Launched Unity Editor (PID: ${event.pid ?? 'unknown'})`);
+            break;
+          }
+          case 'launch-errors-dismissed': {
+            // Single info-level log line on dismissal — exact format
+            // is part of the issue's acceptance contract. Keep in
+            // sync with `launch-error-dismiss.ts` if changed.
+            ui.info(
+              `[open] dismissed Unity launch-errors dialog (button=${event.button}, platform=${event.platform})`,
+            );
             break;
           }
           default:
