@@ -16,32 +16,23 @@ using UnityEngine;
 namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 {
     /// <summary>
-    /// Helpers for invalidating Unity's <c>Library/ScriptAssemblies/</c> cache.
-    /// Wiping the cache forces Unity to recompile every assembly from scratch
-    /// on the next compile attempt — used after operations that swap plugin
-    /// source code under the editor (package update, force-resolve) so the
-    /// post-operation domain reload can't accidentally keep stale plugin
-    /// assemblies loaded in the AppDomain.
+    /// Forces Unity to recompile every assembly on the next compile by wiping
+    /// <c>Library/ScriptAssemblies/</c>. Used after operations that swap plugin
+    /// source code (package update, force-resolve) so the post-operation reload
+    /// can't keep stale plugin assemblies loaded in the AppDomain.
     /// </summary>
     public static class ScriptAssembliesCache
     {
         const string Tag = "[ScriptAssembliesCache]";
 
         /// <summary>
-        /// Best-effort recursive delete of <c>Library/ScriptAssemblies/</c>.
-        /// Tries the atomic <see cref="Directory.Delete(string, bool)"/> first
-        /// and falls back to per-file deletion when a single file is locked
-        /// (the currently-loaded plugin DLLs are mmapped into the editor
-        /// AppDomain, so on Windows their file handles may still be held).
-        /// Whatever survives the wipe will be overwritten by Unity's next
-        /// recompile anyway; the goal is just to maximize the chance of a
-        /// clean rebuild without requiring the user to close Unity and
-        /// delete the folder by hand.
+        /// Best-effort recursive delete; falls back to per-file delete when
+        /// the atomic call hits a locked file (loaded plugin DLLs are mmapped
+        /// on Windows). Whatever survives gets overwritten by Unity's next
+        /// recompile.
         /// </summary>
         public static void Wipe()
         {
-            // Application.dataPath is the absolute path to Assets/; Library/
-            // is its sibling at the project root.
             var path = Path.GetFullPath(Path.Combine(Application.dataPath, "..", "Library", "ScriptAssemblies"));
             if (!Directory.Exists(path))
                 return;
@@ -52,10 +43,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 Debug.Log($"{Tag} Wiped {path} — Unity will recompile every assembly on the next compile.");
                 return;
             }
-            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
-            {
-                // Fall through to per-file best-effort.
-            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException) { }
 
             var locked = 0;
             foreach (var file in Directory.GetFiles(path, "*", SearchOption.AllDirectories))

@@ -202,6 +202,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         }
 
         /// <summary>
+        /// Best-effort <see cref="File.Delete"/> that swallows missing-file
+        /// races and logs a warning on any other failure. Shared between the
+        /// migration and per-package install paths so the two surfaces don't
+        /// drift on what counts as "best effort".
+        /// </summary>
+        internal static void TryDeleteFile(string path)
+        {
+            if (!File.Exists(path))
+                return;
+            try
+            {
+                File.Delete(path);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"{Tag} Failed to delete '{path}': {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// Determines if a DLL should be included in game builds based on its
         /// owning package ID. Configured packages use their IncludeInBuild flag.
         /// Transitive dependencies default to included (runtime packages depend on them).

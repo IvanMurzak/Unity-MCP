@@ -49,18 +49,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 if (!Directory.Exists(NuGetConfig.InstallPath))
                     Directory.CreateDirectory(NuGetConfig.InstallPath);
 
-                // One-shot migration from the legacy {Id}.{Version}/ layout. Best-effort:
-                // a locked DLL in one folder no longer aborts the entire restore — the
-                // migration removes whatever it can, disables the PluginImporter on
-                // anything still locked so the next domain reload unloads it, and the
-                // downstream stale-flat sweep + extraction continue regardless. The
-                // legacy folder will finish disappearing on a subsequent migration pass.
+                // Best-effort: continue past AbortedFileLock so extraction can proceed
+                // on what the migration freed up; the rest finishes on the next reload.
                 var migration = NuGetLegacyMigration.Run(NuGetConfig.InstallPath);
-                if (migration.Outcome == NuGetLegacyMigration.Outcome.Migrated
-                    || migration.Outcome == NuGetLegacyMigration.Outcome.AbortedFileLock)
-                {
+                if (migration.Outcome != NuGetLegacyMigration.Outcome.NoLegacyState)
                     anyChanged = true;
-                }
 
                 // Manifest disaster recovery: rebuild from on-disk versioned
                 // filenames when .nuget-installed.json is missing. The
@@ -131,9 +124,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     return false;
             }
 
-            // Versioned-filename flat DLLs on disk → migration to the unversioned flat layout
-            // is pending → force a full restore so NuGetLegacyMigration sweeps them. Same
-            // O(directory listing) cost; once the migration completes there are no matches.
+            // Versioned-filename flat DLL on disk → migration is pending → force restore.
             foreach (var dllPath in Directory.GetFiles(NuGetConfig.InstallPath, "*.dll", SearchOption.TopDirectoryOnly))
             {
                 if (NuGetInstallManifest.TryParseInstalledDllName(Path.GetFileName(dllPath), out _, out _))
@@ -178,12 +169,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 if (!string.Equals(entry.Version, package.Version, StringComparison.OrdinalIgnoreCase))
                     return false;
 
-                // Every recorded DLL must still be on disk AND must be in the
-                // canonical unversioned shape. A manifest entry whose dlls
-                // list still carries the {stem}.{version}.dll shape is left
-                // over from the pre-unversioned-filename resolver — force a
-                // full restore so extraction re-emits the {stem}.dll
-                // canonical and updates the entry.
+                // Versioned-filename manifest entry → pre-unversioned resolver → force restore.
                 foreach (var dll in entry.Dlls)
                 {
                     if (!File.Exists(Path.Combine(NuGetConfig.InstallPath, dll)))

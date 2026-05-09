@@ -83,61 +83,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         }
 
         /// <summary>
-        /// Outcome of a successful run that returned <see cref="Outcome.Migrated"/>.
+        /// Outcome of a <see cref="Run"/> call. <see cref="FirstFailedItem"/>
+        /// is the first directory or file the migration could not fully remove
+        /// (others get logged); <see cref="RemovedItems"/> lists everything
+        /// that did get cleaned up.
         /// </summary>
         public readonly struct Result
         {
             public Outcome Outcome { get; }
-            public IReadOnlyList<string> RemovedDirectories { get; }
-            public string? FailedDirectory { get; }
-            public string? FailureMessage { get; }
+            public IReadOnlyList<string> RemovedItems { get; }
+            public string? FirstFailedItem { get; }
+            public string? FirstFailureMessage { get; }
 
-            public Result(Outcome outcome, IReadOnlyList<string> removedDirectories, string? failedDirectory = null, string? failureMessage = null)
+            public Result(Outcome outcome, IReadOnlyList<string> removedItems, string? firstFailedItem = null, string? firstFailureMessage = null)
             {
                 Outcome = outcome;
-                RemovedDirectories = removedDirectories;
-                FailedDirectory = failedDirectory;
-                FailureMessage = failureMessage;
+                RemovedItems = removedItems;
+                FirstFailedItem = firstFailedItem;
+                FirstFailureMessage = firstFailureMessage;
             }
         }
 
         /// <summary>
         /// Migrates the install path off pre-#733 layouts to the canonical
-        /// unversioned flat layout. Two migration steps run on every call:
-        /// <list type="number">
-        ///   <item><description>remove legacy <c>{Id}.{Version}/</c>
-        ///     directories (the original #733 migration);</description></item>
-        ///   <item><description>remove flat versioned-filename DLLs of the
-        ///     <c>{stem}.{numericVersion}.dll</c> shape — these are the
-        ///     transitional output the resolver wrote before the version was
-        ///     moved out of the filename and into the manifest. The current
-        ///     canonical filename is just <c>{stem}.dll</c>; any matching
-        ///     <c>{stem}.{numericVersion}.dll</c> sibling is by definition
-        ///     stale.</description></item>
-        /// </list>
-        ///
-        /// <para>
-        /// Best-effort per-file deletion: a single locked file no longer aborts
-        /// the entire migration. Files that can be deleted are deleted; files
-        /// that can't (Windows <c>FileShare.None</c> lock when Unity has the
-        /// assembly loaded into the editor AppDomain, antivirus quarantine,
-        /// read-only flags) are logged and have their <c>PluginImporter</c>
-        /// disabled (via <see cref="NuGetPluginConfigurator.DisableImporter"/>)
-        /// so the next domain reload unloads them and unlocks the file. The
-        /// next migration pass completes the deletion. The caller may always
-        /// continue past this method; downstream extraction can still make
-        /// progress on whatever the migration freed up.
-        /// </para>
-        ///
-        /// <para>
-        /// Outcomes: <see cref="Outcome.NoLegacyState"/> when no legacy
-        /// directory and no versioned-filename DLL were found;
-        /// <see cref="Outcome.Migrated"/> when every detected item was fully
-        /// removed; <see cref="Outcome.AbortedFileLock"/> when at least one
-        /// item could not be fully removed.
-        /// <see cref="Result.FailedDirectory"/> reports the first such item;
-        /// the warning log enumerates them all.
-        /// </para>
+        /// unversioned flat layout: removes legacy <c>{Id}.{Version}/</c>
+        /// directories AND flat <c>{stem}.{numericVersion}.dll</c> files.
+        /// Best-effort — see the class doc for the locked-file recovery
+        /// contract.
         /// </summary>
         public static Result Run(string installPath)
         {
@@ -161,13 +133,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 Debug.Log($"{Tag} Removing legacy directory: {dir}");
                 if (TryRemoveDirectoryRecursive(dir, out var failureMessage))
                 {
-                    TryDeleteFile(dir + ".meta");
+                    NuGetPluginConfigurator.TryDeleteFile(dir + ".meta");
                     removed.Add(dir);
                     continue;
                 }
                 firstFailedItem ??= dir;
                 firstFailureMessage ??= failureMessage;
-                Debug.LogWarning(BuildLockMessage(dir, failureMessage));
+                Debug.LogWarning(BuildLockMessage(dir, failureMessage ?? "(unknown)"));
             }
 
             foreach (var file in versionedFiles)
@@ -180,7 +152,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 }
                 firstFailedItem ??= file;
                 firstFailureMessage ??= failureMessage;
-                Debug.LogWarning(BuildLockMessage(file, failureMessage));
+                Debug.LogWarning(BuildLockMessage(file, failureMessage ?? "(unknown)"));
             }
 
             if (firstFailedItem != null)
@@ -227,7 +199,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             try
             {
                 File.Delete(filePath);
-                TryDeleteFile(filePath + ".meta");
+                NuGetPluginConfigurator.TryDeleteFile(filePath + ".meta");
                 return true;
             }
             catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
@@ -239,13 +211,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         }
 
         /// <summary>
-        /// Best-effort recursive delete that does not throw. Returns true only
-        /// when the directory is gone after the call. On a per-file
-        /// IOException / UnauthorizedAccessException, disables the file's
-        /// <see cref="PluginImporter"/> (when applicable) so the next domain
-        /// reload unloads it and the next migration pass can finish — without
-        /// this, a single locked DLL inside an otherwise-deletable folder
-        /// would keep the user pinned in the duplicate-assembly state forever.
+        /// Best-effort recursive delete; returns true only when the directory
+        /// is gone after the call. Locked file → disable importer so the next
+        /// reload unloads it and the next migration pass finishes.
         /// </summary>
         static bool TryRemoveDirectoryRecursive(string dir, out string? failureMessage)
         {
@@ -282,26 +250,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             }
         }
 
-        static void TryDeleteFile(string path)
-        {
-            if (!File.Exists(path))
-                return;
-            try
-            {
-                File.Delete(path);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogWarning($"{Tag} Failed to delete '{path}': {ex.Message}");
-            }
-        }
-
-        static string BuildLockMessage(string directory, string? reason)
+        static string BuildLockMessage(string directory, string reason)
         {
             return
                 $"{Tag} Could not fully remove legacy install directory:\n" +
                 $"  {directory}\n\n" +
-                (reason != null ? $"  Reason: {reason}\n\n" : "") +
+                $"  Reason: {reason}\n\n" +
                 "On Windows this typically means a DLL inside the legacy folder is loaded " +
                 "into the editor AppDomain. The PluginImporter for the locked DLL has been " +
                 "disabled so the next domain reload will unload it; the next migration pass " +

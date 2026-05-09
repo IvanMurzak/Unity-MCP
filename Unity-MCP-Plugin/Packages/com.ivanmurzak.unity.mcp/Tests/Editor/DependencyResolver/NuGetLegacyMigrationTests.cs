@@ -57,7 +57,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
             var result = NuGetLegacyMigration.Run(_installPath);
 
             Assert.AreEqual(NuGetLegacyMigration.Outcome.NoLegacyState, result.Outcome);
-            Assert.AreEqual(0, result.RemovedDirectories.Count);
+            Assert.AreEqual(0, result.RemovedItems.Count);
         }
 
         [Test]
@@ -87,7 +87,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
             var result = NuGetLegacyMigration.Run(_installPath);
 
             Assert.AreEqual(NuGetLegacyMigration.Outcome.Migrated, result.Outcome);
-            Assert.AreEqual(2, result.RemovedDirectories.Count);
+            Assert.AreEqual(2, result.RemovedItems.Count);
             Assert.IsFalse(Directory.Exists(Path.Combine(_installPath, "System.Text.Json.8.0.5")));
             Assert.IsFalse(File.Exists(Path.Combine(_installPath, "System.Text.Json.8.0.5.meta")));
             Assert.IsFalse(Directory.Exists(Path.Combine(_installPath, "Microsoft.Bcl.Memory.10.0.3")));
@@ -104,7 +104,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
 
             var second = NuGetLegacyMigration.Run(_installPath);
             Assert.AreEqual(NuGetLegacyMigration.Outcome.NoLegacyState, second.Outcome);
-            Assert.AreEqual(0, second.RemovedDirectories.Count);
+            Assert.AreEqual(0, second.RemovedItems.Count);
         }
 
         [Test]
@@ -178,7 +178,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
             var result = NuGetLegacyMigration.Run(_installPath);
 
             Assert.AreEqual(NuGetLegacyMigration.Outcome.Migrated, result.Outcome);
-            Assert.AreEqual(3, result.RemovedDirectories.Count);
+            Assert.AreEqual(3, result.RemovedItems.Count);
             Assert.IsFalse(Directory.Exists(Path.Combine(_installPath, "Foo.Bar.1.0.0-preview")));
             Assert.IsFalse(Directory.Exists(Path.Combine(_installPath, "Baz.2.3.4+build.42")));
             Assert.IsFalse(Directory.Exists(Path.Combine(_installPath, "Qux.1.0.0-rc.1")));
@@ -208,8 +208,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
                 var result = NuGetLegacyMigration.Run(_installPath);
 
                 Assert.AreEqual(NuGetLegacyMigration.Outcome.AbortedFileLock, result.Outcome);
-                Assert.IsNotNull(result.FailedDirectory);
-                Assert.IsNotNull(result.FailureMessage);
+                Assert.IsNotNull(result.FirstFailedItem);
+                Assert.IsNotNull(result.FirstFailureMessage);
                 // Blocked folder still on disk — the next reload picks it back up.
                 Assert.IsTrue(Directory.Exists(Path.Combine(_installPath, "System.Text.Json.8.0.5")));
             }
@@ -231,7 +231,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
                 var result = NuGetLegacyMigration.Run(_installPath);
 
                 Assert.AreEqual(NuGetLegacyMigration.Outcome.AbortedFileLock, result.Outcome);
-                Assert.AreEqual(1, result.RemovedDirectories.Count,
+                Assert.AreEqual(1, result.RemovedItems.Count,
                     "The unblocked folder must still be removed even though a sibling folder was locked.");
                 Assert.IsTrue(Directory.Exists(Path.Combine(_installPath, "System.Text.Json.8.0.5")),
                     "Blocked folder remains on disk for retry on the next pass.");
@@ -269,8 +269,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
                 var result = NuGetLegacyMigration.Run(_installPath);
 
                 Assert.AreEqual(NuGetLegacyMigration.Outcome.AbortedFileLock, result.Outcome);
-                Assert.IsNotNull(result.FailedDirectory);
-                Assert.IsNotNull(result.FailureMessage);
+                Assert.IsNotNull(result.FirstFailedItem);
+                Assert.IsNotNull(result.FirstFailureMessage);
                 Assert.IsTrue(Directory.Exists(Path.Combine(_installPath, "System.Text.Json.8.0.5")));
             }
             finally
