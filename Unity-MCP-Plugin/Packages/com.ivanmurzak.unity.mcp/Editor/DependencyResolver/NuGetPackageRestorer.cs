@@ -131,6 +131,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     return false;
             }
 
+            // Versioned-filename flat DLLs on disk → migration to the unversioned flat layout
+            // is pending → force a full restore so NuGetLegacyMigration sweeps them. Same
+            // O(directory listing) cost; once the migration completes there are no matches.
+            foreach (var dllPath in Directory.GetFiles(NuGetConfig.InstallPath, "*.dll", SearchOption.TopDirectoryOnly))
+            {
+                if (NuGetInstallManifest.TryParseInstalledDllName(Path.GetFileName(dllPath), out _, out _))
+                    return false;
+            }
+
             // Manifest is the source of truth for the flat layout. If it's missing we need a full
             // restore — Restore() will rebuild it from on-disk filenames as the first step, then
             // the closure-completeness check below runs against the rebuilt entries.
@@ -169,10 +178,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 if (!string.Equals(entry.Version, package.Version, StringComparison.OrdinalIgnoreCase))
                     return false;
 
-                // Every recorded DLL must still be on disk.
+                // Every recorded DLL must still be on disk AND must be in the
+                // canonical unversioned shape. A manifest entry whose dlls
+                // list still carries the {stem}.{version}.dll shape is left
+                // over from the pre-unversioned-filename resolver — force a
+                // full restore so extraction re-emits the {stem}.dll
+                // canonical and updates the entry.
                 foreach (var dll in entry.Dlls)
                 {
                     if (!File.Exists(Path.Combine(NuGetConfig.InstallPath, dll)))
+                        return false;
+                    if (NuGetInstallManifest.TryParseInstalledDllName(dll, out _, out _))
                         return false;
                 }
             }

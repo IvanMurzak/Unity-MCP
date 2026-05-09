@@ -124,7 +124,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 
                 // Plan DLL paths up front so synthetic-owner reconciliation (below) can
                 // operate on the same filenames the collision check would compare against.
-                var planned = NuGetExtractor.PlanDllPaths(nupkgPath, installPath, package.Version);
+                var planned = NuGetExtractor.PlanDllPaths(nupkgPath, installPath);
 
                 // Filesystem fallback for stale DLLs the manifest doesn't know about
                 // (manifest deleted, partial-restore failure, AV quarantine).
@@ -187,7 +187,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     foreach (var planEntry in planned)
                         NuGetLongPathPreflight.Check(planEntry.TargetPath, package.Id);
 
-                    var extractedDlls = NuGetExtractor.ExtractDlls(nupkgPath, installPath, package.Version);
+                    var extractedDlls = NuGetExtractor.ExtractDlls(nupkgPath, installPath);
                     if (extractedDlls.Count > 0)
                     {
                         Debug.Log($"{Tag} Installed {package.Id} {package.Version} ({extractedDlls.Count} DLL(s))");

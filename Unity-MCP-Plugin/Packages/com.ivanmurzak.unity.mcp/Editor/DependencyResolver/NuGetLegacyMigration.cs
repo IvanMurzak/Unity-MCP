@@ -102,33 +102,41 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         }
 
         /// <summary>
-        /// Detects and removes legacy <c>{Id}.{Version}/</c> directories under
-        /// <paramref name="installPath"/>. Flat-layout DLLs and the manifest
-        /// are left untouched.
+        /// Migrates the install path off pre-#733 layouts to the canonical
+        /// unversioned flat layout. Two migration steps run on every call:
+        /// <list type="number">
+        ///   <item><description>remove legacy <c>{Id}.{Version}/</c>
+        ///     directories (the original #733 migration);</description></item>
+        ///   <item><description>remove flat versioned-filename DLLs of the
+        ///     <c>{stem}.{numericVersion}.dll</c> shape — these are the
+        ///     transitional output the resolver wrote before the version was
+        ///     moved out of the filename and into the manifest. The current
+        ///     canonical filename is just <c>{stem}.dll</c>; any matching
+        ///     <c>{stem}.{numericVersion}.dll</c> sibling is by definition
+        ///     stale.</description></item>
+        /// </list>
         ///
         /// <para>
-        /// Best-effort per-file deletion: a single locked DLL inside one
-        /// legacy folder no longer aborts the entire migration. Files that
-        /// can be deleted are deleted; files that can't (Windows
-        /// <c>FileShare.None</c> lock when Unity has the assembly loaded into
-        /// the editor AppDomain, antivirus quarantine, read-only flags) are
-        /// logged and have their <c>PluginImporter</c> disabled so the next
-        /// domain reload unloads them and unlocks the file — the next
-        /// migration pass then completes the deletion. The caller may always
-        /// continue past this method; the downstream stale-flat sweep
-        /// (<see cref="NuGetPackageInstaller.RemoveStaleVersionDllsByStem"/>)
-        /// and extraction can still make progress on whatever the migration
-        /// freed up.
+        /// Best-effort per-file deletion: a single locked file no longer aborts
+        /// the entire migration. Files that can be deleted are deleted; files
+        /// that can't (Windows <c>FileShare.None</c> lock when Unity has the
+        /// assembly loaded into the editor AppDomain, antivirus quarantine,
+        /// read-only flags) are logged and have their <c>PluginImporter</c>
+        /// disabled (via <see cref="NuGetPluginConfigurator.DisableImporter"/>)
+        /// so the next domain reload unloads them and unlocks the file. The
+        /// next migration pass completes the deletion. The caller may always
+        /// continue past this method; downstream extraction can still make
+        /// progress on whatever the migration freed up.
         /// </para>
         ///
         /// <para>
         /// Outcomes: <see cref="Outcome.NoLegacyState"/> when no legacy
-        /// directory was found; <see cref="Outcome.Migrated"/> when every
-        /// legacy directory was fully removed;
-        /// <see cref="Outcome.AbortedFileLock"/> when at least one directory
-        /// could not be fully removed. <see cref="Result.FailedDirectory"/>
-        /// reports the first such directory; the warning log enumerates them
-        /// all.
+        /// directory and no versioned-filename DLL were found;
+        /// <see cref="Outcome.Migrated"/> when every detected item was fully
+        /// removed; <see cref="Outcome.AbortedFileLock"/> when at least one
+        /// item could not be fully removed.
+        /// <see cref="Result.FailedDirectory"/> reports the first such item;
+        /// the warning log enumerates them all.
         /// </para>
         /// </summary>
         public static Result Run(string installPath)
@@ -137,51 +145,97 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             if (!Directory.Exists(installPath))
                 return new Result(Outcome.NoLegacyState, removed);
 
-            // First pass: detect legacy directories without deleting anything.
-            // Splitting detection from deletion lets us short-circuit on a
-            // clean install with a single Directory.GetDirectories call.
-            var legacyDirs = new List<string>();
-            foreach (var dir in Directory.GetDirectories(installPath))
-            {
-                var dirName = Path.GetFileName(dir);
-                var packageId = NuGetPackageInstaller.ExtractPackageIdFromDirName(dirName);
-                if (packageId == null)
-                    continue;
-                legacyDirs.Add(dir);
-            }
+            var legacyDirs = DetectLegacyDirectories(installPath);
+            var versionedFiles = DetectVersionedFilenameDlls(installPath);
 
-            if (legacyDirs.Count == 0)
+            if (legacyDirs.Count == 0 && versionedFiles.Count == 0)
                 return new Result(Outcome.NoLegacyState, removed);
 
-            Debug.Log($"{Tag} Legacy install detected: {legacyDirs.Count} directories to migrate to flat layout (issue #733).");
+            Debug.Log($"{Tag} Legacy install detected: {legacyDirs.Count} directories, {versionedFiles.Count} versioned-filename DLLs to migrate to the unversioned flat layout.");
 
-            string? firstFailedDir = null;
+            string? firstFailedItem = null;
             string? firstFailureMessage = null;
 
             foreach (var dir in legacyDirs)
             {
-                Debug.Log($"{Tag} Migrating legacy install: removing {dir} (replaced by flat layout in #733)");
-
+                Debug.Log($"{Tag} Removing legacy directory: {dir}");
                 if (TryRemoveDirectoryRecursive(dir, out var failureMessage))
                 {
                     TryDeleteFile(dir + ".meta");
                     removed.Add(dir);
                     continue;
                 }
-
-                if (firstFailedDir == null)
-                {
-                    firstFailedDir = dir;
-                    firstFailureMessage = failureMessage;
-                }
+                firstFailedItem ??= dir;
+                firstFailureMessage ??= failureMessage;
                 Debug.LogWarning(BuildLockMessage(dir, failureMessage));
             }
 
-            if (firstFailedDir != null)
-                return new Result(Outcome.AbortedFileLock, removed, firstFailedDir, firstFailureMessage);
+            foreach (var file in versionedFiles)
+            {
+                Debug.Log($"{Tag} Removing versioned-filename DLL: {Path.GetFileName(file)} (version moved into the manifest).");
+                if (TryDeleteVersionedFile(file, out var failureMessage))
+                {
+                    removed.Add(file);
+                    continue;
+                }
+                firstFailedItem ??= file;
+                firstFailureMessage ??= failureMessage;
+                Debug.LogWarning(BuildLockMessage(file, failureMessage));
+            }
 
-            Debug.Log($"{Tag} Migration complete: {removed.Count} legacy directories removed; flat layout active");
+            if (firstFailedItem != null)
+                return new Result(Outcome.AbortedFileLock, removed, firstFailedItem, firstFailureMessage);
+
+            Debug.Log($"{Tag} Migration complete: {removed.Count} legacy items removed; unversioned flat layout active.");
             return new Result(Outcome.Migrated, removed);
+        }
+
+        static List<string> DetectLegacyDirectories(string installPath)
+        {
+            var result = new List<string>();
+            foreach (var dir in Directory.GetDirectories(installPath))
+            {
+                var dirName = Path.GetFileName(dir);
+                if (NuGetPackageInstaller.ExtractPackageIdFromDirName(dirName) != null)
+                    result.Add(dir);
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// Returns every <c>{stem}.{numericVersion}.dll</c> at the install
+        /// root — these are flat-layout files written by an earlier resolver
+        /// that embedded the package version in the filename. With the
+        /// version now living in the manifest, every such file is by
+        /// definition stale and the canonical replacement is <c>{stem}.dll</c>.
+        /// </summary>
+        static List<string> DetectVersionedFilenameDlls(string installPath)
+        {
+            var result = new List<string>();
+            foreach (var dllPath in Directory.GetFiles(installPath, "*.dll", SearchOption.TopDirectoryOnly))
+            {
+                var fileName = Path.GetFileName(dllPath);
+                if (NuGetInstallManifest.TryParseInstalledDllName(fileName, out _, out _))
+                    result.Add(dllPath);
+            }
+            return result;
+        }
+
+        static bool TryDeleteVersionedFile(string filePath, out string? failureMessage)
+        {
+            failureMessage = null;
+            try
+            {
+                File.Delete(filePath);
+                TryDeleteFile(filePath + ".meta");
+                return true;
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+            {
+                failureMessage = ex.Message;
+                NuGetPluginConfigurator.DisableImporter(filePath);
+                return false;
+            }
         }
 
         /// <summary>

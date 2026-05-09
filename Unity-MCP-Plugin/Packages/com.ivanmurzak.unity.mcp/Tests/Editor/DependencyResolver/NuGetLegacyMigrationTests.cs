@@ -61,19 +61,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
         }
 
         [Test]
-        public void Run_NoLegacyState_ReturnsNoLegacyState_OnFlatOnlyInstall()
+        public void Run_NoLegacyState_ReturnsNoLegacyState_OnUnversionedFlatInstall()
         {
-            // Already-migrated project: only flat-layout (versioned) DLLs and
-            // the manifest are present. Migration must short-circuit, not
-            // delete anything.
-            File.WriteAllText(Path.Combine(_installPath, "System.Memory.10.0.3.dll"), "dummy");
-            File.WriteAllText(Path.Combine(_installPath, "System.Memory.10.0.3.dll.meta"), "meta");
+            // Steady-state install in the unversioned flat layout: no legacy
+            // {Id}.{Version}/ directories, no versioned-filename {stem}.{v}.dll
+            // siblings — the migration must short-circuit and touch nothing.
+            File.WriteAllText(Path.Combine(_installPath, "System.Memory.dll"), "dummy");
+            File.WriteAllText(Path.Combine(_installPath, "System.Memory.dll.meta"), "meta");
             File.WriteAllText(Path.Combine(_installPath, ".nuget-installed.json"), "{}");
 
             var result = NuGetLegacyMigration.Run(_installPath);
 
             Assert.AreEqual(NuGetLegacyMigration.Outcome.NoLegacyState, result.Outcome);
-            Assert.IsTrue(File.Exists(Path.Combine(_installPath, "System.Memory.10.0.3.dll")));
+            Assert.IsTrue(File.Exists(Path.Combine(_installPath, "System.Memory.dll")));
         }
 
         [Test]
@@ -108,25 +108,56 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
         }
 
         [Test]
-        public void Run_PartialLegacyState_MigratesOnlyLegacyDirsAndIgnoresFlatDllsOrUnrelatedDirectories()
+        public void Run_MixedLegacyState_MigratesLegacyDirsAndVersionedFiles_LeavesUnrelatedContent()
         {
-            // Mixed install: some legacy folders, some flat-layout DLLs already
-            // present, plus a non-package directory the user dropped in. The
-            // migration must remove only the legacy folders.
+            // Mixed install: a legacy {Id}.{Version}/ folder, a flat
+            // versioned-filename DLL, and unrelated user content. The migration
+            // sweeps both legacy artifacts in one pass and leaves the user's
+            // directory + unversioned canonical untouched.
             CreateLegacyPackage("System.Text.Json", "8.0.5", "System.Text.Json.dll");
-            File.WriteAllText(Path.Combine(_installPath, "Microsoft.Bcl.Memory.10.0.3.dll"), "flat-already");
+            File.WriteAllText(Path.Combine(_installPath, "Microsoft.Bcl.Memory.10.0.3.dll"), "flat-versioned-leftover");
+            File.WriteAllText(Path.Combine(_installPath, "Microsoft.Bcl.Memory.dll"), "canonical");
             Directory.CreateDirectory(Path.Combine(_installPath, "ReadMe"));
             File.WriteAllText(Path.Combine(_installPath, "ReadMe", "notes.txt"), "user notes");
 
             var result = NuGetLegacyMigration.Run(_installPath);
 
             Assert.AreEqual(NuGetLegacyMigration.Outcome.Migrated, result.Outcome);
-            Assert.AreEqual(1, result.RemovedDirectories.Count);
             Assert.IsFalse(Directory.Exists(Path.Combine(_installPath, "System.Text.Json.8.0.5")));
-            Assert.IsTrue(File.Exists(Path.Combine(_installPath, "Microsoft.Bcl.Memory.10.0.3.dll")),
-                "Flat-layout DLLs already present must not be deleted by migration.");
+            Assert.IsFalse(File.Exists(Path.Combine(_installPath, "Microsoft.Bcl.Memory.10.0.3.dll")),
+                "Versioned-filename flat DLLs are now legacy and must be swept.");
+            Assert.IsTrue(File.Exists(Path.Combine(_installPath, "Microsoft.Bcl.Memory.dll")),
+                "Unversioned canonical filenames must not be touched by migration.");
             Assert.IsTrue(Directory.Exists(Path.Combine(_installPath, "ReadMe")),
                 "Non-package directories must not be touched by migration.");
+        }
+
+        [Test]
+        public void Run_VersionedFilenameDllsAtRoot_AreSwept()
+        {
+            // Migration from the pre-unversioned-filename resolver: any flat
+            // {stem}.{numericVersion}.dll at the install root is by
+            // definition stale once the canonical filename is just {stem}.dll.
+            // The migration sweeps them in the same pass that removes
+            // legacy {Id}.{Version}/ directories.
+            File.WriteAllText(Path.Combine(_installPath, "McpPlugin.6.2.1.dll"), "stale");
+            File.WriteAllText(Path.Combine(_installPath, "McpPlugin.6.2.1.dll.meta"), "meta");
+            File.WriteAllText(Path.Combine(_installPath, "System.Text.Json.8.0.5.dll"), "stale");
+            File.WriteAllText(Path.Combine(_installPath, "System.Text.Json.8.0.5.dll.meta"), "meta");
+            // Unversioned canonicals must NOT be touched.
+            File.WriteAllText(Path.Combine(_installPath, "ReadMe.dll"), "user-content");
+            File.WriteAllText(Path.Combine(_installPath, "Foo.dll"), "canonical");
+
+            var result = NuGetLegacyMigration.Run(_installPath);
+
+            Assert.AreEqual(NuGetLegacyMigration.Outcome.Migrated, result.Outcome);
+            Assert.IsFalse(File.Exists(Path.Combine(_installPath, "McpPlugin.6.2.1.dll")));
+            Assert.IsFalse(File.Exists(Path.Combine(_installPath, "McpPlugin.6.2.1.dll.meta")),
+                ".meta sidecar must be deleted alongside the DLL.");
+            Assert.IsFalse(File.Exists(Path.Combine(_installPath, "System.Text.Json.8.0.5.dll")));
+            Assert.IsTrue(File.Exists(Path.Combine(_installPath, "ReadMe.dll")),
+                "Unversioned filenames are the new canonical and must be preserved.");
+            Assert.IsTrue(File.Exists(Path.Combine(_installPath, "Foo.dll")));
         }
 
         [Test]

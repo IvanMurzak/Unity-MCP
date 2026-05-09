@@ -17,12 +17,13 @@ using com.IvanMurzak.Unity.MCP.Editor.DependencyResolver;
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
 {
     /// <summary>
-    /// Coverage for <see cref="NuGetExtractor"/>'s flat-layout extraction
-    /// (issue #733). Synthetic .nupkg fixtures exercise the extractor directly
-    /// without touching nuget.org. DLLs are written with the
-    /// <c>{stem}.{packageVersion}.dll</c> filename pattern so the install
-    /// layout is self-describing and the longest path stays under
-    /// Windows' MAX_PATH=260 limit.
+    /// Coverage for <see cref="NuGetExtractor"/>'s flat-layout extraction.
+    /// Synthetic .nupkg fixtures exercise the extractor directly without
+    /// touching nuget.org. DLLs are written FLAT under the install directory
+    /// using the original <c>{stem}.dll</c> filename from the .nupkg lib
+    /// folder — the package version is NOT embedded in the on-disk filename
+    /// (it is tracked in <see cref="NuGetInstallManifest"/> instead, so
+    /// asmdef <c>precompiledReferences</c> stay stable across version bumps).
     /// </summary>
     [TestFixture]
     public class NuGetExtractorFlatLayoutTests
@@ -50,66 +51,61 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
         }
 
         [Test]
-        public void ExtractDlls_WritesFlatVersionedFilename()
+        public void ExtractDlls_WritesUnversionedFlatFilename()
         {
-            // Single-DLL package. Output filename is {stem}.{packageVersion}.dll
-            // and sits directly under the install path (no per-package subfolder).
+            // Output filename is the original {stem}.dll from the .nupkg's
+            // lib/<tfm>/ folder; version is tracked in the manifest, not the
+            // filename. The DLL sits directly under the install path (no
+            // per-package subfolder, no version tail).
             var nupkg = BuildNupkg("System.Text.Json", "8.0.5", "lib/netstandard2.0/System.Text.Json.dll");
 
-            var extracted = NuGetExtractor.ExtractDlls(nupkg, _installDir, "8.0.5");
+            var extracted = NuGetExtractor.ExtractDlls(nupkg, _installDir);
 
-            CollectionAssert.AreEqual(new[] { "System.Text.Json.8.0.5.dll" }, extracted);
-            Assert.IsTrue(File.Exists(Path.Combine(_installDir, "System.Text.Json.8.0.5.dll")));
-            Assert.IsFalse(Directory.Exists(Path.Combine(_installDir, "System.Text.Json.8.0.5")),
-                "Per-package directory must not be created in the flat layout.");
-            Assert.IsFalse(File.Exists(Path.Combine(_installDir, "System.Text.Json.dll")),
-                "Unversioned filename must not be left behind.");
+            CollectionAssert.AreEqual(new[] { "System.Text.Json.dll" }, extracted);
+            Assert.IsTrue(File.Exists(Path.Combine(_installDir, "System.Text.Json.dll")));
+            Assert.IsFalse(File.Exists(Path.Combine(_installDir, "System.Text.Json.8.0.5.dll")),
+                "Versioned-filename layout is no longer produced.");
         }
 
         [Test]
-        public void ExtractDlls_TagsAllDllsWithPackageVersion_ForMultiDllPackage()
+        public void ExtractDlls_WritesAllShippedDlls_ForMultiDllPackage()
         {
-            // Multi-DLL packages (e.g. Microsoft.Bcl.Memory) tag every DLL with
-            // the PACKAGE version, not the DLL's own internal version.
+            // Multi-DLL packages (e.g. Microsoft.Bcl.Memory) write every DLL
+            // under its original stem; the per-package version (10.0.3 here)
+            // lives in the manifest entry.
             var nupkg = BuildNupkg("Microsoft.Bcl.Memory", "10.0.3",
                 "lib/netstandard2.0/System.Memory.dll",
                 "lib/netstandard2.0/System.Buffers.dll",
                 "lib/netstandard2.0/System.Runtime.CompilerServices.Unsafe.dll");
 
-            var extracted = NuGetExtractor.ExtractDlls(nupkg, _installDir, "10.0.3");
+            var extracted = NuGetExtractor.ExtractDlls(nupkg, _installDir);
 
             CollectionAssert.AreEquivalent(
                 new[]
                 {
-                    "System.Memory.10.0.3.dll",
-                    "System.Buffers.10.0.3.dll",
-                    "System.Runtime.CompilerServices.Unsafe.10.0.3.dll",
+                    "System.Memory.dll",
+                    "System.Buffers.dll",
+                    "System.Runtime.CompilerServices.Unsafe.dll",
                 },
                 extracted);
         }
 
         [Test]
-        public void ToVersionedFileName_AppendsVersionBeforeExtension()
+        public void ExtractDlls_OverwritesExistingFile_ForVersionBumpInPlace()
         {
-            Assert.AreEqual("System.Memory.10.0.3.dll",
-                NuGetExtractor.ToVersionedFileName("System.Memory.dll", "10.0.3"));
-        }
+            // Steady-state version-bump: the same {stem}.dll filename is
+            // reused across versions, so re-extraction overwrites bytes in
+            // place. This is the primary win of the unversioned layout —
+            // asmdef precompiledReferences never need to be edited when the
+            // configured package version bumps.
+            var nupkg = BuildNupkg("Foo.Bar", "1.0.0", "lib/netstandard2.0/Foo.Bar.dll");
+            var targetPath = Path.Combine(_installDir, "Foo.Bar.dll");
 
-        [Test]
-        public void ToVersionedFileName_IsIdempotent()
-        {
-            // If the input already ends in ".{packageVersion}", do not append again.
-            Assert.AreEqual("System.Memory.10.0.3.dll",
-                NuGetExtractor.ToVersionedFileName("System.Memory.10.0.3.dll", "10.0.3"));
-        }
+            File.WriteAllText(targetPath, "old-version-bytes");
+            NuGetExtractor.ExtractDlls(nupkg, _installDir);
 
-        [Test]
-        public void ToVersionedFileName_PreservesExtensionCasing()
-        {
-            // Defensive — real .nupkg entries are always lower-case .dll, but
-            // the rewrite should not be case-sensitive about the extension.
-            Assert.AreEqual("System.Memory.10.0.3.DLL",
-                NuGetExtractor.ToVersionedFileName("System.Memory.DLL", "10.0.3"));
+            Assert.AreEqual("dummy-dll-content", File.ReadAllText(targetPath),
+                "Extraction must overwrite the existing file with the new version's bytes.");
         }
 
         [Test]
@@ -124,7 +120,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
                 w.Write("<?xml version=\"1.0\"?><package><metadata><id>Empty</id><version>1.0.0</version><authors>t</authors><description>t</description></metadata></package>");
             }
 
-            var extracted = NuGetExtractor.ExtractDlls(emptyNupkg, _installDir, "1.0.0");
+            var extracted = NuGetExtractor.ExtractDlls(emptyNupkg, _installDir);
 
             Assert.AreEqual(0, extracted.Count);
             Assert.AreEqual(0, Directory.GetFiles(_installDir).Length,
