@@ -130,10 +130,10 @@ function validateOptions(opts: RunToolOptions): RunToolFailure | null {
       message: 'toolName is required and must be a non-empty string.',
     });
   }
-  if (
-    (opts.url === undefined || opts.url.length === 0) &&
-    (typeof opts.unityProjectPath !== 'string' || opts.unityProjectPath.trim().length === 0)
-  ) {
+  const hasUrl = typeof opts.url === 'string' && opts.url.length > 0;
+  const hasProjectPath =
+    typeof opts.unityProjectPath === 'string' && opts.unityProjectPath.trim().length > 0;
+  if (!hasUrl && !hasProjectPath) {
     return makeFailure({
       endpoint: '',
       reason: 'invalid-input',

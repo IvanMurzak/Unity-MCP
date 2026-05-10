@@ -58,21 +58,26 @@ export function buildRunToolCommand(cfg: BuilderOptions): Command {
     .option('--raw', 'Output raw JSON (no formatting)')
     .option('--timeout <ms>', 'Request timeout in milliseconds (default: 60000)', '60000')
     .action(async (toolName: string, positionalPath: string | undefined, options: CliOptions) => {
+      // Validate --timeout first so a bad value short-circuits before
+      // we read --input-file or hit the network.
+      const timeoutMs = parseInt(options.timeout!, 10);
+      if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
+        ui.error(`Invalid --timeout value: "${options.timeout}". Must be a positive integer (milliseconds).`);
+        process.exit(1);
+      }
+
       // Resolve path + connection up front so the heading and verbose
       // output reflect the final endpoint before the HTTP call fires.
       const projectPath = resolveAndValidateProjectPath(positionalPath, options);
       const { url: baseUrl, token } = resolveConnection(projectPath, options);
       const body = parseInput(options);
       const endpoint = `${baseUrl}${cfg.routePrefix}/${encodeURIComponent(toolName)}`;
+      const authSource = options.token ? '--token flag' : 'config';
 
       verbose(`${cfg.verboseLabel}: ${toolName}`);
       verbose(`Endpoint: ${endpoint}`);
       verbose(`Body: ${body}`);
-      if (token) {
-        verbose(`Authorization header set (source: ${options.token ? '--token flag' : 'config'})`);
-      }
-
-      const authSource = options.token ? '--token flag' : 'config';
+      if (token) verbose(`Authorization header set (source: ${authSource})`);
 
       if (!options.raw) {
         ui.heading(cfg.headingLabel);
@@ -83,12 +88,6 @@ export function buildRunToolCommand(cfg: BuilderOptions): Command {
       }
 
       const spinner = options.raw ? null : ui.startSpinner(`Calling ${toolName}...`);
-
-      const timeoutMs = parseInt(options.timeout ?? '60000', 10);
-      if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
-        ui.error(`Invalid --timeout value: "${options.timeout}". Must be a positive integer (milliseconds).`);
-        process.exit(1);
-      }
 
       // The CLI already resolved url/token, so passing them explicitly
       // makes the lib's resolver a no-op rather than re-reading config.
