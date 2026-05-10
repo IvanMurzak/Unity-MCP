@@ -63,7 +63,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // 6.1.0 drops the unused ModelContextProtocol dep; earlier versions drag in a
             // v10 BCL stack via MCP.Core.1.2.0 that collides with our v8 pins in Unity.
             // 6.1.1 bumps the transitive ReflectorNet dependency to 5.1.1.
-            new NuGetPackage("com.IvanMurzak.McpPlugin",                              "6.2.1",  includeInBuild: true),
+            new NuGetPackage("com.IvanMurzak.McpPlugin",                              "6.3.0",  includeInBuild: true),
             // Pinned explicitly so the resolver doesn't drift below the version
             // bundled in this package. The atomic API surface (TryModifyAt,
             // TryPatch, TryReadAt, View, Grep) introduced in 5.1.0 is exercised
