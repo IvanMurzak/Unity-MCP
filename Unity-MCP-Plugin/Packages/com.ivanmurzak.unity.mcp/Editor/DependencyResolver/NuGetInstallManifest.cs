@@ -129,9 +129,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 
         /// <summary>
         /// Rebuilds an in-memory manifest by scanning the install directory
-        /// for versioned DLL filenames (the
-        /// <c>{stem}.{version}.dll</c> shape produced by
-        /// <see cref="NuGetExtractor.ToVersionedFileName"/>).
+        /// for the legacy versioned DLL filename shape
+        /// <c>{stem}.{version}.dll</c>. Unversioned canonical filenames are
+        /// skipped (we can't recover their version from disk; if the manifest
+        /// is missing, the next <c>Restore()</c> re-extracts every package
+        /// from .nupkg cache and rebuilds the manifest authoritatively).
         ///
         /// Used when <c>.nuget-installed.json</c> is missing, corrupt, or
         /// out-of-sync with disk (the disaster-recovery path). The caller is
@@ -145,7 +147,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// ID; the next full restore reconciles the synthetic IDs against the
         /// dependency closure (the closure is the authoritative source). This
         /// is enough to satisfy the steady-state "manifest deleted, no
-        /// re-extraction needed" disaster-recovery acceptance criterion.
+        /// re-extraction needed" disaster-recovery acceptance criterion for
+        /// the pre-unversioned-filename layouts that still ship versioned
+        /// filenames on disk.
         /// </para>
         /// </summary>
         public static InstallManifest TryRebuildFromDisk(string installPath)
@@ -184,8 +188,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// <summary>
         /// Splits a versioned install filename of the form
         /// <c>{stem}.{version}.dll</c> back into its stem and version parts.
-        /// Returns false for legacy unversioned names (e.g. <c>System.Memory.dll</c>)
-        /// or names whose version-tail does not parse as a System.Version.
+        /// Returns false for canonical unversioned names (e.g. <c>System.Memory.dll</c>)
+        /// or names whose version-tail does not parse as a System.Version —
+        /// useful as a "is this a leftover from the pre-unversioned-filename
+        /// layout?" predicate.
         ///
         /// The version segment is matched as <c>\d+(\.\d+){1,3}</c> at the
         /// tail before <c>.dll</c>. The match is greedy on the tail so that
@@ -222,8 +228,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         }
 
         // Anchor a 1-4 segment numeric tail (each segment 1-9 digits — System.Version's
-        // ceiling) to the end of the stem. Used to peel the version off filenames
-        // produced by NuGetExtractor.ToVersionedFileName.
+        // ceiling) to the end of the stem. Used to detect / peel the version off
+        // filenames left over from the pre-unversioned-filename layout.
         static readonly Regex VersionTailPattern = new(@"\.(\d+(?:\.\d+){1,3})$", RegexOptions.Compiled);
     }
 

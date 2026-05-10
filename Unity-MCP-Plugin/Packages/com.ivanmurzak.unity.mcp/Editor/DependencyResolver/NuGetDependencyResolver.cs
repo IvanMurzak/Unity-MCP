@@ -11,9 +11,7 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEditor;
-using UnityEditor.Build;
 using UnityEditor.PackageManager;
 using UnityEngine;
 using PackageManagerEvents = UnityEditor.PackageManager.Events;
@@ -57,7 +55,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
     static class NuGetDependencyResolver
     {
         const string Tag = "[Unity-MCP DependencyResolver]";
-        const string ReadyDefine = "UNITY_MCP_READY";
 
         static NuGetDependencyResolver()
         {
@@ -67,7 +64,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // because scripts are compiling" when the test runner races the recompilation.
             if (IsCi())
             {
-                EnsureScriptingDefine();
+                RecompileGate.EnsureReadyDefine();
                 return;
             }
 
@@ -134,7 +131,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             if (NuGetPackageRestorer.AllPackagesInstalled())
             {
                 NuGetPluginConfigurator.ConfigureAll();
-                EnsureScriptingDefine();
+                RecompileGate.EnsureReadyDefine();
                 return;
             }
 
@@ -143,7 +140,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 
             NuGetPluginConfigurator.ConfigureAll();
 
-            EnsureScriptingDefine();
+            RecompileGate.EnsureReadyDefine();
 
             if (changed)
             {
@@ -236,62 +233,5 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             return result;
         }
 
-        /// <summary>
-        /// Ensures the UNITY_MCP_READY scripting define is set for every supported
-        /// build target group. Applying it only to the currently selected group would let
-        /// target switching (e.g., Standalone → Android) reintroduce compilation failures
-        /// in assemblies gated by defineConstraints.
-        /// </summary>
-        static void EnsureScriptingDefine()
-        {
-            var added = new List<string>();
-
-            foreach (BuildTargetGroup group in Enum.GetValues(typeof(BuildTargetGroup)))
-            {
-                if (group == BuildTargetGroup.Unknown)
-                    continue;
-
-                NamedBuildTarget target;
-                try
-                {
-                    target = NamedBuildTarget.FromBuildTargetGroup(group);
-                }
-                catch
-                {
-                    continue;
-                }
-
-                if (TryAddDefine(target))
-                    added.Add(target.TargetName);
-            }
-
-            // Server is a distinct NamedBuildTarget not reachable via BuildTargetGroup.
-            if (TryAddDefine(NamedBuildTarget.Server))
-                added.Add(NamedBuildTarget.Server.TargetName);
-
-            if (added.Count > 0)
-                Debug.Log($"{Tag} Added '{ReadyDefine}' scripting define for: {string.Join(", ", added)}.");
-        }
-
-        static bool TryAddDefine(NamedBuildTarget target)
-        {
-            try
-            {
-                PlayerSettings.GetScriptingDefineSymbols(target, out var defines);
-                if (defines.Contains(ReadyDefine))
-                    return false;
-
-                var newDefines = new string[defines.Length + 1];
-                Array.Copy(defines, newDefines, defines.Length);
-                newDefines[defines.Length] = ReadyDefine;
-
-                PlayerSettings.SetScriptingDefineSymbols(target, newDefines);
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
-        }
     }
 }

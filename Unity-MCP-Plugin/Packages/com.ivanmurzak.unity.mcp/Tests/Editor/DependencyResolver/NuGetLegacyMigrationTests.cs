@@ -57,23 +57,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
             var result = NuGetLegacyMigration.Run(_installPath);
 
             Assert.AreEqual(NuGetLegacyMigration.Outcome.NoLegacyState, result.Outcome);
-            Assert.AreEqual(0, result.RemovedDirectories.Count);
+            Assert.AreEqual(0, result.RemovedItems.Count);
         }
 
         [Test]
-        public void Run_NoLegacyState_ReturnsNoLegacyState_OnFlatOnlyInstall()
+        public void Run_NoLegacyState_ReturnsNoLegacyState_OnUnversionedFlatInstall()
         {
-            // Already-migrated project: only flat-layout (versioned) DLLs and
-            // the manifest are present. Migration must short-circuit, not
-            // delete anything.
-            File.WriteAllText(Path.Combine(_installPath, "System.Memory.10.0.3.dll"), "dummy");
-            File.WriteAllText(Path.Combine(_installPath, "System.Memory.10.0.3.dll.meta"), "meta");
+            // Steady-state install in the unversioned flat layout: no legacy
+            // {Id}.{Version}/ directories, no versioned-filename {stem}.{v}.dll
+            // siblings — the migration must short-circuit and touch nothing.
+            File.WriteAllText(Path.Combine(_installPath, "System.Memory.dll"), "dummy");
+            File.WriteAllText(Path.Combine(_installPath, "System.Memory.dll.meta"), "meta");
             File.WriteAllText(Path.Combine(_installPath, ".nuget-installed.json"), "{}");
 
             var result = NuGetLegacyMigration.Run(_installPath);
 
             Assert.AreEqual(NuGetLegacyMigration.Outcome.NoLegacyState, result.Outcome);
-            Assert.IsTrue(File.Exists(Path.Combine(_installPath, "System.Memory.10.0.3.dll")));
+            Assert.IsTrue(File.Exists(Path.Combine(_installPath, "System.Memory.dll")));
         }
 
         [Test]
@@ -87,7 +87,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
             var result = NuGetLegacyMigration.Run(_installPath);
 
             Assert.AreEqual(NuGetLegacyMigration.Outcome.Migrated, result.Outcome);
-            Assert.AreEqual(2, result.RemovedDirectories.Count);
+            Assert.AreEqual(2, result.RemovedItems.Count);
             Assert.IsFalse(Directory.Exists(Path.Combine(_installPath, "System.Text.Json.8.0.5")));
             Assert.IsFalse(File.Exists(Path.Combine(_installPath, "System.Text.Json.8.0.5.meta")));
             Assert.IsFalse(Directory.Exists(Path.Combine(_installPath, "Microsoft.Bcl.Memory.10.0.3")));
@@ -104,29 +104,60 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
 
             var second = NuGetLegacyMigration.Run(_installPath);
             Assert.AreEqual(NuGetLegacyMigration.Outcome.NoLegacyState, second.Outcome);
-            Assert.AreEqual(0, second.RemovedDirectories.Count);
+            Assert.AreEqual(0, second.RemovedItems.Count);
         }
 
         [Test]
-        public void Run_PartialLegacyState_MigratesOnlyLegacyDirsAndIgnoresFlatDllsOrUnrelatedDirectories()
+        public void Run_MixedLegacyState_MigratesLegacyDirsAndVersionedFiles_LeavesUnrelatedContent()
         {
-            // Mixed install: some legacy folders, some flat-layout DLLs already
-            // present, plus a non-package directory the user dropped in. The
-            // migration must remove only the legacy folders.
+            // Mixed install: a legacy {Id}.{Version}/ folder, a flat
+            // versioned-filename DLL, and unrelated user content. The migration
+            // sweeps both legacy artifacts in one pass and leaves the user's
+            // directory + unversioned canonical untouched.
             CreateLegacyPackage("System.Text.Json", "8.0.5", "System.Text.Json.dll");
-            File.WriteAllText(Path.Combine(_installPath, "Microsoft.Bcl.Memory.10.0.3.dll"), "flat-already");
+            File.WriteAllText(Path.Combine(_installPath, "Microsoft.Bcl.Memory.10.0.3.dll"), "flat-versioned-leftover");
+            File.WriteAllText(Path.Combine(_installPath, "Microsoft.Bcl.Memory.dll"), "canonical");
             Directory.CreateDirectory(Path.Combine(_installPath, "ReadMe"));
             File.WriteAllText(Path.Combine(_installPath, "ReadMe", "notes.txt"), "user notes");
 
             var result = NuGetLegacyMigration.Run(_installPath);
 
             Assert.AreEqual(NuGetLegacyMigration.Outcome.Migrated, result.Outcome);
-            Assert.AreEqual(1, result.RemovedDirectories.Count);
             Assert.IsFalse(Directory.Exists(Path.Combine(_installPath, "System.Text.Json.8.0.5")));
-            Assert.IsTrue(File.Exists(Path.Combine(_installPath, "Microsoft.Bcl.Memory.10.0.3.dll")),
-                "Flat-layout DLLs already present must not be deleted by migration.");
+            Assert.IsFalse(File.Exists(Path.Combine(_installPath, "Microsoft.Bcl.Memory.10.0.3.dll")),
+                "Versioned-filename flat DLLs are now legacy and must be swept.");
+            Assert.IsTrue(File.Exists(Path.Combine(_installPath, "Microsoft.Bcl.Memory.dll")),
+                "Unversioned canonical filenames must not be touched by migration.");
             Assert.IsTrue(Directory.Exists(Path.Combine(_installPath, "ReadMe")),
                 "Non-package directories must not be touched by migration.");
+        }
+
+        [Test]
+        public void Run_VersionedFilenameDllsAtRoot_AreSwept()
+        {
+            // Migration from the pre-unversioned-filename resolver: any flat
+            // {stem}.{numericVersion}.dll at the install root is by
+            // definition stale once the canonical filename is just {stem}.dll.
+            // The migration sweeps them in the same pass that removes
+            // legacy {Id}.{Version}/ directories.
+            File.WriteAllText(Path.Combine(_installPath, "McpPlugin.6.2.1.dll"), "stale");
+            File.WriteAllText(Path.Combine(_installPath, "McpPlugin.6.2.1.dll.meta"), "meta");
+            File.WriteAllText(Path.Combine(_installPath, "System.Text.Json.8.0.5.dll"), "stale");
+            File.WriteAllText(Path.Combine(_installPath, "System.Text.Json.8.0.5.dll.meta"), "meta");
+            // Unversioned canonicals must NOT be touched.
+            File.WriteAllText(Path.Combine(_installPath, "ReadMe.dll"), "user-content");
+            File.WriteAllText(Path.Combine(_installPath, "Foo.dll"), "canonical");
+
+            var result = NuGetLegacyMigration.Run(_installPath);
+
+            Assert.AreEqual(NuGetLegacyMigration.Outcome.Migrated, result.Outcome);
+            Assert.IsFalse(File.Exists(Path.Combine(_installPath, "McpPlugin.6.2.1.dll")));
+            Assert.IsFalse(File.Exists(Path.Combine(_installPath, "McpPlugin.6.2.1.dll.meta")),
+                ".meta sidecar must be deleted alongside the DLL.");
+            Assert.IsFalse(File.Exists(Path.Combine(_installPath, "System.Text.Json.8.0.5.dll")));
+            Assert.IsTrue(File.Exists(Path.Combine(_installPath, "ReadMe.dll")),
+                "Unversioned filenames are the new canonical and must be preserved.");
+            Assert.IsTrue(File.Exists(Path.Combine(_installPath, "Foo.dll")));
         }
 
         [Test]
@@ -147,70 +178,86 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
             var result = NuGetLegacyMigration.Run(_installPath);
 
             Assert.AreEqual(NuGetLegacyMigration.Outcome.Migrated, result.Outcome);
-            Assert.AreEqual(3, result.RemovedDirectories.Count);
+            Assert.AreEqual(3, result.RemovedItems.Count);
             Assert.IsFalse(Directory.Exists(Path.Combine(_installPath, "Foo.Bar.1.0.0-preview")));
             Assert.IsFalse(Directory.Exists(Path.Combine(_installPath, "Baz.2.3.4+build.42")));
             Assert.IsFalse(Directory.Exists(Path.Combine(_installPath, "Qux.1.0.0-rc.1")));
         }
 
 #if UNITY_EDITOR_WIN
-        // Windows-only: this test simulates the abort path that Windows' exclusive
-        // file-share lock triggers when a DLL is loaded by another process. Linux
-        // and macOS use advisory locking — `FileShare.None` does not prevent
-        // `Directory.Delete(recursive: true)` there, so the migration completes
-        // successfully and the assertion fails. Unity's CI runs in a Linux Docker
-        // container; gating on `UNITY_EDITOR_WIN` keeps the assertion honest
-        // without adding a runtime branch in production code.
+        // Windows-only: simulates a `FileShare.None` lock that Unity holds on a
+        // DLL it has loaded into the editor AppDomain. Linux/macOS use advisory
+        // locking — `FileShare.None` does not prevent `File.Delete` there — so
+        // gating on `UNITY_EDITOR_WIN` keeps the assertion honest. The
+        // post-best-effort migration no longer aborts the entire restore on a
+        // single locked file: the call returns `AbortedFileLock` to surface
+        // that some directory is still on disk, but the caller may continue
+        // safely (the locked file's PluginImporter is disabled so the next
+        // domain reload unloads it and the next migration pass cleans it up).
         [Test]
-        public void Run_FileLock_AbortsAndLeavesLegacyIntact()
+        public void Run_FileLock_LeavesBlockedFolderIntactAndReportsAbortedFileLock()
         {
-            // Simulate a Windows file-lock failure. The migration must abort,
-            // surface the failure, and leave the legacy directory intact so the
-            // project is in a recoverable state — not partially migrated.
             CreateLegacyPackage("System.Text.Json", "8.0.5", "System.Text.Json.dll");
             var lockedDll = Path.Combine(_installPath, "System.Text.Json.8.0.5", "System.Text.Json.dll");
 
-            // The migration intentionally surfaces the abort via Debug.LogError
-            // so the user sees it in the Unity Console. Unity's test framework
-            // treats ANY error log as a test failure unless it's explicitly
-            // declared expected.
-            LogAssert.Expect(UnityEngine.LogType.Error, new Regex(@"\[NuGet\] Migration to flat layout aborted"));
+            // Best-effort migration logs a warning (not an error) for blocked folders.
+            LogAssert.Expect(UnityEngine.LogType.Warning, new Regex(@"\[NuGet\] Could not fully remove legacy install directory"));
 
             using (var lockHandle = new FileStream(lockedDll, FileMode.Open, FileAccess.Read, FileShare.None))
             {
                 var result = NuGetLegacyMigration.Run(_installPath);
 
                 Assert.AreEqual(NuGetLegacyMigration.Outcome.AbortedFileLock, result.Outcome);
-                Assert.IsNotNull(result.FailedDirectory);
-                Assert.IsNotNull(result.FailureMessage);
-                // Legacy folder still on disk — recoverable state.
+                Assert.IsNotNull(result.FirstFailedItem);
+                Assert.IsNotNull(result.FirstFailureMessage);
+                // Blocked folder still on disk — the next reload picks it back up.
                 Assert.IsTrue(Directory.Exists(Path.Combine(_installPath, "System.Text.Json.8.0.5")));
+            }
+        }
+
+        [Test]
+        public void Run_FileLock_OneFolderBlocked_OtherFoldersAreStillRemoved()
+        {
+            // Mixed state: a blocked folder must NOT prevent unblocked folders
+            // from being cleaned up — that's the whole point of best-effort.
+            CreateLegacyPackage("System.Text.Json", "8.0.5", "System.Text.Json.dll");
+            CreateLegacyPackage("R3", "1.3.0", "R3.dll");
+            var lockedDll = Path.Combine(_installPath, "System.Text.Json.8.0.5", "System.Text.Json.dll");
+
+            LogAssert.Expect(UnityEngine.LogType.Warning, new Regex(@"\[NuGet\] Could not fully remove legacy install directory"));
+
+            using (var lockHandle = new FileStream(lockedDll, FileMode.Open, FileAccess.Read, FileShare.None))
+            {
+                var result = NuGetLegacyMigration.Run(_installPath);
+
+                Assert.AreEqual(NuGetLegacyMigration.Outcome.AbortedFileLock, result.Outcome);
+                Assert.AreEqual(1, result.RemovedItems.Count,
+                    "The unblocked folder must still be removed even though a sibling folder was locked.");
+                Assert.IsTrue(Directory.Exists(Path.Combine(_installPath, "System.Text.Json.8.0.5")),
+                    "Blocked folder remains on disk for retry on the next pass.");
+                Assert.IsFalse(Directory.Exists(Path.Combine(_installPath, "R3.1.3.0")),
+                    "Unblocked folder must have been removed.");
             }
         }
 #endif
 
 #if !UNITY_EDITOR_WIN
-        // Unix counterpart of Run_FileLock_AbortsAndLeavesLegacyIntact. The migration
-        // catches both `IOException` (Windows file-lock) and `UnauthorizedAccessException`
-        // (Unix permission denial / antivirus / read-only flags) and treats them
-        // identically — both yield `Outcome.AbortedFileLock`. Here we deny write on
-        // the install-path parent via `chmod 0o500`, which makes `Directory.Delete`
-        // throw `UnauthorizedAccessException` on the final rmdir of the now-empty
-        // legacy subdirectory.
-        //
-        // Self-skips when running as root (e.g. inside the GameCI Unity Docker
-        // container), because the kernel bypasses chmod-based denial for uid=0
-        // and the test would falsely fail. Local non-root Unix dev / CI agents
-        // running as a regular user exercise the abort path for real.
+        // Unix counterpart of Run_FileLock_LeavesBlockedFolderIntactAndReportsAbortedFileLock.
+        // The migration catches both `IOException` (Windows file-lock) and
+        // `UnauthorizedAccessException` (Unix permission denial / antivirus /
+        // read-only flags) inside its per-file delete loop. Here we deny write
+        // on the install-path parent via `chmod 0o500`, which makes
+        // `File.Delete` and the trailing `Directory.Delete` both throw
+        // `UnauthorizedAccessException`. Self-skips when running as root.
         [Test]
-        public void Run_PermissionDenied_AbortsAndLeavesLegacyIntact()
+        public void Run_PermissionDenied_LeavesBlockedFolderIntactAndReportsAbortedFileLock()
         {
             if (geteuid() == 0)
                 Assert.Ignore("chmod-based permission denial is bypassed by the kernel for uid=0; run this test as a non-root user.");
 
             CreateLegacyPackage("System.Text.Json", "8.0.5", "System.Text.Json.dll");
 
-            LogAssert.Expect(UnityEngine.LogType.Error, new Regex(@"\[NuGet\] Migration to flat layout aborted"));
+            LogAssert.Expect(UnityEngine.LogType.Warning, new Regex(@"\[NuGet\] Could not fully remove legacy install directory"));
 
             const uint READ_EXEC_ONLY = 0b101_000_000; // 0o500 — r-x------
             const uint READ_WRITE_EXEC = 0b111_000_000; // 0o700 — rwx------ (TearDown-friendly)
@@ -222,11 +269,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
                 var result = NuGetLegacyMigration.Run(_installPath);
 
                 Assert.AreEqual(NuGetLegacyMigration.Outcome.AbortedFileLock, result.Outcome);
-                Assert.IsNotNull(result.FailedDirectory);
-                Assert.IsNotNull(result.FailureMessage);
-                // Legacy folder still on disk (possibly emptied of contents, but
-                // the directory entry itself remains because we couldn't unlink
-                // it from a read-only parent) — recoverable state.
+                Assert.IsNotNull(result.FirstFailedItem);
+                Assert.IsNotNull(result.FirstFailureMessage);
                 Assert.IsTrue(Directory.Exists(Path.Combine(_installPath, "System.Text.Json.8.0.5")));
             }
             finally

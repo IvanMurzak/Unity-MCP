@@ -22,6 +22,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         public const string LogTag = "[NuGet]";
 
         /// <summary>
+        /// Scripting define added to all build target groups once the resolver
+        /// confirms the NuGet DLLs are in place. Main plugin asmdefs are gated
+        /// on this define so they only attempt to compile when the references
+        /// are guaranteed to resolve.
+        /// </summary>
+        public const string ReadyDefine = "UNITY_MCP_READY";
+
+        /// <summary>
         /// NuGet v3 flat container base URL.
         /// Download URL pattern: {base}/{id}/{version}/{id}.{version}.nupkg
         /// </summary>

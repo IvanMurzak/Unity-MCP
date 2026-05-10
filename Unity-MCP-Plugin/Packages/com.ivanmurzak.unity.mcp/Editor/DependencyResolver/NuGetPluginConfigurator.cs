@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
@@ -163,6 +164,61 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 
             importer.SaveAndReimport();
             Debug.Log($"{Tag} Configured '{assemblyName}': anyPlatform={anyPlatform}, excludeEditor={excludeEditor}, editorOnly={editorOnly}");
+        }
+
+        /// <summary>
+        /// Sets the file's <see cref="PluginImporter"/> compatibility to "no
+        /// platforms" so Unity unloads the DLL on the next domain reload,
+        /// freeing the OS file handle. Used by the legacy-folder migration
+        /// and the stale-flat sweep to recover from the case where Unity has
+        /// the assembly loaded into the editor AppDomain and the file is
+        /// therefore locked. Safe to call on non-DLL files or paths Unity
+        /// hasn't imported (no-op).
+        /// </summary>
+        public static void DisableImporter(string filePath)
+        {
+            if (!filePath.EndsWith(".dll", System.StringComparison.OrdinalIgnoreCase))
+                return;
+
+            // Asset paths use forward slashes and are project-relative;
+            // Windows Path APIs may have inserted '\' so normalise here.
+            var assetPath = filePath.Replace('\\', '/');
+
+            try
+            {
+                if (!(AssetImporter.GetAtPath(assetPath) is PluginImporter importer))
+                    return;
+
+                importer.SetCompatibleWithAnyPlatform(false);
+                importer.SetCompatibleWithEditor(false);
+                importer.SaveAndReimport();
+
+                Debug.Log($"{Tag} Disabled PluginImporter for locked '{assetPath}'; deletion will be retried after the next domain reload.");
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"{Tag} Could not disable PluginImporter for '{assetPath}': {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Best-effort <see cref="File.Delete"/> that swallows missing-file
+        /// races and logs a warning on any other failure. Shared between the
+        /// migration and per-package install paths so the two surfaces don't
+        /// drift on what counts as "best effort".
+        /// </summary>
+        internal static void TryDeleteFile(string path)
+        {
+            if (!File.Exists(path))
+                return;
+            try
+            {
+                File.Delete(path);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"{Tag} Failed to delete '{path}': {ex.Message}");
+            }
         }
 
         /// <summary>

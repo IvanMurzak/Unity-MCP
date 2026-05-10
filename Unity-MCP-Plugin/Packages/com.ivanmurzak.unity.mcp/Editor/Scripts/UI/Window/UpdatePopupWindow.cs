@@ -11,6 +11,7 @@
 #nullable enable
 
 using System;
+using com.IvanMurzak.Unity.MCP.Editor.DependencyResolver;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using R3;
 using UnityEditor;
@@ -168,6 +169,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var installButton = rootVisualElement.Q<Button>("btn-install-update");
             if (installButton != null)
                 installButton.text = "Installing...";
+
+            // Force a clean post-install recompile so an unrelated user-asmdef
+            // error can't leave the OLD plugin AppDomain loaded with the new
+            // package files on disk.
+            RecompileGate.Reset();
 
             addRequest = Client.Add($"{PackageId}@{latestVersion}");
             EditorApplication.update += OnPackageInstallProgress;

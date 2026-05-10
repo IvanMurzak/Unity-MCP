@@ -32,6 +32,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         {
             Debug.Log($"{Tag} Force resolve requested — running full restore...");
 
+            // Force a clean recompile so the AssetDatabase.Refresh() at the
+            // bottom runs against fresh assemblies, not the stale AppDomain.
+            RecompileGate.Reset();
+
             try
             {
                 var changed = NuGetPackageRestorer.Restore();

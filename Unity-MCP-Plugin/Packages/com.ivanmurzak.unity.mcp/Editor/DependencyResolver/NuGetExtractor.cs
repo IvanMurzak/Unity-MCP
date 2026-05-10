@@ -24,20 +24,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
     /// Selects the best target framework match and skips irrelevant content.
     /// Also parses the .nuspec for transitive dependency information.
     ///
-    /// Since #733 the extractor writes DLLs FLAT under the install directory
-    /// using the versioned filename pattern <c>{stem}.{packageVersion}.dll</c>
-    /// (e.g. <c>System.Memory.10.0.3.dll</c>) instead of the previous
-    /// <c>{Id}.{Version}/{Dll}.dll</c> per-package layout. This shortens the
-    /// longest install path enough to keep the resulting DLLs inside
-    /// Windows' legacy <c>MAX_PATH = 260</c> limit on the project layouts
-    /// that previously broke (deep worktree / OneDrive paths). The version
-    /// in the filename also makes the install layout self-describing and
-    /// hardens stale-version detection — even if the manifest is corrupted,
-    /// the on-disk filenames carry the version metadata.
+    /// Install layout: DLLs are written FLAT under the install directory
+    /// using the original <c>{stem}.dll</c> filename from the .nupkg's
+    /// <c>lib/&lt;tfm&gt;/</c> folder — the package version does NOT appear
+    /// in the filename. The version is tracked exclusively in
+    /// <see cref="NuGetInstallManifest"/>'s per-package <c>version</c> field;
+    /// the resolver compares that against <see cref="NuGetConfig.Packages"/>
+    /// to decide when a DLL needs to be replaced.
     ///
-    /// Consuming asmdef <c>precompiledReferences</c> must reference the
-    /// versioned filename (e.g. <c>System.Text.Json.8.0.5.dll</c>); they
-    /// are updated in lockstep with the configured package version.
+    /// Consuming asmdef <c>precompiledReferences</c> reference the unversioned
+    /// filename (e.g. <c>System.Text.Json.dll</c>) and never need to be edited
+    /// when a configured package version bumps — the resolver re-extracts the
+    /// new version into the same filename and the manifest's <c>version</c>
+    /// field tracks the change.
     /// </summary>
     static class NuGetExtractor
     {
@@ -51,7 +50,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// ship no compatible framework folder; both cases are valid no-op
         /// installs that the caller treats as "nothing to do".
         /// </summary>
-        public static List<PlannedDll> PlanDllPaths(string nupkgPath, string installDirectory, string packageVersion)
+        public static List<PlannedDll> PlanDllPaths(string nupkgPath, string installDirectory)
         {
             var planned = new List<PlannedDll>();
 
@@ -66,31 +65,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             {
                 // Snapshot FullName / Name into the PlannedDll BEFORE the zip
                 // disposes — accessing them on the entry after Dispose throws.
-                var versionedName = ToVersionedFileName(entry.Name, packageVersion);
+                // The on-disk filename is the .nupkg's original lib-folder
+                // entry name; version is tracked in the manifest, not here.
+                var fileName = entry.Name;
                 var fullName = entry.FullName;
-                var targetPath = Path.Combine(installDirectory, versionedName);
-                planned.Add(new PlannedDll(fullName, versionedName, targetPath));
+                var targetPath = Path.Combine(installDirectory, fileName);
+                planned.Add(new PlannedDll(fullName, fileName, targetPath));
             }
 
             return planned;
         }
 
         /// <summary>
-        /// Extracts DLLs from a .nupkg file FLAT under the install directory,
-        /// rewriting each filename to <c>{stem}.{packageVersion}.dll</c>.
-        ///
-        /// Returns the list of extracted (versioned) DLL filenames — relative,
-        /// no directory prefix, sit directly under <paramref name="installDirectory"/>.
-        /// Empty list when the package has no DLLs in any compatible framework folder.
+        /// Extracts DLLs from a .nupkg file FLAT under the install directory
+        /// using the original <c>{stem}.dll</c> filename. Returns the list of
+        /// extracted filenames — relative, no directory prefix. Empty list
+        /// when the package has no DLLs in any compatible framework folder.
         /// </summary>
-        public static List<string> ExtractDlls(string nupkgPath, string installDirectory, string packageVersion)
+        public static List<string> ExtractDlls(string nupkgPath, string installDirectory)
         {
             var extracted = new List<string>();
 
             if (!Directory.Exists(installDirectory))
                 Directory.CreateDirectory(installDirectory);
 
-            var planned = PlanDllPaths(nupkgPath, installDirectory, packageVersion);
+            var planned = PlanDllPaths(nupkgPath, installDirectory);
             if (planned.Count == 0)
                 return extracted;
 
@@ -112,28 +111,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             }
 
             return extracted;
-        }
-
-        /// <summary>
-        /// Rewrites a DLL filename to the flat-layout pattern
-        /// <c>{stem}.{packageVersion}{extension}</c>. If the input already
-        /// ends in the expected version tail (e.g. a hand-prepared zip), the
-        /// rename is a no-op so the operation is idempotent.
-        /// </summary>
-        internal static string ToVersionedFileName(string originalDllFileName, string packageVersion)
-        {
-            var stem = Path.GetFileNameWithoutExtension(originalDllFileName);
-            var extension = Path.GetExtension(originalDllFileName);
-            if (string.IsNullOrEmpty(extension))
-                extension = ".dll";
-
-            // Defensive: if the stem already ends in ".{packageVersion}", do
-            // not append again. Real .nupkg entries never do, but a re-run
-            // against a hand-tagged zip should be a no-op.
-            if (stem.EndsWith("." + packageVersion, StringComparison.OrdinalIgnoreCase))
-                return stem + extension;
-
-            return $"{stem}.{packageVersion}{extension}";
         }
 
         /// <summary>

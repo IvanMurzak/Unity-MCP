@@ -18,14 +18,14 @@
     "overrideReferences": true,
     "precompiledReferences": [
         "nunit.framework.dll",
-        "System.Text.Json.8.0.5.dll",
-        "Microsoft.Extensions.Logging.Abstractions.8.0.3.dll",
-        "Microsoft.AspNetCore.SignalR.Client.8.0.15.dll",
-        "Microsoft.AspNetCore.SignalR.Client.Core.8.0.15.dll",
-        "ReflectorNet.5.1.1.dll",
-        "McpPlugin.6.2.1.dll",
-        "McpPlugin.Common.6.2.1.dll",
-        "R3.1.3.0.dll"
+        "System.Text.Json.dll",
+        "Microsoft.Extensions.Logging.Abstractions.dll",
+        "Microsoft.AspNetCore.SignalR.Client.dll",
+        "Microsoft.AspNetCore.SignalR.Client.Core.dll",
+        "ReflectorNet.dll",
+        "McpPlugin.dll",
+        "McpPlugin.Common.dll",
+        "R3.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [

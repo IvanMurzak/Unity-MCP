@@ -49,18 +49,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 if (!Directory.Exists(NuGetConfig.InstallPath))
                     Directory.CreateDirectory(NuGetConfig.InstallPath);
 
-                // One-shot migration from the legacy {Id}.{Version}/ layout. After the first
-                // successful pass this short-circuits at NoLegacyState in O(directory listing).
+                // Best-effort: continue past AbortedFileLock so extraction can proceed
+                // on what the migration freed up; the rest finishes on the next reload.
                 var migration = NuGetLegacyMigration.Run(NuGetConfig.InstallPath);
-                if (migration.Outcome == NuGetLegacyMigration.Outcome.AbortedFileLock)
-                {
-                    // Cannot continue safely — extracting flat-layout DLLs alongside the
-                    // surviving legacy folders would brick the project with duplicate-assembly
-                    // errors. Leave everything where it is and report; the next domain reload
-                    // (after the user closes whatever held the lock) will retry.
-                    return false;
-                }
-                if (migration.Outcome == NuGetLegacyMigration.Outcome.Migrated)
+                if (migration.Outcome != NuGetLegacyMigration.Outcome.NoLegacyState)
                     anyChanged = true;
 
                 // Manifest disaster recovery: rebuild from on-disk versioned
@@ -132,6 +124,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     return false;
             }
 
+            // Versioned-filename flat DLL on disk → migration is pending → force restore.
+            foreach (var dllPath in Directory.GetFiles(NuGetConfig.InstallPath, "*.dll", SearchOption.TopDirectoryOnly))
+            {
+                if (NuGetInstallManifest.TryParseInstalledDllName(Path.GetFileName(dllPath), out _, out _))
+                    return false;
+            }
+
             // Manifest is the source of truth for the flat layout. If it's missing we need a full
             // restore — Restore() will rebuild it from on-disk filenames as the first step, then
             // the closure-completeness check below runs against the rebuilt entries.
@@ -170,10 +169,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 if (!string.Equals(entry.Version, package.Version, StringComparison.OrdinalIgnoreCase))
                     return false;
 
-                // Every recorded DLL must still be on disk.
+                // Versioned-filename manifest entry → pre-unversioned resolver → force restore.
                 foreach (var dll in entry.Dlls)
                 {
                     if (!File.Exists(Path.Combine(NuGetConfig.InstallPath, dll)))
+                        return false;
+                    if (NuGetInstallManifest.TryParseInstalledDllName(dll, out _, out _))
                         return false;
                 }
             }

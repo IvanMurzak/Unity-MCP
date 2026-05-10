@@ -27,11 +27,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
     /// short-circuit at the detection probe.
     ///
     /// Failure mode (Windows file lock — see issue #733): if a legacy DLL is
-    /// loaded into the editor AppDomain, <c>Directory.Delete</c> may throw
-    /// <see cref="IOException"/>. The migration aborts the entire restore
-    /// cycle in that case (see <see cref="MigrationAbortedException"/>) — a
-    /// partial migration would leave the project in the duplicate-assembly
-    /// state we're explicitly trying to prevent.
+    /// loaded into the editor AppDomain, <c>File.Delete</c> throws
+    /// <see cref="IOException"/>. The migration is best-effort per file —
+    /// the locked file's <see cref="PluginImporter"/> is disabled so the next
+    /// domain reload unloads the assembly and unlocks the file, then the next
+    /// migration pass deletes it. The caller proceeds with the rest of the
+    /// restore regardless: even if a legacy folder still survives, the
+    /// downstream stale-flat sweep + extraction can still make progress on
+    /// whatever the migration freed up.
     ///
     /// <para>
     /// Asset GUIDs in legacy <c>.meta</c> files are intentionally NOT preserved
@@ -70,50 +73,43 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             Migrated,
 
             /// <summary>
-            /// A legacy directory could not be removed because of a file lock
-            /// or other I/O error. The caller MUST abort the entire restore
-            /// cycle without writing any new DLLs.
+            /// At least one legacy directory could not be fully removed
+            /// because of a file lock or other I/O error. The migration has
+            /// already done what it could (deleted any unlocked siblings,
+            /// disabled the PluginImporter on locked files); the caller may
+            /// proceed and the next migration pass will pick up the rest.
             /// </summary>
             AbortedFileLock,
         }
 
         /// <summary>
-        /// Outcome of a successful run that returned <see cref="Outcome.Migrated"/>.
+        /// Outcome of a <see cref="Run"/> call. <see cref="FirstFailedItem"/>
+        /// is the first directory or file the migration could not fully remove
+        /// (others get logged); <see cref="RemovedItems"/> lists everything
+        /// that did get cleaned up.
         /// </summary>
         public readonly struct Result
         {
             public Outcome Outcome { get; }
-            public IReadOnlyList<string> RemovedDirectories { get; }
-            public string? FailedDirectory { get; }
-            public string? FailureMessage { get; }
+            public IReadOnlyList<string> RemovedItems { get; }
+            public string? FirstFailedItem { get; }
+            public string? FirstFailureMessage { get; }
 
-            public Result(Outcome outcome, IReadOnlyList<string> removedDirectories, string? failedDirectory = null, string? failureMessage = null)
+            public Result(Outcome outcome, IReadOnlyList<string> removedItems, string? firstFailedItem = null, string? firstFailureMessage = null)
             {
                 Outcome = outcome;
-                RemovedDirectories = removedDirectories;
-                FailedDirectory = failedDirectory;
-                FailureMessage = failureMessage;
+                RemovedItems = removedItems;
+                FirstFailedItem = firstFailedItem;
+                FirstFailureMessage = firstFailureMessage;
             }
         }
 
         /// <summary>
-        /// Detects and removes legacy <c>{Id}.{Version}/</c> directories under
-        /// <paramref name="installPath"/>. The flat-layout DLLs (if any) and
-        /// the manifest are left untouched.
-        ///
-        /// <para>
-        /// On a clean install or on the second run after a successful first
-        /// migration this returns <see cref="Outcome.NoLegacyState"/> and does
-        /// no I/O beyond the directory enumeration.
-        /// </para>
-        ///
-        /// <para>
-        /// On a file-lock failure, this returns <see cref="Outcome.AbortedFileLock"/>
-        /// with the offending directory and message. The caller MUST abort the
-        /// rest of the restore — the legacy DLLs are still on disk and writing
-        /// flat-layout DLLs alongside them would brick the project with
-        /// duplicate-assembly compile errors.
-        /// </para>
+        /// Migrates the install path off pre-#733 layouts to the canonical
+        /// unversioned flat layout: removes legacy <c>{Id}.{Version}/</c>
+        /// directories AND flat <c>{stem}.{numericVersion}.dll</c> files.
+        /// Best-effort — see the class doc for the locked-file recovery
+        /// contract.
         /// </summary>
         public static Result Run(string installPath)
         {
@@ -121,81 +117,149 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             if (!Directory.Exists(installPath))
                 return new Result(Outcome.NoLegacyState, removed);
 
-            // First pass: detect legacy directories without deleting anything.
-            // Splitting detection from deletion lets us short-circuit on a
-            // clean install with a single Directory.GetDirectories call.
-            var legacyDirs = new List<string>();
-            foreach (var dir in Directory.GetDirectories(installPath))
-            {
-                var dirName = Path.GetFileName(dir);
-                var packageId = NuGetPackageInstaller.ExtractPackageIdFromDirName(dirName);
-                if (packageId == null)
-                    continue;
-                legacyDirs.Add(dir);
-            }
+            var legacyDirs = DetectLegacyDirectories(installPath);
+            var versionedFiles = DetectVersionedFilenameDlls(installPath);
 
-            if (legacyDirs.Count == 0)
+            if (legacyDirs.Count == 0 && versionedFiles.Count == 0)
                 return new Result(Outcome.NoLegacyState, removed);
 
-            Debug.Log($"{Tag} Legacy install detected: {legacyDirs.Count} directories to migrate to flat layout (issue #733).");
+            Debug.Log($"{Tag} Legacy install detected: {legacyDirs.Count} directories, {versionedFiles.Count} versioned-filename DLLs to migrate to the unversioned flat layout.");
+
+            string? firstFailedItem = null;
+            string? firstFailureMessage = null;
 
             foreach (var dir in legacyDirs)
             {
-                var dirName = Path.GetFileName(dir);
-                Debug.Log($"{Tag} Migrating legacy install: removing {dir} (replaced by flat layout in #733)");
-
-                try
+                Debug.Log($"{Tag} Removing legacy directory: {dir}");
+                if (TryRemoveDirectoryRecursive(dir, out var failureMessage))
                 {
-                    Directory.Delete(dir, recursive: true);
+                    NuGetPluginConfigurator.TryDeleteFile(dir + ".meta");
+                    removed.Add(dir);
+                    continue;
                 }
-                catch (IOException ex)
-                {
-                    // Common on Windows when a DLL inside the legacy directory
-                    // is loaded into the running editor AppDomain.
-                    var message = BuildLockMessage(dir, ex);
-                    Debug.LogError(message);
-                    return new Result(Outcome.AbortedFileLock, removed, dir, message);
-                }
-                catch (UnauthorizedAccessException ex)
-                {
-                    // Antivirus / permissions / read-only flags. Same recovery
-                    // story as a file lock — abort, surface, retry next reload.
-                    var message = BuildLockMessage(dir, ex);
-                    Debug.LogError(message);
-                    return new Result(Outcome.AbortedFileLock, removed, dir, message);
-                }
-
-                var metaFile = dir + ".meta";
-                if (File.Exists(metaFile))
-                {
-                    try { File.Delete(metaFile); }
-                    catch (Exception ex)
-                    {
-                        // Losing a .meta file isn't load-bearing on the
-                        // upgrade path — Unity will regenerate it. Log and
-                        // keep going so the rest of the migration can finish.
-                        Debug.LogWarning($"{Tag} Failed to delete legacy meta '{metaFile}': {ex.Message}");
-                    }
-                }
-
-                removed.Add(dir);
+                firstFailedItem ??= dir;
+                firstFailureMessage ??= failureMessage;
+                Debug.LogWarning(BuildLockMessage(dir, failureMessage ?? "(unknown)"));
             }
 
-            Debug.Log($"{Tag} Migration complete: {removed.Count} legacy directories removed; flat layout active");
+            foreach (var file in versionedFiles)
+            {
+                Debug.Log($"{Tag} Removing versioned-filename DLL: {Path.GetFileName(file)} (version moved into the manifest).");
+                if (TryDeleteVersionedFile(file, out var failureMessage))
+                {
+                    removed.Add(file);
+                    continue;
+                }
+                firstFailedItem ??= file;
+                firstFailureMessage ??= failureMessage;
+                Debug.LogWarning(BuildLockMessage(file, failureMessage ?? "(unknown)"));
+            }
+
+            if (firstFailedItem != null)
+                return new Result(Outcome.AbortedFileLock, removed, firstFailedItem, firstFailureMessage);
+
+            Debug.Log($"{Tag} Migration complete: {removed.Count} legacy items removed; unversioned flat layout active.");
             return new Result(Outcome.Migrated, removed);
         }
 
-        static string BuildLockMessage(string directory, Exception ex)
+        static List<string> DetectLegacyDirectories(string installPath)
+        {
+            var result = new List<string>();
+            foreach (var dir in Directory.GetDirectories(installPath))
+            {
+                var dirName = Path.GetFileName(dir);
+                if (NuGetPackageInstaller.ExtractPackageIdFromDirName(dirName) != null)
+                    result.Add(dir);
+            }
+            return result;
+        }
+
+        /// <summary>
+        /// Returns every <c>{stem}.{numericVersion}.dll</c> at the install
+        /// root — these are flat-layout files written by an earlier resolver
+        /// that embedded the package version in the filename. With the
+        /// version now living in the manifest, every such file is by
+        /// definition stale and the canonical replacement is <c>{stem}.dll</c>.
+        /// </summary>
+        static List<string> DetectVersionedFilenameDlls(string installPath)
+        {
+            var result = new List<string>();
+            foreach (var dllPath in Directory.GetFiles(installPath, "*.dll", SearchOption.TopDirectoryOnly))
+            {
+                var fileName = Path.GetFileName(dllPath);
+                if (NuGetInstallManifest.TryParseInstalledDllName(fileName, out _, out _))
+                    result.Add(dllPath);
+            }
+            return result;
+        }
+
+        static bool TryDeleteVersionedFile(string filePath, out string? failureMessage)
+        {
+            failureMessage = null;
+            try
+            {
+                File.Delete(filePath);
+                NuGetPluginConfigurator.TryDeleteFile(filePath + ".meta");
+                return true;
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+            {
+                failureMessage = ex.Message;
+                NuGetPluginConfigurator.DisableImporter(filePath);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Best-effort recursive delete; returns true only when the directory
+        /// is gone after the call. Locked file → disable importer so the next
+        /// reload unloads it and the next migration pass finishes.
+        /// </summary>
+        static bool TryRemoveDirectoryRecursive(string dir, out string? failureMessage)
+        {
+            failureMessage = null;
+
+            foreach (var subDir in Directory.GetDirectories(dir))
+            {
+                if (!TryRemoveDirectoryRecursive(subDir, out var subFailure))
+                    failureMessage ??= subFailure;
+            }
+
+            foreach (var file in Directory.GetFiles(dir))
+            {
+                try
+                {
+                    File.Delete(file);
+                }
+                catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+                {
+                    failureMessage ??= ex.Message;
+                    NuGetPluginConfigurator.DisableImporter(file);
+                }
+            }
+
+            try
+            {
+                Directory.Delete(dir);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                failureMessage ??= ex.Message;
+                return false;
+            }
+        }
+
+        static string BuildLockMessage(string directory, string reason)
         {
             return
-                $"{Tag} Migration to flat layout aborted — could not remove legacy install directory:\n" +
+                $"{Tag} Could not fully remove legacy install directory:\n" +
                 $"  {directory}\n\n" +
-                $"  Reason: {ex.Message}\n\n" +
-                "On Windows this typically means a DLL inside the legacy folder is loaded into " +
-                "the editor AppDomain. Restart Unity to drop the AppDomain and the migration " +
-                "will retry on the next domain reload. The legacy folders are intentionally left " +
-                "intact; no flat-layout DLLs will be written until migration succeeds (otherwise " +
-                "the project would end up with duplicate copies of every assembly).";
+                $"  Reason: {reason}\n\n" +
+                "On Windows this typically means a DLL inside the legacy folder is loaded " +
+                "into the editor AppDomain. The PluginImporter for the locked DLL has been " +
+                "disabled so the next domain reload will unload it; the next migration pass " +
+                "will retry the deletion. Restart Unity if the warning persists.";
         }
     }
 }
