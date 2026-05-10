@@ -3,6 +3,7 @@
     "rootNamespace": "com.IvanMurzak.Unity.MCP.Editor",
     "references": [
         "com.IvanMurzak.Unity.MCP.Runtime",
+        "com.IvanMurzak.Unity.MCP.DependencyResolver",
         "Extensions.Unity.PlayerPrefsEx"
     ],
     "includePlatforms": [
