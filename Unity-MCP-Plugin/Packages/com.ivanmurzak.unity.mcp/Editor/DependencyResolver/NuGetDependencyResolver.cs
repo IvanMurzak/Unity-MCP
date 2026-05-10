@@ -57,7 +57,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
     static class NuGetDependencyResolver
     {
         const string Tag = "[Unity-MCP DependencyResolver]";
-        const string ReadyDefine = "UNITY_MCP_READY";
 
         static NuGetDependencyResolver()
         {
@@ -270,7 +269,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 added.Add(NamedBuildTarget.Server.TargetName);
 
             if (added.Count > 0)
-                Debug.Log($"{Tag} Added '{ReadyDefine}' scripting define for: {string.Join(", ", added)}.");
+                Debug.Log($"{Tag} Added '{NuGetConfig.ReadyDefine}' scripting define for: {string.Join(", ", added)}.");
         }
 
         static bool TryAddDefine(NamedBuildTarget target)
@@ -278,12 +277,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             try
             {
                 PlayerSettings.GetScriptingDefineSymbols(target, out var defines);
-                if (defines.Contains(ReadyDefine))
+                if (defines.Contains(NuGetConfig.ReadyDefine))
                     return false;
 
                 var newDefines = new string[defines.Length + 1];
                 Array.Copy(defines, newDefines, defines.Length);
-                newDefines[defines.Length] = ReadyDefine;
+                newDefines[defines.Length] = NuGetConfig.ReadyDefine;
 
                 PlayerSettings.SetScriptingDefineSymbols(target, newDefines);
                 return true;

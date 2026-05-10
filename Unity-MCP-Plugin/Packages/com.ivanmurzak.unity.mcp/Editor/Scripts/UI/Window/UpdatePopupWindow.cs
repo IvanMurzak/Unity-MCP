@@ -170,13 +170,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             if (installButton != null)
                 installButton.text = "Installing...";
 
-            // Wipe Library/ScriptAssemblies so Unity recompiles every assembly
-            // from the fresh package source on the post-install reload. Without
-            // this, if user-asmdef compile errors persist long enough that
-            // Unity skips a domain reload, the AppDomain keeps the OLD plugin
-            // assemblies loaded and the new resolver code never starts running
-            // even though it's already on disk.
+            // Reset the post-install compile state so the resolver can run
+            // through cleanly even if some unrelated compile error would
+            // otherwise keep the OLD plugin AppDomain loaded:
+            //   1. Wipe ScriptAssemblies — force every assembly to recompile.
+            //   2. Strip UNITY_MCP_READY — main plugin asmdefs (gated on the
+            //      define) skip compile until the resolver re-adds it once
+            //      the new DLL set is healthy.
             ScriptAssembliesCache.Wipe();
+            ScriptAssembliesCache.RemoveReadyDefine();
 
             addRequest = Client.Add($"{PackageId}@{latestVersion}");
             EditorApplication.update += OnPackageInstallProgress;

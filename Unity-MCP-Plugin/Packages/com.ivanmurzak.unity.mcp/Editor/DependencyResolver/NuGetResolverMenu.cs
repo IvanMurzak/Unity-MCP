@@ -32,13 +32,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         {
             Debug.Log($"{Tag} Force resolve requested — running full restore...");
 
-            // Wipe Library/ScriptAssemblies up front so the AssetDatabase.Refresh()
-            // at the bottom triggers a full recompile rather than reusing the
-            // cached plugin assemblies. Without this, if user-asmdef compile
-            // errors had previously prevented Unity from completing a domain
-            // reload, the OLD plugin AppDomain stays in memory after this menu
-            // call and any new resolver code on disk never starts running.
+            // Reset the compile state up front so the AssetDatabase.Refresh()
+            // at the bottom triggers a clean recompile of the resolver itself,
+            // not just an incremental one over the stale AppDomain. Strip
+            // UNITY_MCP_READY too so main plugin asmdefs skip compile until
+            // the resolver re-adds the define after a healthy install.
             ScriptAssembliesCache.Wipe();
+            ScriptAssembliesCache.RemoveReadyDefine();
 
             try
             {
