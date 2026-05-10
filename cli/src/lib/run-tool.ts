@@ -4,12 +4,7 @@
 // - No commander, no spinners, no process.exit, no console output.
 // - Errors are returned in `{ kind: 'failure', success: false, ... }`,
 //   never thrown past the public boundary.
-// - Connection resolution mirrors the CLI's `resolveConnection` but
-//   uses a library-safe variant — the CLI helper calls `process.exit`
-//   when the project path is missing or invalid, which would crash a
-//   library consumer.
 
-import * as fs from 'fs';
 import { readConfig, resolveConnectionFromConfig } from '../utils/config.js';
 import { generatePortFromDirectory } from '../utils/port.js';
 import { requireProjectPath } from './validation.js';
@@ -23,13 +18,18 @@ import type {
 
 const DEFAULT_TIMEOUT_MS = 60_000;
 
+interface ErrorCause {
+  code?: string;
+  message?: string;
+}
+
 /**
  * Invoke a regular MCP tool over the Unity plugin's HTTP API.
  *
- * Mirrors `unity-mcp-cli run-tool <name>`: same URL/token resolution
- * priority (explicit override → project config → deterministic port)
- * and the same `POST /api/tools/{name}` endpoint shape, but without
- * the CLI's terminal output and `process.exit` paths.
+ * URL/token resolution priority: explicit override → project config →
+ * deterministic localhost port. POSTs to `/api/tools/{name}`. No
+ * console output, no `process.exit`; errors are returned in the
+ * `kind: 'failure'` variant.
  */
 export async function runTool(opts: RunToolOptions): Promise<RunToolResult> {
   return invokeTool('/api/tools', opts);
@@ -37,16 +37,15 @@ export async function runTool(opts: RunToolOptions): Promise<RunToolResult> {
 
 /**
  * Invoke a system tool (internal tool not exposed to MCP clients) over
- * the Unity plugin's HTTP API. Mirrors `unity-mcp-cli run-system-tool
- * <name>` and posts to `/api/system-tools/{name}`.
+ * the Unity plugin's HTTP API. POSTs to `/api/system-tools/{name}`.
  */
 export async function runSystemTool(opts: RunToolOptions): Promise<RunToolResult> {
   return invokeTool('/api/system-tools', opts);
 }
 
 async function invokeTool(routePrefix: string, opts: RunToolOptions): Promise<RunToolResult> {
-  const validation = validateOptions(opts);
-  if (validation.kind === 'failure') return validation;
+  const validationFailure = validateOptions(opts);
+  if (validationFailure) return validationFailure;
 
   const resolved = resolveConnection(opts);
   if (resolved.kind === 'failure') return resolved;
@@ -116,7 +115,7 @@ async function invokeTool(routePrefix: string, opts: RunToolOptions): Promise<Ru
   }
 }
 
-function validateOptions(opts: RunToolOptions): { kind: 'success' } | RunToolFailure {
+function validateOptions(opts: RunToolOptions): RunToolFailure | null {
   if (!opts || typeof opts !== 'object') {
     return makeFailure({
       endpoint: '',
@@ -141,20 +140,19 @@ function validateOptions(opts: RunToolOptions): { kind: 'success' } | RunToolFai
       message: 'Either unityProjectPath or url must be provided.',
     });
   }
-  return { kind: 'success' };
+  return null;
 }
 
 function resolveConnection(
   opts: RunToolOptions,
 ): { kind: 'success'; url: string; token: string | undefined } | RunToolFailure {
   if (opts.url) {
-    const url = opts.url.replace(/\/$/, '');
-    return { kind: 'success', url, token: opts.token };
+    return { kind: 'success', url: opts.url.replace(/\/$/, ''), token: opts.token };
   }
 
-  // Validate the project path. Library-safe variant of the CLI's
-  // `resolveAndValidateProjectPath` — returns a structured failure
-  // instead of calling `process.exit` when the path is missing.
+  // `unityProjectPath` is library-only — does NOT require an `Assets/`
+  // folder, unlike the CLI's `resolveAndValidateProjectPath`. The
+  // deterministic-port fallback works against the path string alone.
   const validated = requireProjectPath(opts.unityProjectPath);
   if (!validated.ok) {
     return makeFailure({
@@ -166,36 +164,22 @@ function resolveConnection(
   }
   const projectPath = validated.projectPath;
 
-  // Match the CLI's flow: read config, fall back to deterministic port.
-  // We tolerate a missing on-disk path here (the deterministic port
-  // works without the directory existing) but require it to exist when
-  // reading the config — `readConfig` already returns `null` for
-  // non-existent paths, so no extra check needed.
-  const exists = fs.existsSync(projectPath);
-  const config = exists ? readConfig(projectPath) : null;
+  const config = readConfig(projectPath);
   const fromConfig = config
     ? resolveConnectionFromConfig(config)
     : { url: undefined, token: undefined };
 
-  let url: string;
-  if (fromConfig.url) {
-    url = fromConfig.url.replace(/\/$/, '');
-  } else {
-    // Mirror the CLI: fall back to deterministic port from path.
-    // Use `path.resolve` is already done by `requireProjectPath`.
-    const port = generatePortFromDirectory(projectPath);
-    url = `http://localhost:${port}`;
-  }
+  const url = fromConfig.url
+    ? fromConfig.url.replace(/\/$/, '')
+    : `http://localhost:${generatePortFromDirectory(projectPath)}`;
 
-  const token = opts.token ?? fromConfig.token;
-  return { kind: 'success', url, token };
+  return { kind: 'success', url, token: opts.token ?? fromConfig.token };
 }
 
 function serializeInput(input: unknown): { json: string } | { error: Error } {
   if (input === undefined || input === null) return { json: '{}' };
   if (typeof input === 'string') {
-    // Allow callers to pass a pre-serialized JSON string. Validate it
-    // round-trips so the server never sees malformed bodies.
+    // Validate the round-trip so the server never sees malformed bodies.
     try {
       JSON.parse(input);
       return { json: input };
@@ -240,13 +224,17 @@ function parseJsonOrText(text: string): unknown {
   }
 }
 
+function getCause(err: unknown): ErrorCause | undefined {
+  if (!(err instanceof Error) || !('cause' in err)) return undefined;
+  return err.cause as ErrorCause | undefined;
+}
+
 function classifyFetchError(
   err: unknown,
   endpoint: string,
   timeoutMs: number,
 ): RunToolFailure {
-  const isAbort = err instanceof Error && err.name === 'AbortError';
-  if (isAbort) {
+  if (err instanceof Error && err.name === 'AbortError') {
     return makeFailure({
       endpoint,
       reason: 'timeout',
@@ -256,15 +244,12 @@ function classifyFetchError(
   }
 
   const error = err instanceof Error ? err : new Error(String(err));
-  const cause = err instanceof Error && 'cause' in err ? (err.cause as { code?: string; message?: string } | undefined) : undefined;
-  const causeCode = cause?.code ?? '';
-  const causeMessage = cause?.message ?? '';
-  const signature = `${error.message} ${causeMessage} ${causeCode}`;
+  const causeCode = getCause(err)?.code;
 
   let reason: RunToolFailureReason = 'unknown';
-  if (signature.includes('ECONNREFUSED')) reason = 'connection-refused';
-  else if (signature.includes('ECONNRESET')) reason = 'connection-reset';
-  else if (signature.includes('EAI_AGAIN') || signature.includes('ENOTFOUND')) reason = 'network-error';
+  if (causeCode === 'ECONNREFUSED') reason = 'connection-refused';
+  else if (causeCode === 'ECONNRESET') reason = 'connection-reset';
+  else if (causeCode === 'ENOTFOUND' || causeCode === 'EAI_AGAIN') reason = 'network-error';
 
   return makeFailure({
     endpoint,

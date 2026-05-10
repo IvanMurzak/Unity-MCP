@@ -534,11 +534,9 @@ export interface RunToolFailure {
 
 export type RunToolResult = RunToolSuccess | RunToolFailure;
 
-/** Alias kept for symmetry with `RunToolOptions` — same shape. */
+// `runSystemTool` shares the exact shape of `runTool`; these aliases
+// exist purely for naming symmetry at the consumer site.
 export type RunSystemToolOptions = RunToolOptions;
-/** Alias for `RunToolResult`; a system tool call returns the same shape. */
 export type RunSystemToolResult = RunToolResult;
-/** Alias for `RunToolSuccess`. */
 export type RunSystemToolSuccess = RunToolSuccess;
-/** Alias for `RunToolFailure`. */
 export type RunSystemToolFailure = RunToolFailure;
