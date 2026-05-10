@@ -3,79 +3,79 @@
     "com.IvanMurzak.McpPlugin": {
       "version": "6.2.1",
       "dlls": [
-        "McpPlugin.6.2.1.dll"
+        "McpPlugin.dll"
       ]
     },
     "com.IvanMurzak.McpPlugin.Common": {
       "version": "6.2.1",
       "dlls": [
-        "McpPlugin.Common.6.2.1.dll"
+        "McpPlugin.Common.dll"
       ]
     },
     "com.IvanMurzak.ReflectorNet": {
       "version": "5.1.1",
       "dlls": [
-        "ReflectorNet.5.1.1.dll"
+        "ReflectorNet.dll"
       ]
     },
     "Microsoft.AspNetCore.Connections.Abstractions": {
       "version": "8.0.15",
       "dlls": [
-        "Microsoft.AspNetCore.Connections.Abstractions.8.0.15.dll"
+        "Microsoft.AspNetCore.Connections.Abstractions.dll"
       ]
     },
     "Microsoft.AspNetCore.Http.Connections.Client": {
       "version": "8.0.15",
       "dlls": [
-        "Microsoft.AspNetCore.Http.Connections.Client.8.0.15.dll"
+        "Microsoft.AspNetCore.Http.Connections.Client.dll"
       ]
     },
     "Microsoft.AspNetCore.Http.Connections.Common": {
       "version": "8.0.15",
       "dlls": [
-        "Microsoft.AspNetCore.Http.Connections.Common.8.0.15.dll"
+        "Microsoft.AspNetCore.Http.Connections.Common.dll"
       ]
     },
     "Microsoft.AspNetCore.SignalR.Client": {
       "version": "8.0.15",
       "dlls": [
-        "Microsoft.AspNetCore.SignalR.Client.8.0.15.dll"
+        "Microsoft.AspNetCore.SignalR.Client.dll"
       ]
     },
     "Microsoft.AspNetCore.SignalR.Client.Core": {
       "version": "8.0.15",
       "dlls": [
-        "Microsoft.AspNetCore.SignalR.Client.Core.8.0.15.dll"
+        "Microsoft.AspNetCore.SignalR.Client.Core.dll"
       ]
     },
     "Microsoft.AspNetCore.SignalR.Common": {
       "version": "8.0.15",
       "dlls": [
-        "Microsoft.AspNetCore.SignalR.Common.8.0.15.dll"
+        "Microsoft.AspNetCore.SignalR.Common.dll"
       ]
     },
     "Microsoft.AspNetCore.SignalR.Protocols.Json": {
       "version": "8.0.15",
       "dlls": [
-        "Microsoft.AspNetCore.SignalR.Protocols.Json.8.0.15.dll"
+        "Microsoft.AspNetCore.SignalR.Protocols.Json.dll"
       ]
     },
     "Microsoft.Bcl.AsyncInterfaces": {
       "version": "8.0.0",
       "dlls": [
-        "Microsoft.Bcl.AsyncInterfaces.8.0.0.dll"
+        "Microsoft.Bcl.AsyncInterfaces.dll"
       ]
     },
     "Microsoft.Bcl.Memory": {
       "version": "10.0.3",
       "dlls": [
-        "Microsoft.Bcl.Memory.10.0.3.dll"
+        "Microsoft.Bcl.Memory.dll"
       ]
     },
     "Microsoft.Bcl.TimeProvider": {
       "version": "8.0.1",
       "dlls": [
-        "Microsoft.Bcl.TimeProvider.8.0.1.dll"
+        "Microsoft.Bcl.TimeProvider.dll"
       ]
     },
     "Microsoft.CodeAnalysis.Analyzers": {
@@ -85,175 +85,175 @@
     "Microsoft.CodeAnalysis.Common": {
       "version": "4.8.0",
       "dlls": [
-        "Microsoft.CodeAnalysis.4.8.0.dll"
+        "Microsoft.CodeAnalysis.dll"
       ]
     },
     "Microsoft.CodeAnalysis.CSharp": {
       "version": "4.8.0",
       "dlls": [
-        "Microsoft.CodeAnalysis.CSharp.4.8.0.dll"
+        "Microsoft.CodeAnalysis.CSharp.dll"
       ]
     },
     "Microsoft.Extensions.Caching.Abstractions": {
       "version": "8.0.0",
       "dlls": [
-        "Microsoft.Extensions.Caching.Abstractions.8.0.0.dll"
+        "Microsoft.Extensions.Caching.Abstractions.dll"
       ]
     },
     "Microsoft.Extensions.Configuration.Abstractions": {
       "version": "8.0.0",
       "dlls": [
-        "Microsoft.Extensions.Configuration.Abstractions.8.0.0.dll"
+        "Microsoft.Extensions.Configuration.Abstractions.dll"
       ]
     },
     "Microsoft.Extensions.DependencyInjection": {
       "version": "8.0.1",
       "dlls": [
-        "Microsoft.Extensions.DependencyInjection.8.0.1.dll"
+        "Microsoft.Extensions.DependencyInjection.dll"
       ]
     },
     "Microsoft.Extensions.DependencyInjection.Abstractions": {
       "version": "8.0.2",
       "dlls": [
-        "Microsoft.Extensions.DependencyInjection.Abstractions.8.0.2.dll"
+        "Microsoft.Extensions.DependencyInjection.Abstractions.dll"
       ]
     },
     "Microsoft.Extensions.Diagnostics.Abstractions": {
       "version": "8.0.1",
       "dlls": [
-        "Microsoft.Extensions.Diagnostics.Abstractions.8.0.1.dll"
+        "Microsoft.Extensions.Diagnostics.Abstractions.dll"
       ]
     },
     "Microsoft.Extensions.Features": {
       "version": "8.0.15",
       "dlls": [
-        "Microsoft.Extensions.Features.8.0.15.dll"
+        "Microsoft.Extensions.Features.dll"
       ]
     },
     "Microsoft.Extensions.FileProviders.Abstractions": {
       "version": "8.0.0",
       "dlls": [
-        "Microsoft.Extensions.FileProviders.Abstractions.8.0.0.dll"
+        "Microsoft.Extensions.FileProviders.Abstractions.dll"
       ]
     },
     "Microsoft.Extensions.Hosting.Abstractions": {
       "version": "8.0.1",
       "dlls": [
-        "Microsoft.Extensions.Hosting.Abstractions.8.0.1.dll"
+        "Microsoft.Extensions.Hosting.Abstractions.dll"
       ]
     },
     "Microsoft.Extensions.Logging": {
       "version": "8.0.1",
       "dlls": [
-        "Microsoft.Extensions.Logging.8.0.1.dll"
+        "Microsoft.Extensions.Logging.dll"
       ]
     },
     "Microsoft.Extensions.Logging.Abstractions": {
       "version": "8.0.3",
       "dlls": [
-        "Microsoft.Extensions.Logging.Abstractions.8.0.3.dll"
+        "Microsoft.Extensions.Logging.Abstractions.dll"
       ]
     },
     "Microsoft.Extensions.Options": {
       "version": "8.0.2",
       "dlls": [
-        "Microsoft.Extensions.Options.8.0.2.dll"
+        "Microsoft.Extensions.Options.dll"
       ]
     },
     "Microsoft.Extensions.Primitives": {
       "version": "8.0.0",
       "dlls": [
-        "Microsoft.Extensions.Primitives.8.0.0.dll"
+        "Microsoft.Extensions.Primitives.dll"
       ]
     },
     "R3": {
       "version": "1.3.0",
       "dlls": [
-        "R3.1.3.0.dll"
+        "R3.dll"
       ]
     },
     "System.Buffers": {
       "version": "4.5.1",
       "dlls": [
-        "System.Buffers.4.5.1.dll"
+        "System.Buffers.dll"
       ]
     },
     "System.Collections.Immutable": {
       "version": "7.0.0",
       "dlls": [
-        "System.Collections.Immutable.7.0.0.dll"
+        "System.Collections.Immutable.dll"
       ]
     },
     "System.ComponentModel.Annotations": {
       "version": "5.0.0",
       "dlls": [
-        "System.ComponentModel.Annotations.5.0.0.dll"
+        "System.ComponentModel.Annotations.dll"
       ]
     },
     "System.Diagnostics.DiagnosticSource": {
       "version": "8.0.1",
       "dlls": [
-        "System.Diagnostics.DiagnosticSource.8.0.1.dll"
+        "System.Diagnostics.DiagnosticSource.dll"
       ]
     },
     "System.IO.Pipelines": {
       "version": "8.0.0",
       "dlls": [
-        "System.IO.Pipelines.8.0.0.dll"
+        "System.IO.Pipelines.dll"
       ]
     },
     "System.Memory": {
       "version": "4.5.5",
       "dlls": [
-        "System.Memory.4.5.5.dll"
+        "System.Memory.dll"
       ]
     },
     "System.Numerics.Vectors": {
       "version": "4.4.0",
       "dlls": [
-        "System.Numerics.Vectors.4.4.0.dll"
+        "System.Numerics.Vectors.dll"
       ]
     },
     "System.Reflection.Metadata": {
       "version": "7.0.0",
       "dlls": [
-        "System.Reflection.Metadata.7.0.0.dll"
+        "System.Reflection.Metadata.dll"
       ]
     },
     "System.Runtime.CompilerServices.Unsafe": {
       "version": "6.1.2",
       "dlls": [
-        "System.Runtime.CompilerServices.Unsafe.6.1.2.dll"
+        "System.Runtime.CompilerServices.Unsafe.dll"
       ]
     },
     "System.Text.Encoding.CodePages": {
       "version": "7.0.0",
       "dlls": [
-        "System.Text.Encoding.CodePages.7.0.0.dll"
+        "System.Text.Encoding.CodePages.dll"
       ]
     },
     "System.Text.Encodings.Web": {
       "version": "8.0.0",
       "dlls": [
-        "System.Text.Encodings.Web.8.0.0.dll"
+        "System.Text.Encodings.Web.dll"
       ]
     },
     "System.Text.Json": {
       "version": "8.0.5",
       "dlls": [
-        "System.Text.Json.8.0.5.dll"
+        "System.Text.Json.dll"
       ]
     },
     "System.Threading.Channels": {
       "version": "8.0.0",
       "dlls": [
-        "System.Threading.Channels.8.0.0.dll"
+        "System.Threading.Channels.dll"
       ]
     },
     "System.Threading.Tasks.Extensions": {
       "version": "4.5.4",
       "dlls": [
-        "System.Threading.Tasks.Extensions.4.5.4.dll"
+        "System.Threading.Tasks.Extensions.dll"
       ]
     }
   }
