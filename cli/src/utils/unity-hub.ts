@@ -199,6 +199,19 @@ export interface InstalledEditor {
 }
 
 /**
+ * Pull the `stderr` capture off an `execFileSync` error and merge it
+ * into the error message. Returns the bare `err.message` when no
+ * stderr was captured (e.g. spawn failures before the child ran).
+ */
+function formatExecError(err: unknown): string {
+  const message = (err as Error).message;
+  const stderr = (err as { stderr?: Buffer | string }).stderr;
+  if (!stderr) return message;
+  const text = (Buffer.isBuffer(stderr) ? stderr.toString('utf-8') : stderr).trim();
+  return text ? `${message}\n${text}` : message;
+}
+
+/**
  * List installed Unity editors via Unity Hub CLI.
  */
 /**
@@ -251,10 +264,7 @@ export function listInstalledEditors(hubPath: string): InstalledEditor[] {
     verbose(`listInstalledEditors completed in ${Date.now() - startedAt}ms`);
     return editors;
   } catch (err) {
-    const stderr = (err as { stderr?: Buffer | string }).stderr;
-    const stderrText = stderr ? (Buffer.isBuffer(stderr) ? stderr.toString('utf-8') : stderr).trim() : '';
-    const detail = stderrText ? `${(err as Error).message}\n${stderrText}` : (err as Error).message;
-    spinner.error(`Failed to list installed editors: ${detail}`);
+    spinner.error(`Failed to list installed editors: ${formatExecError(err)}`);
     verbose(`listInstalledEditors failed after ${Date.now() - startedAt}ms`);
     return [];
   }
@@ -327,10 +337,7 @@ export function listAvailableReleases(hubPath: string): AvailableRelease[] {
     spinner.success(`Found ${releases.length} available release${releases.length !== 1 ? 's' : ''}`);
     return releases;
   } catch (err) {
-    const stderr = (err as { stderr?: Buffer | string }).stderr;
-    const stderrText = stderr ? (Buffer.isBuffer(stderr) ? stderr.toString('utf-8') : stderr).trim() : '';
-    const detail = stderrText ? `${(err as Error).message}\n${stderrText}` : (err as Error).message;
-    spinner.error(`Failed to fetch available releases: ${detail}`);
+    spinner.error(`Failed to fetch available releases: ${formatExecError(err)}`);
     return [];
   }
 }

@@ -71,11 +71,8 @@ export async function findEditorPath(version?: string): Promise<string | null> {
   const startedAt = Date.now();
   verbose(`findEditorPath start (version=${version ?? 'auto'})`);
 
-  // Cache lookup: if we previously resolved this version and the
-  // binary still exists, skip every probe below. Stale entries
-  // (file deleted, editor uninstalled) are evicted inside
-  // readCachedEditorPath so we always proceed with a fresh resolve
-  // in that case.
+  // Cache hit short-circuits the Unity Hub Electron probe below
+  // (~13s cold -> ~instant warm). Stale entries self-evict.
   const cached = readCachedEditorPath(version);
   if (cached) {
     verbose(`findEditorPath cache hit in ${Date.now() - startedAt}ms`);

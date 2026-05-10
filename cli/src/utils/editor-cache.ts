@@ -5,9 +5,8 @@ import { verbose } from './ui.js';
 
 const CACHE_FILE = join(homedir(), '.unity-mcp-cli-editor-cache.json');
 
-// Used as the storage key when the caller didn't supply a version
-// (i.e. "open whatever editor — pick the highest"). Keeps a single
-// well-known key out of the legal Unity-version namespace.
+// Storage key for the version-less "highest installed" lookup.
+// Underscored to stay out of the Unity-version namespace (e.g. `6000.3.1f1`).
 const AUTO_KEY = '__auto__';
 
 interface CacheEntry {
