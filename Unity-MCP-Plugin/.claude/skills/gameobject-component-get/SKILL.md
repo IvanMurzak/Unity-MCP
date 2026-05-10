@@ -1,6 +1,10 @@
 ---
 name: gameobject-component-get
-description: Get detailed information about a specific Component on a GameObject. Returns component type, enabled state, and optionally serialized fields and properties. Use this to inspect component data before modifying it. Use 'gameobject-find' tool to get the list of all components on the GameObject.
+description: |-
+  Get detailed information about a specific Component on a GameObject. Returns component type, enabled state, and optionally serialized fields and properties. Use this to inspect component data before modifying it. Use 'gameobject-find' tool to get the list of all components on the GameObject.
+  
+  Path-scoped reads (token-saving): supply 'paths' (a list of paths) to read only the listed fields/elements via Reflector.TryReadAt, or 'viewQuery' (a ViewQuery) to navigate to a subtree and/or filter by name regex / max depth / type via Reflector.View. The result is returned in the 'View' field of the response. These two parameters are mutually exclusive — supply at most one.
+  Path syntax: 'fieldName', 'nested/field', 'arrayField/[i]', 'dictField/[key]'. Leading '#/' is stripped.
 ---
 
 # GameObject / Component / Get
@@ -13,7 +17,9 @@ unity-mcp-cli run-tool gameobject-component-get --input '{
   "componentRef": "string_value",
   "includeFields": false,
   "includeProperties": false,
-  "deepSerialization": false
+  "deepSerialization": false,
+  "paths": "string_value",
+  "viewQuery": "string_value"
 }'
 ```
 
@@ -44,6 +50,8 @@ Read the /unity-initial-setup skill for detailed installation instructions.
 | `includeFields` | `boolean` | No | Include serialized fields of the component. |
 | `includeProperties` | `boolean` | No | Include serialized properties of the component. |
 | `deepSerialization` | `boolean` | No | Performs deep serialization including all nested objects. Otherwise, only serializes top-level members. |
+| `paths` | `any` | No | Optional. List of paths to read individually via Reflector.TryReadAt. When supplied, the legacy 'Fields'/'Properties' lists are skipped and the result is returned in 'View'. Path syntax: 'fieldName', 'nested/field', 'arrayField/[i]', 'dictField/[key]'. Mutually exclusive with 'viewQuery'. |
+| `viewQuery` | `any` | No | Optional. View-query filter routed through Reflector.View. When supplied, the legacy 'Fields'/'Properties' lists are skipped and the filtered subtree is returned in 'View'. Mutually exclusive with 'paths'. |
 
 ### Input JSON Schema
 
@@ -52,10 +60,10 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "gameObjectRef": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef"
+      "$ref": "#/$defs/AIGD.GameObjectRef"
     },
     "componentRef": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef"
+      "$ref": "#/$defs/AIGD.ComponentRef"
     },
     "includeFields": {
       "type": "boolean"
@@ -65,13 +73,19 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     },
     "deepSerialization": {
       "type": "boolean"
+    },
+    "paths": {
+      "$ref": "#/$defs/System.Collections.Generic.List<System.String>"
+    },
+    "viewQuery": {
+      "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.ViewQuery"
     }
   },
   "$defs": {
     "System.Type": {
       "type": "string"
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
+    "AIGD.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -104,50 +118,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       ],
       "description": "Find GameObject in opened Prefab or in the active Scene."
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef": {
-      "type": "object",
-      "properties": {
-        "index": {
-          "type": "integer",
-          "description": "Component 'index' attached to a gameObject. The first index is '0' and that is usually Transform or RectTransform. Priority: 2. Default value is -1."
-        },
-        "typeName": {
-          "type": "string",
-          "description": "Component type full name. Sample 'UnityEngine.Transform'. If the gameObject has two components of the same type, the output component is unpredictable. Priority: 3. Default value is null."
-        },
-        "instanceID": {
-          "type": "integer",
-          "description": "instanceID of the UnityEngine.Object. If this is '0', then it will be used as 'null'."
-        }
-      },
-      "required": [
-        "index",
-        "instanceID"
-      ],
-      "description": "Component reference. Used to find a Component at GameObject."
-    }
-  },
-  "required": [
-    "gameObjectRef",
-    "componentRef"
-  ]
-}
-```
-
-## Output
-
-### Output JSON Schema
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_GameObject+GetComponentResponse"
-    }
-  },
-  "$defs": {
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef": {
+    "AIGD.ComponentRef": {
       "type": "object",
       "properties": {
         "index": {
@@ -169,7 +140,77 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       ],
       "description": "Component reference. Used to find a Component at GameObject."
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentDataShallow": {
+    "System.Collections.Generic.List<System.String>": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "com.IvanMurzak.ReflectorNet.Model.ViewQuery": {
+      "type": "object",
+      "properties": {
+        "Path": {
+          "type": "string",
+          "description": "Navigate to this path first, then serialize only that subtree. Path segments are separated by '/'. Use '[i]' for array/list index (e.g. 'users/[2]/name') and '[key]' for dictionary entry (e.g. 'config/[timeout]'). A leading '#/' is stripped automatically. Examples: 'admin/name', 'users/[0]/email', 'config/[timeout]'. Leave null to start from the root object."
+        },
+        "NamePattern": {
+          "type": "string",
+          "description": "Case-insensitive .NET regex pattern matched against field and property names. Only branches containing at least one match are kept in the result tree. Examples: 'orbitRadius' (exact name), 'orbit.*' (prefix match), 'radius|speed' (either name). When nothing matches, the root envelope is returned with empty fields/props. Leave null to return all fields and properties without filtering."
+        },
+        "MaxDepth": {
+          "type": "integer",
+          "description": "Maximum nesting depth of the returned serialized tree. 0 = root type name and value only — no nested fields or properties. 1 = one level of fields/props visible, their children stripped. 2 = two levels visible, and so on. Leave null (default) for unlimited depth."
+        },
+        "TypeFilter": {
+          "$ref": "#/$defs/System.Type",
+          "description": "When set, prunes the result tree to members whose runtime type is assignable to this type. Non-matching branches are removed; the root envelope is always preserved. Examples: typeof(float) keeps only float fields, typeof(IEnumerable) keeps only collections. Leave null to include members of any type."
+        }
+      }
+    }
+  },
+  "required": [
+    "gameObjectRef",
+    "componentRef"
+  ]
+}
+```
+
+## Output
+
+### Output JSON Schema
+
+```json
+{
+  "type": "object",
+  "properties": {
+    "result": {
+      "$ref": "#/$defs/AIGD.GetComponentResponse"
+    }
+  },
+  "$defs": {
+    "AIGD.ComponentRef": {
+      "type": "object",
+      "properties": {
+        "index": {
+          "type": "integer",
+          "description": "Component 'index' attached to a gameObject. The first index is '0' and that is usually Transform or RectTransform. Priority: 2. Default value is -1."
+        },
+        "typeName": {
+          "type": "string",
+          "description": "Component type full name. Sample 'UnityEngine.Transform'. If the gameObject has two components of the same type, the output component is unpredictable. Priority: 3. Default value is null."
+        },
+        "instanceID": {
+          "type": "integer",
+          "description": "instanceID of the UnityEngine.Object. If this is '0', then it will be used as 'null'."
+        }
+      },
+      "required": [
+        "index",
+        "instanceID"
+      ],
+      "description": "Component reference. Used to find a Component at GameObject."
+    },
+    "AIGD.ComponentDataShallow": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -240,11 +281,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.SerializedMember"
       }
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_GameObject+GetComponentResponse": {
+    "AIGD.GetComponentResponse": {
       "type": "object",
       "properties": {
         "Reference": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef",
+          "$ref": "#/$defs/AIGD.ComponentRef",
           "description": "Reference to the component for future operations."
         },
         "Index": {
@@ -252,16 +293,20 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "description": "Index of the component in the GameObject's component list."
         },
         "Component": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentDataShallow",
+          "$ref": "#/$defs/AIGD.ComponentDataShallow",
           "description": "Basic component information (type, enabled state)."
         },
         "Fields": {
           "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.ReflectorNet.Model.SerializedMember>",
-          "description": "Serialized fields of the component."
+          "description": "Serialized fields of the component. Populated only on the legacy code path (no 'paths' / no 'viewQuery')."
         },
         "Properties": {
           "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.ReflectorNet.Model.SerializedMember>",
-          "description": "Serialized properties of the component."
+          "description": "Serialized properties of the component. Populated only on the legacy code path (no 'paths' / no 'viewQuery')."
+        },
+        "View": {
+          "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.SerializedMember",
+          "description": "Path-scoped read or view-query result, populated when 'paths' or 'viewQuery' was supplied. Null otherwise."
         }
       },
       "required": [

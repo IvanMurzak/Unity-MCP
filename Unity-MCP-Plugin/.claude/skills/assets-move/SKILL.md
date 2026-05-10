@@ -76,7 +76,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets+MoveAssetsResponse"
+      "$ref": "#/$defs/AIGD.MoveAssetsResponse"
     }
   },
   "$defs": {
@@ -86,7 +86,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "type": "string"
       }
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets+MoveAssetsResponse": {
+    "AIGD.MoveAssetsResponse": {
       "type": "object",
       "properties": {
         "MovedPaths": {

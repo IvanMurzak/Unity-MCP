@@ -1,0 +1,29 @@
+{
+    "name": "com.IvanMurzak.Unity.MCP.Runtime",
+    "rootNamespace": "com.IvanMurzak.Unity.MCP.Runtime",
+    "references": [
+        "Extensions.Unity.PlayerPrefsEx"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "McpPlugin.dll",
+        "McpPlugin.Common.dll",
+        "ReflectorNet.dll",
+        "R3.dll",
+        "System.Text.Json.dll",
+        "Microsoft.Extensions.Logging.dll",
+        "Microsoft.Extensions.Logging.Abstractions.dll",
+        "Microsoft.Extensions.DependencyInjection.Abstractions.dll",
+        "Microsoft.AspNetCore.SignalR.Client.dll",
+        "Microsoft.AspNetCore.SignalR.Client.Core.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "UNITY_MCP_READY"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

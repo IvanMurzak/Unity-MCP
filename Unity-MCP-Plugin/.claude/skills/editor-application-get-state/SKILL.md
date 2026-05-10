@@ -59,12 +59,12 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Editor+EditorStatsData",
+      "$ref": "#/$defs/AIGD.EditorStatsData",
       "description": "Available information about 'UnityEditor.EditorApplication'."
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Editor+EditorStatsData": {
+    "AIGD.EditorStatsData": {
       "type": "object",
       "properties": {
         "IsPlaying": {

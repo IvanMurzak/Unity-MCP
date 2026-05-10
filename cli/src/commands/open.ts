@@ -1,16 +1,123 @@
 import { Command } from 'commander';
 import * as path from 'path';
-import * as fs from 'fs';
-import { findEditorPath, getProjectEditorVersion, launchEditor, printEditorNotFoundHelp } from '../utils/unity-editor.js';
+import { findUnityHub, listInstalledEditors } from '../utils/unity-hub.js';
 import { findUnityProcess } from '../utils/unity-process.js';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
-import { readConfig, isCloudMode, writeConfig } from '../utils/config.js';
+import {
+  openProject,
+  resolveProjectPath as libResolveProjectPath,
+  isUnityProjectDir as libIsUnityProjectDir,
+} from '../lib/open.js';
+import type { OpenProjectAuthOption, OpenProjectTransport } from '../lib/types.js';
+
+/**
+ * Resolve the project path from the positional argument, `--path` option, or
+ * the current working directory when neither is provided.
+ *
+ * Re-exported from the library helper so existing tests continue to import
+ * `resolveOpenProjectPath` from this module.
+ */
+export interface ResolveProjectPathResult {
+  /** Absolute, resolved path to the project directory. */
+  projectPath: string;
+  /** True if no path was supplied and we fell back to `process.cwd()`. */
+  usedCwdFallback: boolean;
+}
+
+export function resolveOpenProjectPath(
+  positionalPath: string | undefined,
+  optionPath: string | undefined,
+  cwd: string,
+): ResolveProjectPathResult {
+  // The CLI takes both a positional `[path]` AND an `--path` flag; the
+  // library helper only takes a single `optionPath`. Collapse the two
+  // CLI inputs (positional wins) before delegating.
+  const explicit = positionalPath ?? optionPath;
+  return libResolveProjectPath(explicit, cwd);
+}
+
+/** Re-export for backward compatibility with existing tests. */
+export const isUnityProjectDir = libIsUnityProjectDir;
+
+/**
+ * Parse a `--xxx <ms>` style commander option as a positive integer.
+ * Commander stores the raw string (including the literal default
+ * supplied to `.option()`), so a parse-and-validate step is required
+ * before the value can flow into the library. Exits with code 1 on
+ * a non-numeric / non-positive value — matches the CLI's existing
+ * error-handling pattern for malformed flag values (`--auth`,
+ * `--transport`, `--start-server`).
+ *
+ * Exported for unit tests; the CLI wrapper is the only production
+ * caller.
+ */
+export function parsePositiveIntFlag(
+  raw: string | undefined,
+  flagName: string,
+  fallback: number,
+): number {
+  if (raw === undefined) return fallback;
+  const trimmed = String(raw).trim();
+  if (trimmed === '') return fallback;
+  // Reject scientific notation, fractions, and explicit signs — the
+  // ms value MUST be a positive whole number for the polling loop's
+  // bookkeeping to be sane.
+  if (!/^\d+$/.test(trimmed)) {
+    ui.error(`${flagName} must be a positive integer (got: "${raw}")`);
+    process.exit(1);
+  }
+  const parsed = parseInt(trimmed, 10);
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    ui.error(`${flagName} must be a positive integer (got: "${raw}")`);
+    process.exit(1);
+  }
+  return parsed;
+}
+
+/**
+ * Print actionable help when a required Unity Editor version is not found.
+ * Lists installed editors and suggests install or override commands. Lives
+ * here (next to the CLI command) instead of `unity-editor.ts` because it
+ * writes to the chalk-styled `ui` and we want to keep the `unity-editor.ts`
+ * helpers library-safe.
+ */
+function printEditorNotFoundHelp(requestedVersion: string | undefined, commandName: string): void {
+  if (requestedVersion) {
+    ui.error(`Unity Editor ${requestedVersion} is not installed.`);
+  } else {
+    ui.error('No Unity Editor found.');
+  }
+
+  ui.heading('Options:');
+
+  if (requestedVersion) {
+    ui.info(`Install it:  npx unity-mcp-cli install-unity ${requestedVersion}`);
+  }
+  ui.info('Install latest stable:  npx unity-mcp-cli install-unity');
+
+  const hubPath = findUnityHub();
+  if (hubPath) {
+    const editors = listInstalledEditors(hubPath);
+    if (editors.length > 0) {
+      ui.heading('Installed editors:');
+      for (const editor of editors) {
+        ui.label(editor.version, editor.path);
+      }
+      if (requestedVersion) {
+        const hint = commandName === 'connect'
+          ? `npx unity-mcp-cli ${commandName} --unity ${editors[0].version} --path <path> --url <url>`
+          : `npx unity-mcp-cli ${commandName} <path> --unity ${editors[0].version}`;
+        ui.info(`Use a different version:  ${hint}`);
+      }
+    }
+  }
+}
 
 export const openCommand = new Command('open')
   .description('Open a Unity project in Unity Editor, optionally passing MCP connection env vars when connection options (--url, --token, etc.) are provided. Use --no-connect to suppress all MCP env vars.')
-  .argument('[path]', 'Path to the Unity project')
-  .option('--path <path>', 'Path to the Unity project')
+  .argument('[path]', 'Path to the Unity project (defaults to current directory)')
+  .option('--path <path>', 'Path to the Unity project (defaults to current directory)')
   .option('--unity <version>', 'Specific Unity Editor version to use')
   .option('--no-connect', 'Open without MCP connection environment variables')
   .option('--url <url>', 'MCP server URL to connect to (sets UNITY_MCP_HOST)')
@@ -20,6 +127,20 @@ export const openCommand = new Command('open')
   .option('--keep-connected', 'Force keep connected (sets UNITY_MCP_KEEP_CONNECTED=true)')
   .option('--transport <method>', 'Transport method: streamableHttp or stdio (sets UNITY_MCP_TRANSPORT)')
   .option('--start-server <value>', 'Set to true/false to control server auto-start (sets UNITY_MCP_START_SERVER)', undefined)
+  .option(
+    '--no-auto-dismiss-launch-errors',
+    'Disable auto-dismissal of the Unity Editor "compile errors at launch" dialog (default: enabled). On macOS, requires Accessibility permission for the terminal / unity-mcp-cli binary. On Linux/X11, requires `xdotool` on PATH (Wayland not supported).',
+  )
+  .option(
+    '--launch-dismiss-timeout-ms <ms>',
+    'Overall timeout (milliseconds) for the launch-errors auto-dismiss polling loop (default: 30000)',
+    '30000',
+  )
+  .option(
+    '--launch-dismiss-poll-interval-ms <ms>',
+    'Polling tick interval (milliseconds) for the launch-errors auto-dismiss loop (default: 1500)',
+    '1500',
+  )
   .action(async (positionalPath: string | undefined, options: {
     path?: string;
     unity?: string;
@@ -31,137 +152,212 @@ export const openCommand = new Command('open')
     keepConnected?: boolean;
     transport?: string;
     startServer?: string;
+    autoDismissLaunchErrors?: boolean;
+    launchDismissTimeoutMs?: string;
+    launchDismissPollIntervalMs?: string;
   }) => {
-    const resolvedPath = positionalPath ?? options.path;
-    if (!resolvedPath) {
-      ui.error('Path is required. Usage: unity-mcp-cli open <path> or --path <path>');
-      process.exit(1);
-    }
-    const projectPath = path.resolve(resolvedPath);
+    // Resolve the path the same way the library does, but also
+    // validate the existence + Unity-project shape up front so we
+    // can emit the historical, friendlier "Current directory is
+    // not a Unity project" message when the cwd-fallback was used.
+    // The library always reports the underlying error string, but
+    // the CLI is allowed to render two different variants.
+    const { projectPath, usedCwdFallback } = resolveOpenProjectPath(
+      positionalPath,
+      options.path,
+      process.cwd(),
+    );
 
+    const fs = await import('fs');
     if (!fs.existsSync(projectPath)) {
       ui.error(`Project path does not exist: ${projectPath}`);
       process.exit(1);
     }
 
+    if (!libIsUnityProjectDir(projectPath)) {
+      if (usedCwdFallback) {
+        ui.error(`Current directory is not a Unity project: ${projectPath}`);
+        ui.info('Run this command from a Unity project folder, or pass a path: unity-mcp-cli open <path>');
+      } else {
+        ui.error(`Not a Unity project (missing Assets/ or ProjectSettings/ProjectVersion.txt): ${projectPath}`);
+      }
+      process.exit(1);
+    }
+
+    if (usedCwdFallback) {
+      verbose(`No path provided — using current directory: ${projectPath}`);
+    }
     verbose(`open invoked for project: ${projectPath}`);
     verbose(`--no-connect: ${options.connect === false}`);
 
-    // Check if Unity is already running with this project
-    const existingProcess = findUnityProcess(projectPath);
-    if (existingProcess) {
-      ui.success(`Unity is already running with this project (PID: ${existingProcess.pid})`);
+    // Validate auth/transport/startServer here — keeps the historical
+    // CLI error messages and exit codes (the library reports these
+    // as `kind: 'failure'` instead).
+    if (options.auth !== undefined && options.auth !== 'none' && options.auth !== 'required') {
+      ui.error('--auth must be "none" or "required"');
+      process.exit(1);
+    }
+    if (options.transport !== undefined && options.transport !== 'streamableHttp' && options.transport !== 'stdio') {
+      ui.error('--transport must be "streamableHttp" or "stdio"');
+      process.exit(1);
+    }
+    let startServerBool: boolean | undefined;
+    if (options.startServer !== undefined) {
+      const val = options.startServer.toLowerCase();
+      if (val !== 'true' && val !== 'false') {
+        ui.error('--start-server must be "true" or "false"');
+        process.exit(1);
+      }
+      startServerBool = val === 'true';
+    }
+
+    // --launch-dismiss-timeout-ms / --launch-dismiss-poll-interval-ms
+    // are commander string options with numeric defaults. Parse and
+    // validate here so the failure mode is a clear CLI error rather
+    // than a silent NaN that disables the polling loop.
+    const launchDismissTimeoutMs = parsePositiveIntFlag(
+      options.launchDismissTimeoutMs,
+      '--launch-dismiss-timeout-ms',
+      30000,
+    );
+    const launchDismissPollIntervalMs = parsePositiveIntFlag(
+      options.launchDismissPollIntervalMs,
+      '--launch-dismiss-poll-interval-ms',
+      1500,
+    );
+    // Commander's `--no-auto-dismiss-launch-errors` produces
+    // `autoDismissLaunchErrors: false`; the absence of the flag
+    // produces `undefined` (which `openProject` treats as the default
+    // `true`). No additional parsing needed.
+
+    // Pre-flight already-running check so we don't flash the
+    // "Locating Unity Editor..." spinner when Unity is already open
+    // for this project. The lib does its own check too (single
+    // source of truth for the result shape); this one only suppresses
+    // spinner spam in the common already-open case.
+    const alreadyRunningPid = findUnityProcess(projectPath)?.pid;
+
+    // Spinner around editor location for parity with the legacy UX.
+    let spinner: ReturnType<typeof ui.startSpinner> | undefined =
+      alreadyRunningPid === undefined
+        ? ui.startSpinner('Locating Unity Editor...')
+        : undefined;
+
+    const result = await openProject({
+      projectPath,
+      unityVersion: options.unity,
+      noConnect: options.connect === false,
+      url: options.url,
+      token: options.token,
+      auth: options.auth as OpenProjectAuthOption | undefined,
+      tools: options.tools,
+      keepConnected: options.keepConnected,
+      transport: options.transport as OpenProjectTransport | undefined,
+      startServer: startServerBool,
+      autoDismissLaunchErrors: options.autoDismissLaunchErrors !== false,
+      launchDismissTimeoutMs,
+      launchDismissPollIntervalMs,
+      onProgress: (event) => {
+        switch (event.phase) {
+          case 'detecting-editor-version': {
+            // unity-version detection is fast — no UI noise needed.
+            break;
+          }
+          case 'editors-located': {
+            // Cover the case where editor discovery succeeded — the
+            // spinner success message lands on `editor-resolved`,
+            // not here, so we don't overwrite the "Locating…" line.
+            break;
+          }
+          case 'editor-resolved': {
+            if (spinner) {
+              spinner.success('Unity Editor located');
+              spinner = undefined;
+            }
+            verbose(`Editor path: ${event.editorPath}`);
+            if (event.version) {
+              ui.info(`Detected editor version from project: ${event.version}`);
+              verbose(`Resolved editor version from ProjectVersion.txt: ${event.version}`);
+            }
+            break;
+          }
+          case 'connection-details': {
+            const envVars = event.envVars;
+            if (Object.keys(envVars).length > 0) {
+              ui.heading('Connection Details');
+              ui.label('Project', event.projectPath);
+              ui.label('Editor', event.editorPath);
+              ui.heading('Environment Variables');
+              for (const [key, value] of Object.entries(envVars)) {
+                const display = key === 'UNITY_MCP_TOKEN' ? '***' : value;
+                ui.label(key, display);
+                verbose(`Setting ${key}=${display}`);
+              }
+              ui.divider();
+            } else {
+              verbose('MCP connection disabled via --no-connect or no options');
+            }
+            break;
+          }
+          case 'launching-editor': {
+            ui.label('Project', event.projectPath);
+            ui.label('Editor', event.editorPath);
+            break;
+          }
+          case 'editor-launched': {
+            ui.success(`Launched Unity Editor (PID: ${event.pid ?? 'unknown'})`);
+            break;
+          }
+          case 'launch-errors-dismissed': {
+            // Single info-level log line on dismissal — exact format
+            // is part of the issue's acceptance contract. Keep in
+            // sync with `launch-error-dismiss.ts` if changed.
+            ui.info(
+              `[open] dismissed Unity launch-errors dialog (button=${event.button}, platform=${event.platform})`,
+            );
+            break;
+          }
+          default:
+            break;
+        }
+      },
+    });
+
+    if (spinner) {
+      // Library returned before emitting `editor-resolved` — most
+      // likely failed to locate an editor. Stop the spinner so the
+      // error path renders cleanly.
+      spinner.stop();
+      spinner = undefined;
+    }
+
+    if (result.kind === 'failure') {
+      // Render the failure with the original CLI surface. Two cases
+      // get the rich "no editor found" help; everything else is a
+      // plain ui.error.
+      if (
+        result.errorMessage.startsWith('Unity Editor') &&
+        result.errorMessage.endsWith('is not installed.')
+      ) {
+        printEditorNotFoundHelp(options.unity, 'open');
+      } else if (result.errorMessage === 'No Unity Editor found.') {
+        printEditorNotFoundHelp(undefined, 'open');
+      } else {
+        ui.error(result.errorMessage);
+      }
+      process.exit(1);
+    }
+
+    // Already-running short-circuit: the library returns success
+    // with `alreadyRunning: true`. Preserve the original exit-0 +
+    // friendly message.
+    if (result.alreadyRunning) {
+      ui.success(`Unity is already running with this project (PID: ${result.editorPid ?? 'unknown'})`);
       ui.info('Skipping launch. Use the running instance or close it first.');
       process.exit(0);
     }
 
-    // Determine editor version
-    let version = options.unity;
-    if (!version) {
-      version = getProjectEditorVersion(projectPath) ?? undefined;
-      if (version) {
-        ui.info(`Detected editor version from project: ${version}`);
-        verbose(`Resolved editor version from ProjectVersion.txt: ${version}`);
-      }
-    }
-
-    const spinner = ui.startSpinner('Locating Unity Editor...');
-    const editorPath = await findEditorPath(version);
-    if (!editorPath) {
-      spinner.stop();
-      printEditorNotFoundHelp(version, 'open');
-      process.exit(1);
-    }
-    spinner.success('Unity Editor located');
-    verbose(`Editor path: ${editorPath}`);
-
-    // Auto-detect Cloud mode: if project has cloudToken, ensure keep-connected
-    // so the Unity plugin connects to the cloud server on startup.
-    // Also enable auto-generate skills for claude-code by default.
-    {
-      const config = readConfig(projectPath);
-      if (config && isCloudMode(config) && config.cloudToken) {
-        if (!options.keepConnected) {
-          options.keepConnected = true;
-          verbose('Cloud mode with token detected — auto-enabling keep-connected');
-        }
-
-        const skillAutoGenerate = { ...(config.skillAutoGenerate ?? {}) } as Record<string, boolean>;
-        if (!skillAutoGenerate['claude-code']) {
-          skillAutoGenerate['claude-code'] = true;
-          writeConfig(projectPath, { ...config, skillAutoGenerate });
-          verbose('Auto-enabled skill generation for claude-code');
-        }
-      }
-    }
-
-    // Build environment variables for MCP connection (unless --no-connect)
-    const useConnect = options.connect !== false;
-    let env: Record<string, string> | undefined;
-
-    if (useConnect) {
-      const envVars: Record<string, string> = {};
-
-      if (options.url) {
-        envVars['UNITY_MCP_HOST'] = options.url;
-      }
-
-      if (options.keepConnected) {
-        envVars['UNITY_MCP_KEEP_CONNECTED'] = 'true';
-      }
-
-      if (options.tools) {
-        envVars['UNITY_MCP_TOOLS'] = options.tools;
-      }
-
-      if (options.token) {
-        envVars['UNITY_MCP_TOKEN'] = options.token;
-      }
-
-      if (options.auth) {
-        if (options.auth !== 'none' && options.auth !== 'required') {
-          ui.error('--auth must be "none" or "required"');
-          process.exit(1);
-        }
-        envVars['UNITY_MCP_AUTH_OPTION'] = options.auth;
-      }
-
-      if (options.transport) {
-        if (options.transport !== 'streamableHttp' && options.transport !== 'stdio') {
-          ui.error('--transport must be "streamableHttp" or "stdio"');
-          process.exit(1);
-        }
-        envVars['UNITY_MCP_TRANSPORT'] = options.transport;
-      }
-
-      if (options.startServer !== undefined) {
-        const val = options.startServer.toLowerCase();
-        if (val !== 'true' && val !== 'false') {
-          ui.error('--start-server must be "true" or "false"');
-          process.exit(1);
-        }
-        envVars['UNITY_MCP_START_SERVER'] = val;
-      }
-
-      if (Object.keys(envVars).length > 0) {
-        env = envVars;
-        ui.heading('Connection Details');
-        ui.label('Project', projectPath);
-        ui.label('Editor', editorPath);
-
-        ui.heading('Environment Variables');
-        for (const [key, value] of Object.entries(envVars)) {
-          const display = key === 'UNITY_MCP_TOKEN' ? '***' : value;
-          ui.label(key, display);
-          verbose(`Setting ${key}=${display}`);
-        }
-        ui.divider();
-      }
-    } else {
-      verbose('MCP connection disabled via --no-connect');
-    }
-
-    ui.label('Project', projectPath);
-    ui.label('Editor', editorPath);
-    launchEditor(editorPath, projectPath, env);
+    // Path is normally absolute already; resolve defensively for
+    // verbose log parity with the legacy CLI.
+    verbose(`Resolved project path: ${path.resolve(result.projectPath)}`);
   });

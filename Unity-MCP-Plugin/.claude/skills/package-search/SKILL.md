@@ -72,11 +72,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Editor.API.Tool_Package+PackageSearchResult>"
+      "$ref": "#/$defs/System.Collections.Generic.List<AIGD.PackageSearchResult>"
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Package+PackageSearchResult": {
+    "AIGD.PackageSearchResult": {
       "type": "object",
       "properties": {
         "Name": {
@@ -119,10 +119,10 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "type": "string"
       }
     },
-    "System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Editor.API.Tool_Package+PackageSearchResult>": {
+    "System.Collections.Generic.List<AIGD.PackageSearchResult>": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Package+PackageSearchResult",
+        "$ref": "#/$defs/AIGD.PackageSearchResult",
         "description": "Package search result with available versions."
       }
     }

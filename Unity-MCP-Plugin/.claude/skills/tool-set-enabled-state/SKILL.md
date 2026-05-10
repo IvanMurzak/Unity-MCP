@@ -46,14 +46,14 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "tools": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Tool+InputData[]"
+      "$ref": "#/$defs/AIGD.ToolToggleInput[]"
     },
     "includeLogs": {
       "$ref": "#/$defs/System.Boolean"
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Tool+InputData": {
+    "AIGD.ToolToggleInput": {
       "type": "object",
       "properties": {
         "Name": {
@@ -69,10 +69,10 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "Enabled"
       ]
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Tool+InputData[]": {
+    "AIGD.ToolToggleInput[]": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Tool+InputData"
+        "$ref": "#/$defs/AIGD.ToolToggleInput"
       }
     },
     "System.Boolean": {
@@ -94,7 +94,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Tool+ResultData"
+      "$ref": "#/$defs/AIGD.ToolToggleResult"
     }
   },
   "$defs": {
@@ -137,7 +137,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "type": "boolean"
       }
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Tool+ResultData": {
+    "AIGD.ToolToggleResult": {
       "type": "object",
       "properties": {
         "Logs": {

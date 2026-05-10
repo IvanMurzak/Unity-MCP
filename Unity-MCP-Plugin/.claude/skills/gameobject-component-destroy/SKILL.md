@@ -46,17 +46,17 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "gameObjectRef": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef"
+      "$ref": "#/$defs/AIGD.GameObjectRef"
     },
     "destroyComponentRefs": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRefList"
+      "$ref": "#/$defs/AIGD.ComponentRefList"
     }
   },
   "$defs": {
     "System.Type": {
       "type": "string"
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
+    "AIGD.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -89,7 +89,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       ],
       "description": "Find GameObject in opened Prefab or in the active Scene."
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef": {
+    "AIGD.ComponentRef": {
       "type": "object",
       "properties": {
         "index": {
@@ -111,10 +111,10 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       ],
       "description": "Component reference. Used to find a Component at GameObject."
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRefList": {
+    "AIGD.ComponentRefList": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef",
+        "$ref": "#/$defs/AIGD.ComponentRef",
         "description": "Component reference. Used to find a Component at GameObject."
       },
       "description": "Component reference array. Used to find Component at GameObject."
@@ -136,19 +136,19 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_GameObject+DestroyComponentsResponse"
+      "$ref": "#/$defs/AIGD.DestroyComponentsResponse"
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRefList": {
+    "AIGD.ComponentRefList": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef",
+        "$ref": "#/$defs/AIGD.ComponentRef",
         "description": "Component reference. Used to find a Component at GameObject."
       },
       "description": "Component reference array. Used to find Component at GameObject."
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef": {
+    "AIGD.ComponentRef": {
       "type": "object",
       "properties": {
         "index": {
@@ -170,11 +170,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       ],
       "description": "Component reference. Used to find a Component at GameObject."
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_GameObject+DestroyComponentsResponse": {
+    "AIGD.DestroyComponentsResponse": {
       "type": "object",
       "properties": {
         "DestroyedComponents": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRefList",
+          "$ref": "#/$defs/AIGD.ComponentRefList",
           "description": "List of destroyed components."
         }
       }

@@ -78,11 +78,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Editor.API.Tool_Package+PackageData>"
+      "$ref": "#/$defs/System.Collections.Generic.List<AIGD.PackageData>"
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Package+PackageData": {
+    "AIGD.PackageData": {
       "type": "object",
       "properties": {
         "Name": {
@@ -112,10 +112,10 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       },
       "description": "Package information returned from package list operation."
     },
-    "System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Editor.API.Tool_Package+PackageData>": {
+    "System.Collections.Generic.List<AIGD.PackageData>": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Package+PackageData",
+        "$ref": "#/$defs/AIGD.PackageData",
         "description": "Package information returned from package list operation."
       }
     }

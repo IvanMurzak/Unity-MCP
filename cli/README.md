@@ -96,6 +96,7 @@ npx unity-mcp-cli install-plugin /path/to/unity/project
   - [`install-plugin`](#install-plugin)
   - [`install-unity`](#install-unity)
   - [`open`](#open)
+  - [`close`](#close)
   - [`run-tool`](#run-tool)
   - [`wait-for-ready`](#wait-for-ready)
   - [`setup-mcp`](#setup-mcp)
@@ -235,12 +236,16 @@ unity-mcp-cli install-unity --path ./MyGame
 Open a Unity project in the Unity Editor. By default, sets MCP connection environment variables if connection options are provided. Use `--no-connect` to open without MCP connection.
 
 ```bash
+# Explicit path
 unity-mcp-cli open ./MyGame
+
+# From inside the Unity project folder — path defaults to the current directory
+cd ./MyGame && unity-mcp-cli open
 ```
 
 | Option | Env Variable | Required | Description |
 |---|---|---|---|
-| `[path]` | — | Yes | Path to the Unity project (positional or `--path`) |
+| `[path]` | — | No | Path to the Unity project (positional or `--path`). Defaults to the current working directory. |
 | `--unity <version>` | — | No | Specific Unity Editor version to use (defaults to version from project settings, falls back to highest installed) |
 | `--no-connect` | — | No | Open without MCP connection environment variables |
 | `--url <url>` | `UNITY_MCP_HOST` | No | MCP server URL to connect to |
@@ -250,8 +255,21 @@ unity-mcp-cli open ./MyGame
 | `--tools <names>` | `UNITY_MCP_TOOLS` | No | Comma-separated list of tools to enable |
 | `--transport <method>` | `UNITY_MCP_TRANSPORT` | No | Transport method: `streamableHttp` or `stdio` |
 | `--start-server <value>` | `UNITY_MCP_START_SERVER` | No | Set to `true` or `false` to control MCP server auto-start |
+| `--no-auto-dismiss-launch-errors` | — | No | Disable auto-dismissal of the Unity Editor "compile errors at launch" dialog (default: enabled) |
+| `--launch-dismiss-timeout-ms <ms>` | — | No | Overall timeout (milliseconds) for the launch-errors auto-dismiss polling loop (default: `30000`) |
+| `--launch-dismiss-poll-interval-ms <ms>` | — | No | Polling tick interval (milliseconds) for the launch-errors auto-dismiss loop (default: `1500`) |
 
-The editor process is spawned in detached mode — the CLI returns immediately.
+The editor process is spawned in detached mode. By default, after spawning the editor, `open` polls for Unity's "compile errors at launch" dialog (`"Enter Safe Mode?"` on Unity 2020.2+, `"Hold On" / "Compiler Errors"` on older releases) and clicks `Ignore` so the editor finishes initialising — without this, any in-Editor automation that needs to run after a state where Unity itself can't compile (e.g. the NuGet dependency resolver) cannot self-heal. The dialog is surfaced after Unity has booted, connected to Package Manager, and started compiling — empirically ~6s on a fast machine and longer on a slow one — so the polling loop has a grace window after which it exits early if no dialog has been seen. The grace window has to cover Unity's full startup phase or the loop bails out before the dialog ever appears (issue #737); it never runs the full `--launch-dismiss-timeout-ms` in the no-dialog case. If the dialog is observed (and successfully dismissed), polling continues until the overall timeout so a re-appearing dialog (resolver fixes one error → dialog re-surfaces with the next) is dismissed again. Library-mode callers can supply an `AbortSignal` (`launchDismissAbortSignal` on `OpenProjectOptions`) to abort the loop the instant their own readiness signal fires.
+
+### Auto-dismiss platform requirements
+
+| Platform | Requirement | Notes |
+|---|---|---|
+| **Windows** | Built-in (Win32 API) | Uses `EnumWindows` / `EnumChildWindows` / `SendMessageW(BM_CLICK)` driven from PowerShell. No extra setup required. |
+| **macOS** | **Accessibility permission** must be granted to the terminal (or `unity-mcp-cli` binary). System Settings → Privacy & Security → Accessibility. | Implemented via AppleScript / `osascript`. Without this permission, `osascript` reports an error every poll tick and the dialog cannot be dismissed. |
+| **Linux/X11** | `xdotool` on `PATH` (e.g. `sudo apt-get install xdotool`). | Wayland is **not** supported in the first cut — track upstream issues for Wayland support. |
+
+To opt out entirely, pass `--no-auto-dismiss-launch-errors`.
 
 **Example — open with MCP connection:**
 
@@ -275,6 +293,48 @@ unity-mcp-cli open ./MyGame \
   --token my-secret-token \
   --auth required \
   --tools gameobject-create,gameobject-find
+```
+
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `close`
+
+Gracefully terminate the Unity Editor instance running for a given project path. Symmetric counterpart of [`open`](#open) — for scripted workflows (CI agents, pipeline executors, integration test fixtures) that need a clean tear-down without resorting to OS-level process kills.
+
+```bash
+unity-mcp-cli close ./MyGame
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `[path]` | No | Path to the Unity project (positional, defaults to current directory) |
+| `--timeout <seconds>` | No | Polite-quit timeout in seconds (default: 30) |
+| `--force` | No | Hard-kill the Editor if it does not exit within `--timeout` |
+
+**How it works:**
+
+1. Resolves the running Editor's PID by reading `<project>/Temp/UnityLockfile` (4-byte little-endian uint32) and cross-checking against process enumeration to handle stale lock files.
+2. Sends a polite-quit signal — `SIGTERM` on Linux/macOS, `taskkill` (no `/F`) on Windows — letting Unity finish autosave / asset-import.
+3. Polls every 250ms until the process exits or `--timeout` elapses.
+4. If the timeout expires AND `--force` is set, falls back to `SIGKILL` / `taskkill /F`.
+5. Idempotent — closing an already-closed Editor (or a project whose Editor was never running) exits 0 with `no running Editor for project at <path>`.
+6. Refuses to act on any path that is not a Unity project root (`ProjectSettings/ProjectVersion.txt` must exist) — protects against accidental kill-all-Unity-on-host invocations.
+
+> **Windows headless caveat:** the polite-quit step uses `taskkill` (no `/F`), which delivers `WM_CLOSE`. That message only reaches processes owning a top-level window on the **same desktop/session** as the CLI. If Unity was launched by a Windows service in session 0 (or any other non-interactive desktop), the polite-quit will be silently dropped, the `--timeout` will elapse, and `--force` becomes the only path that brings the Editor down. Plan accordingly in headless CI runners.
+
+**Example — close, fall back to force after 60s:**
+
+```bash
+unity-mcp-cli close ./MyGame --timeout 60 --force
+```
+
+**Example — clean tear-down at the end of an automation script:**
+
+```bash
+unity-mcp-cli open ./MyGame
+unity-mcp-cli wait-for-ready ./MyGame
+unity-mcp-cli run-tool tests-run ./MyGame --input '{"testMode":"EditMode"}'
+unity-mcp-cli close ./MyGame
 ```
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
@@ -553,3 +613,33 @@ Commands that manage editors or create projects use the **Unity Hub CLI** (`--he
 > For the full Unity-MCP project documentation, see the [main README](https://github.com/IvanMurzak/Unity-MCP/blob/main/README.md).
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+# Library API (v0.67.0+)
+
+In addition to the CLI binary, `unity-mcp-cli` exposes its core commands as a typed, side-effect-free library so other Node.js / TypeScript tools can embed the same install / configure flow without shelling out.
+
+```ts
+import { installPlugin, removePlugin, configure, setupMcp } from 'unity-mcp-cli';
+
+const result = await installPlugin({
+  unityProjectPath: './MyUnityProject',
+  // version: '0.67.0',        // optional — defaults to latest from OpenUPM
+  onProgress: (event) => {
+    // phase is one of: 'start' | 'dependencies-resolved' | 'manifest-patched' | 'done'
+    console.log(event.phase, event.message);
+  },
+});
+
+if (!result.success) {
+  console.error('Install failed:', result.error?.message);
+  return;
+}
+
+console.log(`Installed v${result.installedVersion}`);
+for (const warning of result.warnings) console.warn(warning);
+for (const step of result.nextSteps) console.log(step);
+```
+
+Each function returns a typed `{ success, ... }` result object; errors are never thrown past the public boundary. The library entry has no top-level side effects — `import 'unity-mcp-cli'` never parses argv and never writes to stdout or stderr.
+
+See [`CHANGELOG.md`](CHANGELOG.md#0670---2026-04-21) for the full list of exported functions and types.

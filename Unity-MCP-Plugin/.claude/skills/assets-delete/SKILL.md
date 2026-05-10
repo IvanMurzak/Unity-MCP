@@ -70,7 +70,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets+DeleteAssetsResponse"
+      "$ref": "#/$defs/AIGD.DeleteAssetsResponse"
     }
   },
   "$defs": {
@@ -80,7 +80,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "type": "string"
       }
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets+DeleteAssetsResponse": {
+    "AIGD.DeleteAssetsResponse": {
       "type": "object",
       "properties": {
         "DeletedPaths": {

@@ -8,7 +8,9 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [],
+    "defineConstraints": [
+        "UNITY_MCP_READY"
+    ],
     "versionDefines": [],
     "noEngineReferences": false
 }
