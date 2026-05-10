@@ -95,7 +95,7 @@ async function invokeTool(routePrefix: string, opts: RunToolOptions): Promise<Ru
         reason: 'http-error',
         httpStatus: response.status,
         data,
-        message: `HTTP ${response.status} ${response.statusText || ''}`.trim(),
+        message: response.statusText || `HTTP ${response.status}`,
       });
     }
 

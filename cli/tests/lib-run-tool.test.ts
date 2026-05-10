@@ -241,7 +241,7 @@ describe('runTool — failure modes', () => {
     expect(result.reason).toBe('http-error');
     expect(result.httpStatus).toBe(400);
     expect(result.data).toEqual({ error: 'Bad request' });
-    expect(result.message).toContain('400');
+    expect(result.message).toBe('Bad Request');
   });
 
   it('classifies HTTP 5xx as reason "http-error"', async () => {
