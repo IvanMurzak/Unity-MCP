@@ -244,16 +244,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var go = CreateTargetCube("CleanupTarget");
             var goRef = new GameObjectRef { InstanceID = go.GetEntityId() };
 
-            var beforeCount = Object.FindObjectsByType<Camera>(FindObjectsSortMode.None).Length;
+            var beforeCount = Object.FindObjectsByType<Camera>().Length;
 
             new Tool_Screenshot().ScreenshotIsolated(
                 gameObjectRef: goRef,
                 resolution: 32);
 
-            var afterCount = Object.FindObjectsByType<Camera>(FindObjectsSortMode.None).Length;
+            var afterCount = Object.FindObjectsByType<Camera>().Length;
             Assert.AreEqual(beforeCount, afterCount, "All temporary cameras must be destroyed in finally");
 
-            var leftoverLights = new List<Light>(Object.FindObjectsByType<Light>(FindObjectsSortMode.None)).FindAll(l =>
+            var leftoverLights = new List<Light>(Object.FindObjectsByType<Light>()).FindAll(l =>
                 l != null && l.name != null && l.name.StartsWith("__TempIsolation"));
             Assert.AreEqual(0, leftoverLights.Count, "All temporary lights must be destroyed in finally");
         }
@@ -264,26 +264,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var go = CreateTargetCube("CompositeCleanupTarget");
             var goRef = new GameObjectRef { InstanceID = go.GetEntityId() };
 
-            var beforeCameras = Object.FindObjectsByType<Camera>(FindObjectsSortMode.None).Length;
-            var beforeLights = Object.FindObjectsByType<Light>(FindObjectsSortMode.None).Length;
+            var beforeCameras = Object.FindObjectsByType<Camera>().Length;
+            var beforeLights = Object.FindObjectsByType<Light>().Length;
 
             new Tool_Screenshot().ScreenshotIsolated(
                 gameObjectRef: goRef,
                 cameraView: Tool_Screenshot.CameraView.Composite,
                 resolution: 32);
 
-            var afterCameras = Object.FindObjectsByType<Camera>(FindObjectsSortMode.None).Length;
+            var afterCameras = Object.FindObjectsByType<Camera>().Length;
             Assert.AreEqual(beforeCameras, afterCameras, "All composite-quadrant temporary cameras must be destroyed in finally");
 
             var leftoverIsolation = new List<GameObject>();
-            foreach (var camera in Object.FindObjectsByType<Camera>(FindObjectsSortMode.None))
+            foreach (var camera in Object.FindObjectsByType<Camera>())
             {
                 if (camera != null && camera.name != null && camera.name.StartsWith("__TempIsolation"))
                     leftoverIsolation.Add(camera.gameObject);
             }
             Assert.AreEqual(0, leftoverIsolation.Count, "No __TempIsolationCamera GameObjects must survive a composite render");
 
-            var afterLights = Object.FindObjectsByType<Light>(FindObjectsSortMode.None).Length;
+            var afterLights = Object.FindObjectsByType<Light>().Length;
             Assert.AreEqual(beforeLights, afterLights, "All composite-quadrant temporary lights must be destroyed in finally");
         }
 

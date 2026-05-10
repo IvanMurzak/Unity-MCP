@@ -515,7 +515,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 light.colorTemperature = cfg.ColorTemperature.Value;
             }
             if (cfg.CookieSize.HasValue)
+            {
+#if UNITY_6000_5_OR_NEWER
+                // Unity 6.5+ deprecated the float cookieSize in favour of Vector2 cookieSize2D.
+                // The IsolatedLightConfig wire shape stays a single float (uniform XY size) to
+                // preserve backwards-compatible JSON; expand it to (x,y) at the API boundary.
+                light.cookieSize2D = new Vector2(cfg.CookieSize.Value, cfg.CookieSize.Value);
+#else
                 light.cookieSize = cfg.CookieSize.Value;
+#endif
+            }
 
             light.shadows = ParseShadows(cfg.Shadows);
             if (cfg.ShadowStrength.HasValue)
