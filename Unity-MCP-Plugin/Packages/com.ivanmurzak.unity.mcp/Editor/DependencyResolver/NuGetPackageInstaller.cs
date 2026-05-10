@@ -126,6 +126,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 // operate on the same filenames the collision check would compare against.
                 var planned = NuGetExtractor.PlanDllPaths(nupkgPath, installPath, package.Version);
 
+                // Filesystem fallback for stale DLLs the manifest doesn't know about
+                // (manifest deleted, partial-restore failure, AV quarantine).
+                if (RemoveStaleVersionDllsByStem(installPath, planned, package.Version, package.Id))
+                    anyInstalled = true;
+
                 // Disaster-recovery reconciliation: TryRebuildFromDisk has no way to recover
                 // multi-DLL package IDs from filenames alone (e.g., Microsoft.Bcl.Memory ships
                 // System.Memory.dll / System.Buffers.dll / System.Runtime.CompilerServices.Unsafe.dll),
@@ -347,6 +352,60 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             DeleteEntryFiles(installPath, entry);
             manifest.Packages.Remove(packageId);
             return true;
+        }
+
+        /// <summary>
+        /// Filesystem-driven complement to <see cref="RemoveStaleSiblingVersions"/>:
+        /// removes any <c>{stem}.dll</c> or <c>{stem}.{anyOtherVersion}.dll</c> on
+        /// disk for the DLL stems this package ships, leaving only the canonical
+        /// <c>{stem}.{keepVersion}.dll</c>. Catches stale DLLs the manifest
+        /// doesn't know about (manifest deleted, partial-restore failure, AV
+        /// quarantine) — without this, the freshly extracted current-version
+        /// copy and the orphan stale copy coexist and Unity errors with CS0436.
+        /// </summary>
+        internal static bool RemoveStaleVersionDllsByStem(string installPath, IReadOnlyList<PlannedDll> planned, string keepVersion, string packageId)
+        {
+            if (!Directory.Exists(installPath) || planned.Count == 0)
+                return false;
+
+            var originalStems = new HashSet<string>(
+                planned
+                    .Select(p => Path.GetFileNameWithoutExtension(Path.GetFileName(p.EntryFullName)))
+                    .Where(s => !string.IsNullOrEmpty(s)),
+                StringComparer.OrdinalIgnoreCase);
+
+            if (originalStems.Count == 0)
+                return false;
+
+            var canonicalNames = new HashSet<string>(
+                planned.Select(p => p.FileName),
+                StringComparer.OrdinalIgnoreCase);
+
+            var anyRemoved = false;
+            foreach (var dllPath in Directory.GetFiles(installPath, "*.dll", SearchOption.TopDirectoryOnly))
+            {
+                var fileName = Path.GetFileName(dllPath);
+                if (canonicalNames.Contains(fileName))
+                    continue;
+
+                // Reuse the manifest's filename parser so the version-tail
+                // grammar stays defined in one place. Unversioned legacy
+                // {stem}.dll files (e.g. McpPlugin.dll dropped in by hand)
+                // fall through to GetFileNameWithoutExtension.
+                var stem = NuGetInstallManifest.TryParseInstalledDllName(fileName, out var parsedStem, out _) && parsedStem != null
+                    ? parsedStem
+                    : Path.GetFileNameWithoutExtension(fileName);
+
+                if (!originalStems.Contains(stem))
+                    continue;
+
+                Debug.Log($"{Tag} Removing stale '{fileName}' from install path — superseded by {packageId} {keepVersion}.");
+                TryDeleteFile(dllPath);
+                TryDeleteFile(dllPath + ".meta");
+                anyRemoved = true;
+            }
+
+            return anyRemoved;
         }
 
         static void DeleteEntryFiles(string installPath, InstalledPackage entry)
