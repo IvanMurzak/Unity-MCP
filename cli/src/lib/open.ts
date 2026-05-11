@@ -6,6 +6,7 @@ import {
   getProjectEditorVersion,
   launchEditor,
 } from '../utils/unity-editor.js';
+import { clearCachedEditorPath } from '../utils/editor-cache.js';
 import { findUnityProcess } from '../utils/unity-process.js';
 import { readConfig, isCloudMode, writeConfig } from '../utils/config.js';
 import {
@@ -293,6 +294,11 @@ export async function openProject(
         // Don't throw out of the event listener — the caller can't
         // catch it. Surface the warning for diagnostics.
         warnings.push(`Editor spawn reported error: ${err.message}`);
+        // The resolved path failed to spawn (binary corrupted,
+        // wrong arch, perms revoked, …). Drop the cache so the
+        // next invocation re-resolves from Unity Hub instead of
+        // handing back the same broken path.
+        clearCachedEditorPath(version);
       },
     });
 

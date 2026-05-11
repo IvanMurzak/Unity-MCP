@@ -199,6 +199,19 @@ export interface InstalledEditor {
 }
 
 /**
+ * Pull the `stderr` capture off an `execFileSync` error and merge it
+ * into the error message. Returns the bare `err.message` when no
+ * stderr was captured (e.g. spawn failures before the child ran).
+ */
+function formatExecError(err: unknown): string {
+  const message = (err as Error).message;
+  const stderr = (err as { stderr?: Buffer | string }).stderr;
+  if (!stderr) return message;
+  const text = (Buffer.isBuffer(stderr) ? stderr.toString('utf-8') : stderr).trim();
+  return text ? `${message}\n${text}` : message;
+}
+
+/**
  * List installed Unity editors via Unity Hub CLI.
  */
 /**
@@ -226,9 +239,14 @@ export function listInstalledEditors(hubPath: string): InstalledEditor[] {
   try {
     verbose(`listInstalledEditors invoking Unity Hub CLI: ${hubPath} -- --headless editors --installed`);
     const execStartedAt = Date.now();
+    // stdio: pipe stderr instead of inheriting it — Unity Hub is an
+    // Electron app and Chromium routinely logs benign quota_database
+    // errors to stderr that would otherwise pollute the CLI output.
+    // The catch block re-surfaces captured stderr on real failures.
     const output = execFileSync(hubPath, ['--', '--headless', 'editors', '--installed'], {
       encoding: 'utf-8',
       timeout: 120000,
+      stdio: ['ignore', 'pipe', 'pipe'],
     });
     verbose(`listInstalledEditors Unity Hub CLI returned in ${Date.now() - execStartedAt}ms`);
 
@@ -246,7 +264,7 @@ export function listInstalledEditors(hubPath: string): InstalledEditor[] {
     verbose(`listInstalledEditors completed in ${Date.now() - startedAt}ms`);
     return editors;
   } catch (err) {
-    spinner.error(`Failed to list installed editors: ${(err as Error).message}`);
+    spinner.error(`Failed to list installed editors: ${formatExecError(err)}`);
     verbose(`listInstalledEditors failed after ${Date.now() - startedAt}ms`);
     return [];
   }
@@ -295,9 +313,11 @@ export function findHighestEditor(editors: InstalledEditor[]): InstalledEditor {
 export function listAvailableReleases(hubPath: string): AvailableRelease[] {
   const spinner = ui.startSpinner('Fetching available releases...');
   try {
+    // Same stderr suppression rationale as listInstalledEditors above.
     const output = execFileSync(hubPath, ['--', '--headless', 'editors', '--releases'], {
       encoding: 'utf-8',
       timeout: 120000,
+      stdio: ['ignore', 'pipe', 'pipe'],
     });
 
     const releases: AvailableRelease[] = [];
@@ -317,7 +337,7 @@ export function listAvailableReleases(hubPath: string): AvailableRelease[] {
     spinner.success(`Found ${releases.length} available release${releases.length !== 1 ? 's' : ''}`);
     return releases;
   } catch (err) {
-    spinner.error(`Failed to fetch available releases: ${(err as Error).message}`);
+    spinner.error(`Failed to fetch available releases: ${formatExecError(err)}`);
     return [];
   }
 }

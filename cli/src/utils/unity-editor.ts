@@ -3,6 +3,7 @@ import * as path from 'path';
 import { spawn } from 'child_process';
 import { platform } from 'os';
 import { findUnityHub, ensureUnityHub, listInstalledEditors } from './unity-hub.js';
+import { readCachedEditorPath, writeCachedEditorPath } from './editor-cache.js';
 import * as ui from './ui.js';
 import { verbose } from './ui.js';
 
@@ -70,12 +71,21 @@ export async function findEditorPath(version?: string): Promise<string | null> {
   const startedAt = Date.now();
   verbose(`findEditorPath start (version=${version ?? 'auto'})`);
 
+  // Cache hit short-circuits the Unity Hub Electron probe below
+  // (~13s cold -> ~instant warm). Stale entries self-evict.
+  const cached = readCachedEditorPath(version);
+  if (cached) {
+    verbose(`findEditorPath cache hit in ${Date.now() - startedAt}ms`);
+    return cached;
+  }
+
   // Fast path: if we know the version, check common install locations first (instant filesystem check)
   if (version) {
     const fastStartedAt = Date.now();
     const fastResult = findEditorPathByCommonLocations(version);
     verbose(`findEditorPath fast path completed in ${Date.now() - fastStartedAt}ms (${fastResult ? 'hit' : 'miss'})`);
     if (fastResult) {
+      writeCachedEditorPath(version, fastResult);
       verbose(`findEditorPath resolved via common locations in ${Date.now() - startedAt}ms`);
       return fastResult;
     }
@@ -90,6 +100,7 @@ export async function findEditorPath(version?: string): Promise<string | null> {
     const fallback = findEditorPathByCommonLocations(version);
     verbose(`findEditorPath fallback common-location scan completed in ${Date.now() - fallbackStartedAt}ms (${fallback ? 'hit' : 'miss'})`);
     verbose(`findEditorPath completed in ${Date.now() - startedAt}ms`);
+    if (fallback) writeCachedEditorPath(version, fallback);
     return fallback;
   }
 
@@ -101,6 +112,7 @@ export async function findEditorPath(version?: string): Promise<string | null> {
     const fallback = findEditorPathByCommonLocations(version);
     verbose(`findEditorPath empty-editor fallback completed in ${Date.now() - fallbackStartedAt}ms (${fallback ? 'hit' : 'miss'})`);
     verbose(`findEditorPath completed in ${Date.now() - startedAt}ms`);
+    if (fallback) writeCachedEditorPath(version, fallback);
     return fallback;
   }
 
@@ -108,6 +120,7 @@ export async function findEditorPath(version?: string): Promise<string | null> {
     const match = editors.find((e) => e.version === version);
     if (match) {
       const resolved = getEditorBinary(match.path);
+      writeCachedEditorPath(version, resolved);
       verbose(`findEditorPath matched requested version ${version} in ${Date.now() - startedAt}ms`);
       return resolved;
     }
@@ -116,6 +129,7 @@ export async function findEditorPath(version?: string): Promise<string | null> {
   // Return the highest installed editor by version-aware sorting
   const sorted = [...editors].sort((a, b) => compareUnityVersions(b.version, a.version));
   const resolved = getEditorBinary(sorted[0].path);
+  writeCachedEditorPath(version, resolved);
   verbose(`findEditorPath selected highest installed version ${sorted[0].version} in ${Date.now() - startedAt}ms`);
   return resolved;
 }
