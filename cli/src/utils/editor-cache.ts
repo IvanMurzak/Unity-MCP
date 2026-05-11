@@ -27,12 +27,16 @@ function readAll(): EditorCache {
     const raw = readFileSync(CACHE_FILE, 'utf-8');
     const parsed = JSON.parse(raw) as unknown;
     if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      return parsed as EditorCache;
+      const safe: EditorCache = Object.create(null) as EditorCache;
+      for (const k of Object.keys(parsed as object)) {
+        safe[k] = (parsed as EditorCache)[k];
+      }
+      return safe;
     }
   } catch {
     // Missing or corrupt — treat as empty cache.
   }
-  return {};
+  return Object.create(null) as EditorCache;
 }
 
 function writeAll(cache: EditorCache): void {

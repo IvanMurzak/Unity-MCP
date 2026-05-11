@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
@@ -115,6 +115,84 @@ describe('getProjectEditorVersion', () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// findEditorPath — cache-hit integration
+// ---------------------------------------------------------------------------
+// The CACHE_FILE path in editor-cache.ts is captured at module load time, so
+// we must redirect HOME/USERPROFILE and then reload the whole module graph
+// (editor-cache + unity-editor) via vi.resetModules() + dynamic import.
+// Unity Hub helpers are mocked so we can assert they are never invoked on a
+// cache hit.
+// ---------------------------------------------------------------------------
+describe('findEditorPath (cache-hit integration)', () => {
+  let tmpDir: string;
+  let origHome: string | undefined;
+  let origUserProfile: string | undefined;
+
+  beforeEach(() => {
+    origHome = process.env['HOME'];
+    origUserProfile = process.env['USERPROFILE'];
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-editor-cache-hit-'));
+    process.env['HOME'] = tmpDir;
+    process.env['USERPROFILE'] = tmpDir;
+  });
+
+  afterEach(() => {
+    if (origHome === undefined) {
+      delete process.env['HOME'];
+    } else {
+      process.env['HOME'] = origHome;
+    }
+    if (origUserProfile === undefined) {
+      delete process.env['USERPROFILE'];
+    } else {
+      process.env['USERPROFILE'] = origUserProfile;
+    }
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+    vi.resetModules();
+    vi.restoreAllMocks();
+  });
+
+  it('returns the cached path without invoking Unity Hub helpers when the cache is warm', async () => {
+    // Create a fake binary that exists on disk so existsSync passes in the cache
+    const fakeBinary = path.join(tmpDir, 'Unity.exe');
+    fs.writeFileSync(fakeBinary, '');
+
+    // Pre-populate the cache file directly so readCachedEditorPath finds it
+    // after the module is reloaded with HOME=tmpDir.
+    const cacheFile = path.join(tmpDir, '.unity-mcp-cli-editor-cache.json');
+    fs.writeFileSync(
+      cacheFile,
+      JSON.stringify({ '6000.3.1f1': { path: fakeBinary, savedAt: Date.now() } }),
+      'utf-8',
+    );
+
+    // Reload module graph so CACHE_FILE is re-computed against our tmpDir.
+    vi.resetModules();
+
+    // Mock unity-hub BEFORE importing unity-editor so the mock is in place
+    // when unity-editor.js loads its static imports.
+    const ensureUnityHubMock = vi.fn().mockResolvedValue('/fake/hub');
+    const listInstalledEditorsMock = vi.fn().mockReturnValue([]);
+    vi.doMock('../src/utils/unity-hub.js', () => ({
+      findUnityHub: vi.fn().mockReturnValue(null),
+      ensureUnityHub: ensureUnityHubMock,
+      listInstalledEditors: listInstalledEditorsMock,
+    }));
+
+    const { findEditorPath } = (await import(
+      '../src/utils/unity-editor.js'
+    )) as typeof import('../src/utils/unity-editor.js');
+
+    const result = await findEditorPath('6000.3.1f1');
+
+    expect(result).toBe(fakeBinary);
+    expect(ensureUnityHubMock).not.toHaveBeenCalled();
+    expect(listInstalledEditorsMock).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Test against the actual test project files in the repo
 describe('getProjectEditorVersion (real projects)', () => {
   const __dirname = path.dirname(fileURLToPath(import.meta.url));
