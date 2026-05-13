@@ -31,6 +31,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "GameObject / Modify",
             IdempotentHint = true
         )]
+        [McpPluginSkillDescription("Modify GameObject fields and properties in opened Prefab or in a Scene. " +
+            "You can modify multiple GameObjects at once. Just provide the same number of GameObject references and SerializedMember objects. " +
+            "Three modification surfaces are available per GameObject (gameObjectDiffs, pathPatchesPerGameObject, jsonPatchesPerGameObject) — see the skill body for details.")]
+        [McpPluginSkillBody(
+            "## Three modification surfaces\n\n" +
+            "Per GameObject — parallel arrays must have the same length as `gameObjectRefs`:\n\n" +
+            "1. `gameObjectDiffs` — full `SerializedMember` diff per GameObject (legacy, backwards compatible).\n" +
+            "2. `pathPatchesPerGameObject` — list of `{path, value}` patches per GameObject routed through `Reflector.TryModifyAt`; atomic per-path modification.\n" +
+            "3. `jsonPatchesPerGameObject` — JSON Merge Patch per GameObject routed through `Reflector.TryPatch`.\n\n" +
+            "When more than one is supplied for the same GameObject they run in this order: `jsonPatch` → `pathPatches` → `diff`. At least one of the three is required.\n\n" +
+            "## Path syntax\n\n" +
+            "`fieldName`, `nested/field`, `arrayField/[i]`, `dictField/[key]`.")]
         [Description("Modify GameObject fields and properties in opened Prefab or in a Scene. " +
             "You can modify multiple GameObjects at once. Just provide the same number of GameObject references and SerializedMember objects.\n\n" +
             "Three modification surfaces (per GameObject — parallel arrays must have the same length as gameObjectRefs):\n" +

@@ -35,6 +35,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Assets / Modify",
             IdempotentHint = true
         )]
+        [McpPluginSkillDescription("Modify an asset file in the project. " +
+            "Use '" + AssetsGetDataToolId + "' first to inspect the asset structure before modifying. " +
+            "Not allowed to modify asset files in the 'Packages/' folder — modify them in 'Assets/'. " +
+            "Three modification surfaces are available (content, pathPatches, jsonPatch) — see the skill body for details.")]
+        [McpPluginSkillBody(
+            "## Three modification surfaces\n\n" +
+            "Use whichever fits the task:\n\n" +
+            "1. `content` — full `SerializedMember` override (legacy, backwards compatible).\n" +
+            "2. `pathPatches` — list of `{path, value}` pairs routed through `Reflector.TryModifyAt`.\n" +
+            "3. `jsonPatch` — JSON Merge Patch routed through `Reflector.TryPatch`.\n\n" +
+            "When more than one is supplied they run in this order: `jsonPatch` → `pathPatches` → `content`. At least one is required.\n\n" +
+            "## Path syntax\n\n" +
+            "`fieldName`, `nested/field`, `arrayField/[i]`, `dictField/[key]`. Leading `#/` is stripped.")]
         [Description("Modify asset file in the project. " +
             "Use '" + AssetsGetDataToolId + "' tool first to inspect the asset structure before modifying. " +
             "Not allowed to modify asset file in 'Packages/' folder. Please modify it in 'Assets/' folder.\n\n" +
