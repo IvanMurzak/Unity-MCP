@@ -1,11 +1,18 @@
----
-name: unity-skill-create
-description: Create a new skill (MCP tool) for the Unity Editor by writing a C# (.cs) file that Unity compiles into the project. After compilation the new tool becomes callable through MCP. The file must be a partial class decorated with [McpPluginToolType], each tool method must be decorated with [McpPluginTool], the class name should match the file name, all Unity API calls must run via com.IvanMurzak.ReflectorNet.Utils.MainThread.Instance.Run(), and the method should either return a structured data model (for parseable output) or void (for side-effect-only operations). See the body of this skill for a full sample and best-practice notes.
----
+/*
+┌──────────────────────────────────────────────────────────────────┐
+│  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
+│  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
+│  Copyright (c) 2025 Ivan Murzak                                  │
+│  Licensed under the Apache License, Version 2.0.                 │
+│  See the LICENSE file in the project root for more information.  │
+└──────────────────────────────────────────────────────────────────┘
+*/
 
-# Skill (Tool) / Create
-
-## Full sample
+namespace com.IvanMurzak.Unity.MCP.Editor.API
+{
+    public partial class Tool_Skills
+    {
+        internal const string SkillsCreateSkillBody = @"## Full sample
 
 ```csharp
 #nullable enable
@@ -23,37 +30,37 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     [McpPluginToolType]
     public partial class Tool_Sample
     {
-        [McpPluginTool("sample-get", Title = "Sample / Get")]
-        [Description("Finds a GameObject and returns its ref data.")]
+        [McpPluginTool(""sample-get"", Title = ""Sample / Get"")]
+        [Description(""Finds a GameObject and returns its ref data."")]
         public GameObjectRef Get
         (
-            [Description("Name of the GameObject to find.")]
+            [Description(""Name of the GameObject to find."")]
             string name
         )
         {
             return MainThread.Instance.Run(() =>
             {
                 var go = GameObject.Find(name)
-                    ?? throw new ArgumentException($"GameObject '{name}' not found.", nameof(name));
+                    ?? throw new ArgumentException($""GameObject '{name}' not found."", nameof(name));
 
                 return new GameObjectRef(go);
             });
         }
 
-        [McpPluginTool("sample-rename", Title = "Sample / Rename")]
-        [Description("Renames a GameObject.")]
+        [McpPluginTool(""sample-rename"", Title = ""Sample / Rename"")]
+        [Description(""Renames a GameObject."")]
         public void Rename
         (
-            [Description("Current name of the GameObject.")]
+            [Description(""Current name of the GameObject."")]
             string name,
-            [Description("New name to assign.")]
+            [Description(""New name to assign."")]
             string newName
         )
         {
             MainThread.Instance.Run(() =>
             {
                 var go = GameObject.Find(name)
-                    ?? throw new ArgumentException($"GameObject '{name}' not found.", nameof(name));
+                    ?? throw new ArgumentException($""GameObject '{name}' not found."", nameof(name));
 
                 go.name = newName;
                 EditorUtility.SetDirty(go);
@@ -86,14 +93,14 @@ MainThread.Instance.Run(() =>
 ### Use processing mechanic for long-running or domain-reload operations
 Some operations take time to complete and may trigger a Unity domain reload (e.g. writing a .cs script, switching play mode, running tests, adding a package). In these cases the tool must NOT block and wait — instead it must:
 1. Accept a `[RequestID] string? requestId` parameter.
-2. Return `ResponseCallTool.Processing("...").SetRequestID(requestId)` immediately.
+2. Return `ResponseCallTool.Processing(""..."").SetRequestID(requestId)` immediately.
 3. Schedule the actual work asynchronously via `MainThread.Instance.RunAsync(async () => { await Task.Yield(); ... })`.
 4. When the operation finishes, send the final result by calling:
 ```csharp
 _ = UnityMcpPluginEditor.NotifyToolRequestCompleted(new RequestToolCompletedData
 {
     RequestId = requestId,
-    Result = ResponseCallTool.Success("Operation completed.").SetRequestID(requestId)
+    Result = ResponseCallTool.Success(""Operation completed."").SetRequestID(requestId)
 });
 ```
 If the operation may survive a domain reload (e.g. a .cs file was saved and Unity will recompile), use `ScriptUtils.SchedulePostCompilationNotification(requestId, filePath, operationType)` instead of calling `NotifyToolRequestCompleted` directly — it persists the pending notification to `SessionState` and sends it automatically after the domain reload completes. For package install/removal or other non-compilation domain reloads use `PackageUtils.SchedulePostDomainReloadNotification(requestId, label, action, expectedResult)` the same way.
@@ -125,10 +132,10 @@ namespace AIGD
 {
     public class MyResult
     {
-        [Description("Name of the GameObject.")]
+        [Description(""Name of the GameObject."")]
         public string? Name { get; set; }
 
-        [Description("Unity instance ID of the GameObject.")]
+        [Description(""Unity instance ID of the GameObject."")]
         public int InstanceID { get; set; }
     }
 }
@@ -139,68 +146,10 @@ For simpler cases that do not need async/processing, you may return the model di
 Always validate required parameters at the top of the method before any Unity API calls. Throw `ArgumentException` or `InvalidOperationException` with descriptive messages so the AI knows exactly what went wrong and can self-correct:
 ```csharp
 if (string.IsNullOrEmpty(name))
-    throw new ArgumentException("Name cannot be null or empty.", nameof(name));
+    throw new ArgumentException(""Name cannot be null or empty."", nameof(name));
 ```
 
 ### Always use MainThread for Unity API calls
-All Unity API calls (including `GameObject.Find`, `AssetDatabase`, `EditorUtility`, etc.) MUST run on the main thread. Wrap them in `MainThread.Instance.Run(() => { ... })` for synchronous operations, or `MainThread.Instance.RunAsync(async () => { ... })` when you need to await inside.
-
-## How to Call
-
-```bash
-unity-mcp-cli run-system-tool unity-skill-create --input '{
-  "path": "string_value",
-  "code": "string_value"
-}'
-```
-
-> For complex input (multi-line strings, code), save the JSON to a file and use:
-> ```bash
-> unity-mcp-cli run-system-tool unity-skill-create --input-file args.json
-> ```
->
-> Or pipe via stdin (recommended):
-> ```bash
-> unity-mcp-cli run-system-tool unity-skill-create --input-file - <<'EOF'
-> {"param": "value"}
-> EOF
-> ```
-
-
-### Troubleshooting
-
-If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
-Read the /unity-initial-setup skill for detailed installation instructions.
-
-## Input
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `path` | `string` | Yes | Path for the C# (.cs) file to be created. Sample: "Assets/Skills/MySkill.cs".
-CRITICAL — Assembly Definition placement: If the project uses Assembly Definition files (.asmdef), you MUST place the script inside a folder that belongs to an assembly definition which already references all required dependencies (e.g. com.IvanMurzak.McpPlugin, UnityEditor, UnityEngine). Placing the file in the wrong assembly will cause compile errors due to missing type references. Before choosing a path, inspect existing .asmdef files with the assets-find tool to identify the correct assembly folder. |
-| `code` | `string` | Yes | C# code for the skill tool. |
-
-### Input JSON Schema
-
-```json
-{
-  "type": "object",
-  "properties": {
-    "path": {
-      "type": "string"
-    },
-    "code": {
-      "type": "string"
+All Unity API calls (including `GameObject.Find`, `AssetDatabase`, `EditorUtility`, etc.) MUST run on the main thread. Wrap them in `MainThread.Instance.Run(() => { ... })` for synchronous operations, or `MainThread.Instance.RunAsync(async () => { ... })` when you need to await inside.";
     }
-  },
-  "required": [
-    "path",
-    "code"
-  ]
 }
-```
-
-## Output
-
-This tool does not return structured output.
-

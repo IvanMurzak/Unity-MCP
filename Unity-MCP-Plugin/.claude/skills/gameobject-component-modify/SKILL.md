@@ -1,17 +1,23 @@
 ---
 name: gameobject-component-modify
-description: |-
-  Modify a specific Component on a GameObject in opened Prefab or in a Scene. Allows direct modification of component fields and properties without wrapping in GameObject structure. Use 'gameobject-component-get' first to inspect the component structure before modifying.
-  
-  Three modification surfaces (use whichever fits the task):
-    1. 'componentDiff' — full SerializedMember diff (legacy, backwards compatible).
-    2. 'pathPatches' — list of {path, value} pairs routed through Reflector.TryModifyAt; atomic per-path modification, multiple entries can target different depths.
-    3. 'jsonPatch' — a JSON Merge Patch (RFC 7396, extended with [i]/[key] notation) routed through Reflector.TryPatch; multiple fields at any depth in a single call.
-  When more than one is supplied they run in this order: jsonPatch → pathPatches → componentDiff. At least one is required.
-  Path syntax: 'fieldName', 'nested/field', 'arrayField/[i]', 'dictField/[key]'. Leading '#/' is stripped.
+description: Modify a specific Component on a GameObject in opened Prefab or in a Scene. Allows direct modification of component fields and properties without wrapping in GameObject structure. Use 'gameobject-component-get' first to inspect the component structure before modifying. Three modification surfaces are available (componentDiff, pathPatches, jsonPatch) — see the skill body for details.
 ---
 
 # GameObject / Component / Modify
+
+## Three modification surfaces
+
+Use whichever fits the task:
+
+1. `componentDiff` — full `SerializedMember` diff (legacy, backwards compatible).
+2. `pathPatches` — list of `{path, value}` pairs routed through `Reflector.TryModifyAt`; atomic per-path modification, multiple entries can target different depths.
+3. `jsonPatch` — a JSON Merge Patch (RFC 7396, extended with `[i]`/`[key]` notation) routed through `Reflector.TryPatch`; multiple fields at any depth in a single call.
+
+When more than one is supplied they run in this order: `jsonPatch` → `pathPatches` → `componentDiff`. At least one is required.
+
+## Path syntax
+
+`fieldName`, `nested/field`, `arrayField/[i]`, `dictField/[key]`. Leading `#/` is stripped.
 
 ## How to Call
 

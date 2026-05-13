@@ -1,9 +1,24 @@
 ---
 name: script-execute
-description: "Compiles and executes C# code dynamically using Roslyn. Supports two modes: full code mode (default) requires a complete class definition, while body-only mode (isMethodBody=true) auto-generates the boilerplate so you only provide the method body. Unity objects (GameObject, Component, etc.) can be passed as parameters using their Ref types (GameObjectRef, ComponentRef, etc.) or directly by type."
+description: Compiles and executes C# code dynamically using Roslyn. Supports a full-code mode (default) and a body-only mode — see the skill body for the difference and for how to pass Unity object references as parameters.
 ---
 
 # Script / Execute
+
+## Modes
+
+- **Full code mode** (default, `isMethodBody=false`): the `csharpCode` argument must define a complete class with a static method (no top-level statements).
+- **Body-only mode** (`isMethodBody=true`): provide only the method body statements. The tool auto-generates the usings, class, and method header.
+
+## Passing Unity objects as parameters
+
+Unity objects (`GameObject`, `Component`, etc.) can be passed as parameters using their `Ref` types (`GameObjectRef`, `ComponentRef`, etc.) or directly by type:
+
+- `UnityEngine.GameObject` — resolves an actual GameObject from value `{"instanceID": N}`, `{"name": "..."}`, or `{"path": "..."}`.
+- `UnityEngine.Component` (or any component subtype) — resolves from `{"instanceID": N}`.
+- `AIGD.GameObjectRef` — passes a `GameObjectRef` POCO directly; the method body calls `goRef.FindGameObject()` to resolve it.
+- `AIGD.ComponentRef` — passes a `ComponentRef` POCO.
+- `AIGD.ObjectRef` — passes a base `ObjectRef` POCO.
 
 ## How to Call
 
