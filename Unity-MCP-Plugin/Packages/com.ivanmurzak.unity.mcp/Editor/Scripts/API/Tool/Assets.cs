@@ -51,5 +51,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             // public static string MaterialsPrinted => string.Join("\n", AssetDatabase.FindAssets("t:Material"));
         }
+
+        // Shared skill metadata for `assets-modify`. The Unity 6.5 and pre-6.5 implementations
+        // diverge in behavioral code but their SKILL.md description/body are identical,
+        // so we keep the strings here once instead of duplicating them across both files.
+        internal static class ModifySkill
+        {
+            public const string Description =
+                "Modify an asset file in the project. " +
+                "Use '" + AssetsGetDataToolId + "' first to inspect the asset structure before modifying. " +
+                "Not allowed to modify asset files in the 'Packages/' folder — modify them in 'Assets/'. " +
+                "Three modification surfaces are available (content, pathPatches, jsonPatch) — see the skill body for details.";
+
+            public const string Body =
+                "## Three modification surfaces\n\n" +
+                "Use whichever fits the task:\n\n" +
+                "1. `content` — full `SerializedMember` override (legacy, backwards compatible).\n" +
+                "2. `pathPatches` — list of `{path, value}` pairs routed through `Reflector.TryModifyAt`.\n" +
+                "3. `jsonPatch` — JSON Merge Patch routed through `Reflector.TryPatch`.\n\n" +
+                "When more than one is supplied they run in this order: `jsonPatch` → `pathPatches` → `content`. At least one is required.\n\n" +
+                "## Path syntax\n\n" +
+                "`fieldName`, `nested/field`, `arrayField/[i]`, `dictField/[key]`. Leading `#/` is stripped.";
+        }
     }
 }
