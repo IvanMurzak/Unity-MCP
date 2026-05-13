@@ -32,6 +32,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "GameObject / Component / Modify",
             IdempotentHint = true
         )]
+        [McpPluginSkillDescription("Modify a specific Component on a GameObject in opened Prefab or in a Scene. " +
+            "Allows direct modification of component fields and properties without wrapping in GameObject structure. " +
+            "Use '" + GameObjectComponentGetToolId + "' first to inspect the component structure before modifying. " +
+            "Three modification surfaces are available (componentDiff, pathPatches, jsonPatch) — see the skill body for details.")]
+        [McpPluginSkillBody(
+            "## Three modification surfaces\n\n" +
+            "Use whichever fits the task:\n\n" +
+            "1. `componentDiff` — full `SerializedMember` diff (legacy, backwards compatible).\n" +
+            "2. `pathPatches` — list of `{path, value}` pairs routed through `Reflector.TryModifyAt`; atomic per-path modification, multiple entries can target different depths.\n" +
+            "3. `jsonPatch` — a JSON Merge Patch (RFC 7396, extended with `[i]`/`[key]` notation) routed through `Reflector.TryPatch`; multiple fields at any depth in a single call.\n\n" +
+            "When more than one is supplied they run in this order: `jsonPatch` → `pathPatches` → `componentDiff`. At least one is required.\n\n" +
+            "## Path syntax\n\n" +
+            "`fieldName`, `nested/field`, `arrayField/[i]`, `dictField/[key]`. Leading `#/` is stripped.")]
         [Description("Modify a specific Component on a GameObject in opened Prefab or in a Scene. " +
             "Allows direct modification of component fields and properties without wrapping in GameObject structure. " +
             "Use '" + GameObjectComponentGetToolId + "' first to inspect the component structure before modifying.\n\n" +
