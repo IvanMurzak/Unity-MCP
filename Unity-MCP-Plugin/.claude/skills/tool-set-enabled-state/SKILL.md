@@ -1,9 +1,20 @@
 ---
 name: tool-set-enabled-state
-description: Enable or disable MCP tools by name. Allows controlling which tools are available for the AI agent.
+description: Enable or disable MCP tools by name in batch. Persists the change via `UnityMcpPluginEditor.Instance.Save()` only when at least one tool actually flipped. Returns per-input success flags plus optional operation logs.
 ---
 
 # Tool / Set Enabled State
+
+Enable or disable MCP tools by name. Allows controlling which tools are available for the AI agent.
+
+## Inputs
+
+- `tools` — array of `ToolToggleInput { Name, Enabled }`. Non-empty.
+- `includeLogs` (default `false`) — when true, returns per-step operation logs alongside the success map.
+
+## Behavior
+
+Each entry is resolved against the tool manager's exact-name and case-insensitive lookups. Already-correct state short-circuits as success without writing. The plugin's config is saved once at the end iff at least one tool actually changed state.
 
 ## How to Call
 

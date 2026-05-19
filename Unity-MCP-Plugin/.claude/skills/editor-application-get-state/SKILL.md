@@ -1,9 +1,15 @@
 ---
 name: editor-application-get-state
-description: "Returns available information about 'UnityEditor.EditorApplication'. Use it to get information about the current state of the Unity Editor application. Such as: playmode, paused state, compilation state, etc."
+description: Return the current state of `UnityEditor.EditorApplication` — playmode, paused state, compilation state, and related flags.
 ---
 
 # Editor / Application / Get State
+
+Returns available information about 'UnityEditor.EditorApplication'. Use it to get information about the current state of the Unity Editor application. Such as: playmode, paused state, compilation state, etc.
+
+## Behavior
+
+Snapshots Editor state via `EditorStatsData.FromEditor()` on the main thread and returns the result.
 
 ## How to Call
 

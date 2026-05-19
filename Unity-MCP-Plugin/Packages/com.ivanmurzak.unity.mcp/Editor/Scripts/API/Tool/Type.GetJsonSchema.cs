@@ -31,6 +31,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             IdempotentHint = true,
             Enabled = false
         )]
+        [McpPluginSkillDescription("Generate a JSON Schema for a C# type name via reflection. " +
+            "Supports primitives, enums, arrays, generic collections, dictionaries, and complex objects. " +
+            "Knobs control inclusion of nested `$defs` and whether type-level / property-level descriptions are emitted.")]
+        [McpPluginSkillBody("Generates a JSON Schema for a given C# type name using reflection. " +
+            "Supports primitives, enums, arrays, generic collections, dictionaries, and complex objects. " +
+            "The type must be present in any loaded assembly. " +
+            "Use the full type name (e.g. 'UnityEngine.Vector3') for best results.\n\n" +
+            "## Inputs\n\n" +
+            "- `typeName` — full type name preferred (e.g. `UnityEngine.Vector3`, `System.Collections.Generic.List<System.Int32>`). " +
+            "Simple names work when unambiguous.\n" +
+            "- `descriptionMode` (default `Ignore`) — controls type-level `description`: `Include` keeps it on the target only, " +
+            "`IncludeRecursively` also keeps it inside `$defs`, `Ignore` strips all.\n" +
+            "- `propertyDescriptionMode` (default `Ignore`) — controls property/field/item `description`: `Include` keeps " +
+            "on the target's own properties/items only, `IncludeRecursively` also keeps inside `$defs`, `Ignore` strips all.\n" +
+            "- `includeNestedTypes` (default `false`) — when true, complex nested types are extracted into `$defs` and " +
+            "referenced via `$ref`. Useful for recursive or large types.\n" +
+            "- `writeIndented` (default `false`) — pretty-print the output JSON.")]
         [Description("Generates a JSON Schema for a given C# type name using reflection. " +
             "Supports primitives, enums, arrays, generic collections, dictionaries, and complex objects. " +
             "The type must be present in any loaded assembly. " +

@@ -1,9 +1,29 @@
 ---
 name: tests-run
-description: "Execute Unity tests and return detailed results. Supports filtering by test mode, assembly, namespace, class, and method. Recommended to use 'EditMode' for faster iteration during development. Precondition: every open scene MUST be saved (no unsaved changes). If any open scene is dirty, this tool throws an InvalidOperationException listing the dirty scenes; save them and retry."
+description: "Execute Unity tests (`EditMode` or `PlayMode`) and return per-test results. Supports filtering by test assembly, namespace, class, and method. Refreshes the AssetDatabase first; defers execution across domain reloads if scripts changed. Precondition: every open scene must be saved — dirty scenes abort the run."
 ---
 
 # Tests / Run
+
+Execute Unity tests and return detailed results. Supports filtering by test mode, assembly, namespace, class, and method. Recommended to use 'EditMode' for faster iteration during development. Precondition: every open scene MUST be saved (no unsaved changes). If any open scene is dirty, this tool throws an InvalidOperationException listing the dirty scenes; save them and retry.
+
+## Filters
+
+- `testMode` (default `EditMode`) — `EditMode` or `PlayMode`. EditMode is faster; prefer it during iteration.
+- `testAssembly` / `testNamespace` / `testClass` / `testMethod` — optional, layered filters. Namespace and class filters become regex `groupNames` so the validation count and Unity's execution stay in sync. `testMethod` must be fully qualified (`Namespace.FixtureName.TestName`).
+
+## Response toggles
+
+- `includePassingTests` (default `false`) — include details for passing tests; otherwise only failing test details are returned.
+- `includeMessages` (default `true`) — include per-test result messages.
+- `includeStacktrace` (default `false`) — include stack traces for failing tests.
+- `includeLogs` (default `false`) — include console logs captured during the run.
+- `logType` (default `Warning`) — minimum log severity to include.
+- `includeLogsStacktrace` (default `false`) — include log stack traces (large payload; use sparingly).
+
+## Domain reloads
+
+If the AssetDatabase refresh triggers compilation, the tool persists the run parameters to `SessionState`, returns `Processing`, and resumes the run automatically after the reload completes. Pre-existing compilation errors short-circuit the run and return the error details so the caller can fix the project first.
 
 ## How to Call
 

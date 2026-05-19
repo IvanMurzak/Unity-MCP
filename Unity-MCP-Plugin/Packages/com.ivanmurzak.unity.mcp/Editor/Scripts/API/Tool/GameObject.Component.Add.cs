@@ -28,6 +28,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             GameObjectComponentAddToolId,
             Title = "GameObject / Component / Add"
         )]
+        [McpPluginSkillDescription("Add one or more Components to a GameObject in the opened Prefab or active Scene. " +
+            "Component types are looked up by full name (with namespace) or by class-name fallback. " +
+            "Use '" + GameObjectFindToolId + "' to locate the host GameObject and '" + ComponentListToolId +
+            "' to discover valid component type names.")]
+        [McpPluginSkillBody("Add Component to GameObject in opened Prefab or in a Scene. " +
+            "Use '" + GameObjectFindToolId + "' tool to find the target GameObject first. " +
+            "Use '" + ComponentListToolId + "' tool to find the component type names to add.\n\n" +
+            "## Inputs\n\n" +
+            "- `componentNames` — list of component type names. Each entry may be a fully-qualified type name (preferred) " +
+            "or a bare class name (resolved via fallback to `AllComponentTypes`).\n" +
+            "- `gameObjectRef` — the target GameObject. Required.\n\n" +
+            "## Behavior\n\n" +
+            "Per-name errors (unknown type, type not assignable to `UnityEngine.Component`, add-failed/duplicate) are " +
+            "accumulated in `response.Errors` / `response.Warnings` instead of throwing, so a single bad name does not " +
+            "abort the whole batch. Successful additions populate `response.AddedComponents` with `ComponentDataShallow` " +
+            "snapshots.")]
         [Description("Add Component to GameObject in opened Prefab or in a Scene. " +
             "Use '" + GameObjectFindToolId + "' tool to find the target GameObject first. " +
             "Use '" + ComponentListToolId + "' tool to find the component type names to add.")]

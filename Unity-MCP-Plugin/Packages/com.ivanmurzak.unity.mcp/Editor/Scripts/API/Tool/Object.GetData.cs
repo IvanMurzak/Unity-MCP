@@ -32,6 +32,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ReadOnlyHint = true,
             IdempotentHint = true
         )]
+        [McpPluginSkillDescription("Get serialized data for a Unity `UnityEngine.Object` — all serializable fields " +
+            "and properties. Supports token-saving path-scoped reads via `paths` or `viewQuery`. " +
+            "Pair with '" + ObjectModifyToolId + "' when you need to write back.")]
+        [McpPluginSkillBody("Get data of the specified Unity Object. " +
+            "Returns serialized data of the object including its properties and fields. " +
+            "If need to modify the data use '" + ObjectModifyToolId + "' tool.\n\n" +
+            "## Path-scoped reads (token-saving)\n\n" +
+            "Supply `paths` (a list of paths) to read only the listed fields/elements via `Reflector.TryReadAt`, or " +
+            "`viewQuery` (a `ViewQuery`) to navigate to a subtree and/or filter by name regex / max depth / type via " +
+            "`Reflector.View`. These two parameters are mutually exclusive — supply at most one. When neither is " +
+            "supplied the full object is serialized (backwards compatible).\n\n" +
+            "## Path syntax\n\n" +
+            "`fieldName`, `nested/field`, `arrayField/[i]`, `dictField/[key]`. Leading `#/` is stripped.")]
         [Description("Get data of the specified Unity Object. " +
             "Returns serialized data of the object including its properties and fields. " +
             "If need to modify the data use '" + ObjectModifyToolId + "' tool.\n\n" +

@@ -1,9 +1,20 @@
 ---
 name: script-delete
-description: Delete the script file(s). Does AssetDatabase.Refresh() and waits for Unity compilation to complete before reporting results. Use 'script-read' tool to read existing script files first.
+description: Delete one or more `.cs` script files from disk, refresh the AssetDatabase, and wait for Unity compilation to settle before delivering the final result via the request's `requestId`. Pair with 'script-read' to inspect files before deletion.
 ---
 
 # Script / Delete
+
+Delete the script file(s). Does AssetDatabase.Refresh() and waits for Unity compilation to complete before reporting results. Use 'script-read' tool to read existing script files first.
+
+## Inputs
+
+- `files` — non-empty array of `.cs` paths. Every entry must exist on disk.
+- `requestId` — required for the processing/delivered-later contract.
+
+## Behavior
+
+Validates the array (non-empty, every entry ends with `.cs`, every entry exists). Deletes each file plus its sibling `.meta` (when present). Calls `AssetDatabase.Refresh` and schedules a post-compilation notification — the final response is delivered after Unity finishes the recompile triggered by the delete.
 
 ## How to Call
 

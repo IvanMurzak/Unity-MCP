@@ -40,6 +40,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Assets / Create Folder",
             Enabled = false
         )]
+        [McpPluginSkillDescription("Create a new folder under a parent folder inside 'Assets/'. " +
+            "The parent path must start with 'Assets/' and every intermediate folder in it must already exist. " +
+            "Refreshes the AssetDatabase at the end and returns the GUID(s) of the created folder(s).")]
+        [McpPluginSkillBody("Creates a new folder in the specified parent folder. " +
+            "The parent folder string must start with the 'Assets' folder, and all folders within the parent folder string must already exist. " +
+            "For example, when specifying 'Assets/ParentFolder1/ParentFolder2/', the new folder will be created in 'ParentFolder2' only if ParentFolder1 and ParentFolder2 already exist. " +
+            "Use it to organize scripts and assets in the project. " +
+            "Does AssetDatabase.Refresh() at the end. " +
+            "Returns the GUID of the newly created folder, if successful.\n\n" +
+            "## Inputs\n\n" +
+            "- `inputs` — list of `{ParentFolderPath, NewFolderName}` entries. Each entry is processed independently; " +
+            "per-entry errors are collected in the response so a single bad input does not abort the batch.\n\n" +
+            "## Validation\n\n" +
+            "- `NewFolderName` must be non-empty and must not contain any of `/`, `\\`, `<`, `>`, `:`, `\"`, `|`, `?`, `*`, or control characters (these checks are cross-platform even on Linux/Mac).\n" +
+            "- `ParentFolderPath` must already exist as an `AssetDatabase.IsValidFolder` path.\n" +
+            "- A folder with the same target name must not already exist under the parent.")]
         [Description("Creates a new folder in the specified parent folder. " +
             "The parent folder string must start with the 'Assets' folder, and all folders within the parent folder string must already exist. " +
             "For example, when specifying 'Assets/ParentFolder1/ParentFolder2/', the new folder will be created in 'ParentFolder2' only if ParentFolder1 and ParentFolder2 already exist. " +

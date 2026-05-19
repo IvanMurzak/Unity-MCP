@@ -97,6 +97,35 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             IdempotentHint = true,
             Enabled = true
         )]
+        [McpPluginSkillDescription("Render a target GameObject from a chosen camera angle with optional layer-based " +
+            "isolation, configurable background (solid/skybox/transparent), multi-light setup via JSON, and Composite " +
+            "(2x2 Front/Right/Back/Top) mode. Returns a PNG image. When isolated=true, inactive children may briefly " +
+            "fire OnEnable — see the body for side-effect notes.")]
+        [McpPluginSkillBody("Renders a screenshot of a target GameObject with configurable isolation, background, "
+                   + "camera angle, and lighting. When isolated=true (default), only the target object is "
+                   + "visible via layer-based culling and inactive children of the target are temporarily "
+                   + "activated for the render (their OnEnable callbacks may fire — restored in finally, but "
+                   + "side effects like audio/network/animation events are not undoable). When isolated=false, "
+                   + "the existing scene state is rendered as-is without activating inactive objects. Supports "
+                   + "custom multi-light setups via JSON. Returns a base64-encoded PNG.\n\n" +
+            "## Camera views\n\n" +
+            "`Front` (-Z), `Back` (+Z), `Left` (-X), `Right` (+X), `Top` (+Y), `Bottom` (-Y). " +
+            "`Composite` produces a single 2x2 image (Front, Right, Back, Top) where each sub-view uses the requested " +
+            "`resolution`, so the final image is `resolution*2 x resolution*2`.\n\n" +
+            "## Background modes\n\n" +
+            "- `SolidColor` — flat color from `backgroundColor` (hex string).\n" +
+            "- `Skybox` — current scene skybox.\n" +
+            "- `Transparent` — alpha-zero (ARGB32 PNG; useful for compositing).\n\n" +
+            "## Lights\n\n" +
+            "`lights` is an optional JSON array of `IsolatedLightConfig` objects (type, color, intensity, rotation, " +
+            "position, range, spotAngle, innerSpotAngle, shadows, shadowStrength, bounceIntensity, colorTemperature, " +
+            "cookieSize, cullingMask, renderMode). When `null`, a default 1.0-intensity white directional light at " +
+            "rotation `(50, -30, 0)` is used. Empty array `[]` explicitly disables extra lights.\n\n" +
+            "## Side-effect caveat\n\n" +
+            "Isolation temporarily activates inactive child GameObjects so their renderers participate in the cull. " +
+            "Activation state is restored in `finally`, but OnEnable-triggered side effects (audio, networking, " +
+            "animation events) are not rewindable. Set `isolated=false` if your scene contains scripts that must not " +
+            "fire OnEnable during the capture.")]
         [Description("Renders a screenshot of a target GameObject with configurable isolation, background, "
                    + "camera angle, and lighting. When isolated=true (default), only the target object is "
                    + "visible via layer-based culling and inactive children of the target are temporarily "

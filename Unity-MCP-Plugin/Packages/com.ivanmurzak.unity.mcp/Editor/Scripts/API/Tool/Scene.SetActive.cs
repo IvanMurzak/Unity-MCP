@@ -28,6 +28,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Scene / Set Active",
             IdempotentHint = true
         )]
+        [McpPluginSkillDescription("Mark an opened scene as the Editor's active scene (the one new GameObjects are " +
+            "added to and that's used as the default for many operations). " +
+            "Use '" + SceneListOpenedToolId + "' to enumerate opened scenes first.")]
+        [McpPluginSkillBody("Set the specified opened scene as the active scene. " +
+            "Use '" + SceneListOpenedToolId + "' tool to get the list of all opened scenes.\n\n" +
+            "## Inputs\n\n" +
+            "- `sceneRef` — `AssetObjectRef` pointing at a `SceneAsset`. The scene must already be opened.\n\n" +
+            "## Behavior\n\n" +
+            "Resolves the `SceneAsset`, finds the matching opened scene (by name then by path), and calls " +
+            "`EditorSceneManager.SetActiveScene`. No-op if the scene is already active. Returns the post-call " +
+            "snapshot of opened scenes.")]
         [Description("Set the specified opened scene as the active scene. " +
             "Use '" + SceneListOpenedToolId + "' tool to get the list of all opened scenes.")]
         public SceneDataShallow[] SetActive(AssetObjectRef sceneRef)

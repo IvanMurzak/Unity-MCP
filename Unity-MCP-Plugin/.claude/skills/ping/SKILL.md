@@ -1,9 +1,19 @@
 ---
 name: ping
-description: Lightweight readiness probe. Returns the input message or 'pong' if omitted.
+description: Lightweight readiness probe. Returns the input `message` echoed back, or `'pong'` when omitted. Useful for CLI health checks and SignalR connectivity smoke tests.
 ---
 
 # Ping
+
+Lightweight readiness probe. Returns the input message or 'pong' if omitted.
+
+## Inputs
+
+- `message` (optional) — when present, echoed back verbatim.
+
+## Behavior
+
+No I/O, no Unity API calls — pure echo. Ideal for measuring round-trip latency or confirming the MCP transport is alive before invoking a heavier tool.
 
 ## How to Call
 

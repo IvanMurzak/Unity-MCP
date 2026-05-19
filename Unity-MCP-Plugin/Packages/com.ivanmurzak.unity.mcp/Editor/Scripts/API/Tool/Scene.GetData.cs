@@ -31,6 +31,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ReadOnlyHint = true,
             IdempotentHint = true
         )]
+        [McpPluginSkillDescription("Retrieve the list of root GameObjects in the specified opened scene " +
+            "(or the active scene when `openedSceneName` is empty). Supports token-saving path-scoped reads over the " +
+            "root-GameObjects array via `paths` or `viewQuery`. Use '" + SceneListOpenedToolId + "' to enumerate scenes.")]
+        [McpPluginSkillBody("This tool retrieves the list of root GameObjects in the specified scene. " +
+            "Use '" + SceneListOpenedToolId + "' tool to get the list of all opened scenes.\n\n" +
+            "## Toggles (all default `false` to keep responses small)\n\n" +
+            "- `includeRootGameObjects` — include root GameObjects in the scene data.\n" +
+            "- `includeChildrenDepth` (default 3) — depth of the hierarchy to include.\n" +
+            "- `includeBounds` — include 3D bounds for GameObjects.\n" +
+            "- `includeData` — include serialized component data for GameObjects.\n\n" +
+            "## Path-scoped reads (token-saving)\n\n" +
+            "Supply `paths` to read only the listed fields/elements from the scene's root-GameObjects array via " +
+            "`Reflector.TryReadAt`, or `viewQuery` to navigate/filter the same array via `Reflector.View`. " +
+            "The result populates `Data` on the returned `SceneData`. These two parameters are mutually exclusive.\n\n" +
+            "## Path syntax\n\n" +
+            "`fieldName`, `nested/field`, `arrayField/[i]`, `dictField/[key]`. Leading `#/` is stripped. " +
+            "Example: `paths=['[0]/name']` reads the name of the first root GameObject.")]
         [Description("This tool retrieves the list of root GameObjects in the specified scene. " +
             "Use '" + SceneListOpenedToolId + "' tool to get the list of all opened scenes.\n\n" +
             "Path-scoped reads (token-saving): supply '" + "paths" + "' (a list of paths) to read only the listed " +

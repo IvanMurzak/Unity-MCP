@@ -27,6 +27,48 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 => "Script path is empty. Please provide a valid path. Sample: \"Assets/Scripts/MyScript.cs\".";
         }
 
+        // Shared skill metadata for `editor-selection-get`. The Unity 6.5+ and pre-6.5 implementations
+        // diverge in behavioral code (different Selection API surfaces) but their SKILL.md
+        // description/body are identical, so we keep the strings here once.
+        internal static class GetSkill
+        {
+            public const string Description =
+                "Get information about the current Selection in the Unity Editor — active object, active transform, " +
+                "selected GameObjects, transforms, instance IDs, and asset GUIDs (each enrichment is opt-in). " +
+                "Pair with 'editor-selection-set' to change the selection.";
+
+            public const string Body =
+                "Get information about the current Selection in the Unity Editor. " +
+                "Use 'editor-selection-set' tool to set the selection.\n\n" +
+                "## Toggles (default off where indicated to keep responses small)\n\n" +
+                "- `includeGameObjects` (default `false`) — populate `GameObjects[]`.\n" +
+                "- `includeTransforms` (default `false`) — populate `Transforms[]` as `ComponentRef`s.\n" +
+                "- `includeInstanceIDs` (default `false`) — populate `InstanceIDs[]`.\n" +
+                "- `includeAssetGUIDs` (default `false`) — populate `AssetGUIDs[]` from project-window selection.\n" +
+                "- `includeActiveObject` (default `true`) — populate `ActiveObject` as a generic `ObjectRef`.\n" +
+                "- `includeActiveTransform` (default `true`) — populate `ActiveTransform` as a `ComponentRef`.\n\n" +
+                "`ActiveGameObject` and `ActiveInstanceID` are always populated.";
+        }
+
+        // Shared skill metadata for `editor-selection-set`. See GetSkill above for rationale.
+        internal static class SetSkill
+        {
+            public const string Description =
+                "Set the current Selection in the Unity Editor to the provided objects. " +
+                "All `ObjectRef`s must resolve to existing Unity objects; otherwise the call throws. " +
+                "Use 'editor-selection-get' to inspect the current selection first.";
+
+            public const string Body =
+                "Set the current Selection in the Unity Editor to the provided objects. " +
+                "Use 'editor-selection-get' tool to get the current selection first.\n\n" +
+                "## Inputs\n\n" +
+                "- `select` — array of `ObjectRef`. Every entry MUST resolve via `FindObject()`; otherwise the tool throws " +
+                "before touching `Selection.objects`.\n\n" +
+                "## Behavior\n\n" +
+                "Assigns the resolved array to `Selection.objects`, then calls " +
+                "`UnityEditorInternal.InternalEditorUtility.RepaintAllViews()` so Hierarchy/Inspector reflect the change. " +
+                "Returns the post-change `SelectionData` snapshot.";
+        }
     }
 }
 #endif

@@ -30,6 +30,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Tool / Set Enabled State",
             Enabled = false
         )]
+        [McpPluginSkillDescription("Enable or disable MCP tools by name in batch. " +
+            "Persists the change via `UnityMcpPluginEditor.Instance.Save()` only when at least one tool actually flipped. " +
+            "Returns per-input success flags plus optional operation logs.")]
+        [McpPluginSkillBody("Enable or disable MCP tools by name. " +
+            "Allows controlling which tools are available for the AI agent.\n\n" +
+            "## Inputs\n\n" +
+            "- `tools` — array of `ToolToggleInput { Name, Enabled }`. Non-empty.\n" +
+            "- `includeLogs` (default `false`) — when true, returns per-step operation logs alongside the success map.\n\n" +
+            "## Behavior\n\n" +
+            "Each entry is resolved against the tool manager's exact-name and case-insensitive lookups. " +
+            "Already-correct state short-circuits as success without writing. The plugin's config is saved once at the " +
+            "end iff at least one tool actually changed state.")]
         [Description("Enable or disable MCP tools by name. " +
             "Allows controlling which tools are available for the AI agent.")]
         public ToolToggleResult SetEnabledState

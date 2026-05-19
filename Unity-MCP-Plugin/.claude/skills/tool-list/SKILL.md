@@ -1,9 +1,21 @@
 ---
 name: tool-list
-description: List all available MCP tools. Optionally filter by regex across tool names, descriptions, and arguments.
+description: List all MCP tools registered with this plugin. Optional regex filter matches against tool name, description, and argument names/descriptions. Use the `includeDescription` / `includeInputs` toggles to control the response size.
 ---
 
 # Tool / List
+
+List all available MCP tools. Optionally filter by regex across tool names, descriptions, and arguments.
+
+## Inputs
+
+- `regexSearch` (optional) — case-insensitive regex with a 200ms execution-timeout guard. Invalid regex throws an `ArgumentException`. Matches name → description → input names → input descriptions.
+- `includeDescription` (default `false`) — populate each tool's `Description` field.
+- `includeInputs` (default `None`) — one of `None`, `Inputs` (names only), `InputsWithDescription` (names + descriptions).
+
+## Behavior
+
+Iterates `UnityMcpPluginEditor.Instance.Tools.GetAllTools()`, evaluates the filter (if any), and projects each surviving tool into a `ToolInfoData` honoring the verbosity toggles.
 
 ## How to Call
 

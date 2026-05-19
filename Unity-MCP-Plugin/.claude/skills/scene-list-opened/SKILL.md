@@ -1,9 +1,15 @@
 ---
 name: scene-list-opened
-description: Returns the list of currently opened scenes in Unity Editor. Use 'scene-get-data' tool to get detailed information about a specific scene.
+description: List every scene currently opened in the Unity Editor as a shallow snapshot (name, path, build flags). Use 'scene-get-data' for the deep view of a specific scene.
 ---
 
 # Scene / List Opened
+
+Returns the list of currently opened scenes in Unity Editor. Use 'scene-get-data' tool to get detailed information about a specific scene.
+
+## Behavior
+
+Maps `OpenedScenes` through `ToSceneDataShallow()` on the main thread and returns the resulting array. No filtering or pagination — every opened scene is included.
 
 ## How to Call
 

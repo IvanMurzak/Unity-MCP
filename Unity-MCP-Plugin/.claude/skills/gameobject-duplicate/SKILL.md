@@ -1,9 +1,19 @@
 ---
 name: gameobject-duplicate
-description: Duplicate GameObjects in opened Prefab or in a Scene. Use 'gameobject-find' tool to find the target GameObjects first.
+description: Duplicate a batch of GameObjects in the currently opened Prefab or active Scene. Marks each affected scene as dirty after duplication. Use 'gameobject-find' to locate the source GameObjects first.
 ---
 
 # GameObject / Duplicate
+
+Duplicate GameObjects in opened Prefab or in a Scene. Use 'gameobject-find' tool to find the target GameObjects first.
+
+## Inputs
+
+- `gameObjectRefs` — `GameObjectRefList` of source GameObjects.
+
+## Behavior
+
+Resolves every input ref on the main thread (throwing on any unresolved entry to keep the batch atomic). Sets `Selection.entityIds`/`instanceIDs` to the sources and invokes `Unsupported.DuplicateGameObjectsUsingPasteboard()` (Unity's canonical duplicate routine). Marks every distinct affected scene dirty so the duplicated objects are saved with the scene. Returns refs to the sources (the duplicates are reachable via the post-call `Selection`).
 
 ## How to Call
 

@@ -28,6 +28,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             AssetsPrefabCloseToolId,
             Title = "Assets / Prefab / Close"
         )]
+        [McpPluginSkillDescription("Close the currently opened prefab edit stage. " +
+            "Optionally saves changes back to the prefab asset before closing. " +
+            "Pair with '" + AssetsPrefabOpenToolId + "' to enter the edit mode first.")]
+        [McpPluginSkillBody("Close currently opened prefab. " +
+            "Use it when you are in prefab editing mode in Unity Editor. " +
+            "Use '" + AssetsPrefabOpenToolId + "' tool to open a prefab first.\n\n" +
+            "## Inputs\n\n" +
+            "- `save` (default `true`) — when `true`, calls `PrefabUtility.SaveAsPrefabAsset` before exiting the stage; " +
+            "when `false`, the prefab stage's dirtiness is cleared and changes are discarded.\n\n" +
+            "## Behavior\n\n" +
+            "Throws when no prefab stage is currently open. Returns an `AssetObjectRef` for the closed prefab asset.")]
         [Description("Close currently opened prefab. " +
             "Use it when you are in prefab editing mode in Unity Editor. " +
             "Use '" + AssetsPrefabOpenToolId + "' tool to open a prefab first.")]

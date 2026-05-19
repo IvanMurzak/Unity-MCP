@@ -28,6 +28,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             AssetsPrefabOpenToolId,
             Title = "Assets / Prefab / Open"
         )]
+        [McpPluginSkillDescription("Open the prefab edit stage for a prefab instance or prefab asset GameObject. " +
+            "Modifications inside the edit stage propagate to all instances. " +
+            "Pair with '" + AssetsPrefabCloseToolId + "' to exit the stage when done.")]
+        [McpPluginSkillBody("Open prefab edit mode for a specific GameObject. " +
+            "In the Edit mode you can modify the prefab. " +
+            "The modification will be applied to all instances of the prefab across the project. " +
+            "Note: Please use '" + AssetsPrefabCloseToolId + "' tool later to exit prefab editing mode.\n\n" +
+            "## Inputs\n\n" +
+            "- `gameObjectRef` — reference to a scene prefab instance OR a prefab asset GameObject. The tool resolves " +
+            "the prefab asset path via `PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot` and opens the appropriate " +
+            "prefab stage.\n\n" +
+            "## Behavior\n\n" +
+            "Asset-side GameObjects open via the simple `OpenPrefab(path)` overload. Scene-instance GameObjects open " +
+            "via `OpenPrefab(path, gameObject)` so the editor remembers which instance prompted the edit. Editor windows " +
+            "are repainted before returning. Throws when the GameObject cannot be resolved or the stage fails to open.")]
         [Description("Open prefab edit mode for a specific GameObject. " +
             "In the Edit mode you can modify the prefab. " +
             "The modification will be applied to all instances of the prefab across the project. " +

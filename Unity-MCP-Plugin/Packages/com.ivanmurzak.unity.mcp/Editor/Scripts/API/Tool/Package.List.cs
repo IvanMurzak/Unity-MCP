@@ -57,6 +57,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             IdempotentHint = true,
             Enabled = false
         )]
+        [McpPluginSkillDescription("List all UPM packages installed in the Unity project — name, version, source, " +
+            "description. Optionally filter by source (registry, embedded, local, git, built-in, local tarball), " +
+            "by name/display/description substring, and by direct-dependency-only.")]
+        [McpPluginSkillBody("List all packages installed in the Unity project (UPM packages). " +
+            "Returns information about each installed package including name, version, source, and description. " +
+            "Use this to check which packages are currently installed before adding or removing packages.\n\n" +
+            "## Inputs\n\n" +
+            "- `sourceFilter` (default `All`) — restrict by Unity `PackageSource`: `All`, `Registry`, `Embedded`, " +
+            "`Local`, `Git`, `BuiltIn`, `LocalTarball`.\n" +
+            "- `nameFilter` (optional) — case-insensitive substring filter over name / displayName / description. " +
+            "Results are prioritized: exact name → exact displayName → name substring → displayName substring → " +
+            "description substring.\n" +
+            "- `directDependenciesOnly` (default `false`) — when true, return only packages listed in `manifest.json` " +
+            "(no transitive dependencies).")]
         [Description("List all packages installed in the Unity project (UPM packages). " +
             "Returns information about each installed package including name, version, source, and description. " +
             "Use this to check which packages are currently installed before adding or removing packages.")]

@@ -1,9 +1,19 @@
 ---
 name: editor-selection-set
-description: Set the current Selection in the Unity Editor to the provided objects. Use 'editor-selection-get' tool to get the current selection first.
+description: Set the current Selection in the Unity Editor to the provided objects. All `ObjectRef`s must resolve to existing Unity objects; otherwise the call throws. Use 'editor-selection-get' to inspect the current selection first.
 ---
 
 # Editor / Selection / Set
+
+Set the current Selection in the Unity Editor to the provided objects. Use 'editor-selection-get' tool to get the current selection first.
+
+## Inputs
+
+- `select` — array of `ObjectRef`. Every entry MUST resolve via `FindObject()`; otherwise the tool throws before touching `Selection.objects`.
+
+## Behavior
+
+Assigns the resolved array to `Selection.objects`, then calls `UnityEditorInternal.InternalEditorUtility.RepaintAllViews()` so Hierarchy/Inspector reflect the change. Returns the post-change `SelectionData` snapshot.
 
 ## How to Call
 

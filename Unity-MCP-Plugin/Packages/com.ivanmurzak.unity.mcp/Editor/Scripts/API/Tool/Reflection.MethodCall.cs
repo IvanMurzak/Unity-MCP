@@ -30,6 +30,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Method C# / Call",
             Enabled = false
         )]
+        [McpPluginSkillDescription("Call a C# method by reflection — including private methods. " +
+            "Requires a method schema obtained via '" + ReflectionMethodFindToolId + "'. " +
+            "Supports static methods, instance methods (with optional target deserialization), and main-thread / " +
+            "off-thread execution.")]
+        [McpPluginSkillBody("Call C# method. Any method could be called, even private methods. " +
+            "It requires to receive proper method schema. " +
+            "Use '" + ReflectionMethodFindToolId + "' to find available method before using it. " +
+            "Receives input parameters and returns result.\n\n" +
+            "## Match levels (apply to `typeName`, `MethodName`, `Parameters`)\n\n" +
+            "- `typeNameMatchLevel` / `methodNameMatchLevel` (default 1 — contains ignoring case): " +
+            "`0` ignore filter, `1` contains-ic, `2` contains-cs, `3` starts-with-ic, `4` starts-with-cs, " +
+            "`5` equals-ic, `6` equals-cs.\n" +
+            "- `parametersMatchLevel` (default 2 — equals): `0` ignore filter, `1` count matches, `2` equals.\n\n" +
+            "## Inputs\n\n" +
+            "- `targetObject` (optional) — for instance methods. When null, a new instance is created from the declaring " +
+            "type. Required shape: `{ type, value }` (value is deserialized to `type`).\n" +
+            "- `inputParameters` (optional) — list of `{ type, name, value }`. Names are enhanced against the resolved " +
+            "method signature if omitted.\n" +
+            "- `executeInMainThread` (default `true`) — Unity API calls should keep this true; set false only for " +
+            "thread-safe pure logic.")]
         [Description("Call C# method. Any method could be called, even private methods. " +
             "It requires to receive proper method schema. " +
             "Use '" + ReflectionMethodFindToolId + "' to find available method before using it. " +

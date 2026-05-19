@@ -1,13 +1,19 @@
 ---
 name: assets-get-data
-description: |-
-  Get asset data from the asset file in the Unity project. It includes all serializable fields and properties of the asset. Use 'assets-find' tool to find asset before using this tool.
-  
-  Path-scoped reads (token-saving): supply 'paths' (a list of paths) to read only the listed fields/elements via Reflector.TryReadAt, or 'viewQuery' (a ViewQuery) to navigate to a subtree and/or filter by name regex / max depth / type via Reflector.View. These two parameters are mutually exclusive — supply at most one. When neither is supplied the full asset is serialized as before (backwards compatible).
-  Path syntax: 'fieldName', 'nested/field', 'arrayField/[i]', 'dictField/[key]'. Leading '#/' is stripped.
+description: Get asset data from the asset file in the Unity project — every serializable field and property. Supports token-saving path-scoped reads via `paths` or `viewQuery`. Use 'assets-find' to find the asset first.
 ---
 
 # Assets / Get Data
+
+Get asset data from the asset file in the Unity project. It includes all serializable fields and properties of the asset. Use 'assets-find' tool to find asset before using this tool.
+
+## Path-scoped reads (token-saving)
+
+Supply `paths` (a list of paths) to read only the listed fields/elements via `Reflector.TryReadAt`, or `viewQuery` (a `ViewQuery`) to navigate to a subtree and/or filter by name regex / max depth / type via `Reflector.View`. These two parameters are mutually exclusive — supply at most one. When neither is supplied the full asset is serialized (backwards compatible).
+
+## Path syntax
+
+`fieldName`, `nested/field`, `arrayField/[i]`, `dictField/[key]`. Leading `#/` is stripped.
 
 ## How to Call
 

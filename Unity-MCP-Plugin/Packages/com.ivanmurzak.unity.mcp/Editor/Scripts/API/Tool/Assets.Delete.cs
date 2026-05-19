@@ -31,6 +31,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             DestructiveHint = true,
             Enabled = false
         )]
+        [McpPluginSkillDescription("Delete the assets at the given project paths. " +
+            "Refreshes the AssetDatabase at the end. " +
+            "Use '" + AssetsFindToolId + "' to locate the assets first.")]
+        [McpPluginSkillBody("Delete the assets at paths from the project. " +
+            "Does AssetDatabase.Refresh() at the end. " +
+            "Use '" + AssetsFindToolId + "' tool to find assets before deleting.\n\n" +
+            "## Inputs\n\n" +
+            "- `paths` — project-relative asset paths to delete. Must be non-empty.\n\n" +
+            "## Behavior\n\n" +
+            "Routes through `AssetDatabase.DeleteAssets`, which deletes the batch atomically. " +
+            "Paths Unity reports as failed are surfaced in `response.Errors`; successfully deleted paths " +
+            "are surfaced in `response.DeletedPaths`. The tool is destructive (removes files from disk).")]
         [Description("Delete the assets at paths from the project. " +
             "Does AssetDatabase.Refresh() at the end. " +
             "Use '" + AssetsFindToolId + "' tool to find assets before deleting.")]

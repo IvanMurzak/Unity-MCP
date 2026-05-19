@@ -1,9 +1,22 @@
 ---
 name: editor-selection-get
-description: Get information about the current Selection in the Unity Editor. Use 'editor-selection-set' tool to set the selection.
+description: Get information about the current Selection in the Unity Editor — active object, active transform, selected GameObjects, transforms, instance IDs, and asset GUIDs (each enrichment is opt-in). Pair with 'editor-selection-set' to change the selection.
 ---
 
 # Editor / Selection / Get
+
+Get information about the current Selection in the Unity Editor. Use 'editor-selection-set' tool to set the selection.
+
+## Toggles (default off where indicated to keep responses small)
+
+- `includeGameObjects` (default `false`) — populate `GameObjects[]`.
+- `includeTransforms` (default `false`) — populate `Transforms[]` as `ComponentRef`s.
+- `includeInstanceIDs` (default `false`) — populate `InstanceIDs[]`.
+- `includeAssetGUIDs` (default `false`) — populate `AssetGUIDs[]` from project-window selection.
+- `includeActiveObject` (default `true`) — populate `ActiveObject` as a generic `ObjectRef`.
+- `includeActiveTransform` (default `true`) — populate `ActiveTransform` as a `ComponentRef`.
+
+`ActiveGameObject` and `ActiveInstanceID` are always populated.
 
 ## How to Call
 

@@ -1,9 +1,18 @@
 ---
 name: scene-open
-description: Open scene from the project asset file. Use 'assets-find' tool to find the scene asset first.
+description: Open a Unity scene asset in Single or Additive mode. Returns the post-open list of all opened scenes. Use 'assets-find' to locate the scene asset first.
 ---
 
 # Scene / Open
+
+Open scene from the project asset file. Use 'assets-find' tool to find the scene asset first.
+
+## Inputs
+
+- `sceneRef` — `AssetObjectRef` pointing at a `SceneAsset`. Throws if the asset cannot be resolved or is not a `SceneAsset`.
+- `loadSceneMode` (default `Single`):
+  - `Single` — closes the currently opened scenes and opens this one.
+  - `Additive` — keeps the currently opened scenes and opens this one alongside them.
 
 ## How to Call
 

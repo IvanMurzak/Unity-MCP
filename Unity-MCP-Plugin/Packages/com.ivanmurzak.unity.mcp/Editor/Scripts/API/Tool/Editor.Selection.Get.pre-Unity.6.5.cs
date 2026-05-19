@@ -30,6 +30,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             IdempotentHint = true,
             Enabled = false
         )]
+        [McpPluginSkillDescription(GetSkill.Description)]
+        [McpPluginSkillBody(GetSkill.Body)]
         [Description("Get information about the current Selection in the Unity Editor. " +
             "Use '" + EditorSelectionSetToolId + "' tool to set the selection.")]
         public SelectionData Get(
