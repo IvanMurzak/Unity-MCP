@@ -9,7 +9,7 @@
 */
 
 #nullable enable
-using Extensions.Unity.PlayerPrefsEx;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
@@ -17,7 +17,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
     [InitializeOnLoad]
     static class MainWindowInitializer
     {
-        static PlayerPrefsBool isInitialized = new PlayerPrefsBool("Unity-MCP.MainWindow.Initialized");
+        static EditorPrefsBool isInitialized = new EditorPrefsBool("Unity-MCP.MainWindow.Initialized");
 
         static MainWindowInitializer()
         {

@@ -15,7 +15,6 @@ using System.Collections.Generic;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
-using Extensions.Unity.PlayerPrefsEx;
 using Microsoft.Extensions.Logging;
 using R3;
 using UnityEngine.UIElements;
@@ -127,7 +126,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             public string? Uri { get; set; }
             public string? MimeType { get; set; }
             public bool IsEnabled { get; set; }
-            public PlayerPrefsBool descriptionExpanded;
+            public EditorPrefsBool descriptionExpanded;
 
             public ResourceViewModel(IResourceManager resourceManager, IRunResource resource)
             {
@@ -136,7 +135,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 Uri = resource.Route;
                 MimeType = resource.MimeType;
                 IsEnabled = resourceManager?.IsResourceEnabled(resource.Name) == true;
-                descriptionExpanded = new PlayerPrefsBool(GetFoldoutKey(resource.Name, "description-foldout"));
+                descriptionExpanded = new EditorPrefsBool(GetFoldoutKey(resource.Name, "description-foldout"));
             }
 
             private string GetFoldoutKey(string resourceName, string foldoutName)
