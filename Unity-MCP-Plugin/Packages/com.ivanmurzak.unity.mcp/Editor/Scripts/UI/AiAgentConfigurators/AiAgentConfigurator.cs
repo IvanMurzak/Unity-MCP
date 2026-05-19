@@ -42,7 +42,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public abstract string AgentName { get; }
 
         /// <summary>
-        /// The unique identifier for this agent (used for dropdown values and EditorPrefs).
+        /// The unique identifier for this agent (used for dropdown values and PlayerPrefs).
         /// </summary>
         public abstract string AgentId { get; }
 
