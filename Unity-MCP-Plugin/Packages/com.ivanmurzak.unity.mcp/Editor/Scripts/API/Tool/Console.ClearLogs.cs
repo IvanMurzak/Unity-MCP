@@ -28,6 +28,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             DestructiveHint = true,
             IdempotentHint = true
         )]
+        [McpPluginSkillDescription("Clear the MCP log cache (used by '" + ConsoleGetLogsToolId + "') and the Unity Editor Console window. " +
+            "Useful for isolating logs to a specific action by clearing the slate first.")]
+        [McpPluginSkillBody("Clears the MCP log cache (used by console-get-logs) and the Unity Editor Console window. " +
+            "Useful for isolating errors related to a specific action by clearing logs before performing the action.\n\n" +
+            "## Behavior\n\n" +
+            "Calls `Debug.ClearDeveloperConsole()` to wipe the Editor Console, then clears the MCP-side `LogCollector` " +
+            "cache so subsequent '" + ConsoleGetLogsToolId + "' calls only see new entries.")]
         [Description("Clears the MCP log cache (used by console-get-logs) and the Unity Editor Console window. " +
             "Useful for isolating errors related to a specific action by clearing logs before performing the action.")]
         public void ClearLogs(string? nothing = null)

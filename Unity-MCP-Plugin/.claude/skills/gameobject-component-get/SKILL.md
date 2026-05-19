@@ -1,13 +1,27 @@
 ---
 name: gameobject-component-get
-description: |-
-  Get detailed information about a specific Component on a GameObject. Returns component type, enabled state, and optionally serialized fields and properties. Use this to inspect component data before modifying it. Use 'gameobject-find' tool to get the list of all components on the GameObject.
-  
-  Path-scoped reads (token-saving): supply 'paths' (a list of paths) to read only the listed fields/elements via Reflector.TryReadAt, or 'viewQuery' (a ViewQuery) to navigate to a subtree and/or filter by name regex / max depth / type via Reflector.View. The result is returned in the 'View' field of the response. These two parameters are mutually exclusive — supply at most one.
-  Path syntax: 'fieldName', 'nested/field', 'arrayField/[i]', 'dictField/[key]'. Leading '#/' is stripped.
+description: Get detailed information about a specific Component on a GameObject — type, enabled state, and (optionally) serialized fields and properties. Supports token-saving path-scoped reads via `paths` or `viewQuery`. Use 'gameobject-find' to list components first.
 ---
 
 # GameObject / Component / Get
+
+Get detailed information about a specific Component on a GameObject. Returns component type, enabled state, and optionally serialized fields and properties. Use this to inspect component data before modifying it. Use 'gameobject-find' tool to get the list of all components on the GameObject.
+
+## Inputs
+
+- `gameObjectRef` — the host GameObject.
+- `componentRef` — the specific component to inspect (matched by index or instance ID).
+- `includeFields` (default `true`) — populate the legacy `Fields` list.
+- `includeProperties` (default `true`) — populate the legacy `Properties` list.
+- `deepSerialization` (default `false`) — when populating legacy lists, recurse into nested members.
+
+## Path-scoped reads (token-saving)
+
+Supply `paths` (a list of paths) to read only the listed fields/elements via `Reflector.TryReadAt`, or `viewQuery` (a `ViewQuery`) to navigate to a subtree and/or filter by name regex / max depth / type via `Reflector.View`. The result is returned in the `View` field of the response, and the legacy `Fields`/`Properties` lists are skipped. These two parameters are mutually exclusive — supply at most one.
+
+## Path syntax
+
+`fieldName`, `nested/field`, `arrayField/[i]`, `dictField/[key]`. Leading `#/` is stripped.
 
 ## How to Call
 

@@ -1,9 +1,20 @@
 ---
 name: assets-move
-description: Move the assets at paths in the project. Should be used for asset rename. Does AssetDatabase.Refresh() at the end. Use 'assets-find' tool to find assets before moving.
+description: Move or rename assets at the given project paths. Refreshes the AssetDatabase at the end. Use 'assets-find' to locate the assets first.
 ---
 
 # Assets / Move
+
+Move the assets at paths in the project. Should be used for asset rename. Does AssetDatabase.Refresh() at the end. Use 'assets-find' tool to find assets before moving.
+
+## Inputs
+
+- `sourcePaths` — paths of the assets to move.
+- `destinationPaths` — target paths (must match `sourcePaths` length).
+
+## Behavior
+
+Each pair is moved independently via `AssetDatabase.MoveAsset`. Per-pair failures (Unity's `MoveAsset` returns a non-empty error string) are surfaced in `response.Errors`; successful moves accumulate into `response.MovedPaths`.
 
 ## How to Call
 

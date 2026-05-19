@@ -1,9 +1,21 @@
 ---
 name: gameobject-set-parent
-description: Set parent GameObject to list of GameObjects in opened Prefab or in a Scene. Use 'gameobject-find' tool to find the target GameObjects first.
+description: Reparent a batch of GameObjects under a new parent in the currently opened Prefab or active Scene. Per-item failures are reported in the returned status string instead of aborting the batch. Use 'gameobject-find' to locate the GameObjects first.
 ---
 
 # GameObject / Set Parent
+
+Set parent GameObject to list of GameObjects in opened Prefab or in a Scene. Use 'gameobject-find' tool to find the target GameObjects first.
+
+## Inputs
+
+- `gameObjectRefs` — list of children to reparent.
+- `parentGameObjectRef` — new parent. Must resolve, otherwise the call returns early with an error string.
+- `worldPositionStays` (default `true`) — preserve world-space transform when reparenting (passed to `Transform.SetParent`).
+
+## Behavior
+
+Iterates `gameObjectRefs` and reparents each one independently; per-item resolve errors are appended to the returned status string instead of throwing. After the loop, if at least one reparent succeeded, marks the active scene dirty and repaints editor windows.
 
 ## How to Call
 

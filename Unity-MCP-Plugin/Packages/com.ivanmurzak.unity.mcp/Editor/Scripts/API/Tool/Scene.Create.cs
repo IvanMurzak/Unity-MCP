@@ -25,6 +25,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             SceneCreateToolId,
             Title = "Scene / Create"
         )]
+        [McpPluginSkillDescription("Create a new Unity scene asset and save it at the given `.unity` path. " +
+            "Use '" + SceneListOpenedToolId + "' to inspect the resulting opened-scene set afterwards.")]
+        [McpPluginSkillBody("Create new scene in the project assets. " +
+            "Use '" + SceneListOpenedToolId + "' tool to list all opened scenes after creation.\n\n" +
+            "## Inputs\n\n" +
+            "- `path` — must end with `.unity`. Non-empty.\n" +
+            "- `newSceneSetup` (default `DefaultGameObjects`) — Unity's `NewSceneSetup` flag (`EmptyScene` or `DefaultGameObjects`).\n" +
+            "- `newSceneMode` (default `Single`) — `Single` closes other scenes, `Additive` keeps them open.\n\n" +
+            "## Behavior\n\n" +
+            "Calls `EditorSceneManager.NewScene` + `SaveScene(path)` on the main thread, repaints editor windows, " +
+            "and returns a `SceneDataShallow` for the newly created scene.")]
         [Description("Create new scene in the project assets. " +
             "Use '" + SceneListOpenedToolId + "' tool to list all opened scenes after creation.")]
         public SceneDataShallow Create

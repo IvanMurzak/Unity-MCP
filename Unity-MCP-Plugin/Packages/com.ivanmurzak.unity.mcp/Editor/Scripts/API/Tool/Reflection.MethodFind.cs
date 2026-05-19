@@ -30,6 +30,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             IdempotentHint = true,
             Enabled = false
         )]
+        [McpPluginSkillDescription("Find C# methods across every loaded assembly by name / type / parameters — " +
+            "including private methods. Returns serialized `MethodData` entries usable as schemas for '" +
+            ReflectionMethodCallToolId + "'.")]
+        [McpPluginSkillBody("Find method in the project using C# Reflection. " +
+            "It looks for all assemblies in the project and finds method by its name, class name and parameters. " +
+            "Even private methods are available. " +
+            "Use '" + ReflectionMethodCallToolId + "' to call the method after finding it.\n\n" +
+            "## Match levels (apply to `typeName`, `MethodName`, `Parameters`)\n\n" +
+            "- `typeNameMatchLevel` / `methodNameMatchLevel` (default 1 — contains ignoring case): " +
+            "`0` ignore filter, `1` contains-ic, `2` contains-cs, `3` starts-with-ic, `4` starts-with-cs, " +
+            "`5` equals-ic, `6` equals-cs.\n" +
+            "- `parametersMatchLevel` (default 0 — ignore filter): `0` ignore, `1` count matches, `2` equals.\n\n" +
+            "## Output\n\n" +
+            "On match, returns a `[Success] Found N method(s):` line followed by a JSON dump of every method's " +
+            "`MethodData`. Pass any single entry to '" + ReflectionMethodCallToolId + "' as its `filter`.")]
         [Description("Find method in the project using C# Reflection. " +
             "It looks for all assemblies in the project and finds method by its name, class name and parameters. " +
             "Even private methods are available. " +

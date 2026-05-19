@@ -1,9 +1,19 @@
 ---
 name: assets-prefab-close
-description: Close currently opened prefab. Use it when you are in prefab editing mode in Unity Editor. Use 'assets-prefab-open' tool to open a prefab first.
+description: Close the currently opened prefab edit stage. Optionally saves changes back to the prefab asset before closing. Pair with 'assets-prefab-open' to enter the edit mode first.
 ---
 
 # Assets / Prefab / Close
+
+Close currently opened prefab. Use it when you are in prefab editing mode in Unity Editor. Use 'assets-prefab-open' tool to open a prefab first.
+
+## Inputs
+
+- `save` (default `true`) — when `true`, calls `PrefabUtility.SaveAsPrefabAsset` before exiting the stage; when `false`, the save is skipped. The prefab stage's dirtiness is always cleared at the end, so any unsaved changes are discarded when `save` is `false`.
+
+## Behavior
+
+Throws when no prefab stage is currently open. Returns an `AssetObjectRef` for the closed prefab asset.
 
 ## How to Call
 

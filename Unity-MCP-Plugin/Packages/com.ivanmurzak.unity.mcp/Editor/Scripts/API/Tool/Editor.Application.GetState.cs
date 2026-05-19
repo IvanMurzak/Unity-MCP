@@ -27,6 +27,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             IdempotentHint = true,
             Enabled = false
         )]
+        [McpPluginSkillDescription("Return the current state of `UnityEditor.EditorApplication` — playmode, " +
+            "paused state, compilation state, and related flags.")]
+        [McpPluginSkillBody("Returns available information about 'UnityEditor.EditorApplication'. " +
+            "Use it to get information about the current state of the Unity Editor application. " +
+            "Such as: playmode, paused state, compilation state, etc.\n\n" +
+            "## Behavior\n\n" +
+            "Snapshots Editor state via `EditorStatsData.FromEditor()` on the main thread and returns the result.")]
         [Description("Returns available information about 'UnityEditor.EditorApplication'. " +
             "Use it to get information about the current state of the Unity Editor application. " +
             "Such as: playmode, paused state, compilation state, etc.")]

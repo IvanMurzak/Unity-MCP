@@ -1,9 +1,22 @@
 ---
 name: assets-prefab-create
-description: Create a prefab from a GameObject in the current active scene. The prefab will be saved in the project assets at the specified path. Creates folders recursively if they do not exist. If the source GameObject is already a prefab instance and 'connectGameObjectToPrefab' is true, a Prefab Variant is created automatically. To create a Prefab Variant from an existing prefab asset, provide 'sourcePrefabAssetPath' instead of 'gameObjectRef'. Use 'gameobject-find' tool to find the target GameObject first.
+description: Create a Prefab (or Prefab Variant) at a project asset path. Source can be a scene GameObject (`gameObjectRef`) or an existing prefab asset (`sourcePrefabAssetPath`). Creates intermediate folders if missing. Use 'gameobject-find' to locate the source GameObject first.
 ---
 
 # Assets / Prefab / Create
+
+Create a prefab from a GameObject in the current active scene. The prefab will be saved in the project assets at the specified path. Creates folders recursively if they do not exist. If the source GameObject is already a prefab instance and 'connectGameObjectToPrefab' is true, a Prefab Variant is created automatically. To create a Prefab Variant from an existing prefab asset, provide 'sourcePrefabAssetPath' instead of 'gameObjectRef'. Use 'gameobject-find' tool to find the target GameObject first.
+
+## Inputs (mutually exclusive sources)
+
+- `prefabAssetPath` — required. Must start with `Assets/` and end with `.prefab`.
+- `gameObjectRef` — scene GameObject to convert (or to seed a Prefab Variant from when it is already a prefab instance).
+- `sourcePrefabAssetPath` — existing prefab asset to seed a Prefab Variant from. Cannot be combined with `gameObjectRef`.
+- `connectGameObjectToPrefab` (default `true`) — when sourcing from a scene GameObject, connect the scene object to the new prefab asset (becoming a prefab instance). Ignored for `sourcePrefabAssetPath` (always creates a variant).
+
+## Behavior
+
+Creates intermediate folders along `prefabAssetPath` if they don't already exist. Returns an `AssetObjectRef` pointing at the new prefab asset.
 
 ## How to Call
 

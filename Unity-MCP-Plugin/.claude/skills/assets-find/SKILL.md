@@ -1,9 +1,22 @@
 ---
 name: assets-find
-description: Search the asset database using the search filter string. Allows you to search for Assets. The string argument can provide names, labels or types (classnames).
+description: "Search the Unity asset database using a search filter string. The filter accepts names, labels (`l:`), types (`t:`), AssetBundles (`b:`), areas (`a:`), and globs (`glob:`). See the body for the full filter syntax."
 ---
 
 # Assets / Find
+
+Search the asset database using the search filter string. Allows you to search for Assets. The string argument can provide names, labels or types (classnames).
+
+## Filter syntax
+
+- **Name** — filter assets by their filename (without extension). Words separated by whitespace are treated as separate name searches.
+- **Labels (`l:`)** — assets can have labels attached. Use `l:` before each label.
+- **Types (`t:`)** — find assets based on explicitly identified types. Available types include AnimationClip, AudioClip, AudioMixer, ComputeShader, Font, GUISkin, Material, Mesh, Model, PhysicMaterial, Prefab, Scene, Script, Shader, Sprite, Texture, VideoClip, VisualEffectAsset, VisualEffectSubgraph.
+- **AssetBundles (`b:`)** — find assets which are part of an Asset bundle.
+- **Area (`a:`)** — find assets in a specific area. Valid values: `all`, `assets`, `packages`.
+- **Globbing (`glob:`)** — use globbing to match specific rules.
+
+Searching is case-insensitive. Use `searchInFolders` to restrict the search scope. `maxResults` caps the returned list (default 10) — results beyond it are truncated.
 
 ## How to Call
 

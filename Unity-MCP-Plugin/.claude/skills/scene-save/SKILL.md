@@ -1,9 +1,20 @@
 ---
 name: scene-save
-description: Save Opened scene to the asset file. Use 'scene-list-opened' tool to get the list of all opened scenes.
+description: Save an opened scene back to its asset file (or to a new path when `path` is provided). When `openedSceneName` is empty, saves the currently active scene. Use 'scene-list-opened' to find the scene name first.
 ---
 
 # Scene / Save
+
+Save Opened scene to the asset file. Use 'scene-list-opened' tool to get the list of all opened scenes.
+
+## Inputs
+
+- `openedSceneName` (optional) — name of an opened scene to save. Empty/null = active scene.
+- `path` (optional) — destination `.unity` path. Empty/null = save back to the scene's existing path.
+
+## Validation
+
+Throws if the scene cannot be resolved, has no existing path AND no override path was supplied, or the supplied path does not end with `.unity`. On `EditorSceneManager.SaveScene` failure, surfaces an error with the current opened-scenes list for diagnosis.
 
 ## How to Call
 

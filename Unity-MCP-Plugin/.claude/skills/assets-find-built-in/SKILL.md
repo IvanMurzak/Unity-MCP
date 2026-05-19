@@ -1,9 +1,21 @@
 ---
 name: assets-find-built-in
-description: "Search the built-in assets of the Unity Editor located in the built-in resources: Resources/unity_builtin_extra. Doesn't support GUIDs since built-in assets do not have them."
+description: Search the built-in assets of the Unity Editor (located at Resources/unity_builtin_extra). Filters by name and/or type; built-in assets have no GUID so GUID-based lookups are not supported.
 ---
 
 # Assets / Find (Built-in)
+
+Search the built-in assets of the Unity Editor located in the built-in resources: Resources/unity_builtin_extra. Doesn't support GUIDs since built-in assets do not have them.
+
+## Inputs
+
+- `name` (optional) — case-insensitive name fragment. Underscores, hyphens, spaces, and periods delimit search words so partial-word matching works.
+- `type` (optional) — restrict results to assets assignable to this type (e.g. `UnityEngine.Texture2D`).
+- `maxResults` — cap on returned list size (default 10).
+
+## Ranking
+
+Results are sorted by descending match quality: exact match → substring match → all-words match → partial-words match. Within a rank, results are sorted alphabetically by filename for stable ordering.
 
 ## How to Call
 

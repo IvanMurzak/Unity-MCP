@@ -1,9 +1,20 @@
 ---
 name: editor-application-set-state
-description: Control the Unity Editor application state. You can start, stop, or pause the 'playmode'. Use 'editor-application-get-state' tool to get the current state first.
+description: Start / stop / pause the Unity Editor 'playmode'. Use 'editor-application-get-state' to inspect the current state first. Throws if the project currently has compilation errors.
 ---
 
 # Editor / Application / Set State
+
+Control the Unity Editor application state. You can start, stop, or pause the 'playmode'. Use 'editor-application-get-state' tool to get the current state first.
+
+## Inputs
+
+- `isPlaying` (default `false`) — sets `EditorApplication.isPlaying`.
+- `isPaused` (default `false`) — sets `EditorApplication.isPaused`.
+
+## Behavior
+
+Refuses any state change while `EditorUtility.scriptCompilationFailed` is true — instead throws with the compilation error details so the caller can fix them first. On success returns the post-change `EditorStatsData` snapshot.
 
 ## How to Call
 

@@ -35,6 +35,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ReadOnlyHint = true,
             IdempotentHint = true
         )]
+        [McpPluginSkillDescription(ComponentGetSkill.Description)]
+        [McpPluginSkillBody(ComponentGetSkill.Body)]
         [Description("Get detailed information about a specific Component on a GameObject. " +
             "Returns component type, enabled state, and optionally serialized fields and properties. " +
             "Use this to inspect component data before modifying it. " +

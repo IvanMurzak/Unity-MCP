@@ -28,6 +28,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Scene / Save",
             IdempotentHint = true
         )]
+        [McpPluginSkillDescription("Save an opened scene back to its asset file (or to a new path when `path` is " +
+            "provided). When `openedSceneName` is empty, saves the currently active scene. " +
+            "Use '" + SceneListOpenedToolId + "' to find the scene name first.")]
+        [McpPluginSkillBody("Save Opened scene to the asset file. " +
+            "Use '" + SceneListOpenedToolId + "' tool to get the list of all opened scenes.\n\n" +
+            "## Inputs\n\n" +
+            "- `openedSceneName` (optional) — name of an opened scene to save. Empty/null = active scene.\n" +
+            "- `path` (optional) — destination `.unity` path. Empty/null = save back to the scene's existing path.\n\n" +
+            "## Validation\n\n" +
+            "Throws if the scene cannot be resolved, has no existing path AND no override path was supplied, or the " +
+            "supplied path does not end with `.unity`. On `EditorSceneManager.SaveScene` failure, surfaces an error " +
+            "with the current opened-scenes list for diagnosis.")]
         [Description("Save Opened scene to the asset file. " +
             "Use '" + SceneListOpenedToolId + "' tool to get the list of all opened scenes.")]
         public void Save

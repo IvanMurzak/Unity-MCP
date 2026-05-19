@@ -29,6 +29,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Assets / Move",
             Enabled = false
         )]
+        [McpPluginSkillDescription("Move or rename assets at the given project paths. " +
+            "Refreshes the AssetDatabase at the end. " +
+            "Use '" + AssetsFindToolId + "' to locate the assets first.")]
+        [McpPluginSkillBody("Move the assets at paths in the project. " +
+            "Should be used for asset rename. " +
+            "Does AssetDatabase.Refresh() at the end. " +
+            "Use '" + AssetsFindToolId + "' tool to find assets before moving.\n\n" +
+            "## Inputs\n\n" +
+            "- `sourcePaths` — paths of the assets to move.\n" +
+            "- `destinationPaths` — target paths (must match `sourcePaths` length).\n\n" +
+            "## Behavior\n\n" +
+            "Each pair is moved independently via `AssetDatabase.MoveAsset`. " +
+            "Per-pair failures (Unity's `MoveAsset` returns a non-empty error string) are surfaced in " +
+            "`response.Errors`; successful moves accumulate into `response.MovedPaths`.")]
         [Description("Move the assets at paths in the project. " +
             "Should be used for asset rename. " +
             "Does AssetDatabase.Refresh() at the end. " +

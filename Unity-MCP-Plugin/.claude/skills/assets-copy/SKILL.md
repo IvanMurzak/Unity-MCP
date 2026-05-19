@@ -1,9 +1,20 @@
 ---
 name: assets-copy
-description: Copy assets at given paths and store them at new paths. Does AssetDatabase.Refresh() at the end. Use 'assets-find' tool to find assets before copying.
+description: Copy assets at given paths and store them at new paths. Refreshes the AssetDatabase at the end. Use 'assets-find' to locate the source assets first.
 ---
 
 # Assets / Copy
+
+Copy assets at given paths and store them at new paths. Does AssetDatabase.Refresh() at the end. Use 'assets-find' tool to find assets before copying.
+
+## Inputs
+
+- `sourcePaths` — paths of the assets to copy.
+- `destinationPaths` — paths to store the copied assets (must match `sourcePaths` length).
+
+## Behavior
+
+Each source/destination pair is copied in order. Per-pair errors are accumulated in the response instead of throwing, so a single bad pair does not abort the whole batch.
 
 ## How to Call
 

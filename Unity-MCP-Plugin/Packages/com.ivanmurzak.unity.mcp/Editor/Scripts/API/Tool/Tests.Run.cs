@@ -35,6 +35,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Tests / Run",
             Enabled = true
         )]
+        [McpPluginSkillDescription("Execute Unity tests (`EditMode` or `PlayMode`) and return per-test results. " +
+            "Supports filtering by test assembly, namespace, class, and method. " +
+            "Refreshes the AssetDatabase first; defers execution across domain reloads if scripts changed. " +
+            "Precondition: every open scene must be saved — dirty scenes abort the run.")]
+        [McpPluginSkillBody("Execute Unity tests and return detailed results. " +
+            "Supports filtering by test mode, assembly, namespace, class, and method. " +
+            "Recommended to use '" + nameof(TestMode.EditMode) + "' for faster iteration during development. " +
+            "Precondition: every open scene MUST be saved (no unsaved changes). If any open scene is dirty, " +
+            "this tool throws an InvalidOperationException listing the dirty scenes; save them and retry.\n\n" +
+            "## Filters\n\n" +
+            "- `testMode` (default `EditMode`) — `EditMode` or `PlayMode`. EditMode is faster; prefer it during iteration.\n" +
+            "- `testAssembly` / `testNamespace` / `testClass` / `testMethod` — optional, layered filters. Namespace and " +
+            "class filters become regex `groupNames` so the validation count and Unity's execution stay in sync. " +
+            "`testMethod` must be fully qualified (`Namespace.FixtureName.TestName`).\n\n" +
+            "## Response toggles\n\n" +
+            "- `includePassingTests` (default `false`) — include details for passing tests; otherwise only failing test details are returned.\n" +
+            "- `includeMessages` (default `true`) — include per-test result messages.\n" +
+            "- `includeStacktrace` (default `false`) — include stack traces for failing tests.\n" +
+            "- `includeLogs` (default `false`) — include console logs captured during the run.\n" +
+            "- `logType` (default `Warning`) — minimum log severity to include.\n" +
+            "- `includeLogsStacktrace` (default `false`) — include log stack traces (large payload; use sparingly).\n\n" +
+            "## Domain reloads\n\n" +
+            "If the AssetDatabase refresh triggers compilation, the tool persists the run parameters to `SessionState`, " +
+            "returns `Processing`, and resumes the run automatically after the reload completes. Pre-existing " +
+            "compilation errors short-circuit the run and return the error details so the caller can fix the project first.")]
         [Description("Execute Unity tests and return detailed results. " +
             "Supports filtering by test mode, assembly, namespace, class, and method. " +
             "Recommended to use '" + nameof(TestMode.EditMode) + "' for faster iteration during development. " +

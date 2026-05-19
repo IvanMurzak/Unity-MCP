@@ -29,6 +29,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Assets / Prefab / Save",
             IdempotentHint = true
         )]
+        [McpPluginSkillDescription("Save the currently opened prefab edit stage back to its prefab asset without exiting the stage. " +
+            "Pair with '" + AssetsPrefabOpenToolId + "' to enter the edit mode first.")]
+        [McpPluginSkillBody("Save a prefab. " +
+            "Use it when you are in prefab editing mode in Unity Editor. " +
+            "Use '" + AssetsPrefabOpenToolId + "' tool to open a prefab first.\n\n" +
+            "## Behavior\n\n" +
+            "Calls `PrefabUtility.SaveAsPrefabAsset` on the current prefab stage's contents root, clears the stage's " +
+            "dirtiness flag, repaints editor windows, and returns an `AssetObjectRef` to the saved prefab. " +
+            "Throws when no prefab stage is currently open.")]
         [Description("Save a prefab. " +
             "Use it when you are in prefab editing mode in Unity Editor. " +
             "Use '" + AssetsPrefabOpenToolId + "' tool to open a prefab first.")]

@@ -28,6 +28,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ReadOnlyHint = true,
             IdempotentHint = true
         )]
+        [McpPluginSkillDescription("Search the Unity asset database using a search filter string. " +
+            "The filter accepts names, labels (`l:`), types (`t:`), AssetBundles (`b:`), areas (`a:`), and globs (`glob:`). " +
+            "See the body for the full filter syntax.")]
+        [McpPluginSkillBody("Search the asset database using the search filter string. " +
+            "Allows you to search for Assets. The string argument can provide names, labels or types (classnames).\n\n" +
+            "## Filter syntax\n\n" +
+            "- **Name** — filter assets by their filename (without extension). Words separated by whitespace are " +
+            "treated as separate name searches.\n" +
+            "- **Labels (`l:`)** — assets can have labels attached. Use `l:` before each label.\n" +
+            "- **Types (`t:`)** — find assets based on explicitly identified types. Available types include " +
+            "AnimationClip, AudioClip, AudioMixer, ComputeShader, Font, GUISkin, Material, Mesh, Model, " +
+            "PhysicMaterial, Prefab, Scene, Script, Shader, Sprite, Texture, VideoClip, VisualEffectAsset, " +
+            "VisualEffectSubgraph.\n" +
+            "- **AssetBundles (`b:`)** — find assets which are part of an Asset bundle.\n" +
+            "- **Area (`a:`)** — find assets in a specific area. Valid values: `all`, `assets`, `packages`.\n" +
+            "- **Globbing (`glob:`)** — use globbing to match specific rules.\n\n" +
+            "Searching is case-insensitive. Use `searchInFolders` to restrict the search scope. " +
+            "`maxResults` caps the returned list (default 10) — results beyond it are truncated.")]
         [Description("Search the asset database using the search filter string. " +
             "Allows you to search for Assets. The string argument can provide names, labels or types (classnames).")]
         public List<AssetObjectRef> Find

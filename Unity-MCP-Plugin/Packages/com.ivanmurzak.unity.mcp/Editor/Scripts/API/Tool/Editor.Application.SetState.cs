@@ -29,6 +29,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             IdempotentHint = true,
             Enabled = false
         )]
+        [McpPluginSkillDescription("Start / stop / pause the Unity Editor 'playmode'. " +
+            "Use '" + EditorApplicationGetStateToolId + "' to inspect the current state first. " +
+            "Throws if the project currently has compilation errors.")]
+        [McpPluginSkillBody("Control the Unity Editor application state. " +
+            "You can start, stop, or pause the 'playmode'. " +
+            "Use '" + EditorApplicationGetStateToolId + "' tool to get the current state first.\n\n" +
+            "## Inputs\n\n" +
+            "- `isPlaying` (default `false`) — sets `EditorApplication.isPlaying`.\n" +
+            "- `isPaused` (default `false`) — sets `EditorApplication.isPaused`.\n\n" +
+            "## Behavior\n\n" +
+            "Refuses any state change while `EditorUtility.scriptCompilationFailed` is true — instead throws with " +
+            "the compilation error details so the caller can fix them first. On success returns the post-change " +
+            "`EditorStatsData` snapshot.")]
         [Description("Control the Unity Editor application state. " +
             "You can start, stop, or pause the 'playmode'. " +
             "Use '" + EditorApplicationGetStateToolId + "' tool to get the current state first.")]

@@ -1,9 +1,20 @@
 ---
 name: gameobject-component-add
-description: Add Component to GameObject in opened Prefab or in a Scene. Use 'gameobject-find' tool to find the target GameObject first. Use 'gameobject-component-list-all' tool to find the component type names to add.
+description: Add one or more Components to a GameObject in the opened Prefab or active Scene. Component types are looked up by full name (with namespace) or by class-name fallback. Use 'gameobject-find' to locate the host GameObject and 'gameobject-component-list-all' to discover valid component type names.
 ---
 
 # GameObject / Component / Add
+
+Add Component to GameObject in opened Prefab or in a Scene. Use 'gameobject-find' tool to find the target GameObject first. Use 'gameobject-component-list-all' tool to find the component type names to add.
+
+## Inputs
+
+- `componentNames` — list of component type names. Each entry may be a fully-qualified type name (preferred) or a bare class name (resolved via fallback to `AllComponentTypes`).
+- `gameObjectRef` — the target GameObject. Required.
+
+## Behavior
+
+Per-name errors (unknown type, type not assignable to `UnityEngine.Component`, add-failed/duplicate) are accumulated in `response.Errors` / `response.Warnings` instead of throwing, so a single bad name does not abort the whole batch. Successful additions populate `response.AddedComponents` with `ComponentDataShallow` snapshots.
 
 ## How to Call
 

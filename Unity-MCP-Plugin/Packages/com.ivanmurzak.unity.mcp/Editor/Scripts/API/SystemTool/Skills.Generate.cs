@@ -29,6 +29,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Enabled = false,
             ToolType = McpToolType.System
         )]
+        [McpPluginSkillDescription("Regenerate every `SKILL.md` from the project's currently-registered MCP tools into " +
+            "the configured skills folder (or a project-relative override path). " +
+            "Writes the YAML `description:` from `[McpPluginSkillDescription]` and the body from `[McpPluginSkillBody]`.")]
+        [McpPluginSkillBody("Generate all skills from the existed Tools in the Unity Project.\n\n" +
+            "## Inputs\n\n" +
+            "- `path` (optional) — project-relative skills folder (e.g. `.claude/skills`). Absolute paths and `..` " +
+            "traversal segments are rejected. When null/empty, the editor's configured `SkillsRootFolderAbsolutePath` " +
+            "is used.\n\n" +
+            "## Behavior\n\n" +
+            "Creates the destination folder if missing, then invokes `McpPluginInstance.GenerateSkillFiles(...)` to " +
+            "emit a `SKILL.md` per registered MCP tool. The plugin's `SkillsPath` is temporarily swapped to the target " +
+            "folder and restored in `finally` so the on-disk configuration is unchanged after the call returns.")]
         [Description("Generate all skills from the existed Tools in the Unity Project.")]
         public void GenerateAll
         (

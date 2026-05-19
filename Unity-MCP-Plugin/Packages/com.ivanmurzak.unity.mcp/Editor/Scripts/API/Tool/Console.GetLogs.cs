@@ -26,6 +26,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ReadOnlyHint = true,
             IdempotentHint = true
         )]
+        [McpPluginSkillDescription("Retrieve Unity Editor logs from the MCP plugin's `LogCollector`, " +
+            "optionally filtered by log type or time window. Useful for debugging and monitoring Editor activity.")]
+        [McpPluginSkillBody("Retrieves Unity Editor logs. " +
+            "Useful for debugging and monitoring Unity Editor activity.\n\n" +
+            "## Inputs\n\n" +
+            "- `maxEntries` (default 100, minimum 1) — caps the size of the returned array.\n" +
+            "- `logTypeFilter` — Unity `LogType` filter; `null` returns all severities.\n" +
+            "- `includeStackTrace` (default `false`) — include stack-trace strings in each entry.\n" +
+            "- `lastMinutes` (default 0) — when non-zero, only logs from the last N minutes are returned.")]
         [Description("Retrieves Unity Editor logs. " +
             "Useful for debugging and monitoring Unity Editor activity.")]
         public LogEntry[] GetLogs

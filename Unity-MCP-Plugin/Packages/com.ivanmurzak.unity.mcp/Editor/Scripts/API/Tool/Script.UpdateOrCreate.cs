@@ -31,6 +31,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             OpenWorldHint = false,
             Enabled = false
         )]
+        [McpPluginSkillDescription("Write a `.cs` script file (create or overwrite) with the provided C# code. " +
+            "Validates syntax via Roslyn before write — invalid code is rejected with error details and the file is left " +
+            "untouched. Refreshes the AssetDatabase and delivers the final result via `requestId` after Unity finishes " +
+            "the triggered compilation. Use '" + ScriptReadToolId + "' to inspect existing content first.")]
+        [McpPluginSkillBody("Updates or creates script file with the provided C# code. " +
+            "Does AssetDatabase.Refresh() at the end. " +
+            "Provides compilation error details if the code has syntax errors. " +
+            "Use '" + ScriptReadToolId + "' tool to read existing script files first.\n\n" +
+            "## Inputs\n\n" +
+            "- `filePath` — required `.cs` path.\n" +
+            "- `content` — C# source. MUST pass `ScriptUtils.IsValidCSharpSyntax`.\n" +
+            "- `requestId` — required for the processing/delivered-later contract.\n\n" +
+            "## Behavior\n\n" +
+            "Creates any missing parent directories, writes the file, then calls `AssetDatabase.Refresh` and schedules " +
+            "a post-compilation notification so the final response is delivered after Unity finishes the recompile.")]
         [Description("Updates or creates script file with the provided C# code. " +
             "Does AssetDatabase.Refresh() at the end. " +
             "Provides compilation error details if the code has syntax errors. " +

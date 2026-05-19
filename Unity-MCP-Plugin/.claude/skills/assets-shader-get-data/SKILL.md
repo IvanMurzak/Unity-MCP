@@ -1,13 +1,26 @@
 ---
 name: assets-shader-get-data
-description: |-
-  Get detailed data about a shader asset in the Unity project. Returns shader properties, subshaders, passes, compilation errors, and supported status. Use 'assets-find' tool with filter 't:Shader' to find shaders, or 'assets-shader-list-all' tool to list all shader names.
-  
-  Path-scoped reads (token-saving): supply 'paths' (a list of paths) to read only the listed fields/elements via Reflector.TryReadAt, or 'viewQuery' (a ViewQuery) to navigate to a subtree and/or filter by name regex / max depth / type via Reflector.View. The result populates 'View' on the returned ShaderData. These two parameters are mutually exclusive.
-  Path syntax: 'fieldName', 'nested/field', 'arrayField/[i]', 'dictField/[key]'. Leading '#/' is stripped.
+description: "Get detailed data about a shader asset — properties, subshaders, passes, compilation messages, and supported status. Supports token-saving path-scoped reads via `paths` or `viewQuery`. Use 'assets-find' with `t:Shader` or 'assets-shader-list-all' to locate the shader first."
 ---
 
 # Assets / Shader / Get Data
+
+Get detailed data about a shader asset in the Unity project. Returns shader properties, subshaders, passes, compilation errors, and supported status. Use 'assets-find' tool with filter 't:Shader' to find shaders, or 'assets-shader-list-all' tool to list all shader names.
+
+## Toggles (most default off to keep responses small)
+
+- `includeMessages` (default `true`) — shader compilation messages.
+- `includeProperties` (default `false`) — uniforms list.
+- `includeSubshaders` (default `false`) — subshader and pass structure.
+- `includeSourceCode` (default `false`) — pass source code. Implies `includeSubshaders` and can produce very large responses.
+
+## Path-scoped reads (token-saving)
+
+Supply `paths` (a list of paths) to read only the listed fields/elements via `Reflector.TryReadAt`, or `viewQuery` (a `ViewQuery`) to navigate to a subtree and/or filter by name regex / max depth / type via `Reflector.View`. The result populates `View` on the returned `ShaderData`. These two parameters are mutually exclusive.
+
+## Path syntax
+
+`fieldName`, `nested/field`, `arrayField/[i]`, `dictField/[key]`. Leading `#/` is stripped.
 
 ## How to Call
 

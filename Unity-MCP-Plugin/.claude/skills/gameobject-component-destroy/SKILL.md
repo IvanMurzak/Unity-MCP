@@ -1,9 +1,20 @@
 ---
 name: gameobject-component-destroy
-description: Destroy one or many components from target GameObject. Can't destroy missed components. Use 'gameobject-find' tool to find the target GameObject and 'gameobject-component-get' to get component details first.
+description: Destroy one or more Components from a target GameObject. Missing (null) components are skipped — they cannot be destroyed. Use 'gameobject-find' and 'gameobject-component-get' to identify the components first.
 ---
 
 # GameObject / Component / Destroy
+
+Destroy one or many components from target GameObject. Can't destroy missed components. Use 'gameobject-find' tool to find the target GameObject and 'gameobject-component-get' to get component details first.
+
+## Inputs
+
+- `gameObjectRef` — the host GameObject.
+- `destroyComponentRefs` — `ComponentRefList` of components to destroy (matched against the GameObject's components).
+
+## Behavior
+
+Iterates `go.GetComponents<Component>()`, skipping null entries (missing scripts). For each non-null component that matches one of `destroyComponentRefs`, the tool snapshots a `ComponentRef`, calls `Object.DestroyImmediate`, and records the destroyed reference. If no component matches at all, throws with the help text from `Error.NotFoundComponents` (which includes a preview of all available components on the GameObject).
 
 ## How to Call
 

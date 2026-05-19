@@ -1,9 +1,19 @@
 ---
 name: scene-unload
-description: Unload scene from the Opened scenes in Unity Editor. Use 'scene-list-opened' tool to get the list of all opened scenes.
+description: Unload an opened scene from the Unity Editor (asynchronously via `SceneManager.UnloadSceneAsync`). Use 'scene-list-opened' to find the scene name first.
 ---
 
 # Scene / Unload
+
+Unload scene from the Opened scenes in Unity Editor. Use 'scene-list-opened' tool to get the list of all opened scenes.
+
+## Inputs
+
+- `name` — required non-empty scene name. Must match an opened scene; otherwise throws.
+
+## Behavior
+
+Runs `SceneManager.UnloadSceneAsync` on the main thread and awaits completion. Returns an `UnloadSceneResult` containing the scene name and an `AssetObjectRef` to its asset (or `null` if the scene was not backed by an asset on disk).
 
 ## How to Call
 

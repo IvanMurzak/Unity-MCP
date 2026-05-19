@@ -1,9 +1,21 @@
 ---
 name: script-read
-description: Reads the content of a script file and returns it as a string. Use 'script-update-or-create' tool to update or create script files.
+description: Read a `.cs` script file and return its content as a string. Supports a 1-based `lineFrom`/`lineTo` slice for partial reads. Pair with 'script-update-or-create' to write back.
 ---
 
 # Script / Read
+
+Reads the content of a script file and returns it as a string. Use 'script-update-or-create' tool to update or create script files.
+
+## Inputs
+
+- `filePath` — required `.cs` path. Throws if missing on disk.
+- `lineFrom` (default 1, 1-based) — start line; clamped into valid range.
+- `lineTo` (default -1 = end-of-file, 1-based) — inclusive end line; clamped into valid range.
+
+## Behavior
+
+Reads the file with `File.ReadAllLines` and slices `[lineFrom..lineTo]` (inclusive). The slice indices are clamped — passing out-of-range `lineFrom`/`lineTo` is forgiving (read returns at-most the whole file).
 
 ## How to Call
 

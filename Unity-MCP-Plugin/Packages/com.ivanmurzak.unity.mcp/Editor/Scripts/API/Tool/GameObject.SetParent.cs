@@ -29,6 +29,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "GameObject / Set Parent",
             IdempotentHint = true
         )]
+        [McpPluginSkillDescription("Reparent a batch of GameObjects under a new parent in the currently opened Prefab " +
+            "or active Scene. Per-item failures are reported in the returned status string instead of aborting the batch. " +
+            "Use '" + GameObjectFindToolId + "' to locate the GameObjects first.")]
+        [McpPluginSkillBody("Set parent GameObject to list of GameObjects in opened Prefab or in a Scene. " +
+            "Use '" + GameObjectFindToolId + "' tool to find the target GameObjects first.\n\n" +
+            "## Inputs\n\n" +
+            "- `gameObjectRefs` — list of children to reparent.\n" +
+            "- `parentGameObjectRef` — new parent. Must resolve, otherwise the call returns early with an error string.\n" +
+            "- `worldPositionStays` (default `true`) — preserve world-space transform when reparenting (passed to " +
+            "`Transform.SetParent`).\n\n" +
+            "## Behavior\n\n" +
+            "Iterates `gameObjectRefs` and reparents each one independently; per-item resolve errors are appended to " +
+            "the returned status string instead of throwing. After the loop, if at least one reparent succeeded, marks " +
+            "the active scene dirty and repaints editor windows.")]
         [Description("Set parent GameObject to list of GameObjects in opened Prefab or in a Scene. " +
             "Use '" + GameObjectFindToolId + "' tool to find the target GameObjects first.")]
         public string SetParent

@@ -1,9 +1,15 @@
 ---
 name: assets-prefab-save
-description: Save a prefab. Use it when you are in prefab editing mode in Unity Editor. Use 'assets-prefab-open' tool to open a prefab first.
+description: Save the currently opened prefab edit stage back to its prefab asset without exiting the stage. Pair with 'assets-prefab-open' to enter the edit mode first.
 ---
 
 # Assets / Prefab / Save
+
+Save a prefab. Use it when you are in prefab editing mode in Unity Editor. Use 'assets-prefab-open' tool to open a prefab first.
+
+## Behavior
+
+Calls `PrefabUtility.SaveAsPrefabAsset` on the current prefab stage's contents root, clears the stage's dirtiness flag, repaints editor windows, and returns an `AssetObjectRef` to the saved prefab. Throws when no prefab stage is currently open.
 
 ## How to Call
 

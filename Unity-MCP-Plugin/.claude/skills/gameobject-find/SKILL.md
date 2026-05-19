@@ -1,13 +1,27 @@
 ---
 name: gameobject-find
-description: |-
-  Finds specific GameObject by provided information in opened Prefab or in a Scene. First it looks for the opened Prefab, if any Prefab is opened it looks only there ignoring a scene. If no opened Prefab it looks into current active scene. Returns GameObject information and its children. Also, it returns Components preview just for the target GameObject.
-  
-  Path-scoped reads (token-saving): supply 'paths' (a list of paths) to read only the listed fields/elements via Reflector.TryReadAt, or 'viewQuery' (a ViewQuery) to navigate to a subtree and/or filter by name regex / max depth / type via Reflector.View. When either is supplied, the result populates 'Data' on the returned GameObjectData and overrides 'includeData' (which would otherwise produce a full recursive serialization). These two parameters are mutually exclusive — supply at most one.
-  Path syntax: 'fieldName', 'nested/field', 'arrayField/[i]', 'dictField/[key]'. Leading '#/' is stripped.
+description: Find a specific GameObject in the opened Prefab (preferred when present) or the active Scene. Optionally include editable data, components preview, bounds, and limited hierarchy. Supports token-saving path-scoped reads via `paths` or `viewQuery`.
 ---
 
 # GameObject / Find
+
+Finds specific GameObject by provided information in opened Prefab or in a Scene. First it looks for the opened Prefab, if any Prefab is opened it looks only there ignoring a scene. If no opened Prefab it looks into current active scene. Returns GameObject information and its children. Also, it returns Components preview just for the target GameObject.
+
+## Toggles (all default `false` to keep responses small)
+
+- `includeData` — full editable GameObject data (tag, layer, etc.).
+- `includeComponents` — attached components references.
+- `includeBounds` — 3D bounds.
+- `includeHierarchy` — hierarchy metadata.
+- `hierarchyDepth` (default 0) — depth of the hierarchy to include. `0` = target only, `1` = one layer below, etc.
+
+## Path-scoped reads (token-saving)
+
+Supply `paths` (a list of paths) to read only the listed fields/elements via `Reflector.TryReadAt`, or `viewQuery` (a `ViewQuery`) to navigate to a subtree and/or filter by name regex / max depth / type via `Reflector.View`. When either is supplied, the result populates `Data` on the returned `GameObjectData` and overrides `includeData` (which would otherwise produce a full recursive serialization). These two parameters are mutually exclusive — supply at most one.
+
+## Path syntax
+
+`fieldName`, `nested/field`, `arrayField/[i]`, `dictField/[key]`. Leading `#/` is stripped.
 
 ## How to Call
 

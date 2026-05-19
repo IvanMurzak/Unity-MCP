@@ -1,9 +1,21 @@
 ---
 name: script-update-or-create
-description: Updates or creates script file with the provided C# code. Does AssetDatabase.Refresh() at the end. Provides compilation error details if the code has syntax errors. Use 'script-read' tool to read existing script files first.
+description: Write a `.cs` script file (create or overwrite) with the provided C# code. Validates syntax via Roslyn before write — invalid code is rejected with error details and the file is left untouched. Refreshes the AssetDatabase and delivers the final result via `requestId` after Unity finishes the triggered compilation. Use 'script-read' to inspect existing content first.
 ---
 
 # Script / Update or Create
+
+Updates or creates script file with the provided C# code. Does AssetDatabase.Refresh() at the end. Provides compilation error details if the code has syntax errors. Use 'script-read' tool to read existing script files first.
+
+## Inputs
+
+- `filePath` — required `.cs` path.
+- `content` — C# source. MUST pass `ScriptUtils.IsValidCSharpSyntax`.
+- `requestId` — required for the processing/delivered-later contract.
+
+## Behavior
+
+Creates any missing parent directories, writes the file, then calls `AssetDatabase.Refresh` and schedules a post-compilation notification so the final response is delivered after Unity finishes the recompile.
 
 ## How to Call
 
