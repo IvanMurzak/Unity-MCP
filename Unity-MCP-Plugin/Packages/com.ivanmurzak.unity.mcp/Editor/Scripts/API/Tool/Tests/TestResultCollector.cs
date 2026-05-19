@@ -13,8 +13,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using com.IvanMurzak.McpPlugin.Common.Model;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
-using Extensions.Unity.PlayerPrefsEx;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 
@@ -50,15 +50,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             _ => "Unknown"
         };
 
-        public static PlayerPrefsString TestCallRequestID = new PlayerPrefsString("Unity_MCP_TestRunner_TestCallRequestID");
+        public static EditorPrefsString TestCallRequestID = new EditorPrefsString("Unity_MCP_TestRunner_TestCallRequestID");
 
-        public static PlayerPrefsBool IncludePassingTests = new PlayerPrefsBool("Unity_MCP_TestRunner_IncludePassingTests");
-        public static PlayerPrefsBool IncludeMessage = new PlayerPrefsBool("Unity_MCP_TestRunner_IncludeMessage", true);
-        public static PlayerPrefsBool IncludeMessageStacktrace = new PlayerPrefsBool("Unity_MCP_TestRunner_IncludeStacktrace");
+        public static EditorPrefsBool IncludePassingTests = new EditorPrefsBool("Unity_MCP_TestRunner_IncludePassingTests");
+        public static EditorPrefsBool IncludeMessage = new EditorPrefsBool("Unity_MCP_TestRunner_IncludeMessage", true);
+        public static EditorPrefsBool IncludeMessageStacktrace = new EditorPrefsBool("Unity_MCP_TestRunner_IncludeStacktrace");
 
-        public static PlayerPrefsBool IncludeLogs = new PlayerPrefsBool("Unity_MCP_TestRunner_IncludeLogs");
-        public static PlayerPrefsInt IncludeLogsMinLevel = new PlayerPrefsInt("Unity_MCP_TestRunner_IncludeLogsMinLevel", (int)LogType.Warning);
-        public static PlayerPrefsBool IncludeLogsStacktrace = new PlayerPrefsBool("Unity_MCP_TestRunner_IncludeLogsStacktrace");
+        public static EditorPrefsBool IncludeLogs = new EditorPrefsBool("Unity_MCP_TestRunner_IncludeLogs");
+        public static EditorPrefsInt IncludeLogsMinLevel = new EditorPrefsInt("Unity_MCP_TestRunner_IncludeLogsMinLevel", (int)LogType.Warning);
+        public static EditorPrefsBool IncludeLogsStacktrace = new EditorPrefsBool("Unity_MCP_TestRunner_IncludeLogsStacktrace");
 
         public TestResultCollector()
         {

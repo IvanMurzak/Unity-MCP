@@ -9,7 +9,7 @@
 */
 
 #nullable enable
-using Extensions.Unity.PlayerPrefsEx;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using Microsoft.Extensions.Logging;
 using R3;
 using UnityEngine;
@@ -19,7 +19,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
     public partial class MainWindowEditor
     {
-        internal static PlayerPrefsString selectedAiAgentId = new("Unity_MCP_SelectedAiAgent");
+        internal static EditorPrefsString selectedAiAgentId = new("Unity_MCP_SelectedAiAgent");
 
         private AiAgentConfigurator? currentAiAgentConfigurator;
 
@@ -48,7 +48,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var agentNames = AiAgentConfiguratorRegistry.GetAgentNames();
             aiAgentDropdown.choices = agentNames;
 
-            // Load saved selection from PlayerPrefs
+            // Load saved selection from EditorPrefs
             var savedAiAgentId = selectedAiAgentId.Value;
             var selectedIndex = 0;
 
@@ -79,7 +79,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 var newIndex = agentNames.IndexOf(evt.newValue);
                 if (newIndex < 0) return;
 
-                // Save selection to PlayerPrefs
+                // Save selection to EditorPrefs
                 var configurator = AiAgentConfiguratorRegistry.All[newIndex];
                 selectedAiAgentId.Value = configurator.AgentId;
 

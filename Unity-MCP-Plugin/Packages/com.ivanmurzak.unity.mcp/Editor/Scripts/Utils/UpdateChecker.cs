@@ -15,7 +15,6 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using com.IvanMurzak.Unity.MCP.Editor.UI;
-using Extensions.Unity.PlayerPrefsEx;
 using Microsoft.Extensions.Logging;
 using UnityEditor;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
@@ -50,9 +49,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         // elsewhere in this package. The 10s timeout covers OpenUPM's slowest realistic responses.
         private static readonly HttpClient HttpClient = CreateHttpClient();
 
-        private static PlayerPrefsBool DoNotShowAgain = new("Unity-MCP.UpdateChecker.DoNotShowAgain");
-        private static PlayerPrefsString NextCheckTime = new("Unity-MCP.UpdateChecker.NextCheckTime");
-        private static PlayerPrefsString SkippedVersion = new("Unity-MCP.UpdateChecker.SkippedVersion");
+        // EditorPrefs (not PlayerPrefs) — these are editor-only states. Storing them in
+        // PlayerPrefs meant a user clearing their game's save data (PlayerPrefs.DeleteAll)
+        // would also reset the update checker. See
+        // https://github.com/IvanMurzak/Unity-MCP/issues/755.
+        private static EditorPrefsBool DoNotShowAgain = new("Unity-MCP.UpdateChecker.DoNotShowAgain");
+        private static EditorPrefsString NextCheckTime = new("Unity-MCP.UpdateChecker.NextCheckTime");
+        private static EditorPrefsString SkippedVersion = new("Unity-MCP.UpdateChecker.SkippedVersion");
 
         private static bool isChecking = false;
         private static string? latestVersion = null;
@@ -71,11 +74,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         public static bool IsDoNotShowAgain
         {
             get => DoNotShowAgain.Value;
-            set
-            {
-                DoNotShowAgain.Value = value;
-                PlayerPrefsEx.Save();
-            }
+            set => DoNotShowAgain.Value = value;
         }
 
         /// <summary>
@@ -140,7 +139,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         public static void SkipVersion(string version)
         {
             SkippedVersion.Value = version;
-            PlayerPrefsEx.Save();
         }
 
         /// <summary>
@@ -151,7 +149,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             DoNotShowAgain.Value = false;
             NextCheckTime.Value = string.Empty;
             SkippedVersion.Value = string.Empty;
-            PlayerPrefsEx.Save();
         }
 
         /// <summary>
@@ -221,7 +218,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 if (!forceCheck)
                 {
                     NextCheckTime.Value = DateTime.UtcNow.AddHours(1).ToString("O");
-                    PlayerPrefsEx.Save();
                 }
                 isChecking = false;
             }

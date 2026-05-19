@@ -17,7 +17,6 @@ using System.Text.Json.Nodes;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
-using Extensions.Unity.PlayerPrefsEx;
 using Microsoft.Extensions.Logging;
 using R3;
 using UnityEngine.UIElements;
@@ -137,8 +136,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             public string Role { get; set; }
             public bool IsEnabled { get; set; }
             public IReadOnlyList<ArgumentData> Arguments { get; set; }
-            public PlayerPrefsBool descriptionExpanded;
-            public PlayerPrefsBool argumentsExpanded;
+            public EditorPrefsBool descriptionExpanded;
+            public EditorPrefsBool argumentsExpanded;
 
             public PromptViewModel(IPromptManager promptManager, IRunPrompt prompt)
             {
@@ -148,8 +147,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 Role = prompt.Role.ToString();
                 IsEnabled = promptManager?.IsPromptEnabled(prompt.Name) == true;
                 Arguments = ParseSchemaArguments(prompt.InputSchema);
-                descriptionExpanded = new PlayerPrefsBool(GetFoldoutKey(prompt.Name, "description-foldout"));
-                argumentsExpanded = new PlayerPrefsBool(GetFoldoutKey(prompt.Name, "arguments-foldout"));
+                descriptionExpanded = new EditorPrefsBool(GetFoldoutKey(prompt.Name, "description-foldout"));
+                argumentsExpanded = new EditorPrefsBool(GetFoldoutKey(prompt.Name, "arguments-foldout"));
             }
 
             private IReadOnlyList<ArgumentData> ParseSchemaArguments(JsonNode? schema)
