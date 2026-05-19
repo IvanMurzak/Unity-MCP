@@ -9,7 +9,7 @@ Close currently opened prefab. Use it when you are in prefab editing mode in Uni
 
 ## Inputs
 
-- `save` (default `true`) — when `true`, calls `PrefabUtility.SaveAsPrefabAsset` before exiting the stage; when `false`, the prefab stage's dirtiness is cleared and changes are discarded.
+- `save` (default `true`) — when `true`, calls `PrefabUtility.SaveAsPrefabAsset` before exiting the stage; when `false`, the save is skipped. The prefab stage's dirtiness is always cleared at the end, so any unsaved changes are discarded when `save` is `false`.
 
 ## Behavior
 

@@ -45,7 +45,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "Returns shader properties, subshaders, passes, compilation errors, and supported status. " +
             "Use '" + Tool_Assets.AssetsFindToolId + "' tool with filter 't:Shader' to find shaders, " +
             "or '" + AssetsShaderListAllToolId + "' tool to list all shader names.\n\n" +
-            "## Toggles (default off to keep responses small)\n\n" +
+            "## Toggles (most default off to keep responses small)\n\n" +
             "- `includeMessages` (default `true`) — shader compilation messages.\n" +
             "- `includeProperties` (default `false`) — uniforms list.\n" +
             "- `includeSubshaders` (default `false`) — subshader and pass structure.\n" +

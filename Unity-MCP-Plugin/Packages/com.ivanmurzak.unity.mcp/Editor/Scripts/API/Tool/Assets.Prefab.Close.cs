@@ -36,7 +36,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "Use '" + AssetsPrefabOpenToolId + "' tool to open a prefab first.\n\n" +
             "## Inputs\n\n" +
             "- `save` (default `true`) — when `true`, calls `PrefabUtility.SaveAsPrefabAsset` before exiting the stage; " +
-            "when `false`, the prefab stage's dirtiness is cleared and changes are discarded.\n\n" +
+            "when `false`, the save is skipped. The prefab stage's dirtiness is always cleared at the end, so any " +
+            "unsaved changes are discarded when `save` is `false`.\n\n" +
             "## Behavior\n\n" +
             "Throws when no prefab stage is currently open. Returns an `AssetObjectRef` for the closed prefab asset.")]
         [Description("Close currently opened prefab. " +

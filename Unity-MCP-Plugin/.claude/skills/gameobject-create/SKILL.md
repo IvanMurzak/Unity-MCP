@@ -10,7 +10,7 @@ Create a new GameObject in opened Prefab or in a Scene. If needed - provide prop
 ## Inputs
 
 - `name` — required non-empty name.
-- `parentGameObjectRef` (optional) — when provided, the new GameObject is parented under this one (`SetParent(parent, false)`); otherwise it's created at scene/prefab root.
+- `parentGameObjectRef` (optional) — when provided, the new GameObject is parented under this one (`SetParent(parent, worldPositionStays: false)`); otherwise it's created at scene/prefab root.
 - `position` / `rotation` / `scale` — optional transform; default to zero / zero / one.
 - `isLocalSpace` — when `true`, applies the transform in local space relative to the parent.
 - `primitiveType` (optional) — when set, the GameObject is created via `GameObject.CreatePrimitive` (adds the appropriate renderer/collider for the primitive shape).

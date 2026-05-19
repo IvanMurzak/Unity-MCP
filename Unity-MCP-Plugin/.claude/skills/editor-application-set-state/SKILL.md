@@ -14,7 +14,7 @@ Control the Unity Editor application state. You can start, stop, or pause the 'p
 
 ## Behavior
 
-Refuses to switch into play mode while `EditorUtility.scriptCompilationFailed` is true — instead throws with the compilation error details so the caller can fix them first. On success returns the post-change `EditorStatsData` snapshot.
+Refuses any state change while `EditorUtility.scriptCompilationFailed` is true — instead throws with the compilation error details so the caller can fix them first. On success returns the post-change `EditorStatsData` snapshot.
 
 ## How to Call
 

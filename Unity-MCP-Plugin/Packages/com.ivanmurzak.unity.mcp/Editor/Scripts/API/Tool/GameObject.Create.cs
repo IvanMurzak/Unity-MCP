@@ -38,7 +38,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "## Inputs\n\n" +
             "- `name` — required non-empty name.\n" +
             "- `parentGameObjectRef` (optional) — when provided, the new GameObject is parented under this one " +
-            "(`SetParent(parent, false)`); otherwise it's created at scene/prefab root.\n" +
+            "(`SetParent(parent, worldPositionStays: false)`); otherwise it's created at scene/prefab root.\n" +
             "- `position` / `rotation` / `scale` — optional transform; default to zero / zero / one.\n" +
             "- `isLocalSpace` — when `true`, applies the transform in local space relative to the parent.\n" +
             "- `primitiveType` (optional) — when set, the GameObject is created via `GameObject.CreatePrimitive` " +

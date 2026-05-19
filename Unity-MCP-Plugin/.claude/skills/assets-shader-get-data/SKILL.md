@@ -7,7 +7,7 @@ description: "Get detailed data about a shader asset — properties, subshaders,
 
 Get detailed data about a shader asset in the Unity project. Returns shader properties, subshaders, passes, compilation errors, and supported status. Use 'assets-find' tool with filter 't:Shader' to find shaders, or 'assets-shader-list-all' tool to list all shader names.
 
-## Toggles (default off to keep responses small)
+## Toggles (most default off to keep responses small)
 
 - `includeMessages` (default `true`) — shader compilation messages.
 - `includeProperties` (default `false`) — uniforms list.
