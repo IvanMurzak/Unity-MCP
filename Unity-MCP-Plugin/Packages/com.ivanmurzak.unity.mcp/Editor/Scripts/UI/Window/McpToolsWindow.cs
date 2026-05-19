@@ -17,6 +17,7 @@ using System.Text.Json.Nodes;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
+using Extensions.Unity.PlayerPrefsEx;
 using Microsoft.Extensions.Logging;
 using R3;
 using UnityEngine.UIElements;
@@ -161,9 +162,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             public IReadOnlyList<ArgumentData> Inputs { get; set; }
             public IReadOnlyList<ArgumentData> Outputs { get; set; }
             public string TokenCount { get; set; }
-            public EditorPrefsBool descriptionExpanded;
-            public EditorPrefsBool inputsExpanded;
-            public EditorPrefsBool outputsExpanded;
+            public PlayerPrefsBool descriptionExpanded;
+            public PlayerPrefsBool inputsExpanded;
+            public PlayerPrefsBool outputsExpanded;
 
             public ToolViewModel(IToolManager toolManager, IRunTool tool)
             {
@@ -174,9 +175,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 Inputs = ParseSchemaArguments(tool.InputSchema);
                 Outputs = ParseSchemaArguments(tool.OutputSchema);
                 TokenCount = UIMcpUtils.FormatTokenCount(tool.TokenCount);
-                descriptionExpanded = new EditorPrefsBool(GetFoldoutKey(tool.Name, "description-foldout"));
-                inputsExpanded = new EditorPrefsBool(GetFoldoutKey(tool.Name, "arguments-foldout"));
-                outputsExpanded = new EditorPrefsBool(GetFoldoutKey(tool.Name, "outputs-foldout"));
+                descriptionExpanded = new PlayerPrefsBool(GetFoldoutKey(tool.Name, "description-foldout"));
+                inputsExpanded = new PlayerPrefsBool(GetFoldoutKey(tool.Name, "arguments-foldout"));
+                outputsExpanded = new PlayerPrefsBool(GetFoldoutKey(tool.Name, "outputs-foldout"));
             }
 
             private IReadOnlyList<ArgumentData> ParseSchemaArguments(JsonNode? schema)
