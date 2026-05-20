@@ -15,9 +15,9 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using com.IvanMurzak.Unity.MCP.Editor.UI;
-using Extensions.Unity.PlayerPrefsEx;
 using Microsoft.Extensions.Logging;
 using UnityEditor;
+using UnityEngine;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
@@ -30,6 +30,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
     /// install for end users. GitHub releases are published before the OpenUPM build pipeline
     /// finishes, so polling GitHub releases would prompt users to update to a version that is
     /// not yet installable. See https://github.com/IvanMurzak/Unity-MCP/issues/694.
+    ///
+    /// Two opt-out layers gate the popup, in this order:
+    ///   1. <see cref="IsDisabledForProject"/> — team-shared, stored in
+    ///      <c>ProjectSettings/AI-Game-Developer-UpdateSettings.asset</c> via
+    ///      <see cref="UnityMcpUpdateProjectSettings"/>. Set this once and commit it to
+    ///      disable the popup for every team member who clones the project. See
+    ///      https://github.com/IvanMurzak/Unity-MCP/issues/768.
+    ///   2. <see cref="IsDoNotShowAgain"/> — per-user, stored in <see cref="EditorPrefs"/>
+    ///      (NOT <see cref="PlayerPrefs"/> — clearing in-game <c>PlayerPrefs</c> must not
+    ///      wipe the editor flag). See https://github.com/IvanMurzak/Unity-MCP/issues/755.
     /// </remarks>
     public static class UpdateChecker
     {
@@ -50,9 +60,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         // elsewhere in this package. The 10s timeout covers OpenUPM's slowest realistic responses.
         private static readonly HttpClient HttpClient = CreateHttpClient();
 
-        private static PlayerPrefsBool DoNotShowAgain = new("Unity-MCP.UpdateChecker.DoNotShowAgain");
-        private static PlayerPrefsString NextCheckTime = new("Unity-MCP.UpdateChecker.NextCheckTime");
-        private static PlayerPrefsString SkippedVersion = new("Unity-MCP.UpdateChecker.SkippedVersion");
+        // EditorPrefs is global to the Unity install, so the keys are namespaced by package id
+        // AND by a stable per-project token (Application.dataPath hash) to keep parallel projects
+        // from stomping on each other's state. See #755 for the migration rationale.
+        private static readonly string ProjectKeyPrefix =
+            $"{PackageId}.{Application.dataPath.GetHashCode():X8}.UpdateChecker.";
+        private static readonly string KeyDoNotShowAgain = ProjectKeyPrefix + "DoNotShowAgain";
+        private static readonly string KeyNextCheckTime  = ProjectKeyPrefix + "NextCheckTime";
+        private static readonly string KeySkippedVersion = ProjectKeyPrefix + "SkippedVersion";
 
         private static bool isChecking = false;
         private static string? latestVersion = null;
@@ -66,16 +81,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         }
 
         /// <summary>
-        /// Gets whether the user has chosen to never show the update popup again.
+        /// Gets whether the team-wide kill-switch is enabled for this project. When <c>true</c>,
+        /// the popup is suppressed for every team member who has the
+        /// <c>ProjectSettings/AI-Game-Developer-UpdateSettings.asset</c> file in their checkout,
+        /// regardless of their per-user <see cref="IsDoNotShowAgain"/> state.
         /// </summary>
+        /// <remarks>
+        /// Stored in <see cref="UnityMcpUpdateProjectSettings"/> — a <see cref="ScriptableSingleton{T}"/>
+        /// persisted under <c>ProjectSettings/</c>. The asset is intended to be committed to VCS.
+        /// </remarks>
+        public static bool IsDisabledForProject
+        {
+            get => UnityMcpUpdateProjectSettings.instance.DisableUpdateNotificationsForTeam;
+            set => UnityMcpUpdateProjectSettings.instance.DisableUpdateNotificationsForTeam = value;
+        }
+
+        /// <summary>
+        /// Gets whether the user has chosen to never show the update popup again on this machine.
+        /// </summary>
+        /// <remarks>
+        /// Stored in <see cref="EditorPrefs"/> (per-user, per-Unity-install) — not in
+        /// <see cref="PlayerPrefs"/>. Clearing in-game <c>PlayerPrefs</c> must not silently
+        /// reset the editor flag. See https://github.com/IvanMurzak/Unity-MCP/issues/755.
+        /// </remarks>
         public static bool IsDoNotShowAgain
         {
-            get => DoNotShowAgain.Value;
-            set
-            {
-                DoNotShowAgain.Value = value;
-                PlayerPrefsEx.Save();
-            }
+            get => EditorPrefs.GetBool(KeyDoNotShowAgain, false);
+            set => EditorPrefs.SetBool(KeyDoNotShowAgain, value);
         }
 
         /// <summary>
@@ -112,16 +144,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         }
 
         /// <summary>
-        /// Determines if we should check for updates based on user preferences and cooldown.
+        /// Determines if we should check for updates based on the team-shared project flag,
+        /// the per-user opt-out, and the cooldown timer.
         /// </summary>
+        /// <remarks>
+        /// Precedence (in order):
+        ///   1. <see cref="IsDisabledForProject"/> — team-wide kill-switch wins over everything.
+        ///   2. <see cref="IsDoNotShowAgain"/> — per-user opt-out.
+        ///   3. The cooldown timestamp stored in <see cref="EditorPrefs"/>.
+        /// </remarks>
         public static bool ShouldCheckForUpdates()
         {
-            // Don't check if user opted out
-            if (DoNotShowAgain.Value)
+            // 1. Team-wide kill-switch — short-circuits before any per-user state is consulted.
+            if (IsDisabledForProject)
                 return false;
 
-            // Check if we're still in cooldown period
-            var nextCheckTimeStr = NextCheckTime.Value;
+            // 2. Per-user opt-out.
+            if (IsDoNotShowAgain)
+                return false;
+
+            // 3. Cooldown.
+            var nextCheckTimeStr = EditorPrefs.GetString(KeyNextCheckTime, string.Empty);
             if (!string.IsNullOrEmpty(nextCheckTimeStr))
             {
                 if (DateTime.TryParse(nextCheckTimeStr, out var nextCheckDateTime))
@@ -139,19 +182,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// </summary>
         public static void SkipVersion(string version)
         {
-            SkippedVersion.Value = version;
-            PlayerPrefsEx.Save();
+            EditorPrefs.SetString(KeySkippedVersion, version);
         }
 
         /// <summary>
-        /// Clears all update checker preferences (useful for testing).
+        /// Clears all per-user update-checker preferences (useful for testing and for the
+        /// "Reset Update Preferences" debug menu).
         /// </summary>
+        /// <remarks>
+        /// This intentionally does NOT reset <see cref="IsDisabledForProject"/> — that flag is
+        /// team-shared via <c>ProjectSettings/</c>, and clearing it from a debug menu would
+        /// produce a spurious diff in a committed asset (potentially surprising other team
+        /// members). The team flag is reset only through the Project Settings UI or
+        /// <c>Tools ▸ AI Game Developer ▸ Disable Update Notifications (Team)</c>.
+        /// </remarks>
         public static void ClearPreferences()
         {
-            DoNotShowAgain.Value = false;
-            NextCheckTime.Value = string.Empty;
-            SkippedVersion.Value = string.Empty;
-            PlayerPrefsEx.Save();
+            EditorPrefs.DeleteKey(KeyDoNotShowAgain);
+            EditorPrefs.DeleteKey(KeyNextCheckTime);
+            EditorPrefs.DeleteKey(KeySkippedVersion);
         }
 
         /// <summary>
@@ -185,7 +234,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 latestVersion = fetched;
 
                 // Check if this version was skipped
-                var skippedVersion = SkippedVersion.Value;
+                var skippedVersion = EditorPrefs.GetString(KeySkippedVersion, string.Empty);
                 if (!string.IsNullOrEmpty(skippedVersion) && skippedVersion == fetched && !forceCheck)
                 {
                     return;
@@ -220,8 +269,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 // Set next allowed check time to enforce cooldown (only for automatic checks)
                 if (!forceCheck)
                 {
-                    NextCheckTime.Value = DateTime.UtcNow.AddHours(1).ToString("O");
-                    PlayerPrefsEx.Save();
+                    EditorPrefs.SetString(KeyNextCheckTime, DateTime.UtcNow.AddHours(1).ToString("O"));
                 }
                 isChecking = false;
             }

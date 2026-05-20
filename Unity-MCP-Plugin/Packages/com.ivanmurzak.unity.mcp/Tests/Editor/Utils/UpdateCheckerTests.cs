@@ -20,15 +20,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [SetUp]
         public void SetUp()
         {
-            // Clear all preferences before each test to ensure clean state
+            // Clear all per-user preferences AND the team-shared project flag before each
+            // test. ClearPreferences() intentionally does NOT reset IsDisabledForProject
+            // (see its XML doc) — explicit reset here so the precedence tests start from a
+            // known false state regardless of what a prior test wrote.
             UpdateChecker.ClearPreferences();
+            UpdateChecker.IsDisabledForProject = false;
         }
 
         [TearDown]
         public void TearDown()
         {
-            // Clean up preferences after each test
+            // Mirror SetUp — leave both layers clean for any test that follows. Same rationale
+            // as above: ClearPreferences() does not touch the project flag, so reset it
+            // explicitly to keep tests order-independent.
             UpdateChecker.ClearPreferences();
+            UpdateChecker.IsDisabledForProject = false;
         }
 
         #region Version Comparison Tests
@@ -376,6 +383,57 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             UpdateChecker.ClearPreferences();
 
             Assert.IsTrue(UpdateChecker.ShouldCheckForUpdates());
+        }
+
+        // Team-shared kill-switch tests — see https://github.com/IvanMurzak/Unity-MCP/issues/768.
+        // The project flag must short-circuit ShouldCheckForUpdates() BEFORE the per-user
+        // DoNotShowAgain check, so flipping it on suppresses the popup for the whole team
+        // regardless of individual users' EditorPrefs state.
+
+        [Test]
+        public void ShouldCheckForUpdates_ProjectDisabled_ReturnsFalse()
+        {
+            UpdateChecker.IsDisabledForProject = true;
+
+            Assert.IsFalse(UpdateChecker.ShouldCheckForUpdates());
+        }
+
+        [Test]
+        public void ShouldCheckForUpdates_ProjectDisabled_TakesPrecedenceOverPerUserFlag()
+        {
+            // Project flag ON, per-user flag OFF — popup must still be suppressed.
+            UpdateChecker.IsDisabledForProject = true;
+            UpdateChecker.IsDoNotShowAgain = false;
+
+            Assert.IsFalse(UpdateChecker.ShouldCheckForUpdates());
+        }
+
+        [Test]
+        public void ShouldCheckForUpdates_ProjectEnabled_FallsBackToPerUser()
+        {
+            // Project flag OFF, per-user flag ON — popup is still suppressed by the per-user
+            // layer. Pins the precedence ordering: project flag does NOT mean "force show",
+            // only "force hide".
+            UpdateChecker.IsDisabledForProject = false;
+            UpdateChecker.IsDoNotShowAgain = true;
+
+            Assert.IsFalse(UpdateChecker.ShouldCheckForUpdates());
+        }
+
+        [Test]
+        public void ClearPreferences_DoesNotResetProjectFlag()
+        {
+            // ClearPreferences() is the per-user reset (also wired into the "Reset Update
+            // Preferences" debug menu). It must NOT touch the team-shared project flag —
+            // doing so would produce a spurious diff in a committed asset and surprise other
+            // team members.
+            UpdateChecker.IsDisabledForProject = true;
+
+            UpdateChecker.ClearPreferences();
+
+            Assert.IsTrue(UpdateChecker.IsDisabledForProject,
+                "ClearPreferences() reset the project flag — that flag belongs to ProjectSettings/ and " +
+                "must only be mutated via the Project Settings UI or the Tools menu toggle.");
         }
 
         #endregion
