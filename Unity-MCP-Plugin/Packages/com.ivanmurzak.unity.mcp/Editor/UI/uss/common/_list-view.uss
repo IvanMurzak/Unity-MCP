@@ -24,7 +24,7 @@
 
 /* Item Container */
 .item-container {
-    background-color: #4A4A4A;
+    background-color: var(--unity-colors-helpbox-background);
     border-radius: 12px;
     padding: 10px;
     margin-bottom: 7px;
@@ -63,13 +63,15 @@
     white-space: nowrap;
 }
 
-/* Item Highlighting States */
+/* Item Highlighting States — semitransparent tints layer over the
+   theme-aware base so the card stays readable on both light and dark
+   editor skins. */
 .item-container.enabled {
-    background-color: #3A4039;
+    background-color: rgba(80, 160, 80, 0.18);
     transition-duration: 200ms;
 }
 
 .item-container.disabled {
-    background-color: #3F393A;
+    background-color: rgba(160, 80, 80, 0.18);
     transition-duration: 200ms;
 }
