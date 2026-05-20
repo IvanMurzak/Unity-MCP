@@ -37,6 +37,7 @@ namespace com.IvanMurzak.Unity.MCP
             // https://github.com/IvanMurzak/MCP-Plugin-dotnet/issues/107 /
             // https://github.com/IvanMurzak/MCP-Plugin-dotnet/pull/108).
             unityConnectionConfig.ProjectRootPath = ProjectRootPath;
+            _logger.LogTrace("Seeded ConnectionConfig.ProjectRootPath={path}", ProjectRootPath);
 
             var built = _plugin.BuildOnce(() => BuildMcpPlugin(
                 version: BuildVersion(),

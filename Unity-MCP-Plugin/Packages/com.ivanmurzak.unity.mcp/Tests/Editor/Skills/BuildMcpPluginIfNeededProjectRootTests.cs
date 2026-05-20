@@ -10,6 +10,7 @@
 
 #nullable enable
 using NUnit.Framework;
+using UnityEngine.TestTools;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
@@ -29,10 +30,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     [TestFixture]
     public class BuildMcpPluginIfNeededProjectRootTests
     {
+        private string? _originalProjectRootPath;
+
+        [SetUp]
+        public void SetUp()
+        {
+            UnityMcpPluginEditor.InitSingletonIfNeeded();
+            // Snapshot the field so unrelated tests / Editor state are unaffected by this
+            // fixture's mutation. Mirrors the pattern used by SkillsPathNormalizationTests
+            // for the SkillsPath field in the same folder.
+            _originalProjectRootPath = UnityMcpPluginEditor.Instance.ConnectionConfigForTests.ProjectRootPath;
+        }
+
+        [TearDown]
+        public void TearDown()
+        {
+            // Restore so unrelated tests / Editor state are unaffected.
+            UnityMcpPluginEditor.Instance.ConnectionConfigForTests.ProjectRootPath = _originalProjectRootPath;
+        }
+
         [Test]
         public void BuildMcpPluginIfNeeded_SetsProjectRootPath_OnConnectionConfig()
         {
-            UnityMcpPluginEditor.InitSingletonIfNeeded();
             UnityMcpPluginEditor.Instance.BuildMcpPluginIfNeeded();
 
             var config = UnityMcpPluginEditor.Instance.ConnectionConfigForTests;
@@ -42,6 +61,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 config.ProjectRootPath,
                 "ConnectionConfig.ProjectRootPath must be set to UnityMcpPluginEditor.ProjectRootPath " +
                 "so the McpPlugin auto-fire skill-generation path does not throw InvalidOperationException.");
+
+            // Guard the regression contract directly: the whole point of seeding
+            // ProjectRootPath before _plugin.BuildOnce is to prevent McpPlugin's ctor
+            // from logging InvalidOperationException via the relative-SkillsPath path.
+            // A future refactor that moved the assignment AFTER BuildOnce would still
+            // pass the equality assert above (because the field is set by the time we
+            // observe it), but McpPlugin would have logged the exception during the
+            // build. NoUnexpectedReceived() catches that regression — any uncaught log
+            // during the test body fails the test here.
+            LogAssert.NoUnexpectedReceived();
         }
     }
 }
