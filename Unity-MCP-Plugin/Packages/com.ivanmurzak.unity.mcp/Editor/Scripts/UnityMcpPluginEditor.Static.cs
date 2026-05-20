@@ -10,7 +10,9 @@
 
 #nullable enable
 using System;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin;
@@ -230,7 +232,8 @@ namespace com.IvanMurzak.Unity.MCP
         /// diff stability; no other change.</item>
         /// </list>
         /// </summary>
-        public static string NormalizeSkillsPath(string value)
+        [return: NotNullIfNotNull("value")]
+        public static string? NormalizeSkillsPath(string? value)
         {
             if (string.IsNullOrWhiteSpace(value))
                 return value;
@@ -244,7 +247,10 @@ namespace com.IvanMurzak.Unity.MCP
             // Absolute path — check whether it lives inside the project root. If yes, make it relative.
             var root = ProjectRootPath.Replace('\\', '/').TrimEnd('/');
             // Compare case-insensitively on Windows because paths there are not case-sensitive.
-            var comparison = Environment.OSVersion.Platform == PlatformID.Win32NT
+            // macOS APFS is also case-insensitive by default, but that is an accepted gap here;
+            // the typical AI-Game-Developer-Config.json is committed from Windows machines and
+            // the legacy values we auto-heal originate from Windows in practice.
+            var comparison = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
                 ? StringComparison.OrdinalIgnoreCase
                 : StringComparison.Ordinal;
 

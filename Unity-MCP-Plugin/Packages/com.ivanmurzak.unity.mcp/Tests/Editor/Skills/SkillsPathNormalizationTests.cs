@@ -139,6 +139,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Defensive: pass-through for empty/null/whitespace. The caller decides what
             // to do; we do not synthesise a default here.
+            Assert.IsNull(UnityMcpPluginEditor.NormalizeSkillsPath(null));
             Assert.AreEqual(string.Empty, UnityMcpPluginEditor.NormalizeSkillsPath(string.Empty));
             Assert.AreEqual("   ", UnityMcpPluginEditor.NormalizeSkillsPath("   "));
         }
@@ -179,19 +180,38 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // End-to-end: set an absolute-inside-project path, save, read the on-disk JSON,
             // and confirm the persisted value is the relative form. This is the contract
             // teams need so committing `UserSettings/AI-Game-Developer-Config.json` works.
+            //
+            // This test mutates the real on-disk config file via Save(); snapshot the
+            // original bytes up front and restore them after the assertions so the test
+            // does not leave the developer's config in a test-only state. TearDown only
+            // restores the in-memory value, not the file.
             var projectRoot = UnityMcpPluginEditor.ProjectRootPath;
             var absInside = Path.Combine(projectRoot, ".claude", "skills");
+            var configPath = UnityMcpPluginEditor.AssetsFileAbsolutePath;
+            var originalJson = File.Exists(configPath) ? File.ReadAllBytes(configPath) : null;
 
-            UnityMcpPluginEditor.SkillsPath = absInside;
-            UnityMcpPluginEditor.Instance.Save();
+            try
+            {
+                UnityMcpPluginEditor.SkillsPath = absInside;
+                UnityMcpPluginEditor.Instance.Save();
 
-            var json = File.ReadAllText(UnityMcpPluginEditor.AssetsFileAbsolutePath);
+                var json = File.ReadAllText(configPath);
 
-            // Persisted JSON uses camelCase: `"skillsPath": ".claude/skills"`.
-            Assert.That(json, Does.Contain("\".claude/skills\""),
-                $"Persisted JSON must contain the relative skillsPath. Got:\n{json}");
-            Assert.That(json, Does.Not.Contain(projectRoot.Replace("\\", "\\\\")),
-                $"Persisted JSON must not contain the machine-specific absolute project root. Got:\n{json}");
+                // Persisted JSON uses camelCase: `"skillsPath": ".claude/skills"`.
+                Assert.That(json, Does.Contain("\".claude/skills\""),
+                    $"Persisted JSON must contain the relative skillsPath. Got:\n{json}");
+                // Guard against both backslash-encoded and forward-slash forms of the
+                // project root leaking into the persisted JSON.
+                Assert.That(json, Does.Not.Contain(projectRoot.Replace("\\", "\\\\")),
+                    $"Persisted JSON must not contain the machine-specific absolute project root (backslash form). Got:\n{json}");
+                Assert.That(json, Does.Not.Contain(projectRoot.Replace('\\', '/')),
+                    $"Persisted JSON must not contain the machine-specific absolute project root (forward-slash form). Got:\n{json}");
+            }
+            finally
+            {
+                if (originalJson != null)
+                    File.WriteAllBytes(configPath, originalJson);
+            }
         }
 
         [Test]

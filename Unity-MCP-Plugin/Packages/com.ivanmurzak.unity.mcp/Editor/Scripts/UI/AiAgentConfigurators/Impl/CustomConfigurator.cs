@@ -148,6 +148,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             {
                 UnityMcpPluginEditor.SkillsPath = evt.newValue;
                 UnityMcpPluginEditor.Instance.Save();
+
+                // The setter may have normalised the value (absolute-inside-project →
+                // project-relative, backslashes → forward slashes). Reflect that back
+                // into the TextField so the visible content matches what was persisted.
+                var normalized = UnityMcpPluginEditor.SkillsPath;
+                if (normalized != evt.newValue)
+                    inputPath.SetValueWithoutNotify(normalized);
             });
             headerRow.Remove(pathLabel);
             headerRow.Add(inputPath);
