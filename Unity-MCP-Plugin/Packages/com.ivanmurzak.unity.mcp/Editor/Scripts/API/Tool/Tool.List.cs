@@ -24,7 +24,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public partial class Tool_Tool
     {
-        public const string ToolListId = "tool-list";
+        public const string ToolListId = "unity-tool-list";
 
         static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(200);
 

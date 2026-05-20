@@ -1,5 +1,5 @@
 ---
-name: tool-list
+name: unity-tool-list
 description: List all Unity-MCP tools registered in the connected Unity Editor instance. Optional regex filter matches against tool name, description, and argument names/descriptions. Use the `includeDescription` / `includeInputs` toggles to control the response size.
 ---
 
@@ -20,7 +20,7 @@ Iterates `UnityMcpPluginEditor.Instance.Tools.GetAllTools()`, evaluates the filt
 ## How to Call
 
 ```bash
-unity-mcp-cli run-tool tool-list --input '{
+unity-mcp-cli run-tool unity-tool-list --input '{
   "regexSearch": "string_value",
   "includeDescription": "string_value",
   "includeInputs": "string_value"
@@ -29,12 +29,12 @@ unity-mcp-cli run-tool tool-list --input '{
 
 > For complex input (multi-line strings, code), save the JSON to a file and use:
 > ```bash
-> unity-mcp-cli run-tool tool-list --input-file args.json
+> unity-mcp-cli run-tool unity-tool-list --input-file args.json
 > ```
 >
 > Or pipe via stdin (recommended):
 > ```bash
-> unity-mcp-cli run-tool tool-list --input-file - <<'EOF'
+> unity-mcp-cli run-tool unity-tool-list --input-file - <<'EOF'
 > {"param": "value"}
 > EOF
 > ```

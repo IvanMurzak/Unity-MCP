@@ -534,9 +534,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [UnityTest]
         public IEnumerator ToolSetEnabledState_BothThreads()
         {
-            // Enable tool-list twice (idempotent, already enabled) from both threads.
+            // Enable unity-tool-list twice (idempotent, already enabled) from both threads.
             yield return RunToolBothThreads(Tool_Tool.ToolSetEnabledStateId,
-                @"{""tools"":[{""name"":""tool-list"",""enabled"":true}]}");
+                @"{""tools"":[{""name"":""unity-tool-list"",""enabled"":true}]}");
         }
 
         // ================================================================
