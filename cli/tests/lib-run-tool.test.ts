@@ -48,11 +48,11 @@ function makeFetchSpy(impl: (url: string, init?: RequestInit) => Promise<Respons
 describe('runTool — happy path', () => {
   it('posts to /api/tools/{name} with JSON body and returns the parsed structured response', async () => {
     const spy = makeFetchSpy(async () =>
-      jsonResponse({ status: 'success', structured: { result: [{ name: 'tool-list' }] } }),
+      jsonResponse({ status: 'success', structured: { result: [{ name: 'unity-tool-list' }] } }),
     );
 
     const result: RunToolResult = await runTool({
-      toolName: 'tool-list',
+      toolName: 'unity-tool-list',
       url: 'http://localhost:55000',
       input: { regexSearch: 'foo', includeDescription: true },
       fetchImpl: spy.fetch,
@@ -60,13 +60,13 @@ describe('runTool — happy path', () => {
 
     expect(result.kind).toBe('success');
     if (result.kind !== 'success') throw new Error('expected success kind');
-    expect(result.endpoint).toBe('http://localhost:55000/api/tools/tool-list');
+    expect(result.endpoint).toBe('http://localhost:55000/api/tools/unity-tool-list');
     expect(result.httpStatus).toBe(200);
-    expect(result.data).toEqual({ status: 'success', structured: { result: [{ name: 'tool-list' }] } });
+    expect(result.data).toEqual({ status: 'success', structured: { result: [{ name: 'unity-tool-list' }] } });
 
     expect(spy.calls).toHaveLength(1);
     const call = spy.calls[0];
-    expect(call.url).toBe('http://localhost:55000/api/tools/tool-list');
+    expect(call.url).toBe('http://localhost:55000/api/tools/unity-tool-list');
     expect(call.init?.method).toBe('POST');
     expect(call.init?.body).toBe('{"regexSearch":"foo","includeDescription":true}');
     const headers = call.init?.headers as Record<string, string>;
