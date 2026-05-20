@@ -61,13 +61,42 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         private static readonly HttpClient HttpClient = CreateHttpClient();
 
         // EditorPrefs is global to the Unity install, so the keys are namespaced by package id
-        // AND by a stable per-project token (Application.dataPath hash) to keep parallel projects
-        // from stomping on each other's state. See #755 for the migration rationale.
+        // AND by a stable per-project token (FNV-1a hash of Application.dataPath) to keep parallel
+        // projects from stomping on each other's state. See #755 for the migration rationale.
+        //
+        // FNV-1a (not string.GetHashCode()) because Unity is migrating to CoreCLR (preview in 6.x),
+        // and on CoreCLR string.GetHashCode() is randomized per process — keys would change on
+        // every editor restart and per-user state (DoNotShowAgain, cooldown, skipped version)
+        // would be silently lost. FNV-1a is byte-stable across runtimes and across machines.
+        //
+        // Caveat: two distinct Unity projects that happen to live at the same Application.dataPath
+        // (e.g. user copies a project folder, deletes the original, and opens the copy at the same
+        // location) will share EditorPrefs state. Acceptable for a "do not show again" flag.
         private static readonly string ProjectKeyPrefix =
-            $"{PackageId}.{Application.dataPath.GetHashCode():X8}.UpdateChecker.";
+            $"{PackageId}.{Fnv1a32(Application.dataPath):X8}.UpdateChecker.";
         private static readonly string KeyDoNotShowAgain = ProjectKeyPrefix + "DoNotShowAgain";
-        private static readonly string KeyNextCheckTime  = ProjectKeyPrefix + "NextCheckTime";
+        private static readonly string KeyNextCheckTime = ProjectKeyPrefix + "NextCheckTime";
         private static readonly string KeySkippedVersion = ProjectKeyPrefix + "SkippedVersion";
+
+        /// <summary>
+        /// Deterministic 32-bit FNV-1a hash of a UTF-16 string. Stable across .NET runtimes
+        /// (Mono and CoreCLR) and across machines — unlike <see cref="string.GetHashCode"/>,
+        /// which is randomized per process under CoreCLR.
+        /// </summary>
+        private static uint Fnv1a32(string input)
+        {
+            const uint offsetBasis = 2166136261u;
+            const uint prime = 16777619u;
+            var hash = offsetBasis;
+            for (int i = 0; i < input.Length; i++)
+            {
+                hash ^= (byte)(input[i] & 0xFF);
+                hash *= prime;
+                hash ^= (byte)((input[i] >> 8) & 0xFF);
+                hash *= prime;
+            }
+            return hash;
+        }
 
         private static bool isChecking = false;
         private static string? latestVersion = null;

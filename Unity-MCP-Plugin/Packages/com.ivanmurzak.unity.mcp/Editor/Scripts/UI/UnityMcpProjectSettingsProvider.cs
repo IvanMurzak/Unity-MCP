@@ -9,7 +9,6 @@
 */
 
 #nullable enable
-#if UNITY_EDITOR
 using System.Collections.Generic;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEditor;
@@ -36,8 +35,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             label = "AI Game Developer",
             guiHandler = _ =>
             {
-                var settings = UnityMcpUpdateProjectSettings.instance;
-
                 EditorGUILayout.LabelField("Update Notifications", EditorStyles.boldLabel);
 
                 EditorGUI.BeginChangeCheck();
@@ -47,9 +44,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                         "Stored in ProjectSettings/ and shared with everyone who clones this project. " +
                         "When enabled, the update popup is suppressed for every team member, regardless " +
                         "of their per-user 'Do not show again' state."),
-                    settings.DisableUpdateNotificationsForTeam);
+                    UpdateChecker.IsDisabledForProject);
                 if (EditorGUI.EndChangeCheck())
-                    settings.DisableUpdateNotificationsForTeam = newValue;
+                    UpdateChecker.IsDisabledForProject = newValue;
 
                 EditorGUILayout.Space();
                 EditorGUILayout.HelpBox(
@@ -58,8 +55,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     "button on the update popup is unaffected by this setting.",
                     MessageType.Info);
             },
-            keywords = new HashSet<string> { "AI", "MCP", "Update", "Notifications", "Team", "Game", "Developer" }
+            keywords = new HashSet<string>
+            {
+                "AI", "MCP", "Unity-MCP", "OpenUPM", "Update", "Notifications", "Team", "Game", "Developer"
+            }
         };
     }
 }
-#endif

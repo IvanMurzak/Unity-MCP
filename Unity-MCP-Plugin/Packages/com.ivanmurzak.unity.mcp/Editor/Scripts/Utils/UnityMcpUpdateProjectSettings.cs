@@ -32,6 +32,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
     ///
     /// See <see href="https://github.com/IvanMurzak/Unity-MCP/issues/768"/>.
     /// </remarks>
+    /// <remarks>
+    /// <see cref="FilePathAttribute.Location.ProjectFolder"/> resolves the relative path against
+    /// the Unity project root (the folder that contains <c>Assets/</c>, <c>Packages/</c>, and
+    /// <c>ProjectSettings/</c>) — NOT against <c>Assets/</c>. That places the asset alongside
+    /// other team-shared editor settings such as <c>ProjectSettings/EditorSettings.asset</c>.
+    /// </remarks>
     [FilePath("ProjectSettings/AI-Game-Developer-UpdateSettings.asset", FilePathAttribute.Location.ProjectFolder)]
     internal sealed class UnityMcpUpdateProjectSettings : ScriptableSingleton<UnityMcpUpdateProjectSettings>
     {
