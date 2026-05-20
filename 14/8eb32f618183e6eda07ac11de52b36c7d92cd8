@@ -1,0 +1,19 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UnityMcpPluginEditor.Static.cs
+  s_5b77098ca95a5f::t_246068d3c8b490 242-247
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "148eb32f618183e6eda07ac11de52b36c7d92cd8",
+  "prompts": {},
+  "sessions": {
+    "s_5b77098ca95a5f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f10347d0-d71c-4d83-ba57-c18a3e759efa",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
