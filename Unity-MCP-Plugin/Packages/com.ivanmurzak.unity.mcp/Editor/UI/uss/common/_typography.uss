@@ -14,7 +14,7 @@
 }
 
 .header-description {
-    color: #B0B0B0;
+    color: var(--unity-colors-helpbox-text);
     margin-bottom: 7px;
     white-space: normal;
 }
@@ -35,13 +35,13 @@
 }
 
 .section-desc {
-    color: rgb(135, 135, 135);
+    color: var(--unity-colors-helpbox-text);
     margin-bottom: 8px;
     white-space: normal;
 }
 
 .section-text {
-    color: rgb(255, 255, 255);
+    color: var(--unity-colors-default-text);
     white-space: normal;
 }
 
@@ -56,13 +56,13 @@
     font-size: 22px;
     -unity-font-style: bold;
     margin-bottom: 12px;
-    color: rgb(220, 220, 220);
+    color: var(--unity-colors-default-text);
     -unity-text-align: middle-center;
 }
 
 .popup-message {
     font-size: 13px;
-    color: rgb(180, 180, 180);
+    color: var(--unity-colors-helpbox-text);
     margin-bottom: 16px;
     -unity-text-align: middle-center;
     white-space: normal;
@@ -72,7 +72,7 @@
 /* Version labels */
 .version-label {
     font-size: 12px;
-    color: rgb(160, 160, 160);
+    color: var(--unity-colors-helpbox-text);
     min-width: 100px;
 }
 
@@ -84,7 +84,7 @@
 }
 
 .current-version {
-    color: rgb(180, 180, 180);
+    color: var(--unity-colors-helpbox-text);
 }
 
 .latest-version {
@@ -100,12 +100,12 @@
 
 .status-label {
     font-size: 14px;
-    color: rgb(136, 136, 136);
+    color: var(--unity-colors-helpbox-text);
 }
 
 .server-label {
     font-size: 14px;
-    color: rgb(136, 136, 136);
+    color: var(--unity-colors-helpbox-text);
     margin-bottom: 8px;
 }
 
@@ -121,7 +121,7 @@
     flex-grow: 1;
     -unity-text-align: middle-center;
     font-size: 18px;
-    color: #808080;
+    color: var(--unity-colors-helpbox-text);
     padding-left: 15px;
     padding-right: 15px;
     padding-bottom: 15px;
