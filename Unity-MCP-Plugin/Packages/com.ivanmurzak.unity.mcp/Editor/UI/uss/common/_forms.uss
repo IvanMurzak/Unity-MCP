@@ -25,7 +25,7 @@
 }
 
 .filter-stats-label {
-    color: #B0B0B0;
+    color: var(--unity-colors-helpbox-text);
     margin-left: auto;
 }
 
@@ -75,7 +75,7 @@
 .disabled-text-field .unity-text-field__input {
     border-color: rgba(0, 0, 0, 0);
     background-color: rgba(255, 255, 255, 0.03);
-    color: rgb(110, 110, 110);
+    color: var(--unity-colors-default-text_disabled);
     transition-duration: 200ms;
 }
 
@@ -86,7 +86,7 @@
 }
 
 .disabled-text-field .unity-label {
-    color: rgb(110, 110, 110);
+    color: var(--unity-colors-default-text_disabled);
     transition-duration: 200ms;
 }
 
@@ -126,7 +126,7 @@
 }
 
 .styled-dropdown .unity-base-popup-field__text {
-    color: rgb(200, 200, 200);
+    color: var(--unity-colors-default-text);
     font-size: 12px;
     -unity-text-align: middle-left;
 }
@@ -139,7 +139,7 @@
     border-color: rgba(255, 255, 255, 0.08);
     border-width: 1px;
     padding: 3px 8px;
-    color: rgb(200, 200, 200);
+    color: var(--unity-colors-default-text);
     transition-duration: 200ms;
 }
 
@@ -167,7 +167,7 @@
     border-color: rgba(255, 255, 255, 0.08);
     border-width: 1px;
     padding: 3px 8px;
-    color: rgb(200, 200, 200);
+    color: var(--unity-colors-default-text);
     transition-duration: 200ms;
 }
 
@@ -196,7 +196,7 @@
 
 .argument-description {
     white-space: normal;
-    color: #B0B0B0;
+    color: var(--unity-colors-helpbox-text);
 }
 
 /* Config snippet - readonly text fields for configuration display */

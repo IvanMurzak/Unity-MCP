@@ -90,13 +90,13 @@
 .timeline-label {
     flex-grow: 0;
     -unity-text-align: middle-left;
-    color: rgb(200, 200, 200);
+    color: var(--unity-colors-default-text);
     font-size: 13px;
     -unity-font-style: bold;
 
     /* Simulate the underline with a bottom border */
     border-bottom-width: 0.3px;
-    border-bottom-color: rgb(200, 200, 200);
+    border-bottom-color: var(--unity-colors-default-text);
 
     /* Adjust padding so the line isn't touching the letters */
     padding-bottom: 1px;
@@ -121,11 +121,12 @@
 }
 
 .token-input > .unity-base-field__input {
-    color: rgb(135, 135, 135);
+    color: var(--unity-colors-helpbox-text);
 }
 
 .token-input.token-placeholder > .unity-base-field__input {
-    color: rgb(100, 100, 100);
+    color: var(--unity-colors-helpbox-text);
+    opacity: 0.7;
     -unity-font-style: italic;
 }
 
