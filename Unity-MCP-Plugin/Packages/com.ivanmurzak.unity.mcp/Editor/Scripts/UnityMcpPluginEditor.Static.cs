@@ -239,7 +239,12 @@ namespace com.IvanMurzak.Unity.MCP
                 return value;
 
             // Always use forward slashes in the persisted form for cross-platform diff stability.
-            var normalized = value.Replace('\\', '/');
+            // The `!` is required because the Unity Editor C# compiler does not honor
+            // `[NotNullWhen(false)]` on `string.IsNullOrWhiteSpace`, so it does not narrow
+            // `value` (declared `string?`) to non-null after the early-return guard above and
+            // would otherwise emit CS8602 here. The runtime check above already establishes
+            // `value` is non-null at this point.
+            var normalized = value!.Replace('\\', '/');
 
             if (!Path.IsPathRooted(normalized))
                 return normalized;
