@@ -25,7 +25,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
     {
         const string EnvVarNameAuthToken = "GAME_DEV_AUTH_TOKEN";
 
-        public override string? SkillsPath => Path.Combine(ProjectRootPath, ".agents", "skills");
+        public override string? SkillsPath => ".agents/skills";
         public override string AgentName => "Codex";
         public override string AgentId => "codex";
         public override string DownloadUrl => "https://openai.com/codex/";
