@@ -28,7 +28,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public override string AgentName => "GitHub Copilot CLI";
         public override string AgentId => "github-copilot-cli";
         public override string DownloadUrl => "https://github.com/features/copilot/cli";
-        public override string? SkillsPath => Path.Combine(ProjectRootPath, ".claude", "skills");
+        public override string? SkillsPath => ".claude/skills";
 
         protected override string? IconFileName => "github-copilot-64.png";
 

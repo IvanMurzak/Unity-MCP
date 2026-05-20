@@ -10,6 +10,7 @@
 
 #nullable enable
 using System;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin;
@@ -209,9 +210,52 @@ namespace com.IvanMurzak.Unity.MCP
             get => Instance.unityConnectionConfig.SkillsPath;
             set
             {
-                Instance.unityConnectionConfig.SkillsPath = value;
+                Instance.unityConnectionConfig.SkillsPath = NormalizeSkillsPath(value);
                 NotifyChanged(Instance.unityConnectionConfig);
             }
+        }
+
+        /// <summary>
+        /// Normalises a user-supplied or configurator-supplied skills path so the on-disk
+        /// `UserSettings/AI-Game-Developer-Config.json` stays portable across machines and
+        /// across path-separator conventions. Rules:
+        /// <list type="bullet">
+        /// <item>null / empty / whitespace → returned verbatim (caller decides what to do).</item>
+        /// <item>Absolute path inside <see cref="ProjectRootPath"/> → rewritten to a project-relative
+        /// path with forward slashes (e.g. <c>"C:\proj\.claude\skills"</c> → <c>".claude/skills"</c>).
+        /// This is the path-portability fix for committing the config file to version control.</item>
+        /// <item>Absolute path outside the project → returned unchanged (the user has explicitly
+        /// chosen an external location; we do not rewrite it).</item>
+        /// <item>Already-relative path → backslashes converted to forward slashes for cross-platform
+        /// diff stability; no other change.</item>
+        /// </list>
+        /// </summary>
+        public static string NormalizeSkillsPath(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return value;
+
+            // Always use forward slashes in the persisted form for cross-platform diff stability.
+            var normalized = value.Replace('\\', '/');
+
+            if (!Path.IsPathRooted(normalized))
+                return normalized;
+
+            // Absolute path — check whether it lives inside the project root. If yes, make it relative.
+            var root = ProjectRootPath.Replace('\\', '/').TrimEnd('/');
+            // Compare case-insensitively on Windows because paths there are not case-sensitive.
+            var comparison = Environment.OSVersion.Platform == PlatformID.Win32NT
+                ? StringComparison.OrdinalIgnoreCase
+                : StringComparison.Ordinal;
+
+            if (normalized.StartsWith(root + "/", comparison))
+                return normalized.Substring(root.Length + 1);
+
+            if (normalized.Equals(root, comparison))
+                return string.Empty;
+
+            // Absolute path outside the project root — leave as-is.
+            return normalized;
         }
 
         // 'new' is intentional: static dispatch on the subtype, instance logic lives in the base.

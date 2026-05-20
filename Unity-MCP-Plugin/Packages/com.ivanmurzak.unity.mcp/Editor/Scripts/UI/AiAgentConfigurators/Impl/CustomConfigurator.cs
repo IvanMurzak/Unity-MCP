@@ -135,7 +135,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             // Hide the unsupported label
             unsupportedLabel.style.display = DisplayStyle.None;
 
-            // Replace the read-only path label with an editable TextField for custom configurator
+            // Replace the read-only path label with an editable TextField for custom configurator.
+            // The persisted value is normalised by the SkillsPath setter (absolute-inside-project
+            // → project-relative, backslashes → forward slashes); we feed user input straight
+            // through that setter so the on-disk config stays portable across machines.
             var headerRow = pathLabel.parent;
             var inputPath = new TextField { value = UnityMcpPluginEditor.SkillsPath };
             inputPath.style.flexGrow = 1;
