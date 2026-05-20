@@ -16,7 +16,6 @@ using System.Globalization;
 using System.Text.Json;
 using AIGD;
 using com.IvanMurzak.Unity.MCP.JsonConverters;
-using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -251,8 +250,47 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.JsonConverter
                 $"Schema must declare a 'pattern' field for the string format. Schema: {schemaJson}");
             Assert.AreEqual(JsonValueKind.String, patternElement.ValueKind,
                 $"Schema 'pattern' must be a JSON string. Schema: {schemaJson}");
-            Assert.IsFalse(string.IsNullOrEmpty(patternElement.GetString()),
-                $"Schema 'pattern' must not be empty. Schema: {schemaJson}");
+            Assert.AreEqual("^[0-9]+$", patternElement.GetString(),
+                $"Schema 'pattern' must pin the exact #759 wire-contract regex. Schema: {schemaJson}");
+        }
+
+        // Cross-converter smoke test for the #759 wire contract. The five
+        // *RefConverter writers all delegate the EntityId conversion to the
+        // central EntityIdConverter, so the behavior is shared — but a future
+        // refactor that bypasses the central converter on one of them would
+        // silently regress only that path. This guard re-asserts the JSON
+        // string shape per converter so any such drift fails CI.
+        [TestCase("ObjectRef")]
+        [TestCase("GameObjectRef")]
+        [TestCase("AssetObjectRef")]
+        [TestCase("ComponentRef")]
+        [TestCase("SceneRef")]
+        public void AllRefConverters_InstanceID_EmitsJsonString_BeyondJsSafeInteger(string refKind)
+        {
+            const ulong RawId = 568_105_584_918_935_294UL;
+            var entityId = UnityEngine.EntityId.FromULong(RawId);
+            var reflector = UnityMcpPluginEditor.Instance.Reflector
+                ?? throw new Exception("Reflector is not available.");
+
+            string json = refKind switch
+            {
+                "ObjectRef" => reflector.JsonSerializer.Serialize(new ObjectRef(entityId)),
+                "GameObjectRef" => reflector.JsonSerializer.Serialize(new GameObjectRef(entityId)),
+                "AssetObjectRef" => reflector.JsonSerializer.Serialize(new AssetObjectRef(entityId)),
+                "ComponentRef" => reflector.JsonSerializer.Serialize(new ComponentRef(entityId)),
+                "SceneRef" => reflector.JsonSerializer.Serialize(new SceneRef(entityId)),
+                _ => throw new ArgumentOutOfRangeException(nameof(refKind), refKind, "Unknown ref kind.")
+            };
+
+            Assert.IsFalse(string.IsNullOrEmpty(json), $"Serialized JSON for {refKind} should not be empty.");
+
+            using var doc = JsonDocument.Parse(json);
+            Assert.IsTrue(doc.RootElement.TryGetProperty("instanceID", out var instanceIdElement),
+                $"{refKind} JSON must contain 'instanceID' property. JSON: {json}");
+            Assert.AreEqual(JsonValueKind.String, instanceIdElement.ValueKind,
+                $"{refKind} 'instanceID' must serialize as a JSON string (the #759 wire contract), not {instanceIdElement.ValueKind}. JSON: {json}");
+            Assert.AreEqual(RawId.ToString(CultureInfo.InvariantCulture), instanceIdElement.GetString(),
+                $"{refKind} 'instanceID' string must be the exact decimal representation of the raw EntityId ulong. JSON: {json}");
         }
     }
 }

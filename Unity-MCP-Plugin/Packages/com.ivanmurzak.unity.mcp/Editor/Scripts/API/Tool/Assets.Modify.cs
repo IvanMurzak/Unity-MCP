@@ -13,6 +13,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Model;
@@ -123,7 +124,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     // on a String-valued JsonElement (the value left there by the serializer).
                     content!.valueJsonElement.SetProperty(
                         ObjectRef.ObjectRefProperty.InstanceID,
-                        UnityEngine.EntityId.ToULong(asset.GetEntityId()).ToString(System.Globalization.CultureInfo.InvariantCulture));
+                        UnityEngine.EntityId.ToULong(asset.GetEntityId()).ToString(CultureInfo.InvariantCulture));
 
                     if (reflector.TryModify(ref obj, data: content!, logs: logs, logger: logger))
                         anySuccess = true;

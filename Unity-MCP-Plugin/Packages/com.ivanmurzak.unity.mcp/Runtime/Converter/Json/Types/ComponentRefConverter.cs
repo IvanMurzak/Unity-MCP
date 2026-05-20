@@ -79,6 +79,7 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
 
             writer.WriteStartObject();
 
+            // Write the "instanceID" property (JSON string — see #759).
             writer.WriteString(ObjectRef.ObjectRefProperty.InstanceID, UnityEngine.EntityId.ToULong(value.InstanceID).ToString(CultureInfo.InvariantCulture));
 
             if (value.Index != -1)

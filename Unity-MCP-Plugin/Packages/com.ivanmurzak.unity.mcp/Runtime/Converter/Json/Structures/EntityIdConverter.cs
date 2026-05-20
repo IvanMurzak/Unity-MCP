@@ -54,24 +54,17 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
             if (reader.TokenType == JsonTokenType.Null)
                 return EntityId.None;
 
-            // Inbound accepts both forms so JS-side clients that already
-            // post strings AND legacy clients that still post numbers both
-            // round-trip correctly.
-            if (reader.TokenType == JsonTokenType.String)
-            {
-                var stringValue = reader.GetString();
-                return EntityIdUtils.FromString(stringValue!);
-            }
-
-            if (reader.TokenType != JsonTokenType.Number)
+            if (reader.TokenType != JsonTokenType.String && reader.TokenType != JsonTokenType.Number)
                 throw new JsonException($"Expected string or number token for {nameof(EntityId)}, got {reader.TokenType}.");
 
             return ReadEntityIdValue(ref reader);
         }
 
-        // Accept both JSON representations so handwritten JSON (legacy int form
-        // from EntityId.ToString) and machine-serialized JSON (full raw ulong
-        // from EntityId.ToULong) both round-trip correctly.
+        // Accept three JSON representations:
+        //   1. String token — the new on-wire format (decimal digits, see top-of-file).
+        //   2. Legacy int form from EntityId.ToString (handwritten JSON).
+        //   3. Raw ulong from EntityId.ToULong (machine-serialized JSON).
+        // All three round-trip correctly.
         internal static EntityId ReadEntityIdValue(ref Utf8JsonReader reader)
         {
             // String token — the new on-wire format.
