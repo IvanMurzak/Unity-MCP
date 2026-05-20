@@ -1,11 +1,11 @@
 ---
 name: tool-list
-description: List all MCP tools registered with this plugin. Optional regex filter matches against tool name, description, and argument names/descriptions. Use the `includeDescription` / `includeInputs` toggles to control the response size.
+description: List all Unity-MCP tools registered in the connected Unity Editor instance. Optional regex filter matches against tool name, description, and argument names/descriptions. Use the `includeDescription` / `includeInputs` toggles to control the response size.
 ---
 
 # Tool / List
 
-List all available MCP tools. Optionally filter by regex across tool names, descriptions, and arguments.
+List all Unity-MCP tools registered in the connected Unity Editor instance. Optionally filter by regex across tool names, descriptions, and arguments.
 
 ## Inputs
 

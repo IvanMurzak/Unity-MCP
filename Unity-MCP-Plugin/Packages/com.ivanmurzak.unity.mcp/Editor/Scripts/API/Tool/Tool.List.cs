@@ -48,10 +48,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ReadOnlyHint = true,
             IdempotentHint = true
         )]
-        [McpPluginSkillDescription("List all MCP tools registered with this plugin. " +
+        [McpPluginSkillDescription("List all Unity-MCP tools registered in the connected Unity Editor instance. " +
             "Optional regex filter matches against tool name, description, and argument names/descriptions. " +
             "Use the `includeDescription` / `includeInputs` toggles to control the response size.")]
-        [McpPluginSkillBody("List all available MCP tools. " +
+        [McpPluginSkillBody("List all Unity-MCP tools registered in the connected Unity Editor instance. " +
             "Optionally filter by regex across tool names, descriptions, and arguments.\n\n" +
             "## Inputs\n\n" +
             "- `regexSearch` (optional) — case-insensitive regex with a 200ms execution-timeout guard. " +
@@ -61,7 +61,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "## Behavior\n\n" +
             "Iterates `UnityMcpPluginEditor.Instance.Tools.GetAllTools()`, evaluates the filter (if any), and projects " +
             "each surviving tool into a `ToolInfoData` honoring the verbosity toggles.")]
-        [Description("List all available MCP tools. " +
+        [Description("List all Unity-MCP tools registered in the connected Unity Editor instance. " +
             "Optionally filter by regex across tool names, descriptions, and arguments.")]
         public ToolInfoData[] List
         (
