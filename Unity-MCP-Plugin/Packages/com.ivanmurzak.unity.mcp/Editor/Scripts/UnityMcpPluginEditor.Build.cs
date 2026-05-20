@@ -16,10 +16,28 @@ namespace com.IvanMurzak.Unity.MCP
 {
     public partial class UnityMcpPluginEditor
     {
+        /// <summary>
+        /// Editor-only test accessor for the underlying <see cref="UnityConnectionConfig"/>.
+        /// The field is <c>protected</c> on <see cref="UnityMcpPlugin"/>; this accessor exposes
+        /// it to the Editor test assembly (via <c>InternalsVisibleTo</c>) so tests can verify
+        /// state that is written through the plugin's build path.
+        /// </summary>
+        internal UnityConnectionConfig ConnectionConfigForTests => unityConnectionConfig;
+
         public UnityMcpPluginEditor BuildMcpPluginIfNeeded()
         {
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             var loggerProvider = BuildLoggerProvider();
+
+            // Feed the host project root into the connection config BEFORE the plugin is built.
+            // McpPlugin's ctor calls GenerateSkillFilesIfNeeded() internally; it needs an anchor
+            // for the relative SkillsPath. Without this, the McpPlugin ctor logs an
+            // InvalidOperationException every Editor open / domain reload — see
+            // https://github.com/IvanMurzak/Unity-MCP/issues/766 (host-side cascade of upstream
+            // https://github.com/IvanMurzak/MCP-Plugin-dotnet/issues/107 /
+            // https://github.com/IvanMurzak/MCP-Plugin-dotnet/pull/108).
+            unityConnectionConfig.ProjectRootPath = ProjectRootPath;
+
             var built = _plugin.BuildOnce(() => BuildMcpPlugin(
                 version: BuildVersion(),
                 reflector: CreateDefaultReflector(),
