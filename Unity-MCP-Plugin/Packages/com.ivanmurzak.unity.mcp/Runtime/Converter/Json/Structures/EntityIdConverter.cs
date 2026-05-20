@@ -8,9 +8,26 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 
+// Wire contract for EntityId (Unity 6.5+):
+//   On the wire: JSON string of decimal digits, e.g. "568105584918935294".
+//                No sign, no leading zeros, no exponent.
+//   Schema:      { "type": "string", "pattern": "^[0-9]+$" }.
+//
+//   Outbound: always emitted as a JSON string (via WriteStringValue).
+//   Inbound:  accepts both a JSON string (preferred) and a JSON number
+//             (back-compat — legacy clients pre-#759 wrote a number).
+//
+// Rationale: Unity 6.5's EntityId is a 64-bit ulong. JS-based MCP clients
+// (Claude Agent SDK, etc.) parse JSON numbers as IEEE-754 doubles, so any
+// value past 2^53 - 1 rounds. Serializing as a string makes the value
+// opaque to every JSON parser, preserving full precision through any
+// language boundary. This is the same pattern used by Twitter, YouTube,
+// Discord, Stripe, and gRPC-JSON for 64-bit IDs. See #759 / #754.
+
 #nullable enable
 #if UNITY_6000_5_OR_NEWER
 using System;
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using com.IvanMurzak.ReflectorNet.Json;
@@ -24,7 +41,8 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
     {
         public override JsonNode GetSchema() => new JsonObject
         {
-            [JsonSchema.Type] = JsonSchema.Integer
+            [JsonSchema.Type] = JsonSchema.String,
+            [JsonSchema.Pattern] = "^[0-9]+$"
         };
         public override JsonNode GetSchemaRef() => new JsonObject
         {
@@ -36,8 +54,17 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
             if (reader.TokenType == JsonTokenType.Null)
                 return EntityId.None;
 
+            // Inbound accepts both forms so JS-side clients that already
+            // post strings AND legacy clients that still post numbers both
+            // round-trip correctly.
+            if (reader.TokenType == JsonTokenType.String)
+            {
+                var stringValue = reader.GetString();
+                return EntityIdUtils.FromString(stringValue!);
+            }
+
             if (reader.TokenType != JsonTokenType.Number)
-                throw new JsonException($"Expected number token for {nameof(EntityId)}, got {reader.TokenType}.");
+                throw new JsonException($"Expected string or number token for {nameof(EntityId)}, got {reader.TokenType}.");
 
             return ReadEntityIdValue(ref reader);
         }
@@ -47,6 +74,13 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
         // from EntityId.ToULong) both round-trip correctly.
         internal static EntityId ReadEntityIdValue(ref Utf8JsonReader reader)
         {
+            // String token — the new on-wire format.
+            if (reader.TokenType == JsonTokenType.String)
+            {
+                var stringValue = reader.GetString();
+                return EntityIdUtils.FromString(stringValue!);
+            }
+
             if (reader.TryGetInt64(out var signedValue))
                 return EntityIdUtils.FromNumber(signedValue);
 
@@ -77,7 +111,10 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
 
         public override void Write(Utf8JsonWriter writer, EntityId value, JsonSerializerOptions options)
         {
-            writer.WriteNumberValue(EntityId.ToULong(value));
+            // Outbound: always a JSON string of decimal digits so JS clients
+            // can JSON.parse the payload without IEEE-754 precision loss
+            // (see top-of-file wire contract).
+            writer.WriteStringValue(EntityId.ToULong(value).ToString(CultureInfo.InvariantCulture));
         }
     }
 }
