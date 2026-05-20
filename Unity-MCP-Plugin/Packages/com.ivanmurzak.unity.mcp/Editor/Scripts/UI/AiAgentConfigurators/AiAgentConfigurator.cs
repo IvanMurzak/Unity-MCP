@@ -557,9 +557,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             // Hide the unsupported label
             unsupportedLabel.style.display = DisplayStyle.None;
 
-            // Show the skills output path
-            pathLabel.text = ToDisplayPath(SkillsPath!);
-            pathLabel.tooltip = SkillsPath;
+            // Show the skills output path. SkillsPath is stored as a project-relative literal
+            // (e.g. ".claude/skills") so it is portable across machines, but the on-screen label
+            // should still display the absolute path the user expects to navigate / copy.
+            var absoluteSkillsPath = Path.IsPathRooted(SkillsPath!)
+                ? SkillsPath!
+                : Path.GetFullPath(Path.Combine(UnityMcpPluginEditor.ProjectRootPath, SkillsPath!));
+            pathLabel.text = ToDisplayPath(absoluteSkillsPath);
+            pathLabel.tooltip = absoluteSkillsPath;
 
             // Configure toggle (per-agent)
             toggleAutoGenerate.SetValueWithoutNotify(UnityMcpPluginEditor.IsAutoGenerateSkills(AgentId));
