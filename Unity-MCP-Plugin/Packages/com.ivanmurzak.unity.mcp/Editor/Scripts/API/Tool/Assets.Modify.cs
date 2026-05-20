@@ -13,6 +13,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Model;
@@ -116,8 +117,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 if (hasContent)
                 {
-                    // Fixing instanceID - inject expected instance ID into the valueJsonElement
-                    content!.valueJsonElement.SetProperty(ObjectRef.ObjectRefProperty.InstanceID, UnityEngine.EntityId.ToULong(asset.GetEntityId()));
+                    // Fixing instanceID - inject expected instance ID into the valueJsonElement.
+                    // Written as a JSON string of decimal digits to match the #759 EntityId
+                    // wire contract (see EntityIdConverter top-of-file). Calling the ulong
+                    // overload here would throw because TryGetUInt64 throws InvalidOperationException
+                    // on a String-valued JsonElement (the value left there by the serializer).
+                    content!.valueJsonElement.SetProperty(
+                        ObjectRef.ObjectRefProperty.InstanceID,
+                        UnityEngine.EntityId.ToULong(asset.GetEntityId()).ToString(CultureInfo.InvariantCulture));
 
                     if (reflector.TryModify(ref obj, data: content!, logs: logs, logger: logger))
                         anySuccess = true;

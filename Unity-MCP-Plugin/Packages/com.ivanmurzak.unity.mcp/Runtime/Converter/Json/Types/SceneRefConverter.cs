@@ -11,6 +11,7 @@
 #nullable enable
 #if UNITY_6000_5_OR_NEWER
 using System;
+using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using com.IvanMurzak.McpPlugin;
@@ -67,8 +68,10 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
             {
                 writer.WriteStartObject();
 
-                // Write the "instanceID" property
-                writer.WriteNumber(ObjectRef.ObjectRefProperty.InstanceID, 0);
+                // Write the "instanceID" property — see EntityIdConverter
+                // top-of-file wire contract (#759): outbound is always a
+                // JSON string of decimal digits, never a number.
+                writer.WriteString(ObjectRef.ObjectRefProperty.InstanceID, "0");
 
                 writer.WriteEndObject();
                 return;
@@ -76,8 +79,8 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
 
             writer.WriteStartObject();
 
-            // Write the "instanceID" property
-            writer.WriteNumber(ObjectRef.ObjectRefProperty.InstanceID, UnityEngine.EntityId.ToULong(value.InstanceID));
+            // Write the "instanceID" property (JSON string — see #759).
+            writer.WriteString(ObjectRef.ObjectRefProperty.InstanceID, UnityEngine.EntityId.ToULong(value.InstanceID).ToString(CultureInfo.InvariantCulture));
 
             // Write the "path" property
             if (!string.IsNullOrEmpty(value.Path))

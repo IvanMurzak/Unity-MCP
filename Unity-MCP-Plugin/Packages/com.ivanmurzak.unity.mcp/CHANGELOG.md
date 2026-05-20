@@ -2,6 +2,23 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- **`EntityId` wire format moved from JSON number to JSON string of decimal digits**
+  (Unity 6.5+ paths only). Closes #759, resolves #754. JS-based MCP clients
+  (Claude Agent SDK, etc.) parse JSON numbers as IEEE-754 doubles, so any
+  `EntityId` raw ulong past `2^53 - 1` was rounded on the JS side and the
+  rounded value sent back to Unity could not resolve the original object.
+  Serialising the value as an opaque JSON string preserves full 64-bit
+  precision across any language boundary. Inbound still accepts both forms
+  (string preferred, number accepted for back-compat); outbound is always a
+  string. Schema is now `{ "type": "string", "pattern": "^[0-9]+$" }`. Affects
+  every Unity 6.5+ converter that writes `EntityId` or an `instanceID` field:
+  `EntityIdConverter`, `ObjectRefConverter`, `GameObjectRefConverter`,
+  `AssetObjectRefConverter`, `ComponentRefConverter`, `SceneRefConverter`,
+  and the `Tool_Assets.Modify` `instanceID` injection. Pre-Unity-6.5 paths
+  (legacy `int InstanceID`, safely inside the JS-safe range) are untouched.
+
 ### Changed (BREAKING)
 
 - **Namespace flattened to `AIGD`**: AI-facing data model namespace renamed from
