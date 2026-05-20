@@ -1,0 +1,21 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/JsonConverters/GameObjectRefConverterTests.cs
+  s_7d1fb4e8f28b5b::t_e7a150f3a2c894 228-247
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/Structures/EntityIdConverter.cs
+  s_7d1fb4e8f28b5b::t_6e3562a283eb88 74-80
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "365513b76f7612f2491ebd2c1856c4a04e8f8893",
+  "prompts": {},
+  "sessions": {
+    "s_7d1fb4e8f28b5b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ee55318c-21bc-4ab7-9ec1-82c4f6f48645",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
