@@ -71,7 +71,13 @@ namespace com.IvanMurzak.Unity.MCP.JsonConverters
             if (reader.TokenType == JsonTokenType.String)
             {
                 var stringValue = reader.GetString();
-                return EntityIdUtils.FromString(stringValue!);
+                // Reject empty string up-front: the schema regex "^[0-9]+$" requires
+                // one or more digits, but EntityIdUtils.FromString("") returns
+                // EntityId.None silently. Throw here so the runtime matches the
+                // published schema (see #759 wire contract at top-of-file).
+                if (string.IsNullOrEmpty(stringValue))
+                    throw new JsonException($"{nameof(EntityId)} string must be one or more decimal digits, got empty string.");
+                return EntityIdUtils.FromString(stringValue);
             }
 
             if (reader.TryGetInt64(out var signedValue))

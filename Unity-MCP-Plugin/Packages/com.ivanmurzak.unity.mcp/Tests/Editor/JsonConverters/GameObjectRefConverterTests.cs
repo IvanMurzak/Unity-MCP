@@ -225,6 +225,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.JsonConverter
                 $"InstanceID '\"0\"' must deserialize to EntityId.None. JSON: {Json}");
         }
 
+        // Negative cases: empty string violates the schema ("^[0-9]+$" requires
+        // one or more digits), and non-numeric garbage cannot be parsed at all.
+        // Both MUST surface as a deserialization-time exception so a malformed
+        // payload fails loudly rather than silently coercing to EntityId.None.
+        // (Whitespace, signed-int, and decimal-with-trailing-zero variants are
+        // intentionally NOT in this list — see EntityIdUtils.FromString's doc
+        // comment for the accepted forms.)
+        [TestCase("\"\"")]
+        [TestCase("\"abc\"")]
+        public void GameObjectRef_InstanceID_FromJsonString_MalformedString_Throws(string instanceIdJsonValue)
+        {
+            var json = $"{{\"instanceID\":{instanceIdJsonValue}}}";
+
+            var reflector = UnityMcpPluginEditor.Instance.Reflector
+                ?? throw new Exception("Reflector is not available.");
+
+            Assert.Catch(() => reflector.JsonSerializer.Deserialize<GameObjectRef>(json),
+                $"Malformed instanceID string must surface as a deserialization exception. JSON: {json}");
+        }
+
         [Test]
         public void EntityIdConverter_Schema_DeclaresString()
         {
