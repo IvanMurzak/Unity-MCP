@@ -77,7 +77,7 @@ Any unknown or invalid fields and properties will be reported in the response. |
       "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.SerializedMember"
     },
     "pathPatches": {
-      "$ref": "#/$defs/System.Collections.Generic.List<AIGD.PathPatch>"
+      "$ref": "#/$defs/System.Collections.Generic.List%3CAIGD.PathPatch%3E"
     },
     "jsonPatch": {
       "type": "string"
@@ -295,7 +295,7 @@ Any unknown or invalid fields and properties will be reported in the response. |
           "description": "Updated component information after modification."
         },
         "Logs": {
-          "$ref": "#/$defs/System.String[]",
+          "$ref": "#/$defs/System.String%5B%5D",
           "description": "Log of modifications made and any warnings/errors encountered."
         }
       },

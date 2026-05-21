@@ -54,7 +54,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "select": {
-      "$ref": "#/$defs/AIGD.ObjectRef[]"
+      "$ref": "#/$defs/AIGD.ObjectRef%5B%5D"
     }
   },
   "$defs": {
@@ -199,19 +199,19 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "type": "object",
       "properties": {
         "GameObjects": {
-          "$ref": "#/$defs/AIGD.GameObjectRef[]",
+          "$ref": "#/$defs/AIGD.GameObjectRef%5B%5D",
           "description": "Returns the actual game object selection. Includes Prefabs, non-modifiable objects."
         },
         "Transforms": {
-          "$ref": "#/$defs/AIGD.ComponentRef[]",
+          "$ref": "#/$defs/AIGD.ComponentRef%5B%5D",
           "description": "Returns the top level selection, excluding Prefabs."
         },
         "InstanceIDs": {
-          "$ref": "#/$defs/System.Int32[]",
+          "$ref": "#/$defs/System.Int32%5B%5D",
           "description": "The actual unfiltered selection from the Scene returned as instance ids instead of objects."
         },
         "AssetGUIDs": {
-          "$ref": "#/$defs/System.String[]",
+          "$ref": "#/$defs/System.String%5B%5D",
           "description": "Returns the guids of the selected assets."
         },
         "ActiveGameObject": {

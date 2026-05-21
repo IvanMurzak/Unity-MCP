@@ -66,7 +66,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "$ref": "#/$defs/System.Boolean"
     },
     "includeInputs": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Tool+InputRequest"
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Tool%2BInputRequest"
     }
   },
   "$defs": {
@@ -95,7 +95,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/AIGD.ToolInfoData[]"
+      "$ref": "#/$defs/AIGD.ToolInfoData%5B%5D"
     }
   },
   "$defs": {
@@ -111,7 +111,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "description": "Tool description."
         },
         "inputs": {
-          "$ref": "#/$defs/AIGD.ToolInputData[]",
+          "$ref": "#/$defs/AIGD.ToolInputData%5B%5D",
           "description": "Tool input arguments."
         }
       },

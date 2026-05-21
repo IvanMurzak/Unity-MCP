@@ -118,7 +118,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/System.Collections.Generic.List<AIGD.GameObjectRef>"
+      "$ref": "#/$defs/System.Collections.Generic.List%3CAIGD.GameObjectRef%3E"
     }
   },
   "$defs": {

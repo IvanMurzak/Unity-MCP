@@ -86,7 +86,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/System.Collections.Generic.List<AIGD.AssetObjectRef>"
+      "$ref": "#/$defs/System.Collections.Generic.List%3CAIGD.AssetObjectRef%3E"
     }
   },
   "$defs": {

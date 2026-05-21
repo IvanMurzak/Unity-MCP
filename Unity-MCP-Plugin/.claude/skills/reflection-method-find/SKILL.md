@@ -82,7 +82,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     "System.Collections.Generic.List<com.IvanMurzak.ReflectorNet.Model.MethodRef+Parameter>": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.MethodRef+Parameter",
+        "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.MethodRef%2BParameter",
         "description": "Parameter of a method. Contains type and name of the parameter."
       }
     },
@@ -116,7 +116,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "description": "Method name, or substring of the method name. It may be empty if the method is unknown."
         },
         "inputParameters": {
-          "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.ReflectorNet.Model.MethodRef+Parameter>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3Ccom.IvanMurzak.ReflectorNet.Model.MethodRef%2BParameter%3E",
           "description": "List of input parameters. Can be null if the method has no parameters or the parameters are unknown."
         }
       },

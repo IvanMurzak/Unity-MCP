@@ -61,7 +61,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "$ref": "#/$defs/AIGD.ObjectRef"
     },
     "paths": {
-      "$ref": "#/$defs/System.Collections.Generic.List<System.String>"
+      "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E"
     },
     "viewQuery": {
       "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.ViewQuery"

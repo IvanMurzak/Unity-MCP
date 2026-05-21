@@ -56,7 +56,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "inputs": {
-      "$ref": "#/$defs/AIGD.CreateFolderInput[]"
+      "$ref": "#/$defs/AIGD.CreateFolderInput%5B%5D"
     }
   },
   "$defs": {
@@ -109,11 +109,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "type": "object",
       "properties": {
         "CreatedFolderGuids": {
-          "$ref": "#/$defs/System.Collections.Generic.List<System.String>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E",
           "description": "List of GUIDs of created folders."
         },
         "Errors": {
-          "$ref": "#/$defs/System.Collections.Generic.List<System.String>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E",
           "description": "List of errors encountered during folder creation."
         }
       }

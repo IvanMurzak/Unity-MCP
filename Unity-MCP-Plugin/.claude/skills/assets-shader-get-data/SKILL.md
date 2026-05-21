@@ -88,7 +88,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "$ref": "#/$defs/System.Boolean"
     },
     "paths": {
-      "$ref": "#/$defs/System.Collections.Generic.List<System.String>"
+      "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E"
     },
     "viewQuery": {
       "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.ViewQuery"
@@ -273,7 +273,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "description": "Default texture name for Texture properties. Null if not applicable."
         },
         "Attributes": {
-          "$ref": "#/$defs/System.Collections.Generic.List<System.String>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E",
           "description": "Custom attributes applied to this property. Null if none."
         }
       },
@@ -305,7 +305,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "description": "Number of passes in this subshader."
         },
         "Passes": {
-          "$ref": "#/$defs/System.Collections.Generic.List<AIGD.PassData>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3CAIGD.PassData%3E",
           "description": "List of passes in this subshader. Null if no passes."
         }
       },
@@ -418,15 +418,15 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "description": "The RenderType tag value from the first pass, if set."
         },
         "Messages": {
-          "$ref": "#/$defs/System.Collections.Generic.List<AIGD.ShaderMessageData>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3CAIGD.ShaderMessageData%3E",
           "description": "Compilation messages including errors and warnings. Null if no messages."
         },
         "Properties": {
-          "$ref": "#/$defs/System.Collections.Generic.List<AIGD.ShaderPropertyData>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3CAIGD.ShaderPropertyData%3E",
           "description": "List of shader properties (uniforms). Null if the shader has no properties."
         },
         "Subshaders": {
-          "$ref": "#/$defs/System.Collections.Generic.List<AIGD.SubshaderData>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3CAIGD.SubshaderData%3E",
           "description": "List of subshaders with their passes. Null if shader data is unavailable."
         },
         "View": {
