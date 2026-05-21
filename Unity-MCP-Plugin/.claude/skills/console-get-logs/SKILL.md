@@ -95,7 +95,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.LogEntry[]"
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.LogEntry%5B%5D"
     }
   },
   "$defs": {

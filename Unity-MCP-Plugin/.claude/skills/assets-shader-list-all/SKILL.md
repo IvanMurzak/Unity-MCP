@@ -65,7 +65,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/System.String[]"
+      "$ref": "#/$defs/System.String%5B%5D"
     }
   },
   "$defs": {

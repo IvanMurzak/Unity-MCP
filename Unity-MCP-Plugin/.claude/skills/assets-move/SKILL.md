@@ -57,10 +57,10 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "sourcePaths": {
-      "$ref": "#/$defs/System.String[]"
+      "$ref": "#/$defs/System.String%5B%5D"
     },
     "destinationPaths": {
-      "$ref": "#/$defs/System.String[]"
+      "$ref": "#/$defs/System.String%5B%5D"
     }
   },
   "$defs": {
@@ -101,11 +101,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "type": "object",
       "properties": {
         "MovedPaths": {
-          "$ref": "#/$defs/System.Collections.Generic.List<System.String>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E",
           "description": "List of destination paths of successfully moved assets."
         },
         "Errors": {
-          "$ref": "#/$defs/System.Collections.Generic.List<System.String>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E",
           "description": "List of errors encountered during move operations."
         }
       }

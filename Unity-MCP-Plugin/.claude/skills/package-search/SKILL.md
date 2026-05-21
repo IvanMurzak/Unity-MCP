@@ -84,7 +84,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/System.Collections.Generic.List<AIGD.PackageSearchResult>"
+      "$ref": "#/$defs/System.Collections.Generic.List%3CAIGD.PackageSearchResult%3E"
     }
   },
   "$defs": {
@@ -116,7 +116,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "description": "The currently installed version (if installed)."
         },
         "AvailableVersions": {
-          "$ref": "#/$defs/System.Collections.Generic.List<System.String>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E",
           "description": "Available versions of this package (up to 5 most recent)."
         }
       },

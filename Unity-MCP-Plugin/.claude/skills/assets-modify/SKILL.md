@@ -70,7 +70,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.SerializedMember"
     },
     "pathPatches": {
-      "$ref": "#/$defs/System.Collections.Generic.List<AIGD.PathPatch>"
+      "$ref": "#/$defs/System.Collections.Generic.List%3CAIGD.PathPatch%3E"
     },
     "jsonPatch": {
       "type": "string"
@@ -182,7 +182,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/System.String[]"
+      "$ref": "#/$defs/System.String%5B%5D"
     }
   },
   "$defs": {

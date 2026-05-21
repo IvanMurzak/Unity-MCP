@@ -88,7 +88,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "type": "boolean"
     },
     "paths": {
-      "$ref": "#/$defs/System.Collections.Generic.List<System.String>"
+      "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E"
     },
     "viewQuery": {
       "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.ViewQuery"
@@ -169,7 +169,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "description": "Hierarchy metadata of the GameObject."
         },
         "Components": {
-          "$ref": "#/$defs/AIGD.ComponentDataShallow[]",
+          "$ref": "#/$defs/AIGD.ComponentDataShallow%5B%5D",
           "description": "Attached components shallow data of the GameObject (Read-only, use Component modification tool for modification)."
         }
       }
@@ -325,7 +325,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "type": "boolean"
         },
         "children": {
-          "$ref": "#/$defs/System.Collections.Generic.List<AIGD.GameObjectMetadata>"
+          "$ref": "#/$defs/System.Collections.Generic.List%3CAIGD.GameObjectMetadata%3E"
         }
       },
       "required": [
@@ -373,7 +373,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "type": "object",
       "properties": {
         "RootGameObjects": {
-          "$ref": "#/$defs/System.Collections.Generic.List<AIGD.GameObjectData>"
+          "$ref": "#/$defs/System.Collections.Generic.List%3CAIGD.GameObjectData%3E"
         },
         "Data": {
           "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.SerializedMember",

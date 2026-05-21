@@ -64,7 +64,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "type": "string"
     },
     "searchInFolders": {
-      "$ref": "#/$defs/System.String[]"
+      "$ref": "#/$defs/System.String%5B%5D"
     },
     "maxResults": {
       "type": "integer"
@@ -90,7 +90,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/System.Collections.Generic.List<AIGD.AssetObjectRef>"
+      "$ref": "#/$defs/System.Collections.Generic.List%3CAIGD.AssetObjectRef%3E"
     }
   },
   "$defs": {

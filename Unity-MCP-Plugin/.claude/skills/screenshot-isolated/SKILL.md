@@ -95,13 +95,13 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "$ref": "#/$defs/System.Boolean"
     },
     "backgroundMode": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Screenshot+BackgroundMode"
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Screenshot%2BBackgroundMode"
     },
     "backgroundColor": {
       "type": "string"
     },
     "cameraView": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Screenshot+CameraView"
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Screenshot%2BCameraView"
     },
     "fieldOfView": {
       "$ref": "#/$defs/System.Single"

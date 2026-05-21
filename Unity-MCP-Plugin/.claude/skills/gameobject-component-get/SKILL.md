@@ -89,7 +89,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "type": "boolean"
     },
     "paths": {
-      "$ref": "#/$defs/System.Collections.Generic.List<System.String>"
+      "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E"
     },
     "viewQuery": {
       "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.ViewQuery"
@@ -311,11 +311,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "description": "Basic component information (type, enabled state)."
         },
         "Fields": {
-          "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.ReflectorNet.Model.SerializedMember>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3Ccom.IvanMurzak.ReflectorNet.Model.SerializedMember%3E",
           "description": "Serialized fields of the component. Populated only on the legacy code path (no 'paths' / no 'viewQuery')."
         },
         "Properties": {
-          "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.ReflectorNet.Model.SerializedMember>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3Ccom.IvanMurzak.ReflectorNet.Model.SerializedMember%3E",
           "description": "Serialized properties of the component. Populated only on the legacy code path (no 'paths' / no 'viewQuery')."
         },
         "View": {

@@ -261,11 +261,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "description": "Summary of the test run including total, passed, failed, and skipped counts."
         },
         "Results": {
-          "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Editor.API.TestRunner.TestResultData>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3Ccom.IvanMurzak.Unity.MCP.Editor.API.TestRunner.TestResultData%3E",
           "description": "List of individual test results with details about each test."
         },
         "Logs": {
-          "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Editor.API.TestRunner.TestLogEntry>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3Ccom.IvanMurzak.Unity.MCP.Editor.API.TestRunner.TestLogEntry%3E",
           "description": "Log entries captured during test execution."
         }
       }

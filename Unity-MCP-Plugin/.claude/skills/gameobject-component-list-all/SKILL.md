@@ -95,7 +95,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "type": "object",
       "properties": {
         "Items": {
-          "$ref": "#/$defs/System.String[]",
+          "$ref": "#/$defs/System.String%5B%5D",
           "description": "Array of component type names for the current page."
         },
         "Page": {

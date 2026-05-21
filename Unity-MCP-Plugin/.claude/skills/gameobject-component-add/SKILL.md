@@ -57,7 +57,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "componentNames": {
-      "$ref": "#/$defs/System.String[]"
+      "$ref": "#/$defs/System.String%5B%5D"
     },
     "gameObjectRef": {
       "$ref": "#/$defs/AIGD.GameObjectRef"
@@ -166,19 +166,19 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "type": "object",
       "properties": {
         "AddedComponents": {
-          "$ref": "#/$defs/System.Collections.Generic.List<AIGD.ComponentDataShallow>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3CAIGD.ComponentDataShallow%3E",
           "description": "List of successfully added components."
         },
         "Messages": {
-          "$ref": "#/$defs/System.Collections.Generic.List<System.String>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E",
           "description": "List of success messages for added components."
         },
         "Warnings": {
-          "$ref": "#/$defs/System.Collections.Generic.List<System.String>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E",
           "description": "List of warnings encountered during component addition."
         },
         "Errors": {
-          "$ref": "#/$defs/System.Collections.Generic.List<System.String>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E",
           "description": "List of errors encountered during component addition."
         }
       }
