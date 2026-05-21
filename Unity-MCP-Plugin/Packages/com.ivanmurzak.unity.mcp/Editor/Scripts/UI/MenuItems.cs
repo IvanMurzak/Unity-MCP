@@ -24,16 +24,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         [MenuItem("Window/AI Game Developer — MCP %&a", priority = 1006)]
         public static void ShowWindow() => MainWindowEditor.ShowWindow();
 
-        [MenuItem("Tools/AI Game Developer/Check for Updates", priority = 999)]
+        [MenuItem("Tools/AI Game Developer/Updates/Check for Updates", priority = 999)]
         public static void CheckForUpdates() => _ = UpdateChecker.CheckForUpdatesAsync(forceCheck: true);
 
         // Team-shared kill-switch for the update popup. Toggling this writes through to
         // ProjectSettings/AI-Game-Developer-UpdateSettings.asset (intended to be committed
         // to VCS). The validate method renders the menu's check-mark to match current state.
         // See https://github.com/IvanMurzak/Unity-MCP/issues/768.
-        private const string DisableUpdatesMenu = "Tools/AI Game Developer/Disable Update Notifications (Team)";
+        private const string DisableUpdatesMenu = "Tools/AI Game Developer/Updates/Disable Update Notifications (Team)";
 
-        [MenuItem(DisableUpdatesMenu, priority = 1005)]
+        [MenuItem(DisableUpdatesMenu, priority = 1000)]
         public static void ToggleDisableUpdatesForTeam()
             => UpdateChecker.IsDisabledForProject = !UpdateChecker.IsDisabledForProject;
 

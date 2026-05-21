@@ -416,7 +416,7 @@ Create metallic golden material and attach it to a new sphere gameObject
 
 プラグインのバージョン管理を 1 人のエンジニアが担当している複数人での Unity プロジェクトでは、**Edit ▸ Project Settings ▸ AI Game Developer** を開き *"Disable update notifications for the entire team"* を有効にすることで、**チーム全体**でこのポップアップを無効化できます。設定は `ProjectSettings/AI-Game-Developer-UpdateSettings.asset` に保存され、プロジェクトごとに一度だけ設定すれば十分です — このファイルをコミットすると、そのコミットを取り込んだすべてのチームメンバーでポップアップが抑制されます。
 
-同じ切り替えはメニューバーの **Tools ▸ AI Game Developer ▸ Disable Update Notifications (Team)** からも利用できます。
+同じ切り替えはメニューバーの **Tools ▸ AI Game Developer ▸ Updates ▸ Disable Update Notifications (Team)** からも利用できます。
 
 ## LLM 向け高度な機能
 
