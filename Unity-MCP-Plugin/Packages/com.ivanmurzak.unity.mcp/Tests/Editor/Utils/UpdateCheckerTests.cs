@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System.IO;
 using NUnit.Framework;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 
@@ -17,18 +18,65 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     [TestFixture]
     public class UpdateCheckerTests
     {
+        // ProjectSettings/AI-Game-Developer-UpdateSettings.asset is intended to be a deliberate
+        // engineer act (commit it to disable team-wide notifications). If a consumer project runs
+        // the EditMode suite without that asset on disk, none of these tests may leave it behind:
+        // doing so would surface as a spurious "untracked file" diff. Snapshot existence + the
+        // pre-existing value at fixture entry, then restore at fixture exit (delete the asset if
+        // it didn't pre-exist; otherwise reset it to its original value).
+        private const string ProjectSettingsAssetPath =
+            "ProjectSettings/AI-Game-Developer-UpdateSettings.asset";
+
+        private bool _projectSettingsAssetPreExisted;
+        private bool _originalIsDisabledForProject;
+
+        [OneTimeSetUp]
+        public void OneTimeSetUp()
+        {
+            _projectSettingsAssetPreExisted = File.Exists(ProjectSettingsAssetPath);
+            _originalIsDisabledForProject = UpdateChecker.IsDisabledForProject;
+        }
+
+        [OneTimeTearDown]
+        public void OneTimeTearDown()
+        {
+            // Restore the user-visible state of the asset to what it was at fixture entry. If the
+            // asset did not pre-exist, force it false (early-exit may or may not fire depending on
+            // the last test) and then delete the file from disk so the consumer's working tree is
+            // clean. If it did pre-exist, just restore the original value via the setter (which
+            // will short-circuit if no test mutated it).
+            UpdateChecker.IsDisabledForProject = _originalIsDisabledForProject;
+            if (!_projectSettingsAssetPreExisted && File.Exists(ProjectSettingsAssetPath))
+                File.Delete(ProjectSettingsAssetPath);
+        }
+
         [SetUp]
         public void SetUp()
         {
-            // Clear all preferences before each test to ensure clean state
+            // Clear all per-user preferences AND the team-shared project flag before each
+            // test. ClearPreferences() intentionally does NOT reset IsDisabledForProject
+            // (see its XML doc) — explicit reset here so the precedence tests start from a
+            // known false state regardless of what a prior test wrote.
+            //
+            // Guard the project-flag reset behind a read so the setter's early-exit short-circuit
+            // fires when it's already false. Otherwise SetUp would call Save(true) on first run
+            // (when the asset doesn't exist) or after any test that flipped it on, materializing
+            // ProjectSettings/AI-Game-Developer-UpdateSettings.asset on disk and producing a
+            // spurious committed-asset diff in a consumer project that runs the EditMode suite.
             UpdateChecker.ClearPreferences();
+            if (UpdateChecker.IsDisabledForProject)
+                UpdateChecker.IsDisabledForProject = false;
         }
 
         [TearDown]
         public void TearDown()
         {
-            // Clean up preferences after each test
+            // Mirror SetUp — leave both layers clean for any test that follows. Same rationale
+            // as above: ClearPreferences() does not touch the project flag, so reset it
+            // explicitly to keep tests order-independent. Same early-exit guard as SetUp.
             UpdateChecker.ClearPreferences();
+            if (UpdateChecker.IsDisabledForProject)
+                UpdateChecker.IsDisabledForProject = false;
         }
 
         #region Version Comparison Tests
@@ -376,6 +424,57 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             UpdateChecker.ClearPreferences();
 
             Assert.IsTrue(UpdateChecker.ShouldCheckForUpdates());
+        }
+
+        // Team-shared kill-switch tests — see https://github.com/IvanMurzak/Unity-MCP/issues/768.
+        // The project flag must short-circuit ShouldCheckForUpdates() BEFORE the per-user
+        // DoNotShowAgain check, so flipping it on suppresses the popup for the whole team
+        // regardless of individual users' EditorPrefs state.
+
+        [Test]
+        public void ShouldCheckForUpdates_ProjectDisabled_ReturnsFalse()
+        {
+            UpdateChecker.IsDisabledForProject = true;
+
+            Assert.IsFalse(UpdateChecker.ShouldCheckForUpdates());
+        }
+
+        [Test]
+        public void ShouldCheckForUpdates_ProjectDisabled_TakesPrecedenceOverPerUserFlag()
+        {
+            // Project flag ON, per-user flag OFF — popup must still be suppressed.
+            UpdateChecker.IsDisabledForProject = true;
+            UpdateChecker.IsDoNotShowAgain = false;
+
+            Assert.IsFalse(UpdateChecker.ShouldCheckForUpdates());
+        }
+
+        [Test]
+        public void ShouldCheckForUpdates_ProjectEnabled_FallsBackToPerUser()
+        {
+            // Project flag OFF, per-user flag ON — popup is still suppressed by the per-user
+            // layer. Pins the precedence ordering: project flag does NOT mean "force show",
+            // only "force hide".
+            UpdateChecker.IsDisabledForProject = false;
+            UpdateChecker.IsDoNotShowAgain = true;
+
+            Assert.IsFalse(UpdateChecker.ShouldCheckForUpdates());
+        }
+
+        [Test]
+        public void ClearPreferences_DoesNotResetProjectFlag()
+        {
+            // ClearPreferences() is the per-user reset (also wired into the "Reset Update
+            // Preferences" debug menu). It must NOT touch the team-shared project flag —
+            // doing so would produce a spurious diff in a committed asset and surprise other
+            // team members.
+            UpdateChecker.IsDisabledForProject = true;
+
+            UpdateChecker.ClearPreferences();
+
+            Assert.IsTrue(UpdateChecker.IsDisabledForProject,
+                "ClearPreferences() reset the project flag — that flag belongs to ProjectSettings/ and " +
+                "must only be mutated via the Project Settings UI or the Tools menu toggle.");
         }
 
         #endregion

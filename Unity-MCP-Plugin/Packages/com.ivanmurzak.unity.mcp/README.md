@@ -410,6 +410,14 @@ Create metallic golden material and attach it to a new sphere gameObject
 
 > Make sure `Agent` mode is enabled if using VS Code with Copilot
 
+## Disabling update notifications for the whole team
+
+The plugin shows an update popup at Editor startup when a newer version is available on OpenUPM. By default, each team member sees this popup until they individually click *"Do not show again"* (which is a per-user setting stored on their machine).
+
+For multi-person Unity projects where one engineer owns plugin versioning, you can disable the popup for the **entire team** by opening **Edit ▸ Project Settings ▸ AI Game Developer** and enabling *"Disable update notifications for the entire team"*. The setting is persisted to `ProjectSettings/AI-Game-Developer-UpdateSettings.asset` and only needs to be set once per project — commit that file and every team member who pulls the commit will have the popup suppressed.
+
+The same toggle is also reachable via **Tools ▸ AI Game Developer ▸ Disable Update Notifications (Team)** in the menu bar.
+
 ## Advanced Features for LLM
 
 Unity MCP provides advanced tools that enable the LLM to work faster and more effectively, avoiding mistakes and self-correcting when errors occur. Everything is designed to achieve your goals efficiently.

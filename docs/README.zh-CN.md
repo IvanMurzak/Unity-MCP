@@ -410,6 +410,14 @@ Create metallic golden material and attach it to a new sphere gameObject
 
 > 如果你在 VS Code 中使用 Copilot，请确保已启用 `Agent` 模式
 
+## 为整个团队关闭更新通知
+
+当 OpenUPM 上有新版本可用时，插件会在 Editor 启动时显示更新弹窗。默认情况下，每位团队成员都会看到这个弹窗，直到他们各自点击 *"Do not show again"*（这是保存在各自机器上的个人设置）。
+
+对于由一位工程师统一管理插件版本的多人 Unity 项目，你可以为**整个团队**关闭这个弹窗：打开 **Edit ▸ Project Settings ▸ AI Game Developer** 并启用 *"Disable update notifications for the entire team"*。该设置会保存到 `ProjectSettings/AI-Game-Developer-UpdateSettings.asset`，每个项目只需设置一次 —— 提交（commit）该文件后，所有拉取该提交的团队成员都将看不到这个弹窗。
+
+同样的开关也可以通过菜单栏中的 **Tools ▸ AI Game Developer ▸ Disable Update Notifications (Team)** 访问。
+
 ## LLM 高级功能
 
 Unity MCP 提供高级工具，使 LLM 能够更快、更有效地工作，避免错误并在出现问题时自我纠正。一切都设计为高效地实现你的目标。

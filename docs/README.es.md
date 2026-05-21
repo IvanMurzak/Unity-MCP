@@ -410,6 +410,14 @@ Create metallic golden material and attach it to a new sphere gameObject
 
 > Asegúrate de que el modo `Agent` esté activado si usas VS Code con Copilot
 
+## Desactivar las notificaciones de actualización para todo el equipo
+
+El plugin muestra una ventana emergente de actualización al iniciar el Editor cuando hay una versión nueva disponible en OpenUPM. Por defecto, cada miembro del equipo ve esta ventana hasta que pulsa *"No volver a mostrar"* (que es una configuración por usuario almacenada en su máquina).
+
+En proyectos Unity con varios miembros, donde un ingeniero gestiona las versiones del plugin, puedes desactivar la ventana emergente para **todo el equipo** abriendo **Edit ▸ Project Settings ▸ AI Game Developer** y activando *"Disable update notifications for the entire team"*. El ajuste se guarda en `ProjectSettings/AI-Game-Developer-UpdateSettings.asset` y solo debe configurarse una vez por proyecto — al confirmar (commit) ese archivo, todos los miembros del equipo que descarguen el commit verán la ventana suprimida.
+
+El mismo conmutador también está disponible en **Tools ▸ AI Game Developer ▸ Disable Update Notifications (Team)** en la barra de menús.
+
 ## Funcionalidades avanzadas para LLM
 
 Unity MCP proporciona herramientas avanzadas que permiten al LLM trabajar de forma más rápida y efectiva, evitando errores y autocorrigiéndose cuando ocurren. Todo está diseñado para alcanzar tus objetivos de manera eficiente.
