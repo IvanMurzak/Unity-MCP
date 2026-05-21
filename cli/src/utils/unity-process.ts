@@ -1,4 +1,4 @@
-import { execSync } from 'child_process';
+import { execFileSync, execSync } from 'child_process';
 import { platform } from 'os';
 import * as path from 'path';
 import { verbose } from './ui.js';
@@ -42,10 +42,11 @@ function listUnityProcesses(): UnityProcess[] {
     let lines: string[];
 
     if (os === 'win32') {
-      const psCommand = `powershell -NoProfile -Command "Get-CimInstance Win32_Process -Filter \\"Name='Unity.exe'\\" | Select-Object ProcessId,CommandLine | ForEach-Object { $_.ProcessId.ToString() + '|||' + $_.CommandLine }"`;
-      const output = execSync(
-        psCommand,
-        { encoding: 'utf-8', timeout: 3000, stdio: ['pipe', 'pipe', 'pipe'] }
+      const psCommand = "Get-CimInstance Win32_Process -Filter \"Name='Unity.exe'\" | Select-Object ProcessId,CommandLine | ForEach-Object { $_.ProcessId.ToString() + '|||' + $_.CommandLine }";
+      const output = execFileSync(
+        'powershell.exe',
+        ['-NoProfile', '-Command', psCommand],
+        { encoding: 'utf-8', timeout: 10000, stdio: ['pipe', 'pipe', 'pipe'] }
       );
       lines = output.split('\n').filter(l => l.trim().length > 0);
 

@@ -331,6 +331,73 @@ describe('openProject — editor-version detection (mocked)', () => {
   });
 });
 
+describe('openProject — explicit editor path override (mocked)', () => {
+  let tmpDir: string;
+  let editorDir: string;
+  let editorPath: string;
+  let launchEditorMock: ReturnType<typeof vi.fn>;
+  let findEditorPathMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity mcp project with spaces-'));
+    editorDir = fs.mkdtempSync(path.join(os.tmpdir(), 'Unity Hub Editors With Spaces-'));
+    editorPath = path.join(editorDir, 'Editor', process.platform === 'win32' ? 'Unity.exe' : 'Unity');
+    fs.mkdirSync(path.dirname(editorPath), { recursive: true });
+    fs.writeFileSync(editorPath, '');
+    makeFakeUnityProject(tmpDir, '6000.5.0b8');
+
+    launchEditorMock = vi.fn(() => ({
+      pid: 12345,
+      on: () => {},
+      once: () => {},
+      unref: () => {},
+    }));
+    findEditorPathMock = vi.fn(async () => {
+      throw new Error('findEditorPath should not be called when editorPath is explicit');
+    });
+
+    vi.resetModules();
+    vi.doMock('../src/utils/unity-editor.js', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('../src/utils/unity-editor.js')>();
+      return {
+        ...actual,
+        findEditorPath: findEditorPathMock,
+        launchEditor: launchEditorMock,
+      };
+    });
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+    fs.rmSync(editorDir, { recursive: true, force: true });
+    vi.doUnmock('../src/utils/unity-editor.js');
+    vi.resetModules();
+  });
+
+  it('launches with an explicit editor path and a project path containing spaces', async () => {
+    const { openProject: mockedOpenProject } = await import('../src/lib/open.js');
+    const events: ProgressEvent[] = [];
+
+    const result = await mockedOpenProject({
+      projectPath: tmpDir,
+      editorPath,
+      autoDismissLaunchErrors: false,
+      onProgress: (e) => events.push(e),
+    });
+
+    expect(result.kind).toBe('success');
+    expect(findEditorPathMock).not.toHaveBeenCalled();
+    expect(launchEditorMock).toHaveBeenCalledTimes(1);
+    expect(launchEditorMock.mock.calls[0][0]).toBe(path.resolve(editorPath));
+    expect(launchEditorMock.mock.calls[0][1]).toBe(path.resolve(tmpDir));
+    expect(events).toContainEqual({
+      phase: 'editors-located',
+      message: 'Using explicit Unity Editor path',
+      found: true,
+    });
+  });
+});
+
 // ---------------------------------------------------------------------------
 // openProject — onProgress contract
 // ---------------------------------------------------------------------------

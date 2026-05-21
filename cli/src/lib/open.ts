@@ -212,18 +212,33 @@ export async function openProject(
     }
     resolvedVersion = version;
 
-    // Locate editor binary (Unity Hub / common locations).
-    const editorPath = await findEditorPath(version);
+    // Locate editor binary. An explicit editor path is authoritative
+    // and intentionally skips Unity Hub / common-location discovery,
+    // which can miss custom Windows install roots.
+    let editorPath: string | null;
+    if (options.editorPath !== undefined) {
+      editorPath = path.resolve(options.editorPath);
+      if (!fs.existsSync(editorPath)) {
+        throw new Error(`Unity Editor path does not exist: ${editorPath}`);
+      }
+      emitProgress(options.onProgress, {
+        phase: 'editors-located',
+        message: 'Using explicit Unity Editor path',
+        found: true,
+      });
+    } else {
+      editorPath = await findEditorPath(version);
 
-    // Boolean signal for caller telemetry — we surface only whether
-    // editor discovery succeeded, not how many editors are installed.
-    emitProgress(options.onProgress, {
-      phase: 'editors-located',
-      message: editorPath
-        ? 'Located Unity Editor candidates'
-        : 'Failed to locate any Unity Editor',
-      found: editorPath !== null,
-    });
+      // Boolean signal for caller telemetry — we surface only whether
+      // editor discovery succeeded, not how many editors are installed.
+      emitProgress(options.onProgress, {
+        phase: 'editors-located',
+        message: editorPath
+          ? 'Located Unity Editor candidates'
+          : 'Failed to locate any Unity Editor',
+        found: editorPath !== null,
+      });
+    }
 
     if (!editorPath) {
       const detail = version
