@@ -416,7 +416,7 @@ El plugin muestra una ventana emergente de actualización al iniciar el Editor c
 
 En proyectos Unity con varios miembros, donde un ingeniero gestiona las versiones del plugin, puedes desactivar la ventana emergente para **todo el equipo** abriendo **Edit ▸ Project Settings ▸ AI Game Developer** y activando *"Disable update notifications for the entire team"*. El ajuste se guarda en `ProjectSettings/AI-Game-Developer-UpdateSettings.asset` y solo debe configurarse una vez por proyecto — al confirmar (commit) ese archivo, todos los miembros del equipo que descarguen el commit verán la ventana suprimida.
 
-El mismo conmutador también está disponible en **Tools ▸ AI Game Developer ▸ Disable Update Notifications (Team)** en la barra de menús.
+El mismo conmutador también está disponible en **Tools ▸ AI Game Developer ▸ Updates ▸ Disable Update Notifications (Team)** en la barra de menús.
 
 ## Funcionalidades avanzadas para LLM
 

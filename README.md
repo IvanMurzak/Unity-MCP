@@ -416,7 +416,7 @@ The plugin shows an update popup at Editor startup when a newer version is avail
 
 For multi-person Unity projects where one engineer owns plugin versioning, you can disable the popup for the **entire team** by opening **Edit ▸ Project Settings ▸ AI Game Developer** and enabling *"Disable update notifications for the entire team"*. The setting is persisted to `ProjectSettings/AI-Game-Developer-UpdateSettings.asset` and only needs to be set once per project — commit that file and every team member who pulls the commit will have the popup suppressed.
 
-The same toggle is also reachable via **Tools ▸ AI Game Developer ▸ Disable Update Notifications (Team)** in the menu bar.
+The same toggle is also reachable via **Tools ▸ AI Game Developer ▸ Updates ▸ Disable Update Notifications (Team)** in the menu bar.
 
 ## Advanced Features for LLM
 

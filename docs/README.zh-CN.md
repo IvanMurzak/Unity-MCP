@@ -416,7 +416,7 @@ Create metallic golden material and attach it to a new sphere gameObject
 
 对于由一位工程师统一管理插件版本的多人 Unity 项目，你可以为**整个团队**关闭这个弹窗：打开 **Edit ▸ Project Settings ▸ AI Game Developer** 并启用 *"Disable update notifications for the entire team"*。该设置会保存到 `ProjectSettings/AI-Game-Developer-UpdateSettings.asset`，每个项目只需设置一次 —— 提交（commit）该文件后，所有拉取该提交的团队成员都将看不到这个弹窗。
 
-同样的开关也可以通过菜单栏中的 **Tools ▸ AI Game Developer ▸ Disable Update Notifications (Team)** 访问。
+同样的开关也可以通过菜单栏中的 **Tools ▸ AI Game Developer ▸ Updates ▸ Disable Update Notifications (Team)** 访问。
 
 ## LLM 高级功能
 

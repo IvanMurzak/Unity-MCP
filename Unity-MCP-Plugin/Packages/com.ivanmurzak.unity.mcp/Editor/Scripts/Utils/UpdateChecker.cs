@@ -223,7 +223,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// team-shared via <c>ProjectSettings/</c>, and clearing it from a debug menu would
         /// produce a spurious diff in a committed asset (potentially surprising other team
         /// members). The team flag is reset only through the Project Settings UI or
-        /// <c>Tools ▸ AI Game Developer ▸ Disable Update Notifications (Team)</c>.
+        /// <c>Tools ▸ AI Game Developer ▸ Updates ▸ Disable Update Notifications (Team)</c>.
         /// </remarks>
         public static void ClearPreferences()
         {
