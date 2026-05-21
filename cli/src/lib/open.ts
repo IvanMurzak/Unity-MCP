@@ -217,9 +217,29 @@ export async function openProject(
     // which can miss custom Windows install roots.
     let editorPath: string | null;
     if (options.editorPath !== undefined) {
-      editorPath = path.resolve(options.editorPath);
-      if (!fs.existsSync(editorPath)) {
+      // Validate the explicit value BEFORE `path.resolve` so an empty
+      // / whitespace-only string is rejected up-front. `path.resolve('')`
+      // returns `process.cwd()`, which would then pass `existsSync` and
+      // lead us to spawn the working directory as the editor binary.
+      const trimmedEditorPath =
+        typeof options.editorPath === 'string' ? options.editorPath.trim() : '';
+      if (trimmedEditorPath.length === 0) {
+        throw new Error('Explicit Unity Editor path is empty or whitespace-only.');
+      }
+      editorPath = path.resolve(trimmedEditorPath);
+      // Use `statSync` (not just `existsSync`) so directories and
+      // other non-file entries are rejected here, where the failure
+      // message is clear, rather than asynchronously inside
+      // `launchEditor` — where the spawn `error` event would surface
+      // AFTER `openProject` had already taken its happy path.
+      let editorStat: fs.Stats;
+      try {
+        editorStat = fs.statSync(editorPath);
+      } catch {
         throw new Error(`Unity Editor path does not exist: ${editorPath}`);
+      }
+      if (!editorStat.isFile()) {
+        throw new Error(`Unity Editor path is not a file: ${editorPath}`);
       }
       emitProgress(options.onProgress, {
         phase: 'editors-located',

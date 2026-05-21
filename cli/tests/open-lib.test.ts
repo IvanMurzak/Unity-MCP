@@ -396,6 +396,61 @@ describe('openProject — explicit editor path override (mocked)', () => {
       found: true,
     });
   });
+
+  it('rejects an empty string editorPath without spawning the editor', async () => {
+    // Regression for review: `path.resolve('')` is `process.cwd()`,
+    // which would otherwise pass `existsSync` and lead us to spawn
+    // the working directory as the editor binary. The explicit-path
+    // branch must reject empty / whitespace-only values up-front.
+    const { openProject: mockedOpenProject } = await import('../src/lib/open.js');
+
+    const result = await mockedOpenProject({
+      projectPath: tmpDir,
+      editorPath: '',
+      autoDismissLaunchErrors: false,
+    });
+
+    expect(result.kind).toBe('failure');
+    if (result.kind !== 'failure') return;
+    expect(result.errorMessage).toMatch(/empty|whitespace/i);
+    expect(launchEditorMock).not.toHaveBeenCalled();
+    expect(findEditorPathMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects a whitespace-only editorPath without spawning the editor', async () => {
+    const { openProject: mockedOpenProject } = await import('../src/lib/open.js');
+
+    const result = await mockedOpenProject({
+      projectPath: tmpDir,
+      editorPath: '   ',
+      autoDismissLaunchErrors: false,
+    });
+
+    expect(result.kind).toBe('failure');
+    if (result.kind !== 'failure') return;
+    expect(result.errorMessage).toMatch(/empty|whitespace/i);
+    expect(launchEditorMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects a directory passed as editorPath without spawning the editor', async () => {
+    // Regression for review: `existsSync` returns true for directories
+    // too. The validation must reject non-files here, where the error
+    // is synchronous and clearly attributable to the editor-path
+    // option, rather than letting the spawn fail asynchronously and
+    // surface as `{ kind: 'success', editorPid: undefined }`.
+    const { openProject: mockedOpenProject } = await import('../src/lib/open.js');
+
+    const result = await mockedOpenProject({
+      projectPath: tmpDir,
+      editorPath: editorDir, // a directory, not a file
+      autoDismissLaunchErrors: false,
+    });
+
+    expect(result.kind).toBe('failure');
+    if (result.kind !== 'failure') return;
+    expect(result.errorMessage).toMatch(/not a file/i);
+    expect(launchEditorMock).not.toHaveBeenCalled();
+  });
 });
 
 // ---------------------------------------------------------------------------
