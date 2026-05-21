@@ -1,0 +1,29 @@
+README.md
+  s_5b77098ca95a5f::t_e7db2842efdf57 419
+docs/README.es.md
+  s_5b77098ca95a5f::t_fa7263696ba78a 419
+docs/README.zh-CN.md
+  s_5b77098ca95a5f::t_446b0619e90c69 419
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Utils/UpdateChecker.cs
+  s_5b77098ca95a5f::t_c4eae225971ee8 226
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/README.md
+  s_5b77098ca95a5f::t_9f2c811c80bf4e 419
+docs/README.ja.md
+  s_5b77098ca95a5f::t_76dcd8194a3633 419
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "49ce266354dbca6584d16421344ce57fccbd7e2e",
+  "prompts": {},
+  "sessions": {
+    "s_5b77098ca95a5f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f10347d0-d71c-4d83-ba57-c18a3e759efa",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
