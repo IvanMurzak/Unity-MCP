@@ -29,6 +29,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             OpenWorldHint = true,
             Enabled = false
         )]
+        [McpPluginSkillDescription("Install a Unity package from the registry, a Git URL, or a local path. " +
+            "Modifies `manifest.json` and triggers package resolution; may also trigger a domain reload — the final " +
+            "result is delivered after the reload via the request's `requestId`. " +
+            "Use '" + PackageSearchToolId + "' / '" + PackageListToolId + "' for discovery first.")]
+        [McpPluginSkillBody("Install a package from the Unity Package Manager registry, Git URL, or local path. " +
+            "This operation modifies the project's manifest.json and triggers package resolution. " +
+            "Note: Package installation may trigger a domain reload. The result will be sent after the reload completes. " +
+            "Use '" + PackageSearchToolId + "' tool to search for packages and '" + PackageListToolId + "' to list installed packages.\n\n" +
+            "## `packageId` formats\n\n" +
+            "- Plain package ID: `com.unity.textmeshpro` (installs latest compatible version).\n" +
+            "- Pinned version: `com.unity.textmeshpro@3.0.6`.\n" +
+            "- Git URL: `https://github.com/user/repo.git`.\n" +
+            "- Git URL with branch/tag: `https://github.com/user/repo.git#v1.0.0`.\n" +
+            "- Local path: `file:../MyPackage`.\n\n" +
+            "## Processing model\n\n" +
+            "Returns `Processing` immediately with the supplied `requestId`. Once `Client.Add` completes, a follow-up " +
+            "result is delivered: success → `SchedulePostDomainReloadNotification` (delivers after the reload finishes), " +
+            "failure → an immediate error notification with the underlying Unity error message.")]
         [Description("Install a package from the Unity Package Manager registry, Git URL, or local path. " +
             "This operation modifies the project's manifest.json and triggers package resolution. " +
             "Note: Package installation may trigger a domain reload. The result will be sent after the reload completes. " +

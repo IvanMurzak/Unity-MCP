@@ -32,6 +32,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Object / Modify",
             IdempotentHint = true
         )]
+        [McpPluginSkillDescription("Modify a Unity `UnityEngine.Object`'s serializable fields/properties. " +
+            "Three modification surfaces are available (`objectDiff`, `pathPatches`, `jsonPatch`) — see the skill body. " +
+            "Use '" + ObjectGetDataToolId + "' first to inspect the object structure.")]
+        [McpPluginSkillBody("Modify the specified Unity Object. " +
+            "Allows direct modification of object fields and properties. " +
+            "Use '" + ObjectGetDataToolId + "' first to inspect the object structure before modifying.\n\n" +
+            "## Three modification surfaces\n\n" +
+            "Use whichever fits the task:\n\n" +
+            "1. `objectDiff` — full `SerializedMember` diff (legacy, backwards compatible).\n" +
+            "2. `pathPatches` — list of `{path, value}` pairs routed through `Reflector.TryModifyAt`; atomic per-path " +
+            "modification, multiple entries can target different depths.\n" +
+            "3. `jsonPatch` — a JSON Merge Patch (RFC 7396, extended with `[i]`/`[key]` notation) routed through " +
+            "`Reflector.TryPatch`; multiple fields at any depth in a single call.\n\n" +
+            "When more than one is supplied they run in this order: `jsonPatch` → `pathPatches` → `objectDiff`. " +
+            "At least one is required.\n\n" +
+            "## Path syntax\n\n" +
+            "`fieldName`, `nested/field`, `arrayField/[i]`, `dictField/[key]`. Leading `#/` is stripped.")]
         [Description("Modify the specified Unity Object. " +
             "Allows direct modification of object fields and properties. " +
             "Use '" + ObjectGetDataToolId + "' first to inspect the object structure before modifying.\n\n" +

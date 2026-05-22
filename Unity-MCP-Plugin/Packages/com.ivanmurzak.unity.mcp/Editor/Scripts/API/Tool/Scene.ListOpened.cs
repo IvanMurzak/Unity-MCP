@@ -27,6 +27,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ReadOnlyHint = true,
             IdempotentHint = true
         )]
+        [McpPluginSkillDescription("List every scene currently opened in the Unity Editor as a shallow snapshot " +
+            "(name, path, build flags). Use '" + SceneGetDataToolId + "' for the deep view of a specific scene.")]
+        [McpPluginSkillBody("Returns the list of currently opened scenes in Unity Editor. " +
+            "Use '" + SceneGetDataToolId + "' tool to get detailed information about a specific scene.\n\n" +
+            "## Behavior\n\n" +
+            "Maps `OpenedScenes` through `ToSceneDataShallow()` on the main thread and returns the resulting array. " +
+            "No filtering or pagination — every opened scene is included.")]
         [Description("Returns the list of currently opened scenes in Unity Editor. " +
             "Use '" + SceneGetDataToolId + "' tool to get detailed information about a specific scene.")]
         public SceneDataShallow[] ListOpened(string? nothing = null)

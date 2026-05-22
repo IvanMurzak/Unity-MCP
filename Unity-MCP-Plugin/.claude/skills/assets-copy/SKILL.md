@@ -1,9 +1,20 @@
 ---
 name: assets-copy
-description: Copy assets at given paths and store them at new paths. Does AssetDatabase.Refresh() at the end. Use 'assets-find' tool to find assets before copying.
+description: Copy assets at given paths and store them at new paths. Refreshes the AssetDatabase at the end. Use 'assets-find' to locate the source assets first.
 ---
 
 # Assets / Copy
+
+Copy assets at given paths and store them at new paths. Does AssetDatabase.Refresh() at the end. Use 'assets-find' tool to find assets before copying.
+
+## Inputs
+
+- `sourcePaths` — paths of the assets to copy.
+- `destinationPaths` — paths to store the copied assets (must match `sourcePaths` length).
+
+## Behavior
+
+Each source/destination pair is copied in order. Per-pair errors are accumulated in the response instead of throwing, so a single bad pair does not abort the whole batch.
 
 ## How to Call
 
@@ -46,10 +57,10 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "sourcePaths": {
-      "$ref": "#/$defs/System.String[]"
+      "$ref": "#/$defs/System.String%5B%5D"
     },
     "destinationPaths": {
-      "$ref": "#/$defs/System.String[]"
+      "$ref": "#/$defs/System.String%5B%5D"
     }
   },
   "$defs": {
@@ -125,11 +136,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "type": "object",
       "properties": {
         "CopiedAssets": {
-          "$ref": "#/$defs/System.Collections.Generic.List<AIGD.AssetObjectRef>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3CAIGD.AssetObjectRef%3E",
           "description": "List of copied assets."
         },
         "Errors": {
-          "$ref": "#/$defs/System.Collections.Generic.List<System.String>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E",
           "description": "List of errors encountered during copy operations."
         }
       }

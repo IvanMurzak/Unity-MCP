@@ -30,7 +30,7 @@
 }
 
 .segmented-control__segment {
-    color: rgb(140, 140, 140);
+    color: var(--unity-colors-helpbox-text);
     font-size: 12px;
     padding: 2px 8px;
     margin: 0;
@@ -40,7 +40,7 @@
 }
 
 .segmented-control__segment:hover {
-    color: rgb(180, 180, 180);
+    color: var(--unity-colors-default-text);
 }
 
 .segmented-control__segment--selected {

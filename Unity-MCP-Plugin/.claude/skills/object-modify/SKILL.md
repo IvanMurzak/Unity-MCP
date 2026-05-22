@@ -1,17 +1,25 @@
 ---
 name: object-modify
-description: |-
-  Modify the specified Unity Object. Allows direct modification of object fields and properties. Use 'object-get-data' first to inspect the object structure before modifying.
-  
-  Three modification surfaces (use whichever fits the task):
-    1. 'objectDiff' — full SerializedMember diff (legacy, backwards compatible).
-    2. 'pathPatches' — list of {path, value} pairs routed through Reflector.TryModifyAt; atomic per-path modification, multiple entries can target different depths.
-    3. 'jsonPatch' — a JSON Merge Patch (RFC 7396, extended with [i]/[key] notation) routed through Reflector.TryPatch; multiple fields at any depth in a single call.
-  When more than one is supplied they run in this order: jsonPatch → pathPatches → objectDiff. At least one is required.
-  Path syntax: 'fieldName', 'nested/field', 'arrayField/[i]', 'dictField/[key]'. Leading '#/' is stripped.
+description: Modify a Unity `UnityEngine.Object`'s serializable fields/properties. Three modification surfaces are available (`objectDiff`, `pathPatches`, `jsonPatch`) — see the skill body. Use 'object-get-data' first to inspect the object structure.
 ---
 
 # Object / Modify
+
+Modify the specified Unity Object. Allows direct modification of object fields and properties. Use 'object-get-data' first to inspect the object structure before modifying.
+
+## Three modification surfaces
+
+Use whichever fits the task:
+
+1. `objectDiff` — full `SerializedMember` diff (legacy, backwards compatible).
+2. `pathPatches` — list of `{path, value}` pairs routed through `Reflector.TryModifyAt`; atomic per-path modification, multiple entries can target different depths.
+3. `jsonPatch` — a JSON Merge Patch (RFC 7396, extended with `[i]`/`[key]` notation) routed through `Reflector.TryPatch`; multiple fields at any depth in a single call.
+
+When more than one is supplied they run in this order: `jsonPatch` → `pathPatches` → `objectDiff`. At least one is required.
+
+## Path syntax
+
+`fieldName`, `nested/field`, `arrayField/[i]`, `dictField/[key]`. Leading `#/` is stripped.
 
 ## How to Call
 
@@ -66,7 +74,7 @@ Any unknown or invalid fields and properties will be reported in the response. |
       "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.SerializedMember"
     },
     "pathPatches": {
-      "$ref": "#/$defs/System.Collections.Generic.List<AIGD.PathPatch>"
+      "$ref": "#/$defs/System.Collections.Generic.List%3CAIGD.PathPatch%3E"
     },
     "jsonPatch": {
       "type": "string"
@@ -244,7 +252,7 @@ Any unknown or invalid fields and properties will be reported in the response. |
           "description": "Updated object data after modification."
         },
         "Logs": {
-          "$ref": "#/$defs/System.String[]",
+          "$ref": "#/$defs/System.String%5B%5D",
           "description": "Log of modifications made and any warnings/errors encountered."
         }
       },

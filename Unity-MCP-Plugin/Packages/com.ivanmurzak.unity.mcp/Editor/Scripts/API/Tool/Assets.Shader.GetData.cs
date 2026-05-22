@@ -37,6 +37,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ReadOnlyHint = true,
             IdempotentHint = true
         )]
+        [McpPluginSkillDescription("Get detailed data about a shader asset — properties, subshaders, passes, " +
+            "compilation messages, and supported status. Supports token-saving path-scoped reads via `paths` or " +
+            "`viewQuery`. Use '" + Tool_Assets.AssetsFindToolId + "' with `t:Shader` or '" +
+            AssetsShaderListAllToolId + "' to locate the shader first.")]
+        [McpPluginSkillBody("Get detailed data about a shader asset in the Unity project. " +
+            "Returns shader properties, subshaders, passes, compilation errors, and supported status. " +
+            "Use '" + Tool_Assets.AssetsFindToolId + "' tool with filter 't:Shader' to find shaders, " +
+            "or '" + AssetsShaderListAllToolId + "' tool to list all shader names.\n\n" +
+            "## Toggles (most default off to keep responses small)\n\n" +
+            "- `includeMessages` (default `true`) — shader compilation messages.\n" +
+            "- `includeProperties` (default `false`) — uniforms list.\n" +
+            "- `includeSubshaders` (default `false`) — subshader and pass structure.\n" +
+            "- `includeSourceCode` (default `false`) — pass source code. Implies `includeSubshaders` and can produce very large responses.\n\n" +
+            "## Path-scoped reads (token-saving)\n\n" +
+            "Supply `paths` (a list of paths) to read only the listed fields/elements via `Reflector.TryReadAt`, " +
+            "or `viewQuery` (a `ViewQuery`) to navigate to a subtree and/or filter by name regex / max depth / type " +
+            "via `Reflector.View`. The result populates `View` on the returned `ShaderData`. " +
+            "These two parameters are mutually exclusive.\n\n" +
+            "## Path syntax\n\n" +
+            "`fieldName`, `nested/field`, `arrayField/[i]`, `dictField/[key]`. Leading `#/` is stripped.")]
         [Description("Get detailed data about a shader asset in the Unity project. " +
             "Returns shader properties, subshaders, passes, compilation errors, and supported status. " +
             "Use '" + Tool_Assets.AssetsFindToolId + "' tool with filter 't:Shader' to find shaders, " +

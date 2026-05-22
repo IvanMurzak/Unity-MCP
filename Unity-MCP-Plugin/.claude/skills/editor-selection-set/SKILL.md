@@ -1,9 +1,19 @@
 ---
 name: editor-selection-set
-description: Set the current Selection in the Unity Editor to the provided objects. Use 'editor-selection-get' tool to get the current selection first.
+description: Set the current Selection in the Unity Editor to the provided objects. All `ObjectRef`s must resolve to existing Unity objects; otherwise the call throws. Use 'editor-selection-get' to inspect the current selection first.
 ---
 
 # Editor / Selection / Set
+
+Set the current Selection in the Unity Editor to the provided objects. Use 'editor-selection-get' tool to get the current selection first.
+
+## Inputs
+
+- `select` — array of `ObjectRef`. Every entry MUST resolve via `FindObject()`; otherwise the tool throws before touching `Selection.objects`.
+
+## Behavior
+
+Assigns the resolved array to `Selection.objects`, then calls `UnityEditorInternal.InternalEditorUtility.RepaintAllViews()` so Hierarchy/Inspector reflect the change. Returns the post-change `SelectionData` snapshot.
 
 ## How to Call
 
@@ -44,7 +54,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "select": {
-      "$ref": "#/$defs/AIGD.ObjectRef[]"
+      "$ref": "#/$defs/AIGD.ObjectRef%5B%5D"
     }
   },
   "$defs": {
@@ -189,19 +199,19 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "type": "object",
       "properties": {
         "GameObjects": {
-          "$ref": "#/$defs/AIGD.GameObjectRef[]",
+          "$ref": "#/$defs/AIGD.GameObjectRef%5B%5D",
           "description": "Returns the actual game object selection. Includes Prefabs, non-modifiable objects."
         },
         "Transforms": {
-          "$ref": "#/$defs/AIGD.ComponentRef[]",
+          "$ref": "#/$defs/AIGD.ComponentRef%5B%5D",
           "description": "Returns the top level selection, excluding Prefabs."
         },
         "InstanceIDs": {
-          "$ref": "#/$defs/System.Int32[]",
+          "$ref": "#/$defs/System.Int32%5B%5D",
           "description": "The actual unfiltered selection from the Scene returned as instance ids instead of objects."
         },
         "AssetGUIDs": {
-          "$ref": "#/$defs/System.String[]",
+          "$ref": "#/$defs/System.String%5B%5D",
           "description": "Returns the guids of the selected assets."
         },
         "ActiveGameObject": {

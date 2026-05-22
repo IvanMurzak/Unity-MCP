@@ -3,8 +3,8 @@
    ========================================================================== */
 
 .root-container {
-    background-color: #383838;
-    color: #E0E0E0;
+    background-color: var(--unity-colors-window-background);
+    color: var(--unity-colors-default-text);
     flex-grow: 1;
 }
 
@@ -79,7 +79,7 @@
     padding: 20px;
     align-items: center;
     flex-grow: 1;
-    background-color: rgb(56, 56, 56);
+    background-color: var(--unity-colors-window-background);
 }
 
 /* Version container */

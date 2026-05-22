@@ -28,6 +28,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "GameObject / Component / Destroy",
             DestructiveHint = true
         )]
+        [McpPluginSkillDescription("Destroy one or more Components from a target GameObject. Missing (null) components " +
+            "are skipped — they cannot be destroyed. " +
+            "Use '" + GameObjectFindToolId + "' and '" + GameObjectComponentGetToolId +
+            "' to identify the components first.")]
+        [McpPluginSkillBody("Destroy one or many components from target GameObject. Can't destroy missed components. " +
+            "Use '" + GameObjectFindToolId + "' tool to find the target GameObject and '" + GameObjectComponentGetToolId + "' to get component details first.\n\n" +
+            "## Inputs\n\n" +
+            "- `gameObjectRef` — the host GameObject.\n" +
+            "- `destroyComponentRefs` — `ComponentRefList` of components to destroy (matched against the GameObject's components).\n\n" +
+            "## Behavior\n\n" +
+            "Iterates `go.GetComponents<Component>()`, skipping null entries (missing scripts). For each non-null component " +
+            "that matches one of `destroyComponentRefs`, the tool snapshots a `ComponentRef`, calls `Object.DestroyImmediate`, " +
+            "and records the destroyed reference. If no component matches at all, throws with the help text from " +
+            "`Error.NotFoundComponents` (which includes a preview of all available components on the GameObject).")]
         [Description("Destroy one or many components from target GameObject. Can't destroy missed components. " +
             "Use '" + GameObjectFindToolId + "' tool to find the target GameObject and '" + GameObjectComponentGetToolId + "' to get component details first.")]
         public DestroyComponentsResponse DestroyComponents

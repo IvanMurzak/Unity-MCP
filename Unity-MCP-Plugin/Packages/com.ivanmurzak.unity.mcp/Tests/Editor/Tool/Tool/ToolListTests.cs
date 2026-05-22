@@ -186,14 +186,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             yield return null;
 
             var json = RunTool(Tool_Tool.ToolListId, @"{
-                ""regexSearch"": ""^tool-list$""
+                ""regexSearch"": ""^unity-tool-list$""
             }").Value!.GetMessage()!;
 
             using var doc = JsonDocument.Parse(json);
             var arr = GetResultArray(doc);
 
-            Assert.AreEqual(1, arr.GetArrayLength(), "Exact regex for 'tool-list' should match one tool");
-            Assert.AreEqual("tool-list", arr[0].GetProperty("name").GetString());
+            Assert.AreEqual(1, arr.GetArrayLength(), "Exact regex for 'unity-tool-list' should match one tool");
+            Assert.AreEqual("unity-tool-list", arr[0].GetProperty("name").GetString());
         }
 
         [UnityTest]
@@ -247,7 +247,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var names = Enumerable.Range(0, arr.GetArrayLength())
                 .Select(i => arr[i].GetProperty("name").GetString())
                 .ToList();
-            Assert.Contains("tool-list", names, "tool-list has input named 'regexSearch'");
+            Assert.Contains("unity-tool-list", names, "unity-tool-list has input named 'regexSearch'");
         }
 
         [UnityTest]
@@ -265,7 +265,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var names = Enumerable.Range(0, arr.GetArrayLength())
                 .Select(i => arr[i].GetProperty("name").GetString())
                 .ToList();
-            Assert.Contains("tool-list", names, "tool-list input description contains 'regex pattern to filter tools'");
+            Assert.Contains("unity-tool-list", names, "unity-tool-list input description contains 'regex pattern to filter tools'");
         }
 
         [UnityTest]
@@ -274,14 +274,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             yield return null;
 
             var json = RunTool(Tool_Tool.ToolListId, @"{
-                ""regexSearch"": ""^TOOL-LIST$""
+                ""regexSearch"": ""^UNITY-TOOL-LIST$""
             }").Value!.GetMessage()!;
 
             using var doc = JsonDocument.Parse(json);
             var arr = GetResultArray(doc);
 
             Assert.AreEqual(1, arr.GetArrayLength(), "Regex should match case-insensitively");
-            Assert.AreEqual("tool-list", arr[0].GetProperty("name").GetString());
+            Assert.AreEqual("unity-tool-list", arr[0].GetProperty("name").GetString());
         }
 
         [UnityTest]
@@ -290,7 +290,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             yield return null;
 
             var json = RunTool(Tool_Tool.ToolListId, @"{
-                ""regexSearch"": ""^tool-list$"",
+                ""regexSearch"": ""^unity-tool-list$"",
                 ""includeDescription"": true,
                 ""includeInputs"": ""InputsWithDescription""
             }").Value!.GetMessage()!;
@@ -301,7 +301,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(1, arr.GetArrayLength());
             var tool = arr[0];
 
-            Assert.AreEqual("tool-list", tool.GetProperty("name").GetString());
+            Assert.AreEqual("unity-tool-list", tool.GetProperty("name").GetString());
 
             Assert.IsTrue(
                 tool.TryGetProperty("description", out var desc) && desc.ValueKind == JsonValueKind.String,

@@ -1,19 +1,19 @@
 {
   "packages": {
     "com.IvanMurzak.McpPlugin": {
-      "version": "6.3.0",
+      "version": "6.3.2",
       "dlls": [
         "McpPlugin.dll"
       ]
     },
     "com.IvanMurzak.McpPlugin.Common": {
-      "version": "6.3.0",
+      "version": "6.3.2",
       "dlls": [
         "McpPlugin.Common.dll"
       ]
     },
     "com.IvanMurzak.ReflectorNet": {
-      "version": "5.1.1",
+      "version": "5.1.2",
       "dlls": [
         "ReflectorNet.dll"
       ]

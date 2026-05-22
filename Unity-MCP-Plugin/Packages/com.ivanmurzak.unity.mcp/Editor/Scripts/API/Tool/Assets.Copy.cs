@@ -28,6 +28,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Assets / Copy",
             Enabled = false
         )]
+        [McpPluginSkillDescription("Copy assets at given paths and store them at new paths. " +
+            "Refreshes the AssetDatabase at the end. " +
+            "Use '" + AssetsFindToolId + "' to locate the source assets first.")]
+        [McpPluginSkillBody("Copy assets at given paths and store them at new paths. " +
+            "Does AssetDatabase.Refresh() at the end. " +
+            "Use '" + AssetsFindToolId + "' tool to find assets before copying.\n\n" +
+            "## Inputs\n\n" +
+            "- `sourcePaths` — paths of the assets to copy.\n" +
+            "- `destinationPaths` — paths to store the copied assets (must match `sourcePaths` length).\n\n" +
+            "## Behavior\n\n" +
+            "Each source/destination pair is copied in order. Per-pair errors are accumulated in the response " +
+            "instead of throwing, so a single bad pair does not abort the whole batch.")]
         [Description("Copy assets at given paths and store them at new paths. " +
             "Does AssetDatabase.Refresh() at the end. " +
             "Use '" + AssetsFindToolId + "' tool to find assets before copying.")]

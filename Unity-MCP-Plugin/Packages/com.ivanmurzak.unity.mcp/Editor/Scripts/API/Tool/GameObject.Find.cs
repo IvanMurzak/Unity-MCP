@@ -32,6 +32,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ReadOnlyHint = true,
             IdempotentHint = true
         )]
+        [McpPluginSkillDescription("Find a specific GameObject in the opened Prefab (preferred when present) or the " +
+            "active Scene. Optionally include editable data, components preview, bounds, and limited hierarchy. " +
+            "Supports token-saving path-scoped reads via `paths` or `viewQuery`.")]
+        [McpPluginSkillBody("Finds specific GameObject by provided information in opened Prefab or in a Scene. " +
+            "First it looks for the opened Prefab, if any Prefab is opened it looks only there ignoring a scene. " +
+            "If no opened Prefab it looks into current active scene. " +
+            "Returns GameObject information and its children. " +
+            "Also, it returns Components preview just for the target GameObject.\n\n" +
+            "## Toggles (all default `false` to keep responses small)\n\n" +
+            "- `includeData` — full editable GameObject data (tag, layer, etc.).\n" +
+            "- `includeComponents` — attached components references.\n" +
+            "- `includeBounds` — 3D bounds.\n" +
+            "- `includeHierarchy` — hierarchy metadata.\n" +
+            "- `hierarchyDepth` (default 0) — depth of the hierarchy to include. `0` = target only, `1` = one layer below, etc.\n\n" +
+            "## Path-scoped reads (token-saving)\n\n" +
+            "Supply `paths` (a list of paths) to read only the listed fields/elements via `Reflector.TryReadAt`, " +
+            "or `viewQuery` (a `ViewQuery`) to navigate to a subtree and/or filter by name regex / max depth / type via " +
+            "`Reflector.View`. When either is supplied, the result populates `Data` on the returned `GameObjectData` " +
+            "and overrides `includeData` (which would otherwise produce a full recursive serialization). " +
+            "These two parameters are mutually exclusive — supply at most one.\n\n" +
+            "## Path syntax\n\n" +
+            "`fieldName`, `nested/field`, `arrayField/[i]`, `dictField/[key]`. Leading `#/` is stripped.")]
         [Description("Finds specific GameObject by provided information in opened Prefab or in a Scene. " +
             "First it looks for the opened Prefab, if any Prefab is opened it looks only there ignoring a scene. " +
             "If no opened Prefab it looks into current active scene. " +

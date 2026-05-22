@@ -154,6 +154,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             return normalized.StartsWith(root) ? normalized[root.Length..] : normalized;
         }
 
+        /// <summary>
+        /// Resolves a configurator's <see cref="SkillsPath"/> (which is project-relative for
+        /// every built-in configurator — e.g. ".claude/skills") to an absolute filesystem
+        /// path so the UI can show a clickable / copy-pasteable location. Mirrors the logic
+        /// of <see cref="UnityMcpPluginEditor.SkillsRootFolderAbsolutePath"/> but operates on
+        /// the configurator-supplied value rather than the persisted one — this is important
+        /// because the configurator's path can differ from the persisted one until the user
+        /// enables skills for that agent.
+        /// </summary>
+        protected static string ResolveAbsoluteSkillsPath(string folder)
+        {
+            if (string.IsNullOrEmpty(folder))
+                return folder;
+            return Path.IsPathRooted(folder)
+                ? folder
+                : Path.GetFullPath(Path.Combine(ProjectRootPath, folder));
+        }
+
         #endregion
 
         #region Abstract
@@ -557,9 +575,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             // Hide the unsupported label
             unsupportedLabel.style.display = DisplayStyle.None;
 
-            // Show the skills output path
-            pathLabel.text = ToDisplayPath(SkillsPath!);
-            pathLabel.tooltip = SkillsPath;
+            // Show the skills output path. `SkillsPath` is project-relative for the built-in
+            // configurators (e.g. ".claude/skills") so the persisted config is portable across
+            // machines, but the user still wants to see — and click into — the absolute
+            // on-disk location. Resolve via `SkillsRootFolderAbsolutePath`, then strip the
+            // project root for compact display via `ToDisplayPath`.
+            var absoluteSkillsPath = ResolveAbsoluteSkillsPath(SkillsPath!);
+            pathLabel.text = ToDisplayPath(absoluteSkillsPath);
+            pathLabel.tooltip = absoluteSkillsPath;
 
             // Configure toggle (per-agent)
             toggleAutoGenerate.SetValueWithoutNotify(UnityMcpPluginEditor.IsAutoGenerateSkills(AgentId));

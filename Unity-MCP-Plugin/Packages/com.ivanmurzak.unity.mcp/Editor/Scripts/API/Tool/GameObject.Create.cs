@@ -30,6 +30,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             GameObjectCreateToolId,
             Title = "GameObject / Create"
         )]
+        [McpPluginSkillDescription("Create a new GameObject in the currently opened Prefab or active Scene, optionally " +
+            "parented under another GameObject and pre-positioned. Pass `primitiveType` to spawn a Unity primitive " +
+            "(Cube, Sphere, etc.) instead of an empty GameObject.")]
+        [McpPluginSkillBody("Create a new GameObject in opened Prefab or in a Scene. " +
+            "If needed - provide proper 'position', 'rotation' and 'scale' to reduce amount of operations.\n\n" +
+            "## Inputs\n\n" +
+            "- `name` — required non-empty name.\n" +
+            "- `parentGameObjectRef` (optional) — when provided, the new GameObject is parented under this one " +
+            "(`SetParent(parent, worldPositionStays: false)`); otherwise it's created at scene/prefab root.\n" +
+            "- `position` / `rotation` / `scale` — optional transform; default to zero / zero / one.\n" +
+            "- `isLocalSpace` — when `true`, applies the transform in local space relative to the parent.\n" +
+            "- `primitiveType` (optional) — when set, the GameObject is created via `GameObject.CreatePrimitive` " +
+            "(adds the appropriate renderer/collider for the primitive shape).")]
         [Description("Create a new GameObject in opened Prefab or in a Scene. " +
             "If needed - provide proper 'position', 'rotation' and 'scale' to reduce amount of operations.")]
         public GameObjectRef Create

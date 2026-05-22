@@ -247,6 +247,7 @@ cd ./MyGame && unity-mcp-cli open
 |---|---|---|---|
 | `[path]` | — | No | Path to the Unity project (positional or `--path`). Defaults to the current working directory. |
 | `--unity <version>` | — | No | Specific Unity Editor version to use (defaults to version from project settings, falls back to highest installed) |
+| `--editor-path <path>` | — | No | Explicit path to the Unity Editor executable. Skips Unity Hub discovery, useful for custom install locations. |
 | `--no-connect` | — | No | Open without MCP connection environment variables |
 | `--url <url>` | `UNITY_MCP_HOST` | No | MCP server URL to connect to |
 | `--keep-connected` | `UNITY_MCP_KEEP_CONNECTED` | No | Force keep the connection alive |

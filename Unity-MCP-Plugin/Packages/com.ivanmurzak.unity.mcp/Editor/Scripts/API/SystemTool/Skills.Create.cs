@@ -31,6 +31,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Enabled = false,
             ToolType = McpToolType.System
         )]
+        [McpPluginSkillDescription("Create a new skill (MCP tool) for the Unity Editor by writing a C# (.cs) file " +
+            "that Unity compiles into the project. After compilation the new tool becomes callable through MCP. " +
+            "The file must be a partial class decorated with [McpPluginToolType], each tool method must be " +
+            "decorated with [McpPluginTool], the class name should match the file name, all Unity API calls must " +
+            "run via com.IvanMurzak.ReflectorNet.Utils.MainThread.Instance.Run(), and the method should either " +
+            "return a structured data model (for parseable output) or void (for side-effect-only operations). " +
+            "See the body of this skill for a full sample and best-practice notes.")]
+        [McpPluginSkillBody(SkillsCreateSkillBody)]
         [Description("Create a new skill using C# code. " +
             "It will be added into the project as a .cs file and compiled by Unity. " +
             "The skill will be available for use after compilation.\n" +

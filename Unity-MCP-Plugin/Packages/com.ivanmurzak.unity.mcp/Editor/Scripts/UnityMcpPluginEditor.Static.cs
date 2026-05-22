@@ -10,6 +10,9 @@
 
 #nullable enable
 using System;
+using System.Diagnostics.CodeAnalysis;
+using System.IO;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin;
@@ -209,9 +212,61 @@ namespace com.IvanMurzak.Unity.MCP
             get => Instance.unityConnectionConfig.SkillsPath;
             set
             {
-                Instance.unityConnectionConfig.SkillsPath = value;
+                Instance.unityConnectionConfig.SkillsPath = NormalizeSkillsPath(value);
                 NotifyChanged(Instance.unityConnectionConfig);
             }
+        }
+
+        /// <summary>
+        /// Normalises a user-supplied or configurator-supplied skills path so the on-disk
+        /// `UserSettings/AI-Game-Developer-Config.json` stays portable across machines and
+        /// across path-separator conventions. Rules:
+        /// <list type="bullet">
+        /// <item>null / empty / whitespace → returned verbatim (caller decides what to do).</item>
+        /// <item>Absolute path inside <see cref="ProjectRootPath"/> → rewritten to a project-relative
+        /// path with forward slashes (e.g. <c>"C:\proj\.claude\skills"</c> → <c>".claude/skills"</c>).
+        /// This is the path-portability fix for committing the config file to version control.</item>
+        /// <item>Absolute path outside the project → returned unchanged (the user has explicitly
+        /// chosen an external location; we do not rewrite it).</item>
+        /// <item>Already-relative path → backslashes converted to forward slashes for cross-platform
+        /// diff stability; no other change.</item>
+        /// </list>
+        /// </summary>
+        [return: NotNullIfNotNull("value")]
+        public static string? NormalizeSkillsPath(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return value;
+
+            // Always use forward slashes in the persisted form for cross-platform diff stability.
+            // The `!` is required because the Unity Editor C# compiler does not honor
+            // `[NotNullWhen(false)]` on `string.IsNullOrWhiteSpace`, so it does not narrow
+            // `value` (declared `string?`) to non-null after the early-return guard above and
+            // would otherwise emit CS8602 here. The runtime check above already establishes
+            // `value` is non-null at this point.
+            var normalized = value!.Replace('\\', '/');
+
+            if (!Path.IsPathRooted(normalized))
+                return normalized;
+
+            // Absolute path — check whether it lives inside the project root. If yes, make it relative.
+            var root = ProjectRootPath.Replace('\\', '/').TrimEnd('/');
+            // Compare case-insensitively on Windows because paths there are not case-sensitive.
+            // macOS APFS is also case-insensitive by default, but that is an accepted gap here;
+            // the typical AI-Game-Developer-Config.json is committed from Windows machines and
+            // the legacy values we auto-heal originate from Windows in practice.
+            var comparison = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+                ? StringComparison.OrdinalIgnoreCase
+                : StringComparison.Ordinal;
+
+            if (normalized.StartsWith(root + "/", comparison))
+                return normalized.Substring(root.Length + 1);
+
+            if (normalized.Equals(root, comparison))
+                return string.Empty;
+
+            // Absolute path outside the project root — leave as-is.
+            return normalized;
         }
 
         // 'new' is intentional: static dispatch on the subtype, instance logic lives in the base.

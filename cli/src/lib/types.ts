@@ -269,6 +269,13 @@ export interface OpenProjectOptions {
   /** Specific Unity Editor version to use (e.g. `"2022.3.62f3"`). */
   unityVersion?: string;
   /**
+   * Explicit Unity Editor executable path. When provided, editor
+   * discovery via Unity Hub / common install locations is skipped.
+   * Useful for custom Windows installs such as
+   * `D:\Program Files\Unity Hub\Editors\<version>\Editor\Unity.exe`.
+   */
+  editorPath?: string;
+  /**
    * If `true`, skip wiring the MCP connection environment variables
    * onto the spawned editor process. Mirrors the CLI's `--no-connect`
    * flag semantics. Defaults to `false`.

@@ -410,6 +410,14 @@ Create metallic golden material and attach it to a new sphere gameObject
 
 > VS Code で Copilot を使用している場合は、`Agent` モードが有効になっていることを確認してください
 
+## チーム全体の更新通知を無効化する
+
+このプラグインは、OpenUPM 上で新しいバージョンが利用可能になると Editor 起動時にアップデートのポップアップを表示します。デフォルトでは、各チームメンバーが自分で *"Do not show again"* をクリックするまでこのポップアップが表示され続けます（これは各ユーザーのマシン上に保存される個人設定です）。
+
+プラグインのバージョン管理を 1 人のエンジニアが担当している複数人での Unity プロジェクトでは、**Edit ▸ Project Settings ▸ AI Game Developer** を開き *"Disable update notifications for the entire team"* を有効にすることで、**チーム全体**でこのポップアップを無効化できます。設定は `ProjectSettings/AI-Game-Developer-UpdateSettings.asset` に保存され、プロジェクトごとに一度だけ設定すれば十分です — このファイルをコミットすると、そのコミットを取り込んだすべてのチームメンバーでポップアップが抑制されます。
+
+同じ切り替えはメニューバーの **Tools ▸ AI Game Developer ▸ Updates ▸ Disable Update Notifications (Team)** からも利用できます。
+
 ## LLM 向け高度な機能
 
 Unity MCP は、LLM がより速く効果的に作業できるよう高度なツールを提供し、ミスを回避し、エラー発生時には自己修正します。すべてがあなたの目標を効率的に達成するために設計されています。

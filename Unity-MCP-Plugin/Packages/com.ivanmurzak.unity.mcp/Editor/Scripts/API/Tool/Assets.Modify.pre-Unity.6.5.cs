@@ -35,6 +35,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Assets / Modify",
             IdempotentHint = true
         )]
+        [McpPluginSkillDescription(ModifySkill.Description)]
+        [McpPluginSkillBody(ModifySkill.Body)]
         [Description("Modify asset file in the project. " +
             "Use '" + AssetsGetDataToolId + "' tool first to inspect the asset structure before modifying. " +
             "Not allowed to modify asset file in 'Packages/' folder. Please modify it in 'Assets/' folder.\n\n" +

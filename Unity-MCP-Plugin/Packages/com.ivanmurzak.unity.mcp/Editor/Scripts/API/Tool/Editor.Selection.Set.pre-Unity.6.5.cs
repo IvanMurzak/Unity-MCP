@@ -30,6 +30,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             IdempotentHint = true,
             Enabled = false
         )]
+        [McpPluginSkillDescription(SetSkill.Description)]
+        [McpPluginSkillBody(SetSkill.Body)]
         [Description("Set the current Selection in the Unity Editor to the provided objects. " +
             "Use '" + EditorSelectionGetToolId + "' tool to get the current selection first.")]
         public SelectionData Set(ObjectRef[] select)

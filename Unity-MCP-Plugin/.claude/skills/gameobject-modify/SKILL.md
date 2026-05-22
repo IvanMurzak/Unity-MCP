@@ -1,17 +1,23 @@
 ---
 name: gameobject-modify
-description: |-
-  Modify GameObject fields and properties in opened Prefab or in a Scene. You can modify multiple GameObjects at once. Just provide the same number of GameObject references and SerializedMember objects.
-  
-  Three modification surfaces (per GameObject — parallel arrays must have the same length as gameObjectRefs):
-    1. 'gameObjectDiffs' — full SerializedMember diff per GameObject (legacy, backwards compatible).
-    2. 'pathPatchesPerGameObject' — list of {path, value} patches per GameObject routed through Reflector.TryModifyAt; atomic per-path modification.
-    3. 'jsonPatchesPerGameObject' — JSON Merge Patch per GameObject routed through Reflector.TryPatch.
-  When more than one is supplied for the same GameObject they run in this order: jsonPatch → pathPatches → diff. At least one of the three is required.
-  Path syntax: 'fieldName', 'nested/field', 'arrayField/[i]', 'dictField/[key]'.
+description: Modify GameObject fields and properties in opened Prefab or in a Scene. You can modify multiple GameObjects at once. Just provide the same number of GameObject references and SerializedMember objects. Three modification surfaces are available per GameObject (gameObjectDiffs, pathPatchesPerGameObject, jsonPatchesPerGameObject) — see the skill body for details.
 ---
 
 # GameObject / Modify
+
+## Three modification surfaces
+
+Per GameObject — parallel arrays must have the same length as `gameObjectRefs`:
+
+1. `gameObjectDiffs` — full `SerializedMember` diff per GameObject (legacy, backwards compatible).
+2. `pathPatchesPerGameObject` — list of `{path, value}` patches per GameObject routed through `Reflector.TryModifyAt`; atomic per-path modification.
+3. `jsonPatchesPerGameObject` — JSON Merge Patch per GameObject routed through `Reflector.TryPatch`.
+
+When more than one is supplied for the same GameObject they run in this order: `jsonPatch` → `pathPatches` → `diff`. At least one of the three is required.
+
+## Path syntax
+
+`fieldName`, `nested/field`, `arrayField/[i]`, `dictField/[key]`.
 
 ## How to Call
 
@@ -64,10 +70,10 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.SerializedMemberList"
     },
     "pathPatchesPerGameObject": {
-      "$ref": "#/$defs/System.Collections.Generic.List<System.Collections.Generic.List<AIGD.PathPatch>>"
+      "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.Collections.Generic.List%3CAIGD.PathPatch%3E%3E"
     },
     "jsonPatchesPerGameObject": {
-      "$ref": "#/$defs/System.Collections.Generic.List<System.String>"
+      "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E"
     }
   },
   "$defs": {
@@ -179,7 +185,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     "System.Collections.Generic.List<System.Collections.Generic.List<AIGD.PathPatch>>": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/System.Collections.Generic.List<AIGD.PathPatch>"
+        "$ref": "#/$defs/System.Collections.Generic.List%3CAIGD.PathPatch%3E"
       }
     },
     "System.Collections.Generic.List<System.String>": {

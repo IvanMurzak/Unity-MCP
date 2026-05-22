@@ -34,6 +34,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Script / Execute",
             OpenWorldHint = true
         )]
+        [McpPluginSkillDescription("Compiles and executes C# code dynamically using Roslyn. " +
+            "Supports a full-code mode (default) and a body-only mode — see the skill body for the difference and for how to pass Unity object references as parameters.")]
+        [McpPluginSkillBody(
+            "## Modes\n\n" +
+            "- **Full code mode** (default, `isMethodBody=false`): the `csharpCode` argument must define a complete class with a static method (no top-level statements).\n" +
+            "- **Body-only mode** (`isMethodBody=true`): provide only the method body statements. The tool auto-generates the usings, class, and method header.\n\n" +
+            "## Passing Unity objects as parameters\n\n" +
+            "Unity objects (`GameObject`, `Component`, etc.) can be passed as parameters using their `Ref` types (`GameObjectRef`, `ComponentRef`, etc.) or directly by type:\n\n" +
+            "- `UnityEngine.GameObject` — resolves an actual GameObject from value `{\"instanceID\": N}`, `{\"name\": \"...\"}`, or `{\"path\": \"...\"}`.\n" +
+            "- `UnityEngine.Component` (or any component subtype) — resolves from `{\"instanceID\": N}`.\n" +
+            "- `AIGD.GameObjectRef` — passes a `GameObjectRef` POCO directly; the method body calls `goRef.FindGameObject()` to resolve it.\n" +
+            "- `AIGD.ComponentRef` — passes a `ComponentRef` POCO.\n" +
+            "- `AIGD.ObjectRef` — passes a base `ObjectRef` POCO.")]
         [Description("Compiles and executes C# code dynamically using Roslyn. " +
             "Supports two modes: full code mode (default) requires a complete class definition, " +
             "while body-only mode (isMethodBody=true) auto-generates the boilerplate so you only " +

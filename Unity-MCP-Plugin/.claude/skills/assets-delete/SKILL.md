@@ -1,9 +1,19 @@
 ---
 name: assets-delete
-description: Delete the assets at paths from the project. Does AssetDatabase.Refresh() at the end. Use 'assets-find' tool to find assets before deleting.
+description: Delete the assets at the given project paths. Refreshes the AssetDatabase at the end. Use 'assets-find' to locate the assets first.
 ---
 
 # Assets / Delete
+
+Delete the assets at paths from the project. Does AssetDatabase.Refresh() at the end. Use 'assets-find' tool to find assets before deleting.
+
+## Inputs
+
+- `paths` — project-relative asset paths to delete. Must be non-empty.
+
+## Behavior
+
+Routes through `AssetDatabase.DeleteAssets`, which deletes the batch atomically. Paths Unity reports as failed are surfaced in `response.Errors`; successfully deleted paths are surfaced in `response.DeletedPaths`. The tool is destructive (removes files from disk).
 
 ## How to Call
 
@@ -44,7 +54,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "paths": {
-      "$ref": "#/$defs/System.String[]"
+      "$ref": "#/$defs/System.String%5B%5D"
     }
   },
   "$defs": {
@@ -84,11 +94,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "type": "object",
       "properties": {
         "DeletedPaths": {
-          "$ref": "#/$defs/System.Collections.Generic.List<System.String>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E",
           "description": "List of paths of deleted assets."
         },
         "Errors": {
-          "$ref": "#/$defs/System.Collections.Generic.List<System.String>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E",
           "description": "List of errors encountered during delete operations."
         }
       }

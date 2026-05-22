@@ -1,9 +1,19 @@
 ---
 name: scene-set-active
-description: Set the specified opened scene as the active scene. Use 'scene-list-opened' tool to get the list of all opened scenes.
+description: Mark an opened scene as the Editor's active scene (the one new GameObjects are added to and that's used as the default for many operations). Use 'scene-list-opened' to enumerate opened scenes first.
 ---
 
 # Scene / Set Active
+
+Set the specified opened scene as the active scene. Use 'scene-list-opened' tool to get the list of all opened scenes.
+
+## Inputs
+
+- `sceneRef` — `AssetObjectRef` pointing at a `SceneAsset`. The scene must already be opened.
+
+## Behavior
+
+Resolves the `SceneAsset`, finds the matching opened scene (by name then by path), and calls `EditorSceneManager.SetActiveScene`. No-op if the scene is already active. Returns the post-call snapshot of opened scenes.
 
 ## How to Call
 
@@ -92,7 +102,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/AIGD.SceneDataShallow[]"
+      "$ref": "#/$defs/AIGD.SceneDataShallow%5B%5D"
     }
   },
   "$defs": {

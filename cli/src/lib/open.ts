@@ -212,18 +212,53 @@ export async function openProject(
     }
     resolvedVersion = version;
 
-    // Locate editor binary (Unity Hub / common locations).
-    const editorPath = await findEditorPath(version);
+    // Locate editor binary. An explicit editor path is authoritative
+    // and intentionally skips Unity Hub / common-location discovery,
+    // which can miss custom Windows install roots.
+    let editorPath: string | null;
+    if (options.editorPath !== undefined) {
+      // Validate the explicit value BEFORE `path.resolve` so an empty
+      // / whitespace-only string is rejected up-front. `path.resolve('')`
+      // returns `process.cwd()`, which would then pass `existsSync` and
+      // lead us to spawn the working directory as the editor binary.
+      const trimmedEditorPath =
+        typeof options.editorPath === 'string' ? options.editorPath.trim() : '';
+      if (trimmedEditorPath.length === 0) {
+        throw new Error('Explicit Unity Editor path is empty or whitespace-only.');
+      }
+      editorPath = path.resolve(trimmedEditorPath);
+      // Use `statSync` (not just `existsSync`) so directories and
+      // other non-file entries are rejected here, where the failure
+      // message is clear, rather than asynchronously inside
+      // `launchEditor` — where the spawn `error` event would surface
+      // AFTER `openProject` had already taken its happy path.
+      let editorStat: fs.Stats;
+      try {
+        editorStat = fs.statSync(editorPath);
+      } catch {
+        throw new Error(`Unity Editor path does not exist: ${editorPath}`);
+      }
+      if (!editorStat.isFile()) {
+        throw new Error(`Unity Editor path is not a file: ${editorPath}`);
+      }
+      emitProgress(options.onProgress, {
+        phase: 'editors-located',
+        message: 'Using explicit Unity Editor path',
+        found: true,
+      });
+    } else {
+      editorPath = await findEditorPath(version);
 
-    // Boolean signal for caller telemetry — we surface only whether
-    // editor discovery succeeded, not how many editors are installed.
-    emitProgress(options.onProgress, {
-      phase: 'editors-located',
-      message: editorPath
-        ? 'Located Unity Editor candidates'
-        : 'Failed to locate any Unity Editor',
-      found: editorPath !== null,
-    });
+      // Boolean signal for caller telemetry — we surface only whether
+      // editor discovery succeeded, not how many editors are installed.
+      emitProgress(options.onProgress, {
+        phase: 'editors-located',
+        message: editorPath
+          ? 'Located Unity Editor candidates'
+          : 'Failed to locate any Unity Editor',
+        found: editorPath !== null,
+      });
+    }
 
     if (!editorPath) {
       const detail = version

@@ -34,6 +34,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ReadOnlyHint = true,
             IdempotentHint = true
         )]
+        [McpPluginSkillDescription("List the fully-qualified C# type names of every concrete `UnityEngine.Component` " +
+            "subclass available in the project. Paginated (default 5/page, max 500). " +
+            "Use this to find a valid `componentName` for '" + GameObjectComponentAddToolId + "'.")]
+        [McpPluginSkillBody("List C# class names extended from UnityEngine.Component. " +
+            "Use this to find component type names for '" + GameObjectComponentAddToolId + "' tool. " +
+            "Results are paginated to avoid overwhelming responses.\n\n" +
+            "## Inputs\n\n" +
+            "- `search` (optional) — case-insensitive substring filter on type names.\n" +
+            "- `page` (default 0, 0-based) — page index.\n" +
+            "- `pageSize` (default 5, range 1..500) — items per page.\n\n" +
+            "## Behavior\n\n" +
+            "Enumerates `AllComponentTypes` (every non-abstract subclass of `UnityEngine.Component`), filters by " +
+            "`search` if supplied, then returns a `ComponentListResult` containing the requested page plus " +
+            "`TotalCount` / `TotalPages` so the caller can iterate.")]
         [Description("List C# class names extended from UnityEngine.Component. " +
             "Use this to find component type names for '" + GameObjectComponentAddToolId + "' tool. " +
             "Results are paginated to avoid overwhelming responses.")]

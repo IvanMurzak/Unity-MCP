@@ -1,9 +1,21 @@
 ---
 name: scene-create
-description: Create new scene in the project assets. Use 'scene-list-opened' tool to list all opened scenes after creation.
+description: Create a new Unity scene asset and save it at the given `.unity` path. Use 'scene-list-opened' to inspect the resulting opened-scene set afterwards.
 ---
 
 # Scene / Create
+
+Create new scene in the project assets. Use 'scene-list-opened' tool to list all opened scenes after creation.
+
+## Inputs
+
+- `path` — must end with `.unity`. Non-empty.
+- `newSceneSetup` (default `DefaultGameObjects`) — Unity's `NewSceneSetup` flag (`EmptyScene` or `DefaultGameObjects`).
+- `newSceneMode` (default `Single`) — `Single` closes other scenes, `Additive` keeps them open.
+
+## Behavior
+
+Calls `EditorSceneManager.NewScene` + `SaveScene(path)` on the main thread, repaints editor windows, and returns a `SceneDataShallow` for the newly created scene.
 
 ## How to Call
 

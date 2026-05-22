@@ -1,9 +1,20 @@
 ---
 name: reflection-method-find
-description: Find method in the project using C# Reflection. It looks for all assemblies in the project and finds method by its name, class name and parameters. Even private methods are available. Use 'reflection-method-call' to call the method after finding it.
+description: Find C# methods across every loaded assembly by name / type / parameters — including private methods. Returns serialized `MethodData` entries usable as schemas for 'reflection-method-call'.
 ---
 
 # Method C# / Find
+
+Find method in the project using C# Reflection. It looks for all assemblies in the project and finds method by its name, class name and parameters. Even private methods are available. Use 'reflection-method-call' to call the method after finding it.
+
+## Match levels (apply to `typeName`, `MethodName`, `Parameters`)
+
+- `typeNameMatchLevel` / `methodNameMatchLevel` (default 1 — contains ignoring case): `0` ignore filter, `1` contains-ic, `2` contains-cs, `3` starts-with-ic, `4` starts-with-cs, `5` equals-ic, `6` equals-cs.
+- `parametersMatchLevel` (default 0 — ignore filter): `0` ignore, `1` count matches, `2` equals.
+
+## Output
+
+On match, returns a `[Success] Found N method(s):` line followed by a JSON dump of every method's `MethodData`. Pass any single entry to 'reflection-method-call' as its `filter`.
 
 ## How to Call
 
@@ -71,7 +82,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     "System.Collections.Generic.List<com.IvanMurzak.ReflectorNet.Model.MethodRef+Parameter>": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.MethodRef+Parameter",
+        "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.MethodRef%2BParameter",
         "description": "Parameter of a method. Contains type and name of the parameter."
       }
     },
@@ -105,7 +116,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "description": "Method name, or substring of the method name. It may be empty if the method is unknown."
         },
         "inputParameters": {
-          "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.ReflectorNet.Model.MethodRef+Parameter>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3Ccom.IvanMurzak.ReflectorNet.Model.MethodRef%2BParameter%3E",
           "description": "List of input parameters. Can be null if the method has no parameters or the parameters are unknown."
         }
       },

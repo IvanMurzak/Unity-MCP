@@ -113,6 +113,26 @@ namespace com.IvanMurzak.Unity.MCP
                     wasCreated = true;
                 }
 
+                // Auto-heal a legacy absolute `SkillsPath` that points inside the project root.
+                // Committing `UserSettings/AI-Game-Developer-Config.json` is supposed to be portable
+                // across machines; a machine-specific absolute path breaks every other team member.
+                // The normaliser also flips backslashes to forward slashes for cross-platform diff
+                // stability. Absolute paths OUTSIDE the project root are intentional user choices
+                // and are left untouched. Re-saving runs only when normalisation actually changed
+                // the value, so a project with an already-relative SkillsPath does not get touched.
+                if (!string.IsNullOrEmpty(config.SkillsPath))
+                {
+                    var normalizedSkills = NormalizeSkillsPath(config.SkillsPath);
+                    if (!string.Equals(normalizedSkills, config.SkillsPath, StringComparison.Ordinal))
+                    {
+                        _logger.LogInformation(
+                            "{method}: migrating SkillsPath from <i>{old}</i> to <i>{new}</i>",
+                            nameof(GetOrCreateConfig), config.SkillsPath, normalizedSkills);
+                        config.SkillsPath = normalizedSkills;
+                        wasCreated = true;
+                    }
+                }
+
                 return config;
             }
             catch (Exception e)

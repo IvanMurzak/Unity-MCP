@@ -113,7 +113,7 @@ namespace com.IvanMurzak.Unity.MCP
 
                     _logger.LogDebug("Creating log file stream: {file}", filePath);
 
-                    var stream = new FileStream(filePath, FileMode.Append, FileAccess.Write, FileShare.Read, bufferSize: _fileBufferSize, useAsync: false)
+                    var stream = new FileStream(filePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite, bufferSize: _fileBufferSize, useAsync: false)
                         ?? throw new Exception("Failed to create file stream for log storage.");
 
                     resultFileName = currentFileName;
