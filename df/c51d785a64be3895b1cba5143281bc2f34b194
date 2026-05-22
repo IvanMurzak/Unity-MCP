@@ -1,0 +1,19 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Profiler.EnableModule.cs
+  s_f6b66cedbacc57::t_658ffd66597117 13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "dfc51d785a64be3895b1cba5143281bc2f34b194",
+  "prompts": {},
+  "sessions": {
+    "s_f6b66cedbacc57": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "214298cf-e9ac-4b12-b6be-19c13f3a4f93",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
