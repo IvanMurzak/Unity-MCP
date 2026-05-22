@@ -1,21 +1,45 @@
-﻿---
+---
 name: scene-set-active
-description: Set the specified opened scene as the active scene. Use 'scene-list-opened' tool to get the list of all opened scenes.
+description: Mark an opened scene as the Editor's active scene (the one new GameObjects are added to and that's used as the default for many operations). Use 'scene-list-opened' to enumerate opened scenes first.
 ---
 
 # Scene / Set Active
 
+Set the specified opened scene as the active scene. Use 'scene-list-opened' tool to get the list of all opened scenes.
+
+## Inputs
+
+- `sceneRef` — `AssetObjectRef` pointing at a `SceneAsset`. The scene must already be opened.
+
+## Behavior
+
+Resolves the `SceneAsset`, finds the matching opened scene (by name then by path), and calls `EditorSceneManager.SetActiveScene`. No-op if the scene is already active. Returns the post-call snapshot of opened scenes.
+
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
-npx unity-mcp-cli run-tool scene-set-active --input '{
+unity-mcp-cli run-tool scene-set-active --input '{
   "sceneRef": "string_value"
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> unity-mcp-cli run-tool scene-set-active --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> unity-mcp-cli run-tool scene-set-active --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 
@@ -30,14 +54,14 @@ npx unity-mcp-cli run-tool scene-set-active --input '{
   "type": "object",
   "properties": {
     "sceneRef": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef"
+      "$ref": "#/$defs/AIGD.AssetObjectRef"
     }
   },
   "$defs": {
     "System.Type": {
       "type": "string"
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef": {
+    "AIGD.AssetObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -78,11 +102,11 @@ npx unity-mcp-cli run-tool scene-set-active --input '{
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.SceneDataShallow[]"
+      "$ref": "#/$defs/AIGD.SceneDataShallow%5B%5D"
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.SceneDataShallow": {
+    "AIGD.SceneDataShallow": {
       "type": "object",
       "properties": {
         "Name": {
@@ -128,10 +152,10 @@ npx unity-mcp-cli run-tool scene-set-active --input '{
       ],
       "description": "Scene reference. Used to find a Scene."
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.SceneDataShallow[]": {
+    "AIGD.SceneDataShallow[]": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.SceneDataShallow",
+        "$ref": "#/$defs/AIGD.SceneDataShallow",
         "description": "Scene reference. Used to find a Scene."
       }
     }

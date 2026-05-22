@@ -1,0 +1,74 @@
+﻿/*
+┌──────────────────────────────────────────────────────────────────┐
+│  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
+│  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
+│  Copyright (c) 2025 Ivan Murzak                                  │
+│  Licensed under the Apache License, Version 2.0.                 │
+│  See the LICENSE file in the project root for more information.  │
+└──────────────────────────────────────────────────────────────────┘
+*/
+
+#nullable enable
+using System;
+using System.ComponentModel;
+using com.IvanMurzak.McpPlugin;
+using UnityEngine;
+
+namespace com.IvanMurzak.Unity.MCP.Editor.API
+{
+    public partial class Tool_Console
+    {
+        public const string ConsoleGetLogsToolId = "console-get-logs";
+        [McpPluginTool
+        (
+            ConsoleGetLogsToolId,
+            Title = "Console / Get Logs",
+            ReadOnlyHint = true,
+            IdempotentHint = true
+        )]
+        [McpPluginSkillDescription("Retrieve Unity Editor logs from the MCP plugin's `LogCollector`, " +
+            "optionally filtered by log type or time window. Useful for debugging and monitoring Editor activity.")]
+        [McpPluginSkillBody("Retrieves Unity Editor logs. " +
+            "Useful for debugging and monitoring Unity Editor activity.\n\n" +
+            "## Inputs\n\n" +
+            "- `maxEntries` (default 100, minimum 1) — caps the size of the returned array.\n" +
+            "- `logTypeFilter` — Unity `LogType` filter; `null` returns all severities.\n" +
+            "- `includeStackTrace` (default `false`) — include stack-trace strings in each entry.\n" +
+            "- `lastMinutes` (default 0) — when non-zero, only logs from the last N minutes are returned.")]
+        [Description("Retrieves Unity Editor logs. " +
+            "Useful for debugging and monitoring Unity Editor activity.")]
+        public LogEntry[] GetLogs
+        (
+            [Description("Maximum number of log entries to return. Minimum: 1. Default: 100")]
+            int maxEntries = 100,
+            [Description("Filter by log type. 'null' means All.")]
+            LogType? logTypeFilter = null,
+            [Description("Include stack traces in the output. Default: false")]
+            bool includeStackTrace = false,
+            [Description("Return logs from the last N minutes. If 0, returns all available logs. Default: 0")]
+            int lastMinutes = 0
+        )
+        {
+            // Validate parameters
+            if (maxEntries < 1)
+                throw new ArgumentException(Error.InvalidMaxEntries(maxEntries));
+
+            if (!UnityMcpPluginEditor.HasInstance)
+                throw new InvalidOperationException("UnityMcpPluginEditor is not initialized.");
+
+            var logCollector = UnityMcpPluginEditor.Instance.LogCollector;
+            if (logCollector == null)
+                throw new InvalidOperationException("LogCollector is not initialized.");
+
+            // Get all log entries as array to avoid concurrent modification
+            var logs = logCollector.Query(
+                maxEntries: maxEntries,
+                logTypeFilter: logTypeFilter,
+                includeStackTrace: includeStackTrace,
+                lastMinutes: lastMinutes
+            );
+
+            return logs;
+        }
+    }
+}

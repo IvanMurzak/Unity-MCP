@@ -1,23 +1,49 @@
-﻿---
+---
 name: scene-create
-description: Create new scene in the project assets. Use 'scene-list-opened' tool to list all opened scenes after creation.
+description: Create a new Unity scene asset and save it at the given `.unity` path. Use 'scene-list-opened' to inspect the resulting opened-scene set afterwards.
 ---
 
 # Scene / Create
 
+Create new scene in the project assets. Use 'scene-list-opened' tool to list all opened scenes after creation.
+
+## Inputs
+
+- `path` — must end with `.unity`. Non-empty.
+- `newSceneSetup` (default `DefaultGameObjects`) — Unity's `NewSceneSetup` flag (`EmptyScene` or `DefaultGameObjects`).
+- `newSceneMode` (default `Single`) — `Single` closes other scenes, `Additive` keeps them open.
+
+## Behavior
+
+Calls `EditorSceneManager.NewScene` + `SaveScene(path)` on the main thread, repaints editor windows, and returns a `SceneDataShallow` for the newly created scene.
+
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
-npx unity-mcp-cli run-tool scene-create --input '{
+unity-mcp-cli run-tool scene-create --input '{
   "path": "string_value",
   "newSceneSetup": "string_value",
   "newSceneMode": "string_value"
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> unity-mcp-cli run-tool scene-create --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> unity-mcp-cli run-tool scene-create --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 
@@ -74,12 +100,12 @@ npx unity-mcp-cli run-tool scene-create --input '{
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.SceneDataShallow",
+      "$ref": "#/$defs/AIGD.SceneDataShallow",
       "description": "Scene reference. Used to find a Scene."
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.SceneDataShallow": {
+    "AIGD.SceneDataShallow": {
       "type": "object",
       "properties": {
         "Name": {

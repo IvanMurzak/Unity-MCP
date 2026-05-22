@@ -1,21 +1,45 @@
-﻿---
+---
 name: gameobject-duplicate
-description: Duplicate GameObjects in opened Prefab or in a Scene. Use 'gameobject-find' tool to find the target GameObjects first.
+description: Duplicate a batch of GameObjects in the currently opened Prefab or active Scene. Marks each affected scene as dirty after duplication. Use 'gameobject-find' to locate the source GameObjects first.
 ---
 
 # GameObject / Duplicate
 
+Duplicate GameObjects in opened Prefab or in a Scene. Use 'gameobject-find' tool to find the target GameObjects first.
+
+## Inputs
+
+- `gameObjectRefs` — `GameObjectRefList` of source GameObjects.
+
+## Behavior
+
+Resolves every input ref on the main thread (throwing on any unresolved entry to keep the batch atomic). Sets `Selection.entityIds`/`instanceIDs` to the sources and invokes `Unsupported.DuplicateGameObjectsUsingPasteboard()` (Unity's canonical duplicate routine). Marks every distinct affected scene dirty so the duplicated objects are saved with the scene. Returns refs to the sources (the duplicates are reachable via the post-call `Selection`).
+
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
-npx unity-mcp-cli run-tool gameobject-duplicate --input '{
+unity-mcp-cli run-tool gameobject-duplicate --input '{
   "gameObjectRefs": "string_value"
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> unity-mcp-cli run-tool gameobject-duplicate --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> unity-mcp-cli run-tool gameobject-duplicate --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 
@@ -30,11 +54,11 @@ npx unity-mcp-cli run-tool gameobject-duplicate --input '{
   "type": "object",
   "properties": {
     "gameObjectRefs": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRefList"
+      "$ref": "#/$defs/AIGD.GameObjectRefList"
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
+    "AIGD.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -70,10 +94,10 @@ npx unity-mcp-cli run-tool gameobject-duplicate --input '{
     "System.Type": {
       "type": "string"
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRefList": {
+    "AIGD.GameObjectRefList": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef",
+        "$ref": "#/$defs/AIGD.GameObjectRef",
         "description": "Find GameObject in opened Prefab or in the active Scene."
       },
       "description": "Array of GameObjects in opened Prefab or in the active Scene."
@@ -94,11 +118,11 @@ npx unity-mcp-cli run-tool gameobject-duplicate --input '{
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef>"
+      "$ref": "#/$defs/System.Collections.Generic.List%3CAIGD.GameObjectRef%3E"
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
+    "AIGD.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -134,10 +158,10 @@ npx unity-mcp-cli run-tool gameobject-duplicate --input '{
     "System.Type": {
       "type": "string"
     },
-    "System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef>": {
+    "System.Collections.Generic.List<AIGD.GameObjectRef>": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef",
+        "$ref": "#/$defs/AIGD.GameObjectRef",
         "description": "Find GameObject in opened Prefab or in the active Scene."
       }
     }

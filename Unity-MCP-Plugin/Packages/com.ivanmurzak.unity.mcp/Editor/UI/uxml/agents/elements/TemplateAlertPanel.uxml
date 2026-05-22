@@ -1,0 +1,8 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement name="alertPanel" class="alert-frame" style="display: none;">
+        <ui:Label name="alertTitle" class="alert-frame-title" />
+        <ui:Label name="alertMessage" class="alert-frame-message" />
+        <ui:VisualElement name="alertItemsContainer" />
+        <ui:Button name="alertButton" class="btn-primary" style="display: none; margin-top: 8px;" />
+    </ui:VisualElement>
+</ui:UXML>

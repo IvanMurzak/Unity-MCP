@@ -1,18 +1,24 @@
-﻿---
+---
 name: gameobject-create
-description: Create a new GameObject in opened Prefab or in a Scene. If needed - provide proper 'position', 'rotation' and 'scale' to reduce amount of operations.
+description: Create a new GameObject in the currently opened Prefab or active Scene, optionally parented under another GameObject and pre-positioned. Pass `primitiveType` to spawn a Unity primitive (Cube, Sphere, etc.) instead of an empty GameObject.
 ---
 
 # GameObject / Create
 
+Create a new GameObject in opened Prefab or in a Scene. If needed - provide proper 'position', 'rotation' and 'scale' to reduce amount of operations.
+
+## Inputs
+
+- `name` — required non-empty name.
+- `parentGameObjectRef` (optional) — when provided, the new GameObject is parented under this one (`SetParent(parent, worldPositionStays: false)`); otherwise it's created at scene/prefab root.
+- `position` / `rotation` / `scale` — optional transform; default to zero / zero / one.
+- `isLocalSpace` — when `true`, applies the transform in local space relative to the parent.
+- `primitiveType` (optional) — when set, the GameObject is created via `GameObject.CreatePrimitive` (adds the appropriate renderer/collider for the primitive shape).
+
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
-npx unity-mcp-cli run-tool gameobject-create --input '{
+unity-mcp-cli run-tool gameobject-create --input '{
   "name": "string_value",
   "parentGameObjectRef": "string_value",
   "position": "string_value",
@@ -22,6 +28,24 @@ npx unity-mcp-cli run-tool gameobject-create --input '{
   "primitiveType": "string_value"
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> unity-mcp-cli run-tool gameobject-create --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> unity-mcp-cli run-tool gameobject-create --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 
@@ -45,7 +69,7 @@ npx unity-mcp-cli run-tool gameobject-create --input '{
       "type": "string"
     },
     "parentGameObjectRef": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef"
+      "$ref": "#/$defs/AIGD.GameObjectRef"
     },
     "position": {
       "$ref": "#/$defs/UnityEngine.Vector3"
@@ -67,7 +91,7 @@ npx unity-mcp-cli run-tool gameobject-create --input '{
     "System.Type": {
       "type": "string"
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
+    "AIGD.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -147,7 +171,7 @@ npx unity-mcp-cli run-tool gameobject-create --input '{
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef",
+      "$ref": "#/$defs/AIGD.GameObjectRef",
       "description": "Find GameObject in opened Prefab or in the active Scene."
     }
   },
@@ -155,7 +179,7 @@ npx unity-mcp-cli run-tool gameobject-create --input '{
     "System.Type": {
       "type": "string"
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
+    "AIGD.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {

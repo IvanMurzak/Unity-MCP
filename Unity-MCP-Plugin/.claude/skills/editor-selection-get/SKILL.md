@@ -1,18 +1,27 @@
-﻿---
+---
 name: editor-selection-get
-description: Get information about the current Selection in the Unity Editor. Use 'editor-selection-set' tool to set the selection.
+description: Get information about the current Selection in the Unity Editor — active object, active transform, selected GameObjects, transforms, instance IDs, and asset GUIDs (each enrichment is opt-in). Pair with 'editor-selection-set' to change the selection.
 ---
 
 # Editor / Selection / Get
 
+Get information about the current Selection in the Unity Editor. Use 'editor-selection-set' tool to set the selection.
+
+## Toggles (default off where indicated to keep responses small)
+
+- `includeGameObjects` (default `false`) — populate `GameObjects[]`.
+- `includeTransforms` (default `false`) — populate `Transforms[]` as `ComponentRef`s.
+- `includeInstanceIDs` (default `false`) — populate `InstanceIDs[]`.
+- `includeAssetGUIDs` (default `false`) — populate `AssetGUIDs[]` from project-window selection.
+- `includeActiveObject` (default `true`) — populate `ActiveObject` as a generic `ObjectRef`.
+- `includeActiveTransform` (default `true`) — populate `ActiveTransform` as a `ComponentRef`.
+
+`ActiveGameObject` and `ActiveInstanceID` are always populated.
+
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
-npx unity-mcp-cli run-tool editor-selection-get --input '{
+unity-mcp-cli run-tool editor-selection-get --input '{
   "includeGameObjects": false,
   "includeTransforms": false,
   "includeInstanceIDs": false,
@@ -21,6 +30,24 @@ npx unity-mcp-cli run-tool editor-selection-get --input '{
   "includeActiveTransform": false
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> unity-mcp-cli run-tool editor-selection-get --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> unity-mcp-cli run-tool editor-selection-get --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 
@@ -70,18 +97,18 @@ npx unity-mcp-cli run-tool editor-selection-get --input '{
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Editor_Selection+SelectionData"
+      "$ref": "#/$defs/AIGD.SelectionData"
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef[]": {
+    "AIGD.GameObjectRef[]": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef",
+        "$ref": "#/$defs/AIGD.GameObjectRef",
         "description": "Find GameObject in opened Prefab or in the active Scene."
       }
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
+    "AIGD.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -117,14 +144,14 @@ npx unity-mcp-cli run-tool editor-selection-get --input '{
     "System.Type": {
       "type": "string"
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef[]": {
+    "AIGD.ComponentRef[]": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef",
+        "$ref": "#/$defs/AIGD.ComponentRef",
         "description": "Component reference. Used to find a Component at GameObject."
       }
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef": {
+    "AIGD.ComponentRef": {
       "type": "object",
       "properties": {
         "index": {
@@ -158,7 +185,7 @@ npx unity-mcp-cli run-tool editor-selection-get --input '{
         "type": "string"
       }
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ObjectRef": {
+    "AIGD.ObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -171,27 +198,27 @@ npx unity-mcp-cli run-tool editor-selection-get --input '{
       ],
       "description": "Reference to UnityEngine.Object instance. It could be GameObject, Component, Asset, etc. Anything extended from UnityEngine.Object."
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Editor_Selection+SelectionData": {
+    "AIGD.SelectionData": {
       "type": "object",
       "properties": {
         "GameObjects": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef[]",
+          "$ref": "#/$defs/AIGD.GameObjectRef%5B%5D",
           "description": "Returns the actual game object selection. Includes Prefabs, non-modifiable objects."
         },
         "Transforms": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef[]",
+          "$ref": "#/$defs/AIGD.ComponentRef%5B%5D",
           "description": "Returns the top level selection, excluding Prefabs."
         },
         "InstanceIDs": {
-          "$ref": "#/$defs/System.Int32[]",
+          "$ref": "#/$defs/System.Int32%5B%5D",
           "description": "The actual unfiltered selection from the Scene returned as instance ids instead of objects."
         },
         "AssetGUIDs": {
-          "$ref": "#/$defs/System.String[]",
+          "$ref": "#/$defs/System.String%5B%5D",
           "description": "Returns the guids of the selected assets."
         },
         "ActiveGameObject": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef",
+          "$ref": "#/$defs/AIGD.GameObjectRef",
           "description": "Returns the active game object. (The one shown in the inspector)."
         },
         "ActiveInstanceID": {
@@ -199,11 +226,11 @@ npx unity-mcp-cli run-tool editor-selection-get --input '{
           "description": "Returns the instanceID of the actual object selection. Includes Prefabs, non-modifiable objects"
         },
         "ActiveObject": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ObjectRef",
+          "$ref": "#/$defs/AIGD.ObjectRef",
           "description": "Returns the actual object selection. Includes Prefabs, non-modifiable objects."
         },
         "ActiveTransform": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentRef",
+          "$ref": "#/$defs/AIGD.ComponentRef",
           "description": "Returns the active transform. (The one shown in the inspector)."
         }
       },

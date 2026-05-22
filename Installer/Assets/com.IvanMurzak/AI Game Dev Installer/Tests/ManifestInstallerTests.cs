@@ -7,9 +7,9 @@
 │  See the LICENSE file in the project root for more information.  │
 └──────────────────────────────────────────────────────────────────┘
 */
+using System.Collections.Generic;
 using System.IO;
 using NUnit.Framework;
-using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Installer.Tests
 {
@@ -21,51 +21,48 @@ namespace com.IvanMurzak.Unity.MCP.Installer.Tests
         const string FilesCopyRoot = "Temp/com.IvanMurzak/AI Game Dev Installer/Tests/Files";
         static string CorrectManifestPath => $"{FilesRoot}/Correct/correct_manifest.json";
 
-        [SetUp]
-        public void SetUp()
+        // Fixture names are enumerated once at test-discovery time so each appears as
+        // its own test case in the runner — a failure points at a specific fixture
+        // instead of hiding inside a single combined "All" test.
+        static IEnumerable<string> FixtureNames()
         {
-            Debug.Log($"[{nameof(ManifestInstallerTests)}] SetUp");
-            Directory.CreateDirectory(FilesCopyRoot);
+            foreach (var path in Directory.GetFiles(FilesRoot, "*.json", SearchOption.TopDirectoryOnly))
+                yield return Path.GetFileName(path);
         }
+
+        [SetUp]
+        public void SetUp() => Directory.CreateDirectory(FilesCopyRoot);
 
         [TearDown]
         public void TearDown()
         {
-            Debug.Log($"[{nameof(ManifestInstallerTests)}] TearDown");
-
-            // var files = Directory.GetFiles(FilesCopyRoot, "*.json", SearchOption.TopDirectoryOnly);
-            // foreach (var file in files)
-            //     File.Delete(file);
+            if (!Directory.Exists(FilesCopyRoot))
+                return;
+            foreach (var file in Directory.GetFiles(FilesCopyRoot, "*.json", SearchOption.TopDirectoryOnly))
+                File.Delete(file);
         }
 
-        [Test]
-        public void All()
+        [TestCaseSource(nameof(FixtureNames))]
+        public void NormalizesManifestTo_CorrectManifest(string fixtureName)
         {
-            var files = Directory.GetFiles(FilesRoot, "*.json", SearchOption.TopDirectoryOnly);
-            var correctManifest = File.ReadAllText(CorrectManifestPath)
+            // Arrange — copy fixture to temp, substitute tags, keep Installer.Version
+            // deterministic so tests don't depend on OpenUPM's live response.
+            var src = Path.Combine(FilesRoot, fixtureName);
+            var dst = Path.Combine(FilesCopyRoot, fixtureName);
+            File.WriteAllText(dst, File.ReadAllText(src)
+                .Replace(PackageVersionTag, Installer.Version)
+                .Replace(PackageIdTag, Installer.PackageId));
+
+            var expected = File.ReadAllText(CorrectManifestPath)
                 .Replace(PackageVersionTag, Installer.Version)
                 .Replace(PackageIdTag, Installer.PackageId);
 
-            foreach (var file in files)
-            {
-                Debug.Log($"Found JSON file: {file}");
+            // Act — use the version-aware overload so the test is offline-safe.
+            Installer.AddScopedRegistryIfNeeded(dst, Installer.Version);
 
-                // Copy the file
-                var fileCopy = Path.Combine(FilesCopyRoot, Path.GetFileName(file));
-                File.Copy(file, fileCopy, overwrite: true);
-
-                // Arrange
-                File.WriteAllText(fileCopy, File.ReadAllText(fileCopy)
-                    .Replace(PackageVersionTag, Installer.Version)
-                    .Replace(PackageIdTag, Installer.PackageId));
-
-                // Act
-                Installer.AddScopedRegistryIfNeeded(fileCopy);
-
-                // Assert
-                var modifiedManifest = File.ReadAllText(fileCopy);
-                Assert.AreEqual(correctManifest, modifiedManifest, $"Modified manifest from {file} does not match the correct manifest.");
-            }
+            // Assert
+            Assert.AreEqual(expected, File.ReadAllText(dst),
+                $"Normalized manifest from '{fixtureName}' does not match the correct manifest.");
         }
     }
 }

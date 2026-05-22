@@ -1,21 +1,45 @@
-﻿---
+---
 name: scene-unload
-description: Unload scene from the Opened scenes in Unity Editor. Use 'scene-list-opened' tool to get the list of all opened scenes.
+description: Unload an opened scene from the Unity Editor (asynchronously via `SceneManager.UnloadSceneAsync`). Use 'scene-list-opened' to find the scene name first.
 ---
 
 # Scene / Unload
 
+Unload scene from the Opened scenes in Unity Editor. Use 'scene-list-opened' tool to get the list of all opened scenes.
+
+## Inputs
+
+- `name` — required non-empty scene name. Must match an opened scene; otherwise throws.
+
+## Behavior
+
+Runs `SceneManager.UnloadSceneAsync` on the main thread and awaits completion. Returns an `UnloadSceneResult` containing the scene name and an `AssetObjectRef` to its asset (or `null` if the scene was not backed by an asset on disk).
+
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
-npx unity-mcp-cli run-tool scene-unload --input '{
+unity-mcp-cli run-tool scene-unload --input '{
   "name": "string_value"
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> unity-mcp-cli run-tool scene-unload --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> unity-mcp-cli run-tool scene-unload --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 
@@ -48,11 +72,11 @@ npx unity-mcp-cli run-tool scene-unload --input '{
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Scene+UnloadSceneResult"
+      "$ref": "#/$defs/AIGD.UnloadSceneResult"
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef": {
+    "AIGD.AssetObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -80,7 +104,7 @@ npx unity-mcp-cli run-tool scene-unload --input '{
     "System.Type": {
       "type": "string"
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Scene+UnloadSceneResult": {
+    "AIGD.UnloadSceneResult": {
       "type": "object",
       "properties": {
         "Name": {
@@ -88,7 +112,7 @@ npx unity-mcp-cli run-tool scene-unload --input '{
           "description": "Name of the unloaded scene."
         },
         "AssetObjectRef": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef",
+          "$ref": "#/$defs/AIGD.AssetObjectRef",
           "description": "Reference to the unloaded scene asset."
         }
       }

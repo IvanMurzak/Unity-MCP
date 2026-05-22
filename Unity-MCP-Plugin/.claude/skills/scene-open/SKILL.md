@@ -1,22 +1,45 @@
-﻿---
+---
 name: scene-open
-description: Open scene from the project asset file. Use 'assets-find' tool to find the scene asset first.
+description: Open a Unity scene asset in Single or Additive mode. Returns the post-open list of all opened scenes. Use 'assets-find' to locate the scene asset first.
 ---
 
 # Scene / Open
 
+Open scene from the project asset file. Use 'assets-find' tool to find the scene asset first.
+
+## Inputs
+
+- `sceneRef` — `AssetObjectRef` pointing at a `SceneAsset`. Throws if the asset cannot be resolved or is not a `SceneAsset`.
+- `loadSceneMode` (default `Single`):
+  - `Single` — closes the currently opened scenes and opens this one.
+  - `Additive` — keeps the currently opened scenes and opens this one alongside them.
+
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
-npx unity-mcp-cli run-tool scene-open --input '{
+unity-mcp-cli run-tool scene-open --input '{
   "sceneRef": "string_value",
   "loadSceneMode": "string_value"
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> unity-mcp-cli run-tool scene-open --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> unity-mcp-cli run-tool scene-open --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 
@@ -32,7 +55,7 @@ npx unity-mcp-cli run-tool scene-open --input '{
   "type": "object",
   "properties": {
     "sceneRef": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef"
+      "$ref": "#/$defs/AIGD.AssetObjectRef"
     },
     "loadSceneMode": {
       "type": "string",
@@ -47,7 +70,7 @@ npx unity-mcp-cli run-tool scene-open --input '{
     "System.Type": {
       "type": "string"
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef": {
+    "AIGD.AssetObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -88,11 +111,11 @@ npx unity-mcp-cli run-tool scene-open --input '{
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.SceneDataShallow[]"
+      "$ref": "#/$defs/AIGD.SceneDataShallow%5B%5D"
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.SceneDataShallow": {
+    "AIGD.SceneDataShallow": {
       "type": "object",
       "properties": {
         "Name": {
@@ -138,10 +161,10 @@ npx unity-mcp-cli run-tool scene-open --input '{
       ],
       "description": "Scene reference. Used to find a Scene."
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.SceneDataShallow[]": {
+    "AIGD.SceneDataShallow[]": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.SceneDataShallow",
+        "$ref": "#/$defs/AIGD.SceneDataShallow",
         "description": "Scene reference. Used to find a Scene."
       }
     }

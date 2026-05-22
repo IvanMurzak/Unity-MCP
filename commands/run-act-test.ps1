@@ -164,36 +164,36 @@ if ($missingSecrets.Count -gt 0) {
 }
 
 # ============================================================================
-# Build act command
+# Build act argument array (avoids Invoke-Expression injection surface)
 # ============================================================================
 
-# Base command
-$actCommand = "act workflow_dispatch -j $JobName -W $WorkflowFile"
+# Base arguments
+$actArgs = @('workflow_dispatch', '-j', $JobName, '-W', $WorkflowFile)
 
 # Add secrets
 foreach ($key in $secrets.Keys) {
-    $actCommand += " -s $key=`"$($secrets[$key])`""
+    $actArgs += @('-s', "${key}=$($secrets[$key])")
 }
 
 # Add debugging flags
 if ($Verbose) {
-    $actCommand += " --verbose"
+    $actArgs += '--verbose'
 }
 
 if ($DryRun) {
-    $actCommand += " --dryrun"
+    $actArgs += '--dryrun'
 }
 
 if ($StepDebug) {
-    $actCommand += " --env ACTIONS_STEP_DEBUG=true"
+    $actArgs += @('--env', 'ACTIONS_STEP_DEBUG=true')
 }
 
 # Add artifact support
 $artifactPath = "./.act-artifacts"
-$actCommand += " --artifact-server-path `"$artifactPath`""
+$actArgs += @('--artifact-server-path', $artifactPath)
 
 # Add container architecture for consistency
-$actCommand += " --container-architecture linux/amd64"
+$actArgs += @('--container-architecture', 'linux/amd64')
 
 # ============================================================================
 # Display execution info
@@ -223,12 +223,12 @@ $startTime = Get-Date
 
 if ($LogFile) {
     # Execute with log file
-    Invoke-Expression "$actCommand 2>&1 | Tee-Object -FilePath `"$LogFile`""
+    & act @actArgs 2>&1 | Tee-Object -FilePath $LogFile
     $exitCode = $LASTEXITCODE
 }
 else {
     # Execute normally
-    Invoke-Expression $actCommand
+    & act @actArgs
     $exitCode = $LASTEXITCODE
 }
 

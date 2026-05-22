@@ -1,24 +1,47 @@
-﻿---
+---
 name: console-get-logs
-description: Retrieves Unity Editor logs. Useful for debugging and monitoring Unity Editor activity.
+description: Retrieve Unity Editor logs from the MCP plugin's `LogCollector`, optionally filtered by log type or time window. Useful for debugging and monitoring Editor activity.
 ---
 
 # Console / Get Logs
 
+Retrieves Unity Editor logs. Useful for debugging and monitoring Unity Editor activity.
+
+## Inputs
+
+- `maxEntries` (default 100, minimum 1) — caps the size of the returned array.
+- `logTypeFilter` — Unity `LogType` filter; `null` returns all severities.
+- `includeStackTrace` (default `false`) — include stack-trace strings in each entry.
+- `lastMinutes` (default 0) — when non-zero, only logs from the last N minutes are returned.
+
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
-npx unity-mcp-cli run-tool console-get-logs --input '{
+unity-mcp-cli run-tool console-get-logs --input '{
   "maxEntries": 0,
   "logTypeFilter": "string_value",
   "includeStackTrace": false,
   "lastMinutes": 0
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> unity-mcp-cli run-tool console-get-logs --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> unity-mcp-cli run-tool console-get-logs --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 
@@ -72,7 +95,7 @@ npx unity-mcp-cli run-tool console-get-logs --input '{
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.LogEntry[]"
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.LogEntry%5B%5D"
     }
   },
   "$defs": {

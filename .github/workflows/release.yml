@@ -34,7 +34,7 @@ jobs:
         id: get_version
         uses: martinbeentjes/npm-get-version-action@v1.3.1
         with:
-          path: Unity-MCP-Plugin/Assets/root
+          path: Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp
 
       - name: Find previous version tag
         id: prev_tag
@@ -84,6 +84,7 @@ jobs:
         env:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
         with:
           projectPath: ./Installer
           unityVersion: 2022.3.62f3
@@ -106,7 +107,7 @@ jobs:
           echo "Cleaned Unity artifacts and reset tracked files"
 
       - name: Export Unity Package
-        uses: game-ci/unity-builder@v4
+        uses: game-ci/unity-builder@v5
         env:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}

@@ -1,23 +1,45 @@
-﻿---
+---
 name: package-list
-description: List all packages installed in the Unity project (UPM packages). Returns information about each installed package including name, version, source, and description. Use this to check which packages are currently installed before adding or removing packages.
+description: List all UPM packages installed in the Unity project — name, version, source, description. Optionally filter by source (registry, embedded, local, git, built-in, local tarball), by name/display/description substring, and by direct-dependency-only.
 ---
 
 # Package Manager / List Installed
 
+List all packages installed in the Unity project (UPM packages). Returns information about each installed package including name, version, source, and description. Use this to check which packages are currently installed before adding or removing packages.
+
+## Inputs
+
+- `sourceFilter` (default `All`) — restrict by Unity `PackageSource`: `All`, `Registry`, `Embedded`, `Local`, `Git`, `BuiltIn`, `LocalTarball`.
+- `nameFilter` (optional) — case-insensitive substring filter over name / displayName / description. Results are prioritized: exact name → exact displayName → name substring → displayName substring → description substring.
+- `directDependenciesOnly` (default `false`) — when true, return only packages listed in `manifest.json` (no transitive dependencies).
+
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
-npx unity-mcp-cli run-tool package-list --input '{
+unity-mcp-cli run-tool package-list --input '{
   "sourceFilter": "string_value",
   "nameFilter": "string_value",
   "directDependenciesOnly": false
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> unity-mcp-cli run-tool package-list --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> unity-mcp-cli run-tool package-list --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 
@@ -64,11 +86,11 @@ npx unity-mcp-cli run-tool package-list --input '{
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Editor.API.Tool_Package+PackageData>"
+      "$ref": "#/$defs/System.Collections.Generic.List%3CAIGD.PackageData%3E"
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Package+PackageData": {
+    "AIGD.PackageData": {
       "type": "object",
       "properties": {
         "Name": {
@@ -98,10 +120,10 @@ npx unity-mcp-cli run-tool package-list --input '{
       },
       "description": "Package information returned from package list operation."
     },
-    "System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Editor.API.Tool_Package+PackageData>": {
+    "System.Collections.Generic.List<AIGD.PackageData>": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Package+PackageData",
+        "$ref": "#/$defs/AIGD.PackageData",
         "description": "Package information returned from package list operation."
       }
     }

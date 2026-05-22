@@ -1,0 +1,421 @@
+/*
+┌──────────────────────────────────────────────────────────────────┐
+│  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
+│  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
+│  Copyright (c) 2025 Ivan Murzak                                  │
+│  Licensed under the Apache License, Version 2.0.                 │
+│  See the LICENSE file in the project root for more information.  │
+└──────────────────────────────────────────────────────────────────┘
+*/
+
+#nullable enable
+using System;
+using System.Net.Http;
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using com.IvanMurzak.Unity.MCP.Editor.UI;
+using Microsoft.Extensions.Logging;
+using UnityEditor;
+using UnityEngine;
+using ILogger = Microsoft.Extensions.Logging.ILogger;
+
+namespace com.IvanMurzak.Unity.MCP.Editor.Utils
+{
+    /// <summary>
+    /// Utility class for checking if a new version of the package is available on OpenUPM.
+    /// </summary>
+    /// <remarks>
+    /// OpenUPM is the source of truth for the version that Unity Package Manager will actually
+    /// install for end users. GitHub releases are published before the OpenUPM build pipeline
+    /// finishes, so polling GitHub releases would prompt users to update to a version that is
+    /// not yet installable. See https://github.com/IvanMurzak/Unity-MCP/issues/694.
+    ///
+    /// Two opt-out layers gate the popup, in this order:
+    ///   1. <see cref="IsDisabledForProject"/> — team-shared, stored in
+    ///      <c>ProjectSettings/AI-Game-Developer-UpdateSettings.asset</c> via
+    ///      <see cref="UnityMcpUpdateProjectSettings"/>. Set this once and commit it to
+    ///      disable the popup for every team member who clones the project. See
+    ///      https://github.com/IvanMurzak/Unity-MCP/issues/768.
+    ///   2. <see cref="IsDoNotShowAgain"/> — per-user, stored in <see cref="EditorPrefs"/>
+    ///      (NOT <see cref="PlayerPrefs"/> — clearing in-game <c>PlayerPrefs</c> must not
+    ///      wipe the editor flag). See https://github.com/IvanMurzak/Unity-MCP/issues/755.
+    /// </remarks>
+    public static class UpdateChecker
+    {
+        private const string PackageId = "com.ivanmurzak.unity.mcp";
+        // package.openupm.com is the npm-style metadata registry (machine-readable JSON);
+        // openupm.com is the human-readable package page the popup links users to.
+        private const string OpenUpmPackageMetadataUrl = "https://package.openupm.com/" + PackageId;
+        private const string OpenUpmPackageUrl = "https://openupm.com/packages/" + PackageId + "/";
+
+        // Anchored at both ends: accepts only complete "N.N" or "N.N.N" strings. Without the
+        // trailing anchor, "1.0.0-preview" would match and CompareVersions would silently
+        // treat the "0-preview" segment as 0, making pre-release tags look equal to the
+        // final release. See https://github.com/IvanMurzak/Unity-MCP/issues/694 review.
+        private static readonly Regex VersionPattern = new(@"^\d+\.\d+(\.\d+)?$", RegexOptions.Compiled);
+
+        // Hoisted to a single static instance to avoid socket exhaustion (TIME_WAIT) under
+        // repeated update checks. Same pattern used by NuGetDownloader and DeviceAuthService
+        // elsewhere in this package. The 10s timeout covers OpenUPM's slowest realistic responses.
+        private static readonly HttpClient HttpClient = CreateHttpClient();
+
+        // EditorPrefs is global to the Unity install, so the keys are namespaced by package id
+        // AND by a stable per-project token (FNV-1a hash of Application.dataPath) to keep parallel
+        // projects from stomping on each other's state. See #755 for the migration rationale.
+        //
+        // FNV-1a (not string.GetHashCode()) because Unity is migrating to CoreCLR (preview in 6.x),
+        // and on CoreCLR string.GetHashCode() is randomized per process — keys would change on
+        // every editor restart and per-user state (DoNotShowAgain, cooldown, skipped version)
+        // would be silently lost. FNV-1a is byte-stable across runtimes and across machines.
+        //
+        // Caveat: two distinct Unity projects that happen to live at the same Application.dataPath
+        // (e.g. user copies a project folder, deletes the original, and opens the copy at the same
+        // location) will share EditorPrefs state. Acceptable for a "do not show again" flag.
+        private static readonly string ProjectKeyPrefix =
+            $"{PackageId}.{Fnv1a32(Application.dataPath):X8}.UpdateChecker.";
+        private static readonly string KeyDoNotShowAgain = ProjectKeyPrefix + "DoNotShowAgain";
+        private static readonly string KeyNextCheckTime = ProjectKeyPrefix + "NextCheckTime";
+        private static readonly string KeySkippedVersion = ProjectKeyPrefix + "SkippedVersion";
+
+        /// <summary>
+        /// Deterministic 32-bit FNV-1a hash of a UTF-16 string. Stable across .NET runtimes
+        /// (Mono and CoreCLR) and across machines — unlike <see cref="string.GetHashCode"/>,
+        /// which is randomized per process under CoreCLR.
+        /// </summary>
+        private static uint Fnv1a32(string input)
+        {
+            const uint offsetBasis = 2166136261u;
+            const uint prime = 16777619u;
+            var hash = offsetBasis;
+            for (int i = 0; i < input.Length; i++)
+            {
+                hash ^= (byte)(input[i] & 0xFF);
+                hash *= prime;
+                hash ^= (byte)((input[i] >> 8) & 0xFF);
+                hash *= prime;
+            }
+            return hash;
+        }
+
+        private static bool isChecking = false;
+        private static string? latestVersion = null;
+        private static ILogger? logger = null;
+
+        private static HttpClient CreateHttpClient()
+        {
+            var client = new HttpClient { Timeout = TimeSpan.FromSeconds(10) };
+            client.DefaultRequestHeaders.Add("User-Agent", "AI-Game-Developer-UpdateChecker");
+            return client;
+        }
+
+        /// <summary>
+        /// Gets whether the team-wide kill-switch is enabled for this project. When <c>true</c>,
+        /// the popup is suppressed for every team member who has the
+        /// <c>ProjectSettings/AI-Game-Developer-UpdateSettings.asset</c> file in their checkout,
+        /// regardless of their per-user <see cref="IsDoNotShowAgain"/> state.
+        /// </summary>
+        /// <remarks>
+        /// Stored in <see cref="UnityMcpUpdateProjectSettings"/> — a <see cref="ScriptableSingleton{T}"/>
+        /// persisted under <c>ProjectSettings/</c>. The asset is intended to be committed to VCS.
+        /// </remarks>
+        public static bool IsDisabledForProject
+        {
+            get => UnityMcpUpdateProjectSettings.instance.DisableUpdateNotificationsForTeam;
+            set => UnityMcpUpdateProjectSettings.instance.DisableUpdateNotificationsForTeam = value;
+        }
+
+        /// <summary>
+        /// Gets whether the user has chosen to never show the update popup again on this machine.
+        /// </summary>
+        /// <remarks>
+        /// Stored in <see cref="EditorPrefs"/> (per-user, per-Unity-install) — not in
+        /// <see cref="PlayerPrefs"/>. Clearing in-game <c>PlayerPrefs</c> must not silently
+        /// reset the editor flag. See https://github.com/IvanMurzak/Unity-MCP/issues/755.
+        /// </remarks>
+        public static bool IsDoNotShowAgain
+        {
+            get => EditorPrefs.GetBool(KeyDoNotShowAgain, false);
+            set => EditorPrefs.SetBool(KeyDoNotShowAgain, value);
+        }
+
+        /// <summary>
+        /// Gets the latest version that was found during the last check.
+        /// </summary>
+        public static string? LatestVersion => latestVersion;
+
+        /// <summary>
+        /// Gets the OpenUPM package URL for the user to manually view available versions.
+        /// </summary>
+        /// <remarks>
+        /// Points at OpenUPM rather than GitHub releases because OpenUPM is the registry
+        /// Unity Package Manager actually pulls from — the version visible there is the
+        /// version users can actually install at this moment.
+        /// </remarks>
+        public static string ReleasesUrl => OpenUpmPackageUrl;
+
+        public static void Init(ILogger? initLogger = null)
+        {
+            logger = initLogger;
+
+            // Check for updates after Unity finishes loading
+            EditorApplication.delayCall += CheckForUpdatesOnStartup;
+        }
+
+        private static void CheckForUpdatesOnStartup()
+        {
+            EditorApplication.delayCall -= CheckForUpdatesOnStartup;
+
+            if (!ShouldCheckForUpdates())
+                return;
+
+            _ = CheckForUpdatesAsync();
+        }
+
+        /// <summary>
+        /// Determines if we should check for updates based on the team-shared project flag,
+        /// the per-user opt-out, and the cooldown timer.
+        /// </summary>
+        /// <remarks>
+        /// Precedence (in order):
+        ///   1. <see cref="IsDisabledForProject"/> — team-wide kill-switch wins over everything.
+        ///   2. <see cref="IsDoNotShowAgain"/> — per-user opt-out.
+        ///   3. The cooldown timestamp stored in <see cref="EditorPrefs"/>.
+        /// </remarks>
+        public static bool ShouldCheckForUpdates()
+        {
+            // 1. Team-wide kill-switch — short-circuits before any per-user state is consulted.
+            if (IsDisabledForProject)
+                return false;
+
+            // 2. Per-user opt-out.
+            if (IsDoNotShowAgain)
+                return false;
+
+            // 3. Cooldown.
+            var nextCheckTimeStr = EditorPrefs.GetString(KeyNextCheckTime, string.Empty);
+            if (!string.IsNullOrEmpty(nextCheckTimeStr))
+            {
+                if (DateTime.TryParse(nextCheckTimeStr, out var nextCheckDateTime))
+                {
+                    if (DateTime.UtcNow < nextCheckDateTime)
+                        return false;
+                }
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Skips a specific version (user doesn't want to be notified about it again).
+        /// </summary>
+        public static void SkipVersion(string version)
+        {
+            EditorPrefs.SetString(KeySkippedVersion, version);
+        }
+
+        /// <summary>
+        /// Clears all per-user update-checker preferences (useful for testing and for the
+        /// "Reset Update Preferences" debug menu).
+        /// </summary>
+        /// <remarks>
+        /// This intentionally does NOT reset <see cref="IsDisabledForProject"/> — that flag is
+        /// team-shared via <c>ProjectSettings/</c>, and clearing it from a debug menu would
+        /// produce a spurious diff in a committed asset (potentially surprising other team
+        /// members). The team flag is reset only through the Project Settings UI or
+        /// <c>Tools ▸ AI Game Developer ▸ Updates ▸ Disable Update Notifications (Team)</c>.
+        /// </remarks>
+        public static void ClearPreferences()
+        {
+            EditorPrefs.DeleteKey(KeyDoNotShowAgain);
+            EditorPrefs.DeleteKey(KeyNextCheckTime);
+            EditorPrefs.DeleteKey(KeySkippedVersion);
+        }
+
+        /// <summary>
+        /// Asynchronously checks for updates from OpenUPM.
+        /// </summary>
+        /// <param name="forceCheck">If true, ignores cooldown and skipped version settings.</param>
+        public static async Task CheckForUpdatesAsync(bool forceCheck = false)
+        {
+            if (isChecking)
+            {
+                if (forceCheck)
+                    logger?.LogWarning("Already checking for updates...");
+                return;
+            }
+
+            if (!forceCheck && !ShouldCheckForUpdates())
+                return;
+
+            isChecking = true;
+
+            try
+            {
+                var fetched = await FetchLatestVersionAsync();
+                if (string.IsNullOrEmpty(fetched))
+                {
+                    if (forceCheck)
+                        logger?.LogWarning("Unable to check for updates. Please check your internet connection.");
+                    return;
+                }
+
+                latestVersion = fetched;
+
+                // Check if this version was skipped
+                var skippedVersion = EditorPrefs.GetString(KeySkippedVersion, string.Empty);
+                if (!string.IsNullOrEmpty(skippedVersion) && skippedVersion == fetched && !forceCheck)
+                {
+                    return;
+                }
+
+                // Compare versions. The `!` is required because the Unity Editor C# compiler
+                // does not honor `[NotNullWhen(false)]` on `string.IsNullOrEmpty`, so it does
+                // not narrow `fetched` (declared `string?`) to non-null after the early-return
+                // guard above and would otherwise emit CS8604 here. The runtime check above
+                // already establishes `fetched` is non-null and non-empty at this point.
+                var currentVersion = UnityMcpPlugin.Version;
+                if (IsNewerVersion(fetched!, currentVersion))
+                {
+                    // Show the update popup on the main thread
+                    EditorApplication.delayCall += () =>
+                    {
+                        UpdatePopupWindow.ShowWindow(currentVersion, fetched!);
+                    };
+                }
+                else if (forceCheck)
+                {
+                    // User manually checked - inform them they're up to date
+                    logger?.LogDebug("You are using the latest version ({currentVersion}).", currentVersion);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger?.LogWarning(ex, "Failed to check for updates");
+            }
+            finally
+            {
+                // Set next allowed check time to enforce cooldown (only for automatic checks)
+                if (!forceCheck)
+                {
+                    EditorPrefs.SetString(KeyNextCheckTime, DateTime.UtcNow.AddHours(1).ToString("O"));
+                }
+                isChecking = false;
+            }
+        }
+
+        /// <summary>
+        /// Fetches the latest version from the OpenUPM registry.
+        /// </summary>
+        /// <remarks>
+        /// Uses the npm-style registry endpoint <c>https://package.openupm.com/{packageId}</c>,
+        /// which returns a JSON document whose <c>dist-tags.latest</c> field is the version
+        /// currently installable via Unity Package Manager. On any network or parsing failure
+        /// the method returns <c>null</c> so callers fall back gracefully without prompting.
+        /// </remarks>
+        private static async Task<string?> FetchLatestVersionAsync()
+        {
+            try
+            {
+                var json = await HttpClient.GetStringAsync(OpenUpmPackageMetadataUrl);
+                return ParseLatestVersionFromJson(json);
+            }
+            catch (HttpRequestException ex)
+            {
+                // Use the exception-preserving overload so stack trace and inner exceptions
+                // survive into structured logs — same pattern as the catch-all below.
+                logger?.LogWarning(ex, "Failed to fetch package metadata");
+                return null;
+            }
+            catch (TaskCanceledException ex)
+            {
+                logger?.LogWarning(ex, "OpenUPM request timed out");
+                return null;
+            }
+            catch (Exception ex)
+            {
+                // ParseLatestVersionFromJson swallows JsonException internally, so anything
+                // reaching here is an unexpected transport / URI / IO failure rather than a
+                // parse error — message must reflect that.
+                logger?.LogWarning(ex, "Unexpected error during OpenUPM update check");
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Parses the latest version from an OpenUPM registry JSON response.
+        /// </summary>
+        /// <remarks>
+        /// The OpenUPM registry follows the npm registry shape; the latest published version
+        /// is at <c>dist-tags.latest</c>. Returns <c>null</c> if the JSON is empty, malformed,
+        /// or does not contain a <c>dist-tags.latest</c> string. Also returns <c>null</c> for
+        /// non-numeric or pre-release version strings (e.g. <c>"1.0.0-preview"</c>) — the
+        /// parser only accepts strict <c>N.N</c> / <c>N.N.N</c> shapes so the popup never
+        /// surfaces a tag that <see cref="CompareVersions"/> would silently misorder.
+        /// </remarks>
+        internal static string? ParseLatestVersionFromJson(string json)
+        {
+            if (string.IsNullOrEmpty(json))
+                return null;
+
+            try
+            {
+                using var doc = JsonDocument.Parse(json);
+
+                if (!doc.RootElement.TryGetProperty("dist-tags", out var distTags))
+                    return null;
+
+                if (distTags.ValueKind != JsonValueKind.Object)
+                    return null;
+
+                if (!distTags.TryGetProperty("latest", out var latest))
+                    return null;
+
+                if (latest.ValueKind != JsonValueKind.String)
+                    return null;
+
+                var version = latest.GetString();
+                if (string.IsNullOrEmpty(version))
+                    return null;
+
+                // Defensive: only accept numeric semver-shaped strings. Without this guard
+                // CompareVersions would silently treat non-numeric parts as 0, producing a
+                // misleading "version" in the popup if the registry ever returns garbage.
+                return VersionPattern.IsMatch(version) ? version : null;
+            }
+            catch (JsonException)
+            {
+                return null;
+            }
+        }
+
+        /// <summary>
+        /// Compares two version strings.
+        /// </summary>
+        internal static int CompareVersions(string v1, string v2)
+        {
+            var parts1 = v1.Split('.');
+            var parts2 = v2.Split('.');
+
+            var maxLength = Math.Max(parts1.Length, parts2.Length);
+            for (int i = 0; i < maxLength; i++)
+            {
+                var num1 = i < parts1.Length && int.TryParse(parts1[i], out var n1) ? n1 : 0;
+                var num2 = i < parts2.Length && int.TryParse(parts2[i], out var n2) ? n2 : 0;
+
+                if (num1 != num2)
+                    return num1.CompareTo(num2);
+            }
+
+            return 0;
+        }
+
+        /// <summary>
+        /// Determines if the remote version is newer than the current version.
+        /// </summary>
+        public static bool IsNewerVersion(string remoteVersion, string currentVersion)
+        {
+            return CompareVersions(remoteVersion, currentVersion) > 0;
+        }
+    }
+}

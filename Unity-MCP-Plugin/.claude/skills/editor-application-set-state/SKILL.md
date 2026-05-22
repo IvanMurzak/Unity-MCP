@@ -1,22 +1,47 @@
-﻿---
+---
 name: editor-application-set-state
-description: Control the Unity Editor application state. You can start, stop, or pause the 'playmode'. Use 'editor-application-get-state' tool to get the current state first.
+description: Start / stop / pause the Unity Editor 'playmode'. Use 'editor-application-get-state' to inspect the current state first. Throws if the project currently has compilation errors.
 ---
 
 # Editor / Application / Set State
 
+Control the Unity Editor application state. You can start, stop, or pause the 'playmode'. Use 'editor-application-get-state' tool to get the current state first.
+
+## Inputs
+
+- `isPlaying` (default `false`) — sets `EditorApplication.isPlaying`.
+- `isPaused` (default `false`) — sets `EditorApplication.isPaused`.
+
+## Behavior
+
+Refuses any state change while `EditorUtility.scriptCompilationFailed` is true — instead throws with the compilation error details so the caller can fix them first. On success returns the post-change `EditorStatsData` snapshot.
+
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
-npx unity-mcp-cli run-tool editor-application-set-state --input '{
+unity-mcp-cli run-tool editor-application-set-state --input '{
   "isPlaying": false,
   "isPaused": false
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> unity-mcp-cli run-tool editor-application-set-state --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> unity-mcp-cli run-tool editor-application-set-state --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 
@@ -50,12 +75,12 @@ npx unity-mcp-cli run-tool editor-application-set-state --input '{
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Editor+EditorStatsData",
+      "$ref": "#/$defs/AIGD.EditorStatsData",
       "description": "Available information about 'UnityEditor.EditorApplication'."
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Editor+EditorStatsData": {
+    "AIGD.EditorStatsData": {
       "type": "object",
       "properties": {
         "IsPlaying": {

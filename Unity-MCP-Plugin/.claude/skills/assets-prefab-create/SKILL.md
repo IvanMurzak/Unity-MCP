@@ -1,31 +1,60 @@
-﻿---
+---
 name: assets-prefab-create
-description: Create a prefab from a GameObject in the current active scene. The prefab will be saved in the project assets at the specified path. Use 'gameobject-find' tool to find the target GameObject first.
+description: Create a Prefab (or Prefab Variant) at a project asset path. Source can be a scene GameObject (`gameObjectRef`) or an existing prefab asset (`sourcePrefabAssetPath`). Creates intermediate folders if missing. Use 'gameobject-find' to locate the source GameObject first.
 ---
 
 # Assets / Prefab / Create
 
+Create a prefab from a GameObject in the current active scene. The prefab will be saved in the project assets at the specified path. Creates folders recursively if they do not exist. If the source GameObject is already a prefab instance and 'connectGameObjectToPrefab' is true, a Prefab Variant is created automatically. To create a Prefab Variant from an existing prefab asset, provide 'sourcePrefabAssetPath' instead of 'gameObjectRef'. Use 'gameobject-find' tool to find the target GameObject first.
+
+## Inputs (mutually exclusive sources)
+
+- `prefabAssetPath` — required. Must start with `Assets/` and end with `.prefab`.
+- `gameObjectRef` — scene GameObject to convert (or to seed a Prefab Variant from when it is already a prefab instance).
+- `sourcePrefabAssetPath` — existing prefab asset to seed a Prefab Variant from. Cannot be combined with `gameObjectRef`.
+- `connectGameObjectToPrefab` (default `true`) — when sourcing from a scene GameObject, connect the scene object to the new prefab asset (becoming a prefab instance). Ignored for `sourcePrefabAssetPath` (always creates a variant).
+
+## Behavior
+
+Creates intermediate folders along `prefabAssetPath` if they don't already exist. Returns an `AssetObjectRef` pointing at the new prefab asset.
+
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
-npx unity-mcp-cli run-tool assets-prefab-create --input '{
+unity-mcp-cli run-tool assets-prefab-create --input '{
   "prefabAssetPath": "string_value",
   "gameObjectRef": "string_value",
-  "replaceGameObjectWithPrefab": false
+  "sourcePrefabAssetPath": "string_value",
+  "connectGameObjectToPrefab": false
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> unity-mcp-cli run-tool assets-prefab-create --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> unity-mcp-cli run-tool assets-prefab-create --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 | `prefabAssetPath` | `string` | Yes | Prefab asset path. Should be in the format 'Assets/Path/To/Prefab.prefab'. |
-| `gameObjectRef` | `any` | Yes | Find GameObject in opened Prefab or in the active Scene. |
-| `replaceGameObjectWithPrefab` | `boolean` | No | If true, the prefab will replace the GameObject in the scene. |
+| `gameObjectRef` | `any` | No | Reference to a scene GameObject to create the prefab from. If the GameObject is already a prefab instance, a Prefab Variant is created when 'connectGameObjectToPrefab' is true. Optional if 'sourcePrefabAssetPath' is provided. |
+| `sourcePrefabAssetPath` | `string` | No | Path to an existing prefab asset to create a Prefab Variant from (e.g. 'Assets/Prefabs/Base.prefab'). When provided, a temporary instance is created, saved as a Prefab Variant, and cleaned up. Optional if 'gameObjectRef' is provided. |
+| `connectGameObjectToPrefab` | `boolean` | No | If true, the scene GameObject will be connected to the new prefab (becoming a prefab instance). If the source is already a prefab instance, this creates a Prefab Variant. If false, the prefab asset is created but the scene GameObject remains unchanged. Ignored when 'sourcePrefabAssetPath' is used (always creates a variant). |
 
 ### Input JSON Schema
 
@@ -37,9 +66,12 @@ npx unity-mcp-cli run-tool assets-prefab-create --input '{
       "type": "string"
     },
     "gameObjectRef": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef"
+      "$ref": "#/$defs/AIGD.GameObjectRef"
     },
-    "replaceGameObjectWithPrefab": {
+    "sourcePrefabAssetPath": {
+      "type": "string"
+    },
+    "connectGameObjectToPrefab": {
       "type": "boolean"
     }
   },
@@ -47,7 +79,7 @@ npx unity-mcp-cli run-tool assets-prefab-create --input '{
     "System.Type": {
       "type": "string"
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
+    "AIGD.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -82,8 +114,7 @@ npx unity-mcp-cli run-tool assets-prefab-create --input '{
     }
   },
   "required": [
-    "prefabAssetPath",
-    "gameObjectRef"
+    "prefabAssetPath"
   ]
 }
 ```
@@ -97,7 +128,7 @@ npx unity-mcp-cli run-tool assets-prefab-create --input '{
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef",
+      "$ref": "#/$defs/AIGD.AssetObjectRef",
       "description": "Reference to UnityEngine.Object asset instance. It could be Material, ScriptableObject, Prefab, and any other Asset. Anything located in the Assets and Packages folders."
     }
   },
@@ -105,7 +136,7 @@ npx unity-mcp-cli run-tool assets-prefab-create --input '{
     "System.Type": {
       "type": "string"
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef": {
+    "AIGD.AssetObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {

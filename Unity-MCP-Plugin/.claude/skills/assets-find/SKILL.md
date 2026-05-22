@@ -1,23 +1,50 @@
-﻿---
+---
 name: assets-find
-description: Search the asset database using the search filter string. Allows you to search for Assets. The string argument can provide names, labels or types (classnames).
+description: "Search the Unity asset database using a search filter string. The filter accepts names, labels (`l:`), types (`t:`), AssetBundles (`b:`), areas (`a:`), and globs (`glob:`). See the body for the full filter syntax."
 ---
 
 # Assets / Find
 
+Search the asset database using the search filter string. Allows you to search for Assets. The string argument can provide names, labels or types (classnames).
+
+## Filter syntax
+
+- **Name** — filter assets by their filename (without extension). Words separated by whitespace are treated as separate name searches.
+- **Labels (`l:`)** — assets can have labels attached. Use `l:` before each label.
+- **Types (`t:`)** — find assets based on explicitly identified types. Available types include AnimationClip, AudioClip, AudioMixer, ComputeShader, Font, GUISkin, Material, Mesh, Model, PhysicMaterial, Prefab, Scene, Script, Shader, Sprite, Texture, VideoClip, VisualEffectAsset, VisualEffectSubgraph.
+- **AssetBundles (`b:`)** — find assets which are part of an Asset bundle.
+- **Area (`a:`)** — find assets in a specific area. Valid values: `all`, `assets`, `packages`.
+- **Globbing (`glob:`)** — use globbing to match specific rules.
+
+Searching is case-insensitive. Use `searchInFolders` to restrict the search scope. `maxResults` caps the returned list (default 10) — results beyond it are truncated.
+
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
-npx unity-mcp-cli run-tool assets-find --input '{
+unity-mcp-cli run-tool assets-find --input '{
   "filter": "string_value",
   "searchInFolders": "string_value",
   "maxResults": 0
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> unity-mcp-cli run-tool assets-find --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> unity-mcp-cli run-tool assets-find --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 
@@ -37,7 +64,7 @@ npx unity-mcp-cli run-tool assets-find --input '{
       "type": "string"
     },
     "searchInFolders": {
-      "$ref": "#/$defs/System.String[]"
+      "$ref": "#/$defs/System.String%5B%5D"
     },
     "maxResults": {
       "type": "integer"
@@ -63,11 +90,11 @@ npx unity-mcp-cli run-tool assets-find --input '{
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef>"
+      "$ref": "#/$defs/System.Collections.Generic.List%3CAIGD.AssetObjectRef%3E"
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef": {
+    "AIGD.AssetObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -95,10 +122,10 @@ npx unity-mcp-cli run-tool assets-find --input '{
     "System.Type": {
       "type": "string"
     },
-    "System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef>": {
+    "System.Collections.Generic.List<AIGD.AssetObjectRef>": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef",
+        "$ref": "#/$defs/AIGD.AssetObjectRef",
         "description": "Reference to UnityEngine.Object asset instance. It could be Material, ScriptableObject, Prefab, and any other Asset. Anything located in the Assets and Packages folders."
       }
     }

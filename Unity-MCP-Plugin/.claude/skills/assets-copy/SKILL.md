@@ -1,22 +1,47 @@
-﻿---
+---
 name: assets-copy
-description: Copy assets at given paths and store them at new paths. Does AssetDatabase.Refresh() at the end. Use 'assets-find' tool to find assets before copying.
+description: Copy assets at given paths and store them at new paths. Refreshes the AssetDatabase at the end. Use 'assets-find' to locate the source assets first.
 ---
 
 # Assets / Copy
 
+Copy assets at given paths and store them at new paths. Does AssetDatabase.Refresh() at the end. Use 'assets-find' tool to find assets before copying.
+
+## Inputs
+
+- `sourcePaths` — paths of the assets to copy.
+- `destinationPaths` — paths to store the copied assets (must match `sourcePaths` length).
+
+## Behavior
+
+Each source/destination pair is copied in order. Per-pair errors are accumulated in the response instead of throwing, so a single bad pair does not abort the whole batch.
+
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
-npx unity-mcp-cli run-tool assets-copy --input '{
+unity-mcp-cli run-tool assets-copy --input '{
   "sourcePaths": "string_value",
   "destinationPaths": "string_value"
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> unity-mcp-cli run-tool assets-copy --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> unity-mcp-cli run-tool assets-copy --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 
@@ -32,10 +57,10 @@ npx unity-mcp-cli run-tool assets-copy --input '{
   "type": "object",
   "properties": {
     "sourcePaths": {
-      "$ref": "#/$defs/System.String[]"
+      "$ref": "#/$defs/System.String%5B%5D"
     },
     "destinationPaths": {
-      "$ref": "#/$defs/System.String[]"
+      "$ref": "#/$defs/System.String%5B%5D"
     }
   },
   "$defs": {
@@ -62,18 +87,18 @@ npx unity-mcp-cli run-tool assets-copy --input '{
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets+CopyAssetsResponse"
+      "$ref": "#/$defs/AIGD.CopyAssetsResponse"
     }
   },
   "$defs": {
-    "System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef>": {
+    "System.Collections.Generic.List<AIGD.AssetObjectRef>": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef",
+        "$ref": "#/$defs/AIGD.AssetObjectRef",
         "description": "Reference to UnityEngine.Object asset instance. It could be Material, ScriptableObject, Prefab, and any other Asset. Anything located in the Assets and Packages folders."
       }
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef": {
+    "AIGD.AssetObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -107,15 +132,15 @@ npx unity-mcp-cli run-tool assets-copy --input '{
         "type": "string"
       }
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets+CopyAssetsResponse": {
+    "AIGD.CopyAssetsResponse": {
       "type": "object",
       "properties": {
         "CopiedAssets": {
-          "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.AssetObjectRef>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3CAIGD.AssetObjectRef%3E",
           "description": "List of copied assets."
         },
         "Errors": {
-          "$ref": "#/$defs/System.Collections.Generic.List<System.String>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E",
           "description": "List of errors encountered during copy operations."
         }
       }

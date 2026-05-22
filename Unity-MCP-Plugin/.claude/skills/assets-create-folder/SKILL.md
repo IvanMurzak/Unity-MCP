@@ -1,21 +1,47 @@
-﻿---
+---
 name: assets-create-folder
-description: Creates a new folder in the specified parent folder. The parent folder string must start with the 'Assets' folder, and all folders within the parent folder string must already exist. For example, when specifying 'Assets/ParentFolder1/ParentFolder2/', the new folder will be created in 'ParentFolder2' only if ParentFolder1 and ParentFolder2 already exist. Use it to organize scripts and assets in the project. Does AssetDatabase.Refresh() at the end. Returns the GUID of the newly created folder, if successful.
+description: Create a new folder under a parent folder inside 'Assets/'. The parent path must start with 'Assets/' and every intermediate folder in it must already exist. Refreshes the AssetDatabase at the end and returns the GUID(s) of the created folder(s).
 ---
 
 # Assets / Create Folder
 
+Creates a new folder in the specified parent folder. The parent folder string must start with the 'Assets' folder, and all folders within the parent folder string must already exist. For example, when specifying 'Assets/ParentFolder1/ParentFolder2/', the new folder will be created in 'ParentFolder2' only if ParentFolder1 and ParentFolder2 already exist. Use it to organize scripts and assets in the project. Does AssetDatabase.Refresh() at the end. Returns the GUID of the newly created folder, if successful.
+
+## Inputs
+
+- `inputs` — list of `{ParentFolderPath, NewFolderName}` entries. Each entry is processed independently; per-entry errors are collected in the response so a single bad input does not abort the batch.
+
+## Validation
+
+- `NewFolderName` must be non-empty and must not contain any of `/`, `\`, `<`, `>`, `:`, `"`, `|`, `?`, `*`, or control characters (these checks are cross-platform even on Linux/Mac).
+- `ParentFolderPath` must already exist as an `AssetDatabase.IsValidFolder` path.
+- A folder with the same target name must not already exist under the parent.
+
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
-npx unity-mcp-cli run-tool assets-create-folder --input '{
+unity-mcp-cli run-tool assets-create-folder --input '{
   "inputs": "string_value"
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> unity-mcp-cli run-tool assets-create-folder --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> unity-mcp-cli run-tool assets-create-folder --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 
@@ -30,11 +56,11 @@ npx unity-mcp-cli run-tool assets-create-folder --input '{
   "type": "object",
   "properties": {
     "inputs": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets+CreateFolderInput[]"
+      "$ref": "#/$defs/AIGD.CreateFolderInput%5B%5D"
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets+CreateFolderInput": {
+    "AIGD.CreateFolderInput": {
       "type": "object",
       "properties": {
         "ParentFolderPath": {
@@ -47,10 +73,10 @@ npx unity-mcp-cli run-tool assets-create-folder --input '{
         }
       }
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets+CreateFolderInput[]": {
+    "AIGD.CreateFolderInput[]": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets+CreateFolderInput"
+        "$ref": "#/$defs/AIGD.CreateFolderInput"
       }
     }
   },
@@ -69,7 +95,7 @@ npx unity-mcp-cli run-tool assets-create-folder --input '{
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets+CreateFolderResponse"
+      "$ref": "#/$defs/AIGD.CreateFolderResponse"
     }
   },
   "$defs": {
@@ -79,15 +105,15 @@ npx unity-mcp-cli run-tool assets-create-folder --input '{
         "type": "string"
       }
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets+CreateFolderResponse": {
+    "AIGD.CreateFolderResponse": {
       "type": "object",
       "properties": {
         "CreatedFolderGuids": {
-          "$ref": "#/$defs/System.Collections.Generic.List<System.String>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E",
           "description": "List of GUIDs of created folders."
         },
         "Errors": {
-          "$ref": "#/$defs/System.Collections.Generic.List<System.String>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E",
           "description": "List of errors encountered during folder creation."
         }
       }

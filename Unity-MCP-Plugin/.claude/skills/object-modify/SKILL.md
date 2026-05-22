@@ -1,31 +1,65 @@
-﻿---
+---
 name: object-modify
-description: Modify the specified Unity Object. Allows direct modification of object fields and properties. Use 'object-get-data' first to inspect the object structure before modifying.
+description: Modify a Unity `UnityEngine.Object`'s serializable fields/properties. Three modification surfaces are available (`objectDiff`, `pathPatches`, `jsonPatch`) — see the skill body. Use 'object-get-data' first to inspect the object structure.
 ---
 
 # Object / Modify
 
+Modify the specified Unity Object. Allows direct modification of object fields and properties. Use 'object-get-data' first to inspect the object structure before modifying.
+
+## Three modification surfaces
+
+Use whichever fits the task:
+
+1. `objectDiff` — full `SerializedMember` diff (legacy, backwards compatible).
+2. `pathPatches` — list of `{path, value}` pairs routed through `Reflector.TryModifyAt`; atomic per-path modification, multiple entries can target different depths.
+3. `jsonPatch` — a JSON Merge Patch (RFC 7396, extended with `[i]`/`[key]` notation) routed through `Reflector.TryPatch`; multiple fields at any depth in a single call.
+
+When more than one is supplied they run in this order: `jsonPatch` → `pathPatches` → `objectDiff`. At least one is required.
+
+## Path syntax
+
+`fieldName`, `nested/field`, `arrayField/[i]`, `dictField/[key]`. Leading `#/` is stripped.
+
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
-npx unity-mcp-cli run-tool object-modify --input '{
+unity-mcp-cli run-tool object-modify --input '{
   "objectRef": "string_value",
-  "objectDiff": "string_value"
+  "objectDiff": "string_value",
+  "pathPatches": "string_value",
+  "jsonPatch": "string_value"
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> unity-mcp-cli run-tool object-modify --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> unity-mcp-cli run-tool object-modify --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 | `objectRef` | `any` | Yes | Reference to UnityEngine.Object instance. It could be GameObject, Component, Asset, etc. Anything extended from UnityEngine.Object. |
-| `objectDiff` | `any` | Yes | The object data to apply. Should contain 'fields' and/or 'props' with the values to modify.
+| `objectDiff` | `any` | No | Optional. The full object data to apply (legacy path). Should contain 'fields' and/or 'props' with the values to modify.
 Only include the fields/properties you want to change.
 Any unknown or invalid fields and properties will be reported in the response. |
+| `pathPatches` | `any` | No | Optional. List of path-scoped patches routed through Reflector.TryModifyAt. |
+| `jsonPatch` | `string` | No | Optional. JSON Merge Patch (RFC 7396, extended with [i]/[key] keys) routed through Reflector.TryPatch. |
 
 ### Input JSON Schema
 
@@ -34,14 +68,20 @@ Any unknown or invalid fields and properties will be reported in the response. |
   "type": "object",
   "properties": {
     "objectRef": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ObjectRef"
+      "$ref": "#/$defs/AIGD.ObjectRef"
     },
     "objectDiff": {
       "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.SerializedMember"
+    },
+    "pathPatches": {
+      "$ref": "#/$defs/System.Collections.Generic.List%3CAIGD.PathPatch%3E"
+    },
+    "jsonPatch": {
+      "type": "string"
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ObjectRef": {
+    "AIGD.ObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -95,11 +135,29 @@ Any unknown or invalid fields and properties will be reported in the response. |
         "typeName"
       ],
       "additionalProperties": false
+    },
+    "AIGD.PathPatch": {
+      "type": "object",
+      "properties": {
+        "Path": {
+          "type": "string",
+          "description": "Slash-delimited path to the target field/element/entry. Plain segment navigates a field or property (e.g. 'admin' or 'admin/name'). Use '[i]' for array/list index (e.g. 'planets/[0]/orbitRadius'). Use '[key]' for dictionary entry (e.g. 'config/[timeout]'). A leading '#/' is stripped automatically. Required."
+        },
+        "Value": {
+          "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.SerializedMember",
+          "description": "The new value to write at the path. Use the standard SerializedMember envelope: 'typeName' + 'value' for primitives, or nested 'fields'/'props' for complex types. Required — omitting it overwrites the target with a default empty SerializedMember."
+        }
+      }
+    },
+    "System.Collections.Generic.List<AIGD.PathPatch>": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/AIGD.PathPatch"
+      }
     }
   },
   "required": [
-    "objectRef",
-    "objectDiff"
+    "objectRef"
   ]
 }
 ```
@@ -113,11 +171,11 @@ Any unknown or invalid fields and properties will be reported in the response. |
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Object+ModifyObjectResponse"
+      "$ref": "#/$defs/AIGD.ModifyObjectResponse"
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ObjectRef": {
+    "AIGD.ObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -178,7 +236,7 @@ Any unknown or invalid fields and properties will be reported in the response. |
         "type": "string"
       }
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Object+ModifyObjectResponse": {
+    "AIGD.ModifyObjectResponse": {
       "type": "object",
       "properties": {
         "Success": {
@@ -186,7 +244,7 @@ Any unknown or invalid fields and properties will be reported in the response. |
           "description": "Whether the modification was successful."
         },
         "Reference": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ObjectRef",
+          "$ref": "#/$defs/AIGD.ObjectRef",
           "description": "Reference to the modified object."
         },
         "Data": {
@@ -194,7 +252,7 @@ Any unknown or invalid fields and properties will be reported in the response. |
           "description": "Updated object data after modification."
         },
         "Logs": {
-          "$ref": "#/$defs/System.String[]",
+          "$ref": "#/$defs/System.String%5B%5D",
           "description": "Log of modifications made and any warnings/errors encountered."
         }
       },

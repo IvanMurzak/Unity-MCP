@@ -1,26 +1,60 @@
-﻿---
+---
 name: gameobject-find
-description: Finds specific GameObject by provided information in opened Prefab or in a Scene. First it looks for the opened Prefab, if any Prefab is opened it looks only there ignoring a scene. If no opened Prefab it looks into current active scene. Returns GameObject information and its children. Also, it returns Components preview just for the target GameObject.
+description: Find a specific GameObject in the opened Prefab (preferred when present) or the active Scene. Optionally include editable data, components preview, bounds, and limited hierarchy. Supports token-saving path-scoped reads via `paths` or `viewQuery`.
 ---
 
 # GameObject / Find
 
+Finds specific GameObject by provided information in opened Prefab or in a Scene. First it looks for the opened Prefab, if any Prefab is opened it looks only there ignoring a scene. If no opened Prefab it looks into current active scene. Returns GameObject information and its children. Also, it returns Components preview just for the target GameObject.
+
+## Toggles (all default `false` to keep responses small)
+
+- `includeData` — full editable GameObject data (tag, layer, etc.).
+- `includeComponents` — attached components references.
+- `includeBounds` — 3D bounds.
+- `includeHierarchy` — hierarchy metadata.
+- `hierarchyDepth` (default 0) — depth of the hierarchy to include. `0` = target only, `1` = one layer below, etc.
+
+## Path-scoped reads (token-saving)
+
+Supply `paths` (a list of paths) to read only the listed fields/elements via `Reflector.TryReadAt`, or `viewQuery` (a `ViewQuery`) to navigate to a subtree and/or filter by name regex / max depth / type via `Reflector.View`. When either is supplied, the result populates `Data` on the returned `GameObjectData` and overrides `includeData` (which would otherwise produce a full recursive serialization). These two parameters are mutually exclusive — supply at most one.
+
+## Path syntax
+
+`fieldName`, `nested/field`, `arrayField/[i]`, `dictField/[key]`. Leading `#/` is stripped.
+
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
-npx unity-mcp-cli run-tool gameobject-find --input '{
+unity-mcp-cli run-tool gameobject-find --input '{
   "gameObjectRef": "string_value",
   "includeData": false,
   "includeComponents": false,
   "includeBounds": false,
   "includeHierarchy": false,
-  "hierarchyDepth": 0
+  "hierarchyDepth": 0,
+  "paths": "string_value",
+  "viewQuery": "string_value"
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> unity-mcp-cli run-tool gameobject-find --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> unity-mcp-cli run-tool gameobject-find --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 
@@ -32,6 +66,8 @@ npx unity-mcp-cli run-tool gameobject-find --input '{
 | `includeBounds` | `boolean` | No | Include 3D bounds of the GameObject. |
 | `includeHierarchy` | `boolean` | No | Include hierarchy metadata. |
 | `hierarchyDepth` | `integer` | No | Determines the depth of the hierarchy to include. 0 - means only the target GameObject. 1 - means to include one layer below. |
+| `paths` | `any` | No | Optional. List of paths to read individually via Reflector.TryReadAt. When supplied, replaces 'includeData'-style full serialization with a path-scoped aggregate. Path syntax: 'fieldName', 'nested/field', 'arrayField/[i]', 'dictField/[key]'. Mutually exclusive with 'viewQuery'. |
+| `viewQuery` | `any` | No | Optional. View-query filter routed through Reflector.View. When supplied, replaces 'includeData'-style full serialization with the filtered subtree. Mutually exclusive with 'paths'. |
 
 ### Input JSON Schema
 
@@ -40,7 +76,7 @@ npx unity-mcp-cli run-tool gameobject-find --input '{
   "type": "object",
   "properties": {
     "gameObjectRef": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef"
+      "$ref": "#/$defs/AIGD.GameObjectRef"
     },
     "includeData": {
       "type": "boolean"
@@ -56,13 +92,19 @@ npx unity-mcp-cli run-tool gameobject-find --input '{
     },
     "hierarchyDepth": {
       "type": "integer"
+    },
+    "paths": {
+      "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E"
+    },
+    "viewQuery": {
+      "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.ViewQuery"
     }
   },
   "$defs": {
     "System.Type": {
       "type": "string"
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
+    "AIGD.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -94,6 +136,33 @@ npx unity-mcp-cli run-tool gameobject-find --input '{
         "instanceID"
       ],
       "description": "Find GameObject in opened Prefab or in the active Scene."
+    },
+    "System.Collections.Generic.List<System.String>": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "com.IvanMurzak.ReflectorNet.Model.ViewQuery": {
+      "type": "object",
+      "properties": {
+        "Path": {
+          "type": "string",
+          "description": "Navigate to this path first, then serialize only that subtree. Path segments are separated by '/'. Use '[i]' for array/list index (e.g. 'users/[2]/name') and '[key]' for dictionary entry (e.g. 'config/[timeout]'). A leading '#/' is stripped automatically. Examples: 'admin/name', 'users/[0]/email', 'config/[timeout]'. Leave null to start from the root object."
+        },
+        "NamePattern": {
+          "type": "string",
+          "description": "Case-insensitive .NET regex pattern matched against field and property names. Only branches containing at least one match are kept in the result tree. Examples: 'orbitRadius' (exact name), 'orbit.*' (prefix match), 'radius|speed' (either name). When nothing matches, the root envelope is returned with empty fields/props. Leave null to return all fields and properties without filtering."
+        },
+        "MaxDepth": {
+          "type": "integer",
+          "description": "Maximum nesting depth of the returned serialized tree. 0 = root type name and value only — no nested fields or properties. 1 = one level of fields/props visible, their children stripped. 2 = two levels visible, and so on. Leave null (default) for unlimited depth."
+        },
+        "TypeFilter": {
+          "$ref": "#/$defs/System.Type",
+          "description": "When set, prunes the result tree to members whose runtime type is assignable to this type. Non-matching branches are removed; the root envelope is always preserved. Examples: typeof(float) keeps only float fields, typeof(IEnumerable) keeps only collections. Leave null to include members of any type."
+        }
+      }
     }
   },
   "required": [
@@ -111,11 +180,11 @@ npx unity-mcp-cli run-tool gameobject-find --input '{
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectData"
+      "$ref": "#/$defs/AIGD.GameObjectData"
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
+    "AIGD.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -241,7 +310,7 @@ npx unity-mcp-cli run-tool gameobject-find --input '{
       ],
       "additionalProperties": false
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectMetadata": {
+    "AIGD.GameObjectMetadata": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -266,7 +335,7 @@ npx unity-mcp-cli run-tool gameobject-find --input '{
           "type": "boolean"
         },
         "children": {
-          "$ref": "#/$defs/System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectMetadata>"
+          "$ref": "#/$defs/System.Collections.Generic.List%3CAIGD.GameObjectMetadata%3E"
         }
       },
       "required": [
@@ -275,19 +344,19 @@ npx unity-mcp-cli run-tool gameobject-find --input '{
         "activeInHierarchy"
       ]
     },
-    "System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectMetadata>": {
+    "System.Collections.Generic.List<AIGD.GameObjectMetadata>": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectMetadata"
+        "$ref": "#/$defs/AIGD.GameObjectMetadata"
       }
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentDataShallow[]": {
+    "AIGD.ComponentDataShallow[]": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentDataShallow"
+        "$ref": "#/$defs/AIGD.ComponentDataShallow"
       }
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentDataShallow": {
+    "AIGD.ComponentDataShallow": {
       "type": "object",
       "properties": {
         "instanceID": {
@@ -310,11 +379,11 @@ npx unity-mcp-cli run-tool gameobject-find --input '{
         "isEnabled"
       ]
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectData": {
+    "AIGD.GameObjectData": {
       "type": "object",
       "properties": {
         "Reference": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef",
+          "$ref": "#/$defs/AIGD.GameObjectRef",
           "description": "Find GameObject in opened Prefab or in the active Scene."
         },
         "Data": {
@@ -326,11 +395,11 @@ npx unity-mcp-cli run-tool gameobject-find --input '{
           "description": "Bounds of the GameObject."
         },
         "Hierarchy": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectMetadata",
+          "$ref": "#/$defs/AIGD.GameObjectMetadata",
           "description": "Hierarchy metadata of the GameObject."
         },
         "Components": {
-          "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.ComponentDataShallow[]",
+          "$ref": "#/$defs/AIGD.ComponentDataShallow%5B%5D",
           "description": "Attached components shallow data of the GameObject (Read-only, use Component modification tool for modification)."
         }
       }

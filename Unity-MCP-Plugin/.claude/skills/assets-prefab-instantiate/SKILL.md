@@ -1,18 +1,23 @@
-﻿---
+---
 name: assets-prefab-instantiate
-description: Instantiates prefab in the current active scene. Use 'assets-find' tool to find prefab assets in the project.
+description: Instantiate a prefab into the currently active scene at an optional position/rotation/scale, parented under an optional scene GameObject path. Use 'assets-find' to locate the prefab asset first.
 ---
 
 # Assets / Prefab / Instantiate
 
+Instantiates prefab in the current active scene. Use 'assets-find' tool to find prefab assets in the project.
+
+## Inputs
+
+- `prefabAssetPath` — project asset path of the prefab to instantiate.
+- `gameObjectPath` — destination path in the scene; the last segment becomes the new GameObject's name, any prefix is looked up as the parent (must already exist).
+- `position` / `rotation` / `scale` — optional transform; default to zero / zero / one.
+- `isLocalSpace` — when `true`, applies the transform in local space relative to the parent.
+
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
-npx unity-mcp-cli run-tool assets-prefab-instantiate --input '{
+unity-mcp-cli run-tool assets-prefab-instantiate --input '{
   "prefabAssetPath": "string_value",
   "gameObjectPath": "string_value",
   "position": "string_value",
@@ -21,6 +26,24 @@ npx unity-mcp-cli run-tool assets-prefab-instantiate --input '{
   "isLocalSpace": false
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> unity-mcp-cli run-tool assets-prefab-instantiate --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> unity-mcp-cli run-tool assets-prefab-instantiate --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 
@@ -96,7 +119,7 @@ npx unity-mcp-cli run-tool assets-prefab-instantiate --input '{
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef",
+      "$ref": "#/$defs/AIGD.GameObjectRef",
       "description": "Find GameObject in opened Prefab or in the active Scene."
     }
   },
@@ -104,7 +127,7 @@ npx unity-mcp-cli run-tool assets-prefab-instantiate --input '{
     "System.Type": {
       "type": "string"
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
+    "AIGD.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {

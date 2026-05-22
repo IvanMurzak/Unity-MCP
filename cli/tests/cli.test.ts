@@ -263,10 +263,12 @@ describe('CLI integration', () => {
       expect(stdout).toContain('--start-server');
     });
 
-    it('requires a project path', () => {
+    it('falls back to cwd and fails when cwd is not a Unity project', () => {
+      // With no arguments the CLI defaults to process.cwd(); when the cwd
+      // is not a Unity project it should exit 1 with a helpful message.
       const { exitCode, stdout } = runCli(['open']);
       expect(exitCode).toBe(1);
-      expect(stdout).toContain('Path is required');
+      expect(stdout).toContain('Current directory is not a Unity project');
     });
   });
 

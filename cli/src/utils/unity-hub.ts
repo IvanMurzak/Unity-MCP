@@ -25,6 +25,7 @@ const UNITY_HUB_DOWNLOAD_URLS: Record<string, string> = {
  * Returns the path if found, or null.
  */
 export function findUnityHub(): string | null {
+  const startedAt = Date.now();
   const plat = platform();
   const candidates: string[] = [];
 
@@ -48,14 +49,16 @@ export function findUnityHub(): string | null {
   }
 
   for (const candidate of candidates) {
+    const candidateStartedAt = Date.now();
     verbose(`Checking Unity Hub candidate: ${candidate}`);
     if (candidate && fs.existsSync(candidate)) {
-      verbose(`Found Unity Hub at: ${candidate}`);
+      verbose(`Found Unity Hub at: ${candidate} (${Date.now() - candidateStartedAt}ms for candidate, ${Date.now() - startedAt}ms total)`);
       return candidate;
     }
+    verbose(`Unity Hub candidate missing: ${candidate} (${Date.now() - candidateStartedAt}ms)`);
   }
 
-  verbose('Unity Hub not found in any candidate location');
+  verbose(`Unity Hub not found in any candidate location (${Date.now() - startedAt}ms total)`);
   return null;
 }
 
@@ -177,16 +180,35 @@ export async function installUnityHub(): Promise<string> {
  * Find Unity Hub, or install it automatically if not found.
  */
 export async function ensureUnityHub(): Promise<string> {
+  const startedAt = Date.now();
   const hubPath = findUnityHub();
-  if (hubPath) return hubPath;
+  if (hubPath) {
+    verbose(`ensureUnityHub reused existing installation in ${Date.now() - startedAt}ms`);
+    return hubPath;
+  }
 
   ui.warn('Unity Hub not found. Installing automatically...');
-  return installUnityHub();
+  const installedHubPath = await installUnityHub();
+  verbose(`ensureUnityHub installed Unity Hub in ${Date.now() - startedAt}ms`);
+  return installedHubPath;
 }
 
 export interface InstalledEditor {
   version: string;
   path: string;
+}
+
+/**
+ * Pull the `stderr` capture off an `execFileSync` error and merge it
+ * into the error message. Returns the bare `err.message` when no
+ * stderr was captured (e.g. spawn failures before the child ran).
+ */
+function formatExecError(err: unknown): string {
+  const message = (err as Error).message;
+  const stderr = (err as { stderr?: Buffer | string }).stderr;
+  if (!stderr) return message;
+  const text = (Buffer.isBuffer(stderr) ? stderr.toString('utf-8') : stderr).trim();
+  return text ? `${message}\n${text}` : message;
 }
 
 /**
@@ -213,12 +235,22 @@ export function parseInstalledEditorsLine(line: string): InstalledEditor | null 
 
 export function listInstalledEditors(hubPath: string): InstalledEditor[] {
   const spinner = ui.startSpinner('Listing installed editors...');
+  const startedAt = Date.now();
   try {
+    verbose(`listInstalledEditors invoking Unity Hub CLI: ${hubPath} -- --headless editors --installed`);
+    const execStartedAt = Date.now();
+    // stdio: pipe stderr instead of inheriting it — Unity Hub is an
+    // Electron app and Chromium routinely logs benign quota_database
+    // errors to stderr that would otherwise pollute the CLI output.
+    // The catch block re-surfaces captured stderr on real failures.
     const output = execFileSync(hubPath, ['--', '--headless', 'editors', '--installed'], {
       encoding: 'utf-8',
       timeout: 120000,
+      stdio: ['ignore', 'pipe', 'pipe'],
     });
+    verbose(`listInstalledEditors Unity Hub CLI returned in ${Date.now() - execStartedAt}ms`);
 
+    const parseStartedAt = Date.now();
     const editors: InstalledEditor[] = [];
     for (const line of output.split('\n')) {
       const editor = parseInstalledEditorsLine(line);
@@ -226,11 +258,14 @@ export function listInstalledEditors(hubPath: string): InstalledEditor[] {
         editors.push(editor);
       }
     }
+    verbose(`listInstalledEditors parsed ${editors.length} editor(s) in ${Date.now() - parseStartedAt}ms`);
 
     spinner.success(`Found ${editors.length} installed editor${editors.length !== 1 ? 's' : ''}`);
+    verbose(`listInstalledEditors completed in ${Date.now() - startedAt}ms`);
     return editors;
   } catch (err) {
-    spinner.error(`Failed to list installed editors: ${(err as Error).message}`);
+    spinner.error(`Failed to list installed editors: ${formatExecError(err)}`);
+    verbose(`listInstalledEditors failed after ${Date.now() - startedAt}ms`);
     return [];
   }
 }
@@ -278,9 +313,11 @@ export function findHighestEditor(editors: InstalledEditor[]): InstalledEditor {
 export function listAvailableReleases(hubPath: string): AvailableRelease[] {
   const spinner = ui.startSpinner('Fetching available releases...');
   try {
+    // Same stderr suppression rationale as listInstalledEditors above.
     const output = execFileSync(hubPath, ['--', '--headless', 'editors', '--releases'], {
       encoding: 'utf-8',
       timeout: 120000,
+      stdio: ['ignore', 'pipe', 'pipe'],
     });
 
     const releases: AvailableRelease[] = [];
@@ -300,7 +337,7 @@ export function listAvailableReleases(hubPath: string): AvailableRelease[] {
     spinner.success(`Found ${releases.length} available release${releases.length !== 1 ? 's' : ''}`);
     return releases;
   } catch (err) {
-    spinner.error(`Failed to fetch available releases: ${(err as Error).message}`);
+    spinner.error(`Failed to fetch available releases: ${formatExecError(err)}`);
     return [];
   }
 }

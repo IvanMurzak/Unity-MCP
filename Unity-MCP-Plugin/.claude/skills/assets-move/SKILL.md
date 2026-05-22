@@ -1,22 +1,47 @@
-﻿---
+---
 name: assets-move
-description: Move the assets at paths in the project. Should be used for asset rename. Does AssetDatabase.Refresh() at the end. Use 'assets-find' tool to find assets before moving.
+description: Move or rename assets at the given project paths. Refreshes the AssetDatabase at the end. Use 'assets-find' to locate the assets first.
 ---
 
 # Assets / Move
 
+Move the assets at paths in the project. Should be used for asset rename. Does AssetDatabase.Refresh() at the end. Use 'assets-find' tool to find assets before moving.
+
+## Inputs
+
+- `sourcePaths` — paths of the assets to move.
+- `destinationPaths` — target paths (must match `sourcePaths` length).
+
+## Behavior
+
+Each pair is moved independently via `AssetDatabase.MoveAsset`. Per-pair failures (Unity's `MoveAsset` returns a non-empty error string) are surfaced in `response.Errors`; successful moves accumulate into `response.MovedPaths`.
+
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
-npx unity-mcp-cli run-tool assets-move --input '{
+unity-mcp-cli run-tool assets-move --input '{
   "sourcePaths": "string_value",
   "destinationPaths": "string_value"
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> unity-mcp-cli run-tool assets-move --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> unity-mcp-cli run-tool assets-move --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 
@@ -32,10 +57,10 @@ npx unity-mcp-cli run-tool assets-move --input '{
   "type": "object",
   "properties": {
     "sourcePaths": {
-      "$ref": "#/$defs/System.String[]"
+      "$ref": "#/$defs/System.String%5B%5D"
     },
     "destinationPaths": {
-      "$ref": "#/$defs/System.String[]"
+      "$ref": "#/$defs/System.String%5B%5D"
     }
   },
   "$defs": {
@@ -62,7 +87,7 @@ npx unity-mcp-cli run-tool assets-move --input '{
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets+MoveAssetsResponse"
+      "$ref": "#/$defs/AIGD.MoveAssetsResponse"
     }
   },
   "$defs": {
@@ -72,15 +97,15 @@ npx unity-mcp-cli run-tool assets-move --input '{
         "type": "string"
       }
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Assets+MoveAssetsResponse": {
+    "AIGD.MoveAssetsResponse": {
       "type": "object",
       "properties": {
         "MovedPaths": {
-          "$ref": "#/$defs/System.Collections.Generic.List<System.String>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E",
           "description": "List of destination paths of successfully moved assets."
         },
         "Errors": {
-          "$ref": "#/$defs/System.Collections.Generic.List<System.String>",
+          "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E",
           "description": "List of errors encountered during move operations."
         }
       }

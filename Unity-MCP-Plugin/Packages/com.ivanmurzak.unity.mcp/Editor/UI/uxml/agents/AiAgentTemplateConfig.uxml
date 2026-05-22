@@ -1,0 +1,32 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../../../../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement class="frame-group" style="flex-grow: 1;">
+        <!-- Agent Header -->
+        <ui:VisualElement style="flex-direction: row; align-items: center;">
+            <ui:VisualElement name="agentIcon" class="agent-icon" />
+            <ui:VisualElement style="flex-grow: 1;">
+                <ui:Label name="agentName" text="Claude Code" class="section-title" />
+                <ui:VisualElement name="linksContainer" style="flex-direction: row; align-items: center;">
+                    <ui:Label name="downloadLink" text="Download" class="section-desc link-label" />
+                    <ui:Label name="tutorialSeparator" text="•" class="section-desc link-separator" />
+                    <ui:Label name="tutorialLink" text="YouTube Tutorial" class="section-desc link-label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+
+        <!-- Under header container -->
+        <ui:VisualElement name="containerUnderHeader" />
+
+        <!-- Alert container - shown when setup is incomplete -->
+        <ui:VisualElement name="containerAlert" style="display: none;" />
+
+        <!-- Skills container -->
+        <ui:VisualElement name="containerSkills" />
+
+        <!-- Transport mode container: HTTP -->
+        <ui:VisualElement name="containerHttp" style="margin-top: 4px;" />
+
+        <!-- Transport mode container: STDIO -->
+        <ui:VisualElement name="containerStdio" style="margin-top: 4px;" />
+
+    </ui:VisualElement>
+</ui:UXML>

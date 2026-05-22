@@ -1,33 +1,64 @@
-﻿---
+---
 name: script-execute
-description: Compiles and executes C# code dynamically using Roslyn. The provided code must define a class with a static method to execute.
+description: Compiles and executes C# code dynamically using Roslyn. Supports a full-code mode (default) and a body-only mode — see the skill body for the difference and for how to pass Unity object references as parameters.
 ---
 
 # Script / Execute
 
+## Modes
+
+- **Full code mode** (default, `isMethodBody=false`): the `csharpCode` argument must define a complete class with a static method (no top-level statements).
+- **Body-only mode** (`isMethodBody=true`): provide only the method body statements. The tool auto-generates the usings, class, and method header.
+
+## Passing Unity objects as parameters
+
+Unity objects (`GameObject`, `Component`, etc.) can be passed as parameters using their `Ref` types (`GameObjectRef`, `ComponentRef`, etc.) or directly by type:
+
+- `UnityEngine.GameObject` — resolves an actual GameObject from value `{"instanceID": N}`, `{"name": "..."}`, or `{"path": "..."}`.
+- `UnityEngine.Component` (or any component subtype) — resolves from `{"instanceID": N}`.
+- `AIGD.GameObjectRef` — passes a `GameObjectRef` POCO directly; the method body calls `goRef.FindGameObject()` to resolve it.
+- `AIGD.ComponentRef` — passes a `ComponentRef` POCO.
+- `AIGD.ObjectRef` — passes a base `ObjectRef` POCO.
+
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
-npx unity-mcp-cli run-tool script-execute --input '{
+unity-mcp-cli run-tool script-execute --input '{
   "csharpCode": "string_value",
   "className": "string_value",
   "methodName": "string_value",
-  "parameters": "string_value"
+  "parameters": "string_value",
+  "isMethodBody": false
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> unity-mcp-cli run-tool script-execute --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> unity-mcp-cli run-tool script-execute --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| `csharpCode` | `string` | Yes | C# code that compiles and executes immediately. It won't be stored as a script in the project. It is temporary one shot C# code execution using Roslyn. IMPORTANT: The code must define a class (e.g., 'public class Script') with a static method (e.g., 'public static object Main()'). Do NOT use top-level statements or code outside a class. Top-level statements are not supported and will cause compilation errors. |
-| `className` | `string` | No | The name of the class containing the method to execute. |
-| `methodName` | `string` | No | The name of the method to execute. It must be a static method in the class provided above. |
-| `parameters` | `any` | No | Serialized parameters to pass to the method. If the method does not require parameters, leave this empty. |
+| `csharpCode` | `string` | Yes | C# code to compile and execute. In full code mode (default, isMethodBody=false): must define a complete class with a static method. Example: 'using UnityEngine; public class Script { public static void Main() { Debug.Log("Hello"); } }'. Do NOT use top-level statements. In body-only mode (isMethodBody=true): provide only the method body statements. The tool auto-generates usings, class, and method header. Example body: 'go.SetActive(false);'. Custom helper classes can still be defined inline in the body-only string after the main logic, but for complex additional class definitions use full code mode instead. |
+| `className` | `string` | No | The name of the class containing the method to execute. In body-only mode this becomes the generated class name. |
+| `methodName` | `string` | No | The name of the method to execute. Must be a static method. In body-only mode this becomes the generated method name. |
+| `parameters` | `any` | No | Serialized parameters to pass to the method. Each entry must specify 'name' and 'typeName'. Supported parameter types include primitives, strings, and Unity object references: - 'UnityEngine.GameObject': resolves an actual GameObject from value '{"instanceID": N}', '{"name": "..."}', or '{"path": "..."}'. - 'UnityEngine.Component' (or any component subtype): resolves from '{"instanceID": N}'. - 'AIGD.GameObjectRef': passes a GameObjectRef POCO directly;   the method body calls goRef.FindGameObject() to resolve it. - 'AIGD.ComponentRef': passes a ComponentRef POCO. - 'AIGD.ObjectRef': passes a base ObjectRef POCO. If the method does not require parameters, leave this empty. |
+| `isMethodBody` | `boolean` | No | When true, 'csharpCode' is treated as just the method body. The tool auto-generates standard using directives (System, UnityEngine, AIGD, com.IvanMurzak.Unity.MCP.Runtime.Extensions, UnityEditor), the class definition, and the method signature (void return type). Parameters from the 'parameters' list are automatically added to the method signature using their typeName and name. When false (default), 'csharpCode' must be a complete C# compilation unit with class and method definitions. |
 
 ### Input JSON Schema
 
@@ -46,6 +77,9 @@ npx unity-mcp-cli run-tool script-execute --input '{
     },
     "parameters": {
       "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.SerializedMemberList"
+    },
+    "isMethodBody": {
+      "type": "boolean"
     }
   },
   "$defs": {

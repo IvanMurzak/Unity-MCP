@@ -1,0 +1,69 @@
+/*
+┌──────────────────────────────────────────────────────────────────┐
+│  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
+│  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
+│  Copyright (c) 2025 Ivan Murzak                                  │
+│  Licensed under the Apache License, Version 2.0.                 │
+│  See the LICENSE file in the project root for more information.  │
+└──────────────────────────────────────────────────────────────────┘
+*/
+
+#nullable enable
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
+
+namespace com.IvanMurzak.Unity.MCP
+{
+    /// <summary>
+    /// Editor-only singleton that owns the persistent MCP connection used
+    /// by Unity Editor tooling (AI Game Developer window, configurators, etc.).
+    /// Lives in the Editor assembly — not accessible from Runtime code.
+    /// </summary>
+    public partial class UnityMcpPluginEditor : UnityMcpPlugin
+    {
+        /// <summary>
+        /// Captures runtime overrides (env vars / CLI flags) that were layered on top of the
+        /// on-disk config during construction. Used by <see cref="Save"/> to round-trip the
+        /// disk-baseline values to disk while keeping the runtime overrides on the in-memory
+        /// config — runtime-only overrides MUST NOT leak into the persisted JSON.
+        /// </summary>
+        internal EnvironmentUtils.OverrideRecord RuntimeOverrides { get; private set; }
+            = new EnvironmentUtils.OverrideRecord();
+
+        protected UnityMcpPluginEditor() : base()
+        {
+            var config = GetOrCreateConfig(out var wasCreated);
+            unityConnectionConfig = config;
+            ApplyLogLevel(unityConnectionConfig.LogLevel);
+            // Layered loader: disk values are already on `config`; env vars and CLI flags
+            // are applied here as runtime overrides. The OverrideRecord captures the
+            // disk-baseline values so Save() can persist them without leaking the overrides.
+            RuntimeOverrides = EnvironmentUtils.ApplyEnvironmentOverrides(unityConnectionConfig);
+            if (wasCreated)
+                Save();
+            IncrementSingletonCount();
+        }
+
+        public void Validate()
+        {
+            var changed = false;
+            var data = unityConnectionConfig ??= new UnityConnectionConfig();
+
+            if (string.IsNullOrEmpty(data.LocalHost))
+            {
+                data.LocalHost = UnityConnectionConfig.DefaultHost;
+                changed = true;
+            }
+
+            // Data was changed during validation, need to notify subscribers
+            if (changed)
+                NotifyChanged(data);
+        }
+
+        public override void Dispose()
+        {
+            DecrementSingletonCount();
+            base.Dispose();
+            DisposeMcpPluginInstance();
+        }
+    }
+}

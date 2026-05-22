@@ -1,0 +1,252 @@
+﻿/*
+┌──────────────────────────────────────────────────────────────────┐
+│  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
+│  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
+│  Copyright (c) 2025 Ivan Murzak                                  │
+│  Licensed under the Apache License, Version 2.0.                 │
+│  See the LICENSE file in the project root for more information.  │
+└──────────────────────────────────────────────────────────────────┘
+*/
+
+#nullable enable
+
+using System;
+using com.IvanMurzak.Unity.MCP.Editor.DependencyResolver;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
+using R3;
+using UnityEditor;
+using UnityEditor.PackageManager;
+using UnityEditor.PackageManager.Requests;
+using UnityEngine;
+using UnityEngine.UIElements;
+
+namespace com.IvanMurzak.Unity.MCP.Editor.UI
+{
+    /// <summary>
+    /// A popup window that notifies the user when a new version of AI Game Developer is available.
+    /// </summary>
+    public class UpdatePopupWindow : NotificationPopupWindow
+    {
+        private static readonly string[] _windowUxmlPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uxml/UpdatePopupWindow.uxml");
+        private static readonly string[] _windowUssPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/UI/uss/UpdatePopupWindow.uss");
+        private static readonly string[] LogoIconPaths = EditorAssetLoader.GetEditorAssetPaths("Editor/Gizmos/logo_512.png");
+
+        private const string PackageId = "com.ivanmurzak.unity.mcp";
+
+        protected override string[] WindowUxmlPaths => _windowUxmlPaths;
+        protected override string[] WindowUssPaths => _windowUssPaths;
+        protected override string WindowTitle => "Update Available";
+
+        // [SerializeField] so the version strings survive Unity's domain reload (script
+        // recompile). Without this, after a recompile the EditorWindow instance is recreated,
+        // CreateGUI() is invoked again, and BindUI() re-binds button click handlers — but
+        // these private fields revert to empty, so the labels render empty and "Install
+        // Update" attempts to install "{PackageId}@" (empty version), which silently fails.
+        // See https://github.com/IvanMurzak/Unity-MCP/issues/702.
+        [SerializeField] private string currentVersion = string.Empty;
+        [SerializeField] private string latestVersion = string.Empty;
+
+        // The AddRequest holds a native Package Manager handle and the R3 subscription holds
+        // a reactive pipeline; neither survives a domain reload. Unity does, however, carry
+        // these private references over the reload boundary even without [SerializeField], so
+        // OnInstallUpdateClicked's "already in progress" guard would permanently lock the
+        // button. ResetInstallState() (called from OnEnable + OnDestroy) keeps the contract.
+        private AddRequest? addRequest;
+        private IDisposable? _stopSubscription;
+
+        /// <summary>
+        /// Shows the update popup window with version information.
+        /// </summary>
+        public static UpdatePopupWindow ShowWindow(string currentVersion, string latestVersion)
+        {
+            var window = GetWindow<UpdatePopupWindow>(utility: false, "Update Available", focus: true);
+            window.currentVersion = currentVersion ?? "Unknown";
+            window.latestVersion = latestVersion ?? "Unknown";
+
+            CenterAndSizeWindow(
+                window: window,
+                width: 350f,
+                height: 450f,
+                minWidth: 350f,
+                minHeight: 450f,
+                maxWidth: 350f,
+                maxHeight: 450f);
+
+            window.CreateGUI();
+            window.Show();
+            window.Focus();
+
+            return window;
+        }
+
+        protected override void OnEnable()
+        {
+            base.OnEnable();
+            ResetInstallState();
+        }
+
+        protected override void BindUI(VisualElement root)
+        {
+            // Set icon
+            var iconContainer = root.Q<VisualElement>("icon-container");
+            if (iconContainer == null)
+                throw new InvalidOperationException("icon-container VisualElement not found in UXML");
+
+            var icon = EditorAssetLoader.LoadAssetAtPath<Texture2D>(LogoIconPaths);
+            if (icon == null)
+                throw new InvalidOperationException("Logo icon not found in specified paths");
+
+            iconContainer.style.backgroundImage = new StyleBackground(icon);
+
+            // Set version labels
+            var currentVersionLabel = root.Q<Label>("current-version-value");
+            if (currentVersionLabel == null)
+                throw new InvalidOperationException("current-version-value Label not found in UXML");
+            currentVersionLabel.text = currentVersion;
+
+            var latestVersionLabel = root.Q<Label>("latest-version-value");
+            if (latestVersionLabel == null)
+                throw new InvalidOperationException("latest-version-value Label not found in UXML");
+            latestVersionLabel.text = latestVersion;
+
+            // Bind buttons
+            var installUpdateButton = root.Q<Button>("btn-install-update");
+            if (installUpdateButton == null)
+                throw new InvalidOperationException("btn-install-update Button not found in UXML");
+            installUpdateButton.clicked += OnInstallUpdateClicked;
+
+            var viewReleasesButton = root.Q<Button>("btn-view-releases");
+            if (viewReleasesButton == null)
+                throw new InvalidOperationException("btn-view-releases Button not found in UXML");
+            viewReleasesButton.clicked += OnViewReleasesClicked;
+
+            var skipVersionButton = root.Q<Button>("btn-skip-version");
+            if (skipVersionButton == null)
+                throw new InvalidOperationException("btn-skip-version Button not found in UXML");
+            skipVersionButton.clicked += OnSkipVersionClicked;
+
+            var doNotShowAgainButton = root.Q<Button>("btn-do-not-show-again");
+            if (doNotShowAgainButton == null)
+                throw new InvalidOperationException("btn-do-not-show-again Button not found in UXML");
+            doNotShowAgainButton.clicked += OnDoNotShowAgainClicked;
+        }
+
+        private void OnInstallUpdateClicked()
+        {
+            if (addRequest != null || _stopSubscription != null)
+                return; // Already in progress
+
+            var installButton = rootVisualElement.Q<Button>("btn-install-update");
+            if (installButton == null)
+                throw new InvalidOperationException("btn-install-update Button not found in UXML");
+
+            installButton.SetEnabled(false);
+
+            var currentStatus = McpServerManager.ServerStatus.CurrentValue;
+            if (currentStatus == McpServerStatus.Running || currentStatus == McpServerStatus.Starting ||
+                currentStatus == McpServerStatus.Stopping)
+            {
+                installButton.text = "Stopping server...";
+                if (currentStatus != McpServerStatus.Stopping)
+                    McpServerManager.StopServer();
+                _stopSubscription = McpServerManager.ServerStatus
+                    .Where(status => status == McpServerStatus.Stopped)
+                    .Take(1)
+                    .ObserveOnCurrentSynchronizationContext()
+                    .Subscribe(_ => StartPackageInstall());
+            }
+            else
+            {
+                StartPackageInstall();
+            }
+        }
+
+        private void StartPackageInstall()
+        {
+            _stopSubscription?.Dispose();
+            _stopSubscription = null;
+
+            var installButton = rootVisualElement.Q<Button>("btn-install-update");
+            if (installButton != null)
+                installButton.text = "Installing...";
+
+            // Force a clean post-install recompile so an unrelated user-asmdef
+            // error can't leave the OLD plugin AppDomain loaded with the new
+            // package files on disk.
+            RecompileGate.Reset();
+
+            addRequest = Client.Add($"{PackageId}@{latestVersion}");
+            EditorApplication.update += OnPackageInstallProgress;
+        }
+
+        private void OnPackageInstallProgress()
+        {
+            if (addRequest == null)
+            {
+                EditorApplication.update -= OnPackageInstallProgress;
+                return;
+            }
+
+            if (!addRequest.IsCompleted)
+                return; // wait until completed
+
+            EditorApplication.update -= OnPackageInstallProgress;
+
+            if (addRequest.Status == StatusCode.Success)
+            {
+                UnityMcpPluginEditor.Instance.LogInfo("Package updated to version {version}", typeof(UpdatePopupWindow), latestVersion);
+                EditorUtility.DisplayDialog(
+                    "Update Complete",
+                    $"AI Game Developer has been updated to version {latestVersion}.\n\nUnity will recompile scripts automatically.",
+                    "OK");
+            }
+            else if (addRequest.Status >= StatusCode.Failure)
+            {
+                var errorMessage = addRequest.Error?.message ?? "Unknown error";
+                UnityMcpPluginEditor.Instance.LogError("Failed to update package: {error}", typeof(UpdatePopupWindow), errorMessage);
+                EditorUtility.DisplayDialog(
+                    "Update Failed",
+                    $"Failed to update the package:\n{errorMessage}",
+                    "OK");
+
+                // Re-enable the button on failure
+                var installButton = rootVisualElement.Q<Button>("btn-install-update");
+                if (installButton != null)
+                {
+                    installButton.SetEnabled(true);
+                    installButton.text = "Install Update";
+                }
+            }
+
+            addRequest = null;
+            Close();
+        }
+
+        private void OnViewReleasesClicked()
+        {
+            Application.OpenURL(UpdateChecker.ReleasesUrl);
+        }
+
+        private void OnSkipVersionClicked()
+        {
+            UpdateChecker.SkipVersion(latestVersion);
+            Close();
+        }
+
+        private void OnDoNotShowAgainClicked()
+        {
+            UpdateChecker.IsDoNotShowAgain = true;
+            Close();
+        }
+
+        void OnDestroy() => ResetInstallState();
+
+        private void ResetInstallState()
+        {
+            EditorApplication.update -= OnPackageInstallProgress;
+            _stopSubscription?.Dispose();
+            _stopSubscription = null;
+            addRequest = null;
+        }
+    }
+}

@@ -1,0 +1,6 @@
+# Code owners for Unity-MCP.
+# See https://docs.github.com/en/repositories/managing-your-repositories-settings-and-features/customizing-your-repository/about-code-owners
+#
+# `* @IvanMurzak` makes Ivan the default owner of every path in the repo,
+# satisfying the `require_code_owner_reviews` branch protection on `main`.
+* @IvanMurzak

@@ -1,21 +1,45 @@
-﻿---
+---
 name: assets-prefab-open
-description: "Open prefab edit mode for a specific GameObject. In the Edit mode you can modify the prefab. The modification will be applied to all instances of the prefab across the project. Note: Please use 'assets-prefab-close' tool later to exit prefab editing mode."
+description: Open the prefab edit stage for a prefab instance or prefab asset GameObject. Modifications inside the edit stage propagate to all instances. Pair with 'assets-prefab-close' to exit the stage when done.
 ---
 
 # Assets / Prefab / Open
 
+Open prefab edit mode for a specific GameObject. In the Edit mode you can modify the prefab. The modification will be applied to all instances of the prefab across the project. Note: Please use 'assets-prefab-close' tool later to exit prefab editing mode.
+
+## Inputs
+
+- `gameObjectRef` — reference to a scene prefab instance OR a prefab asset GameObject. The tool resolves the prefab asset path via `PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot` and opens the appropriate prefab stage.
+
+## Behavior
+
+Asset-side GameObjects open via the simple `OpenPrefab(path)` overload. Scene-instance GameObjects open via `OpenPrefab(path, gameObject)` so the editor remembers which instance prompted the edit. Editor windows are repainted before returning. Throws when the GameObject cannot be resolved or the stage fails to open.
+
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
-npx unity-mcp-cli run-tool assets-prefab-open --input '{
+unity-mcp-cli run-tool assets-prefab-open --input '{
   "gameObjectRef": "string_value"
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> unity-mcp-cli run-tool assets-prefab-open --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> unity-mcp-cli run-tool assets-prefab-open --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 
@@ -30,14 +54,14 @@ npx unity-mcp-cli run-tool assets-prefab-open --input '{
   "type": "object",
   "properties": {
     "gameObjectRef": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef"
+      "$ref": "#/$defs/AIGD.GameObjectRef"
     }
   },
   "$defs": {
     "System.Type": {
       "type": "string"
     },
-    "com.IvanMurzak.Unity.MCP.Runtime.Data.GameObjectRef": {
+    "AIGD.GameObjectRef": {
       "type": "object",
       "properties": {
         "instanceID": {

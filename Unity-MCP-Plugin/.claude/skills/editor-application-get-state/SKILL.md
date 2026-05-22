@@ -1,21 +1,41 @@
-﻿---
+---
 name: editor-application-get-state
-description: "Returns available information about 'UnityEditor.EditorApplication'. Use it to get information about the current state of the Unity Editor application. Such as: playmode, paused state, compilation state, etc."
+description: Return the current state of `UnityEditor.EditorApplication` — playmode, paused state, compilation state, and related flags.
 ---
 
 # Editor / Application / Get State
 
+Returns available information about 'UnityEditor.EditorApplication'. Use it to get information about the current state of the Unity Editor application. Such as: playmode, paused state, compilation state, etc.
+
+## Behavior
+
+Snapshots Editor state via `EditorStatsData.FromEditor()` on the main thread and returns the result.
+
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
-npx unity-mcp-cli run-tool editor-application-get-state --input '{
+unity-mcp-cli run-tool editor-application-get-state --input '{
   "nothing": "string_value"
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> unity-mcp-cli run-tool editor-application-get-state --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> unity-mcp-cli run-tool editor-application-get-state --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 
@@ -45,12 +65,12 @@ npx unity-mcp-cli run-tool editor-application-get-state --input '{
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Editor+EditorStatsData",
+      "$ref": "#/$defs/AIGD.EditorStatsData",
       "description": "Available information about 'UnityEditor.EditorApplication'."
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Editor+EditorStatsData": {
+    "AIGD.EditorStatsData": {
       "type": "object",
       "properties": {
         "IsPlaying": {

@@ -1,0 +1,9 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" editor-extension-mode="False">
+    <ui:VisualElement name="extension-item" style="margin-top: 2px; margin-bottom: 2px;">
+        <ui:VisualElement class="row" style="align-items: center;">
+            <ui:Label name="extension-name" text="Extension Name" class="section-title" style="flex-grow: 1; flex-shrink: 1; margin-bottom: 0;" />
+            <ui:Button name="extension-install-btn" text="Install" class="btn-compact btn-secondary" />
+        </ui:VisualElement>
+        <ui:Label name="extension-desc" text="Extension description." class="section-desc" style="white-space: normal; margin-bottom: 0; margin-top: 2px;" />
+    </ui:VisualElement>
+</ui:UXML>

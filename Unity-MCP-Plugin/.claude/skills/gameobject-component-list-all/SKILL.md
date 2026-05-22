@@ -1,23 +1,49 @@
-﻿---
+---
 name: gameobject-component-list-all
-description: List C# class names extended from UnityEngine.Component. Use this to find component type names for 'gameobject-component-add' tool. Results are paginated to avoid overwhelming responses.
+description: List the fully-qualified C# type names of every concrete `UnityEngine.Component` subclass available in the project. Paginated (default 5/page, max 500). Use this to find a valid `componentName` for 'gameobject-component-add'.
 ---
 
 # GameObject / Component / List All
 
+List C# class names extended from UnityEngine.Component. Use this to find component type names for 'gameobject-component-add' tool. Results are paginated to avoid overwhelming responses.
+
+## Inputs
+
+- `search` (optional) — case-insensitive substring filter on type names.
+- `page` (default 0, 0-based) — page index.
+- `pageSize` (default 5, range 1..500) — items per page.
+
+## Behavior
+
+Enumerates `AllComponentTypes` (every non-abstract subclass of `UnityEngine.Component`), filters by `search` if supplied, then returns a `ComponentListResult` containing the requested page plus `TotalCount` / `TotalPages` so the caller can iterate.
+
 ## How to Call
 
-### CLI (Direct Tool Execution)
-
-Execute this tool directly via command line:
-
 ```bash
-npx unity-mcp-cli run-tool gameobject-component-list-all --input '{
+unity-mcp-cli run-tool gameobject-component-list-all --input '{
   "search": "string_value",
   "page": 0,
   "pageSize": 0
 }'
 ```
+
+> For complex input (multi-line strings, code), save the JSON to a file and use:
+> ```bash
+> unity-mcp-cli run-tool gameobject-component-list-all --input-file args.json
+> ```
+>
+> Or pipe via stdin (recommended):
+> ```bash
+> unity-mcp-cli run-tool gameobject-component-list-all --input-file - <<'EOF'
+> {"param": "value"}
+> EOF
+> ```
+
+
+### Troubleshooting
+
+If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.
+Read the /unity-initial-setup skill for detailed installation instructions.
 
 ## Input
 
@@ -55,7 +81,7 @@ npx unity-mcp-cli run-tool gameobject-component-list-all --input '{
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_GameObject+ComponentListResult"
+      "$ref": "#/$defs/AIGD.ComponentListResult"
     }
   },
   "$defs": {
@@ -65,11 +91,11 @@ npx unity-mcp-cli run-tool gameobject-component-list-all --input '{
         "type": "string"
       }
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_GameObject+ComponentListResult": {
+    "AIGD.ComponentListResult": {
       "type": "object",
       "properties": {
         "Items": {
-          "$ref": "#/$defs/System.String[]",
+          "$ref": "#/$defs/System.String%5B%5D",
           "description": "Array of component type names for the current page."
         },
         "Page": {
