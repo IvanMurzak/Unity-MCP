@@ -331,6 +331,128 @@ describe('openProject — editor-version detection (mocked)', () => {
   });
 });
 
+describe('openProject — explicit editor path override (mocked)', () => {
+  let tmpDir: string;
+  let editorDir: string;
+  let editorPath: string;
+  let launchEditorMock: ReturnType<typeof vi.fn>;
+  let findEditorPathMock: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity mcp project with spaces-'));
+    editorDir = fs.mkdtempSync(path.join(os.tmpdir(), 'Unity Hub Editors With Spaces-'));
+    editorPath = path.join(editorDir, 'Editor', process.platform === 'win32' ? 'Unity.exe' : 'Unity');
+    fs.mkdirSync(path.dirname(editorPath), { recursive: true });
+    fs.writeFileSync(editorPath, '');
+    makeFakeUnityProject(tmpDir, '6000.5.0b8');
+
+    launchEditorMock = vi.fn(() => ({
+      pid: 12345,
+      on: () => {},
+      once: () => {},
+      unref: () => {},
+    }));
+    findEditorPathMock = vi.fn(async () => {
+      throw new Error('findEditorPath should not be called when editorPath is explicit');
+    });
+
+    vi.resetModules();
+    vi.doMock('../src/utils/unity-editor.js', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('../src/utils/unity-editor.js')>();
+      return {
+        ...actual,
+        findEditorPath: findEditorPathMock,
+        launchEditor: launchEditorMock,
+      };
+    });
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+    fs.rmSync(editorDir, { recursive: true, force: true });
+    vi.doUnmock('../src/utils/unity-editor.js');
+    vi.resetModules();
+  });
+
+  it('launches with an explicit editor path and a project path containing spaces', async () => {
+    const { openProject: mockedOpenProject } = await import('../src/lib/open.js');
+    const events: ProgressEvent[] = [];
+
+    const result = await mockedOpenProject({
+      projectPath: tmpDir,
+      editorPath,
+      autoDismissLaunchErrors: false,
+      onProgress: (e) => events.push(e),
+    });
+
+    expect(result.kind).toBe('success');
+    expect(findEditorPathMock).not.toHaveBeenCalled();
+    expect(launchEditorMock).toHaveBeenCalledTimes(1);
+    expect(launchEditorMock.mock.calls[0][0]).toBe(path.resolve(editorPath));
+    expect(launchEditorMock.mock.calls[0][1]).toBe(path.resolve(tmpDir));
+    expect(events).toContainEqual({
+      phase: 'editors-located',
+      message: 'Using explicit Unity Editor path',
+      found: true,
+    });
+  });
+
+  it('rejects an empty string editorPath without spawning the editor', async () => {
+    // Regression for review: `path.resolve('')` is `process.cwd()`,
+    // which would otherwise pass `existsSync` and lead us to spawn
+    // the working directory as the editor binary. The explicit-path
+    // branch must reject empty / whitespace-only values up-front.
+    const { openProject: mockedOpenProject } = await import('../src/lib/open.js');
+
+    const result = await mockedOpenProject({
+      projectPath: tmpDir,
+      editorPath: '',
+      autoDismissLaunchErrors: false,
+    });
+
+    expect(result.kind).toBe('failure');
+    if (result.kind !== 'failure') return;
+    expect(result.errorMessage).toMatch(/empty|whitespace/i);
+    expect(launchEditorMock).not.toHaveBeenCalled();
+    expect(findEditorPathMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects a whitespace-only editorPath without spawning the editor', async () => {
+    const { openProject: mockedOpenProject } = await import('../src/lib/open.js');
+
+    const result = await mockedOpenProject({
+      projectPath: tmpDir,
+      editorPath: '   ',
+      autoDismissLaunchErrors: false,
+    });
+
+    expect(result.kind).toBe('failure');
+    if (result.kind !== 'failure') return;
+    expect(result.errorMessage).toMatch(/empty|whitespace/i);
+    expect(launchEditorMock).not.toHaveBeenCalled();
+  });
+
+  it('rejects a directory passed as editorPath without spawning the editor', async () => {
+    // Regression for review: `existsSync` returns true for directories
+    // too. The validation must reject non-files here, where the error
+    // is synchronous and clearly attributable to the editor-path
+    // option, rather than letting the spawn fail asynchronously and
+    // surface as `{ kind: 'success', editorPid: undefined }`.
+    const { openProject: mockedOpenProject } = await import('../src/lib/open.js');
+
+    const result = await mockedOpenProject({
+      projectPath: tmpDir,
+      editorPath: editorDir, // a directory, not a file
+      autoDismissLaunchErrors: false,
+    });
+
+    expect(result.kind).toBe('failure');
+    if (result.kind !== 'failure') return;
+    expect(result.errorMessage).toMatch(/not a file/i);
+    expect(launchEditorMock).not.toHaveBeenCalled();
+  });
+});
+
 // ---------------------------------------------------------------------------
 // openProject — onProgress contract
 // ---------------------------------------------------------------------------

@@ -113,6 +113,12 @@ describe('open command (merged open + connect)', () => {
     expect(stdout).toContain('--unity');
   });
 
+  it('includes --editor-path option in help', () => {
+    const { stdout, exitCode } = runCli(['open', '--help']);
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain('--editor-path');
+  });
+
   it('documents the path argument as optional in help', () => {
     const { stdout, exitCode } = runCli(['open', '--help']);
     expect(exitCode).toBe(0);

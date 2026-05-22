@@ -119,6 +119,7 @@ export const openCommand = new Command('open')
   .argument('[path]', 'Path to the Unity project (defaults to current directory)')
   .option('--path <path>', 'Path to the Unity project (defaults to current directory)')
   .option('--unity <version>', 'Specific Unity Editor version to use')
+  .option('--editor-path <path>', 'Explicit path to the Unity Editor executable (skips Unity Hub discovery)')
   .option('--no-connect', 'Open without MCP connection environment variables')
   .option('--url <url>', 'MCP server URL to connect to (sets UNITY_MCP_HOST)')
   .option('--tools <names>', 'Comma-separated list of tools to enable (sets UNITY_MCP_TOOLS)')
@@ -144,6 +145,7 @@ export const openCommand = new Command('open')
   .action(async (positionalPath: string | undefined, options: {
     path?: string;
     unity?: string;
+    editorPath?: string;
     connect?: boolean;
     url?: string;
     tools?: string;
@@ -246,6 +248,7 @@ export const openCommand = new Command('open')
     const result = await openProject({
       projectPath,
       unityVersion: options.unity,
+      editorPath: options.editorPath,
       noConnect: options.connect === false,
       url: options.url,
       token: options.token,
