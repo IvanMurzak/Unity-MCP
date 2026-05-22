@@ -12,7 +12,6 @@
 using System;
 using System.ComponentModel;
 using System.IO;
-using System.Linq;
 using System.Text.Json;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
@@ -55,7 +54,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 {
                     // Compose the snapshot by delegating to sibling Get* methods so the
                     // serialized shape stays in sync with each tool's POCO. Direct field reads
-                    // here would silently drift whenever a POCO gains/loses a field.
+                    // here would silently drift whenever a POCO gains/loses a field. The set of
+                    // enabled modules is carried by `status.ActiveModules` (already sorted) —
+                    // a separate top-level field would duplicate the data and risk drift.
                     var snapshot = new
                     {
                         savedAt = DateTime.UtcNow.ToString("O"),
@@ -63,10 +64,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         memory = GetMemoryStats(),
                         rendering = GetRenderingStats(),
                         script = GetScriptStats(),
-                        frame = CaptureFrame(),
-                        // Snapshot a sorted copy so two runs with the same enabled set produce
-                        // byte-identical output (HashSet iteration order is not guaranteed).
-                        enabledModules = EnabledModules.OrderBy(name => name).ToList()
+                        frame = CaptureFrame()
                     };
 
                     var json = System.Text.Json.JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });

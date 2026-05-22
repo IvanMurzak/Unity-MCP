@@ -9,7 +9,6 @@
 */
 
 #nullable enable
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
@@ -45,7 +44,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             return MainThread.Instance.Run(() => new ProfilerStatusData
             {
                 ProfilerEnabled = UnityProfiler.enabled,
-                ActiveModules = new List<string>(EnabledModules).OrderBy(name => name).ToList(),
+                ActiveModules = EnabledModules.OrderBy(name => name).ToList(),
                 MaxUsedMemoryMB = (float)(UnityProfiler.maxUsedMemory / 1048576.0),
                 Supported = UnityProfiler.supported
             });
