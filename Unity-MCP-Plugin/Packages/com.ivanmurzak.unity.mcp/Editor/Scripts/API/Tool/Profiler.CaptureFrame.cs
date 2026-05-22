@@ -39,11 +39,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "## Behavior\n\n" +
             "Uses only built-in Unity APIs (`UnityEngine.Time`). No external Unity package is required.")]
         [Description("Captures current frame timing data (delta time, FPS, total + rendered frame counts, runtime).")]
-        public FrameCaptureData CaptureFrame
-        (
-            [Description("Reserved for future per-N-frames capture. Currently ignored — only the current frame is captured.")]
-            int frameCount = 1
-        )
+        public FrameCaptureData CaptureFrame(string? nothing = null)
         {
             return MainThread.Instance.Run(() =>
             {

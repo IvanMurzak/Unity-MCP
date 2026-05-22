@@ -44,17 +44,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [Description("Returns memory statistics from the Unity Profiler (all values in MB).")]
         public MemoryStatsData GetMemoryStats(string? nothing = null)
         {
+            // Divide in double precision then cast — `long / 1048576f` loses precision
+            // above ~16 MB because the float mantissa is only 24 bits.
             return MainThread.Instance.Run(() => new MemoryStatsData
             {
-                TotalReservedMemoryMB = UnityProfiler.GetTotalReservedMemoryLong() / 1048576f,
-                TotalAllocatedMemoryMB = UnityProfiler.GetTotalAllocatedMemoryLong() / 1048576f,
-                TotalUnusedReservedMemoryMB = UnityProfiler.GetTotalUnusedReservedMemoryLong() / 1048576f,
-                MonoHeapSizeMB = UnityProfiler.GetMonoHeapSizeLong() / 1048576f,
-                MonoUsedSizeMB = UnityProfiler.GetMonoUsedSizeLong() / 1048576f,
-                TempAllocatorSizeMB = UnityProfiler.GetTempAllocatorSize() / 1048576f,
-                GraphicsMemoryMB = UnityProfiler.GetAllocatedMemoryForGraphicsDriver() / 1048576f,
-                MaxUsedMemoryMB = UnityProfiler.maxUsedMemory / 1048576f,
-                UsedHeapSizeMB = UnityProfiler.usedHeapSizeLong / 1048576f
+                TotalReservedMemoryMB = (float)(UnityProfiler.GetTotalReservedMemoryLong() / 1048576.0),
+                TotalAllocatedMemoryMB = (float)(UnityProfiler.GetTotalAllocatedMemoryLong() / 1048576.0),
+                TotalUnusedReservedMemoryMB = (float)(UnityProfiler.GetTotalUnusedReservedMemoryLong() / 1048576.0),
+                MonoHeapSizeMB = (float)(UnityProfiler.GetMonoHeapSizeLong() / 1048576.0),
+                MonoUsedSizeMB = (float)(UnityProfiler.GetMonoUsedSizeLong() / 1048576.0),
+                TempAllocatorSizeMB = (float)(UnityProfiler.GetTempAllocatorSize() / 1048576.0),
+                GraphicsMemoryMB = (float)(UnityProfiler.GetAllocatedMemoryForGraphicsDriver() / 1048576.0),
+                MaxUsedMemoryMB = (float)(UnityProfiler.maxUsedMemory / 1048576.0),
+                UsedHeapSizeMB = (float)(UnityProfiler.usedHeapSizeLong / 1048576.0)
             });
         }
     }

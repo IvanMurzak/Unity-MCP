@@ -20,6 +20,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Profiler
     {
         public const string ProfilerLoadDataToolId = "profiler-load-data";
+
+        // Cap to keep an accidental call against a huge file from OOMing the Editor.
+        // Snapshots written by SaveData are typically a few KB; 10 MB leaves plenty of
+        // headroom for future schema expansion while bounding worst-case memory.
+        const long MaxLoadFileSizeBytes = 10L * 1024L * 1024L;
+
         [McpPluginTool
         (
             ProfilerLoadDataToolId,
@@ -33,9 +39,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "## Inputs\n\n" +
             "- `filePath` (required) — path written by `profiler-save-data`.\n\n" +
             "## Errors\n\n" +
-            "- Returns `[Error]` when `filePath` is empty, the file does not exist, or the read fails.\n\n" +
+            "- Returns `[Error]` when `filePath` is empty, the file does not exist, exceeds the 10 MB size cap, or the read fails.\n\n" +
             "## Behavior\n\n" +
-            "Uses `System.IO.File.ReadAllText` (BCL) — no external Unity package is required.")]
+            "Uses `System.IO.File.ReadAllText` (BCL) — no external Unity package is required. " +
+            "Files larger than 10 MB are rejected up-front to avoid OOM on a stray call.")]
         [Description("Reads a profiler snapshot JSON file and returns its raw text content.")]
         public string LoadData
         (
@@ -53,6 +60,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 try
                 {
+                    var info = new FileInfo(filePath);
+                    if (info.Length > MaxLoadFileSizeBytes)
+                        return Error.FileTooLarge(filePath, info.Length, MaxLoadFileSizeBytes);
+
                     var content = File.ReadAllText(filePath);
                     return content;
                 }

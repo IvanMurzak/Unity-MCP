@@ -43,6 +43,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [Description("Returns script execution statistics including timing and Mono / GC memory usage.")]
         public ScriptStatsData GetScriptStats(string? nothing = null)
         {
+            // Divide in double precision then cast — see GetMemoryStats for the rationale.
             return MainThread.Instance.Run(() => new ScriptStatsData
             {
                 FrameTimeMs = Time.deltaTime * 1000f,
@@ -50,8 +51,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 TimeScale = Time.timeScale,
                 TotalFrameCount = Time.frameCount,
                 RealtimeSinceStartup = Time.realtimeSinceStartup,
-                MonoMemoryUsageMB = UnityProfiler.GetMonoUsedSizeLong() / 1048576f,
-                GCMemoryUsageMB = GC.GetTotalMemory(false) / 1048576f
+                MonoMemoryUsageMB = (float)(UnityProfiler.GetMonoUsedSizeLong() / 1048576.0),
+                GCMemoryUsageMB = (float)(GC.GetTotalMemory(false) / 1048576.0)
             });
         }
     }

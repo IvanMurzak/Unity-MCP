@@ -41,11 +41,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         [Description("Returns the current state of the Unity Profiler (enabled flag, active modules, max-used memory, platform support).")]
         public ProfilerStatusData GetStatus(string? nothing = null)
         {
+            // Divide in double precision then cast — see GetMemoryStats for the rationale.
             return MainThread.Instance.Run(() => new ProfilerStatusData
             {
                 ProfilerEnabled = UnityProfiler.enabled,
                 ActiveModules = new List<string>(EnabledModules).OrderBy(name => name).ToList(),
-                MaxUsedMemoryMB = UnityProfiler.maxUsedMemory / 1048576f,
+                MaxUsedMemoryMB = (float)(UnityProfiler.maxUsedMemory / 1048576.0),
                 Supported = UnityProfiler.supported
             });
         }

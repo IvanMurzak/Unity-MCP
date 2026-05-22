@@ -13,6 +13,7 @@ using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using UnityEditor;
+using UnityEngine;
 using UnityProfiler = UnityEngine.Profiling.Profiler;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -43,7 +44,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             return MainThread.Instance.Run(() =>
             {
                 UnityProfiler.enabled = true;
-                EditorApplication.ExecuteMenuItem("Window/Analysis/Profiler");
+                // ExecuteMenuItem returns false silently when the menu path is renamed
+                // or missing — log a warning so a broken UI hook does not look like a
+                // successful Start() (the profiler-enabled flag flips regardless).
+                if (!EditorApplication.ExecuteMenuItem("Window/Analysis/Profiler"))
+                    Debug.LogWarning("[Tool_Profiler] Could not open menu 'Window/Analysis/Profiler'. The runtime profiler is still enabled.");
                 return UnityProfiler.enabled;
             });
         }

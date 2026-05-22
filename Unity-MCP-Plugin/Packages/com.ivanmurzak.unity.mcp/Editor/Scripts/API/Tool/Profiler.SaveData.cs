@@ -12,10 +12,10 @@
 using System;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
-using UnityProfiler = UnityEngine.Profiling.Profiler;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -53,40 +53,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 try
                 {
-                    var deltaTime = UnityEngine.Time.deltaTime;
+                    // Compose the snapshot by delegating to sibling Get* methods so the
+                    // serialized shape stays in sync with each tool's POCO. Direct field reads
+                    // here would silently drift whenever a POCO gains/loses a field.
                     var snapshot = new
                     {
                         savedAt = DateTime.UtcNow.ToString("O"),
-                        status = new
-                        {
-                            profilerEnabled = UnityProfiler.enabled,
-                            supported = UnityProfiler.supported,
-                            maxUsedMemoryMB = UnityProfiler.maxUsedMemory / 1048576f,
-                            enabledModules = EnabledModules
-                        },
-                        memory = new
-                        {
-                            totalReservedMemoryMB = UnityProfiler.GetTotalReservedMemoryLong() / 1048576f,
-                            totalAllocatedMemoryMB = UnityProfiler.GetTotalAllocatedMemoryLong() / 1048576f,
-                            totalUnusedReservedMemoryMB = UnityProfiler.GetTotalUnusedReservedMemoryLong() / 1048576f,
-                            monoHeapSizeMB = UnityProfiler.GetMonoHeapSizeLong() / 1048576f,
-                            monoUsedSizeMB = UnityProfiler.GetMonoUsedSizeLong() / 1048576f,
-                            graphicsMemoryMB = UnityProfiler.GetAllocatedMemoryForGraphicsDriver() / 1048576f
-                        },
-                        rendering = new
-                        {
-                            frameTimeMs = deltaTime * 1000f,
-                            fps = deltaTime > 0f ? 1f / deltaTime : 0f,
-                            vSyncCount = UnityEngine.QualitySettings.vSyncCount,
-                            targetFrameRate = UnityEngine.Application.targetFrameRate
-                        },
-                        script = new
-                        {
-                            timeScale = UnityEngine.Time.timeScale,
-                            totalFrameCount = UnityEngine.Time.frameCount,
-                            realtimeSinceStartup = UnityEngine.Time.realtimeSinceStartup,
-                            gcMemoryUsageMB = GC.GetTotalMemory(false) / 1048576f
-                        }
+                        status = GetStatus(),
+                        memory = GetMemoryStats(),
+                        rendering = GetRenderingStats(),
+                        script = GetScriptStats(),
+                        frame = CaptureFrame(),
+                        // Snapshot a sorted copy so two runs with the same enabled set produce
+                        // byte-identical output (HashSet iteration order is not guaranteed).
+                        enabledModules = EnabledModules.OrderBy(name => name).ToList()
                     };
 
                     var json = System.Text.Json.JsonSerializer.Serialize(snapshot, new JsonSerializerOptions { WriteIndented = true });

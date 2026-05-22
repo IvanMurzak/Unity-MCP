@@ -19,10 +19,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Profiler
     {
         /// <summary>
-        /// Locally-tracked set of profiler modules considered "enabled" by the MCP wrapper.
-        /// Unity's runtime Profiler API does not expose per-module enable/disable, so this
-        /// is a bookkeeping helper for callers; actual module visibility is controlled
-        /// from the Profiler window.
+        /// Default-enabled subset of <see cref="AvailableModules"/>. Mutated by
+        /// <c>profiler-enable-module</c> and read by <c>profiler-get-status</c> /
+        /// <c>profiler-list-modules</c>. Unity's runtime Profiler API does not expose
+        /// per-module enable/disable, so this is purely a bookkeeping helper for callers;
+        /// actual module visibility is controlled from the Profiler window.
         /// </summary>
         internal static readonly HashSet<string> EnabledModules = new HashSet<string>()
         {
@@ -42,9 +43,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         /// from the names Unity uses in its built-in Profiler window — kept here as a
         /// constant so the wrapper is independent of the optional
         /// `com.unity.profiling.core` package (per task scope, the core tool must rely on
-        /// built-in Unity APIs only).
+        /// built-in Unity APIs only). Exposed as <see cref="IReadOnlyList{T}"/> so callers
+        /// cannot accidentally mutate the canonical list via <c>.Add()</c>.
         /// </summary>
-        public static readonly List<string> AvailableModules = new List<string>()
+        internal static readonly IReadOnlyList<string> AvailableModules = new List<string>()
         {
             "CPU",
             "GPU",
@@ -60,7 +62,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "UIDetails",
             "GlobalIllumination",
             "VirtualTexturing"
-        };
+        }.AsReadOnly();
 
         public static class Error
         {
@@ -75,6 +77,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             public static string FileNotFound(string filePath)
                 => $"[Error] Profiler data file not found: '{filePath}'.";
+
+            public static string FileTooLarge(string filePath, long fileBytes, long maxBytes)
+                => $"[Error] Profiler data file '{filePath}' is {fileBytes} bytes, exceeding the {maxBytes}-byte cap.";
 
             public static string FailedToSaveData(string message)
                 => $"[Error] Failed to save profiler data: {message}";
