@@ -22,15 +22,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Scene
     {
         public const string SceneOpenToolId = "scene-open";
-        [McpPluginTool
+        [AiTool
         (
             SceneOpenToolId,
             Title = "Scene / Open"
         )]
-        [McpPluginSkillDescription("Open a Unity scene asset in Single or Additive mode. " +
+        [AiSkillDescription("Open a Unity scene asset in Single or Additive mode. " +
             "Returns the post-open list of all opened scenes. " +
             "Use '" + Tool_Assets.AssetsFindToolId + "' to locate the scene asset first.")]
-        [McpPluginSkillBody("Open scene from the project asset file. " +
+        [AiSkillBody("Open scene from the project asset file. " +
             "Use '" + Tool_Assets.AssetsFindToolId + "' tool to find the scene asset first.\n\n" +
             "## Inputs\n\n" +
             "- `sceneRef` — `AssetObjectRef` pointing at a `SceneAsset`. Throws if the asset cannot be resolved or " +

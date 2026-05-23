@@ -25,15 +25,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_GameObject
     {
         public const string GameObjectDuplicateToolId = "gameobject-duplicate";
-        [McpPluginTool
+        [AiTool
         (
             GameObjectDuplicateToolId,
             Title = "GameObject / Duplicate"
         )]
-        [McpPluginSkillDescription("Duplicate a batch of GameObjects in the currently opened Prefab or active Scene. " +
+        [AiSkillDescription("Duplicate a batch of GameObjects in the currently opened Prefab or active Scene. " +
             "Marks each affected scene as dirty after duplication. " +
             "Use '" + GameObjectFindToolId + "' to locate the source GameObjects first.")]
-        [McpPluginSkillBody("Duplicate GameObjects in opened Prefab or in a Scene. " +
+        [AiSkillBody("Duplicate GameObjects in opened Prefab or in a Scene. " +
             "Use '" + GameObjectFindToolId + "' tool to find the target GameObjects first.\n\n" +
             "## Inputs\n\n" +
             "- `gameObjectRefs` — `GameObjectRefList` of source GameObjects.\n\n" +

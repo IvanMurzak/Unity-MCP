@@ -21,16 +21,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Profiler
     {
         public const string ProfilerStartToolId = "profiler-start";
-        [McpPluginTool
+        [AiTool
         (
             ProfilerStartToolId,
             Title = "Profiler / Start",
             IdempotentHint = true,
             Enabled = false
         )]
-        [McpPluginSkillDescription("Enable Unity's runtime profiler and open the Profiler window. " +
+        [AiSkillDescription("Enable Unity's runtime profiler and open the Profiler window. " +
             "Idempotent: calling when already enabled returns the current enabled state without error.")]
-        [McpPluginSkillBody("Enables `UnityEngine.Profiling.Profiler.enabled = true` and opens " +
+        [AiSkillBody("Enables `UnityEngine.Profiling.Profiler.enabled = true` and opens " +
             "`Window > Analysis > Profiler` via `EditorApplication.ExecuteMenuItem`. " +
             "Returns `true` once the profiler is enabled.\n\n" +
             "## Behavior\n\n" +

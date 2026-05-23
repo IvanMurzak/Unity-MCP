@@ -21,14 +21,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Profiler
     {
         public const string ProfilerSaveDataToolId = "profiler-save-data";
-        [McpPluginTool
+        [AiTool
         (
             ProfilerSaveDataToolId,
             Title = "Profiler / Save Data",
             Enabled = false
         )]
-        [McpPluginSkillDescription("Save a snapshot of profiler-derived stats (status + memory + rendering + script + frame capture) to a JSON file. Built-in Unity APIs only.")]
-        [McpPluginSkillBody("Composes the outputs of `profiler-get-status`, `profiler-get-memory-stats`, " +
+        [AiSkillDescription("Save a snapshot of profiler-derived stats (status + memory + rendering + script + frame capture) to a JSON file. Built-in Unity APIs only.")]
+        [AiSkillBody("Composes the outputs of `profiler-get-status`, `profiler-get-memory-stats`, " +
             "`profiler-get-rendering-stats`, `profiler-get-script-stats` and `profiler-capture-frame` into a single " +
             "JSON document and writes it to `filePath`. Creates any missing parent directories.\n\n" +
             "## Inputs\n\n" +

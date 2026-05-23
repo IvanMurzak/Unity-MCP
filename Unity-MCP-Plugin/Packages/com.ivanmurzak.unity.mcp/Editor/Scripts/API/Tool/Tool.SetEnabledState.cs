@@ -24,16 +24,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         public const string ToolSetEnabledStateId = "tool-set-enabled-state";
 
-        [McpPluginTool
+        [AiTool
         (
             ToolSetEnabledStateId,
             Title = "Tool / Set Enabled State",
             Enabled = false
         )]
-        [McpPluginSkillDescription("Enable or disable MCP tools by name in batch. " +
+        [AiSkillDescription("Enable or disable MCP tools by name in batch. " +
             "Persists the change via `UnityMcpPluginEditor.Instance.Save()` only when at least one tool actually flipped. " +
             "Returns per-input success flags plus optional operation logs.")]
-        [McpPluginSkillBody("Enable or disable MCP tools by name. " +
+        [AiSkillBody("Enable or disable MCP tools by name. " +
             "Allows controlling which tools are available for the AI agent.\n\n" +
             "## Inputs\n\n" +
             "- `tools` — array of `ToolToggleInput { Name, Enabled }`. Non-empty.\n" +

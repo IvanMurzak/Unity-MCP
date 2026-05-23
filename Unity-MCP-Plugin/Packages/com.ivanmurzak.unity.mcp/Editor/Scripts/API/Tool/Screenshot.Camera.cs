@@ -23,7 +23,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Screenshot
     {
         public const string ScreenshotCameraToolId = "screenshot-camera";
-        [McpPluginTool
+        [AiTool
         (
             ScreenshotCameraToolId,
             Title = "Screenshot / Camera",
@@ -31,10 +31,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             IdempotentHint = true,
             Enabled = false
         )]
-        [McpPluginSkillDescription("Capture a screenshot from a Unity `Camera` and return it as a PNG image " +
+        [AiSkillDescription("Capture a screenshot from a Unity `Camera` and return it as a PNG image " +
             "for direct LLM inspection. Falls back to `Camera.main` (then any active camera) when `cameraRef` is null. " +
             "Width and height are capped to keep response size manageable.")]
-        [McpPluginSkillBody("Captures a screenshot from a camera and returns it as an image. " +
+        [AiSkillBody("Captures a screenshot from a camera and returns it as an image. " +
             "If no camera is specified, uses the Main Camera. " +
             "Returns the image directly for visual inspection by the LLM.\n\n" +
             "## Inputs\n\n" +

@@ -23,16 +23,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_GameObject
     {
         public const string GameObjectSetParentToolId = "gameobject-set-parent";
-        [McpPluginTool
+        [AiTool
         (
             GameObjectSetParentToolId,
             Title = "GameObject / Set Parent",
             IdempotentHint = true
         )]
-        [McpPluginSkillDescription("Reparent a batch of GameObjects under a new parent in the currently opened Prefab " +
+        [AiSkillDescription("Reparent a batch of GameObjects under a new parent in the currently opened Prefab " +
             "or active Scene. Per-item failures are reported in the returned status string instead of aborting the batch. " +
             "Use '" + GameObjectFindToolId + "' to locate the GameObjects first.")]
-        [McpPluginSkillBody("Set parent GameObject to list of GameObjects in opened Prefab or in a Scene. " +
+        [AiSkillBody("Set parent GameObject to list of GameObjects in opened Prefab or in a Scene. " +
             "Use '" + GameObjectFindToolId + "' tool to find the target GameObjects first.\n\n" +
             "## Inputs\n\n" +
             "- `gameObjectRefs` — list of children to reparent.\n" +

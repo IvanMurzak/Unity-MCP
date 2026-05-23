@@ -19,7 +19,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Profiler
     {
         public const string ProfilerClearDataToolId = "profiler-clear-data";
-        [McpPluginTool
+        [AiTool
         (
             ProfilerClearDataToolId,
             Title = "Profiler / Clear Data",
@@ -27,8 +27,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             IdempotentHint = true,
             Enabled = false
         )]
-        [McpPluginSkillDescription("Discard all frames currently held by the Editor Profiler (UnityEditorInternal.ProfilerDriver.ClearAllFrames). Cannot be undone.")]
-        [McpPluginSkillBody("Invokes `UnityEditorInternal.ProfilerDriver.ClearAllFrames()` on the main thread. " +
+        [AiSkillDescription("Discard all frames currently held by the Editor Profiler (UnityEditorInternal.ProfilerDriver.ClearAllFrames). Cannot be undone.")]
+        [AiSkillBody("Invokes `UnityEditorInternal.ProfilerDriver.ClearAllFrames()` on the main thread. " +
             "`UnityEditorInternal` is a built-in editor namespace — no external Unity package is required.\n\n" +
             "## Behavior\n\n" +
             "After this call, the Profiler window's frame history is empty; subsequent recording starts from frame 0. " +

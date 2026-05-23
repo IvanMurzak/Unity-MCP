@@ -29,17 +29,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public static partial class Tool_Tests
     {
         public const string TestsRunToolId = "tests-run";
-        [McpPluginTool
+        [AiTool
         (
             TestsRunToolId,
             Title = "Tests / Run",
             Enabled = true
         )]
-        [McpPluginSkillDescription("Execute Unity tests (`EditMode` or `PlayMode`) and return per-test results. " +
+        [AiSkillDescription("Execute Unity tests (`EditMode` or `PlayMode`) and return per-test results. " +
             "Supports filtering by test assembly, namespace, class, and method. " +
             "Refreshes the AssetDatabase first; defers execution across domain reloads if scripts changed. " +
             "Precondition: every open scene must be saved — dirty scenes abort the run.")]
-        [McpPluginSkillBody("Execute Unity tests and return detailed results. " +
+        [AiSkillBody("Execute Unity tests and return detailed results. " +
             "Supports filtering by test mode, assembly, namespace, class, and method. " +
             "Recommended to use '" + nameof(TestMode.EditMode) + "' for faster iteration during development. " +
             "Precondition: every open scene MUST be saved (no unsaved changes). If any open scene is dirty, " +

@@ -24,15 +24,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Assets_Prefab
     {
         public const string AssetsPrefabInstantiateToolId = "assets-prefab-instantiate";
-        [McpPluginTool
+        [AiTool
         (
             AssetsPrefabInstantiateToolId,
             Title = "Assets / Prefab / Instantiate"
         )]
-        [McpPluginSkillDescription("Instantiate a prefab into the currently active scene at an optional position/rotation/scale, " +
+        [AiSkillDescription("Instantiate a prefab into the currently active scene at an optional position/rotation/scale, " +
             "parented under an optional scene GameObject path. " +
             "Use '" + Tool_Assets.AssetsFindToolId + "' to locate the prefab asset first.")]
-        [McpPluginSkillBody("Instantiates prefab in the current active scene. " +
+        [AiSkillBody("Instantiates prefab in the current active scene. " +
             "Use '" + Tool_Assets.AssetsFindToolId + "' tool to find prefab assets in the project.\n\n" +
             "## Inputs\n\n" +
             "- `prefabAssetPath` — project asset path of the prefab to instantiate.\n" +

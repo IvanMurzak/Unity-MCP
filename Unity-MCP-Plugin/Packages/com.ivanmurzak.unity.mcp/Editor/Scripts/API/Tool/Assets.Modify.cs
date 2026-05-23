@@ -30,14 +30,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Assets
     {
         public const string AssetsModifyToolId = "assets-modify";
-        [McpPluginTool
+        [AiTool
         (
             AssetsModifyToolId,
             Title = "Assets / Modify",
             IdempotentHint = true
         )]
-        [McpPluginSkillDescription(ModifySkill.Description)]
-        [McpPluginSkillBody(ModifySkill.Body)]
+        [AiSkillDescription(ModifySkill.Description)]
+        [AiSkillBody(ModifySkill.Body)]
         [Description("Modify asset file in the project. " +
             "Use '" + AssetsGetDataToolId + "' tool first to inspect the asset structure before modifying. " +
             "Not allowed to modify asset file in 'Packages/' folder. Please modify it in 'Assets/' folder.\n\n" +

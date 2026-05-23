@@ -25,15 +25,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_GameObject
     {
         public const string GameObjectCreateToolId = "gameobject-create";
-        [McpPluginTool
+        [AiTool
         (
             GameObjectCreateToolId,
             Title = "GameObject / Create"
         )]
-        [McpPluginSkillDescription("Create a new GameObject in the currently opened Prefab or active Scene, optionally " +
+        [AiSkillDescription("Create a new GameObject in the currently opened Prefab or active Scene, optionally " +
             "parented under another GameObject and pre-positioned. Pass `primitiveType` to spawn a Unity primitive " +
             "(Cube, Sphere, etc.) instead of an empty GameObject.")]
-        [McpPluginSkillBody("Create a new GameObject in opened Prefab or in a Scene. " +
+        [AiSkillBody("Create a new GameObject in opened Prefab or in a Scene. " +
             "If needed - provide proper 'position', 'rotation' and 'scale' to reduce amount of operations.\n\n" +
             "## Inputs\n\n" +
             "- `name` — required non-empty name.\n" +

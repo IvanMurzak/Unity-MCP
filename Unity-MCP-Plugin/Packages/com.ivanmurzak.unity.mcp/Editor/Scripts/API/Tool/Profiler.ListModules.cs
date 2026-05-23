@@ -19,7 +19,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Profiler
     {
         public const string ProfilerListModulesToolId = "profiler-list-modules";
-        [McpPluginTool
+        [AiTool
         (
             ProfilerListModulesToolId,
             Title = "Profiler / List Modules",
@@ -27,8 +27,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             IdempotentHint = true,
             Enabled = false
         )]
-        [McpPluginSkillDescription("List all known profiler module names with their local 'enabled' bookkeeping flag.")]
-        [McpPluginSkillBody("Returns `Tool_Profiler.AvailableModules` projected into a `ProfilerModulesData` list, " +
+        [AiSkillDescription("List all known profiler module names with their local 'enabled' bookkeeping flag.")]
+        [AiSkillBody("Returns `Tool_Profiler.AvailableModules` projected into a `ProfilerModulesData` list, " +
             "with each entry's `Enabled` field reflecting the wrapper's local bookkeeping.\n\n" +
             "## Behavior\n\n" +
             "Uses only built-in Unity APIs and in-process state. No external Unity package is required. " +

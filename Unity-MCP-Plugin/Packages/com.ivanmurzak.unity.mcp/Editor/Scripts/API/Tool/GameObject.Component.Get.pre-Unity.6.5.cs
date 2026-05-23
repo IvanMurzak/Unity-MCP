@@ -28,15 +28,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_GameObject
     {
         public const string GameObjectComponentGetToolId = "gameobject-component-get";
-        [McpPluginTool
+        [AiTool
         (
             GameObjectComponentGetToolId,
             Title = "GameObject / Component / Get",
             ReadOnlyHint = true,
             IdempotentHint = true
         )]
-        [McpPluginSkillDescription(ComponentGetSkill.Description)]
-        [McpPluginSkillBody(ComponentGetSkill.Body)]
+        [AiSkillDescription(ComponentGetSkill.Description)]
+        [AiSkillBody(ComponentGetSkill.Body)]
         [Description("Get detailed information about a specific Component on a GameObject. " +
             "Returns component type, enabled state, and optionally serialized fields and properties. " +
             "Use this to inspect component data before modifying it. " +

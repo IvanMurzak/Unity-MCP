@@ -23,15 +23,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Assets
     {
         public const string AssetsMaterialCreateToolId = "assets-material-create";
-        [McpPluginTool
+        [AiTool
         (
             AssetsMaterialCreateToolId,
             Title = "Assets / Create Material"
         )]
-        [McpPluginSkillDescription("Create a new Material asset with default parameters at a given 'Assets/'-rooted " +
+        [AiSkillDescription("Create a new Material asset with default parameters at a given 'Assets/'-rooted " +
             "path ending in '.mat'. Creates intermediate folders if missing. Use '" +
             Tool_Assets_Shader.AssetsShaderListAllToolId + "' to find a valid `shaderName`.")]
-        [McpPluginSkillBody("Create new material asset with default parameters. " +
+        [AiSkillBody("Create new material asset with default parameters. " +
             "Creates folders recursively if they do not exist. " +
             "Provide proper 'shaderName' - use '" + Tool_Assets_Shader.AssetsShaderListAllToolId + "' tool to find available shaders.\n\n" +
             "## Inputs\n\n" +

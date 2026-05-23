@@ -22,16 +22,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Assets
     {
         public const string AssetsCopyToolId = "assets-copy";
-        [McpPluginTool
+        [AiTool
         (
             AssetsCopyToolId,
             Title = "Assets / Copy",
             Enabled = false
         )]
-        [McpPluginSkillDescription("Copy assets at given paths and store them at new paths. " +
+        [AiSkillDescription("Copy assets at given paths and store them at new paths. " +
             "Refreshes the AssetDatabase at the end. " +
             "Use '" + AssetsFindToolId + "' to locate the source assets first.")]
-        [McpPluginSkillBody("Copy assets at given paths and store them at new paths. " +
+        [AiSkillBody("Copy assets at given paths and store them at new paths. " +
             "Does AssetDatabase.Refresh() at the end. " +
             "Use '" + AssetsFindToolId + "' tool to find assets before copying.\n\n" +
             "## Inputs\n\n" +

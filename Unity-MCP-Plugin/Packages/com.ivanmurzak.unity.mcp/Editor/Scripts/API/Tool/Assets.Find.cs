@@ -21,17 +21,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Assets
     {
         public const string AssetsFindToolId = "assets-find";
-        [McpPluginTool
+        [AiTool
         (
             AssetsFindToolId,
             Title = "Assets / Find",
             ReadOnlyHint = true,
             IdempotentHint = true
         )]
-        [McpPluginSkillDescription("Search the Unity asset database using a search filter string. " +
+        [AiSkillDescription("Search the Unity asset database using a search filter string. " +
             "The filter accepts names, labels (`l:`), types (`t:`), AssetBundles (`b:`), areas (`a:`), and globs (`glob:`). " +
             "See the body for the full filter syntax.")]
-        [McpPluginSkillBody("Search the asset database using the search filter string. " +
+        [AiSkillBody("Search the asset database using the search filter string. " +
             "Allows you to search for Assets. The string argument can provide names, labels or types (classnames).\n\n" +
             "## Filter syntax\n\n" +
             "- **Name** — filter assets by their filename (without extension). Words separated by whitespace are " +

@@ -22,7 +22,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Type
     {
         public const string TypeGetJsonSchemaToolId = "type-get-json-schema";
-        [McpPluginTool
+        [AiTool
         (
             TypeGetJsonSchemaToolId,
             Title = "Type / Get Json Schema",
@@ -31,10 +31,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             IdempotentHint = true,
             Enabled = false
         )]
-        [McpPluginSkillDescription("Generate a JSON Schema for a C# type name via reflection. " +
+        [AiSkillDescription("Generate a JSON Schema for a C# type name via reflection. " +
             "Supports primitives, enums, arrays, generic collections, dictionaries, and complex objects. " +
             "Knobs control inclusion of nested `$defs` and whether type-level / property-level descriptions are emitted.")]
-        [McpPluginSkillBody("Generates a JSON Schema for a given C# type name using reflection. " +
+        [AiSkillBody("Generates a JSON Schema for a given C# type name using reflection. " +
             "Supports primitives, enums, arrays, generic collections, dictionaries, and complex objects. " +
             "The type must be present in any loaded assembly. " +
             "Use the full type name (e.g. 'UnityEngine.Vector3') for best results.\n\n" +

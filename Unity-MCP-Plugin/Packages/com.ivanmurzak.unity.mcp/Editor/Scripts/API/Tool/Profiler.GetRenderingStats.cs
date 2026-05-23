@@ -19,7 +19,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Profiler
     {
         public const string ProfilerGetRenderingStatsToolId = "profiler-get-rendering-stats";
-        [McpPluginTool
+        [AiTool
         (
             ProfilerGetRenderingStatsToolId,
             Title = "Profiler / Get Rendering Stats",
@@ -27,8 +27,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             IdempotentHint = true,
             Enabled = false
         )]
-        [McpPluginSkillDescription("Return current frame timing, FPS, vsync, target frame rate, threading mode, and graphics device type from Unity Time / QualitySettings / SystemInfo.")]
-        [McpPluginSkillBody("Snapshots rendering-related fields from `UnityEngine.Time`, `UnityEngine.QualitySettings`, " +
+        [AiSkillDescription("Return current frame timing, FPS, vsync, target frame rate, threading mode, and graphics device type from Unity Time / QualitySettings / SystemInfo.")]
+        [AiSkillBody("Snapshots rendering-related fields from `UnityEngine.Time`, `UnityEngine.QualitySettings`, " +
             "`UnityEngine.Application` and `UnityEngine.SystemInfo`. All values are read from built-in Unity APIs " +
             "so no external Unity package is required.\n\n" +
             "## Fields\n\n" +

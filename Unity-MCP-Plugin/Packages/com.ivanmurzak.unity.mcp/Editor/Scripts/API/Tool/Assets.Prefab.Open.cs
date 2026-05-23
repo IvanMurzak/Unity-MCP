@@ -23,15 +23,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Assets_Prefab
     {
         public const string AssetsPrefabOpenToolId = "assets-prefab-open";
-        [McpPluginTool
+        [AiTool
         (
             AssetsPrefabOpenToolId,
             Title = "Assets / Prefab / Open"
         )]
-        [McpPluginSkillDescription("Open the prefab edit stage for a prefab instance or prefab asset GameObject. " +
+        [AiSkillDescription("Open the prefab edit stage for a prefab instance or prefab asset GameObject. " +
             "Modifications inside the edit stage propagate to all instances. " +
             "Pair with '" + AssetsPrefabCloseToolId + "' to exit the stage when done.")]
-        [McpPluginSkillBody("Open prefab edit mode for a specific GameObject. " +
+        [AiSkillBody("Open prefab edit mode for a specific GameObject. " +
             "In the Edit mode you can modify the prefab. " +
             "The modification will be applied to all instances of the prefab across the project. " +
             "Note: Please use '" + AssetsPrefabCloseToolId + "' tool later to exit prefab editing mode.\n\n" +

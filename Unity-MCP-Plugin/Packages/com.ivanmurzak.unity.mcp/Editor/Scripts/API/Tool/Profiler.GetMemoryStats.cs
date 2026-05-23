@@ -19,7 +19,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Profiler
     {
         public const string ProfilerGetMemoryStatsToolId = "profiler-get-memory-stats";
-        [McpPluginTool
+        [AiTool
         (
             ProfilerGetMemoryStatsToolId,
             Title = "Profiler / Get Memory Stats",
@@ -27,8 +27,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             IdempotentHint = true,
             Enabled = false
         )]
-        [McpPluginSkillDescription("Return memory statistics snapshot from UnityEngine.Profiling.Profiler — reserved, allocated, mono heap, graphics, etc. (in MB).")]
-        [McpPluginSkillBody("Reads UnityEngine.Profiling.Profiler scalar memory counters and converts each from bytes to megabytes (`/1048576f`).\n\n" +
+        [AiSkillDescription("Return memory statistics snapshot from UnityEngine.Profiling.Profiler — reserved, allocated, mono heap, graphics, etc. (in MB).")]
+        [AiSkillBody("Reads UnityEngine.Profiling.Profiler scalar memory counters and converts each from bytes to megabytes (`/1048576f`).\n\n" +
             "## Fields\n\n" +
             "- `TotalReservedMemoryMB` — `GetTotalReservedMemoryLong()`.\n" +
             "- `TotalAllocatedMemoryMB` — `GetTotalAllocatedMemoryLong()`.\n" +

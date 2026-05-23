@@ -23,7 +23,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Skills
     {
         public const string SkillsCreateToolId = "unity-skill-create";
-        [McpPluginTool
+        [AiTool
         (
             SkillsCreateToolId,
             Title = "Skill (Tool) / Create",
@@ -31,19 +31,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Enabled = false,
             ToolType = McpToolType.System
         )]
-        [McpPluginSkillDescription("Create a new skill (MCP tool) for the Unity Editor by writing a C# (.cs) file " +
+        [AiSkillDescription("Create a new skill (MCP tool) for the Unity Editor by writing a C# (.cs) file " +
             "that Unity compiles into the project. After compilation the new tool becomes callable through MCP. " +
-            "The file must be a partial class decorated with [McpPluginToolType], each tool method must be " +
-            "decorated with [McpPluginTool], the class name should match the file name, all Unity API calls must " +
+            "The file must be a partial class decorated with [AiToolType], each tool method must be " +
+            "decorated with [AiTool], the class name should match the file name, all Unity API calls must " +
             "run via com.IvanMurzak.ReflectorNet.Utils.MainThread.Instance.Run(), and the method should either " +
             "return a structured data model (for parseable output) or void (for side-effect-only operations). " +
             "See the body of this skill for a full sample and best-practice notes.")]
-        [McpPluginSkillBody(SkillsCreateSkillBody)]
+        [AiSkillBody(SkillsCreateSkillBody)]
         [Description("Create a new skill using C# code. " +
             "It will be added into the project as a .cs file and compiled by Unity. " +
             "The skill will be available for use after compilation.\n" +
             "\n" +
-            "It must be a partial class decorated with [McpPluginToolType]. Each tool method must be decorated with [McpPluginTool]. " +
+            "It must be a partial class decorated with [AiToolType]. Each tool method must be decorated with [AiTool]. " +
             "The class name should match the file name. " +
             "All Unity API calls must use com.IvanMurzak.ReflectorNet.Utils.MainThread.Instance.Run(). " +
             "Return a data model for structured output, or void for side-effect-only operations. " +
@@ -61,10 +61,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "\n" +
             "namespace com.IvanMurzak.Unity.MCP.Editor.API\n" +
             "{\n" +
-            "    [McpPluginToolType]\n" +
+            "    [AiToolType]\n" +
             "    public partial class Tool_Sample\n" +
             "    {\n" +
-            "        [McpPluginTool(\"sample-get\", Title = \"Sample / Get\")]\n" +
+            "        [AiTool(\"sample-get\", Title = \"Sample / Get\")]\n" +
             "        [Description(\"Finds a GameObject and returns its ref data.\")]\n" +
             "        public GameObjectRef Get\n" +
             "        (\n" +
@@ -81,7 +81,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "            });\n" +
             "        }\n" +
             "\n" +
-            "        [McpPluginTool(\"sample-rename\", Title = \"Sample / Rename\")]\n" +
+            "        [AiTool(\"sample-rename\", Title = \"Sample / Rename\")]\n" +
             "        [Description(\"Renames a GameObject.\")]\n" +
             "        public void Rename\n" +
             "        (\n" +
@@ -160,7 +160,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "\n" +
             "namespace com.IvanMurzak.Unity.MCP.Editor.API\n" +
             "{\n" +
-            "    [McpPluginToolType]\n" +
+            "    [AiToolType]\n" +
             "    public partial class Tool_Sample\n" +
             "    {\n" +
             "        public ResponseCallValueTool<MyResult> MyTool(...)\n" +

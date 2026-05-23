@@ -30,9 +30,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     try { return assembly.GetTypes(); }
                     catch (ReflectionTypeLoadException) { return Array.Empty<Type>(); }
                 })
-                .Where(type => type.GetCustomAttribute<McpPluginToolTypeAttribute>() != null)
+                .Where(type => type.GetCustomAttribute<AiToolTypeAttribute>() != null)
                 .SelectMany(type => type.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static))
-                .Where(method => method.GetCustomAttribute<McpPluginToolAttribute>() != null)
+                .Where(method => method.GetCustomAttribute<AiToolAttribute>() != null)
                 .ToList();
 
             Assert.IsTrue(toolMethods.Count > 0, "Should find at least one MCP tool method");
@@ -43,7 +43,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 var parameters = method.GetParameters();
                 if (parameters.Length == 0)
                 {
-                    var attr = method.GetCustomAttribute<McpPluginToolAttribute>()!;
+                    var attr = method.GetCustomAttribute<AiToolAttribute>()!;
                     zeroParamTools.Add($"  - {attr.Name} ({method.DeclaringType?.Name}.{method.Name})");
                 }
             }

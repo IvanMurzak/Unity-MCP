@@ -24,17 +24,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Scene
     {
         public const string SceneGetDataToolId = "scene-get-data";
-        [McpPluginTool
+        [AiTool
         (
             SceneGetDataToolId,
             Title = "Scene / Get Data",
             ReadOnlyHint = true,
             IdempotentHint = true
         )]
-        [McpPluginSkillDescription("Retrieve the list of root GameObjects in the specified opened scene " +
+        [AiSkillDescription("Retrieve the list of root GameObjects in the specified opened scene " +
             "(or the active scene when `openedSceneName` is empty). Supports token-saving path-scoped reads over the " +
             "root-GameObjects array via `paths` or `viewQuery`. Use '" + SceneListOpenedToolId + "' to enumerate scenes.")]
-        [McpPluginSkillBody("This tool retrieves the list of root GameObjects in the specified scene. " +
+        [AiSkillBody("This tool retrieves the list of root GameObjects in the specified scene. " +
             "Use '" + SceneListOpenedToolId + "' tool to get the list of all opened scenes.\n\n" +
             "## Toggles (all default `false` to keep responses small)\n\n" +
             "- `includeRootGameObjects` — include root GameObjects in the scene data.\n" +

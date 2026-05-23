@@ -22,17 +22,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Editor
     {
         public const string EditorApplicationSetStateToolId = "editor-application-set-state";
-        [McpPluginTool
+        [AiTool
         (
             EditorApplicationSetStateToolId,
             Title = "Editor / Application / Set State",
             IdempotentHint = true,
             Enabled = false
         )]
-        [McpPluginSkillDescription("Start / stop / pause the Unity Editor 'playmode'. " +
+        [AiSkillDescription("Start / stop / pause the Unity Editor 'playmode'. " +
             "Use '" + EditorApplicationGetStateToolId + "' to inspect the current state first. " +
             "Throws if the project currently has compilation errors.")]
-        [McpPluginSkillBody("Control the Unity Editor application state. " +
+        [AiSkillBody("Control the Unity Editor application state. " +
             "You can start, stop, or pause the 'playmode'. " +
             "Use '" + EditorApplicationGetStateToolId + "' tool to get the current state first.\n\n" +
             "## Inputs\n\n" +

@@ -19,14 +19,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Profiler
     {
         public const string ProfilerEnableModuleToolId = "profiler-enable-module";
-        [McpPluginTool
+        [AiTool
         (
             ProfilerEnableModuleToolId,
             Title = "Profiler / Enable Module",
             Enabled = false
         )]
-        [McpPluginSkillDescription("Toggle the wrapper's local 'enabled' flag for a named profiler module. Bookkeeping only — Unity's runtime API does not expose direct module control; for real module visibility use the Profiler window.")]
-        [McpPluginSkillBody("Adds or removes the given module name from the wrapper's `EnabledModules` set. " +
+        [AiSkillDescription("Toggle the wrapper's local 'enabled' flag for a named profiler module. Bookkeeping only — Unity's runtime API does not expose direct module control; for real module visibility use the Profiler window.")]
+        [AiSkillBody("Adds or removes the given module name from the wrapper's `EnabledModules` set. " +
             "This is local bookkeeping consumed by `profiler-get-status` and `profiler-list-modules`; Unity's " +
             "runtime API does not allow programmatic toggling of Profiler-window modules from a built-in " +
             "namespace, so this tool intentionally does not pretend to.\n\n" +

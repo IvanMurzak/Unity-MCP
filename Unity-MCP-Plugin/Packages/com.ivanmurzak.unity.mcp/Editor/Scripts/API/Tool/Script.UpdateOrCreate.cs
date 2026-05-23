@@ -23,7 +23,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public static partial class Tool_Script
     {
         public const string ScriptUpdateOrCreateToolId = "script-update-or-create";
-        [McpPluginTool
+        [AiTool
         (
             ScriptUpdateOrCreateToolId,
             Title = "Script / Update or Create",
@@ -31,11 +31,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             OpenWorldHint = false,
             Enabled = false
         )]
-        [McpPluginSkillDescription("Write a `.cs` script file (create or overwrite) with the provided C# code. " +
+        [AiSkillDescription("Write a `.cs` script file (create or overwrite) with the provided C# code. " +
             "Validates syntax via Roslyn before write — invalid code is rejected with error details and the file is left " +
             "untouched. Refreshes the AssetDatabase and delivers the final result via `requestId` after Unity finishes " +
             "the triggered compilation. Use '" + ScriptReadToolId + "' to inspect existing content first.")]
-        [McpPluginSkillBody("Updates or creates script file with the provided C# code. " +
+        [AiSkillBody("Updates or creates script file with the provided C# code. " +
             "Does AssetDatabase.Refresh() at the end. " +
             "Provides compilation error details if the code has syntax errors. " +
             "Use '" + ScriptReadToolId + "' tool to read existing script files first.\n\n" +

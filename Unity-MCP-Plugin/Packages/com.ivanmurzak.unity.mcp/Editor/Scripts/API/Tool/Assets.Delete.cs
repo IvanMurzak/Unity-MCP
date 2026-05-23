@@ -24,17 +24,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Assets
     {
         public const string AssetsDeleteToolId = "assets-delete";
-        [McpPluginTool
+        [AiTool
         (
             AssetsDeleteToolId,
             Title = "Assets / Delete",
             DestructiveHint = true,
             Enabled = false
         )]
-        [McpPluginSkillDescription("Delete the assets at the given project paths. " +
+        [AiSkillDescription("Delete the assets at the given project paths. " +
             "Refreshes the AssetDatabase at the end. " +
             "Use '" + AssetsFindToolId + "' to locate the assets first.")]
-        [McpPluginSkillBody("Delete the assets at paths from the project. " +
+        [AiSkillBody("Delete the assets at paths from the project. " +
             "Does AssetDatabase.Refresh() at the end. " +
             "Use '" + AssetsFindToolId + "' tool to find assets before deleting.\n\n" +
             "## Inputs\n\n" +

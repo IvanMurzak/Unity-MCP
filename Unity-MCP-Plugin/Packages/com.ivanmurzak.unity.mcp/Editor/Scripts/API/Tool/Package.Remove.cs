@@ -23,18 +23,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Package
     {
         public const string PackageRemoveToolId = "package-remove";
-        [McpPluginTool
+        [AiTool
         (
             PackageRemoveToolId,
             Title = "Package Manager / Remove",
             DestructiveHint = true,
             Enabled = false
         )]
-        [McpPluginSkillDescription("Uninstall a UPM package from the Unity project. Modifies `manifest.json` and may " +
+        [AiSkillDescription("Uninstall a UPM package from the Unity project. Modifies `manifest.json` and may " +
             "trigger a domain reload — the final result is delivered after the reload via the request's `requestId`. " +
             "Built-in packages and packages that are dependencies of others cannot be removed. " +
             "Use '" + PackageListToolId + "' to list installed packages first.")]
-        [McpPluginSkillBody("Remove (uninstall) a package from the Unity project. " +
+        [AiSkillBody("Remove (uninstall) a package from the Unity project. " +
             "This removes the package from the project's manifest.json and triggers package resolution. " +
             "Note: Built-in packages and packages that are dependencies of other installed packages cannot be removed. " +
             "Note: Package removal may trigger a domain reload. The result will be sent after the reload completes. " +

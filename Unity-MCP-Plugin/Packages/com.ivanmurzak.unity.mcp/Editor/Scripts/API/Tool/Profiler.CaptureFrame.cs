@@ -19,15 +19,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Profiler
     {
         public const string ProfilerCaptureFrameToolId = "profiler-capture-frame";
-        [McpPluginTool
+        [AiTool
         (
             ProfilerCaptureFrameToolId,
             Title = "Profiler / Capture Frame",
             ReadOnlyHint = true,
             Enabled = false
         )]
-        [McpPluginSkillDescription("Capture the current frame's timing info (delta time, FPS, frame counts, runtime). Snapshot only — historical frames live in Unity's Profiler window.")]
-        [McpPluginSkillBody("Reads `UnityEngine.Time` fields and returns them in a single struct. " +
+        [AiSkillDescription("Capture the current frame's timing info (delta time, FPS, frame counts, runtime). Snapshot only — historical frames live in Unity's Profiler window.")]
+        [AiSkillBody("Reads `UnityEngine.Time` fields and returns them in a single struct. " +
             "This tool is intentionally a single-frame snapshot — Unity's runtime API does not expose historical " +
             "frame-data outside the Profiler window.\n\n" +
             "## Fields\n\n" +

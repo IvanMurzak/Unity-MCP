@@ -26,10 +26,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     using Consts = McpPlugin.Common.Consts;
 
-    [McpPluginResourceType]
+    [AiResourceType]
     public partial class Resource_GameObject
     {
-        [McpPluginResource
+        [AiResource
         (
             Name = "GameObject from Current Scene by Path",
             Route = "gameobject://currentScene/{path}",

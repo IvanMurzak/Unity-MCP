@@ -14,11 +14,11 @@ using com.IvanMurzak.McpPlugin;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
-    [McpPluginToolType]
+    [AiToolType]
     public partial class Tool_Ping
     {
         public const string PingToolId = "ping";
-        [McpPluginTool
+        [AiTool
         (
             PingToolId,
             Title = "Ping",
@@ -26,9 +26,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             IdempotentHint = true,
             ToolType = McpToolType.System
         )]
-        [McpPluginSkillDescription("Lightweight readiness probe. Returns the input `message` echoed back, or `'pong'` " +
+        [AiSkillDescription("Lightweight readiness probe. Returns the input `message` echoed back, or `'pong'` " +
             "when omitted. Useful for CLI health checks and SignalR connectivity smoke tests.")]
-        [McpPluginSkillBody("Lightweight readiness probe. Returns the input message or 'pong' if omitted.\n\n" +
+        [AiSkillBody("Lightweight readiness probe. Returns the input message or 'pong' if omitted.\n\n" +
             "## Inputs\n\n" +
             "- `message` (optional) — when present, echoed back verbatim.\n\n" +
             "## Behavior\n\n" +

@@ -20,14 +20,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Scene
     {
         public const string SceneCreateToolId = "scene-create";
-        [McpPluginTool
+        [AiTool
         (
             SceneCreateToolId,
             Title = "Scene / Create"
         )]
-        [McpPluginSkillDescription("Create a new Unity scene asset and save it at the given `.unity` path. " +
+        [AiSkillDescription("Create a new Unity scene asset and save it at the given `.unity` path. " +
             "Use '" + SceneListOpenedToolId + "' to inspect the resulting opened-scene set afterwards.")]
-        [McpPluginSkillBody("Create new scene in the project assets. " +
+        [AiSkillBody("Create new scene in the project assets. " +
             "Use '" + SceneListOpenedToolId + "' tool to list all opened scenes after creation.\n\n" +
             "## Inputs\n\n" +
             "- `path` — must end with `.unity`. Non-empty.\n" +
