@@ -27,10 +27,10 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
-    [McpPluginToolType]
+    [AiToolType]
     public partial class Tool_Sample
     {
-        [McpPluginTool(""sample-get"", Title = ""Sample / Get"")]
+        [AiTool(""sample-get"", Title = ""Sample / Get"")]
         [Description(""Finds a GameObject and returns its ref data."")]
         public GameObjectRef Get
         (
@@ -47,7 +47,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             });
         }
 
-        [McpPluginTool(""sample-rename"", Title = ""Sample / Rename"")]
+        [AiTool(""sample-rename"", Title = ""Sample / Rename"")]
         [Description(""Renames a GameObject."")]
         public void Rename
         (
@@ -113,7 +113,7 @@ using AIGD;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
-    [McpPluginToolType]
+    [AiToolType]
     public partial class Tool_Sample
     {
         public ResponseCallValueTool<MyResult> MyTool(...)

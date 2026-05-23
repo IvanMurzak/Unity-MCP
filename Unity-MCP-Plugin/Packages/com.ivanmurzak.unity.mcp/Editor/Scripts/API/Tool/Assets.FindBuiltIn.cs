@@ -25,17 +25,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Assets
     {
         public const string AssetsFindBuiltInToolId = "assets-find-built-in";
-        [McpPluginTool
+        [AiTool
         (
             AssetsFindBuiltInToolId,
             Title = "Assets / Find (Built-in)",
             ReadOnlyHint = true,
             IdempotentHint = true
         )]
-        [McpPluginSkillDescription("Search the built-in assets of the Unity Editor (located at " +
+        [AiSkillDescription("Search the built-in assets of the Unity Editor (located at " +
             ExtensionsRuntimeObject.UnityEditorBuiltInResourcesPath + "). " +
             "Filters by name and/or type; built-in assets have no GUID so GUID-based lookups are not supported.")]
-        [McpPluginSkillBody("Search the built-in assets of the Unity Editor located in the built-in resources: " +
+        [AiSkillBody("Search the built-in assets of the Unity Editor located in the built-in resources: " +
             ExtensionsRuntimeObject.UnityEditorBuiltInResourcesPath + ". " +
             "Doesn't support GUIDs since built-in assets do not have them.\n\n" +
             "## Inputs\n\n" +

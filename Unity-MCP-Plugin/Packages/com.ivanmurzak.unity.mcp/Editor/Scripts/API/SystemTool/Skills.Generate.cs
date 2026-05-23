@@ -21,7 +21,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Skills
     {
         public const string SkillsGenerateToolId = "unity-skill-generate";
-        [McpPluginTool
+        [AiTool
         (
             SkillsGenerateToolId,
             Title = "Skill (Tool) / Generate All",
@@ -29,10 +29,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Enabled = false,
             ToolType = McpToolType.System
         )]
-        [McpPluginSkillDescription("Regenerate every `SKILL.md` from the project's currently-registered MCP tools into " +
+        [AiSkillDescription("Regenerate every `SKILL.md` from the project's currently-registered MCP tools into " +
             "the configured skills folder (or a project-relative override path). " +
-            "Writes the YAML `description:` from `[McpPluginSkillDescription]` and the body from `[McpPluginSkillBody]`.")]
-        [McpPluginSkillBody("Generate all skills from the existed Tools in the Unity Project.\n\n" +
+            "Writes the YAML `description:` from `[AiSkillDescription]` and the body from `[AiSkillBody]`.")]
+        [AiSkillBody("Generate all skills from the existed Tools in the Unity Project.\n\n" +
             "## Inputs\n\n" +
             "- `path` (optional) — project-relative skills folder (e.g. `.claude/skills`). Absolute paths and `..` " +
             "traversal segments are rejected. When null/empty, the editor's configured `SkillsRootFolderAbsolutePath` " +

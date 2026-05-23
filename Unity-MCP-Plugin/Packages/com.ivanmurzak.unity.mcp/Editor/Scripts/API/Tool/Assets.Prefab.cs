@@ -14,7 +14,7 @@ using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
-    [McpPluginToolType]
+    [AiToolType]
     public partial class Tool_Assets_Prefab
     {
         public static class Error

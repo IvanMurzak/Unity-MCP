@@ -30,18 +30,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         public const string AssetsShaderGetDataToolId = "assets-shader-get-data";
 
-        [McpPluginTool
+        [AiTool
         (
             AssetsShaderGetDataToolId,
             Title = "Assets / Shader / Get Data",
             ReadOnlyHint = true,
             IdempotentHint = true
         )]
-        [McpPluginSkillDescription("Get detailed data about a shader asset — properties, subshaders, passes, " +
+        [AiSkillDescription("Get detailed data about a shader asset — properties, subshaders, passes, " +
             "compilation messages, and supported status. Supports token-saving path-scoped reads via `paths` or " +
             "`viewQuery`. Use '" + Tool_Assets.AssetsFindToolId + "' with `t:Shader` or '" +
             AssetsShaderListAllToolId + "' to locate the shader first.")]
-        [McpPluginSkillBody("Get detailed data about a shader asset in the Unity project. " +
+        [AiSkillBody("Get detailed data about a shader asset in the Unity project. " +
             "Returns shader properties, subshaders, passes, compilation errors, and supported status. " +
             "Use '" + Tool_Assets.AssetsFindToolId + "' tool with filter 't:Shader' to find shaders, " +
             "or '" + AssetsShaderListAllToolId + "' tool to list all shader names.\n\n" +

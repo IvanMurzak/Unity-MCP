@@ -20,7 +20,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public static partial class Tool_Script
     {
         public const string ScriptReadToolId = "script-read";
-        [McpPluginTool
+        [AiTool
         (
             ScriptReadToolId,
             Title = "Script / Read",
@@ -28,10 +28,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             IdempotentHint = true,
             Enabled = false
         )]
-        [McpPluginSkillDescription("Read a `.cs` script file and return its content as a string. " +
+        [AiSkillDescription("Read a `.cs` script file and return its content as a string. " +
             "Supports a 1-based `lineFrom`/`lineTo` slice for partial reads. " +
             "Pair with '" + ScriptUpdateOrCreateToolId + "' to write back.")]
-        [McpPluginSkillBody("Reads the content of a script file and returns it as a string. " +
+        [AiSkillBody("Reads the content of a script file and returns it as a string. " +
             "Use '" + ScriptUpdateOrCreateToolId + "' tool to update or create script files.\n\n" +
             "## Inputs\n\n" +
             "- `filePath` — required `.cs` path. Throws if missing on disk.\n" +

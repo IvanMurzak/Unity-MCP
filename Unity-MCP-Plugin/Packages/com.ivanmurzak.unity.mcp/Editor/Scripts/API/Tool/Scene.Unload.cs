@@ -26,15 +26,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Scene
     {
         public const string SceneUnloadToolId = "scene-unload";
-        [McpPluginTool
+        [AiTool
         (
             SceneUnloadToolId,
             Title = "Scene / Unload"
         )]
-        [McpPluginSkillDescription("Unload an opened scene from the Unity Editor (asynchronously via " +
+        [AiSkillDescription("Unload an opened scene from the Unity Editor (asynchronously via " +
             "`SceneManager.UnloadSceneAsync`). " +
             "Use '" + SceneListOpenedToolId + "' to find the scene name first.")]
-        [McpPluginSkillBody("Unload scene from the Opened scenes in Unity Editor. " +
+        [AiSkillBody("Unload scene from the Opened scenes in Unity Editor. " +
             "Use '" + SceneListOpenedToolId + "' tool to get the list of all opened scenes.\n\n" +
             "## Inputs\n\n" +
             "- `name` — required non-empty scene name. Must match an opened scene; otherwise throws.\n\n" +

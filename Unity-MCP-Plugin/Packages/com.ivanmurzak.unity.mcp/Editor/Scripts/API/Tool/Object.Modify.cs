@@ -26,16 +26,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Object
     {
         public const string ObjectModifyToolId = "object-modify";
-        [McpPluginTool
+        [AiTool
         (
             ObjectModifyToolId,
             Title = "Object / Modify",
             IdempotentHint = true
         )]
-        [McpPluginSkillDescription("Modify a Unity `UnityEngine.Object`'s serializable fields/properties. " +
+        [AiSkillDescription("Modify a Unity `UnityEngine.Object`'s serializable fields/properties. " +
             "Three modification surfaces are available (`objectDiff`, `pathPatches`, `jsonPatch`) — see the skill body. " +
             "Use '" + ObjectGetDataToolId + "' first to inspect the object structure.")]
-        [McpPluginSkillBody("Modify the specified Unity Object. " +
+        [AiSkillBody("Modify the specified Unity Object. " +
             "Allows direct modification of object fields and properties. " +
             "Use '" + ObjectGetDataToolId + "' first to inspect the object structure before modifying.\n\n" +
             "## Three modification surfaces\n\n" +

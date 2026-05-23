@@ -23,16 +23,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Assets
     {
         public const string AssetsMoveToolId = "assets-move";
-        [McpPluginTool
+        [AiTool
         (
             AssetsMoveToolId,
             Title = "Assets / Move",
             Enabled = false
         )]
-        [McpPluginSkillDescription("Move or rename assets at the given project paths. " +
+        [AiSkillDescription("Move or rename assets at the given project paths. " +
             "Refreshes the AssetDatabase at the end. " +
             "Use '" + AssetsFindToolId + "' to locate the assets first.")]
-        [McpPluginSkillBody("Move the assets at paths in the project. " +
+        [AiSkillBody("Move the assets at paths in the project. " +
             "Should be used for asset rename. " +
             "Does AssetDatabase.Refresh() at the end. " +
             "Use '" + AssetsFindToolId + "' tool to find assets before moving.\n\n" +

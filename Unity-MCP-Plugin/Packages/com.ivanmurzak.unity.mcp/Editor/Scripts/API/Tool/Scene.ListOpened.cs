@@ -20,16 +20,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Scene
     {
         public const string SceneListOpenedToolId = "scene-list-opened";
-        [McpPluginTool
+        [AiTool
         (
             SceneListOpenedToolId,
             Title = "Scene / List Opened",
             ReadOnlyHint = true,
             IdempotentHint = true
         )]
-        [McpPluginSkillDescription("List every scene currently opened in the Unity Editor as a shallow snapshot " +
+        [AiSkillDescription("List every scene currently opened in the Unity Editor as a shallow snapshot " +
             "(name, path, build flags). Use '" + SceneGetDataToolId + "' for the deep view of a specific scene.")]
-        [McpPluginSkillBody("Returns the list of currently opened scenes in Unity Editor. " +
+        [AiSkillBody("Returns the list of currently opened scenes in Unity Editor. " +
             "Use '" + SceneGetDataToolId + "' tool to get detailed information about a specific scene.\n\n" +
             "## Behavior\n\n" +
             "Maps `OpenedScenes` through `ToSceneDataShallow()` on the main thread and returns the resulting array. " +

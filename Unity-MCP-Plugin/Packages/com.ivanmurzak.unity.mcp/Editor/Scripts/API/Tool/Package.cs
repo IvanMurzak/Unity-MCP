@@ -14,7 +14,7 @@ using com.IvanMurzak.McpPlugin;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
-    [McpPluginToolType]
+    [AiToolType]
     public partial class Tool_Package
     {
         public static class Error
