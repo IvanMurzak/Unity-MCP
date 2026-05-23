@@ -1,0 +1,22 @@
+.github/workflows/release.yml
+  s_e30159354ab104::t_5f95ad42607d4e 442,457
+  s_e30159354ab104::t_806e7cbac3e084 415
+docs/openupm-signing.md
+  s_e30159354ab104::t_43a039d8001493 96-100
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "c39258c9164543666e545bf9395557408bf42ddc",
+  "prompts": {},
+  "sessions": {
+    "s_e30159354ab104": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f53185a5-f95d-4b3d-91af-dff62c4c25e8",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
