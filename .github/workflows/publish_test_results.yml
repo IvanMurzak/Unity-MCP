@@ -41,6 +41,14 @@ jobs:
           event_file: artifacts/Event File/event.json
           event_name: ${{ github.event.workflow_run.event }}
           files: artifacts/Test results for */**/*.xml
-          comment_mode: changes in failures
-          root_log_level: DEBUG
-          log_level: DEBUG
+          comment_mode: failures
+          # Disable build-over-build comparison: it triggers a paginated GET on
+          # /repos/{owner}/{repo}/commits/{before_sha}/check-runs that
+          # intermittently returns 401 ("Bad credentials") even with valid
+          # GITHUB_TOKEN + correct permissions. The first probe call with
+          # per_page=1 succeeds; the immediately following per_page=100 fetch
+          # 401s on the same URL with the same token. Disabling compare_to_
+          # earlier_commit skips the problematic call entirely. The previous
+          # comment_mode 'changes in failures' depended on this comparison,
+          # so it's been simplified to 'failures' (always comment on failures).
+          compare_to_earlier_commit: false
