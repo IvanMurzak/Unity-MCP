@@ -444,11 +444,21 @@ jobs:
           fi
 
           archive="${archives[0]}"
-          tar -tzf "$archive" | grep -qx 'package/package.json'
-          tar -tzf "$archive" | grep -qx 'package/.attestation.p7m'
+          archive_basename="$(basename "$archive")"
+          # OpenUPM consumes the asset via the `githubReleaseAssetName: 'com.ivanmurzak.unity.mcp-'`
+          # prefix documented in docs/openupm-signing.md. Enforce the contract here so a future
+          # `upm pack` naming change fails CI loudly instead of silently breaking OpenUPM pickup.
+          if [[ "$archive_basename" != com.ivanmurzak.unity.mcp-* ]]; then
+            printf 'Signed archive basename %q does not begin with the OpenUPM-expected prefix com.ivanmurzak.unity.mcp- (see docs/openupm-signing.md)\n' "$archive_basename" >&2
+            exit 1
+          fi
+
+          archive_entries="$(tar -tzf "$archive")"
+          grep -qx 'package/package.json'      <<<"$archive_entries"
+          grep -qx 'package/.attestation.p7m'  <<<"$archive_entries"
 
           echo "PACKAGE_ARCHIVE=$archive" >> "$GITHUB_ENV"
-          printf 'Signed archive: %s\n' "$(basename "$archive")"
+          printf 'Signed archive: %s\n' "$archive_basename"
           tar -xOzf "$archive" package/package.json | jq '{name, version}'
 
       - name: Attach signed package to release
