@@ -26,17 +26,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_GameObject
     {
         public const string GameObjectComponentModifyToolId = "gameobject-component-modify";
-        [McpPluginTool
+        [AiTool
         (
             GameObjectComponentModifyToolId,
             Title = "GameObject / Component / Modify",
             IdempotentHint = true
         )]
-        [McpPluginSkillDescription("Modify a specific Component on a GameObject in opened Prefab or in a Scene. " +
+        [AiSkillDescription("Modify a specific Component on a GameObject in opened Prefab or in a Scene. " +
             "Allows direct modification of component fields and properties without wrapping in GameObject structure. " +
             "Use '" + GameObjectComponentGetToolId + "' first to inspect the component structure before modifying. " +
             "Three modification surfaces are available (componentDiff, pathPatches, jsonPatch) — see the skill body for details.")]
-        [McpPluginSkillBody(
+        [AiSkillBody(
             "## Three modification surfaces\n\n" +
             "Use whichever fits the task:\n\n" +
             "1. `componentDiff` — full `SerializedMember` diff (legacy, backwards compatible).\n" +

@@ -21,7 +21,7 @@ using Microsoft.Extensions.Logging;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
-    [McpPluginToolType]
+    [AiToolType]
     public partial class Tool_GameObject
     {
         public static class Error

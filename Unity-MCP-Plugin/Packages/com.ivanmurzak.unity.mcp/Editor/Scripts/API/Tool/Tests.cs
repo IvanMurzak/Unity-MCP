@@ -25,7 +25,7 @@ using UnityEngine.SceneManagement;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
-    [McpPluginToolType]
+    [AiToolType]
     [InitializeOnLoad]
     public static partial class Tool_Tests
     {

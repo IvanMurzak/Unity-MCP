@@ -22,18 +22,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Package
     {
         public const string PackageAddToolId = "package-add";
-        [McpPluginTool
+        [AiTool
         (
             PackageAddToolId,
             Title = "Package Manager / Add",
             OpenWorldHint = true,
             Enabled = false
         )]
-        [McpPluginSkillDescription("Install a Unity package from the registry, a Git URL, or a local path. " +
+        [AiSkillDescription("Install a Unity package from the registry, a Git URL, or a local path. " +
             "Modifies `manifest.json` and triggers package resolution; may also trigger a domain reload — the final " +
             "result is delivered after the reload via the request's `requestId`. " +
             "Use '" + PackageSearchToolId + "' / '" + PackageListToolId + "' for discovery first.")]
-        [McpPluginSkillBody("Install a package from the Unity Package Manager registry, Git URL, or local path. " +
+        [AiSkillBody("Install a package from the Unity Package Manager registry, Git URL, or local path. " +
             "This operation modifies the project's manifest.json and triggers package resolution. " +
             "Note: Package installation may trigger a domain reload. The result will be sent after the reload completes. " +
             "Use '" + PackageSearchToolId + "' tool to search for packages and '" + PackageListToolId + "' to list installed packages.\n\n" +

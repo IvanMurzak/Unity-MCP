@@ -14,12 +14,12 @@ using com.IvanMurzak.McpPlugin;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
-    [McpPluginSkillType]
+    [AiSkillType]
     public static class Skill_InitialSetup
     {
         public const string SkillId = "unity-initial-setup";
 
-        [McpPluginSkill(SkillId,
+        [AiSkill(SkillId,
 @"Provides an initial setup for AI Skills, `unity-mcp-cli` command line tool installation
 and everything else that is helpful to set up at the start of the project. Essential packages,
 and basic configurations.")]

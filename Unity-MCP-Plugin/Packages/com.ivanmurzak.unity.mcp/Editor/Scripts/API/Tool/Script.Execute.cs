@@ -28,15 +28,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public static partial class Tool_Script
     {
         public const string ScriptExecuteToolId = "script-execute";
-        [McpPluginTool
+        [AiTool
         (
             ScriptExecuteToolId,
             Title = "Script / Execute",
             OpenWorldHint = true
         )]
-        [McpPluginSkillDescription("Compiles and executes C# code dynamically using Roslyn. " +
+        [AiSkillDescription("Compiles and executes C# code dynamically using Roslyn. " +
             "Supports a full-code mode (default) and a body-only mode — see the skill body for the difference and for how to pass Unity object references as parameters.")]
-        [McpPluginSkillBody(
+        [AiSkillBody(
             "## Modes\n\n" +
             "- **Full code mode** (default, `isMethodBody=false`): the `csharpCode` argument must define a complete class with a static method (no top-level statements).\n" +
             "- **Body-only mode** (`isMethodBody=true`): provide only the method body statements. The tool auto-generates the usings, class, and method header.\n\n" +

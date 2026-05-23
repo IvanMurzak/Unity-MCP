@@ -27,17 +27,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             .Where(type => typeof(UnityEngine.Component).IsAssignableFrom(type) && !type.IsAbstract);
 
         public const string ComponentListToolId = "gameobject-component-list-all";
-        [McpPluginTool
+        [AiTool
         (
             ComponentListToolId,
             Title = "GameObject / Component / List All",
             ReadOnlyHint = true,
             IdempotentHint = true
         )]
-        [McpPluginSkillDescription("List the fully-qualified C# type names of every concrete `UnityEngine.Component` " +
+        [AiSkillDescription("List the fully-qualified C# type names of every concrete `UnityEngine.Component` " +
             "subclass available in the project. Paginated (default 5/page, max 500). " +
             "Use this to find a valid `componentName` for '" + GameObjectComponentAddToolId + "'.")]
-        [McpPluginSkillBody("List C# class names extended from UnityEngine.Component. " +
+        [AiSkillBody("List C# class names extended from UnityEngine.Component. " +
             "Use this to find component type names for '" + GameObjectComponentAddToolId + "' tool. " +
             "Results are paginated to avoid overwhelming responses.\n\n" +
             "## Inputs\n\n" +

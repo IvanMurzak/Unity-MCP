@@ -19,15 +19,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Profiler
     {
         public const string ProfilerStopToolId = "profiler-stop";
-        [McpPluginTool
+        [AiTool
         (
             ProfilerStopToolId,
             Title = "Profiler / Stop",
             IdempotentHint = true,
             Enabled = false
         )]
-        [McpPluginSkillDescription("Disable Unity's runtime profiler. Idempotent — calling when already disabled returns the current disabled state.")]
-        [McpPluginSkillBody("Sets `UnityEngine.Profiling.Profiler.enabled = false`. Returns the post-call value of `Profiler.enabled` " +
+        [AiSkillDescription("Disable Unity's runtime profiler. Idempotent — calling when already disabled returns the current disabled state.")]
+        [AiSkillBody("Sets `UnityEngine.Profiling.Profiler.enabled = false`. Returns the post-call value of `Profiler.enabled` " +
             "(expected `false`).\n\n" +
             "## Behavior\n\n" +
             "Uses only built-in Unity APIs (`UnityEngine.Profiling`). No external Unity package is required.")]

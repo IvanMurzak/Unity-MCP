@@ -23,15 +23,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Editor_Selection
     {
         public const string EditorSelectionSetToolId = "editor-selection-set";
-        [McpPluginTool
+        [AiTool
         (
             EditorSelectionSetToolId,
             Title = "Editor / Selection / Set",
             IdempotentHint = true,
             Enabled = false
         )]
-        [McpPluginSkillDescription(SetSkill.Description)]
-        [McpPluginSkillBody(SetSkill.Body)]
+        [AiSkillDescription(SetSkill.Description)]
+        [AiSkillBody(SetSkill.Body)]
         [Description("Set the current Selection in the Unity Editor to the provided objects. " +
             "Use '" + EditorSelectionGetToolId + "' tool to get the current selection first.")]
         public SelectionData Set(ObjectRef[] select)

@@ -26,17 +26,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Assets
     {
         public const string AssetsGetDataToolId = "assets-get-data";
-        [McpPluginTool
+        [AiTool
         (
             AssetsGetDataToolId,
             Title = "Assets / Get Data",
             ReadOnlyHint = true,
             IdempotentHint = true
         )]
-        [McpPluginSkillDescription("Get asset data from the asset file in the Unity project — every serializable " +
+        [AiSkillDescription("Get asset data from the asset file in the Unity project — every serializable " +
             "field and property. Supports token-saving path-scoped reads via `paths` or `viewQuery`. " +
             "Use '" + AssetsFindToolId + "' to find the asset first.")]
-        [McpPluginSkillBody("Get asset data from the asset file in the Unity project. " +
+        [AiSkillBody("Get asset data from the asset file in the Unity project. " +
             "It includes all serializable fields and properties of the asset. " +
             "Use '" + AssetsFindToolId + "' tool to find asset before using this tool.\n\n" +
             "## Path-scoped reads (token-saving)\n\n" +

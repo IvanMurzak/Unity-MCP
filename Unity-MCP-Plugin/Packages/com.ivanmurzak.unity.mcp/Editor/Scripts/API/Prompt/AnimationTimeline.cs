@@ -15,59 +15,59 @@ using com.IvanMurzak.McpPlugin.Common.Model;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
-    [McpPluginPromptType]
+    [AiPromptType]
     public partial class Prompt_AnimationTimeline
     {
-        [McpPluginPrompt(Name = "setup-animator-controller", Role = Role.User, Enabled = false)]
+        [AiPrompt(Name = "setup-animator-controller", Role = Role.User, Enabled = false)]
         [Description("Create Animator Controller with state machine for character or object animation.")]
         public string SetupAnimatorController()
         {
             return "Create Animator Controller with basic state machine, setup animation states, transitions, parameters, and blend trees for character or object animation.";
         }
 
-        [McpPluginPrompt(Name = "create-simple-tweening", Role = Role.User, Enabled = false)]
+        [AiPrompt(Name = "create-simple-tweening", Role = Role.User, Enabled = false)]
         [Description("Add simple tweening animations for UI elements or object movements.")]
         public string CreateSimpleTweening()
         {
             return "Create simple tweening animations using Animation curves, Coroutines, or tweening libraries like DOTween for smooth object movements and UI transitions.";
         }
 
-        [McpPluginPrompt(Name = "setup-timeline-sequence", Role = Role.User, Enabled = false)]
+        [AiPrompt(Name = "setup-timeline-sequence", Role = Role.User, Enabled = false)]
         [Description("Create Timeline sequence for cinematic scenes or complex gameplay sequences.")]
         public string SetupTimelineSequence()
         {
             return "Create Timeline asset with multiple tracks, setup Animation, Audio, and Activation tracks for cinematic sequences or complex gameplay events.";
         }
 
-        [McpPluginPrompt(Name = "add-animation-events", Role = Role.User, Enabled = false)]
+        [AiPrompt(Name = "add-animation-events", Role = Role.User, Enabled = false)]
         [Description("Add animation events to trigger code execution at specific animation frames.")]
         public string AddAnimationEvents()
         {
             return "Add Animation Events to animation clips, create event handler methods, and setup communication between animation system and game logic.";
         }
 
-        [McpPluginPrompt(Name = "create-procedural-animation", Role = Role.User, Enabled = false)]
+        [AiPrompt(Name = "create-procedural-animation", Role = Role.User, Enabled = false)]
         [Description("Implement procedural animation systems for dynamic object movement.")]
         public string CreateProceduralAnimation()
         {
             return "Create procedural animation systems using code-driven movement, physics-based animation, or mathematical functions for dynamic object behavior.";
         }
 
-        [McpPluginPrompt(Name = "setup-sprite-animation", Role = Role.User, Enabled = false)]
+        [AiPrompt(Name = "setup-sprite-animation", Role = Role.User, Enabled = false)]
         [Description("Create 2D sprite animations with proper frame timing and looping.")]
         public string SetupSpriteAnimation()
         {
             return "Create 2D sprite animations using Animation window, setup sprite sequences, configure frame timing, looping, and animation events for 2D characters.";
         }
 
-        [McpPluginPrompt(Name = "add-ik-system", Role = Role.User, Enabled = false)]
+        [AiPrompt(Name = "add-ik-system", Role = Role.User, Enabled = false)]
         [Description("Implement Inverse Kinematics (IK) system for realistic character poses.")]
         public string AddIKSystem()
         {
             return "Setup IK system using Unity's built-in IK or custom IK solutions for realistic character posing, foot placement, and hand interactions.";
         }
 
-        [McpPluginPrompt(Name = "create-animation-blending", Role = Role.User, Enabled = false)]
+        [AiPrompt(Name = "create-animation-blending", Role = Role.User, Enabled = false)]
         [Description("Setup animation blending and layering for complex character animations.")]
         public string CreateAnimationBlending()
         {

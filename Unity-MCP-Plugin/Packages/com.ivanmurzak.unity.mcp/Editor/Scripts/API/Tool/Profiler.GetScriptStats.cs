@@ -21,7 +21,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Profiler
     {
         public const string ProfilerGetScriptStatsToolId = "profiler-get-script-stats";
-        [McpPluginTool
+        [AiTool
         (
             ProfilerGetScriptStatsToolId,
             Title = "Profiler / Get Script Stats",
@@ -29,8 +29,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             IdempotentHint = true,
             Enabled = false
         )]
-        [McpPluginSkillDescription("Return script execution timing (frame time, fixed dt, time scale, frame count, runtime) plus Mono / GC memory usage in MB.")]
-        [McpPluginSkillBody("Snapshots fields from `UnityEngine.Time`, `UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong()` and " +
+        [AiSkillDescription("Return script execution timing (frame time, fixed dt, time scale, frame count, runtime) plus Mono / GC memory usage in MB.")]
+        [AiSkillBody("Snapshots fields from `UnityEngine.Time`, `UnityEngine.Profiling.Profiler.GetMonoUsedSizeLong()` and " +
             "`System.GC.GetTotalMemory(false)`. All values are produced by built-in Unity APIs.\n\n" +
             "## Fields\n\n" +
             "- `FrameTimeMs` — `Time.deltaTime * 1000f`.\n" +

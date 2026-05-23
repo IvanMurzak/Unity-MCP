@@ -19,7 +19,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Editor
     {
         public const string EditorApplicationGetStateToolId = "editor-application-get-state";
-        [McpPluginTool
+        [AiTool
         (
             EditorApplicationGetStateToolId,
             Title = "Editor / Application / Get State",
@@ -27,9 +27,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             IdempotentHint = true,
             Enabled = false
         )]
-        [McpPluginSkillDescription("Return the current state of `UnityEditor.EditorApplication` — playmode, " +
+        [AiSkillDescription("Return the current state of `UnityEditor.EditorApplication` — playmode, " +
             "paused state, compilation state, and related flags.")]
-        [McpPluginSkillBody("Returns available information about 'UnityEditor.EditorApplication'. " +
+        [AiSkillBody("Returns available information about 'UnityEditor.EditorApplication'. " +
             "Use it to get information about the current state of the Unity Editor application. " +
             "Such as: playmode, paused state, compilation state, etc.\n\n" +
             "## Behavior\n\n" +

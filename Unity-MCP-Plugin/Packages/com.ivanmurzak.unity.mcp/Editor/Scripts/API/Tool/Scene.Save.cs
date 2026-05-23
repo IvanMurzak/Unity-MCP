@@ -22,16 +22,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Scene
     {
         public const string SceneSaveToolId = "scene-save";
-        [McpPluginTool
+        [AiTool
         (
             SceneSaveToolId,
             Title = "Scene / Save",
             IdempotentHint = true
         )]
-        [McpPluginSkillDescription("Save an opened scene back to its asset file (or to a new path when `path` is " +
+        [AiSkillDescription("Save an opened scene back to its asset file (or to a new path when `path` is " +
             "provided). When `openedSceneName` is empty, saves the currently active scene. " +
             "Use '" + SceneListOpenedToolId + "' to find the scene name first.")]
-        [McpPluginSkillBody("Save Opened scene to the asset file. " +
+        [AiSkillBody("Save Opened scene to the asset file. " +
             "Use '" + SceneListOpenedToolId + "' tool to get the list of all opened scenes.\n\n" +
             "## Inputs\n\n" +
             "- `openedSceneName` (optional) — name of an opened scene to save. Empty/null = active scene.\n" +

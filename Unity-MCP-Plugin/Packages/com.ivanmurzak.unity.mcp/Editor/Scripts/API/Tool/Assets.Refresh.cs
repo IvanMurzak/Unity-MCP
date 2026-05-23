@@ -22,16 +22,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Assets
     {
         public const string AssetsRefreshToolId = "assets-refresh";
-        [McpPluginTool
+        [AiTool
         (
             AssetsRefreshToolId,
             Title = "Assets / Refresh",
             IdempotentHint = true
         )]
-        [McpPluginSkillDescription("Refresh the Unity AssetDatabase. " +
+        [AiSkillDescription("Refresh the Unity AssetDatabase. " +
             "Use after files were added or updated outside of the Unity API, or to force script recompilation " +
             "when a '.cs' file changed. Returns a processing/success response and waits for compilation when triggered.")]
-        [McpPluginSkillBody("Refreshes the AssetDatabase. " +
+        [AiSkillBody("Refreshes the AssetDatabase. " +
             "Use it if any file was added or updated in the project outside of Unity API. " +
             "Use it if need to force scripts recompilation when '.cs' file changed.\n\n" +
             "## Inputs\n\n" +

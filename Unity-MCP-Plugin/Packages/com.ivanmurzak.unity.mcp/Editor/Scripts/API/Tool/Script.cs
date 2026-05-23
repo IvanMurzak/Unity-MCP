@@ -18,7 +18,7 @@ using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
-    [McpPluginToolType]
+    [AiToolType]
     [InitializeOnLoad]
     public static partial class Tool_Script
     {

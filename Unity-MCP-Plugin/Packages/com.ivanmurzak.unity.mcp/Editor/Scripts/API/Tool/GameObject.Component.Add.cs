@@ -23,16 +23,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_GameObject
     {
         public const string GameObjectComponentAddToolId = "gameobject-component-add";
-        [McpPluginTool
+        [AiTool
         (
             GameObjectComponentAddToolId,
             Title = "GameObject / Component / Add"
         )]
-        [McpPluginSkillDescription("Add one or more Components to a GameObject in the opened Prefab or active Scene. " +
+        [AiSkillDescription("Add one or more Components to a GameObject in the opened Prefab or active Scene. " +
             "Component types are looked up by full name (with namespace) or by class-name fallback. " +
             "Use '" + GameObjectFindToolId + "' to locate the host GameObject and '" + ComponentListToolId +
             "' to discover valid component type names.")]
-        [McpPluginSkillBody("Add Component to GameObject in opened Prefab or in a Scene. " +
+        [AiSkillBody("Add Component to GameObject in opened Prefab or in a Scene. " +
             "Use '" + GameObjectFindToolId + "' tool to find the target GameObject first. " +
             "Use '" + ComponentListToolId + "' tool to find the component type names to add.\n\n" +
             "## Inputs\n\n" +

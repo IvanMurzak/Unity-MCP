@@ -23,8 +23,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
     public class CallToolExecutor : LazyNodeExecutor
     {
         public CallToolExecutor(MethodInfo toolMethod, string json, Reflector? reflector = null) : this(
-            toolName: toolMethod.GetCustomAttribute<McpPluginToolAttribute>()?.Name
-                ?? throw new ArgumentException("Tool method must have a McpPluginTool attribute."),
+            toolName: toolMethod.GetCustomAttribute<AiToolAttribute>()?.Name
+                ?? throw new ArgumentException("Tool method must have an AiTool attribute."),
             json: json,
             reflector: reflector)
         {

@@ -22,17 +22,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_GameObject
     {
         public const string GameObjectComponentDestroyToolId = "gameobject-component-destroy";
-        [McpPluginTool
+        [AiTool
         (
             GameObjectComponentDestroyToolId,
             Title = "GameObject / Component / Destroy",
             DestructiveHint = true
         )]
-        [McpPluginSkillDescription("Destroy one or more Components from a target GameObject. Missing (null) components " +
+        [AiSkillDescription("Destroy one or more Components from a target GameObject. Missing (null) components " +
             "are skipped — they cannot be destroyed. " +
             "Use '" + GameObjectFindToolId + "' and '" + GameObjectComponentGetToolId +
             "' to identify the components first.")]
-        [McpPluginSkillBody("Destroy one or many components from target GameObject. Can't destroy missed components. " +
+        [AiSkillBody("Destroy one or many components from target GameObject. Can't destroy missed components. " +
             "Use '" + GameObjectFindToolId + "' tool to find the target GameObject and '" + GameObjectComponentGetToolId + "' to get component details first.\n\n" +
             "## Inputs\n\n" +
             "- `gameObjectRef` — the host GameObject.\n" +

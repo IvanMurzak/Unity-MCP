@@ -20,7 +20,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Profiler
     {
         public const string ProfilerGetStatusToolId = "profiler-get-status";
-        [McpPluginTool
+        [AiTool
         (
             ProfilerGetStatusToolId,
             Title = "Profiler / Get Status",
@@ -28,8 +28,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             IdempotentHint = true,
             Enabled = false
         )]
-        [McpPluginSkillDescription("Return the Unity profiler's current enabled state, active modules, max-used memory, and platform support flag. Read-only.")]
-        [McpPluginSkillBody("Snapshots `UnityEngine.Profiling.Profiler` state and returns it in a single response.\n\n" +
+        [AiSkillDescription("Return the Unity profiler's current enabled state, active modules, max-used memory, and platform support flag. Read-only.")]
+        [AiSkillBody("Snapshots `UnityEngine.Profiling.Profiler` state and returns it in a single response.\n\n" +
             "## Fields\n\n" +
             "- `ProfilerEnabled` — `Profiler.enabled`.\n" +
             "- `ActiveModules` — names of modules this wrapper considers enabled (local bookkeeping).\n" +

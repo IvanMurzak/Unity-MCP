@@ -23,16 +23,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Assets_Prefab
     {
         public const string AssetsPrefabCreateToolId = "assets-prefab-create";
-        [McpPluginTool
+        [AiTool
         (
             AssetsPrefabCreateToolId,
             Title = "Assets / Prefab / Create"
         )]
-        [McpPluginSkillDescription("Create a Prefab (or Prefab Variant) at a project asset path. " +
+        [AiSkillDescription("Create a Prefab (or Prefab Variant) at a project asset path. " +
             "Source can be a scene GameObject (`gameObjectRef`) or an existing prefab asset (`sourcePrefabAssetPath`). " +
             "Creates intermediate folders if missing. Use '" + Tool_GameObject.GameObjectFindToolId +
             "' to locate the source GameObject first.")]
-        [McpPluginSkillBody("Create a prefab from a GameObject in the current active scene. " +
+        [AiSkillBody("Create a prefab from a GameObject in the current active scene. " +
             "The prefab will be saved in the project assets at the specified path. " +
             "Creates folders recursively if they do not exist. " +
             "If the source GameObject is already a prefab instance and 'connectGameObjectToPrefab' is true, a Prefab Variant is created automatically. " +

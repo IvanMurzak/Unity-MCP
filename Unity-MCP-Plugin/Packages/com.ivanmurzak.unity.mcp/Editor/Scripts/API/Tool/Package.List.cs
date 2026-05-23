@@ -49,7 +49,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         }
 
         public const string PackageListToolId = "package-list";
-        [McpPluginTool
+        [AiTool
         (
             PackageListToolId,
             Title = "Package Manager / List Installed",
@@ -57,10 +57,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             IdempotentHint = true,
             Enabled = false
         )]
-        [McpPluginSkillDescription("List all UPM packages installed in the Unity project — name, version, source, " +
+        [AiSkillDescription("List all UPM packages installed in the Unity project — name, version, source, " +
             "description. Optionally filter by source (registry, embedded, local, git, built-in, local tarball), " +
             "by name/display/description substring, and by direct-dependency-only.")]
-        [McpPluginSkillBody("List all packages installed in the Unity project (UPM packages). " +
+        [AiSkillBody("List all packages installed in the Unity project (UPM packages). " +
             "Returns information about each installed package including name, version, source, and description. " +
             "Use this to check which packages are currently installed before adding or removing packages.\n\n" +
             "## Inputs\n\n" +

@@ -19,16 +19,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Console
     {
         public const string ConsoleGetLogsToolId = "console-get-logs";
-        [McpPluginTool
+        [AiTool
         (
             ConsoleGetLogsToolId,
             Title = "Console / Get Logs",
             ReadOnlyHint = true,
             IdempotentHint = true
         )]
-        [McpPluginSkillDescription("Retrieve Unity Editor logs from the MCP plugin's `LogCollector`, " +
+        [AiSkillDescription("Retrieve Unity Editor logs from the MCP plugin's `LogCollector`, " +
             "optionally filtered by log type or time window. Useful for debugging and monitoring Editor activity.")]
-        [McpPluginSkillBody("Retrieves Unity Editor logs. " +
+        [AiSkillBody("Retrieves Unity Editor logs. " +
             "Useful for debugging and monitoring Unity Editor activity.\n\n" +
             "## Inputs\n\n" +
             "- `maxEntries` (default 100, minimum 1) — caps the size of the returned array.\n" +

@@ -46,7 +46,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             var toolName = typeof(Tool_GameObject)
                 .GetMethod(nameof(Tool_GameObject.Find))
-                .GetCustomAttribute<McpPluginToolAttribute>()
+                .GetCustomAttribute<AiToolAttribute>()
                 .Name;
 
             var task = UnityMcpPluginEditor.Instance.Tools!.RunCallTool(new RequestCallTool(toolName, parameters!));

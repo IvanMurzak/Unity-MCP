@@ -21,16 +21,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_Assets_Shader
     {
         public const string AssetsShaderListAllToolId = "assets-shader-list-all";
-        [McpPluginTool
+        [AiTool
         (
             AssetsShaderListAllToolId,
             Title = "Assets / List Shaders",
             ReadOnlyHint = true,
             IdempotentHint = true
         )]
-        [McpPluginSkillDescription("List all shaders available in the project assets and packages, sorted by name. " +
+        [AiSkillDescription("List all shaders available in the project assets and packages, sorted by name. " +
             "Use this to discover a valid `shaderName` for '" + Tool_Assets.AssetsMaterialCreateToolId + "'.")]
-        [McpPluginSkillBody("List all available shaders in the project assets and packages. " +
+        [AiSkillBody("List all available shaders in the project assets and packages. " +
             "Returns their names. " +
             "Use this to find a shader name for '" + Tool_Assets.AssetsMaterialCreateToolId + "' tool.\n\n" +
             "## Behavior\n\n" +

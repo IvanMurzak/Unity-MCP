@@ -23,8 +23,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
     public class DynamicCallToolExecutor : LazyNodeExecutor
     {
         public DynamicCallToolExecutor(MethodInfo toolMethod, Func<string> jsonProvider, Reflector? reflector = null) : this(
-            toolName: toolMethod.GetCustomAttribute<McpPluginToolAttribute>()?.Name
-                ?? throw new ArgumentException("Tool method must have a McpPluginTool attribute."),
+            toolName: toolMethod.GetCustomAttribute<AiToolAttribute>()?.Name
+                ?? throw new ArgumentException("Tool method must have an AiTool attribute."),
             jsonProvider: jsonProvider,
             reflector: reflector)
         {

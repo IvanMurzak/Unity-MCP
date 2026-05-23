@@ -26,15 +26,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         // headroom for future schema expansion while bounding worst-case memory.
         const long MaxLoadFileSizeBytes = 10L * 1024L * 1024L;
 
-        [McpPluginTool
+        [AiTool
         (
             ProfilerLoadDataToolId,
             Title = "Profiler / Load Data",
             ReadOnlyHint = true,
             Enabled = false
         )]
-        [McpPluginSkillDescription("Read back a previously-saved JSON snapshot from `profiler-save-data` and return its raw text.")]
-        [McpPluginSkillBody("Reads `filePath` as UTF-8 text and returns the file body unchanged. Caller is responsible " +
+        [AiSkillDescription("Read back a previously-saved JSON snapshot from `profiler-save-data` and return its raw text.")]
+        [AiSkillBody("Reads `filePath` as UTF-8 text and returns the file body unchanged. Caller is responsible " +
             "for parsing.\n\n" +
             "## Inputs\n\n" +
             "- `filePath` (required) — path written by `profiler-save-data`.\n\n" +

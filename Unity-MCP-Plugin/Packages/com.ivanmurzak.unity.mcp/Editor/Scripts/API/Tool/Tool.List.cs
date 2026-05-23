@@ -41,17 +41,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             InputsWithDescription = 2
         }
 
-        [McpPluginTool
+        [AiTool
         (
             ToolListId,
             Title = "Tool / List",
             ReadOnlyHint = true,
             IdempotentHint = true
         )]
-        [McpPluginSkillDescription("List all Unity-MCP tools registered in the connected Unity Editor instance. " +
+        [AiSkillDescription("List all Unity-MCP tools registered in the connected Unity Editor instance. " +
             "Optional regex filter matches against tool name, description, and argument names/descriptions. " +
             "Use the `includeDescription` / `includeInputs` toggles to control the response size.")]
-        [McpPluginSkillBody("List all Unity-MCP tools registered in the connected Unity Editor instance. " +
+        [AiSkillBody("List all Unity-MCP tools registered in the connected Unity Editor instance. " +
             "Optionally filter by regex across tool names, descriptions, and arguments.\n\n" +
             "## Inputs\n\n" +
             "- `regexSearch` (optional) — case-insensitive regex with a 200ms execution-timeout guard. " +

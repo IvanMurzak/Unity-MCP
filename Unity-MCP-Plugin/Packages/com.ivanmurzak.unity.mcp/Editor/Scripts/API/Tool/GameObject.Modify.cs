@@ -25,16 +25,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public partial class Tool_GameObject
     {
         public const string GameObjectModifyToolId = "gameobject-modify";
-        [McpPluginTool
+        [AiTool
         (
             GameObjectModifyToolId,
             Title = "GameObject / Modify",
             IdempotentHint = true
         )]
-        [McpPluginSkillDescription("Modify GameObject fields and properties in opened Prefab or in a Scene. " +
+        [AiSkillDescription("Modify GameObject fields and properties in opened Prefab or in a Scene. " +
             "You can modify multiple GameObjects at once. Just provide the same number of GameObject references and SerializedMember objects. " +
             "Three modification surfaces are available per GameObject (gameObjectDiffs, pathPatchesPerGameObject, jsonPatchesPerGameObject) — see the skill body for details.")]
-        [McpPluginSkillBody(
+        [AiSkillBody(
             "## Three modification surfaces\n\n" +
             "Per GameObject — parallel arrays must have the same length as `gameObjectRefs`:\n\n" +
             "1. `gameObjectDiffs` — full `SerializedMember` diff per GameObject (legacy, backwards compatible).\n" +
