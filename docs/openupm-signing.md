@@ -33,16 +33,19 @@ The artifact is then consumed by the atomic publish step in `release-unity-plugi
 which downloads every release asset (the `.unitypackage`, the server `.zip`s, and
 the signed `.tgz`) and creates the GitHub Release + tag with all assets attached
 in a single `softprops/action-gh-release@v2` call. There are no separate
-post-release publish jobs — the release is either created with the complete asset
-set, or it is not created at all.
+post-release publish jobs — the release is created in a single step after all
+prerequisites pass; if any prerequisite fails, no release is created. The
+`fail_on_unmatched_files: true` option on the release action ensures the step
+hard-fails (rather than silently publishing) if any of the asset globs match
+zero files.
 
 ### Signing is a hard gate on the release
 
 `build-signed-upm-package` is **not** `continue-on-error`. If the three required
 repo secrets (see below) are missing, or if `upm pack` / attestation verification
-fails for any reason, the job exits non-zero, the entire release pipeline fails,
-and **no GitHub Release is created**. This is intentional: every public release
-must ship the signed UPM tarball so OpenUPM (with the listing on
+fails for any reason, the job exits non-zero, the release-creation jobs do not
+run, and **no GitHub Release is created**. This is intentional: every public
+release must ship the signed UPM tarball so OpenUPM (with the listing on
 `trackingMode: githubRelease`) can surface the signed package without ever
 race-publishing an unsigned git tag.
 
@@ -128,8 +131,8 @@ After the next release ships:
 1. Go to the [release page](https://github.com/IvanMurzak/Unity-MCP/releases)
    for the new version and confirm a `com.ivanmurzak.unity.mcp-<version>.tgz`
    asset is attached alongside the `.unitypackage` and server `.zip`s. The
-   atomic publish guarantees that if the release exists, the signed tarball is
-   on it.
+   single-step publish runs only after the signed tarball is built and verified,
+   so a successful release run should always include the signed asset.
 2. Inspect the tarball locally to confirm it contains the signing attestation:
 
    ```bash

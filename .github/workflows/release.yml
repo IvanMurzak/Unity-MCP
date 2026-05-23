@@ -465,7 +465,15 @@ jobs:
           set -e
           # Expose the release notes body as a job output so downstream jobs
           # (publish_discord) can consume it without re-downloading the artifact.
-          printf 'release_body<<ENDOFRELEASEBODY\n%s\nENDOFRELEASEBODY\n' "$(cat ./release-notes/release.md)" >> "$GITHUB_OUTPUT"
+          # Use a randomized delimiter so a release-notes line that happens to
+          # match the sentinel cannot terminate the heredoc early (mirrors the
+          # UNITY_LICENSE pattern above).
+          DELIM="ENDOFRELEASEBODY_$(openssl rand -hex 16)"
+          {
+            printf 'release_body<<%s\n' "$DELIM"
+            cat ./release-notes/release.md
+            printf '\n%s\n' "$DELIM"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Create Tag and Release with all assets
         uses: softprops/action-gh-release@v2
@@ -475,6 +483,7 @@ jobs:
           body_path: ./release-notes/release.md
           draft: false
           prerelease: false
+          fail_on_unmatched_files: true
           files: |
             ./assets/AI-Game-Dev-Installer.unitypackage
             ./assets/*.zip
@@ -483,12 +492,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Mark publish success
+        id: mark_success
         run: |
           # The action-gh-release step above is the atomic publish — if it
           # succeeded the release exists with every asset attached. Surface
           # `success=true` for downstream jobs that gate on the release.
           echo "success=true" >> "$GITHUB_OUTPUT"
-        id: mark_success
 
   publish_discord:
     runs-on: ubuntu-latest
