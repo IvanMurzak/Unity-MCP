@@ -42,3 +42,5 @@ jobs:
           event_name: ${{ github.event.workflow_run.event }}
           files: artifacts/Test results for */**/*.xml
           comment_mode: changes in failures
+          root_log_level: DEBUG
+          log_level: DEBUG
