@@ -369,6 +369,101 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+  # Signs the UPM package with Unity's UPM CLI using service-account credentials,
+  # then attaches the signed .tgz to the just-created GitHub Release.
+  #
+  # OpenUPM picks up the signed tarball when its listing has `trackingMode: githubRelease`
+  # (see docs/openupm-signing.md for the cross-repo OpenUPM listing change). Until then,
+  # OpenUPM continues to pack from git and ships unsigned packages — the asset attached
+  # here is still uploaded for verification.
+  #
+  # Required repo secrets (configure via `gh secret set --repo IvanMurzak/Unity-MCP <NAME>`):
+  #   - UPM_SERVICE_ACCOUNT_KEY_ID
+  #   - UPM_SERVICE_ACCOUNT_KEY_SECRET
+  #   - UPM_ORG_ID
+  # If any are missing the job soft-fails with `continue-on-error: true` so an absent
+  # signing key never blocks the release pipeline (the upstream release flow still ships).
+  # See https://openupm.com/docs/signing-upm-packages.html for the procedure.
+  sign-and-publish-upm:
+    runs-on: ubuntu-latest
+    needs: release-unity-plugin
+    if: needs.release-unity-plugin.outputs.success == 'true'
+    continue-on-error: true
+    env:
+      UPM_SERVICE_ACCOUNT_KEY_ID: ${{ secrets.UPM_SERVICE_ACCOUNT_KEY_ID }}
+      UPM_SERVICE_ACCOUNT_KEY_SECRET: ${{ secrets.UPM_SERVICE_ACCOUNT_KEY_SECRET }}
+      UPM_ORG_ID: ${{ secrets.UPM_ORG_ID }}
+      PACKAGE_DIR: Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp
+      DIST_DIR: /tmp/signed-upm-dist
+    steps:
+      - name: Verify signing secrets are configured
+        run: |
+          missing=()
+          [ -z "$UPM_SERVICE_ACCOUNT_KEY_ID" ]     && missing+=("UPM_SERVICE_ACCOUNT_KEY_ID")
+          [ -z "$UPM_SERVICE_ACCOUNT_KEY_SECRET" ] && missing+=("UPM_SERVICE_ACCOUNT_KEY_SECRET")
+          [ -z "$UPM_ORG_ID" ]                     && missing+=("UPM_ORG_ID")
+          if [ "${#missing[@]}" -ne 0 ]; then
+            printf '::warning::UPM signing secrets are not configured (%s); skipping signing. See docs/openupm-signing.md.\n' "${missing[*]}"
+            # Exit non-zero so subsequent steps short-circuit; continue-on-error at the
+            # job level keeps the overall release pipeline green.
+            exit 1
+          fi
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Read package metadata
+        run: |
+          package_name="$(jq -r '.name' "$PACKAGE_DIR/package.json")"
+          package_version="$(jq -r '.version' "$PACKAGE_DIR/package.json")"
+
+          echo "PACKAGE_NAME=$package_name" >> "$GITHUB_ENV"
+          echo "PACKAGE_VERSION=$package_version" >> "$GITHUB_ENV"
+
+          printf 'Package name: %s\n' "$package_name"
+          printf 'Package version: %s\n' "$package_version"
+
+      - name: Install Unity UPM CLI
+        run: |
+          curl -fsSL https://cdn.packages.unity.com/upm-cli/install.sh -o install.sh
+          bash install.sh
+          echo "$HOME/.upm/bin" >> "$GITHUB_PATH"
+
+      - name: Verify Unity UPM CLI
+        run: upm --help
+
+      - name: Sign package
+        run: |
+          mkdir -p "$DIST_DIR"
+          upm pack "./$PACKAGE_DIR" --organization-id "$UPM_ORG_ID" --destination "$DIST_DIR"
+
+      - name: Verify signed package contains attestation
+        run: |
+          shopt -s nullglob
+          archives=("$DIST_DIR"/*.tgz "$DIST_DIR"/*.tar.gz)
+          if [ "${#archives[@]}" -ne 1 ]; then
+            printf 'Expected exactly one signed package archive, found %s\n' "${#archives[@]}" >&2
+            exit 1
+          fi
+
+          archive="${archives[0]}"
+          tar -tzf "$archive" | grep -qx 'package/package.json'
+          tar -tzf "$archive" | grep -qx 'package/.attestation.p7m'
+
+          echo "PACKAGE_ARCHIVE=$archive" >> "$GITHUB_ENV"
+          printf 'Signed archive: %s\n' "$(basename "$archive")"
+          tar -xOzf "$archive" package/package.json | jq '{name, version}'
+
+      - name: Attach signed package to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            /tmp/signed-upm-dist/*.tgz
+            /tmp/signed-upm-dist/*.tar.gz
+          tag_name: ${{ needs.release-unity-plugin.outputs.version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   publish_discord:
     runs-on: ubuntu-latest
     needs:
