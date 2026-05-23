@@ -412,13 +412,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Read package metadata
+      - name: Log package metadata
         run: |
           package_name="$(jq -r '.name' "$PACKAGE_DIR/package.json")"
           package_version="$(jq -r '.version' "$PACKAGE_DIR/package.json")"
-
-          echo "PACKAGE_NAME=$package_name" >> "$GITHUB_ENV"
-          echo "PACKAGE_VERSION=$package_version" >> "$GITHUB_ENV"
 
           printf 'Package name: %s\n' "$package_name"
           printf 'Package version: %s\n' "$package_version"
@@ -442,7 +439,7 @@ jobs:
           shopt -s nullglob
           archives=("$DIST_DIR"/*.tgz "$DIST_DIR"/*.tar.gz)
           if [ "${#archives[@]}" -ne 1 ]; then
-            printf 'Expected exactly one signed package archive, found %s\n' "${#archives[@]}" >&2
+            printf 'Expected exactly one signed package archive, found %s: %s\n' "${#archives[@]}" "${archives[*]:-<none>}" >&2
             exit 1
           fi
 
@@ -457,9 +454,7 @@ jobs:
       - name: Attach signed package to release
         uses: softprops/action-gh-release@v2
         with:
-          files: |
-            /tmp/signed-upm-dist/*.tgz
-            /tmp/signed-upm-dist/*.tar.gz
+          files: ${{ env.PACKAGE_ARCHIVE }}
           tag_name: ${{ needs.release-unity-plugin.outputs.version }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

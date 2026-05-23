@@ -93,15 +93,15 @@ Per the OpenUPM blog, switch `trackingMode` to `githubRelease` **before** the
 first signed release ships, so OpenUPM does not race-publish the unsigned git
 tag in parallel.
 
-`githubReleaseAssetName` is **not** required — the release has only one
-`.tgz` / `.tar.gz` asset (the signed UPM tarball), so OpenUPM will auto-select
-it. If the release ever ships multiple `.tgz` assets, add:
+Also set `githubReleaseAssetName` so OpenUPM picks the signed tarball by
+filename prefix rather than guessing from the asset list. The release already
+ships `.unitypackage` and multiple server `.zip` assets, and may add more
+`.tgz` assets later (e.g. signing a second package), so the prefix guard
+prevents a future-breaking failure mode:
 
 ```yaml
 githubReleaseAssetName: 'com.ivanmurzak.unity.mcp-'
 ```
-
-so OpenUPM picks the right one by filename prefix.
 
 ## Verifying signing worked
 
