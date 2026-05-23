@@ -21,20 +21,38 @@ References:
 
 ## What this repo ships
 
-The signing step is implemented as the `sign-and-publish-upm` job in
-[`.github/workflows/release.yml`](../.github/workflows/release.yml). It runs on
-every successful version-bump release (the same trigger as `publish-mcp-server`
-and `publish-unity-installer`), packs the package at
-`Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/` with Unity's UPM CLI, and
-attaches the resulting signed `.tgz` to the release tag.
+The signing step is implemented as the `build-signed-upm-package` job in
+[`.github/workflows/release.yml`](../.github/workflows/release.yml). It runs in
+parallel with tests and builds on every version-bump release commit, packs the
+package at `Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/` with Unity's
+UPM CLI, verifies the resulting archive contains `package/.attestation.p7m` and
+that its basename begins with `com.ivanmurzak.unity.mcp-`, and uploads the
+signed `.tgz` as a `signed-upm-package` workflow artifact.
 
-The job is declared `continue-on-error: true` and exits early with a warning if
-the required Unity-org secrets are not configured — so until the secrets are in
-place the existing release flow continues to ship unchanged.
+The artifact is then consumed by the atomic publish step in `release-unity-plugin`,
+which downloads every release asset (the `.unitypackage`, the server `.zip`s, and
+the signed `.tgz`) and creates the GitHub Release + tag with all assets attached
+in a single `softprops/action-gh-release@v2` call. There are no separate
+post-release publish jobs — the release is either created with the complete asset
+set, or it is not created at all.
+
+### Signing is a hard gate on the release
+
+`build-signed-upm-package` is **not** `continue-on-error`. If the three required
+repo secrets (see below) are missing, or if `upm pack` / attestation verification
+fails for any reason, the job exits non-zero, the entire release pipeline fails,
+and **no GitHub Release is created**. This is intentional: every public release
+must ship the signed UPM tarball so OpenUPM (with the listing on
+`trackingMode: githubRelease`) can surface the signed package without ever
+race-publishing an unsigned git tag.
+
+If you need to ship a release without signing, the correct action is to land a
+follow-up PR that explicitly removes the gate — not to silently skip signing.
 
 ## One-time setup (repository owner)
 
-These steps land outside this PR — they are operational, not code changes.
+These steps are operational, not code changes. The release pipeline cannot ship
+a release until they are complete.
 
 ### 1. Create a Unity organization service account
 
@@ -105,11 +123,13 @@ githubReleaseAssetName: 'com.ivanmurzak.unity.mcp-'
 
 ## Verifying signing worked
 
-After the next release that runs with the secrets in place:
+After the next release ships:
 
 1. Go to the [release page](https://github.com/IvanMurzak/Unity-MCP/releases)
    for the new version and confirm a `com.ivanmurzak.unity.mcp-<version>.tgz`
-   asset is attached alongside the existing `.unitypackage` and server `.zip`s.
+   asset is attached alongside the `.unitypackage` and server `.zip`s. The
+   atomic publish guarantees that if the release exists, the signed tarball is
+   on it.
 2. Inspect the tarball locally to confirm it contains the signing attestation:
 
    ```bash
@@ -124,9 +144,10 @@ After the next release that runs with the secrets in place:
 
 ## Troubleshooting
 
-- **Job is skipped with warning "UPM signing secrets are not configured"** —
-  expected when the three secrets are not yet set. Complete the
-  "One-time setup" steps above.
+- **`build-signed-upm-package` fails with `UPM signing secrets are not configured`** —
+  the three repo secrets above have not been set (or were set on the wrong repo).
+  Complete the "One-time setup" steps above. The release pipeline is hard-gated
+  on these secrets; until they are configured no release will ship.
 - **`upm pack` fails with an authentication error** — the service account key
   is invalid or lacks the package-signing permission. Regenerate the key in the
   Unity org dashboard and re-set the GitHub secrets.

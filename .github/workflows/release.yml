@@ -46,6 +46,65 @@ jobs:
         with:
           tag: ${{ steps.get_version.outputs.current-version }}
 
+  # Generates release notes (release.md) in parallel with tests/builds.
+  # The artifact is consumed by release-unity-plugin's atomic publish step.
+  prepare-release-notes:
+    runs-on: ubuntu-latest
+    needs: [check-version-tag]
+    if: needs.check-version-tag.outputs.tag_exists == 'false'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Generate release description
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          version=${{ needs.check-version-tag.outputs.version }}
+          prev_tag=${{ needs.check-version-tag.outputs.prev_tag }}
+          repo_url="https://github.com/${GITHUB_REPOSITORY}"
+          today=$(date +'%B %e, %Y')
+
+          echo "repo_url: $repo_url"
+          echo "today: $today"
+
+          echo "# AI Game Developer (Unity MCP) $version" > release.md
+          echo "**Released:** *$today*" >> release.md
+
+          echo "" >> release.md
+          echo "---" >> release.md
+          echo "" >> release.md
+
+          if [ -n "$prev_tag" ]; then
+            echo "## Comparison" >> release.md
+            echo "See every change: [Compare $prev_tag...$version]($repo_url/compare/$prev_tag...$version)" >> release.md
+
+            echo "" >> release.md
+            echo "---" >> release.md
+            echo "" >> release.md
+
+            echo "## Commit Summary (Newest → Oldest)" >> release.md
+            for sha in $(git log --pretty=format:'%H' $prev_tag..HEAD); do
+              username=$(gh api repos/${GITHUB_REPOSITORY}/commits/$sha --jq '.author.login // .commit.author.name' 2>/dev/null || true)
+              if [ -z "$username" ]; then
+                username=$(git log -1 --pretty=format:'%an' $sha)
+              fi
+              message=$(git log -1 --pretty=format:'%s' $sha)
+              short_sha=$(git log -1 --pretty=format:'%h' $sha)
+              echo "- [\`$short_sha\`]($repo_url/commit/$sha) — $message by @$username" >> release.md
+            done
+          fi
+
+      - name: Upload release notes as artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: release-notes
+          path: ./release.md
+
   build-unity-installer:
     runs-on: ubuntu-latest
     needs: [check-version-tag]
@@ -152,6 +211,99 @@ jobs:
           name: mcp-server-zips
           path: ./Unity-MCP-Server/publish/*.zip
 
+  # Builds the signed UPM package (.tgz with package/.attestation.p7m) in parallel
+  # with tests/builds and uploads it as a `signed-upm-package` artifact for the
+  # atomic release publish in release-unity-plugin.
+  #
+  # HARD-GATE: this job is NOT continue-on-error. Missing UPM signing secrets fail
+  # fast and the release pipeline halts — no GitHub Release is created without a
+  # signed UPM tarball. This reverses PR #776's soft-fail design (see
+  # docs/openupm-signing.md for the blocking-semantics rationale).
+  #
+  # Required repo secrets (configure via `gh secret set --repo IvanMurzak/Unity-MCP <NAME>`):
+  #   - UPM_SERVICE_ACCOUNT_KEY_ID
+  #   - UPM_SERVICE_ACCOUNT_KEY_SECRET
+  #   - UPM_ORG_ID
+  # See https://openupm.com/docs/signing-upm-packages.html for the procedure.
+  build-signed-upm-package:
+    runs-on: ubuntu-latest
+    needs: [check-version-tag]
+    if: needs.check-version-tag.outputs.tag_exists == 'false'
+    env:
+      UPM_SERVICE_ACCOUNT_KEY_ID: ${{ secrets.UPM_SERVICE_ACCOUNT_KEY_ID }}
+      UPM_SERVICE_ACCOUNT_KEY_SECRET: ${{ secrets.UPM_SERVICE_ACCOUNT_KEY_SECRET }}
+      UPM_ORG_ID: ${{ secrets.UPM_ORG_ID }}
+      PACKAGE_DIR: Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp
+      DIST_DIR: /tmp/signed-upm-dist
+    steps:
+      - name: Verify signing secrets are configured
+        run: |
+          missing=()
+          [ -z "$UPM_SERVICE_ACCOUNT_KEY_ID" ]     && missing+=("UPM_SERVICE_ACCOUNT_KEY_ID")
+          [ -z "$UPM_SERVICE_ACCOUNT_KEY_SECRET" ] && missing+=("UPM_SERVICE_ACCOUNT_KEY_SECRET")
+          [ -z "$UPM_ORG_ID" ]                     && missing+=("UPM_ORG_ID")
+          if [ "${#missing[@]}" -ne 0 ]; then
+            printf '::error::UPM signing secrets are not configured (%s). The release pipeline is hard-gated on signing — see docs/openupm-signing.md for setup.\n' "${missing[*]}"
+            exit 1
+          fi
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Log package metadata
+        run: |
+          package_name="$(jq -r '.name' "$PACKAGE_DIR/package.json")"
+          package_version="$(jq -r '.version' "$PACKAGE_DIR/package.json")"
+
+          printf 'Package name: %s\n' "$package_name"
+          printf 'Package version: %s\n' "$package_version"
+
+      - name: Install Unity UPM CLI
+        run: |
+          curl -fsSL https://cdn.packages.unity.com/upm-cli/install.sh -o install.sh
+          bash install.sh
+          echo "$HOME/.upm/bin" >> "$GITHUB_PATH"
+
+      - name: Verify Unity UPM CLI
+        run: upm --help
+
+      - name: Sign package
+        run: |
+          mkdir -p "$DIST_DIR"
+          upm pack "./$PACKAGE_DIR" --organization-id "$UPM_ORG_ID" --destination "$DIST_DIR"
+
+      - name: Verify signed package contains attestation
+        run: |
+          shopt -s nullglob
+          archives=("$DIST_DIR"/*.tgz "$DIST_DIR"/*.tar.gz)
+          if [ "${#archives[@]}" -ne 1 ]; then
+            printf 'Expected exactly one signed package archive, found %s: %s\n' "${#archives[@]}" "${archives[*]:-<none>}" >&2
+            exit 1
+          fi
+
+          archive="${archives[0]}"
+          archive_basename="$(basename "$archive")"
+          # OpenUPM consumes the asset via the `githubReleaseAssetName: 'com.ivanmurzak.unity.mcp-'`
+          # prefix documented in docs/openupm-signing.md. Enforce the contract here so a future
+          # `upm pack` naming change fails CI loudly instead of silently breaking OpenUPM pickup.
+          if [[ "$archive_basename" != com.ivanmurzak.unity.mcp-* ]]; then
+            printf 'Signed archive basename %q does not begin with the OpenUPM-expected prefix com.ivanmurzak.unity.mcp- (see docs/openupm-signing.md)\n' "$archive_basename" >&2
+            exit 1
+          fi
+
+          archive_entries="$(tar -tzf "$archive")"
+          grep -qx 'package/package.json'      <<<"$archive_entries"
+          grep -qx 'package/.attestation.p7m'  <<<"$archive_entries"
+
+          printf 'Signed archive: %s\n' "$archive_basename"
+          tar -xOzf "$archive" package/package.json | jq '{name, version}'
+
+      - name: Upload signed UPM package as artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: signed-upm-package
+          path: /tmp/signed-upm-dist/*.tgz
+
   # --- UNITY TESTS ---
   # -------------------
 
@@ -244,13 +396,20 @@ jobs:
 
   # -------------------
 
+  # Atomic publish point — gated on EVERY prerequisite (tests, builds, signed
+  # UPM package, release notes). Downloads all asset artifacts and creates the
+  # GitHub Release + tag with the full asset set in a SINGLE
+  # softprops/action-gh-release@v2 call so a failed upload cannot strand the
+  # release with incomplete assets. Signing failure → no release (hard gate).
   release-unity-plugin:
     runs-on: ubuntu-latest
     needs: [
         check-version-tag,
         test-cli,
+        prepare-release-notes,
         build-and-zip-mcp-server,
         build-unity-installer,
+        build-signed-upm-package,
         test-unity-2022-3-62f3-editmode,
         # test-unity-2022-3-62f3-playmode,
         test-unity-2022-3-62f3-standalone,
@@ -264,225 +423,83 @@ jobs:
     if: needs.check-version-tag.outputs.tag_exists == 'false'
     outputs:
       version: ${{ needs.check-version-tag.outputs.version }}
-      success: ${{ steps.rel_desc.outputs.success }}
-      release_notes: ${{ steps.rel_desc.outputs.release_body }}
+      success: ${{ steps.mark_success.outputs.success }}
+      release_notes: ${{ steps.read_notes.outputs.release_body }}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
+      - name: Download release notes artifact
+        uses: actions/download-artifact@v6
         with:
-          fetch-depth: 0
-          fetch-tags: true
+          name: release-notes
+          path: ./release-notes
 
-      - name: Generate release description
-        id: rel_desc
-        env:
-          GH_TOKEN: ${{ github.token }}
+      - name: Download Unity installer artifact
+        uses: actions/download-artifact@v6
+        with:
+          name: unity-installer-package
+          path: ./assets
+
+      - name: Download MCP server zips artifact
+        uses: actions/download-artifact@v6
+        with:
+          name: mcp-server-zips
+          path: ./assets
+
+      - name: Download signed UPM package artifact
+        uses: actions/download-artifact@v6
+        with:
+          name: signed-upm-package
+          path: ./assets
+
+      - name: List assembled release assets
         run: |
           set -e
-          version=${{ needs.check-version-tag.outputs.version }}
-          prev_tag=${{ needs.check-version-tag.outputs.prev_tag }}
-          repo_url="https://github.com/${GITHUB_REPOSITORY}"
-          today=$(date +'%B %e, %Y')
+          echo "Release notes:"
+          ls -la ./release-notes
+          echo ""
+          echo "Release assets:"
+          ls -la ./assets
 
-          echo "repo_url: $repo_url"
-          echo "today: $today"
+      - name: Read release notes into job output
+        id: read_notes
+        run: |
+          set -e
+          # Expose the release notes body as a job output so downstream jobs
+          # (publish_discord) can consume it without re-downloading the artifact.
+          printf 'release_body<<ENDOFRELEASEBODY\n%s\nENDOFRELEASEBODY\n' "$(cat ./release-notes/release.md)" >> "$GITHUB_OUTPUT"
 
-          echo "# AI Game Developer (Unity MCP) $version" > release.md
-          echo "**Released:** *$today*" >> release.md
-
-          echo "" >> release.md
-          echo "---" >> release.md
-          echo "" >> release.md
-
-          if [ -n "$prev_tag" ]; then
-            echo "## Comparison" >> release.md
-            echo "See every change: [Compare $prev_tag...$version]($repo_url/compare/$prev_tag...$version)" >> release.md
-
-            echo "" >> release.md
-            echo "---" >> release.md
-            echo "" >> release.md
-
-            echo "## Commit Summary (Newest → Oldest)" >> release.md
-            for sha in $(git log --pretty=format:'%H' $prev_tag..HEAD); do
-              username=$(gh api repos/${GITHUB_REPOSITORY}/commits/$sha --jq '.author.login // .commit.author.name' 2>/dev/null || true)
-              if [ -z "$username" ]; then
-                username=$(git log -1 --pretty=format:'%an' $sha)
-              fi
-              message=$(git log -1 --pretty=format:'%s' $sha)
-              short_sha=$(git log -1 --pretty=format:'%h' $sha)
-              echo "- [\`$short_sha\`]($repo_url/commit/$sha) — $message by @$username" >> release.md
-            done
-          fi
-
-          printf "release_body<<ENDOFRELEASEBODY\n%s\nENDOFRELEASEBODY\n" "$(cat release.md)" >> $GITHUB_OUTPUT
-          echo "success=true" >> $GITHUB_OUTPUT
-
-      - name: Create Tag and Release
+      - name: Create Tag and Release with all assets
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.check-version-tag.outputs.version }}
           name: ${{ needs.check-version-tag.outputs.version }}
-          body: ${{ steps.rel_desc.outputs.release_body }}
+          body_path: ./release-notes/release.md
           draft: false
           prerelease: false
+          files: |
+            ./assets/AI-Game-Dev-Installer.unitypackage
+            ./assets/*.zip
+            ./assets/com.ivanmurzak.unity.mcp-*.tgz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  publish-unity-installer:
-    runs-on: ubuntu-latest
-    needs: release-unity-plugin
-    if: needs.release-unity-plugin.outputs.success == 'true'
-    steps:
-      - name: Download Unity Package artifact
-        uses: actions/download-artifact@v6
-        with:
-          name: unity-installer-package
-          path: ./
-
-      - name: Upload Unity Package to Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: ./AI-Game-Dev-Installer.unitypackage
-          tag_name: ${{ needs.release-unity-plugin.outputs.version }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  publish-mcp-server:
-    runs-on: macos-latest
-    needs: release-unity-plugin
-    if: needs.release-unity-plugin.outputs.success == 'true'
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Download build zips artifact
-        uses: actions/download-artifact@v6
-        with:
-          name: mcp-server-zips
-          path: ./Unity-MCP-Server/publish
-
-      - name: Upload release zip archives
-        uses: softprops/action-gh-release@v2
-        with:
-          files: ./Unity-MCP-Server/publish/*.zip
-          tag_name: ${{ needs.release-unity-plugin.outputs.version }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  # Signs the UPM package with Unity's UPM CLI using service-account credentials,
-  # then attaches the signed .tgz to the just-created GitHub Release.
-  #
-  # OpenUPM picks up the signed tarball when its listing has `trackingMode: githubRelease`
-  # (see docs/openupm-signing.md for the cross-repo OpenUPM listing change). Until then,
-  # OpenUPM continues to pack from git and ships unsigned packages — the asset attached
-  # here is still uploaded for verification.
-  #
-  # Required repo secrets (configure via `gh secret set --repo IvanMurzak/Unity-MCP <NAME>`):
-  #   - UPM_SERVICE_ACCOUNT_KEY_ID
-  #   - UPM_SERVICE_ACCOUNT_KEY_SECRET
-  #   - UPM_ORG_ID
-  # If any are missing the job soft-fails with `continue-on-error: true` so an absent
-  # signing key never blocks the release pipeline (the upstream release flow still ships).
-  # See https://openupm.com/docs/signing-upm-packages.html for the procedure.
-  sign-and-publish-upm:
-    runs-on: ubuntu-latest
-    needs: release-unity-plugin
-    if: needs.release-unity-plugin.outputs.success == 'true'
-    continue-on-error: true
-    env:
-      UPM_SERVICE_ACCOUNT_KEY_ID: ${{ secrets.UPM_SERVICE_ACCOUNT_KEY_ID }}
-      UPM_SERVICE_ACCOUNT_KEY_SECRET: ${{ secrets.UPM_SERVICE_ACCOUNT_KEY_SECRET }}
-      UPM_ORG_ID: ${{ secrets.UPM_ORG_ID }}
-      PACKAGE_DIR: Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp
-      DIST_DIR: /tmp/signed-upm-dist
-    steps:
-      - name: Verify signing secrets are configured
+      - name: Mark publish success
         run: |
-          missing=()
-          [ -z "$UPM_SERVICE_ACCOUNT_KEY_ID" ]     && missing+=("UPM_SERVICE_ACCOUNT_KEY_ID")
-          [ -z "$UPM_SERVICE_ACCOUNT_KEY_SECRET" ] && missing+=("UPM_SERVICE_ACCOUNT_KEY_SECRET")
-          [ -z "$UPM_ORG_ID" ]                     && missing+=("UPM_ORG_ID")
-          if [ "${#missing[@]}" -ne 0 ]; then
-            printf '::warning::UPM signing secrets are not configured (%s); skipping signing. See docs/openupm-signing.md.\n' "${missing[*]}"
-            # Exit non-zero so subsequent steps short-circuit; continue-on-error at the
-            # job level keeps the overall release pipeline green.
-            exit 1
-          fi
-
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Log package metadata
-        run: |
-          package_name="$(jq -r '.name' "$PACKAGE_DIR/package.json")"
-          package_version="$(jq -r '.version' "$PACKAGE_DIR/package.json")"
-
-          printf 'Package name: %s\n' "$package_name"
-          printf 'Package version: %s\n' "$package_version"
-
-      - name: Install Unity UPM CLI
-        run: |
-          curl -fsSL https://cdn.packages.unity.com/upm-cli/install.sh -o install.sh
-          bash install.sh
-          echo "$HOME/.upm/bin" >> "$GITHUB_PATH"
-
-      - name: Verify Unity UPM CLI
-        run: upm --help
-
-      - name: Sign package
-        run: |
-          mkdir -p "$DIST_DIR"
-          upm pack "./$PACKAGE_DIR" --organization-id "$UPM_ORG_ID" --destination "$DIST_DIR"
-
-      - name: Verify signed package contains attestation
-        run: |
-          shopt -s nullglob
-          archives=("$DIST_DIR"/*.tgz "$DIST_DIR"/*.tar.gz)
-          if [ "${#archives[@]}" -ne 1 ]; then
-            printf 'Expected exactly one signed package archive, found %s: %s\n' "${#archives[@]}" "${archives[*]:-<none>}" >&2
-            exit 1
-          fi
-
-          archive="${archives[0]}"
-          archive_basename="$(basename "$archive")"
-          # OpenUPM consumes the asset via the `githubReleaseAssetName: 'com.ivanmurzak.unity.mcp-'`
-          # prefix documented in docs/openupm-signing.md. Enforce the contract here so a future
-          # `upm pack` naming change fails CI loudly instead of silently breaking OpenUPM pickup.
-          if [[ "$archive_basename" != com.ivanmurzak.unity.mcp-* ]]; then
-            printf 'Signed archive basename %q does not begin with the OpenUPM-expected prefix com.ivanmurzak.unity.mcp- (see docs/openupm-signing.md)\n' "$archive_basename" >&2
-            exit 1
-          fi
-
-          archive_entries="$(tar -tzf "$archive")"
-          grep -qx 'package/package.json'      <<<"$archive_entries"
-          grep -qx 'package/.attestation.p7m'  <<<"$archive_entries"
-
-          echo "PACKAGE_ARCHIVE=$archive" >> "$GITHUB_ENV"
-          printf 'Signed archive: %s\n' "$archive_basename"
-          tar -xOzf "$archive" package/package.json | jq '{name, version}'
-
-      - name: Attach signed package to release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: ${{ env.PACKAGE_ARCHIVE }}
-          tag_name: ${{ needs.release-unity-plugin.outputs.version }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # The action-gh-release step above is the atomic publish — if it
+          # succeeded the release exists with every asset attached. Surface
+          # `success=true` for downstream jobs that gate on the release.
+          echo "success=true" >> "$GITHUB_OUTPUT"
+        id: mark_success
 
   publish_discord:
     runs-on: ubuntu-latest
     needs:
       [
         release-unity-plugin,
-        publish-unity-installer,
-        publish-mcp-server,
         deploy,
       ]
     if: |
       always() &&
-      needs.release-unity-plugin.result == 'success' &&
-      needs.publish-unity-installer.result == 'success' &&
-      needs.publish-mcp-server.result == 'success'
+      needs.release-unity-plugin.result == 'success'
     steps:
       - name: Send Release Notes to Discord
         env:
@@ -559,10 +576,12 @@ jobs:
       version: ${{ needs.release-unity-plugin.outputs.version }}
     secrets: inherit
 
-  # Cleanup job to remove build artifacts after publishing
+  # Cleanup job to remove build artifacts after the atomic publish + deploy.
+  # Re-pointed at release-unity-plugin (was: publish-mcp-server, publish-unity-installer)
+  # since those post-release publish jobs collapsed into release-unity-plugin.
   cleanup-artifacts:
     runs-on: ubuntu-latest
-    needs: [publish-mcp-server, publish-unity-installer, deploy]
+    needs: [release-unity-plugin, deploy]
     if: always()
     steps:
       - name: Delete MCP Server artifacts
@@ -576,5 +595,19 @@ jobs:
         uses: geekyeggo/delete-artifact@v5
         with:
           name: unity-installer-package
+          failOnError: false
+        continue-on-error: true
+
+      - name: Delete signed UPM package artifacts
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: signed-upm-package
+          failOnError: false
+        continue-on-error: true
+
+      - name: Delete release notes artifacts
+        uses: geekyeggo/delete-artifact@v5
+        with:
+          name: release-notes
           failOnError: false
         continue-on-error: true
