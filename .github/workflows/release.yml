@@ -304,7 +304,10 @@ jobs:
 
             echo "## Commit Summary (Newest → Oldest)" >> release.md
             for sha in $(git log --pretty=format:'%H' $prev_tag..HEAD); do
-              username=$(gh api repos/${GITHUB_REPOSITORY}/commits/$sha --jq '.author.login // .commit.author.name')
+              username=$(gh api repos/${GITHUB_REPOSITORY}/commits/$sha --jq '.author.login // .commit.author.name' 2>/dev/null || true)
+              if [ -z "$username" ]; then
+                username=$(git log -1 --pretty=format:'%an' $sha)
+              fi
               message=$(git log -1 --pretty=format:'%s' $sha)
               short_sha=$(git log -1 --pretty=format:'%h' $sha)
               echo "- [\`$short_sha\`]($repo_url/commit/$sha) — $message by @$username" >> release.md
