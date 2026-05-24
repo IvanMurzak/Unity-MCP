@@ -16,6 +16,7 @@ using System.Linq;
 using System.Reflection;
 using System.Text;
 using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
@@ -52,7 +53,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "while body-only mode (isMethodBody=true) auto-generates the boilerplate so you only " +
             "provide the method body. Unity objects (GameObject, Component, etc.) can be passed as " +
             "parameters using their Ref types (GameObjectRef, ComponentRef, etc.) or directly by type.")]
-        public static SerializedMember? Execute
+        public static ResponseCallTool Execute
         (
             [Description("C# code to compile and execute. " +
                 "In full code mode (default, isMethodBody=false): must define a complete class with a static method. " +
@@ -132,16 +133,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 }
 
                 if (result is null)
-                    return null;
-
-                if (result is SerializedMember serializedResult)
-                    return serializedResult;
+                    return ResponseCallTool.Success("Script executed successfully. No return value.");
 
                 var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
+                var jsonSerializer = reflector.JsonSerializer;
 
-                return reflector.Serialize(
+                if (result is SerializedMember serializedResult)
+                    return ResponseCallTool.Success(jsonSerializer.Serialize(serializedResult));
+
+                var serialized = reflector.Serialize(
                     obj: result,
                     logger: logger);
+
+                return ResponseCallTool.Success(jsonSerializer.Serialize(serialized));
             });
         }
 
