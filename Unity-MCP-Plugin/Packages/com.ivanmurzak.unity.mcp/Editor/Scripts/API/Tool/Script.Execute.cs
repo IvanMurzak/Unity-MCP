@@ -132,7 +132,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 }
 
                 if (result is null)
-                    return null;
+                {
+                    var ret = new SerializedMember
+                    {
+                        name = "result",
+                        typeName = "System.Void"
+                    };
+                    return ret.SetJsonValue("\"Success\"");
+                }
 
                 if (result is SerializedMember serializedResult)
                     return serializedResult;
