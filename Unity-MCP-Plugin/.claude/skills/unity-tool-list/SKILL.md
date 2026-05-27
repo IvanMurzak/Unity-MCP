@@ -66,14 +66,14 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "$ref": "#/$defs/System.Boolean"
     },
     "includeInputs": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Tool%2BInputRequest"
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Tool-InputRequest"
     }
   },
   "$defs": {
     "System.Boolean": {
       "type": "boolean"
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Tool+InputRequest": {
+    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Tool-InputRequest": {
       "type": "string",
       "enum": [
         "None",
@@ -95,7 +95,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/AIGD.ToolInfoData%5B%5D"
+      "$ref": "#/$defs/AIGD.ToolInfoData-1"
     }
   },
   "$defs": {
@@ -111,13 +111,13 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "description": "Tool description."
         },
         "inputs": {
-          "$ref": "#/$defs/AIGD.ToolInputData%5B%5D",
+          "$ref": "#/$defs/AIGD.ToolInputData-1",
           "description": "Tool input arguments."
         }
       },
       "description": "MCP tool information."
     },
-    "AIGD.ToolInputData[]": {
+    "AIGD.ToolInputData-1": {
       "type": "array",
       "items": {
         "$ref": "#/$defs/AIGD.ToolInputData",
@@ -138,7 +138,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       },
       "description": "MCP tool input argument."
     },
-    "AIGD.ToolInfoData[]": {
+    "AIGD.ToolInfoData-1": {
       "type": "array",
       "items": {
         "$ref": "#/$defs/AIGD.ToolInfoData",

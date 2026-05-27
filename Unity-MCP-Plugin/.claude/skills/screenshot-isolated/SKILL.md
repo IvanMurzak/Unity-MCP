@@ -95,13 +95,13 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "$ref": "#/$defs/System.Boolean"
     },
     "backgroundMode": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Screenshot%2BBackgroundMode"
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Screenshot-BackgroundMode"
     },
     "backgroundColor": {
       "type": "string"
     },
     "cameraView": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Screenshot%2BCameraView"
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Screenshot-CameraView"
     },
     "fieldOfView": {
       "$ref": "#/$defs/System.Single"
@@ -162,7 +162,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     "System.Boolean": {
       "type": "boolean"
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Screenshot+BackgroundMode": {
+    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Screenshot-BackgroundMode": {
       "type": "string",
       "enum": [
         "SolidColor",
@@ -170,7 +170,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "Transparent"
       ]
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Screenshot+CameraView": {
+    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Screenshot-CameraView": {
       "type": "string",
       "enum": [
         "Front",

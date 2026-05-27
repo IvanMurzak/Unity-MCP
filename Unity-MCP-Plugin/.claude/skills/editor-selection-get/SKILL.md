@@ -101,7 +101,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     }
   },
   "$defs": {
-    "AIGD.GameObjectRef[]": {
+    "AIGD.GameObjectRef-1": {
       "type": "array",
       "items": {
         "$ref": "#/$defs/AIGD.GameObjectRef",
@@ -144,7 +144,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     "System.Type": {
       "type": "string"
     },
-    "AIGD.ComponentRef[]": {
+    "AIGD.ComponentRef-1": {
       "type": "array",
       "items": {
         "$ref": "#/$defs/AIGD.ComponentRef",
@@ -173,13 +173,13 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       ],
       "description": "Component reference. Used to find a Component at GameObject."
     },
-    "System.Int32[]": {
+    "System.Int32-1": {
       "type": "array",
       "items": {
         "type": "integer"
       }
     },
-    "System.String[]": {
+    "System.String-1": {
       "type": "array",
       "items": {
         "type": "string"
@@ -202,19 +202,19 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "type": "object",
       "properties": {
         "GameObjects": {
-          "$ref": "#/$defs/AIGD.GameObjectRef%5B%5D",
+          "$ref": "#/$defs/AIGD.GameObjectRef-1",
           "description": "Returns the actual game object selection. Includes Prefabs, non-modifiable objects."
         },
         "Transforms": {
-          "$ref": "#/$defs/AIGD.ComponentRef%5B%5D",
+          "$ref": "#/$defs/AIGD.ComponentRef-1",
           "description": "Returns the top level selection, excluding Prefabs."
         },
         "InstanceIDs": {
-          "$ref": "#/$defs/System.Int32%5B%5D",
+          "$ref": "#/$defs/System.Int32-1",
           "description": "The actual unfiltered selection from the Scene returned as instance ids instead of objects."
         },
         "AssetGUIDs": {
-          "$ref": "#/$defs/System.String%5B%5D",
+          "$ref": "#/$defs/System.String-1",
           "description": "Returns the guids of the selected assets."
         },
         "ActiveGameObject": {

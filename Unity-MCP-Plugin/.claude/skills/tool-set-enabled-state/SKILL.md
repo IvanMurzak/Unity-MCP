@@ -57,7 +57,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "tools": {
-      "$ref": "#/$defs/AIGD.ToolToggleInput%5B%5D"
+      "$ref": "#/$defs/AIGD.ToolToggleInput-1"
     },
     "includeLogs": {
       "$ref": "#/$defs/System.Boolean"
@@ -80,7 +80,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "Enabled"
       ]
     },
-    "AIGD.ToolToggleInput[]": {
+    "AIGD.ToolToggleInput-1": {
       "type": "array",
       "items": {
         "$ref": "#/$defs/AIGD.ToolToggleInput"
@@ -142,7 +142,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "Type"
       ]
     },
-    "System.Collections.Generic.Dictionary<System.String,System.Boolean>": {
+    "System.Collections.Generic.Dictionary(System.String,System.Boolean)": {
       "type": "object",
       "additionalProperties": {
         "type": "boolean"
@@ -156,7 +156,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "description": "Optional operation logs. Only included when 'includeLogs' is true."
         },
         "Success": {
-          "$ref": "#/$defs/System.Collections.Generic.Dictionary%3CSystem.String,System.Boolean%3E",
+          "$ref": "#/$defs/System.Collections.Generic.Dictionary(System.String,System.Boolean)",
           "description": "Result of each tool operation. Key: original input name as provided by the caller (case preserved as-is). Value: true if the enable/disable operation completed successfully, false if the name was unknown, ambiguous, or empty."
         }
       }

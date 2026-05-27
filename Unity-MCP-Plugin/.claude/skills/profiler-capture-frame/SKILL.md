@@ -73,12 +73,12 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler%2BFrameCaptureData",
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler-FrameCaptureData",
       "description": "Single-frame snapshot of timing information from UnityEngine.Time. No historical frame data; use the Profiler window for that."
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler+FrameCaptureData": {
+    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler-FrameCaptureData": {
       "type": "object",
       "properties": {
         "FrameTimeMs": {

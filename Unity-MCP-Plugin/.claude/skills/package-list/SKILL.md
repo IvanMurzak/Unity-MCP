@@ -86,7 +86,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/System.Collections.Generic.List%3CAIGD.PackageData%3E"
+      "$ref": "#/$defs/System.Collections.Generic.List(AIGD.PackageData)"
     }
   },
   "$defs": {
@@ -120,7 +120,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       },
       "description": "Package information returned from package list operation."
     },
-    "System.Collections.Generic.List<AIGD.PackageData>": {
+    "System.Collections.Generic.List(AIGD.PackageData)": {
       "type": "array",
       "items": {
         "$ref": "#/$defs/AIGD.PackageData",

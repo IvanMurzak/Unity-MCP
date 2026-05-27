@@ -95,7 +95,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.LogEntry%5B%5D"
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.LogEntry-1"
     }
   },
   "$defs": {
@@ -128,7 +128,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "Timestamp"
       ]
     },
-    "com.IvanMurzak.Unity.MCP.LogEntry[]": {
+    "com.IvanMurzak.Unity.MCP.LogEntry-1": {
       "type": "array",
       "items": {
         "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.LogEntry"

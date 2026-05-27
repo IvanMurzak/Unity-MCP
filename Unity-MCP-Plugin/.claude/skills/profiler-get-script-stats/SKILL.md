@@ -71,12 +71,12 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler%2BScriptStatsData",
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler-ScriptStatsData",
       "description": "Script statistics derived from UnityEngine.Time + UnityEngine.Profiling.Profiler."
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler+ScriptStatsData": {
+    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler-ScriptStatsData": {
       "type": "object",
       "properties": {
         "FrameTimeMs": {

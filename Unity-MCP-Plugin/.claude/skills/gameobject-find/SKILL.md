@@ -94,7 +94,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "type": "integer"
     },
     "paths": {
-      "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E"
+      "$ref": "#/$defs/System.Collections.Generic.List(System.String)"
     },
     "viewQuery": {
       "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.ViewQuery"
@@ -137,7 +137,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       ],
       "description": "Find GameObject in opened Prefab or in the active Scene."
     },
-    "System.Collections.Generic.List<System.String>": {
+    "System.Collections.Generic.List(System.String)": {
       "type": "array",
       "items": {
         "type": "string"
@@ -335,7 +335,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "type": "boolean"
         },
         "children": {
-          "$ref": "#/$defs/System.Collections.Generic.List%3CAIGD.GameObjectMetadata%3E"
+          "$ref": "#/$defs/System.Collections.Generic.List(AIGD.GameObjectMetadata)"
         }
       },
       "required": [
@@ -344,13 +344,13 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "activeInHierarchy"
       ]
     },
-    "System.Collections.Generic.List<AIGD.GameObjectMetadata>": {
+    "System.Collections.Generic.List(AIGD.GameObjectMetadata)": {
       "type": "array",
       "items": {
         "$ref": "#/$defs/AIGD.GameObjectMetadata"
       }
     },
-    "AIGD.ComponentDataShallow[]": {
+    "AIGD.ComponentDataShallow-1": {
       "type": "array",
       "items": {
         "$ref": "#/$defs/AIGD.ComponentDataShallow"
@@ -399,7 +399,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "description": "Hierarchy metadata of the GameObject."
         },
         "Components": {
-          "$ref": "#/$defs/AIGD.ComponentDataShallow%5B%5D",
+          "$ref": "#/$defs/AIGD.ComponentDataShallow-1",
           "description": "Attached components shallow data of the GameObject (Read-only, use Component modification tool for modification)."
         }
       }
