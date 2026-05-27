@@ -125,6 +125,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     code: codeToCompile,
                     parameters: parameters,
                     returnValue: out var result,
+                    returnType: out var returnType,
                     error: out var error,
                     logger: logger))
                 {
@@ -133,12 +134,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 if (result is null)
                 {
-                    var ret = new SerializedMember
+                    if (returnType == typeof(void))
                     {
-                        name = "result",
-                        typeName = "System.Void"
-                    };
-                    return ret.SetJsonValue("\"Success\"");
+                        var ret = new SerializedMember
+                        {
+                            name = "result",
+                            typeName = "System.Void"
+                        };
+                        return ret.SetJsonValue("\"Success\"");
+                    }
+                    else if (returnType is not null)
+                    {
+                        var ret = new SerializedMember
+                        {
+                            name = "result",
+                            typeName = returnType.FullName ?? returnType.Name ?? "object"
+                        };
+                        return ret.SetJsonValue("\"null\"");
+                    }
+                    return null;
                 }
 
                 if (result is SerializedMember serializedResult)
@@ -146,12 +160,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
-                var serializedResult2 = reflector.Serialize(
+                var serializedResultByReflector = reflector.Serialize(
                     obj: result,
                     logger: logger);
-                if (string.IsNullOrEmpty(serializedResult2.name))
-                    serializedResult2.name = "result";
-                return serializedResult2;
+                if (string.IsNullOrEmpty(serializedResultByReflector.name))
+                    serializedResultByReflector.name = "result";
+                return serializedResultByReflector;
             });
         }
 
@@ -209,18 +223,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             string code,
             SerializedMemberList? parameters,
             out object? returnValue,
+            out Type? returnType,
             out string? error,
             ILogger? logger = null)
         {
             if (string.IsNullOrEmpty(className))
             {
                 returnValue = null;
+                returnType = null;
                 error = $"'{nameof(className)}' cannot be null or empty.";
                 return false;
             }
             if (string.IsNullOrEmpty(methodName))
             {
                 returnValue = null;
+                returnType = null;
                 error = $"'{nameof(methodName)}' cannot be null or empty.";
                 return false;
             }
@@ -276,6 +293,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 {
                     error = $"Compilation failed:\n{string.Join("\n", result.Diagnostics.Select(d => d.ToString()))}";
                     returnValue = null;
+                    returnType = null;
                     return false;
                 }
                 ms.Seek(0, SeekOrigin.Begin);
@@ -285,6 +303,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 {
                     error = $"Class '{className}' not found in the compiled assembly.";
                     returnValue = null;
+                    returnType = null;
                     return false;
                 }
                 var method = type.GetMethod(methodName);
@@ -292,11 +311,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 {
                     error = $"Method '{methodName}' not found in class '{className}'.";
                     returnValue = null;
+                    returnType = null;
                     return false;
                 }
                 try
                 {
                     returnValue = method.Invoke(null, parsedParameters);
+                    returnType = method.ReturnType;
                     error = null;
                     return true;
                 }
@@ -304,12 +325,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 {
                     error = $"Execution failed. TargetInvocationException: {ex.InnerException?.Message ?? ex.Message}\n{ex.InnerException?.StackTrace ?? ex.StackTrace}";
                     returnValue = null;
+                    returnType = null;
                     return false;
                 }
                 catch (Exception ex)
                 {
                     error = $"Execution failed: {ex.InnerException?.Message ?? ex.Message}\n{ex.InnerException?.StackTrace ?? ex.StackTrace}";
                     returnValue = null;
+                    returnType = null;
                     return false;
                 }
             }
