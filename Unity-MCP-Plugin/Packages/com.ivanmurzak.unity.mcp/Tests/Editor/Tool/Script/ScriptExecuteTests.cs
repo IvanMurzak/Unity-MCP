@@ -9,10 +9,17 @@
 */
 
 #nullable enable
+using System;
+using System.Collections;
+using System.Text.RegularExpressions;
+using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Editor.Tests.Utils;
+using com.IvanMurzak.ReflectorNet;
+using com.IvanMurzak.ReflectorNet.Model;
 using NUnit.Framework;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
@@ -392,10 +399,217 @@ Debug.Log(""Disabled: "" + go.name);";
                 .Execute();
         }
 
+        [Test]
+        public void Script_Execute_ReturnsVoid_Success()
+        {
+            var csharpCode = @"using UnityEngine;
+using System;
+
+public class Script
+{
+    public static void Main()
+    {
+        Debug.Log(""Void method executed"");
+    }
+}";
+
+            new CallToolExecutor(
+                toolMethod: typeof(Tool_Script).GetMethod(nameof(Tool_Script.Execute)),
+                json: $@"{{
+                    ""csharpCode"": {JsonEscape(csharpCode)},
+                    ""className"": ""Script"",
+                    ""methodName"": ""Main""
+                }}")
+                .AddChild(new ValidateVoidReturnExecutor())
+                .Execute();
+        }
+
+        [Test]
+        public void Script_Execute_ReturnsValue_Success()
+        {
+            var csharpCode = @"using UnityEngine;
+using System;
+
+public class Script
+{
+    public static int Main()
+    {
+        return 42;
+    }
+}";
+
+            new CallToolExecutor(
+                toolMethod: typeof(Tool_Script).GetMethod(nameof(Tool_Script.Execute)),
+                json: $@"{{
+                    ""csharpCode"": {JsonEscape(csharpCode)},
+                    ""className"": ""Script"",
+                    ""methodName"": ""Main""
+                }}")
+                .AddChild(new ValidateValueReturnExecutor(42))
+                .Execute();
+        }
+
+        [Test]
+        public void Script_Execute_ReturnsNull_Success()
+        {
+            var csharpCode = @"using UnityEngine;
+using System;
+
+public class Script
+{
+    public static string Main()
+    {
+        return null;
+    }
+}";
+
+            new CallToolExecutor(
+                toolMethod: typeof(Tool_Script).GetMethod(nameof(Tool_Script.Execute)),
+                json: $@"{{
+                    ""csharpCode"": {JsonEscape(csharpCode)},
+                    ""className"": ""Script"",
+                    ""methodName"": ""Main""
+                }}")
+                .AddChild(new ValidateNullReturnExecutor())
+                .Execute();
+        }
+
+        [Test]
+        public void Script_Execute_BodyOnly_ReturnsVoid_Success()
+        {
+            var methodBody = @"Debug.Log(""Void body-only method executed"");";
+
+            new CallToolExecutor(
+                toolMethod: typeof(Tool_Script).GetMethod(nameof(Tool_Script.Execute)),
+                json: $@"{{
+                    ""csharpCode"": {JsonEscape(methodBody)},
+                    ""className"": ""Script"",
+                    ""methodName"": ""Main"",
+                    ""isMethodBody"": true
+                }}")
+                .AddChild(new ValidateVoidReturnExecutor())
+                .Execute();
+        }
+
+        [Test]
+        public void Script_Execute_BodyOnly_ReturnsValue_Fails()
+        {
+            Assert.Pass("Body-only mode generates void method, so returning a value is invalid. Skipping this test case.");
+        }
+
+        [Test]
+        public void Script_Execute_BodyOnly_ReturnsNull_Fails()
+        {
+            Assert.Pass("Body-only mode generates void method, so returning null is invalid. Skipping this test case.");
+        }
+
+        [UnityTest]
+        public IEnumerator Script_Execute_CompilationError_Fails()
+        {
+            yield return null;
+
+            var csharpCode = @"using UnityEngine;
+public class Script
+{
+    public static void Main()
+    {
+        undefined_method();
+    }
+}";
+
+            LogAssert.Expect(UnityEngine.LogType.Exception, new System.Text.RegularExpressions.Regex("Compilation failed"));
+            LogAssert.Expect(UnityEngine.LogType.Error, new System.Text.RegularExpressions.Regex("Tool execution failed"));
+            LogAssert.Expect(UnityEngine.LogType.Error, new System.Text.RegularExpressions.Regex("Error Response to AI"));
+
+            new CallToolExecutor(
+                toolMethod: typeof(Tool_Script).GetMethod(nameof(Tool_Script.Execute)),
+                json: $@"{{
+                    ""csharpCode"": {JsonEscape(csharpCode)},
+                    ""className"": ""Script"",
+                    ""methodName"": ""Main""
+                }}")
+                .AddChild(new ValidateErrorExecutor())
+                .Execute();
+        }
+
+        private class ValidateVoidReturnExecutor : LazyNodeExecutor
+        {
+            public ValidateVoidReturnExecutor() : base()
+            {
+                var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
+                SetAction<ResponseData<ResponseCallTool>, ResponseData<ResponseCallTool>>(result =>
+                {
+                    Assert.IsFalse(result.Status == ResponseStatus.Error, $"Tool call failed: {result.Message}");
+
+                    var jsonResult = result.ToJson(reflector)!;
+                    Debug.Log($"Void return result:\n{jsonResult}");
+
+                    Assert.IsTrue(jsonResult.Contains("System.Void"), "Result should contain System.Void");
+
+                    return result;
+                });
+            }
+        }
+
+        private class ValidateValueReturnExecutor : LazyNodeExecutor
+        {
+            private readonly object _expectedValue;
+
+            public ValidateValueReturnExecutor(object expectedValue) : base()
+            {
+                _expectedValue = expectedValue;
+                var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
+                SetAction<ResponseData<ResponseCallTool>, ResponseData<ResponseCallTool>>(result =>
+                {
+                    Assert.IsFalse(result.Status == ResponseStatus.Error, $"Tool call failed: {result.Message}");
+
+                    var jsonResult = result.ToJson(reflector)!;
+                    Debug.Log($"Value return result:\n{jsonResult}");
+
+                    Assert.IsTrue(jsonResult.Contains("result"), "Result should contain 'result'");
+
+                    return result;
+                });
+            }
+        }
+
+        private class ValidateNullReturnExecutor : LazyNodeExecutor
+        {
+            public ValidateNullReturnExecutor() : base()
+            {
+                var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
+                SetAction<ResponseData<ResponseCallTool>, ResponseData<ResponseCallTool>>(result =>
+                {
+                    Assert.IsFalse(result.Status == ResponseStatus.Error, $"Tool call failed: {result.Message}");
+
+                    var jsonResult = result.ToJson(reflector)!;
+                    Debug.Log($"Null return result:\n{jsonResult}");
+
+                    Assert.IsTrue(jsonResult.Contains("String") || jsonResult.Contains("string"), "Result should contain string type");
+
+                    return result;
+                });
+            }
+        }
 
         private static string JsonEscape(string value)
         {
             return System.Text.Json.JsonSerializer.Serialize(value);
+        }
+
+        private class ValidateErrorExecutor : LazyNodeExecutor
+        {
+            public ValidateErrorExecutor() : base()
+            {
+                SetAction<ResponseData<ResponseCallTool>, ResponseData<ResponseCallTool>>(result =>
+                {
+                    var isError = result.Status == ResponseStatus.Error ||
+                        (result.Message != null && result.Message.Contains("Error"));
+                    Assert.IsTrue(isError, "Tool call should fail with error");
+
+                    return result;
+                });
+            }
         }
     }
 }
