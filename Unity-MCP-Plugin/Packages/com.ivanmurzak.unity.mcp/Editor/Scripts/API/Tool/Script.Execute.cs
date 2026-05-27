@@ -15,6 +15,7 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
+using AIGD;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet.Model;
@@ -53,7 +54,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "while body-only mode (isMethodBody=true) auto-generates the boilerplate so you only " +
             "provide the method body. Unity objects (GameObject, Component, etc.) can be passed as " +
             "parameters using their Ref types (GameObjectRef, ComponentRef, etc.) or directly by type.")]
-        public static ResponseCallTool Execute
+        public static ResponseCallValueTool<ScriptExecuteResponse> Execute
         (
             [Description("C# code to compile and execute. " +
                 "In full code mode (default, isMethodBody=false): must define a complete class with a static method. " +
@@ -132,20 +133,41 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     throw new Exception(error);
                 }
 
-                if (result is null)
-                    return ResponseCallTool.Success("Script executed successfully. No return value.");
-
                 var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
                 var jsonSerializer = reflector.JsonSerializer;
 
+                // Void return - use plain success message
+                if (result is null)
+                {
+                    return ResponseCallValueTool<ScriptExecuteResponse>
+                        .Success(new ScriptExecuteResponse
+                        {
+                            Result = null,
+                            Message = "Script executed successfully. No return value."
+                        });
+                }
+
+                // Non-null result - use SuccessStructured to preserve JSON structure
                 if (result is SerializedMember serializedResult)
-                    return ResponseCallTool.Success(jsonSerializer.Serialize(serializedResult));
+                {
+                    return ResponseCallValueTool<ScriptExecuteResponse>
+                        .SuccessStructured(jsonSerializer.SerializeToNode(new ScriptExecuteResponse
+                        {
+                            Result = serializedResult,
+                            Message = "Script executed successfully."
+                        }));
+                }
 
                 var serialized = reflector.Serialize(
                     obj: result,
                     logger: logger);
 
-                return ResponseCallTool.Success(jsonSerializer.Serialize(serialized));
+                return ResponseCallValueTool<ScriptExecuteResponse>
+                    .SuccessStructured(jsonSerializer.SerializeToNode(new ScriptExecuteResponse
+                    {
+                        Result = serialized,
+                        Message = "Script executed successfully."
+                    }));
             });
         }
 
