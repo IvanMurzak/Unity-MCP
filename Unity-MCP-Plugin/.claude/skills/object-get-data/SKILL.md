@@ -61,7 +61,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "$ref": "#/$defs/AIGD.ObjectRef"
     },
     "paths": {
-      "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E"
+      "$ref": "#/$defs/System.Collections.Generic.List(System.String)"
     },
     "viewQuery": {
       "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.ViewQuery"
@@ -81,7 +81,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       ],
       "description": "Reference to UnityEngine.Object instance. It could be GameObject, Component, Asset, etc. Anything extended from UnityEngine.Object."
     },
-    "System.Collections.Generic.List<System.String>": {
+    "System.Collections.Generic.List(System.String)": {
       "type": "array",
       "items": {
         "type": "string"

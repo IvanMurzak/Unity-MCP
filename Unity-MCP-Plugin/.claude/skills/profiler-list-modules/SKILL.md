@@ -65,19 +65,19 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler%2BProfilerModulesData",
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler-ProfilerModulesData",
       "description": "Container for 'profiler-list-modules' output."
     }
   },
   "$defs": {
-    "System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler+ProfilerModuleInfo>": {
+    "System.Collections.Generic.List(com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler-ProfilerModuleInfo)": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler%2BProfilerModuleInfo",
+        "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler-ProfilerModuleInfo",
         "description": "Profiler module entry returned by 'profiler-list-modules'."
       }
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler+ProfilerModuleInfo": {
+    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler-ProfilerModuleInfo": {
       "type": "object",
       "properties": {
         "Name": {
@@ -94,11 +94,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       ],
       "description": "Profiler module entry returned by 'profiler-list-modules'."
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler+ProfilerModulesData": {
+    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler-ProfilerModulesData": {
       "type": "object",
       "properties": {
         "Modules": {
-          "$ref": "#/$defs/System.Collections.Generic.List%3Ccom.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler%2BProfilerModuleInfo%3E",
+          "$ref": "#/$defs/System.Collections.Generic.List(com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler-ProfilerModuleInfo)",
           "description": "All known profiler modules and their wrapper-side enabled flag."
         }
       },

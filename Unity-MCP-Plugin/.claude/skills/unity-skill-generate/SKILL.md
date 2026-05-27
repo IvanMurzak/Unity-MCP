@@ -1,6 +1,6 @@
 ---
 name: unity-skill-generate
-description: "Regenerate every `SKILL.md` from the project's currently-registered MCP tools into the configured skills folder (or a project-relative override path). Writes the YAML `description:` from `[McpPluginSkillDescription]` and the body from `[McpPluginSkillBody]`."
+description: "Regenerate every `SKILL.md` from the project's currently-registered MCP tools into the configured skills folder (or a project-relative override path). Writes the YAML `description:` from `[AiSkillDescription]` and the body from `[AiSkillBody]`."
 ---
 
 # Skill (Tool) / Generate All

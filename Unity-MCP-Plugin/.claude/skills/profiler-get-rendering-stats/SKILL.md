@@ -70,12 +70,12 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler%2BRenderingStatsData",
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler-RenderingStatsData",
       "description": "Rendering statistics from Unity's Time / QualitySettings / SystemInfo. No external package required."
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler+RenderingStatsData": {
+    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler-RenderingStatsData": {
       "type": "object",
       "properties": {
         "FrameTimeMs": {

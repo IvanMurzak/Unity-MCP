@@ -16,6 +16,7 @@
 - **Development**
   - [Development Guide](/dev/Development.md)
   - [Version Management](/version-management.md)
+  - [OpenUPM Package Signing](/openupm-signing.md)
   - [Architecture](/#how-unity-mcp-architecture-works)
 
 - **Languages**

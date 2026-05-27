@@ -102,7 +102,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/AIGD.SceneDataShallow%5B%5D"
+      "$ref": "#/$defs/AIGD.SceneDataShallow-1"
     }
   },
   "$defs": {
@@ -152,7 +152,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       ],
       "description": "Scene reference. Used to find a Scene."
     },
-    "AIGD.SceneDataShallow[]": {
+    "AIGD.SceneDataShallow-1": {
       "type": "array",
       "items": {
         "$ref": "#/$defs/AIGD.SceneDataShallow",

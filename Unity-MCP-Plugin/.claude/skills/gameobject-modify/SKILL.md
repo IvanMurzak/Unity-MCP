@@ -70,10 +70,10 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.SerializedMemberList"
     },
     "pathPatchesPerGameObject": {
-      "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.Collections.Generic.List%3CAIGD.PathPatch%3E%3E"
+      "$ref": "#/$defs/System.Collections.Generic.List(System.Collections.Generic.List(AIGD.PathPatch))"
     },
     "jsonPatchesPerGameObject": {
-      "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E"
+      "$ref": "#/$defs/System.Collections.Generic.List(System.String)"
     }
   },
   "$defs": {
@@ -163,7 +163,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       ],
       "additionalProperties": false
     },
-    "System.Collections.Generic.List<AIGD.PathPatch>": {
+    "System.Collections.Generic.List(AIGD.PathPatch)": {
       "type": "array",
       "items": {
         "$ref": "#/$defs/AIGD.PathPatch"
@@ -182,13 +182,13 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         }
       }
     },
-    "System.Collections.Generic.List<System.Collections.Generic.List<AIGD.PathPatch>>": {
+    "System.Collections.Generic.List(System.Collections.Generic.List(AIGD.PathPatch))": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/System.Collections.Generic.List%3CAIGD.PathPatch%3E"
+        "$ref": "#/$defs/System.Collections.Generic.List(AIGD.PathPatch)"
       }
     },
-    "System.Collections.Generic.List<System.String>": {
+    "System.Collections.Generic.List(System.String)": {
       "type": "array",
       "items": {
         "type": "string"

@@ -72,18 +72,18 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler%2BProfilerStatusData",
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler-ProfilerStatusData",
       "description": "Profiler status data including memory and module information."
     }
   },
   "$defs": {
-    "System.Collections.Generic.List<System.String>": {
+    "System.Collections.Generic.List(System.String)": {
       "type": "array",
       "items": {
         "type": "string"
       }
     },
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler+ProfilerStatusData": {
+    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler-ProfilerStatusData": {
       "type": "object",
       "properties": {
         "ProfilerEnabled": {
@@ -91,7 +91,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "description": "Whether Unity's runtime profiler is currently enabled (UnityEngine.Profiling.Profiler.enabled)."
         },
         "ActiveModules": {
-          "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E",
+          "$ref": "#/$defs/System.Collections.Generic.List(System.String)",
           "description": "List of profiler modules this wrapper considers active. Local bookkeeping only."
         },
         "MaxUsedMemoryMB": {

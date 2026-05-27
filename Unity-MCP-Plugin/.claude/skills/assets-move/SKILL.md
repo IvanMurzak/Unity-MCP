@@ -57,14 +57,14 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "sourcePaths": {
-      "$ref": "#/$defs/System.String%5B%5D"
+      "$ref": "#/$defs/System.String-1"
     },
     "destinationPaths": {
-      "$ref": "#/$defs/System.String%5B%5D"
+      "$ref": "#/$defs/System.String-1"
     }
   },
   "$defs": {
-    "System.String[]": {
+    "System.String-1": {
       "type": "array",
       "items": {
         "type": "string"
@@ -91,7 +91,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     }
   },
   "$defs": {
-    "System.Collections.Generic.List<System.String>": {
+    "System.Collections.Generic.List(System.String)": {
       "type": "array",
       "items": {
         "type": "string"
@@ -101,11 +101,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "type": "object",
       "properties": {
         "MovedPaths": {
-          "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E",
+          "$ref": "#/$defs/System.Collections.Generic.List(System.String)",
           "description": "List of destination paths of successfully moved assets."
         },
         "Errors": {
-          "$ref": "#/$defs/System.Collections.Generic.List%3CSystem.String%3E",
+          "$ref": "#/$defs/System.Collections.Generic.List(System.String)",
           "description": "List of errors encountered during move operations."
         }
       }

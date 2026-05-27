@@ -77,12 +77,12 @@ Read the /unity-initial-setup skill for detailed installation instructions.
   "type": "object",
   "properties": {
     "result": {
-      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler%2BMemoryStatsData",
+      "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler-MemoryStatsData",
       "description": "Memory statistics from the Unity Profiler. All values in megabytes unless otherwise noted."
     }
   },
   "$defs": {
-    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler+MemoryStatsData": {
+    "com.IvanMurzak.Unity.MCP.Editor.API.Tool_Profiler-MemoryStatsData": {
       "type": "object",
       "properties": {
         "TotalReservedMemoryMB": {

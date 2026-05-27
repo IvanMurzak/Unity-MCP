@@ -74,7 +74,7 @@ Any unknown or invalid fields and properties will be reported in the response. |
       "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.SerializedMember"
     },
     "pathPatches": {
-      "$ref": "#/$defs/System.Collections.Generic.List%3CAIGD.PathPatch%3E"
+      "$ref": "#/$defs/System.Collections.Generic.List(AIGD.PathPatch)"
     },
     "jsonPatch": {
       "type": "string"
@@ -149,7 +149,7 @@ Any unknown or invalid fields and properties will be reported in the response. |
         }
       }
     },
-    "System.Collections.Generic.List<AIGD.PathPatch>": {
+    "System.Collections.Generic.List(AIGD.PathPatch)": {
       "type": "array",
       "items": {
         "$ref": "#/$defs/AIGD.PathPatch"
@@ -230,7 +230,7 @@ Any unknown or invalid fields and properties will be reported in the response. |
         "$ref": "#/$defs/com.IvanMurzak.ReflectorNet.Model.SerializedMember"
       }
     },
-    "System.String[]": {
+    "System.String-1": {
       "type": "array",
       "items": {
         "type": "string"
@@ -252,7 +252,7 @@ Any unknown or invalid fields and properties will be reported in the response. |
           "description": "Updated object data after modification."
         },
         "Logs": {
-          "$ref": "#/$defs/System.String%5B%5D",
+          "$ref": "#/$defs/System.String-1",
           "description": "Log of modifications made and any warnings/errors encountered."
         }
       },

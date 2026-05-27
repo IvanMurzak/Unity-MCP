@@ -180,7 +180,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "Duration"
       ]
     },
-    "System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Editor.API.TestRunner.TestResultData>": {
+    "System.Collections.Generic.List(com.IvanMurzak.Unity.MCP.Editor.API.TestRunner.TestResultData)": {
       "type": "array",
       "items": {
         "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.TestRunner.TestResultData"
@@ -215,7 +215,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "Duration"
       ]
     },
-    "System.Collections.Generic.List<com.IvanMurzak.Unity.MCP.Editor.API.TestRunner.TestLogEntry>": {
+    "System.Collections.Generic.List(com.IvanMurzak.Unity.MCP.Editor.API.TestRunner.TestLogEntry)": {
       "type": "array",
       "items": {
         "$ref": "#/$defs/com.IvanMurzak.Unity.MCP.Editor.API.TestRunner.TestLogEntry"
@@ -261,11 +261,11 @@ Read the /unity-initial-setup skill for detailed installation instructions.
           "description": "Summary of the test run including total, passed, failed, and skipped counts."
         },
         "Results": {
-          "$ref": "#/$defs/System.Collections.Generic.List%3Ccom.IvanMurzak.Unity.MCP.Editor.API.TestRunner.TestResultData%3E",
+          "$ref": "#/$defs/System.Collections.Generic.List(com.IvanMurzak.Unity.MCP.Editor.API.TestRunner.TestResultData)",
           "description": "List of individual test results with details about each test."
         },
         "Logs": {
-          "$ref": "#/$defs/System.Collections.Generic.List%3Ccom.IvanMurzak.Unity.MCP.Editor.API.TestRunner.TestLogEntry%3E",
+          "$ref": "#/$defs/System.Collections.Generic.List(com.IvanMurzak.Unity.MCP.Editor.API.TestRunner.TestLogEntry)",
           "description": "Log entries captured during test execution."
         }
       }
