@@ -3,7 +3,12 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { fileURLToPath } from 'url';
-import { getProjectEditorVersion, resolveEditorPath } from '../src/utils/unity-editor.js';
+import {
+  getProjectEditorVersion,
+  getSecondaryInstallPathFile,
+  readSecondaryInstallPaths,
+  resolveEditorPath,
+} from '../src/utils/unity-editor.js';
 
 describe('resolveEditorPath', () => {
   describe('darwin', () => {
@@ -189,6 +194,418 @@ describe('findEditorPath (cache-hit integration)', () => {
     expect(result).toBe(fakeBinary);
     expect(ensureUnityHubMock).not.toHaveBeenCalled();
     expect(listInstalledEditorsMock).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// getSecondaryInstallPathFile — platform path resolution
+// ---------------------------------------------------------------------------
+describe('getSecondaryInstallPathFile', () => {
+  let origAppData: string | undefined;
+  let origHome: string | undefined;
+
+  beforeEach(() => {
+    origAppData = process.env['APPDATA'];
+    origHome = process.env['HOME'];
+  });
+
+  afterEach(() => {
+    if (origAppData === undefined) delete process.env['APPDATA'];
+    else process.env['APPDATA'] = origAppData;
+    if (origHome === undefined) delete process.env['HOME'];
+    else process.env['HOME'] = origHome;
+  });
+
+  it('returns null on win32 when APPDATA is not set', () => {
+    delete process.env['APPDATA'];
+    expect(getSecondaryInstallPathFile('win32')).toBeNull();
+  });
+
+  it('returns %APPDATA%/UnityHub/secondaryInstallPath.json on win32', () => {
+    process.env['APPDATA'] = 'C:\\Users\\Test\\AppData\\Roaming';
+    expect(getSecondaryInstallPathFile('win32')).toBe(
+      path.join('C:\\Users\\Test\\AppData\\Roaming', 'UnityHub', 'secondaryInstallPath.json'),
+    );
+  });
+
+  it('returns ~/Library/Application Support/UnityHub/secondaryInstallPath.json on darwin', () => {
+    // homedir() is OS-native; assert the suffix instead of an exact path.
+    const result = getSecondaryInstallPathFile('darwin');
+    expect(result).not.toBeNull();
+    expect(result!.endsWith(path.join('Library', 'Application Support', 'UnityHub', 'secondaryInstallPath.json'))).toBe(true);
+  });
+
+  it('returns ~/.config/UnityHub/secondaryInstallPath.json on linux', () => {
+    const result = getSecondaryInstallPathFile('linux');
+    expect(result).not.toBeNull();
+    expect(result!.endsWith(path.join('.config', 'UnityHub', 'secondaryInstallPath.json'))).toBe(true);
+  });
+
+  it('returns null on an unsupported platform', () => {
+    expect(getSecondaryInstallPathFile('aix' as NodeJS.Platform)).toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// readSecondaryInstallPaths — file-shape tolerance
+// ---------------------------------------------------------------------------
+// The file is best-effort: every malformed shape collapses to []. We exercise
+// each branch by redirecting APPDATA (win32) to a temp dir and dropping
+// fixture files there.
+// ---------------------------------------------------------------------------
+describe('readSecondaryInstallPaths', () => {
+  let tmpDir: string;
+  let origAppData: string | undefined;
+
+  beforeEach(() => {
+    origAppData = process.env['APPDATA'];
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-secondary-paths-'));
+    process.env['APPDATA'] = tmpDir;
+  });
+
+  afterEach(() => {
+    if (origAppData === undefined) delete process.env['APPDATA'];
+    else process.env['APPDATA'] = origAppData;
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  /** Path that `getSecondaryInstallPathFile('win32')` resolves to under APPDATA=tmpDir. */
+  function secondaryFile(): string {
+    return path.join(tmpDir, 'UnityHub', 'secondaryInstallPath.json');
+  }
+
+  it('returns [] when the file does not exist', () => {
+    expect(readSecondaryInstallPaths('win32')).toEqual([]);
+  });
+
+  it('returns [] when the file is empty', () => {
+    fs.mkdirSync(path.dirname(secondaryFile()), { recursive: true });
+    fs.writeFileSync(secondaryFile(), '', 'utf-8');
+    expect(readSecondaryInstallPaths('win32')).toEqual([]);
+  });
+
+  it('returns [] when the file is whitespace only', () => {
+    fs.mkdirSync(path.dirname(secondaryFile()), { recursive: true });
+    fs.writeFileSync(secondaryFile(), '   \n  \t  ', 'utf-8');
+    expect(readSecondaryInstallPaths('win32')).toEqual([]);
+  });
+
+  it('returns [] when the file is not valid JSON', () => {
+    fs.mkdirSync(path.dirname(secondaryFile()), { recursive: true });
+    fs.writeFileSync(secondaryFile(), 'not-json-at-all{', 'utf-8');
+    expect(readSecondaryInstallPaths('win32')).toEqual([]);
+  });
+
+  it('returns the parsed path when the file is a JSON-encoded string (Unity Hub format)', () => {
+    fs.mkdirSync(path.dirname(secondaryFile()), { recursive: true });
+    // Real-world Windows shape: a JSON-encoded string e.g. "C:\\UnityEditor".
+    fs.writeFileSync(secondaryFile(), JSON.stringify('C:\\UnityEditor'), 'utf-8');
+    expect(readSecondaryInstallPaths('win32')).toEqual(['C:\\UnityEditor']);
+  });
+
+  it('returns [] when the JSON-encoded string is empty / whitespace', () => {
+    fs.mkdirSync(path.dirname(secondaryFile()), { recursive: true });
+    fs.writeFileSync(secondaryFile(), JSON.stringify(''), 'utf-8');
+    expect(readSecondaryInstallPaths('win32')).toEqual([]);
+
+    fs.writeFileSync(secondaryFile(), JSON.stringify('   '), 'utf-8');
+    expect(readSecondaryInstallPaths('win32')).toEqual([]);
+  });
+
+  it('returns the parsed array when the file is a JSON array of strings (defensive format)', () => {
+    fs.mkdirSync(path.dirname(secondaryFile()), { recursive: true });
+    fs.writeFileSync(
+      secondaryFile(),
+      JSON.stringify(['C:\\UnityEditor', 'D:\\UnityEditors']),
+      'utf-8',
+    );
+    expect(readSecondaryInstallPaths('win32')).toEqual(['C:\\UnityEditor', 'D:\\UnityEditors']);
+  });
+
+  it('drops non-string and empty-string entries from an array', () => {
+    fs.mkdirSync(path.dirname(secondaryFile()), { recursive: true });
+    fs.writeFileSync(
+      secondaryFile(),
+      JSON.stringify(['C:\\UnityEditor', '', 42, null, 'D:\\UnityEditors']),
+      'utf-8',
+    );
+    expect(readSecondaryInstallPaths('win32')).toEqual(['C:\\UnityEditor', 'D:\\UnityEditors']);
+  });
+
+  it('returns [] when the parsed JSON is an unsupported shape (object / number / null)', () => {
+    fs.mkdirSync(path.dirname(secondaryFile()), { recursive: true });
+
+    fs.writeFileSync(secondaryFile(), JSON.stringify({ path: 'C:\\UnityEditor' }), 'utf-8');
+    expect(readSecondaryInstallPaths('win32')).toEqual([]);
+
+    fs.writeFileSync(secondaryFile(), JSON.stringify(42), 'utf-8');
+    expect(readSecondaryInstallPaths('win32')).toEqual([]);
+
+    fs.writeFileSync(secondaryFile(), JSON.stringify(null), 'utf-8');
+    expect(readSecondaryInstallPaths('win32')).toEqual([]);
+  });
+
+  it('returns [] on unsupported platform regardless of file contents', () => {
+    // The file may exist for win32 but the function should still return [] when
+    // asked about an unsupported platform (defensive — should be unreachable).
+    fs.mkdirSync(path.dirname(secondaryFile()), { recursive: true });
+    fs.writeFileSync(secondaryFile(), JSON.stringify('C:\\UnityEditor'), 'utf-8');
+    expect(readSecondaryInstallPaths('aix' as NodeJS.Platform)).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// findEditorPath — secondaryInstallPath fast path (Windows-only host gate)
+// ---------------------------------------------------------------------------
+// `findEditorPathByCommonLocations` uses `platform()` at runtime; we can't
+// safely override it. Run the integration check on Windows hosts only — that
+// is the platform where the issue was reproduced (and where Unity-MCP CI
+// runs). The pure helpers (`readSecondaryInstallPaths`) above cover the
+// cross-platform shape; this test confirms the fast path actually picks up a
+// secondary root end-to-end.
+// ---------------------------------------------------------------------------
+describe.skipIf(process.platform !== 'win32')('findEditorPath (secondaryInstallPath fast path on win32)', () => {
+  let tmpDir: string;
+  let origHome: string | undefined;
+  let origUserProfile: string | undefined;
+  let origAppData: string | undefined;
+  let origProgramFiles: string | undefined;
+
+  beforeEach(() => {
+    origHome = process.env['HOME'];
+    origUserProfile = process.env['USERPROFILE'];
+    origAppData = process.env['APPDATA'];
+    origProgramFiles = process.env['PROGRAMFILES'];
+
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-secondary-fast-path-'));
+    // Redirect HOME / USERPROFILE so editor-cache writes into the temp dir.
+    process.env['HOME'] = tmpDir;
+    process.env['USERPROFILE'] = tmpDir;
+    // Redirect APPDATA so getSecondaryInstallPathFile('win32') resolves under tmpDir.
+    process.env['APPDATA'] = tmpDir;
+    // Redirect PROGRAMFILES to an empty subdir so the default-Hub-root scan finds nothing.
+    const fakeProgramFiles = path.join(tmpDir, 'ProgramFiles');
+    fs.mkdirSync(fakeProgramFiles, { recursive: true });
+    process.env['PROGRAMFILES'] = fakeProgramFiles;
+  });
+
+  afterEach(() => {
+    if (origHome === undefined) delete process.env['HOME'];
+    else process.env['HOME'] = origHome;
+    if (origUserProfile === undefined) delete process.env['USERPROFILE'];
+    else process.env['USERPROFILE'] = origUserProfile;
+    if (origAppData === undefined) delete process.env['APPDATA'];
+    else process.env['APPDATA'] = origAppData;
+    if (origProgramFiles === undefined) delete process.env['PROGRAMFILES'];
+    else process.env['PROGRAMFILES'] = origProgramFiles;
+
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+    vi.resetModules();
+    vi.restoreAllMocks();
+  });
+
+  it('resolves a version that lives only under secondaryInstallPath without invoking Unity Hub', async () => {
+    // Set up a fake secondary install root with one editor binary in it.
+    const secondaryRoot = path.join(tmpDir, 'UnityEditor');
+    const fakeBinaryDir = path.join(secondaryRoot, '6000.3.1f1', 'Editor');
+    fs.mkdirSync(fakeBinaryDir, { recursive: true });
+    const fakeBinary = path.join(fakeBinaryDir, 'Unity.exe');
+    fs.writeFileSync(fakeBinary, '');
+
+    // Drop a Unity-Hub-shaped secondaryInstallPath.json pointing at it.
+    const secondaryFile = path.join(tmpDir, 'UnityHub', 'secondaryInstallPath.json');
+    fs.mkdirSync(path.dirname(secondaryFile), { recursive: true });
+    fs.writeFileSync(secondaryFile, JSON.stringify(secondaryRoot), 'utf-8');
+
+    vi.resetModules();
+
+    // Mock unity-hub so we can assert the slow path is NEVER taken — a
+    // successful fast path means the Electron probe doesn't run.
+    const ensureUnityHubMock = vi.fn().mockResolvedValue('/fake/hub');
+    const listInstalledEditorsMock = vi.fn().mockReturnValue([]);
+    vi.doMock('../src/utils/unity-hub.js', () => ({
+      findUnityHub: vi.fn().mockReturnValue(null),
+      ensureUnityHub: ensureUnityHubMock,
+      listInstalledEditors: listInstalledEditorsMock,
+    }));
+
+    const { findEditorPath } = (await import(
+      '../src/utils/unity-editor.js'
+    )) as typeof import('../src/utils/unity-editor.js');
+
+    const result = await findEditorPath('6000.3.1f1');
+
+    expect(result).toBe(fakeBinary);
+    expect(ensureUnityHubMock).not.toHaveBeenCalled();
+    expect(listInstalledEditorsMock).not.toHaveBeenCalled();
+
+    // The AC bullet ("secondary fast path returns in <100ms cold") implies
+    // the cache MUST be written on a fast-path hit so subsequent calls are
+    // warm. editor-cache.ts stores `{ [versionKey]: { path, savedAt } }` and
+    // writes to `homedir() + '/.unity-mcp-cli-editor-cache.json'`. HOME /
+    // USERPROFILE is redirected to tmpDir in beforeEach, so the cache lands
+    // under tmpDir. Assert the requested version key resolved to fakeBinary.
+    const cacheFile = path.join(tmpDir, '.unity-mcp-cli-editor-cache.json');
+    expect(fs.existsSync(cacheFile)).toBe(true);
+    const cache = JSON.parse(fs.readFileSync(cacheFile, 'utf-8')) as Record<
+      string,
+      { path: string; savedAt: number }
+    >;
+    expect(cache['6000.3.1f1']).toBeDefined();
+    expect(cache['6000.3.1f1'].path).toBe(fakeBinary);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// findEditorPath — cache-poisoning fix (Windows-only host gate)
+// ---------------------------------------------------------------------------
+// When a caller asks for a version that is NOT installed and the resolver
+// falls back to the highest installed editor, the cache MUST NOT be written
+// under the requested-but-unmatched key. This was the secondary bug in #784.
+//
+// Host-gated to win32 for the same reason as the sibling
+// `secondaryInstallPath fast path` block above: the redirected
+// HOME/USERPROFILE/PROGRAMFILES/APPDATA env vars make the Windows fast path
+// miss, but on POSIX the fast path also scans absolute roots
+// (`/Applications/Unity/Hub/Editor` on darwin, `/opt/unity/hub/Editor` on
+// linux) that are NOT under HOME. On a POSIX runner with a matching real
+// Unity install at those locations, the fast path would hit before the
+// mocked `listInstalledEditors` was consulted and the tests would pass for
+// the wrong reason (the fast path itself writes the cache).
+// ---------------------------------------------------------------------------
+describe.skipIf(process.platform !== 'win32')('findEditorPath (no cache write on unmatched-version fallback)', () => {
+  let tmpDir: string;
+  let origHome: string | undefined;
+  let origUserProfile: string | undefined;
+  let origAppData: string | undefined;
+  let origProgramFiles: string | undefined;
+
+  beforeEach(() => {
+    origHome = process.env['HOME'];
+    origUserProfile = process.env['USERPROFILE'];
+    origAppData = process.env['APPDATA'];
+    origProgramFiles = process.env['PROGRAMFILES'];
+
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-cache-poison-'));
+    process.env['HOME'] = tmpDir;
+    process.env['USERPROFILE'] = tmpDir;
+    // Force the fast path to find nothing so the slow path (the path we care
+    // about) is exercised. Both the default Hub root AND the secondary file
+    // must be inaccessible.
+    const fakeProgramFiles = path.join(tmpDir, 'ProgramFiles');
+    fs.mkdirSync(fakeProgramFiles, { recursive: true });
+    process.env['PROGRAMFILES'] = fakeProgramFiles;
+    process.env['APPDATA'] = path.join(tmpDir, 'NoSuchDir');
+  });
+
+  afterEach(() => {
+    if (origHome === undefined) delete process.env['HOME'];
+    else process.env['HOME'] = origHome;
+    if (origUserProfile === undefined) delete process.env['USERPROFILE'];
+    else process.env['USERPROFILE'] = origUserProfile;
+    if (origAppData === undefined) delete process.env['APPDATA'];
+    else process.env['APPDATA'] = origAppData;
+    if (origProgramFiles === undefined) delete process.env['PROGRAMFILES'];
+    else process.env['PROGRAMFILES'] = origProgramFiles;
+
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+    vi.resetModules();
+    vi.restoreAllMocks();
+  });
+
+  it('does NOT cache the fallback resolution when requested version != resolved version', async () => {
+    // Set up a fake "installed" editor that Unity Hub will return.
+    const installedDir = path.join(tmpDir, 'installed', '2022.3.62f3');
+    fs.mkdirSync(installedDir, { recursive: true });
+    // The path on disk doesn't need to actually contain Unity.exe — the
+    // production code returns whatever `getEditorBinary(match.path)` resolves
+    // to without `existsSync` checking it in the slow path. The cache READ
+    // does existsSync, but we're asserting the cache file's CONTENTS, not
+    // re-reading via the cache API.
+
+    vi.resetModules();
+
+    const ensureUnityHubMock = vi.fn().mockResolvedValue('/fake/hub');
+    const listInstalledEditorsMock = vi.fn().mockReturnValue([
+      { version: '2022.3.62f3', path: installedDir },
+    ]);
+    vi.doMock('../src/utils/unity-hub.js', () => ({
+      findUnityHub: vi.fn().mockReturnValue('/fake/hub'),
+      ensureUnityHub: ensureUnityHubMock,
+      listInstalledEditors: listInstalledEditorsMock,
+    }));
+
+    const { findEditorPath } = (await import(
+      '../src/utils/unity-editor.js'
+    )) as typeof import('../src/utils/unity-editor.js');
+
+    // Ask for a version that is NOT in the installed list. Expect a
+    // best-effort fallback (the highest installed editor's path), but the
+    // cache MUST NOT learn the bogus key.
+    const result = await findEditorPath('999.0.0f0');
+    expect(result).not.toBeNull(); // fallback path returned
+    expect(result).toContain('2022.3.62f3'); // fell back to the installed editor
+
+    // Verify the cache file does NOT contain the bogus requested key.
+    const cacheFile = path.join(tmpDir, '.unity-mcp-cli-editor-cache.json');
+    if (fs.existsSync(cacheFile)) {
+      const cache = JSON.parse(fs.readFileSync(cacheFile, 'utf-8')) as Record<string, unknown>;
+      expect(Object.keys(cache)).not.toContain('999.0.0f0');
+    }
+    // (If cacheFile doesn't exist at all, that also satisfies the assertion.)
+  });
+
+  it('DOES cache when the requested version exactly matches an installed editor', async () => {
+    const installedDir = path.join(tmpDir, 'installed', '2022.3.62f3');
+    fs.mkdirSync(installedDir, { recursive: true });
+
+    vi.resetModules();
+
+    vi.doMock('../src/utils/unity-hub.js', () => ({
+      findUnityHub: vi.fn().mockReturnValue('/fake/hub'),
+      ensureUnityHub: vi.fn().mockResolvedValue('/fake/hub'),
+      listInstalledEditors: vi.fn().mockReturnValue([
+        { version: '2022.3.62f3', path: installedDir },
+      ]),
+    }));
+
+    const { findEditorPath } = (await import(
+      '../src/utils/unity-editor.js'
+    )) as typeof import('../src/utils/unity-editor.js');
+
+    await findEditorPath('2022.3.62f3');
+
+    const cacheFile = path.join(tmpDir, '.unity-mcp-cli-editor-cache.json');
+    expect(fs.existsSync(cacheFile)).toBe(true);
+    const cache = JSON.parse(fs.readFileSync(cacheFile, 'utf-8')) as Record<string, unknown>;
+    expect(Object.keys(cache)).toContain('2022.3.62f3');
+  });
+
+  it('DOES cache under the auto key when no version is requested (highest-installed lookup)', async () => {
+    const installedDir = path.join(tmpDir, 'installed', '6000.3.1f1');
+    fs.mkdirSync(installedDir, { recursive: true });
+
+    vi.resetModules();
+
+    vi.doMock('../src/utils/unity-hub.js', () => ({
+      findUnityHub: vi.fn().mockReturnValue('/fake/hub'),
+      ensureUnityHub: vi.fn().mockResolvedValue('/fake/hub'),
+      listInstalledEditors: vi.fn().mockReturnValue([
+        { version: '6000.3.1f1', path: installedDir },
+      ]),
+    }));
+
+    const { findEditorPath } = (await import(
+      '../src/utils/unity-editor.js'
+    )) as typeof import('../src/utils/unity-editor.js');
+
+    await findEditorPath(undefined);
+
+    const cacheFile = path.join(tmpDir, '.unity-mcp-cli-editor-cache.json');
+    expect(fs.existsSync(cacheFile)).toBe(true);
+    const cache = JSON.parse(fs.readFileSync(cacheFile, 'utf-8')) as Record<string, unknown>;
+    // The auto key is "__auto__" in editor-cache.ts.
+    expect(Object.keys(cache)).toContain('__auto__');
   });
 });
 
