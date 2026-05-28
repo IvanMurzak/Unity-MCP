@@ -212,10 +212,13 @@ export function readSecondaryInstallPaths(os: NodeJS.Platform): string[] {
   }
 
   if (typeof parsed === 'string') {
-    return parsed.trim() ? [parsed] : [];
+    const trimmed = parsed.trim();
+    return trimmed ? [trimmed] : [];
   }
   if (Array.isArray(parsed)) {
-    return parsed.filter((p): p is string => typeof p === 'string' && p.trim().length > 0);
+    return parsed
+      .filter((p): p is string => typeof p === 'string' && p.trim().length > 0)
+      .map((p) => p.trim());
   }
   return [];
 }
