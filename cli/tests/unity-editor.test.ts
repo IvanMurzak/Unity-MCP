@@ -438,17 +438,42 @@ describe.skipIf(process.platform !== 'win32')('findEditorPath (secondaryInstallP
     expect(result).toBe(fakeBinary);
     expect(ensureUnityHubMock).not.toHaveBeenCalled();
     expect(listInstalledEditorsMock).not.toHaveBeenCalled();
+
+    // The AC bullet ("secondary fast path returns in <100ms cold") implies
+    // the cache MUST be written on a fast-path hit so subsequent calls are
+    // warm. editor-cache.ts stores `{ [versionKey]: { path, savedAt } }` and
+    // writes to `homedir() + '/.unity-mcp-cli-editor-cache.json'`. HOME /
+    // USERPROFILE is redirected to tmpDir in beforeEach, so the cache lands
+    // under tmpDir. Assert the requested version key resolved to fakeBinary.
+    const cacheFile = path.join(tmpDir, '.unity-mcp-cli-editor-cache.json');
+    expect(fs.existsSync(cacheFile)).toBe(true);
+    const cache = JSON.parse(fs.readFileSync(cacheFile, 'utf-8')) as Record<
+      string,
+      { path: string; savedAt: number }
+    >;
+    expect(cache['6000.3.1f1']).toBeDefined();
+    expect(cache['6000.3.1f1'].path).toBe(fakeBinary);
   });
 });
 
 // ---------------------------------------------------------------------------
-// findEditorPath — cache-poisoning fix
+// findEditorPath — cache-poisoning fix (Windows-only host gate)
 // ---------------------------------------------------------------------------
 // When a caller asks for a version that is NOT installed and the resolver
 // falls back to the highest installed editor, the cache MUST NOT be written
 // under the requested-but-unmatched key. This was the secondary bug in #784.
+//
+// Host-gated to win32 for the same reason as the sibling
+// `secondaryInstallPath fast path` block above: the redirected
+// HOME/USERPROFILE/PROGRAMFILES/APPDATA env vars make the Windows fast path
+// miss, but on POSIX the fast path also scans absolute roots
+// (`/Applications/Unity/Hub/Editor` on darwin, `/opt/unity/hub/Editor` on
+// linux) that are NOT under HOME. On a POSIX runner with a matching real
+// Unity install at those locations, the fast path would hit before the
+// mocked `listInstalledEditors` was consulted and the tests would pass for
+// the wrong reason (the fast path itself writes the cache).
 // ---------------------------------------------------------------------------
-describe('findEditorPath (no cache write on unmatched-version fallback)', () => {
+describe.skipIf(process.platform !== 'win32')('findEditorPath (no cache write on unmatched-version fallback)', () => {
   let tmpDir: string;
   let origHome: string | undefined;
   let origUserProfile: string | undefined;

@@ -221,6 +221,25 @@ export function readSecondaryInstallPaths(os: NodeJS.Platform): string[] {
 }
 
 /**
+ * Build a comparison key for an editor-root path, used to dedupe a
+ * `secondaryInstallPath.json` entry against the platform's default root.
+ * Returns a normalized form: redundant separators collapsed via
+ * `path.normalize`, a single trailing separator stripped, and (on Windows
+ * only) lowercased so `c:\…` and `C:\…` compare equal. Posix paths preserve
+ * their case because Posix filesystems are case-sensitive. The original
+ * string is still used for `existsSync` and verbose logs — only the
+ * comparison key is normalized.
+ */
+function normalizeRootForDedup(root: string, os: NodeJS.Platform): string {
+  let normalized = path.normalize(root);
+  // Strip a single trailing separator (path.sep is `\\` on win32, `/` on posix).
+  if (normalized.length > 1 && normalized.endsWith(path.sep)) {
+    normalized = normalized.slice(0, -1);
+  }
+  return os === 'win32' ? normalized.toLowerCase() : normalized;
+}
+
+/**
  * Find editor by checking common installation directories.
  *
  * Scans, in order:
@@ -275,8 +294,16 @@ function findEditorPathByCommonLocations(version?: string): string | null {
   // an array of strings). Missing/malformed → empty array, no crash.
   const secondaryRootsBeforeFiltering = readSecondaryInstallPaths(os);
   // Drop duplicates that already appear in `defaultRoots` so the candidate
-  // list doesn't double-stat them.
-  const secondaryRoots = secondaryRootsBeforeFiltering.filter((r) => !defaultRoots.includes(r));
+  // list doesn't double-stat them. Compare via `normalizeRootForDedup` so a
+  // user-typed trailing separator (e.g. `C:\Program Files\Unity\Hub\Editor\`)
+  // or, on Windows, a drive-letter case difference (`c:\...` vs `C:\...`)
+  // still dedupes against the default root. The original string is kept for
+  // downstream `existsSync` and verbose logs — only the comparison key is
+  // normalized.
+  const defaultRootKeys = new Set(defaultRoots.map((r) => normalizeRootForDedup(r, os)));
+  const secondaryRoots = secondaryRootsBeforeFiltering.filter(
+    (r) => !defaultRootKeys.has(normalizeRootForDedup(r, os)),
+  );
   if (secondaryRoots.length > 0) {
     verbose(`findEditorPathByCommonLocations including ${secondaryRoots.length} secondary root(s): ${secondaryRoots.join(', ')}`);
   }
@@ -315,8 +342,10 @@ function findEditorPathByCommonLocations(version?: string): string | null {
     if (fs.existsSync(candidate)) {
       // Identify which root the hit came from so verbose logs distinguish a
       // default-root hit from a `secondaryInstallPath` hit — useful when
-      // debugging users who report slow opens.
-      const fromRoot = allRoots.find((root) => candidate.startsWith(root + path.sep) || candidate === root);
+      // debugging users who report slow opens. Candidates are always built via
+      // `buildBinaryPath(root, ver)` which joins extra segments under `root`,
+      // so `startsWith(root + path.sep)` is the only reachable case.
+      const fromRoot = allRoots.find((root) => candidate.startsWith(root + path.sep));
       const origin = fromRoot && rootIsSecondary.get(fromRoot) ? 'secondaryInstallPath' : 'default Hub root';
       verbose(`findEditorPathByCommonLocations hit ${candidate} (${origin}) after ${Date.now() - startedAt}ms (${candidates.length} candidates)`);
       return candidate;
