@@ -35,6 +35,7 @@ Manage files, folders, and project resources.
 | :--- | :--- | :--- |
 | **Assets / Create Material** | `assets-material-create` | Create a new Material asset. |
 | **Assets / List Shaders** | `assets-shader-list-all` | List all available shaders in the project. |
+| **Assets / Shader / Get Data** | `assets-shader-get-data` | Get shader data — properties, subshaders, passes, and compilation messages. |
 
 ### Prefabs
 | Tool | ID | Description |
@@ -105,6 +106,7 @@ Manage scene objects and hierarchy.
 | **Screenshot / Camera** | `screenshot-camera` | Capture a screenshot from a camera (defaults to Main Camera). |
 | **Screenshot / Game View** | `screenshot-game-view` | Capture a screenshot from the Unity Editor Game View. |
 | **Screenshot / Scene View** | `screenshot-scene-view` | Capture a screenshot from the Unity Editor Scene View. |
+| **Screenshot / Isolated GameObject** | `screenshot-isolated` | Render a target GameObject in isolation from a chosen angle, with optional Composite (2x2) view. |
 
 ## 🧪 Testing
 | Tool | ID | Description |
@@ -115,11 +117,29 @@ Manage scene objects and hierarchy.
 | Tool | ID | Description |
 | :--- | :--- | :--- |
 | **Console / Get Logs** | `console-get-logs` | Retrieve Unity Console logs. |
+| **Console / Clear Logs** | `console-clear-logs` | Clear the MCP log cache and the Unity Editor Console window. |
 | **Editor / Application / Get State** | `editor-application-get-state` | Check Play/Pause/Edit mode status. |
 | **Editor / Application / Set State** | `editor-application-set-state` | Set Play/Pause status. |
 | **Editor / Selection / Get** | `editor-selection-get` | Get current selection. |
 | **Editor / Selection / Set** | `editor-selection-set` | Set current selection. |
 | **Method C# / Find** | `reflection-method-find` | Find any C# method (public/private). |
 | **Method C# / Call** | `reflection-method-call` | Execute any found method. |
+| **Type / Get Json Schema** | `type-get-json-schema` | Generate a JSON Schema for a C# type via reflection. |
+
+## 📊 Profiling & Diagnostics
+| Tool | ID | Description |
+| :--- | :--- | :--- |
+| **Profiler / Start** | `profiler-start` | Enable Unity's runtime profiler and open the Profiler window. |
+| **Profiler / Stop** | `profiler-stop` | Disable Unity's runtime profiler. |
+| **Profiler / Get Status** | `profiler-get-status` | Return the profiler's enabled state, active modules, and platform support. |
+| **Profiler / Capture Frame** | `profiler-capture-frame` | Capture the current frame's timing info (delta time, FPS, frame counts). |
+| **Profiler / Get Memory Stats** | `profiler-get-memory-stats` | Return a memory statistics snapshot (reserved, allocated, mono heap, graphics). |
+| **Profiler / Get Rendering Stats** | `profiler-get-rendering-stats` | Return frame timing, FPS, vsync, target frame rate, and graphics device type. |
+| **Profiler / Get Script Stats** | `profiler-get-script-stats` | Return script execution timing plus Mono / GC memory usage. |
+| **Profiler / List Modules** | `profiler-list-modules` | List all known profiler module names with their enabled flag. |
+| **Profiler / Enable Module** | `profiler-enable-module` | Toggle the local enabled flag for a named profiler module. |
+| **Profiler / Clear Data** | `profiler-clear-data` | Discard all frames currently held by the Editor Profiler. |
+| **Profiler / Save Data** | `profiler-save-data` | Save a snapshot of profiler-derived stats to a JSON file. |
+| **Profiler / Load Data** | `profiler-load-data` | Read back a previously-saved profiler JSON snapshot. |
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)

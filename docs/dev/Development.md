@@ -247,7 +247,7 @@ The Editor component provides Unity Editor integration, implementing MCP capabil
    - **Prompts**: Pre-built templates for common Unity development tasks
    - **Resources**: URI-based access to Unity Editor data with JSON serialization
    - All operations execute on Unity's main thread for thread safety
-   - Attribute-based discovery using `[McpPluginTool]`, `[McpPluginPrompt]`, `[McpPluginResource]`
+   - Attribute-based discovery using `[AiTool]`, `[AiPrompt]`, `[AiResource]`
 
 4. **Editor UI** ([Scripts/UI/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/))
    - Configuration window for connection management (`Window > AI Game Developer`)
@@ -287,10 +287,10 @@ The Runtime component provides core infrastructure shared between Editor and Run
 #### Add `MCP Tool`
 
 ```csharp
-[McpPluginToolType]
+[AiToolType]
 public class Tool_GameObject
 {
-    [McpPluginTool
+    [AiTool
     (
         "MyCustomTask",
         Title = "Create a new GameObject"
@@ -319,10 +319,10 @@ public class Tool_GameObject
 `MCP Prompt` allows you to inject custom prompts into the conversation with the LLM. It supports two sender roles: User and Assistant. This is a quick way to instruct the LLM to perform specific tasks. You can generate prompts using custom data, providing lists or any other relevant information.
 
 ```csharp
-[McpPluginPromptType]
+[AiPromptType]
 public static class Prompt_ScriptingCode
 {
-    [McpPluginPrompt(Name = "add-event-system", Role = Role.User)]
+    [AiPrompt(Name = "add-event-system", Role = Role.User)]
     [Description("Implement UnityEvent-based communication system between GameObjects.")]
     public string AddEventSystem()
     {
@@ -364,7 +364,7 @@ This project follows consistent C# coding patterns. All new code must adhere to 
 
 1. **File Headers**: Include copyright notice in box comment format at the top of every file
 2. **Nullable Context**: Use `#nullable enable` for null safety — no implicit nulls
-3. **Attributes**: Leverage `[McpPluginTool]`, `[McpPluginPrompt]`, `[McpPluginResource]` for MCP discovery
+3. **Attributes**: Leverage `[AiTool]`, `[AiPrompt]`, `[AiResource]` for MCP discovery
 4. **Partial Classes**: Split functionality across files (e.g., `Tool_GameObject.Create.cs`, `Tool_GameObject.Destroy.cs`)
 5. **Main Thread Execution**: Wrap all Unity API calls with `MainThread.Instance.Run()`
 6. **Error Handling**: Throw exceptions for errors — use `ArgumentException` or `Exception`, never return error strings
@@ -403,14 +403,14 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
-    // Use [McpPluginToolType] for tool classes - enables MCP discovery via reflection
-    [McpPluginToolType]
+    // Use [AiToolType] for tool classes - enables MCP discovery via reflection
+    [AiToolType]
     // Partial classes allow splitting implementation across multiple files
     // Pattern: One file per operation (e.g., GameObject.Create.cs, GameObject.Destroy.cs)
     public partial class Tool_GameObject
     {
         // MCP Tool declaration with attribute-based metadata
-        [McpPluginTool(
+        [AiTool(
             "gameobject-create",                    // Unique tool identifier (kebab-case)
             Title = "GameObject / Create"           // Human-readable title
         )]
@@ -496,11 +496,11 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
     }
 
     // Separate partial class file for prompts
-    [McpPluginPromptType]
+    [AiPromptType]
     public static partial class Prompt_SceneManagement
     {
         // MCP Prompt with role definition (User or Assistant)
-        [McpPluginPrompt(Name = "setup-basic-scene", Role = Role.User)]
+        [AiPrompt(Name = "setup-basic-scene", Role = Role.User)]
         [Description("Setup a basic scene with camera, lighting, and environment.")]
         public static string SetupBasicScene()
         {

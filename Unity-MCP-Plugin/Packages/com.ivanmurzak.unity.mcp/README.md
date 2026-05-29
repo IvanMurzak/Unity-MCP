@@ -94,7 +94,7 @@ That's it. Ask your AI *"Create 3 cubes in a circle with radius 2"* and watch it
 
 # Skills and Tools Reference
 
-The plugin ships with 100+ built-in tools across three categories. Each tool brings AI skill. All tools are available immediately after installation — no extra configuration required. See [docs/default-mcp-tools.md](docs/default-mcp-tools.md) for the full reference with detailed descriptions.
+The plugin ships with 70+ built-in tools across four categories. Each tool brings AI skill. All tools are available immediately after installation — no extra configuration required. See [docs/default-mcp-tools.md](docs/default-mcp-tools.md) for the full reference with detailed descriptions.
 
 <details>
   <summary>Project & Assets</summary>
@@ -114,6 +114,7 @@ The plugin ships with 100+ built-in tools across three categories. Each tool bri
 - `assets-prefab-open` - Open prefab edit mode for a specific GameObject
 - `assets-prefab-save` - Save a prefab in prefab editing mode
 - `assets-refresh` - Refreshes the AssetDatabase
+- `assets-shader-get-data` - Get detailed data about a shader asset (properties, subshaders, passes)
 - `assets-shader-list-all` - List all available shaders in the project assets and packages
 - `package-add` - Install a package from the Unity Package Manager registry, Git URL, or local path
 - `package-list` - List all packages installed in the Unity project (UPM packages)
@@ -147,6 +148,7 @@ The plugin ships with 100+ built-in tools across three categories. Each tool bri
 - `scene-unload` - Unload scene from the opened scenes in Unity Editor
 - `screenshot-camera` - Captures a screenshot from a camera and returns it as an image
 - `screenshot-game-view` - Captures a screenshot from the Unity Editor Game View
+- `screenshot-isolated` - Render a GameObject in isolation from a chosen angle (optional composite 2x2 view)
 - `screenshot-scene-view` - Captures a screenshot from the Unity Editor Scene View
 
 </details>
@@ -154,6 +156,7 @@ The plugin ships with 100+ built-in tools across three categories. Each tool bri
 <details>
   <summary>Scripting & Editor</summary>
 
+- `console-clear-logs` - Clears the MCP log cache and the Unity Editor Console window
 - `console-get-logs` - Retrieves Unity Editor logs with filtering options
 - `editor-application-get-state` - Returns information about the Unity Editor application state (playmode, paused, compilation)
 - `editor-application-set-state` - Control the Unity Editor application state (start/stop/pause playmode)
@@ -166,6 +169,25 @@ The plugin ships with 100+ built-in tools across three categories. Each tool bri
 - `script-read` - Reads the content of a script file
 - `script-update-or-create` - Updates or creates script file with the provided C# code
 - `tests-run` - Execute Unity tests (EditMode/PlayMode) with filtering and detailed results
+- `type-get-json-schema` - Generate a JSON Schema for a C# type via reflection
+
+</details>
+
+<details>
+  <summary>Profiling & Diagnostics</summary>
+
+- `profiler-capture-frame` - Capture the current frame's timing info (delta time, FPS, frame counts)
+- `profiler-clear-data` - Discard all frames currently held by the Editor Profiler
+- `profiler-enable-module` - Toggle the local enabled flag for a named profiler module
+- `profiler-get-memory-stats` - Return a memory statistics snapshot (reserved, allocated, mono heap, graphics)
+- `profiler-get-rendering-stats` - Return frame timing, FPS, vsync, target frame rate, graphics device type
+- `profiler-get-script-stats` - Return script execution timing plus Mono / GC memory usage
+- `profiler-get-status` - Return the profiler's enabled state, active modules, and platform support
+- `profiler-list-modules` - List all known profiler module names with their enabled flag
+- `profiler-load-data` - Read back a previously-saved profiler JSON snapshot
+- `profiler-save-data` - Save a snapshot of profiler-derived stats to a JSON file
+- `profiler-start` - Enable Unity's runtime profiler and open the Profiler window
+- `profiler-stop` - Disable Unity's runtime profiler
 
 </details>
 
@@ -450,18 +472,18 @@ Unity MCP provides advanced tools that enable the LLM to work faster and more ef
 
 To add a custom `Tool`, you need:
 
-1. A class with the `McpPluginToolType` attribute
-2. A method in the class with the `McpPluginTool` attribute
+1. A class with the `AiToolType` attribute
+2. A method in the class with the `AiTool` attribute
 3. *Optional:* Add a `Description` attribute to each method argument to help the LLM understand it
 4. *Optional:* Use `string? optional = null` properties with `?` and default values to mark them as `optional` for the LLM
 
 > Note that the line `MainThread.Instance.Run(() =>` allows you to run code on the main thread, which is required for interacting with Unity's API. If you don't need this and running the tool in a background thread is acceptable, avoid using the main thread for efficiency purposes.
 
 ```csharp
-[McpPluginToolType]
+[AiToolType]
 public class Tool_GameObject
 {
-    [McpPluginTool
+    [AiTool
     (
         "MyCustomTask",
         Title = "Create a new GameObject"
@@ -490,10 +512,10 @@ public class Tool_GameObject
 `MCP Prompt` allows you to inject custom prompts into the conversation with the LLM. It supports two sender roles: User and Assistant. This is a quick way to instruct the LLM to perform specific tasks. You can generate prompts using custom data, providing lists or any other relevant information.
 
 ```csharp
-[McpPluginPromptType]
+[AiPromptType]
 public static class Prompt_ScriptingCode
 {
-    [McpPluginPrompt(Name = "add-event-system", Role = Role.User)]
+    [AiPrompt(Name = "add-event-system", Role = Role.User)]
     [Description("Implement UnityEvent-based communication system between GameObjects.")]
     public string AddEventSystem()
     {
@@ -532,17 +554,17 @@ await mcpPlugin.Disconnect(); // Stop active connection and close existed connec
 There is a classic Chess game. Lets outsource to LLM the bot logic. Bot should do the turn using game rules.
 
 ```csharp
-[McpPluginToolType]
+[AiToolType]
 public static class ChessGameAI
 {
-    [McpPluginTool("chess-do-turn", Title = "Do the turn")]
+    [AiTool("chess-do-turn", Title = "Do the turn")]
     [Description("Do the turn in the chess game. Returns true if the turn was accepted, false otherwise.")]
     public static Task<bool> DoTurn(int figureId, Vector2Int position)
     {
         return MainThread.Instance.RunAsync(() => ChessGameController.Instance.DoTurn(figureId, position));
     }
 
-    [McpPluginTool("chess-get-board", Title = "Get the board")]
+    [AiTool("chess-get-board", Title = "Get the board")]
     [Description("Get the current state of the chess board.")]
     public static Task<BoardData> GetBoard()
     {
@@ -567,11 +589,16 @@ Doesn't matter what launch option you choose, all of them support custom configu
 
 | Environment Variable         | Command Line Args    | Description                                                                  |
 | ---------------------------- | -------------------- | ---------------------------------------------------------------------------- |
-| `MCP_PLUGIN_PORT`            | `--port`             | **Client** -> **Server** <- **Plugin** connection port (default: 8080)       |
-| `MCP_PLUGIN_CLIENT_TIMEOUT`   | `--plugin-timeout`   | **Plugin** -> **Server** connection timeout (ms) (default: 10000)            |
-| `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport` | **Client** -> **Server** transport type: `stdio` or `streamableHttp` (default: `streamableHttp`) |
+| `MCP_PLUGIN_PORT`             | `--port`                 | **Client** -> **Server** <- **Plugin** connection port (default: 8080)       |
+| `MCP_PLUGIN_CLIENT_TIMEOUT`   | `--plugin-timeout`       | **Plugin** -> **Server** connection timeout (ms) (default: 10000)            |
+| `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport`     | **Client** -> **Server** transport type: `stdio` or `streamableHttp` (default: `streamableHttp`) |
+| `MCP_AUTHORIZATION`           | `--authorization`        | Authentication mode for incoming **Client** connections: `none` or `required` (default: `none`) |
+| `MCP_PLUGIN_TOKEN`            | `--token`                | Bearer token required from the **Client** when `--authorization=required` (default: unset) |
+| `MCP_PLUGIN_IDLE_TIMEOUT_SECONDS` | `--idle-timeout-seconds` | Shut down the server after this many seconds with no connections (default: 600) |
 
 > Command line args support also the option with a single `-` prefix (`-port`) and an option without prefix at all (`port`).
+
+> For analytics and authorization **webhook** variables (`MCP_PLUGIN_WEBHOOK_*`), see [docs/mcp-server.md](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md).
 
 > **Choosing a transport:** Use `stdio` when the MCP client launches the server binary directly (local use — this is the most common setup). Use `streamableHttp` when running the server as a standalone process or in Docker/cloud, and connecting over HTTP.
 
@@ -581,13 +608,16 @@ The Unity MCP Plugin reads the following environment variables (and command-line
 
 | Environment Variable        | Command Line Arg            | Values              | Description                                   |
 | --------------------------- | --------------------------- | ------------------- | --------------------------------------------- |
-| `UNITY_MCP_HOST`            | `-UNITY_MCP_HOST`           | URL string                    | Override the MCP Server host URL                                    |
+| `UNITY_MCP_CLOUD_URL`       | `-url`                      | URL string                    | Override the MCP Server URL (`UNITY_MCP_HOST` is a legacy alias)     |
+| `UNITY_MCP_CONNECTION_MODE` | `-UNITY_MCP_CONNECTION_MODE`| `Cloud` / `Custom`            | Force the connection mode (a loopback URL implies `Custom`)          |
 | `UNITY_MCP_KEEP_CONNECTED`  | `-UNITY_MCP_KEEP_CONNECTED` | `true` / `false`              | Force enable or disable the active connection                       |
-| `UNITY_MCP_AUTH_OPTION`     | `-UNITY_MCP_AUTH_OPTION`    | `none` / `required`           | Force set the authentication mode                                   |
-| `UNITY_MCP_TOKEN`           | `-UNITY_MCP_TOKEN`          | string                        | Force set the authentication token                                  |
+| `UNITY_MCP_AUTH_OPTION`     | `-auth`                     | `none` / `required`           | Force set the authentication mode                                   |
+| `UNITY_MCP_TOKEN`           | `-token`                    | string                        | Force set the authentication token                                  |
+| `UNITY_MCP_TRANSPORT`       | `-UNITY_MCP_TRANSPORT`      | `stdio` / `streamableHttp`    | Force the client transport the plugin configures                    |
+| `UNITY_MCP_START_SERVER`    | `-UNITY_MCP_START_SERVER`   | `true` / `false`              | Force whether the plugin keeps a local server process running       |
 | `UNITY_MCP_TOOLS`           | `-UNITY_MCP_TOOLS`          | comma-separated tool IDs      | Enable only the listed tools; all others are disabled. Unknown IDs are logged as errors. |
 
-> Command-line args take precedence over environment variables. Both override the saved config file value.
+> Command-line args take precedence over environment variables. Both override the saved config file value. The short flags `-url`, `-token`, and `-auth` are aliases; the full `-UNITY_MCP_*` arg names are also accepted.
 
 **Example (CI/CD batch mode):**
 

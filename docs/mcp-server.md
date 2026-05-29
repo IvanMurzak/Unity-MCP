@@ -56,6 +56,23 @@ All arguments can be provided as CLI flags or equivalent environment variables:
 | `MCP_PLUGIN_CLIENT_TIMEOUT`   | `--plugin-timeout`   | Timeout in ms for plugin responses.                                                               | `10000`          |
 | `MCP_AUTHORIZATION`           | `--authorization`    | Authentication mode for incoming Client connections: `none` or `required`.                        | `none`           |
 | `MCP_PLUGIN_TOKEN`            | `--token`            | Bearer token required from the Client when `--authorization=required`. Ignored when `none`.       | *(unset)*        |
+| `MCP_PLUGIN_IDLE_TIMEOUT_SECONDS` | `--idle-timeout-seconds` | Shut the server down after this many seconds with no active connections.                  | `600`            |
+
+### Analytics & Authorization Webhooks
+
+For cloud/hosted deployments the server can call out to external webhooks. All are optional and unset by default:
+
+| Environment Variable                       | CLI Argument                       | Description                                                          |
+| :----------------------------------------- | :--------------------------------- | :------------------------------------------------------------------ |
+| `MCP_PLUGIN_WEBHOOK_TOOL_URL`              | `--webhook-tool-url`               | Notified on tool calls.                                             |
+| `MCP_PLUGIN_WEBHOOK_PROMPT_URL`            | `--webhook-prompt-url`             | Notified on prompt usage.                                          |
+| `MCP_PLUGIN_WEBHOOK_RESOURCE_URL`          | `--webhook-resource-url`           | Notified on resource access.                                       |
+| `MCP_PLUGIN_WEBHOOK_CONNECTION_URL`        | `--webhook-connection-url`         | Notified on plugin connect/disconnect.                             |
+| `MCP_PLUGIN_WEBHOOK_TOKEN`                 | `--webhook-token`                  | Bearer token sent with webhook requests.                           |
+| `MCP_PLUGIN_WEBHOOK_HEADER`                | `--webhook-header`                 | Extra header sent with webhook requests.                           |
+| `MCP_PLUGIN_WEBHOOK_TIMEOUT`               | `--webhook-timeout`                | Webhook request timeout in ms (default `10000`).                   |
+| `MCP_PLUGIN_WEBHOOK_AUTHORIZATION_URL`     | `--webhook-authorization-url`      | Endpoint that authorizes incoming Client connections.              |
+| `MCP_PLUGIN_WEBHOOK_AUTHORIZATION_FAIL_OPEN` | `--webhook-authorization-fail-open` | Allow connections when the authorization webhook is unreachable (default `false`). |
 
 ## Architecture
 
