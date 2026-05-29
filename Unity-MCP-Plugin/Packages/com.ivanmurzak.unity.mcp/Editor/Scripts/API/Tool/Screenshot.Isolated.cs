@@ -183,6 +183,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             var resolvedFar = farClipPlane ?? 1000f;
             var resolvedPadding = padding ?? 1.2f;
 
+            // Keep the encoded PNG within the MCP transport limit so the screenshot is not
+            // dropped in transit. Composite emits a resolution*2 x resolution*2 grid, so its
+            // per-axis budget is half the cap; single views use the full cap.
+            var maxResolutionForMode = resolvedCameraView == CameraView.Composite
+                ? MaxScreenshotDimension / 2
+                : MaxScreenshotDimension;
+            if (resolvedResolution > maxResolutionForMode)
+                resolvedResolution = maxResolutionForMode;
+
             if (!float.IsFinite(resolvedFov) || resolvedFov < MinFieldOfView || resolvedFov > MaxFieldOfView)
                 return ResponseCallTool.Error(
                     $"fieldOfView must be finite and between {MinFieldOfView} and {MaxFieldOfView} degrees. Got {resolvedFov}.");

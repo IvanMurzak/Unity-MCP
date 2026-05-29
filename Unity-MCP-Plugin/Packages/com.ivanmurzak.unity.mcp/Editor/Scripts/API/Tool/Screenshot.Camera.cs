@@ -63,6 +63,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (width > MaxDimension || height > MaxDimension)
                 return ResponseCallTool.Error($"Width and height must not exceed {MaxDimension} pixels. Got {width}x{height}.");
 
+            // Keep the encoded PNG within the MCP transport limit so the screenshot is not
+            // dropped in transit; an oversized request is scaled down (aspect preserved).
+            (width, height) = ClampToTransportLimit(width, height);
+
             return MainThread.Instance.Run(() =>
             {
                 var camera = cameraRef?.FindGameObject()?.GetComponent<Camera>()
