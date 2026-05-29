@@ -94,7 +94,7 @@ unity-mcp-cli open ./MyUnityProject
 
 # スキルとツールリファレンス
 
-このプラグインには3つのカテゴリにまたがる100以上の組み込みツールが付属しています。各ツールが AI スキルを提供します。すべてのツールはインストール直後に利用可能で、追加の設定は不要です。詳細な説明付きの完全なリファレンスは [docs/default-mcp-tools.md](docs/default-mcp-tools.md) をご覧ください。
+このプラグインには4つのカテゴリにまたがる70以上の組み込みツールが付属しています。各ツールが AI スキルを提供します。すべてのツールはインストール直後に利用可能で、追加の設定は不要です。詳細な説明付きの完全なリファレンスは [docs/default-mcp-tools.md](docs/default-mcp-tools.md) をご覧ください。
 
 <details>
   <summary>プロジェクト＆アセット</summary>
@@ -114,6 +114,7 @@ unity-mcp-cli open ./MyUnityProject
 - `assets-prefab-open` - 特定のGameObjectのプレハブ編集モードを開く
 - `assets-prefab-save` - プレハブ編集モードでプレハブを保存
 - `assets-refresh` - AssetDatabaseを更新
+- `assets-shader-get-data` - シェーダーアセットの詳細データを取得（プロパティ、サブシェーダー、パス）
 - `assets-shader-list-all` - プロジェクトアセットとパッケージ内のすべてのシェーダーを一覧表示
 - `package-add` - Unity Package Managerレジストリ、Git URL、またはローカルパスからパッケージをインストール
 - `package-list` - Unityプロジェクトにインストールされたすべてのパッケージを一覧表示（UPMパッケージ）
@@ -147,6 +148,7 @@ unity-mcp-cli open ./MyUnityProject
 - `scene-unload` - Unity Editorで開かれているシーンをアンロード
 - `screenshot-camera` - カメラからスクリーンショットをキャプチャし、画像として返す
 - `screenshot-game-view` - Unity Editor Game Viewからスクリーンショットをキャプチャ
+- `screenshot-isolated` - GameObjectを選択した角度から分離してレンダリング（オプションで2x2の合成ビュー）
 - `screenshot-scene-view` - Unity Editor Scene Viewからスクリーンショットをキャプチャ
 
 </details>
@@ -154,6 +156,7 @@ unity-mcp-cli open ./MyUnityProject
 <details>
   <summary>スクリプティング＆エディター</summary>
 
+- `console-clear-logs` - MCP ログキャッシュと Unity Editor のコンソールウィンドウをクリア
 - `console-get-logs` - フィルタリングオプション付きでUnity Editorのログを取得
 - `editor-application-get-state` - Unity Editorアプリケーションの状態情報を返す（再生モード、一時停止、コンパイル）
 - `editor-application-set-state` - Unity Editorアプリケーションの状態を制御（再生モードの開始/停止/一時停止）
@@ -166,6 +169,25 @@ unity-mcp-cli open ./MyUnityProject
 - `script-read` - スクリプトファイルの内容を読み取る
 - `script-update-or-create` - 提供されたC#コードでスクリプトファイルを更新または作成
 - `tests-run` - フィルタリングと詳細な結果付きでUnityテスト（EditMode/PlayMode）を実行
+- `type-get-json-schema` - リフレクションを使用してC#型のJSON Schemaを生成
+
+</details>
+
+<details>
+  <summary>プロファイリング＆診断</summary>
+
+- `profiler-capture-frame` - 現在のフレームのタイミング情報をキャプチャ（デルタタイム、FPS、フレーム数）
+- `profiler-clear-data` - Editor Profilerが現在保持しているすべてのフレームを破棄
+- `profiler-enable-module` - 指定されたプロファイラーモジュールのローカルな有効化フラグを切り替え
+- `profiler-get-memory-stats` - メモリ統計のスナップショットを返す（予約済み、割り当て済み、monoヒープ、グラフィックス）
+- `profiler-get-rendering-stats` - フレームタイミング、FPS、vsync、目標フレームレート、グラフィックスデバイスタイプを返す
+- `profiler-get-script-stats` - スクリプト実行タイミングとMono / GCメモリ使用量を返す
+- `profiler-get-status` - プロファイラーの有効状態、アクティブなモジュール、プラットフォームサポートを返す
+- `profiler-list-modules` - 既知のすべてのプロファイラーモジュール名とその有効化フラグを一覧表示
+- `profiler-load-data` - 以前に保存したプロファイラーのJSONスナップショットを読み戻す
+- `profiler-save-data` - プロファイラー由来の統計のスナップショットをJSONファイルに保存
+- `profiler-start` - Unityのランタイムプロファイラーを有効化しProfilerウィンドウを開く
+- `profiler-stop` - Unityのランタイムプロファイラーを無効化
 
 </details>
 
@@ -450,18 +472,18 @@ Unity MCP は、LLM がより速く効果的に作業できるよう高度なツ
 
 カスタム `Tool` を追加するには：
 
-1. `McpPluginToolType` 属性を持つクラス
-2. `McpPluginTool` 属性を持つクラス内のメソッド
+1. `AiToolType` 属性を持つクラス
+2. `AiTool` 属性を持つクラス内のメソッド
 3. *オプション:* LLM の理解を助けるために、各メソッド引数に `Description` 属性を追加
 4. *オプション:* LLM に対して `optional` としてマークするために、`string? optional = null` のように `?` とデフォルト値を使用
 
 > `MainThread.Instance.Run(() =>` の行は、Unity の API とのインタラクションに必要なメインスレッドでコードを実行することを可能にします。これが不要で、バックグラウンドスレッドでの実行が許容される場合は、効率のためにメインスレッドの使用を避けてください。
 
 ```csharp
-[McpPluginToolType]
+[AiToolType]
 public class Tool_GameObject
 {
-    [McpPluginTool
+    [AiTool
     (
         "MyCustomTask",
         Title = "Create a new GameObject"
@@ -490,10 +512,10 @@ public class Tool_GameObject
 `MCP Prompt` を使用すると、LLM との会話にカスタムプロンプトを注入できます。User と Assistant の2つの送信者ロールをサポートしています。LLM に特定のタスクを実行させるための手軽な方法です。リストやその他の関連情報など、カスタムデータを使用してプロンプトを生成できます。
 
 ```csharp
-[McpPluginPromptType]
+[AiPromptType]
 public static class Prompt_ScriptingCode
 {
-    [McpPluginPrompt(Name = "add-event-system", Role = Role.User)]
+    [AiPrompt(Name = "add-event-system", Role = Role.User)]
     [Description("Implement UnityEvent-based communication system between GameObjects.")]
     public string AddEventSystem()
     {
@@ -532,17 +554,17 @@ await mcpPlugin.Disconnect(); // Stop active connection and close existed connec
 古典的なチェスゲームがあります。ボットのロジックを LLM に委託しましょう。ボットはゲームルールに従ってターンを実行する必要があります。
 
 ```csharp
-[McpPluginToolType]
+[AiToolType]
 public static class ChessGameAI
 {
-    [McpPluginTool("chess-do-turn", Title = "Do the turn")]
+    [AiTool("chess-do-turn", Title = "Do the turn")]
     [Description("Do the turn in the chess game. Returns true if the turn was accepted, false otherwise.")]
     public static Task<bool> DoTurn(int figureId, Vector2Int position)
     {
         return MainThread.Instance.RunAsync(() => ChessGameController.Instance.DoTurn(figureId, position));
     }
 
-    [McpPluginTool("chess-get-board", Title = "Get the board")]
+    [AiTool("chess-get-board", Title = "Get the board")]
     [Description("Get the current state of the chess board.")]
     public static Task<BoardData> GetBoard()
     {
@@ -570,8 +592,13 @@ public static class ChessGameAI
 | `MCP_PLUGIN_PORT`            | `--port`             | **Client** -> **Server** <- **Plugin** 接続ポート（デフォルト: 8080）       |
 | `MCP_PLUGIN_CLIENT_TIMEOUT`   | `--plugin-timeout`   | **Plugin** -> **Server** 接続タイムアウト（ミリ秒）（デフォルト: 10000）            |
 | `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport` | **Client** -> **Server** トランスポートタイプ: `stdio` または `streamableHttp`（デフォルト: `streamableHttp`） |
+| `MCP_AUTHORIZATION`           | `--authorization`        | 受信する **Client** 接続の認証モード: `none` または `required`（デフォルト: `none`） |
+| `MCP_PLUGIN_TOKEN`            | `--token`                | `--authorization=required` の場合に **Client** から要求される Bearer トークン（デフォルト: 未設定） |
+| `MCP_PLUGIN_IDLE_TIMEOUT_SECONDS` | `--idle-timeout-seconds` | 接続がない状態がこの秒数続いた後にサーバーをシャットダウン（デフォルト: 600） |
 
 > コマンドライン引数は、`-` プレフィックス1つ（`-port`）やプレフィックスなし（`port`）のオプションもサポートしています。
+
+> 分析および認証の **webhook** 変数（`MCP_PLUGIN_WEBHOOK_*`）については、[docs/mcp-server.md](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md) を参照してください。
 
 > **トランスポートの選択:** MCP クライアントがサーバーバイナリを直接起動する場合は `stdio` を使用します（ローカル使用 — 最も一般的な設定）。サーバーをスタンドアロンプロセスとして実行する場合や Docker/クラウドで HTTP 経由で接続する場合は `streamableHttp` を使用します。
 
@@ -581,13 +608,16 @@ Unity MCP Plugin は起動時に以下の環境変数（およびコマンドラ
 
 | 環境変数                      | コマンドライン引数              | 値                    | 説明                                   |
 | --------------------------- | --------------------------- | ------------------- | --------------------------------------------- |
-| `UNITY_MCP_HOST`            | `-UNITY_MCP_HOST`           | URL 文字列                    | MCP Server ホスト URL の上書き                                    |
+| `UNITY_MCP_CLOUD_URL`       | `-url`                      | URL string                    | MCP Server URL の上書き（`UNITY_MCP_HOST` はレガシーエイリアス）     |
+| `UNITY_MCP_CONNECTION_MODE` | `-UNITY_MCP_CONNECTION_MODE`| `Cloud` / `Custom`            | 接続モードを強制（ループバック URL は `Custom` を意味します）          |
 | `UNITY_MCP_KEEP_CONNECTED`  | `-UNITY_MCP_KEEP_CONNECTED` | `true` / `false`              | アクティブ接続の強制有効化または無効化                       |
-| `UNITY_MCP_AUTH_OPTION`     | `-UNITY_MCP_AUTH_OPTION`    | `none` / `required`           | 認証モードの強制設定                                   |
-| `UNITY_MCP_TOKEN`           | `-UNITY_MCP_TOKEN`          | 文字列                        | 認証トークンの強制設定                                  |
-| `UNITY_MCP_TOOLS`           | `-UNITY_MCP_TOOLS`          | カンマ区切りのツール ID      | リストされたツールのみを有効化し、その他はすべて無効化。不明な ID はエラーとしてログに記録されます。 |
+| `UNITY_MCP_AUTH_OPTION`     | `-auth`                     | `none` / `required`           | 認証モードの強制設定                                   |
+| `UNITY_MCP_TOKEN`           | `-token`                    | string                        | 認証トークンの強制設定                                  |
+| `UNITY_MCP_TRANSPORT`       | `-UNITY_MCP_TRANSPORT`      | `stdio` / `streamableHttp`    | プラグインが設定するクライアントトランスポートを強制                    |
+| `UNITY_MCP_START_SERVER`    | `-UNITY_MCP_START_SERVER`   | `true` / `false`              | プラグインがローカルサーバープロセスを起動し続けるかどうかを強制       |
+| `UNITY_MCP_TOOLS`           | `-UNITY_MCP_TOOLS`          | comma-separated tool IDs      | リストされたツールのみを有効化し、その他はすべて無効化。不明な ID はエラーとしてログに記録されます。 |
 
-> コマンドライン引数は環境変数よりも優先されます。両方とも保存された設定ファイルの値を上書きします。
+> コマンドライン引数は環境変数よりも優先されます。両方とも保存された設定ファイルの値を上書きします。短縮フラグ `-url`、`-token`、`-auth` はエイリアスです。完全な `-UNITY_MCP_*` 引数名も受け付けられます。
 
 **例（CI/CD バッチモード）：**
 

@@ -32,11 +32,12 @@ Located at: `commands/bump-version.ps1`
 ### What gets updated?
 
 The script automatically finds and replaces version strings in:
-1.  **`README.md`**: Updates the Installer download URL.
-2.  **`server.json`**: Updates the server version field.
-3.  **`package.json`**: Updates the Unity Package version.
-4.  **`Installer.cs`**: Updates the embedded version constant in the installer.
-5.  **`UnityMcpPlugin.cs`**: Updates the runtime plugin version constant.
+1.  **`Unity-MCP-Server/server.json`**: Updates the server version field.
+2.  **`Unity-MCP-Server/com.IvanMurzak.Unity.MCP.Server.csproj`**: Updates the `<Version>` element.
+3.  **`Installer/Assets/com.IvanMurzak/AI Game Dev Installer/Installer.cs`**: Updates the embedded version constant in the installer.
+4.  **`Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json`**: Updates the Unity Package version (this file is also the source of the current version).
+5.  **`Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/UnityMcpPlugin.cs`**: Updates the runtime plugin version constant.
+6.  **`cli/package.json`**: Updates the `unity-mcp-cli` npm package version.
 
 ## Workflow for Release
 

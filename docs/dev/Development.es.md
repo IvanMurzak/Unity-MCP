@@ -247,7 +247,7 @@ El componente Editor proporciona integración con Unity Editor, implementando ca
    - **Prompts**: Plantillas predefinidas para tareas comunes de desarrollo en Unity
    - **Resources**: Acceso basado en URI a datos del Unity Editor con serialización JSON
    - Todas las operaciones se ejecutan en el hilo principal de Unity para garantizar la seguridad de hilos
-   - Descubrimiento basado en atributos mediante `[McpPluginTool]`, `[McpPluginPrompt]`, `[McpPluginResource]`
+   - Descubrimiento basado en atributos mediante `[AiTool]`, `[AiPrompt]`, `[AiResource]`
 
 4. **Interfaz del Editor** ([Scripts/UI/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/))
    - Ventana de configuración para la gestión de conexiones (`Window > AI Game Developer`)
@@ -287,10 +287,10 @@ El componente Runtime proporciona la infraestructura principal compartida entre 
 #### Añadir `MCP Tool`
 
 ```csharp
-[McpPluginToolType]
+[AiToolType]
 public class Tool_GameObject
 {
-    [McpPluginTool
+    [AiTool
     (
         "MyCustomTask",
         Title = "Create a new GameObject"
@@ -319,10 +319,10 @@ public class Tool_GameObject
 `MCP Prompt` te permite inyectar prompts personalizados en la conversación con el LLM. Soporta dos roles de emisor: User y Assistant. Es una forma rápida de instruir al LLM para que realice tareas específicas. Puedes generar prompts usando datos personalizados, proporcionando listas o cualquier otra información relevante.
 
 ```csharp
-[McpPluginPromptType]
+[AiPromptType]
 public static class Prompt_ScriptingCode
 {
-    [McpPluginPrompt(Name = "add-event-system", Role = Role.User)]
+    [AiPrompt(Name = "add-event-system", Role = Role.User)]
     [Description("Implement UnityEvent-based communication system between GameObjects.")]
     public string AddEventSystem()
     {
@@ -364,7 +364,7 @@ Este proyecto sigue patrones de codificación C# consistentes. Todo el código n
 
 1. **Encabezados de archivo**: Incluir aviso de copyright en formato de comentario de caja al inicio de cada archivo
 2. **Contexto nullable**: Usar `#nullable enable` para seguridad de nulos — sin nulos implícitos
-3. **Atributos**: Usar `[McpPluginTool]`, `[McpPluginPrompt]`, `[McpPluginResource]` para el descubrimiento MCP
+3. **Atributos**: Usar `[AiTool]`, `[AiPrompt]`, `[AiResource]` para el descubrimiento MCP
 4. **Clases parciales**: Dividir la funcionalidad en varios archivos (por ej., `Tool_GameObject.Create.cs`, `Tool_GameObject.Destroy.cs`)
 5. **Ejecución en el hilo principal**: Envolver todas las llamadas a la API de Unity con `MainThread.Instance.Run()`
 6. **Manejo de errores**: Lanzar excepciones para los errores — usar `ArgumentException` o `Exception`, nunca devolver cadenas de error
@@ -403,14 +403,14 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
-    // Usar [McpPluginToolType] para clases de tools - habilita el descubrimiento MCP via reflexión
-    [McpPluginToolType]
+    // Usar [AiToolType] para clases de tools - habilita el descubrimiento MCP via reflexión
+    [AiToolType]
     // Las clases parciales permiten dividir la implementación en múltiples archivos
     // Patrón: Un archivo por operación (por ej., GameObject.Create.cs, GameObject.Destroy.cs)
     public partial class Tool_GameObject
     {
         // Declaración de MCP Tool con metadatos basados en atributos
-        [McpPluginTool(
+        [AiTool(
             "gameobject-create",                    // Identificador único del tool (kebab-case)
             Title = "GameObject / Create"           // Título legible por humanos
         )]
@@ -496,11 +496,11 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
     }
 
     // Archivo de clase parcial separado para prompts
-    [McpPluginPromptType]
+    [AiPromptType]
     public static partial class Prompt_SceneManagement
     {
         // MCP Prompt con definición de rol (User o Assistant)
-        [McpPluginPrompt(Name = "setup-basic-scene", Role = Role.User)]
+        [AiPrompt(Name = "setup-basic-scene", Role = Role.User)]
         [Description("Setup a basic scene with camera, lighting, and environment.")]
         public static string SetupBasicScene()
         {
