@@ -1,13 +1,13 @@
 {
   "packages": {
     "com.IvanMurzak.McpPlugin": {
-      "version": "6.5.1",
+      "version": "6.5.2",
       "dlls": [
         "McpPlugin.dll"
       ]
     },
     "com.IvanMurzak.McpPlugin.Common": {
-      "version": "6.5.1",
+      "version": "6.5.2",
       "dlls": [
         "McpPlugin.Common.dll"
       ]

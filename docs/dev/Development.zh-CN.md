@@ -247,7 +247,7 @@ graph LR
    - **Prompts**：用于常见 Unity 开发任务的预构建模板
    - **Resources**：通过 URI 访问 Unity 编辑器数据，支持 JSON 序列化
    - 所有操作在 Unity 主线程上执行以确保线程安全
-   - 使用 `[McpPluginTool]`、`[McpPluginPrompt]`、`[McpPluginResource]` 进行基于特性的发现
+   - 使用 `[AiTool]`、`[AiPrompt]`、`[AiResource]` 进行基于特性的发现
 
 4. **编辑器 UI** ([Scripts/UI/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/))
    - 用于连接管理的配置窗口（`Window > AI Game Developer`）
@@ -287,10 +287,10 @@ graph LR
 #### 添加 `MCP Tool`
 
 ```csharp
-[McpPluginToolType]
+[AiToolType]
 public class Tool_GameObject
 {
-    [McpPluginTool
+    [AiTool
     (
         "MyCustomTask",
         Title = "Create a new GameObject"
@@ -319,10 +319,10 @@ public class Tool_GameObject
 `MCP Prompt` 允许您将自定义提示词注入到与 LLM 的对话中。它支持两种发送者角色：User（用户）和 Assistant（助手）。这是指导 LLM 执行特定任务的快捷方式。您可以使用自定义数据生成提示词，提供列表或任何其他相关信息。
 
 ```csharp
-[McpPluginPromptType]
+[AiPromptType]
 public static class Prompt_ScriptingCode
 {
-    [McpPluginPrompt(Name = "add-event-system", Role = Role.User)]
+    [AiPrompt(Name = "add-event-system", Role = Role.User)]
     [Description("Implement UnityEvent-based communication system between GameObjects.")]
     public string AddEventSystem()
     {
@@ -364,7 +364,7 @@ graph LR
 
 1. **文件头部**：在每个文件顶部以注释框格式包含版权声明
 2. **可空上下文**：使用 `#nullable enable` 确保空值安全——不允许隐式空值
-3. **特性**：使用 `[McpPluginTool]`、`[McpPluginPrompt]`、`[McpPluginResource]` 进行 MCP 发现
+3. **特性**：使用 `[AiTool]`、`[AiPrompt]`、`[AiResource]` 进行 MCP 发现
 4. **分部类**：将功能拆分到多个文件中（如 `Tool_GameObject.Create.cs`、`Tool_GameObject.Destroy.cs`）
 5. **主线程执行**：使用 `MainThread.Instance.Run()` 包装所有 Unity API 调用
 6. **错误处理**：通过抛出异常来处理错误——使用 `ArgumentException` 或 `Exception`，不要返回错误字符串
@@ -403,14 +403,14 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
-    // 对工具类使用 [McpPluginToolType] — 通过反射启用 MCP 发现
-    [McpPluginToolType]
+    // 对工具类使用 [AiToolType] — 通过反射启用 MCP 发现
+    [AiToolType]
     // 分部类允许将实现拆分到多个文件中
     // 模式：每个操作一个文件（如 GameObject.Create.cs、GameObject.Destroy.cs）
     public partial class Tool_GameObject
     {
         // 使用基于特性的元数据声明 MCP Tool
-        [McpPluginTool(
+        [AiTool(
             "gameobject-create",                    // 唯一工具标识符（kebab-case）
             Title = "GameObject / Create"           // 人类可读标题
         )]
@@ -496,11 +496,11 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
     }
 
     // 用于提示词的独立分部类文件
-    [McpPluginPromptType]
+    [AiPromptType]
     public static partial class Prompt_SceneManagement
     {
         // 带角色定义的 MCP Prompt（User 或 Assistant）
-        [McpPluginPrompt(Name = "setup-basic-scene", Role = Role.User)]
+        [AiPrompt(Name = "setup-basic-scene", Role = Role.User)]
         [Description("Setup a basic scene with camera, lighting, and environment.")]
         public static string SetupBasicScene()
         {
