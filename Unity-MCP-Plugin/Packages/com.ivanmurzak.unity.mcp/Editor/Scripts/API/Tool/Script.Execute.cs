@@ -134,25 +134,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 if (result is null)
                 {
-                    if (returnType == typeof(void))
+                    if (returnType is null)
+                        return null;
+
+                    var isVoid = returnType == typeof(void);
+                    var ret = new SerializedMember
                     {
-                        var ret = new SerializedMember
-                        {
-                            name = "result",
-                            typeName = "System.Void"
-                        };
-                        return ret.SetJsonValue("\"Success\"");
-                    }
-                    else if (returnType is not null)
-                    {
-                        var ret = new SerializedMember
-                        {
-                            name = "result",
-                            typeName = returnType.FullName ?? returnType.Name ?? "object"
-                        };
-                        return ret.SetJsonValue("\"null\"");
-                    }
-                    return null;
+                        name = "result",
+                        typeName = isVoid ? "System.Void" : (returnType.FullName ?? returnType.Name ?? "object")
+                    };
+                    return ret.SetJsonValue(isVoid ? "\"Success\"" : "\"null\"");
                 }
 
                 if (result is SerializedMember serializedResult)
