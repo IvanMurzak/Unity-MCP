@@ -79,7 +79,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 // The Game View renders at the live resolution, which on high-DPI / 4K
                 // displays can be large enough that the encoded PNG exceeds the MCP transport's
                 // message-size limit — the result is then dropped in transit and never reaches
-                // the chat. Clamp the longest edge to `MaxGameViewDimension`, downscaling on the
+                // the chat. Clamp the longest edge to `MaxScreenshotDimension`, downscaling on the
                 // GPU (an RT→RT blit preserves pixel orientation, so the flip compensation below
                 // stays correct), so the payload stays comparable to the other screenshot tools.
                 var srcWidth = sourceRt.width;
