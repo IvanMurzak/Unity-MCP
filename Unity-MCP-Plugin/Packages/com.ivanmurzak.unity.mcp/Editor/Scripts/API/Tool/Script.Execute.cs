@@ -140,8 +140,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     var isVoid = returnType == typeof(void);
                     var ret = new SerializedMember
                     {
-                        name = "result",
-                        typeName = isVoid ? "System.Void" : (returnType.FullName ?? returnType.Name ?? "object")
+                        name = JsonSchema.Result,
+                        typeName = isVoid ? "System.Void" : (returnType.FullName ?? returnType.Name ?? JsonSchema.Object)
                     };
                     return ret.SetJsonValue(isVoid ? "\"Success\"" : "\"null\"");
                 }
@@ -155,7 +155,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     obj: result,
                     logger: logger);
                 if (string.IsNullOrEmpty(serializedResultByReflector.name))
-                    serializedResultByReflector.name = "result";
+                    serializedResultByReflector.name = JsonSchema.Result;
                 return serializedResultByReflector;
             });
         }
