@@ -75,15 +75,38 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 // DirectX/Metal because Unity performs a Y-flip at display-blit time — a step
                 // bypassed when ReadPixels runs against the GameView RT directly.
                 // `SystemInfo.graphicsUVStartsAtTop` identifies the APIs that need the flip.
-                var width = sourceRt.width;
-                var height = sourceRt.height;
+                //
+                // The Game View renders at the live resolution, which on high-DPI / 4K
+                // displays can be large enough that the encoded PNG exceeds the MCP transport's
+                // message-size limit — the result is then dropped in transit and never reaches
+                // the chat. Clamp the longest edge to `MaxScreenshotDimension`, downscaling on the
+                // GPU (an RT→RT blit preserves pixel orientation, so the flip compensation below
+                // stays correct), so the payload stays comparable to the other screenshot tools.
+                var srcWidth = sourceRt.width;
+                var srcHeight = sourceRt.height;
+
+                var scale = Mathf.Min(1f, (float)MaxScreenshotDimension / Mathf.Max(srcWidth, srcHeight));
+                var width = Mathf.Max(1, Mathf.RoundToInt(srcWidth * scale));
+                var height = Mathf.Max(1, Mathf.RoundToInt(srcHeight * scale));
 
                 var prevActive = RenderTexture.active;
+                RenderTexture? scaledRt = null;
                 Texture2D? tex = null;
                 byte[]? pngBytes = null;
                 try
                 {
-                    RenderTexture.active = sourceRt;
+                    // When the Game View is within the limit (scale == 1) the read path is
+                    // byte-identical to a direct read of the source RT; otherwise we read from a
+                    // downscaled copy.
+                    var readSource = sourceRt;
+                    if (scale < 1f)
+                    {
+                        scaledRt = RenderTexture.GetTemporary(width, height, 0, sourceRt.format);
+                        Graphics.Blit(sourceRt, scaledRt);
+                        readSource = scaledRt;
+                    }
+
+                    RenderTexture.active = readSource;
                     tex = new Texture2D(width, height, TextureFormat.RGB24, false);
                     tex.ReadPixels(new Rect(0, 0, width, height), 0, 0);
 
@@ -106,6 +129,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 finally
                 {
                     RenderTexture.active = prevActive;
+                    if (scaledRt != null)
+                        RenderTexture.ReleaseTemporary(scaledRt);
                     if (tex != null)
                         UnityEngine.Object.DestroyImmediate(tex);
                 }
