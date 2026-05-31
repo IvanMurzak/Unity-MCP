@@ -36,6 +36,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 new CodexConfigurator(),
                 new KiloCodeConfigurator(),
                 new UnityAiConfigurator(),
+                new ZooCodeConfigurator(),
             }
             .OrderBy(c => c.AgentName)
             .Append(new CustomConfigurator()) // Ensure CustomConfigurator is always last
