@@ -27,7 +27,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public override string DownloadUrl => "https://www.zoocode.dev/";
         public override string? SkillsPath => ".roo/skills";
 
-        protected override string? IconFileName => null;
+        protected override string? IconFileName => "zoo-code-64.png";
 
         private static string LocalConfigPath => Path.Combine(ProjectRootPath, ".roo", "mcp.json");
 
