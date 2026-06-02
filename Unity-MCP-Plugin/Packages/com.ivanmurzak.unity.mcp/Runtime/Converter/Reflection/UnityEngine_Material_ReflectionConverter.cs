@@ -202,7 +202,7 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
 
             return new SerializedMember()
             {
-                name = name,
+                name = name ?? material.name,
                 typeName = type.GetTypeId(),
                 fields = new SerializedMemberList()
                 {
