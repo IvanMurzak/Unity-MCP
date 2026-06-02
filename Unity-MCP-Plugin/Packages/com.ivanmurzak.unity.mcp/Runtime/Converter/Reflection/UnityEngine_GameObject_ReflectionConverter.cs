@@ -35,10 +35,12 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
     {
         // Allow SetValue so an atomic GameObject-ref node (e.g. {"instanceID": ...}) on the
         // merge-patch (Reflector.TryPatch) path is resolved to the live GameObject and assigned
-        // to the target field. The overridden SetValue below routes through
-        // ToGameObjectRef().FindGameObject(), which is a reference resolution (not a deep
-        // structural deserialize), so this does not reintroduce the heavy GameObject
-        // serialization this converter deliberately avoids. See IvanMurzak/Unity-MCP#791.
+        // to the target field. AllowSetValue also gates the non-merge-patch TryModify path, but
+        // the overridden SetValue below is a reference-only resolve
+        // (ToGameObjectRef().FindGameObject()) — never a structural write or GameObject
+        // instantiation — so flipping it cannot cause unintended writes elsewhere, and it does
+        // not reintroduce the heavy GameObject serialization this converter deliberately avoids.
+        // See IvanMurzak/Unity-MCP#791.
         public override bool AllowSetValue => true;
 
         // This converter does NOT inherit UnityEngine_Object_ReflectionConverter<T> (it extends

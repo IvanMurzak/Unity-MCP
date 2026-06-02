@@ -9,12 +9,10 @@
 */
 
 #nullable enable
-#if UNITY_6000_5_OR_NEWER
 using System;
 using System.Collections;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using AIGD;
-using com.IvanMurzak.Unity.MCP.Runtime.Extensions;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -41,6 +39,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     /// always a string, so both forms drive the identical <c>Reflector.TryPatch</c>
     /// apply path that the bug lived on; the string form additionally exercises a
     /// patch whose object-ref is embedded verbatim as the agent would send it.
+    ///
+    /// This file is version-agnostic: the only Unity-6.5-vs-pre-6.5 differences
+    /// (EntityId/GetEntityId vs int/GetInstanceID, and the instanceID JSON wire form
+    /// — string on 6.5, number on pre-6.5) are isolated in the version-split helper
+    /// partial <c>TestToolGameObject.JsonPatchObjectOrString.Helpers(.pre-Unity.6.5).cs</c>,
+    /// so the 8 tests compile and run on Unity 2022.3 through 6.5+.
     /// </summary>
     public partial class TestToolGameObject : BaseTest
     {
@@ -77,7 +81,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var (go, solar, _, _) = BuildSolarFixtureForPatch();
 
             var response = new Tool_GameObject().ModifyComponent(
-                gameObjectRef: new GameObjectRef(go.GetEntityId()),
+                gameObjectRef: GoRef(go),
                 componentRef: new ComponentRef { TypeName = typeof(SolarSystem).FullName! },
                 jsonPatch: "{\"globalOrbitSpeedMultiplier\": 7.5, \"globalSizeMultiplier\": 3.25}");
 
@@ -97,7 +101,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var json = "{\"globalOrbitSpeedMultiplier\": 11.0, \"globalSizeMultiplier\": 4.0}";
 
             var response = new Tool_GameObject().ModifyComponent(
-                gameObjectRef: new GameObjectRef(go.GetEntityId()),
+                gameObjectRef: GoRef(go),
                 componentRef: new ComponentRef { TypeName = typeof(SolarSystem).FullName! },
                 jsonPatch: json);
 
@@ -127,16 +131,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             {
                 Assert.IsNull(renderer.sharedMaterial, "Precondition: renderer has no shared material yet.");
 
-                var json = $"{{\"sharedMaterial\":{{\"instanceID\":\"{UnityEngine.EntityId.ToULong(material.GetEntityId())}\"}}}}";
+                var json = InstanceIdPatch("sharedMaterial", material);
 
                 var response = new Tool_GameObject().ModifyComponent(
-                    gameObjectRef: new GameObjectRef(go.GetEntityId()),
-                    componentRef: new ComponentRef(renderer.GetEntityId()),
+                    gameObjectRef: GoRef(go),
+                    componentRef: CompRef(renderer),
                     jsonPatch: json);
 
                 Assert.IsTrue(response.Success, $"Asset-ref jsonPatch should resolve and assign the Material. Logs: {string.Join(", ", response.Logs ?? Array.Empty<string>())}");
                 Assert.IsNotNull(renderer.sharedMaterial, "sharedMaterial should have been assigned.");
-                Assert.AreEqual(material.GetEntityId(), renderer.sharedMaterial!.GetEntityId(),
+                Assert.IsTrue(SameRef(material, renderer.sharedMaterial!),
                     "The assigned Material must be the one referenced by {instanceID}.");
             }
             finally
@@ -165,16 +169,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             try
             {
                 // String form: the agent passes the patch as a JSON string; same apply path.
-                var json = $"{{\"sharedMaterial\":{{\"instanceID\":\"{UnityEngine.EntityId.ToULong(material.GetEntityId())}\"}}}}";
+                var json = InstanceIdPatch("sharedMaterial", material);
 
                 var response = new Tool_GameObject().ModifyComponent(
-                    gameObjectRef: new GameObjectRef(go.GetEntityId()),
-                    componentRef: new ComponentRef(renderer.GetEntityId()),
+                    gameObjectRef: GoRef(go),
+                    componentRef: CompRef(renderer),
                     jsonPatch: json);
 
                 Assert.IsTrue(response.Success, $"String-form asset-ref jsonPatch should resolve the Material. Logs: {string.Join(", ", response.Logs ?? Array.Empty<string>())}");
                 Assert.IsNotNull(renderer.sharedMaterial, "sharedMaterial should have been assigned (string form).");
-                Assert.AreEqual(material.GetEntityId(), renderer.sharedMaterial!.GetEntityId(),
+                Assert.IsTrue(SameRef(material, renderer.sharedMaterial!),
                     "The assigned Material must be the one referenced by {instanceID} (string form).");
             }
             finally
@@ -198,16 +202,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var hinge = jointGo.AddComponent<HingeJoint>();
             Assert.IsNull(hinge.connectedBody, "Precondition: hinge joint has no connected body yet.");
 
-            var json = $"{{\"connectedBody\":{{\"instanceID\":\"{UnityEngine.EntityId.ToULong(rigidbody.GetEntityId())}\"}}}}";
+            var json = InstanceIdPatch("connectedBody", rigidbody);
 
             var response = new Tool_GameObject().ModifyComponent(
-                gameObjectRef: new GameObjectRef(jointGo.GetEntityId()),
-                componentRef: new ComponentRef(hinge.GetEntityId()),
+                gameObjectRef: GoRef(jointGo),
+                componentRef: CompRef(hinge),
                 jsonPatch: json);
 
             Assert.IsTrue(response.Success, $"Component-ref jsonPatch should resolve and assign the Rigidbody. Logs: {string.Join(", ", response.Logs ?? Array.Empty<string>())}");
             Assert.IsNotNull(hinge.connectedBody, "connectedBody should have been assigned.");
-            Assert.AreEqual(rigidbody.GetEntityId(), hinge.connectedBody!.GetEntityId(),
+            Assert.IsTrue(SameRef(rigidbody, hinge.connectedBody!),
                 "The assigned Rigidbody must be the one referenced by {instanceID}.");
             yield return null;
         }
@@ -221,16 +225,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var jointGo = new GameObject("Joint host str");
             var hinge = jointGo.AddComponent<HingeJoint>();
 
-            var json = $"{{\"connectedBody\":{{\"instanceID\":\"{UnityEngine.EntityId.ToULong(rigidbody.GetEntityId())}\"}}}}";
+            var json = InstanceIdPatch("connectedBody", rigidbody);
 
             var response = new Tool_GameObject().ModifyComponent(
-                gameObjectRef: new GameObjectRef(jointGo.GetEntityId()),
-                componentRef: new ComponentRef(hinge.GetEntityId()),
+                gameObjectRef: GoRef(jointGo),
+                componentRef: CompRef(hinge),
                 jsonPatch: json);
 
             Assert.IsTrue(response.Success, $"String-form component-ref jsonPatch should resolve the Rigidbody. Logs: {string.Join(", ", response.Logs ?? Array.Empty<string>())}");
             Assert.IsNotNull(hinge.connectedBody, "connectedBody should have been assigned (string form).");
-            Assert.AreEqual(rigidbody.GetEntityId(), hinge.connectedBody!.GetEntityId(),
+            Assert.IsTrue(SameRef(rigidbody, hinge.connectedBody!),
                 "The assigned Rigidbody must be the one referenced by {instanceID} (string form).");
             yield return null;
         }
@@ -242,19 +246,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             var (go, solar, _, _) = BuildSolarFixtureForPatch();
             var newSun = new GameObject("ReplacementSun");
-            Assert.AreNotEqual(newSun.GetEntityId(), solar.sun.GetEntityId(),
+            Assert.IsFalse(SameRef(newSun, solar.sun),
                 "Precondition: solar.sun starts as the original Sun, not the replacement.");
 
-            var json = $"{{\"sun\":{{\"instanceID\":\"{UnityEngine.EntityId.ToULong(newSun.GetEntityId())}\"}}}}";
+            var json = InstanceIdPatch("sun", newSun);
 
             var response = new Tool_GameObject().ModifyComponent(
-                gameObjectRef: new GameObjectRef(go.GetEntityId()),
+                gameObjectRef: GoRef(go),
                 componentRef: new ComponentRef { TypeName = typeof(SolarSystem).FullName! },
                 jsonPatch: json);
 
             Assert.IsTrue(response.Success, $"GameObject-ref jsonPatch should resolve and assign the GameObject. Logs: {string.Join(", ", response.Logs ?? Array.Empty<string>())}");
             Assert.IsNotNull(solar.sun, "solar.sun should still be assigned after the patch.");
-            Assert.AreEqual(newSun.GetEntityId(), solar.sun.GetEntityId(),
+            Assert.IsTrue(SameRef(newSun, solar.sun),
                 "solar.sun must now be the GameObject referenced by {instanceID}.");
             yield return null;
         }
@@ -265,18 +269,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var (go, solar, _, _) = BuildSolarFixtureForPatch();
             var newSun = new GameObject("ReplacementSun str");
 
-            var json = $"{{\"sun\":{{\"instanceID\":\"{UnityEngine.EntityId.ToULong(newSun.GetEntityId())}\"}}}}";
+            var json = InstanceIdPatch("sun", newSun);
 
             var response = new Tool_GameObject().ModifyComponent(
-                gameObjectRef: new GameObjectRef(go.GetEntityId()),
+                gameObjectRef: GoRef(go),
                 componentRef: new ComponentRef { TypeName = typeof(SolarSystem).FullName! },
                 jsonPatch: json);
 
             Assert.IsTrue(response.Success, $"String-form GameObject-ref jsonPatch should resolve the GameObject. Logs: {string.Join(", ", response.Logs ?? Array.Empty<string>())}");
-            Assert.AreEqual(newSun.GetEntityId(), solar.sun.GetEntityId(),
+            Assert.IsTrue(SameRef(newSun, solar.sun),
                 "solar.sun must now be the GameObject referenced by {instanceID} (string form).");
             yield return null;
         }
     }
 }
-#endif
