@@ -55,7 +55,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
 | `assetRef` | `any` | Yes | Reference to UnityEngine.Object asset instance. It could be Material, ScriptableObject, Prefab, and any other Asset. Anything located in the Assets and Packages folders. |
 | `content` | `any` | No | Optional. The asset content. It overrides the existing asset content (legacy path). |
 | `pathPatches` | `any` | No | Optional. List of path-scoped patches routed through Reflector.TryModifyAt. |
-| `jsonPatch` | `string` | No | Optional. JSON Merge Patch (RFC 7396, extended with [i]/[key] keys) routed through Reflector.TryPatch. |
+| `jsonPatch` | `any` | No | Optional. JSON Merge Patch (RFC 7396, extended with [i]/[key] keys) routed through Reflector.TryPatch. |
 
 ### Input JSON Schema
 
@@ -73,7 +73,15 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "$ref": "#/$defs/System.Collections.Generic.List(AIGD.PathPatch)"
     },
     "jsonPatch": {
-      "type": "string"
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "additionalProperties": true
+        }
+      ]
     }
   },
   "$defs": {

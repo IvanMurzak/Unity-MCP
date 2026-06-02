@@ -59,7 +59,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
 Only include the fields/properties you want to change.
 Any unknown or invalid fields and properties will be reported in the response. |
 | `pathPatches` | `any` | No | Optional. List of path-scoped patches routed through Reflector.TryModifyAt. Each entry targets one field/element/entry by path. Path syntax: 'fieldName', 'nested/field', 'arrayField/[i]', 'dictField/[key]'. |
-| `jsonPatch` | `string` | No | Optional. JSON Merge Patch (RFC 7396, extended with [i]/[key] keys) routed through Reflector.TryPatch. Allows multiple fields at any depth to be updated in a single call. Use '$type' for compatible-subtype replacement. |
+| `jsonPatch` | `any` | No | Optional. JSON Merge Patch (RFC 7396, extended with [i]/[key] keys) routed through Reflector.TryPatch. Allows multiple fields at any depth to be updated in a single call. Use '$type' for compatible-subtype replacement. |
 
 ### Input JSON Schema
 
@@ -80,7 +80,15 @@ Any unknown or invalid fields and properties will be reported in the response. |
       "$ref": "#/$defs/System.Collections.Generic.List(AIGD.PathPatch)"
     },
     "jsonPatch": {
-      "type": "string"
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "object",
+          "additionalProperties": true
+        }
+      ]
     }
   },
   "$defs": {
