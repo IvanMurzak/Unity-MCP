@@ -15,6 +15,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.ReflectorNet.Json;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
@@ -54,6 +55,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             SerializedMember? content = null,
             [Description("Optional. List of path-scoped patches routed through Reflector.TryModifyAt.")]
             List<PathPatch>? pathPatches = null,
+            [JsonStringOrObject]
             [Description("Optional. JSON Merge Patch (RFC 7396, extended with [i]/[key] keys) routed through " +
                 "Reflector.TryPatch.")]
             string? jsonPatch = null
