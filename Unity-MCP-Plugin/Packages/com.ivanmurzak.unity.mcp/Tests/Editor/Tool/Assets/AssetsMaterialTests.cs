@@ -10,8 +10,10 @@
 
 #nullable enable
 using System.Collections.Generic;
+using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Editor.Tests.Utils;
+using AIGD;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -20,6 +22,52 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
     public partial class AssetsMaterialTests : BaseTest
     {
+        // Regression for issue #793: the Material converter's deep/recursive path
+        // (UnityEngine_Material_ReflectionConverter[.pre-Unity.6.5].cs root construction)
+        // omitted the `name ?? material.name` fallback that its own shallow path and the
+        // Object/GameObject converters already had, so a deep `assets-get-data` read (a
+        // viewQuery with MaxDepth>0, where View passes a null name down) returned
+        // `result.name: null` for a Material — even though every UnityEngine.Object has a
+        // name. This test drives the real `assets-get-data` tool path with a deep viewQuery
+        // and asserts the root SerializedMember.name is the asset's name (non-null). The
+        // fixture is version-agnostic, so it exercises whichever converter variant the
+        // active Editor compiles (Unity 6.5+ -> .cs, pre-6.5 -> .pre-Unity.6.5.cs).
+        [Test]
+        public void GetData_DeepViewQuery_RootNameIsAssetName()
+        {
+            const string folder = "Assets/Unity-MCP-Test";
+            const string assetName = "Material_793_DeepName";
+            var assetPath = $"{folder}/{assetName}.mat";
+
+            if (!AssetDatabase.IsValidFolder(folder))
+                AssetDatabase.CreateFolder("Assets", "Unity-MCP-Test");
+
+            var material = new Material(Shader.Find("Standard"));
+            AssetDatabase.CreateAsset(material, assetPath);
+            AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+            try
+            {
+                // Deep viewQuery (MaxDepth > 0) routes through the recursive root
+                // construction in the Material converter — the path that regressed. The
+                // NamePattern mirrors the shape reported on the live assets-get-data call.
+                var result = new Tool_Assets().GetData(
+                    new AssetObjectRef(material),
+                    viewQuery: new ViewQuery { NamePattern = "color|material|shader", MaxDepth = 3 });
+
+                Assert.IsNotNull(result, "Deep viewQuery result should not be null.");
+                Assert.IsNotNull(result.name,
+                    "Material deep/recursive serialization must not return a null root name (issue #793).");
+                Assert.AreEqual(assetName, result.name,
+                    "Root SerializedMember.name should equal the Material asset's name.");
+            }
+            finally
+            {
+                AssetDatabase.DeleteAsset(assetPath);
+                AssetDatabase.DeleteAsset(folder);
+                AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
+            }
+        }
+
         [Test]
         public void Material_Create()
         {
