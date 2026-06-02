@@ -22,3 +22,7 @@ commands/.env
 
 # Wiki project
 Unity-MCP.wiki
+
+# Claude Code subagent memory can leak here when an agent runs with its cwd inside this repo.
+# Canonical agent memory lives ONLY in the top-level infra repo; ignore it everywhere here.
+**/.claude/agent-memory/
