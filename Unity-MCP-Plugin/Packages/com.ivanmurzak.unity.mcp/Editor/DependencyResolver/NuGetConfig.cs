@@ -70,7 +70,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // by the EditMode tests under Tests/Editor/AtomicApi/, which
             // compile-fail against 5.0.0. 5.1.1 adds defensive try/catch around
             // reflection so the documented no-throw contract on Try* methods holds.
-            new NuGetPackage("com.IvanMurzak.ReflectorNet",                           "5.2.0",  includeInBuild: true),
+            new NuGetPackage("com.IvanMurzak.ReflectorNet",                           "5.3.0",  includeInBuild: true),
             new NuGetPackage("System.Text.Json",                                      "8.0.5",  includeInBuild: true),
             new NuGetPackage("Microsoft.AspNetCore.SignalR.Client",                   "8.0.15", includeInBuild: true),
             new NuGetPackage("Microsoft.AspNetCore.SignalR.Protocols.Json",           "8.0.15", includeInBuild: true),
