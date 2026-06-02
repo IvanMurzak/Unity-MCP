@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.ReflectorNet.Json;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using AIGD;
@@ -68,6 +69,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 "Outer index aligns with 'gameObjectRefs'; inner list contains {path, value} entries. " +
                 "Pass null or omit for GameObjects that should not receive path patches.")]
             List<List<PathPatch>?>? pathPatchesPerGameObject = null,
+            [JsonStringOrObject]
             [Description("Optional. Per-GameObject JSON Merge Patch (RFC 7396, extended with [i]/[key] keys) " +
                 "routed through Reflector.TryPatch. Outer index aligns with 'gameObjectRefs'. " +
                 "Pass null or omit for GameObjects that should not receive a JSON patch.")]

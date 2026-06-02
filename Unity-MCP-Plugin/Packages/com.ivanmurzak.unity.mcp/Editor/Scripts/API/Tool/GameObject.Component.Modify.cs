@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.ReflectorNet.Json;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using AIGD;
@@ -69,6 +70,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 "Each entry targets one field/element/entry by path. " +
                 "Path syntax: 'fieldName', 'nested/field', 'arrayField/[i]', 'dictField/[key]'.")]
             List<PathPatch>? pathPatches = null,
+            [JsonStringOrObject]
             [Description("Optional. JSON Merge Patch (RFC 7396, extended with [i]/[key] keys) routed through " +
                 "Reflector.TryPatch. Allows multiple fields at any depth to be updated in a single call. " +
                 "Use '$type' for compatible-subtype replacement.")]

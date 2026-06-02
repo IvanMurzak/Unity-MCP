@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
@@ -22,6 +23,12 @@ namespace com.IvanMurzak.Unity.MCP.Reflection.Converter
     {
         public override bool AllowCascadePropertiesConversion => true;
         public override bool AllowSetValue => true;
+
+        // Treat object-ref JSON nodes (e.g. {"instanceID": ...}) as atomic on the merge-patch
+        // (Reflector.TryPatch) path so they route through SetValue and resolve to the live
+        // UnityEngine.Object instead of being structurally descended. Safe because ReflectorNet
+        // 5.3.0 only applies atomic delegation to non-root nodes. See IvanMurzak/Unity-MCP#791.
+        public override bool TreatJsonObjectAsAtomicValue(Type type) => true;
 
         protected virtual IEnumerable<string> RestrictedInValuePropertyNames(Reflector reflector, JsonElement valueJsonElement) => new[]
         {
