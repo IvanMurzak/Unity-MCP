@@ -161,9 +161,14 @@ jobs:
           sudo rm -rf ./Installer/Temp/ || true
           sudo rm -rf ./artifacts-installer-editmode/ || true
 
-          # Reset only tracked files to their committed state
+          # Reset tracked files to their committed state...
           git reset --hard HEAD
-          echo "Cleaned Unity artifacts and reset tracked files"
+          # ...and remove untracked Unity junk (e.g. batch-mode error.html/error.png)
+          # that would otherwise leave the tree dirty. -d removes stray dirs; we do NOT
+          # pass -x, so gitignored caches like ./Installer/Library are preserved.
+          git clean -fd
+          echo "Cleaned Unity artifacts and reset git state"
+          git status --porcelain
 
       - name: Export Unity Package
         uses: game-ci/unity-builder@v5
@@ -178,6 +183,10 @@ jobs:
           buildsPath: build
           buildMethod: com.IvanMurzak.Unity.MCP.Installer.PackageExporter.ExportPackage
           customParameters: -CI true -GITHUB_ACTIONS true
+          # This job only exports a .unitypackage; it never reads Application.version.
+          # Default Semantic versioning runs a git-dirty check that fails when Unity
+          # leaves stray untracked files behind, so disable versioning entirely.
+          versioning: None
 
       - name: Upload Unity Package as artifact
         uses: actions/upload-artifact@v6
