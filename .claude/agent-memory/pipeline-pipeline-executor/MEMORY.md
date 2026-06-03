@@ -1,2 +1,0 @@
-- [tests-run returns failures-only Results list](tests-run-results-failures-only.md) — the EditMode gate's `Results[]` enumerates only non-passing tests; read `Summary.{TotalTests,PassedTests,FailedTests}` for the real verdict, not the list length
-- [GameObject converter needs AllowSetValue=true for jsonPatch object-refs](gameobject-converter-allowsetvalue.md) — TreatJsonObjectAsAtomicValue alone is insufficient for GameObject-ref-by-{instanceID}; AllowSetValue must also be flipped or the field is silently left unmodified
