@@ -39,6 +39,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 }
             ),
             new(
+                name:        "Cinemachine",
+                description: "AI-assisted Cinemachine camera setup and configuration tools.",
+                packageId:   "com.ivanmurzak.unity.mcp.cinemachine",
+                gitUrl:      "https://github.com/IvanMurzak/Unity-AI-Cinemachine.git",
+                tools: new[]
+                {
+                    ("cinemachine-camera-create", "Create a CinemachineCamera in the scene"),
+                    ("cinemachine-set-targets",   "Set the Follow and LookAt targets"),
+                    ("cinemachine-set-lens",      "Configure FOV, clip planes, and dutch"),
+                    ("cinemachine-set-body",      "Set the position-control component (Follow/Orbital/...)"),
+                    ("cinemachine-set-noise",     "Add camera shake via Perlin noise"),
+                }
+            ),
+            new(
                 name:        "ParticleSystem",
                 description: "AI-powered particle system creation and control tools.",
                 packageId:   "com.ivanmurzak.unity.mcp.particlesystem",

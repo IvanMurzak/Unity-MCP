@@ -198,6 +198,7 @@ unity-mcp-cli open ./MyUnityProject
 | 拡張機能 | 説明 |
 | --- | --- |
 | **[AI Animation](https://github.com/IvanMurzak/Unity-AI-Animation/)** | Unity アニメーション用の追加ツールセット |
+| **[AI Cinemachine](https://github.com/IvanMurzak/Unity-AI-Cinemachine/)** | Cinemachine 用の MCP ツール |
 | **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-AI-ParticleSystem/)** | Unity パーティクルシステム用の追加ツールセット |
 | **[AI ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)** | Unity ProBuilder 用の追加ツールセット |
 
