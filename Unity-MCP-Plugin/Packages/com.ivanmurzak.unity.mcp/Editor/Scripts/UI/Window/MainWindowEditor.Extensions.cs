@@ -156,6 +156,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     ("tilemap-create-rule-tile",  "Create a RuleTile asset (2D Tilemap Extras)"),
                 }
             ),
+            new(
+                name:        "Timeline",
+                description: "AI-assisted Timeline cutscene and sequence authoring tools.",
+                packageId:   "com.ivanmurzak.unity.mcp.timeline",
+                gitUrl:      "https://github.com/IvanMurzak/Unity-AI-Timeline.git",
+                tools: new[]
+                {
+                    ("timeline-create",         "Create a TimelineAsset (.playable)"),
+                    ("timeline-track-add",      "Add Animation/Activation/Audio/Signal/Control tracks"),
+                    ("timeline-clip-add",       "Add clips to a track with start and duration"),
+                    ("timeline-director-bind",  "Bind a TimelineAsset to a scene PlayableDirector"),
+                    ("timeline-modify",         "Modify any Timeline object via ReflectorNet"),
+                }
+            ),
         };
 
         private void SetupExtensionsSection(VisualElement root)
