@@ -69,6 +69,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 }
             ),
             new(
+                name:        "Navigation",
+                description: "AI-driven NavMesh navigation: surfaces, baking, agents, and links.",
+                packageId:   "com.ivanmurzak.unity.mcp.navigation",
+                gitUrl:      "https://github.com/IvanMurzak/Unity-AI-Navigation.git",
+                tools: new[]
+                {
+                    ("navigation-surface-add",          "Add and configure a NavMeshSurface"),
+                    ("navigation-set-bake-settings",    "Set agent radius/height/slope/step and voxel size"),
+                    ("navigation-surface-bake",         "Bake or clear a NavMeshSurface"),
+                    ("navigation-modifier-add",         "Add a NavMeshModifier (override area / ignore)"),
+                    ("navigation-modifier-volume-add",  "Add a NavMeshModifierVolume"),
+                    ("navigation-link-add",             "Add a NavMeshLink between two points"),
+                    ("navigation-agent-add",            "Add and configure a NavMeshAgent"),
+                    ("navigation-agent-set-destination","Set a NavMeshAgent's destination"),
+                    ("navigation-list",                 "List NavMeshSurfaces and NavMeshAgents"),
+                    ("navigation-get",                  "Serialize any NavMesh component"),
+                    ("navigation-modify",               "Modify any NavMesh component via ReflectorNet"),
+                }
+            ),
+            new(
                 name:        "ParticleSystem",
                 description: "AI-powered particle system creation and control tools.",
                 packageId:   "com.ivanmurzak.unity.mcp.particlesystem",
