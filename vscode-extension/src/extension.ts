@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { configureVscodeProject } from './cliAdapter';
+import { configureVscodeProject, installUnityMcpPlugin } from './cliAdapter';
 import { ExtensionLogger } from './logging';
 import {
   formatWorkspaceStatusReport,
@@ -26,6 +26,147 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     vscode.commands.registerCommand('unityMcp.showOutput', () => {
       logger.show();
       logger.debug('output:show', {});
+    }),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('unityMcp.installPlugin', async () => {
+      const workspaceFolder = await pickWorkspaceFolder();
+      logger.debug('workspace:pick', {
+        selected: workspaceFolder?.uri.fsPath ?? null,
+      });
+
+      if (!workspaceFolder) {
+        void vscode.window.showWarningMessage(
+          'Unity MCP needs an open workspace folder before it can install the Unity package.',
+        );
+        logger.warn('pluginInstall:error', {
+          reason: 'no-workspace-folder',
+        });
+        return;
+      }
+
+      if (!vscode.workspace.isTrusted) {
+        logger.warn('pluginInstall:precheck', {
+          workspace: workspaceFolder.uri.fsPath,
+          reason: 'workspace-not-trusted',
+        });
+
+        const selection = await vscode.window.showWarningMessage(
+          'Unity MCP only installs the Unity package in a trusted workspace.',
+          'Manage Trust',
+        );
+
+        if (selection === 'Manage Trust') {
+          await vscode.commands.executeCommand('workbench.trust.manage');
+        }
+        return;
+      }
+
+      const initialStatus = await inspectWorkspaceStatus(
+        workspaceFolder.uri.fsPath,
+        workspaceFolder.name,
+        'trusted',
+      );
+
+      if (!initialStatus.unityProjectDetected) {
+        logger.warn('pluginInstall:precheck', {
+          workspace: workspaceFolder.uri.fsPath,
+          reason: 'not-unity-project',
+        });
+
+        void vscode.window.showErrorMessage(
+          'Unity MCP can only install the Unity package into a workspace that looks like a Unity project.',
+        );
+        return;
+      }
+
+      if (initialStatus.pluginInstalled) {
+        const alreadyInstalledChoice = await vscode.window.showInformationMessage(
+          `Unity MCP plugin already appears in ${workspaceFolder.name}. Install again anyway to let the shared library reconcile the manifest?`,
+          'Re-run Install',
+          'Cancel',
+        );
+
+        if (alreadyInstalledChoice !== 'Re-run Install') {
+          logger.warn('pluginInstall:precheck', {
+            workspace: workspaceFolder.uri.fsPath,
+            reason: 'already-installed-cancelled',
+          });
+          return;
+        }
+      } else {
+        const confirmInstall = await vscode.window.showWarningMessage(
+          'Unity MCP will update Packages/manifest.json in this Unity project. Continue?',
+          'Install Plugin',
+          'Cancel',
+        );
+
+        if (confirmInstall !== 'Install Plugin') {
+          logger.warn('pluginInstall:precheck', {
+            workspace: workspaceFolder.uri.fsPath,
+            reason: 'install-cancelled',
+          });
+          return;
+        }
+      }
+
+      logger.info('pluginInstall:start', {
+        workspace: workspaceFolder.uri.fsPath,
+      });
+
+      const result = await installUnityMcpPlugin(logger, {
+        workspacePath: workspaceFolder.uri.fsPath,
+      });
+
+      if (result.kind === 'failure') {
+        void vscode.window.showErrorMessage(
+          `Unity MCP could not install the plugin: ${result.error.message}`,
+          'Show Output',
+        ).then((selection) => {
+          if (selection === 'Show Output') {
+            logger.show();
+          }
+        });
+        return;
+      }
+
+      if (result.warnings.length > 0) {
+        logger.warn('pluginInstall:warnings', {
+          warnings: result.warnings,
+        });
+      }
+      if (result.nextSteps.length > 0) {
+        logger.info('pluginInstall:nextSteps', {
+          nextSteps: result.nextSteps,
+        });
+      }
+
+      const updatedStatus = await inspectWorkspaceStatus(
+        workspaceFolder.uri.fsPath,
+        workspaceFolder.name,
+        'trusted',
+      );
+      logger.appendReport(
+        'Unity MCP Status',
+        formatWorkspaceStatusReport(updatedStatus),
+      );
+      logger.show();
+
+      void vscode.window.showInformationMessage(
+        `Unity MCP plugin installed for ${workspaceFolder.name} (version ${result.installedVersion}).`,
+        'Open Manifest',
+        'Show Output',
+      ).then(async (selection) => {
+        if (selection === 'Open Manifest') {
+          const document = await vscode.workspace.openTextDocument(result.manifestPath);
+          await vscode.window.showTextDocument(document);
+        }
+
+        if (selection === 'Show Output') {
+          logger.show();
+        }
+      });
     }),
   );
 
@@ -266,6 +407,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     commands: [
       'unityMcp.checkStatus',
       'unityMcp.configureProject',
+      'unityMcp.installPlugin',
       'unityMcp.showOutput',
     ],
   });

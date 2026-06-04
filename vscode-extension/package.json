@@ -23,7 +23,8 @@
   "activationEvents": [
     "onCommand:unityMcp.checkStatus",
     "onCommand:unityMcp.showOutput",
-    "onCommand:unityMcp.configureProject"
+    "onCommand:unityMcp.configureProject",
+    "onCommand:unityMcp.installPlugin"
   ],
   "capabilities": {
     "untrustedWorkspaces": {
@@ -40,6 +41,10 @@
       {
         "command": "unityMcp.configureProject",
         "title": "Unity MCP: Configure Project"
+      },
+      {
+        "command": "unityMcp.installPlugin",
+        "title": "Unity MCP: Install Plugin"
       },
       {
         "command": "unityMcp.showOutput",

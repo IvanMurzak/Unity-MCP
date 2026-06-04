@@ -22,6 +22,12 @@ Slice 2 adds:
 - trusted-workspace guard for write actions
 - transport picker for `HTTP` or `STDIO`
 
+Slice 3 adds:
+
+- `Unity MCP: Install Plugin`
+- shared `unity-mcp-cli` adapter usage for Unity package installation
+- explicit confirmation before mutating `Packages/manifest.json`
+
 ## Local Development
 
 ```bash
@@ -53,5 +59,12 @@ Then:
 8. Choose `HTTP` unless you specifically want to test `STDIO`.
 9. Confirm `.vscode/mcp.json` is created.
 10. Run `Unity MCP: Check Status` again and confirm the MCP server now appears as configured.
+
+Then:
+
+11. Run `Unity MCP: Install Plugin`.
+12. Confirm the warning about updating `Packages/manifest.json`.
+13. Approve the install.
+14. Confirm the manifest is updated and the status report now shows the plugin as installed.
 
 Unity itself is not required for this slice.

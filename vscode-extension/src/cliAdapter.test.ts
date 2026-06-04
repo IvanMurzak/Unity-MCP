@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { configureVscodeProject } from './cliAdapter';
+import { configureVscodeProject, installUnityMcpPlugin } from './cliAdapter';
 import { ExtensionLogger } from './logging';
 
 describe('configureVscodeProject', () => {
@@ -54,6 +54,37 @@ describe('configureVscodeProject', () => {
     if (result.kind === 'failure') {
       expect(result.error.message).toContain('Could not load unity-mcp-cli');
     }
+  });
+
+  it('calls installPlugin through the shared CLI loader', async () => {
+    const installPlugin = vi.fn().mockResolvedValue({
+      kind: 'success',
+      success: true,
+      installedVersion: '0.79.0',
+      manifestPath: '/tmp/project/Packages/manifest.json',
+      warnings: [],
+      nextSteps: ['Open the Unity project in the Editor to complete installation.'],
+    });
+
+    const logger = createLogger();
+    const result = await installUnityMcpPlugin(
+      logger,
+      {
+        workspacePath: '/tmp/project',
+      },
+      async () => ({
+        installPlugin,
+        setupMcp: vi.fn(),
+        listAgentIds: () => ['vscode-copilot'],
+      }),
+    );
+
+    expect(installPlugin).toHaveBeenCalledWith(
+      expect.objectContaining({
+        unityProjectPath: '/tmp/project',
+      }),
+    );
+    expect(result.kind).toBe('success');
   });
 });
 
