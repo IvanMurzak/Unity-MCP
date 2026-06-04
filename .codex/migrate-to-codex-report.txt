@@ -1,0 +1,17 @@
+Migration inventory:
+  inactive: instruction files - none found
+  active: skills - 2 found
+    - build-cli
+    - github-pr-review-fix
+  inactive: command sources - none found
+  inactive: subagents - none found
+Migration surfaces:
+  inactive: AGENTS.md - No supported instruction file found.
+  active: skills - 2 skill(s) converted.
+  inactive: MCP config - No settings or MCP config found.
+  inactive: subagents - No subagents found.
+Migration report:
+  manual_fix_required: .agents/skills/build-cli/SKILL.md - Manual review required for Claude skill fields: `argument-hint`, `disable-model-invocation`.
+  manual_fix_required: .agents/skills/github-pr-review-fix/SKILL.md - Manual review required for Claude skill fields: `argument-hint`, `disable-model-invocation`.
+  overwritten: /Users/suporte/Unity-MCP/.agents/skills/build-cli - Existing Codex skill will be replaced.
+  overwritten: /Users/suporte/Unity-MCP/.agents/skills/github-pr-review-fix - Existing Codex skill will be replaced.
