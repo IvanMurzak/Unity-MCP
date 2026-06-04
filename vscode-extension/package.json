@@ -1,0 +1,74 @@
+{
+  "name": "unity-mcp-vscode",
+  "displayName": "Unity MCP - VS Code Integration",
+  "description": "Preview VS Code integration for Unity MCP local project setup and diagnostics.",
+  "version": "0.0.1",
+  "license": "Apache-2.0",
+  "engines": {
+    "vscode": "^1.99.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "unity",
+    "mcp",
+    "copilot",
+    "vscode"
+  ],
+  "main": "./out/extension.js",
+  "extensionKind": [
+    "workspace"
+  ],
+  "activationEvents": [
+    "onCommand:unityMcp.checkStatus",
+    "onCommand:unityMcp.showOutput"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "Unity MCP only exposes read-only diagnostics in untrusted workspaces."
+    }
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "unityMcp.checkStatus",
+        "title": "Unity MCP: Check Status"
+      },
+      {
+        "command": "unityMcp.showOutput",
+        "title": "Unity MCP: Show Output"
+      }
+    ],
+    "configuration": {
+      "title": "Unity MCP",
+      "properties": {
+        "unityMcp.logLevel": {
+          "type": "string",
+          "enum": [
+            "error",
+            "warn",
+            "info",
+            "debug"
+          ],
+          "default": "info",
+          "description": "Controls the verbosity of the Unity MCP extension output channel."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run build",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "@types/vscode": "^1.99.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0"
+  }
+}
