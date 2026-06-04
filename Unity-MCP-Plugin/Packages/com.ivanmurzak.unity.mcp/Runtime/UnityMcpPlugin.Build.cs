@@ -144,7 +144,16 @@ namespace com.IvanMurzak.Unity.MCP
                 .WithToolsFromAssembly(assemblies)
                 .WithPromptsFromAssembly(assemblies)
                 .WithResourcesFromAssembly(assemblies)
-                .WithSkillsFromAssembly(assemblies);
+                .WithSkillsFromAssembly(assemblies)
+                // Auto-discover IReflectorModule implementors across all loaded assemblies so any
+                // assembly (including extensions added later, unknown ahead of time) can contribute
+                // ReflectorNet JSON/reflection converters, serialization-blacklist entries, and
+                // scan-ignore rules without a hardcoded extension list. Discovery honors the
+                // .IgnoreAssemblies(...) prune above (heavy assemblies are never type-enumerated)
+                // and runs strictly before the heavy attribute scan inside Build(). The hardcoded
+                // core converters in CreateDefaultReflector() remain the Order=0 baseline; module
+                // contributions layer on top.
+                .WithReflectorModulesFromAssembly(assemblies);
 
             configure?.Invoke(mcpPluginBuilder);
 
