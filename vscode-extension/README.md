@@ -34,6 +34,12 @@ Slice 4 adds:
 - plain launch or MCP-connected launch
 - reuse of shared `openProject()` behavior from `unity-mcp-cli`
 
+Slice 5 adds:
+
+- actionable status recommendations
+- guided next-step buttons from `Unity MCP: Check Status`
+- clearer first-run setup hints in the output report
+
 ## Local Development
 
 ```bash
@@ -81,5 +87,11 @@ Then:
 18. If the plugin was just installed and the project has not initialized yet, the extension should offer a guided fallback to `Open Without MCP`.
 19. After Unity imports and creates `UserSettings/AI-Game-Developer-Config.json`, retry `Open Unity With MCP Connection`.
 20. Confirm the output channel shows the open-project progress events.
+
+Then:
+
+21. Run `Unity MCP: Check Status` in projects representing different setup states.
+22. Confirm the status report includes `Recommended next actions`.
+23. Confirm the status notification offers relevant next-step buttons such as `Install Plugin`, `Configure Project`, `Open Unity`, or `Show Output`.
 
 Unity itself is not required for this slice.

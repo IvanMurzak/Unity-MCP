@@ -4,6 +4,7 @@ import { ExtensionLogger } from './logging';
 import {
   formatWorkspaceStatusReport,
   inspectWorkspaceStatus,
+  type WorkspaceAction,
 } from './projectStatus';
 import { readUnityMcpProjectConfig } from './unityConfig';
 import { pickWorkspaceFolder } from './workspace';
@@ -538,13 +539,24 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
         );
         logger.show();
 
+        const actions = buildStatusMessageActions(status);
         const summary = status.unityProjectDetected
           ? `Unity MCP status collected for ${workspaceFolder.name}.`
           : `${workspaceFolder.name} does not look like a Unity project.`;
 
-        void vscode.window.showInformationMessage(summary, 'Show Output').then((selection) => {
+        void vscode.window.showInformationMessage(summary, ...actions).then(async (selection) => {
+          if (!selection) {
+            return;
+          }
+
           if (selection === 'Show Output') {
             logger.show();
+            return;
+          }
+
+          const command = statusActionToCommand(selection);
+          if (command) {
+            await vscode.commands.executeCommand(command);
           }
         });
       } catch (error) {
@@ -575,6 +587,46 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       'unityMcp.showOutput',
     ],
   });
+}
+
+function buildStatusMessageActions(status: {
+  recommendedActions: WorkspaceAction[];
+}): string[] {
+  const actions = status.recommendedActions.map((action) => actionToLabel(action));
+  actions.push('Show Output');
+  return actions.slice(0, 3);
+}
+
+function actionToLabel(action: WorkspaceAction): string {
+  switch (action) {
+    case 'trust-workspace':
+      return 'Manage Trust';
+    case 'install-plugin':
+      return 'Install Plugin';
+    case 'open-unity-without-mcp':
+      return 'Open Unity';
+    case 'configure-vscode-mcp':
+      return 'Configure Project';
+    case 'open-unity-with-mcp':
+      return 'Open Unity With MCP';
+  }
+}
+
+function statusActionToCommand(actionLabel: string): string | undefined {
+  switch (actionLabel) {
+    case 'Manage Trust':
+      return 'workbench.trust.manage';
+    case 'Install Plugin':
+      return 'unityMcp.installPlugin';
+    case 'Open Unity':
+      return 'unityMcp.openUnity';
+    case 'Configure Project':
+      return 'unityMcp.configureProject';
+    case 'Open Unity With MCP':
+      return 'unityMcp.openUnity';
+    default:
+      return undefined;
+  }
 }
 
 export function deactivate(): void {

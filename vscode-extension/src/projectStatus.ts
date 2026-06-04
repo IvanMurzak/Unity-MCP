@@ -18,7 +18,15 @@ export interface WorkspaceStatus {
   mcpServerConfigured: boolean;
   mcpServerTransport?: string;
   warnings: string[];
+  recommendedActions: WorkspaceAction[];
 }
+
+export type WorkspaceAction =
+  | 'trust-workspace'
+  | 'install-plugin'
+  | 'open-unity-without-mcp'
+  | 'configure-vscode-mcp'
+  | 'open-unity-with-mcp';
 
 export async function inspectWorkspaceStatus(
   workspacePath: string,
@@ -64,6 +72,13 @@ export async function inspectWorkspaceStatus(
 
   const mcpInfo = await readMcpConfig(mcpConfigPath);
   warnings.push(...mcpInfo.warnings);
+  const recommendedActions = buildRecommendedActions({
+    trustState,
+    unityProjectDetected,
+    pluginInstalled,
+    unityMcpProjectConfigExists: projectConfig.exists,
+    mcpServerConfigured: mcpInfo.hasServerEntry,
+  });
 
   return {
     workspaceName,
@@ -78,6 +93,7 @@ export async function inspectWorkspaceStatus(
     mcpServerConfigured: mcpInfo.hasServerEntry,
     mcpServerTransport: mcpInfo.transport,
     warnings,
+    recommendedActions,
   };
 }
 
@@ -95,6 +111,13 @@ export function formatWorkspaceStatusReport(status: WorkspaceStatus): string {
     `Configured transport: ${status.mcpServerTransport ?? 'unknown'}`,
   ];
 
+  if (status.recommendedActions.length > 0) {
+    lines.push('Recommended next actions:');
+    for (const action of status.recommendedActions) {
+      lines.push(`- ${describeAction(action)}`);
+    }
+  }
+
   if (status.warnings.length > 0) {
     lines.push('Warnings:');
     for (const warning of status.warnings) {
@@ -103,6 +126,56 @@ export function formatWorkspaceStatusReport(status: WorkspaceStatus): string {
   }
 
   return lines.join('\n');
+}
+
+function buildRecommendedActions(input: {
+  trustState: 'trusted' | 'restricted';
+  unityProjectDetected: boolean;
+  pluginInstalled: boolean;
+  unityMcpProjectConfigExists: boolean;
+  mcpServerConfigured: boolean;
+}): WorkspaceAction[] {
+  if (input.trustState !== 'trusted') {
+    return ['trust-workspace'];
+  }
+
+  if (!input.unityProjectDetected) {
+    return [];
+  }
+
+  const actions: WorkspaceAction[] = [];
+
+  if (!input.pluginInstalled) {
+    actions.push('install-plugin');
+    return actions;
+  }
+
+  if (!input.unityMcpProjectConfigExists) {
+    actions.push('open-unity-without-mcp');
+    return actions;
+  }
+
+  if (!input.mcpServerConfigured) {
+    actions.push('configure-vscode-mcp');
+  }
+
+  actions.push('open-unity-with-mcp');
+  return actions;
+}
+
+function describeAction(action: WorkspaceAction): string {
+  switch (action) {
+    case 'trust-workspace':
+      return 'Trust this workspace before running Unity MCP write or launch actions.';
+    case 'install-plugin':
+      return 'Run "Unity MCP: Install Plugin".';
+    case 'open-unity-without-mcp':
+      return 'Run "Unity MCP: Open Unity" and choose "Open Unity" once so the package can initialize.';
+    case 'configure-vscode-mcp':
+      return 'Run "Unity MCP: Configure Project".';
+    case 'open-unity-with-mcp':
+      return 'Run "Unity MCP: Open Unity" and choose "Open Unity With MCP Connection".';
+  }
 }
 
 interface PackageManifestInfo {

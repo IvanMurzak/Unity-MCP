@@ -45,6 +45,7 @@ describe('inspectWorkspaceStatus', () => {
     expect(status.pluginVersion).toBe('0.79.0');
     expect(status.unityMcpProjectConfigExists).toBe(true);
     expect(status.warnings).toEqual([]);
+    expect(status.recommendedActions).toEqual(['configure-vscode-mcp', 'open-unity-with-mcp']);
   });
 
   it('reports missing Unity markers for a non-Unity workspace', async () => {
@@ -56,6 +57,7 @@ describe('inspectWorkspaceStatus', () => {
     expect(status.unityProjectDetected).toBe(false);
     expect(status.pluginInstalled).toBe(false);
     expect(status.unityMarkers).toEqual([]);
+    expect(status.recommendedActions).toEqual(['trust-workspace']);
   });
 
   it('warns when the plugin is installed but the Unity MCP project config has not been initialized yet', async () => {
@@ -77,10 +79,22 @@ describe('inspectWorkspaceStatus', () => {
     expect(status.pluginInstalled).toBe(true);
     expect(status.unityMcpProjectConfigExists).toBe(false);
     expect(status.warnings.some((warning) => warning.includes('Open Unity once without MCP'))).toBe(true);
+    expect(status.recommendedActions).toEqual(['open-unity-without-mcp']);
   });
 
   it('warns on invalid workspace MCP config', async () => {
     const workspace = await createTempWorkspace();
+    await mkdir(path.join(workspace, 'Assets'), { recursive: true });
+    await mkdir(path.join(workspace, 'ProjectSettings'), { recursive: true });
+    await mkdir(path.join(workspace, 'Packages'), { recursive: true });
+    await writeFile(
+      path.join(workspace, 'Packages', 'manifest.json'),
+      JSON.stringify({
+        dependencies: {
+          'com.ivanmurzak.unity.mcp': '0.79.0',
+        },
+      }, null, 2),
+    );
     await mkdir(path.join(workspace, '.vscode'), { recursive: true });
     await writeFile(path.join(workspace, '.vscode', 'mcp.json'), '{invalid json');
 
@@ -89,6 +103,7 @@ describe('inspectWorkspaceStatus', () => {
     expect(status.mcpConfigExists).toBe(true);
     expect(status.mcpServerConfigured).toBe(false);
     expect(status.warnings.some((warning) => warning.includes('Could not parse .vscode/mcp.json'))).toBe(true);
+    expect(status.recommendedActions).toEqual(['open-unity-without-mcp']);
   });
 });
 
