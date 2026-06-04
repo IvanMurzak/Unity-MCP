@@ -202,6 +202,7 @@ Install extensions when need more tools or [create your own tools](#add-custom-t
 | **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-AI-ParticleSystem/)** | Set of additional tools for Unity Particle System |
 | **[AI ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)** | Set of additional tools for Unity ProBuilder |
 | **[AI Splines](https://github.com/IvanMurzak/Unity-AI-Splines/)** | MCP Tools for Unity Splines |
+| **[AI Terrain](https://github.com/IvanMurzak/Unity-AI-Terrain/)** | Set of additional tools for Unity Terrain |
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 

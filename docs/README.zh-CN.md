@@ -202,6 +202,7 @@ unity-mcp-cli open ./MyUnityProject
 | **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-AI-ParticleSystem/)** | Unity 粒子系统附加工具集 |
 | **[AI ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)** | Unity ProBuilder 附加工具集 |
 | **[AI Splines](https://github.com/IvanMurzak/Unity-AI-Splines/)** | 用于 Unity Splines 的 MCP 工具 |
+| **[AI Terrain](https://github.com/IvanMurzak/Unity-AI-Terrain/)** | Unity 地形附加工具集 |
 
 ![AI 游戏开发者 — Unity SKILLS 和 MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 

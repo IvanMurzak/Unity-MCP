@@ -92,6 +92,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     ("splines-modify",           "Modify any Splines component via ReflectorNet"),
                 }
             ),
+            new(
+                name:        "Terrain",
+                description: "AI-powered Unity Terrain authoring tools.",
+                packageId:   "com.ivanmurzak.unity.mcp.terrain",
+                gitUrl:      "https://github.com/IvanMurzak/Unity-AI-Terrain.git",
+                tools: new[]
+                {
+                    ("terrain-create",       "Create a Terrain GameObject backed by new TerrainData"),
+                    ("terrain-set-heights",  "Sculpt heightmap values over a region or the whole terrain"),
+                    ("terrain-paint-layer",  "Paint a TerrainLayer onto the alphamap (splatmap)"),
+                    ("terrain-place-trees",  "Scatter or place trees from a tree prototype"),
+                    ("terrain-set-neighbors", "Stitch neighbor Terrains so Unity blends seams"),
+                }
+            ),
         };
 
         private void SetupExtensionsSection(VisualElement root)
