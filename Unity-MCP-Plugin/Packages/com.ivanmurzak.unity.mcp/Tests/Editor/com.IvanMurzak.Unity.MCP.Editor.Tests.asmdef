@@ -20,6 +20,7 @@
         "nunit.framework.dll",
         "System.Text.Json.dll",
         "Microsoft.Extensions.Logging.Abstractions.dll",
+        "Microsoft.Extensions.DependencyInjection.Abstractions.dll",
         "Microsoft.AspNetCore.SignalR.Client.dll",
         "Microsoft.AspNetCore.SignalR.Client.Core.dll",
         "ReflectorNet.dll",
