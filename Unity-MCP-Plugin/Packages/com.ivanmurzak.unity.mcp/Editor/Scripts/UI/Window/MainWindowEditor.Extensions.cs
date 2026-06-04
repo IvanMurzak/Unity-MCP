@@ -77,6 +77,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     ("probuilder-set-face-material", "Assign materials to individual faces"),
                 }
             ),
+            new(
+                name:        "Tilemap",
+                description: "AI-assisted 2D Tilemap creation, painting, and tile/RuleTile asset tools.",
+                packageId:   "com.ivanmurzak.unity.mcp.tilemap",
+                gitUrl:      "https://github.com/IvanMurzak/Unity-AI-Tilemap.git",
+                tools: new[]
+                {
+                    ("tilemap-create",            "Create a Grid + Tilemap + TilemapRenderer"),
+                    ("tilemap-set-tile",          "Paint a tile into a cell"),
+                    ("tilemap-box-fill",          "Fill a rectangular region with a tile"),
+                    ("tilemap-create-tile-asset", "Create a Tile asset from a Sprite"),
+                    ("tilemap-create-rule-tile",  "Create a RuleTile asset (2D Tilemap Extras)"),
+                }
+            ),
         };
 
         private void SetupExtensionsSection(VisualElement root)
