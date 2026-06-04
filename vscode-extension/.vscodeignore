@@ -7,4 +7,3 @@ vitest.config.*
 **/*.test.*
 .DS_Store
 *.vsix
-PUBLISHING.md

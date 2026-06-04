@@ -1,30 +1,132 @@
 # Unity MCP VS Code Extension
 
-This package is the isolated VS Code extension workspace for GitHub issue `#613`.
+This folder contains the VS Code extension for Unity MCP. The extension is designed to reduce manual project setup inside VS Code while keeping file writes and Unity launch behavior explicit and easy to debug.
 
-It is currently a preview extension focused on local project setup and diagnostics for Unity MCP. It does not publish telemetry and it only performs file mutations or Unity launch actions after explicit user action in a trusted workspace.
+## What The Extension Does
 
-## Current Capabilities
+- shows a `Unity MCP` dashboard in the Activity Bar
+- shows project readiness in the VS Code status bar
+- detects whether the current workspace looks like a Unity project
+- detects whether the Unity MCP package is installed
+- detects whether the Unity MCP project config exists
+- generates or updates `.vscode/mcp.json`
+- installs the Unity MCP package into `Packages/manifest.json`
+- launches Unity in plain mode or with MCP connection settings
 
-- `Unity MCP` Activity Bar dashboard with:
-  - current workspace setup state
-  - recommended next step
-  - action buttons for install, configure, launch, refresh, and logs
-- bottom status bar item that reflects project readiness and opens the dashboard
+## Safety Model
+
+- untrusted workspaces are read-only
+- file mutations only happen after an explicit command or button click
+- Unity launch is explicit and never automatic
+- logs are structured and do not include tokens or generated config bodies
+
+## Install A Local VSIX
+
+```bash
+cd vscode-extension
+npm install
+npm run build
+npm test
+npm run package:vsix
+```
+
+Then install `unity-mcp-vscode-0.0.1.vsix` in VS Code:
+
+1. Open the Extensions view.
+2. Open the `...` menu in the top-right.
+3. Choose `Install from VSIX...`.
+4. Select the generated `.vsix` file from this folder.
+
+## Normal Usage
+
+### Recommended First-Time Flow
+
+1. Open a Unity project in VS Code.
+2. Trust the workspace if VS Code asks.
+3. Open the `Unity MCP` view from the Activity Bar or click the bottom status bar item.
+4. If the dashboard says `Install`, run `Install Plugin`.
+5. Open Unity once and let the package import and compile.
+6. If the dashboard says `Configure`, run `Configure Project`.
+7. Run `Check Status` or use the dashboard refresh action.
+8. When the dashboard says `Ready`, use `Open Unity With MCP`.
+
+### Dashboard States
+
+- `Install`
+  The Unity MCP package is not installed in `Packages/manifest.json`.
+- `Init`
+  The package is installed, but `UserSettings/AI-Game-Developer-Config.json` does not exist yet. Open Unity once without MCP so the package can initialize.
+- `Configure`
+  The Unity-side config exists, but `.vscode/mcp.json` is missing or incomplete.
+- `Ready`
+  The project looks ready for connected Unity MCP use.
+
+### Commands
+
 - `Unity MCP: Check Status`
+  Recomputes the current workspace status and prints a full report to the `Unity MCP` output channel.
 - `Unity MCP: Configure Project`
+  Writes or updates `.vscode/mcp.json` using the shared `unity-mcp-cli` setup logic.
 - `Unity MCP: Install Plugin`
+  Updates `Packages/manifest.json` to include `com.ivanmurzak.unity.mcp`.
 - `Unity MCP: Open Unity`
+  Lets you choose plain launch or connected launch.
+- `Unity MCP: Show Dashboard`
+  Opens the Activity Bar dashboard.
 - `Unity MCP: Show Output`
+  Opens the `Unity MCP` output channel.
 
-## Safety Rules
+## Files The Extension Touches
 
-- Untrusted workspaces stay read-only.
-- File mutations always require an explicit command or button click.
-- Unity launch is explicit and never automatic.
-- Logs are structured and do not include auth tokens or generated config bodies.
+Read-only checks:
 
-## Local Development
+- `Packages/manifest.json`
+- `.vscode/mcp.json`
+- `UserSettings/AI-Game-Developer-Config.json`
+- workspace trust state
+- Unity project markers such as `Assets/` and `ProjectSettings/`
+
+Mutations:
+
+- `Install Plugin` updates `Packages/manifest.json`
+- `Configure Project` writes `.vscode/mcp.json`
+- `Open Unity` launches the Unity editor but does not rewrite project files by itself
+
+## Debugging And Troubleshooting
+
+Start here:
+
+1. Run `Unity MCP: Show Output`.
+2. Set `unityMcp.logLevel` to `debug` if you need more detail.
+3. Re-run the failing action.
+4. Capture the `Unity MCP` output channel logs.
+
+Common logs:
+
+- `status:*`
+  workspace detection and diagnostics
+- `configure:*`
+  VS Code MCP config generation
+- `pluginInstall:*`
+  Unity package installation
+- `openUnity:*`
+  Unity launch flow
+- `dashboard:*`
+  Activity Bar dashboard lifecycle and button actions
+- `cliAdapter:*`
+  calls into the shared `unity-mcp-cli` library
+
+If Unity behaves unexpectedly, also capture Unity editor logs. On macOS, the main editor log is usually:
+
+```text
+~/Library/Logs/Unity/Editor.log
+```
+
+More debugging guidance and issue-report checklists are in [SUPPORT.md](./SUPPORT.md).
+
+## Change The Extension
+
+For local development:
 
 ```bash
 cd vscode-extension
@@ -33,79 +135,14 @@ npm run build
 npm test
 ```
 
-Then open `/Users/suporte/Unity-MCP/vscode-extension` in VS Code and press `F5`.
+Then open `/Users/suporte/Unity-MCP/vscode-extension` in VS Code and press `F5` to launch an Extension Development Host.
 
-## Package A VSIX Locally
+Detailed maintainer guidance is in:
 
-```bash
-cd vscode-extension
-npm install
-npm run package:vsix
-```
-
-This produces a local `.vsix` package in the extension folder.
-
-To install it in VS Code:
-
-1. Open the Extensions view.
-2. Click the `...` menu in the top-right.
-3. Choose `Install from VSIX...`.
-4. Select the generated `unity-mcp-vscode-0.0.1.vsix`.
+- [DEVELOPMENT.md](./DEVELOPMENT.md)
+- [SUPPORT.md](./SUPPORT.md)
+- [PUBLISHING.md](./PUBLISHING.md)
 
 ## Release Handoff
 
-This repo is prepared for local VSIX packaging, but not for publishing from a personal account.
-
-- Maintainer handoff steps: [PUBLISHING.md](/Users/suporte/Unity-MCP/vscode-extension/PUBLISHING.md)
-- Support guidance: [SUPPORT.md](/Users/suporte/Unity-MCP/vscode-extension/SUPPORT.md)
-
-## Manual Validation Matrix
-
-### Dashboard and Status Bar
-
-1. Open a Unity project in VS Code.
-2. Confirm the `Unity MCP` icon appears in the Activity Bar.
-3. Confirm the bottom status bar item appears and changes by project state:
-   - `Install`
-   - `Init`
-   - `Configure`
-   - `Ready`
-4. Click the status bar item and confirm it opens the dashboard.
-5. Confirm the dashboard shows:
-   - `Next Step`
-   - `Workspace Status`
-   - `Actions`
-   - `Diagnostics`
-
-### Setup Flows
-
-1. In a project without the package, run `Install Plugin`.
-2. Confirm `Packages/manifest.json` is updated.
-3. Open Unity and allow package import to complete.
-4. Run `Configure Project`.
-5. Confirm `.vscode/mcp.json` is created or updated.
-6. Run `Check Status`.
-7. Confirm the report shows:
-   - plugin installed
-   - Unity MCP project config present
-   - VS Code MCP configured
-
-### Launch Flows
-
-1. Run `Open Unity`.
-2. Validate plain launch.
-3. Run `Open Unity With MCP` from the dashboard or command flow.
-4. If the project has not initialized yet, confirm the extension offers `Open Without MCP`.
-5. After initialization, confirm connected launch succeeds.
-
-### Clean VSIX Install
-
-1. Install the VSIX in a normal VS Code window, not the Extension Development Host.
-2. Open a Unity project.
-3. Use only the Activity Bar dashboard and status bar entry.
-4. Confirm the full setup workflow still works without launching the extension from source.
-
-## Notes
-
-- `HTTP` is the recommended transport when configuring VS Code MCP.
-- The current package metadata uses a preview publisher id for local packaging. Marketplace publisher identity can change later without affecting the extension architecture.
+This repo is prepared for local VSIX packaging, but not for publishing from a personal account. The current `publisher` value is a placeholder for packaging and handoff only.
