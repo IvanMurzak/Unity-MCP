@@ -53,6 +53,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 }
             ),
             new(
+                name:        "InputSystem",
+                description: "AI-assisted Unity Input System authoring: InputActionAssets, maps, actions, bindings, and control schemes.",
+                packageId:   "com.ivanmurzak.unity.mcp.inputsystem",
+                gitUrl:      "https://github.com/IvanMurzak/Unity-AI-InputSystem.git",
+                tools: new[]
+                {
+                    ("inputsystem-asset-create",          "Create a new .inputactions InputActionAsset"),
+                    ("inputsystem-actionmap-add",         "Add an ActionMap to the asset"),
+                    ("inputsystem-action-add",            "Add an Action (type + expectedControlType)"),
+                    ("inputsystem-binding-add",           "Add a binding path to an Action"),
+                    ("inputsystem-binding-composite-add", "Add a composite binding (2DVector/1DAxis)"),
+                    ("inputsystem-controlscheme-add",     "Add a control scheme with device requirements"),
+                    ("inputsystem-get",                   "Read the asset's maps, actions, and bindings"),
+                }
+            ),
+            new(
                 name:        "ParticleSystem",
                 description: "AI-powered particle system creation and control tools.",
                 packageId:   "com.ivanmurzak.unity.mcp.particlesystem",
