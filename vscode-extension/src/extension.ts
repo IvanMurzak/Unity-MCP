@@ -1,10 +1,11 @@
 import * as vscode from 'vscode';
-import { configureVscodeProject, installUnityMcpPlugin } from './cliAdapter';
+import { configureVscodeProject, installUnityMcpPlugin, openUnityProject } from './cliAdapter';
 import { ExtensionLogger } from './logging';
 import {
   formatWorkspaceStatusReport,
   inspectWorkspaceStatus,
 } from './projectStatus';
+import { readUnityMcpProjectConfig } from './unityConfig';
 import { pickWorkspaceFolder } from './workspace';
 
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
@@ -26,6 +27,168 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     vscode.commands.registerCommand('unityMcp.showOutput', () => {
       logger.show();
       logger.debug('output:show', {});
+    }),
+  );
+
+  context.subscriptions.push(
+    vscode.commands.registerCommand('unityMcp.openUnity', async () => {
+      const workspaceFolder = await pickWorkspaceFolder();
+      logger.debug('workspace:pick', {
+        selected: workspaceFolder?.uri.fsPath ?? null,
+      });
+
+      if (!workspaceFolder) {
+        void vscode.window.showWarningMessage(
+          'Unity MCP needs an open workspace folder before it can launch Unity.',
+        );
+        logger.warn('openUnity:error', {
+          reason: 'no-workspace-folder',
+        });
+        return;
+      }
+
+      if (!vscode.workspace.isTrusted) {
+        logger.warn('openUnity:precheck', {
+          workspace: workspaceFolder.uri.fsPath,
+          reason: 'workspace-not-trusted',
+        });
+
+        const selection = await vscode.window.showWarningMessage(
+          'Unity MCP only launches Unity from a trusted workspace.',
+          'Manage Trust',
+        );
+
+        if (selection === 'Manage Trust') {
+          await vscode.commands.executeCommand('workbench.trust.manage');
+        }
+        return;
+      }
+
+      const initialStatus = await inspectWorkspaceStatus(
+        workspaceFolder.uri.fsPath,
+        workspaceFolder.name,
+        'trusted',
+      );
+
+      if (!initialStatus.unityProjectDetected) {
+        logger.warn('openUnity:precheck', {
+          workspace: workspaceFolder.uri.fsPath,
+          reason: 'not-unity-project',
+        });
+
+        void vscode.window.showErrorMessage(
+          'Unity MCP can only open a workspace that looks like a Unity project.',
+        );
+        return;
+      }
+
+      const projectConfig = await readUnityMcpProjectConfig(workspaceFolder.uri.fsPath);
+      if (projectConfig.warnings.length > 0) {
+        logger.warn('openUnity:configWarnings', {
+          warnings: projectConfig.warnings,
+        });
+      }
+
+      const openMode = await vscode.window.showQuickPick(
+        [
+          {
+            label: 'Open Unity',
+            detail: 'Launch the Unity project without overriding MCP connection settings.',
+            mode: 'plain' as const,
+          },
+          {
+            label: 'Open Unity With MCP Connection',
+            detail: projectConfig.exists
+              ? 'Use the current AI-Game-Developer project config and request server startup.'
+              : 'Requires UserSettings/AI-Game-Developer-Config.json to be present.',
+            mode: 'connected' as const,
+          },
+        ],
+        {
+          placeHolder: 'Choose how Unity MCP should launch this Unity project',
+        },
+      );
+
+      if (!openMode) {
+        logger.warn('openUnity:precheck', {
+          workspace: workspaceFolder.uri.fsPath,
+          reason: 'mode-not-selected',
+        });
+        return;
+      }
+
+      let effectiveMode = openMode.mode;
+      if (effectiveMode === 'connected' && !projectConfig.exists) {
+        logger.warn('openUnity:precheck', {
+          workspace: workspaceFolder.uri.fsPath,
+          reason: 'project-config-missing',
+        });
+
+        const selection = await vscode.window.showWarningMessage(
+          'Unity MCP is installed, but the project has not finished first-time initialization yet. Open Unity once without MCP so the package can import and create its project config, then retry connected launch.',
+          'Open Without MCP',
+          'Show Output',
+          'Cancel',
+        );
+
+        if (selection === 'Show Output') {
+          logger.show();
+        }
+
+        if (selection !== 'Open Without MCP') {
+          return;
+        }
+
+        effectiveMode = 'plain';
+      }
+
+      logger.info('openUnity:start', {
+        workspace: workspaceFolder.uri.fsPath,
+        mode: effectiveMode,
+      });
+
+      const result = await openUnityProject(logger, {
+        workspacePath: workspaceFolder.uri.fsPath,
+        noConnect: effectiveMode === 'plain',
+        url: effectiveMode === 'connected' ? projectConfig.host : undefined,
+        token: effectiveMode === 'connected' ? projectConfig.token : undefined,
+        auth: effectiveMode === 'connected' ? projectConfig.authOption : undefined,
+        keepConnected: effectiveMode === 'connected' ? projectConfig.keepConnected : undefined,
+        transport: effectiveMode === 'connected' ? projectConfig.transport : undefined,
+        startServer: effectiveMode === 'connected' ? true : undefined,
+      });
+
+      if (result.kind === 'failure') {
+        void vscode.window.showErrorMessage(
+          `Unity MCP could not open Unity: ${result.errorMessage}`,
+          'Show Output',
+        ).then((selection) => {
+          if (selection === 'Show Output') {
+            logger.show();
+          }
+        });
+        return;
+      }
+
+      if (result.warnings.length > 0) {
+        logger.warn('openUnity:warnings', {
+          warnings: result.warnings,
+        });
+      }
+
+      logger.show();
+      const summary = result.alreadyRunning
+        ? `Unity is already running for ${workspaceFolder.name}.`
+        : `Unity launch requested for ${workspaceFolder.name}.`;
+
+      void vscode.window.showInformationMessage(
+        summary,
+        'Show Output',
+      ).then((selection) => {
+        if (selection === 'Show Output') {
+          logger.show();
+        }
+      });
     }),
   );
 
@@ -408,6 +571,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       'unityMcp.checkStatus',
       'unityMcp.configureProject',
       'unityMcp.installPlugin',
+      'unityMcp.openUnity',
       'unityMcp.showOutput',
     ],
   });

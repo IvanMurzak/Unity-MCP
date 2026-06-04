@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { configureVscodeProject, installUnityMcpPlugin } from './cliAdapter';
+import { configureVscodeProject, installUnityMcpPlugin, openUnityProject } from './cliAdapter';
 import { ExtensionLogger } from './logging';
 
 describe('configureVscodeProject', () => {
@@ -82,6 +82,41 @@ describe('configureVscodeProject', () => {
     expect(installPlugin).toHaveBeenCalledWith(
       expect.objectContaining({
         unityProjectPath: '/tmp/project',
+      }),
+    );
+    expect(result.kind).toBe('success');
+  });
+
+  it('calls openProject through the shared CLI loader', async () => {
+    const openProject = vi.fn().mockResolvedValue({
+      kind: 'success',
+      success: true,
+      editorPath: '/Applications/Unity/Unity.app',
+      editorPid: 1234,
+      projectPath: '/tmp/project',
+      warnings: [],
+      alreadyRunning: false,
+    });
+
+    const logger = createLogger();
+    const result = await openUnityProject(
+      logger,
+      {
+        workspacePath: '/tmp/project',
+        noConnect: true,
+      },
+      async () => ({
+        installPlugin: vi.fn(),
+        openProject,
+        setupMcp: vi.fn(),
+        listAgentIds: () => ['vscode-copilot'],
+      }),
+    );
+
+    expect(openProject).toHaveBeenCalledWith(
+      expect.objectContaining({
+        projectPath: '/tmp/project',
+        noConnect: true,
       }),
     );
     expect(result.kind).toBe('success');

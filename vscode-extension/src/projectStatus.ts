@@ -1,5 +1,6 @@
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
+import { readUnityMcpProjectConfig } from './unityConfig';
 
 const MCP_SERVER_NAME = 'ai-game-developer';
 const UNITY_MCP_PACKAGE_NAME = 'com.ivanmurzak.unity.mcp';
@@ -12,6 +13,7 @@ export interface WorkspaceStatus {
   unityMarkers: string[];
   pluginInstalled: boolean;
   pluginVersion?: string;
+  unityMcpProjectConfigExists: boolean;
   mcpConfigExists: boolean;
   mcpServerConfigured: boolean;
   mcpServerTransport?: string;
@@ -51,6 +53,14 @@ export async function inspectWorkspaceStatus(
 
   const pluginVersion = manifestInfo.dependencies[UNITY_MCP_PACKAGE_NAME];
   const pluginInstalled = typeof pluginVersion === 'string' && pluginVersion.length > 0;
+  const projectConfig = await readUnityMcpProjectConfig(workspacePath);
+  warnings.push(...projectConfig.warnings);
+
+  if (pluginInstalled && !projectConfig.exists) {
+    warnings.push(
+      'Unity MCP project config is missing. Open Unity once without MCP after installing the plugin so the package can import and initialize.',
+    );
+  }
 
   const mcpInfo = await readMcpConfig(mcpConfigPath);
   warnings.push(...mcpInfo.warnings);
@@ -63,6 +73,7 @@ export async function inspectWorkspaceStatus(
     unityMarkers,
     pluginInstalled,
     pluginVersion,
+    unityMcpProjectConfigExists: projectConfig.exists,
     mcpConfigExists: mcpInfo.exists,
     mcpServerConfigured: mcpInfo.hasServerEntry,
     mcpServerTransport: mcpInfo.transport,
@@ -78,6 +89,7 @@ export function formatWorkspaceStatusReport(status: WorkspaceStatus): string {
     `Unity project detected: ${status.unityProjectDetected ? 'yes' : 'no'}`,
     `Unity markers: ${status.unityMarkers.length > 0 ? status.unityMarkers.join(', ') : 'none'}`,
     `Unity MCP plugin installed: ${status.pluginInstalled ? `yes (${status.pluginVersion ?? 'unknown version'})` : 'no'}`,
+    `Unity MCP project config present: ${status.unityMcpProjectConfigExists ? 'yes' : 'no'}`,
     `.vscode/mcp.json present: ${status.mcpConfigExists ? 'yes' : 'no'}`,
     `ai-game-developer configured: ${status.mcpServerConfigured ? 'yes' : 'no'}`,
     `Configured transport: ${status.mcpServerTransport ?? 'unknown'}`,

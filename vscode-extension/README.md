@@ -28,6 +28,12 @@ Slice 3 adds:
 - shared `unity-mcp-cli` adapter usage for Unity package installation
 - explicit confirmation before mutating `Packages/manifest.json`
 
+Slice 4 adds:
+
+- `Unity MCP: Open Unity`
+- plain launch or MCP-connected launch
+- reuse of shared `openProject()` behavior from `unity-mcp-cli`
+
 ## Local Development
 
 ```bash
@@ -66,5 +72,14 @@ Then:
 12. Confirm the warning about updating `Packages/manifest.json`.
 13. Approve the install.
 14. Confirm the manifest is updated and the status report now shows the plugin as installed.
+
+Then:
+
+15. Run `Unity MCP: Open Unity`.
+16. First test `Open Unity`.
+17. Then test `Open Unity With MCP Connection`.
+18. If the plugin was just installed and the project has not initialized yet, the extension should offer a guided fallback to `Open Without MCP`.
+19. After Unity imports and creates `UserSettings/AI-Game-Developer-Config.json`, retry `Open Unity With MCP Connection`.
+20. Confirm the output channel shows the open-project progress events.
 
 Unity itself is not required for this slice.

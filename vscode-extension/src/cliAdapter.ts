@@ -1,6 +1,8 @@
 import type {
   InstallPluginOptions,
   InstallResult,
+  OpenProjectOptions,
+  OpenProjectResult,
   ProgressEvent,
   SetupMcpOptions,
   SetupMcpResult,
@@ -13,6 +15,7 @@ type NativeImport = <T>(specifier: string) => Promise<T>;
 
 interface UnityMcpCliModule {
   installPlugin(options: InstallPluginOptions): Promise<InstallResult>;
+  openProject(options: OpenProjectOptions): Promise<OpenProjectResult>;
   setupMcp(options: SetupMcpOptions): Promise<SetupMcpResult>;
   listAgentIds(): string[];
 }
@@ -152,6 +155,75 @@ export async function installUnityMcpPlugin(
   return result;
 }
 
+export async function openUnityProject(
+  logger: ExtensionLogger,
+  options: OpenUnityProjectOptions,
+  loader: CliModuleLoader = defaultLoader,
+): Promise<OpenProjectResult> {
+  logger.debug('cliAdapter:loadStart', {});
+
+  let cliModule: UnityMcpCliModule;
+  try {
+    cliModule = await loader();
+    logger.debug('cliAdapter:loadSuccess', {});
+  } catch (error) {
+    const message = toErrorMessage(error);
+    logger.error('cliAdapter:loadFailure', {
+      message,
+    });
+
+    return {
+      kind: 'failure',
+      success: false,
+      warnings: [],
+      errorMessage: `Could not load unity-mcp-cli: ${message}`,
+      error: new Error(`Could not load unity-mcp-cli: ${message}`),
+    };
+  }
+
+  logger.info('cliAdapter:callStart', {
+    workspacePath: options.workspacePath,
+    operation: 'openProject',
+    noConnect: options.noConnect,
+    startServer: options.startServer,
+    transport: options.transport,
+  });
+
+  const result = await cliModule.openProject({
+    projectPath: options.workspacePath,
+    noConnect: options.noConnect,
+    url: options.url,
+    token: options.token,
+    auth: options.auth,
+    keepConnected: options.keepConnected,
+    transport: options.transport,
+    startServer: options.startServer,
+    onProgress: (event) => {
+      logger.debug('cliAdapter:progress', {
+        phase: event.phase,
+        message: event.message,
+      });
+      options.onProgress?.(event);
+    },
+  });
+
+  if (result.kind === 'success') {
+    logger.info('cliAdapter:callSuccess', {
+      editorPath: result.editorPath,
+      editorPid: result.editorPid ?? null,
+      alreadyRunning: result.alreadyRunning ?? false,
+      warnings: result.warnings.length,
+    });
+    return result;
+  }
+
+  logger.error('cliAdapter:callFailure', {
+    message: result.error.message,
+    warnings: result.warnings.length,
+  });
+  return result;
+}
+
 async function defaultLoader(): Promise<UnityMcpCliModule> {
   // Keep native ESM loading at runtime. TypeScript rewrites plain
   // `import()` into `require()` for CommonJS output, which breaks on
@@ -177,5 +249,17 @@ export interface ConfigureVscodeProjectOptions {
 export interface InstallUnityMcpPluginOptions {
   workspacePath: string;
   version?: string;
+  onProgress?: (event: ProgressEvent) => void;
+}
+
+export interface OpenUnityProjectOptions {
+  workspacePath: string;
+  noConnect?: boolean;
+  url?: string;
+  token?: string;
+  auth?: 'none' | 'required';
+  keepConnected?: boolean;
+  transport?: 'streamableHttp' | 'stdio';
+  startServer?: boolean;
   onProgress?: (event: ProgressEvent) => void;
 }

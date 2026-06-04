@@ -20,6 +20,7 @@ describe('inspectWorkspaceStatus', () => {
     await mkdir(path.join(workspace, 'Assets'), { recursive: true });
     await mkdir(path.join(workspace, 'ProjectSettings'), { recursive: true });
     await mkdir(path.join(workspace, 'Packages'), { recursive: true });
+    await mkdir(path.join(workspace, 'UserSettings'), { recursive: true });
     await writeFile(
       path.join(workspace, 'Packages', 'manifest.json'),
       JSON.stringify({
@@ -28,12 +29,21 @@ describe('inspectWorkspaceStatus', () => {
         },
       }, null, 2),
     );
+    await writeFile(
+      path.join(workspace, 'UserSettings', 'AI-Game-Developer-Config.json'),
+      JSON.stringify({
+        host: 'http://localhost:6501',
+        authOption: 'none',
+        transportMethod: 'streamableHttp',
+      }, null, 2),
+    );
 
     const status = await inspectWorkspaceStatus(workspace, 'TestProject', 'trusted');
 
     expect(status.unityProjectDetected).toBe(true);
     expect(status.pluginInstalled).toBe(true);
     expect(status.pluginVersion).toBe('0.79.0');
+    expect(status.unityMcpProjectConfigExists).toBe(true);
     expect(status.warnings).toEqual([]);
   });
 
@@ -46,6 +56,27 @@ describe('inspectWorkspaceStatus', () => {
     expect(status.unityProjectDetected).toBe(false);
     expect(status.pluginInstalled).toBe(false);
     expect(status.unityMarkers).toEqual([]);
+  });
+
+  it('warns when the plugin is installed but the Unity MCP project config has not been initialized yet', async () => {
+    const workspace = await createTempWorkspace();
+    await mkdir(path.join(workspace, 'Assets'), { recursive: true });
+    await mkdir(path.join(workspace, 'ProjectSettings'), { recursive: true });
+    await mkdir(path.join(workspace, 'Packages'), { recursive: true });
+    await writeFile(
+      path.join(workspace, 'Packages', 'manifest.json'),
+      JSON.stringify({
+        dependencies: {
+          'com.ivanmurzak.unity.mcp': '0.79.0',
+        },
+      }, null, 2),
+    );
+
+    const status = await inspectWorkspaceStatus(workspace, 'NeedsInit', 'trusted');
+
+    expect(status.pluginInstalled).toBe(true);
+    expect(status.unityMcpProjectConfigExists).toBe(false);
+    expect(status.warnings.some((warning) => warning.includes('Open Unity once without MCP'))).toBe(true);
   });
 
   it('warns on invalid workspace MCP config', async () => {
