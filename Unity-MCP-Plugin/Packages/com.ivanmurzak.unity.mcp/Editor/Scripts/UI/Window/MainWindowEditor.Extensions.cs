@@ -77,6 +77,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     ("probuilder-set-face-material", "Assign materials to individual faces"),
                 }
             ),
+            new(
+                name:        "Splines",
+                description: "AI-assisted Spline authoring: containers, knots, tangents, and evaluation.",
+                packageId:   "com.ivanmurzak.unity.mcp.splines",
+                gitUrl:      "https://github.com/IvanMurzak/Unity-AI-Splines.git",
+                tools: new[]
+                {
+                    ("splines-container-create", "Create a SplineContainer in the scene"),
+                    ("splines-add-knot",         "Append a knot to a spline"),
+                    ("splines-set-knot",         "Set a knot's position, tangents, and rotation"),
+                    ("splines-set-tangent-mode", "Set a knot's tangent mode"),
+                    ("splines-evaluate",         "Evaluate position/tangent/up along a spline"),
+                    ("splines-modify",           "Modify any Splines component via ReflectorNet"),
+                }
+            ),
         };
 
         private void SetupExtensionsSection(VisualElement root)
