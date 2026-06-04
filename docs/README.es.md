@@ -96,6 +96,8 @@ Eso es todo. Pídele a tu IA *"Crea 3 cubos en un círculo con radio 2"* y obser
 
 El plugin incluye más de 70 herramientas integradas en cuatro categorías. Cada herramienta aporta una habilidad a la IA. Todas las herramientas están disponibles inmediatamente después de la instalación — no se requiere configuración adicional. Consulta [docs/default-mcp-tools.md](docs/default-mcp-tools.md) para la referencia completa con descripciones detalladas.
 
+> 🧰 Explora el registro completo de herramientas MCP en línea: [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)
+
 <details>
   <summary>Proyecto y assets</summary>
 

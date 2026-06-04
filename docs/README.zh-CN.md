@@ -96,6 +96,8 @@ unity-mcp-cli open ./MyUnityProject
 
 插件内置 70+ 个工具，分为四个类别。每个工具都为 AI 带来技能。安装后所有工具立即可用，无需额外配置。完整参考及详细说明请见 [docs/default-mcp-tools.md](docs/default-mcp-tools.md)。
 
+> 🧰 在线浏览完整的 MCP 工具注册表：[ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)
+
 <details>
   <summary>项目与资产</summary>
 
