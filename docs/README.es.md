@@ -199,6 +199,7 @@ Instala extensiones cuando necesites más herramientas o [crea tus propias herra
 | --- | --- |
 | **[AI Animation](https://github.com/IvanMurzak/Unity-AI-Animation/)** | Conjunto de herramientas adicionales para animaciones de Unity |
 | **[AI Cinemachine](https://github.com/IvanMurzak/Unity-AI-Cinemachine/)** | Herramientas MCP para Cinemachine |
+| **[AI InputSystem](https://github.com/IvanMurzak/Unity-AI-InputSystem/)** | Herramientas MCP para el Input System de Unity |
 | **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-AI-ParticleSystem/)** | Conjunto de herramientas adicionales para el sistema de partículas de Unity |
 | **[AI ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)** | Conjunto de herramientas adicionales para Unity ProBuilder |
 
