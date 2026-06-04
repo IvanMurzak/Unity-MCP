@@ -96,6 +96,8 @@ unity-mcp-cli open ./MyUnityProject
 
 このプラグインには4つのカテゴリにまたがる70以上の組み込みツールが付属しています。各ツールが AI スキルを提供します。すべてのツールはインストール直後に利用可能で、追加の設定は不要です。詳細な説明付きの完全なリファレンスは [docs/default-mcp-tools.md](docs/default-mcp-tools.md) をご覧ください。
 
+> 🧰 MCP ツールレジストリの全体をオンラインで閲覧: [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)
+
 <details>
   <summary>プロジェクト＆アセット</summary>
 

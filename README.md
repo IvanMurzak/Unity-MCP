@@ -96,6 +96,8 @@ That's it. Ask your AI *"Create 3 cubes in a circle with radius 2"* and watch it
 
 The plugin ships with 70+ built-in tools across four categories. Each tool brings AI skill. All tools are available immediately after installation — no extra configuration required. See [docs/default-mcp-tools.md](docs/default-mcp-tools.md) for the full reference with detailed descriptions.
 
+> 🧰 Browse the full MCP tools registry online: [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)
+
 <details>
   <summary>Project & Assets</summary>
 
