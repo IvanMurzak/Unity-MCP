@@ -22,7 +22,8 @@
   ],
   "activationEvents": [
     "onCommand:unityMcp.checkStatus",
-    "onCommand:unityMcp.showOutput"
+    "onCommand:unityMcp.showOutput",
+    "onCommand:unityMcp.configureProject"
   ],
   "capabilities": {
     "untrustedWorkspaces": {
@@ -35,6 +36,10 @@
       {
         "command": "unityMcp.checkStatus",
         "title": "Unity MCP: Check Status"
+      },
+      {
+        "command": "unityMcp.configureProject",
+        "title": "Unity MCP: Configure Project"
       },
       {
         "command": "unityMcp.showOutput",
@@ -64,6 +69,9 @@
     "pretest": "npm run build",
     "test": "vitest run",
     "test:watch": "vitest"
+  },
+  "dependencies": {
+    "unity-mcp-cli": "^0.79.0"
   },
   "devDependencies": {
     "@types/node": "^22.15.0",

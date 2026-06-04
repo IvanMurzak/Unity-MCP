@@ -15,7 +15,12 @@ Slice 1 adds:
 - `Unity MCP: Check Status`
 - `Unity MCP: Show Output`
 
-No files are modified in the opened workspace by this slice.
+Slice 2 adds:
+
+- `Unity MCP: Configure Project`
+- shared `unity-mcp-cli` adapter usage for VS Code MCP config generation
+- trusted-workspace guard for write actions
+- transport picker for `HTTP` or `STDIO`
 
 ## Local Development
 
@@ -41,5 +46,12 @@ In the Extension Development Host:
    - Unity markers
    - plugin installed or missing
    - `.vscode/mcp.json` present or missing
+
+Then:
+
+7. Run `Unity MCP: Configure Project`.
+8. Choose `HTTP` unless you specifically want to test `STDIO`.
+9. Confirm `.vscode/mcp.json` is created.
+10. Run `Unity MCP: Check Status` again and confirm the MCP server now appears as configured.
 
 Unity itself is not required for this slice.
