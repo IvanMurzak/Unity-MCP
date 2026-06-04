@@ -21,11 +21,15 @@
     "workspace"
   ],
   "activationEvents": [
+    "onStartupFinished",
+    "onView:unityMcp.dashboard",
     "onCommand:unityMcp.checkStatus",
     "onCommand:unityMcp.showOutput",
     "onCommand:unityMcp.configureProject",
     "onCommand:unityMcp.installPlugin",
-    "onCommand:unityMcp.openUnity"
+    "onCommand:unityMcp.openUnity",
+    "onCommand:unityMcp.showDashboard",
+    "onCommand:unityMcp.refreshDashboard"
   ],
   "capabilities": {
     "untrustedWorkspaces": {
@@ -52,10 +56,50 @@
         "title": "Unity MCP: Open Unity"
       },
       {
+        "command": "unityMcp.showDashboard",
+        "title": "Unity MCP: Show Dashboard"
+      },
+      {
+        "command": "unityMcp.refreshDashboard",
+        "title": "Unity MCP: Refresh Dashboard"
+      },
+      {
         "command": "unityMcp.showOutput",
         "title": "Unity MCP: Show Output"
       }
     ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "unityMcpSidebar",
+          "title": "Unity MCP",
+          "icon": "media/unity-mcp-activity.svg"
+        }
+      ]
+    },
+    "views": {
+      "unityMcpSidebar": [
+        {
+          "id": "unityMcp.dashboard",
+          "name": "Workspace",
+          "type": "webview"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "unityMcp.refreshDashboard",
+          "when": "view == unityMcp.dashboard",
+          "group": "navigation"
+        },
+        {
+          "command": "unityMcp.showOutput",
+          "when": "view == unityMcp.dashboard",
+          "group": "navigation"
+        }
+      ]
+    },
     "configuration": {
       "title": "Unity MCP",
       "properties": {
