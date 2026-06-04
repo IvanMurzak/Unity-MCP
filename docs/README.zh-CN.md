@@ -201,6 +201,7 @@ unity-mcp-cli open ./MyUnityProject
 | **[AI Cinemachine](https://github.com/IvanMurzak/Unity-AI-Cinemachine/)** | 用于 Cinemachine 的 MCP 工具 |
 | **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-AI-ParticleSystem/)** | Unity 粒子系统附加工具集 |
 | **[AI ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)** | Unity ProBuilder 附加工具集 |
+| **[AI Timeline](https://github.com/IvanMurzak/Unity-AI-Timeline/)** | 用于 Unity Timeline 过场动画和序列的 MCP 工具 |
 
 ![AI 游戏开发者 — Unity SKILLS 和 MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
