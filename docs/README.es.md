@@ -201,6 +201,7 @@ Instala extensiones cuando necesites más herramientas o [crea tus propias herra
 | **[AI Cinemachine](https://github.com/IvanMurzak/Unity-AI-Cinemachine/)** | Herramientas MCP para Cinemachine |
 | **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-AI-ParticleSystem/)** | Conjunto de herramientas adicionales para el sistema de partículas de Unity |
 | **[AI ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)** | Conjunto de herramientas adicionales para Unity ProBuilder |
+| **[AI Splines](https://github.com/IvanMurzak/Unity-AI-Splines/)** | Herramientas MCP para Unity Splines |
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
