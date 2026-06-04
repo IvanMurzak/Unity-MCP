@@ -1,0 +1,10 @@
+.vscode/**
+src/**
+tsconfig.json
+.gitignore
+package-lock.json
+vitest.config.*
+**/*.test.*
+.DS_Store
+*.vsix
+PUBLISHING.md

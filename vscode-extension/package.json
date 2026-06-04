@@ -1,9 +1,24 @@
 {
   "name": "unity-mcp-vscode",
   "displayName": "Unity MCP - VS Code Integration",
-  "description": "Preview VS Code integration for Unity MCP local project setup and diagnostics.",
+  "description": "Preview VS Code extension for Unity MCP project setup, diagnostics, plugin install, and Unity launch flows.",
   "version": "0.0.1",
+  "publisher": "unity-mcp-preview",
+  "preview": true,
   "license": "Apache-2.0",
+  "icon": "media/marketplace-icon.png",
+  "galleryBanner": {
+    "color": "#111111"
+  },
+  "homepage": "https://github.com/IvanMurzak/Unity-MCP/tree/main/vscode-extension",
+  "bugs": {
+    "url": "https://github.com/IvanMurzak/Unity-MCP/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/IvanMurzak/Unity-MCP.git",
+    "directory": "vscode-extension"
+  },
   "engines": {
     "vscode": "^1.99.0"
   },
@@ -122,12 +137,14 @@
     "watch": "tsc -watch -p ./",
     "pretest": "npm run build",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "package:vsix": "vsce package"
   },
   "dependencies": {
     "unity-mcp-cli": "^0.79.0"
   },
   "devDependencies": {
+    "@vscode/vsce": "^3.6.1",
     "@types/node": "^22.15.0",
     "@types/vscode": "^1.99.0",
     "typescript": "^5.8.0",
