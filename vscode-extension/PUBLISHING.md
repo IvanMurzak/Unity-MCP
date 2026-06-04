@@ -13,7 +13,7 @@ This extension is ready for local VSIX packaging and maintainer handoff, but it 
 
 ## Verification Checklist
 
-Run from `/Users/suporte/Unity-MCP/vscode-extension`:
+Run from the `vscode-extension/` directory:
 
 ```bash
 npm install

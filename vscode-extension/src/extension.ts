@@ -14,6 +14,13 @@ import {
 import { readUnityMcpProjectConfig } from './unityConfig';
 import { getPreferredWorkspaceFolder, pickWorkspaceFolder } from './workspace';
 
+const UI_REFRESH_DEBOUNCE_MS = 150;
+const STATUS_RELEVANT_FILES = new Set([
+  'Packages/manifest.json',
+  '.vscode/mcp.json',
+  'UserSettings/AI-Game-Developer-Config.json',
+]);
+
 export async function activate(context: vscode.ExtensionContext): Promise<void> {
   const logger = new ExtensionLogger();
   context.subscriptions.push(logger);
@@ -43,6 +50,8 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     workspaceCount: vscode.workspace.workspaceFolders?.length ?? 0,
     trusted: vscode.workspace.isTrusted,
   });
+
+  let scheduledRefreshHandle: NodeJS.Timeout | undefined;
 
   async function getDashboardSnapshot(): Promise<DashboardSnapshot> {
     const workspaceFolder = getPreferredWorkspaceFolder();
@@ -79,6 +88,36 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
     statusBarItem.tooltip = statusBar.tooltip;
     statusBarItem.show();
     await dashboardProvider.refresh();
+  }
+
+  function scheduleRefreshUi(reason: string): void {
+    if (scheduledRefreshHandle) {
+      clearTimeout(scheduledRefreshHandle);
+    }
+
+    logger.debug('dashboard:refreshScheduled', {
+      reason,
+      delayMs: UI_REFRESH_DEBOUNCE_MS,
+    });
+
+    scheduledRefreshHandle = setTimeout(() => {
+      scheduledRefreshHandle = undefined;
+      void refreshUi();
+    }, UI_REFRESH_DEBOUNCE_MS);
+  }
+
+  function isRelevantStatusDocument(document: vscode.TextDocument): boolean {
+    if (document.uri.scheme !== 'file') {
+      return false;
+    }
+
+    const workspaceFolder = vscode.workspace.getWorkspaceFolder(document.uri);
+    if (!workspaceFolder) {
+      return false;
+    }
+
+    const relativePath = pathRelativeToWorkspace(workspaceFolder, document.uri);
+    return STATUS_RELEVANT_FILES.has(relativePath);
   }
 
   async function runOpenUnity(
@@ -250,27 +289,39 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
   context.subscriptions.push(
     vscode.workspace.onDidGrantWorkspaceTrust(() => {
       logger.info('trust:granted', {});
-      void refreshUi();
+      scheduleRefreshUi('workspace-trusted');
     }),
   );
 
   context.subscriptions.push(
     vscode.workspace.onDidChangeWorkspaceFolders(() => {
-      void refreshUi();
+      scheduleRefreshUi('workspace-folders-changed');
     }),
   );
 
   context.subscriptions.push(
     vscode.window.onDidChangeActiveTextEditor(() => {
-      void refreshUi();
+      scheduleRefreshUi('active-editor-changed');
     }),
   );
 
   context.subscriptions.push(
-    vscode.workspace.onDidSaveTextDocument(() => {
-      void refreshUi();
+    vscode.workspace.onDidSaveTextDocument((document) => {
+      if (!isRelevantStatusDocument(document)) {
+        return;
+      }
+
+      scheduleRefreshUi(`saved:${document.uri.fsPath}`);
     }),
   );
+
+  context.subscriptions.push({
+    dispose: () => {
+      if (scheduledRefreshHandle) {
+        clearTimeout(scheduledRefreshHandle);
+      }
+    },
+  });
 
   context.subscriptions.push(
     vscode.commands.registerCommand('unityMcp.showOutput', () => {
@@ -753,4 +804,22 @@ function statusActionToCommand(actionLabel: string): string | undefined {
 
 export function deactivate(): void {
   // Nothing to dispose beyond the extension context subscriptions.
+}
+
+function pathRelativeToWorkspace(
+  workspaceFolder: vscode.WorkspaceFolder,
+  uri: vscode.Uri,
+): string {
+  const normalizedWorkspace = normalizeFsPath(workspaceFolder.uri.fsPath);
+  const normalizedDocument = normalizeFsPath(uri.fsPath);
+
+  if (!normalizedDocument.startsWith(`${normalizedWorkspace}/`)) {
+    return normalizedDocument;
+  }
+
+  return normalizedDocument.slice(normalizedWorkspace.length + 1);
+}
+
+function normalizeFsPath(targetPath: string): string {
+  return targetPath.replaceAll('\\', '/');
 }

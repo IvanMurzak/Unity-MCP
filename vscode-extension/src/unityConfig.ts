@@ -1,5 +1,6 @@
-import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
+import { promises as fs } from 'node:fs';
+import { pathExists, toErrorMessage } from './utils';
 
 export interface UnityMcpProjectConfig {
   exists: boolean;
@@ -52,23 +53,10 @@ export async function readUnityMcpProjectConfig(
   }
 }
 
-async function pathExists(targetPath: string): Promise<boolean> {
-  try {
-    await fs.access(targetPath);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 function parseAuthOption(value: unknown): 'none' | 'required' | undefined {
   return value === 'none' || value === 'required' ? value : undefined;
 }
 
 function parseTransport(value: unknown): 'streamableHttp' | 'stdio' | undefined {
   return value === 'stdio' || value === 'streamableHttp' ? value : undefined;
-}
-
-function toErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }

@@ -1,9 +1,11 @@
 import { promises as fs } from 'node:fs';
 import * as path from 'node:path';
 import { readUnityMcpProjectConfig } from './unityConfig';
+import { pathExists, toErrorMessage } from './utils';
 
 const MCP_SERVER_NAME = 'ai-game-developer';
 const UNITY_MCP_PACKAGE_NAME = 'com.ivanmurzak.unity.mcp';
+const VALID_VSCODE_MCP_TRANSPORTS = new Set(['http', 'stdio']);
 
 export interface WorkspaceStatus {
   workspaceName: string;
@@ -231,12 +233,20 @@ async function readMcpConfig(mcpConfigPath: string): Promise<McpConfigInfo> {
     };
 
     const serverEntry = parsed.servers?.[MCP_SERVER_NAME];
+    const transport = parseMcpTransport(serverEntry?.type);
+    const warnings: string[] = [];
+
+    if (serverEntry && transport === undefined) {
+      warnings.push(
+        `The ai-game-developer server entry in .vscode/mcp.json is missing a supported transport type. Expected one of: ${Array.from(VALID_VSCODE_MCP_TRANSPORTS).join(', ')}.`,
+      );
+    }
 
     return {
       exists: true,
-      hasServerEntry: Boolean(serverEntry),
-      transport: serverEntry?.type,
-      warnings: [],
+      hasServerEntry: transport !== undefined,
+      transport,
+      warnings,
     };
   } catch (error) {
     return {
@@ -249,15 +259,8 @@ async function readMcpConfig(mcpConfigPath: string): Promise<McpConfigInfo> {
   }
 }
 
-async function pathExists(targetPath: string): Promise<boolean> {
-  try {
-    await fs.access(targetPath);
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function toErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
+function parseMcpTransport(value: unknown): string | undefined {
+  return typeof value === 'string' && VALID_VSCODE_MCP_TRANSPORTS.has(value)
+    ? value
+    : undefined;
 }

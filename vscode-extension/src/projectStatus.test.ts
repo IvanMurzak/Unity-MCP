@@ -105,6 +105,50 @@ describe('inspectWorkspaceStatus', () => {
     expect(status.warnings.some((warning) => warning.includes('Could not parse .vscode/mcp.json'))).toBe(true);
     expect(status.recommendedActions).toEqual(['open-unity-without-mcp']);
   });
+
+  it('treats an incomplete ai-game-developer MCP entry as not configured', async () => {
+    const workspace = await createTempWorkspace();
+    await mkdir(path.join(workspace, 'Assets'), { recursive: true });
+    await mkdir(path.join(workspace, 'ProjectSettings'), { recursive: true });
+    await mkdir(path.join(workspace, 'Packages'), { recursive: true });
+    await mkdir(path.join(workspace, 'UserSettings'), { recursive: true });
+    await mkdir(path.join(workspace, '.vscode'), { recursive: true });
+    await writeFile(
+      path.join(workspace, 'Packages', 'manifest.json'),
+      JSON.stringify({
+        dependencies: {
+          'com.ivanmurzak.unity.mcp': '0.79.0',
+        },
+      }, null, 2),
+    );
+    await writeFile(
+      path.join(workspace, 'UserSettings', 'AI-Game-Developer-Config.json'),
+      JSON.stringify({
+        host: 'http://localhost:6501',
+        authOption: 'none',
+        transportMethod: 'streamableHttp',
+      }, null, 2),
+    );
+    await writeFile(
+      path.join(workspace, '.vscode', 'mcp.json'),
+      JSON.stringify({
+        servers: {
+          'ai-game-developer': {},
+        },
+      }, null, 2),
+    );
+
+    const status = await inspectWorkspaceStatus(workspace, 'IncompleteConfig', 'trusted');
+
+    expect(status.mcpConfigExists).toBe(true);
+    expect(status.mcpServerConfigured).toBe(false);
+    expect(status.mcpServerTransport).toBeUndefined();
+    expect(
+      status.warnings.some((warning) =>
+        warning.includes('missing a supported transport type')),
+    ).toBe(true);
+    expect(status.recommendedActions).toEqual(['configure-vscode-mcp', 'open-unity-with-mcp']);
+  });
 });
 
 async function createTempWorkspace(): Promise<string> {

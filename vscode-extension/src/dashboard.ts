@@ -1,3 +1,4 @@
+import { randomBytes } from 'node:crypto';
 import * as vscode from 'vscode';
 import {
   formatWorkspaceStatusReport,
@@ -569,12 +570,7 @@ function dedupeActions(items: DashboardActionItem[]): DashboardActionItem[] {
 }
 
 function createNonce(): string {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  let result = '';
-  for (let index = 0; index < 24; index += 1) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
+  return randomBytes(18).toString('base64url');
 }
 
 function escapeHtml(value: string): string {

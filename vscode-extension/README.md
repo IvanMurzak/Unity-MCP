@@ -135,7 +135,7 @@ npm run build
 npm test
 ```
 
-Then open `/Users/suporte/Unity-MCP/vscode-extension` in VS Code and press `F5` to launch an Extension Development Host.
+Then open the `vscode-extension/` folder in VS Code and press `F5` to launch an Extension Development Host.
 
 Detailed maintainer guidance is in:
 

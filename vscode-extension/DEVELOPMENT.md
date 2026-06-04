@@ -4,7 +4,7 @@ This guide is for maintainers changing the VS Code extension itself.
 
 ## Local Workflow
 
-Run from `/Users/suporte/Unity-MCP/vscode-extension`:
+Run from the `vscode-extension/` directory:
 
 ```bash
 npm install
@@ -14,7 +14,7 @@ npm test
 
 To debug the extension host:
 
-1. Open `/Users/suporte/Unity-MCP/vscode-extension` in VS Code.
+1. Open the `vscode-extension/` folder in VS Code.
 2. Press `F5`.
 3. In the Extension Development Host, open a Unity project.
 4. Use the dashboard, status bar, or command palette.
