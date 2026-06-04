@@ -199,6 +199,7 @@ unity-mcp-cli open ./MyUnityProject
 | --- | --- |
 | **[AI Animation](https://github.com/IvanMurzak/Unity-AI-Animation/)** | Unity 动画附加工具集 |
 | **[AI Cinemachine](https://github.com/IvanMurzak/Unity-AI-Cinemachine/)** | 用于 Cinemachine 的 MCP 工具 |
+| **[AI Navigation](https://github.com/IvanMurzak/Unity-AI-Navigation/)** | 用于 AI 导航的 MCP 工具（NavMesh 表面、烘焙、智能体与链接） |
 | **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-AI-ParticleSystem/)** | Unity 粒子系统附加工具集 |
 | **[AI ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)** | Unity ProBuilder 附加工具集 |
 
