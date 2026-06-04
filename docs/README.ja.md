@@ -204,6 +204,7 @@ unity-mcp-cli open ./MyUnityProject
 | **[AI ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)** | Unity ProBuilder 用の追加ツールセット |
 | **[AI Splines](https://github.com/IvanMurzak/Unity-AI-Splines/)** | Unity Splines 用の MCP ツール |
 | **[AI Terrain](https://github.com/IvanMurzak/Unity-AI-Terrain/)** | Unity Terrain 用の追加ツールセット |
+| **[AI Tilemap](https://github.com/IvanMurzak/Unity-AI-Tilemap/)** | Unity 2D タイルマップ用の MCP ツール |
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 

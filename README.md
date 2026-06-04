@@ -204,6 +204,7 @@ Install extensions when need more tools or [create your own tools](#add-custom-t
 | **[AI ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)** | Set of additional tools for Unity ProBuilder |
 | **[AI Splines](https://github.com/IvanMurzak/Unity-AI-Splines/)** | MCP Tools for Unity Splines |
 | **[AI Terrain](https://github.com/IvanMurzak/Unity-AI-Terrain/)** | Set of additional tools for Unity Terrain |
+| **[AI Tilemap](https://github.com/IvanMurzak/Unity-AI-Tilemap/)** | MCP Tools for Unity 2D Tilemaps |
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
