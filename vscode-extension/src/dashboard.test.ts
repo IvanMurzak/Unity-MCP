@@ -15,6 +15,7 @@ describe('buildStatusBarPresentation', () => {
       createSnapshot({
         pluginInstalled: false,
         unityMcpProjectConfigExists: false,
+        unityMcpProjectConfigReady: false,
         mcpServerConfigured: false,
       }),
     );
@@ -27,6 +28,7 @@ describe('buildStatusBarPresentation', () => {
       createSnapshot({
         pluginInstalled: true,
         unityMcpProjectConfigExists: false,
+        unityMcpProjectConfigReady: false,
         mcpServerConfigured: false,
       }),
     );
@@ -39,6 +41,7 @@ describe('buildStatusBarPresentation', () => {
       createSnapshot({
         pluginInstalled: true,
         unityMcpProjectConfigExists: true,
+        unityMcpProjectConfigReady: true,
         mcpServerConfigured: true,
       }),
     );
@@ -68,6 +71,7 @@ describe('buildDashboardActions', () => {
       createSnapshot({
         pluginInstalled: true,
         unityMcpProjectConfigExists: true,
+        unityMcpProjectConfigReady: true,
         mcpServerConfigured: true,
         recommendedActions: ['open-unity-with-mcp'],
       }),
@@ -82,12 +86,27 @@ describe('buildDashboardActions', () => {
       createSnapshot({
         pluginInstalled: true,
         unityMcpProjectConfigExists: true,
+        unityMcpProjectConfigReady: true,
         mcpServerConfigured: false,
         recommendedActions: ['configure-vscode-mcp', 'open-unity-with-mcp'],
       }),
     );
 
     expect(actions[0]?.commandId).toBe('unityMcp.configureProject');
+  });
+
+  it('shows a fix-config state when the Unity config file exists but is not ready', () => {
+    const presentation = buildStatusBarPresentation(
+      createSnapshot({
+        pluginInstalled: true,
+        unityMcpProjectConfigExists: true,
+        unityMcpProjectConfigReady: false,
+        mcpServerConfigured: false,
+        recommendedActions: ['open-unity-without-mcp'],
+      }),
+    );
+
+    expect(presentation.text).toBe('$(warning) Unity MCP: Fix Config');
   });
 });
 
@@ -112,6 +131,7 @@ function createStatus(overrides: Partial<WorkspaceStatus>): WorkspaceStatus {
     pluginInstalled: true,
     pluginVersion: '0.79.0',
     unityMcpProjectConfigExists: true,
+    unityMcpProjectConfigReady: true,
     mcpConfigExists: true,
     mcpServerConfigured: true,
     mcpServerTransport: 'http',

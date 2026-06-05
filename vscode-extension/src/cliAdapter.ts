@@ -6,12 +6,10 @@ import type {
   ProgressEvent,
   SetupMcpOptions,
   SetupMcpResult,
-} from 'unity-mcp-cli';
+} from 'unity-mcp-cli' with { "resolution-mode": "import" };
 import { ExtensionLogger } from './logging';
 
 export type CliModuleLoader = () => Promise<UnityMcpCliModule>;
-
-type NativeImport = <T>(specifier: string) => Promise<T>;
 
 interface UnityMcpCliModule {
   installPlugin(options: InstallPluginOptions): Promise<InstallResult>;
@@ -225,16 +223,10 @@ export async function openUnityProject(
 }
 
 async function defaultLoader(): Promise<UnityMcpCliModule> {
-  // Keep native ESM loading at runtime. TypeScript rewrites plain
-  // `import()` into `require()` for CommonJS output, which breaks on
-  // packages like `unity-mcp-cli` that only expose ESM import exports.
-  return nativeImport<UnityMcpCliModule>('unity-mcp-cli');
+  // tsconfig uses the Node16 module target so this CommonJS extension
+  // entrypoint keeps native import() at runtime for ESM-only packages.
+  return import('unity-mcp-cli') as Promise<UnityMcpCliModule>;
 }
-
-const nativeImport = new Function(
-  'specifier',
-  'return import(specifier);',
-) as NativeImport;
 
 function toErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);

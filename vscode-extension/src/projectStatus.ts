@@ -16,6 +16,7 @@ export interface WorkspaceStatus {
   pluginInstalled: boolean;
   pluginVersion?: string;
   unityMcpProjectConfigExists: boolean;
+  unityMcpProjectConfigReady: boolean;
   mcpConfigExists: boolean;
   mcpServerConfigured: boolean;
   mcpServerTransport?: string;
@@ -70,6 +71,10 @@ export async function inspectWorkspaceStatus(
     warnings.push(
       'Unity MCP project config is missing. Open Unity once without MCP after installing the plugin so the package can import and initialize.',
     );
+  } else if (pluginInstalled && !projectConfig.ready) {
+    warnings.push(
+      'Unity MCP project config is present but invalid or incomplete. Open Unity without MCP and fix or regenerate UserSettings/AI-Game-Developer-Config.json before retrying connected launch.',
+    );
   }
 
   const mcpInfo = await readMcpConfig(mcpConfigPath);
@@ -78,7 +83,7 @@ export async function inspectWorkspaceStatus(
     trustState,
     unityProjectDetected,
     pluginInstalled,
-    unityMcpProjectConfigExists: projectConfig.exists,
+    unityMcpProjectConfigReady: projectConfig.ready,
     mcpServerConfigured: mcpInfo.hasServerEntry,
   });
 
@@ -91,6 +96,7 @@ export async function inspectWorkspaceStatus(
     pluginInstalled,
     pluginVersion,
     unityMcpProjectConfigExists: projectConfig.exists,
+    unityMcpProjectConfigReady: projectConfig.ready,
     mcpConfigExists: mcpInfo.exists,
     mcpServerConfigured: mcpInfo.hasServerEntry,
     mcpServerTransport: mcpInfo.transport,
@@ -108,6 +114,7 @@ export function formatWorkspaceStatusReport(status: WorkspaceStatus): string {
     `Unity markers: ${status.unityMarkers.length > 0 ? status.unityMarkers.join(', ') : 'none'}`,
     `Unity MCP plugin installed: ${status.pluginInstalled ? `yes (${status.pluginVersion ?? 'unknown version'})` : 'no'}`,
     `Unity MCP project config present: ${status.unityMcpProjectConfigExists ? 'yes' : 'no'}`,
+    `Unity MCP project config ready: ${status.unityMcpProjectConfigReady ? 'yes' : 'no'}`,
     `.vscode/mcp.json present: ${status.mcpConfigExists ? 'yes' : 'no'}`,
     `ai-game-developer configured: ${status.mcpServerConfigured ? 'yes' : 'no'}`,
     `Configured transport: ${status.mcpServerTransport ?? 'unknown'}`,
@@ -134,7 +141,7 @@ function buildRecommendedActions(input: {
   trustState: 'trusted' | 'restricted';
   unityProjectDetected: boolean;
   pluginInstalled: boolean;
-  unityMcpProjectConfigExists: boolean;
+  unityMcpProjectConfigReady: boolean;
   mcpServerConfigured: boolean;
 }): WorkspaceAction[] {
   if (input.trustState !== 'trusted') {
@@ -152,7 +159,7 @@ function buildRecommendedActions(input: {
     return actions;
   }
 
-  if (!input.unityMcpProjectConfigExists) {
+  if (!input.unityMcpProjectConfigReady) {
     actions.push('open-unity-without-mcp');
     return actions;
   }

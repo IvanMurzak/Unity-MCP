@@ -84,7 +84,7 @@ export class UnityMcpDashboardProvider implements vscode.WebviewViewProvider {
       trustState: snapshot.status?.trustState,
       unityProjectDetected: snapshot.status?.unityProjectDetected,
       pluginInstalled: snapshot.status?.pluginInstalled,
-      unityConfigReady: snapshot.status?.unityMcpProjectConfigExists,
+      unityConfigReady: snapshot.status?.unityMcpProjectConfigReady,
       mcpConfigured: snapshot.status?.mcpServerConfigured,
     });
     this.view.webview.html = renderDashboardHtml(
@@ -133,6 +133,13 @@ export function buildStatusBarPresentation(snapshot: DashboardSnapshot): {
     return {
       text: '$(sync~spin) Unity MCP: Init',
       tooltip: 'Open Unity once without MCP so the Unity MCP package can initialize.',
+    };
+  }
+
+  if (!status.unityMcpProjectConfigReady) {
+    return {
+      text: '$(warning) Unity MCP: Fix Config',
+      tooltip: 'The Unity MCP project config exists but is invalid or incomplete. Open Unity without MCP and review the diagnostics.',
     };
   }
 
@@ -236,6 +243,13 @@ export function buildDashboardActions(snapshot: DashboardSnapshot): DashboardAct
       label: 'Install Plugin',
       description: 'Re-run package installation to reconcile Packages/manifest.json if needed.',
       recommended: false,
+    });
+  } else if (!status.unityMcpProjectConfigReady) {
+    items.push({
+      commandId: 'unityMcp.openUnityPlain',
+      label: 'Open Unity',
+      description: 'Launch Unity without MCP and repair or regenerate the AI-Game-Developer project config.',
+      recommended: true,
     });
   } else if (!status.mcpServerConfigured) {
     items.push({
@@ -463,7 +477,7 @@ function renderDashboardHtml(
             </div>
             <div class="state-item">
               <span class="label">Unity Config</span>
-              <span class="value">${status.unityMcpProjectConfigExists ? 'Ready' : 'Missing'}</span>
+              <span class="value">${!status.unityMcpProjectConfigExists ? 'Missing' : status.unityMcpProjectConfigReady ? 'Ready' : 'Needs attention'}</span>
             </div>
             <div class="state-item">
               <span class="label">VS Code MCP</span>
@@ -536,6 +550,13 @@ function buildDashboardRecommendation(
         detail: 'Add the Unity package to Packages/manifest.json before trying to launch or connect with MCP.',
       };
     case 'open-unity-without-mcp':
+      if (status.unityMcpProjectConfigExists) {
+        return {
+          title: 'Repair the Unity project config',
+          detail: 'Open Unity without MCP and fix or regenerate AI-Game-Developer-Config.json before retrying connected launch.',
+        };
+      }
+
       return {
         title: 'Initialize the Unity project',
         detail: 'Open Unity once without MCP so the newly installed package can import and create its project config.',

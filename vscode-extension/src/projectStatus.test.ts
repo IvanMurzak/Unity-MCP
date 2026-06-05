@@ -44,6 +44,7 @@ describe('inspectWorkspaceStatus', () => {
     expect(status.pluginInstalled).toBe(true);
     expect(status.pluginVersion).toBe('0.79.0');
     expect(status.unityMcpProjectConfigExists).toBe(true);
+    expect(status.unityMcpProjectConfigReady).toBe(true);
     expect(status.warnings).toEqual([]);
     expect(status.recommendedActions).toEqual(['configure-vscode-mcp', 'open-unity-with-mcp']);
   });
@@ -78,6 +79,7 @@ describe('inspectWorkspaceStatus', () => {
 
     expect(status.pluginInstalled).toBe(true);
     expect(status.unityMcpProjectConfigExists).toBe(false);
+    expect(status.unityMcpProjectConfigReady).toBe(false);
     expect(status.warnings.some((warning) => warning.includes('Open Unity once without MCP'))).toBe(true);
     expect(status.recommendedActions).toEqual(['open-unity-without-mcp']);
   });
@@ -143,11 +145,46 @@ describe('inspectWorkspaceStatus', () => {
     expect(status.mcpConfigExists).toBe(true);
     expect(status.mcpServerConfigured).toBe(false);
     expect(status.mcpServerTransport).toBeUndefined();
+    expect(status.unityMcpProjectConfigReady).toBe(true);
     expect(
       status.warnings.some((warning) =>
         warning.includes('missing a supported transport type')),
     ).toBe(true);
     expect(status.recommendedActions).toEqual(['configure-vscode-mcp', 'open-unity-with-mcp']);
+  });
+
+  it('treats a malformed Unity MCP project config as present but not ready', async () => {
+    const workspace = await createTempWorkspace();
+    await mkdir(path.join(workspace, 'Assets'), { recursive: true });
+    await mkdir(path.join(workspace, 'ProjectSettings'), { recursive: true });
+    await mkdir(path.join(workspace, 'Packages'), { recursive: true });
+    await mkdir(path.join(workspace, 'UserSettings'), { recursive: true });
+    await writeFile(
+      path.join(workspace, 'Packages', 'manifest.json'),
+      JSON.stringify({
+        dependencies: {
+          'com.ivanmurzak.unity.mcp': '0.79.0',
+        },
+      }, null, 2),
+    );
+    await writeFile(
+      path.join(workspace, 'UserSettings', 'AI-Game-Developer-Config.json'),
+      '{broken json',
+    );
+
+    const status = await inspectWorkspaceStatus(workspace, 'BrokenUnityConfig', 'trusted');
+
+    expect(status.unityMcpProjectConfigExists).toBe(true);
+    expect(status.unityMcpProjectConfigReady).toBe(false);
+    expect(
+      status.warnings.some((warning) =>
+        warning.includes('Could not parse UserSettings/AI-Game-Developer-Config.json')),
+    ).toBe(true);
+    expect(
+      status.warnings.some((warning) =>
+        warning.includes('invalid or incomplete')),
+    ).toBe(true);
+    expect(status.recommendedActions).toEqual(['open-unity-without-mcp']);
   });
 });
 

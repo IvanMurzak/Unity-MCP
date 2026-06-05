@@ -80,7 +80,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       trustState: snapshot.status?.trustState,
       unityProjectDetected: snapshot.status?.unityProjectDetected,
       pluginInstalled: snapshot.status?.pluginInstalled,
-      unityConfigReady: snapshot.status?.unityMcpProjectConfigExists,
+      unityConfigReady: snapshot.status?.unityMcpProjectConfigReady,
       mcpConfigured: snapshot.status?.mcpServerConfigured,
     });
     const statusBar = buildStatusBarPresentation(snapshot);
@@ -191,9 +191,7 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
           },
           {
             label: 'Open Unity With MCP Connection',
-            detail: projectConfig.exists
-              ? 'Use the current AI-Game-Developer project config and request server startup.'
-              : 'Requires UserSettings/AI-Game-Developer-Config.json to be present.',
+            detail: describeConnectedLaunchAvailability(projectConfig),
             mode: 'connected' as const,
           },
         ],
@@ -213,14 +211,16 @@ export async function activate(context: vscode.ExtensionContext): Promise<void> 
       effectiveMode = openMode.mode;
     }
 
-    if (effectiveMode === 'connected' && !projectConfig.exists) {
+    if (effectiveMode === 'connected' && !projectConfig.ready) {
       logger.warn('openUnity:precheck', {
         workspace: workspaceFolder.uri.fsPath,
-        reason: 'project-config-missing',
+        reason: projectConfig.exists ? 'project-config-invalid' : 'project-config-missing',
       });
 
       const selection = await vscode.window.showWarningMessage(
-        'Unity MCP is installed, but the project has not finished first-time initialization yet. Open Unity once without MCP so the package can import and create its project config, then retry connected launch.',
+        projectConfig.exists
+          ? 'Unity MCP found AI-Game-Developer-Config.json, but it is invalid or incomplete. Open Unity once without MCP and fix or regenerate the project config before retrying connected launch.'
+          : 'Unity MCP is installed, but the project has not finished first-time initialization yet. Open Unity once without MCP so the package can import and create its project config, then retry connected launch.',
         'Open Without MCP',
         'Show Output',
         'Cancel',
@@ -804,6 +804,20 @@ function statusActionToCommand(actionLabel: string): string | undefined {
 
 export function deactivate(): void {
   // Nothing to dispose beyond the extension context subscriptions.
+}
+
+function describeConnectedLaunchAvailability(
+  projectConfig: Awaited<ReturnType<typeof readUnityMcpProjectConfig>>,
+): string {
+  if (projectConfig.ready) {
+    return 'Use the current AI-Game-Developer project config and request server startup.';
+  }
+
+  if (projectConfig.exists) {
+    return 'Blocked until UserSettings/AI-Game-Developer-Config.json is valid again.';
+  }
+
+  return 'Requires UserSettings/AI-Game-Developer-Config.json to be present.';
 }
 
 function pathRelativeToWorkspace(
