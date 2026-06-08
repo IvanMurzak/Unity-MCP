@@ -9,10 +9,6 @@ const REGISTRY_URL = 'https://package.openupm.com';
 const REQUIRED_SCOPES = [
   'com.ivanmurzak',
   'extensions.unity',
-  'org.nuget.com.ivanmurzak',
-  'org.nuget.microsoft',
-  'org.nuget.system',
-  'org.nuget.r3',
 ];
 
 interface ScopedRegistry {
