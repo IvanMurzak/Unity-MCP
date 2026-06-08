@@ -593,7 +593,7 @@ The CLI generates a **deterministic port** for each Unity project based on its d
 
 The `install-plugin` command modifies `Packages/manifest.json` directly:
 - Adds the [OpenUPM](https://openupm.com/) scoped registry (`package.openupm.com`)
-- Registers all required scopes (`com.ivanmurzak`, `extensions.unity`, `org.nuget.*`)
+- Registers all required scopes (`com.ivanmurzak`, `extensions.unity`)
 - Adds the `com.ivanmurzak.unity.mcp` dependency with version-aware updates (never downgrades)
 
 ### Configuration File
