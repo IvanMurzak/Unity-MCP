@@ -236,7 +236,7 @@ async function readMcpConfig(mcpConfigPath: string): Promise<McpConfigInfo> {
   try {
     const raw = await fs.readFile(mcpConfigPath, 'utf8');
     const parsed = JSON.parse(raw) as {
-      servers?: Record<string, { type?: string }>;
+      servers?: Record<string, { type?: string; url?: string; command?: string }>;
     };
 
     const serverEntry = parsed.servers?.[MCP_SERVER_NAME];
@@ -249,9 +249,24 @@ async function readMcpConfig(mcpConfigPath: string): Promise<McpConfigInfo> {
       );
     }
 
+    const hasServerEntry =
+      transport === 'http'
+        ? typeof serverEntry?.url === 'string' && serverEntry.url.trim().length > 0
+        : transport === 'stdio'
+          ? typeof serverEntry?.command === 'string' && serverEntry.command.trim().length > 0
+          : false;
+
+    if (transport === 'http' && serverEntry && !hasServerEntry) {
+      warnings.push('The ai-game-developer server entry in .vscode/mcp.json is missing a url for http transport.');
+    }
+
+    if (transport === 'stdio' && serverEntry && !hasServerEntry) {
+      warnings.push('The ai-game-developer server entry in .vscode/mcp.json is missing a command for stdio transport.');
+    }
+
     return {
       exists: true,
-      hasServerEntry: transport !== undefined,
+      hasServerEntry,
       transport,
       warnings,
     };
