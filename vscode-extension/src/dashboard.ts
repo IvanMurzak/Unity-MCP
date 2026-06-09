@@ -10,8 +10,27 @@ export interface DashboardSnapshot {
   status?: WorkspaceStatus;
 }
 
+export type DashboardCommandId =
+  | 'unityMcp.checkStatus'
+  | 'unityMcp.showOutput'
+  | 'workbench.trust.manage'
+  | 'unityMcp.installPlugin'
+  | 'unityMcp.configureProject'
+  | 'unityMcp.openUnityPlain'
+  | 'unityMcp.openUnityConnected';
+
+const ALLOWED_DASHBOARD_COMMANDS = new Set<DashboardCommandId>([
+  'unityMcp.checkStatus',
+  'unityMcp.showOutput',
+  'workbench.trust.manage',
+  'unityMcp.installPlugin',
+  'unityMcp.configureProject',
+  'unityMcp.openUnityPlain',
+  'unityMcp.openUnityConnected',
+]);
+
 interface DashboardActionItem {
-  commandId: string;
+  commandId: DashboardCommandId;
   label: string;
   description: string;
   recommended: boolean;
@@ -30,7 +49,7 @@ export class UnityMcpDashboardProvider implements vscode.WebviewViewProvider {
   public constructor(
     private readonly extensionUri: vscode.Uri,
     private readonly getSnapshot: () => Promise<DashboardSnapshot>,
-    private readonly onCommand: (commandId: string) => Promise<void>,
+    private readonly onCommand: (commandId: DashboardCommandId) => Promise<void>,
     private readonly onEvent?: (event: string, properties?: Record<string, unknown>) => void,
   ) {}
 
@@ -55,6 +74,13 @@ export class UnityMcpDashboardProvider implements vscode.WebviewViewProvider {
         message.type === 'run-command' &&
         typeof message.commandId === 'string'
       ) {
+        if (!isAllowedDashboardCommand(message.commandId)) {
+          this.onEvent?.('dashboard:commandRejected', {
+            commandId: message.commandId,
+          });
+          return;
+        }
+
         this.onEvent?.('dashboard:command', {
           commandId: message.commandId,
         });
@@ -154,6 +180,12 @@ export function buildStatusBarPresentation(snapshot: DashboardSnapshot): {
     text: '$(check) Unity MCP: Ready',
     tooltip: `Unity MCP is ready for ${status.workspaceName}.`,
   };
+}
+
+export function isAllowedDashboardCommand(
+  commandId: string,
+): commandId is DashboardCommandId {
+  return ALLOWED_DASHBOARD_COMMANDS.has(commandId as DashboardCommandId);
 }
 
 export function buildDashboardActions(snapshot: DashboardSnapshot): DashboardActionItem[] {

@@ -12,3 +12,11 @@ export async function pathExists(targetPath: string): Promise<boolean> {
 export function toErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
+
+export function normalizeFsPath(
+  targetPath: string,
+  platform: NodeJS.Platform = process.platform,
+): string {
+  const normalized = targetPath.replaceAll('\\', '/');
+  return platform === 'win32' ? normalized.toLowerCase() : normalized;
+}

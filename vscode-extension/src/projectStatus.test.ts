@@ -153,6 +153,58 @@ describe('inspectWorkspaceStatus', () => {
     expect(status.recommendedActions).toEqual(['configure-vscode-mcp', 'open-unity-with-mcp']);
   });
 
+  it('requires a url for an http ai-game-developer MCP entry', async () => {
+    const workspace = await createReadyWorkspace();
+    await mkdir(path.join(workspace, '.vscode'), { recursive: true });
+    await writeFile(
+      path.join(workspace, '.vscode', 'mcp.json'),
+      JSON.stringify({
+        servers: {
+          'ai-game-developer': {
+            type: 'http',
+          },
+        },
+      }, null, 2),
+    );
+
+    const status = await inspectWorkspaceStatus(workspace, 'MissingHttpUrl', 'trusted');
+
+    expect(status.mcpConfigExists).toBe(true);
+    expect(status.mcpServerConfigured).toBe(false);
+    expect(status.mcpServerTransport).toBe('http');
+    expect(
+      status.warnings.some((warning) =>
+        warning.includes('missing a url for http transport')),
+    ).toBe(true);
+    expect(status.recommendedActions).toEqual(['configure-vscode-mcp', 'open-unity-with-mcp']);
+  });
+
+  it('requires a command for a stdio ai-game-developer MCP entry', async () => {
+    const workspace = await createReadyWorkspace();
+    await mkdir(path.join(workspace, '.vscode'), { recursive: true });
+    await writeFile(
+      path.join(workspace, '.vscode', 'mcp.json'),
+      JSON.stringify({
+        servers: {
+          'ai-game-developer': {
+            type: 'stdio',
+          },
+        },
+      }, null, 2),
+    );
+
+    const status = await inspectWorkspaceStatus(workspace, 'MissingStdioCommand', 'trusted');
+
+    expect(status.mcpConfigExists).toBe(true);
+    expect(status.mcpServerConfigured).toBe(false);
+    expect(status.mcpServerTransport).toBe('stdio');
+    expect(
+      status.warnings.some((warning) =>
+        warning.includes('missing a command for stdio transport')),
+    ).toBe(true);
+    expect(status.recommendedActions).toEqual(['configure-vscode-mcp', 'open-unity-with-mcp']);
+  });
+
   it('treats a malformed Unity MCP project config as present but not ready', async () => {
     const workspace = await createTempWorkspace();
     await mkdir(path.join(workspace, 'Assets'), { recursive: true });
@@ -192,4 +244,30 @@ async function createTempWorkspace(): Promise<string> {
   const tempDir = await mkdtemp(path.join(os.tmpdir(), 'unity-mcp-vscode-'));
   tempRoots.push(tempDir);
   return tempDir;
+}
+
+async function createReadyWorkspace(): Promise<string> {
+  const workspace = await createTempWorkspace();
+  await mkdir(path.join(workspace, 'Assets'), { recursive: true });
+  await mkdir(path.join(workspace, 'ProjectSettings'), { recursive: true });
+  await mkdir(path.join(workspace, 'Packages'), { recursive: true });
+  await mkdir(path.join(workspace, 'UserSettings'), { recursive: true });
+  await writeFile(
+    path.join(workspace, 'Packages', 'manifest.json'),
+    JSON.stringify({
+      dependencies: {
+        'com.ivanmurzak.unity.mcp': '0.79.0',
+      },
+    }, null, 2),
+  );
+  await writeFile(
+    path.join(workspace, 'UserSettings', 'AI-Game-Developer-Config.json'),
+    JSON.stringify({
+      host: 'http://localhost:6501',
+      authOption: 'none',
+      transportMethod: 'streamableHttp',
+    }, null, 2),
+  );
+
+  return workspace;
 }

@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   buildDashboardActions,
   buildStatusBarPresentation,
+  isAllowedDashboardCommand,
   type DashboardSnapshot,
 } from './dashboard';
 import type { WorkspaceStatus } from './projectStatus';
@@ -107,6 +108,13 @@ describe('buildDashboardActions', () => {
     );
 
     expect(presentation.text).toBe('$(warning) Unity MCP: Fix Config');
+  });
+
+  it('only emits commands from the dashboard allowlist', () => {
+    const actions = buildDashboardActions(createSnapshot({}));
+
+    expect(actions.every((action) => isAllowedDashboardCommand(action.commandId))).toBe(true);
+    expect(isAllowedDashboardCommand('workbench.action.closeAllEditors')).toBe(false);
   });
 });
 

@@ -12,6 +12,7 @@ import {
   type WorkspaceAction,
 } from './projectStatus';
 import { readUnityMcpProjectConfig } from './unityConfig';
+import { normalizeFsPath } from './utils';
 import { getPreferredWorkspaceFolder, pickWorkspaceFolder } from './workspace';
 
 const UI_REFRESH_DEBOUNCE_MS = 150;
@@ -832,8 +833,4 @@ function pathRelativeToWorkspace(
   }
 
   return normalizedDocument.slice(normalizedWorkspace.length + 1);
-}
-
-function normalizeFsPath(targetPath: string): string {
-  return targetPath.replaceAll('\\', '/');
 }
