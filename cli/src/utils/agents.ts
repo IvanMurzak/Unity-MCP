@@ -303,11 +303,11 @@ export const agentRegistry: readonly AgentDefinition[] = [
     id: 'antigravity',
     name: 'Antigravity',
     skillsPath: '.agent/skills',
-    configPathDisplay: '~/.gemini/antigravity/mcp_config.json',
+    configPathDisplay: '~/.gemini/config/mcp_config.json',
     configFormat: 'json',
     bodyPath: 'mcpServers',
     getConfigPath: () =>
-      path.join(home(), '.gemini', 'antigravity', 'mcp_config.json'),
+      path.join(home(), '.gemini', 'config', 'mcp_config.json'),
     getStdioProps: (serverPath, port, timeout, auth, token) => ({
       disabled: false,
       command: serverPath,
