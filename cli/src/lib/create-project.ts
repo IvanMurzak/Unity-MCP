@@ -138,13 +138,17 @@ export async function createProject(
     });
 
     // -- Create the project -------------------------------------------------
-    // Only a finite positive integer is a valid execFile timeout; anything
-    // else (0, negative, NaN, Infinity, or a fractional value, which
-    // execFile rejects with ERR_OUT_OF_RANGE) falls back to the default.
+    // Only a finite positive integer within Node's timer range is a valid
+    // execFile timeout; anything else (0, negative, NaN, Infinity, a
+    // fractional value which execFile rejects with ERR_OUT_OF_RANGE, or a
+    // value above Node's max timer delay of 2^31-1 which would emit a
+    // TimeoutOverflowWarning and clamp to 1ms — killing the editor almost
+    // immediately) falls back to the default.
     const timeoutMs =
       options.timeoutMs !== undefined &&
       Number.isInteger(options.timeoutMs) &&
-      options.timeoutMs > 0
+      options.timeoutMs > 0 &&
+      options.timeoutMs <= 2147483647
         ? options.timeoutMs
         : DEFAULT_CREATE_TIMEOUT_MS;
 

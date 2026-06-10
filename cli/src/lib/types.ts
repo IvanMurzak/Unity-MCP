@@ -472,9 +472,10 @@ export interface CreateProjectOptions {
   /**
    * Timeout (milliseconds) for the editor's `-createProject`
    * invocation. Defaults to `120000` (matching the historical CLI
-   * behaviour). Only a finite positive integer is honoured; any other
-   * value (`<= 0`, fractional, `NaN`, or `Infinity`) falls back to the
-   * default.
+   * behaviour). Only a finite positive integer up to `2147483647`
+   * (Node's max timer delay, 2^31-1) is honoured; any other value
+   * (`<= 0`, above that ceiling, fractional, `NaN`, or `Infinity`)
+   * falls back to the default.
    */
   timeoutMs?: number;
   /**

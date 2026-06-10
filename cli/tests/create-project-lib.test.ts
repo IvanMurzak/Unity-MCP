@@ -217,10 +217,16 @@ describe('createProject — success path', () => {
     await createProject(makeOptions({ runEditorImpl: runEditor, timeoutMs: 0 }));
     expect(runEditor).toHaveBeenLastCalledWith(expect.any(String), expect.any(String), 120000);
 
-    // Non-integer values (negative, fractional, NaN, Infinity) are not valid
-    // execFile timeouts and fall back to the default rather than reaching
+    // The upper boundary (Node's max timer delay, 2^31-1) is honoured as-is.
+    await createProject(makeOptions({ runEditorImpl: runEditor, timeoutMs: 2147483647 }));
+    expect(runEditor).toHaveBeenLastCalledWith(expect.any(String), expect.any(String), 2147483647);
+
+    // Non-integer values (negative, fractional, NaN, Infinity) and values
+    // above Node's max timer delay (2^31-1, which would emit a
+    // TimeoutOverflowWarning and clamp to 1ms) are not valid execFile
+    // timeouts and fall back to the default rather than reaching
     // child_process with an out-of-range value.
-    for (const bad of [-1, 1500.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+    for (const bad of [-1, 1500.5, Number.NaN, Number.POSITIVE_INFINITY, 2147483648]) {
       await createProject(makeOptions({ runEditorImpl: runEditor, timeoutMs: bad }));
       expect(runEditor).toHaveBeenLastCalledWith(expect.any(String), expect.any(String), 120000);
     }
