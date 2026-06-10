@@ -6,6 +6,7 @@ import {
   findHighestEditor,
   resolveEditorExecutable,
   runEditorCreateProject,
+  DEFAULT_CREATE_TIMEOUT_MS,
 } from '../utils/unity-hub.js';
 import { emitProgress } from './progress.js';
 import type {
@@ -13,8 +14,6 @@ import type {
   CreateProjectOptions,
   CreateProjectResult,
 } from './types.js';
-
-const DEFAULT_CREATE_TIMEOUT_MS = 120000;
 
 /**
  * Resolve an editor install path to its executable, returning `null`

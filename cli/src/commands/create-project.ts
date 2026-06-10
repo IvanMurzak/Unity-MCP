@@ -42,6 +42,14 @@ export const createProjectCommand = new Command('create-project')
       hubPath,
       onProgress: (event) => {
         switch (event.phase) {
+          case 'editors-located': {
+            // The Hub query is synchronous (it has already returned by the
+            // time this fires), so emit the result line directly to keep
+            // parity with the old "Found N installed editors" output rather
+            // than leaving the user with no feedback during the query.
+            ui.info(event.message);
+            break;
+          }
           case 'editor-resolved': {
             if (!options.unity && event.version) {
               ui.info(`No Unity version specified, using highest installed: ${event.version}`);

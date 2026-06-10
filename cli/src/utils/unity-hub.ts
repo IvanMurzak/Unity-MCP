@@ -655,22 +655,37 @@ export function resolveEditorExecutable(editorPath: string): string {
  * version selection) lives in `lib/create-project.ts`; the CLI's
  * `create-project` command delegates there.
  */
+/**
+ * Default timeout (ms) for the editor's `-createProject` invocation —
+ * the single source of truth shared with `lib/create-project.ts`.
+ */
+export const DEFAULT_CREATE_TIMEOUT_MS = 120000;
+
 export function runEditorCreateProject(
   editorExePath: string,
   projectPath: string,
-  timeoutMs = 120000,
+  timeoutMs = DEFAULT_CREATE_TIMEOUT_MS,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     execFile(
       editorExePath,
       ['-createProject', projectPath, '-quit', '-batchmode'],
-      { encoding: 'utf-8', timeout: timeoutMs, windowsHide: true },
-      (err, _stdout, stderr) => {
+      // maxBuffer: Infinity — captured output is only used to enrich the
+      // failure message, and Unity's verbose first-run import logs can
+      // exceed Node's 1 MiB default, which would otherwise kill (with
+      // ERR_CHILD_PROCESS_STDOUT_MAXBUFFER) a creation that was succeeding.
+      { encoding: 'utf-8', timeout: timeoutMs, windowsHide: true, maxBuffer: Infinity },
+      (err) => {
         if (err) {
-          const detail = stderr?.trim();
-          reject(new Error(
-            `Failed to create project: ${err.message}` + (detail ? `\n${detail}` : ''),
-          ));
+          // On timeout, execFile kills the process with SIGTERM and leaves
+          // a generic "Command failed" message, so name the timeout
+          // explicitly. Otherwise execFile already folds the captured
+          // stderr into err.message ("Command failed: <cmd>\n<stderr>") —
+          // surface that as-is rather than appending stderr a second time.
+          const message = err.killed && err.signal === 'SIGTERM'
+            ? `Failed to create project: timed out after ${timeoutMs}ms`
+            : `Failed to create project: ${err.message}`;
+          reject(new Error(message));
           return;
         }
         resolve();

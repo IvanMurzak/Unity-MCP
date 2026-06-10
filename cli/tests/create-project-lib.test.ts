@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import * as path from 'path';
 import { createProject } from '../src/lib.js';
+import { queryInstalledEditors, runEditorCreateProject } from '../src/utils/unity-hub.js';
 import type {
   CreateProjectEditorInfo,
   CreateProjectOptions,
@@ -253,5 +254,33 @@ describe('createProject — editor invocation failure', () => {
     expect(result.projectPath).toBe(path.resolve('some/new-project'));
     expect(result.editorVersion).toBe('6000.3.11f1');
     expect(result.editorPath).toBe('/editors/6000.3.11f1/Editor/Unity.exe');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Unity-hub building blocks (exercised directly — the createProject tests
+// above inject past these, so their real error-shaping contracts are only
+// covered here).
+// ---------------------------------------------------------------------------
+
+describe('queryInstalledEditors — direct contract', () => {
+  it('re-throws an unrunnable hub as the formatted "Failed to list installed editors" error', () => {
+    // A path that cannot be executed makes the underlying execFileSync
+    // throw; the extracted silent core must re-throw with the message its
+    // callers (listInstalledEditors, the lib) rely on.
+    expect(() => queryInstalledEditors('/no/such/unity-hub-binary')).toThrow(
+      /Failed to list installed editors/,
+    );
+  });
+});
+
+describe('runEditorCreateProject — direct contract', () => {
+  it('rejects (never throws synchronously) with a wrapped error when the editor binary is unrunnable', async () => {
+    // Drives the real sync->async refactor: a non-existent editor exe makes
+    // execFile call back with an error, which must surface as a rejected
+    // promise carrying the "Failed to create project" prefix.
+    await expect(
+      runEditorCreateProject('/no/such/unity-editor-binary', 'some/throwaway/project'),
+    ).rejects.toThrow(/Failed to create project/);
   });
 });
