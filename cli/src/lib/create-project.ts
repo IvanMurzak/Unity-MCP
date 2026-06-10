@@ -138,8 +138,13 @@ export async function createProject(
     });
 
     // -- Create the project -------------------------------------------------
+    // Only a finite positive integer is a valid execFile timeout; anything
+    // else (0, negative, NaN, Infinity, or a fractional value, which
+    // execFile rejects with ERR_OUT_OF_RANGE) falls back to the default.
     const timeoutMs =
-      options.timeoutMs !== undefined && options.timeoutMs > 0
+      options.timeoutMs !== undefined &&
+      Number.isInteger(options.timeoutMs) &&
+      options.timeoutMs > 0
         ? options.timeoutMs
         : DEFAULT_CREATE_TIMEOUT_MS;
 

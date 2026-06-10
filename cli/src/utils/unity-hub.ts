@@ -644,6 +644,12 @@ export function resolveEditorExecutable(editorPath: string): string {
 }
 
 /**
+ * Default timeout (ms) for the editor's `-createProject` invocation —
+ * the single source of truth shared with `lib/create-project.ts`.
+ */
+export const DEFAULT_CREATE_TIMEOUT_MS = 120000;
+
+/**
  * Invoke the Unity Editor binary to create a new project at
  * `projectPath`. Unity Hub's headless CLI does not support a 'create'
  * command in newer versions, so we invoke the editor binary with
@@ -655,12 +661,6 @@ export function resolveEditorExecutable(editorPath: string): string {
  * version selection) lives in `lib/create-project.ts`; the CLI's
  * `create-project` command delegates there.
  */
-/**
- * Default timeout (ms) for the editor's `-createProject` invocation —
- * the single source of truth shared with `lib/create-project.ts`.
- */
-export const DEFAULT_CREATE_TIMEOUT_MS = 120000;
-
 export function runEditorCreateProject(
   editorExePath: string,
   projectPath: string,

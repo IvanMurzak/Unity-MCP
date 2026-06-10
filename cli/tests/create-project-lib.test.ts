@@ -216,6 +216,14 @@ describe('createProject — success path', () => {
 
     await createProject(makeOptions({ runEditorImpl: runEditor, timeoutMs: 0 }));
     expect(runEditor).toHaveBeenLastCalledWith(expect.any(String), expect.any(String), 120000);
+
+    // Non-integer values (negative, fractional, NaN, Infinity) are not valid
+    // execFile timeouts and fall back to the default rather than reaching
+    // child_process with an out-of-range value.
+    for (const bad of [-1, 1500.5, Number.NaN, Number.POSITIVE_INFINITY]) {
+      await createProject(makeOptions({ runEditorImpl: runEditor, timeoutMs: bad }));
+      expect(runEditor).toHaveBeenLastCalledWith(expect.any(String), expect.any(String), 120000);
+    }
   });
 
   it('a throwing onProgress callback does not break the operation', async () => {

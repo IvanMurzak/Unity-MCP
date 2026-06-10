@@ -472,7 +472,9 @@ export interface CreateProjectOptions {
   /**
    * Timeout (milliseconds) for the editor's `-createProject`
    * invocation. Defaults to `120000` (matching the historical CLI
-   * behaviour). Values <= 0 are treated as the default.
+   * behaviour). Only a finite positive integer is honoured; any other
+   * value (`<= 0`, fractional, `NaN`, or `Infinity`) falls back to the
+   * default.
    */
   timeoutMs?: number;
   /**
