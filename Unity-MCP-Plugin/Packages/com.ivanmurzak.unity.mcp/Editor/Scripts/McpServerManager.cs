@@ -52,7 +52,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
     public static class McpServerManager
     {
         const string ProcessIdKey = "McpServerManager_ProcessId";
-        const string McpServerProcessName = "unity-mcp-server";
+        const string McpServerProcessName = "gamedev-mcp-server";
 
         static readonly ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger(typeof(McpServerManager));
         static readonly ReactiveProperty<McpServerStatus> _serverStatus = new(McpServerStatus.Stopped);
@@ -91,7 +91,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         #region Binary Metadata
 
-        public const string ExecutableName = "unity-mcp-server";
+        /// <summary>
+        /// The PINNED version of the shared <c>GameDev-MCP-Server</c> this plugin downloads and runs.
+        /// The plugin version (<see cref="UnityMcpPlugin.Version"/>, 0.x) and the shared server version
+        /// (8.x) DIVERGE — the server is released from its own repo
+        /// (https://github.com/IvanMurzak/GameDev-MCP-Server) on its own cadence — so the download URL
+        /// must NEVER be derived from the plugin version. Bumping the consumed server is an explicit
+        /// plugin change: update THIS constant (and make sure the corresponding
+        /// <c>v&lt;ServerVersion&gt;</c> release with all 7 RID zips exists on GameDev-MCP-Server
+        /// BEFORE cutting a plugin release that pins it — otherwise the download 404s).
+        /// </summary>
+        public const string ServerVersion = "8.0.0";
+
+        public const string ExecutableName = "gamedev-mcp-server";
 
         public static string McpServerName
             => string.IsNullOrEmpty(Application.productName)
@@ -116,8 +128,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public static string PlatformName => $"{OperationSystem}-{CpuArch}";
 
         // Server executable file name
-        // Sample (mac linux): unity-mcp-server
-        // Sample   (windows): unity-mcp-server.exe
+        // Sample (mac linux): gamedev-mcp-server
+        // Sample   (windows): gamedev-mcp-server.exe
         public static string ExecutableFullName
             => ExecutableName.ToLowerInvariant() + (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
                 ? ".exe"
@@ -147,8 +159,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             );
 
         // Full path to the server executable
-        // Sample (mac linux): ../Library/mcp-server/osx-x64/unity-mcp-server
-        // Sample   (windows): ../Library/mcp-server/win-x64/unity-mcp-server.exe
+        // Sample (mac linux): ../Library/mcp-server/osx-x64/gamedev-mcp-server
+        // Sample   (windows): ../Library/mcp-server/win-x64/gamedev-mcp-server.exe
         public static string ExecutableFullPath
             => Path.GetFullPath(
                 Path.Combine(
@@ -165,8 +177,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 )
             );
 
+        /// <summary>
+        /// The Git release TAG for a server version: the version with a leading <c>v</c>
+        /// (e.g. <c>8.0.0</c> → <c>v8.0.0</c>). GameDev-MCP-Server tags every release
+        /// <c>v&lt;version&gt;</c> and the per-platform server zips are attached to THAT tag — so the
+        /// download path MUST use the v-prefixed tag, never the bare version (a bare-version path
+        /// 404s). Already-v-prefixed input is passed through unchanged so a caller cannot
+        /// accidentally double-prefix.
+        /// </summary>
+        public static string ServerReleaseTag(string serverVersion)
+        {
+            var version = (serverVersion ?? string.Empty).Trim();
+            return version.StartsWith("v", StringComparison.Ordinal) ? version : "v" + version;
+        }
+
+        /// <summary>
+        /// The download URL of the shared GameDev-MCP-Server release zip for the current platform,
+        /// pinned by <see cref="ServerVersion"/> — NEVER the plugin version (the two diverge).
+        /// </summary>
         public static string ExecutableZipUrl
-            => $"https://github.com/IvanMurzak/Unity-MCP/releases/download/{UnityMcpPlugin.Version}/{ExecutableName.ToLowerInvariant()}-{PlatformName}.zip";
+            => $"https://github.com/IvanMurzak/GameDev-MCP-Server/releases/download/{ServerReleaseTag(ServerVersion)}/{ExecutableName.ToLowerInvariant()}-{PlatformName}.zip";
 
         #endregion // Binary Metadata
 
@@ -194,7 +224,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             if (binaryVersion == null)
                 return false;
 
-            return binaryVersion == UnityMcpPlugin.Version;
+            // Compared against the pinned shared-server version, NOT the plugin version —
+            // the cached binary is a GameDev-MCP-Server release.
+            return binaryVersion == ServerVersion;
         }
 
         public static bool DeleteBinaryFolderIfExists()
@@ -252,7 +284,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
                         var retry = EditorUtility.DisplayDialog(
                             title: "Failed to Delete MCP Server Binaries",
-                            message: $"The current unity-mcp-server binaries can't be deleted. " +
+                            message: $"The current gamedev-mcp-server binaries can't be deleted. " +
                                 $"This is very likely because the MCP server is currently running.\n\n" +
                                 $"Please close your MCP client to make sure the server is not running, then click \"Retry\".\n\n" +
                                 $"Path: {ExecutableFolderRootPath}\n\n" +
@@ -289,7 +321,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         public static async Task<bool> DownloadAndUnpackBinary()
         {
-            UnityEngine.Debug.Log($"Downloading Unity-MCP-Server binary from: <color=yellow>{ExecutableZipUrl}</color>");
+            UnityEngine.Debug.Log($"Downloading GameDev-MCP-Server binary from: <color=yellow>{ExecutableZipUrl}</color>");
 
             try
             {
@@ -302,7 +334,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 if (!Directory.Exists(ExecutableFolderPath))
                     Directory.CreateDirectory(ExecutableFolderPath);
 
-                var archiveFilePath = Path.GetFullPath($"{Application.temporaryCachePath}/{ExecutableName.ToLowerInvariant()}-{PlatformName}-{UnityMcpPlugin.Version}.zip");
+                var archiveFilePath = Path.GetFullPath($"{Application.temporaryCachePath}/{ExecutableName.ToLowerInvariant()}-{PlatformName}-{ServerVersion}.zip");
                 UnityEngine.Debug.Log($"Temporary archive file path: <color=yellow>{archiveFilePath}</color>");
 
                 // Download the zip file from the GitHub release notes
@@ -311,9 +343,42 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     await client.DownloadFileTaskAsync(ExecutableZipUrl, archiveFilePath);
                 }
 
-                // Unpack zip archive
-                UnityEngine.Debug.Log($"Unpacking Unity-MCP-Server binary to: <color=yellow>{ExecutableFolderPath}</color>");
-                ZipFile.ExtractToDirectory(archiveFilePath, ExecutableFolderRootPath, overwriteFiles: true);
+                // Unpack zip archive.
+                // The shared GameDev-MCP-Server release zips are NOT layout-uniform: the win zips are
+                // FLAT (gamedev-mcp-server.exe + its sidecar files at the zip root) while the osx/linux
+                // zips wrap everything in a <rid>/ folder. Extract to a throwaway staging folder, FIND
+                // the binary wherever it landed, then move its containing folder's files into the
+                // per-platform cache folder — so BOTH layouts (and any future re-arrangement) resolve
+                // correctly. The sidecar files (appsettings.json, NLog.config, server.json, ...) are
+                // LOAD-BEARING and must travel with the binary.
+                UnityEngine.Debug.Log($"Unpacking GameDev-MCP-Server binary to: <color=yellow>{ExecutableFolderPath}</color>");
+                var stagingFolder = Path.GetFullPath($"{Application.temporaryCachePath}/{ExecutableName.ToLowerInvariant()}-extract-{Guid.NewGuid():N}");
+                try
+                {
+                    ZipFile.ExtractToDirectory(archiveFilePath, stagingFolder, overwriteFiles: true);
+
+                    var extractedBinary = FindExtractedBinary(stagingFolder, ExecutableFullName);
+                    if (extractedBinary == null)
+                    {
+                        UnityEngine.Debug.LogError($"Failed to unpack server binary: '{ExecutableFullName}' not found inside the downloaded zip.");
+                        return false;
+                    }
+
+                    // Move the binary plus every sidecar file beside it into the cache folder.
+                    var sourceFolder = Path.GetDirectoryName(extractedBinary)!;
+                    foreach (var file in Directory.GetFiles(sourceFolder))
+                    {
+                        var destination = Path.Combine(ExecutableFolderPath, Path.GetFileName(file));
+                        if (File.Exists(destination))
+                            File.Delete(destination);
+                        File.Move(file, destination);
+                    }
+                }
+                finally
+                {
+                    try { Directory.Delete(stagingFolder, recursive: true); } catch { /* best effort */ }
+                    try { File.Delete(archiveFilePath); } catch { /* best effort */ }
+                }
 
                 if (!File.Exists(ExecutableFullPath))
                 {
@@ -322,7 +387,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     return false;
                 }
 
-                UnityEngine.Debug.Log($"Downloaded and unpacked Unity-MCP-Server binary to: <color=green>{ExecutableFullPath}</color>");
+                UnityEngine.Debug.Log($"Downloaded and unpacked GameDev-MCP-Server binary to: <color=green>{ExecutableFullPath}</color>");
 
                 // Set executable permission on macOS and Linux
                 if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
@@ -331,7 +396,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     UnixUtils.Set0755(ExecutableFullPath);
                 }
 
-                File.WriteAllText(VersionFullPath, UnityMcpPlugin.Version);
+                File.WriteAllText(VersionFullPath, ServerVersion);
 
                 UnityEngine.Debug.Log($"MCP server version file created at: <color=green><b>COMPLETED</b></color>");
 
@@ -377,6 +442,29 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             }
         }
 
+        /// <summary>
+        /// Locate the extracted server binary under the staging folder, wherever the zip layout put it —
+        /// at the root (the FLAT win zips) or nested in a <c>&lt;rid&gt;/</c> folder (the osx/linux zips).
+        /// Prefers the SHALLOWEST match so a hypothetical nested duplicate cannot shadow the real binary.
+        /// Returns null when the zip contains no file with the expected name.
+        /// </summary>
+        internal static string? FindExtractedBinary(string stagingFolder, string executableFileName)
+        {
+            string? best = null;
+            var bestDepth = int.MaxValue;
+            foreach (var candidate in Directory.GetFiles(stagingFolder, executableFileName, SearchOption.AllDirectories))
+            {
+                var relative = candidate.Substring(stagingFolder.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                var depth = relative.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar).Length;
+                if (depth < bestDepth)
+                {
+                    best = candidate;
+                    bestDepth = depth;
+                }
+            }
+            return best;
+        }
+
         #endregion // Binary Lifecycle
 
         #region Client Configuration
@@ -388,7 +476,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         ///   "mcpServers": {
         ///     "Unity ProjectName": {
         ///       "type": "...",    // optional, only if provided
-        ///       "command": "path/to/unity-mcp-server",
+        ///       "command": "path/to/gamedev-mcp-server",
         ///       "args": ["port=...", "plugin-timeout=...", "client-transport=stdio" /*, "token=..." if auth required */]
         ///     }
         ///   }
@@ -509,24 +597,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             if (authRequired && !string.IsNullOrEmpty(token))
                 dockerEnvVars += $" -e {Env.Token}={token}";
 
-            var dockerContainer = $"--name unity-mcp-server-{UnityMcpPluginEditor.Port}";
-            var dockerImage = $"ivanmurzakdev/unity-mcp-server:{UnityMcpPlugin.Version}";
+            var dockerContainer = $"--name {ExecutableName}-{UnityMcpPluginEditor.Port}";
+            // The shared GameDev-MCP-Server Docker image, tagged by the pinned ServerVersion
+            // (NOT the plugin version — the two diverge).
+            var dockerImage = $"aigamedeveloper/mcp-server:{ServerVersion}";
             return $"docker run -d {dockerPortMapping} {dockerEnvVars} {dockerContainer} {dockerImage}";
         }
 
         public static string DockerRunCommand()
         {
-            return $"docker start unity-mcp-server-{UnityMcpPluginEditor.Port}";
+            return $"docker start {ExecutableName}-{UnityMcpPluginEditor.Port}";
         }
 
         public static string DockerStopCommand()
         {
-            return $"docker stop unity-mcp-server-{UnityMcpPluginEditor.Port}";
+            return $"docker stop {ExecutableName}-{UnityMcpPluginEditor.Port}";
         }
 
         public static string DockerRemoveCommand()
         {
-            return $"docker rm unity-mcp-server-{UnityMcpPluginEditor.Port}";
+            return $"docker rm {ExecutableName}-{UnityMcpPluginEditor.Port}";
         }
 
         #endregion // Client Configuration
@@ -828,7 +918,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         }
 
         /// <summary>
-        /// Kills an orphaned unity-mcp-server process that is occupying this project's port.
+        /// Kills an orphaned gamedev-mcp-server process that is occupying this project's port.
         /// Only targets the specific process listening on <see cref="UnityMcpPluginEditor.Port"/>.
         /// If the port owner cannot be determined, does nothing (fails safe).
         /// </summary>

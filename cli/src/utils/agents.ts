@@ -554,7 +554,7 @@ export function resolveServerBinaryPath(projectPath: string): string {
     'Library',
     'mcp-server',
     platform,
-    `unity-mcp-server${ext}`,
+    `gamedev-mcp-server${ext}`,
   );
 }
 
