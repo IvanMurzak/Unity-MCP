@@ -3,7 +3,7 @@
 
 [![MCP](https://badge.mcpx.dev 'MCP 服务器')](https://modelcontextprotocol.io/introduction)
 [![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&labelColor=333A41 'OpenUPM 包')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
-[![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker 镜像')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
+[![Docker Image](https://img.shields.io/docker/image-size/aigamedeveloper/mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker 镜像')](https://hub.docker.com/r/aigamedeveloper/mcp-server)
 [![Unity Editor](https://img.shields.io/badge/Editor-X?style=flat&logo=unity&labelColor=333A41&color=2A2A2A 'Unity 编辑器支持')](https://unity.com/releases/editor/archive)
 [![Unity Runtime](https://img.shields.io/badge/Runtime-X?style=flat&logo=unity&labelColor=333A41&color=2A2A2A 'Unity 运行时支持')](https://unity.com/releases/editor/archive)
 [![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg '测试通过')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)</br>
@@ -364,13 +364,13 @@ unity-mcp-cli wait-for-ready ./MyUnityProject
 
 | 平台                | `<command>`                                                                                                 |
 | ------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Windows x64         | `"<unityProjectPath>/Library/mcp-server/win-x64/unity-mcp-server.exe" port=<port> client-transport=stdio`   |
-| Windows x86         | `"<unityProjectPath>/Library/mcp-server/win-x86/unity-mcp-server.exe" port=<port> client-transport=stdio`   |
-| Windows arm64       | `"<unityProjectPath>/Library/mcp-server/win-arm64/unity-mcp-server.exe" port=<port> client-transport=stdio` |
-| MacOS Apple-Silicon | `"<unityProjectPath>/Library/mcp-server/osx-arm64/unity-mcp-server" port=<port> client-transport=stdio`     |
-| MacOS Apple-Intel   | `"<unityProjectPath>/Library/mcp-server/osx-x64/unity-mcp-server" port=<port> client-transport=stdio`       |
-| Linux x64           | `"<unityProjectPath>/Library/mcp-server/linux-x64/unity-mcp-server" port=<port> client-transport=stdio`     |
-| Linux arm64         | `"<unityProjectPath>/Library/mcp-server/linux-arm64/unity-mcp-server" port=<port> client-transport=stdio`   |
+| Windows x64         | `"<unityProjectPath>/Library/mcp-server/win-x64/gamedev-mcp-server.exe" port=<port> client-transport=stdio`   |
+| Windows x86         | `"<unityProjectPath>/Library/mcp-server/win-x86/gamedev-mcp-server.exe" port=<port> client-transport=stdio`   |
+| Windows arm64       | `"<unityProjectPath>/Library/mcp-server/win-arm64/gamedev-mcp-server.exe" port=<port> client-transport=stdio` |
+| MacOS Apple-Silicon | `"<unityProjectPath>/Library/mcp-server/osx-arm64/gamedev-mcp-server" port=<port> client-transport=stdio`     |
+| MacOS Apple-Intel   | `"<unityProjectPath>/Library/mcp-server/osx-x64/gamedev-mcp-server" port=<port> client-transport=stdio`       |
+| Linux x64           | `"<unityProjectPath>/Library/mcp-server/linux-x64/gamedev-mcp-server" port=<port> client-transport=stdio`     |
+| Linux arm64         | `"<unityProjectPath>/Library/mcp-server/linux-arm64/gamedev-mcp-server" port=<port> client-transport=stdio`   |
 
 **2. 将 `<unityProjectPath>` 替换为 Unity 项目的完整路径**
 
@@ -553,7 +553,7 @@ var mcpPlugin = UnityMcpPluginRuntime.Initialize(builder =>
     })
     .Build();
 
-await mcpPlugin.Connect(); // Start active connection with retry to Unity-MCP-Server
+await mcpPlugin.Connect(); // Start active connection with retry to the MCP server
 
 await mcpPlugin.Disconnect(); // Stop active connection and close existed connection
 ```
@@ -640,7 +640,7 @@ Unity.exe -batchmode -nographics \
 
 ## Docker 📦
 
-[![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker 镜像')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
+[![Docker Image](https://img.shields.io/docker/image-size/aigamedeveloper/mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker 镜像')](https://hub.docker.com/r/aigamedeveloper/mcp-server)
 
 确保已安装 Docker。如果你在 Windows 操作系统上，请确保 Docker Desktop 已启动。
 
@@ -649,7 +649,7 @@ Unity.exe -batchmode -nographics \
 ### `streamableHttp` 传输
 
 ```bash
-docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server
+docker run -p 8080:8080 aigamedeveloper/mcp-server
 ```
 
 <details>
@@ -674,7 +674,7 @@ docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server
 使用此方式，`MCP 客户端` 应在 Docker 中启动 `MCP 服务器`。这可以通过修改 `MCP 客户端` 配置来实现。
 
 ```bash
-docker run -t -e MCP_PLUGIN_CLIENT_TRANSPORT=stdio -p 8080:8080 ivanmurzakdev/unity-mcp-server
+docker run -t -e MCP_PLUGIN_CLIENT_TRANSPORT=stdio -p 8080:8080 aigamedeveloper/mcp-server
 ```
 
 <details>
@@ -692,7 +692,7 @@ docker run -t -e MCP_PLUGIN_CLIENT_TRANSPORT=stdio -p 8080:8080 ivanmurzakdev/un
         "MCP_PLUGIN_CLIENT_TRANSPORT=stdio",
         "-p",
         "8080:8080",
-        "ivanmurzakdev/unity-mcp-server"
+        "aigamedeveloper/mcp-server"
       ]
     }
   }
@@ -704,7 +704,7 @@ docker run -t -e MCP_PLUGIN_CLIENT_TRANSPORT=stdio -p 8080:8080 ivanmurzakdev/un
 ### 自定义 `端口`
 
 ```bash
-docker run -e MCP_PLUGIN_PORT=123 -p 123:123 ivanmurzakdev/unity-mcp-server
+docker run -e MCP_PLUGIN_PORT=123 -p 123:123 aigamedeveloper/mcp-server
 ```
 
 <details>
@@ -725,10 +725,10 @@ docker run -e MCP_PLUGIN_PORT=123 -p 123:123 ivanmurzakdev/unity-mcp-server
 
 ## 二进制可执行文件
 
-你可以直接从二进制文件启动 Unity `MCP Server`。你需要针对你的 CPU 架构专门编译的二进制文件。请查看 [GitHub 发布页面](https://github.com/IvanMurzak/Unity-MCP/releases)，其中包含为所有 CPU 架构预编译的二进制文件。
+你可以直接从二进制文件启动 Unity `MCP Server`。你需要针对你的 CPU 架构专门编译的二进制文件。请查看 [GitHub 发布页面](https://github.com/IvanMurzak/GameDev-MCP-Server/releases)，其中包含为所有 CPU 架构预编译的二进制文件。
 
 ```bash
-./unity-mcp-server --port 8080 --plugin-timeout 10000 --client-transport stdio
+./gamedev-mcp-server --port 8080 --plugin-timeout 10000 --client-transport stdio
 ```
 
 <details>
@@ -740,7 +740,7 @@ docker run -e MCP_PLUGIN_PORT=123 -p 123:123 ivanmurzakdev/unity-mcp-server
 {
   "mcpServers": {
     "ai-game-developer": {
-      "command": "<project>/Library/mcp-server/win-x64/unity-mcp-server.exe",
+      "command": "<project>/Library/mcp-server/win-x64/gamedev-mcp-server.exe",
       "args": [
         "--port=8080",
         "--plugin-timeout=10000",

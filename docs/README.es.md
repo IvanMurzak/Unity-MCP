@@ -3,7 +3,7 @@
 
 [![MCP](https://badge.mcpx.dev 'Servidor MCP')](https://modelcontextprotocol.io/introduction)
 [![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&labelColor=333A41 'Paquete OpenUPM')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
-[![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Imagen Docker')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
+[![Docker Image](https://img.shields.io/docker/image-size/aigamedeveloper/mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Imagen Docker')](https://hub.docker.com/r/aigamedeveloper/mcp-server)
 [![Unity Editor](https://img.shields.io/badge/Editor-X?style=flat&logo=unity&labelColor=333A41&color=2A2A2A 'Unity Editor compatible')](https://unity.com/releases/editor/archive)
 [![Unity Runtime](https://img.shields.io/badge/Runtime-X?style=flat&logo=unity&labelColor=333A41&color=2A2A2A 'Unity Runtime compatible')](https://unity.com/releases/editor/archive)
 [![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg 'Pruebas superadas')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)</br>
@@ -364,13 +364,13 @@ Si la configuración automática no funciona por cualquier motivo, usa el JSON d
 
 | Plataforma          | `<command>`                                                                                                 |
 | ------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Windows x64         | `"<unityProjectPath>/Library/mcp-server/win-x64/unity-mcp-server.exe" port=<port> client-transport=stdio`   |
-| Windows x86         | `"<unityProjectPath>/Library/mcp-server/win-x86/unity-mcp-server.exe" port=<port> client-transport=stdio`   |
-| Windows arm64       | `"<unityProjectPath>/Library/mcp-server/win-arm64/unity-mcp-server.exe" port=<port> client-transport=stdio` |
-| MacOS Apple-Silicon | `"<unityProjectPath>/Library/mcp-server/osx-arm64/unity-mcp-server" port=<port> client-transport=stdio`     |
-| MacOS Apple-Intel   | `"<unityProjectPath>/Library/mcp-server/osx-x64/unity-mcp-server" port=<port> client-transport=stdio`       |
-| Linux x64           | `"<unityProjectPath>/Library/mcp-server/linux-x64/unity-mcp-server" port=<port> client-transport=stdio`     |
-| Linux arm64         | `"<unityProjectPath>/Library/mcp-server/linux-arm64/unity-mcp-server" port=<port> client-transport=stdio`   |
+| Windows x64         | `"<unityProjectPath>/Library/mcp-server/win-x64/gamedev-mcp-server.exe" port=<port> client-transport=stdio`   |
+| Windows x86         | `"<unityProjectPath>/Library/mcp-server/win-x86/gamedev-mcp-server.exe" port=<port> client-transport=stdio`   |
+| Windows arm64       | `"<unityProjectPath>/Library/mcp-server/win-arm64/gamedev-mcp-server.exe" port=<port> client-transport=stdio` |
+| MacOS Apple-Silicon | `"<unityProjectPath>/Library/mcp-server/osx-arm64/gamedev-mcp-server" port=<port> client-transport=stdio`     |
+| MacOS Apple-Intel   | `"<unityProjectPath>/Library/mcp-server/osx-x64/gamedev-mcp-server" port=<port> client-transport=stdio`       |
+| Linux x64           | `"<unityProjectPath>/Library/mcp-server/linux-x64/gamedev-mcp-server" port=<port> client-transport=stdio`     |
+| Linux arm64         | `"<unityProjectPath>/Library/mcp-server/linux-arm64/gamedev-mcp-server" port=<port> client-transport=stdio`   |
 
 **2. Reemplaza `<unityProjectPath>` con la ruta completa al proyecto de Unity**
 
@@ -553,7 +553,7 @@ var mcpPlugin = UnityMcpPluginRuntime.Initialize(builder =>
     })
     .Build();
 
-await mcpPlugin.Connect(); // Start active connection with retry to Unity-MCP-Server
+await mcpPlugin.Connect(); // Start active connection with retry to the MCP server
 
 await mcpPlugin.Disconnect(); // Stop active connection and close existed connection
 ```
@@ -640,7 +640,7 @@ Unity.exe -batchmode -nographics \
 
 ## Docker 📦
 
-[![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Imagen Docker')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
+[![Docker Image](https://img.shields.io/docker/image-size/aigamedeveloper/mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Imagen Docker')](https://hub.docker.com/r/aigamedeveloper/mcp-server)
 
 Asegúrate de que Docker esté instalado. Y por favor verifica que Docker Desktop esté ejecutándose si estás en un sistema operativo Windows.
 
@@ -649,7 +649,7 @@ Asegúrate de que Docker esté instalado. Y por favor verifica que Docker Deskto
 ### Transporte `streamableHttp`
 
 ```bash
-docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server
+docker run -p 8080:8080 aigamedeveloper/mcp-server
 ```
 
 <details>
@@ -674,7 +674,7 @@ docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server
 Para usar esta variante, el `MCP Client` debe ejecutar el `MCP Server` en Docker. Esto se logra mediante la configuración modificada del `MCP Client`.
 
 ```bash
-docker run -t -e MCP_PLUGIN_CLIENT_TRANSPORT=stdio -p 8080:8080 ivanmurzakdev/unity-mcp-server
+docker run -t -e MCP_PLUGIN_CLIENT_TRANSPORT=stdio -p 8080:8080 aigamedeveloper/mcp-server
 ```
 
 <details>
@@ -692,7 +692,7 @@ docker run -t -e MCP_PLUGIN_CLIENT_TRANSPORT=stdio -p 8080:8080 ivanmurzakdev/un
         "MCP_PLUGIN_CLIENT_TRANSPORT=stdio",
         "-p",
         "8080:8080",
-        "ivanmurzakdev/unity-mcp-server"
+        "aigamedeveloper/mcp-server"
       ]
     }
   }
@@ -704,7 +704,7 @@ docker run -t -e MCP_PLUGIN_CLIENT_TRANSPORT=stdio -p 8080:8080 ivanmurzakdev/un
 ### `port` personalizado
 
 ```bash
-docker run -e MCP_PLUGIN_PORT=123 -p 123:123 ivanmurzakdev/unity-mcp-server
+docker run -e MCP_PLUGIN_PORT=123 -p 123:123 aigamedeveloper/mcp-server
 ```
 
 <details>
@@ -725,10 +725,10 @@ docker run -e MCP_PLUGIN_PORT=123 -p 123:123 ivanmurzakdev/unity-mcp-server
 
 ## Ejecutable binario
 
-Puedes ejecutar el `MCP Server` de Unity directamente desde un archivo binario. Necesitarás tener un binario compilado específicamente para la arquitectura de tu CPU. Consulta la [página de releases en GitHub](https://github.com/IvanMurzak/Unity-MCP/releases), que contiene binarios precompilados para todas las arquitecturas de CPU.
+Puedes ejecutar el `MCP Server` de Unity directamente desde un archivo binario. Necesitarás tener un binario compilado específicamente para la arquitectura de tu CPU. Consulta la [página de releases en GitHub](https://github.com/IvanMurzak/GameDev-MCP-Server/releases), que contiene binarios precompilados para todas las arquitecturas de CPU.
 
 ```bash
-./unity-mcp-server --port 8080 --plugin-timeout 10000 --client-transport stdio
+./gamedev-mcp-server --port 8080 --plugin-timeout 10000 --client-transport stdio
 ```
 
 <details>
@@ -740,7 +740,7 @@ Puedes ejecutar el `MCP Server` de Unity directamente desde un archivo binario. 
 {
   "mcpServers": {
     "ai-game-developer": {
-      "command": "<project>/Library/mcp-server/win-x64/unity-mcp-server.exe",
+      "command": "<project>/Library/mcp-server/win-x64/gamedev-mcp-server.exe",
       "args": [
         "--port=8080",
         "--plugin-timeout=10000",

@@ -3,7 +3,7 @@
 
 [![MCP](https://badge.mcpx.dev 'MCP Server')](https://modelcontextprotocol.io/introduction)
 [![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&labelColor=333A41 'OpenUPM package')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
-[![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
+[![Docker Image](https://img.shields.io/docker/image-size/aigamedeveloper/mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/aigamedeveloper/mcp-server)
 [![Unity Editor](https://img.shields.io/badge/Editor-X?style=flat&logo=unity&labelColor=333A41&color=2A2A2A 'Unity Editor supported')](https://unity.com/releases/editor/archive)
 [![Unity Runtime](https://img.shields.io/badge/Runtime-X?style=flat&logo=unity&labelColor=333A41&color=2A2A2A 'Unity Runtime supported')](https://unity.com/releases/editor/archive)
 [![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg 'Tests Passed')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)</br>
@@ -28,7 +28,7 @@
 - [本地开发环境搭建](#本地开发环境搭建)
 - [贡献](#贡献)
 - [项目结构](#项目结构)
-  - [🔹Unity-MCP-Server](#unity-mcp-server)
+  - [🔹MCP Server (shared GameDev-MCP-Server)](#mcp-server-shared-gamedev-mcp-server)
     - [Docker 镜像](#docker-镜像)
   - [🔸Unity-MCP-Plugin](#unity-mcp-plugin)
     - [UPM 包](#upm-包)
@@ -51,7 +51,6 @@
     - [🧪 test\_pull\_request.yml](#-test_pull_requestyml)
     - [🔧 test\_unity\_plugin.yml](#-test_unity_pluginyml)
     - [📦 deploy.yml](#-deployyml)
-    - [🎯 deploy\_server\_executables.yml](#-deploy_server_executablesyml)
   - [技术栈](#技术栈)
   - [安全注意事项](#安全注意事项)
   - [部署目标](#部署目标)
@@ -105,14 +104,15 @@
    - 打开 Unity Hub → 添加项目 → 选择 `Unity-MCP-Plugin/` 文件夹
    - Unity 将在首次打开时自动编译所有程序集
 
-3. **在 IDE 中打开 Server**
-   - 在 Visual Studio、Rider 或 VS Code 中打开 `Unity-MCP-Server/Server.sln`
-   - 还原 NuGet 包：`dotnet restore`
+3. **获取 MCP Server** *（位于独立仓库）*
+   - 服务器是共享的 [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) — 仅当需要修改或调试服务器本身时才单独克隆
+   - 插件会自动下载由 `McpServerManager.cs` 中 `ServerVersion` 常量固定的发布二进制文件
 
-4. **本地运行 Server**
+4. **本地运行 Server** *（可选——仅在针对自定义服务器构建进行开发时）*
    ```bash
-   cd Unity-MCP-Server
-   dotnet run --project com.IvanMurzak.Unity.MCP.Server.csproj -- --port 8080 --client-transport stdio
+   git clone https://github.com/IvanMurzak/GameDev-MCP-Server.git
+   cd GameDev-MCP-Server
+   dotnet run --project com.IvanMurzak.GameDev.MCP.Server.csproj -- --port 8080 --client-transport stdio
    ```
 
 5. **将插件指向本地 Server** *（可选——跳过自动下载的二进制文件）*
@@ -123,7 +123,6 @@
 6. **使用 MCP Inspector 进行调试** *（可选）*
    ```bash
    Unity-MCP-Plugin/Commands/start_mcp_inspector.bat   # Windows (.bat)
-   Unity-MCP-Server/commands/start-mcp-inspector.ps1   # PowerShell（跨平台）
    ```
    需要 Node.js。在 `http://localhost:5173` 打开浏览器 UI，用于实时检查 MCP 协议消息。
 
@@ -146,7 +145,7 @@
 ```mermaid
 graph LR
   A(◽AI 代理)
-  B(🔹Unity-MCP-Server)
+  B(🔹GameDev-MCP-Server)
   C(🔸Unity-MCP-Plugin)
   D(🎮Unity)
 
@@ -158,62 +157,31 @@ graph LR
 
 ◽**AI 代理** - 任何 AI 界面，如：*Claude*、*Copilot*、*Cursor* 或其他，它不属于这些项目，但是架构中的重要组成部分。
 
-🔹**Unity-MCP-Server** - 连接到 `AI 代理` 并与其交互的 `MCP Server`。同时，`Unity-MCP-Server` 通过 SignalR 与 `Unity-MCP-Plugin` 通信。可在本地或云端以 HTTP 传输方式运行。技术栈：`C#`、`ASP.NET Core`、`SignalR`
+🔹**GameDev-MCP-Server** - 共享的 `MCP Server`（位于独立仓库：[GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server)），连接到 `AI 代理` 并与其交互。它通过 SignalR 与 `Unity-MCP-Plugin` 通信。可在本地或云端以 HTTP 传输方式运行。技术栈：`C#`、`ASP.NET Core`、`SignalR`
 
-🔸**Unity-MCP-Plugin** - 集成到 Unity 项目中的 `Unity 插件`，可访问 Unity 的 API。与 `Unity-MCP-Server` 通信并执行来自服务器的命令。技术栈：`C#`、`Unity`、`SignalR`
+🔸**Unity-MCP-Plugin** - 集成到 Unity 项目中的 `Unity 插件`，可访问 Unity 的 API。与共享的 `GameDev-MCP-Server` 通信并执行来自服务器的命令。技术栈：`C#`、`Unity`、`SignalR`
 
 🎮**Unity** - Unity 引擎，游戏引擎。
 
 ---
 
-## 🔹Unity-MCP-Server
+## 🔹MCP Server (shared GameDev-MCP-Server)
 
-一个 C# ASP.NET Core 应用程序，充当 AI 代理（如 Claude、Cursor 等 AI 界面）与 Unity 编辑器实例之间的桥梁。服务器使用 [csharp-sdk](https://github.com/modelcontextprotocol/csharp-sdk) 实现了 [Model Context Protocol](https://github.com/modelcontextprotocol)。
+一个 C# ASP.NET Core 应用程序，充当 AI 代理（Claude、Cursor 等 AI 界面）与 Unity Editor 实例之间的桥梁。服务器使用 [csharp-sdk](https://github.com/modelcontextprotocol/csharp-sdk) 实现 [Model Context Protocol](https://github.com/modelcontextprotocol)。
 
-> 项目位置：`Unity-MCP-Server`
+> 项目位置：共享仓库 [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) — 一个引擎无关的服务器，由 Unity-MCP、Godot-MCP 和 Unreal-MCP 共同使用。**它已不再是本仓库的一部分。**
 
-**主要职责：**
-
-1. **MCP 协议实现** ([ExtensionsMcpServer.cs](Unity-MCP-Server/src/Extension/ExtensionsMcpServer.cs))
-   - 实现支持 Tools、Prompts 和 Resources 的 MCP 服务器
-   - 支持 STDIO 和 HTTP 两种传输方式
-   - 处理 AI 代理请求：`CallTool`、`GetPrompt`、`ReadResource` 及其列表操作
-   - 当功能发生变化时（工具/提示列表更新）向 AI 代理发送通知
-
-2. **SignalR Hub 通信** ([RemoteApp.cs](Unity-MCP-Server/src/Hub/RemoteApp.cs)、[BaseHub.cs](Unity-MCP-Server/src/Hub/BaseHub.cs))
-   - 通过 SignalR 管理与 Unity-MCP-Plugin 的实时双向通信
-   - 处理版本握手以确保服务器与插件之间的 API 兼容性
-   - 跟踪客户端连接并管理断开连接
-   - 将工具/提示/资源更新通知从 Unity 路由到 AI 代理
-
-3. **请求路由与执行** ([ToolRouter.Call.cs](Unity-MCP-Server/src/Routing/Tool/ToolRouter.Call.cs)、[PromptRouter.Get.cs](Unity-MCP-Server/src/Routing/Prompt/PromptRouter.Get.cs)、[ResourceRouter.ReadResource.cs](Unity-MCP-Server/src/Routing/Resource/ResourceRouter.ReadResource.cs))
-   - 将 AI 代理请求路由到适当的 Unity-MCP-Plugin 实例
-   - 处理 Tool 调用、Prompt 请求和 Resource 读取
-   - 执行错误处理和验证
-   - 在 MCP 协议格式与内部数据模型之间进行转换
-
-4. **远程执行服务** ([RemoteToolRunner.cs](Unity-MCP-Server/src/Client/RemoteToolRunner.cs)、[RemotePromptRunner.cs](Unity-MCP-Server/src/Client/RemotePromptRunner.cs)、[RemoteResourceRunner.cs](Unity-MCP-Server/src/Client/RemoteResourceRunner.cs))
-   - 通过 SignalR 在 Unity-MCP-Plugin 上调用远程过程
-   - 跟踪异步请求并管理超时
-   - 实现带取消支持的请求/响应模式
-   - 处理来自 Unity 实例的请求完成回调
-
-5. **服务器生命周期管理** ([Program.cs](Unity-MCP-Server/src/Program.cs)、[McpServerService.cs](Unity-MCP-Server/src/McpServerService.cs))
-   - 使用 Kestrel 配置并启动 ASP.NET Core Web 服务器
-   - 初始化 MCP 服务器、SignalR Hub 和依赖注入
-   - 使用 NLog 管理日志（在 STDIO 模式下将日志重定向到 stderr）
-   - 处理优雅关闭和资源清理
-   - 订阅 Unity 工具/提示列表变更事件
+插件会下载由 [McpServerManager.cs](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/McpServerManager.cs) 中 `ServerVersion` 常量固定的发布二进制文件（`gamedev-mcp-server-<rid>.zip`）。架构与构建说明请参阅 [GameDev-MCP-Server README](https://github.com/IvanMurzak/GameDev-MCP-Server#readme)。
 
 ### Docker 镜像
 
-`Unity-MCP-Server` 可部署到 Docker 镜像中。项目文件夹中包含 `Dockerfile` 和 `.dockerignore` 文件。
+共享服务器由 GameDev-MCP-Server 仓库发布到 Docker Hub：[`aigamedeveloper/mcp-server`](https://hub.docker.com/r/aigamedeveloper/mcp-server)。
 
 ---
 
 ## 🔸Unity-MCP-Plugin
 
-集成到 Unity 环境中。使用 `Unity-MCP-Common` 通过反射在本地代码库中搜索 MCP *Tool*、*Resource* 和 *Prompt*。与 `Unity-MCP-Server` 通信以发送 MCP *Tool*、*Resource* 和 *Prompt* 的更新信息。接收来自 `Unity-MCP-Server` 的命令并执行。
+集成到 Unity 环境中。使用 `Unity-MCP-Common` 通过反射在本地代码库中搜索 MCP *Tool*、*Resource* 和 *Prompt*。与共享的 `GameDev-MCP-Server` 通信以发送 MCP *Tool*、*Resource* 和 *Prompt* 的更新信息。接收来自服务器的命令并执行。
 
 > 项目位置：`Unity-MCP-Plugin`
 
@@ -225,7 +193,7 @@ graph LR
 
 ### 编辑器
 
-编辑器组件提供 Unity 编辑器集成，实现 MCP 功能（Tools、Prompts、Resources）并管理 `Unity-MCP-Server` 的生命周期。
+编辑器组件提供 Unity 编辑器集成，实现 MCP 功能（Tools、Prompts、Resources）并管理本地 `GameDev-MCP-Server` 的生命周期。
 
 > 位置：`Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor`
 
@@ -237,7 +205,7 @@ graph LR
    - 域重载或退出播放模式后自动重新连接
 
 2. **MCP Server 二进制文件管理** ([McpServerManager.cs](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/McpServerManager.cs))
-   - 从 GitHub 发布版下载和管理 `Unity-MCP-Server` 可执行文件
+   - 从其 GitHub 发布版下载和管理共享的 `GameDev-MCP-Server` 可执行文件（由 `ServerVersion` 常量固定）
    - 跨平台二进制文件选择（Windows/macOS/Linux，x86/x64/ARM/ARM64）
    - 强制执行服务器与插件之间的版本兼容性
    - 为 AI 代理生成配置（包含可执行文件路径和连接设置的 JSON）
@@ -264,7 +232,7 @@ graph LR
 1. **插件核心与 SignalR 连接** ([UnityMcpPlugin.cs](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/UnityMcpPlugin.cs))
    - 通过 `BuildAndStart()` 管理插件生命周期的线程安全单例
    - 使用反射从程序集中发现 MCP Tools/Prompts/Resources
-   - 使用响应式状态监控（R3 库）建立与 Unity-MCP-Server 的 SignalR 连接
+   - 使用响应式状态监控（R3 库）建立与 MCP 服务器的 SignalR 连接
    - 配置管理：主机、端口、超时、版本兼容性
 
 2. **主线程调度器** ([MainThreadDispatcher.cs](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Utils/MainThreadDispatcher.cs))
@@ -599,16 +567,15 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 
 1. **版本检查** - 从 [package.json](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json) 提取版本并检查发布标签是否已存在
 2. **构建 Unity Installer** - 测试并导出 Unity 包安装程序（`AI-Game-Dev-Installer.unitypackage`）
-3. **构建 MCP Server** - 使用 [build-all.sh](../../Unity-MCP-Server/build-all.sh) 编译跨平台可执行文件（Windows、macOS、Linux）
 4. **Unity 插件测试** - 跨以下组合运行全面测试：
    - 3 个 Unity 版本：`2022.3.62f3`、`2023.2.22f1`、`6000.3.1f1`
    - 3 种测试模式：`editmode`、`playmode`、`standalone`
    - 2 种操作系统：`windows-latest`、`ubuntu-latest`
    - 合计：**18 种测试矩阵组合**
 5. **创建发布版本** - 从提交记录生成发布说明并创建带标签的 GitHub 发布
-6. **发布** - 将 Unity 安装程序包和 MCP Server 可执行文件上传到发布版本
+6. **发布** - 将 Unity 安装程序包和已签名的 UPM 包上传到发布版本
 7. **Discord 通知** - 将格式化的发布说明发送到 Discord 频道
-8. **部署** - 触发 NuGet 和 Docker 的部署工作流
+8. **部署** - 触发 npm CLI 的部署工作流
 9. **清理** - 成功发布后删除构建构件
 
 ### 🧪 [test_pull_request.yml](../../.github/workflows/test_pull_request.yml)
@@ -618,8 +585,7 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 
 **流程：**
 
-1. 为所有平台构建 MCP Server 可执行文件
-2. 运行与发布工作流相同的 18 种 Unity 测试矩阵组合
+1. 运行与发布工作流相同的 18 种 Unity 测试矩阵组合
 3. 所有测试必须通过，PR 才能被合并
 
 ### 🔧 [test_unity_plugin.yml](../../.github/workflows/test_unity_plugin.yml)
@@ -639,57 +605,39 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 
 ### 📦 [deploy.yml](../../.github/workflows/deploy.yml)
 
-**触发条件：** 由发布工作流调用 OR 手动调度 OR 发布版本发布时
-**用途：** 将 MCP Server 部署到 NuGet 和 Docker Hub
+**触发条件：** 由发布工作流调用或手动触发
+**用途：** 发布 `unity-mcp-cli` npm 包
 
 **任务：**
 
-**1. 部署到 NuGet：**
+**将 CLI 部署到 npm：**
 
-- 构建并测试 MCP Server
-- 打包 NuGet 包
-- 发布到 [nuget.org](https://www.nuget.org/packages/com.IvanMurzak.Unity.MCP.Server)
+- 构建并测试 CLI
+- 以 provenance 方式发布到 [npm](https://www.npmjs.com/package/unity-mcp-cli)
 
-**2. 部署 Docker 镜像：**
+> MCP Server 的 NuGet 包和 Docker 镜像部署已迁移到共享仓库 [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server)（Docker：[`aigamedeveloper/mcp-server`](https://hub.docker.com/r/aigamedeveloper/mcp-server)）。
 
-- 构建多平台 Docker 镜像（linux/amd64、linux/arm64）
-- 推送到 [Docker Hub](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
-- 使用版本号和 `latest` 标签
-- 使用 GitHub Actions 缓存优化构建
-
-### 🎯 [deploy_server_executables.yml](../../.github/workflows/deploy_server_executables.yml)
-
-**触发条件：** GitHub 发布版本发布时
-**用途：** 构建跨平台服务器可执行文件并上传到发布版本
-
-**流程：**
-
-- 在 macOS 上运行以支持交叉编译
-- 使用 [build-all.sh](../../Unity-MCP-Server/build-all.sh) 为 Windows、macOS、Linux 构建可执行文件
-- 为每个平台创建 ZIP 压缩包
-- 上传到 GitHub 发布版本
 
 ## 技术栈
 
 - **CI 平台：** GitHub Actions
 - **Unity 测试：** 带有 Unity Test Runner 的 [Game CI](https://game.ci/)
 - **容器化：** 支持多平台构建的 Docker
-- **包管理：** NuGet、OpenUPM、Docker Hub
+- **包管理：** npm、OpenUPM
 - **构建工具：** .NET 9.0、bash 脚本
 - **构件存储：** GitHub Actions 构件（临时）、GitHub Releases（永久）
 
 ## 安全注意事项
 
 - Unity 许可证、邮箱和密码存储为 GitHub Secrets
-- NuGet API 密钥和 Docker 凭据已安全保管
+- npm 发布使用 trusted publishing / provenance（OIDC）
 - PR 工作流包含对工作流文件修改的安全检查
 - 不受信任的 PR 贡献需要维护者通过 `ci-ok` 标签批准
 
 ## 部署目标
 
-1. **GitHub Releases** - Unity 安装程序包和 MCP Server 可执行文件
-2. **NuGet** - 面向 .NET 开发者的 MCP Server 包
-3. **Docker Hub** - 用于云部署的容器化 MCP Server
-4. **OpenUPM** - Unity 插件包（从 GitHub Releases 自动同步）
+1. **GitHub Releases** - Unity 安装程序包和已签名的 UPM 包
+2. **npm** - `unity-mcp-cli` 包
+3. **OpenUPM** - Unity 插件包（从 GitHub Releases 自动同步）
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)

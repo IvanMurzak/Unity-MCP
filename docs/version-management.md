@@ -2,7 +2,7 @@
 
 [![MCP](https://badge.mcpx.dev 'MCP Server')](https://modelcontextprotocol.io/introduction)
 [![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&labelColor=333A41 'OpenUPM package')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
-[![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
+[![Docker Image](https://img.shields.io/docker/image-size/aigamedeveloper/mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/aigamedeveloper/mcp-server)
 [![Unity Editor](https://img.shields.io/badge/Editor-X?style=flat&logo=unity&labelColor=333A41&color=49BC5C 'Unity Editor supported')](https://unity.com/releases/editor/archive)
 [![Unity Runtime](https://img.shields.io/badge/Runtime-X?style=flat&logo=unity&labelColor=333A41&color=49BC5C 'Unity Runtime supported')](https://unity.com/releases/editor/archive)
 [![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg 'Tests Passed')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)</br>
@@ -32,12 +32,18 @@ Located at: `commands/bump-version.ps1`
 ### What gets updated?
 
 The script automatically finds and replaces version strings in:
-1.  **`Unity-MCP-Server/server.json`**: Updates the server version field.
-2.  **`Unity-MCP-Server/com.IvanMurzak.Unity.MCP.Server.csproj`**: Updates the `<Version>` element.
-3.  **`Installer/Assets/com.IvanMurzak/AI Game Dev Installer/Installer.cs`**: Updates the embedded version constant in the installer.
-4.  **`Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json`**: Updates the Unity Package version (this file is also the source of the current version).
-5.  **`Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/UnityMcpPlugin.cs`**: Updates the runtime plugin version constant.
-6.  **`cli/package.json`**: Updates the `unity-mcp-cli` npm package version.
+1.  **`Installer/Assets/com.IvanMurzak/AI Game Dev Installer/Installer.cs`**: Updates the embedded version constant in the installer.
+2.  **`Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json`**: Updates the Unity Package version (this file is also the source of the current version).
+3.  **`Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/UnityMcpPlugin.cs`**: Updates the runtime plugin version constant.
+4.  **`cli/package.json`**: Updates the `unity-mcp-cli` npm package version.
+
+> **MCP server version is separate.** The MCP server is no longer part of this repo and is NOT
+> bumped with the plugin. The plugin consumes the shared
+> [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) release pinned by the
+> `ServerVersion` constant in
+> `Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/McpServerManager.cs`.
+> Bumping the consumed server = changing that constant; the corresponding `v<ServerVersion>`
+> release (with all 7 RID zips) must already exist on GameDev-MCP-Server.
 
 ## Workflow for Release
 
@@ -48,4 +54,4 @@ The script automatically finds and replaces version strings in:
 5.  **Tag** the release: `git tag X.Y.Z`
 6.  **Push**: `git push && git push --tags`
 
-> The GitHub Actions workflow will automatically build the Release, Docker Image, and Unity Package when a new Tag is pushed.
+> The GitHub Actions workflow will automatically build the Release and Unity Package when a new Tag is pushed.
