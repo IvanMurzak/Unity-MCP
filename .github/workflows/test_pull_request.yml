@@ -28,23 +28,9 @@ jobs:
   test-cli:
     uses: ./.github/workflows/test_cli.yml
 
-  build-and-zip-mcp-server:
-    runs-on: macos-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: "9.0.x"
-
-      - name: Make build script executable
-        run: chmod +x ./Unity-MCP-Server/build-all.sh
-
-      - name: Build executables for all platforms
-        shell: bash {0}
-        run: cd Unity-MCP-Server && ./build-all.sh Release
+  # NOTE: the MCP server is no longer built from this repo — the plugin consumes the shared
+  # GameDev-MCP-Server (https://github.com/IvanMurzak/GameDev-MCP-Server) release pinned by
+  # McpServerManager.ServerVersion.
 
   # --- UNITY TESTS ---
   # -------------------
@@ -52,7 +38,6 @@ jobs:
   # --- EDIT MODE ---
 
   test-unity-2022-3-62f3-editmode:
-    needs: [build-and-zip-mcp-server]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/2022.3.62f3"
@@ -61,7 +46,6 @@ jobs:
     secrets: inherit
 
   test-unity-2023-2-22f1-editmode:
-    needs: [build-and-zip-mcp-server]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/2023.2.22f1"
@@ -70,7 +54,6 @@ jobs:
     secrets: inherit
 
   test-unity-6000-3-1f1-editmode:
-    needs: [build-and-zip-mcp-server]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/6000.3.1f1"
@@ -81,7 +64,6 @@ jobs:
   # --- PLAY MODE ---
 
   # test-unity-2022-3-62f3-playmode:
-  #   needs: [build-and-zip-mcp-server]
   #   uses: ./.github/workflows/test_unity_plugin.yml
   #   with:
   #     projectPath: './Unity-Tests/2022.3.62f3'
@@ -90,7 +72,6 @@ jobs:
   #   secrets: inherit
 
   # test-unity-2023-2-22f1-playmode:
-  #   needs: [build-and-zip-mcp-server]
   #   uses: ./.github/workflows/test_unity_plugin.yml
   #   with:
   #     projectPath: './Unity-Tests/2023.2.22f1'
@@ -99,7 +80,6 @@ jobs:
   #   secrets: inherit
 
   # test-unity-6000-3-1f1-playmode:
-  #   needs: [build-and-zip-mcp-server]
   #   uses: ./.github/workflows/test_unity_plugin.yml
   #   with:
   #     projectPath: './Unity-Tests/6000.3.1f1'
@@ -110,7 +90,6 @@ jobs:
   # --- STANDALONE ---
 
   test-unity-2022-3-62f3-standalone:
-    needs: [build-and-zip-mcp-server]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/2022.3.62f3"
@@ -119,7 +98,6 @@ jobs:
     secrets: inherit
 
   test-unity-2023-2-22f1-standalone:
-    needs: [build-and-zip-mcp-server]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/2023.2.22f1"
@@ -128,7 +106,6 @@ jobs:
     secrets: inherit
 
   test-unity-6000-3-1f1-standalone:
-    needs: [build-and-zip-mcp-server]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/6000.3.1f1"

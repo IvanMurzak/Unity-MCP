@@ -104,5 +104,5 @@ jobs:
       - name: Cleanup Docker containers
         if: always()
         run: |
-          docker rm -f unity-mcp-server unity-editor 2>/dev/null || true
+          docker rm -f gamedev-mcp-server unity-editor 2>/dev/null || true
         shell: bash

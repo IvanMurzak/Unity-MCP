@@ -194,31 +194,9 @@ jobs:
           name: unity-installer-package
           path: ./Installer/build/AI-Game-Dev-Installer.unitypackage
 
-  build-and-zip-mcp-server:
-    runs-on: macos-latest
-    needs: check-version-tag
-    if: needs.check-version-tag.outputs.tag_exists == 'false'
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: "9.0.x"
-
-      - name: Make build script executable
-        run: chmod +x ./Unity-MCP-Server/build-all.sh
-
-      - name: Build executables for all platforms
-        shell: bash {0}
-        run: cd Unity-MCP-Server && ./build-all.sh Release
-
-      - name: Upload build zips as artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: mcp-server-zips
-          path: ./Unity-MCP-Server/publish/*.zip
+  # NOTE: the MCP server is no longer built or released from this repo — the plugin consumes
+  # the shared GameDev-MCP-Server (https://github.com/IvanMurzak/GameDev-MCP-Server) release
+  # pinned by McpServerManager.ServerVersion.
 
   # Builds the signed UPM package (.tgz with package/.attestation.p7m) in parallel
   # with tests/builds and uploads it as a `signed-upm-package` artifact for the
@@ -319,7 +297,7 @@ jobs:
   # --- EDIT MODE ---
 
   test-unity-2022-3-62f3-editmode:
-    needs: [build-and-zip-mcp-server, build-unity-installer]
+    needs: [build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/2022.3.62f3"
@@ -328,7 +306,7 @@ jobs:
     secrets: inherit
 
   test-unity-2023-2-22f1-editmode:
-    needs: [build-and-zip-mcp-server, build-unity-installer]
+    needs: [build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/2023.2.22f1"
@@ -337,7 +315,7 @@ jobs:
     secrets: inherit
 
   test-unity-6000-3-1f1-editmode:
-    needs: [build-and-zip-mcp-server, build-unity-installer]
+    needs: [build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/6000.3.1f1"
@@ -348,7 +326,7 @@ jobs:
   # --- PLAY MODE ---
 
   # test-unity-2022-3-62f3-playmode:
-  #   needs: [build-and-zip-mcp-server, build-unity-installer]
+  #   needs: [build-unity-installer]
   #   uses: ./.github/workflows/test_unity_plugin.yml
   #   with:
   #     projectPath: './Unity-Tests/2022.3.62f3'
@@ -357,7 +335,7 @@ jobs:
   #   secrets: inherit
 
   # test-unity-2023-2-22f1-playmode:
-  #   needs: [build-and-zip-mcp-server, build-unity-installer]
+  #   needs: [build-unity-installer]
   #   uses: ./.github/workflows/test_unity_plugin.yml
   #   with:
   #     projectPath: './Unity-Tests/2023.2.22f1'
@@ -366,7 +344,7 @@ jobs:
   #   secrets: inherit
 
   # test-unity-6000-3-1f1-playmode:
-  #   needs: [build-and-zip-mcp-server, build-unity-installer]
+  #   needs: [build-unity-installer]
   #   uses: ./.github/workflows/test_unity_plugin.yml
   #   with:
   #     projectPath: './Unity-Tests/6000.3.1f1'
@@ -377,7 +355,7 @@ jobs:
   # --- STANDALONE ---
 
   test-unity-2022-3-62f3-standalone:
-    needs: [build-and-zip-mcp-server, build-unity-installer]
+    needs: [build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/2022.3.62f3"
@@ -386,7 +364,7 @@ jobs:
     secrets: inherit
 
   test-unity-2023-2-22f1-standalone:
-    needs: [build-and-zip-mcp-server, build-unity-installer]
+    needs: [build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/2023.2.22f1"
@@ -395,7 +373,7 @@ jobs:
     secrets: inherit
 
   test-unity-6000-3-1f1-standalone:
-    needs: [build-and-zip-mcp-server, build-unity-installer]
+    needs: [build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/6000.3.1f1"
@@ -416,7 +394,6 @@ jobs:
         check-version-tag,
         test-cli,
         prepare-release-notes,
-        build-and-zip-mcp-server,
         build-unity-installer,
         build-signed-upm-package,
         test-unity-2022-3-62f3-editmode,
@@ -445,12 +422,6 @@ jobs:
         uses: actions/download-artifact@v6
         with:
           name: unity-installer-package
-          path: ./assets
-
-      - name: Download MCP server zips artifact
-        uses: actions/download-artifact@v6
-        with:
-          name: mcp-server-zips
           path: ./assets
 
       - name: Download signed UPM package artifact
@@ -495,7 +466,6 @@ jobs:
           fail_on_unmatched_files: true
           files: |
             ./assets/AI-Game-Dev-Installer.unitypackage
-            ./assets/*.zip
             ./assets/com.ivanmurzak.unity.mcp-*.tgz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -602,13 +572,6 @@ jobs:
     needs: [release-unity-plugin, deploy]
     if: always()
     steps:
-      - name: Delete MCP Server artifacts
-        uses: geekyeggo/delete-artifact@v5
-        with:
-          name: mcp-server-zips
-          failOnError: false
-        continue-on-error: true
-
       - name: Delete Unity Package artifacts
         uses: geekyeggo/delete-artifact@v5
         with:
