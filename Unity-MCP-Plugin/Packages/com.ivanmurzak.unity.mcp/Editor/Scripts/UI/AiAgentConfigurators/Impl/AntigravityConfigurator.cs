@@ -1,4 +1,4 @@
-﻿/*
+/*
 ┌──────────────────────────────────────────────────────────────────┐
 │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
 │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
@@ -33,7 +33,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         private static string GlobalConfigPath => Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
             ".gemini",
-            "antigravity",
+            "config",
             "mcp_config.json"
         );
 
@@ -109,7 +109,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             var manualStepsContainer = TemplateFoldoutFirst("Manual Configuration Steps");
 
-            manualStepsContainer!.Add(TemplateLabelDescription("1. Open or create file '%User%/.gemini/antigravity/mcp_config.json'"));
+            manualStepsContainer!.Add(TemplateLabelDescription("1. Open or create file '%User%/.gemini/config/mcp_config.json'"));
             manualStepsContainer!.Add(TemplateLabelDescription("2. Copy and paste the configuration json into the file."));
             manualStepsContainer!.Add(TemplateTextFieldReadOnly(ConfigStdio.ExpectedFileContent));
 
@@ -126,7 +126,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             var manualStepsContainerHttp = TemplateFoldoutFirst("Manual Configuration Steps");
 
-            manualStepsContainerHttp!.Add(TemplateLabelDescription("1. Open or create file '%User%/.gemini/antigravity/mcp_config.json'"));
+            manualStepsContainerHttp!.Add(TemplateLabelDescription("1. Open or create file '%User%/.gemini/config/mcp_config.json'"));
             manualStepsContainerHttp!.Add(TemplateLabelDescription("2. Copy and paste the configuration json into the file."));
             manualStepsContainerHttp!.Add(TemplateTextFieldReadOnly(ConfigHttp.ExpectedFileContent));
 

@@ -7,6 +7,7 @@ set -uo pipefail
 CONFIGURATION="Release"
 PROJECT_FILE="com.IvanMurzak.Unity.MCP.Server.csproj"
 SPECIFIED_PLATFORMS=()
+NO_ZIP=false
 
 all_runtimes=(
     "win-x64"
@@ -24,6 +25,12 @@ while [[ $# -gt 0 ]]; do
         -c|--configuration)
             CONFIGURATION="$2"
             shift 2
+            ;;
+        --no-zip)
+            # Build/publish only; skip the zip-archive phase. Used by CI when
+            # executables must be code-signed AFTER publish and BEFORE zipping.
+            NO_ZIP=true
+            shift
             ;;
         Debug|Release)
             CONFIGURATION="$1"
@@ -45,7 +52,7 @@ while [[ $# -gt 0 ]]; do
             done
             if [ "$is_runtime" = false ]; then
                 echo "Unknown argument: $1"
-                echo "Usage: $0 [Debug|Release] [-c|--configuration <config>] [*.csproj] [runtime...]"
+                echo "Usage: $0 [Debug|Release] [-c|--configuration <config>] [--no-zip] [*.csproj] [runtime...]"
                 echo "Known runtimes: ${all_runtimes[*]}"
                 exit 1
             fi
@@ -112,6 +119,12 @@ if [ $failed -eq 0 ]; then
     echo ""
     echo "All builds completed successfully!"
     echo "Executables are located in: ${PUBLISH_ROOT}/{runtime}/"
+
+    if [ "$NO_ZIP" = true ]; then
+        echo ""
+        echo "--no-zip specified: skipping zip-archive phase (executables left unzipped in ${PUBLISH_ROOT}/{runtime}/)."
+        exit 0
+    fi
 
     echo ""
     echo "Creating zip archives for each runtime..."

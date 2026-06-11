@@ -5,7 +5,10 @@
 param(
     [string]$Configuration = "Release",
     [string]$ProjectFile = "com.IvanMurzak.Unity.MCP.Server.csproj",
-    [string[]]$Platforms = @()
+    [string[]]$Platforms = @(),
+    # Build/publish only; skip the zip-archive phase. Used by CI when the
+    # executables must be code-signed AFTER publish and BEFORE zipping.
+    [switch]$NoZip
 )
 
 Write-Host "Building self-contained executables..." -ForegroundColor Green
@@ -100,6 +103,11 @@ if ($failed -gt 0) {
 Write-Host "`nAll builds completed successfully!" -ForegroundColor Green
 Write-Host "Executables are located in: $PublishRoot" -ForegroundColor Yellow
 Write-Host "Per-platform folders: ./publish/{runtime}/" -ForegroundColor Yellow
+
+if ($NoZip) {
+    Write-Host "`n-NoZip specified: skipping zip-archive phase (executables left unzipped in ./publish/{runtime}/)." -ForegroundColor Cyan
+    exit 0
+}
 
 Write-Host "`nCreating zip archives for each runtime..." -ForegroundColor Cyan
 

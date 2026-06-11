@@ -21,6 +21,7 @@ export { removePlugin } from './lib/remove-plugin.js';
 export { configure } from './lib/configure.js';
 export { setupMcp, listAgentIds } from './lib/setup-mcp.js';
 export { openProject } from './lib/open.js';
+export { createProject } from './lib/create-project.js';
 export { runTool, runSystemTool } from './lib/run-tool.js';
 
 export type {
@@ -59,6 +60,12 @@ export type {
   OpenProjectFailure,
   OpenProjectAuthOption,
   OpenProjectTransport,
+  // create-project
+  CreateProjectOptions,
+  CreateProjectResult,
+  CreateProjectSuccess,
+  CreateProjectFailure,
+  CreateProjectEditorInfo,
   // run-tool / run-system-tool
   RunToolOptions,
   RunToolResult,
