@@ -31,6 +31,14 @@ namespace com.IvanMurzak.Unity.MCP.Server
             // Configure NLog
             LogManager.Setup().LoadConfigurationFromFile("NLog.config");
 
+            // Default the streamableHttp idle-session window to 6 hours for this local server.
+            // The plugin's built-in default is 600s (10 min), which is too aggressive for a
+            // single-user local editor session and drops the MCP session mid-work. We only seed
+            // the env var when it is unset, and DataArguments parses CLI args after env vars, so an
+            // explicit MCP_PLUGIN_IDLE_TIMEOUT_SECONDS or --idle-timeout-seconds still overrides this.
+            if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(Consts.MCP.Server.Env.IdleTimeoutSeconds)))
+                Environment.SetEnvironmentVariable(Consts.MCP.Server.Env.IdleTimeoutSeconds, "21600"); // 6 hours
+
             var dataArguments = new DataArguments(args);
 
             // In STDIO mode, redirect console logs to stderr to avoid polluting stdout with non-JSON content
