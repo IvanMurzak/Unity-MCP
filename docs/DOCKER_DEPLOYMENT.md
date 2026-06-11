@@ -2,7 +2,7 @@
 
 [![MCP](https://badge.mcpx.dev 'MCP Server')](https://modelcontextprotocol.io/introduction)
 [![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&labelColor=333A41 'OpenUPM package')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
-[![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
+[![Docker Image](https://img.shields.io/docker/image-size/aigamedeveloper/mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/aigamedeveloper/mcp-server)
 [![Unity Editor](https://img.shields.io/badge/Editor-X?style=flat&logo=unity&labelColor=333A41&color=2A2A2A 'Unity Editor supported')](https://unity.com/releases/editor/archive)
 [![Unity Runtime](https://img.shields.io/badge/Runtime-X?style=flat&logo=unity&labelColor=333A41&color=2A2A2A 'Unity Runtime supported')](https://unity.com/releases/editor/archive)
 [![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg 'Tests Passed')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)</br>
@@ -12,10 +12,10 @@
 [![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&labelColor=333A41)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
-The Unity-MCP Server is available as a lightweight Docker container, ideal for cloud deployments or isolating the AI server environment. GitHub repository: [IvanMurzak/Unity-MCP](https://github.com/IvanMurzak/Unity-MCP)
+The MCP Server is available as a lightweight Docker container, ideal for cloud deployments or isolating the AI server environment. The server lives in its own shared repository: [IvanMurzak/GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server)
 
-- **Image**: `ivanmurzakdev/unity-mcp-server`
-- **Tags**: `latest`, `X.Y.Z` (e.g., `0.50.1`)
+- **Image**: `aigamedeveloper/mcp-server`
+- **Tags**: `latest`, `X.Y.Z` (e.g., `8.0.0`)
 - **Architectures**: `linux/amd64`, `linux/arm64` (Apple Silicon compatible)
 
 ![Docker Launch](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/docker-launch.gif?raw=true)
@@ -27,7 +27,7 @@ The Unity-MCP Server is available as a lightweight Docker container, ideal for c
 Run the server on port `8080`:
 
 ```bash
-docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server:latest
+docker run -p 8080:8080 aigamedeveloper/mcp-server:latest
 ```
 
 > ⚠️ **Required:**
@@ -56,7 +56,7 @@ Run on port `9090`:
 docker run \
   -e MCP_PLUGIN_PORT=9090 \
   -p 9090:9090 \
-  ivanmurzakdev/unity-mcp-server:latest
+  aigamedeveloper/mcp-server:latest
 ```
 
 ### Example: STDIO Mode
@@ -66,7 +66,7 @@ STDIO mode is used when the MCP Client manages the Docker process directly.
 docker run -i \
   -e MCP_PLUGIN_CLIENT_TRANSPORT=stdio \
   -p 8080:8080 \
-  ivanmurzakdev/unity-mcp-server:latest
+  aigamedeveloper/mcp-server:latest
 ```
 
 ### Example: Bearer Token Authentication
@@ -78,7 +78,7 @@ docker run \
   -e MCP_AUTHORIZATION=required \
   -e MCP_PLUGIN_TOKEN=your-secret-token \
   -p 8080:8080 \
-  ivanmurzakdev/unity-mcp-server:latest
+  aigamedeveloper/mcp-server:latest
 ```
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
@@ -124,7 +124,7 @@ With bearer token authentication (`MCP_AUTHORIZATION=required`):
         "--rm",
         "-e", "MCP_PLUGIN_CLIENT_TRANSPORT=stdio",
         "-p", "8080:8080",
-        "ivanmurzakdev/unity-mcp-server:latest"
+        "aigamedeveloper/mcp-server:latest"
       ]
     }
   }
@@ -145,7 +145,7 @@ With bearer token authentication (`MCP_AUTHORIZATION=required`):
         "-e", "MCP_AUTHORIZATION=required",
         "-e", "MCP_PLUGIN_TOKEN=your-secret-token",
         "-p", "8080:8080",
-        "ivanmurzakdev/unity-mcp-server:latest"
+        "aigamedeveloper/mcp-server:latest"
       ]
     }
   }

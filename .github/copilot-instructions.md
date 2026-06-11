@@ -34,9 +34,7 @@ Before performing any code review, you **MUST** read the project constitution: [
     - Core logic: [Packages/com.ivanmurzak.unity.mcp/Runtime](Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime).
     - Editor logic: `Packages/com.ivanmurzak.unity.mcp/Editor`.
     - Tests: `Packages/com.ivanmurzak.unity.mcp/Tests`.
-- **Unity-MCP-Server**: ASP.NET Core bridging LLMs and Unity.
-    - Entry point: [Program.cs](Unity-MCP-Server/src/Program.cs) (or similar in project root/src).
-    - SignalR Hub: `RemoteApp` (referenced in CLAUDE.md).
+- **MCP Server**: lives in the shared [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) repo (binary `gamedev-mcp-server`); the plugin downloads the release pinned by `McpServerManager.ServerVersion`.
 - **Installer**: [Installer/](Installer/) wraps the package installation.
 - **Unity-Tests**: [Unity-Tests/](Unity-Tests/) contains projects for different Unity versions (2022, 2023, 6000) linking locally to the Plugin.
 
@@ -45,9 +43,7 @@ Before performing any code review, you **MUST** read the project constitution: [
     - Auto-compiles in Unity.
     - Run tests: [commands/run-unity-tests.ps1](commands/run-unity-tests.ps1).
     - Editor Tests: `Packages/com.ivanmurzak.unity.mcp/Tests/Editor`.
-- **Server**:
-    - Build: `.\Unity-MCP-Server\build-all.ps1`.
-    - Run: `dotnet run --project Unity-MCP-Server/com.IvanMurzak.Unity.MCP.Server.csproj`.
+- **Server**: built and released from the shared [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) repo — not from this repo.
 - **Commands**: See [commands/](commands/) for utility scripts (release, tests).
 
 ## Project Conventions
