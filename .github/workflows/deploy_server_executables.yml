@@ -66,10 +66,13 @@ jobs:
           ./build-all.sh Release --no-zip osx-x64 osx-arm64 linux-x64 linux-arm64
 
       # Import the Developer ID Application certificate into a temporary
-      # keychain. Guarded: skipped (and signing later skipped) when MAC_CSC_LINK
-      # is empty, so an unsigned-but-green release is still produced.
+      # keychain. Guarded on ALL THREE mac signing secrets so a partial-secrets
+      # dispatch (e.g. MAC_CSC_LINK set but MAC_SIGN_IDENTITY empty) skips the
+      # whole sign+notarize path cleanly rather than dying under `set -e` and
+      # taking the unsigned-upload fallback down with it. Result: missing or
+      # partial mac secrets => unsigned-but-green release is still produced.
       - name: Import macOS signing certificate
-        if: ${{ env.MAC_CSC_LINK != '' }}
+        if: ${{ env.MAC_CSC_LINK != '' && env.MAC_CSC_KEY_PASSWORD != '' && env.MAC_SIGN_IDENTITY != '' }}
         run: |
           set -euo pipefail
           KEYCHAIN_PATH="$RUNNER_TEMP/signing.keychain-db"
@@ -90,8 +93,11 @@ jobs:
           rm -f "$CERT_PATH"
           echo "KEYCHAIN_PATH=$KEYCHAIN_PATH" >> "$GITHUB_ENV"
 
+      # Same all-three-secrets guard as the import step: never reach `codesign
+      # --sign "$MAC_SIGN_IDENTITY"` with an empty identity (which would fail
+      # under `set -e` and sink the whole job, including the unsigned upload).
       - name: Code-sign macOS executables (hardened runtime)
-        if: ${{ env.MAC_CSC_LINK != '' }}
+        if: ${{ env.MAC_CSC_LINK != '' && env.MAC_CSC_KEY_PASSWORD != '' && env.MAC_SIGN_IDENTITY != '' }}
         run: |
           set -euo pipefail
           ENTITLEMENTS="Unity-MCP-Server/build/entitlements.mac.plist"
@@ -121,9 +127,13 @@ jobs:
           ls -la *.zip
 
       # Notarize the two macOS zips with notarytool (App Store Connect API key).
-      # Guarded: skipped when the API key secret is empty.
+      # Guarded on the SAME three signing secrets as the codesign step PLUS the
+      # notarize API key — notarizing an UNSIGNED binary is meaningless, so the
+      # signing guard is part of this condition (notarize secrets present but
+      # signing secrets absent must NOT submit unsigned zips). Missing either
+      # set => skip cleanly and still upload the (unsigned) zips.
       - name: Notarize macOS zips
-        if: ${{ env.APPLE_API_KEY_B64 != '' }}
+        if: ${{ env.MAC_CSC_LINK != '' && env.MAC_CSC_KEY_PASSWORD != '' && env.MAC_SIGN_IDENTITY != '' && env.APPLE_API_KEY_B64 != '' }}
         run: |
           set -euo pipefail
           KEY_PATH="$RUNNER_TEMP/AuthKey.p8"
@@ -132,11 +142,23 @@ jobs:
           for rid in osx-x64 osx-arm64; do
             ZIP="Unity-MCP-Server/publish/unity-mcp-server-${rid}.zip"
             echo "Notarizing ${ZIP}..."
-            xcrun notarytool submit "$ZIP" \
+            # `notarytool submit --wait` exits 0 even when the submission is
+            # Invalid/Rejected (it only fails on transport errors), so the exit
+            # code alone is NOT proof of acceptance. Capture the JSON result and
+            # fail the step unless status == "Accepted".
+            SUBMIT_JSON="$(xcrun notarytool submit "$ZIP" \
               --key "$KEY_PATH" \
               --key-id "$APPLE_API_KEY_ID" \
               --issuer "$APPLE_API_ISSUER" \
-              --wait
+              --wait \
+              --output-format json)"
+            echo "$SUBMIT_JSON"
+            STATUS="$(echo "$SUBMIT_JSON" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("status",""))')"
+            if [ "$STATUS" != "Accepted" ]; then
+              echo "::error::Notarization for ${rid} did not succeed (status: ${STATUS:-unknown})"
+              exit 1
+            fi
+            echo "Notarization for ${rid} accepted."
           done
 
           rm -f "$KEY_PATH"
