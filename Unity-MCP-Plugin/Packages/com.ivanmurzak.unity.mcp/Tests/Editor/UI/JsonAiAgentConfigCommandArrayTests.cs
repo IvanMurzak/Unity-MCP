@@ -99,7 +99,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // First element should be executable path
             var executable = commandArray[0]?.GetValue<string>();
             Assert.IsNotNull(executable, "Executable should not be null");
-            Assert.IsTrue(executable!.Contains("unity-mcp-server"), "First element should be the executable path");
+            Assert.IsTrue(executable!.Contains(McpServerManager.ExecutableName), "First element should be the executable path");
 
             yield return null;
         }

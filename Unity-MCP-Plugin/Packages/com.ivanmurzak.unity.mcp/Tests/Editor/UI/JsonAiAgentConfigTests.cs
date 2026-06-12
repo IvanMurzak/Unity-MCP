@@ -128,7 +128,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             var command = serverEntry!["command"]?.GetValue<string>();
             Assert.IsNotNull(command, "command should not be null");
-            Assert.IsTrue(command!.Contains("unity-mcp-server"), "command should contain executable name");
+            Assert.IsTrue(command!.Contains(McpServerManager.ExecutableName), "command should contain executable name");
 
             var args = serverEntry["args"]?.AsArray();
             Assert.IsNotNull(args, "args should not be null");

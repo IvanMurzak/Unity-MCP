@@ -2,7 +2,7 @@
 
 [![MCP](https://badge.mcpx.dev 'MCP Server')](https://modelcontextprotocol.io/introduction)
 [![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&labelColor=333A41 'OpenUPM package')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
-[![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
+[![Docker Image](https://img.shields.io/docker/image-size/aigamedeveloper/mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/aigamedeveloper/mcp-server)
 [![Unity Editor](https://img.shields.io/badge/Editor-X?style=flat&logo=unity&labelColor=333A41&color=49BC5C 'Unity Editor supported')](https://unity.com/releases/editor/archive)
 [![Unity Runtime](https://img.shields.io/badge/Runtime-X?style=flat&logo=unity&labelColor=333A41&color=49BC5C 'Unity Runtime supported')](https://unity.com/releases/editor/archive)
 [![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg 'Tests Passed')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)</br>
@@ -12,6 +12,8 @@
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
 The **MCP Server** acts as the bridge between the **AI Client** (Claude, Cursor, etc.) and the **Unity Editor/Game**.
+
+> The server lives in its own shared repo: [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) (binary `gamedev-mcp-server`, Docker `aigamedeveloper/mcp-server`) — one engine-agnostic server consumed by Unity-MCP, Godot-MCP, and Unreal-MCP. The Unity plugin downloads the release pinned by the `ServerVersion` constant in `McpServerManager.cs`.
 
 <div align="center">
 
@@ -35,14 +37,14 @@ See **[Docker Deployment](DOCKER_DEPLOYMENT.md)**. Best for cloud hosting or iso
 ### 3. Manual Binary
 You can run the server manually if you need advanced control or debugging.
 
-Download from **[Releases](https://github.com/IvanMurzak/Unity-MCP/releases)**.
+Download from the shared **[GameDev-MCP-Server Releases](https://github.com/IvanMurzak/GameDev-MCP-Server/releases)**.
 
 ```bash
 # HTTP mode (default transport)
-./unity-mcp-server --port 8080 --client-transport streamableHttp
+./gamedev-mcp-server --port 8080 --client-transport streamableHttp
 
 # STDIO mode (for piping to MCP clients like Claude Desktop)
-./unity-mcp-server --port 8080 --client-transport stdio
+./gamedev-mcp-server --port 8080 --client-transport stdio
 ```
 
 ## CLI Arguments

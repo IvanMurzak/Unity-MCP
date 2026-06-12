@@ -2,7 +2,9 @@
 
 ## What This Is
 
-Unity-MCP bridges LLMs (Claude, Cursor, Copilot, etc.) with Unity Editor and Runtime via the [Model Context Protocol](https://modelcontextprotocol.io/). Sub-projects: `Unity-MCP-Server/` (ASP.NET Core + MCP SDK), `Unity-MCP-Plugin/` (Unity Editor/Runtime plugin), `cli/`, `Installer/`, `Unity-Tests/`.
+Unity-MCP bridges LLMs (Claude, Cursor, Copilot, etc.) with Unity Editor and Runtime via the [Model Context Protocol](https://modelcontextprotocol.io/). Sub-projects: `Unity-MCP-Plugin/` (Unity Editor/Runtime plugin), `cli/`, `Installer/`, `Unity-Tests/`.
+
+The MCP server is NOT in this repo — the plugin consumes the shared [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) (binary `gamedev-mcp-server`, release assets `gamedev-mcp-server-<rid>.zip`, Docker `aigamedeveloper/mcp-server`) — one engine-agnostic server shared by Unity-MCP, Godot-MCP, and Unreal-MCP. The plugin downloads the release pinned by the `ServerVersion` constant in `Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/McpServerManager.cs` (decoupled from the plugin `Version`). **Server version pin:** bumping the consumed server = changing that constant; the pinned `v<ServerVersion>` release (with all 7 RID zips) must already exist on GameDev-MCP-Server BEFORE cutting a plugin release that pins it.
 
 ## Build / Run
 
@@ -19,4 +21,4 @@ Non-negotiable principles and architecture constraints: [`.specify/memory/consti
 - [docs/claude/style.md](docs/claude/style.md) — Coding conventions: `#nullable enable`, no reflection for private access, namespace pattern, copyright headers
 - [docs/claude/release.md](docs/claude/release.md) — Release, versioning, CI/CD
 - [docs/claude/documentation-sync.md](docs/claude/documentation-sync.md) — README translation/copy sync requirements
-- `Unity-MCP-Server/CLAUDE.md`, `Unity-MCP-Plugin/CLAUDE.md` — sub-project specifics
+- `Unity-MCP-Plugin/CLAUDE.md` — sub-project specifics
