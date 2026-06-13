@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { execFileSync, execSync, spawn } from 'child_process';
+import { execFile, execFileSync, execSync, spawn } from 'child_process';
 import { platform } from 'os';
 import { get as httpsGet } from 'https';
 import { get as httpGet, IncomingMessage } from 'http';
@@ -233,38 +233,55 @@ export function parseInstalledEditorsLine(line: string): InstalledEditor | null 
   return null;
 }
 
-export function listInstalledEditors(hubPath: string): InstalledEditor[] {
-  const spinner = ui.startSpinner('Listing installed editors...');
-  const startedAt = Date.now();
+/**
+ * Query Unity Hub for installed editors — the silent core shared by
+ * the spinner-wrapped {@link listInstalledEditors} (CLI surface) and
+ * the library's `createProject` (which must not write to stdout).
+ * Throws an `Error` with the formatted Hub CLI failure on exec error;
+ * callers decide how to surface it.
+ */
+export function queryInstalledEditors(hubPath: string): InstalledEditor[] {
+  verbose(`queryInstalledEditors invoking Unity Hub CLI: ${hubPath} -- --headless editors --installed`);
+  const execStartedAt = Date.now();
+  let output: string;
   try {
-    verbose(`listInstalledEditors invoking Unity Hub CLI: ${hubPath} -- --headless editors --installed`);
-    const execStartedAt = Date.now();
     // stdio: pipe stderr instead of inheriting it — Unity Hub is an
     // Electron app and Chromium routinely logs benign quota_database
     // errors to stderr that would otherwise pollute the CLI output.
-    // The catch block re-surfaces captured stderr on real failures.
-    const output = execFileSync(hubPath, ['--', '--headless', 'editors', '--installed'], {
+    // formatExecError re-surfaces captured stderr on real failures.
+    output = execFileSync(hubPath, ['--', '--headless', 'editors', '--installed'], {
       encoding: 'utf-8',
       timeout: 120000,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
-    verbose(`listInstalledEditors Unity Hub CLI returned in ${Date.now() - execStartedAt}ms`);
+  } catch (err) {
+    verbose(`queryInstalledEditors failed after ${Date.now() - execStartedAt}ms`);
+    throw new Error(`Failed to list installed editors: ${formatExecError(err)}`);
+  }
+  verbose(`queryInstalledEditors Unity Hub CLI returned in ${Date.now() - execStartedAt}ms`);
 
-    const parseStartedAt = Date.now();
-    const editors: InstalledEditor[] = [];
-    for (const line of output.split('\n')) {
-      const editor = parseInstalledEditorsLine(line);
-      if (editor) {
-        editors.push(editor);
-      }
+  const parseStartedAt = Date.now();
+  const editors: InstalledEditor[] = [];
+  for (const line of output.split('\n')) {
+    const editor = parseInstalledEditorsLine(line);
+    if (editor) {
+      editors.push(editor);
     }
-    verbose(`listInstalledEditors parsed ${editors.length} editor(s) in ${Date.now() - parseStartedAt}ms`);
+  }
+  verbose(`queryInstalledEditors parsed ${editors.length} editor(s) in ${Date.now() - parseStartedAt}ms`);
+  return editors;
+}
 
+export function listInstalledEditors(hubPath: string): InstalledEditor[] {
+  const spinner = ui.startSpinner('Listing installed editors...');
+  const startedAt = Date.now();
+  try {
+    const editors = queryInstalledEditors(hubPath);
     spinner.success(`Found ${editors.length} installed editor${editors.length !== 1 ? 's' : ''}`);
     verbose(`listInstalledEditors completed in ${Date.now() - startedAt}ms`);
     return editors;
   } catch (err) {
-    spinner.error(`Failed to list installed editors: ${formatExecError(err)}`);
+    spinner.error((err as Error).message);
     verbose(`listInstalledEditors failed after ${Date.now() - startedAt}ms`);
     return [];
   }
@@ -579,7 +596,7 @@ export async function installEditor(hubPath: string, version: string, prefetched
  * The path from Unity Hub may already point to the executable (e.g. .../Editor/Unity.exe)
  * or to the install root directory. This function handles both cases.
  */
-function resolveEditorExecutable(editorPath: string): string {
+export function resolveEditorExecutable(editorPath: string): string {
   // If the path already points to an existing executable, use it directly
   const basename = path.basename(editorPath).toLowerCase();
   if (basename === 'unity.exe' || (basename === 'unity' && !fs.statSync(editorPath, { throwIfNoEntry: false })?.isDirectory())) {
@@ -627,44 +644,52 @@ function resolveEditorExecutable(editorPath: string): string {
 }
 
 /**
- * Create a new Unity project using the Unity Editor directly.
- * Unity Hub's headless CLI does not support a 'create' command in newer versions,
- * so we invoke the editor binary with -createProject -quit -batchmode instead.
+ * Default timeout (ms) for the editor's `-createProject` invocation —
+ * the single source of truth shared with `lib/create-project.ts`.
  */
-export function createProject(hubPath: string, projectPath: string, editorVersion?: string): void {
-  // Find the editor install path
-  const editors = listInstalledEditors(hubPath);
-  if (editors.length === 0) {
-    throw new Error('No Unity editors installed. Install one with: unity-mcp-cli install-unity [version]');
-  }
+export const DEFAULT_CREATE_TIMEOUT_MS = 120000;
 
-  let editor: InstalledEditor | undefined;
-  if (editorVersion) {
-    editor = editors.find(e => e.version === editorVersion);
-    if (!editor) {
-      throw new Error(`Unity Editor ${editorVersion} not found. Installed versions: ${editors.map(e => e.version).join(', ')}`);
-    }
-  } else {
-    editor = findHighestEditor(editors);
-  }
-
-  const editorExe = resolveEditorExecutable(editor.path);
-  if (!fs.existsSync(editorExe)) {
-    throw new Error(`Unity Editor executable not found at: ${editorExe}`);
-  }
-
-  const args = ['-createProject', projectPath, '-quit', '-batchmode'];
-
-  ui.info(`Creating Unity project at: ${projectPath}`);
-  ui.label('Unity Editor', `${editor.version} (${editorExe})`);
-  try {
-    execFileSync(editorExe, args, {
-      encoding: 'utf-8',
-      timeout: 120000,
-      stdio: 'inherit',
-    });
-    ui.success('Project created successfully.');
-  } catch (err) {
-    throw new Error(`Failed to create project: ${(err as Error).message}`);
-  }
+/**
+ * Invoke the Unity Editor binary to create a new project at
+ * `projectPath`. Unity Hub's headless CLI does not support a 'create'
+ * command in newer versions, so we invoke the editor binary with
+ * `-createProject -quit -batchmode` instead.
+ *
+ * Silent (library-safe): no spinners, no stdout/stderr writes — the
+ * editor's output is captured and folded into the rejection error on
+ * failure. The orchestration around this call (editor discovery /
+ * version selection) lives in `lib/create-project.ts`; the CLI's
+ * `create-project` command delegates there.
+ */
+export function runEditorCreateProject(
+  editorExePath: string,
+  projectPath: string,
+  timeoutMs = DEFAULT_CREATE_TIMEOUT_MS,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    execFile(
+      editorExePath,
+      ['-createProject', projectPath, '-quit', '-batchmode'],
+      // maxBuffer: Infinity — captured output is only used to enrich the
+      // failure message, and Unity's verbose first-run import logs can
+      // exceed Node's 1 MiB default, which would otherwise kill (with
+      // ERR_CHILD_PROCESS_STDOUT_MAXBUFFER) a creation that was succeeding.
+      { encoding: 'utf-8', timeout: timeoutMs, windowsHide: true, maxBuffer: Infinity },
+      (err) => {
+        if (err) {
+          // On timeout, execFile kills the process with SIGTERM and leaves
+          // a generic "Command failed" message, so name the timeout
+          // explicitly. Otherwise execFile already folds the captured
+          // stderr into err.message ("Command failed: <cmd>\n<stderr>") —
+          // surface that as-is rather than appending stderr a second time.
+          const message = err.killed && err.signal === 'SIGTERM'
+            ? `Failed to create project: timed out after ${timeoutMs}ms`
+            : `Failed to create project: ${err.message}`;
+          reject(new Error(message));
+          return;
+        }
+        resolve();
+      },
+    );
+  });
 }

@@ -8,8 +8,6 @@ docs/
 ├── README.es.md                                                 ← Spanish translation of root README *
 ├── README.ja.md                                                 ← Japanese translation *
 └── README.zh-CN.md                                              ← Simplified Chinese translation *
-Unity-MCP-Server/README.md                                       ← MCP Server documentation
-Unity-MCP-Server/MCP-Test-Client/README.md                       ← Test client documentation
 cli/README.md                                                    ← CLI documentation
 cli/docs/
 ├── README.es.md                                                 ← Spanish translation of CLI README

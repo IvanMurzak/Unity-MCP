@@ -31,6 +31,15 @@ export type ProgressEvent =
       envVars: Record<string, string>;
     }
   | { phase: 'launching-editor'; message: string; editorPath: string; projectPath: string }
+  // createProject phase — fires right before the editor binary is
+  // invoked with `-createProject`.
+  | {
+      phase: 'creating-project';
+      message: string;
+      projectPath: string;
+      editorPath: string;
+      version: string;
+    }
   | { phase: 'editor-launched'; message: string; pid?: number }
   | {
       phase: 'launch-errors-dismissed';
@@ -424,6 +433,117 @@ export interface OpenEnvInputs {
   transport?: OpenProjectOptions['transport'];
   startServer?: OpenProjectOptions['startServer'];
 }
+
+// ---------------------------------------------------------------------------
+// create-project
+// ---------------------------------------------------------------------------
+
+/**
+ * Installed Unity Editor entry as surfaced by Unity Hub. Structurally
+ * identical to the internal `InstalledEditor` shape returned by the
+ * unity-hub utilities; declared here so the public library surface
+ * does not reach into `utils/`.
+ */
+export interface CreateProjectEditorInfo {
+  /** Unity Editor version string (e.g. `"2022.3.62f3"`). */
+  version: string;
+  /** Editor install path as reported by Unity Hub. */
+  path: string;
+}
+
+export interface CreateProjectOptions {
+  /**
+   * Path where the project will be created. Absolute or relative
+   * (resolved against `process.cwd()`). Required.
+   */
+  projectPath: string;
+  /**
+   * Unity Editor version to use (e.g. `"2022.3.62f3"`). When omitted,
+   * the highest installed editor is used.
+   */
+  editorVersion?: string;
+  /**
+   * Pre-resolved Unity Hub path. When provided, Hub discovery is
+   * skipped — the CLI passes `ensureUnityHub()`'s result here so the
+   * auto-install bootstrap stays on the CLI surface while the library
+   * itself never installs anything.
+   */
+  hubPath?: string;
+  /**
+   * Timeout (milliseconds) for the editor's `-createProject`
+   * invocation. Defaults to `120000` (matching the historical CLI
+   * behaviour). Only a finite positive integer up to `2147483647`
+   * (Node's max timer delay, 2^31-1) is honoured; any other value
+   * (`<= 0`, above that ceiling, fractional, `NaN`, or `Infinity`)
+   * falls back to the default.
+   */
+  timeoutMs?: number;
+  /**
+   * Optional progress callback — fires for `start`, `editors-located`,
+   * `editor-resolved`, `creating-project`, and `done`.
+   */
+  onProgress?: ProgressCallback;
+  /**
+   * Test injection — Unity Hub discovery. Defaults to the real
+   * filesystem probe (`findUnityHub`). Only consulted when `hubPath`
+   * is not provided.
+   */
+  findHubImpl?: () => string | null;
+  /**
+   * Test injection — installed-editor query. Defaults to invoking the
+   * Unity Hub CLI (`--headless editors --installed`).
+   */
+  listEditorsImpl?: (hubPath: string) => CreateProjectEditorInfo[];
+  /**
+   * Test injection — resolve an editor install path to its executable.
+   * Defaults to the cross-platform executable resolution plus an
+   * existence check; returns `null` when no executable exists at the
+   * resolved location.
+   */
+  resolveEditorExecutableImpl?: (editorInstallPath: string) => string | null;
+  /**
+   * Test injection — the editor `-createProject` invocation. Defaults
+   * to spawning the real editor binary with
+   * `-createProject <path> -quit -batchmode`.
+   */
+  runEditorImpl?: (editorExePath: string, projectPath: string, timeoutMs: number) => Promise<void>;
+}
+
+/** Successful `createProject` outcome. Narrow with `kind === 'success'`. */
+export interface CreateProjectSuccess {
+  kind: 'success';
+  /** Always `true` for the success variant. Wire-compatible alias for `kind === 'success'`. */
+  success: true;
+  /** Resolved absolute path of the created project. */
+  projectPath: string;
+  /** Unity Editor version that created the project. */
+  editorVersion: string;
+  /** Absolute path to the Unity Editor executable that was invoked. */
+  editorPath: string;
+  /** Non-fatal warnings collected during the run. */
+  warnings: string[];
+}
+
+/** Failed `createProject` outcome. Narrow with `kind === 'failure'`. */
+export interface CreateProjectFailure {
+  kind: 'failure';
+  /** Always `false` for the failure variant. Wire-compatible alias for `kind === 'failure'`. */
+  success: false;
+  /** Resolved absolute project path, if resolution happened before the failure. */
+  projectPath?: string;
+  /** Editor version, if one was resolved before the failure. */
+  editorVersion?: string;
+  /** Editor executable path, if it was resolved before the failure. */
+  editorPath?: string;
+  /** Non-fatal warnings collected before the failure. */
+  warnings: string[];
+  /** Human-readable error message — never thrown past the public boundary. */
+  errorMessage: string;
+  /** The captured error. */
+  error: Error;
+}
+
+export type CreateProjectResult = CreateProjectSuccess | CreateProjectFailure;
 
 // ---------------------------------------------------------------------------
 // run-tool / run-system-tool

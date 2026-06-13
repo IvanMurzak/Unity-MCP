@@ -36,19 +36,10 @@ Push-Location $repoRoot
 $ErrorActionPreference = "Stop"
 
 # Version file locations (relative to script root)
+# NOTE: the MCP server is NOT bumped here anymore — it lives in the shared GameDev-MCP-Server
+# repo and is consumed via the pinned McpServerManager.ServerVersion constant (updated manually
+# when a new shared-server release should be consumed).
 $VersionFiles = @(
-    @{
-        Path        = "Unity-MCP-Server/server.json"
-        Pattern     = '"version":\s*"[\d\.]+"'
-        Replace     = '"version": "{VERSION}"'
-        Description = "Server JSON version (2 occurrences)"
-    },
-    @{
-        Path        = "Unity-MCP-Server/com.IvanMurzak.Unity.MCP.Server.csproj"
-        Pattern     = '<Version>[\d\.]+</Version>'
-        Replace     = '<Version>{VERSION}</Version>'
-        Description = "Server csproj XML version"
-    },
     @{
         Path        = "Installer/Assets/com.IvanMurzak/AI Game Dev Installer/Installer.cs"
         Pattern     = 'public const string Version = "[\d\.]+";'

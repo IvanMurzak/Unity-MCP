@@ -1,8 +1,8 @@
 import { Command } from 'commander';
-import * as path from 'path';
-import { ensureUnityHub, createProject, listInstalledEditors, findHighestEditor } from '../utils/unity-hub.js';
+import { ensureUnityHub } from '../utils/unity-hub.js';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
+import { createProject } from '../lib/create-project.js';
 
 export const createProjectCommand = new Command('create-project')
   .description('Create a new Unity project')
@@ -16,31 +16,71 @@ export const createProjectCommand = new Command('create-project')
       process.exit(1);
     }
 
-    const spinner = ui.startSpinner('Locating Unity Hub...');
+    // Hub bootstrap stays on the CLI surface: `ensureUnityHub` may
+    // download + install Unity Hub (spinners, possible admin prompt),
+    // which the library deliberately never does. The resolved path is
+    // handed to the library so discovery is not repeated.
+    const hubSpinner = ui.startSpinner('Locating Unity Hub...');
     let hubPath: string;
     try {
       hubPath = await ensureUnityHub();
     } catch (err) {
-      spinner.error('Failed to locate Unity Hub');
+      hubSpinner.error('Failed to locate Unity Hub');
       throw err;
     }
-    spinner.success('Unity Hub located');
+    hubSpinner.success('Unity Hub located');
+    verbose(`Unity Hub path: ${hubPath}`);
 
-    let editorVersion = options.unity;
+    let createSpinner: ReturnType<typeof ui.startSpinner> | undefined;
 
-    if (!editorVersion) {
-      const editors = listInstalledEditors(hubPath);
-      if (editors.length === 0) {
-        ui.error('No Unity editors installed. Install one with: unity-mcp-cli install-unity [version]');
-        process.exit(1);
+    // All project-creation logic lives in the shared library function;
+    // this command only renders progress and maps the result onto the
+    // historical CLI output / exit codes.
+    const result = await createProject({
+      projectPath: resolvedPath,
+      editorVersion: options.unity,
+      hubPath,
+      onProgress: (event) => {
+        switch (event.phase) {
+          case 'editors-located': {
+            // The Hub query is synchronous (it has already returned by the
+            // time this fires), so emit the result line directly to keep
+            // parity with the old "Found N installed editors" output rather
+            // than leaving the user with no feedback during the query.
+            ui.info(event.message);
+            break;
+          }
+          case 'editor-resolved': {
+            if (!options.unity && event.version) {
+              ui.info(`No Unity version specified, using highest installed: ${event.version}`);
+            }
+            verbose(`Unity Editor executable: ${event.editorPath}`);
+            break;
+          }
+          case 'creating-project': {
+            ui.info(`Creating Unity project at: ${event.projectPath}`);
+            ui.label('Unity Editor', `${event.version} (${event.editorPath})`);
+            createSpinner = ui.startSpinner('Creating project...');
+            break;
+          }
+          default:
+            break;
+        }
+      },
+    });
+
+    if (result.kind === 'failure') {
+      if (createSpinner) {
+        createSpinner.error('Project creation failed');
+        createSpinner = undefined;
       }
-      const highest = findHighestEditor(editors);
-      editorVersion = highest.version;
-      ui.info(`No Unity version specified, using highest installed: ${editorVersion}`);
+      ui.error(result.errorMessage);
+      process.exit(1);
     }
 
-    const projectPath = path.resolve(resolvedPath);
-    verbose(`Creating project at: ${projectPath} with editor version: ${editorVersion}`);
-    verbose(`Unity Hub path: ${hubPath}`);
-    createProject(hubPath, projectPath, editorVersion);
+    if (createSpinner) {
+      createSpinner.stop();
+      createSpinner = undefined;
+    }
+    ui.success('Project created successfully.');
   });

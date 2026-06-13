@@ -54,26 +54,26 @@ runs:
 
     - name: Start AI-Game-Developer MCP Server
       run: |
-        docker rm -f unity-mcp-server 2>/dev/null || true
+        docker rm -f gamedev-mcp-server 2>/dev/null || true
 
         docker run -d \
-          --name unity-mcp-server \
+          --name gamedev-mcp-server \
           --network host \
           -e MCP_PLUGIN_PORT=8080 \
           -e MCP_PLUGIN_CLIENT_TRANSPORT=streamableHttp \
           -e MCP_AUTHORIZATION=none \
-          ivanmurzakdev/unity-mcp-server:latest
+          aigamedeveloper/mcp-server:latest
 
         echo "Waiting for MCP Server to be ready..."
         for i in $(seq 1 12); do
           sleep 5
-          if docker logs unity-mcp-server 2>&1 | grep -q "Start listening on port:"; then
+          if docker logs gamedev-mcp-server 2>&1 | grep -q "Start listening on port:"; then
             echo "MCP Server is ready."; break
           fi
           echo "Still waiting... ($((i*5))s)"
           if [ "$i" -eq 12 ]; then
             echo "Timeout waiting for MCP Server"
-            docker logs unity-mcp-server
+            docker logs gamedev-mcp-server
             exit 1
           fi
         done
