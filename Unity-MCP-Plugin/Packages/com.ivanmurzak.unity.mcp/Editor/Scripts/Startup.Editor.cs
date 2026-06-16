@@ -44,6 +44,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         /// Note: Log collector disposal always occurs regardless of this flag.</param>
         static void TryDisconnectAndCleanup(string callerName, bool onlyIfConnected = false)
         {
+            // DEV-ONLY: tear down the inject/control bridge first so a domain reload / quit never leaks
+            // the bound 127.0.0.1 port (the HttpListener accept thread holds the socket otherwise).
+            // Runs regardless of plugin-instance presence (the early-return below would skip it).
+            StopDevControl();
+
             if (!UnityMcpPluginEditor.HasInstance)
             {
                 _logger.LogDebug("{class} {method} triggered: No UnityMcpPluginEditor instance to disconnect",
