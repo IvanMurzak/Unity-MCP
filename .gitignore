@@ -12,8 +12,10 @@
 
 # Commands and env files
 commands/TestResults
-commands/.env
-!commands/.env.example
+# Local env files (secrets / dev config such as the dev-control bridge flags) — never commit,
+# anywhere in the repo. Keep any committed example templates.
+.env
+!**/.env.example
 
 # Unity package lock files (auto-generated)
 **/Packages/packages-lock.json
