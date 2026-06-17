@@ -39,7 +39,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 host: UnityMcpPluginEditor.Host,
                 token: UnityMcpPluginEditor.Token,
                 connectionMode: MapConnectionMode(UnityMcpPluginEditor.ConnectionMode),
-                authOption: UnityMcpPluginEditor.AuthOption);
+                authOption: UnityMcpPluginEditor.AuthOption,
+                // Pass Unity's authoritative server identity explicitly so the shared module's
+                // Docker command (image tag = serverVersion) tracks McpServerManager's pin instead
+                // of silently coinciding with the shared library's own defaults — which would drift
+                // the moment ServerVersion is bumped here. The Docker image base mirrors the literal
+                // McpServerManager.DockerSetupRunCommand() builds ("aigamedeveloper/mcp-server"),
+                // which Unity has no constant for.
+                serverExecutableName: McpServerManager.ExecutableName,
+                serverVersion: McpServerManager.ServerVersion,
+                dockerImage: "aigamedeveloper/mcp-server");
         }
 
         /// <summary>

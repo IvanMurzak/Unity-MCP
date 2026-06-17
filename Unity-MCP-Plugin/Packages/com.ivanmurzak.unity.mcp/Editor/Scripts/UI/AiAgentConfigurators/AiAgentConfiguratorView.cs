@@ -298,12 +298,32 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var foldout = section.ExpandedFirst ? TemplateFoldoutFirst(section.Heading) : TemplateFoldout(section.Heading);
             foreach (var item in section.Items)
             {
+                // The Custom agent's editable skills path is owned by the dedicated skills section
+                // (SetupCustomSkillsUI — it adds the auto-generate toggle + Generate button the DTO
+                // EditableField can't), matching the old single-field behaviour. The shared
+                // CustomConfigurator.BuildSections still emits the editable field (+ its "Skills
+                // output path (editable):" label) for engines that have no separate skills UI, so
+                // skip that pair here to avoid rendering the field twice.
+                if (_configurator is AgentConfig.Impl.CustomConfigurator && IsCustomSkillsPathItem(item))
+                    continue;
+
                 var element = BuildItem(item);
                 if (element != null)
                     foldout.Add(element);
             }
             return foldout;
         }
+
+        /// <summary>
+        /// True for the shared <see cref="AgentConfig.Impl.CustomConfigurator"/>'s editable
+        /// skills-path items — the <see cref="AgentConfig.ConfigurationItemKind.EditableField"/>
+        /// and its preceding "Skills output path (editable):" description. These are rendered by
+        /// the dedicated <see cref="SetupCustomSkillsUI"/> instead, so the section walk skips them.
+        /// </summary>
+        private static bool IsCustomSkillsPathItem(AgentConfig.ConfigurationItem item)
+            => item.Kind == AgentConfig.ConfigurationItemKind.EditableField
+                || (item.Kind == AgentConfig.ConfigurationItemKind.Description
+                    && item.Text == "Skills output path (editable):");
 
         /// <summary>
         /// Maps a single shared <see cref="AgentConfig.ConfigurationItem"/> onto a Unity element.
