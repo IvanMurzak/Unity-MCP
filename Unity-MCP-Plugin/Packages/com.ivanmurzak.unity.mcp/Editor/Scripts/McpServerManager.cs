@@ -51,8 +51,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor
     [InitializeOnLoad]
     public static class McpServerManager
     {
-        const string ProcessIdKey = "McpServerManager_ProcessId";
+        // Qualified by the server port so two Editors (different projects, different ports) on
+        // the same machine never share this slot. EditorPrefs are machine-global - shared across
+        // every project of the same Editor version - so an UNqualified key let one project's
+        // CheckExistingProcess adopt the OTHER project's server PID and then tear it down on stop,
+        // making the two Editors mutually exclusive even though their ports differ. See ProcessIdKeyForPort.
+        static string ProcessIdKey => ProcessIdKeyForPort(UnityMcpPluginEditor.Port);
         const string McpServerProcessName = "gamedev-mcp-server";
+
+        /// <summary>
+        /// The EditorPrefs key under which this project's running server PID is stored, qualified by
+        /// the server <paramref name="port"/>. EditorPrefs are shared across every project of the same
+        /// Editor version on the machine, so this key MUST be port-qualified: otherwise two Editors
+        /// clobber a single global slot and adopt/terminate each other's server processes. Pure (no
+        /// Unity API access) so it can be unit-tested in EditMode.
+        /// </summary>
+        internal static string ProcessIdKeyForPort(int port) => $"McpServerManager_ProcessId_{port}";
 
         static readonly ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger(typeof(McpServerManager));
         static readonly ReactiveProperty<McpServerStatus> _serverStatus = new(McpServerStatus.Stopped);
