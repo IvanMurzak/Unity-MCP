@@ -34,6 +34,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
     using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
     using Consts = McpPlugin.Common.Consts;
     using ILogger = Microsoft.Extensions.Logging.ILogger;
+    using AiAgentConfig = McpPlugin.AgentConfig.AiAgentConfig;
 
     public enum McpServerStatus
     {

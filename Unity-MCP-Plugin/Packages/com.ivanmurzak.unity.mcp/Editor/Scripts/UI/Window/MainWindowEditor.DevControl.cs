@@ -16,6 +16,7 @@ using com.IvanMurzak.Unity.MCP.Editor.DevControl;
 using Microsoft.AspNetCore.SignalR.Client;
 using UnityEngine;
 using UnityEngine.UIElements;
+using AiAgentConfiguratorRegistry = com.IvanMurzak.McpPlugin.AgentConfig.AiAgentConfiguratorRegistry;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
