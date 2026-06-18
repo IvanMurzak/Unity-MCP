@@ -229,6 +229,9 @@ Install extensions when need more tools or [create your own tools](#add-custom-t
     - [Manual configuration](#manual-configuration)
       - [Command line configuration](#command-line-configuration)
 - [AI Workflow Examples](#ai-workflow-examples)
+  - [Writing good AI requests](#writing-good-ai-requests)
+  - [Discovering capabilities](#discovering-capabilities)
+  - [Official links](#official-links)
   - [Advanced Features for LLM](#advanced-features-for-llm)
     - [Core Capabilities](#core-capabilities)
     - [Reflection-Powered Features](#reflection-powered-features)
@@ -440,6 +443,85 @@ Create metallic golden material and attach it to a new sphere gameObject
 ```
 
 > Make sure `Agent` mode is enabled if using VS Code with Copilot
+
+## Writing good AI requests
+
+You talk to the plugin in plain language through your `AI agent` — you don't call tools by name or memorize tool IDs. The agent reads your intent, picks the right tool(s) from the catalog, runs them inside the live Unity Editor, and reports back. The clearer the request, the better the result. A good first request is **small, concrete, and verifiable**.
+
+Anatomy of a good request:
+
+- **State the outcome, not the tool.** Say *"Create a third-person player controller in the current scene"*, not *"call gameobject-create then gameobject-component-add"*. The agent maps intent onto tools.
+- **Reference the current context.** *"in the active scene"*, *"on the selected GameObject"*, *"under the Player"* — the plugin has read tools (`gameobject-find`, `object-get-data`, `editor-selection-get`, `scene-get-data`) so the agent can resolve these.
+- **Keep the first request tiny.** One scene, one object, one script. Verify it worked in the Editor, then build up. Big multi-step asks are fine once you trust the loop.
+- **Ask for a screenshot to verify visually.** *"…then take a screenshot so I can see it"* closes the loop — the agent can read the image back too (`screenshot-camera`, `screenshot-game-view`, `screenshot-scene-view`, `screenshot-isolated`).
+- **Let the agent read errors and self-correct.** *"Compile it and fix any console errors"* is a valid, powerful request — script and console tools return structured error + warning lists.
+- **Name things you'll refer back to.** *"Create a GameObject named `SpawnPoint`"* lets the next request say *"move the SpawnPoint"*.
+
+A reliable shape for a first request:
+
+> *"In the current scene, create `<thing>` named `<name>`, set `<one property>`, then take a screenshot."*
+
+**Copy-pasteable Unity example prompts** (start with one, verify, then build up):
+
+```text
+Create a new scene with a directional light and a rotating cube, then enter Play mode.
+```
+
+```text
+Create an empty GameObject called SpawnPoint at world origin, then add a Rigidbody to it and set its mass to 5.
+```
+
+```text
+Make a prefab from the FlyingDrone GameObject, then drop 10 instances of it along the road.
+```
+
+```text
+Add a HealthBar.cs script with a public float health property, attach it to the Player, then compile and fix any console errors.
+```
+
+```text
+Take a 1920x1080 screenshot from the cinematic camera so I can see the framing.
+```
+
+```text
+Start profiling CPU and memory, enter Play mode for a few seconds, then tell me which scripts are taking the most CPU time.
+```
+
+```text
+List every GameObject in the active scene with their components.
+```
+
+## Discovering capabilities
+
+You don't need to memorize the tool catalog — discovery is conversational. Ask the agent what it can do, and it will enumerate its tools by calling the plugin's own listing tool. Useful probes:
+
+- **Enumerate the tools.** *"List the AI Game Developer tools you can call right now."* / *"What can you do in this Unity Editor?"* The `unity-tool-list` tool (Editor family) returns every available MCP tool.
+- **Group by family.** *"Group your tools by family and give me a one-line purpose for each."* Unity-MCP ships **70+ built-in tools across 27 families** — Scene, GameObject, Component, Object, Asset, Material, Shader, Prefab, Editor, Console, Script, Reflection, Package, Profiler, Screenshot, Tests, System, and more.
+- **Check which extensions are installed.** *"Do you have Cinemachine / Terrain / Timeline / ProBuilder tools available?"* Extension families (Animation, Particles, ProBuilder, Cinemachine, Splines, Terrain, Input System, Tilemap, Navigation, Timeline) only appear when the matching `unity-ai-*` package is installed — see [Install Additional Skills and Tools](#install-additional-skills-and-tools). If the agent reports no such tool, install the extension, reopen the project, and the family appears.
+- **Probe the connection first.** *"Ping the plugin to check the connection."* The `ping` tool (System family) round-trips the whole `AI client → MCP server → Unity Editor` chain before you ask for real work.
+- **Describe one tool.** *"What parameters does `gameobject-create` take?"* MCP tools carry JSON schemas, so the agent can report required vs optional parameters.
+- **Reflection escape hatch.** For anything without a dedicated tool, the agent can `reflection-method-find` then `reflection-method-call` to invoke any Unity or project C# method directly — even private and compiled-DLL methods.
+
+**Unity-unique highlights**
+
+- **Runtime / in-game tools.** Unity-MCP works inside your **compiled game**, not just the Editor — enabling real-time AI debugging and player-AI interaction in-game. See [Runtime usage (in-game)](#runtime-usage-in-game).
+- **Auto-generated Skills.** The plugin can **auto-generate "skills"** (saved, parameterized tool sequences) tailored to your operating system, Unity version, and installed packages. Click **Auto-generate skills** in the `Window/AI Game Developer` panel (or run `unity-mcp-cli setup-skills`) for the smoothest agent setup.
+- **Extension-gated families.** The 10 optional `unity-ai-*` extension packages add their tool families on install — your available capability set grows with the packages in your project.
+
+**Discovery recipe**
+
+1. *"Ping the Unity MCP plugin and confirm we're connected."*
+2. *"List every tool you can call, grouped by family, with a one-line purpose for each."*
+3. *"Which extension families do I have installed — Cinemachine, Terrain, Timeline, ProBuilder, …?"*
+4. *"List every GameObject in the active scene with their components."*
+5. Pick one family and ask for a tiny concrete action plus a screenshot.
+
+## Official links
+
+- Website: [ai-game.dev](https://ai-game.dev)
+- Documentation: [ai-game.dev/docs](https://ai-game.dev/docs)
+- Unity tools registry: [ai-game.dev/docs/tools/unity](https://ai-game.dev/docs/tools/unity)
+- Unity engine page: [ai-game.dev/engines/unity](https://ai-game.dev/engines/unity)
 
 ## Disabling update notifications for the whole team
 
