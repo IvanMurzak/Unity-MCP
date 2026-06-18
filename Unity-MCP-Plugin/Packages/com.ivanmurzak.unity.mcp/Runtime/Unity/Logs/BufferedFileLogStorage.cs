@@ -181,19 +181,19 @@ namespace com.IvanMurzak.Unity.MCP
                 {
                     if (entry.Timestamp < cutoffTime)
                     {
-                        return result.AsEnumerable().Reverse().ToArray();
+                        return ClearStackTraceIfNeeded(result.AsEnumerable().Reverse().ToArray(), includeStackTrace);
                     }
                 }
 
                 result.Add(entry);
                 if (result.Count >= maxEntries)
-                    return result.AsEnumerable().Reverse().ToArray();
+                    return ClearStackTraceIfNeeded(result.AsEnumerable().Reverse().ToArray(), includeStackTrace);
             }
 
             // 2. Exit if we already have enough entries
             var neededLogsCount = maxEntries - result.Count;
             if (neededLogsCount <= 0)
-                return result.AsEnumerable().Reverse().ToArray();
+                return ClearStackTraceIfNeeded(result.AsEnumerable().Reverse().ToArray(), includeStackTrace);
 
             result.Reverse();
 
@@ -201,7 +201,17 @@ namespace com.IvanMurzak.Unity.MCP
             var fileEntries = base.QueryInternal(neededLogsCount, logTypeFilter, includeStackTrace, lastMinutes);
             result.AddRange(fileEntries);
 
-            return result.ToArray();
+            return ClearStackTraceIfNeeded(result.ToArray(), includeStackTrace);
+        }
+
+        private static LogEntry[] ClearStackTraceIfNeeded(LogEntry[] entries, bool includeStackTrace)
+        {
+            if (!includeStackTrace)
+            {
+                foreach (var log in entries)
+                    log.StackTrace = null;
+            }
+            return entries;
         }
 
         ~BufferedFileLogStorage() => Dispose();
