@@ -26,6 +26,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         static Startup()
         {
+            // Skip auto-start in headless batchmode (e.g. CI / `-batchmode -runTests`). Otherwise the
+            // plugin connects to the shared local MCP server — forcibly disconnecting an interactive
+            // Editor running on the same machine — and, with no token in a clean CI checkout, logs an
+            // authorization error from a background connection callback that Unity's Test Framework
+            // converts into a test failure (it cannot be suppressed via LogAssert, being off the test's
+            // main-thread scope). Opt in for intentional headless use by setting UNITY_MCP_BATCHMODE=1.
+            if (Application.isBatchMode && System.Environment.GetEnvironmentVariable("UNITY_MCP_BATCHMODE") != "1")
+                return;
+
             UnityMcpPluginEditor.Instance.BuildMcpPluginIfNeeded();
             UnityMcpPluginEditor.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
 
