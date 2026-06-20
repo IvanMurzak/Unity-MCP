@@ -14,7 +14,9 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
+using System.Net.Http;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
@@ -193,11 +195,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         }
 
         /// <summary>
+        /// The release-asset zip NAME for the current platform: <c>gamedev-mcp-server-&lt;rid&gt;.zip</c>
+        /// (e.g. <c>gamedev-mcp-server-win-x64.zip</c>). This is the exact key looked up in the release's
+        /// <c>SHA256SUMS</c> integrity manifest (exact-key Ordinal — see <see cref="McpServerChecksum"/>), and
+        /// the trailing segment of <see cref="ExecutableZipUrl"/> — so the verified asset name can never drift
+        /// from the downloaded asset name.
+        /// </summary>
+        public static string ExecutableZipName
+            => $"{ExecutableName.ToLowerInvariant()}-{PlatformName}.zip";
+
+        /// <summary>
         /// The download URL of the shared GameDev-MCP-Server release zip for the current platform,
         /// pinned by <see cref="ServerVersion"/> — NEVER the plugin version (the two diverge).
         /// </summary>
         public static string ExecutableZipUrl
-            => $"https://github.com/IvanMurzak/GameDev-MCP-Server/releases/download/{ServerReleaseTag(ServerVersion)}/{ExecutableName.ToLowerInvariant()}-{PlatformName}.zip";
+            => $"https://github.com/IvanMurzak/GameDev-MCP-Server/releases/download/{ServerReleaseTag(ServerVersion)}/{ExecutableZipName}";
 
         #endregion // Binary Metadata
 
@@ -344,6 +356,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     await client.DownloadFileTaskAsync(ExecutableZipUrl, archiveFilePath);
                 }
 
+                // FAIL-CLOSED INTEGRITY GATE (verify-before-execute). The zip is on disk but UNTRUSTED. Before
+                // extracting or launching it, download the release's SHA256SUMS manifest (sibling of the zip URL
+                // under the same v<ServerVersion> tag), compute the downloaded zip's SHA256 (pure BCL), and
+                // compare against the manifest entry for THIS RID. On MISMATCH / MISSING entry / unparsable-or-
+                // unfetchable manifest we delete the temp zip and return WITHOUT extracting or launching — an
+                // unverified binary must NEVER be executed (a compromised release asset or a trusted-CA MITM
+                // would otherwise yield arbitrary code execution; issue #841).
+                if (!await VerifyDownloadedArchive(archiveFilePath, ServerVersion, ExecutableZipName))
+                {
+                    try { File.Delete(archiveFilePath); } catch { /* best effort */ }
+                    return false;
+                }
+
                 // Unpack zip archive.
                 // The shared GameDev-MCP-Server release zips are NOT layout-uniform: the win zips are
                 // FLAT (gamedev-mcp-server.exe + its sidecar files at the zip root) while the osx/linux
@@ -464,6 +489,116 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 }
             }
             return best;
+        }
+
+        /// <summary>
+        /// The number of attempts for the SHA256SUMS manifest fetch (1 initial + retries) before we
+        /// fail-closed. A TRANSIENT network error on the manifest fetch is retried (the binary is already
+        /// downloaded; only the integrity manifest is missing) — but a persistent failure NEVER falls through
+        /// to executing an unverified binary.
+        /// </summary>
+        const int Sha256SumsFetchAttempts = 3;
+
+        /// <summary>Backoff between SHA256SUMS fetch attempts.</summary>
+        static readonly TimeSpan Sha256SumsRetryDelay = TimeSpan.FromSeconds(1.0);
+
+        /// <summary>
+        /// Fail-closed verify-before-execute gate. Downloads the release's <c>SHA256SUMS</c> manifest (with a
+        /// bounded transient-retry), computes the downloaded zip's SHA256 (pure BCL — the same
+        /// <c>SHA256.Create().ComputeHash</c> idiom the plugin already uses in <c>UnityMcpPlugin</c>, so it is
+        /// .NET-Standard-2.1-safe on the Unity 2022.3 floor; no new deps), and compares against the manifest
+        /// entry for <paramref name="assetZipName"/> via the pure-managed
+        /// <see cref="McpServerChecksum.VerifyZipChecksum"/>. Returns true ONLY when the digest matched the
+        /// manifest. Every failure path — a manifest we could not fetch after all retries, an unparsable
+        /// manifest, a missing entry, or a digest mismatch — returns false with a clear, actionable error so
+        /// the caller skips extraction/launch. Never throws.
+        /// </summary>
+        static async Task<bool> VerifyDownloadedArchive(string archiveFilePath, string serverVersion, string assetZipName)
+        {
+            var sumsUrl = McpServerChecksum.Sha256SumsUrl(serverVersion);
+
+            // 1) Fetch the integrity manifest (bounded transient-retry). A null result means every attempt
+            //    failed — fail-closed (do NOT execute an unverified binary).
+            var sha256SumsText = await FetchSha256SumsText(sumsUrl);
+            if (sha256SumsText == null)
+            {
+                UnityEngine.Debug.LogError(
+                    $"Refusing to launch MCP server: could not download the {McpServerChecksum.Sha256SumsAssetName} " +
+                    $"integrity manifest from {sumsUrl} after {Sha256SumsFetchAttempts} attempt(s). " +
+                    "The downloaded binary was NOT verified and will not be executed (fail-closed).");
+                return false;
+            }
+
+            // 2) Compute the downloaded zip's SHA256 (pure BCL; .NET-Standard-2.1-safe on the Unity 2022.3
+            //    floor — SHA256.HashDataAsync / Convert.ToHexString are .NET 5+ and would not compile there).
+            string actualHexDigest;
+            try
+            {
+                byte[] hashBytes;
+                using (var sha256 = SHA256.Create())
+                using (var zipStream = File.OpenRead(archiveFilePath))
+                {
+                    hashBytes = sha256.ComputeHash(zipStream);
+                }
+                actualHexDigest = BitConverter.ToString(hashBytes).Replace("-", string.Empty); // upper-case hex; compare is case-insensitive
+            }
+            catch (Exception ex)
+            {
+                UnityEngine.Debug.LogError(
+                    $"Refusing to launch MCP server: failed to compute the downloaded zip's SHA256: {ex.Message}");
+                return false;
+            }
+
+            // 3) Parse + compare via the pure-managed verifier (unit-tested with no editor).
+            var verdict = McpServerChecksum.VerifyZipChecksum(sha256SumsText, assetZipName, actualHexDigest);
+            if (verdict != McpServerChecksum.ChecksumVerdict.Verified)
+            {
+                UnityEngine.Debug.LogError(
+                    $"Refusing to launch MCP server: {McpServerChecksum.ChecksumFailureReason(verdict, assetZipName)}. " +
+                    "The binary will not be extracted or executed (fail-closed).");
+                return false;
+            }
+
+            UnityEngine.Debug.Log(
+                $"Verified '{assetZipName}' against {McpServerChecksum.Sha256SumsAssetName} (SHA256 OK).");
+            return true;
+        }
+
+        /// <summary>
+        /// Download the <c>SHA256SUMS</c> manifest text with a bounded transient-retry. Returns the manifest
+        /// body, or null when every attempt failed (the fail-closed signal). The manifest is small text — read
+        /// it fully into a string. Never throws.
+        /// </summary>
+        static async Task<string?> FetchSha256SumsText(string sumsUrl)
+        {
+            for (var attempt = 1; attempt <= Sha256SumsFetchAttempts; attempt++)
+            {
+                try
+                {
+                    using var client = new HttpClient();
+                    using var response = await client.GetAsync(sumsUrl);
+                    response.EnsureSuccessStatusCode();
+                    return await response.Content.ReadAsStringAsync();
+                }
+                catch (Exception ex)
+                {
+                    if (attempt < Sha256SumsFetchAttempts)
+                    {
+                        UnityEngine.Debug.LogWarning(
+                            $"{McpServerChecksum.Sha256SumsAssetName} fetch attempt {attempt}/{Sha256SumsFetchAttempts} " +
+                            $"failed ({ex.Message}); retrying…");
+                        try { await Task.Delay(Sha256SumsRetryDelay); } catch { /* ignore */ }
+                    }
+                    else
+                    {
+                        UnityEngine.Debug.LogWarning(
+                            $"{McpServerChecksum.Sha256SumsAssetName} fetch attempt {attempt}/{Sha256SumsFetchAttempts} " +
+                            $"failed ({ex.Message}).");
+                    }
+                }
+            }
+
+            return null;
         }
 
         #endregion // Binary Lifecycle
