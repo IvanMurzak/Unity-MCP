@@ -14,6 +14,7 @@ using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
 using UnityEditor;
 using UnityEngine;
+using AiAgentConfiguratorRegistry = com.IvanMurzak.McpPlugin.AgentConfig.AiAgentConfiguratorRegistry;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
 namespace com.IvanMurzak.Unity.MCP.Editor
@@ -46,6 +47,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 UnityMcpPluginEditor.SkillsPath = agent.SkillsPath!;
                 UnityMcpPluginEditor.Instance.McpPluginInstance!.GenerateSkillFiles(UnityMcpPluginEditor.ProjectRootPath);
             }
+
+            // DEV-ONLY: start the 127.0.0.1 inject/control bridge, gated on UNITY_MCP_DEV_CONTROL=1
+            // (process env > project-root .env > default). No-op / never listens in a shipped plugin.
+            StartDevControlIfEnabled();
         }
     }
 }

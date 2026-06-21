@@ -105,6 +105,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 || _btnConnect == null || _connectionStatusCircle == null)
                 return;
 
+            // DEV-ONLY: a dev-injected connection status pins the row — skip the live re-sync so the
+            // injection sticks on screen (see _devConnectionStatusOverride). Never set in a shipped plugin.
+            if (_devConnectionStatusOverride != null)
+                return;
+
             UpdateHostFieldState(_inputFieldHost, keepConnected, state);
             _connectionStatusText.text = "Unity: " + GetConnectionStatusText(state, keepConnected);
             _btnConnect.text = GetButtonText(state, keepConnected);
