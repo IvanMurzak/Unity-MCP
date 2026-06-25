@@ -66,13 +66,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // deferred importer then logs an unexpected [Error] that fails whichever test
             // happens to be running — a shared-teardown race, not a defect in any single test.
             AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
 
-            // Bracket the cleanup delete so benign importer-teardown log noise can never
-            // fail a test. Restored in finally per the project's LogAssert convention.
+            // Bracket BOTH the import-settling Refresh() and the cleanup delete so benign
+            // importer-teardown log noise can never fail a test: the deferred importer can
+            // surface its [Error] while Refresh() flushes the import queue, not only during
+            // DeleteAsset. Restored in finally per the project's LogAssert convention.
             LogAssert.ignoreFailingMessages = true;
             try
             {
+                AssetDatabase.Refresh();
                 AssetDatabase.DeleteAsset(TmpFolder);
             }
             finally
