@@ -56,8 +56,29 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [TearDown]
         public void BgTearDown()
         {
-            if (AssetDatabase.IsValidFolder(TmpFolder))
+            if (!AssetDatabase.IsValidFolder(TmpFolder))
+                return;
+
+            // Settle imports created on a background thread (e.g. mat_bg.mat from
+            // AssetsMaterialCreate_BothThreads, scene_bg.unity from SceneCreate_BothThreads)
+            // before deleting the temp folder. Unity 6.x's async import worker can otherwise
+            // still be flushing such an asset when DeleteAsset removes the folder, and the
+            // deferred importer then logs an unexpected [Error] that fails whichever test
+            // happens to be running — a shared-teardown race, not a defect in any single test.
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            // Bracket the cleanup delete so benign importer-teardown log noise can never
+            // fail a test. Restored in finally per the project's LogAssert convention.
+            LogAssert.ignoreFailingMessages = true;
+            try
+            {
                 AssetDatabase.DeleteAsset(TmpFolder);
+            }
+            finally
+            {
+                LogAssert.ignoreFailingMessages = false;
+            }
         }
 
         // ================================================================
