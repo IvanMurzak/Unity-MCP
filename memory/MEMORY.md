@@ -1,0 +1,1 @@
+- [Do not manually create .meta files](feedback_unity_meta_files.md) — Unity auto-generates them after assets-refresh
