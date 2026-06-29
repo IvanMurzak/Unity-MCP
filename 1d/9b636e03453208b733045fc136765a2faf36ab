@@ -1,0 +1,29 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/McpServerManager.cs
+  s_f59a9ea9c1b04f::t_931a444e93aa97 375-384,424,429,544-552
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Window/MainWindowEditor.McpServer.cs
+  s_45c4298bf8773c::t_d09b0df484a8cd 306-311
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.4",
+  "base_commit_sha": "1d9b636e03453208b733045fc136765a2faf36ab",
+  "prompts": {},
+  "sessions": {
+    "s_45c4298bf8773c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a9a3de02c3ec23419",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_f59a9ea9c1b04f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b81206cc-eadd-429e-a3d6-9ca6043eace1",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
