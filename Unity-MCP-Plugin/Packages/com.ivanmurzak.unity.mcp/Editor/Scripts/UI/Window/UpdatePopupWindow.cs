@@ -146,18 +146,32 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             if (currentStatus == McpServerStatus.Running || currentStatus == McpServerStatus.Starting ||
                 currentStatus == McpServerStatus.Stopping || currentStatus == McpServerStatus.Downloading)
             {
-                // Downloading is a transient busy state too (issue #845): wait for it to settle to Stopped
-                // (the binary download/start path will land there on completion) before installing the update.
+                // The server is busy (running, mid-transition, or downloading its binary — issue #845). Drive it
+                // to Stopped before installing the update. The subscription must react to EVERY state, not just
+                // Stopped: a binary download that auto-starts the server lands on Downloading -> Starting ->
+                // Running, so a Stopped-only wait would hang the popup on "Waiting for server download..." while
+                // the server is actually running. Stop the server whenever it (re)starts, keep waiting through
+                // the Downloading/Stopping busy states, and install once it reaches Stopped.
                 installButton.text = currentStatus == McpServerStatus.Downloading
                     ? "Waiting for server download..."
                     : "Stopping server...";
-                if (currentStatus == McpServerStatus.Running || currentStatus == McpServerStatus.Starting)
-                    McpServerManager.StopServer();
                 _stopSubscription = McpServerManager.ServerStatus
-                    .Where(status => status == McpServerStatus.Stopped)
-                    .Take(1)
                     .ObserveOnCurrentSynchronizationContext()
-                    .Subscribe(_ => StartPackageInstall());
+                    .Subscribe(status =>
+                    {
+                        switch (status)
+                        {
+                            case McpServerStatus.Running:
+                            case McpServerStatus.Starting:
+                                installButton.text = "Stopping server...";
+                                McpServerManager.StopServer();
+                                break;
+                            case McpServerStatus.Stopped:
+                                StartPackageInstall();
+                                break;
+                            // Downloading / Stopping: transient busy states — keep waiting.
+                        }
+                    });
             }
             else
             {

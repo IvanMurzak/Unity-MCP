@@ -246,8 +246,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     }
 
                     // On success the download path may have auto-started the server already
-                    // (KeepServerRunning was set true above). If so, nothing more to do.
-                    if (McpServerManager.IsRunning || McpServerManager.IsStarting)
+                    // (KeepServerRunning was set true above), or another download (e.g. the package-update
+                    // watcher) may still be in flight — DownloadServerBinaryIfNeeded's dedup guard returns
+                    // true immediately in that case. In any of these the server is being driven centrally;
+                    // do NOT fall through to StartServer() and launch a (possibly stale) binary mid-download.
+                    if (McpServerManager.IsRunning || McpServerManager.IsStarting
+                        || McpServerManager.ServerStatus.CurrentValue == McpServerStatus.Downloading)
                         return;
                 }
 
@@ -301,7 +305,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 if (downloaded
                     && UnityMcpPluginEditor.KeepServerRunning
                     && !McpServerManager.IsRunning
-                    && !McpServerManager.IsStarting)
+                    && !McpServerManager.IsStarting
+                    && McpServerManager.ServerStatus.CurrentValue != McpServerStatus.Downloading)
                 {
                     // Honor StartServer()'s bool: the download succeeded but this launch can still fail
                     // (e.g. the binary was just installed but the process won't start). Surface it instead of
