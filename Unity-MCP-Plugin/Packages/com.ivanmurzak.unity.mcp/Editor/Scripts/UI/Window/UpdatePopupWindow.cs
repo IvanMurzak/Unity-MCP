@@ -144,10 +144,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             var currentStatus = McpServerManager.ServerStatus.CurrentValue;
             if (currentStatus == McpServerStatus.Running || currentStatus == McpServerStatus.Starting ||
-                currentStatus == McpServerStatus.Stopping)
+                currentStatus == McpServerStatus.Stopping || currentStatus == McpServerStatus.Downloading)
             {
-                installButton.text = "Stopping server...";
-                if (currentStatus != McpServerStatus.Stopping)
+                // Downloading is a transient busy state too (issue #845): wait for it to settle to Stopped
+                // (the binary download/start path will land there on completion) before installing the update.
+                installButton.text = currentStatus == McpServerStatus.Downloading
+                    ? "Waiting for server download..."
+                    : "Stopping server...";
+                if (currentStatus == McpServerStatus.Running || currentStatus == McpServerStatus.Starting)
                     McpServerManager.StopServer();
                 _stopSubscription = McpServerManager.ServerStatus
                     .Where(status => status == McpServerStatus.Stopped)
