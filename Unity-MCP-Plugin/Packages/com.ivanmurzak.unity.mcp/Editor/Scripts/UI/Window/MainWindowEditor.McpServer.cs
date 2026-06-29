@@ -303,7 +303,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     && !McpServerManager.IsRunning
                     && !McpServerManager.IsStarting)
                 {
-                    McpServerManager.StartServer();
+                    // Honor StartServer()'s bool: the download succeeded but this launch can still fail
+                    // (e.g. the binary was just installed but the process won't start). Surface it instead of
+                    // showing the "Updated" popup over a silently-not-running server (issue #845).
+                    if (!McpServerManager.StartServer())
+                        UnityEngine.Debug.LogWarning(
+                            "[Unity-MCP] Server binary installed but auto-start failed. Click Start to retry.");
                 }
             }
             finally

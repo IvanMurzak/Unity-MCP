@@ -372,6 +372,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 return Task.FromResult(false);
             }
 
+            // Deduplication guard (issue #845): UPM fires MULTIPLE registeredPackages events for a single
+            // package install/update, and ServerBinaryUpdateWatcher's _isRechecking flag resets synchronously
+            // (in its finally) before the fire-and-forget download Task completes. Without this guard, each
+            // event past the flag would start its own DownloadAndUnpackBinary, and the two would race at the
+            // shared archive path (corrupting the zip → checksum failure) and at PublishStagedBinary (one Move
+            // deleting the folder the other just installed). The Downloading status the lifecycle machine
+            // already tracks is the real idempotency guard: if a download is in flight, let it complete.
+            if (_serverStatus.CurrentValue == McpServerStatus.Downloading)
+                return Task.FromResult(true); // download already in progress; let it complete
+
             if (IsBinaryExists() && IsVersionMatches())
             {
                 // Binary is present and current — clear any stale failure so the window hides the error/retry UI.
@@ -411,11 +421,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             SetDownloadingStatus();
 
             string? stagingRoot = null;
+            string? archiveFilePath = null;
             try
             {
                 var previousKeepServerRunning = UnityMcpPluginEditor.KeepServerRunning;
 
-                var archiveFilePath = Path.GetFullPath($"{Application.temporaryCachePath}/{ExecutableName.ToLowerInvariant()}-{PlatformName}-{ServerVersion}.zip");
+                archiveFilePath = Path.GetFullPath($"{Application.temporaryCachePath}/{ExecutableName.ToLowerInvariant()}-{PlatformName}-{ServerVersion}.zip");
                 UnityEngine.Debug.Log($"Temporary archive file path: <color=yellow>{archiveFilePath}</color>");
 
                 // Download the zip file from the GitHub release notes
@@ -528,6 +539,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 if (stagingRoot != null)
                 {
                     try { if (Directory.Exists(stagingRoot)) Directory.Delete(stagingRoot, recursive: true); }
+                    catch { /* best effort */ }
+                }
+                // Clean up the downloaded temp zip on EVERY exit path. The inline File.Delete calls above
+                // free it on the happy/checksum-fail paths, but if ZipFile.ExtractToDirectory (or the download
+                // itself) throws, neither runs and the zip would leak in Application.temporaryCachePath. The
+                // File.Exists guard makes this a no-op when the inline delete already removed it.
+                if (archiveFilePath != null)
+                {
+                    try { if (File.Exists(archiveFilePath)) File.Delete(archiveFilePath); }
                     catch { /* best effort */ }
                 }
             }
