@@ -858,6 +858,15 @@ Es un puente entre el `MCP Client` y "algo más", en este caso particular es Uni
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
+# Desinstalación 🧹
+
+Para eliminar por completo el plugin de tu proyecto de Unity:
+
+1. Abre **Window ▸ Package Manager**, selecciona el paquete **AI Game Developer — MCP** y haz clic en **Remove**.
+2. Cierra Unity y luego elimina la carpeta `Assets/Plugins/NuGet` (junto con su archivo `Assets/Plugins/NuGet.meta`).
+
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
 # Contribución 💙💛
 
 Las contribuciones son muy apreciadas. ¡Trae tus ideas y hagamos que el desarrollo de juegos sea más simple que nunca! ¿Tienes una idea para una nueva `Tool` o funcionalidad, o encontraste un bug y sabes cómo solucionarlo?

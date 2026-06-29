@@ -858,6 +858,15 @@ MCP — Model Context Protocol。一言で言えば、AI のための `USB Type-
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
+# アンインストール 🧹
+
+Unity プロジェクトからプラグインを完全に削除するには：
+
+1. **Window ▸ Package Manager** を開き、**AI Game Developer — MCP** パッケージを選択して **Remove** をクリックします。
+2. Unity を閉じてから、`Assets/Plugins/NuGet` フォルダ（およびその `Assets/Plugins/NuGet.meta` ファイル）を削除します。
+
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
 # コントリビューション 💙💛
 
 コントリビューションを大歓迎します。アイデアを持ち寄り、ゲーム開発をかつてないほどシンプルにしましょう！新しい `Tool` や機能のアイデアがありますか？バグを見つけて修正方法をご存知ですか？
