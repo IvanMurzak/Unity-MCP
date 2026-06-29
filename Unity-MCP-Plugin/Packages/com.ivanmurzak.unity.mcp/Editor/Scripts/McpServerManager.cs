@@ -513,9 +513,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
                 if (previousKeepServerRunning && IsAutoStartAllowedForMode(UnityMcpPluginEditor.ConnectionMode))
                 {
-                    // StartServer() moves the status machine Downloading -> Starting.
+                    // StartServer() moves the status machine Downloading -> Starting. If it early-returns false
+                    // on its !IsBinaryExists() path it never wrote Starting, so the status is still Downloading
+                    // — reset it to Stopped (no-op for the Running/Starting/Stopping early-return) so the UI does
+                    // not hang on "Downloading server…" with the Start button permanently disabled (issue #845).
                     if (!StartServer())
+                    {
                         UnityEngine.Debug.LogError($"Failed to start MCP server after updating binary. Please try starting the server manually.");
+                        ResetDownloadingToStopped();
+                    }
                 }
                 else
                 {
