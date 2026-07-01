@@ -102,7 +102,7 @@ jobs:
           LICENSE_B64: ${{ steps.activate.outputs.license }}
         shell: bash
 
-      - uses: game-ci/unity-test-runner@v4
+      - uses: game-ci/unity-test-runner@08fd329f00a18efa297140b14ac28ebce742759e # node24 runtime (PR #304); revert to @v4 once game-ci moves the tag
         id: tests
         env:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL || 'UnityEngineTester@gmail.com' }}
