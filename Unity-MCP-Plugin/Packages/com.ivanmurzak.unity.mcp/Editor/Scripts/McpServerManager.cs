@@ -44,7 +44,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         Starting,
         Running,
         Stopping,
-        External
+        External,
+        // The server binary is being downloaded/unpacked (issue #845). Distinct from Starting so the UI
+        // can show an honest "Downloading server…" state instead of a misleading "Starting…" while the
+        // process has not been launched yet.
+        Downloading
     }
 
     /// <summary>
@@ -59,14 +63,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         static readonly ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger(typeof(McpServerManager));
         static readonly ReactiveProperty<McpServerStatus> _serverStatus = new(McpServerStatus.Stopped);
+        // Last server-binary download/extract/checksum failure reason, or null when there is no outstanding
+        // failure. The editor window observes this to surface the error + a "Download / Retry server" button
+        // (issue #845). Cleared at the start of every download attempt and on a confirmed-current binary.
+        static readonly ReactiveProperty<string?> _lastDownloadError = new(null);
         static readonly object _processMutex = new();
 
         static Process? _serverProcess;
 
         public static ReadOnlyReactiveProperty<McpServerStatus> ServerStatus => _serverStatus;
 
+        /// <summary>
+        /// Last server-binary download failure reason (null when none). The AI Game Developer window
+        /// subscribes to surface the failure + a retry button instead of silently dead-ending (issue #845).
+        /// </summary>
+        public static ReadOnlyReactiveProperty<string?> LastDownloadError => _lastDownloadError;
+
         public static bool IsRunning => _serverStatus.CurrentValue == McpServerStatus.Running;
         public static bool IsStarting => _serverStatus.CurrentValue == McpServerStatus.Starting;
+
+        /// <summary>
+        /// True when a verified, version-matching server binary is present on disk and can be launched
+        /// without a download. The Start path (<c>HandleServerButton</c>) uses this to decide whether to
+        /// recover a missing/outdated binary before launching (issue #845).
+        /// </summary>
+        public static bool IsBinaryReadyToStart() => IsBinaryExists() && IsVersionMatches();
 
         static McpServerManager()
         {
@@ -76,7 +97,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             // Check if server process is still running (e.g., after domain reload)
             EditorApplication.update += CheckExistingProcess;
 
-            DownloadServerBinaryIfNeeded()
+            DownloadServerBinaryIfNeeded(unattended: true)
                 .ContinueWith(task =>
                 {
                     if (task.IsFaulted || !task.Result)
@@ -242,17 +263,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             return binaryVersion == ServerVersion;
         }
 
-        public static bool DeleteBinaryFolderIfExists()
+        /// <param name="interactive">
+        /// When true (menu / user-initiated paths) a blocking <see cref="EditorUtility.DisplayDialog"/> asks the
+        /// user to retry/skip if the folder can't be deleted (e.g. the server is still holding a file lock).
+        /// When false (the unattended <c>[InitializeOnLoad]</c> / package-update download path) the blocking
+        /// dialog is SKIPPED — after the silent retries the failure is rethrown so the caller surfaces it via the
+        /// non-modal failure popup + retry button instead of freezing editor startup behind a modal (issue #845).
+        /// </param>
+        public static bool DeleteBinaryFolderIfExists(bool interactive = true)
         {
             if (Directory.Exists(ExecutableFolderRootPath))
             {
-                // Intentional infinite loop:
+                // Intentional infinite loop (interactive path only):
                 // - Deletion can fail while the MCP server binaries are in use (e.g., server still running).
                 // - On the first failure, we automatically attempt to stop the server process via McpServerManager.
                 // - The retry/exit behavior is fully controlled by the user via the dialog below.
                 // - We do not impose a fixed maximum retry count so the user can take as long as needed
                 //   to shut down their MCP client and release file locks before trying again.
                 // - The loop terminates when the user selects "Skip", at which point the exception is rethrown.
+                // In the unattended path the blocking dialog is skipped: after the silent retries the exception
+                // is rethrown so the download path fails-loud (non-modal popup) instead of blocking startup.
                 var silentRetries = 0;
                 while (true)
                 {
@@ -295,6 +325,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                             continue;
                         }
 
+                        // Unattended path: never block startup behind a modal — rethrow so the caller
+                        // surfaces the failure via the non-modal popup + retry button (issue #845).
+                        if (!interactive)
+                        {
+                            UnityEngine.Debug.LogError(
+                                $"Failed to delete MCP server folder (unattended): {ex.Message}");
+                            throw;
+                        }
+
                         var retry = EditorUtility.DisplayDialog(
                             title: "Failed to Delete MCP Server Binaries",
                             message: $"The current gamedev-mcp-server binaries can't be deleted. " +
@@ -317,7 +356,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             return false;
         }
 
-        public static Task<bool> DownloadServerBinaryIfNeeded()
+        /// <param name="unattended">
+        /// When true (the <c>[InitializeOnLoad]</c> editor-startup path and the package-update re-check) the
+        /// download runs without any blocking modal and without the result popup — failures are surfaced only
+        /// through <see cref="LastDownloadError"/> (the in-window error + retry button). When false (menu /
+        /// Start button / retry button — user-initiated) the result popup is shown and the delete step may
+        /// prompt interactively. See <see cref="DownloadAndUnpackBinary"/>.
+        /// </param>
+        public static Task<bool> DownloadServerBinaryIfNeeded(bool unattended = false)
         {
             if (EnvironmentUtils.IsCi())
             {
@@ -326,28 +372,61 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 return Task.FromResult(false);
             }
 
-            if (IsBinaryExists() && IsVersionMatches())
-                return Task.FromResult(true);
+            // Deduplication guard (issue #845): UPM fires MULTIPLE registeredPackages events for a single
+            // package install/update, and ServerBinaryUpdateWatcher's _isRechecking flag resets synchronously
+            // (in its finally) before the fire-and-forget download Task completes. Without this guard, each
+            // event past the flag would start its own DownloadAndUnpackBinary, and the two would race at the
+            // shared archive path (corrupting the zip → checksum failure) and at PublishStagedBinary (one Move
+            // deleting the folder the other just installed). The Downloading status the lifecycle machine
+            // already tracks is the real idempotency guard: if a download is in flight, let it complete.
+            if (_serverStatus.CurrentValue == McpServerStatus.Downloading)
+                return Task.FromResult(true); // download already in progress; let it complete
 
-            return DownloadAndUnpackBinary();
+            if (IsBinaryExists() && IsVersionMatches())
+            {
+                // Binary is present and current — clear any stale failure so the window hides the error/retry UI.
+                _lastDownloadError.Value = null;
+                return Task.FromResult(true);
+            }
+
+            return DownloadAndUnpackBinary(unattended);
         }
 
-        public static async Task<bool> DownloadAndUnpackBinary()
+        /// <summary>
+        /// Downloads, verifies, and ATOMICALLY publishes the pinned GameDev-MCP-Server binary for this RID.
+        ///
+        /// <para>Atomicity (issue #845): the previous flow wiped the cache folder, pre-created an EMPTY
+        /// <c>Library/mcp-server/&lt;rid&gt;/</c>, then downloaded + extracted + wrote the version file LAST — so an
+        /// interrupted run (process kill, crash, cancelled domain reload) left an empty per-RID folder behind,
+        /// which then read as "binary present but version missing" forever while the UI hung on "Starting…".
+        /// This implementation instead extracts into a SAME-VOLUME staging folder, fully prepares the payload
+        /// there (binary + sidecars + exec bit + version marker), and only then performs a single
+        /// <see cref="Directory.Move"/> rename into the per-RID cache folder. The destination folder therefore
+        /// never exists in a partial state: it is either absent (download not finished) or complete. The old
+        /// working binary is left untouched until the replacement is fully staged + verified.</para>
+        /// </summary>
+        /// <param name="unattended">
+        /// When true ([InitializeOnLoad] startup / package-update re-check) no blocking modal and no result
+        /// popup are shown — failures surface only via <see cref="LastDownloadError"/> (the in-window error +
+        /// retry button) so editor startup is never blocked and is not spammed with a popup on every reload.
+        /// When false (menu / Start button / retry button — user-initiated) the result popup is shown on BOTH
+        /// success and EVERY failure branch, and the delete step may prompt interactively.
+        /// </param>
+        public static async Task<bool> DownloadAndUnpackBinary(bool unattended = false)
         {
             UnityEngine.Debug.Log($"Downloading GameDev-MCP-Server binary from: <color=yellow>{ExecutableZipUrl}</color>");
 
+            // Clear any prior failure + reflect the in-progress download in the status machine.
+            _lastDownloadError.Value = null;
+            SetDownloadingStatus();
+
+            string? stagingRoot = null;
+            string? archiveFilePath = null;
             try
             {
                 var previousKeepServerRunning = UnityMcpPluginEditor.KeepServerRunning;
 
-                // Clear existed server folder
-                DeleteBinaryFolderIfExists();
-
-                // Create folder if needed
-                if (!Directory.Exists(ExecutableFolderPath))
-                    Directory.CreateDirectory(ExecutableFolderPath);
-
-                var archiveFilePath = Path.GetFullPath($"{Application.temporaryCachePath}/{ExecutableName.ToLowerInvariant()}-{PlatformName}-{ServerVersion}.zip");
+                archiveFilePath = Path.GetFullPath($"{Application.temporaryCachePath}/{ExecutableName.ToLowerInvariant()}-{PlatformName}-{ServerVersion}.zip");
                 UnityEngine.Debug.Log($"Temporary archive file path: <color=yellow>{archiveFilePath}</color>");
 
                 // Download the zip file from the GitHub release notes
@@ -366,106 +445,184 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 if (!await VerifyDownloadedArchive(archiveFilePath, ServerVersion, ExecutableZipName))
                 {
                     try { File.Delete(archiveFilePath); } catch { /* best effort */ }
-                    return false;
+                    return FailDownload(
+                        "Checksum verification failed for the downloaded server binary (see logs).", unattended);
                 }
 
-                // Unpack zip archive.
-                // The shared GameDev-MCP-Server release zips are NOT layout-uniform: the win zips are
-                // FLAT (gamedev-mcp-server.exe + its sidecar files at the zip root) while the osx/linux
-                // zips wrap everything in a <rid>/ folder. Extract to a throwaway staging folder, FIND
-                // the binary wherever it landed, then move its containing folder's files into the
-                // per-platform cache folder — so BOTH layouts (and any future re-arrangement) resolve
-                // correctly. The sidecar files (appsettings.json, NLog.config, server.json, ...) are
-                // LOAD-BEARING and must travel with the binary.
-                UnityEngine.Debug.Log($"Unpacking GameDev-MCP-Server binary to: <color=yellow>{ExecutableFolderPath}</color>");
-                var stagingFolder = Path.GetFullPath($"{Application.temporaryCachePath}/{ExecutableName.ToLowerInvariant()}-extract-{Guid.NewGuid():N}");
-                try
+                // Unpack zip archive into a SAME-VOLUME staging root (a sibling of the cache root, so the final
+                // publish is an atomic rename, never a cross-volume copy that could be interrupted mid-write).
+                // The shared GameDev-MCP-Server release zips are NOT layout-uniform: the win zips are FLAT
+                // (gamedev-mcp-server.exe + its sidecar files at the zip root) while the osx/linux zips wrap
+                // everything in a <rid>/ folder. Extract, FIND the binary wherever it landed, prepare the
+                // payload folder, then atomically Move it into the per-platform cache folder — so BOTH layouts
+                // (and any future re-arrangement) resolve correctly. The sidecar files (appsettings.json,
+                // NLog.config, server.json, ...) are LOAD-BEARING and must travel with the binary.
+                stagingRoot = Path.GetFullPath($"{ExecutableFolderRootPath}-staging-{Guid.NewGuid():N}");
+                var extractFolder = Path.Combine(stagingRoot, "extract");
+                Directory.CreateDirectory(extractFolder);
+                UnityEngine.Debug.Log($"Unpacking GameDev-MCP-Server binary to staging: <color=yellow>{extractFolder}</color>");
+                ZipFile.ExtractToDirectory(archiveFilePath, extractFolder, overwriteFiles: true);
+                try { File.Delete(archiveFilePath); } catch { /* best effort */ }
+
+                var extractedBinary = FindExtractedBinary(extractFolder, ExecutableFullName);
+                if (extractedBinary == null)
                 {
-                    ZipFile.ExtractToDirectory(archiveFilePath, stagingFolder, overwriteFiles: true);
-
-                    var extractedBinary = FindExtractedBinary(stagingFolder, ExecutableFullName);
-                    if (extractedBinary == null)
-                    {
-                        UnityEngine.Debug.LogError($"Failed to unpack server binary: '{ExecutableFullName}' not found inside the downloaded zip.");
-                        return false;
-                    }
-
-                    // Move the binary plus every sidecar file beside it into the cache folder.
-                    var sourceFolder = Path.GetDirectoryName(extractedBinary)!;
-                    foreach (var file in Directory.GetFiles(sourceFolder))
-                    {
-                        var destination = Path.Combine(ExecutableFolderPath, Path.GetFileName(file));
-                        if (File.Exists(destination))
-                            File.Delete(destination);
-                        File.Move(file, destination);
-                    }
+                    return FailDownload(
+                        $"'{ExecutableFullName}' not found inside the downloaded zip.", unattended);
                 }
-                finally
+
+                // The folder that holds the binary + its sidecars is the payload we publish.
+                var payloadFolder = Path.GetDirectoryName(extractedBinary)!;
+
+                // Set executable permission on macOS and Linux BEFORE publishing, so the published payload is
+                // launch-ready the instant it appears under the cache folder.
+                if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    try { Directory.Delete(stagingFolder, recursive: true); } catch { /* best effort */ }
-                    try { File.Delete(archiveFilePath); } catch { /* best effort */ }
+                    UnityEngine.Debug.Log($"Setting executable permission for: <color=green>{extractedBinary}</color>");
+                    UnixUtils.Set0755(extractedBinary);
                 }
+
+                // Write the version marker INTO the staged payload, so the published per-RID folder is complete
+                // the instant it appears — there is no window where the binary exists without its version file.
+                File.WriteAllText(Path.Combine(payloadFolder, "version"), ServerVersion);
+
+                // Stop the running server + remove the OLD cache folder. Only now do we touch the live binary;
+                // everything above operated on staging, so a failure before this point leaves the working copy
+                // intact. Unattended path never blocks behind a modal (see DeleteBinaryFolderIfExists).
+                DeleteBinaryFolderIfExists(interactive: !unattended);
+
+                // Atomic publish: a single same-volume rename of the fully-prepared payload into the per-RID
+                // cache folder. Either it lands complete or not at all.
+                PublishStagedBinary(payloadFolder, ExecutableFolderPath);
 
                 if (!File.Exists(ExecutableFullPath))
                 {
-                    UnityEngine.Debug.LogError($"Failed to unpack server binary to: {ExecutableFolderRootPath}");
-                    UnityEngine.Debug.LogError($"Binary file not found at: {ExecutableFullPath}");
-                    return false;
+                    return FailDownload(
+                        $"Server binary missing after publish at: {ExecutableFullPath}", unattended);
+                }
+
+                var success = IsBinaryExists() && IsVersionMatches();
+                if (!success)
+                {
+                    return FailDownload(
+                        "The published server binary failed the post-publish version check.", unattended);
                 }
 
                 UnityEngine.Debug.Log($"Downloaded and unpacked GameDev-MCP-Server binary to: <color=green>{ExecutableFullPath}</color>");
-
-                // Set executable permission on macOS and Linux
-                if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                {
-                    UnityEngine.Debug.Log($"Setting executable permission for: <color=green>{ExecutableFullPath}</color>");
-                    UnixUtils.Set0755(ExecutableFullPath);
-                }
-
-                File.WriteAllText(VersionFullPath, ServerVersion);
-
                 UnityEngine.Debug.Log($"MCP server version file created at: <color=green><b>COMPLETED</b></color>");
 
-                var binaryExists = IsBinaryExists();
-                var versionMatches = IsVersionMatches();
-                var success = binaryExists && versionMatches;
-
-                if (success && previousKeepServerRunning)
+                if (previousKeepServerRunning && IsAutoStartAllowedForMode(UnityMcpPluginEditor.ConnectionMode))
                 {
-                    if (IsAutoStartAllowedForMode(UnityMcpPluginEditor.ConnectionMode))
+                    // StartServer() moves the status machine Downloading -> Starting. If it early-returns false
+                    // on its !IsBinaryExists() path it never wrote Starting, so the status is still Downloading
+                    // — reset it to Stopped (no-op for the Running/Starting/Stopping early-return) so the UI does
+                    // not hang on "Downloading server…" with the Start button permanently disabled (issue #845).
+                    if (!StartServer())
                     {
-                        if (!StartServer())
-                            UnityEngine.Debug.LogError($"Failed to start MCP server after updating binary. Please try starting the server manually.");
-                    }
-                    else
-                    {
-                        _logger.LogDebug("DownloadAndUnpackBinary: Cloud mode active, skipping local server auto-start after binary update");
+                        UnityEngine.Debug.LogError($"Failed to start MCP server after updating binary. Please try starting the server manually.");
+                        ResetDownloadingToStopped();
                     }
                 }
+                else
+                {
+                    if (previousKeepServerRunning)
+                        _logger.LogDebug("DownloadAndUnpackBinary: Cloud mode active, skipping local server auto-start after binary update");
+                    ResetDownloadingToStopped();
+                }
 
-                NotificationPopupWindow.Show(
-                    windowTitle: success
-                        ? "Updated"
-                        : "Update Failed",
-                    height: 235,
-                    minHeight: 235,
-                    title: success
-                        ? "Server Binary Updated"
-                        : "Server Binary Update Failed",
-                    message: success
-                        ? "The MCP server binary was successfully downloaded and updated. \n\n" +
-                            $"Version: {GetBinaryVersion()}\n\n" +
-                            "You may need to restart your AI agent to reconnect to the updated server."
-                        : "Failed to download and update the MCP server binary. Please check the logs for details.");
+                if (!unattended)
+                    ShowUpdateResultPopup(success: true);
 
-                return success;
+                return true;
             }
             catch (Exception ex)
             {
                 UnityEngine.Debug.LogException(ex);
-                UnityEngine.Debug.LogError($"Failed to download and unpack server binary: {ex.Message}");
-                return false;
+                return FailDownload($"Failed to download and unpack server binary: {ex.Message}", unattended);
             }
+            finally
+            {
+                if (stagingRoot != null)
+                {
+                    try { if (Directory.Exists(stagingRoot)) Directory.Delete(stagingRoot, recursive: true); }
+                    catch { /* best effort */ }
+                }
+                // Clean up the downloaded temp zip on EVERY exit path. The inline File.Delete calls above
+                // free it on the happy/checksum-fail paths, but if ZipFile.ExtractToDirectory (or the download
+                // itself) throws, neither runs and the zip would leak in Application.temporaryCachePath. The
+                // File.Exists guard makes this a no-op when the inline delete already removed it.
+                if (archiveFilePath != null)
+                {
+                    try { if (File.Exists(archiveFilePath)) File.Delete(archiveFilePath); }
+                    catch { /* best effort */ }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Records a download failure: logs it, stores the reason in <see cref="LastDownloadError"/> (so the
+        /// window shows the error + retry button), returns the status machine to Stopped, and — for
+        /// user-initiated (non-unattended) calls — shows the "Update Failed" popup. Always returns false so it
+        /// can be used as the single return expression of every failure branch.
+        /// </summary>
+        static bool FailDownload(string reason, bool unattended)
+        {
+            UnityEngine.Debug.LogError($"MCP server binary download failed: {reason}");
+            _lastDownloadError.Value = reason;
+            ResetDownloadingToStopped();
+            if (!unattended)
+                ShowUpdateResultPopup(success: false);
+            return false;
+        }
+
+        /// <summary>Moves the status machine into Downloading from an idle state (Stopped/Downloading only).</summary>
+        static void SetDownloadingStatus()
+        {
+            var current = _serverStatus.CurrentValue;
+            if (current == McpServerStatus.Stopped || current == McpServerStatus.Downloading)
+                _serverStatus.Value = McpServerStatus.Downloading;
+        }
+
+        /// <summary>Returns the status machine to Stopped, but ONLY if it is still Downloading (so it never
+        /// stomps a Starting/Running/Stopping state that a concurrent path may have moved it to).</summary>
+        static void ResetDownloadingToStopped()
+        {
+            if (_serverStatus.CurrentValue == McpServerStatus.Downloading)
+                _serverStatus.Value = McpServerStatus.Stopped;
+        }
+
+        /// <summary>Shows the non-modal server-binary download result popup (success or failure).</summary>
+        static void ShowUpdateResultPopup(bool success)
+        {
+            NotificationPopupWindow.Show(
+                windowTitle: success ? "Updated" : "Update Failed",
+                height: 235,
+                minHeight: 235,
+                title: success ? "Server Binary Updated" : "Server Binary Update Failed",
+                message: success
+                    ? "The MCP server binary was successfully downloaded and updated. \n\n" +
+                        $"Version: {GetBinaryVersion()}\n\n" +
+                        "You may need to restart your AI agent to reconnect to the updated server."
+                    : "Failed to download and update the MCP server binary. Please check the logs for details.");
+        }
+
+        /// <summary>
+        /// Atomically publishes a fully-prepared staged payload folder into <paramref name="destFolder"/> via a
+        /// single same-volume <see cref="Directory.Move"/>. Ensures the destination's parent exists and removes
+        /// any existing destination first (Directory.Move requires the target to not exist). The caller
+        /// guarantees <paramref name="stagedFolder"/> and <paramref name="destFolder"/> share a volume (staging
+        /// is a sibling of the cache root) so the rename is atomic, never a partial cross-volume copy.
+        /// </summary>
+        internal static void PublishStagedBinary(string stagedFolder, string destFolder)
+        {
+            var parent = Path.GetDirectoryName(destFolder);
+            if (!string.IsNullOrEmpty(parent) && !Directory.Exists(parent))
+                Directory.CreateDirectory(parent);
+
+            if (Directory.Exists(destFolder))
+                Directory.Delete(destFolder, recursive: true);
+
+            Directory.Move(stagedFolder, destFolder);
         }
 
         /// <summary>
