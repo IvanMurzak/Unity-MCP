@@ -71,6 +71,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         static Process? _serverProcess;
 
+        // Single-flight guard for the server-binary download (0 = idle, 1 = a DownloadAndUnpackBinary is in
+        // flight). Claimed atomically via Interlocked.CompareExchange in TryBeginDownload BEFORE the first await,
+        // released in EndDownload from DownloadAndUnpackBinary's finally. This is the TOCTOU-safe replacement for
+        // the old "read _serverStatus, later SetDownloadingStatus" check-then-set that let two first-install
+        // triggers both start a colliding download → "IOException: Sharing violation" on the temp zip.
+        static int _downloadInProgress;
+
         public static ReadOnlyReactiveProperty<McpServerStatus> ServerStatus => _serverStatus;
 
         /// <summary>
@@ -372,13 +379,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 return Task.FromResult(false);
             }
 
-            // Deduplication guard (issue #845): UPM fires MULTIPLE registeredPackages events for a single
-            // package install/update, and ServerBinaryUpdateWatcher's _isRechecking flag resets synchronously
-            // (in its finally) before the fire-and-forget download Task completes. Without this guard, each
-            // event past the flag would start its own DownloadAndUnpackBinary, and the two would race at the
-            // shared archive path (corrupting the zip → checksum failure) and at PublishStagedBinary (one Move
-            // deleting the folder the other just installed). The Downloading status the lifecycle machine
-            // already tracks is the real idempotency guard: if a download is in flight, let it complete.
+            // Cheap best-effort early-out: if a download already advanced the lifecycle machine to Downloading,
+            // skip re-entering DownloadAndUnpackBinary at all. This is only an OPTIMIZATION — the authoritative
+            // single-flight guard is DownloadAndUnpackBinary's atomic TryBeginDownload, which also covers the
+            // manual menu path (MenuItems.DownloadServer calls DownloadAndUnpackBinary directly, bypassing this
+            // method) and the tiny window before SetDownloadingStatus runs. UPM fires MULTIPLE registeredPackages
+            // events per install and ServerBinaryUpdateWatcher's _isRechecking flag resets synchronously before
+            // the fire-and-forget download Task completes, so this caller can legitimately re-enter while a
+            // download is in flight; let the in-flight one complete.
             if (_serverStatus.CurrentValue == McpServerStatus.Downloading)
                 return Task.FromResult(true); // download already in progress; let it complete
 
@@ -414,19 +422,35 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         /// </param>
         public static async Task<bool> DownloadAndUnpackBinary(bool unattended = false)
         {
-            UnityEngine.Debug.Log($"Downloading GameDev-MCP-Server binary from: <color=yellow>{ExecutableZipUrl}</color>");
-
-            // Clear any prior failure + reflect the in-progress download in the status machine.
-            _lastDownloadError.Value = null;
-            SetDownloadingStatus();
+            // SINGLE-FLIGHT GUARD (first-install "IOException: Sharing violation" fix). Atomically claim the one
+            // download slot BEFORE the first await. On a fresh install two triggers race into the download — the
+            // [InitializeOnLoad] static ctor and ServerBinaryUpdateWatcher's registeredPackages handler (which UPM
+            // fires multiple times per install) — and the manual menu (MenuItems.DownloadServer) calls THIS method
+            // directly, bypassing DownloadServerBinaryIfNeeded's status check. The old dedup was a TOCTOU: it read
+            // _serverStatus, then set Downloading only later (SetDownloadingStatus below), so two callers both
+            // passed the check, both ran DownloadFileTaskAsync against the same fixed temp archive path, and the
+            // second WebClient opening the file the first still held threw the Sharing violation. CompareExchange
+            // makes claim-the-slot atomic, so a concurrent second caller no-ops (returns the in-flight result)
+            // instead of starting a second, colliding download. Released in the finally.
+            if (!TryBeginDownload())
+                return true; // a download is already in progress; let it complete
 
             string? stagingRoot = null;
             string? archiveFilePath = null;
             try
             {
+                UnityEngine.Debug.Log($"Downloading GameDev-MCP-Server binary from: <color=yellow>{ExecutableZipUrl}</color>");
+
+                // Clear any prior failure + reflect the in-progress download in the status machine.
+                _lastDownloadError.Value = null;
+                SetDownloadingStatus();
+
                 var previousKeepServerRunning = UnityMcpPluginEditor.KeepServerRunning;
 
-                archiveFilePath = Path.GetFullPath($"{Application.temporaryCachePath}/{ExecutableName.ToLowerInvariant()}-{PlatformName}-{ServerVersion}.zip");
+                // Per-attempt UNIQUE temp archive path (mirrors the staging folder's Guid below). Even if a future
+                // caller bypasses the single-flight guard, two downloads target DIFFERENT files and can never
+                // collide on the same zip — the defensive, belt-and-suspenders half of the fix.
+                archiveFilePath = BuildArchiveFilePath();
                 UnityEngine.Debug.Log($"Temporary archive file path: <color=yellow>{archiveFilePath}</color>");
 
                 // Download the zip file from the GitHub release notes
@@ -542,6 +566,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             }
             finally
             {
+                // Release the single-flight download slot claimed at entry so a later retry / real download can
+                // proceed. Only the caller that acquired the slot reaches this finally (the early return above
+                // never entered the try), so this always pairs 1:1 with the TryBeginDownload that returned true.
+                EndDownload();
+
                 if (stagingRoot != null)
                 {
                     try { if (Directory.Exists(stagingRoot)) Directory.Delete(stagingRoot, recursive: true); }
@@ -590,6 +619,35 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             if (_serverStatus.CurrentValue == McpServerStatus.Downloading)
                 _serverStatus.Value = McpServerStatus.Stopped;
         }
+
+        /// <summary>
+        /// Atomically claims the single server-binary download slot. Returns true when THIS caller acquired it
+        /// (and must eventually release it via <see cref="EndDownload"/>), or false when a download is already in
+        /// flight and the caller must no-op. The atomic claim-the-slot is the fix for the first-install
+        /// "IOException: Sharing violation" race: it replaces the non-atomic status check-then-set so two
+        /// concurrent triggers can never both start a download against the same temp archive path.
+        /// </summary>
+        internal static bool TryBeginDownload()
+            => Interlocked.CompareExchange(ref _downloadInProgress, 1, 0) == 0;
+
+        /// <summary>Releases the single download slot claimed by <see cref="TryBeginDownload"/>.</summary>
+        internal static void EndDownload()
+            => Interlocked.Exchange(ref _downloadInProgress, 0);
+
+        /// <summary>True while a server-binary download slot is currently held (diagnostic / test view).</summary>
+        internal static bool IsDownloadInProgress
+            => Volatile.Read(ref _downloadInProgress) != 0;
+
+        /// <summary>
+        /// Builds a PER-ATTEMPT-UNIQUE temp path for the downloaded server zip
+        /// (<c>{temporaryCachePath}/{executable}-{rid}-{version}-{guid}.zip</c>). The trailing Guid mirrors the
+        /// staging folder's Guid so two concurrent downloads never target the same file — the defensive half of
+        /// the first-install Sharing-violation fix. Internal so an EditMode test can assert per-call uniqueness
+        /// without performing a real download.
+        /// </summary>
+        internal static string BuildArchiveFilePath()
+            => Path.GetFullPath(
+                $"{Application.temporaryCachePath}/{ExecutableName.ToLowerInvariant()}-{PlatformName}-{ServerVersion}-{Guid.NewGuid():N}.zip");
 
         /// <summary>Shows the non-modal server-binary download result popup (success or failure).</summary>
         static void ShowUpdateResultPopup(bool success)
