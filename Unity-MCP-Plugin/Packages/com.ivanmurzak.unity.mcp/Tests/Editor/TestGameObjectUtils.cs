@@ -79,7 +79,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 ? "Assets/__TempTestScene_" + System.Guid.NewGuid().ToString("N") + ".unity"
                 : null;
             if (tempScenePath != null)
-                EditorSceneManager.SaveScene(activeScene, tempScenePath);
+            {
+                var saved = EditorSceneManager.SaveScene(activeScene, tempScenePath);
+                Assert.IsTrue(saved, $"Failed to save temp scene to '{tempScenePath}' as a prerequisite for additive scene creation.");
+            }
 
             // SceneManager.CreateScene is Play-Mode-only; in Edit Mode, additive
             // scenes are created via EditorSceneManager instead.
@@ -105,7 +108,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 // even when the assert above fails, so no temp scene asset leaks.
                 EditorSceneManager.CloseScene(additiveScene, removeScene: true);
                 if (tempScenePath != null && File.Exists(tempScenePath))
+                {
+                    // The active scene is still backed by tempScenePath at this point.
+                    // Swap in a fresh untitled scene first so nothing references the
+                    // asset before it's deleted from disk.
+                    EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
                     AssetDatabase.DeleteAsset(tempScenePath);
+                }
             }
             yield return null;
         }
