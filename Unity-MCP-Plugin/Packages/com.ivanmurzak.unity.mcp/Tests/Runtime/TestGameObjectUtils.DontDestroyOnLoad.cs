@@ -26,6 +26,17 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Tests
             // Mode. This test must run under the PlayMode test category (not EditMode).
             Assert.IsTrue(Application.isPlaying, "This test must run in Play Mode.");
 
+            // GameObjectUtils.FindRootGameObjects(scene: null) is only supported inside
+            // the Editor (see GameObjectUtils.Runtime*.cs) — a standalone Player build
+            // (this test assembly's "standalone" PlayMode CI run) always returns null
+            // there, by design, since DDOL-in-a-standalone-build lookup is out of scope
+            // for this Editor-bridge tool. Skip rather than fail in that environment.
+            if (!Application.isEditor)
+            {
+                Assert.Ignore("FindByName(scene: null) is Editor-only; skipping in a standalone Player build.");
+                yield break;
+            }
+
             var objectName = "ddolTestObject_" + System.Guid.NewGuid().ToString("N");
             var go = new GameObject(objectName);
             Object.DontDestroyOnLoad(go);
