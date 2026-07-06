@@ -52,13 +52,24 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
                 // every no-scene find call while playing.
                 var ddolScene = GetDontDestroyOnLoadScene();
                 if (ddolScene.IsValid())
-                    roots.AddRange(ddolScene.GetRootGameObjects());
+                {
+                    // Object.Destroy(s_ddolProbe) below is deferred to end-of-frame, so
+                    // on the call that (re)builds the cache the probe may still be a
+                    // root here. Filter it by reference rather than relying on destroy
+                    // timing.
+                    foreach (var root in ddolScene.GetRootGameObjects())
+                    {
+                        if (root != s_ddolProbe)
+                            roots.Add(root);
+                    }
+                }
             }
 
             return roots.ToArray();
         }
 
         private static Scene? s_ddolSceneCache;
+        private static GameObject? s_ddolProbe;
 
         private static Scene GetDontDestroyOnLoadScene()
         {
@@ -68,9 +79,10 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
             var probe = new GameObject("~DDOLSceneProbe") { hideFlags = HideFlags.HideAndDontSave };
             Object.DontDestroyOnLoad(probe);
             var scene = probe.scene;
-            Object.DestroyImmediate(probe);
+            Object.Destroy(probe);
 
             s_ddolSceneCache = scene;
+            s_ddolProbe = probe;
             return scene;
         }
         public static GameObject? FindByInstanceID(int instanceID)
