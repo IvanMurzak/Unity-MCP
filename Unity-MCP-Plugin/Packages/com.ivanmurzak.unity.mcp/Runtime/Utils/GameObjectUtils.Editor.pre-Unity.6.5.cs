@@ -11,7 +11,6 @@
 #nullable enable
 #if UNITY_EDITOR && !UNITY_6000_5_OR_NEWER
 using System.Collections.Generic;
-using System.Linq;
 using com.IvanMurzak.McpPlugin.Common;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -45,16 +44,34 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
 
             if (Application.isPlaying)
             {
-                // Every GameObject is disjoint from the sets above: an object lives
-                // in exactly one scene, and DontDestroyOnLoad is not enumerable via
-                // SceneManager, so no dedupe against 'roots' is needed here.
-                var ddolRoots = Object
-                    .FindObjectsByType<GameObject>(FindObjectsInactive.Include, FindObjectsSortMode.None)
-                    .Where(go => go.transform.parent == null && go.scene.name == "DontDestroyOnLoad");
-                roots.AddRange(ddolRoots);
+                // DontDestroyOnLoad is never enumerable via SceneManager.GetSceneAt
+                // or GetSceneByName (it isn't part of that registry at all), so the
+                // only way to get its Scene handle is from an object already known
+                // to live there. GetDontDestroyOnLoadScene() probes for it once and
+                // caches the handle, avoiding a FindObjectsByType world-scan on
+                // every no-scene find call while playing.
+                var ddolScene = GetDontDestroyOnLoadScene();
+                if (ddolScene.IsValid())
+                    roots.AddRange(ddolScene.GetRootGameObjects());
             }
 
             return roots.ToArray();
+        }
+
+        private static Scene? s_ddolSceneCache;
+
+        private static Scene GetDontDestroyOnLoadScene()
+        {
+            if (s_ddolSceneCache.HasValue && s_ddolSceneCache.Value.IsValid())
+                return s_ddolSceneCache.Value;
+
+            var probe = new GameObject("~DDOLSceneProbe") { hideFlags = HideFlags.HideAndDontSave };
+            Object.DontDestroyOnLoad(probe);
+            var scene = probe.scene;
+            Object.DestroyImmediate(probe);
+
+            s_ddolSceneCache = scene;
+            return scene;
         }
         public static GameObject? FindByInstanceID(int instanceID)
         {
