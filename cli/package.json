@@ -57,6 +57,7 @@
     "url": "https://github.com/IvanMurzak/Unity-MCP.git",
     "directory": "cli"
   },
+  "homepage": "https://ai-game.dev",
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
   },
