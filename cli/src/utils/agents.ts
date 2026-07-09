@@ -484,6 +484,37 @@ export const agentRegistry: readonly AgentDefinition[] = [
     stdioRemoveKeys: ['url'],
     httpRemoveKeys: ['command', 'args'],
   },
+
+  // ── Custom (generic mcpServers entry written to <project>/mcp.json) ─
+  // The generic-MCP-client escape hatch: for any client not otherwise
+  // listed, write a standard `mcpServers` entry to `<project>/mcp.json`.
+  // Mirrors the godot-cli / unreal-mcp-cli `custom` agent (semantic
+  // parity), adapted to the Unity CLI's stdio+http surface — the props
+  // use the canonical self-describing `type: 'stdio'` / `type: 'http'`
+  // shape shared by claude-desktop / cursor / gemini above.
+  {
+    id: 'custom',
+    name: 'Custom (generic MCP client)',
+    skillsPath: null,
+    configPathDisplay: 'mcp.json',
+    configFormat: 'json',
+    bodyPath: 'mcpServers',
+    getConfigPath: (p) => path.join(p, 'mcp.json'),
+    getStdioProps: (serverPath, port, timeout, auth, token) => ({
+      type: 'stdio',
+      command: serverPath,
+      args: stdioArgs(port, timeout, auth, token),
+    }),
+    getHttpProps: (url, token, authRequired) => ({
+      type: 'http',
+      url,
+      ...(authHeaders(token, authRequired)
+        ? { headers: authHeaders(token, authRequired) }
+        : {}),
+    }),
+    stdioRemoveKeys: ['url'],
+    httpRemoveKeys: ['command', 'args'],
+  },
 ] as const;
 
 // ---------------------------------------------------------------------------

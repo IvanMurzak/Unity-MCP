@@ -75,6 +75,8 @@ describe('library entry — no top-level side effects', () => {
     const ids = listAgentIds();
     expect(Array.isArray(ids)).toBe(true);
     expect(ids.length).toBeGreaterThan(0);
+    // Generic-MCP-client escape hatch — parity with godot-cli / unreal-mcp-cli.
+    expect(ids).toContain('custom');
 
     expect(log).not.toHaveBeenCalled();
     expect(err).not.toHaveBeenCalled();
