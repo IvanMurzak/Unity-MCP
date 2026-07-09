@@ -1,0 +1,23 @@
+cli/src/utils/agents.ts
+  s_403af0e73abb92::t_5a819172c1b069 485-515
+cli/tests/lib.test.ts
+  s_403af0e73abb92::t_45c31a304ac80a 78-79
+cli/tests/setup-skills.test.ts
+  s_403af0e73abb92::t_d3757ad8b79559 86-88
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ee98962c7467bfe8f312ffd25d2eca0361ac979b",
+  "prompts": {},
+  "sessions": {
+    "s_403af0e73abb92": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-ab742ff7f3419a3c3",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
