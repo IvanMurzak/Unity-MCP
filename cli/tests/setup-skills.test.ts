@@ -83,6 +83,9 @@ describe('setup-skills command', () => {
     expect(exitCode).toBe(0);
     // Table should include at least one agent with skills support
     expect(stdout).toContain('claude-code');
+    // ...and the skill-less generic `custom` agent (rendered with a `—`
+    // skills path) — the full registry is listed, not only skilled agents.
+    expect(stdout).toContain('custom');
   });
 
   it('exits 1 with error when agent-id is missing', async () => {
