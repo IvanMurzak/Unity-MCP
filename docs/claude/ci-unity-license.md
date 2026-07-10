@@ -27,12 +27,13 @@ Set all **three** (game-ci needs all three even for a Personal license):
 | `UNITY_EMAIL` | The CI Unity account email |
 | `UNITY_PASSWORD` | The CI Unity account password |
 
-Org-level secrets (shared across all `IvanMurzak/*` Unity repos) are recommended:
+`IvanMurzak` is a **personal account** (GitHub org-level secrets are not available),
+so set these **per-repo** — repeat on each Unity repo that runs Unity CI:
 
 ```bash
-gh secret set UNITY_LICENSE --org IvanMurzak --visibility all < Unity_vXXXX.ulf
-gh secret set UNITY_EMAIL   --org IvanMurzak --visibility all
-gh secret set UNITY_PASSWORD --org IvanMurzak --visibility all
+gh secret set UNITY_LICENSE  --repo IvanMurzak/Unity-MCP < Unity_vXXXX.ulf
+gh secret set UNITY_EMAIL    --repo IvanMurzak/Unity-MCP
+gh secret set UNITY_PASSWORD --repo IvanMurzak/Unity-MCP
 ```
 
 ## The one machine-binding gotcha (why a desktop `.ulf` fails)
@@ -51,7 +52,7 @@ does exactly this).
 2. **Download** the `unity-activation-file` artifact from that run → you get a `.alf`.
 3. **Convert to `.ulf`.** Open <https://license.unity3d.com/manual>, sign in with the
    CI Unity account, upload the `.alf`, choose **Unity Personal**, download the `.ulf`.
-4. **Store it.** `gh secret set UNITY_LICENSE --org IvanMurzak --visibility all < Unity_vXXXX.ulf`
+4. **Store it.** `gh secret set UNITY_LICENSE --repo IvanMurzak/Unity-MCP < Unity_vXXXX.ulf`
    (and make sure `UNITY_EMAIL` / `UNITY_PASSWORD` exist too).
 5. Re-run any failed Unity workflow — it now uses the stored license.
 

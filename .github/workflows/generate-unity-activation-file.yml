@@ -70,10 +70,9 @@ jobs:
             2. Open https://license.unity3d.com/manual and sign in with the
                CI Unity account.
             3. Upload the .alf, pick "Unity Personal", download the .ulf.
-            4. Store the FULL CONTENTS of the .ulf as a secret named
-               UNITY_LICENSE (org-level recommended so every Unity repo shares it):
-                   gh secret set UNITY_LICENSE --org IvanMurzak < Unity_vXXXX.ulf
-               (or per-repo: gh secret set UNITY_LICENSE --repo IvanMurzak/Unity-MCP < Unity_vXXXX.ulf)
+            4. Store the FULL CONTENTS of the .ulf as the UNITY_LICENSE secret
+               (IvanMurzak is a personal account -> per-repo secret):
+                   gh secret set UNITY_LICENSE --repo IvanMurzak/Unity-MCP < Unity_vXXXX.ulf
             5. Ensure UNITY_EMAIL and UNITY_PASSWORD secrets are also set —
                game-ci requires all three for a Personal license.
 
