@@ -58,6 +58,9 @@ jobs:
           name: unity-activation-file
           path: .unity-license/*.alf
           if-no-files-found: error
+          # `.unity-license` is a dot-dir; upload-artifact@v4+ skips hidden paths
+          # by default, so the .alf would be silently excluded without this.
+          include-hidden-files: true
 
       - name: Print next steps
         run: |
