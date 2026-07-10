@@ -1,0 +1,85 @@
+# ┌──────────────────────────────────────────────────────────────────┐
+# │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
+# │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
+# │  Copyright (c) 2025 Ivan Murzak                                  │
+# │  Licensed under the Apache License, Version 2.0.                 │
+# │  See the LICENSE file in the project root for more information.  │
+# └──────────────────────────────────────────────────────────────────┘
+
+# One-shot helper to (re)generate a Unity manual-activation file (.alf) INSIDE the
+# CI environment. This does NOT activate anything by itself — it only produces the
+# .alf you upload to Unity's portal to obtain a .ulf license file.
+#
+# Why run it here and not on your desktop:
+#   All GitHub-hosted runners report the SAME HardwareId, so Unity treats them as
+#   one machine. A .ulf produced from a CI-generated .alf is therefore valid across
+#   every future CI run. A .ulf generated from a DESKTOP .alf binds to your local
+#   machine and fails in CI with a "machine binding mismatch".
+#
+# Full procedure: docs/claude/ci-unity-license.md
+
+name: generate-unity-activation-file
+
+on:
+  workflow_dispatch:
+    inputs:
+      unityVersion:
+        description: "Unity editor image used to mint the .alf (any version works — the resulting .ulf is version-independent)"
+        required: false
+        default: "2022.3.62f3"
+
+jobs:
+  generate-alf:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate Unity activation file (.alf)
+        env:
+          UNITY_VERSION: ${{ inputs.unityVersion }}
+        run: |
+          mkdir -p .unity-license
+
+          docker run --rm \
+            -v "$(pwd)/.unity-license:/output" \
+            -w /output \
+            unityci/editor:ubuntu-${UNITY_VERSION}-base-3 \
+            unity-editor -batchmode -createManualActivationFile -logFile /dev/stdout || true
+
+          ALF_FILE=$(find .unity-license -name "*.alf" | head -1)
+          if [ -z "$ALF_FILE" ]; then
+            echo "::error::Failed to generate .alf file — check the Docker/editor logs above."
+            exit 1
+          fi
+          echo "Generated ALF file: $ALF_FILE"
+        shell: bash
+
+      - name: Upload .alf artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: unity-activation-file
+          path: .unity-license/*.alf
+          if-no-files-found: error
+
+      - name: Print next steps
+        run: |
+          cat <<'EOF'
+          ============================================================
+          Unity activation file (.alf) generated INSIDE CI.
+
+          To obtain the UNITY_LICENSE secret:
+            1. Download the "unity-activation-file" artifact from this run.
+            2. Open https://license.unity3d.com/manual and sign in with the
+               CI Unity account.
+            3. Upload the .alf, pick "Unity Personal", download the .ulf.
+            4. Store the FULL CONTENTS of the .ulf as a secret named
+               UNITY_LICENSE (org-level recommended so every Unity repo shares it):
+                   gh secret set UNITY_LICENSE --org IvanMurzak < Unity_vXXXX.ulf
+               (or per-repo: gh secret set UNITY_LICENSE --repo IvanMurzak/Unity-MCP < Unity_vXXXX.ulf)
+            5. Ensure UNITY_EMAIL and UNITY_PASSWORD secrets are also set —
+               game-ci requires all three for a Personal license.
+
+          IMPORTANT: always generate the .alf here (in CI), never on your
+          desktop, or the resulting .ulf will bind to the wrong machine.
+          Details: docs/claude/ci-unity-license.md
+          ============================================================
+          EOF
+        shell: bash
