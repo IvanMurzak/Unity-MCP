@@ -1,0 +1,27 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Tests/TestResultCollector.cs
+  s_9bb276d7183c60::t_21dcd53bd7a322 16,131
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Tests.cs
+  s_9bb276d7183c60::t_cf2c9f6cf00df5 106,108,112-113,115-168,204,309-317
+  s_9bb276d7183c60::t_714bbe10aea8ae 44-47,105,107,109-111,114
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Tests/TestsRunDirtySceneTests.cs
+  s_9bb276d7183c60::t_e5ec690b343dfb 34,41,105-140,142-143,146-148,150,152-153,160
+  s_9bb276d7183c60::t_75817fbce23e2c 141,144-145,149,151,154-159,161
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Tests.Run.cs
+  s_9bb276d7183c60::t_392d298d01a042 104-108,117-121,160,180-181,183,199
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.12",
+  "base_commit_sha": "80747bc5b09ed749c875d471172d7ebfd5863952",
+  "prompts": {},
+  "sessions": {
+    "s_9bb276d7183c60": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019f551e-4ca8-7e60-be86-dea13e2ffad8",
+        "model": "gpt-5.5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
