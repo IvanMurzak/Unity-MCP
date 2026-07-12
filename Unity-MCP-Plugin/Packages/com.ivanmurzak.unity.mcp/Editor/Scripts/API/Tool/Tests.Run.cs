@@ -101,6 +101,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             return await MainThread.Instance.RunAsync(async () =>
             {
+                if (IsTestRunActive(out var activeRequestId))
+                    return ResponseCallValueTool<TestRunResponse>
+                        .Error(Error.TestsAlreadyRunning(activeRequestId))
+                        .SetRequestID(requestId);
+
                 // Abort before any state mutation if any open scene has unsaved changes.
                 // Running tests against a dirty scene is unsafe: Unity may reload the scene on
                 // play-mode entry, silently discarding edits and producing non-reproducible
@@ -109,9 +114,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 // AssetDatabase.Refresh so nothing is side-effected on abort.
                 ThrowIfAnyOpenSceneIsDirty();
 
+                if (!TryBeginTestRun(requestId, out activeRequestId))
+                    return ResponseCallValueTool<TestRunResponse>
+                        .Error(Error.TestsAlreadyRunning(activeRequestId))
+                        .SetRequestID(requestId);
+
                 // Save display options to PlayerPrefs BEFORE AssetDatabase.Refresh —
                 // these must be persisted before a potential domain reload
-                TestResultCollector.TestCallRequestID.Value = requestId;
                 TestResultCollector.IncludePassingTests.Value = includePassingTests;
                 TestResultCollector.IncludeMessage.Value = includeMessages;
                 TestResultCollector.IncludeMessageStacktrace.Value = includeStacktrace;
@@ -148,7 +157,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 // Check for pre-existing compilation errors (no new compilation triggered)
                 if (UnityEditor.EditorUtility.scriptCompilationFailed)
                 {
-                    TestResultCollector.TestCallRequestID.Value = string.Empty;
+                    ClearActiveTestRun(requestId);
                     var errorDetails = ScriptUtils.GetCompilationErrorDetails();
                     return ResponseCallValueTool<TestRunResponse>
                         .Error($"Cannot run tests: Unity project has compilation errors.\n\n{errorDetails}")
@@ -168,7 +177,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                     var validation = await ValidateTestFilters(TestRunnerApi, testMode, filterParams);
                     if (validation != null)
+                    {
+                        ClearActiveTestRun(requestId);
                         return ResponseCallValueTool<TestRunResponse>.Error(validation).SetRequestID(requestId);
+                    }
 
                     var filter = CreateTestFilter(testMode, filterParams);
 
@@ -184,6 +196,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         Debug.LogException(ex);
                         Debug.LogError($"[TestRunner] ------------------------------------- Exception {testMode} tests.");
                     }
+                    ClearActiveTestRun(requestId);
                     return ResponseCallValueTool<TestRunResponse>.Error(Error.TestExecutionFailed(ex.Message)).SetRequestID(requestId);
                 }
             }).Unwrap();

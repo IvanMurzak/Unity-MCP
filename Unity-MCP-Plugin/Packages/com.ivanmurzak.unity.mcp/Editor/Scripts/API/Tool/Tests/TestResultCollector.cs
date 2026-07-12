@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using com.IvanMurzak.McpPlugin.Common.Model;
+using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using Extensions.Unity.PlayerPrefsEx;
 using UnityEditor.TestTools.TestRunner.Api;
@@ -127,7 +128,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
                 UnityMcpPluginEditor.ConnectIfNeeded();
 
             var requestId = TestCallRequestID.Value;
-            TestCallRequestID.Value = string.Empty;
+            Tool_Tests.ClearActiveTestRun(requestId);
             if (string.IsNullOrEmpty(requestId) == false)
             {
                 var structuredResponse = CreateStructuredResponse(

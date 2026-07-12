@@ -31,12 +31,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [SetUp]
         public void EnsureCleanScene()
         {
+            Tool_Tests.ClearActiveTestRun();
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
         }
 
         [TearDown]
         public void RestoreCleanScene()
         {
+            Tool_Tests.ClearActiveTestRun();
             // Reset to a fresh empty scene so the next test (or the next session)
             // never sees the dirty marker we may have set.
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -98,6 +100,63 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 "Exactly one open scene should be reported as dirty.");
             Assert.IsTrue(dirty[0].isDirty,
                 "The returned scene must actually be dirty.");
+        }
+
+        [Test]
+        public void TryBeginTestRun_WhenNoRunIsActive_StoresRequestId()
+        {
+            var started = Tool_Tests.TryBeginTestRun("request-1", out var activeRequestId);
+
+            Assert.IsTrue(started);
+            Assert.AreEqual("request-1", activeRequestId);
+            Assert.IsTrue(Tool_Tests.IsTestRunActive(out activeRequestId));
+            Assert.AreEqual("request-1", activeRequestId);
+        }
+
+        [Test]
+        public void TryBeginTestRun_WhenRunIsAlreadyActive_DoesNotReplaceRequestId()
+        {
+            Assert.IsTrue(Tool_Tests.TryBeginTestRun("request-1", out _));
+
+            var started = Tool_Tests.TryBeginTestRun("request-2", out var activeRequestId);
+
+            Assert.IsFalse(started);
+            Assert.AreEqual("request-1", activeRequestId);
+            Assert.IsTrue(Tool_Tests.IsTestRunActive(out activeRequestId));
+            Assert.AreEqual("request-1", activeRequestId);
+        }
+
+        [Test]
+        public void ClearActiveTestRun_WhenRequestIdDoesNotMatch_KeepsActiveRun()
+        {
+            Assert.IsTrue(Tool_Tests.TryBeginTestRun("request-1", out _));
+
+            Tool_Tests.ClearActiveTestRun("request-2");
+
+            Assert.IsTrue(Tool_Tests.IsTestRunActive(out var activeRequestId));
+            Assert.AreEqual("request-1", activeRequestId);
+        }
+
+        [Test]
+        public void IsTestRunActive_WhenActiveRunIsFresh_KeepsActiveRun()
+        {
+            Assert.IsTrue(Tool_Tests.TryBeginTestRun("request-1", out _));
+            Tool_Tests.SetActiveTestRunStartedUtc(DateTime.UtcNow - TimeSpan.FromSeconds(30));
+
+            Assert.IsTrue(Tool_Tests.IsTestRunActive(out var activeRequestId));
+            Assert.AreEqual("request-1", activeRequestId);
+        }
+
+        [Test]
+        public void IsTestRunActive_WhenActiveRunIsStale_ClearsActiveRun()
+        {
+            Assert.IsTrue(Tool_Tests.TryBeginTestRun("request-1", out _));
+            Tool_Tests.SetActiveTestRunStartedUtc(DateTime.UtcNow - Tool_Tests.ActiveTestRunStaleAfter - TimeSpan.FromSeconds(1));
+
+            Assert.IsFalse(Tool_Tests.IsTestRunActive(out var activeRequestId));
+            Assert.AreEqual(string.Empty, activeRequestId);
+            Assert.IsTrue(Tool_Tests.TryBeginTestRun("request-2", out activeRequestId));
+            Assert.AreEqual("request-2", activeRequestId);
         }
 
         // --- helpers ---------------------------------------------------------
