@@ -12,6 +12,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.McpPlugin.Common.Utils;
@@ -98,8 +99,16 @@ namespace com.IvanMurzak.Unity.MCP
             /// Setter mirrors the getter so env-var / CLI overrides (which write via
             /// the generic Token property) land on the right field regardless of mode.
             /// </summary>
+            /// <remarks>
+            /// McpPlugin 7.0 removed the static <c>ConnectionConfig.Token</c> string in favour of the
+            /// <see cref="ConnectionConfig.CredentialProvider"/> callback. This Unity-side property is kept as
+            /// the single source of truth for the effective token (routed by <see cref="ConnectionMode"/>);
+            /// the overridden <see cref="CredentialProvider"/> below presents it on every (re)connect, so the
+            /// on-the-wire behaviour is identical to the pre-7.0 static-token connection. It is no longer an
+            /// <c>override</c> because the base no longer declares <c>Token</c>.
+            /// </remarks>
             [JsonIgnore]
-            public override string? Token
+            public string? Token
             {
                 get => ConnectionMode == ConnectionMode.Cloud ? CloudToken : LocalToken;
                 set
@@ -109,6 +118,22 @@ namespace com.IvanMurzak.Unity.MCP
                     else
                         LocalToken = value;
                 }
+            }
+
+            /// <summary>
+            /// McpPlugin 7.0 credential provider (replaces the removed static <c>ConnectionConfig.Token</c>).
+            /// Behaviour-preserving: returns the current mode-routed <see cref="Token"/> on every (re)connect,
+            /// so the same token the pre-7.0 static <c>Token</c> presented is handed to SignalR's
+            /// <c>AccessTokenProvider</c> (the Authorization header). A null token yields an anonymous
+            /// connection — identical to the pre-7.0 empty-token behaviour. Runtime-only; never serialized
+            /// (<see cref="JsonIgnoreAttribute"/>). The setter is intentionally a no-op: Unity derives the
+            /// credential from <see cref="Token"/> rather than from a host-injected provider.
+            /// </summary>
+            [JsonIgnore]
+            public override Func<Task<string?>>? CredentialProvider
+            {
+                get => () => Task.FromResult<string?>(Token);
+                set { /* Unity derives the credential from Token; a host-set provider is intentionally ignored. */ }
             }
 
             public LogLevel LogLevel { get; set; } = LogLevel.Warning;
