@@ -121,19 +121,47 @@ namespace com.IvanMurzak.Unity.MCP
             }
 
             /// <summary>
+            /// Editor-populated machine-store credential provider (mcp-authorize design 06 / D12 zero-button
+            /// auto-adopt). When set — by <c>AccountCredentialService.Initialize()</c> — a <b>Cloud</b>-mode
+            /// connection presents the proactively-refreshed account JWT read from the shared machine store
+            /// (<c>~/.ai-game-dev/credentials.json</c>); a null/empty result falls back to the mode-routed
+            /// <see cref="Token"/>, and Local/Custom mode ignores it entirely. Static because the machine
+            /// store is per-machine, shared across every config instance and the runtime boot. Runtime-only;
+            /// never serialized.
+            /// </summary>
+            [JsonIgnore]
+            public static Func<Task<string?>>? CloudCredentialProvider { get; set; }
+
+            /// <summary>
             /// McpPlugin 7.0 credential provider (replaces the removed static <c>ConnectionConfig.Token</c>).
-            /// Behaviour-preserving: returns the current mode-routed <see cref="Token"/> on every (re)connect,
-            /// so the same token the pre-7.0 static <c>Token</c> presented is handed to SignalR's
-            /// <c>AccessTokenProvider</c> (the Authorization header). A null token yields an anonymous
-            /// connection — identical to the pre-7.0 empty-token behaviour. Runtime-only; never serialized
-            /// (<see cref="JsonIgnoreAttribute"/>). The setter is intentionally a no-op: Unity derives the
-            /// credential from <see cref="Token"/> rather than from a host-injected provider.
+            /// In <b>Cloud</b> mode it first consults <see cref="CloudCredentialProvider"/> (the shared
+            /// machine-store account credential, proactively refreshed — design 06 / D12); when that yields
+            /// a token it is presented on the (re)connect, giving zero-button sign-in without any UI. When it
+            /// is unset or returns null/empty — and always in Local/Custom mode — it falls back to the
+            /// mode-routed <see cref="Token"/>, so the on-the-wire behaviour is identical to the pre-b7
+            /// static-token connection. A null token yields an anonymous connection. Runtime-only; never
+            /// serialized (<see cref="JsonIgnoreAttribute"/>). The setter is intentionally a no-op: Unity
+            /// derives the credential from the machine store / <see cref="Token"/> rather than from a
+            /// host-injected provider.
             /// </summary>
             [JsonIgnore]
             public override Func<Task<string?>>? CredentialProvider
             {
-                get => () => Task.FromResult<string?>(Token);
-                set { /* Unity derives the credential from Token; a host-set provider is intentionally ignored. */ }
+                get => async () =>
+                {
+                    if (ConnectionMode == ConnectionMode.Cloud)
+                    {
+                        var provider = CloudCredentialProvider;
+                        if (provider != null)
+                        {
+                            var token = await provider().ConfigureAwait(false);
+                            if (!string.IsNullOrEmpty(token))
+                                return token;
+                        }
+                    }
+                    return Token;
+                };
+                set { /* Unity derives the credential from the machine store / Token; a host-set provider is intentionally ignored. */ }
             }
 
             public LogLevel LogLevel { get; set; } = LogLevel.Warning;
