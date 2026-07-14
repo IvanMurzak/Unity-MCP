@@ -100,7 +100,7 @@ namespace com.IvanMurzak.Unity.MCP
         ///             builder.WithConfig(c =>
         ///             {
         ///                 c.Host  = "http://localhost:8080";
-        ///                 c.Token = "my-token";
+        ///                 c.CredentialProvider = () => System.Threading.Tasks.Task.FromResult&lt;string?&gt;("my-token");
         ///             });
         ///         })
         ///         .Build();
