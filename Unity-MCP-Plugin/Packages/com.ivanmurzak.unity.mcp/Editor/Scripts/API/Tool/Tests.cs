@@ -145,20 +145,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (string.IsNullOrEmpty(requestId) || TestResultCollector.TestCallRequestID.Value == requestId)
             {
                 TestResultCollector.TestCallRequestID.Value = string.Empty;
-                PlayerPrefs.DeleteKey(ActiveTestRunStartedUtcTicksKey);
-                PlayerPrefs.Save();
+                SessionState.EraseString(ActiveTestRunStartedUtcTicksKey);
             }
         }
 
         internal static void SetActiveTestRunStartedUtc(DateTime utcStarted)
         {
-            PlayerPrefs.SetString(ActiveTestRunStartedUtcTicksKey, utcStarted.ToUniversalTime().Ticks.ToString());
-            PlayerPrefs.Save();
+            SessionState.SetString(ActiveTestRunStartedUtcTicksKey, utcStarted.ToUniversalTime().Ticks.ToString());
         }
 
         static bool IsActiveTestRunStale(DateTime utcNow)
         {
-            var rawTicks = PlayerPrefs.GetString(ActiveTestRunStartedUtcTicksKey, string.Empty);
+            var rawTicks = SessionState.GetString(ActiveTestRunStartedUtcTicksKey, string.Empty);
             if (!long.TryParse(rawTicks, out var ticks))
                 return true;
 
@@ -202,6 +200,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             {
                 ClearPendingTestRun();
                 ClearActiveTestRun(requestId);
+                if (string.IsNullOrEmpty(requestId))
+                {
+                    Debug.LogError("[TestRunner] Compilation failed after a deferred test run, but the pending MCP request id was missing. The error response cannot be delivered to the client.");
+                    return;
+                }
 
                 var errorDetails = ScriptUtils.GetCompilationErrorDetails();
                 var response = ResponseCallValueTool<TestRunResponse>
@@ -248,7 +251,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         /// Running tests while a scene is dirty is unsafe: Unity may reload the scene when
         /// entering play mode, silently discarding the unsaved edits and producing a test run
         /// against a scene state that does not match either the in-memory scene or the asset
-        /// on disk. This check aborts before any state is mutated (no PlayerPrefs, no
+        /// on disk. This check aborts before any state is mutated (no test-run state, no
         /// AssetDatabase.Refresh, no domain reload is triggered).
         ///
         /// MUST be called on the Unity main thread.

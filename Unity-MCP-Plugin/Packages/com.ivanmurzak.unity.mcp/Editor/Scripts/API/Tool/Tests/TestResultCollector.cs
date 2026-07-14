@@ -15,7 +15,7 @@ using System.Linq;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
-using Extensions.Unity.PlayerPrefsEx;
+using UnityEditor;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 
@@ -51,15 +51,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             _ => "Unknown"
         };
 
-        public static PlayerPrefsString TestCallRequestID = new PlayerPrefsString("Unity_MCP_TestRunner_TestCallRequestID");
+        public static SessionStateString TestCallRequestID = new("Unity_MCP_TestRunner_TestCallRequestID");
 
-        public static PlayerPrefsBool IncludePassingTests = new PlayerPrefsBool("Unity_MCP_TestRunner_IncludePassingTests");
-        public static PlayerPrefsBool IncludeMessage = new PlayerPrefsBool("Unity_MCP_TestRunner_IncludeMessage", true);
-        public static PlayerPrefsBool IncludeMessageStacktrace = new PlayerPrefsBool("Unity_MCP_TestRunner_IncludeStacktrace");
+        public static SessionStateBool IncludePassingTests = new("Unity_MCP_TestRunner_IncludePassingTests");
+        public static SessionStateBool IncludeMessage = new("Unity_MCP_TestRunner_IncludeMessage", true);
+        public static SessionStateBool IncludeMessageStacktrace = new("Unity_MCP_TestRunner_IncludeStacktrace");
 
-        public static PlayerPrefsBool IncludeLogs = new PlayerPrefsBool("Unity_MCP_TestRunner_IncludeLogs");
-        public static PlayerPrefsInt IncludeLogsMinLevel = new PlayerPrefsInt("Unity_MCP_TestRunner_IncludeLogsMinLevel", (int)LogType.Warning);
-        public static PlayerPrefsBool IncludeLogsStacktrace = new PlayerPrefsBool("Unity_MCP_TestRunner_IncludeLogsStacktrace");
+        public static SessionStateBool IncludeLogs = new("Unity_MCP_TestRunner_IncludeLogs");
+        public static SessionStateInt IncludeLogsMinLevel = new("Unity_MCP_TestRunner_IncludeLogsMinLevel", (int)LogType.Warning);
+        public static SessionStateBool IncludeLogsStacktrace = new("Unity_MCP_TestRunner_IncludeLogsStacktrace");
 
         public TestResultCollector()
         {
@@ -149,6 +149,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
                     RequestId = requestId,
                     Result = response
                 });
+            }
+            else
+            {
+                Debug.LogError("[TestRunner] Test run finished, but the pending MCP request id was missing. The test results cannot be delivered to the client.");
             }
         }
 
@@ -291,6 +295,66 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
                 TestStatus.Skipped => TestResultStatus.Skipped,
                 _ => TestResultStatus.Skipped
             };
+        }
+
+        public sealed class SessionStateString
+        {
+            readonly string _key;
+            readonly string _defaultValue;
+
+            public SessionStateString(string key, string defaultValue = "")
+            {
+                _key = key;
+                _defaultValue = defaultValue;
+            }
+
+            public string Value
+            {
+                get => SessionState.GetString(_key, _defaultValue);
+                set
+                {
+                    if (string.IsNullOrEmpty(value) && string.IsNullOrEmpty(_defaultValue))
+                        SessionState.EraseString(_key);
+                    else
+                        SessionState.SetString(_key, value);
+                }
+            }
+        }
+
+        public sealed class SessionStateBool
+        {
+            readonly string _key;
+            readonly bool _defaultValue;
+
+            public SessionStateBool(string key, bool defaultValue = false)
+            {
+                _key = key;
+                _defaultValue = defaultValue;
+            }
+
+            public bool Value
+            {
+                get => SessionState.GetBool(_key, _defaultValue);
+                set => SessionState.SetBool(_key, value);
+            }
+        }
+
+        public sealed class SessionStateInt
+        {
+            readonly string _key;
+            readonly int _defaultValue;
+
+            public SessionStateInt(string key, int defaultValue = 0)
+            {
+                _key = key;
+                _defaultValue = defaultValue;
+            }
+
+            public int Value
+            {
+                get => SessionState.GetInt(_key, _defaultValue);
+                set => SessionState.SetInt(_key, value);
+            }
         }
     }
 }
