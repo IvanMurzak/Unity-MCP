@@ -2,17 +2,18 @@
 // Licensed under the Apache License, Version 2.0.
 
 import * as ui from './ui.js';
-import { readConfig, writeConfig, CLOUD_SERVER_BASE_URL } from './config.js';
+import { CLOUD_SERVER_BASE_URL } from './config.js';
 import { deviceAuthFlow } from './auth.js';
 import { openBrowser } from './browser.js';
+import { MachineCredentialStore } from './machine-credentials.js';
 
 /**
  * Run the cloud device-auth flow: initiate, display code, open browser, poll,
- * and persist the token to the project config.
+ * and persist the token to the shared machine credential store.
  *
  * Returns the access token on success, or null on failure (errors are printed).
  */
-export async function runCloudLogin(projectPath: string): Promise<string | null> {
+export async function runCloudLogin(store: MachineCredentialStore): Promise<string | null> {
   let spinner: ReturnType<typeof ui.startSpinner> | undefined;
 
   try {
@@ -37,13 +38,10 @@ export async function runCloudLogin(projectPath: string): Promise<string | null>
     if (result.success) {
       spinner?.success('Authorized');
 
-      const config = readConfig(projectPath) ?? {};
-      const updatedConfig = {
-        ...config,
-        cloudToken: result.accessToken,
-        connectionMode: 'Cloud' as const,
-      };
-      writeConfig(projectPath, updatedConfig);
+      store.write({
+        accessToken: result.accessToken,
+        serverTarget: CLOUD_SERVER_BASE_URL,
+      });
 
       return result.accessToken;
     }
