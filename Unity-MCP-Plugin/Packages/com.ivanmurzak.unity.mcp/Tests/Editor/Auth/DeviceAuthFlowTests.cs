@@ -17,6 +17,7 @@ using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin.AgentConfig;
 using com.IvanMurzak.Unity.MCP.Editor.Services;
 using NUnit.Framework;
+using UnityEngine.TestTools;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
@@ -199,6 +200,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var client = new FakeDeviceAuthClient(Authorize(), Array.Empty<DeviceTokenResponse>(),
                 authorizeError: new HttpRequestException("network down"));
             var flow = NewFlow(client, _ => { });
+
+            // The transport-error path intentionally logs an error ("Device auth flow failed")
+            // before transitioning to Failed; tell the Unity test runner that error log is expected
+            // so it doesn't fail this negative-path test on the unhandled error message.
+            LogAssert.ignoreFailingMessages = true;
 
             Run(flow);
 
