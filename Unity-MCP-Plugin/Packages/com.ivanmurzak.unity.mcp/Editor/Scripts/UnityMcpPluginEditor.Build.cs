@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using com.IvanMurzak.Unity.MCP.Editor.Services;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using Microsoft.Extensions.Logging;
 
@@ -57,6 +58,12 @@ namespace com.IvanMurzak.Unity.MCP
                 stopwatch.ElapsedMilliseconds);
 
             SetCurrentPlugin(built);
+
+            // Zero-button auto-adopt (mcp-authorize design 06 / D12): point the Cloud credential provider at
+            // the shared machine store and attach the on-401 refresh→reconnect coordinator. Both are inert
+            // when the machine store holds no credential, so this does not change the anonymous/local path.
+            AccountCredentialService.AttachTo(built);
+
             ApplyConfigToMcpPlugin(built);
 
             return this;

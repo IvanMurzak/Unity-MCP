@@ -89,6 +89,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             if (UnityMcpPluginEditor.ConnectionMode != ConnectionMode.Cloud)
                 return;
 
+            // When signed in via the shared machine credential store, the ConnectionCredentialCoordinator
+            // (wired in AccountCredentialService.AttachTo) already handles the 3-strike rejection by
+            // refreshing the token and reconnecting — do not clear the display token here (design 06).
+            if (AccountCredentialService.IsSignedIn)
+                return;
+
             Debug.LogWarning("[AI Game Developer] The server rejected the authorization token. " +
                 "The token has been cleared. Please click 'Authorize' to obtain a new token.");
 
@@ -350,7 +356,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 }
 
                 _deviceAuthFlow?.Cancel();
-                _deviceAuthFlow = new DeviceAuthFlow();
+                var cloudBaseUrl = UnityMcpPlugin.UnityConnectionConfig.CloudServerBaseUrl;
+                _deviceAuthFlow = new DeviceAuthFlow(
+                    new DeviceAuthService(cloudBaseUrl),
+                    onAuthorized: credentials =>
+                    {
+                        // Persist into the shared machine credential store (D12), and mirror the access token
+                        // into CloudToken so the existing cloud-auth UI + connection fallback keep working
+                        // until the token-field UI is retired in a later PR.
+                        AccountCredentialService.Adopt(credentials);
+                        UnityMcpPluginEditor.CloudToken = credentials.AccessToken;
+                        UnityMcpPluginEditor.Instance.Save();
+                    },
+                    serverTarget: cloudBaseUrl);
                 var capturedFlow = _deviceAuthFlow; // Capture to avoid stale field reference in async callbacks
 
                 capturedFlow.OnStateChanged += state =>
@@ -393,7 +411,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     });
                 };
 
-                await capturedFlow.StartAsync(UnityMcpPlugin.UnityConnectionConfig.CloudServerBaseUrl, "Unity Editor");
+                await capturedFlow.StartAsync();
             };
 
             btnAuthorize.RegisterCallback<ClickEvent>(_ => _startAuthorizeAction?.Invoke());
