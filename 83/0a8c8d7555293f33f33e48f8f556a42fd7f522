@@ -1,0 +1,58 @@
+cli/tests/server-version.test.ts
+  s_59a7b968dac78a::t_bfc31f4417a4d0 1-54
+cli/tests/enroll.test.ts
+  s_59a7b968dac78a::t_1ef789da2da0cd 164-179
+  s_59a7b968dac78a::t_504cce5287be7e 1-14,16-163,180-277,280-288
+  s_59a7b968dac78a::t_5f0d9eb62f6ed8 278-279
+  s_59a7b968dac78a::t_3c50b7f9b54c98 15
+cli/src/utils/enroll.ts
+  s_59a7b968dac78a::t_bc750efe9b3dbc 315-317
+  s_59a7b968dac78a::t_0778c149be7187 197-209
+  s_59a7b968dac78a::t_42310657c233eb 1-196,210-314,318-327
+cli/tests/project-marker.test.ts
+  s_59a7b968dac78a::t_2af9015e38f1df 1-68
+cli/tests/install-plugin-enroll-cli.test.ts
+  s_59a7b968dac78a::t_dac0b1daa2d95d 1-28
+cli/src/utils/project-marker.ts
+  s_59a7b968dac78a::t_3cae1821095ab2 1-60
+cli/src/utils/managed-server.ts
+  s_59a7b968dac78a::t_033e746fa50f64 1-351
+cli/tests/rid.test.ts
+  s_59a7b968dac78a::t_a5efd64afbc892 1-41
+cli/src/utils/server-version.ts
+  s_59a7b968dac78a::t_724146b6385c73 1-36
+cli/src/utils/rid.ts
+  s_59a7b968dac78a::t_77ac3fe0df4ccd 1-67
+cli/src/commands/install-plugin.ts
+  s_59a7b968dac78a::t_7765eeea1d942d 2,7-20,23,27-32,41,90-148
+  s_59a7b968dac78a::t_225a769c643739 149
+cli/src/commands/configure.ts
+  s_59a7b968dac78a::t_a0463ece134459 6
+  s_f0ba2c7209891e::t_e1f40e4998f18b 29,32-33,49-50,73-88
+cli/tests/managed-server.test.ts
+  s_f0ba2c7209891e::t_ba2056f92b9940 1-271
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "830a8c8d7555293f33f33e48f8f556a42fd7f522",
+  "prompts": {},
+  "sessions": {
+    "s_59a7b968dac78a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "1d0b6813-6c00-40af-a9ec-b1812e6464d4",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_f0ba2c7209891e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a4c102abe776e7787",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
