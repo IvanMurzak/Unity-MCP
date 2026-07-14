@@ -26,6 +26,37 @@
 }
 
 /* ==========================================================================
+   Sign-in state chip - Machine-credential (OAuth) sign-in badge in the
+   AI-agent configuration card header (mcp-authorize design 06 / PR2 store)
+   ========================================================================== */
+
+.signin-chip {
+    flex-shrink: 0;
+    -unity-text-align: middle-center;
+    font-size: 10px;
+    -unity-font-style: bold;
+    border-radius: 8px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    padding-left: 8px;
+    padding-right: 8px;
+    margin-left: 6px;
+    border-width: 1px;
+}
+
+.signin-chip--in {
+    background-color: rgba(70, 160, 90, 0.18);
+    border-color: rgba(90, 190, 110, 0.45);
+    color: rgb(120, 210, 140);
+}
+
+.signin-chip--out {
+    background-color: rgba(120, 120, 120, 0.15);
+    border-color: rgba(150, 150, 150, 0.4);
+    color: rgb(180, 180, 180);
+}
+
+/* ==========================================================================
    Connection Timeline - Vertical TODO-like list with connected points
    ========================================================================== */
 
