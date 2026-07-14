@@ -2,46 +2,58 @@
 // Licensed under the Apache License, Version 2.0.
 
 import { Command } from 'commander';
+import * as path from 'path';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
-import { resolveProjectPath } from '../utils/connection.js';
-import { getOrCreateConfig, CLOUD_SERVER_BASE_URL } from '../utils/config.js';
+import { CLOUD_SERVER_BASE_URL } from '../utils/config.js';
 import { runCloudLogin } from '../utils/cloud-login.js';
+import { MachineCredentialStore, MACHINE_STORE_DIR_NAME } from '../utils/machine-credentials.js';
 
 interface LoginOptions {
-  path?: string;
+  project?: string;
   force?: boolean;
 }
 
+/**
+ * Resolve the credential store: the shared machine store (`~/.ai-game-dev/`) by default, or a
+ * project-local store (`<path>/.ai-game-dev/`) when `--project` is given.
+ */
+function resolveStore(options: LoginOptions): MachineCredentialStore {
+  if (options.project) {
+    const base = path.join(path.resolve(options.project), MACHINE_STORE_DIR_NAME);
+    return new MachineCredentialStore(base);
+  }
+  return new MachineCredentialStore();
+}
+
 export const loginCommand = new Command('login')
-  .description('Authenticate with the Unity-MCP cloud server')
-  .argument('[path]', 'Unity project path (defaults to cwd)')
-  .option('--force', 'Re-authenticate even if already logged in')
-  .action(
-    async (
-      positionalPath: string | undefined,
-      options: LoginOptions,
-    ) => {
-      const projectPath = resolveProjectPath(positionalPath, options);
-      verbose(`Project path: ${projectPath}`);
+  .description(
+    'Sign in to ai-game.dev and store the credential in the shared machine credential store (~/.ai-game-dev/credentials.json)',
+  )
+  .option(
+    '--project <path>',
+    'Store the credential in a project-local store (<path>/.ai-game-dev/) instead of the shared machine store',
+  )
+  .option('--force', 'Re-authenticate even if already signed in')
+  .action(async (options: LoginOptions) => {
+    const store = resolveStore(options);
+    verbose(`Credential store: ${store.credentialsPath}`);
 
-      const config = getOrCreateConfig(projectPath);
+    if (store.exists && !options.force) {
+      ui.success('Already signed in.');
+      ui.info(`Credential: ${store.credentialsPath}`);
+      ui.info('Use --force to re-authenticate.');
+      return;
+    }
 
-      if (config.cloudToken && !options.force) {
-        ui.success('Already authenticated with cloud server.');
-        ui.info('Use --force to re-authenticate.');
-        return;
-      }
+    ui.heading('Sign in to ai-game.dev');
+    ui.label('Server', CLOUD_SERVER_BASE_URL);
+    ui.divider();
 
-      ui.heading('Cloud Authentication');
-      ui.label('Server', CLOUD_SERVER_BASE_URL);
-      ui.divider();
-
-      const token = await runCloudLogin(projectPath);
-      if (token) {
-        ui.success('Authentication complete. Cloud token saved to project config.');
-      } else {
-        process.exit(1);
-      }
-    },
-  );
+    const token = await runCloudLogin(store);
+    if (token) {
+      ui.success(`Signed in. Credential saved to ${store.credentialsPath}`);
+    } else {
+      process.exit(1);
+    }
+  });
