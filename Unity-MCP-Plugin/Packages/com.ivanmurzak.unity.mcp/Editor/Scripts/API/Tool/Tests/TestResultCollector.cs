@@ -15,7 +15,6 @@ using System.Linq;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
-using UnityEditor;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 
@@ -152,7 +151,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             }
             else
             {
-                Debug.LogError("[TestRunner] Test run finished, but the pending MCP request id was missing. The test results cannot be delivered to the client.");
+                UnityMcpPluginEditor.Instance.LogError(
+                    "Test run finished, but the pending MCP request id was missing. The test results cannot be delivered to the client.",
+                    typeof(TestResultCollector));
             }
         }
 
@@ -297,64 +298,5 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             };
         }
 
-        public sealed class SessionStateString
-        {
-            readonly string _key;
-            readonly string _defaultValue;
-
-            public SessionStateString(string key, string defaultValue = "")
-            {
-                _key = key;
-                _defaultValue = defaultValue;
-            }
-
-            public string Value
-            {
-                get => SessionState.GetString(_key, _defaultValue);
-                set
-                {
-                    if (string.IsNullOrEmpty(value) && string.IsNullOrEmpty(_defaultValue))
-                        SessionState.EraseString(_key);
-                    else
-                        SessionState.SetString(_key, value);
-                }
-            }
-        }
-
-        public sealed class SessionStateBool
-        {
-            readonly string _key;
-            readonly bool _defaultValue;
-
-            public SessionStateBool(string key, bool defaultValue = false)
-            {
-                _key = key;
-                _defaultValue = defaultValue;
-            }
-
-            public bool Value
-            {
-                get => SessionState.GetBool(_key, _defaultValue);
-                set => SessionState.SetBool(_key, value);
-            }
-        }
-
-        public sealed class SessionStateInt
-        {
-            readonly string _key;
-            readonly int _defaultValue;
-
-            public SessionStateInt(string key, int defaultValue = 0)
-            {
-                _key = key;
-                _defaultValue = defaultValue;
-            }
-
-            public int Value
-            {
-                get => SessionState.GetInt(_key, _defaultValue);
-                set => SessionState.SetInt(_key, value);
-            }
-        }
     }
 }

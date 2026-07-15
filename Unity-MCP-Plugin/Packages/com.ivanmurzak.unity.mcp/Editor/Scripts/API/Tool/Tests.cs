@@ -202,7 +202,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 ClearActiveTestRun(requestId);
                 if (string.IsNullOrEmpty(requestId))
                 {
-                    Debug.LogError("[TestRunner] Compilation failed after a deferred test run, but the pending MCP request id was missing. The error response cannot be delivered to the client.");
+                    UnityMcpPluginEditor.Instance.LogError(
+                        "Compilation failed after a deferred test run, but the pending MCP request id was missing. The error response cannot be delivered to the client.",
+                        typeof(Tool_Tests));
                     return;
                 }
 
