@@ -14,6 +14,17 @@ export interface AgentDefinition {
   configPathDisplay: string;
   configFormat: 'json' | 'toml';
   bodyPath: string;
+  /**
+   * Whether this agent can complete native MCP OAuth (RFC 9728) against the
+   * server URL on the default http path (design 03 Flow A / decision D11).
+   * `undefined`/`true` — the default across the registry, mirroring the shared
+   * b6 configurators — means the default config is credential-free: the client
+   * runs its own authorize flow, so injecting a static `Authorization` header
+   * would both fail (the hosted endpoint 401s the token) and suppress that
+   * flow. Set `false` only for a client that cannot do MCP OAuth; such a client
+   * still receives a header only via the explicit PAT fallback (Flow C).
+   */
+  supportsOAuth?: boolean;
   getConfigPath(projectPath: string): string;
   getStdioProps(
     serverPath: string,
@@ -25,7 +36,7 @@ export interface AgentDefinition {
   getHttpProps(
     url: string,
     token: string,
-    authRequired: boolean,
+    emitAuthHeader: boolean,
   ): Record<string, unknown>;
   stdioRemoveKeys: string[];
   httpRemoveKeys: string[];
@@ -70,11 +81,19 @@ function stdioArgs(
   ];
 }
 
+/**
+ * The static `Authorization: Bearer <token>` header, or `undefined` when none
+ * should be written. Whether to emit it is decided by the CALLER (`setupMcp`)
+ * per the b6 credential policy (design decision D11) and passed in as
+ * `emitAuthHeader`; the default http path is credential-free (OAuth-capable
+ * clients authorize natively — Flow A), so a header is emitted only for an
+ * explicit PAT opt-in or a non-OAuth client (Flow C).
+ */
 function authHeaders(
   token: string,
-  authRequired: boolean,
+  emitAuthHeader: boolean,
 ): Record<string, string> | undefined {
-  if (authRequired && token) {
+  if (emitAuthHeader && token) {
     return { Authorization: `Bearer ${token}` };
   }
   return undefined;
@@ -100,11 +119,11 @@ export const agentRegistry: readonly AgentDefinition[] = [
       command: serverPath,
       args: stdioArgs(port, timeout, auth, token),
     }),
-    getHttpProps: (url, token, authRequired) => ({
+    getHttpProps: (url, token, emitAuthHeader) => ({
       type: 'http',
       url,
-      ...(authHeaders(token, authRequired)
-        ? { headers: authHeaders(token, authRequired) }
+      ...(authHeaders(token, emitAuthHeader)
+        ? { headers: authHeaders(token, emitAuthHeader) }
         : {}),
     }),
     stdioRemoveKeys: ['type', 'url'],
@@ -134,11 +153,11 @@ export const agentRegistry: readonly AgentDefinition[] = [
       command: serverPath,
       args: stdioArgs(port, timeout, auth, token),
     }),
-    getHttpProps: (url, token, authRequired) => ({
+    getHttpProps: (url, token, emitAuthHeader) => ({
       type: 'http',
       url,
-      ...(authHeaders(token, authRequired)
-        ? { headers: authHeaders(token, authRequired) }
+      ...(authHeaders(token, emitAuthHeader)
+        ? { headers: authHeaders(token, emitAuthHeader) }
         : {}),
     }),
     stdioRemoveKeys: ['url'],
@@ -159,11 +178,11 @@ export const agentRegistry: readonly AgentDefinition[] = [
       command: serverPath,
       args: stdioArgs(port, timeout, auth, token),
     }),
-    getHttpProps: (url, token, authRequired) => ({
+    getHttpProps: (url, token, emitAuthHeader) => ({
       type: 'http',
       url,
-      ...(authHeaders(token, authRequired)
-        ? { headers: authHeaders(token, authRequired) }
+      ...(authHeaders(token, emitAuthHeader)
+        ? { headers: authHeaders(token, emitAuthHeader) }
         : {}),
     }),
     stdioRemoveKeys: ['url'],
@@ -184,11 +203,11 @@ export const agentRegistry: readonly AgentDefinition[] = [
       command: serverPath,
       args: stdioArgs(port, timeout, auth, token),
     }),
-    getHttpProps: (url, token, authRequired) => ({
+    getHttpProps: (url, token, emitAuthHeader) => ({
       type: 'http',
       url,
-      ...(authHeaders(token, authRequired)
-        ? { headers: authHeaders(token, authRequired) }
+      ...(authHeaders(token, emitAuthHeader)
+        ? { headers: authHeaders(token, emitAuthHeader) }
         : {}),
     }),
     stdioRemoveKeys: ['url'],
@@ -209,11 +228,11 @@ export const agentRegistry: readonly AgentDefinition[] = [
       command: serverPath,
       args: stdioArgs(port, timeout, auth, token),
     }),
-    getHttpProps: (url, token, authRequired) => ({
+    getHttpProps: (url, token, emitAuthHeader) => ({
       type: 'http',
       url,
-      ...(authHeaders(token, authRequired)
-        ? { headers: authHeaders(token, authRequired) }
+      ...(authHeaders(token, emitAuthHeader)
+        ? { headers: authHeaders(token, emitAuthHeader) }
         : {}),
     }),
     stdioRemoveKeys: ['url'],
@@ -235,12 +254,12 @@ export const agentRegistry: readonly AgentDefinition[] = [
       command: serverPath,
       args: stdioArgs(port, timeout, auth, token),
     }),
-    getHttpProps: (url, token, authRequired) => ({
+    getHttpProps: (url, token, emitAuthHeader) => ({
       enabled: true,
       type: 'http',
       url,
-      ...(authHeaders(token, authRequired)
-        ? { headers: authHeaders(token, authRequired) }
+      ...(authHeaders(token, emitAuthHeader)
+        ? { headers: authHeaders(token, emitAuthHeader) }
         : {}),
     }),
     stdioRemoveKeys: ['disabled', 'url'],
@@ -261,12 +280,12 @@ export const agentRegistry: readonly AgentDefinition[] = [
       args: stdioArgs(port, timeout, auth, token),
       tools: ['*'],
     }),
-    getHttpProps: (url, token, authRequired) => ({
+    getHttpProps: (url, token, emitAuthHeader) => ({
       type: 'http',
       url,
       tools: ['*'],
-      ...(authHeaders(token, authRequired)
-        ? { headers: authHeaders(token, authRequired) }
+      ...(authHeaders(token, emitAuthHeader)
+        ? { headers: authHeaders(token, emitAuthHeader) }
         : {}),
     }),
     stdioRemoveKeys: ['url', 'type'],
@@ -287,11 +306,11 @@ export const agentRegistry: readonly AgentDefinition[] = [
       command: serverPath,
       args: stdioArgs(port, timeout, auth, token),
     }),
-    getHttpProps: (url, token, authRequired) => ({
+    getHttpProps: (url, token, emitAuthHeader) => ({
       type: 'http',
       url,
-      ...(authHeaders(token, authRequired)
-        ? { headers: authHeaders(token, authRequired) }
+      ...(authHeaders(token, emitAuthHeader)
+        ? { headers: authHeaders(token, emitAuthHeader) }
         : {}),
     }),
     stdioRemoveKeys: ['url'],
@@ -313,7 +332,7 @@ export const agentRegistry: readonly AgentDefinition[] = [
       command: serverPath,
       args: stdioArgs(port, timeout, auth, token),
     }),
-    getHttpProps: (url, _token, _authRequired) => ({
+    getHttpProps: (url, _token, _emitAuthHeader) => ({
       disabled: false,
       serverUrl: url,
     }),
@@ -363,11 +382,11 @@ export const agentRegistry: readonly AgentDefinition[] = [
       command: serverPath,
       args: stdioArgs(port, timeout, auth, token),
     }),
-    getHttpProps: (url, token, authRequired) => ({
+    getHttpProps: (url, token, emitAuthHeader) => ({
       type: 'streamableHttp',
       url,
-      ...(authHeaders(token, authRequired)
-        ? { headers: authHeaders(token, authRequired) }
+      ...(authHeaders(token, emitAuthHeader)
+        ? { headers: authHeaders(token, emitAuthHeader) }
         : {}),
     }),
     stdioRemoveKeys: ['url'],
@@ -391,12 +410,12 @@ export const agentRegistry: readonly AgentDefinition[] = [
         ...stdioArgs(port, timeout, auth, token),
       ],
     }),
-    getHttpProps: (url, token, authRequired) => ({
+    getHttpProps: (url, token, emitAuthHeader) => ({
       type: 'remote',
       enabled: true,
       url,
-      ...(authHeaders(token, authRequired)
-        ? { headers: authHeaders(token, authRequired) }
+      ...(authHeaders(token, emitAuthHeader)
+        ? { headers: authHeaders(token, emitAuthHeader) }
         : {}),
     }),
     stdioRemoveKeys: ['url', 'args'],
@@ -423,7 +442,7 @@ export const agentRegistry: readonly AgentDefinition[] = [
       ],
       tool_timeout_sec: 300,
     }),
-    getHttpProps: (url, _token, _authRequired) => ({
+    getHttpProps: (url, _token, _emitAuthHeader) => ({
       enabled: true,
       url,
       tool_timeout_sec: 300,
@@ -448,12 +467,12 @@ export const agentRegistry: readonly AgentDefinition[] = [
       command: serverPath,
       args: stdioArgs(port, timeout, auth, token),
     }),
-    getHttpProps: (url, token, authRequired) => ({
+    getHttpProps: (url, token, emitAuthHeader) => ({
       type: 'streamable-http',
       disabled: false,
       url,
-      ...(authHeaders(token, authRequired)
-        ? { headers: authHeaders(token, authRequired) }
+      ...(authHeaders(token, emitAuthHeader)
+        ? { headers: authHeaders(token, emitAuthHeader) }
         : {}),
     }),
     stdioRemoveKeys: ['url'],
@@ -474,11 +493,11 @@ export const agentRegistry: readonly AgentDefinition[] = [
       command: serverPath,
       args: stdioArgs(port, timeout, auth, token),
     }),
-    getHttpProps: (url, token, authRequired) => ({
+    getHttpProps: (url, token, emitAuthHeader) => ({
       type: 'http',
       url,
-      ...(authHeaders(token, authRequired)
-        ? { headers: authHeaders(token, authRequired) }
+      ...(authHeaders(token, emitAuthHeader)
+        ? { headers: authHeaders(token, emitAuthHeader) }
         : {}),
     }),
     stdioRemoveKeys: ['url'],
@@ -505,11 +524,11 @@ export const agentRegistry: readonly AgentDefinition[] = [
       command: serverPath,
       args: stdioArgs(port, timeout, auth, token),
     }),
-    getHttpProps: (url, token, authRequired) => ({
+    getHttpProps: (url, token, emitAuthHeader) => ({
       type: 'http',
       url,
-      ...(authHeaders(token, authRequired)
-        ? { headers: authHeaders(token, authRequired) }
+      ...(authHeaders(token, emitAuthHeader)
+        ? { headers: authHeaders(token, emitAuthHeader) }
         : {}),
     }),
     stdioRemoveKeys: ['url'],
