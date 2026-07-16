@@ -210,6 +210,26 @@ namespace com.IvanMurzak.Unity.MCP
                 return this;
             }
 
+            /// <summary>
+            /// Migrates a persisted legacy <see cref="AuthOption.required"/> value to the offline
+            /// <see cref="AuthOption.token"/> mode (mcp-authorize g5/g6). The b5 breaking change deleted
+            /// the server-side <c>required</c> strategy, so an un-migrated config would launch the local
+            /// server with <c>authorization=required</c> and crash it on boot. <c>required</c> was the
+            /// static shared-secret pairing mode, so it maps to the re-added offline <c>token</c> mode
+            /// (the same secret, now carried as <c>token=</c>). Returns <c>true</c> when a migration was
+            /// applied (so the caller re-saves the healed config); idempotent — a config already on
+            /// none/oauth/token is left untouched.
+            /// </summary>
+            public bool MigrateLegacyAuthOption()
+            {
+                if (AuthOption == AuthOption.required)
+                {
+                    AuthOption = AuthOption.token;
+                    return true;
+                }
+                return false;
+            }
+
             public class McpFeature
             {
                 public string Name { get; set; } = string.Empty;

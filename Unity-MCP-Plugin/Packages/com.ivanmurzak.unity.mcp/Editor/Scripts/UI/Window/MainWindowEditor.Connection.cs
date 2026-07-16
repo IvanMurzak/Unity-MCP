@@ -242,9 +242,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 {
                     UnityMcpPluginEditor.ConnectionMode = ConnectionMode.Cloud;
 
-                    // Cloud requires streamableHttp + authorization
+                    // Cloud requires streamableHttp. Cloud authorization is driven by ConnectionMode.Cloud
+                    // itself (the shared configurator's IsHttpAuthRequired / OAuth account path), NOT by the
+                    // local-server AuthOption — so we no longer stamp the retired `required` value here
+                    // (mcp-authorize g5/g6). AuthOption stays a purely local-server (Custom-mode) setting.
                     UnityMcpPluginEditor.TransportMethod = TransportMethod.streamableHttp;
-                    UnityMcpPluginEditor.AuthOption = AuthOption.required;
 
                     UnityMcpPluginEditor.Instance.Save();
                     UpdateModeVisibility(ConnectionMode.Cloud);
