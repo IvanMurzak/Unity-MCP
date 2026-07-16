@@ -20,6 +20,7 @@ using System.Security.Cryptography;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
+using com.IvanMurzak.McpPlugin.ServerLaunch;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.UI;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
@@ -132,7 +133,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         /// <c>v&lt;ServerVersion&gt;</c> release with all 7 RID zips exists on GameDev-MCP-Server
         /// BEFORE cutting a plugin release that pins it — otherwise the download 404s).
         /// </summary>
-        public const string ServerVersion = "9.0.0";
+        public const string ServerVersion = "9.1.0";
 
         public const string ExecutableName = "gamedev-mcp-server";
 
@@ -850,17 +851,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             serverConfig["command"] = ExecutableFullPath.Replace('\\', '/');
 
+            // stdio spawns in `none` mode (design 03 Flow D / b6): NO legacy authorization/token args.
+            // The offline `token` mode is HTTP-only; a client that needs the Bearer gets it via the
+            // shared configurator's HTTP credential path, never baked into the stdio spawn args here.
             var args = new JsonArray
             {
                 $"{Args.Port}={port}",
                 $"{Args.PluginTimeout}={timeoutMs}",
-                $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
-                $"{Args.Authorization}={UnityMcpPluginEditor.AuthOption}"
+                $"{Args.ClientTransportMethod}={TransportMethod.stdio}"
             };
-
-            var authRequired = UnityMcpPluginEditor.AuthOption == AuthOption.required;
-            if (authRequired && !string.IsNullOrEmpty(UnityMcpPluginEditor.Token))
-                args.Add($"{Args.Token}={UnityMcpPluginEditor.Token}");
 
             serverConfig["args"] = args;
 
@@ -910,14 +909,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             serverConfig["url"] = url;
 
-            var authRequired = UnityMcpPluginEditor.AuthOption == AuthOption.required;
-            if (authRequired && !string.IsNullOrEmpty(UnityMcpPluginEditor.Token))
-            {
-                serverConfig["headers"] = new JsonObject
-                {
-                    ["Authorization"] = $"Bearer {UnityMcpPluginEditor.Token}"
-                };
-            }
+            // URL-only: none/oauth carry no header (oauth authorizes natively against the URL). A client
+            // that needs the offline-token Bearer gets it via the shared configurator's HTTP credential
+            // path (AiAgentConfigurator + HttpCredentialMode.AccessToken), never baked in here.
 
             var innerContent = new JsonObject
             {
@@ -937,16 +931,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public static string DockerSetupRunCommand()
         {
             var dockerPortMapping = $"-p {UnityMcpPluginEditor.Port}:{UnityMcpPluginEditor.Port}";
+            // No legacy MCP_AUTHORIZATION / token env (g6 scrub): the offline `token` Bearer travels via
+            // the shared configurator's client-config path; none/oauth are URL-only. This is the
+            // anonymous-loopback container bring-up shape.
             var dockerEnvVars =
                 $"-e {Env.ClientTransportMethod}={TransportMethod.streamableHttp} " +
                 $"-e {Env.Port}={UnityMcpPluginEditor.Port} " +
-                $"-e {Env.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs} " +
-                $"-e {Env.Authorization}={UnityMcpPluginEditor.AuthOption}";
-
-            var authRequired = UnityMcpPluginEditor.AuthOption == AuthOption.required;
-            var token = UnityMcpPluginEditor.Token;
-            if (authRequired && !string.IsNullOrEmpty(token))
-                dockerEnvVars += $" -e {Env.Token}={token}";
+                $"-e {Env.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}";
 
             var dockerContainer = $"--name {ExecutableName}-{UnityMcpPluginEditor.Port}";
             // The shared GameDev-MCP-Server Docker image, tagged by the pinned ServerVersion
@@ -1414,21 +1405,41 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         {
             var port = UnityMcpPluginEditor.Port;
             var timeout = UnityMcpPluginEditor.TimeoutMs;
-            var transportMethod = TransportMethod.streamableHttp; // always must be streamableHttp for launching the server.
-            var token = UnityMcpPluginEditor.Token;
+            // The local server is always launched over streamableHttp (the loopback HTTP endpoint
+            // the plugin and every AI-agent client connect to); stdio is a client-config transport only.
+            var transportMethod = TransportMethod.streamableHttp;
             var authOption = UnityMcpPluginEditor.AuthOption;
 
-            // Arguments format: port=XXXXX plugin-timeout=XXXXX client-transport=<TransportMethod> token=<Token>
-            var args =
-                $"{Args.Port}={port} " +
-                $"{Args.PluginTimeout}={timeout} " +
-                $"{Args.ClientTransportMethod}={transportMethod} " +
-                $"{Args.Authorization}={authOption}";
+            // g6 consolidation (owner directive: NO duplication): the launch-arg shape is produced by
+            // the ONE shared builder in McpPlugin (ServerLaunchArguments) — Unity no longer re-derives
+            // it. It emits the target-state `auth=<mode>` key (never the retired `authorization=required`),
+            // per mode:
+            //   none  => auth=none                                   (anonymous loopback, design-primary)
+            //   token => auth=token token=<local-secret>            (offline shared-secret, Bearer-gated)
+            //   oauth => auth=oauth auth-issuer=<issuer> public-url=<pinned loopback URL>  (account)
+            switch (authOption)
+            {
+                case AuthOption.oauth:
+                    // Signed-in account path. --public-url MUST equal the exact URL the Configure
+                    // button writes into the client config, or the resource server rejects the token's
+                    // audience — source it from the SAME settings factory so the two can never drift.
+                    var publicUrl = UI.AgentConfiguratorSettingsFactory.Create().PinnedHttpUrl;
+                    return ServerLaunchArguments.BuildCommandLine(
+                        port, timeout, transportMethod, AuthOption.oauth,
+                        authIssuer: UnityMcpPlugin.UnityConnectionConfig.DefaultCloudServerBaseUrl,
+                        publicUrl: publicUrl);
 
-            if (authOption == AuthOption.required && !string.IsNullOrEmpty(token))
-                args += $" {Args.Token}={token}";
+                case AuthOption.token:
+                    return ServerLaunchArguments.BuildCommandLine(
+                        port, timeout, transportMethod, AuthOption.token,
+                        token: UnityMcpPluginEditor.Token);
 
-            return args;
+                default:
+                    // none — plus any legacy value that somehow slipped past the load-time migration —
+                    // launches an anonymous loopback server (crash-safe default, D8).
+                    return ServerLaunchArguments.BuildCommandLine(
+                        port, timeout, transportMethod, AuthOption.none);
+            }
         }
 
         /// <summary>

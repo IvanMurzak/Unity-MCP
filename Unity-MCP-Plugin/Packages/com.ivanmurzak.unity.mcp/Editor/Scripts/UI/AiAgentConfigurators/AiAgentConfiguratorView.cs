@@ -544,12 +544,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         private AgentConfig.AiAgentConfig GetConfig(AgentConfig.AgentConfiguratorSettings settings, TransportMethod transport)
             => transport == TransportMethod.stdio
                 ? _configurator.GetStdioConfig(settings)
-                : _configurator.GetHttpConfig(settings);
+                : _configurator.GetHttpConfig(settings, credentialMode: ResolveHttpCredentialMode(settings));
+
+        /// <summary>
+        /// The HTTP credential mode the Configure button writes for the current server settings
+        /// (mcp-authorize g5/g6). A LOCAL server in the offline <c>token</c> mode is Bearer-gated, so
+        /// its client config MUST carry the <c>Authorization: Bearer &lt;local-secret&gt;</c> header
+        /// (<see cref="AgentConfig.HttpCredentialMode.AccessToken"/>). Every other case — <c>none</c>,
+        /// <c>oauth</c>, and Cloud — keeps the default credential-free OAuth path (URL-only; the client
+        /// authorizes natively against the server URL). Pure, so it is unit-testable without a live Editor.
+        /// </summary>
+        internal static AgentConfig.HttpCredentialMode ResolveHttpCredentialMode(AgentConfig.AgentConfiguratorSettings settings)
+            => settings.ConnectionMode == AgentConfig.ConnectionMode.Local
+               && settings.AuthOption == AuthOption.token
+                ? AgentConfig.HttpCredentialMode.AccessToken
+                : AgentConfig.HttpCredentialMode.Oauth;
 
         private void UpdateStatusRow(Label statusText, Button btnConfigure, Button btnRemove, TransportMethod transport)
         {
             var settings = CurrentSettings();
-            var isConfigured = _configurator.IsConfigured(settings, transport);
+            // Detect against the SAME config the Configure button writes (token-aware) so a local
+            // token-mode config (URL + Bearer) reads back as Configured, not spuriously reconfigure-needed.
+            var isConfigured = GetConfig(settings, transport).IsConfigured();
             var anyConfigured = _configurator.IsDetected(settings);
             var transportText = transport switch
             {
