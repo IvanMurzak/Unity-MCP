@@ -1,0 +1,31 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Config/LocalTokenStabilityTests.cs
+  s_85931c4d4b3c83::t_dd68f655a36b1c 1-124
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Config/LocalTokenStabilityTests.cs.meta
+  s_85931c4d4b3c83::t_85f03a501e411e 1-11
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/UnityMcpPlugin.Config.cs
+  s_78bc072b39a61b::t_0e449346bf641f 209-217
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "6d412af4a2e2ec06a3776eb71b8dbb0375fe8b45",
+  "prompts": {},
+  "sessions": {
+    "s_78bc072b39a61b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-ab63b922d9dcde9cb",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_85931c4d4b3c83": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5bed859b-14ae-436a-b7e7-aa456dc16d16",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
