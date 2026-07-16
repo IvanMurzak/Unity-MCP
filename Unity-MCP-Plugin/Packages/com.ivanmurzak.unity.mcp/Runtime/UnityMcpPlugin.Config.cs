@@ -206,7 +206,15 @@ namespace com.IvanMurzak.Unity.MCP
                 Tools = DefaultTools;
                 Prompts = DefaultPrompts;
                 Resources = DefaultResources;
-                Token = GenerateToken();
+                // Seed the LOCAL server token directly, NOT through the mode-routed `Token` setter.
+                // `ConnectionMode` was set to `Cloud` above, so `Token = GenerateToken()` would route
+                // the freshly-generated local secret into `CloudToken` and leave `LocalToken` null —
+                // the local server token would then never be seeded here, forcing the generate-if-empty
+                // fallback in `GetOrCreateConfig` to mint (and re-mint) it, which is exactly how a
+                // persisted local token could drift and orphan an already-written client `.mcp.json`
+                // (stale Bearer -> 401; Unity-MCP #897 / mcp-authorize i2). `GenerateToken()` produces a
+                // local server secret; `CloudToken` is populated by Cloud sign-in, so it stays null here.
+                LocalToken = GenerateToken();
                 return this;
             }
 
