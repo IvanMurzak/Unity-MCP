@@ -829,7 +829,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         ///     "Unity ProjectName": {
         ///       "type": "...",    // optional, only if provided
         ///       "command": "path/to/gamedev-mcp-server",
-        ///       "args": ["port=...", "plugin-timeout=...", "client-transport=stdio" /*, "token=..." if auth required */]
+        ///       "args": ["port=...", "plugin-timeout=...", "client-transport=stdio"]
         ///     }
         ///   }
         /// }
@@ -885,14 +885,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         ///   "mcpServers": {
         ///     "Unity ProjectName": {
         ///       "type": "...",  // optional, only if provided
-        ///       "url": "http://localhost:port",
-        ///      "headers": {     // only if token is provided
-        ///        "Authorization": "Bearer token"
-        ///      }
+        ///       "url": "http://localhost:port"
         ///     }
         ///   }
         /// }
         /// </code>
+        /// URL-only: the offline-token Bearer is written by the shared configurator's HTTP
+        /// credential path (<c>HttpCredentialMode.AccessToken</c>), never baked in here.
         /// </summary>
         public static JsonNode RawJsonConfigurationHttp(
             string url,
