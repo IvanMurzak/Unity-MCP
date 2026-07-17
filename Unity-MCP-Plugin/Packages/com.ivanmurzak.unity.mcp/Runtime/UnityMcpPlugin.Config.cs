@@ -12,6 +12,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text.Json.Serialization;
+using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.McpPlugin.Common.Utils;
@@ -98,8 +99,16 @@ namespace com.IvanMurzak.Unity.MCP
             /// Setter mirrors the getter so env-var / CLI overrides (which write via
             /// the generic Token property) land on the right field regardless of mode.
             /// </summary>
+            /// <remarks>
+            /// McpPlugin 7.0 removed the static <c>ConnectionConfig.Token</c> string in favour of the
+            /// <see cref="ConnectionConfig.CredentialProvider"/> callback. This Unity-side property is kept as
+            /// the single source of truth for the effective token (routed by <see cref="ConnectionMode"/>);
+            /// the overridden <see cref="CredentialProvider"/> below presents it on every (re)connect, so the
+            /// on-the-wire behaviour is identical to the pre-7.0 static-token connection. It is no longer an
+            /// <c>override</c> because the base no longer declares <c>Token</c>.
+            /// </remarks>
             [JsonIgnore]
-            public override string? Token
+            public string? Token
             {
                 get => ConnectionMode == ConnectionMode.Cloud ? CloudToken : LocalToken;
                 set
@@ -109,6 +118,50 @@ namespace com.IvanMurzak.Unity.MCP
                     else
                         LocalToken = value;
                 }
+            }
+
+            /// <summary>
+            /// Editor-populated machine-store credential provider (mcp-authorize design 06 / D12 zero-button
+            /// auto-adopt). When set — by <c>AccountCredentialService.Initialize()</c> — a <b>Cloud</b>-mode
+            /// connection presents the proactively-refreshed account JWT read from the shared machine store
+            /// (<c>~/.ai-game-dev/credentials.json</c>); a null/empty result falls back to the mode-routed
+            /// <see cref="Token"/>, and Local/Custom mode ignores it entirely. Static because the machine
+            /// store is per-machine, shared across every config instance and the runtime boot. Runtime-only;
+            /// never serialized.
+            /// </summary>
+            [JsonIgnore]
+            public static Func<Task<string?>>? CloudCredentialProvider { get; set; }
+
+            /// <summary>
+            /// McpPlugin 7.0 credential provider (replaces the removed static <c>ConnectionConfig.Token</c>).
+            /// In <b>Cloud</b> mode it first consults <see cref="CloudCredentialProvider"/> (the shared
+            /// machine-store account credential, proactively refreshed — design 06 / D12); when that yields
+            /// a token it is presented on the (re)connect, giving zero-button sign-in without any UI. When it
+            /// is unset or returns null/empty — and always in Local/Custom mode — it falls back to the
+            /// mode-routed <see cref="Token"/>, so the on-the-wire behaviour is identical to the pre-b7
+            /// static-token connection. A null token yields an anonymous connection. Runtime-only; never
+            /// serialized (<see cref="JsonIgnoreAttribute"/>). The setter is intentionally a no-op: Unity
+            /// derives the credential from the machine store / <see cref="Token"/> rather than from a
+            /// host-injected provider.
+            /// </summary>
+            [JsonIgnore]
+            public override Func<Task<string?>>? CredentialProvider
+            {
+                get => async () =>
+                {
+                    if (ConnectionMode == ConnectionMode.Cloud)
+                    {
+                        var provider = CloudCredentialProvider;
+                        if (provider != null)
+                        {
+                            var token = await provider().ConfigureAwait(false);
+                            if (!string.IsNullOrEmpty(token))
+                                return token;
+                        }
+                    }
+                    return Token;
+                };
+                set { /* Unity derives the credential from the machine store / Token; a host-set provider is intentionally ignored. */ }
             }
 
             public LogLevel LogLevel { get; set; } = LogLevel.Warning;
@@ -153,8 +206,36 @@ namespace com.IvanMurzak.Unity.MCP
                 Tools = DefaultTools;
                 Prompts = DefaultPrompts;
                 Resources = DefaultResources;
-                Token = GenerateToken();
+                // Seed the LOCAL server token directly, NOT through the mode-routed `Token` setter.
+                // `ConnectionMode` was set to `Cloud` above, so `Token = GenerateToken()` would route
+                // the freshly-generated local secret into `CloudToken` and leave `LocalToken` null —
+                // the local server token would then never be seeded here, forcing the generate-if-empty
+                // fallback in `GetOrCreateConfig` to mint (and re-mint) it, which is exactly how a
+                // persisted local token could drift and orphan an already-written client `.mcp.json`
+                // (stale Bearer -> 401; Unity-MCP #897 / mcp-authorize i2). `GenerateToken()` produces a
+                // local server secret; `CloudToken` is populated by Cloud sign-in, so it stays null here.
+                LocalToken = GenerateToken();
                 return this;
+            }
+
+            /// <summary>
+            /// Migrates a persisted legacy <see cref="AuthOption.required"/> value to the offline
+            /// <see cref="AuthOption.token"/> mode (mcp-authorize g5/g6). The b5 breaking change deleted
+            /// the server-side <c>required</c> strategy, so an un-migrated config would launch the local
+            /// server with <c>authorization=required</c> and crash it on boot. <c>required</c> was the
+            /// static shared-secret pairing mode, so it maps to the re-added offline <c>token</c> mode
+            /// (the same secret, now carried as <c>token=</c>). Returns <c>true</c> when a migration was
+            /// applied (so the caller re-saves the healed config); idempotent — a config already on
+            /// none/oauth/token is left untouched.
+            /// </summary>
+            public bool MigrateLegacyAuthOption()
+            {
+                if (AuthOption == AuthOption.required)
+                {
+                    AuthOption = AuthOption.token;
+                    return true;
+                }
+                return false;
             }
 
             public class McpFeature

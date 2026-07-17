@@ -11,6 +11,7 @@
 #nullable enable
 using System;
 using System.IO;
+using com.IvanMurzak.Unity.MCP.Editor.Services;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -59,6 +60,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public string AgentName => _configurator.AgentName;
         public bool SupportsSkills => _configurator.SupportsSkills;
         public string? SkillsPath => _configurator.SkillsPath;
+
+        /// <summary>
+        /// Whether this agent can complete native MCP OAuth (design 06 Flow A). When false, the
+        /// configure view exposes the "Advanced: use access token" escape hatch instead of the
+        /// credential-free default path (see <see cref="ShouldOfferAccessTokenAffordance"/>).
+        /// </summary>
+        public bool SupportsOAuth => _configurator.SupportsOAuth;
 
         /// <summary>
         /// Invalidates cached state. The shared configurator is stateless (settings are passed
@@ -162,6 +170,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             SetAgentName(_configurator.AgentName);
             SetAgentIcon();
             SetupHeaderLinks();
+            SetupSignInChip();
             BuildTransportSections();
             SetupSkillsUI();
             SetupAlertPanel();
@@ -284,6 +293,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             foreach (var section in description.Sections)
                 container.Add(BuildSection(section, transport));
+
+            // Advanced: use access token (design 06 Flow C). The default OAuth path writes a
+            // credential-free config and shows NO token field; only a client that cannot do MCP
+            // OAuth surfaces this collapsed escape hatch, and only on the HTTP transport (stdio
+            // spawns in `none` mode).
+            if (transport == TransportMethod.streamableHttp
+                && HasDetectableConfig
+                && ShouldOfferAccessTokenAffordance(_configurator.SupportsOAuth))
+                container.Add(BuildAccessTokenAdvancedSection());
         }
 
         /// <summary>
@@ -397,6 +415,95 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         #endregion
 
+        #region Sign-in chip + advanced access-token (mcp-authorize design 06)
+
+        internal const string USS_ChipSignedIn = "signin-chip--in";
+        internal const string USS_ChipSignedOut = "signin-chip--out";
+
+        /// <summary>
+        /// Pure mapping of the machine-credential sign-in state (PR2's
+        /// <see cref="AccountCredentialService.IsSignedIn"/>) to the header chip's label + USS
+        /// modifier. Signed in → the OAuth golden path completes with a single in-browser click;
+        /// signed out → the user signs in (device flow) or uses the advanced access-token path.
+        /// </summary>
+        internal static (string Text, string UssClass) ComputeSignInChip(bool isSignedIn)
+            => isSignedIn
+                ? ("Signed in", USS_ChipSignedIn)
+                : ("Not signed in", USS_ChipSignedOut);
+
+        /// <summary>
+        /// Whether the configure view offers the "Advanced: use access token" (PAT) affordance. The
+        /// default OAuth-capable path is credential-free and shows NO token field; only a
+        /// configurator that cannot do MCP OAuth
+        /// (<see cref="AgentConfig.AiAgentConfigurator.SupportsOAuth"/> == <c>false</c>) surfaces the
+        /// legacy token field that writes the Bearer-header shape (design 06 Flow C).
+        /// </summary>
+        internal static bool ShouldOfferAccessTokenAffordance(bool supportsOAuth) => !supportsOAuth;
+
+        /// <summary>
+        /// Populates the header sign-in chip from the shared machine-credential store. The chip is
+        /// meaningful only for agents that write a real (OAuth-capable) config, so the Custom agent
+        /// (no writable config) shows none — mirroring the <see cref="HasDetectableConfig"/> gate.
+        /// </summary>
+        private void SetupSignInChip()
+        {
+            var chip = Root!.Q<Label>("signInChip");
+            if (chip == null)
+                return;
+
+            if (!HasDetectableConfig)
+            {
+                chip.style.display = DisplayStyle.None;
+                return;
+            }
+
+            var (text, ussClass) = ComputeSignInChip(AccountCredentialService.IsSignedIn);
+            chip.text = text;
+            chip.EnableInClassList(USS_ChipSignedIn, ussClass == USS_ChipSignedIn);
+            chip.EnableInClassList(USS_ChipSignedOut, ussClass == USS_ChipSignedOut);
+            chip.style.display = DisplayStyle.Flex;
+        }
+
+        /// <summary>
+        /// The collapsed "Advanced: use access token" escape hatch (design 06 Flow C), appended to
+        /// the HTTP transport container only for configurators that cannot do MCP OAuth. Reveals a
+        /// legacy access-token (PAT) field and writes the <c>Authorization: Bearer</c> config via
+        /// <see cref="AgentConfig.HttpCredentialMode.AccessToken"/>. Collapsed by default so the
+        /// golden path stays token-free.
+        /// </summary>
+        private VisualElement BuildAccessTokenAdvancedSection()
+        {
+            var foldout = TemplateFoldout("Advanced: use access token");
+            foldout.value = false;
+
+            foldout.Add(TemplateLabelDescription(
+                "This client cannot use OAuth sign-in. Paste an access token to write the legacy " +
+                "Authorization: Bearer config. Prefer a user-scope or environment-variable placement — " +
+                "a token written into a project file may be committed to version control."));
+
+            var tokenField = new TextField { isPasswordField = true };
+            tokenField.AddToClassList("token-input");
+            tokenField.style.flexGrow = 1;
+            tokenField.style.flexShrink = 1;
+            tokenField.style.minWidth = 0;
+            foldout.Add(tokenField);
+
+            var btnWrite = new Button { text = "Configure with access token" };
+            btnWrite.RegisterCallback<ClickEvent>(_ =>
+            {
+                var config = _configurator.GetHttpConfig(
+                    AgentConfiguratorSettingsFactory.CreateWithAccessToken(tokenField.value),
+                    credentialMode: AgentConfig.HttpCredentialMode.AccessToken);
+                config.Configure();
+                RefreshConfigurationUI();
+            });
+            foldout.Add(btnWrite);
+
+            return foldout;
+        }
+
+        #endregion
+
         #region Configure / Remove status row
 
         private VisualElement BuildConfigureStatusRow(TransportMethod transport)
@@ -437,12 +544,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         private AgentConfig.AiAgentConfig GetConfig(AgentConfig.AgentConfiguratorSettings settings, TransportMethod transport)
             => transport == TransportMethod.stdio
                 ? _configurator.GetStdioConfig(settings)
-                : _configurator.GetHttpConfig(settings);
+                : _configurator.GetHttpConfig(settings, credentialMode: ResolveHttpCredentialMode(settings));
+
+        /// <summary>
+        /// The HTTP credential mode the Configure button writes for the current server settings
+        /// (mcp-authorize g5/g6). A LOCAL server in the offline <c>token</c> mode is Bearer-gated, so
+        /// its client config MUST carry the <c>Authorization: Bearer &lt;local-secret&gt;</c> header
+        /// (<see cref="AgentConfig.HttpCredentialMode.AccessToken"/>). Every other case — <c>none</c>,
+        /// <c>oauth</c>, and Cloud — keeps the default credential-free OAuth path (URL-only; the client
+        /// authorizes natively against the server URL). Pure, so it is unit-testable without a live Editor.
+        /// </summary>
+        internal static AgentConfig.HttpCredentialMode ResolveHttpCredentialMode(AgentConfig.AgentConfiguratorSettings settings)
+            => settings.ConnectionMode == AgentConfig.ConnectionMode.Local
+               && settings.AuthOption == AuthOption.token
+                ? AgentConfig.HttpCredentialMode.AccessToken
+                : AgentConfig.HttpCredentialMode.Oauth;
 
         private void UpdateStatusRow(Label statusText, Button btnConfigure, Button btnRemove, TransportMethod transport)
         {
             var settings = CurrentSettings();
-            var isConfigured = _configurator.IsConfigured(settings, transport);
+            // Detect against the SAME config the Configure button writes (token-aware) so a local
+            // token-mode config (URL + Bearer) reads back as Configured, not spuriously reconfigure-needed.
+            var isConfigured = GetConfig(settings, transport).IsConfigured();
             var anyConfigured = _configurator.IsDetected(settings);
             var transportText = transport switch
             {

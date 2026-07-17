@@ -41,6 +41,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         const string PendingTestNamespaceKey = "MCP_PendingTestRun_TestNamespace";
         const string PendingTestClassKey = "MCP_PendingTestRun_TestClass";
         const string PendingTestMethodKey = "MCP_PendingTestRun_TestMethod";
+        const string ActiveTestRunStartedUtcTicksKey = "Unity_MCP_TestRunner_ActiveStartedUtcTicks";
+
+        static readonly TimeSpan ActiveTestRunTimeoutGrace = TimeSpan.FromMinutes(1);
+        static readonly TimeSpan MinimumActiveTestRunLease = TimeSpan.FromMinutes(10);
 
         static Tool_Tests()
         {
@@ -98,6 +102,70 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         static bool HasPendingTestRun()
             => !string.IsNullOrEmpty(SessionState.GetString(PendingTestRunKey, string.Empty));
 
+        internal static TimeSpan ActiveTestRunStaleAfter
+        {
+            get
+            {
+                var configuredTimeout = TimeSpan.FromMilliseconds(Math.Max(1000, UnityMcpPluginEditor.TimeoutMs));
+                var staleAfter = configuredTimeout + ActiveTestRunTimeoutGrace;
+                return staleAfter < MinimumActiveTestRunLease ? MinimumActiveTestRunLease : staleAfter;
+            }
+        }
+
+        internal static bool IsTestRunActive(out string activeRequestId)
+        {
+            activeRequestId = TestResultCollector.TestCallRequestID.Value;
+            if (HasPendingTestRun())
+                return true;
+
+            if (string.IsNullOrEmpty(activeRequestId))
+                return false;
+
+            if (!IsActiveTestRunStale(DateTime.UtcNow))
+                return true;
+
+            ClearActiveTestRun(activeRequestId);
+            activeRequestId = string.Empty;
+            return false;
+        }
+
+        internal static bool TryBeginTestRun(string requestId, out string activeRequestId)
+        {
+            if (IsTestRunActive(out activeRequestId))
+                return false;
+
+            TestResultCollector.TestCallRequestID.Value = requestId;
+            SetActiveTestRunStartedUtc(DateTime.UtcNow);
+            activeRequestId = requestId;
+            return true;
+        }
+
+        internal static void ClearActiveTestRun(string? requestId = null)
+        {
+            if (string.IsNullOrEmpty(requestId) || TestResultCollector.TestCallRequestID.Value == requestId)
+            {
+                TestResultCollector.TestCallRequestID.Value = string.Empty;
+                PlayerPrefs.DeleteKey(ActiveTestRunStartedUtcTicksKey);
+                PlayerPrefs.Save();
+            }
+        }
+
+        internal static void SetActiveTestRunStartedUtc(DateTime utcStarted)
+        {
+            PlayerPrefs.SetString(ActiveTestRunStartedUtcTicksKey, utcStarted.ToUniversalTime().Ticks.ToString());
+            PlayerPrefs.Save();
+        }
+
+        static bool IsActiveTestRunStale(DateTime utcNow)
+        {
+            var rawTicks = PlayerPrefs.GetString(ActiveTestRunStartedUtcTicksKey, string.Empty);
+            if (!long.TryParse(rawTicks, out var ticks))
+                return true;
+
+            var startedUtc = new DateTime(ticks, DateTimeKind.Utc);
+            return utcNow - startedUtc > ActiveTestRunStaleAfter;
+        }
+
         static void SavePendingTestRun(TestMode testMode, string? testAssembly, string? testNamespace, string? testClass, string? testMethod)
         {
             SessionState.SetString(PendingTestRunKey, "pending");
@@ -133,7 +201,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (EditorUtility.scriptCompilationFailed)
             {
                 ClearPendingTestRun();
-                TestResultCollector.TestCallRequestID.Value = string.Empty;
+                ClearActiveTestRun(requestId);
 
                 var errorDetails = ScriptUtils.GetCompilationErrorDetails();
                 var response = ResponseCallValueTool<TestRunResponse>
@@ -237,6 +305,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             public static string TestTimeout(int timeoutMs)
                 => $"Test execution timed out after {timeoutMs} ms";
+
+            public static string TestsAlreadyRunning(string activeRequestId)
+            {
+                var suffix = string.IsNullOrEmpty(activeRequestId)
+                    ? string.Empty
+                    : $" Active request id: {activeRequestId}.";
+
+                return $"Cannot run tests: another test run is already in progress.{suffix} Wait for it to finish and try again.";
+            }
 
             public static string NoTestsFound(TestFilterParameters filterParams)
             {

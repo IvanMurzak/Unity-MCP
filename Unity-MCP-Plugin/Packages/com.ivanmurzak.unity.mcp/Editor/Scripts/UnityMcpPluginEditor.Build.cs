@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using com.IvanMurzak.Unity.MCP.Editor.Services;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using Microsoft.Extensions.Logging;
 
@@ -39,6 +40,13 @@ namespace com.IvanMurzak.Unity.MCP
             unityConnectionConfig.ProjectRootPath = ProjectRootPath;
             _logger.LogTrace("Seeded ConnectionConfig.ProjectRootPath={path}", ProjectRootPath);
 
+            // Attach the instance-metadata handshake payload (mcp-authorize design 04/06, PR 3) so the hub
+            // connection identifies THIS editor session to the server's account+instance router. The payload
+            // is non-secret (engine/project/machine names + per-session instance id + project-path hash); the
+            // token always travels separately in the Authorization header. Inert on a none-mode/local server
+            // that ignores it. Re-applied on every (re)build; the session instance id is stable across reloads.
+            ProjectInstanceService.AttachInstanceMetadata(unityConnectionConfig);
+
             var built = _plugin.BuildOnce(() => BuildMcpPlugin(
                 version: BuildVersion(),
                 reflector: CreateDefaultReflector(),
@@ -57,6 +65,12 @@ namespace com.IvanMurzak.Unity.MCP
                 stopwatch.ElapsedMilliseconds);
 
             SetCurrentPlugin(built);
+
+            // Zero-button auto-adopt (mcp-authorize design 06 / D12): point the Cloud credential provider at
+            // the shared machine store and attach the on-401 refresh→reconnect coordinator. Both are inert
+            // when the machine store holds no credential, so this does not change the anonymous/local path.
+            AccountCredentialService.AttachTo(built);
+
             ApplyConfigToMcpPlugin(built);
 
             return this;

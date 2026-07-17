@@ -13,12 +13,48 @@ using com.IvanMurzak.Unity.MCP.Editor.Services;
 using com.IvanMurzak.Unity.MCP.Editor.UI;
 using Microsoft.AspNetCore.SignalR.Client;
 using NUnit.Framework;
+using AuthOption = com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server.AuthOption;
 using TransportMethod = com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server.TransportMethod;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
     public class MainWindowEditorStatusLogicTests
     {
+        #region Authorization segmented control (none/oauth/token) index mapping
+
+        // mcp-authorize g5/g6: the 3-way auth control maps 0=none, 1=oauth, 2=token.
+
+        [TestCase(AuthOption.none, 0)]
+        [TestCase(AuthOption.oauth, 1)]
+        [TestCase(AuthOption.token, 2)]
+        // The retired `required` value (if it ever reaches the UI un-migrated) falls back to the
+        // anonymous segment rather than producing an out-of-range index.
+        [TestCase(AuthOption.required, 0)]
+        [TestCase(AuthOption.unknown, 0)]
+        public void AuthOptionToSegmentIndex_MapsEachMode(AuthOption option, int expectedIndex)
+        {
+            Assert.AreEqual(expectedIndex, MainWindowEditor.AuthOptionToSegmentIndex(option));
+        }
+
+        [TestCase(0, AuthOption.none)]
+        [TestCase(1, AuthOption.oauth)]
+        [TestCase(2, AuthOption.token)]
+        public void SegmentIndexToAuthOption_MapsEachIndex(int index, AuthOption expected)
+        {
+            Assert.AreEqual(expected, MainWindowEditor.SegmentIndexToAuthOption(index));
+        }
+
+        [TestCase(AuthOption.none)]
+        [TestCase(AuthOption.oauth)]
+        [TestCase(AuthOption.token)]
+        public void AuthSegment_RoundTrips(AuthOption option)
+        {
+            var index = MainWindowEditor.AuthOptionToSegmentIndex(option);
+            Assert.AreEqual(option, MainWindowEditor.SegmentIndexToAuthOption(index));
+        }
+
+        #endregion
+
         #region GetConnectionStatusClass
 
         [TestCase(HubConnectionState.Connected, true, MainWindowEditor.USS_Connected)]

@@ -36,6 +36,20 @@ function portFromHost(host: string | undefined, projectPath: string): number {
 }
 
 /**
+ * True when `configPath` resolves to a location at or under `projectRoot`
+ * (separator- and case-insensitive) — i.e. a VCS-visible project-scoped file.
+ * Mirrors the b6 configurator's `IsProjectScopedPath`, used to decide whether a
+ * written access token would land in a committable file (design 03 Flow C).
+ */
+function isProjectScoped(configPath: string, projectRoot: string): boolean {
+  const norm = (p: string): string =>
+    path.resolve(p).replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
+  const root = norm(projectRoot);
+  const target = norm(configPath);
+  return target === root || target.startsWith(root + '/');
+}
+
+/**
  * Write MCP configuration for the given AI agent, so it can talk to
  * Unity-MCP. Library-safe: no stdout noise, no process.exit, no throws
  * past the public boundary.
@@ -112,8 +126,24 @@ export async function setupMcp(opts: SetupMcpOptions): Promise<SetupMcpResult> {
 
     const timeout = (config?.timeoutMs as number) ?? 10000;
     const auth = (config?.authOption as string) ?? 'none';
+
+    // Explicit PAT opt-in (design 03 Flow C): a token the caller passed on the
+    // command line (`--token`). Only an explicit opt-in — never a token merely
+    // resolved from the project config — places a static credential in the file.
+    const patOptIn = typeof opts.token === 'string' && opts.token.length > 0;
     const token = opts.token ?? fromConfig.token ?? '';
-    const authRequired = auth === 'required';
+
+    // b6 credential policy (design decision D11): the DEFAULT http config is
+    // credential-free. OAuth-capable clients perform native RFC 9728 OAuth
+    // against the URL (Flow A), so a static `Authorization: Bearer` header both
+    // FAILS (the hosted ai-game.dev/mcp endpoint 401s the token) AND suppresses
+    // the client's own OAuth handshake ("OAuth fallback is disabled when
+    // headers.Authorization is set"). A static header is written ONLY for an
+    // explicit PAT opt-in (Flow C) or a client that cannot do MCP OAuth
+    // (`supportsOAuth === false`) — never automatically for an OAuth-capable
+    // client, regardless of the server's `authRequired` setting.
+    const supportsOAuth = agent.supportsOAuth !== false;
+    const emitAuthHeader = token.length > 0 && (patOptIn || !supportsOAuth);
 
     const serverPath = resolveServerBinaryPath(projectPath).replace(/\\/g, '/');
 
@@ -130,7 +160,7 @@ export async function setupMcp(opts: SetupMcpOptions): Promise<SetupMcpResult> {
       props = agent.getStdioProps(serverPath, port, timeout, auth, token);
       removeKeys = agent.stdioRemoveKeys;
     } else {
-      props = agent.getHttpProps(serverUrl, token, authRequired);
+      props = agent.getHttpProps(serverUrl, token, emitAuthHeader);
       removeKeys = agent.httpRemoveKeys;
     }
 
@@ -145,6 +175,15 @@ export async function setupMcp(opts: SetupMcpOptions): Promise<SetupMcpResult> {
       message: `Wrote ${configPath}`,
       manifestPath: configPath,
     });
+
+    // Flow C credential-placement rule (design 03): a static access token
+    // written into a project-scoped config file is VCS-visible. Warn so the
+    // user prefers an env-var / user-scope placement for the credential.
+    if (transport === 'http' && emitAuthHeader && isProjectScoped(configPath, projectPath)) {
+      warnings.push(
+        `Wrote an access token into project-scoped config file "${configPath}" — it is under the project root and may be committed to version control. Prefer an env-var or user-scope placement for the access token (design 03 Flow C).`,
+      );
+    }
 
     if (transport === 'stdio' && !fs.existsSync(serverPath.replace(/\//g, path.sep))) {
       warnings.push(
