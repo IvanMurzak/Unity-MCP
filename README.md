@@ -324,6 +324,33 @@ unity-mcp-cli wait-for-ready ./MyUnityProject
 
 > See [full CLI documentation](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) for all available commands.
 
+<details>
+<summary><b>🛠️ Troubleshooting: CS0115 / CS0103 compile errors after a version bump (click)</b></summary>
+
+If the Console shows errors like `error CS0115: '...CredentialProvider': no suitable method found to override` in
+`UnityMcpPlugin.Config.cs`, or `error CS0103: The name '...' does not exist in the current context` for a type in
+`Editor/Scripts/**`, the project's on-disk copy of the plugin's dependencies is out of sync with the version pinned
+in `Packages/manifest.json` — usually because `manifest.json` was updated (via `git pull`, a manual edit, or an
+OpenUPM auto-update) while the Unity Editor was **closed**. In that situation the automatic resolver
+(`NuGetDependencyResolver`) never gets a chance to self-heal: Unity refuses to reload the C# domain while the
+project has a compile error, and that same reload is what the resolver needs to run.
+
+Recover with either menu item under **`Tools > AI Game Developer > Dependencies`**:
+
+- **`Force Resolve NuGet DLLs`** — re-checks and re-downloads the NuGet DLLs under `Assets/Plugins/NuGet` against
+  the versions this plugin version requires. Use this for the CS0115 symptom.
+- **`Force Reimport Package Cache (fixes ghost CS0103 errors)`** — deletes this package's own extracted copy under
+  `Library/PackageCache` and asks the Package Manager to re-resolve it from scratch. Use this if Unity's own asset
+  import silently drops a file from compilation (files present on disk with a valid `.meta`, but the type still
+  reads as undefined) — a plain `Assets > Refresh` or even a full Editor restart is not reliably enough to fix
+  this, because Unity's package resolver only re-extracts a package when it detects an actual dependency change,
+  not merely because the destination folder is missing or incomplete.
+
+If the Console has too many errors for the `Tools` menu to be usable, close Unity, delete
+`Assets/Plugins/NuGet/` and the `Library/PackageCache/com.ivanmurzak.unity.mcp@*` folder, then reopen the project.
+
+</details>
+
 ## Step 2: Install `AI agent`
 
 Choose a single `AI agent` you prefer - you don't need to install all of them. This will be your main chat window to communicate with the LLM.
