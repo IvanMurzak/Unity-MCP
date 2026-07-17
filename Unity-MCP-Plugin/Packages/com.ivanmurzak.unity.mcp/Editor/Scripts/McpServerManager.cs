@@ -59,7 +59,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor
     [InitializeOnLoad]
     public static class McpServerManager
     {
-        const string ProcessIdKey = "McpServerManager_ProcessId";
+        // The LEGACY, per-user-hive-wide EditorPrefs key (Fix B, 07 §7.2). Historically ALL projects and
+        // all modern editor versions shared this single key in the per-user EditorPrefs hive
+        // (Windows: HKCU\Software\Unity Technologies\Unity Editor 5.x), so concurrent editors — even on
+        // different Unity versions — adopted each other's server PIDs and poisoned the status machine.
+        // Retained ONLY as the source for the one-time migration in CheckExistingProcess; the live key is
+        // the per-project ProcessIdKey below.
+        const string LegacyProcessIdKey = "McpServerManager_ProcessId";
+
+        // The per-project server-PID EditorPrefs key (Fix B): the legacy base suffixed with a stable hash
+        // of THIS project's directory, so two projects — even opened in different editor versions that
+        // share the single per-user EditorPrefs hive — never collide on one key. See ProcessIdKeyForDirectory.
+        static string ProcessIdKey => ProcessIdKeyForDirectory(Environment.CurrentDirectory);
+
         const string McpServerProcessName = "gamedev-mcp-server";
 
         static readonly ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger(typeof(McpServerManager));
@@ -511,44 +523,72 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 // the instant it appears — there is no window where the binary exists without its version file.
                 File.WriteAllText(Path.Combine(payloadFolder, "version"), ServerVersion);
 
-                // Stop the running server + remove the OLD cache folder. Only now do we touch the live binary;
-                // everything above operated on staging, so a failure before this point leaves the working copy
-                // intact. Unattended path never blocks behind a modal (see DeleteBinaryFolderIfExists).
-                DeleteBinaryFolderIfExists(interactive: !unattended);
+                // Fix A (version-aware server restart, 07 §7.1): when a server is currently Running/Starting, STOP
+                // it and await Stopped (bounded) BEFORE the binary folder is deleted. Otherwise the live server
+                // keeps its file locks and the status machine stays latched Running, so StartServer() after publish
+                // no-ops with "MCP server is already Running" (the user-visible "Failed to start MCP server after
+                // updating binary"). The whole stop -> delete -> publish -> restart sequence is driven through the
+                // pure OrchestrateServerBinaryUpdate so its ordering is guaranteed (and unit-tested with a mock
+                // layer). Everything above operated on staging, so a failure before this point leaves the working
+                // copy intact.
+                var serverWasRunning = WasServerRunningForUpdate(_serverStatus.CurrentValue);
+                var restartAfterPublish = ShouldRestartAfterUpdate(
+                    previousKeepServerRunning, UnityMcpPluginEditor.ConnectionMode);
 
-                // Atomic publish: a single same-volume rename of the fully-prepared payload into the per-RID
-                // cache folder. Either it lands complete or not at all.
-                PublishStagedBinary(payloadFolder, ExecutableFolderPath);
+                // Capture the live PID/port BEFORE the stop (StopServer nulls _serverProcess) so a stop failure can
+                // name them in a single actionable error.
+                var runningPid = serverWasRunning ? (_serverProcess?.Id ?? -1) : -1;
+                var runningPort = UnityMcpPluginEditor.Port;
 
-                if (!File.Exists(ExecutableFullPath))
-                {
-                    return FailDownload(
-                        $"Server binary missing after publish at: {ExecutableFullPath}", unattended);
-                }
+                string? publishFailReason = null;
+                var outcome = OrchestrateServerBinaryUpdate(
+                    serverWasRunning: serverWasRunning,
+                    restartAfterPublish: restartAfterPublish,
+                    stopServerAndAwait: StopServerAndAwaitStopped,
+                    deleteBinaryFolder: () => DeleteBinaryFolderIfExists(interactive: !unattended),
+                    publishAndVerify: () =>
+                    {
+                        // Atomic publish: a single same-volume rename of the fully-prepared payload into the
+                        // per-RID cache folder. Either it lands complete or not at all.
+                        PublishStagedBinary(payloadFolder, ExecutableFolderPath);
 
-                var success = IsBinaryExists() && IsVersionMatches();
-                if (!success)
-                {
-                    return FailDownload(
-                        "The published server binary failed the post-publish version check.", unattended);
-                }
+                        if (!File.Exists(ExecutableFullPath))
+                        {
+                            publishFailReason = $"Server binary missing after publish at: {ExecutableFullPath}";
+                            return false;
+                        }
+                        if (!(IsBinaryExists() && IsVersionMatches()))
+                        {
+                            publishFailReason = "The published server binary failed the post-publish version check.";
+                            return false;
+                        }
+                        return true;
+                    },
+                    startServer: () =>
+                    {
+                        // StartServer() moves the status machine Downloading/Stopped -> Starting. If it
+                        // early-returns false it never wrote Starting, so reset Downloading -> Stopped (a no-op for
+                        // the Running/Starting/Stopping early-return) so the UI does not hang on "Downloading
+                        // server…" with the Start button permanently disabled (issue #845).
+                        if (!StartServer())
+                        {
+                            UnityEngine.Debug.LogError("Failed to start MCP server after updating binary. Please try starting the server manually.");
+                            ResetDownloadingToStopped();
+                        }
+                    });
+
+                if (outcome == ServerUpdateRestartOutcome.StopFailed)
+                    return FailDownload(StopBeforeUpdateFailedMessage(runningPid, runningPort), unattended);
+
+                if (outcome == ServerUpdateRestartOutcome.PublishFailed)
+                    return FailDownload(publishFailReason ?? "The published server binary failed verification.", unattended);
 
                 UnityEngine.Debug.Log($"Downloaded and unpacked GameDev-MCP-Server binary to: <color=green>{ExecutableFullPath}</color>");
                 UnityEngine.Debug.Log($"MCP server version file created at: <color=green><b>COMPLETED</b></color>");
 
-                if (previousKeepServerRunning && IsAutoStartAllowedForMode(UnityMcpPluginEditor.ConnectionMode))
-                {
-                    // StartServer() moves the status machine Downloading -> Starting. If it early-returns false
-                    // on its !IsBinaryExists() path it never wrote Starting, so the status is still Downloading
-                    // — reset it to Stopped (no-op for the Running/Starting/Stopping early-return) so the UI does
-                    // not hang on "Downloading server…" with the Start button permanently disabled (issue #845).
-                    if (!StartServer())
-                    {
-                        UnityEngine.Debug.LogError($"Failed to start MCP server after updating binary. Please try starting the server manually.");
-                        ResetDownloadingToStopped();
-                    }
-                }
-                else
+                // Restart is handled inside the orchestrator when restartAfterPublish is true. When it is false,
+                // return the transient Downloading status to Stopped (preserving the original Cloud-skip log).
+                if (!restartAfterPublish)
                 {
                     if (previousKeepServerRunning)
                         _logger.LogDebug("DownloadAndUnpackBinary: Cloud mode active, skipping local server auto-start after binary update");
@@ -587,6 +627,101 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     catch { /* best effort */ }
                 }
             }
+        }
+
+        // --- Version-aware server restart orchestration (Fix A, 07 §7.1) ---
+
+        /// <summary>The bounded wait (seconds) for the running server to reach Stopped during a version-aware
+        /// update restart (Fix A) before the stop is declared failed.</summary>
+        const double StopBeforeUpdateAwaitSeconds = 10.0;
+
+        /// <summary>
+        /// Stops the running server (force) and waits, bounded, until the status machine reaches Stopped (Fix A).
+        /// <see cref="StopServer"/> with <c>force:true</c> is synchronous (it blocks on process exit and cleans up
+        /// on the calling thread), so Stopped is normally reached immediately; the bounded poll is a defensive
+        /// guard against a lingering transition. Returns true when Stopped was reached within the bound, false
+        /// otherwise (the caller then surfaces a single actionable PID/port error instead of publishing over a
+        /// still-live server).
+        /// </summary>
+        static bool StopServerAndAwaitStopped()
+        {
+            StopServer(force: true);
+
+            var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(StopBeforeUpdateAwaitSeconds);
+            while (_serverStatus.CurrentValue != McpServerStatus.Stopped && DateTime.UtcNow < deadline)
+                Thread.Sleep(50);
+
+            return _serverStatus.CurrentValue == McpServerStatus.Stopped;
+        }
+
+        /// <summary>The single actionable error surfaced when the running server could not be stopped before a
+        /// binary update (Fix A) — names the PID and port so the user can free them and retry.</summary>
+        static string StopBeforeUpdateFailedMessage(int pid, int port)
+            => $"Could not stop the running MCP server (PID: {pid}, port: {port}) before updating its binary. " +
+               "The update was aborted to avoid corrupting the live server. Please stop the server or close the " +
+               "MCP client holding it, then retry the update.";
+
+        /// <summary>
+        /// True when the status machine indicates a live server that must be stopped before its binary is replaced
+        /// (Fix A). Running or Starting count as live; Downloading/Stopping/Stopped/External do not. Pure —
+        /// unit-testable without a running Editor.
+        /// </summary>
+        internal static bool WasServerRunningForUpdate(McpServerStatus status)
+            => status == McpServerStatus.Running || status == McpServerStatus.Starting;
+
+        /// <summary>
+        /// True when the server should be auto-restarted after a binary update (Fix A): the user kept the server
+        /// running AND the connection mode auto-starts the local server. When false (autostart-false) the update
+        /// flow never calls StartServer(), so its "MCP server is already Running" path is unreachable. Pure —
+        /// unit-testable without a running Editor.
+        /// </summary>
+        internal static bool ShouldRestartAfterUpdate(bool previousKeepServerRunning, ConnectionMode mode)
+            => previousKeepServerRunning && IsAutoStartAllowedForMode(mode);
+
+        /// <summary>The result of <see cref="OrchestrateServerBinaryUpdate"/> (Fix A).</summary>
+        internal enum ServerUpdateRestartOutcome
+        {
+            /// <summary>Stop (if needed) → delete → publish succeeded → restart (if requested).</summary>
+            Completed,
+            /// <summary>The running server could not be stopped; nothing was deleted, published, or restarted.</summary>
+            StopFailed,
+            /// <summary>Publish/verify failed after the delete; the server was not restarted.</summary>
+            PublishFailed
+        }
+
+        /// <summary>
+        /// Pure orchestration of the version-aware server restart (Fix A, 07 §7.1). Guarantees the ordering the
+        /// bug requires: if the server is live, STOP it BEFORE deleting the binary folder; only then delete +
+        /// publish; and START it again ONLY when the caller wants it running (so the "already Running" path is
+        /// unreachable under autostart-false). Every side-effecting step is injected, so this can be unit-tested
+        /// with a mock process layer that records call order and asserts stop-before-delete + start-after-publish.
+        /// </summary>
+        /// <param name="serverWasRunning">Whether a live server must be stopped first.</param>
+        /// <param name="restartAfterPublish">Whether to restart the server after a successful publish.</param>
+        /// <param name="stopServerAndAwait">Stops the server and awaits Stopped; returns false on stop failure.</param>
+        /// <param name="deleteBinaryFolder">Removes the old cache folder.</param>
+        /// <param name="publishAndVerify">Publishes the staged payload and verifies it; returns false on failure.</param>
+        /// <param name="startServer">Restarts the server (invoked only when <paramref name="restartAfterPublish"/> is true).</param>
+        internal static ServerUpdateRestartOutcome OrchestrateServerBinaryUpdate(
+            bool serverWasRunning,
+            bool restartAfterPublish,
+            Func<bool> stopServerAndAwait,
+            Action deleteBinaryFolder,
+            Func<bool> publishAndVerify,
+            Action startServer)
+        {
+            if (serverWasRunning && !stopServerAndAwait())
+                return ServerUpdateRestartOutcome.StopFailed;
+
+            deleteBinaryFolder();
+
+            if (!publishAndVerify())
+                return ServerUpdateRestartOutcome.PublishFailed;
+
+            if (restartAfterPublish)
+                startServer();
+
+            return ServerUpdateRestartOutcome.Completed;
         }
 
         /// <summary>
@@ -964,12 +1099,90 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         #region Process Lifecycle
 
+        // --- Per-project server-PID key + legacy-key migration (Fix B, 07 §7.2 / T10) ---
+
+        /// <summary>
+        /// A stable, project-path-derived suffix for the per-project server-PID EditorPrefs key (Fix B).
+        /// Reuses <see cref="UnityMcpPlugin.GeneratePortFromDirectory"/>'s hashing APPROACH — SHA256 over the
+        /// lower-cased directory — so the key can never collide across the many projects (and editor versions)
+        /// that share the single per-user EditorPrefs hive. Pure + deterministic (same directory,
+        /// case-insensitive, always the same suffix) so it is unit-testable without a running Editor.
+        /// Deliberately NOT port-qualified: the port is user-configurable, so a port change would orphan the PID
+        /// under the old key and resurrect the "already Running" ghost (owner ruling 2026-07-17).
+        /// </summary>
+        internal static string ProjectKeySuffixForDirectory(string directory)
+        {
+            var normalized = (directory ?? string.Empty).ToLowerInvariant();
+            using var sha256 = SHA256.Create();
+            var hashBytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(normalized));
+            // First 4 bytes as lower-case hex — the same leading SHA256 bytes GeneratePortFromDirectory maps to
+            // a port, rendered here as a stable 8-char key suffix.
+            return BitConverter.ToString(hashBytes, 0, 4).Replace("-", string.Empty).ToLowerInvariant();
+        }
+
+        /// <summary>
+        /// The full per-project server-PID EditorPrefs key for <paramref name="directory"/>: the legacy shared
+        /// base plus a stable project-path hash suffix. Two distinct project directories always map to distinct
+        /// keys (Fix B isolation); the key carries NO editor-version component, so the same project maps to the
+        /// same key across the editor versions that share the per-user hive.
+        /// </summary>
+        internal static string ProcessIdKeyForDirectory(string directory)
+            => LegacyProcessIdKey + "_" + ProjectKeySuffixForDirectory(directory);
+
+        /// <summary>
+        /// Pure decision for the one-time legacy-key migration (T10): adopt the legacy-keyed PID ONLY when it is
+        /// the process that owns THIS project's port (i.e. it is our own server, previously tracked under the
+        /// pre-Fix-B shared key), never a foreign editor's server that merely shared the per-user hive.
+        /// Everything else is ignored. Unit-testable without a running Editor.
+        /// </summary>
+        internal static bool ShouldAdoptLegacyPid(int legacyPid, int pidListeningOnThisProjectPort)
+            => legacyPid > 0 && legacyPid == pidListeningOnThisProjectPort;
+
+        /// <summary>
+        /// Resolves the server PID to reconnect to across a domain reload. Prefers the per-project key (Fix B).
+        /// When it is absent, performs the legacy-shared-key migration: the legacy PID is adopted only when it
+        /// owns this project's port (<see cref="ShouldAdoptLegacyPid"/> / T10). On ADOPT the PID is written to the
+        /// per-project key and the legacy key is consumed (ownership transferred). On IGNORE the legacy key is
+        /// LEFT intact so its rightful owner project can still migrate it on its own next open — the port-ownership
+        /// gate already prevents a foreign editor from ever adopting another project's PID, so leaving the key
+        /// cannot reintroduce the cross-project poisoning Fix B removes.
+        /// </summary>
+        static int ResolveTrackedServerPid()
+        {
+            var perProjectPid = EditorPrefs.GetInt(ProcessIdKey, -1);
+            if (perProjectPid > 0)
+                return perProjectPid;
+
+            // Per-project key absent — attempt the legacy migration (read once for this project).
+            if (!EditorPrefs.HasKey(LegacyProcessIdKey))
+                return -1;
+
+            var legacyPid = EditorPrefs.GetInt(LegacyProcessIdKey, -1);
+            var port = UnityMcpPluginEditor.Port;
+
+            if (ShouldAdoptLegacyPid(legacyPid, GetPidListeningOnPort(port)))
+            {
+                EditorPrefs.SetInt(ProcessIdKey, legacyPid); // write the new per-project key
+                EditorPrefs.DeleteKey(LegacyProcessIdKey);   // consume: ownership moved to the per-project key
+                _logger.LogInformation(
+                    "Migrated legacy MCP server PID {pid} to the per-project key (owns this project's port {port})",
+                    legacyPid, port);
+                return legacyPid;
+            }
+
+            _logger.LogDebug(
+                "Ignored legacy MCP server PID {pid}: it does not own this project's port {port} (foreign editor sharing the EditorPrefs hive)",
+                legacyPid, port);
+            return -1;
+        }
+
         static void CheckExistingProcess()
         {
             EditorApplication.update -= CheckExistingProcess;
             // Try to find an existing server process by checking if our tracked PID is still running
-            // This helps maintain state across domain reloads
-            var savedPid = EditorPrefs.GetInt(ProcessIdKey, -1);
+            // (per-project key, with a one-time legacy-key migration — Fix B). Helps maintain state across
+            // domain reloads.
+            var savedPid = ResolveTrackedServerPid();
             if (savedPid > 0)
             {
                 try
