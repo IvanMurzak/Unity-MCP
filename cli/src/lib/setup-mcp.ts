@@ -33,9 +33,9 @@ function isValidTransport(t: string | undefined): t is McpTransport {
  * returned `SetupMcpResult` with `result.kind === 'success'` / `=== 'failure'`.
  */
 export async function setupMcp(opts: SetupMcpOptions): Promise<SetupMcpResult> {
-  const warnings: string[] = [];
-  const nextSteps: string[] = [];
-
+  // This wrapper never accumulates its own warnings/next-steps — cli-core owns the warning channel
+  // (`result.warnings`), and `nextSteps` is always empty here. Both fields are written as literals
+  // on each return to satisfy the `SetupMcpResult` shape.
   try {
     // Resolve project path. If the caller supplied one explicitly it must exist; otherwise cli-core
     // falls back to cwd (matching the CLI behaviour and closing the "path required" half of B1).
@@ -43,7 +43,7 @@ export async function setupMcp(opts: SetupMcpOptions): Promise<SetupMcpResult> {
     if (opts.unityProjectPath) {
       const validated = requireExistingPath(opts.unityProjectPath);
       if (!validated.ok) {
-        return { kind: 'failure', success: false, warnings, nextSteps, error: validated.error };
+        return { kind: 'failure', success: false, warnings: [], nextSteps: [], error: validated.error };
       }
       projectPath = validated.projectPath;
     }
@@ -53,8 +53,8 @@ export async function setupMcp(opts: SetupMcpOptions): Promise<SetupMcpResult> {
       return {
         kind: 'failure',
         success: false,
-        warnings,
-        nextSteps,
+        warnings: [],
+        nextSteps: [],
         error: new Error(`Invalid transport: "${transport}". Must be "stdio" or "http".`),
       };
     }
@@ -74,7 +74,7 @@ export async function setupMcp(opts: SetupMcpOptions): Promise<SetupMcpResult> {
         kind: 'failure',
         success: false,
         warnings: result.warnings,
-        nextSteps,
+        nextSteps: [],
         error: result.error,
       };
     }
@@ -98,14 +98,14 @@ export async function setupMcp(opts: SetupMcpOptions): Promise<SetupMcpResult> {
       configPath: result.configPath,
       transport: result.transport,
       warnings: result.warnings,
-      nextSteps,
+      nextSteps: [],
     };
   } catch (err: unknown) {
     return {
       kind: 'failure',
       success: false,
-      warnings,
-      nextSteps,
+      warnings: [],
+      nextSteps: [],
       error: err instanceof Error ? err : new Error(String(err)),
     };
   }
