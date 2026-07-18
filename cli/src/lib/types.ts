@@ -231,8 +231,18 @@ export interface SetupMcpOptions {
   transport?: McpTransport;
   /** Explicit server URL override (for http transport). */
   url?: string;
-  /** Auth token override. */
+  /**
+   * Explicit PAT opt-in (`--token`). The ONLY input that writes a static credential into the config
+   * (auth-fixes M7); a credential is never emitted merely because the server requires auth.
+   */
   token?: string;
+  /**
+   * `--no-pin` escape hatch (auth-fixes T4/B4). By default the http URL is pinned to this project's
+   * routing segment (`<base>/mcp/p/<pin-v2>`) and the stdio config carries a `project=<pin>` arg, so
+   * the config routes strictly to this project's engine instance. Set `true` to write an unpinned URL
+   * / omit the `project=` arg.
+   */
+  noPin?: boolean;
   onProgress?: ProgressCallback;
 }
 

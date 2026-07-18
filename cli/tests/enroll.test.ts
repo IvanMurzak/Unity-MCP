@@ -12,11 +12,13 @@ import {
   pinUrl,
   upsertProjectPinIntoConfigs,
   runEnroll,
-  projectRootForIdentity,
   EnrollmentError,
 } from '../src/utils/enroll.js';
-import { deriveProjectPin } from '../src/utils/port.js';
+import { derivePinV2, unityAdapter } from '@baizor/gamedev-cli-core';
 import { MachineCredentialStore } from '../src/utils/machine-credentials.js';
+
+// The Unity server-entry name — the third arg cli-core's upsert takes (was hard-coded before T7).
+const SERVER_NAME = unityAdapter.serverName;
 
 function tmpProject(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'enroll-'));
@@ -161,19 +163,15 @@ describe('resolveEnrollCode (--enroll vs --enroll-stdin)', () => {
   });
 });
 
-describe('projectRootForIdentity', () => {
-  it('produces a forward-slash absolute root (matching the plugin ProjectRootPath)', () => {
-    const root = projectRootForIdentity(process.cwd());
-    expect(root).not.toContain('\\'); // never a backslash — plugin uses Application.dataPath form
-    expect(path.isAbsolute(root) || /^[A-Za-z]:\//.test(root)).toBe(true);
+describe('v2 pin normalization (B5 fix — replaces the deleted projectRootForIdentity workaround)', () => {
+  it('derives the SAME pin for a backslash root and its forward-slash form', () => {
+    // The old Unity-CLI `projectRootForIdentity` `\`→`/` workaround is gone; cli-core's v2
+    // normalization (derivePinV2) subsumes it — one algorithm for every engine.
+    expect(derivePinV2('C:\\tmp\\some-proj')).toBe(derivePinV2('C:/tmp/some-proj'));
   });
 
-  it('derives the same pin regardless of input separator style for the same path', () => {
-    // A path expressed with backslashes vs forward slashes must normalize to the same pin,
-    // because path.resolve + the /\\/->/ conversion canonicalizes the separators.
-    const a = projectRootForIdentity('C:/tmp/some-proj');
-    const b = projectRootForIdentity('C:/tmp/some-proj/');
-    expect(deriveProjectPin(a)).toBe(deriveProjectPin(b));
+  it('trims a trailing separator before hashing (same pin with or without it)', () => {
+    expect(derivePinV2('C:/tmp/some-proj')).toBe(derivePinV2('C:/tmp/some-proj/'));
   });
 });
 
@@ -201,7 +199,7 @@ describe('upsertProjectPinIntoConfigs', () => {
         JSON.stringify({ mcpServers: { 'ai-game-developer': { type: 'http', url: 'https://ai-game.dev/mcp' } } }, null, 2),
       );
 
-      const { updatedFiles } = upsertProjectPinIntoConfigs(project, '34ea75f2');
+      const { updatedFiles } = upsertProjectPinIntoConfigs(project, '34ea75f2', SERVER_NAME);
       expect(updatedFiles).toContain(mcpJson);
 
       const written = JSON.parse(fs.readFileSync(mcpJson, 'utf-8'));
@@ -218,7 +216,7 @@ describe('upsertProjectPinIntoConfigs', () => {
       const original = JSON.stringify({ mcpServers: { other: { url: 'https://example.com' } } }, null, 2);
       fs.writeFileSync(mcpJson, original);
 
-      const { updatedFiles } = upsertProjectPinIntoConfigs(project, '34ea75f2');
+      const { updatedFiles } = upsertProjectPinIntoConfigs(project, '34ea75f2', SERVER_NAME);
       expect(updatedFiles).toHaveLength(0);
       expect(fs.readFileSync(mcpJson, 'utf-8')).toBe(original);
     } finally {
@@ -229,7 +227,7 @@ describe('upsertProjectPinIntoConfigs', () => {
   it('is a no-op for a project with no agent configs', () => {
     const project = tmpProject();
     try {
-      const { updatedFiles } = upsertProjectPinIntoConfigs(project, '34ea75f2');
+      const { updatedFiles } = upsertProjectPinIntoConfigs(project, '34ea75f2', SERVER_NAME);
       expect(updatedFiles).toHaveLength(0);
     } finally {
       fs.rmSync(project, { recursive: true, force: true });
@@ -262,7 +260,7 @@ describe('runEnroll (full side effect)', () => {
         captured,
       );
 
-      const result = await runEnroll({ code: 'CODE', projectPath: project, store, fetchImpl });
+      const result = await runEnroll({ code: 'CODE', projectPath: project, adapter: unityAdapter, store, fetchImpl });
 
       // 1. Credential in the machine store (never a project cloudToken config).
       const creds = store.read();
@@ -275,8 +273,9 @@ describe('runEnroll (full side effect)', () => {
       const marker = JSON.parse(fs.readFileSync(result.markerPath, 'utf-8'));
       expect(marker.serverTarget).toBe('https://ai-game.dev');
 
-      // 3. Pin upserted into the existing config (forward-slash root, matching the plugin).
-      const expectedPin = deriveProjectPin(projectRootForIdentity(project));
+      // 3. Pin upserted into the existing config, derived with the v2 (`\`→`/`) normalization so a
+      //    Windows backslash root matches the plugin's forward-slash hash (B5 fix).
+      const expectedPin = derivePinV2(path.resolve(project));
       expect(result.pin).toBe(expectedPin);
       const written = JSON.parse(fs.readFileSync(mcpJson, 'utf-8'));
       expect(written.mcpServers['ai-game-developer'].url).toBe(`https://ai-game.dev/mcp/p/${expectedPin}`);
