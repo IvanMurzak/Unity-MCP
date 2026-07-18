@@ -14,6 +14,7 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.McpPlugin.AgentConfig;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet;
 using Microsoft.AspNetCore.SignalR.Client;
@@ -246,30 +247,30 @@ namespace com.IvanMurzak.Unity.MCP
         }
 
         /// <summary>
-        /// Generate a deterministic TCP port based on current directory.
-        /// Uses SHA256 hash for better distribution and less collisions.
-        /// Port range: 20000-29999 (avoids Windows ephemeral/reserved port ranges).
+        /// Generate a deterministic TCP port for the current working directory
+        /// (<see cref="Environment.CurrentDirectory"/>). Port range: 20000-29999 (avoids Windows
+        /// ephemeral/reserved port ranges).
         /// </summary>
+        /// <remarks>
+        /// Defect <b>B10</b> fix (auth-fixes d1): the derivation runs the directory through the shared
+        /// <see cref="ProjectIdentity"/> <b>v2</b> normalization (trim trailing separators, convert
+        /// <c>'\\'</c> to <c>'/'</c>, then <see cref="string.ToLowerInvariant"/>) via
+        /// <see cref="ProjectIdentity.DerivePortV2"/> — instead of hashing the raw, untrimmed, un-separator-
+        /// normalized <see cref="Environment.CurrentDirectory"/> string it used before. This keeps the
+        /// local port in lock-step with the routing pin (also v2-normalized), so a Windows working
+        /// directory reported with backslashes hashes identically to its forward-slash form. The port
+        /// byte-math (first 4 hash bytes, little-endian, mapped into 20000-29999) is unchanged, so a
+        /// path with no backslashes and no trailing separator yields the same port as before.
+        /// </remarks>
         public static int GeneratePortFromDirectory()
-        {
-            const int MinPort = 20000; // Range chosen to avoid Windows ephemeral/reserved ports (49152-65535)
-            const int MaxPort = 29999;
-            const int PortRange = MaxPort - MinPort + 1;
+            => GeneratePortFromDirectory(Environment.CurrentDirectory);
 
-            var currentDir = Environment.CurrentDirectory.ToLowerInvariant();
-
-            using (var sha256 = System.Security.Cryptography.SHA256.Create())
-            {
-                var hashBytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(currentDir));
-
-                // Use first 4 bytes as an unsigned integer to avoid Math.Abs(int.MinValue) overflow
-                var hash = (uint)BitConverter.ToInt32(hashBytes, 0);
-
-                // Map to port range
-                var port = MinPort + (int)(hash % PortRange);
-
-                return port;
-            }
-        }
+        /// <summary>
+        /// Deterministic TCP port for an explicit <paramref name="directory"/>, derived via the shared
+        /// <see cref="ProjectIdentity"/> v2 normalization (see <see cref="GeneratePortFromDirectory()"/>).
+        /// Exposed so the derivation is unit-testable independent of the process working directory.
+        /// </summary>
+        public static int GeneratePortFromDirectory(string directory)
+            => ProjectIdentity.DerivePortV2(directory);
     }
 }
