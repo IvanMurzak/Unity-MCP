@@ -12,6 +12,10 @@ on:
   push:
     branches:
       - main
+  # Manual escape hatch: a merge to `main` does not ALWAYS create the push
+  # event (observed 2026-07-19 across several repos - merge landed, zero runs).
+  # Without this, a release that misses its push event cannot be cut at all.
+  workflow_dispatch:
 
 jobs:
   test-cli:
