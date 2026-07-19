@@ -59,18 +59,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         };
 
         [Test]
-        public void SetDefault_SeedsLocalToken_NotCloudToken()
+        public void SetDefault_SeedsLocalToken()
         {
-            // A freshly-constructed config (the ctor calls SetDefault) must carry a non-empty LOCAL token
-            // and a null cloud token. The prior bug routed GenerateToken() into CloudToken because
-            // SetDefault sets ConnectionMode=Cloud BEFORE assigning the token via the mode-routed setter,
-            // leaving LocalToken unseeded (and re-mintable by the generate-if-empty fallback).
+            // A freshly-constructed config (the ctor calls SetDefault) must carry a non-empty LOCAL server
+            // token. Cloud-mode credentials come from the shared machine store (T9 — the cloudToken mirror
+            // was removed), so SetDefault seeds only the local token and nothing cloud-related.
             var config = new UnityMcpPlugin.UnityConnectionConfig();
 
             Assert.IsFalse(string.IsNullOrEmpty(config.LocalToken),
                 "SetDefault must seed a non-empty LocalToken so the generate-if-empty fallback never has to mint it.");
-            Assert.IsNull(config.CloudToken,
-                "SetDefault must leave CloudToken null — the cloud token comes from Cloud sign-in, not GenerateToken().");
         }
 
         [Test]
