@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEditor.PackageManager;
 using UnityEngine;
+using PackageInfo = UnityEditor.PackageManager.PackageInfo;
 using PackageManagerEvents = UnityEditor.PackageManager.Events;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
@@ -55,6 +56,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
     static class NuGetDependencyResolver
     {
         const string Tag = "[Unity-MCP DependencyResolver]";
+
+        /// <summary>The UPM id of the Unity-MCP package that ships this resolver.</summary>
+        internal const string UnityMcpPackageName = "com.ivanmurzak.unity.mcp";
 
         static NuGetDependencyResolver()
         {
@@ -108,6 +112,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             try
             {
                 Debug.Log($"{Tag} UPM package change detected — running NuGet restore.");
+                AdoptPinsFromUpdatedPackage(args);
                 RunRestoreAndRefresh();
             }
             catch (Exception ex)
@@ -122,9 +127,76 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         }
 
         /// <summary>
+        /// When the Unity-MCP package itself was added or upgraded, re-read the NuGet dependency
+        /// pins from the NEW package files on disk and make them the active pin set
+        /// (<see cref="NuGetConfig.SetPackagesOverride"/>).
+        ///
+        /// This handler runs in the still-alive PREVIOUS AppDomain (see the class doc / #707), so
+        /// the compiled-in pins are the OLD package's. Restoring with them is what wedged upgrades
+        /// before this fix: AllPackagesInstalled() validated the OLD pins (all present), declared
+        /// the DLL set healthy, EnsureReadyDefine() re-enabled the gated assemblies, and the
+        /// post-update recompile then failed against the stale DLLs (e.g. CS0117 on an outdated
+        /// McpPlugin.dll). The failed compile blocks the domain reload, the new resolver never
+        /// runs, and the project — including the MCP server, which is neither re-downloaded nor
+        /// restarted — stays broken until the user repairs the DLLs by hand.
+        ///
+        /// The freshly-written package carries its own pins in nuget-dependencies.json, so the
+        /// restore below installs the RIGHT DLL set and the recompile succeeds in one pass. When
+        /// the manifest is missing (upgrading to a version that predates it) or unreadable, we
+        /// keep the compiled pins — exactly the previous behavior. The override dies with this
+        /// AppDomain; after the reload the new assembly's own compiled pins take over.
+        /// </summary>
+        static void AdoptPinsFromUpdatedPackage(PackageRegistrationEventArgs args)
+        {
+            var updated = FindUnityMcpPackage(args);
+            if (updated == null)
+                return; // some other package changed — our pins are unaffected
+
+            var pins = NuGetDependencyManifest.TryLoad(updated.resolvedPath);
+            if (pins == null)
+            {
+                Debug.Log($"{Tag} No dependency manifest found in {UnityMcpPackageName}@{updated.version} — restoring with compiled-in pins.");
+                return;
+            }
+
+            NuGetConfig.SetPackagesOverride(pins);
+            Debug.Log($"{Tag} Adopted NuGet dependency pins from the updated package files ({UnityMcpPackageName}@{updated.version}).");
+        }
+
+        /// <summary>
+        /// Returns the Unity-MCP package's registration info from an added/changed set, or null
+        /// when the event does not involve the Unity-MCP package. changedTo (not changedFrom) is
+        /// inspected so the returned resolvedPath points at the NEW package files.
+        /// </summary>
+        static PackageInfo? FindUnityMcpPackage(PackageRegistrationEventArgs args)
+        {
+            var match = FindByName(args.added) ?? FindByName(args.changedTo);
+            return match;
+
+            static PackageInfo? FindByName(IEnumerable<PackageInfo>? packages)
+            {
+                if (packages == null)
+                    return null;
+                foreach (var package in packages)
+                {
+                    if (package != null && IsUnityMcpPackage(package.name))
+                        return package;
+                }
+                return null;
+            }
+        }
+
+        /// <summary>True when <paramref name="packageName"/> is the Unity-MCP package id
+        /// (case-insensitive). Pure — unit-testable without UnityEditor types.</summary>
+        internal static bool IsUnityMcpPackage(string? packageName)
+            => string.Equals(packageName, UnityMcpPackageName, StringComparison.OrdinalIgnoreCase);
+
+        /// <summary>
         /// Shared core used by both ResolveOnce (post-domain-reload) and OnRegisteredPackages
         /// (no-domain-reload UPM event path). AllPackagesInstalled() short-circuits the common
-        /// no-op case without touching the network.
+        /// no-op case without touching the network. Both paths consume
+        /// <see cref="NuGetConfig.Packages"/>, which resolves to the pins adopted from the updated
+        /// package files when <see cref="AdoptPinsFromUpdatedPackage"/> installed an override.
         /// </summary>
         static void RunRestoreAndRefresh()
         {

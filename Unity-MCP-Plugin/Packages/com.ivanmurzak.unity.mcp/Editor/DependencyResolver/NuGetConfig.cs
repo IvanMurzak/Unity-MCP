@@ -48,13 +48,40 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         public const string CachePath = "Library/NuGetCache";
 
         /// <summary>
-        /// Top-level NuGet package dependencies.
+        /// The ACTIVE top-level NuGet package dependencies. Normally the compiled-in
+        /// <see cref="DefaultPackages"/> pins; during a UPM upgrade of the Unity-MCP package the
+        /// still-alive previous AppDomain overrides them with the pins read from the NEW package's
+        /// <c>nuget-dependencies.json</c> (see <see cref="NuGetDependencyManifest"/> and
+        /// <see cref="SetPackagesOverride"/>) — the compiled pins are the OLD package's and
+        /// restoring with them wedges the project (Unity-MCP#707). The override lives only in the
+        /// old AppDomain; after the post-update reload the new assembly's compiled pins take over.
+        /// </summary>
+        public static NuGetPackage[] Packages => _packagesOverride ?? DefaultPackages;
+
+        static NuGetPackage[]? _packagesOverride;
+
+        /// <summary>
+        /// Replaces the active pin set (pass null to return to the compiled-in
+        /// <see cref="DefaultPackages"/>). Called from the <c>registeredPackages</c> handler when
+        /// the updated package ships a readable dependency manifest.
+        /// </summary>
+        internal static void SetPackagesOverride(NuGetPackage[]? packages)
+            => _packagesOverride = packages;
+
+        /// <summary>
+        /// Compiled-in top-level NuGet package dependencies for THIS package version.
         /// Transitive dependencies are resolved automatically from .nuspec metadata.
         ///
         /// includeInBuild: true  = DLL included in game builds (runtime dependency)
         /// includeInBuild: false = editor-only DLL (excluded from builds)
+        ///
+        /// IMPORTANT: these pins are duplicated in <c>nuget-dependencies.json</c> (same folder) so
+        /// the still-alive previous AppDomain can read the NEW pins during a package upgrade.
+        /// When bumping a pin, update BOTH — the
+        /// <c>NuGetDependencyManifestTests.ShippedManifest_MatchesCompiledPins</c> test fails CI
+        /// when they drift.
         /// </summary>
-        public static readonly NuGetPackage[] Packages =
+        static readonly NuGetPackage[] DefaultPackages =
         {
             // --- Runtime dependencies (included in game builds) ---
             // v8 pinned to match what McpPlugin.dll (netstandard2.1) is compiled against.
