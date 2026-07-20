@@ -403,19 +403,19 @@ jobs:
       release_notes: ${{ steps.read_notes.outputs.release_body }}
     steps:
       - name: Download release notes artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: release-notes
           path: ./release-notes
 
       - name: Download Unity installer artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: unity-installer-package
           path: ./assets
 
       - name: Download signed UPM package artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: signed-upm-package
           path: ./assets
