@@ -65,8 +65,8 @@ npm install -g unity-mcp-cli
 # 2. Install "AI Game Developer" in Unity project
 unity-mcp-cli install-plugin ./MyUnityProject
 
-# 3. Login to cloud server
-unity-mcp-cli login ./MyUnityProject
+# 3. Sign in to ai-game.dev (opens your browser — OAuth device flow)
+unity-mcp-cli login
 
 # 4. Open Unity project (auto-connects and generates skills)
 unity-mcp-cli open ./MyUnityProject
@@ -312,8 +312,8 @@ unity-mcp-cli create-project ./MyUnityProject              #  │ codex         
 # 2. Install "AI Game Developer" in Unity project          #  │ gemini             │
 unity-mcp-cli install-plugin ./MyUnityProject              #  │ github-copilot-cli │
                                                            #  │ kilo-code          │
-# 3. Login to cloud server                                 #  │ open-code          │
-unity-mcp-cli login ./MyUnityProject                       #  │ rider-junie        │
+# 3. Sign in to ai-game.dev (OAuth device flow)            #  │ open-code          │
+unity-mcp-cli login                                        #  │ rider-junie        │
                                                            #  │ unity-ai           │
 # 4. Open Unity project (auto-connects and generates skills)  │ vs-copilot         │
 unity-mcp-cli open ./MyUnityProject                        #  │ vscode-copilot     │
@@ -324,32 +324,7 @@ unity-mcp-cli wait-for-ready ./MyUnityProject
 
 > See [full CLI documentation](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) for all available commands.
 
-<details>
-<summary><b>🛠️ Troubleshooting: CS0115 / CS0103 compile errors after a version bump (click)</b></summary>
-
-If the Console shows errors like `error CS0115: '...CredentialProvider': no suitable method found to override` in
-`UnityMcpPlugin.Config.cs`, or `error CS0103: The name '...' does not exist in the current context` for a type in
-`Editor/Scripts/**`, the project's on-disk copy of the plugin's dependencies is out of sync with the version pinned
-in `Packages/manifest.json` — usually because `manifest.json` was updated (via `git pull`, a manual edit, or an
-OpenUPM auto-update) while the Unity Editor was **closed**. In that situation the automatic resolver
-(`NuGetDependencyResolver`) never gets a chance to self-heal: Unity refuses to reload the C# domain while the
-project has a compile error, and that same reload is what the resolver needs to run.
-
-Recover with either menu item under **`Tools > AI Game Developer > Dependencies`**:
-
-- **`Force Resolve NuGet DLLs`** — re-checks and re-downloads the NuGet DLLs under `Assets/Plugins/NuGet` against
-  the versions this plugin version requires. Use this for the CS0115 symptom.
-- **`Force Reimport Package Cache (fixes ghost CS0103 errors)`** — deletes this package's own extracted copy under
-  `Library/PackageCache` and asks the Package Manager to re-resolve it from scratch. Use this if Unity's own asset
-  import silently drops a file from compilation (files present on disk with a valid `.meta`, but the type still
-  reads as undefined) — a plain `Assets > Refresh` or even a full Editor restart is not reliably enough to fix
-  this, because Unity's package resolver only re-extracts a package when it detects an actual dependency change,
-  not merely because the destination folder is missing or incomplete.
-
-If the Console has too many errors for the `Tools` menu to be usable, close Unity, delete
-`Assets/Plugins/NuGet/` and the `Library/PackageCache/com.ivanmurzak.unity.mcp@*` folder, then reopen the project.
-
-</details>
+> **Cloud sign-in & project pinning:** `unity-mcp-cli login` runs the browser OAuth device flow and stores the credential in the shared machine store (`~/.ai-game-dev/credentials.json`) — there is no personal access token to paste. By default the AI-agent config that `setup-mcp` writes points at a per-project **pinned** endpoint (`https://ai-game.dev/mcp/p/<pin>`); pass `--no-pin` to use the shared `https://ai-game.dev/mcp` endpoint instead. Teams can distribute access with an **enrollment code**: `unity-mcp-cli install-plugin --enroll <code>`.
 
 ## Step 2: Install `AI agent`
 
@@ -628,8 +603,8 @@ Doesn't matter what launch option you choose, all of them support custom configu
 | `MCP_PLUGIN_PORT`             | `--port`                 | **Client** -> **Server** <- **Plugin** connection port (default: 8080)       |
 | `MCP_PLUGIN_CLIENT_TIMEOUT`   | `--plugin-timeout`       | **Plugin** -> **Server** connection timeout (ms) (default: 10000)            |
 | `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport`     | **Client** -> **Server** transport type: `stdio` or `streamableHttp` (default: `streamableHttp`) |
-| `MCP_AUTHORIZATION`           | `--authorization`        | Authentication mode for incoming **Client** connections: `none` or `required` (default: `none`) |
-| `MCP_PLUGIN_TOKEN`            | `--token`                | Bearer token required from the **Client** when `--authorization=required` (default: unset) |
+| `MCP_AUTHORIZATION`           | `--authorization`        | Authentication mode for incoming **Client** connections: `none`, `oauth`, or `token` (default: `none`; the legacy `required` mode was removed) |
+| `MCP_PLUGIN_TOKEN`            | `--token`                | Bearer token required from the **Client** when authorization is `token` (default: unset) |
 | `MCP_PLUGIN_IDLE_TIMEOUT_SECONDS` | `--idle-timeout-seconds` | Shut down the server after this many seconds with no connections (default: 600) |
 
 > Command line args support also the option with a single `-` prefix (`-port`) and an option without prefix at all (`port`).
@@ -647,7 +622,7 @@ The Unity MCP Plugin reads the following environment variables (and command-line
 | `UNITY_MCP_CLOUD_URL`       | `-url`                      | URL string                    | Override the MCP Server URL (`UNITY_MCP_HOST` is a legacy alias)     |
 | `UNITY_MCP_CONNECTION_MODE` | `-UNITY_MCP_CONNECTION_MODE`| `Cloud` / `Custom`            | Force the connection mode (a loopback URL implies `Custom`)          |
 | `UNITY_MCP_KEEP_CONNECTED`  | `-UNITY_MCP_KEEP_CONNECTED` | `true` / `false`              | Force enable or disable the active connection                       |
-| `UNITY_MCP_AUTH_OPTION`     | `-auth`                     | `none` / `required`           | Force set the authentication mode                                   |
+| `UNITY_MCP_AUTH_OPTION`     | `-auth`                     | `none` / `oauth` / `token`    | Force set the authentication mode (legacy `required` migrates to `token`) |
 | `UNITY_MCP_TOKEN`           | `-token`                    | string                        | Force set the authentication token                                  |
 | `UNITY_MCP_TRANSPORT`       | `-UNITY_MCP_TRANSPORT`      | `stdio` / `streamableHttp`    | Force the client transport the plugin configures                    |
 | `UNITY_MCP_START_SERVER`    | `-UNITY_MCP_START_SERVER`   | `true` / `false`              | Force whether the plugin keeps a local server process running       |
@@ -659,9 +634,9 @@ The Unity MCP Plugin reads the following environment variables (and command-line
 
 ```bash
 Unity.exe -batchmode -nographics \
-  -UNITY_MCP_HOST=http://localhost:8080 \
+  -UNITY_MCP_CLOUD_URL=http://localhost:8080 \
   -UNITY_MCP_KEEP_CONNECTED=true \
-  -UNITY_MCP_AUTH_OPTION=required \
+  -UNITY_MCP_AUTH_OPTION=token \
   -UNITY_MCP_TOKEN=my-secret-token
 ```
 

@@ -92,7 +92,9 @@ describe('CLI integration', () => {
         '--plugin-version', '0.51.6',
       ]);
       expect(exitCode).toBe(1);
-      expect(stdout).toContain('Not a valid Unity project');
+      // T5/B1: the helpful failure lists exactly what marker was checked for.
+      expect(stdout.toLowerCase()).toContain('not a valid unity project');
+      expect(stdout).toContain(path.join('Packages', 'manifest.json'));
       fs.rmSync(emptyDir, { recursive: true, force: true });
     });
 

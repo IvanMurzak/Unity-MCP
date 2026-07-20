@@ -65,8 +65,8 @@ npm install -g unity-mcp-cli
 # 2. Install "AI Game Developer" in Unity project
 unity-mcp-cli install-plugin ./MyUnityProject
 
-# 3. Login to cloud server
-unity-mcp-cli login ./MyUnityProject
+# 3. Sign in to ai-game.dev (opens your browser — OAuth device flow)
+unity-mcp-cli login
 
 # 4. Open Unity project (auto-connects and generates skills)
 unity-mcp-cli open ./MyUnityProject
@@ -95,6 +95,8 @@ That's it. Ask your AI *"Create 3 cubes in a circle with radius 2"* and watch it
 # Skills and Tools Reference
 
 The plugin ships with 70+ built-in tools across four categories. Each tool brings AI skill. All tools are available immediately after installation — no extra configuration required. See [docs/default-mcp-tools.md](docs/default-mcp-tools.md) for the full reference with detailed descriptions.
+
+> 🧰 Browse the full MCP tools registry online: [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)
 
 <details>
   <summary>Project & Assets</summary>
@@ -198,8 +200,15 @@ Install extensions when need more tools or [create your own tools](#add-custom-t
 | Extension | Description |
 | --- | --- |
 | **[AI Animation](https://github.com/IvanMurzak/Unity-AI-Animation/)** | Set of additional tools for Unity Animations |
+| **[AI Cinemachine](https://github.com/IvanMurzak/Unity-AI-Cinemachine/)** | MCP Tools for Cinemachine |
+| **[AI InputSystem](https://github.com/IvanMurzak/Unity-AI-InputSystem/)** | MCP Tools for the Unity Input System |
+| **[AI Navigation](https://github.com/IvanMurzak/Unity-AI-Navigation/)** | MCP Tools for AI Navigation (NavMesh surfaces, baking, agents, links) |
 | **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-AI-ParticleSystem/)** | Set of additional tools for Unity Particle System |
 | **[AI ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)** | Set of additional tools for Unity ProBuilder |
+| **[AI Splines](https://github.com/IvanMurzak/Unity-AI-Splines/)** | MCP Tools for Unity Splines |
+| **[AI Terrain](https://github.com/IvanMurzak/Unity-AI-Terrain/)** | Set of additional tools for Unity Terrain |
+| **[AI Tilemap](https://github.com/IvanMurzak/Unity-AI-Tilemap/)** | MCP Tools for Unity 2D Tilemaps |
+| **[AI Timeline](https://github.com/IvanMurzak/Unity-AI-Timeline/)** | MCP Tools for Unity Timeline cutscenes and sequences |
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
@@ -303,8 +312,8 @@ unity-mcp-cli create-project ./MyUnityProject              #  │ codex         
 # 2. Install "AI Game Developer" in Unity project          #  │ gemini             │
 unity-mcp-cli install-plugin ./MyUnityProject              #  │ github-copilot-cli │
                                                            #  │ kilo-code          │
-# 3. Login to cloud server                                 #  │ open-code          │
-unity-mcp-cli login ./MyUnityProject                       #  │ rider-junie        │
+# 3. Sign in to ai-game.dev (OAuth device flow)            #  │ open-code          │
+unity-mcp-cli login                                        #  │ rider-junie        │
                                                            #  │ unity-ai           │
 # 4. Open Unity project (auto-connects and generates skills)  │ vs-copilot         │
 unity-mcp-cli open ./MyUnityProject                        #  │ vscode-copilot     │
@@ -314,6 +323,8 @@ unity-mcp-cli wait-for-ready ./MyUnityProject
 ```
 
 > See [full CLI documentation](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) for all available commands.
+
+> **Cloud sign-in & project pinning:** `unity-mcp-cli login` runs the browser OAuth device flow and stores the credential in the shared machine store (`~/.ai-game-dev/credentials.json`) — there is no personal access token to paste. By default the AI-agent config that `setup-mcp` writes points at a per-project **pinned** endpoint (`https://ai-game.dev/mcp/p/<pin>`); pass `--no-pin` to use the shared `https://ai-game.dev/mcp` endpoint instead. Teams can distribute access with an **enrollment code**: `unity-mcp-cli install-plugin --enroll <code>`.
 
 ## Step 2: Install `AI agent`
 
@@ -592,8 +603,8 @@ Doesn't matter what launch option you choose, all of them support custom configu
 | `MCP_PLUGIN_PORT`             | `--port`                 | **Client** -> **Server** <- **Plugin** connection port (default: 8080)       |
 | `MCP_PLUGIN_CLIENT_TIMEOUT`   | `--plugin-timeout`       | **Plugin** -> **Server** connection timeout (ms) (default: 10000)            |
 | `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport`     | **Client** -> **Server** transport type: `stdio` or `streamableHttp` (default: `streamableHttp`) |
-| `MCP_AUTHORIZATION`           | `--authorization`        | Authentication mode for incoming **Client** connections: `none` or `required` (default: `none`) |
-| `MCP_PLUGIN_TOKEN`            | `--token`                | Bearer token required from the **Client** when `--authorization=required` (default: unset) |
+| `MCP_AUTHORIZATION`           | `--authorization`        | Authentication mode for incoming **Client** connections: `none`, `oauth`, or `token` (default: `none`; the legacy `required` mode was removed) |
+| `MCP_PLUGIN_TOKEN`            | `--token`                | Bearer token required from the **Client** when authorization is `token` (default: unset) |
 | `MCP_PLUGIN_IDLE_TIMEOUT_SECONDS` | `--idle-timeout-seconds` | Shut down the server after this many seconds with no connections (default: 600) |
 
 > Command line args support also the option with a single `-` prefix (`-port`) and an option without prefix at all (`port`).
@@ -611,7 +622,7 @@ The Unity MCP Plugin reads the following environment variables (and command-line
 | `UNITY_MCP_CLOUD_URL`       | `-url`                      | URL string                    | Override the MCP Server URL (`UNITY_MCP_HOST` is a legacy alias)     |
 | `UNITY_MCP_CONNECTION_MODE` | `-UNITY_MCP_CONNECTION_MODE`| `Cloud` / `Custom`            | Force the connection mode (a loopback URL implies `Custom`)          |
 | `UNITY_MCP_KEEP_CONNECTED`  | `-UNITY_MCP_KEEP_CONNECTED` | `true` / `false`              | Force enable or disable the active connection                       |
-| `UNITY_MCP_AUTH_OPTION`     | `-auth`                     | `none` / `required`           | Force set the authentication mode                                   |
+| `UNITY_MCP_AUTH_OPTION`     | `-auth`                     | `none` / `oauth` / `token`    | Force set the authentication mode (legacy `required` migrates to `token`) |
 | `UNITY_MCP_TOKEN`           | `-token`                    | string                        | Force set the authentication token                                  |
 | `UNITY_MCP_TRANSPORT`       | `-UNITY_MCP_TRANSPORT`      | `stdio` / `streamableHttp`    | Force the client transport the plugin configures                    |
 | `UNITY_MCP_START_SERVER`    | `-UNITY_MCP_START_SERVER`   | `true` / `false`              | Force whether the plugin keeps a local server process running       |
@@ -623,9 +634,9 @@ The Unity MCP Plugin reads the following environment variables (and command-line
 
 ```bash
 Unity.exe -batchmode -nographics \
-  -UNITY_MCP_HOST=http://localhost:8080 \
+  -UNITY_MCP_CLOUD_URL=http://localhost:8080 \
   -UNITY_MCP_KEEP_CONNECTED=true \
-  -UNITY_MCP_AUTH_OPTION=required \
+  -UNITY_MCP_AUTH_OPTION=token \
   -UNITY_MCP_TOKEN=my-secret-token
 ```
 
@@ -846,6 +857,15 @@ It is a bridge between `MCP Client` and "something else", in this particular cas
 - "When creating UI elements, always add them to the Canvas in Scene/UI/MainCanvas"
 - "Performance is critical - prefer object pooling for frequently instantiated objects"
 - "This project follows SOLID principles - explain any architecture decisions"
+
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+# Uninstall 🧹
+
+To completely remove the plugin from your Unity project:
+
+1. Open **Window ▸ Package Manager**, select the **AI Game Developer — MCP** package, and click **Remove**.
+2. Close Unity, then delete the `Assets/Plugins/NuGet` folder (along with its `Assets/Plugins/NuGet.meta` file).
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 

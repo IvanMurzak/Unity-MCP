@@ -66,7 +66,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // 7.1.0 (mcp-authorize g5/g6) adds the shared ServerLaunchArguments launch-arg builder,
             // the AuthOption.token member + LocalTokenMcpStrategy, and the 3-mode configurator — all
             // consumed by the local self-hosted auth path. McpPlugin.Common 7.1.0 follows transitively.
-            new NuGetPackage("com.IvanMurzak.McpPlugin",                              "7.1.1", includeInBuild: true),
+            new NuGetPackage("com.IvanMurzak.McpPlugin",                              "7.3.0", includeInBuild: true),
             // Pinned explicitly so the resolver doesn't drift below the version
             // bundled in this package. The atomic API surface (TryModifyAt,
             // TryPatch, TryReadAt, View, Grep) introduced in 5.1.0 is exercised

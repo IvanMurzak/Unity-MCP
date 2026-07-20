@@ -15,9 +15,10 @@ using NUnit.Framework;
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
     /// <summary>
-    /// The machine-store credential wins over the mode-routed token in Cloud mode, and is ignored in
-    /// Custom/Local mode (mcp-authorize design 06 / D12). This is the seam that makes zero-button boot
-    /// present the shared account JWT while preserving the anonymous/local behaviour when signed out.
+    /// The machine store is the ONLY Cloud-mode credential source (mcp-authorize design 06 / D12; T9 —
+    /// the legacy cloudToken UserSettings mirror was removed): Cloud mode presents the shared account JWT
+    /// when signed in and an anonymous (null) credential otherwise, while Custom/Local mode ignores the
+    /// machine store and uses the local token.
     /// </summary>
     public class UnityConnectionConfigCredentialProviderTests
     {
@@ -36,12 +37,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             UnityMcpPlugin.UnityConnectionConfig.CloudCredentialProvider = _saved;
         }
 
-        static UnityMcpPlugin.UnityConnectionConfig NewConfig(ConnectionMode mode, string? cloudToken, string? localToken)
+        static UnityMcpPlugin.UnityConnectionConfig NewConfig(ConnectionMode mode, string? localToken)
         {
             var config = new UnityMcpPlugin.UnityConnectionConfig
             {
                 ConnectionMode = mode,
-                CloudToken = cloudToken,
                 LocalToken = localToken,
             };
             return config;
@@ -54,31 +54,34 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void Cloud_WithMachineCredential_PresentsMachineJwt()
         {
             UnityMcpPlugin.UnityConnectionConfig.CloudCredentialProvider = () => Task.FromResult<string?>("machine-jwt");
-            var config = NewConfig(ConnectionMode.Cloud, cloudToken: "cloud-tok", localToken: "local-tok");
+            var config = NewConfig(ConnectionMode.Cloud, localToken: "local-tok");
             Assert.AreEqual("machine-jwt", Resolve(config));
         }
 
         [Test]
-        public void Cloud_MachineCredentialEmpty_FallsBackToCloudToken()
+        public void Cloud_MachineCredentialEmpty_ReturnsNull()
         {
+            // T9: the machine store is the ONLY Cloud-mode credential source — the legacy cloudToken mirror
+            // was removed, so an empty machine credential yields an anonymous (null) connection, no fallback.
             UnityMcpPlugin.UnityConnectionConfig.CloudCredentialProvider = () => Task.FromResult<string?>(null);
-            var config = NewConfig(ConnectionMode.Cloud, cloudToken: "cloud-tok", localToken: "local-tok");
-            Assert.AreEqual("cloud-tok", Resolve(config));
+            var config = NewConfig(ConnectionMode.Cloud, localToken: "local-tok");
+            Assert.IsNull(Resolve(config));
         }
 
         [Test]
-        public void Cloud_NoMachineProvider_UsesCloudToken()
+        public void Cloud_NoMachineProvider_ReturnsNull()
         {
-            // CloudCredentialProvider is null (set in SetUp) — behaviour identical to the pre-b7 static token.
-            var config = NewConfig(ConnectionMode.Cloud, cloudToken: "cloud-tok", localToken: "local-tok");
-            Assert.AreEqual("cloud-tok", Resolve(config));
+            // CloudCredentialProvider is null (set in SetUp). With no machine store wired and no cloudToken
+            // fallback (T9), Cloud mode presents no credential (anonymous connection).
+            var config = NewConfig(ConnectionMode.Cloud, localToken: "local-tok");
+            Assert.IsNull(Resolve(config));
         }
 
         [Test]
         public void Custom_IgnoresMachineCredential_UsesLocalToken()
         {
             UnityMcpPlugin.UnityConnectionConfig.CloudCredentialProvider = () => Task.FromResult<string?>("machine-jwt");
-            var config = NewConfig(ConnectionMode.Custom, cloudToken: "cloud-tok", localToken: "local-tok");
+            var config = NewConfig(ConnectionMode.Custom, localToken: "local-tok");
             Assert.AreEqual("local-tok", Resolve(config));
         }
     }

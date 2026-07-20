@@ -206,46 +206,40 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
         #region ComputeCloudAuthState
 
+        // T9: the "has credential" input now comes from the shared machine store (AccountCredentialService
+        // .IsSignedIn), not a persisted cloudToken — so ComputeCloudAuthState takes a bool, not a token string.
+
         [Test]
-        public void ComputeCloudAuthState_Cloud_NullToken()
+        public void ComputeCloudAuthState_Cloud_NoCredential()
         {
-            var (needsAuth, hasToken, isCloud) = MainWindowEditor.ComputeCloudAuthState(ConnectionMode.Cloud, null);
+            var (needsAuth, hasToken, isCloud) = MainWindowEditor.ComputeCloudAuthState(ConnectionMode.Cloud, false);
             Assert.IsTrue(needsAuth);
             Assert.IsFalse(hasToken);
             Assert.IsTrue(isCloud);
         }
 
         [Test]
-        public void ComputeCloudAuthState_Cloud_EmptyToken()
+        public void ComputeCloudAuthState_Cloud_WithCredential()
         {
-            var (needsAuth, hasToken, isCloud) = MainWindowEditor.ComputeCloudAuthState(ConnectionMode.Cloud, "");
-            Assert.IsTrue(needsAuth);
-            Assert.IsFalse(hasToken);
-            Assert.IsTrue(isCloud);
-        }
-
-        [Test]
-        public void ComputeCloudAuthState_Cloud_ValidToken()
-        {
-            var (needsAuth, hasToken, isCloud) = MainWindowEditor.ComputeCloudAuthState(ConnectionMode.Cloud, "abc");
+            var (needsAuth, hasToken, isCloud) = MainWindowEditor.ComputeCloudAuthState(ConnectionMode.Cloud, true);
             Assert.IsFalse(needsAuth);
             Assert.IsTrue(hasToken);
             Assert.IsTrue(isCloud);
         }
 
         [Test]
-        public void ComputeCloudAuthState_Custom_NullToken()
+        public void ComputeCloudAuthState_Custom_NoCredential()
         {
-            var (needsAuth, hasToken, isCloud) = MainWindowEditor.ComputeCloudAuthState(ConnectionMode.Custom, null);
+            var (needsAuth, hasToken, isCloud) = MainWindowEditor.ComputeCloudAuthState(ConnectionMode.Custom, false);
             Assert.IsFalse(needsAuth);
             Assert.IsFalse(hasToken);
             Assert.IsFalse(isCloud);
         }
 
         [Test]
-        public void ComputeCloudAuthState_Custom_ValidToken()
+        public void ComputeCloudAuthState_Custom_WithCredential()
         {
-            var (needsAuth, hasToken, isCloud) = MainWindowEditor.ComputeCloudAuthState(ConnectionMode.Custom, "abc");
+            var (needsAuth, hasToken, isCloud) = MainWindowEditor.ComputeCloudAuthState(ConnectionMode.Custom, true);
             Assert.IsFalse(needsAuth);
             Assert.IsTrue(hasToken);
             Assert.IsFalse(isCloud);

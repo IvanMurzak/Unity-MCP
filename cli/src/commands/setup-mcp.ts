@@ -15,6 +15,8 @@ interface SetupMcpCliOptions {
   url?: string;
   token?: string;
   list?: boolean;
+  /** commander sets this to `false` when `--no-pin` is passed (defaults to `true`). */
+  pin?: boolean;
 }
 
 function listAgents(): void {
@@ -31,7 +33,8 @@ export const setupMcpCommand = new Command('setup-mcp')
     'http',
   )
   .option('--url <url>', 'Server URL override (for http transport)')
-  .option('--token <token>', 'Auth token override')
+  .option('--token <token>', 'Explicit PAT opt-in — writes a static credential into the config (default: credential-free, native OAuth)')
+  .option('--no-pin', 'Write an unpinned URL / omit the project= arg (default: pin to this project via /mcp/p/<pin>)')
   .option('--list', 'List all available agent IDs')
   .action(
     async (
@@ -74,6 +77,8 @@ export const setupMcpCommand = new Command('setup-mcp')
         transport,
         url: options.url,
         token: options.token,
+        // commander sets `options.pin === false` when `--no-pin` was passed.
+        noPin: options.pin === false,
       });
 
       if (result.kind === 'failure') {
