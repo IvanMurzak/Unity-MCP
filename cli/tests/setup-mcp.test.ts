@@ -7,7 +7,13 @@ import * as path from 'path';
 import * as os from 'os';
 import { setupMcp } from '../src/lib/setup-mcp.js';
 import { getAgentById, MCP_SERVER_NAME } from '../src/utils/agents.js';
+import { derivePinV2 } from '@baizor/gamedev-cli-core';
 import type { UnityConnectionConfig } from '../src/utils/config.js';
+
+/** The v2 routing pin cli-core's setup-mcp appends to the hosted URL by default (T4). */
+function pinnedHostedUrl(projectDir: string): string {
+  return `https://ai-game.dev/mcp/p/${derivePinV2(path.resolve(projectDir))}`;
+}
 
 // ---------------------------------------------------------------------------
 // mcp-authorize g2 — setup-mcp writes a credential-free, URL-only http config
@@ -77,7 +83,7 @@ describe('setup-mcp — credential-free OAuth config (mcp-authorize g2 / D11)', 
     },
   );
 
-  it('claude-code entry is exactly {type,url} with no headers key', async () => {
+  it('claude-code entry is exactly {type,url} with the T4-pinned URL and no headers key', async () => {
     seedHostedConfig(tmpDir);
 
     const result = await setupMcp({
@@ -92,8 +98,28 @@ describe('setup-mcp — credential-free OAuth config (mcp-authorize g2 / D11)', 
       mcpServers: Record<string, Record<string, unknown>>;
     };
     const entry = root.mcpServers[MCP_SERVER_NAME];
-    expect(entry).toEqual({ type: 'http', url: 'https://ai-game.dev/mcp' });
+    // T4: the URL is pinned to this project's routing segment by default (byte-for-byte the
+    // Unity Editor Configure output), and no credential is written.
+    expect(entry).toEqual({ type: 'http', url: pinnedHostedUrl(tmpDir) });
     expect(entry).not.toHaveProperty('headers');
+  });
+
+  it('--no-pin writes the unpinned canonical URL (B4 escape hatch)', async () => {
+    seedHostedConfig(tmpDir);
+
+    const result = await setupMcp({
+      agentId: 'claude-code',
+      unityProjectPath: tmpDir,
+      transport: 'http',
+      noPin: true,
+    });
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') return;
+
+    const root = JSON.parse(fs.readFileSync(result.configPath, 'utf-8')) as {
+      mcpServers: Record<string, Record<string, unknown>>;
+    };
+    expect(root.mcpServers[MCP_SERVER_NAME]).toEqual({ type: 'http', url: 'https://ai-game.dev/mcp' });
   });
 
   // DoD 2: the PAT fallback still writes a header — but ONLY on an explicit
@@ -115,15 +141,16 @@ describe('setup-mcp — credential-free OAuth config (mcp-authorize g2 / D11)', 
       mcpServers: Record<string, { url: string; headers?: Record<string, string> }>;
     };
     const entry = root.mcpServers[MCP_SERVER_NAME];
-    expect(entry.url).toBe('https://ai-game.dev/mcp');
+    expect(entry.url).toBe(pinnedHostedUrl(tmpDir));
     expect(entry.headers).toEqual({ Authorization: `Bearer ${pat}` });
 
     // Flow C credential-placement rule: warn on a project-scoped PAT.
     expect(result.warnings.some((w) => w.includes('project-scoped'))).toBe(true);
   });
 
-  it('does NOT write a header when the token is only resolved from config (no opt-in)', async () => {
-    // Custom/localhost config carrying a token but no explicit --token opt-in.
+  it('does NOT write a header when a token merely sits in the project config (no --token opt-in)', async () => {
+    // A config carrying a token but no explicit --token opt-in. cli-core's setup-mcp never reads
+    // the project config for a credential (M7) — the default config stays credential-free.
     seedConfig(tmpDir, {
       connectionMode: 'Custom',
       host: 'http://localhost:12345',
@@ -140,7 +167,6 @@ describe('setup-mcp — credential-free OAuth config (mcp-authorize g2 / D11)', 
     if (result.kind !== 'success') return;
 
     const raw = fs.readFileSync(result.configPath, 'utf-8');
-    expect(raw).toContain('http://localhost:12345');
     expect(raw).not.toContain('Authorization');
     expect(raw).not.toContain(CONFIG_TOKEN);
     expect(result.warnings).toHaveLength(0);

@@ -66,8 +66,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DevControl
         /// <summary>
         /// Open the loopback listener and start the background accept loop. Logs
         /// <c>[dev-control] Listening on http://127.0.0.1:&lt;port&gt;</c> on success; a bind failure
-        /// (port in use) is logged as an error and leaves the server inert rather than throwing into
-        /// editor boot.
+        /// (port in use) is logged as a WARNING (D11) — the dev-control surface is a non-essential,
+        /// double-gated dev tool, so a port collision must not surface as a scary red error — and leaves
+        /// the server inert rather than throwing into editor boot.
         /// </summary>
         public void Start()
         {
@@ -78,7 +79,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DevControl
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[dev-control] failed to bind {BaseUrl}: {ex.Message}");
+                // D11 (07 §7.3): demote from LogError to LogWarning + remediation hint. Dev-control is a
+                // non-essential, double-gated (UNITY_MCP_DEV_CONTROL=1) dev tool; a bind collision on its
+                // port is recoverable (change the port / free it) and must not read as a hard error.
+                Debug.LogWarning(
+                    $"[dev-control] failed to bind {BaseUrl}: {ex.Message}. " +
+                    "Dev-control is disabled for this editor; free the port or set a different " +
+                    "UNITY_MCP_DEV_CONTROL_PORT if you need it.");
                 return;
             }
 
