@@ -15,7 +15,6 @@ using System.Linq;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
-using Extensions.Unity.PlayerPrefsEx;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 
@@ -51,15 +50,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             _ => "Unknown"
         };
 
-        public static PlayerPrefsString TestCallRequestID = new PlayerPrefsString("Unity_MCP_TestRunner_TestCallRequestID");
+        public static SessionStateString TestCallRequestID = new("Unity_MCP_TestRunner_TestCallRequestID");
 
-        public static PlayerPrefsBool IncludePassingTests = new PlayerPrefsBool("Unity_MCP_TestRunner_IncludePassingTests");
-        public static PlayerPrefsBool IncludeMessage = new PlayerPrefsBool("Unity_MCP_TestRunner_IncludeMessage", true);
-        public static PlayerPrefsBool IncludeMessageStacktrace = new PlayerPrefsBool("Unity_MCP_TestRunner_IncludeStacktrace");
+        public static SessionStateBool IncludePassingTests = new("Unity_MCP_TestRunner_IncludePassingTests");
+        public static SessionStateBool IncludeMessage = new("Unity_MCP_TestRunner_IncludeMessage", true);
+        public static SessionStateBool IncludeMessageStacktrace = new("Unity_MCP_TestRunner_IncludeStacktrace");
 
-        public static PlayerPrefsBool IncludeLogs = new PlayerPrefsBool("Unity_MCP_TestRunner_IncludeLogs");
-        public static PlayerPrefsInt IncludeLogsMinLevel = new PlayerPrefsInt("Unity_MCP_TestRunner_IncludeLogsMinLevel", (int)LogType.Warning);
-        public static PlayerPrefsBool IncludeLogsStacktrace = new PlayerPrefsBool("Unity_MCP_TestRunner_IncludeLogsStacktrace");
+        public static SessionStateBool IncludeLogs = new("Unity_MCP_TestRunner_IncludeLogs");
+        public static SessionStateInt IncludeLogsMinLevel = new("Unity_MCP_TestRunner_IncludeLogsMinLevel", (int)LogType.Warning);
+        public static SessionStateBool IncludeLogsStacktrace = new("Unity_MCP_TestRunner_IncludeLogsStacktrace");
 
         public TestResultCollector()
         {
@@ -149,6 +148,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
                     RequestId = requestId,
                     Result = response
                 });
+            }
+            else
+            {
+                UnityMcpPluginEditor.Instance.LogError(
+                    "Test run finished, but the pending MCP request id was missing. The test results cannot be delivered to the client.",
+                    typeof(TestResultCollector));
             }
         }
 
@@ -292,5 +297,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
                 _ => TestResultStatus.Skipped
             };
         }
+
     }
 }
