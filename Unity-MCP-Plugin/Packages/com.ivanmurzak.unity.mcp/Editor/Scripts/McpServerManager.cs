@@ -150,9 +150,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public const string ExecutableName = "gamedev-mcp-server";
 
         public static string McpServerName
-            => string.IsNullOrEmpty(Application.productName)
-                ? "Unity Unknown"
-                : $"Unity {Application.productName}";
+        {
+            get
+            {
+                var baseName = string.IsNullOrEmpty(Application.productName)
+                    ? "Unity Unknown"
+                    : $"Unity {Application.productName}";
+                // MPPM virtual-player clones share the product name with the main editor — include
+                // the clone identity (e.g. "Unity MyGame (Player 2)") so their hub connections and
+                // any config entries stay distinguishable.
+                return MppmUtils.IsMppmClone
+                    ? $"{baseName} ({MppmUtils.CloneName})"
+                    : baseName;
+            }
+        }
 
         public static string OperationSystem =>
             RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "win" :
@@ -385,6 +396,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         /// </param>
         public static Task<bool> DownloadServerBinaryIfNeeded(bool unattended = false)
         {
+            // MPPM virtual-player clones never launch their own server (they connect to the main
+            // editor's), so they must not download a duplicate binary into their cloned Library/.
+            if (MppmUtils.IsMppmClone)
+                return Task.FromResult(IsBinaryExists());
+
             if (EnvironmentUtils.IsCi())
             {
                 // Ignore in CI environment

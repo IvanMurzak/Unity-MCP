@@ -12,6 +12,7 @@
 using System.IO;
 using NUnit.Framework;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
+using UnityEditor.PackageManager;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
@@ -158,6 +159,34 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             Assert.Greater(UpdateChecker.CompareVersions("1.0.0.1", "1.0.0"), 0);
             Assert.Less(UpdateChecker.CompareVersions("1.0.0", "1.0.0.1"), 0);
+        }
+
+        #endregion
+
+        #region Package Source Tests
+
+        [Test]
+        public void ShouldCheckForUpdatesForPackageSource_Registry_ReturnsTrue()
+        {
+            Assert.IsTrue(UpdateChecker.ShouldCheckForUpdatesForPackageSource(PackageSource.Registry));
+        }
+
+        [Test]
+        public void ShouldCheckForUpdatesForPackageSource_Local_ReturnsFalse()
+        {
+            Assert.IsFalse(UpdateChecker.ShouldCheckForUpdatesForPackageSource(PackageSource.Local));
+        }
+
+        [Test]
+        public void ShouldCheckForUpdatesForPackageSource_Git_ReturnsFalse()
+        {
+            Assert.IsFalse(UpdateChecker.ShouldCheckForUpdatesForPackageSource(PackageSource.Git));
+        }
+
+        [Test]
+        public void ShouldCheckForUpdatesForPackageSource_Embedded_ReturnsFalse()
+        {
+            Assert.IsFalse(UpdateChecker.ShouldCheckForUpdatesForPackageSource(PackageSource.Embedded));
         }
 
         #endregion

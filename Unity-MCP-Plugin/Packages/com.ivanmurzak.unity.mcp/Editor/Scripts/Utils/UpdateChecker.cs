@@ -17,6 +17,7 @@ using System.Threading.Tasks;
 using com.IvanMurzak.Unity.MCP.Editor.UI;
 using Microsoft.Extensions.Logging;
 using UnityEditor;
+using UnityEditor.PackageManager;
 using UnityEngine;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
@@ -184,6 +185,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// </remarks>
         public static bool ShouldCheckForUpdates()
         {
+            if (!ShouldCheckForUpdatesForCurrentPackageSource())
+                return false;
+
             // 1. Team-wide kill-switch — short-circuits before any per-user state is consulted.
             if (IsDisabledForProject)
                 return false;
@@ -204,6 +208,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
 
             return true;
+        }
+
+        internal static bool ShouldCheckForUpdatesForPackageSource(PackageSource source)
+        {
+            return source == PackageSource.Registry;
+        }
+
+        private static bool ShouldCheckForUpdatesForCurrentPackageSource()
+        {
+            var packageInfo = UnityEditor.PackageManager.PackageInfo.FindForAssembly(typeof(UpdateChecker).Assembly);
+            return packageInfo == null || ShouldCheckForUpdatesForPackageSource(packageInfo.source);
         }
 
         /// <summary>
