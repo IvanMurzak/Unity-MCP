@@ -1,6 +1,5 @@
 import { Command } from 'commander';
 import * as fs from 'fs';
-import * as path from 'path';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
 import { installPlugin } from '../lib/install-plugin.js';
@@ -8,6 +7,7 @@ import { downloadServerBinary } from '../utils/managed-server.js';
 import { DEFAULT_SERVER_VERSION } from '../utils/server-version.js';
 import { resolveEnrollCode, runEnroll, EnrollmentError } from '../utils/enroll.js';
 import { MachineCredentialStore } from '../utils/machine-credentials.js';
+import { resolveInstallTarget, unityAdapter } from '@baizor/gamedev-cli-core';
 
 interface InstallPluginOptions {
   path?: string;
@@ -30,13 +30,20 @@ export const installPluginCommand = new Command('install-plugin')
   .option('--enroll <code>', 'Redeem an enrollment code for a plugin credential (planted in the shared machine store)')
   .option('--enroll-stdin', 'Read the enrollment code from stdin (never argv/shell history)')
   .action(async (positionalPath: string | undefined, options: InstallPluginOptions) => {
-    const resolvedPath = positionalPath ?? options.path;
-    if (!resolvedPath) {
-      ui.error('Path is required. Usage: unity-mcp-cli install-plugin <path> or --path <path>');
+    // T5/B1: path is OPTIONAL — resolve `path? → --path? → cwd`, then verify the directory is a real
+    // Unity project (marker probe for `Packages/manifest.json`). On a miss the error lists exactly
+    // what was checked, so `install-plugin` "just works" from a project folder with no path.
+    const target = resolveInstallTarget({
+      adapter: unityAdapter,
+      positional: positionalPath,
+      path: options.path,
+    });
+    if (target.kind === 'failure') {
+      ui.error(target.error.message);
       process.exit(1);
     }
 
-    const projectPath = path.resolve(resolvedPath);
+    const projectPath = target.projectRoot;
 
     // ── Phase 1: install the plugin into the Unity project's manifest ────────
     // Wire the library's progress events back into the CLI's chalk-
@@ -128,6 +135,7 @@ export const installPluginCommand = new Command('install-plugin')
         const enrolled = await runEnroll({
           code,
           projectPath,
+          adapter: unityAdapter,
           store: new MachineCredentialStore(),
         });
         enrollSpinner.success('Enrollment complete');

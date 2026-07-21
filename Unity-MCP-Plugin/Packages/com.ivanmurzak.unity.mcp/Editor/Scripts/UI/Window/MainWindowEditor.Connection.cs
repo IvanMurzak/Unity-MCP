@@ -91,15 +91,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             // When signed in via the shared machine credential store, the ConnectionCredentialCoordinator
             // (wired in AccountCredentialService.AttachTo) already handles the 3-strike rejection by
-            // refreshing the token and reconnecting — do not clear the display token here (design 06).
+            // refreshing the token and reconnecting — do not disturb the session here (design 06).
             if (AccountCredentialService.IsSignedIn)
                 return;
 
-            Debug.LogWarning("[AI Game Developer] The server rejected the authorization token. " +
-                "The token has been cleared. Please click 'Authorize' to obtain a new token.");
-
-            UnityMcpPluginEditor.CloudToken = null;
-            UnityMcpPluginEditor.Instance.Save();
+            // Not signed in: the machine store is the only Cloud credential source (T9 — the cloudToken
+            // UserSettings mirror was removed), so there is no persisted token to clear. Prompt a fresh sign-in.
+            Debug.LogWarning("[AI Game Developer] The server rejected the authorization. " +
+                "Please click 'Authorize' to sign in again.");
 
             UpdateCloudAuthState();
             RefreshConnectionUI();
@@ -242,9 +241,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 {
                     UnityMcpPluginEditor.ConnectionMode = ConnectionMode.Cloud;
 
-                    // Cloud requires streamableHttp + authorization
+                    // Cloud requires streamableHttp. Cloud authorization is driven by ConnectionMode.Cloud
+                    // itself (the shared configurator's IsHttpAuthRequired / OAuth account path), NOT by the
+                    // local-server AuthOption — so we no longer stamp the retired `required` value here
+                    // (mcp-authorize g5/g6). AuthOption stays a purely local-server (Custom-mode) setting.
                     UnityMcpPluginEditor.TransportMethod = TransportMethod.streamableHttp;
-                    UnityMcpPluginEditor.AuthOption = AuthOption.required;
 
                     UnityMcpPluginEditor.Instance.Save();
                     UpdateModeVisibility(ConnectionMode.Cloud);
@@ -257,8 +258,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     if (McpServerManager.IsRunning || McpServerManager.IsStarting)
                         McpServerManager.StopServer();
 
-                    // Reconnect to cloud server (only if authorized)
-                    if (!string.IsNullOrEmpty(UnityMcpPluginEditor.CloudToken))
+                    // Reconnect to cloud server (only if authorized via the machine store)
+                    if (AccountCredentialService.IsSignedIn)
                         ReconnectAfterModeSwitch();
                     ScheduleConnectionUIRefresh();
                 }
@@ -303,30 +304,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             });
 
             const string tokenPlaceholder = "Token — press Authorize";
-            void SetTokenValue(string? token)
+            const string signedInDisplay = "Signed in via account";
+            // The raw cloud JWT is no longer mirrored into the config (T9); it lives only in the shared
+            // machine store. This read-only field therefore reflects sign-in state, not the token value.
+            void UpdateTokenDisplay()
             {
-                var isEmpty = string.IsNullOrEmpty(token);
-                inputCloudToken.value = isEmpty ? tokenPlaceholder : token!;
-                inputCloudToken.EnableInClassList("token-placeholder", isEmpty);
+                var signedIn = AccountCredentialService.IsSignedIn;
+                inputCloudToken.value = signedIn ? signedInDisplay : tokenPlaceholder;
+                inputCloudToken.EnableInClassList("token-placeholder", !signedIn);
             }
 
-            SetTokenValue(UnityMcpPluginEditor.CloudToken);
+            UpdateTokenDisplay();
             UpdateCloudAuthState();
 
             void UpdateRevokeButtonVisibility()
             {
                 if (btnRevoke != null)
-                    btnRevoke.style.display = string.IsNullOrEmpty(UnityMcpPluginEditor.CloudToken)
-                        ? DisplayStyle.None
-                        : DisplayStyle.Flex;
+                    btnRevoke.style.display = AccountCredentialService.IsSignedIn
+                        ? DisplayStyle.Flex
+                        : DisplayStyle.None;
             }
             UpdateRevokeButtonVisibility();
 
             btnRevoke?.RegisterCallback<ClickEvent>(evt =>
             {
-                UnityMcpPluginEditor.CloudToken = null;
-                UnityMcpPluginEditor.Instance.Save();
-                SetTokenValue(null);
+                // Sign out of the shared machine store (T9 — the credential lives only there now).
+                AccountCredentialService.SignOut();
+                UpdateTokenDisplay();
                 UpdateRevokeButtonVisibility();
 
                 if (statusLabel != null)
@@ -361,12 +365,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     new DeviceAuthService(cloudBaseUrl),
                     onAuthorized: credentials =>
                     {
-                        // Persist into the shared machine credential store (D12), and mirror the access token
-                        // into CloudToken so the existing cloud-auth UI + connection fallback keep working
-                        // until the token-field UI is retired in a later PR.
+                        // Persist into the shared machine credential store (D12 / T9). The machine store
+                        // (~/.ai-game-dev/credentials.json) is the single Cloud credential source — there is
+                        // no UserSettings cloudToken mirror.
                         AccountCredentialService.Adopt(credentials);
-                        UnityMcpPluginEditor.CloudToken = credentials.AccessToken;
-                        UnityMcpPluginEditor.Instance.Save();
                     },
                     serverTarget: cloudBaseUrl);
                 var capturedFlow = _deviceAuthFlow; // Capture to avoid stale field reference in async callbacks
@@ -390,7 +392,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                         }
                         if (state == DeviceAuthFlowState.Authorized && inputCloudToken != null)
                         {
-                            SetTokenValue(UnityMcpPluginEditor.CloudToken);
+                            UpdateTokenDisplay();
                             UpdateRevokeButtonVisibility();
                             UpdateCloudAuthState();
                         }

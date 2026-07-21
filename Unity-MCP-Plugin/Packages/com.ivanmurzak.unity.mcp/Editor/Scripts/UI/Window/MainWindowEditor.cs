@@ -10,6 +10,7 @@
 
 #nullable enable
 using System;
+using com.IvanMurzak.Unity.MCP.Editor.Services;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using Microsoft.AspNetCore.SignalR.Client;
 using R3;
@@ -74,17 +75,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             _authRejectedSubscription.Dispose();
         }
 
-        internal static (bool needsAuth, bool hasToken, bool isCloud) ComputeCloudAuthState(ConnectionMode mode, string? token)
+        internal static (bool needsAuth, bool hasToken, bool isCloud) ComputeCloudAuthState(ConnectionMode mode, bool hasCredential)
         {
             var isCloud = mode == ConnectionMode.Cloud;
-            var hasToken = !string.IsNullOrEmpty(token);
-            var needsAuth = isCloud && !hasToken;
-            return (needsAuth, hasToken, isCloud);
+            var needsAuth = isCloud && !hasCredential;
+            return (needsAuth, hasCredential, isCloud);
         }
 
         private void UpdateCloudAuthState()
         {
-            var (needsAuth, hasToken, isCloud) = ComputeCloudAuthState(UnityMcpPluginEditor.ConnectionMode, UnityMcpPluginEditor.CloudToken);
+            // Cloud sign-in state comes from the shared machine store (T9 — the cloudToken UserSettings
+            // mirror was removed); the machine store is the single Cloud-mode credential source.
+            var (needsAuth, hasToken, isCloud) = ComputeCloudAuthState(
+                UnityMcpPluginEditor.ConnectionMode, AccountCredentialService.IsSignedIn);
 
             if (_timelinePointUnity != null)
             {

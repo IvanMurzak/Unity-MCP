@@ -107,6 +107,19 @@ namespace com.IvanMurzak.Unity.MCP
                     config = new UnityConnectionConfig();
                     wasCreated = true;
                 }
+
+                // mcp-authorize g5/g6: migrate a persisted legacy `authorization=required` value to the
+                // offline `token` mode BEFORE anything reads it. The b5 change deleted the server-side
+                // `required` strategy, so launching the local server with it now crashes on boot. Re-save
+                // (via wasCreated) so the healed value lands on disk.
+                if (config.MigrateLegacyAuthOption())
+                {
+                    _logger.LogInformation(
+                        "{method}: migrating AuthOption <i>required</i> -> <i>token</i> (legacy auth mode retired)",
+                        nameof(GetOrCreateConfig));
+                    wasCreated = true;
+                }
+
                 if (string.IsNullOrEmpty(config.LocalToken))
                 {
                     config.LocalToken = GenerateToken();

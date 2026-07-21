@@ -13,6 +13,7 @@ using System;
 using System.IO;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.AgentConfig;
+using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.Unity.MCP.Editor.Services;
 using NUnit.Framework;
 
@@ -58,6 +59,41 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ProjectIdentity.DeriveProjectPathHash(ProjectRoot), metadata.ProjectPathHash);
             Assert.AreEqual(64, metadata.ProjectPathHash.Length);
             StringAssert.StartsWith(ProjectIdentity.DerivePin(ProjectRoot), metadata.ProjectPathHash);
+        }
+
+        [Test]
+        public void BuildMetadata_SendsDualHash_V2PrimaryAndLegacyV1()
+        {
+            // A Windows-style backslash root is the case where the v1 and v2 normalizations diverge
+            // (v2 converts '\' -> '/', v1 does not), so both hashes must be present and distinct — this
+            // is exactly the dual-hash transition (auth-fixes T3 / defect B5) that lets a session pinned
+            // by an OLD (v1-pin) config still match this NEW plugin.
+            const string winRoot = @"C:\Users\dev\MyGame";
+            var metadata = ProjectInstanceService.BuildMetadata(winRoot, "MyGame", instanceId: "sess-dh");
+
+            // Primary hash = v2 (separator-normalized); legacy hash = v1 (separators NOT normalized).
+            Assert.AreEqual(ProjectIdentity.DeriveProjectPathHashV2(winRoot), metadata.ProjectPathHash);
+            Assert.AreEqual(ProjectIdentity.DeriveProjectPathHash(winRoot), metadata.ProjectPathHashLegacy);
+            Assert.AreEqual(64, metadata.ProjectPathHash.Length);
+            Assert.AreEqual(64, metadata.ProjectPathHashLegacy.Length);
+            Assert.AreNotEqual(metadata.ProjectPathHash, metadata.ProjectPathHashLegacy,
+                "on a Windows backslash root the v2 and v1 hashes must diverge, proving both are sent");
+
+            // The v2 routing pin is a prefix of the primary hash (server pin-matches by prefix).
+            StringAssert.StartsWith(ProjectIdentity.DerivePinV2(winRoot), metadata.ProjectPathHash);
+        }
+
+        [Test]
+        public void BuildMetadata_ToQuery_CarriesBothHashKeys()
+        {
+            const string winRoot = @"C:\Users\dev\MyGame";
+            var metadata = ProjectInstanceService.BuildMetadata(winRoot, "MyGame", instanceId: "sess-dh2");
+
+            var query = metadata.ToQuery();
+
+            // Both hashes travel as hub-handshake query parameters (dual-hash visible in the handshake).
+            Assert.AreEqual(metadata.ProjectPathHash, query[Consts.MCP.Server.HubQuery.ProjectPathHash]);
+            Assert.AreEqual(metadata.ProjectPathHashLegacy, query[Consts.MCP.Server.HubQuery.ProjectPathHashLegacy]);
         }
 
         [Test]

@@ -73,11 +73,11 @@ describe('parseSha256Sums', () => {
 describe('URL + name helpers', () => {
   it('builds the zip name / url / SHA256SUMS url from RID + version', () => {
     expect(serverZipName('win-x64')).toBe('gamedev-mcp-server-win-x64.zip');
-    expect(serverZipUrl('win-x64', '9.0.0')).toBe(
-      'https://github.com/IvanMurzak/GameDev-MCP-Server/releases/download/v9.0.0/gamedev-mcp-server-win-x64.zip',
+    expect(serverZipUrl('win-x64', '9.1.0')).toBe(
+      'https://github.com/IvanMurzak/GameDev-MCP-Server/releases/download/v9.1.0/gamedev-mcp-server-win-x64.zip',
     );
-    expect(serverShaSumsUrl('9.0.0')).toBe(
-      'https://github.com/IvanMurzak/GameDev-MCP-Server/releases/download/v9.0.0/SHA256SUMS',
+    expect(serverShaSumsUrl('9.1.0')).toBe(
+      'https://github.com/IvanMurzak/GameDev-MCP-Server/releases/download/v9.1.0/SHA256SUMS',
     );
   });
 });
@@ -92,7 +92,7 @@ describe('downloadServerBinary (verify-before-extract)', () => {
 
       const result = await downloadServerBinary({
         rid: RID,
-        version: '9.0.0',
+        version: '9.1.0',
         homeDir: home,
         fetchImpl: makeFetch(zipBytes, sums),
         extractImpl: fakeExtract('gamedev-mcp-server'),
@@ -102,7 +102,7 @@ describe('downloadServerBinary (verify-before-extract)', () => {
       expect(result.rid).toBe(RID);
       expect(result.binaryPath).toBe(managedServerBinaryPath(RID, home));
       expect(fs.existsSync(result.binaryPath)).toBe(true);
-      expect(fs.readFileSync(managedServerVersionPath(RID, home), 'utf-8')).toBe('9.0.0');
+      expect(fs.readFileSync(managedServerVersionPath(RID, home), 'utf-8')).toBe('9.1.0');
       // Sidecars are published alongside the binary.
       expect(fs.existsSync(path.join(managedServerDir(RID, home), 'sidecar.dll'))).toBe(true);
     } finally {
@@ -121,7 +121,7 @@ describe('downloadServerBinary (verify-before-extract)', () => {
       await expect(
         downloadServerBinary({
           rid: RID,
-          version: '9.0.0',
+          version: '9.1.0',
           homeDir: home,
           fetchImpl: makeFetch(zipBytes, sums),
           extractImpl: fakeExtract('gamedev-mcp-server'),
@@ -144,7 +144,7 @@ describe('downloadServerBinary (verify-before-extract)', () => {
       await expect(
         downloadServerBinary({
           rid: RID,
-          version: '9.0.0',
+          version: '9.1.0',
           homeDir: home,
           fetchImpl: makeFetch(zipBytes, sums),
           extractImpl: fakeExtract('gamedev-mcp-server'),
@@ -166,7 +166,7 @@ describe('downloadServerBinary (verify-before-extract)', () => {
 
       const result = await downloadServerBinary({
         rid: RID,
-        version: '9.0.0',
+        version: '9.1.0',
         homeDir: home,
         source: localZip,
         // fetch must never be called for a local source — make it throw if it is.

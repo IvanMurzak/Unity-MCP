@@ -86,8 +86,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 return;
             }
 
-            var authControl = new SegmentedControl("none", "required");
-            authControl.SetTooltips(Tooltip_ToggleAuthNone, Tooltip_ToggleAuthRequired);
+            var authControl = new SegmentedControl("none", "oauth", "token");
+            authControl.SetTooltips(Tooltip_ToggleAuthNone, Tooltip_ToggleAuthOauth, Tooltip_ToggleAuthToken);
             segmentAuthorization.Add(authControl);
 
             inputAuthorizationToken.isPasswordField = true;
@@ -104,30 +104,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             btnGenerateToken.tooltip = Tooltip_BtnGenerateToken;
 
             var authOption = UnityMcpPluginEditor.AuthOption;
-            authControl.SetValueWithoutNotify(authOption == AuthOption.none ? 0 : 1);
+            authControl.SetValueWithoutNotify(AuthOptionToSegmentIndex(authOption));
             inputAuthorizationToken.SetValueWithoutNotify(UnityMcpPluginEditor.Token ?? string.Empty);
-            SetTokenFieldsVisible(inputAuthorizationToken, tokenSection, authOption == AuthOption.required);
+            // The token field + Generate-Token button are meaningful ONLY in `token` mode (none is
+            // anonymous; oauth authorizes via the account, no manual secret).
+            SetTokenFieldsVisible(inputAuthorizationToken, tokenSection, authOption == AuthOption.token);
 
             authControl.RegisterCallback<ChangeEvent<int>>(evt =>
             {
-                if (evt.newValue == 0)
+                var selected = SegmentIndexToAuthOption(evt.newValue);
+                ApplyServerSettingAndRestart(() =>
                 {
-                    ApplyServerSettingAndRestart(() =>
-                    {
-                        UnityMcpPluginEditor.AuthOption = AuthOption.none;
-                    });
-                    SetTokenFieldsVisible(inputAuthorizationToken, tokenSection, false);
-                    InvalidateAndReloadAgentUI();
-                }
-                else
-                {
-                    ApplyServerSettingAndRestart(() =>
-                    {
-                        UnityMcpPluginEditor.AuthOption = AuthOption.required;
-                    });
-                    SetTokenFieldsVisible(inputAuthorizationToken, tokenSection, true);
-                    InvalidateAndReloadAgentUI();
-                }
+                    UnityMcpPluginEditor.AuthOption = selected;
+                });
+                SetTokenFieldsVisible(inputAuthorizationToken, tokenSection, selected == AuthOption.token);
+                InvalidateAndReloadAgentUI();
             });
 
             inputAuthorizationToken.RegisterCallback<FocusOutEvent>(_ =>
@@ -155,6 +146,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 InvalidateAndReloadAgentUI();
             });
         }
+
+        // 3-way authorization segmented control (mcp-authorize g5/g6): index 0=none, 1=oauth, 2=token.
+        // Pure mapping helpers so the index↔AuthOption round-trip is unit-testable without a live Editor.
+        internal static int AuthOptionToSegmentIndex(AuthOption option) => option switch
+        {
+            AuthOption.oauth => 1,
+            AuthOption.token => 2,
+            // none — and any legacy value the load-time migration should have converted — maps to the
+            // anonymous segment so the UI never lands on an out-of-range index.
+            _ => 0,
+        };
+
+        internal static AuthOption SegmentIndexToAuthOption(int index) => index switch
+        {
+            1 => AuthOption.oauth,
+            2 => AuthOption.token,
+            _ => AuthOption.none,
+        };
 
         private void ApplyServerSettingAndRestart(Action applySetting)
         {

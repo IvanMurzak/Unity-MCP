@@ -15,7 +15,7 @@
  * package ships no plugin sources — the plugin release cadence bumps both in the same PR, and the
  * drift-guard test fails CI if a bump touches only one side.
  */
-export const DEFAULT_SERVER_VERSION = '9.0.0';
+export const DEFAULT_SERVER_VERSION = '9.2.0';
 
 /** GitHub `owner/repo` that hosts the shared server's tagged releases + per-RID zips. */
 export const SERVER_RELEASE_REPO = 'IvanMurzak/GameDev-MCP-Server';

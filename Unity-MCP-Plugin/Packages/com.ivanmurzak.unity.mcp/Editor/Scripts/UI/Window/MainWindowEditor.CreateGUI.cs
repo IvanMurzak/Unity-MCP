@@ -125,13 +125,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             "About authorization tokens:\n" +
             Tooltip_AuthorizationTokenConcept;
 
-        private const string Tooltip_ToggleAuthRequired =
-            "Remote deployment — authorization token required.\n\n" +
-            "Every AI agent must supply the correct token in its MCP server configuration. " +
-            "The server will reject any connection that does not include a valid token.\n\n" +
+        private const string Tooltip_ToggleAuthOauth =
+            "Account sign-in — authorize through your ai-game.dev account (OAuth).\n\n" +
+            "The local MCP server validates access tokens issued by ai-game.dev, and each AI agent " +
+            "authorizes natively against the server URL — no token to copy by hand.\n\n" +
             "Use this when:\n" +
-            "  • The MCP server runs on a different machine from the AI agent.\n" +
-            "  • The server endpoint is reachable over a network.\n\n" +
+            "  • You are signed in to your ai-game.dev account.\n" +
+            "  • You want account-gated access without managing a shared secret.\n\n" +
+            "Requires network access to ai-game.dev (the server verifies tokens online).";
+
+        private const string Tooltip_ToggleAuthToken =
+            "Offline shared secret — authorization token required.\n\n" +
+            "The local MCP server accepts only connections that supply the correct secret token, " +
+            "validated with a constant-time compare. Fully offline — no account or network needed.\n\n" +
+            "Use this when:\n" +
+            "  • The MCP server endpoint is reachable over a network and must be gated.\n" +
+            "  • You want a static secret instead of account sign-in.\n\n" +
             "After enabling, generate a secure token with the 'New' button, then copy it into " +
             "your AI agent's MCP server configuration.\n\n" +
             "About authorization tokens:\n" +
