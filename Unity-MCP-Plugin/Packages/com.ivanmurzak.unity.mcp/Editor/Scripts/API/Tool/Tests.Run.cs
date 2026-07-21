@@ -110,7 +110,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 // Running tests against a dirty scene is unsafe: Unity may reload the scene on
                 // play-mode entry, silently discarding edits and producing non-reproducible
                 // results. Throws InvalidOperationException listing every dirty scene so the
-                // caller can save and retry. MUST run before PlayerPrefs writes and before
+                // caller can save and retry. MUST run before test-run state writes and before
                 // AssetDatabase.Refresh so nothing is side-effected on abort.
                 ThrowIfAnyOpenSceneIsDirty();
 
@@ -119,7 +119,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         .Error(Error.TestsAlreadyRunning(activeRequestId))
                         .SetRequestID(requestId);
 
-                // Save display options to PlayerPrefs BEFORE AssetDatabase.Refresh —
+                // Save display options to SessionState BEFORE AssetDatabase.Refresh —
                 // these must be persisted before a potential domain reload
                 TestResultCollector.IncludePassingTests.Value = includePassingTests;
                 TestResultCollector.IncludeMessage.Value = includeMessages;
