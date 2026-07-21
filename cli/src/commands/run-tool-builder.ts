@@ -69,10 +69,16 @@ export function buildRunToolCommand(cfg: BuilderOptions): Command {
       // Resolve path + connection up front so the heading and verbose
       // output reflect the final endpoint before the HTTP call fires.
       const projectPath = resolveAndValidateProjectPath(positionalPath, options);
-      const { url: baseUrl, token } = resolveConnection(projectPath, options);
+      const { url: baseUrl, token, cloudAuthMissing } = resolveConnection(projectPath, options);
+      if (cloudAuthMissing) {
+        ui.error(
+          'Not logged in to ai-game.dev. Run `unity-mcp-cli login` to sign in, then retry — or pass --token / --url to target a specific server.',
+        );
+        process.exit(1);
+      }
       const body = parseInput(options);
       const endpoint = `${baseUrl}${cfg.routePrefix}/${encodeURIComponent(toolName)}`;
-      const authSource = options.token ? '--token flag' : 'config';
+      const authSource = options.token ? '--token flag' : 'config or machine store';
 
       verbose(`${cfg.verboseLabel}: ${toolName}`);
       verbose(`Endpoint: ${endpoint}`);

@@ -5,7 +5,7 @@
 // - Errors are returned in `{ kind: 'failure', success: false, ... }`,
 //   never thrown past the public boundary.
 
-import { readConfig, resolveConnectionFromConfig } from '../utils/config.js';
+import { readConfig, resolveConnectionFromConfig, isCloudMode } from '../utils/config.js';
 import { generatePortFromDirectory } from '../utils/port.js';
 import { requireProjectPath } from './validation.js';
 import type {
@@ -166,14 +166,28 @@ function resolveConnection(
 
   const config = readConfig(projectPath);
   const fromConfig = config
-    ? resolveConnectionFromConfig(config)
+    ? resolveConnectionFromConfig(config, { readCloudToken: opts.readCloudToken })
     : { url: undefined, token: undefined };
 
   const url = fromConfig.url
     ? fromConfig.url.replace(/\/$/, '')
     : `http://localhost:${generatePortFromDirectory(projectPath)}`;
 
-  return { kind: 'success', url, token: opts.token ?? fromConfig.token };
+  const token = opts.token ?? fromConfig.token;
+
+  // Cloud mode draws its Bearer from the shared machine credential store; when the user is not
+  // logged in the token is undefined. Fail actionably rather than issue a silent unauthenticated
+  // cloud request (defect E / D11).
+  if (config && isCloudMode(config) && !token) {
+    return makeFailure({
+      endpoint: '',
+      reason: 'not-authenticated',
+      message:
+        'Not logged in to ai-game.dev. Run `unity-mcp-cli login` to sign in, or pass an explicit --token / --url.',
+    });
+  }
+
+  return { kind: 'success', url, token };
 }
 
 function serializeInput(input: unknown): { json: string } | { error: Error } {

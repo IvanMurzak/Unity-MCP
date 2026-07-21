@@ -393,6 +393,77 @@ describe('runTool — connection resolution', () => {
 });
 
 // ---------------------------------------------------------------------------
+// Cloud mode — machine-store credential + not-logged-in guard (defect E / D11)
+// ---------------------------------------------------------------------------
+
+describe('runTool — Cloud mode auth', () => {
+  function writeCloudConfig(projectPath: string, extra: Record<string, unknown> = {}): void {
+    fs.mkdirSync(path.join(projectPath, 'UserSettings'), { recursive: true });
+    fs.writeFileSync(
+      path.join(projectPath, 'UserSettings', 'AI-Game-Developer-Config.json'),
+      JSON.stringify({ connectionMode: 'Cloud', ...extra }),
+    );
+  }
+
+  it('sends the machine-store credential as the Bearer token against the cloud URL', async () => {
+    const projectPath = mkUnityProject();
+    // A legacy on-disk cloudToken must be ignored; auth comes from the machine store.
+    writeCloudConfig(projectPath, { cloudToken: 'legacy-ignored' });
+    const spy = makeFetchSpy(async () => jsonResponse({ status: 'success', content: [] }));
+
+    const result = await runTool({
+      toolName: 'ping',
+      unityProjectPath: projectPath,
+      readCloudToken: () => 'store-bearer-token',
+      fetchImpl: spy.fetch,
+    });
+
+    expect(result.kind).toBe('success');
+    expect(spy.calls[0].url).toBe('https://ai-game.dev/mcp/api/tools/ping');
+    const headers = spy.calls[0].init?.headers as Record<string, string>;
+    expect(headers['Authorization']).toBe('Bearer store-bearer-token');
+  });
+
+  it('errors actionably (never fires an unauthenticated request) when not logged in', async () => {
+    const projectPath = mkUnityProject();
+    writeCloudConfig(projectPath, { cloudToken: 'legacy-ignored' });
+    const spy = makeFetchSpy(async () => jsonResponse({ status: 'success', content: [] }));
+
+    const result = await runTool({
+      toolName: 'ping',
+      unityProjectPath: projectPath,
+      readCloudToken: () => undefined, // empty machine store ⇒ not logged in
+      fetchImpl: spy.fetch,
+    });
+
+    expect(result.kind).toBe('failure');
+    if (result.kind !== 'failure') throw new Error('expected failure kind');
+    expect(result.reason).toBe('not-authenticated');
+    expect(result.message).toContain('Not logged in to ai-game.dev');
+    // No silent unauthenticated cloud call.
+    expect(spy.calls).toHaveLength(0);
+  });
+
+  it('honors an explicit token override in Cloud mode (no login required)', async () => {
+    const projectPath = mkUnityProject();
+    writeCloudConfig(projectPath);
+    const spy = makeFetchSpy(async () => jsonResponse({ status: 'success', content: [] }));
+
+    const result = await runTool({
+      toolName: 'ping',
+      unityProjectPath: projectPath,
+      token: 'explicit-token',
+      readCloudToken: () => undefined,
+      fetchImpl: spy.fetch,
+    });
+
+    expect(result.kind).toBe('success');
+    const headers = spy.calls[0].init?.headers as Record<string, string>;
+    expect(headers['Authorization']).toBe('Bearer explicit-token');
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Library hygiene
 // ---------------------------------------------------------------------------
 

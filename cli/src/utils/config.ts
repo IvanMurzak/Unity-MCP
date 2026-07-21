@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { generatePortFromDirectory } from './port.js';
+import { MachineCredentialStore } from './machine-credentials.js';
 
 const CONFIG_RELATIVE_PATH = 'UserSettings/AI-Game-Developer-Config.json';
 
@@ -171,20 +172,54 @@ export const CLOUD_SERVER_BASE_URL = 'https://ai-game.dev';
 export const CLOUD_SERVER_URL = 'https://ai-game.dev/mcp';
 
 /**
- * Resolve the server URL and auth token from a project config based on connectionMode.
- * - Custom mode (string "Custom" or integer 0): uses `host` and `token`
- * - Cloud mode (string "Cloud" or integer 1): uses hardcoded cloud URL and `cloudToken`
- * In Custom mode, `url` and `token` may be undefined if the corresponding config fields are not set.
- * In Cloud mode, `url` is always the hardcoded cloud URL, while `token` comes from `cloudToken` and may be undefined.
+ * Read the Cloud-mode Bearer credential from the shared machine credential store
+ * (`~/.ai-game-dev/credentials.json`, managed by `@baizor/gamedev-cli-core`).
+ *
+ * Post-T9 the Unity plugin no longer writes `cloudToken` into the project config — the cloud auth
+ * token now lives once per machine in the shared store (written by `unity-mcp-cli login`). Returns the
+ * stored `accessToken`, or `undefined` when the user is not logged in OR the store is unreadable — a
+ * corrupt/undecryptable store must degrade to "not logged in", never crash a tool call.
  */
-export function resolveConnectionFromConfig(config: UnityConnectionConfig): {
+export function readMachineStoreCloudToken(): string | undefined {
+  try {
+    return new MachineCredentialStore().read()?.accessToken ?? undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+/** Options for {@link resolveConnectionFromConfig}. */
+export interface ResolveConnectionFromConfigOptions {
+  /**
+   * Reads the Cloud-mode Bearer credential from the shared machine credential store. Injectable so
+   * tests (and advanced callers) can supply a deterministic value without touching the real
+   * per-machine store. Defaults to {@link readMachineStoreCloudToken}.
+   */
+  readCloudToken?: () => string | undefined;
+}
+
+/**
+ * Resolve the server URL and auth token from a project config based on connectionMode.
+ * - Custom mode (string "Custom" or integer 0): uses `host` and `token` (self-host / derived-port).
+ * - Cloud mode (string "Cloud" or integer 1): uses the hardcoded cloud URL and the Bearer credential
+ *   from the shared machine credential store (`~/.ai-game-dev/credentials.json`) — NOT the on-disk
+ *   `cloudToken`, which the plugin stopped writing post-T9 (defect E / D11).
+ * In Custom mode, `url` and `token` may be undefined if the corresponding config fields are not set.
+ * In Cloud mode, `url` is always the hardcoded cloud URL, while `token` is the stored credential and is
+ * `undefined` when the user is not logged in — the caller surfaces an actionable "not logged in" error
+ * rather than issuing a silent unauthenticated request.
+ */
+export function resolveConnectionFromConfig(
+  config: UnityConnectionConfig,
+  options: ResolveConnectionFromConfigOptions = {},
+): {
   url: string | undefined;
   token: string | undefined;
 } {
-  const cloud = isCloudMode(config);
+  if (isCloudMode(config)) {
+    const readCloudToken = options.readCloudToken ?? readMachineStoreCloudToken;
+    return { url: CLOUD_SERVER_URL, token: readCloudToken() };
+  }
 
-  return {
-    url: cloud ? CLOUD_SERVER_URL : config.host,
-    token: cloud ? config.cloudToken : config.token,
-  };
+  return { url: config.host, token: config.token };
 }
