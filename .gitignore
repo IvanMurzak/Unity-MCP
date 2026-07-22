@@ -2,6 +2,7 @@
 .secrets
 .unity-license
 *.ulf
+.DS_Store
 
 # AI configurations
 **/.claude/settings.local.json
