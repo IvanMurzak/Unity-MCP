@@ -4,6 +4,23 @@
 
 ### Fixed
 
+- **Package upgrades no longer wedge the project (and the MCP server) when NuGet pins
+  changed** — completes #707. The `Events.registeredPackages` restore runs in the
+  still-alive previous AppDomain, so it used to validate the OLD compiled-in NuGet pins,
+  declare the DLL set healthy, and re-enable compilation — which then failed against the
+  stale DLLs (e.g. `CS0117` on an outdated `McpPlugin.dll` after the 0.84.3 → 0.86.0
+  upgrade). The failed compile blocked the domain reload, the new resolver never ran, and
+  the MCP server was neither re-downloaded nor restarted until the user replaced the DLLs
+  by hand. The package now ships its top-level pins as data
+  (`Editor/DependencyResolver/nuget-dependencies.json`); the upgrade handler reads the
+  NEW package's manifest from the just-written package files and restores against those
+  pins, so the recompile succeeds in one pass and the server-binary update + auto-start
+  flow proceeds normally after every plugin update. A unit test
+  (`NuGetDependencyManifestTests.ShippedManifest_MatchesCompiledPins`) fails CI if the
+  manifest and the compiled pins ever drift. Note: the fix takes effect for upgrades FROM
+  the first version that ships it (the handler doing the reading is the already-installed
+  one).
+
 - **`EntityId` wire format moved from JSON number to JSON string of decimal digits**
   (Unity 6.5+ paths only). Closes #759, resolves #754. JS-based MCP clients
   (Claude Agent SDK, etc.) parse JSON numbers as IEEE-754 doubles, so any
