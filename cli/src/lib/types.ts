@@ -567,6 +567,7 @@ export type CreateProjectResult = CreateProjectSuccess | CreateProjectFailure;
  */
 export type RunToolFailureReason =
   | 'invalid-input'
+  | 'not-authenticated'
   | 'connection-refused'
   | 'connection-reset'
   | 'network-error'
@@ -622,6 +623,13 @@ export interface RunToolOptions {
    * implementation. Defaults to the global `fetch`.
    */
   fetchImpl?: typeof fetch;
+  /**
+   * Optional injection point for the Cloud-mode Bearer credential read from the shared machine
+   * credential store (`~/.ai-game-dev/credentials.json`). Only consulted when the resolved project
+   * config is in Cloud mode and neither `url` nor `token` was supplied. Defaults to reading the real
+   * per-machine store; tests inject a deterministic value.
+   */
+  readCloudToken?: () => string | undefined;
 }
 
 /** Successful `runTool` / `runSystemTool` outcome. Narrow with `kind === 'success'`. */

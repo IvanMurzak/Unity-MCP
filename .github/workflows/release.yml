@@ -403,19 +403,19 @@ jobs:
       release_notes: ${{ steps.read_notes.outputs.release_body }}
     steps:
       - name: Download release notes artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: release-notes
           path: ./release-notes
 
       - name: Download Unity installer artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: unity-installer-package
           path: ./assets
 
       - name: Download signed UPM package artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: signed-upm-package
           path: ./assets
@@ -445,7 +445,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Create Tag and Release with all assets
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.check-version-tag.outputs.version }}
           name: ${{ needs.check-version-tag.outputs.version }}
@@ -562,21 +562,21 @@ jobs:
     if: always()
     steps:
       - name: Delete Unity Package artifacts
-        uses: geekyeggo/delete-artifact@v5
+        uses: geekyeggo/delete-artifact@v6
         with:
           name: unity-installer-package
           failOnError: false
         continue-on-error: true
 
       - name: Delete signed UPM package artifacts
-        uses: geekyeggo/delete-artifact@v5
+        uses: geekyeggo/delete-artifact@v6
         with:
           name: signed-upm-package
           failOnError: false
         continue-on-error: true
 
       - name: Delete release notes artifacts
-        uses: geekyeggo/delete-artifact@v5
+        uses: geekyeggo/delete-artifact@v6
         with:
           name: release-notes
           failOnError: false
