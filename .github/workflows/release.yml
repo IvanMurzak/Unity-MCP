@@ -512,7 +512,13 @@ jobs:
           if [ ${#full_message} -gt 2000 ]; then
             # Remove lines from the end until it fits, keeping the link
             link_text=$'\n\n'"📦 **[View Full Release](${release_url})**"
-            max_length=$((2000 - ${#link_text}))
+            # The truncated message is reassembled below as `<notes>` + `\n...` + `<link>`,
+            # so the ellipsis line costs 4 more characters on top of the link. Budget for
+            # BOTH, otherwise the assembled message reaches 2004 chars and Discord rejects
+            # the whole announcement with a 400 — silently, since the step does not gate on
+            # the response. Godot-MCP and Unreal-MCP carry the identical budget.
+            ellipsis_text=$'\n'"..."
+            max_length=$((2000 - ${#link_text} - ${#ellipsis_text}))
 
             # Split into lines and rebuild until we exceed the limit
             truncated_notes=""
