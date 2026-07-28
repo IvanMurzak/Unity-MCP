@@ -541,12 +541,59 @@ jobs:
             --arg content "$full_message" \
             '{content: $content, flags: 4}')
 
-          # Send to Discord webhook
-          curl -X POST "$DISCORD_WEBHOOK" \
+          # Send to the Discord webhook and GATE ON THE RESPONSE.
+          #
+          # curl exits 0 on an HTTP error status, so a bare `curl -X POST` proves only
+          # that a request was attempted -- never that Discord accepted it. Capture the
+          # status explicitly: 400 (payload over the 2000-char limit), 429 (rate
+          # limited) and 401/404 (revoked or wrong webhook) all used to leave this job
+          # green with no announcement posted and nothing in the log to say so. That
+          # blind spot is how the truncation-budget bug fixed above went unnoticed.
+          #
+          # `--retry 3` covers only what a retry can fix -- curl's transient set (429,
+          # 5xx and timeouts), honouring Discord's `Retry-After` header -- and
+          # `--retry-max-time` bounds it. A 4xx other than 429 is a permanent rejection
+          # and is never retried, and neither is a refused connection (that would need
+          # `--retry-connrefused`); both fail fast and loudly below. Accepted tradeoff:
+          # a webhook execute has no idempotency key, so a retry whose predecessor was
+          # actually processed (response lost in flight) can post the announcement
+          # twice. A duplicate announcement is strictly better than a missing one.
+          #
+          # The webhook URL is a credential: it is never echoed and `-v` is never
+          # passed (curl's own `-S` error text names at most the host). The response
+          # body IS printed -- it is Discord's JSON error object, the single most
+          # useful thing for whoever debugs the next failure.
+          response_file="$(mktemp)"
+          curl_exit=0
+          http_code=$(curl -sS -X POST "$DISCORD_WEBHOOK" \
             -H "Content-Type: application/json" \
-            -d "$json_payload"
+            -d "$json_payload" \
+            --retry 3 \
+            --retry-max-time 60 \
+            -o "$response_file" \
+            -w '%{http_code}') || curl_exit=$?
 
-          echo "Release notes sent to Discord for version $version"
+          # Safe to fail here: nothing downstream depends on this job and the release is
+          # already published, so a red step cannot block or undo it. It DOES redden the
+          # workflow run conclusion (and the release badge) -- that is the intended
+          # visibility, and the message below states exactly what did and did not ship.
+          if [ "$curl_exit" -ne 0 ]; then
+            echo "::error::Discord announcement for version ${version} was NOT delivered (curl exit ${curl_exit}). The release itself is published; only the announcement is missing."
+            exit 1
+          fi
+
+          case "$http_code" in
+            2??)
+              echo "Release notes accepted by Discord for version ${version} (HTTP ${http_code})."
+              ;;
+            *)
+              echo "::error::Discord REJECTED the release notes for version ${version} (HTTP ${http_code}). The release itself is published; only the announcement is missing."
+              echo "Discord response body:"
+              head -c 2000 "$response_file"
+              echo ""
+              exit 1
+              ;;
+          esac
 
   deploy:
     needs: release-unity-plugin
