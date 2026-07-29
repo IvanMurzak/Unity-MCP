@@ -1,3 +1,5 @@
+[![MCP Toplist](https://mcptoplist.com/badge/io.github.IvanMurzak%2FUnity-MCP.svg)](https://mcptoplist.com/server/io.github.IvanMurzak%2FUnity-MCP)
+
 <div align="center" width="100%">
   <h1>✨ AI Game Developer — <i>Unity SKILLS, MCP</i></h1>
 
