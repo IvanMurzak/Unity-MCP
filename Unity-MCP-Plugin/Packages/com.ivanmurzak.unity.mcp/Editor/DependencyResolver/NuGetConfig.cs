@@ -66,14 +66,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // 7.1.0 (mcp-authorize g5/g6) adds the shared ServerLaunchArguments launch-arg builder,
             // the AuthOption.token member + LocalTokenMcpStrategy, and the 3-mode configurator — all
             // consumed by the local self-hosted auth path. McpPlugin.Common 7.1.0 follows transitively.
-            new NuGetPackage("com.IvanMurzak.McpPlugin",                              "7.4.0", includeInBuild: true),
+            new NuGetPackage("com.IvanMurzak.McpPlugin",                              "7.5.2", includeInBuild: true),
             // Pinned explicitly so the resolver doesn't drift below the version
             // bundled in this package. The atomic API surface (TryModifyAt,
             // TryPatch, TryReadAt, View, Grep) introduced in 5.1.0 is exercised
             // by the EditMode tests under Tests/Editor/AtomicApi/, which
             // compile-fail against 5.0.0. 5.1.1 adds defensive try/catch around
             // reflection so the documented no-throw contract on Try* methods holds.
-            new NuGetPackage("com.IvanMurzak.ReflectorNet",                           "5.3.2",  includeInBuild: true),
+            new NuGetPackage("com.IvanMurzak.ReflectorNet",                           "5.4.0",  includeInBuild: true),
             new NuGetPackage("System.Text.Json",                                      "8.0.5",  includeInBuild: true),
             new NuGetPackage("Microsoft.AspNetCore.SignalR.Client",                   "8.0.15", includeInBuild: true),
             new NuGetPackage("Microsoft.AspNetCore.SignalR.Protocols.Json",           "8.0.15", includeInBuild: true),
