@@ -341,6 +341,13 @@ namespace com.IvanMurzak.Unity.MCP
                     .Reverse()
                     .ToArray();
 
+                // Clear stack traces if not requested
+                if (!includeStackTrace)
+                {
+                    foreach (var log in filteredLogs)
+                        log.StackTrace = null;
+                }
+
                 return filteredLogs;
             }
         }
