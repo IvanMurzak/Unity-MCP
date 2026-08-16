@@ -32,20 +32,48 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
     }
 
     /// <summary>
-    /// Drives the RFC 8628 device-authorization state machine (mcp-authorize design 03 Flow B): request a
+    /// What a successful device sign-in yields (unified-machine-auth 03 F1.3): the freshly minted
+    /// AGENT credential family — stamped with the <c>client_id</c> actually presented on the wire (D8)
+    /// and the granted scope — plus the account subject decoded from the JWT <c>sub</c> (D6/F7 guard
+    /// input) and the server target the credential was issued for. The editor hands this to
+    /// <see cref="AccountCredentialService.CommitLoginAsync"/>, which runs the two-lock-hold login
+    /// commit (agent family → RFC 8693 exchange → plugin family + v1 mirror).
+    /// </summary>
+    public sealed class DeviceAuthLoginResult
+    {
+        public DeviceAuthLoginResult(MachineCredentialFamily agentFamily, string? subject, string? serverTarget)
+        {
+            AgentFamily = agentFamily ?? throw new ArgumentNullException(nameof(agentFamily));
+            Subject = subject;
+            ServerTarget = serverTarget;
+        }
+
+        /// <summary>The minted agent family (access + refresh token, expiry, presented clientId, granted scope).</summary>
+        public MachineCredentialFamily AgentFamily { get; }
+
+        /// <summary>The account id from the mint's JWT <c>sub</c> claim; null when the server issued none.</summary>
+        public string? Subject { get; }
+
+        /// <summary>The AS/hub target the credential was issued for.</summary>
+        public string? ServerTarget { get; }
+    }
+
+    /// <summary>
+    /// Drives the RFC 8628 device-authorization state machine (unified-machine-auth 03 F1): request a
     /// device/user code, open the verification URL, poll <c>/oauth/token</c> until the user approves, then
-    /// hand the resulting <see cref="MachineCredentials"/> (access + refresh token + expiry) to
-    /// <paramref name="onAuthorized"/> — the editor wires that to <see cref="AccountCredentialService.Adopt"/>
-    /// so the credential lands in the shared machine store (D12). The device client, browser-open action,
-    /// and poll delay are all injectable so the state machine runs against a mocked authorization server with
-    /// no live network in CI.
+    /// hand the resulting <see cref="DeviceAuthLoginResult"/> (the minted AGENT family + subject) to
+    /// <paramref name="onAuthorized"/> — the editor wires that to the F1 login commit
+    /// (<see cref="AccountCredentialService.CommitLoginAsync"/>), which persists it into the shared
+    /// machine store under the cross-process lock. The device client, browser-open action, and poll delay
+    /// are all injectable so the state machine runs against a mocked authorization server with no live
+    /// network in CI.
     /// </summary>
     public class DeviceAuthFlow
     {
         private static readonly ILogger _logger = MCP.Utils.UnityLoggerFactory.LoggerFactory.CreateLogger<DeviceAuthFlow>();
 
         readonly IDeviceAuthClient _client;
-        readonly Action<MachineCredentials> _onAuthorized;
+        readonly Action<DeviceAuthLoginResult> _onAuthorized;
         readonly Action<string> _openBrowser;
         readonly Func<TimeSpan, CancellationToken, Task> _delay;
         readonly string? _serverTarget;
@@ -59,13 +87,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
         public event Action<DeviceAuthFlowState>? OnStateChanged;
 
         /// <param name="client">Device-authorization transport (real <see cref="DeviceAuthService"/> or a mock).</param>
-        /// <param name="onAuthorized">Sink for the obtained credential (editor: persist to the machine store).</param>
+        /// <param name="onAuthorized">Sink for the minted agent family (editor: run the F1 login commit).</param>
         /// <param name="serverTarget">The AS/hub target recorded on the credential (hosted vs local).</param>
         /// <param name="openBrowser">Verification-URL opener; defaults to <see cref="Application.OpenURL"/>.</param>
         /// <param name="delay">Poll delay; defaults to <see cref="Task.Delay(TimeSpan, CancellationToken)"/>.</param>
         public DeviceAuthFlow(
             IDeviceAuthClient client,
-            Action<MachineCredentials> onAuthorized,
+            Action<DeviceAuthLoginResult> onAuthorized,
             string? serverTarget = null,
             Action<string>? openBrowser = null,
             Func<TimeSpan, CancellationToken, Task>? delay = null)
@@ -114,16 +142,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
 
                     if (!string.IsNullOrEmpty(tokenResponse.AccessToken))
                     {
-                        var credentials = new MachineCredentials
+                        // The minted AGENT family (03 F1.3). ClientId is the id actually presented on
+                        // the wire (D8 — read from the client, never re-inferred); Scope prefers the
+                        // server's granted scope over the requested default.
+                        var agentFamily = new MachineCredentialFamily
                         {
                             AccessToken = tokenResponse.AccessToken,
                             RefreshToken = tokenResponse.RefreshToken,
                             ExpiresAt = tokenResponse.ExpiresIn > 0
                                 ? DateTimeOffset.UtcNow.AddSeconds(tokenResponse.ExpiresIn)
                                 : (DateTimeOffset?)null,
-                            ServerTarget = _serverTarget,
+                            ClientId = _client.ClientId,
+                            Scope = string.IsNullOrEmpty(tokenResponse.Scope)
+                                ? DeviceAuthService.AgentScope
+                                : tokenResponse.Scope,
                         };
-                        _onAuthorized(credentials);
+                        var subject = DeviceAuthService.DecodeJwtSubject(tokenResponse.AccessToken);
+                        _onAuthorized(new DeviceAuthLoginResult(agentFamily, subject, _serverTarget));
                         SetState(DeviceAuthFlowState.Authorized);
                         return;
                     }
