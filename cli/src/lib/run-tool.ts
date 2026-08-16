@@ -6,6 +6,7 @@
 //   never thrown past the public boundary.
 
 import { readConfig, resolveConnectionFromConfig, isCloudMode } from '../utils/config.js';
+import { readCloudAccessToken, refreshCloudAccessToken } from '../utils/cloud-credentials.js';
 import { generatePortFromDirectory } from '../utils/port.js';
 import { requireProjectPath } from './validation.js';
 import type {
@@ -47,26 +48,12 @@ async function invokeTool(routePrefix: string, opts: RunToolOptions): Promise<Ru
   const validationFailure = validateOptions(opts);
   if (validationFailure) return validationFailure;
 
-  const resolved = resolveConnection(opts);
-  if (resolved.kind === 'failure') return resolved;
-  const { url, token } = resolved;
-
-  const body = serializeInput(opts.input);
-  if ('error' in body) {
-    return makeFailure({
-      endpoint: '',
-      reason: 'invalid-input',
-      message: body.error.message,
-      error: body.error,
-    });
-  }
-
-  const endpoint = `${url}${routePrefix}/${encodeURIComponent(opts.toolName)}`;
-
   const fetchImpl = opts.fetchImpl ?? globalThis.fetch;
   const timeoutMs =
     typeof opts.timeoutMs === 'number' && opts.timeoutMs > 0 ? opts.timeoutMs : DEFAULT_TIMEOUT_MS;
 
+  // Wire the abort/timeout plumbing BEFORE the first await so an external abort issued right
+  // after the call is never lost (connection resolution below may itself await a token refresh).
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const externalAbort = (): void => controller.abort();
@@ -75,38 +62,85 @@ async function invokeTool(routePrefix: string, opts: RunToolOptions): Promise<Ru
     else opts.signal.addEventListener('abort', externalAbort, { once: true });
   }
 
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-
+  let endpoint = '';
   try {
-    const response = await fetchImpl(endpoint, {
-      method: 'POST',
-      headers,
-      body: body.json,
-      signal: controller.signal,
-    });
+    const resolved = await resolveConnection(opts);
+    if (resolved.kind === 'failure') return resolved;
+    const { url, token } = resolved;
 
-    const text = await safeReadText(response);
-    const data = parseJsonOrText(text);
-
-    if (!response.ok) {
+    const body = serializeInput(opts.input);
+    if ('error' in body) {
       return makeFailure({
-        endpoint,
-        reason: 'http-error',
-        httpStatus: response.status,
-        data,
-        message: response.statusText || `HTTP ${response.status}`,
+        endpoint: '',
+        reason: 'invalid-input',
+        message: body.error.message,
+        error: body.error,
       });
     }
 
-    const success: RunToolSuccess = {
-      kind: 'success',
-      success: true,
-      endpoint,
-      httpStatus: response.status,
-      data,
-    };
-    return success;
+    endpoint = `${url}${routePrefix}/${encodeURIComponent(opts.toolName)}`;
+
+    // Reactive-refresh loop (unified-machine-auth 04 §3 rule 1): when the Bearer came from the
+    // shared machine credential store and the server answers 401 — revocation or clock skew the
+    // proactive expiry check could not see — refresh the plugin family once under the
+    // cross-process lock and retry the call with the rotated token. At most ONE reactive attempt
+    // per invocation; an explicit --token / --url override is never refreshed. Both attempts
+    // share one timeout.
+    let bearer = token;
+    let attemptedReactiveRefresh = false;
+
+    for (;;) {
+      // Mirror fetch's contract for an ALREADY-aborted signal (an external abort may land while
+      // connection resolution above is awaiting): reject up front instead of relying on the
+      // 'abort' event, which has already fired.
+      if (controller.signal.aborted) {
+        throw new DOMException('The operation was aborted', 'AbortError');
+      }
+
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (bearer) headers['Authorization'] = `Bearer ${bearer}`;
+
+      const response = await fetchImpl(endpoint, {
+        method: 'POST',
+        headers,
+        body: body.json,
+        signal: controller.signal,
+      });
+
+      const text = await safeReadText(response);
+      const data = parseJsonOrText(text);
+
+      if (!response.ok) {
+        if (
+          response.status === 401 &&
+          resolved.tokenFromCloudStore &&
+          !attemptedReactiveRefresh
+        ) {
+          attemptedReactiveRefresh = true;
+          const fresh = await (opts.refreshCloudToken ?? refreshCloudAccessToken)();
+          if (fresh) {
+            bearer = fresh;
+            continue;
+          }
+        }
+        return makeFailure({
+          endpoint,
+          reason: 'http-error',
+          httpStatus: response.status,
+          data,
+          message: response.statusText || `HTTP ${response.status}`,
+        });
+      }
+
+      const success: RunToolSuccess = {
+        kind: 'success',
+        success: true,
+        endpoint,
+        httpStatus: response.status,
+        data,
+      };
+      return success;
+    }
   } catch (err) {
     return classifyFetchError(err, endpoint, timeoutMs);
   } finally {
@@ -143,11 +177,19 @@ function validateOptions(opts: RunToolOptions): RunToolFailure | null {
   return null;
 }
 
-function resolveConnection(
+async function resolveConnection(
   opts: RunToolOptions,
-): { kind: 'success'; url: string; token: string | undefined } | RunToolFailure {
+): Promise<
+  | { kind: 'success'; url: string; token: string | undefined; tokenFromCloudStore: boolean }
+  | RunToolFailure
+> {
   if (opts.url) {
-    return { kind: 'success', url: opts.url.replace(/\/$/, ''), token: opts.token };
+    return {
+      kind: 'success',
+      url: opts.url.replace(/\/$/, ''),
+      token: opts.token,
+      tokenFromCloudStore: false,
+    };
   }
 
   // `unityProjectPath` is library-only — does NOT require an `Assets/`
@@ -166,7 +208,9 @@ function resolveConnection(
 
   const config = readConfig(projectPath);
   const fromConfig = config
-    ? resolveConnectionFromConfig(config, { readCloudToken: opts.readCloudToken })
+    ? await resolveConnectionFromConfig(config, {
+        readCloudToken: opts.readCloudToken ?? readCloudAccessToken,
+      })
     : { url: undefined, token: undefined };
 
   const url = fromConfig.url
@@ -187,7 +231,8 @@ function resolveConnection(
     });
   }
 
-  return { kind: 'success', url, token };
+  const tokenFromCloudStore = !!config && isCloudMode(config) && !opts.token && !!token;
+  return { kind: 'success', url, token, tokenFromCloudStore };
 }
 
 function serializeInput(input: unknown): { json: string } | { error: Error } {

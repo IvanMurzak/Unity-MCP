@@ -17,6 +17,7 @@ interface InstallPluginOptions {
   serverSource?: string;
   enroll?: string;
   enrollStdin?: boolean;
+  yes?: boolean;
 }
 
 export const installPluginCommand = new Command('install-plugin')
@@ -29,6 +30,7 @@ export const installPluginCommand = new Command('install-plugin')
   .option('--server-source <path-or-url>', 'Offline/CI override: install the server from a local zip path or URL (skips SHA256SUMS verification)')
   .option('--enroll <code>', 'Redeem an enrollment code for a plugin credential (planted in the shared machine store)')
   .option('--enroll-stdin', 'Read the enrollment code from stdin (never argv/shell history)')
+  .option('--yes', 'Assume "yes" for prompts (e.g. confirming an account switch during --enroll)')
   .action(async (positionalPath: string | undefined, options: InstallPluginOptions) => {
     // T5/B1: path is OPTIONAL — resolve `path? → --path? → cwd`, then verify the directory is a real
     // Unity project (marker probe for `Packages/manifest.json`). On a miss the error lists exactly
@@ -137,7 +139,29 @@ export const installPluginCommand = new Command('install-plugin')
           projectPath,
           adapter: unityAdapter,
           store: new MachineCredentialStore(),
+          // D6/F7 account-switch guard (`--yes`-gated): enroll is a non-interactive surface, so
+          // without --yes a subject mismatch is DECLINED (the just-redeemed family is revoked
+          // best-effort by cli-core; the store stays untouched).
+          confirmAccountSwitch: async (info) => {
+            if (options.yes) return true;
+            ui.warn(
+              `This machine is signed in as "${info.storedSubject}"; the enrollment code belongs to "${info.newSubject}".`,
+            );
+            return false;
+          },
         });
+        if (enrolled.status === 'switch-declined') {
+          enrollSpinner.error('Enrollment aborted');
+          ui.error(
+            'Account switch declined — nothing was changed. Re-run with --yes to switch this machine to the new account.',
+          );
+          process.exit(1);
+        }
+        if (enrolled.status === 'aborted') {
+          enrollSpinner.error('Enrollment aborted');
+          ui.error('The credential store changed while enrolling. Re-run the command.');
+          process.exit(1);
+        }
         enrollSpinner.success('Enrollment complete');
         ui.label('Credential', enrolled.credentialPath);
         ui.label('Server target', enrolled.serverTarget);

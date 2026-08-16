@@ -625,11 +625,20 @@ export interface RunToolOptions {
   fetchImpl?: typeof fetch;
   /**
    * Optional injection point for the Cloud-mode Bearer credential read from the shared machine
-   * credential store (`~/.ai-game-dev/credentials.json`). Only consulted when the resolved project
-   * config is in Cloud mode and neither `url` nor `token` was supplied. Defaults to reading the real
-   * per-machine store; tests inject a deterministic value.
+   * credential store. Only consulted when the resolved project config is in Cloud mode and neither
+   * `url` nor `token` was supplied. Defaults to cli-core's `MachineCredentialProvider` (proactive
+   * refresh under the cross-process lock — never a raw on-disk read); tests inject a deterministic
+   * value. Sync or async both work.
    */
-  readCloudToken?: () => string | undefined;
+  readCloudToken?: () => Promise<string | undefined> | string | undefined;
+  /**
+   * Optional injection point for the REACTIVE Cloud-mode refresh: invoked at most once per call
+   * when the server answers 401 to a machine-store Bearer (revocation / clock skew). Returns the
+   * rotated access token, or `undefined` when the credential family is dead (the call then fails
+   * with the original 401). Defaults to cli-core's `MachineCredentialProvider.refresh`. Never
+   * consulted for an explicit `token` / `url` override.
+   */
+  refreshCloudToken?: () => Promise<string | undefined> | string | undefined;
 }
 
 /** Successful `runTool` / `runSystemTool` outcome. Narrow with `kind === 'success'`. */
