@@ -1,0 +1,36 @@
+README.md
+  c786693d2a08f2d2 57
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "222306a12efebe84c3a59c85118348fd56a69cd2",
+  "prompts": {
+    "a04f1e732ca3f0be": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5aaf4d17-5302-4344-a012-2359ce069b44",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 125,
+      "total_deletions": 125,
+      "accepted_lines": 125,
+      "overriden_lines": 0
+    },
+    "c786693d2a08f2d2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "54f20a59-98de-4b6a-868f-986b8d29ec25",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 2,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}

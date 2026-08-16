@@ -1,0 +1,23 @@
+Unity-MCP-Plugin/Assets/root/Tests/Editor/Tool/ToolThreadSafetyTests.cs
+  c821f449c614b7f1 23,34-36,388,390,392-423,467,469-488,553,555-559,584-588
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "e8d73ce0fa5e81c9a564c5df8c6e0f6250d0f4d2",
+  "prompts": {
+    "c821f449c614b7f1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "8197769f-dd4f-4a50-ad23-d579199bc6d6",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 408,
+      "total_deletions": 371,
+      "accepted_lines": 213,
+      "overriden_lines": 4
+    }
+  }
+}

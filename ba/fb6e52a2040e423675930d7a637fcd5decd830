@@ -1,0 +1,38 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Reflection/Struct/UnityEngine_Scene_ReflectionConverter.cs
+  4a54350f12285123 1-50
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/UnityMcpPlugin.Converters.cs
+  4a54350f12285123 52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "bafb6e52a2040e423675930d7a637fcd5decd830",
+  "prompts": {
+    "4a54350f12285123": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e185bf0f-f695-4a5b-8b22-e37e7634ddd4",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 223,
+      "total_deletions": 172,
+      "accepted_lines": 198,
+      "overriden_lines": 6
+    },
+    "d73b5a9fcb246df7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9fa2eb9c-f863-4e53-af3d-044644714422",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 7161,
+      "overriden_lines": 0
+    }
+  }
+}

@@ -1,0 +1,36 @@
+cli/src/commands/open.ts
+  s_142531325653d2::t_006471cdd03673 234
+  s_142531325653d2::t_655204234654ab 4
+  s_142531325653d2::t_4a7910f6078357 162-168,171-173
+cli/tests/open-lib.test.ts
+  s_142531325653d2::t_686dac98a99d4a 299
+cli/src/lib/open.ts
+  s_142531325653d2::t_e9b589e332c362 209-210,216
+  s_142531325653d2::t_210a2f33e1a10f 167-169
+  s_142531325653d2::t_edf6c3f567614a 185
+  s_142531325653d2::t_1676da6a0c3236 90
+  s_142531325653d2::t_7e0d57dba1423e 12
+  s_142531325653d2::t_318daede922520 281
+  s_142531325653d2::t_78e748a5b6d2dc 63-77
+  s_142531325653d2::t_eb15e95fe577c3 237,241-242,244-246
+cli/src/lib/types.ts
+  s_142531325653d2::t_37c815cee66989 34
+  s_142531325653d2::t_76c3fce4a2e609 24
+  s_142531325653d2::t_40e72000032596 347-366
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "b448143b79a3b6ee8a390bc58bca3835b4bfdc0b",
+  "prompts": {},
+  "sessions": {
+    "s_142531325653d2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e8179220-c9ef-4f73-baf2-a1fc1b8d098b",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

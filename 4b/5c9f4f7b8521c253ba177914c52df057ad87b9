@@ -1,0 +1,66 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/JsonConverters/GameObjectRefConverterTests.cs
+  49d53a818dbb2c3d 1-142
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Components/ExtensionPanel.cs
+  d73b5a9fcb246df7 19,250-254
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Type.GetJsonSchema.cs
+  d73b5a9fcb246df7 16,136-140
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "4b5c9f4f7b8521c253ba177914c52df057ad87b9",
+  "prompts": {
+    "49d53a818dbb2c3d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4f8975c4-7518-4266-b175-022ab5d78b9f",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 142,
+      "total_deletions": 0,
+      "accepted_lines": 142,
+      "overriden_lines": 0
+    },
+    "91c26df6d376f6b8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "46f4e306-7121-4c86-bb93-fe634e3f3c49",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 96,
+      "total_deletions": 5,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "a53cd4926f7d88d3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a4509d52-1123-4c3b-993f-7e66ba41e611",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 100,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "d73b5a9fcb246df7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9fa2eb9c-f863-4e53-af3d-044644714422",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 7845,
+      "total_deletions": 8645,
+      "accepted_lines": 7562,
+      "overriden_lines": 216
+    }
+  }
+}

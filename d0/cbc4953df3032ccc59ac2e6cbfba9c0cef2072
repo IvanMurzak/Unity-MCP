@@ -1,0 +1,41 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetDependencyResolver.cs
+  43aa9945c728a00d 17,19,24-25,32-42,45,49-54,75-84,87-94,96-105,107-108,110-125,127-135,138-146,148-160
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "d0cbc4953df3032ccc59ac2e6cbfba9c0cef2072",
+  "prompts": {
+    "43aa9945c728a00d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f1b16090-41b9-49f2-b678-caab888d553c",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 726,
+      "total_deletions": 26,
+      "accepted_lines": 297,
+      "overriden_lines": 0
+    },
+    "63d1954c6f41f66d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fc3f0981-63f3-40ce-89f1-623ba90f4a5b",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 236,
+      "total_deletions": 0,
+      "accepted_lines": 236,
+      "overriden_lines": 0
+    }
+  },
+  "humans": {
+    "h_9a61b2ff2f3edc": {
+      "author": "Ivan Murzak"
+    }
+  }
+}

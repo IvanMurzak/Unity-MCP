@@ -1,0 +1,38 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/AiAgentConfigurators/AiAgentConfiguratorView.cs
+  s_94cae3b80679a2::t_a710ef796210cd 1-708
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetConfig.cs
+  s_94cae3b80679a2::t_a3b451121eee9a 66
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/AiAgentConfigurators/AgentConfiguratorSettingsFactory.cs
+  s_94cae3b80679a2::t_26bf5eae86baf9 1-55
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/AiAgentConfigurators/AgentConfiguratorSettingsFactory.cs.meta
+  s_94cae3b80679a2::t_fb3fd501f1f9f7 1-11
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Window/MainWindowEditor.AiAgents.cs
+  s_94cae3b80679a2::t_bae8bee872f879 140-141,143-145
+  s_94cae3b80679a2::t_7941a52f38ec48 17,25
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Startup.cs
+  s_94cae3b80679a2::t_0cd161c5c06fbd 17
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/McpServerManager.cs
+  s_94cae3b80679a2::t_59f94675ef6687 37
+Unity-MCP-Plugin/Assets/Plugins/NuGet/.nuget-installed.json
+  s_94cae3b80679a2::t_53d8012f601468 4,10
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Window/MainWindowEditor.DevControl.cs
+  s_94cae3b80679a2::t_31069b889fe8e6 19
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/AiAgentConfigurators/AiAgentConfiguratorView.cs.meta
+  s_94cae3b80679a2::t_9cbc3a25c7a5c4 1-11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.8",
+  "base_commit_sha": "839c42ae68c1539893ad12ff4ed3f4accc6c5508",
+  "prompts": {},
+  "sessions": {
+    "s_94cae3b80679a2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d15dc434-a705-4009-9c19-05eae0bfc388",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

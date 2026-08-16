@@ -1,0 +1,21 @@
+cli/src/commands/run-tool-builder.ts
+  s_7ab7b1a4bdbcd7::t_4b86221ba1f0b7 61-68,75,80
+cli/src/lib/run-tool.ts
+  s_7ab7b1a4bdbcd7::t_e282c618d01442 133-136
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "2981e579f8bbec24fcec635b69db5c0f3d12e75e",
+  "prompts": {},
+  "sessions": {
+    "s_7ab7b1a4bdbcd7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "3ffd23b7-40bd-4578-aaf7-82bb0cb44e63",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

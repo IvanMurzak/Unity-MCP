@@ -1,0 +1,25 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetAssetPostprocessor.cs
+  8d4d689498114267 19,21-29,31,33,35-39,41,44-51,53-58,66-69,73-75,77,80-82,87-112,114,119,122-123,127-129
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetDependencyResolver.cs
+  8d4d689498114267 62,65,74-76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "a24a7f28d9f0a0a5c9b1c45e84b8c407c509539d",
+  "prompts": {
+    "8d4d689498114267": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "36761876-bbce-477d-9fbd-04b51c7ad534",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 81,
+      "total_deletions": 46,
+      "accepted_lines": 81,
+      "overriden_lines": 0
+    }
+  }
+}

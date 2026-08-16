@@ -1,0 +1,39 @@
+Unity-MCP-Plugin/Assets/root/Runtime/UnityMcpPlugin.Build.cs
+  9f022c51d0af7506 183,186
+Unity-MCP-Plugin/Assets/root/README.md
+  9f022c51d0af7506 509,517
+docs/README.ja.md
+  9f022c51d0af7506 509
+.github/workflows/copilot-setup-steps.yml
+  9f022c51d0af7506 31-32,34-36
+docs/README.zh-CN.md
+  9f022c51d0af7506 509
+.github/actions/setup-unity-mcp/action.yml
+  9f022c51d0af7506 1-163
+.github/workflows/claude.yml
+  9f022c51d0af7506 42-43,45-47
+README.md
+  9f022c51d0af7506 509
+docs/README.es.md
+  9f022c51d0af7506 509
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "b4a923d1682325456af8f2d7d155dfbf37c7a1f4",
+  "prompts": {
+    "9f022c51d0af7506": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cecac5b3-2d6e-4e3c-9d5c-cbc729fa7cd3",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 4346,
+      "total_deletions": 4447,
+      "accepted_lines": 2044,
+      "overriden_lines": 0
+    }
+  }
+}

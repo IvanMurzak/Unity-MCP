@@ -1,0 +1,54 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Profiler.GetMemoryStats.cs
+  s_f6b66cedbacc57::t_2d020e9843fca8 1-61
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Profiler.cs
+  s_f6b66cedbacc57::t_686a9c534cc03c 1-216
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Profiler.Start.cs
+  s_f6b66cedbacc57::t_7a7b598a62c6e8 1-51
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Profiler/TestToolProfiler.StartStop.cs
+  s_f6b66cedbacc57::t_250db87b26fa63 1-54
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Profiler.ListModules.cs
+  s_f6b66cedbacc57::t_ce5c4454054037 1-51
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Profiler.SaveData.cs
+  s_f6b66cedbacc57::t_16130439470024 1-91,93-107
+  s_f6b66cedbacc57::t_8bfd0fab8ab176 92
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Profiler/TestToolProfiler.Stats.cs
+  s_f6b66cedbacc57::t_2210ff170e621e 1-71
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Profiler.LoadData.cs
+  s_f6b66cedbacc57::t_6e081225f62d7b 1-66
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Profiler/TestToolProfiler.Modules.cs
+  s_f6b66cedbacc57::t_b44509e0420a45 1-66
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Profiler.EnableModule.cs
+  s_f6b66cedbacc57::t_543d4f77590aa9 1-65
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Profiler.GetStatus.cs
+  s_f6b66cedbacc57::t_59d91abde19f98 1-53
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Profiler.Stop.cs
+  s_f6b66cedbacc57::t_0fbbce7ea02b3d 1-44
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Profiler/TestToolProfiler.cs
+  s_f6b66cedbacc57::t_b6e51da6cb540a 1-35
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Profiler.GetRenderingStats.cs
+  s_f6b66cedbacc57::t_46e9fe2abe9338 1-59
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Profiler/TestToolProfiler.SaveLoad.cs
+  s_f6b66cedbacc57::t_a25063224b4449 1-83
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Profiler.CaptureFrame.cs
+  s_f6b66cedbacc57::t_6bdc42b84f16dd 1-62
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Profiler.ClearData.cs
+  s_f6b66cedbacc57::t_8a756612081b1d 1-46
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Profiler.GetScriptStats.cs
+  s_f6b66cedbacc57::t_41c5e7786b9826 1-58
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "77ac8e2226bfacc4ce3faed9b3d9349ecbb12d36",
+  "prompts": {},
+  "sessions": {
+    "s_f6b66cedbacc57": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "214298cf-e9ac-4b12-b6be-19c13f3a4f93",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

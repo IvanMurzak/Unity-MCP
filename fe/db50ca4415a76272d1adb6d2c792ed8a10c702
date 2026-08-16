@@ -1,0 +1,23 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Utils/Executor/DynamicCallToolExecutor.cs
+  s_c4ba4f2232a1f2::t_46a06a700d16cb 27
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/SystemTool/Skills.Generate.cs
+  s_c4ba4f2232a1f2::t_8e9e616f782d1f 34
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Utils/Executor/CallToolExecutor.cs
+  s_c4ba4f2232a1f2::t_984ca1a508f1ae 27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "fedb50ca4415a76272d1adb6d2c792ed8a10c702",
+  "prompts": {},
+  "sessions": {
+    "s_c4ba4f2232a1f2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "edabced4-fdfb-411e-9881-8f7d605edc3b",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

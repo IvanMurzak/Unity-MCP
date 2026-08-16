@@ -1,0 +1,69 @@
+Unity-MCP-Plugin/Assets/Plugins/NuGet/Microsoft.AspNetCore.Http.Connections.Client.8.0.15.meta
+  d73b5a9fcb246df7 1-8
+Unity-MCP-Plugin/Assets/Plugins/NuGet/Microsoft.Extensions.DependencyInjection.Abstractions.8.0.2.meta
+  d73b5a9fcb246df7 1-8
+Unity-MCP-Plugin/Assets/Plugins/NuGet/System.Diagnostics.DiagnosticSource.8.0.1.meta
+  d73b5a9fcb246df7 1-8
+Unity-MCP-Plugin/Assets/Plugins/NuGet/Microsoft.Bcl.TimeProvider.8.0.1.meta
+  d73b5a9fcb246df7 1-8
+Unity-MCP-Plugin/Assets/Plugins/NuGet/System.Threading.Channels.8.0.0.meta
+  d73b5a9fcb246df7 1-8
+Unity-MCP-Plugin/Assets/Plugins/NuGet/System.Threading.Tasks.Extensions.4.5.4.meta
+  d73b5a9fcb246df7 1-8
+Unity-MCP-Plugin/Assets/Plugins/NuGet/System.Text.Encodings.Web.8.0.0.meta
+  d73b5a9fcb246df7 1-8
+Unity-MCP-Plugin/Assets/Plugins/NuGet/System.Buffers.4.5.1.meta
+  d73b5a9fcb246df7 1-8
+Unity-MCP-Plugin/Assets/Plugins/NuGet/System.Text.Json.8.0.5.meta
+  d73b5a9fcb246df7 1-8
+Unity-MCP-Plugin/Assets/Plugins/NuGet/Microsoft.Extensions.Features.8.0.15.meta
+  d73b5a9fcb246df7 1-8
+Unity-MCP-Plugin/Assets/Plugins/NuGet/Microsoft.AspNetCore.SignalR.Client.Core.8.0.15.meta
+  d73b5a9fcb246df7 1-8
+Unity-MCP-Plugin/Assets/Plugins/NuGet/Microsoft.Extensions.Options.8.0.2.meta
+  d73b5a9fcb246df7 1-8
+Unity-MCP-Plugin/Assets/Plugins/NuGet/System.IO.Pipelines.8.0.0.meta
+  d73b5a9fcb246df7 1-8
+Unity-MCP-Plugin/Assets/Plugins/NuGet/Microsoft.AspNetCore.SignalR.Protocols.Json.8.0.15.meta
+  d73b5a9fcb246df7 1-8
+Unity-MCP-Plugin/Assets/Plugins/NuGet/Microsoft.Extensions.DependencyInjection.8.0.1.meta
+  d73b5a9fcb246df7 1-8
+Unity-MCP-Plugin/Assets/Plugins/NuGet/Microsoft.AspNetCore.SignalR.Common.8.0.15.meta
+  d73b5a9fcb246df7 1-8
+Unity-MCP-Plugin/Assets/Plugins/NuGet/Microsoft.AspNetCore.SignalR.Client.8.0.15.meta
+  d73b5a9fcb246df7 1-8
+Unity-MCP-Plugin/Assets/Plugins/NuGet/Microsoft.Extensions.Logging.8.0.1.meta
+  d73b5a9fcb246df7 1-8
+Unity-MCP-Plugin/Assets/Plugins/NuGet/System.Memory.4.5.5.meta
+  d73b5a9fcb246df7 1-8
+Unity-MCP-Plugin/Assets/Plugins/NuGet/Microsoft.Extensions.Logging.Abstractions.8.0.2.meta
+  d73b5a9fcb246df7 1-8
+Unity-MCP-Plugin/Assets/Plugins/NuGet/Microsoft.Extensions.Primitives.8.0.0.meta
+  d73b5a9fcb246df7 1-8
+Unity-MCP-Plugin/Assets/Plugins/NuGet/Microsoft.Bcl.AsyncInterfaces.8.0.0.meta
+  d73b5a9fcb246df7 1-8
+Unity-MCP-Plugin/Assets/Plugins/NuGet/Microsoft.AspNetCore.Http.Connections.Common.8.0.15.meta
+  d73b5a9fcb246df7 1-8
+Unity-MCP-Plugin/Assets/Plugins/NuGet/Microsoft.AspNetCore.Connections.Abstractions.8.0.15.meta
+  d73b5a9fcb246df7 1-8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "f7df01dac7bc68e2518e3e21fd0b5c3ca6c3d667",
+  "prompts": {
+    "d73b5a9fcb246df7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9fa2eb9c-f863-4e53-af3d-044644714422",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 712,
+      "total_deletions": 0,
+      "accepted_lines": 7321,
+      "overriden_lines": 0
+    }
+  }
+}
