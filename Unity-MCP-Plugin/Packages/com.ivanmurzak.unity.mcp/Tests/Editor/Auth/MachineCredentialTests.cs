@@ -140,8 +140,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual("rt-new", persisted.RefreshToken);
         }
 
+        /// <summary>
+        /// McpPlugin 8.1.0 failure-state split (unified-machine-auth 04 §3.5 / 03 F3.5): a DEAD family —
+        /// the AS answered <c>invalid_grant</c> and the mandatory post-failure store re-read shows no peer
+        /// rotated it — is the ONLY refresh failure that may surface <see cref="AuthState.SignInRequired"/>.
+        /// Before 8.1.0 every failure did, so this test passes the classification explicitly.
+        /// </summary>
         [Test]
-        public void ReactiveRefresh_Failure_SurfacesSignInRequired()
+        public void ReactiveRefresh_InvalidGrant_SurfacesSignInRequired()
         {
             var store = NewStore();
             store.Write(new MachineCredentials
@@ -152,13 +158,50 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 ServerTarget = "https://ai-game.dev",
             });
 
-            var refresher = new FakeTokenRefresher(TokenRefreshResult.Failure("refresh token expired"));
+            var refresher = new FakeTokenRefresher(
+                TokenRefreshResult.Failure("refresh token expired", TokenRefreshFailureKind.InvalidGrant));
             using var provider = new PluginCredentialProvider(store, refresher);
 
             var refreshed = provider.RefreshAsync().GetAwaiter().GetResult();
 
             Assert.IsFalse(refreshed);
             Assert.AreEqual(AuthState.SignInRequired, provider.State.CurrentValue);
+            // The verdict must come from an ACTUAL refresh attempt on this family — not from a
+            // short-circuit (busy machine-wide lock / missing refresher), which returns false too.
+            Assert.AreEqual(1, refresher.Calls);
+            Assert.AreEqual("rt-old", refresher.LastRefreshToken);
+        }
+
+        /// <summary>
+        /// The other half of the same split, and what makes the test above non-vacuous: a TRANSIENT
+        /// failure (AS unreachable, 5xx, timeout — the classification the one-argument
+        /// <c>TokenRefreshResult.Failure(reason)</c> yields by default) must NOT prompt a sign-in. The
+        /// still-valid access token is kept and the provider stays <see cref="AuthState.SignedIn"/>, so an
+        /// offline editor self-heals silently (04 F9) instead of nagging the user.
+        /// </summary>
+        [Test]
+        public void ReactiveRefresh_TransientFailure_StaysSignedIn()
+        {
+            var store = NewStore();
+            store.Write(new MachineCredentials
+            {
+                AccessToken = "old.jwt",
+                RefreshToken = "rt-old",
+                ExpiresAt = DateTimeOffset.UtcNow.AddHours(1),
+                ServerTarget = "https://ai-game.dev",
+            });
+
+            var refresher = new FakeTokenRefresher(TokenRefreshResult.Failure("authorization server unreachable"));
+            using var provider = new PluginCredentialProvider(store, refresher);
+
+            var refreshed = provider.RefreshAsync().GetAwaiter().GetResult();
+
+            Assert.IsFalse(refreshed);
+            Assert.AreEqual(AuthState.SignedIn, provider.State.CurrentValue);
+            Assert.IsTrue(provider.IsSignedIn);
+            // A real network attempt was made and rejected transiently (guards against a vacuous pass
+            // where the refresher was never reached and the state trivially stayed SignedIn).
+            Assert.AreEqual(1, refresher.Calls);
         }
 
         [Test]
