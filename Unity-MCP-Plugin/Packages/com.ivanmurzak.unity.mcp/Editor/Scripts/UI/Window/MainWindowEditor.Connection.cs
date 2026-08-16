@@ -10,11 +10,14 @@
 
 #nullable enable
 using System;
+using System.Threading.Tasks;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.Services;
 using com.IvanMurzak.Unity.MCP.Editor.UI.Controls;
 using Microsoft.AspNetCore.SignalR.Client;
 using R3;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
@@ -276,7 +279,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             DeviceAuthFlowState.Initiating => "Initiating...",
             DeviceAuthFlowState.WaitingForUser => $"Code: {userCode} — Authorize in browser",
             DeviceAuthFlowState.Polling => $"Code: {userCode} — Waiting for authorization...",
-            DeviceAuthFlowState.Authorized => "Authorized!",
+            DeviceAuthFlowState.Authorized => "Authorized — completing sign-in...",
             DeviceAuthFlowState.Failed => $"Failed: {errorMessage}",
             DeviceAuthFlowState.Expired => "Expired — try again",
             DeviceAuthFlowState.Cancelled => "Cancelled",
@@ -326,18 +329,32 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             }
             UpdateRevokeButtonVisibility();
 
-            btnRevoke?.RegisterCallback<ClickEvent>(evt =>
+            async Task SignOutMachineWideThenRefreshUiAsync()
             {
-                // Sign out of the shared machine store (T9 — the credential lives only there now).
-                AccountCredentialService.SignOut();
+                try
+                {
+                    var result = await AccountCredentialService.SignOutMachineWideAsync();
+                    // Never surface token material (07 rule 2) — state only.
+                    if (statusLabel != null)
+                    {
+                        statusLabel.text = result.StoreDeleted
+                            ? "Signed out on this machine."
+                            : "Sign-out incomplete — another tool holds the credential lock. Try again.";
+                        statusLabel.style.display = DisplayStyle.Flex;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"[AI Game Developer] Machine-wide sign-out failed: {ex.Message}");
+                    if (statusLabel != null)
+                    {
+                        statusLabel.text = "Sign-out failed — see the Console for details.";
+                        statusLabel.style.display = DisplayStyle.Flex;
+                    }
+                }
+
                 UpdateTokenDisplay();
                 UpdateRevokeButtonVisibility();
-
-                if (statusLabel != null)
-                {
-                    statusLabel.text = "Token revoked.";
-                    statusLabel.style.display = DisplayStyle.Flex;
-                }
 
                 // Invalidate cached AI agent configs
                 InvalidateAndReloadAgentUI();
@@ -348,7 +365,88 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 if (UnityMcpPluginEditor.ConnectionMode == ConnectionMode.Cloud
                     && UnityMcpPluginEditor.Instance.HasMcpPluginInstance)
                     _ = UnityMcpPluginEditor.Instance.Disconnect();
+                Repaint();
+            }
+
+            btnRevoke?.RegisterCallback<ClickEvent>(evt =>
+            {
+                // F6 (D5): sign-out is MACHINE-WIDE — every engine plugin, CLI, and the desktop app
+                // share the one machine credential store, so signing out here signs them all out.
+                // Interactive confirm first (03 F6.1 / 08 J5), then best-effort RFC 7009 revocation
+                // of every stored family + the lock-protocol store delete.
+                var confirmed = EditorUtility.DisplayDialog(
+                    "Sign out of AI Game Dev?",
+                    "This signs out ALL AI Game Dev tools on this machine — every engine plugin, CLI, and the desktop app.\n\n"
+                    + "Tokens are revoked server-side (best effort) and the shared machine credential is deleted.",
+                    "Sign Out",
+                    "Cancel");
+                if (!confirmed)
+                    return;
+                _ = SignOutMachineWideThenRefreshUiAsync();
             });
+
+            void SetCommitStatus(string message)
+            {
+                MainThread.Instance.RunAsync(() =>
+                {
+                    if (statusLabel != null)
+                    {
+                        statusLabel.text = message;
+                        statusLabel.style.display = string.IsNullOrEmpty(message)
+                            ? DisplayStyle.None
+                            : DisplayStyle.Flex;
+                    }
+                    Repaint();
+                });
+            }
+
+            async Task CommitLoginThenRefreshUiAsync(DeviceAuthLoginResult result)
+            {
+                LoginCommitResult commit;
+                try
+                {
+                    commit = await AccountCredentialService.CommitLoginAsync(
+                        result.AgentFamily,
+                        result.Subject,
+                        result.ServerTarget,
+                        onStatus: SetCommitStatus, // marshals to the main thread itself
+                        // The commit runs ConfigureAwait(false), so this callback may fire on a
+                        // background thread — the modal dialog must run on the editor main thread.
+                        confirmAccountSwitch: displaced => MainThread.Instance.Run(() => EditorUtility.DisplayDialog(
+                            "Switch account on this machine?",
+                            "This machine is already signed in to a different AI Game Dev account.\n\n"
+                            + "Continuing signs the other account out of every tool on this machine (engine plugins, CLIs, and the desktop app) and replaces it with the account you just authorized.",
+                            "Replace Account",
+                            "Cancel")));
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"[AI Game Developer] Login commit failed: {ex.Message}");
+                    SetCommitStatus("Sign-in failed — see the Console for details.");
+                    return;
+                }
+
+                // Reflect the (possibly) rewritten store in this editor domain — a rebuild through the
+                // provider's auto-adopt read, never an echo-write (G-SEC-2).
+                AccountCredentialService.Reload();
+
+                MainThread.Instance.RunAsync(() =>
+                {
+                    UpdateTokenDisplay();
+                    UpdateRevokeButtonVisibility();
+                    UpdateCloudAuthState();
+                    if (commit.Status == LoginCommitStatus.FullyCommitted)
+                    {
+                        // Invalidate cached AI agent configs so they pick up the new credential
+                        InvalidateAndReloadAgentUI();
+
+                        // Reconnect to cloud server with the new token (only if still in Cloud mode)
+                        if (UnityMcpPluginEditor.ConnectionMode == ConnectionMode.Cloud)
+                            ReconnectAfterModeSwitch();
+                    }
+                    Repaint();
+                });
+            }
 
             _startAuthorizeAction = async () =>
             {
@@ -362,13 +460,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 _deviceAuthFlow?.Cancel();
                 var cloudBaseUrl = UnityMcpPlugin.UnityConnectionConfig.CloudServerBaseUrl;
                 _deviceAuthFlow = new DeviceAuthFlow(
-                    new DeviceAuthService(cloudBaseUrl),
-                    onAuthorized: credentials =>
+                    new DeviceAuthService(cloudBaseUrl), // requests scope=mcp:agent (03 F1.2)
+                    onAuthorized: result =>
                     {
-                        // Persist into the shared machine credential store (D12 / T9). The machine store
-                        // (~/.ai-game-dev/credentials.json) is the single Cloud credential source — there is
-                        // no UserSettings cloudToken mirror.
-                        AccountCredentialService.Adopt(credentials);
+                        // F1.3–F1.5: commit the minted agent family into the shared machine store under
+                        // the cross-process lock, derive the plugin family via RFC 8693 token exchange,
+                        // and stamp the v1 mirror — never a bare lock-free Adopt (G-SEC-2).
+                        _ = CommitLoginThenRefreshUiAsync(result);
                     },
                     serverTarget: cloudBaseUrl);
                 var capturedFlow = _deviceAuthFlow; // Capture to avoid stale field reference in async callbacks
@@ -390,21 +488,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                                 ? DisplayStyle.None
                                 : DisplayStyle.Flex;
                         }
-                        if (state == DeviceAuthFlowState.Authorized && inputCloudToken != null)
-                        {
-                            UpdateTokenDisplay();
-                            UpdateRevokeButtonVisibility();
-                            UpdateCloudAuthState();
-                        }
-                        if (state == DeviceAuthFlowState.Authorized)
-                        {
-                            // Invalidate cached AI agent configs so they pick up the new cloud token
-                            InvalidateAndReloadAgentUI();
-
-                            // Reconnect to cloud server with the new token (only if still in Cloud mode)
-                            if (UnityMcpPluginEditor.ConnectionMode == ConnectionMode.Cloud)
-                                ReconnectAfterModeSwitch();
-                        }
+                        // NOTE (d1): DeviceAuthFlowState.Authorized means the DEVICE GRANT was approved —
+                        // the credential is not yet committed to the machine store. The signed-in UI
+                        // refresh + reconnect happen in CommitLoginThenRefreshUiAsync once the F1 login
+                        // commit (agent family → exchange → plugin family) actually lands.
                         if (btnAuthorize != null)
                         {
                             btnAuthorize.text = IsAuthFlowRunning(state) ? "Cancel" : "Authorize";

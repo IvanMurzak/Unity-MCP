@@ -289,7 +289,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [Test]
         public void GetAuthFlowStatusMessage_Authorized()
         {
-            Assert.AreEqual("Authorized!", MainWindowEditor.GetAuthFlowStatusMessage(DeviceAuthFlowState.Authorized, null, null));
+            // "Authorized" here means the DEVICE GRANT was approved — the F1 login commit (agent
+            // family → exchange → plugin family) is still completing, and its own status messages
+            // (AccountCredentialService.CommitLoginAsync onStatus) take over from this one.
+            Assert.AreEqual("Authorized — completing sign-in...", MainWindowEditor.GetAuthFlowStatusMessage(DeviceAuthFlowState.Authorized, null, null));
         }
 
         [Test]
