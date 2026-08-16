@@ -461,6 +461,83 @@ describe('runTool — Cloud mode auth', () => {
     const headers = spy.calls[0].init?.headers as Record<string, string>;
     expect(headers['Authorization']).toBe('Bearer explicit-token');
   });
+
+  it('REACTIVELY refreshes on a 401 against a machine-store Bearer and retries once (04 §3 rule 1)', async () => {
+    const projectPath = mkUnityProject();
+    writeCloudConfig(projectPath);
+    let refreshCalls = 0;
+    const spy = makeFetchSpy(async (_url, init) => {
+      const headers = init?.headers as Record<string, string>;
+      return headers['Authorization'] === 'Bearer rotated-token'
+        ? jsonResponse({ status: 'success', content: [] })
+        : jsonResponse({ error: 'expired' }, 401, 'Unauthorized');
+    });
+
+    const result = await runTool({
+      toolName: 'ping',
+      unityProjectPath: projectPath,
+      readCloudToken: () => 'revoked-token',
+      refreshCloudToken: () => {
+        refreshCalls++;
+        return 'rotated-token';
+      },
+      fetchImpl: spy.fetch,
+    });
+
+    expect(result.kind).toBe('success');
+    expect(refreshCalls).toBe(1);
+    expect(spy.calls).toHaveLength(2);
+    const retryHeaders = spy.calls[1].init?.headers as Record<string, string>;
+    expect(retryHeaders['Authorization']).toBe('Bearer rotated-token');
+  });
+
+  it('a dead family (reactive refresh returns undefined) surfaces the original 401 — exactly one refresh attempt', async () => {
+    const projectPath = mkUnityProject();
+    writeCloudConfig(projectPath);
+    let refreshCalls = 0;
+    const spy = makeFetchSpy(async () => jsonResponse({ error: 'expired' }, 401, 'Unauthorized'));
+
+    const result = await runTool({
+      toolName: 'ping',
+      unityProjectPath: projectPath,
+      readCloudToken: () => 'revoked-token',
+      refreshCloudToken: () => {
+        refreshCalls++;
+        return undefined;
+      },
+      fetchImpl: spy.fetch,
+    });
+
+    expect(result.kind).toBe('failure');
+    if (result.kind !== 'failure') throw new Error('expected failure kind');
+    expect(result.reason).toBe('http-error');
+    expect(result.httpStatus).toBe(401);
+    expect(refreshCalls).toBe(1);
+    expect(spy.calls).toHaveLength(1);
+  });
+
+  it('never reactively refreshes an explicit --token override on 401', async () => {
+    const projectPath = mkUnityProject();
+    writeCloudConfig(projectPath);
+    let refreshCalls = 0;
+    const spy = makeFetchSpy(async () => jsonResponse({ error: 'nope' }, 401, 'Unauthorized'));
+
+    const result = await runTool({
+      toolName: 'ping',
+      unityProjectPath: projectPath,
+      token: 'explicit-token',
+      readCloudToken: () => undefined,
+      refreshCloudToken: () => {
+        refreshCalls++;
+        return 'should-never-be-used';
+      },
+      fetchImpl: spy.fetch,
+    });
+
+    expect(result.kind).toBe('failure');
+    expect(refreshCalls).toBe(0);
+    expect(spy.calls).toHaveLength(1);
+  });
 });
 
 // ---------------------------------------------------------------------------

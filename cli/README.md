@@ -246,7 +246,7 @@ unity-mcp-cli install-unity --path ./MyGame
 
 ## `login`
 
-Sign in to **ai-game.dev** and store the credential in the shared machine credential store (`~/.ai-game-dev/credentials.json`). Runs the browser-based **OAuth 2.1 device flow** — there is no personal access token to create or paste. The stored credential is the single source of truth for cloud authentication (consumed by `open`, `run-tool`, and the Unity Editor plugin).
+Sign in to **ai-game.dev** and store the credential in the shared machine credential store (`~/.ai-game-dev/credentials.json`). Runs the browser-based **OAuth 2.1 device flow** — there is no personal access token to create or paste. The sign-in authorizes the whole machine: it mints an **agent** credential and derives an engine-tools credential from it, and every consumer (the CLI's cloud commands, the Unity Editor plugin, the desktop app) refreshes it automatically — tokens rotate in the background, so you sign in once per machine, not once per session.
 
 ```bash
 unity-mcp-cli login
@@ -256,13 +256,21 @@ unity-mcp-cli login
 |---|---|---|
 | `--project <path>` | No | Store the credential in a project-local store (`<path>/.ai-game-dev/`) instead of the shared machine store |
 | `--force` | No | Re-authenticate even if a credential already exists |
+| `--tools-only` | No | Authorize **engine tools only** (no agent credential is stored, so desktop-app pickup is impossible). Intended for CI / automation runners, which then appear as their own revocable device group |
+| `--yes` | No | Assume "yes" for prompts — required to confirm an **account switch** non-interactively (signing in as a different account than the machine currently holds) |
 
-The command prints a short user code and a verification URL, opens your browser, and polls until you approve the sign-in. If a credential already exists it exits early with *"Already signed in"* — pass `--force` to replace it.
+The command prints a short user code and a verification URL, opens your browser, and polls until you approve the sign-in. If a credential already exists it exits early with *"Already signed in"* — pass `--force` to replace it. Signing in as a **different account** than the one the machine holds asks for confirmation first (declining leaves everything unchanged); pass `--yes` to confirm in scripts.
 
 **Example — sign in (shared machine store):**
 
 ```bash
 unity-mcp-cli login
+```
+
+**Example — CI runner, engine tools only:**
+
+```bash
+unity-mcp-cli login --tools-only
 ```
 
 **Example — store the credential next to a specific project:**

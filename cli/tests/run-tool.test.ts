@@ -6,12 +6,15 @@ import * as os from 'os';
 import { fileURLToPath } from 'url';
 import {
   resolveConnectionFromConfig,
-  readMachineStoreCloudToken,
   isCloudMode,
   CLOUD_SERVER_URL,
   type UnityConnectionConfig,
 } from '../src/utils/config.js';
 import { resolveConnection } from '../src/utils/connection.js';
+import {
+  readCloudAccessToken,
+  resetCloudCredentialProviderForTests,
+} from '../src/utils/cloud-credentials.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CLI_PATH = path.resolve(__dirname, '..', 'bin', 'unity-mcp-cli.js');
@@ -53,20 +56,26 @@ function loggedOutEnv(): { env: NodeJS.ProcessEnv; cleanup: () => void } {
 
 // ── resolveConnectionFromConfig unit tests ────────────────────────────────────
 
+// The Cloud-mode credential seam is REQUIRED (no built-in default): production callers pass
+// cli-core's refreshing `MachineCredentialProvider` via `readCloudAccessToken`; these unit tests
+// pass deterministic values. `noCloudToken` stands in for Custom-mode cases where the seam must
+// never be consulted.
+const noCloudToken = (): string | undefined => undefined;
+
 describe('resolveConnectionFromConfig', () => {
-  it('returns host and token in Custom mode', () => {
+  it('returns host and token in Custom mode', async () => {
     const config: UnityConnectionConfig = {
       connectionMode: 'Custom',
       host: 'http://localhost:55000',
       token: 'custom-secret',
       cloudToken: 'cloud-secret',
     };
-    const result = resolveConnectionFromConfig(config);
+    const result = await resolveConnectionFromConfig(config, { readCloudToken: noCloudToken });
     expect(result.url).toBe('http://localhost:55000');
     expect(result.token).toBe('custom-secret');
   });
 
-  it('returns hardcoded cloud URL and the machine-store credential in Cloud mode', () => {
+  it('returns hardcoded cloud URL and the machine-store credential in Cloud mode', async () => {
     // Post-T9 the plugin no longer writes `cloudToken`; the Cloud-mode Bearer now comes from the
     // shared machine credential store, NOT the on-disk `cloudToken` (defect E / D11).
     const config: UnityConnectionConfig = {
@@ -75,93 +84,107 @@ describe('resolveConnectionFromConfig', () => {
       token: 'custom-secret',
       cloudToken: 'cloud-secret',
     };
-    const result = resolveConnectionFromConfig(config, { readCloudToken: () => 'store-bearer-token' });
+    const result = await resolveConnectionFromConfig(config, {
+      readCloudToken: () => 'store-bearer-token',
+    });
     expect(result.url).toBe(CLOUD_SERVER_URL);
     expect(result.token).toBe('store-bearer-token');
   });
 
-  it('does NOT read cloudToken in Cloud mode (store empty ⇒ undefined token)', () => {
+  it('supports an ASYNC readCloudToken (the provider seam is awaited)', async () => {
+    const config: UnityConnectionConfig = { connectionMode: 'Cloud' };
+    const result = await resolveConnectionFromConfig(config, {
+      readCloudToken: async () => 'async-bearer',
+    });
+    expect(result.token).toBe('async-bearer');
+  });
+
+  it('does NOT read cloudToken in Cloud mode (store empty ⇒ undefined token)', async () => {
     // The dead `cloudToken` read is gone: even with a `cloudToken` present in the config, an empty
     // machine store resolves to no token (which the caller turns into a "not logged in" error).
     const config: UnityConnectionConfig = {
       connectionMode: 'Cloud',
       cloudToken: 'cloud-secret',
     };
-    const result = resolveConnectionFromConfig(config, { readCloudToken: () => undefined });
+    const result = await resolveConnectionFromConfig(config, { readCloudToken: noCloudToken });
     expect(result.url).toBe(CLOUD_SERVER_URL);
     expect(result.token).toBeUndefined();
   });
 
-  it('defaults to Custom mode when connectionMode is undefined', () => {
+  it('defaults to Custom mode when connectionMode is undefined', async () => {
     const config: UnityConnectionConfig = {
       host: 'http://localhost:55000',
       token: 'my-token',
     };
-    const result = resolveConnectionFromConfig(config);
+    const result = await resolveConnectionFromConfig(config, { readCloudToken: noCloudToken });
     expect(result.url).toBe('http://localhost:55000');
     expect(result.token).toBe('my-token');
   });
 
-  it('returns undefined url and token when fields are missing in Custom mode', () => {
+  it('returns undefined url and token when fields are missing in Custom mode', async () => {
     const config: UnityConnectionConfig = {
       connectionMode: 'Custom',
     };
-    const result = resolveConnectionFromConfig(config);
+    const result = await resolveConnectionFromConfig(config, { readCloudToken: noCloudToken });
     expect(result.url).toBeUndefined();
     expect(result.token).toBeUndefined();
   });
 
-  it('returns hardcoded cloud URL and undefined token when not logged in (Cloud mode)', () => {
+  it('returns hardcoded cloud URL and undefined token when not logged in (Cloud mode)', async () => {
     const config: UnityConnectionConfig = {
       connectionMode: 'Cloud',
     };
-    const result = resolveConnectionFromConfig(config, { readCloudToken: () => undefined });
+    const result = await resolveConnectionFromConfig(config, { readCloudToken: noCloudToken });
     expect(result.url).toBe(CLOUD_SERVER_URL);
     expect(result.token).toBeUndefined();
   });
 
-  it('does not cross-contaminate Custom token with Cloud token', () => {
+  it('does not cross-contaminate Custom token with Cloud token', async () => {
     const config: UnityConnectionConfig = {
       connectionMode: 'Custom',
       token: 'custom-only',
       cloudToken: 'cloud-only',
     };
-    const result = resolveConnectionFromConfig(config);
+    const result = await resolveConnectionFromConfig(config, { readCloudToken: noCloudToken });
     expect(result.token).toBe('custom-only');
   });
 
-  it('ignores both config.token and config.cloudToken in Cloud mode (uses the machine store)', () => {
+  it('ignores both config.token and config.cloudToken in Cloud mode (uses the machine store)', async () => {
     const config: UnityConnectionConfig = {
       connectionMode: 'Cloud',
       token: 'custom-only',
       cloudToken: 'cloud-only',
     };
-    const result = resolveConnectionFromConfig(config, { readCloudToken: () => 'store-bearer' });
+    const result = await resolveConnectionFromConfig(config, {
+      readCloudToken: () => 'store-bearer',
+    });
     expect(result.token).toBe('store-bearer');
   });
 
   // Legacy integer enum values (written by older Unity plugin versions)
 
-  it('handles legacy integer 0 as Custom mode', () => {
+  it('handles legacy integer 0 as Custom mode', async () => {
     const config: UnityConnectionConfig = {
       connectionMode: 0,
       host: 'http://localhost:55000',
       token: 'custom-secret',
       cloudToken: 'cloud-secret',
     };
-    const result = resolveConnectionFromConfig(config);
+    const result = await resolveConnectionFromConfig(config, { readCloudToken: noCloudToken });
     expect(result.url).toBe('http://localhost:55000');
     expect(result.token).toBe('custom-secret');
   });
 
-  it('handles legacy integer 1 as Cloud mode with the machine-store credential', () => {
+  it('handles legacy integer 1 as Cloud mode with the machine-store credential', async () => {
     const config: UnityConnectionConfig = {
       connectionMode: 1,
       host: 'http://localhost:55000',
       token: 'custom-secret',
       cloudToken: 'cloud-secret',
     };
-    const result = resolveConnectionFromConfig(config, { readCloudToken: () => 'store-bearer-token' });
+    const result = await resolveConnectionFromConfig(config, {
+      readCloudToken: () => 'store-bearer-token',
+    });
     expect(result.url).toBe(CLOUD_SERVER_URL);
     expect(result.token).toBe('store-bearer-token');
   });
@@ -169,7 +192,7 @@ describe('resolveConnectionFromConfig', () => {
 
 // ── machine-store credential wiring (default, un-injected path) ───────────────
 
-describe('readMachineStoreCloudToken', () => {
+describe('readCloudAccessToken (the provider-backed default)', () => {
   let savedHome: string | undefined;
   let savedUserProfile: string | undefined;
   let home: string;
@@ -181,6 +204,7 @@ describe('readMachineStoreCloudToken', () => {
     home = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-store-'));
     process.env.HOME = home;
     process.env.USERPROFILE = home;
+    resetCloudCredentialProviderForTests();
   });
 
   afterEach(() => {
@@ -188,24 +212,36 @@ describe('readMachineStoreCloudToken', () => {
     else process.env.HOME = savedHome;
     if (savedUserProfile === undefined) delete process.env.USERPROFILE;
     else process.env.USERPROFILE = savedUserProfile;
+    resetCloudCredentialProviderForTests();
     fs.rmSync(home, { recursive: true, force: true });
   });
 
-  it('returns undefined when the machine store holds no credential', () => {
-    expect(readMachineStoreCloudToken()).toBeUndefined();
+  it('resolves undefined when the machine store holds no credential (login required)', async () => {
+    await expect(readCloudAccessToken()).resolves.toBeUndefined();
   });
 
-  it('is the default Cloud-mode token source for resolveConnectionFromConfig (empty store ⇒ undefined)', () => {
-    // No injected readCloudToken ⇒ the resolver falls through to the real (here empty) machine store.
-    const result = resolveConnectionFromConfig({ connectionMode: 'Cloud', cloudToken: 'ignored' });
-    expect(result.url).toBe(CLOUD_SERVER_URL);
-    expect(result.token).toBeUndefined();
+  it('is the Cloud-mode token source for resolveConnection (empty store ⇒ cloudAuthMissing)', async () => {
+    // No injected readCloudToken ⇒ resolveConnection falls through to the real provider seam
+    // (here: an empty machine store under the redirected HOME).
+    const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-cloud-default-'));
+    try {
+      fs.mkdirSync(path.join(projectDir, 'UserSettings'), { recursive: true });
+      fs.writeFileSync(
+        path.join(projectDir, 'UserSettings', 'AI-Game-Developer-Config.json'),
+        JSON.stringify({ connectionMode: 'Cloud', cloudToken: 'ignored' }),
+      );
+      const result = await resolveConnection(projectDir, {});
+      expect(result.url).toBe(CLOUD_SERVER_URL);
+      expect(result.token).toBeUndefined();
+      expect(result.cloudAuthMissing).toBe(true);
+    } finally {
+      fs.rmSync(projectDir, { recursive: true, force: true });
+    }
   });
 });
-
 // ── resolveConnection cloud-auth-missing signal (feeds the run-tool guard) ─────
 
-describe('resolveConnection — Cloud auth missing', () => {
+describe('resolveConnection — Cloud auth missing', async () => {
   let tmpDir: string;
 
   beforeEach(() => {
@@ -225,31 +261,31 @@ describe('resolveConnection — Cloud auth missing', () => {
     );
   }
 
-  it('flags cloudAuthMissing when Cloud mode has no machine-store credential', () => {
+  it('flags cloudAuthMissing when Cloud mode has no machine-store credential', async () => {
     writeCloudConfig();
-    const result = resolveConnection(tmpDir, {}, { readCloudToken: () => undefined });
+    const result = await resolveConnection(tmpDir, {}, { readCloudToken: () => undefined });
     expect(result.url).toBe(CLOUD_SERVER_URL);
     expect(result.token).toBeUndefined();
     expect(result.cloudAuthMissing).toBe(true);
   });
 
-  it('does not flag cloudAuthMissing when the store has a credential', () => {
+  it('does not flag cloudAuthMissing when the store has a credential', async () => {
     writeCloudConfig();
-    const result = resolveConnection(tmpDir, {}, { readCloudToken: () => 'store-bearer' });
+    const result = await resolveConnection(tmpDir, {}, { readCloudToken: () => 'store-bearer' });
     expect(result.token).toBe('store-bearer');
     expect(result.cloudAuthMissing).toBe(false);
   });
 
-  it('does not flag cloudAuthMissing when --token overrides in Cloud mode', () => {
+  it('does not flag cloudAuthMissing when --token overrides in Cloud mode', async () => {
     writeCloudConfig();
-    const result = resolveConnection(tmpDir, { token: 'explicit' }, { readCloudToken: () => undefined });
+    const result = await resolveConnection(tmpDir, { token: 'explicit' }, { readCloudToken: () => undefined });
     expect(result.token).toBe('explicit');
     expect(result.cloudAuthMissing).toBe(false);
   });
 
-  it('does not flag cloudAuthMissing when --url overrides the endpoint in Cloud mode', () => {
+  it('does not flag cloudAuthMissing when --url overrides the endpoint in Cloud mode', async () => {
     writeCloudConfig();
-    const result = resolveConnection(
+    const result = await resolveConnection(
       tmpDir,
       { url: 'http://localhost:9999' },
       { readCloudToken: () => undefined },
@@ -258,12 +294,12 @@ describe('resolveConnection — Cloud auth missing', () => {
     expect(result.cloudAuthMissing).toBe(false);
   });
 
-  it('never flags cloudAuthMissing in Custom mode (self-host / derived-port)', () => {
+  it('never flags cloudAuthMissing in Custom mode (self-host / derived-port)', async () => {
     fs.writeFileSync(
       path.join(tmpDir, 'UserSettings', 'AI-Game-Developer-Config.json'),
       JSON.stringify({ connectionMode: 'Custom', host: 'http://localhost:55000' }),
     );
-    const result = resolveConnection(tmpDir, {}, { readCloudToken: () => undefined });
+    const result = await resolveConnection(tmpDir, {}, { readCloudToken: () => undefined });
     expect(result.cloudAuthMissing).toBe(false);
   });
 });
