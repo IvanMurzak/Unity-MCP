@@ -1,0 +1,27 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/Structures/EntityIdConverter.cs
+  d73b5a9fcb246df7 18,45-47,51,54,56
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/GameObject/TestToolGameObject.ModifyComponent.cs
+  d73b5a9fcb246df7 378
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Utils/EntityIdUtils.cs
+  d73b5a9fcb246df7 1-63
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "a76871dd81cc43ffc47c7a54f951f876de66be08",
+  "prompts": {
+    "d73b5a9fcb246df7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9fa2eb9c-f863-4e53-af3d-044644714422",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 710,
+      "total_deletions": 653,
+      "accepted_lines": 7535,
+      "overriden_lines": 151
+    }
+  }
+}

@@ -1,0 +1,39 @@
+cli/docs/README.zh-CN.md
+  ebcee6ea9419cabb 11-25
+README.md
+  ebcee6ea9419cabb 18-32
+docs/README.zh-CN.md
+  ebcee6ea9419cabb 18-32
+cli/docs/README.ja.md
+  ebcee6ea9419cabb 11-25
+docs/README.ja.md
+  ebcee6ea9419cabb 18-32
+cli/README.md
+  ebcee6ea9419cabb 11-25
+Unity-MCP-Plugin/Assets/root/README.md
+  ebcee6ea9419cabb 18-32
+docs/README.es.md
+  ebcee6ea9419cabb 18-32
+cli/docs/README.es.md
+  ebcee6ea9419cabb 11-25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "ab4a39a3c3424feebf65204f12399f392690b119",
+  "prompts": {
+    "ebcee6ea9419cabb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a6109497-717a-48c0-8c66-75da07cb770b",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 5399,
+      "total_deletions": 5264,
+      "accepted_lines": 2681,
+      "overriden_lines": 0
+    }
+  }
+}

@@ -1,0 +1,23 @@
+cli/src/utils/machine-credentials.ts
+  s_a751fb1926065b::t_8c540f535e3b0b 93-96
+  s_a751fb1926065b::t_b35d789cc89d5b 130-132
+cli/tests/machine-credentials.test.ts
+  s_a751fb1926065b::t_063c69067704e8 4,14-19
+  s_a751fb1926065b::t_3086934dfbcdd8 20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.13",
+  "base_commit_sha": "c2ec093ed7d06b1655aab0dbab3416c117753d3c",
+  "prompts": {},
+  "sessions": {
+    "s_a751fb1926065b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "00e8960c-83e7-486a-a338-2a4d1545497c",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

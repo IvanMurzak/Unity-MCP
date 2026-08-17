@@ -1,0 +1,29 @@
+Unity-MCP-Plugin/Assets/root/Tests/Editor/Tool/Assets/AssetsPrefabCreateTests.cs
+  39ce660a0113894c 1-360
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/Assets.Prefab.Create.cs
+  39ce660a0113894c 33-35,41-53,64-72,74-113
+Unity-MCP-Plugin/.claude/skills/assets-prefab-create/SKILL.md
+  39ce660a0113894c 3,14-15,42-44,58-61,104
+Unity-MCP-Plugin/Assets/root/Tests/Editor/Tool/Assets/AssetsPrefabCreateTests.cs.meta
+  39ce660a0113894c 1-11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "e1aabcff4848387d05e9a3662a72eef32cbf35bb",
+  "prompts": {
+    "39ce660a0113894c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bb1982f3-0a6e-41e6-a1f1-76418b796147",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 1194,
+      "total_deletions": 10649,
+      "accepted_lines": 653,
+      "overriden_lines": 0
+    }
+  }
+}

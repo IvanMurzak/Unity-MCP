@@ -1,0 +1,31 @@
+.github/workflows/deploy_server_executables.yml
+  s_a91286864e1aa8::t_a257b47531c29e 39-49
+  s_a91286864e1aa8::t_b3ccab068f878d 9-10,13-23,32-37,62,64-66,68-157,165-215
+  s_a91286864e1aa8::t_df59f4f65fbe5f 158-164
+Unity-MCP-Server/build-all.ps1
+  s_a91286864e1aa8::t_8f6d1e28c2082e 107-111
+  s_a91286864e1aa8::t_4e9b894caa08ec 8-11
+Unity-MCP-Server/build/entitlements.mac.plist
+  s_a91286864e1aa8::t_7b53cc5b4edb9f 1-20
+Unity-MCP-Server/build-all.sh
+  s_a91286864e1aa8::t_90cecd5586b8d2 29-34
+  s_a91286864e1aa8::t_ddc4b199627444 10
+  s_a91286864e1aa8::t_b17acfb521186b 55
+  s_a91286864e1aa8::t_f1c67034dade16 123-128
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "cf82d4a3cb2ae072072a7fc6e266534bddbee15b",
+  "prompts": {},
+  "sessions": {
+    "s_a91286864e1aa8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e3b16eb7-61cd-477b-9259-ded24219480e",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

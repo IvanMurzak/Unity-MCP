@@ -1,0 +1,25 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Utils/UpdateChecker.cs
+  037c45f817b1636f 15,37-38,40,43-51,60-66,238,288-294
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Utils/UpdateCheckerTests.cs
+  037c45f817b1636f 222-256
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "7ef68c14183e8da3d59c2a7dec96e006755b5c31",
+  "prompts": {
+    "037c45f817b1636f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "94478e67-ddb3-4768-a44c-35fac2b73df4",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 1991,
+      "total_deletions": 102,
+      "accepted_lines": 2616,
+      "overriden_lines": 5
+    }
+  }
+}

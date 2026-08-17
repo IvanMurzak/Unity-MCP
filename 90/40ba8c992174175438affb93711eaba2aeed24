@@ -1,0 +1,35 @@
+docs/DOCKER_DEPLOYMENT.md
+  s_53ce73f91e4281::t_5551830c1538a0 15,17-18
+docs/version-management.md
+  s_53ce73f91e4281::t_278c64d53fd21a 5,35-46,57
+docs/mcp-server.md
+  s_53ce73f91e4281::t_8181b7969152af 16-17
+  s_53ce73f91e4281::t_2499c900141924 40
+CLAUDE.md
+  s_53ce73f91e4281::t_a5552868f4d697 24
+  s_53ce73f91e4281::t_adb4d170da0f6c 5-7
+docs/claude/architecture.md
+  s_53ce73f91e4281::t_be3dbe426d8f9e 6,13
+docs/dev/Development.md
+  s_53ce73f91e4281::t_b214508ef1cb87 168,172,174-180,182,186
+  s_53ce73f91e4281::t_a12176cd4bb9aa 598-599
+  s_53ce73f91e4281::t_7ab5011e7a4d78 107-109,111,113-115
+  s_53ce73f91e4281::t_3de47072953a28 583-589
+  s_53ce73f91e4281::t_bfb00103da2a6d 618-619,623,625-626,628,634,641,647-651
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "9040ba8c992174175438affb93711eaba2aeed24",
+  "prompts": {},
+  "sessions": {
+    "s_53ce73f91e4281": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e24c1167-2410-4c32-885c-4fd71d157405",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

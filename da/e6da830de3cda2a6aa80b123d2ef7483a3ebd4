@@ -1,0 +1,19 @@
+.github/workflows/generate-unity-activation-file.yml
+  s_60bce0e60f2773::t_65adab227bc5f3 1-85
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "dae6da830de3cda2a6aa80b123d2ef7483a3ebd4",
+  "prompts": {},
+  "sessions": {
+    "s_60bce0e60f2773": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "53d607ea-9a51-44f7-8180-d51f9a2c2fc6",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

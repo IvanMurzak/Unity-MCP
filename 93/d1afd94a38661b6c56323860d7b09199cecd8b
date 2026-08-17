@@ -1,0 +1,19 @@
+Unity-MCP-Server/src/Program.cs
+  s_505c78f0ea55bd::t_c8599774a33c3d 34-41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "93d1afd94a38661b6c56323860d7b09199cecd8b",
+  "prompts": {},
+  "sessions": {
+    "s_505c78f0ea55bd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "675bbc25-d24f-4024-95c5-00cb874794e4",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

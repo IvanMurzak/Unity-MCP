@@ -1,0 +1,42 @@
+Unity-MCP-Plugin/.claude/skills/assets-shader-get-data/SKILL.md
+  d73b5a9fcb246df7 371
+Unity-MCP-Plugin/.claude/skills/assets-modify/SKILL.md
+  6a68a06015032372 3-11,21-23,50-52,65-70,143-161,165
+Unity-MCP-Plugin/.claude/skills/gameobject-modify/SKILL.md
+  6a68a06015032372 3-11,21-23,50-52,65-70,159-189,193
+Unity-MCP-Plugin/.claude/skills/scene-get-data/SKILL.md
+  d73b5a9fcb246df7 4,368
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "34157b7fbb776d7c9290b41a288820ad0f1ff515",
+  "prompts": {
+    "6a68a06015032372": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "91746844-74f2-4cab-b80f-5816aca89318",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 94,
+      "total_deletions": 9833,
+      "accepted_lines": 94,
+      "overriden_lines": 0
+    },
+    "d73b5a9fcb246df7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9fa2eb9c-f863-4e53-af3d-044644714422",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 6881,
+      "overriden_lines": 50
+    }
+  }
+}

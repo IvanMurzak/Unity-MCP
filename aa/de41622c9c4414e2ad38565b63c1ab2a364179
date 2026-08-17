@@ -1,0 +1,21 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "aade41622c9c4414e2ad38565b63c1ab2a364179",
+  "prompts": {
+    "d73b5a9fcb246df7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9fa2eb9c-f863-4e53-af3d-044644714422",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}

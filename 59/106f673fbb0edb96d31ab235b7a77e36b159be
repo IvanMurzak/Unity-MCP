@@ -1,0 +1,45 @@
+cli/src/commands/run-tool.ts
+  4aa1cc2b08e6c364 7,155-178
+  45ca013db5b69276 6,28-36,38,45-53,55
+cli/src/utils/connection.ts
+  4aa1cc2b08e6c364 1-66
+cli/src/commands/run-system-tool.ts
+  4aa1cc2b08e6c364 1-188
+cli/src/index.ts
+  4aa1cc2b08e6c364 10,35
+cli/src/utils/json-parse.ts
+  45ca013db5b69276 1-123
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "59106f673fbb0edb96d31ab235b7a77e36b159be",
+  "prompts": {
+    "45ca013db5b69276": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2e2c1cd8-8720-44b0-ab73-418059d74d8a",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 352,
+      "total_deletions": 214,
+      "accepted_lines": 161,
+      "overriden_lines": 0
+    },
+    "4aa1cc2b08e6c364": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0323f95e-54e5-40b8-adf4-7ea4f44bad52",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 356,
+      "total_deletions": 133,
+      "accepted_lines": 291,
+      "overriden_lines": 0
+    }
+  }
+}

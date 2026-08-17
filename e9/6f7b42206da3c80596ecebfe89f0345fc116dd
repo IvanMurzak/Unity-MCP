@@ -1,0 +1,19 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/ToolThreadSafetyTests.cs
+  s_3292411432cf3b::t_6986f7fcfed7ec 70-73,77
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.2",
+  "base_commit_sha": "e96f7b42206da3c80596ecebfe89f0345fc116dd",
+  "prompts": {},
+  "sessions": {
+    "s_3292411432cf3b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ffdd9b4a-f8c0-4933-8fc2-0550b809b81b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

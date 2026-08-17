@@ -1,0 +1,49 @@
+Unity-MCP-Plugin/Assets/root/Tests/Editor/JsonConverters/GradientConverterTests.cs
+  01c729af27f565c0 1-143
+Unity-MCP-Plugin/Assets/root/Tests/Editor/JsonConverters/TestUtils.cs
+  01c729af27f565c0 37-39,64-77
+Unity-MCP-Plugin/Assets/root/Runtime/Converter/Json/Structures/GradientColorKeyConverter.cs
+  01c729af27f565c0 1-67,69-86,88-92
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/GameObject.Component.Modify.cs
+  01c729af27f565c0 47-50
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/Object.Modify.cs
+  01c729af27f565c0 53-54
+Unity-MCP-Plugin/Assets/root/Runtime/Converter/Reflection/Struct/UnityEngineDataStructReflectionConverters.cs
+  01c729af27f565c0 33-35
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/Assets.Modify.cs
+  01c729af27f565c0 46-49
+Unity-MCP-Plugin/Assets/root/Runtime/UnityMcpPlugin.Converters.cs
+  01c729af27f565c0 51-53,147-148
+Unity-MCP-Plugin/Assets/root/Tests/Editor/Tool/GameObject/TestToolGameObject.ModifyComponent.Gradient.cs
+  01c729af27f565c0 1-144
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/GameObject.Modify.cs
+  01c729af27f565c0 47-54,80-85
+Unity-MCP-Plugin/Assets/root/Runtime/Converter/Json/Structures/GradientAlphaKeyConverter.cs
+  01c729af27f565c0 1-93
+Unity-MCP-Plugin/Assets/root/Runtime/Converter/Json/Structures/GradientConverter.cs
+  01c729af27f565c0 1-46,48-87,89-90,92-119,121-122,124-130
+Unity-MCP-Plugin/Assets/root/Runtime/Converter/Reflection/UnityEngine_Gradient_ReflectionConverter.cs
+  01c729af27f565c0 1-65
+Unity-MCP-Plugin/Assets/root/TestFiles/Scripts/GradientTest.cs
+  01c729af27f565c0 1-20
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.19",
+  "base_commit_sha": "bd085c7527bea62fa54b54b417f85d9d0542c031",
+  "prompts": {
+    "01c729af27f565c0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "fa806d6d-528d-476a-808e-e6537843b10b",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 1435,
+      "total_deletions": 701,
+      "accepted_lines": 1424,
+      "overriden_lines": 8
+    }
+  }
+}
