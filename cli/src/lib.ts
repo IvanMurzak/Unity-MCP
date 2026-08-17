@@ -17,12 +17,27 @@
 // this file via the `exports` field in package.json).
 
 export { installPlugin } from './lib/install-plugin.js';
+export { installExtension } from './lib/install-extension.js';
 export { removePlugin } from './lib/remove-plugin.js';
 export { configure } from './lib/configure.js';
 export { setupMcp, listAgentIds } from './lib/setup-mcp.js';
 export { openProject } from './lib/open.js';
 export { createProject } from './lib/create-project.js';
 export { runTool, runSystemTool } from './lib/run-tool.js';
+
+// The extension catalogue is part of the public library surface: a consumer that
+// renders an "install an extension" list (the desktop app) needs the same ten
+// entries the CLI installs from, and must not re-declare them.
+export {
+  EXTENSIONS_CATALOG,
+  findExtension,
+  hasVersion,
+} from './utils/extensions-catalog.js';
+
+export type {
+  ExtensionDescriptor,
+  ExtensionTool,
+} from './utils/extensions-catalog.js';
 
 export type {
   // Shared
@@ -34,6 +49,12 @@ export type {
   InstallResult,
   InstallSuccess,
   InstallFailure,
+  // install-extension
+  InstallExtensionOptions,
+  InstallExtensionResult,
+  InstallExtensionSuccess,
+  InstallExtensionFailure,
+  InstallExtensionOutcome,
   // remove-plugin
   RemovePluginOptions,
   RemoveResult,
