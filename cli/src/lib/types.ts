@@ -5,6 +5,11 @@
 //
 // No top-level side effects, no runtime deps beyond TypeScript types.
 
+// Type-only import: erased at compile time, so this adds no runtime dependency
+// and cannot introduce a side effect. `ExtensionDescriptor` is the catalogue entry
+// shape, needed by `InstallExtensionOptions.catalog`.
+import type { ExtensionDescriptor } from '../utils/extensions-catalog.js';
+
 // ---------------------------------------------------------------------------
 // Progress events
 // ---------------------------------------------------------------------------
@@ -125,6 +130,93 @@ export interface InstallFailure {
 }
 
 export type InstallResult = InstallSuccess | InstallFailure;
+
+// ---------------------------------------------------------------------------
+// install-extension
+// ---------------------------------------------------------------------------
+
+/**
+ * What `installExtension` actually did. Distinguished from `changed` because a
+ * caller usually wants to say "installed" vs "updated" vs "nothing to do" in its
+ * UI, and `changed` alone cannot tell the first two apart.
+ */
+export type InstallExtensionOutcome = 'added' | 'updated' | 'already-up-to-date';
+
+export interface InstallExtensionOptions {
+  /** Absolute or relative path to the Unity project's root. */
+  unityProjectPath: string;
+  /**
+   * Extension to install — either the OpenUPM package id
+   * (`com.ivanmurzak.unity.mcp.tilemap`) or the catalogue display name
+   * (`Tilemap`). Matched case-insensitively, package id first.
+   */
+  extensionId: string;
+  /**
+   * Version to install. When omitted, OpenUPM's `dist-tags.latest` is resolved
+   * live at install time — which is the normal path, because every catalogue
+   * entry is unpinned (`version: null`). Supplying a value also permits a
+   * downgrade, mirroring `installPlugin`'s explicit-version semantics.
+   */
+  version?: string;
+  /**
+   * Catalogue override, for tests and for callers that carry their own list.
+   * Defaults to the built-in `EXTENSIONS_CATALOG`.
+   */
+  catalog?: readonly ExtensionDescriptor[];
+  /**
+   * Optional progress callback — fires for `start`, `dependencies-resolved`
+   * (when the version was auto-resolved), `manifest-patched`, and `done`.
+   */
+  onProgress?: ProgressCallback;
+}
+
+/** Successful `installExtension` outcome. Narrow with `kind === 'success'`. */
+export interface InstallExtensionSuccess {
+  kind: 'success';
+  /** Always `true` for the success variant. */
+  success: true;
+  /** What happened — see {@link InstallExtensionOutcome}. */
+  outcome: InstallExtensionOutcome;
+  /** `true` when `manifest.json` was written. `false` for `already-up-to-date`. */
+  changed: boolean;
+  /** The `extensionId` as supplied by the caller. */
+  extensionId: string;
+  /** The resolved OpenUPM package id that was written to the manifest. */
+  packageId: string;
+  /** Version present before the call, or `null` when the extension was absent. */
+  fromVersion: string | null;
+  /** Version present after the call. */
+  toVersion: string;
+  /** Absolute path to the `Packages/manifest.json` that was inspected / written. */
+  manifestPath: string;
+  /** Human-readable summary the caller may surface directly. */
+  message: string;
+  /** Non-fatal warnings collected during the run. */
+  warnings: string[];
+  /** Suggested next steps for the caller to surface to a human user. */
+  nextSteps: string[];
+}
+
+/** Failed `installExtension` outcome. Narrow with `kind === 'failure'`. */
+export interface InstallExtensionFailure {
+  kind: 'failure';
+  /** Always `false` for the failure variant. */
+  success: false;
+  /** The `extensionId` as supplied by the caller. */
+  extensionId: string;
+  /** Resolved package id, when catalogue lookup succeeded before the failure. */
+  packageId?: string;
+  /** Manifest path may be known even on failure (e.g. a validation failure that reached it). */
+  manifestPath?: string;
+  /** Non-fatal warnings collected before the failure. */
+  warnings: string[];
+  /** Suggested next steps the caller may surface to a human user. */
+  nextSteps: string[];
+  /** The captured error. Never thrown past this boundary. */
+  error: Error;
+}
+
+export type InstallExtensionResult = InstallExtensionSuccess | InstallExtensionFailure;
 
 // ---------------------------------------------------------------------------
 // remove-plugin

@@ -93,6 +93,7 @@ npx unity-mcp-cli install-plugin /path/to/unity/project
 - [Commands](#commands)
   - [`configure`](#configure)
   - [`create-project`](#create-project)
+  - [`install-extension`](#install-extension)
   - [`install-plugin`](#install-plugin)
   - [`install-unity`](#install-unity)
   - [`login`](#login)
@@ -178,6 +179,55 @@ unity-mcp-cli create-project /path/to/new/project
 ```bash
 unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
 ```
+
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `install-extension`
+
+Install one of the Unity-MCP extensions — the optional tool packs that add MCP tools for Animation, Cinemachine, Input System, Navigation, Particle System, ProBuilder, Splines, Terrain, Tilemap, and Timeline — into a Unity project's `Packages/manifest.json`. This is the command-line equivalent of the **Extensions** section in the *AI Game Developer* editor window, and it installs from the same shared catalogue.
+
+```bash
+# See what is installable (no project and no network required)
+unity-mcp-cli install-extension --list
+
+# Run from inside the Unity project folder — the path is optional
+cd ./MyGame && unity-mcp-cli install-extension Tilemap
+```
+
+| Argument / Option | Required | Description |
+|---|---|---|
+| `[id]` | Yes (unless `--list`) | Extension to install — the OpenUPM package id (`com.ivanmurzak.unity.mcp.tilemap`) or the catalogue name (`Tilemap`). Matched case-insensitively. An unknown id lists every installable extension so you can self-correct. |
+| `[path]` | No | Path to the Unity project (positional or `--path`). Defaults to the current directory, verified the same way as `install-plugin`. |
+| `--extension-version <version>` | No | Extension version to install (defaults to latest from OpenUPM). **Not `--version`** — that is the CLI's own global version flag. |
+| `--list` | No | List the installable extensions and exit. |
+
+This command:
+1. Adds the **OpenUPM scoped registry** with all required scopes (the `com.ivanmurzak` scope is what makes the extension resolvable at all)
+2. Adds the extension's package id to `dependencies`, resolving OpenUPM's `latest` at install time
+3. **Never downgrades** on an auto-resolved version — if a higher version is already installed, it is preserved and a warning is printed. Pass `--extension-version` to force a specific value, including a downgrade.
+4. Is **idempotent** — a re-run that finds the extension already up to date reports so and writes nothing
+
+**Example — install a specific extension version:**
+
+```bash
+unity-mcp-cli install-extension Cinemachine ./MyGame --extension-version 1.0.17
+```
+
+**Example — in-process, from the library:**
+
+```ts
+import { installExtension, EXTENSIONS_CATALOG } from 'unity-mcp-cli';
+
+const result = await installExtension({
+  unityProjectPath: './MyGame',
+  extensionId: 'Tilemap',
+});
+if (result.kind === 'success') {
+  console.log(result.outcome, result.fromVersion, '->', result.toVersion);
+}
+```
+
+> After running this command, open (or focus) the Unity Editor so the Package Manager resolves the new dependency.
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
