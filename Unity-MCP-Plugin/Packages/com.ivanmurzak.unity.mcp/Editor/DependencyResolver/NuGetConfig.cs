@@ -30,6 +30,50 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         public const string ReadyDefine = "UNITY_MCP_READY";
 
         /// <summary>
+        /// Prefix of the dependency-generation gate define. Every define starting with this
+        /// prefix other than <see cref="DependencyGenerationDefine"/> is stale and gets stripped
+        /// by <see cref="RecompileGate.EnsureReadyDefine"/>.
+        /// </summary>
+        public const string DependencyGenerationDefinePrefix = "UNITY_MCP_DEPS_";
+
+        /// <summary>
+        /// Generation marker for the pinned NuGet set in <see cref="Packages"/>, and the SECOND
+        /// gate the main plugin asmdefs are constrained on (Unity ANDs defineConstraints).
+        ///
+        /// <para><b>Bump this whenever any version in <see cref="Packages"/> changes.</b> A CI check
+        /// (<c>.github/scripts/check_nuget_gate.py</c>) fails the build if you don't.</para>
+        ///
+        /// <para>Why it exists (Unity-MCP#957). <see cref="ReadyDefine"/> alone is a boolean "the
+        /// resolver has run at some point" flag that lives in ProjectSettings and therefore SURVIVES
+        /// a package upgrade. It records that <i>some</i> DLL set was restored — not <i>which</i>.
+        /// When a package upgrade raises a NuGet pin, the sequence was:</para>
+        /// <list type="number">
+        ///   <item>UPM writes the new package files; the PREVIOUS AppDomain is still alive.</item>
+        ///   <item>Its <see cref="NuGetDependencyResolver.OnRegisteredPackages"/> handler evaluates
+        ///   the <b>OLD</b> package's compiled <see cref="Packages"/> array, so
+        ///   <see cref="NuGetPackageRestorer.AllPackagesInstalled"/> reports true and no restore runs
+        ///   — the outgoing package cannot know about a pin the incoming package raised.</item>
+        ///   <item><see cref="ReadyDefine"/> is still set, so the gate is OPEN and Unity compiles the
+        ///   NEW sources against the OLD DLLs → CS0246 on every newly-referenced type.</item>
+        ///   <item>The failed compile blocks the domain reload, so the NEW resolver never runs and can
+        ///   never repair the DLL set. Reopening the project lands in Safe Mode. Deadlock.</item>
+        /// </list>
+        /// <para>A package whose code has not run yet can only signal Unity through static asmdef
+        /// data, so the gate must be part of that data. Because this define is bumped in lockstep with
+        /// the pins, an install restored for an older generation can never satisfy the new
+        /// constraint: the main assemblies are simply skipped, the compile SUCCEEDS, the domain
+        /// reloads, and the new resolver restores the correct DLLs and adds this define — the same
+        /// self-healing two-pass path a clean install already takes.</para>
+        /// </summary>
+        public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "2";
+
+        /// <summary>
+        /// Every define the main plugin asmdefs are gated on. All of them must be present for the
+        /// plugin to compile; <see cref="RecompileGate"/> adds and removes them as a set.
+        /// </summary>
+        public static readonly string[] GateDefines = { ReadyDefine, DependencyGenerationDefine };
+
+        /// <summary>
         /// NuGet v3 flat container base URL.
         /// Download URL pattern: {base}/{id}/{version}/{id}.{version}.nupkg
         /// </summary>
