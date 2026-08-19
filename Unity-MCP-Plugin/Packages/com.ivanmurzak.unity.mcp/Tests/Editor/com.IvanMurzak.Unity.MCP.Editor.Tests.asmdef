@@ -30,7 +30,8 @@
     ],
     "autoReferenced": true,
     "defineConstraints": [
-        "UNITY_MCP_READY"
+        "UNITY_MCP_READY",
+        "UNITY_MCP_DEPS_2"
     ],
     "versionDefines": [],
     "noEngineReferences": false
