@@ -430,7 +430,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 // provider's auto-adopt read, never an echo-write (G-SEC-2).
                 AccountCredentialService.Reload();
 
-                MainThread.Instance.RunAsync(() =>
+                await MainThread.Instance.RunAsync(() =>
                 {
                     UpdateTokenDisplay();
                     UpdateRevokeButtonVisibility();
