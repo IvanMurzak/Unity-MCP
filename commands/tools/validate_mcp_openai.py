@@ -1,9 +1,14 @@
 #!/usr/bin/env python3
 """
-MCP Tool JSON Validator using OpenAI API
-Validates MCP tool JSON by actually injecting it into OpenAI API.
-Tests if the tool definition is accepted by OpenAI's function calling system.
-This is a real "battle test" - if OpenAI API accepts it, it's valid!
+MCP Tool JSON Validator using an OpenAI-compatible API
+Validates MCP tool JSON by actually injecting it into an OpenAI-compatible API.
+Tests if the tool definition is accepted by the API's function calling system.
+This is a real "battle test" - if the API accepts it, it's valid!
+
+Provider selection (first match wins):
+  - `orcarouter`: [OrcaRouter](https://www.orcarouter.ai) gateway (https://api.orcarouter.ai/v1)
+    when ORCAROUTER_API_KEY is set, model orcarouter/auto
+  - `openai`: OpenAI API (default), model gpt-4o-mini
 """
 
 import json
@@ -55,20 +60,49 @@ class Colors:
         BOLD = '\033[1m'
 
 
-def get_openai_client():
-    """Get OpenAI client with API key from environment or .env file."""
-    api_key = os.getenv('OPENAI_API_KEY')
+def resolve_provider():
+    """Choose the LLM provider used to validate MCP tool JSON.
+
+    Returns a dict describing the selected provider:
+      - `orcarouter`: the OrcaRouter gateway (base https://api.orcarouter.ai/v1,
+        model orcarouter/auto) when ORCAROUTER_API_KEY is set
+      - `openai`: the OpenAI API (default, model gpt-4o-mini)
+    """
+    if os.getenv('ORCAROUTER_API_KEY'):
+        return {
+            'name': 'orcarouter',
+            'api_key_env': 'ORCAROUTER_API_KEY',
+            'base_url': 'https://api.orcarouter.ai/v1',
+            'model': 'orcarouter/auto',
+        }
+    return {
+        'name': 'openai',
+        'api_key_env': 'OPENAI_API_KEY',
+        'base_url': None,
+        'model': 'gpt-4o-mini',
+    }
+
+
+def get_openai_client(provider):
+    """Get an OpenAI-compatible client for the given provider."""
+    api_key = os.getenv(provider['api_key_env'])
     if not api_key:
         script_dir = Path(__file__).parent
-        print(f"{Colors.RED}Error: OPENAI_API_KEY not found.{Colors.RESET}")
+        print(f"{Colors.RED}Error: {provider['api_key_env']} not found.{Colors.RESET}")
         print(f"\nOption 1: Create a .env file in the script directory:")
         print(f"  Location: {script_dir}/.env")
         print(f"  Content:  OPENAI_API_KEY=sk-your-api-key-here")
+        print(f"           ORCAROUTER_API_KEY=sk-orca-your-api-key-here")
         print(f"\nOption 2: Set environment variable:")
         print(f"  Linux/Mac: export OPENAI_API_KEY='sk-your-api-key-here'")
+        print(f"             export ORCAROUTER_API_KEY='sk-orca-your-api-key-here'")
         print(f"  Windows:   set OPENAI_API_KEY=sk-your-api-key-here")
+        print(f"             set ORCAROUTER_API_KEY=sk-orca-your-api-key-here")
         sys.exit(1)
-    return OpenAI(api_key=api_key)
+    kwargs = {'api_key': api_key}
+    if provider['base_url']:
+        kwargs['base_url'] = provider['base_url']
+    return OpenAI(**kwargs)
 
 
 def convert_mcp_to_openai_tool(mcp_tool):
@@ -91,18 +125,19 @@ def convert_mcp_to_openai_tool(mcp_tool):
     }
 
 
-def validate_with_openai(json_content, filename):
+def validate_with_openai(json_content, filename, provider):
     """
-    Validate MCP tool JSON by actually injecting it into OpenAI API.
+    Validate MCP tool JSON by actually injecting it into an OpenAI-compatible API.
 
     Args:
         json_content: The parsed JSON content
         filename: Name of the file being validated
+        provider: Resolved provider dict (from `resolve_provider`)
 
     Returns:
         Validation result dictionary
     """
-    client = get_openai_client()
+    client = get_openai_client(provider)
 
     validation_results = {
         "isValid": True,
@@ -127,7 +162,7 @@ def validate_with_openai(json_content, filename):
             # Assume single tool
             mcp_tools = [json_content]
 
-        print(f"{Colors.BLUE}🔍 Injecting {len(mcp_tools)} tool(s) into OpenAI API...{Colors.RESET}")
+        print(f"{Colors.BLUE}🔍 Injecting {len(mcp_tools)} tool(s) into {provider['name']} API ({provider['model']})...{Colors.RESET}")
 
         # Convert each MCP tool to OpenAI format
         for i, mcp_tool in enumerate(mcp_tools):
@@ -155,10 +190,10 @@ def validate_with_openai(json_content, filename):
             return validation_results
 
         # Try to make a test API call with the tools to validate them
-        print(f"{Colors.BLUE}  └─ Testing with OpenAI API...{Colors.RESET}")
+        print(f"{Colors.BLUE}  └─ Testing with {provider['name']} API...{Colors.RESET}")
 
         response = client.chat.completions.create(
-            model="gpt-4o-mini",  # Use cheaper model for validation
+            model=provider['model'],  # provider-resolved validation model
             messages=[
                 {
                     "role": "user",
@@ -171,10 +206,10 @@ def validate_with_openai(json_content, filename):
 
         # If we got here, the tools are valid!
         validation_results["isValid"] = True
-        validation_results["summary"] = f"Successfully validated {len(tools_list)} tool(s) with OpenAI API"
+        validation_results["summary"] = f"Successfully validated {len(tools_list)} tool(s) with {provider['name']} API"
         validation_results["info"].append({
             "severity": "info",
-            "message": f"All {len(tools_list)} tool definition(s) accepted by OpenAI API"
+            "message": f"All {len(tools_list)} tool definition(s) accepted by {provider['name']} API"
         })
 
         # Check for missing descriptions or other best practices
@@ -310,8 +345,12 @@ def validate_mcp_tool_file(filename):
 
     print(f"{Colors.BLUE}Validating MCP Tool JSON: {filename}{Colors.RESET}")
 
-    # Validate using OpenAI
-    result = validate_with_openai(json_content, filename)
+    # Select the provider used to validate the tools: OrcaRouter when ORCAROUTER_API_KEY
+    # is set, otherwise the OpenAI API (default).
+    provider = resolve_provider()
+
+    # Validate using the resolved provider
+    result = validate_with_openai(json_content, filename, provider)
 
     if result:
         return print_validation_results(result, filename)
@@ -328,7 +367,7 @@ def main():
         filename = sys.argv[1]
     else:
         # Prompt user for filename
-        print(f"{Colors.BOLD}MCP Tool JSON Validator (OpenAI-powered){Colors.RESET}")
+        print(f"{Colors.BOLD}MCP Tool JSON Validator (OpenAI-compatible / OrcaRouter){Colors.RESET}")
         print("-" * 50)
         filename = input("Enter the MCP tool JSON filename: ").strip()
 
