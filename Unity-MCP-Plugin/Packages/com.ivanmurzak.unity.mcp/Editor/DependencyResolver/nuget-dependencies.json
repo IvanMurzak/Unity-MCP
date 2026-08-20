@@ -1,0 +1,19 @@
+{
+  "packages": [
+    { "id": "com.IvanMurzak.McpPlugin", "version": "7.3.0", "includeInBuild": true },
+    { "id": "com.IvanMurzak.ReflectorNet", "version": "5.3.2", "includeInBuild": true },
+    { "id": "System.Text.Json", "version": "8.0.5", "includeInBuild": true },
+    { "id": "Microsoft.AspNetCore.SignalR.Client", "version": "8.0.15", "includeInBuild": true },
+    { "id": "Microsoft.AspNetCore.SignalR.Protocols.Json", "version": "8.0.15", "includeInBuild": true },
+    { "id": "Microsoft.Extensions.Logging", "version": "8.0.1", "includeInBuild": true },
+    { "id": "Microsoft.Extensions.Logging.Abstractions", "version": "8.0.3", "includeInBuild": true },
+    { "id": "Microsoft.Extensions.DependencyInjection", "version": "8.0.1", "includeInBuild": true },
+    { "id": "Microsoft.Extensions.DependencyInjection.Abstractions", "version": "8.0.2", "includeInBuild": true },
+    { "id": "Microsoft.Extensions.Options", "version": "8.0.2", "includeInBuild": true },
+    { "id": "Microsoft.Extensions.Caching.Abstractions", "version": "8.0.0", "includeInBuild": true },
+    { "id": "Microsoft.Extensions.Hosting.Abstractions", "version": "8.0.1", "includeInBuild": true },
+    { "id": "R3", "version": "1.3.0", "includeInBuild": true },
+    { "id": "Microsoft.Bcl.Memory", "version": "10.0.3", "includeInBuild": false },
+    { "id": "Microsoft.CodeAnalysis.CSharp", "version": "4.8.0", "includeInBuild": false }
+  ]
+}
