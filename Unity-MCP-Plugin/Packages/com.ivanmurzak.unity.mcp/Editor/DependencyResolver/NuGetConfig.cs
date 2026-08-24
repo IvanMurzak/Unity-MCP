@@ -65,7 +65,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// reloads, and the new resolver restores the correct DLLs and adds this define — the same
         /// self-healing two-pass path a clean install already takes.</para>
         /// </summary>
-        public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "2";
+        public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "3";
 
         /// <summary>
         /// Every define the main plugin asmdefs are gated on. All of them must be present for the
@@ -110,7 +110,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // 7.1.0 (mcp-authorize g5/g6) adds the shared ServerLaunchArguments launch-arg builder,
             // the AuthOption.token member + LocalTokenMcpStrategy, and the 3-mode configurator — all
             // consumed by the local self-hosted auth path. McpPlugin.Common 7.1.0 follows transitively.
-            new NuGetPackage("com.IvanMurzak.McpPlugin",                              "8.1.0", includeInBuild: true),
+            // 8.3.0 (oauth-client-error-hygiene a1–a3) adds the dead-family memo + the
+            // SignInRequiredReason surface ("server configuration error" class for invalid_target),
+            // and the ConnectionCredentialCoordinator stop-on-dead-credential / resume-on-SignedIn-edge
+            // behavior the AssistedReauthService (02 §C4, D4 ladder) renders and relies on.
+            new NuGetPackage("com.IvanMurzak.McpPlugin",                              "8.3.0", includeInBuild: true),
             // Pinned explicitly so the resolver doesn't drift below the version
             // bundled in this package. The atomic API surface (TryModifyAt,
             // TryPatch, TryReadAt, View, Grep) introduced in 5.1.0 is exercised
