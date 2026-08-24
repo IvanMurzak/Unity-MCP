@@ -89,23 +89,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private void OnAuthorizationRejected()
         {
-            if (UnityMcpPluginEditor.ConnectionMode != ConnectionMode.Cloud)
+            if (!ShouldPromptOnAuthorizationRejected(UnityMcpPluginEditor.ConnectionMode, AccountCredentialService.IsSignedIn))
                 return;
 
-            // When signed in via the shared machine credential store, the ConnectionCredentialCoordinator
-            // (wired in AccountCredentialService.AttachTo) already handles the 3-strike rejection by
-            // refreshing the token and reconnecting — do not disturb the session here (design 06).
-            if (AccountCredentialService.IsSignedIn)
-                return;
-
-            // Not signed in: the machine store is the only Cloud credential source (T9 — the cloudToken
-            // UserSettings mirror was removed), so there is no persisted token to clear. Prompt a fresh sign-in.
+            // The machine store is the only Cloud credential source (T9 — the cloudToken
+            // UserSettings mirror was removed). A rejection here means the presented credential is
+            // not usable right now — surface the prompt path instead of staying silently red
+            // (oauth-client-error-hygiene 02 §C4). On a dead-family verdict the
+            // AssistedReauthService additionally auto-opens the browser (D4), once-gated.
             Debug.LogWarning("[AI Game Developer] The server rejected the authorization. " +
                 "Please click 'Authorize' to sign in again.");
 
             UpdateCloudAuthState();
             RefreshConnectionUI();
         }
+
+        /// <summary>
+        /// Whether a server authorization rejection surfaces the sign-in prompt path. Cloud mode
+        /// ALWAYS prompts (oauth-client-error-hygiene 02 §C4): the old signed-in early-return
+        /// assumed the coordinator's silent refresh+reconnect would recover, but a DEAD credential
+        /// family can never be refreshed — the early-return left a signed-in editor silently red
+        /// while the authorization server was hit every 60 s. <paramref name="isSignedIn"/> stays an
+        /// explicit input so tests pin the removal (restoring the early-return reddens them).
+        /// </summary>
+        internal static bool ShouldPromptOnAuthorizationRejected(ConnectionMode mode, bool isSignedIn)
+            => mode == ConnectionMode.Cloud;
 
         private void UpdateConnectionUI(HubConnectionState state, bool keepConnected)
         {
@@ -385,122 +393,80 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 _ = SignOutMachineWideThenRefreshUiAsync();
             });
 
-            void SetCommitStatus(string message)
+            // The Authorize flow lives in the service now (oauth-client-error-hygiene 02 §C4:
+            // extraction, not reuse) — it runs the whole D4 ladder (device code → default-browser
+            // open → poll until approval → F1 login commit → reload + reconnect) with or without
+            // this window; the window only renders its state and delegates the button.
+            void RefreshAuthFlowUi()
             {
+                // Service events may fire on any thread. Use RunAsync (EditorApplication.update-
+                // based) instead of delayCall so the UI updates even when the Unity Editor window is
+                // not focused — delayCall is throttled/paused when Unity loses application focus.
                 MainThread.Instance.RunAsync(() =>
                 {
                     if (statusLabel != null)
                     {
-                        statusLabel.text = message;
-                        statusLabel.style.display = string.IsNullOrEmpty(message)
+                        // The persistent status (D4 ladder step 3 / commit progress) wins over the
+                        // flow-state line; both come from the service.
+                        statusLabel.text = AssistedReauthService.StatusMessage
+                            ?? GetAuthFlowStatusMessage(
+                                AssistedReauthService.FlowState,
+                                AssistedReauthService.UserCode,
+                                AssistedReauthService.FlowErrorMessage);
+                        statusLabel.style.display = string.IsNullOrEmpty(statusLabel.text)
                             ? DisplayStyle.None
                             : DisplayStyle.Flex;
                     }
+                    if (btnAuthorize != null)
+                    {
+                        btnAuthorize.text = AssistedReauthService.IsFlowRunning ? "Cancel" : "Authorize";
+                    }
+                    UpdateTokenDisplay();
+                    UpdateRevokeButtonVisibility();
+                    UpdateCloudAuthState();
                     Repaint();
                 });
             }
 
-            async Task CommitLoginThenRefreshUiAsync(DeviceAuthLoginResult result)
-            {
-                LoginCommitResult commit;
-                try
-                {
-                    commit = await AccountCredentialService.CommitLoginAsync(
-                        result.AgentFamily,
-                        result.Subject,
-                        result.ServerTarget,
-                        onStatus: SetCommitStatus, // marshals to the main thread itself
-                        // The commit runs ConfigureAwait(false), so this callback may fire on a
-                        // background thread — the modal dialog must run on the editor main thread.
-                        confirmAccountSwitch: displaced => MainThread.Instance.Run(() => EditorUtility.DisplayDialog(
-                            "Switch account on this machine?",
-                            "This machine is already signed in to a different AI Game Dev account.\n\n"
-                            + "Continuing signs the other account out of every tool on this machine (engine plugins, CLIs, and the desktop app) and replaces it with the account you just authorized.",
-                            "Replace Account",
-                            "Cancel")));
-                }
-                catch (Exception ex)
-                {
-                    Debug.LogWarning($"[AI Game Developer] Login commit failed: {ex.Message}");
-                    SetCommitStatus("Sign-in failed — see the Console for details.");
-                    return;
-                }
+            // Replace any previous handler (CreateGUI reruns on Invalidate) and keep a reference so
+            // OnDisable can detach — a static event must never retain a closed window.
+            if (_assistedReauthChangedHandler != null)
+                AssistedReauthService.Changed -= _assistedReauthChangedHandler;
+            _assistedReauthChangedHandler = RefreshAuthFlowUi;
+            AssistedReauthService.Changed += _assistedReauthChangedHandler;
+            RefreshAuthFlowUi(); // render pre-window state (e.g. an auto flow already in flight, or the carousel status)
 
-                // Reflect the (possibly) rewritten store in this editor domain — a rebuild through the
-                // provider's auto-adopt read, never an echo-write (G-SEC-2).
-                AccountCredentialService.Reload();
+            async Task AuthorizeThenRefreshUiAsync()
+            {
+                // NOTE (d1): DeviceAuthFlowState.Authorized means the DEVICE GRANT was approved —
+                // the service completes the F1 login commit (agent family → exchange → plugin
+                // family), reloads the provider, and reconnects (KeepConnected intent respected)
+                // before this await returns Committed.
+                var outcome = await AssistedReauthService.AuthorizeAsync();
 
                 await MainThread.Instance.RunAsync(() =>
                 {
                     UpdateTokenDisplay();
                     UpdateRevokeButtonVisibility();
                     UpdateCloudAuthState();
-                    if (commit.Status == LoginCommitStatus.FullyCommitted)
+                    if (outcome == AssistedReauthOutcome.Committed)
                     {
                         // Invalidate cached AI agent configs so they pick up the new credential
                         InvalidateAndReloadAgentUI();
-
-                        // Reconnect to cloud server with the new token (only if still in Cloud mode)
-                        if (UnityMcpPluginEditor.ConnectionMode == ConnectionMode.Cloud)
-                            ReconnectAfterModeSwitch();
                     }
                     Repaint();
                 });
             }
 
-            _startAuthorizeAction = async () =>
+            _startAuthorizeAction = () =>
             {
-                // If currently running, cancel
-                if (_deviceAuthFlow != null && IsAuthFlowRunning(_deviceAuthFlow.State))
+                // Click while the flow is running = cancel (unchanged UX).
+                if (AssistedReauthService.IsFlowRunning)
                 {
-                    _deviceAuthFlow.Cancel();
+                    AssistedReauthService.CancelFlow();
                     return;
                 }
-
-                _deviceAuthFlow?.Cancel();
-                var cloudBaseUrl = UnityMcpPlugin.UnityConnectionConfig.CloudServerBaseUrl;
-                _deviceAuthFlow = new DeviceAuthFlow(
-                    new DeviceAuthService(cloudBaseUrl), // requests scope=mcp:agent (03 F1.2)
-                    onAuthorized: result =>
-                    {
-                        // F1.3–F1.5: commit the minted agent family into the shared machine store under
-                        // the cross-process lock, derive the plugin family via RFC 8693 token exchange,
-                        // and stamp the v1 mirror — never a bare lock-free Adopt (G-SEC-2).
-                        _ = CommitLoginThenRefreshUiAsync(result);
-                    },
-                    serverTarget: cloudBaseUrl);
-                var capturedFlow = _deviceAuthFlow; // Capture to avoid stale field reference in async callbacks
-
-                capturedFlow.OnStateChanged += state =>
-                {
-                    // Use RunAsync (EditorApplication.update-based) instead of delayCall so that
-                    // the UI updates even when the Unity Editor window is not focused — delayCall
-                    // is throttled/paused when Unity loses application focus.
-                    MainThread.Instance.RunAsync(() =>
-                    {
-                        // Ignore stale events from a previous auth flow
-                        if (_deviceAuthFlow != capturedFlow) return;
-
-                        if (statusLabel != null)
-                        {
-                            statusLabel.text = GetAuthFlowStatusMessage(state, capturedFlow.UserCode, capturedFlow.ErrorMessage);
-                            statusLabel.style.display = string.IsNullOrEmpty(statusLabel.text)
-                                ? DisplayStyle.None
-                                : DisplayStyle.Flex;
-                        }
-                        // NOTE (d1): DeviceAuthFlowState.Authorized means the DEVICE GRANT was approved —
-                        // the credential is not yet committed to the machine store. The signed-in UI
-                        // refresh + reconnect happen in CommitLoginThenRefreshUiAsync once the F1 login
-                        // commit (agent family → exchange → plugin family) actually lands.
-                        if (btnAuthorize != null)
-                        {
-                            btnAuthorize.text = IsAuthFlowRunning(state) ? "Cancel" : "Authorize";
-                        }
-                        Repaint();
-                    });
-                };
-
-                await capturedFlow.StartAsync();
+                _ = AuthorizeThenRefreshUiAsync();
             };
 
             btnAuthorize.RegisterCallback<ClickEvent>(_ => _startAuthorizeAction?.Invoke());

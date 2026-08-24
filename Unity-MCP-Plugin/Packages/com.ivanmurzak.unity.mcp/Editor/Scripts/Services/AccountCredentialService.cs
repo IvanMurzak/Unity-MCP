@@ -171,6 +171,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
                 var provider = _provider ??= CreateDefaultProvider();
                 if (provider.IsSignedIn)
                     _coordinator = new ConnectionCredentialCoordinator(plugin, provider, _logger);
+
+                // D4 assisted re-auth trigger (oauth-client-error-hygiene 02 §C4): the service-level
+                // dead-credential subscription outlives any editor window — re-attached here on every
+                // plugin (re)build so a provider rebuilt by Reload() is always covered.
+                AssistedReauthService.Attach(provider);
             }
         }
 

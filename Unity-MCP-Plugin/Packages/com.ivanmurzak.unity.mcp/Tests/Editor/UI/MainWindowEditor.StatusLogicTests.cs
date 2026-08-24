@@ -354,5 +354,29 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         #endregion
+
+        #region ShouldPromptOnAuthorizationRejected (oauth-client-error-hygiene 02 §C4)
+
+        // The silent-red early-return is GONE: a Cloud-mode authorization rejection surfaces the
+        // prompt path even while the provider still reads as signed in. A dead credential family
+        // can never be refreshed, so "signed in ⇒ the coordinator will recover" was false — the
+        // early-return left the editor silently red while the AS was hit every 60 s. Restoring
+        // `if (isSignedIn) return false;` reddens the signed-in case below.
+        [TestCase(true)]
+        [TestCase(false)]
+        public void CloudMode_AlwaysReachesThePromptPath(bool isSignedIn)
+        {
+            Assert.IsTrue(MainWindowEditor.ShouldPromptOnAuthorizationRejected(ConnectionMode.Cloud, isSignedIn));
+        }
+
+        // LocalServer (Custom) mode keeps its behavior: no cloud sign-in prompt.
+        [TestCase(true)]
+        [TestCase(false)]
+        public void CustomMode_NeverPrompts(bool isSignedIn)
+        {
+            Assert.IsFalse(MainWindowEditor.ShouldPromptOnAuthorizationRejected(ConnectionMode.Custom, isSignedIn));
+        }
+
+        #endregion
     }
 }
