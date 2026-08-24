@@ -62,14 +62,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
     ///   <item><b>Once-gate + carousel guard:</b> <see cref="AssistedReauthGate"/> over
     ///   <see cref="SessionState"/> — one auto-open per dead token per editor session (surviving
     ///   domain reloads), and the D4 step-3 guard stops auto-opening entirely after a repeat death
-    ///   or two unattended expiries; the manual Authorize button stays.</item>
+    ///   with the same 02 §C2 reason class or two unattended expiries; the manual Authorize button
+    ///   stays, and the parked status renders the class (generic sign-in-required vs
+    ///   "server configuration error" for invalid_target).</item>
     ///   <item><b>Manual entry:</b> the window's Authorize button delegates to
     ///   <see cref="AuthorizeAsync"/> — no duplicated flow.</item>
     ///   <item><b>On success:</b> the F1 login commit (<see cref="AccountCredentialService.CommitLoginAsync"/>),
     ///   then the existing reload flow — <see cref="AccountCredentialService.Reload"/> + plugin
-    ///   rebuild + <c>ConnectIfNeeded</c> (KeepConnected intent respected).
-    ///   r2: once the McpPlugin pin carries the a3 coordinator stop/resume, the provider's
-    ///   SignInRequired→SignedIn edge resumes a stopped loop by itself.</item>
+    ///   rebuild + <c>ConnectIfNeeded</c> (KeepConnected intent respected). The pinned McpPlugin
+    ///   (8.3.0+, a3) additionally resumes a coordinator-stopped connect loop on the provider's
+    ///   SignInRequired→SignedIn edge by itself; the rebuild here remains the fresh-sign-in path
+    ///   and the in-domain provider refresh.</item>
     /// </list>
     /// No method here ever logs or surfaces token material.
     /// </summary>
@@ -186,6 +189,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
                 HandleVerdictCore(
                     isCloudMode: UnityMcpPluginEditor.ConnectionMode == ConnectionMode.Cloud,
                     deadRefreshToken: ReadPluginPlaneRefreshToken(),
+                    reasonClass: CurrentReasonClass(),
                     gate: SessionGate,
                     runFlow: () =>
                     {
@@ -204,15 +208,36 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
         }
 
         /// <summary>
+        /// The 02 §C2 reason class behind the provider's CURRENT SignInRequired state: the pinned
+        /// McpPlugin (8.3.0+) stamps an <c>invalid_target</c> verdict's <c>SignInRequiredReason</c>
+        /// with the "server configuration error" class prefix; everything else — including a null
+        /// reason — classifies as the generic session-expired class.
+        /// </summary>
+        static AssistedReauthReasonClass CurrentReasonClass()
+        {
+            try
+            {
+                return AssistedReauthGate.ClassifyReason(AccountCredentialService.Provider.SignInRequiredReason);
+            }
+            catch (Exception)
+            {
+                return AssistedReauthReasonClass.SessionExpired;
+            }
+        }
+
+        /// <summary>
         /// The verdict trigger's decision core (02 §C4), pure for tests: returns true when the
         /// assisted flow auto-runs for this dead-credential verdict. LocalServer (Custom) mode never
         /// auto-runs (no behavior change); a machine with no stored plugin-plane refresh token has
         /// nothing to re-authorize automatically (the manual prompt path stays); otherwise the
         /// <see cref="AssistedReauthGate"/> once-gate + carousel guard decide.
+        /// <paramref name="reasonClass"/> (02 §C2) keys the carousel guard and picks the persistent
+        /// status text — invalid_target renders the "server configuration error" status.
         /// </summary>
         internal static bool HandleVerdictCore(
             bool isCloudMode,
             string? deadRefreshToken,
+            AssistedReauthReasonClass reasonClass,
             AssistedReauthGate gate,
             Action runFlow,
             Action<string> setStatus)
@@ -228,16 +253,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
             {
                 // Signed out / store missing: nothing to re-authorize automatically — the manual
                 // prompt path (auth alert + Authorize button) stays the way in.
-                setStatus(AssistedReauthGate.StatusSignInRequired);
+                setStatus(AssistedReauthGate.StatusFor(reasonClass));
                 return false;
             }
 
-            var decision = gate.Decide(AssistedReauthGate.HashToken(deadRefreshToken!));
+            var decision = gate.Decide(AssistedReauthGate.HashToken(deadRefreshToken!), reasonClass);
             if (decision != AssistedReauthDecision.AutoRun)
             {
                 // Once-gated this editor session, or the D4 step-3 carousel guard tripped: no
                 // auto-open — persistent status + the manual Authorize button.
-                setStatus(AssistedReauthGate.StatusSignInRequired);
+                setStatus(AssistedReauthGate.StatusFor(reasonClass));
                 return false;
             }
 
@@ -392,9 +417,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
         /// <c>ConnectIfNeeded</c> — so the next (re)connect presents the fresh credential and the
         /// on-401 coordinator re-attaches, reconnecting only when the user's KeepConnected intent
         /// is on (a deliberately stopped connection is never resurrected).
-        /// r2: when the McpPlugin pin carries a3's coordinator stop/resume, the provider's
-        /// SignInRequired→SignedIn edge resumes a stopped loop by itself and this rebuild becomes
-        /// the fresh-sign-in path only.
+        /// With the pinned McpPlugin (8.3.0+, a3) the coordinator also resumes a stopped connect
+        /// loop on the provider's SignInRequired→SignedIn edge by itself (edge-triggered,
+        /// single-flight, KeepConnected-gated) — this rebuild is the fresh-sign-in path and the
+        /// in-domain provider refresh; <c>ConnectIfNeeded</c> stays idempotent alongside it.
         /// </summary>
         static async Task<AssistedReauthOutcome> CommitAndReloadAsync(DeviceAuthLoginResult login, CancellationToken cancellationToken)
         {
@@ -467,12 +493,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
                         // NEVER re-initiate unattended (D4) — count it; the second unattended expiry
                         // trips the carousel guard.
                         SessionGate.RecordUnattendedExpiry();
-                        SetStatusIfEmpty(AssistedReauthGate.StatusSignInRequired);
+                        SetStatusIfEmpty(AssistedReauthGate.StatusFor(CurrentReasonClass()));
                         break;
 
                     case AssistedReauthOutcome.Failed when auto:
                     case AssistedReauthOutcome.CommitFailed when auto:
-                        SetStatusIfEmpty(AssistedReauthGate.StatusSignInRequired);
+                        SetStatusIfEmpty(AssistedReauthGate.StatusFor(CurrentReasonClass()));
                         break;
 
                         // Manual outcomes and Cancelled: the flow's own terminal state (rendered by
