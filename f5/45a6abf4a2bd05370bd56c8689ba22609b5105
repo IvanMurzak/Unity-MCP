@@ -1,0 +1,27 @@
+Unity-MCP-Plugin/Assets/root/Editor/UI/uxml/agents/elements/TemplateSkillsSection.uxml
+  731625b36182d461 1,3-11,15,18-20
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/AiAgentConfigurators/AiAgentConfigurator.cs
+  731625b36182d461 393-395,405-410,413-418,422-423,425-430,440-448
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/AiAgentConfigurators/Impl/CustomConfigurator.cs
+  731625b36182d461 100-115,120-121,123-125,134-135,139-140
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "f545a6abf4a2bd05370bd56c8689ba22609b5105",
+  "prompts": {
+    "731625b36182d461": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f9cc00b2-9c49-4acd-9a7b-2f696d38968a",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 678,
+      "total_deletions": 740,
+      "accepted_lines": 361,
+      "overriden_lines": 6
+    }
+  }
+}

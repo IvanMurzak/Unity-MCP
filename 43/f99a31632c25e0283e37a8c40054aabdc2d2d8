@@ -1,0 +1,179 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/UnityAssemblyResolver.cs
+  8d4d689498114267 1-111
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetAssetPostprocessor.cs
+  8d4d689498114267 1-93
+Unity-Tests/6000.5.0b1/Packages/manifest.json
+  8d4d689498114267 1-52
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetPackageRestorer.cs
+  8d4d689498114267 1-94
+Unity-Tests/6000.5.0b1/ProjectSettings/InputManager.asset
+  8d4d689498114267 1-487
+Unity-Tests/6000.5.0b1/ProjectSettings/Packages/com.unity.testtools.codecoverage/Settings.json
+  8d4d689498114267 1-5
+Unity-Tests/6000.5.0b1/ProjectSettings/UnityConnectSettings.asset
+  8d4d689498114267 1-40
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetPackageInstaller.cs.meta
+  8d4d689498114267 1-11
+Unity-Tests/6000.5.0b1/.gitignore
+  8d4d689498114267 1-11,13-14,16-17,19-20,22-23,25-26,28-45,47-50,52-53,55-57,59-60,62-63,65-66,68-69
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetDependencyResolver.cs
+  8d4d689498114267 21,23-35,46,61-66,68-70,77,83-84,90-91,108
+Unity-Tests/6000.5.0b1/Assets/RuntimeTests/RuntimeTests.asmdef
+  8d4d689498114267 1-24
+Unity-Tests/6000.5.0b1/Assets/Resources.meta
+  8d4d689498114267 1-8
+Unity-Tests/6000.5.0b1/Assets/RuntimeTests/NewTestScript.cs
+  8d4d689498114267 1-5,7-14,16-25
+Unity-MCP-Plugin/Packages/manifest.json
+  8d4d689498114267 13
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetPackage.cs
+  8d4d689498114267 1-57
+Unity-Tests/6000.5.0b1/Assets/EditorTests/SerializeTest.cs.meta
+  8d4d689498114267 1-2
+Unity-Tests/6000.5.0b1/ProjectSettings/NavMeshAreas.asset
+  8d4d689498114267 1-91
+Unity-Tests/6000.5.0b1/ProjectSettings/ProjectVersion.txt
+  8d4d689498114267 1-2
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetCache.cs
+  8d4d689498114267 1-43
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetConfig.cs
+  8d4d689498114267 1-90
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetDownloader.cs.meta
+  8d4d689498114267 1-11
+Unity-Tests/6000.5.0b1/Assets/EditorTests/SerializeTest.cs
+  8d4d689498114267 1-12,14-21,23-25,27-29,31-32,34-37,39-42,44-45,47-51,53-54,56-58,60-62,64-67,69,71-72,74-75,77-80,82-84,86-88,90-91,93-95,97-98,100-102,104-107,109-112,114-115,117-121,123-124,126-128,130-132,134-137,139,141-142,144-146,148-149,151-154,156-158,160-161,163-166,168-172,174-175,177-179,181-183,185-186,188-189,191-194,196,198-201,203-206,208-211,213-217,219-224
+Unity-Tests/6000.5.0b1/Assets/RuntimeTests/NewTestScript.cs.meta
+  8d4d689498114267 1-2
+Unity-Tests/6000.5.0b1/ProjectSettings/PhysicsCoreProjectSettings2D.asset
+  8d4d689498114267 1-6
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetExtractor.cs.meta
+  8d4d689498114267 1-11
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetConfig.cs.meta
+  8d4d689498114267 1-11
+Unity-Tests/6000.5.0b1/ProjectSettings/GraphicsSettings.asset
+  8d4d689498114267 1-69
+Unity-Tests/6000.5.0b1/Assets/EditorTests/EditorTests.asmdef
+  8d4d689498114267 1-26
+Unity-Tests/6000.5.0b1/Assets/EditorTests.meta
+  8d4d689498114267 1-8
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetPackageRestorer.cs.meta
+  8d4d689498114267 1-11
+Unity-Tests/6000.5.0b1/Assets/RuntimeTests.meta
+  8d4d689498114267 1-8
+Unity-Tests/6000.5.0b1/ProjectSettings/Packages/com.unity.dedicated-server/MultiplayerRolesSettings.asset
+  8d4d689498114267 1-17
+Unity-Tests/6000.5.0b1/Assets/Scenes/SampleScene.unity.meta
+  8d4d689498114267 1-7
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetPackageInstaller.cs
+  8d4d689498114267 1-184
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/UnityAssemblyResolver.cs.meta
+  8d4d689498114267 1-11
+Unity-Tests/6000.5.0b1/ProjectSettings/PackageManagerSettings.asset
+  8d4d689498114267 1-58
+Unity-Tests/6000.5.0b1/ProjectSettings/VFXManager.asset
+  8d4d689498114267 1-12
+Unity-Tests/6000.5.0b1/Assets/TestFiles/TestFiles.asmdef
+  8d4d689498114267 1-14
+Unity-Tests/6000.5.0b1/.vscode/.gitignore
+  8d4d689498114267 1
+Unity-Tests/6000.5.0b1/ProjectSettings/AudioManager.asset
+  8d4d689498114267 1-19
+Unity-Tests/6000.5.0b1/ProjectSettings/TagManager.asset
+  8d4d689498114267 1-76
+Unity-Tests/6000.5.0b1/ProjectSettings/QualitySettings.asset
+  8d4d689498114267 1-134
+Unity-Tests/6000.5.0b1/ProjectSettings/XRSettings.asset
+  8d4d689498114267 1-10
+Unity-Tests/6000.5.0b1/ProjectSettings/ShaderGraphSettings.asset
+  8d4d689498114267 1-19
+Unity-Tests/6000.5.0b1/ProjectSettings/PresetManager.asset
+  8d4d689498114267 1-7
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetPackage.cs.meta
+  8d4d689498114267 1-11
+Unity-Tests/6000.5.0b1/ProjectSettings/ClusterInputManager.asset
+  8d4d689498114267 1-6
+Unity-Tests/6000.5.0b1/Assets/EditorTests/NewTestScript.cs.meta
+  8d4d689498114267 1-2
+Unity-Tests/6000.5.0b1/ProjectSettings/TimeManager.asset
+  8d4d689498114267 1-9
+Unity-Tests/6000.5.0b1/ProjectSettings/MemorySettings.asset
+  8d4d689498114267 1-35
+Unity-Tests/6000.5.0b1/ProjectSettings/MultiplayerManager.asset
+  8d4d689498114267 1-7
+Unity-Tests/6000.5.0b1/ProjectSettings/VersionControlSettings.asset
+  8d4d689498114267 1-8
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetAssetPostprocessor.cs.meta
+  8d4d689498114267 1-11
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetExtractor.cs
+  8d4d689498114267 1-288
+Unity-Tests/6000.5.0b1/ProjectSettings/ProjectSettings.asset
+  8d4d689498114267 1-945
+Unity-Tests/6000.5.0b1/Assets/Resources/AI-Game-Developer-Config.json.meta
+  8d4d689498114267 1-7
+Unity-Tests/6000.5.0b1/Assets/TestFiles/TestFiles.asmdef.meta
+  8d4d689498114267 1-7
+Unity-Tests/6000.5.0b1/ProjectSettings/Physics2DSettings.asset
+  8d4d689498114267 1-56
+Unity-Tests/6000.5.0b1/.vscode/extensions.json
+  8d4d689498114267 1-5
+Unity-Tests/6000.5.0b1/Assets/TestFiles/ColliderListTestScript.cs.meta
+  8d4d689498114267 1-2
+Unity-Tests/6000.5.0b1/Assets/Scenes.meta
+  8d4d689498114267 1-8
+Unity-Tests/6000.5.0b1/Assets/EditorTests/EditorTests.asmdef.meta
+  8d4d689498114267 1-7
+Unity-Tests/6000.5.0b1/Assets/RuntimeTests/RuntimeTests.asmdef.meta
+  8d4d689498114267 1-7
+Unity-Tests/6000.5.0b1/ProjectSettings/SceneTemplateSettings.json
+  8d4d689498114267 1-121
+Unity-Tests/6000.5.0b1/Assets/Resources/AI-Game-Developer-Config.json
+  8d4d689498114267 1-400
+Unity-Tests/6000.5.0b1/ProjectSettings/EditorBuildSettings.asset
+  8d4d689498114267 1-13
+Unity-Tests/6000.5.0b1/Assets/EditorTests/NewTestScript.cs
+  8d4d689498114267 1-4,6-15,17-27
+Unity-Tests/6000.5.0b1/Assets/TestFiles/ColliderListTestScript.cs
+  8d4d689498114267 1-9,11-12,14-20
+Unity-Tests/6000.5.0b1/Assets/TestFiles.meta
+  8d4d689498114267 1-8
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json
+  8d4d689498114267 26
+Unity-MCP-Plugin/.gitignore
+  8d4d689498114267 19-20
+Unity-Tests/6000.5.0b1/ProjectSettings/EditorSettings.asset
+  8d4d689498114267 1-50
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetDownloader.cs
+  8d4d689498114267 1-81
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetCache.cs.meta
+  8d4d689498114267 1-11
+Unity-Tests/6000.5.0b1/ProjectSettings/URPProjectSettings.asset
+  8d4d689498114267 1-16
+Unity-Tests/6000.5.0b1/Assets/Scenes/SampleScene.unity
+  8d4d689498114267 1-316
+Unity-Tests/6000.5.0b1/ProjectSettings/DynamicsManager.asset
+  8d4d689498114267 1-36
+Unity-Tests/6000.5.0b1/.vscode/launch.json
+  8d4d689498114267 1-10
+Unity-Tests/6000.5.0b1/.vscode/settings.json
+  8d4d689498114267 1-85
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "43f99a31632c25e0283e37a8c40054aabdc2d2d8",
+  "prompts": {
+    "8d4d689498114267": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "36761876-bbce-477d-9fbd-04b51c7ad534",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 5213,
+      "total_deletions": 472,
+      "accepted_lines": 5131,
+      "overriden_lines": 5
+    }
+  }
+}

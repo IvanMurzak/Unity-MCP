@@ -1,0 +1,25 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetPackageInstaller.cs
+  03012d5ffb726c9e 196-197
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetAssetPostprocessor.cs
+  03012d5ffb726c9e 137
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "1c7b71b6f9b5f9004438ff14bf81dc1bee2022de",
+  "prompts": {
+    "03012d5ffb726c9e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6fa7a303-3c7e-49be-9b96-a3ac98ad6cbe",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 390,
+      "total_deletions": 390,
+      "accepted_lines": 343,
+      "overriden_lines": 3
+    }
+  }
+}
