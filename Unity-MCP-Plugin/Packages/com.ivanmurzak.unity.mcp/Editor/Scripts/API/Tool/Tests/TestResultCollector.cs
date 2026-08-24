@@ -151,8 +151,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             }
             else
             {
-                UnityMcpPluginEditor.Instance.LogError(
-                    "Test run finished, but the pending MCP request id was missing. The test results cannot be delivered to the client.",
+                UnityMcpPluginEditor.Instance.LogTrace(
+                    "Test run finished without a pending MCP request ID (likely a manual test run from the Unity Editor). No results will be delivered over MCP.",
                     typeof(TestResultCollector));
             }
         }
