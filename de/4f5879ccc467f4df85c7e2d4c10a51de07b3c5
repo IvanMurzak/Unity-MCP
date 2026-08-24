@@ -1,0 +1,23 @@
+Unity-MCP-Plugin/Assets/root/Runtime/UnityMcpPlugin.Build.cs
+  969a3b1cf83ee0b6 172-174,177,187
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "de4f5879ccc467f4df85c7e2d4c10a51de07b3c5",
+  "prompts": {
+    "969a3b1cf83ee0b6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "237c230e-09c7-4470-8600-858e8e8a5c67",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 239,
+      "total_deletions": 237,
+      "accepted_lines": 33,
+      "overriden_lines": 0
+    }
+  }
+}

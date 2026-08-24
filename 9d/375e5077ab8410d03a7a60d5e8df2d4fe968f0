@@ -1,0 +1,33 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/ReflectionConverter/DataPropertyPopulationTests.cs
+  d73b5a9fcb246df7 135-139
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/ReflectionConverter/DataPropertyScriptableObjectPopulationTests.cs
+  d73b5a9fcb246df7 135-138
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/ReflectionConverter/DataPopulationTests.cs
+  d73b5a9fcb246df7 140-146
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/Structures/EntityIdConverter.cs
+  d73b5a9fcb246df7 50-51,56-75
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Utils/EntityIdUtils.cs
+  d73b5a9fcb246df7 41-42,45-47,65-99
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/ReflectionConverter/DataFieldScriptableObjectPopulationTests.cs
+  d73b5a9fcb246df7 134-139
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "9d375e5077ab8410d03a7a60d5e8df2d4fe968f0",
+  "prompts": {
+    "d73b5a9fcb246df7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9fa2eb9c-f863-4e53-af3d-044644714422",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 855,
+      "total_deletions": 789,
+      "accepted_lines": 7851,
+      "overriden_lines": 21
+    }
+  }
+}

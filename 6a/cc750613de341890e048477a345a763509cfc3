@@ -1,0 +1,19 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Window/MainWindowEditor.Connection.cs
+  s_d6ec059f93235b::t_bf31c5c627c08d 433
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "6acc750613de341890e048477a345a763509cfc3",
+  "prompts": {},
+  "sessions": {
+    "s_d6ec059f93235b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "eaca8eb3-af38-4560-ab4d-ad86b87a1d9f",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

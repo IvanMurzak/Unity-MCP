@@ -1,0 +1,73 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "a52567093dc6e0295d3e988042d7650f62d9deb6",
+  "prompts": {
+    "20f61e8f4c08ae54": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "267564a3-896b-4392-9249-49149c70f8e9",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    },
+    "b1a923008015533a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f0ea2c8b-1f40-4832-a011-99e728435e62",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 187,
+      "overriden_lines": 0
+    },
+    "bb2cf3afe0082aa3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7c97240d-7ea0-4b7e-bc0b-7284560a2708",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    },
+    "c46db1dc8f8c5cf9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9b2dd5a1-0d5b-4f39-893b-8f1d23cbb98b",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 289,
+      "overriden_lines": 0
+    },
+    "d73b5a9fcb246df7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9fa2eb9c-f863-4e53-af3d-044644714422",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 7161,
+      "overriden_lines": 0
+    }
+  }
+}

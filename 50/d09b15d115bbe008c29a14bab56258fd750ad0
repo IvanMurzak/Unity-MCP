@@ -1,0 +1,43 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/McpServerManager.cs
+  s_2a729de05eeef8::t_81745be40134e8 62-72
+  s_2a729de05eeef8::t_98a497ace0592f 73-74
+  s_bc6f83f767fe65::t_cf17372a69bcb9 526-553,555-578,580-581,583-584,589-591,632-726,1102-1178,1183-1185
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/McpServerRestartAndPidKeyTests.cs
+  s_2a729de05eeef8::t_624ab3e2ad0efa 1-212
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/DevControl/DevControlServer.cs
+  s_2ef2ba6246d405::t_742d755949861a 69-71,82-88
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/McpServerRestartAndPidKeyTests.cs.meta
+  s_2a729de05eeef8::t_21ee3932e4a983 1-11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "50d09b15d115bbe008c29a14bab56258fd750ad0",
+  "prompts": {},
+  "sessions": {
+    "s_2a729de05eeef8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f89775ba-416c-422c-a92f-eb9203869e87",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_2ef2ba6246d405": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d8273024-6a68-45ea-8d05-2f04efe53a93",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_bc6f83f767fe65": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a5c58d445a21e1949",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,23 @@
+cli/src/commands/close.ts
+  4a72700fa0d01f72 83-86
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "c65360279827fddee46594583d44a2fce3413383",
+  "prompts": {
+    "4a72700fa0d01f72": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "293d90db-23d4-4578-87ac-05e06ade0c8f",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 201,
+      "accepted_lines": 625,
+      "overriden_lines": 0
+    }
+  }
+}

@@ -1,0 +1,17 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Window/MainWindowEditor.Extensions.cs
+  s_6908d424636975::t_2a6b14e44eb3a0 125-138
+docs/README.es.md
+  s_6908d424636975::t_69825ba9adb50d 207
+docs/README.zh-CN.md
+  s_6908d424636975::t_cba3fe80eecf3b 207
+README.md
+  s_6908d424636975::t_b59a712f8fe43e 207
+docs/README.ja.md
+  s_6908d424636975::t_0e34fcdae71f88 207
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "f22d75a4f3dcaf1f7195f93e4f4153722234c1d2",
+  "prompts": {}
+}

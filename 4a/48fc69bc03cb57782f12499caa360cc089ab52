@@ -1,0 +1,26 @@
+cli/src/lib/create-project.ts
+  s_37c89c90766a8b::t_aab05bcfbad9ba 9
+cli/tests/create-project-lib.test.ts
+  s_37c89c90766a8b::t_c7e9c4bb092a17 4
+  s_37c89c90766a8b::t_a8214f6928f6fc 259-286
+cli/src/utils/unity-hub.ts
+  s_37c89c90766a8b::t_679ab95a3fa4dd 658-663,667,673-678,680-688
+cli/src/commands/create-project.ts
+  s_37c89c90766a8b::t_bc9fed3ddcc083 45-52
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "4a48fc69bc03cb57782f12499caa360cc089ab52",
+  "prompts": {},
+  "sessions": {
+    "s_37c89c90766a8b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f9462681-f3ad-45e5-908f-39d92001333a",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Ivan Murzak <ivandmurzak@gmail.com>"
+    }
+  }
+}
