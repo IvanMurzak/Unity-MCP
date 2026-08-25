@@ -103,6 +103,13 @@ namespace com.IvanMurzak.Unity.MCP
             if (LogCollector != null)
                 return;
 
+            // Asset Import Workers are headless Editor processes launched with the SAME -projectPath,
+            // so each one resolves the same log file and holds a write handle on it for its whole
+            // lifetime. They serve no MCP client, so collecting their logs only adds import noise to
+            // the cache — and their handles are what makes Console/ClearLogs fail (#855).
+            if (Runtime.Utils.EnvironmentUtils.IsAssetImportWorker())
+                return;
+
             AddUnityLogCollector(logStorageProvider());
         }
 

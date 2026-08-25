@@ -110,6 +110,50 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         }
 
         /// <summary>
+        /// The value Unity gives an Asset Import Worker via its <c>-name</c> command-line argument,
+        /// e.g. <c>-name AssetImportWorker0</c>. Workers are numbered, so this is a prefix.
+        /// </summary>
+        public const string AssetImportWorkerNamePrefix = "AssetImportWorker";
+
+        /// <summary>
+        /// Checks whether the current process is a Unity Asset Import Worker.
+        ///
+        /// A worker is a headless Editor process Unity launches with the SAME <c>-projectPath</c>
+        /// as the main Editor, so every project-relative path it computes — including the MCP log
+        /// file — collides with the main Editor's. Workers serve no MCP client, so anything scoped
+        /// to a client session should be skipped in them.
+        /// </summary>
+        public static bool IsAssetImportWorker()
+            => IsAssetImportWorker(Environment.GetCommandLineArgs());
+
+        /// <summary>
+        /// Test-friendly overload. Matches only a <c>-name</c> / <c>--name</c> flag whose VALUE starts
+        /// with <see cref="AssetImportWorkerNamePrefix"/>. Deliberately not a substring scan of the whole
+        /// command line: a project living under a folder called <c>AssetImportWorkerRepro</c> would
+        /// otherwise disable log collection in the main Editor.
+        /// </summary>
+        public static bool IsAssetImportWorker(IReadOnlyList<string>? commandLineArgs)
+        {
+            if (commandLineArgs == null)
+                return false;
+
+            // Stop at Count - 1: a trailing "-name" has no value to inspect.
+            for (var i = 0; i < commandLineArgs.Count - 1; i++)
+            {
+                var flag = commandLineArgs[i];
+                if (!string.Equals(flag, "-name", StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals(flag, "--name", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var value = commandLineArgs[i + 1];
+                if (value != null && value.StartsWith(AssetImportWorkerNamePrefix, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Applies environment-variable and command-line-argument overrides to the given config.
         /// Args (highest priority) override env vars, env vars override the disk-baseline values
         /// already present on <paramref name="config"/>. Returns an <see cref="OverrideRecord"/>

@@ -301,6 +301,66 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual("QUOTED_TOKEN", config.LocalToken);
         }
 
+        // --- Asset Import Worker detection (#855) ---
+
+        [Test]
+        public void IsAssetImportWorker_TrueForWorkerCommandLine()
+        {
+            // Verbatim shape of a Unity 6 Asset Import Worker command line.
+            var args = new[]
+            {
+                "D:/UnityEditor/6000.3.21f1/Editor/Unity.exe",
+                "-adb2", "-batchMode", "-noUpm",
+                "-name", "AssetImportWorker0",
+                "-projectPath", "D:/Coding/Game",
+                "-logFile", "Logs/AssetImportWorker0.log",
+                "-parentPid", "44868"
+            };
+
+            Assert.IsTrue(EnvironmentUtils.IsAssetImportWorker(args));
+        }
+
+        [Test]
+        public void IsAssetImportWorker_FalseForMainEditorCommandLine()
+        {
+            var args = new[]
+            {
+                "D:/UnityEditor/6000.3.21f1/Editor/Unity.exe",
+                "-projectPath", "D:/Coding/Game"
+            };
+
+            Assert.IsFalse(EnvironmentUtils.IsAssetImportWorker(args));
+        }
+
+        [Test]
+        public void IsAssetImportWorker_FalseWhenOnlyThePathContainsTheWord()
+        {
+            // A substring scan of the whole command line would disable log collection in the MAIN
+            // Editor of any project stored under a folder with this name.
+            var args = new[]
+            {
+                "D:/UnityEditor/6000.3.21f1/Editor/Unity.exe",
+                "-projectPath", "D:/Repro/AssetImportWorkerRepro"
+            };
+
+            Assert.IsFalse(EnvironmentUtils.IsAssetImportWorker(args));
+        }
+
+        [Test]
+        public void IsAssetImportWorker_FalseForTrailingNameFlagWithNoValue()
+        {
+            var args = new[] { "Unity.exe", "-name" };
+
+            Assert.IsFalse(EnvironmentUtils.IsAssetImportWorker(args));
+        }
+
+        [Test]
+        public void IsAssetImportWorker_FalseForNullOrEmptyArgs()
+        {
+            Assert.IsFalse(EnvironmentUtils.IsAssetImportWorker(null));
+            Assert.IsFalse(EnvironmentUtils.IsAssetImportWorker(Array.Empty<string>()));
+        }
+
         // --- Helpers ---
 
         static string SerializeForDisk(UnityMcpPlugin.UnityConnectionConfig config)
