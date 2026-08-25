@@ -116,7 +116,10 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         public const string AssetImportWorkerNamePrefix = "AssetImportWorker";
 
         /// <summary>
-        /// Checks whether the current process is a Unity Asset Import Worker.
+        /// Checks whether the CURRENT PROCESS is a Unity Asset Import Worker, by reading the
+        /// <c>-name</c> argument Unity itself launches the worker with. The project's location on
+        /// disk plays no part: no path is inspected, compared, or hardcoded anywhere here, so this
+        /// behaves identically on every machine and for every project folder.
         ///
         /// A worker is a headless Editor process Unity launches with the SAME <c>-projectPath</c>
         /// as the main Editor, so every project-relative path it computes — including the MCP log
@@ -127,10 +130,14 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
             => IsAssetImportWorker(Environment.GetCommandLineArgs());
 
         /// <summary>
-        /// Test-friendly overload. Matches only a <c>-name</c> / <c>--name</c> flag whose VALUE starts
-        /// with <see cref="AssetImportWorkerNamePrefix"/>. Deliberately not a substring scan of the whole
-        /// command line: a project living under a folder called <c>AssetImportWorkerRepro</c> would
-        /// otherwise disable log collection in the main Editor.
+        /// Test-friendly overload taking the command line explicitly.
+        ///
+        /// Matches a <c>-name</c> / <c>--name</c> flag whose VALUE starts with
+        /// <see cref="AssetImportWorkerNamePrefix"/>. Reading the flag's value, rather than scanning
+        /// the whole command line for the word, is what keeps the project's location out of it: the
+        /// command line also carries <c>-projectPath</c>, so a substring scan would report "worker"
+        /// for any project whose folder happened to contain that word and switch off log collection
+        /// in its main Editor.
         /// </summary>
         public static bool IsAssetImportWorker(IReadOnlyList<string>? commandLineArgs)
         {
