@@ -219,8 +219,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         private VisualElement? _aiAgentLabelsContainer;
         private VisualElement? _aiAgentStatusCircle;
 
-        private DeviceAuthFlow? _deviceAuthFlow;
-
         private long _mcpServerDataVersion;
         private long _aiAgentDataVersion;
 

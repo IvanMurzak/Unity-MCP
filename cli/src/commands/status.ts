@@ -22,7 +22,7 @@ export const statusCommand = new Command('status')
   .option('--timeout <ms>', 'Probe timeout in milliseconds (default: 5000)', '5000')
   .action(async (positionalPath: string | undefined, options: StatusOptions) => {
     const projectPath = resolveAndValidateProjectPath(positionalPath, options);
-    const { url: configUrl, token } = resolveConnection(projectPath, options);
+    const { url: configUrl, token } = await resolveConnection(projectPath, options);
     const localPort = generatePortFromDirectory(projectPath);
     const localUrl = `http://localhost:${localPort}`;
 

@@ -25,6 +25,20 @@ jobs:
           name: Event File
           path: ${{ github.event_path }}
 
+  # Guards issue #957: a NuGet pin may not change without bumping the asmdef gate generation,
+  # or consumers upgrading from the previous release compile the new sources against their old
+  # DLLs and dead-lock in Safe Mode. Static + license-free, so it runs on every PR in seconds.
+  check-nuget-gate:
+    name: nuget gate (issue #957)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - name: Check NuGet pins against the asmdef gate generation
+        run: python .github/scripts/check_nuget_gate.py
+
   test-cli:
     uses: ./.github/workflows/test_cli.yml
 

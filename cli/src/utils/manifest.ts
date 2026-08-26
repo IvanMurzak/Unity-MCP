@@ -32,11 +32,35 @@ interface Manifest {
  *   styled logger adapter explicitly to preserve the historical output.
  */
 export async function resolveLatestVersion(logger: LibLogger = silentLogger): Promise<string> {
+  return resolveLatestPackageVersion(PACKAGE_ID, logger);
+}
+
+/**
+ * Resolve the latest version of ANY OpenUPM-hosted package (the plugin itself, or
+ * one of the catalogue extensions) from the OpenUPM registry. Throws an error with
+ * actionable suggestions if the network request fails.
+ *
+ * This is the generalisation of {@link resolveLatestVersion}: same 5000 ms
+ * `AbortController` abort, same "no cached fallback" behaviour, same actionable
+ * error — the only difference is that the package id is a parameter and the
+ * suggested escape-hatch flag is caller-supplied, because `install-plugin` offers
+ * `--plugin-version` where `install-extension` offers `--version`.
+ *
+ * @param packageId OpenUPM package id to resolve (e.g. `com.ivanmurzak.unity.mcp.tilemap`).
+ * @param logger Optional logger. Defaults to `silentLogger` so library callers stay
+ *   side-effect-free.
+ * @param versionFlag Name of the CLI flag suggested in the failure message.
+ */
+export async function resolveLatestPackageVersion(
+  packageId: string,
+  logger: LibLogger = silentLogger,
+  versionFlag = '--plugin-version',
+): Promise<string> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 5000);
 
   try {
-    const res = await fetch(`https://package.openupm.com/${PACKAGE_ID}`, {
+    const res = await fetch(`https://package.openupm.com/${packageId}`, {
       signal: controller.signal,
       headers: { Accept: 'application/json' },
     });
@@ -52,15 +76,15 @@ export async function resolveLatestVersion(logger: LibLogger = silentLogger): Pr
 
     throw new Error(
       `OpenUPM returned status ${res.status}. ` +
-      'Check your network connection and retry, or specify a version manually with --plugin-version <version>'
+      `Check your network connection and retry, or specify a version manually with ${versionFlag} <version>`
     );
   } catch (err) {
-    if (err instanceof Error && err.message.includes('--plugin-version')) {
+    if (err instanceof Error && err.message.includes(versionFlag)) {
       throw err;
     }
     throw new Error(
-      'Failed to resolve latest plugin version from OpenUPM. ' +
-      'Check your network connection and retry, or specify a version manually with --plugin-version <version>'
+      `Failed to resolve the latest version of ${packageId} from OpenUPM. ` +
+      `Check your network connection and retry, or specify a version manually with ${versionFlag} <version>`
     );
   } finally {
     clearTimeout(timeout);
@@ -117,6 +141,36 @@ export function addPluginToManifest(
   force = false,
   logger: LibLogger = silentLogger,
 ): AddPluginResult {
+  return addPackageToManifest(projectPath, PACKAGE_ID, version, force, logger);
+}
+
+/**
+ * Add ANY OpenUPM-hosted package to a Unity project's `Packages/manifest.json` —
+ * the plugin itself, or one of the catalogue extensions.
+ *
+ * This is the generalisation of {@link addPluginToManifest}, which now delegates
+ * here with `PACKAGE_ID`. Keeping ONE implementation matters because the
+ * scoped-registry rules (registry name, URL, and the `REQUIRED_SCOPES` pair
+ * `com.ivanmurzak` / `extensions.unity`) must be identical for the plugin and for
+ * every extension — the extensions live under the `com.ivanmurzak` scope, so an
+ * extension installed without that scope resolves against Unity's default registry
+ * and fails. It also mirrors the C# editor installer
+ * (`ExtensionPanel.AddToManifest` / `EnsureScopedRegistry`), which single-sources
+ * the same three constants on the Unity side.
+ *
+ * Behaviour (unchanged from the plugin-only version):
+ * - Adds the OpenUPM scoped registry with the required scopes when missing.
+ * - Adds/updates the package dependency.
+ * - When `force` is false (auto-resolved version): never downgrades.
+ * - When `force` is true (user-specified version): allows downgrade.
+ */
+export function addPackageToManifest(
+  projectPath: string,
+  packageId: string,
+  version: string,
+  force = false,
+  logger: LibLogger = silentLogger,
+): AddPluginResult {
   const manifestPath = path.join(projectPath, 'Packages', 'manifest.json');
 
   if (!fs.existsSync(manifestPath)) {
@@ -167,15 +221,15 @@ export function addPluginToManifest(
     modified = true;
   }
 
-  const currentVersion = manifest.dependencies[PACKAGE_ID];
+  const currentVersion = manifest.dependencies[packageId];
   let resolvedVersion = version;
   if (!currentVersion || force || shouldUpdateVersion(currentVersion, version)) {
-    manifest.dependencies[PACKAGE_ID] = version;
+    manifest.dependencies[packageId] = version;
     modified = true;
   } else {
     resolvedVersion = currentVersion;
     logger.info(
-      `Plugin already at version ${currentVersion} (>= ${version}). Skipping version update. Use --plugin-version to force a specific version.`
+      `${packageId} already at version ${currentVersion} (>= ${version}). Skipping version update. Pass an explicit version to force a specific version.`
     );
   }
 

@@ -833,25 +833,25 @@ PlayerSettings:
   webWasm2023: 0
   webEnableSubmoduleStrippingCompatibility: 0
   scriptingDefineSymbols:
-    Android: UNITY_MCP_READY
-    EmbeddedLinux: UNITY_MCP_READY
-    GameCoreScarlett: UNITY_MCP_READY
-    GameCoreXboxOne: UNITY_MCP_READY
-    Kepler: UNITY_MCP_READY
-    LinuxHeadlessSimulation: UNITY_MCP_READY
-    Nintendo Switch: UNITY_MCP_READY
-    Nintendo Switch 2: UNITY_MCP_READY
-    PS4: UNITY_MCP_READY
-    PS5: UNITY_MCP_READY
-    QNX: UNITY_MCP_READY
-    Server: UNITY_MCP_READY
-    Standalone: UNITY_MCP_READY
-    VisionOS: UNITY_MCP_READY
-    WebGL: UNITY_MCP_READY
-    Windows Store Apps: UNITY_MCP_READY
-    XboxOne: UNITY_MCP_READY
-    iPhone: UNITY_MCP_READY
-    tvOS: UNITY_MCP_READY
+    Android: UNITY_MCP_READY;UNITY_MCP_DEPS_3
+    EmbeddedLinux: UNITY_MCP_READY;UNITY_MCP_DEPS_3
+    GameCoreScarlett: UNITY_MCP_READY;UNITY_MCP_DEPS_3
+    GameCoreXboxOne: UNITY_MCP_READY;UNITY_MCP_DEPS_3
+    Kepler: UNITY_MCP_READY;UNITY_MCP_DEPS_3
+    LinuxHeadlessSimulation: UNITY_MCP_READY;UNITY_MCP_DEPS_3
+    Nintendo Switch: UNITY_MCP_READY;UNITY_MCP_DEPS_3
+    Nintendo Switch 2: UNITY_MCP_READY;UNITY_MCP_DEPS_3
+    PS4: UNITY_MCP_READY;UNITY_MCP_DEPS_3
+    PS5: UNITY_MCP_READY;UNITY_MCP_DEPS_3
+    QNX: UNITY_MCP_READY;UNITY_MCP_DEPS_3
+    Server: UNITY_MCP_READY;UNITY_MCP_DEPS_3
+    Standalone: UNITY_MCP_READY;UNITY_MCP_DEPS_3
+    VisionOS: UNITY_MCP_READY;UNITY_MCP_DEPS_3
+    WebGL: UNITY_MCP_READY;UNITY_MCP_DEPS_3
+    Windows Store Apps: UNITY_MCP_READY;UNITY_MCP_DEPS_3
+    XboxOne: UNITY_MCP_READY;UNITY_MCP_DEPS_3
+    iPhone: UNITY_MCP_READY;UNITY_MCP_DEPS_3
+    tvOS: UNITY_MCP_READY;UNITY_MCP_DEPS_3
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:

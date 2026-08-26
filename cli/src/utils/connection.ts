@@ -2,7 +2,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { verbose } from './ui.js';
 import { generatePortFromDirectory } from './port.js';
-import { readConfig, resolveConnectionFromConfig } from './config.js';
+import { readConfig, resolveConnectionFromConfig, isCloudMode } from './config.js';
+import { readCloudAccessToken } from './cloud-credentials.js';
 import * as ui from './ui.js';
 
 export interface ConnectionOptions {
@@ -61,23 +62,46 @@ export function resolveAndValidateProjectPath(positionalPath: string | undefined
  *
  * Token priority:
  *   1. --token flag (explicit override)
- *   2. Config file token
+ *   2. Config file token (Custom mode) / shared machine credential store (Cloud mode)
  */
-export function resolveConnection(
+export interface ResolveConnectionDeps {
+  /**
+   * Injection point for the Cloud-mode machine-store credential read. Forwarded to
+   * `resolveConnectionFromConfig`; defaults to `readCloudAccessToken` — cli-core's
+   * `MachineCredentialProvider` (proactive refresh under the cross-process lock, never a raw
+   * on-disk read). Tests inject a deterministic value.
+   */
+  readCloudToken?: () => Promise<string | undefined> | string | undefined;
+}
+
+export async function resolveConnection(
   projectPath: string,
   options: ConnectionOptions,
-): { url: string; token: string | undefined } {
+  deps: ResolveConnectionDeps = {},
+): Promise<{
+  url: string;
+  token: string | undefined;
+  cloudAuthMissing: boolean;
+  /** True when the Bearer came from the shared machine store (Cloud mode, no --token override). */
+  tokenFromCloudStore: boolean;
+}> {
   const config = readConfig(projectPath);
-  const fromConfig = config ? resolveConnectionFromConfig(config) : { url: undefined, token: undefined };
+  const fromConfig = config
+    ? await resolveConnectionFromConfig(config, {
+        readCloudToken: deps.readCloudToken ?? readCloudAccessToken,
+      })
+    : { url: undefined, token: undefined };
 
   verbose(`Config loaded: connectionMode=${config?.connectionMode ?? 'N/A'}, configUrl=${fromConfig.url ?? 'N/A'}, hasToken=${!!fromConfig.token}`);
 
   let url: string;
+  let usingCloudUrl = false;
   if (options.url) {
     url = options.url.replace(/\/$/, '');
     verbose(`Using explicit --url: ${url}`);
   } else if (fromConfig.url) {
     url = fromConfig.url.replace(/\/$/, '');
+    usingCloudUrl = !!config && isCloudMode(config);
     verbose(`Using URL from config (${config?.connectionMode} mode): ${url}`);
   } else {
     const port = generatePortFromDirectory(projectPath);
@@ -90,5 +114,13 @@ export function resolveConnection(
     verbose('Using explicit --token');
   }
 
-  return { url, token };
+  // Cloud mode resolves its Bearer from the shared machine credential store (see
+  // resolveConnectionFromConfig). When the store holds no credential AND the caller overrode
+  // neither the endpoint (--url) nor the token (--token), the request would go out unauthenticated —
+  // signal this so the run-tool command surfaces an actionable "not logged in" error instead of a
+  // silent unauthenticated cloud call (defect E / D11).
+  const cloudAuthMissing = usingCloudUrl && !token;
+  const tokenFromCloudStore = usingCloudUrl && !options.token && !!token;
+
+  return { url, token, cloudAuthMissing, tokenFromCloudStore };
 }
