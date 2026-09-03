@@ -36,6 +36,65 @@ gh secret set UNITY_EMAIL    --repo IvanMurzak/Unity-MCP
 gh secret set UNITY_PASSWORD --repo IvanMurzak/Unity-MCP
 ```
 
+## Fork pull requests get no secrets (read this before "the license is broken")
+
+GitHub withholds repository secrets from a `pull_request` run whose head repository is a
+**fork**. `secrets: inherit` still resolves — to empty strings. So on a fork PR
+`game-ci/unity-test-runner` receives an empty `UNITY_LICENSE` and aborts before it pulls an
+image or contacts Unity, and **all 12 `test-unity-*` legs go red at once**.
+
+**This is the expected behaviour of an unlicensed run.** The license, the secrets and the
+workflow are all fine; a fork simply cannot see them. Nothing here needs fixing, and
+re-issuing the `.ulf` will not change it.
+
+### How to tell it apart from a real license failure
+
+The tell is **duration**, and it survives log expiry — job metadata outlives logs, so
+`gh api repos/IvanMurzak/Unity-MCP/actions/runs/<run-id>/jobs` answers it even when the log
+download returns HTTP 410:
+
+- **No secrets (fork PR)** — the `Run game-ci/unity-test-runner@…` step starts and completes
+  **in the same second**, while `Free disk space` and `actions/cache` before it succeed. The
+  whole job is 1–3 minutes, nearly all of it disk cleanup.
+- **A genuinely bad `.ulf`** — the step runs for minutes: it pulls the editor image first and
+  only then fails inside the container on activation.
+
+Check the head repository directly rather than inferring from the branch name:
+
+```bash
+gh api repos/IvanMurzak/Unity-MCP/actions/runs/<run-id> \
+  --jq '"\(.event) \(.head_repository.full_name) \(.conclusion)"'
+```
+
+A `full_name` other than `IvanMurzak/Unity-MCP` means the run had no secrets.
+
+### How to run the licensed suite against a fork PR's code
+
+`test_pull_request_manual.yml` is `workflow_dispatch`-only, so it runs with full secrets:
+
+```bash
+gh workflow run test_pull_request_manual.yml --repo IvanMurzak/Unity-MCP --ref main
+```
+
+Reviewing a fork PR's actual code this way needs a ref the maintainer picks — a fork PR's
+commits are fetchable from this repository as `refs/pull/<n>/head` and `refs/pull/<n>/merge`.
+Wiring that into the dispatch (and deciding whether a fork's Unity checks should be allowed to
+pass at all, given the required-status-check ruleset) is a **policy decision**, tracked in
+issue #543 and PR #971 — deliberately not settled by this document.
+
+### Measured, 2026-09-03 (issue #973)
+
+Every `test-pull-request` run between 2026-08-25 and 2026-08-29 came from a fork
+(`Nghaiz`, `akimaleo`, `zorionarrillaga`) and was red; the last same-repository run before them,
+`32788655839` (2026-08-24), was green, and there was no same-repository PR in between. Read as a
+time series that looks exactly like a CI regression, and it was not one. Three runs pin it:
+
+| run | what it was | result |
+|---|---|---|
+| [`32992648441`](https://github.com/IvanMurzak/Unity-MCP/actions/runs/32992648441) | fork PR, secrets withheld | 12/12 legs red; test-runner step `04:57:53Z -> 04:57:53Z` |
+| [`33758511822`](https://github.com/IvanMurzak/Unity-MCP/actions/runs/33758511822) | dispatch of this same workflow with `secrets: inherit` removed — the one variable | red, same instant-failure shape |
+| [`33757559794`](https://github.com/IvanMurzak/Unity-MCP/actions/runs/33757559794) | dispatch on `main`, secrets present, same commit `91e2472a` the fork PRs branched from | green |
+
 ## The one machine-binding gotcha (why a desktop `.ulf` fails)
 
 A `.ulf` binds to the **HardwareId** of the machine whose `.alf` produced it.
