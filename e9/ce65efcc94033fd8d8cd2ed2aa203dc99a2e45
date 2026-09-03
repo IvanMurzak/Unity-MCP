@@ -1,0 +1,50 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/UI/MainWindowEditor.StatusLogicTests.cs
+  s_8d859c66569e2d::t_739fc516308c2c 357-380
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Services/AssistedReauthGate.cs.meta
+  s_8d859c66569e2d::t_1313161ea3a5d4 1-11
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Services/AssistedReauthService.cs.meta
+  s_8d859c66569e2d::t_34f8161df57ce2 1-11
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/AssistedReauthGateTests.cs.meta
+  s_8d859c66569e2d::t_28bac9e8875ffc 1-11
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/AssistedReauthServiceTests.cs.meta
+  s_8d859c66569e2d::t_bac689f2214df8 1-11
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Services/AssistedReauthService.cs
+  s_8d859c66569e2d::t_a01859bf43598f 357
+  s_8d859c66569e2d::t_1099349bc324bd 1-356,358-512
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Services/AssistedReauthGate.cs
+  s_8d859c66569e2d::t_569823fc0f80c5 121-123
+  s_8d859c66569e2d::t_25874701e66526 1-110,112-120,124-171
+  s_8d859c66569e2d::t_dcfa2bb99db5d2 111
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Window/MainWindowEditor.cs
+  s_8d859c66569e2d::t_5b36b993914d5f 77-78,80-81
+  s_8d859c66569e2d::t_ea8365c970fe91 79
+  s_8d859c66569e2d::t_29d45ff7cf5edc 29
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Services/AccountCredentialService.cs
+  s_8d859c66569e2d::t_93dca2f693aea2 174-178
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Window/MainWindowEditor.Connection.cs
+  s_8d859c66569e2d::t_3e4ae88346722e 116
+  s_8d859c66569e2d::t_6fdf5ce665fe2d 396-400,402-404,409-416,420-426,431-437,439,441-445,452,461,463-464,466,469
+  s_8d859c66569e2d::t_02607596d50410 92,95-99,107-115,117,440
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/AssistedReauthGateTests.cs
+  s_8d859c66569e2d::t_a801a7e5767e2c 1-38,40-152,154-168
+  s_8d859c66569e2d::t_d06866f6576e6c 39
+  s_8d859c66569e2d::t_1a99784199d298 153
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/AssistedReauthServiceTests.cs
+  s_8d859c66569e2d::t_49c322ed147536 1-224
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "e9ce65efcc94033fd8d8cd2ed2aa203dc99a2e45",
+  "prompts": {},
+  "sessions": {
+    "s_8d859c66569e2d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0d33093a-57c1-4b45-b2ac-0ca6495e78eb",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
