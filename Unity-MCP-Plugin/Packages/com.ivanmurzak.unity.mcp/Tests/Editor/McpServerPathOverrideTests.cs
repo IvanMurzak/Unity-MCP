@@ -23,20 +23,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     /// skipped. Mirrors Unreal's <c>UNREAL_MCP_SERVER_PATH</c> rule — including the fall-through when the
     /// override is set but the file is missing.
     ///
-    /// <para>Deterministic and editor-state-free: every fixture file lives in an isolated OS temp
+    /// <para>Deterministic and editor-state-free: every fixture BINARY lives in an isolated OS temp
     /// directory, nothing touches the network, and the two override SOURCES are both neutralised in
     /// <c>[SetUp]</c> and restored in <c>[TearDown]</c> — the process env var AND
     /// <c>&lt;projectRoot&gt;/.env</c> — so the unset baseline really is unset and the <c>.env</c>-layer
     /// test really does run with no process env.</para>
+    ///
+    /// <para>That second source is the one piece of REAL project state these tests touch, and it is MOVED
+    /// ASIDE rather than deleted: <c>.env</c> is gitignored, user-owned config that this very feature's
+    /// documentation tells developers to create, so git holds no copy and a run killed before
+    /// <c>[TearDown]</c> must still leave the bytes recoverable on disk rather than only in a field.</para>
     /// </summary>
     public class McpServerPathOverrideTests
     {
         string _tempRoot = string.Empty;
         string? _originalProcessEnv;
-        string? _originalProjectEnvFile; // content of <projectRoot>/.env; null when the file was absent
+        bool _projectEnvFileMovedAside;
 
         static string ProjectEnvFilePath
             => Path.Combine(UnityMcpPluginEditor.ProjectRootPath, ".env");
+
+        // Where the real <projectRoot>/.env is parked while a test owns that path. An on-disk name rather
+        // than an in-memory copy, for the reason the class docblock gives: the file is unrecoverable if a
+        // run dies mid-test holding the only copy in a field.
+        static string ProjectEnvFileAsidePath
+            => ProjectEnvFilePath + ".McpServerPathOverrideTests-aside";
 
         // The NO-OVERRIDE (pinned release) locations, re-derived here INDEPENDENTLY of the members under
         // test, so the no-override assertions pin `Library/mcp-server/<rid>/` as a positive artifact rather
@@ -57,11 +68,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             _originalProcessEnv = Environment.GetEnvironmentVariable(McpServerManager.ServerPathEnvVar);
             Environment.SetEnvironmentVariable(McpServerManager.ServerPathEnvVar, null);
 
-            _originalProjectEnvFile = File.Exists(ProjectEnvFilePath)
-                ? File.ReadAllText(ProjectEnvFilePath)
-                : null;
-            if (_originalProjectEnvFile != null)
-                File.Delete(ProjectEnvFilePath);
+            // Recover from an earlier run killed before its [TearDown]: the project's own .env is still
+            // parked under the aside name, so put it back before this run parks it again.
+            if (!File.Exists(ProjectEnvFilePath) && File.Exists(ProjectEnvFileAsidePath))
+                File.Move(ProjectEnvFileAsidePath, ProjectEnvFilePath);
+
+            _projectEnvFileMovedAside = false;
+            if (File.Exists(ProjectEnvFilePath))
+            {
+                if (File.Exists(ProjectEnvFileAsidePath))
+                    File.Delete(ProjectEnvFileAsidePath);
+                File.Move(ProjectEnvFilePath, ProjectEnvFileAsidePath);
+                _projectEnvFileMovedAside = true;
+            }
         }
 
         [TearDown]
@@ -71,24 +90,37 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             try
             {
-                if (_originalProjectEnvFile != null)
-                    File.WriteAllText(ProjectEnvFilePath, _originalProjectEnvFile);
-                else if (File.Exists(ProjectEnvFilePath))
+                // Drop whatever fixture .env a test wrote at the real path, then unpark the developer's own.
+                if (File.Exists(ProjectEnvFilePath))
                     File.Delete(ProjectEnvFilePath);
+                if (_projectEnvFileMovedAside)
+                    File.Move(ProjectEnvFileAsidePath, ProjectEnvFilePath);
             }
-            catch { /* best effort */ }
+            catch (Exception ex)
+            {
+                // Deliberately NOT best-effort-silent: on failure the project's own .env is still sitting
+                // under the aside name and the next Editor launch would read no .env at all. Debug.LogError
+                // fails the test, which is the correct loudness for losing a developer's config.
+                Debug.LogError(
+                    $"{nameof(McpServerPathOverrideTests)}: failed to restore {ProjectEnvFilePath}"
+                    + (_projectEnvFileMovedAside ? $" from {ProjectEnvFileAsidePath}" : string.Empty)
+                    + $": {ex}");
+            }
 
             try { if (Directory.Exists(_tempRoot)) Directory.Delete(_tempRoot, recursive: true); }
             catch { /* best effort */ }
         }
 
-        /// <summary>A stand-in for a chain-built server binary. Only its PATH is under test here.</summary>
+        /// <summary>
+        /// A stand-in for a server binary built from source — the case the override exists for. Only its
+        /// PATH is under test here, so the contents are irrelevant.
+        /// </summary>
         string CreateFakeServerBinary()
         {
-            var dir = Path.Combine(_tempRoot, "chain-build");
+            var dir = Path.Combine(_tempRoot, "built-from-source");
             Directory.CreateDirectory(dir);
             var path = Path.Combine(dir, McpServerManager.ExecutableFullName);
-            File.WriteAllText(path, "stand-in for a chain-built gamedev-mcp-server; only its path is asserted");
+            File.WriteAllText(path, "stand-in for a gamedev-mcp-server built from source; only its path is asserted");
             return path;
         }
 
@@ -109,6 +141,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(Path.GetFullPath(Path.Combine(exeFolder, "version")),
                 Path.GetFullPath(McpServerManager.VersionFullPath),
                 "VersionFullPath is derived from ExecutableFolderPath, so it follows the override too");
+
+            // This assertion and the IsBinaryReadyToStart() one below are ENTAILED by the ExecutableFullPath
+            // equality above plus the resolver's own File.Exists gate: no mutation of this feature can redden
+            // them. They are kept as executable documentation of the contract callers rely on, and must not
+            // be counted as independent evidence that the override works.
             Assert.IsTrue(McpServerManager.IsBinaryExists());
 
             // The override directory carries NO `version` marker, so IsVersionMatches() can only be true via
@@ -124,6 +161,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             Assert.AreNotEqual(ExpectedCacheExecutable, McpServerManager.ExecutableFullPath,
                 "the pinned Library/mcp-server binary must NOT be the launch target while the override is active");
+
+            // The other half of that split, and the one nothing else pins: the DOWNLOAD CACHE tier is not
+            // redirected by the override. `Download Binaries` must keep publishing into Library/ rather than
+            // deleting and replacing the developer's own folder, and the post-publish verification reads this
+            // tier precisely because the launch-target members report the override and so cannot fail.
+            Assert.AreEqual(ExpectedCacheFolder, Path.GetFullPath(McpServerManager.CachedExecutableFolderPath),
+                "an active override must NOT move the download cache");
         }
 
         [Test]
@@ -141,6 +185,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsTrue(McpServerManager.IsVersionMatches(),
                 "the override short-circuit must win over a mismatched `version` marker");
             Assert.IsTrue(McpServerManager.IsBinaryReadyToStart());
+
+            // The DOWNLOAD path reads a different marker than the LAUNCH path, and this is the contrast that
+            // makes DownloadAndUnpackBinary's post-publish verification able to fail at all while an override
+            // is active: GetBinaryVersion() above returned the mismatched marker sitting beside the override,
+            // so a cache read that followed the override would return it too.
+            Assert.AreNotEqual("0.0.0-not-the-pinned-version", McpServerManager.GetCachedBinaryVersion(),
+                "the download-cache version read must NOT follow the override");
         }
 
         // ── (b) override set to a path that does not exist ──────────────────────────
@@ -191,14 +242,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 Path.GetFullPath(McpServerManager.VersionFullPath));
 
             // IsVersionMatches() is still driven by the on-disk `version` marker, not short-circuited.
+            // Deliberately ONE assertion: re-deriving GetBinaryVersion()'s own body from the same path
+            // expression, and restating IsBinaryReadyToStart() as IsBinaryExists() && IsVersionMatches(),
+            // are both true by construction. The second is the sharper trap — the only mutation it could
+            // catch is `&&` to `||`, and its two operands are EQUAL in both environments this suite runs in
+            // (a clean runner: false/false; a box holding the pinned release: true/true), so it stays green
+            // even then. Neither was kept, so nothing here reads as coverage it does not provide.
             var marker = File.Exists(McpServerManager.VersionFullPath)
                 ? File.ReadAllText(McpServerManager.VersionFullPath)
                 : null;
-            Assert.AreEqual(marker, McpServerManager.GetBinaryVersion());
             Assert.AreEqual(marker == McpServerManager.ServerVersion, McpServerManager.IsVersionMatches());
-            Assert.AreEqual(
-                McpServerManager.IsBinaryExists() && McpServerManager.IsVersionMatches(),
-                McpServerManager.IsBinaryReadyToStart());
         }
 
         // ── (d) the <projectRoot>/.env layer ────────────────────────────────────────
@@ -227,6 +280,35 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsTrue(McpServerManager.IsVersionMatches());
             Assert.IsTrue(McpServerManager.IsBinaryReadyToStart());
             Assert.AreNotEqual(ExpectedCacheExecutable, McpServerManager.ExecutableFullPath);
+        }
+
+        /// <summary>
+        /// The <c>projectRootPath</c>-scoped overload is PUBLIC and documented as the unit-test seam, so it
+        /// gets a test of its own — the sibling test above proves the same layer end-to-end through the real
+        /// project root, which is what the wiring needs, but leaves the overload itself unexercised. Reading
+        /// an arbitrary root also pins the property the overload exists for: the root is an ARGUMENT, not the
+        /// live project, so the resolver has no hidden dependence on <c>UnityMcpPluginEditor</c>.
+        /// </summary>
+        [Test]
+        public void ResolveServerPathOverride_ReadsTheDotEnvOfTheGivenProjectRoot()
+        {
+            var exe = CreateFakeServerBinary();
+            var otherProjectRoot = Path.Combine(_tempRoot, "another-project-root");
+            Directory.CreateDirectory(otherProjectRoot);
+
+            Assert.IsNull(Environment.GetEnvironmentVariable(McpServerManager.ServerPathEnvVar),
+                "fixture precondition: the process env must be EMPTY — this test exercises the .env layer alone");
+            Assert.IsNull(McpServerManager.ResolveServerPathOverride(otherProjectRoot),
+                "fixture precondition: that root carries no .env yet");
+
+            File.WriteAllText(
+                Path.Combine(otherProjectRoot, ".env"),
+                McpServerManager.ServerPathEnvVar + "=" + exe + "\n");
+
+            Assert.AreEqual(Path.GetFullPath(exe), McpServerManager.ResolveServerPathOverride(otherProjectRoot),
+                "the overload must read the .env of the root it was HANDED");
+            Assert.IsNull(McpServerManager.ResolveServerPathOverride(),
+                "and the no-arg overload must still see nothing: that .env belongs to a different root");
         }
 
         [Test]
