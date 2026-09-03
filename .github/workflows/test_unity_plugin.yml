@@ -24,12 +24,12 @@ on:
       #
       # A pull request from a FORK receives none of these three: GitHub withholds
       # repository secrets from a `pull_request` run whose head repository differs
-      # from the base, so `secrets: inherit` passes empty strings and the
-      # game-ci step below fails in under a second on every leg. That is the
-      # expected behaviour of an unlicensed run, not a broken license or a broken
-      # workflow -- see the "Fork pull requests get no secrets" section of
-      # docs/claude/ci-unity-license.md for how to run the licensed suite against
-      # a fork PR's code.
+      # from the base, so the caller's `secrets: inherit` (test_pull_request.yml)
+      # passes empty strings and the game-ci step below fails in under a second on
+      # every leg. That is the expected behaviour of an unlicensed run, not a broken
+      # license or a broken workflow — see the "Fork pull requests get no secrets"
+      # section of docs/claude/ci-unity-license.md for how to run the licensed suite
+      # against a fork PR's code.
       UNITY_LICENSE: { required: false }
       UNITY_EMAIL: { required: false }
       UNITY_PASSWORD: { required: false }
