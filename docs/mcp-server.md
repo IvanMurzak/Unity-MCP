@@ -31,6 +31,19 @@ The **MCP Server** acts as the bridge between the **AI Client** (Claude, Cursor,
 ### 1. Local Automatic (Recommended)
 The **Unity Plugin** automatically downloads and runs the appropriate server binary for your OS. No manual setup required. Configuration is done via the Unity Editor window.
 
+#### Overriding the launched binary — `UNITY_MCP_SERVER_PATH` (dev / CI only)
+
+| Environment Variable    | Value                                                                        | Effect                                                                                                                              |
+| :---------------------- | :--------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------- |
+| `UNITY_MCP_SERVER_PATH` | Absolute path to an **existing** `gamedev-mcp-server` (`.exe` on Windows)     | The Editor launches **that** file instead of the release pinned by `ServerVersion`, and skips both the download and the version match. |
+
+Intended for developing the server itself and for CI chains that build the server from source — not for everyday use. Details:
+
+- The value is read through the same `process env` → `<projectRoot>/.env` → unset chain as `UNITY_MCP_DEV_CONTROL`, so an Editor launched from the GUI or an IDE (which inherits no shell exports) can still pick it up from a `.env` file at the Unity project root.
+- **Set-but-missing falls through**: if the path does not exist, the plugin behaves exactly as if the variable were unset. This matches Unreal-MCP's `UNREAL_MCP_SERVER_PATH`.
+- The override also becomes the `command` written into generated AI-agent configs, so the agent launches the same binary the Editor does.
+- `Tools/AI Game Developer/Server/Download Binaries` (the manual menu item) still downloads into `Library/mcp-server/<rid>/` regardless of the override; the override still wins at launch.
+
 ### 2. Docker
 See **[Docker Deployment](DOCKER_DEPLOYMENT.md)**. Best for cloud hosting or isolated environments.
 
