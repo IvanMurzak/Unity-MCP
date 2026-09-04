@@ -94,9 +94,25 @@ pieces that genuinely do not need an engine, not a replacement for the Unity Tes
 at the **same versions** the resolver installs into a consumer project
 (`Editor/DependencyResolver/NuGetConfig.cs`). That makes this csproj a **second pin location** the
 release train must bump. Never bump it here by hand and never let it drift:
-`NuGetPinGateTests.PinnedPackageVersions_MatchNuGetConfig` compares the versions MSBuild actually
-restored (exported as assembly metadata by the csproj) against `NuGetConfig.Packages`, so a missed
-bump fails loudly instead of leaving this suite silently testing yesterday's DLLs.
+`NuGetPinGateTests.PinnedPackageVersions_MatchNuGetConfig` compares the declared versions (exported
+as assembly metadata from the real `PackageReference` items, so the guard cannot drift from the
+csproj) against `NuGetConfig.Packages`, and a missed bump fails loudly instead of leaving this suite
+silently testing yesterday's DLLs.
+
+## Workspace-source override compatibility
+
+The project is a NuGet consumer with **no** `UseWorkspaceSources` property of its own, no
+`packages.lock.json`, no `RestorePackagesPath` and no `nuget.config`, so a repo-root
+`Directory.Build.targets` + `nuget.config` can redirect it at a local workspace feed. Verified
+locally against a throwaway feed of repacked `-ws.g<sha8>` packages:
+
+- `obj/project.assets.json` resolves `com.IvanMurzak.McpPlugin/8.3.0-ws.g9c0e11d2`,
+  `com.IvanMurzak.McpPlugin.Common/8.3.0-ws.g9c0e11d2`, `com.IvanMurzak.ReflectorNet/5.4.0-ws.g1dff5501`.
+- All 44 tests pass against those packages, and again with `-p:Version=8.3.0-ws.g9c0e11d2` — the
+  `<Compile Include>` links are unaffected by either.
+- The pin-parity test stays GREEN under the override, because the assembly metadata captures the
+  DECLARED pin (`Directory.Build.targets` is imported after the ItemGroup that reads it). Intended:
+  an override is transient, and must not redden a check about what the release train has to bump.
 
 ## Test files
 

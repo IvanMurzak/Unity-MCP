@@ -41,10 +41,19 @@
     <PackageReference Include="com.IvanMurzak.ReflectorNet" Version="5.4.0" />
   </ItemGroup>
 
-  <!-- Pin-parity plumbing (see NuGetPinGateTests): export the versions the BUILD actually restored as
-       assembly metadata, so the parity test reads the real PackageReference values instead of a
-       re-typed literal that could drift from them without anyone noticing. Must stay AFTER the
-       PackageReference items above — MSBuild evaluates items in document order. -->
+  <!-- Pin-parity plumbing (see NuGetPinGateTests): export the DECLARED pins as assembly metadata, so
+       the parity test reads the real PackageReference items instead of a re-typed literal that could
+       drift from them without anyone noticing. Must stay AFTER the PackageReference items above —
+       MSBuild evaluates items in document order.
+
+       Note it captures the DECLARED version, not the resolved one: a workspace-source override
+       (a root Directory.Build.targets pinning `[8.3.0-ws.g<sha8>]`) is imported after this ItemGroup,
+       so the metadata still says 8.3.0 while restore pulls the -ws package. Verified by running the
+       suite both ways. That is deliberate — the guard is about what the release train must bump, and
+       a transient override must not turn it red.
+
+       This project must stay override-COMPATIBLE: no UseWorkspaceSources property, no
+       packages.lock.json, no RestorePackagesPath, no nuget.config of its own. -->
   <ItemGroup>
     <AssemblyMetadata Include="Pin.com.IvanMurzak.McpPlugin"
                       Value="@(PackageReference->WithMetadataValue('Identity','com.IvanMurzak.McpPlugin')->'%(Version)')" />

@@ -238,8 +238,16 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
             // suite compiling the plugin's sources against the PREVIOUS framework DLLs while every other
             // signal says the pin moved — the failure would be silent and the green run misleading.
             //
-            // The observed value is read from assembly metadata that MSBuild emits from the ACTUAL
-            // <PackageReference> item (see EngineFree.csproj), so it cannot drift from what restore used.
+            // The observed value is read from assembly metadata MSBuild emits from the real
+            // <PackageReference> item rather than from a literal re-typed here, so the guard cannot
+            // drift from the csproj.
+            //
+            // Measured: under a workspace-source override (a root Directory.Build.targets whose
+            // `<PackageReference Update>` rows pin `[8.3.0-ws.g<sha8>]` with UseWorkspaceSources=true)
+            // this metadata still reports the DECLARED pin, because Directory.Build.targets is
+            // imported AFTER the ItemGroup that captures it. That is the behaviour this guard wants:
+            // an override is a deliberate, transient substitution, and it must not redden a check
+            // about what the RELEASE TRAIN has to bump.
             var metadata = typeof(NuGetPinGateTests).Assembly
                 .GetCustomAttributes<AssemblyMetadataAttribute>()
                 .FirstOrDefault(a => a.Key == "Pin." + packageId);
