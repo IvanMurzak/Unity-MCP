@@ -1,0 +1,23 @@
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/Utils/UnitySkillFileGenerator.cs
+  7dcf38a9a970be87 65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "192c05f934fe2ec54f1d70385fc4ef9303d85c7c",
+  "prompts": {
+    "7dcf38a9a970be87": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "08b5f8fc-4a90-4525-991d-2300bf026387",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}

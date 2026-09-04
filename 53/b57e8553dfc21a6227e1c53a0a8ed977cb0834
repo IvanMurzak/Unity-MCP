@@ -1,0 +1,77 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/ToolThreadSafetyTests.pre-Unity.6.5.cs
+  49d53a818dbb2c3d 12-13,651
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Utils/Executor/CreateGameObjectExecutor.pre-Unity.6.5.cs
+  49d53a818dbb2c3d 12,137
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Assets/AssetsPrefabCreateTests.cs
+  49d53a818dbb2c3d 12,51,68,85,102,121,145,176,204,221,238,255,286,302,356
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Utils/Executor/CreateGameObjectExecutor.cs
+  49d53a818dbb2c3d 12,113,118,137
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Utils/Executor/AddComponentExecutor.cs
+  49d53a818dbb2c3d 12,63,81
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/ReflectionConverter/DataPropertyPopulationTests.pre-Unity.6.5.cs
+  49d53a818dbb2c3d 1-174
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/GameObject/TestToolGameObject.GetComponents.pre-Unity.6.5.cs
+  49d53a818dbb2c3d 12,90
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Utils/Executor/AddComponentExecutor.pre-Unity.6.5.cs
+  49d53a818dbb2c3d 12,81
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/ReflectionConverter/DataFieldScriptableObjectPopulationTests.cs
+  49d53a818dbb2c3d 2,106,126,169
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/ReflectionConverter/DataPropertyScriptableObjectPopulationTests.pre-Unity.6.5.cs
+  49d53a818dbb2c3d 1-170
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/ReflectionConverter/DataPropertyScriptableObjectPopulationTests.cs
+  49d53a818dbb2c3d 2,106,126,170
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/ToolThreadSafetyTests.cs
+  49d53a818dbb2c3d 12,131,139,143,151,155,163-164,168,176,180,189,200,206,216,226,238,246,258,364,368,377,394,407,412,422,558,651
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Object/ObjectGetDataTests.cs
+  49d53a818dbb2c3d 12,81,298
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Object/ObjectGetDataTests.pre-Unity.6.5.cs
+  49d53a818dbb2c3d 1-298
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/ReflectionConverter/DataPropertyPopulationTests.cs
+  49d53a818dbb2c3d 2,106,126,137,174
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/ReflectionConverter/DataPopulationTests.cs
+  49d53a818dbb2c3d 2,111,131,142,179
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Screenshot/ScreenshotCameraTests.pre-Unity.6.5.cs
+  49d53a818dbb2c3d 1-154
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/ReflectionConverter/DataFieldScriptableObjectPopulationTests.pre-Unity.6.5.cs
+  49d53a818dbb2c3d 1-169
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/GameObject/TestToolGameObject.ModifyComponent.Gradient.cs
+  49d53a818dbb2c3d 12,54,61-62,125,132-133,146
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Screenshot/ScreenshotCameraTests.cs
+  49d53a818dbb2c3d 12,31,47,63,154
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/GameObject/TestToolGameObject.ModifyComponent.cs
+  49d53a818dbb2c3d 12,49,56-57,64,66,68,87,92,97-98,103,378,386,388,400,403,422,561
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/ReflectionConverter/DataPopulationTests.pre-Unity.6.5.cs
+  49d53a818dbb2c3d 1-179
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Assets/AssetsPrefabCreateTests.pre-Unity.6.5.cs
+  49d53a818dbb2c3d 1-356
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/GameObject/TestToolGameObject.Find.pre-Unity.6.5.cs
+  49d53a818dbb2c3d 12,451
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/GameObject/TestToolGameObject.ModifyComponent.pre-Unity.6.5.cs
+  49d53a818dbb2c3d 12,561
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/GameObject/TestToolGameObject.GetComponents.cs
+  49d53a818dbb2c3d 12,37,77,90
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/GameObject/TestToolGameObject.ModifyComponent.Gradient.pre-Unity.6.5.cs
+  49d53a818dbb2c3d 12,146
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/GameObject/TestToolGameObject.Find.cs
+  49d53a818dbb2c3d 12,38,96,120,149,160,332,451
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "53b57e8553dfc21a6227e1c53a0a8ed977cb0834",
+  "prompts": {
+    "49d53a818dbb2c3d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4f8975c4-7518-4266-b175-022ab5d78b9f",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 7341,
+      "total_deletions": 3696,
+      "accepted_lines": 4194,
+      "overriden_lines": 322
+    }
+  }
+}

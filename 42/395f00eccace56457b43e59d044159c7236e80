@@ -1,0 +1,23 @@
+Unity-MCP-Plugin/.claude/settings.json
+  bffa3338ff92bd2c 9-14
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "42395f00eccace56457b43e59d044159c7236e80",
+  "prompts": {
+    "bffa3338ff92bd2c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7cfecf5e-d66f-4261-b6df-556f22efaf1e",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 8,
+      "total_deletions": 1,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    }
+  }
+}

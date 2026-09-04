@@ -1,0 +1,49 @@
+Unity-MCP-Plugin/Assets/root/Tests/Editor/Tool/GameObject/TestJsonSchema.cs
+  a9b567c5721fbed1 198-297
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "7a1cd208ba034face3b5cf4736158b1e95e369fb",
+  "prompts": {
+    "7514928da704370e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a8b0383e-8469-4871-85be-31dd9e22a742",
+        "model": "claude-haiku-4-5-20251001"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 724,
+      "total_deletions": 192,
+      "accepted_lines": 530,
+      "overriden_lines": 2
+    },
+    "9d7af502d832e245": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "46a8e8f2-d5e9-4113-aef3-9254cd76fac0",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 49,
+      "total_deletions": 117,
+      "accepted_lines": 48,
+      "overriden_lines": 0
+    },
+    "a9b567c5721fbed1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "100d6411-5e57-4074-b246-a82deb5fb0b6",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 300,
+      "total_deletions": 200,
+      "accepted_lines": 144,
+      "overriden_lines": 0
+    }
+  }
+}

@@ -1,0 +1,55 @@
+README.md
+  612b9b6f511489d1 37
+docs/README.es.md
+  562b5c4357c641ab 30-34,36
+docs/README.ja.md
+  562b5c4357c641ab 30-34,36
+docs/README.zh-CN.md
+  562b5c4357c641ab 30-34,36
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.5",
+  "base_commit_sha": "e0c36bd79bb3cb388b3b1aaa5bc290eed278de8f",
+  "prompts": {
+    "38d912d6efcc8a5d": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "68641f77-6499-4b1b-b2b7-558ae1398ade",
+        "model": "copilot/claude-opus-4.5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 4,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "562b5c4357c641ab": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "9b8c6e52-d181-4570-948c-9eba89fa3461",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 2301,
+      "total_deletions": 2298,
+      "accepted_lines": 1245,
+      "overriden_lines": 0
+    },
+    "612b9b6f511489d1": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "d5e7174d-619d-4b0b-8070-99b78103202f",
+        "model": "copilot/claude-opus-4.6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 4,
+      "accepted_lines": 1,
+      "overriden_lines": 1
+    }
+  }
+}

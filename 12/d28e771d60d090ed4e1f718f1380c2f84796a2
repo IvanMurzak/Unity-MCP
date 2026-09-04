@@ -1,0 +1,21 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Skills/BuildMcpPluginIfNeededProjectRootTests.cs
+  s_e0e482beb79118::t_710fa150d71701 1-47
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UnityMcpPluginEditor.Build.cs
+  s_e0e482beb79118::t_7adc4fc9ffdf73 19-26,31-40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "12d28e771d60d090ed4e1f718f1380c2f84796a2",
+  "prompts": {},
+  "sessions": {
+    "s_e0e482beb79118": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4e9b3851-07f3-4dab-968f-af35848a2368",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
