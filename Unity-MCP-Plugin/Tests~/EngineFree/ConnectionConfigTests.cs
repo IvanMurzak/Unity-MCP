@@ -175,10 +175,19 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
             // base64url: '-'/'_' instead of '+'/'/', and padding stripped — the shape an ES256 JWT
             // actually arrives in. A decoder that only handled standard base64 would return null for
             // every real token, and the store's account-switch guard keys on this value.
-            var payload = Base64Url("""{"sub":"user_42?/+","aud":"ai-game.dev"}""");
-            var token = "header." + payload + ".signature";
+            //
+            // The odd-looking subject is load-bearing and was chosen by search, not for readability:
+            // a "nice" one (`user_42`, or even `user_42?/+` — the literal characters!) encodes to
+            // base64 containing NEITHER '+' nor '/', so the fixture would exercise neither Replace()
+            // and would pass with both of them deleted. Measured: this exact regression scored GREEN
+            // under a plant until the payload was replaced. The two asserts below are the guard on
+            // the guard — they fail loudly if a future edit makes the fixture toothless again.
+            var payload = Base64Url("""{"sub":"auth0|>00?","aud":"ai-game.dev"}""");
+            Assert.Contains("-", payload);
+            Assert.Contains("_", payload);
 
-            Assert.Equal("user_42?/+", DeviceAuthService.DecodeJwtSubject(token));
+            var token = "header." + payload + ".signature";
+            Assert.Equal("auth0|>00?", DeviceAuthService.DecodeJwtSubject(token));
         }
 
         [Theory]
