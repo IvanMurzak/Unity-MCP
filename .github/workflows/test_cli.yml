@@ -10,6 +10,10 @@ name: test-cli
 
 on:
   workflow_call:
+    inputs:
+      # Optional git ref to test. Empty (the default) checks out the ref the
+      # caller ran on.
+      ref: { required: false, type: string, default: "" }
 
 jobs:
   test-cli:
@@ -20,6 +24,11 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+        with:
+          ref: ${{ inputs.ref }}
+          # When a ref was passed in, this tree is a pull request's code and may
+          # come from a fork: do not leave a usable token in its .git/config.
+          persist-credentials: ${{ inputs.ref == '' }}
 
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v6

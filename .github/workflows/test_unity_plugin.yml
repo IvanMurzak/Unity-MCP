@@ -17,6 +17,10 @@ on:
       projectPath: { required: true, type: string }
       unityVersion: { required: true, type: string }
       testMode: { required: true, type: string }
+      # Optional git ref to test. Empty (the default) checks out the ref the
+      # caller ran on. test_pull_request_manual.yml passes refs/pull/<n>/merge
+      # so a maintainer can run this suite against a fork PR's code.
+      ref: { required: false, type: string, default: "" }
     secrets:
       # Stored Unity Personal license (.ulf XML). Generated once via the
       # generate-unity-activation-file workflow + https://license.unity3d.com/manual
@@ -50,16 +54,64 @@ jobs:
 
     steps:
       # --------------------------------------------------------------------- #
+      # 2-a1. Is a Unity license reachable from this run?
+      #
+      # GitHub withholds repository secrets from pull_request runs raised by a
+      # fork, so on a fork PR every step below would fail inside game-ci at
+      # license activation. Decide here instead, where the reason can be said
+      # out loud, and never print the secret itself.
+      # --------------------------------------------------------------------- #
+      - name: Check Unity license availability
+        id: license
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        run: |
+          if [ -n "$UNITY_LICENSE" ]; then
+            echo "available=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "available=false" >> "$GITHUB_OUTPUT"
+          # Not "head.repo.fork": that field says whether the head repository is
+          # itself a fork of anything, which is true for every PR raised inside a
+          # fork. The question here is whether the head is a DIFFERENT repository
+          # from this one, because that is what makes GitHub withhold the secret.
+          head_repo="${{ github.event.pull_request.head.repo.full_name }}"
+          if [ "${{ github.event_name }}" != "pull_request" ] || \
+             [ -z "$head_repo" ] || [ "$head_repo" = "${{ github.repository }}" ]; then
+            echo "::error::UNITY_LICENSE is empty on a run that should have it. See docs/claude/ci-unity-license.md."
+            exit 1
+          fi
+          echo "::notice::Unity tests not run: UNITY_LICENSE is unavailable to a fork PR. See the job summary."
+          {
+            echo "### Unity tests not run: no license in a fork PR"
+            echo ""
+            echo "GitHub withholds repository secrets from \`pull_request\` runs raised by a fork,"
+            echo "so \`UNITY_LICENSE\` is empty here and game-ci cannot activate an editor."
+            echo ""
+            echo "Two ways to get these tests run:"
+            echo "- Set your own \`UNITY_LICENSE\`, \`UNITY_EMAIL\` and \`UNITY_PASSWORD\` secrets on your fork"
+            echo "  (see \`docs/claude/ci-unity-license.md\`) and this suite runs on your fork's PRs."
+            echo "- Ask a maintainer to run **test-pull-request-manual** with this PR's number."
+          } >> "$GITHUB_STEP_SUMMARY"
+        shell: bash
+
+      # --------------------------------------------------------------------- #
       # 2-a. Checkout repository
       # --------------------------------------------------------------------- #
       - uses: actions/checkout@v6
+        if: steps.license.outputs.available == 'true'
         with:
           lfs: false
+          ref: ${{ inputs.ref }}
+          # When a ref was passed in, this tree is a pull request's code and may
+          # come from a fork: do not leave a usable token in its .git/config.
+          persist-credentials: ${{ inputs.ref == '' }}
 
       # --------------------------------------------------------------------- #
       # 2-b. Free disk space
       # --------------------------------------------------------------------- #
       - name: Free disk space
+        if: steps.license.outputs.available == 'true'
         uses: jlumbroso/free-disk-space@v1.3.1
         with:
           tool-cache: false
@@ -76,6 +128,7 @@ jobs:
       # (see the env block on the test-runner step below). No per-run web scraping.
       # --------------------------------------------------------------------- #
       - name: Generate cache key
+        if: steps.license.outputs.available == 'true'
         id: cache_key
         run: |
           # Sanitize projectPath: replace /, \, :, and spaces with underscores
@@ -84,6 +137,7 @@ jobs:
         shell: bash
 
       - uses: actions/cache@v5
+        if: steps.license.outputs.available == 'true'
         with:
           path: |
             ${{ inputs.projectPath }}/Library
@@ -92,11 +146,13 @@ jobs:
 
       # --------------------------------------------------------------------- #
       - name: Generate custom image name
+        if: steps.license.outputs.available == 'true'
         id: custom_image
         run: echo "image=unityci/editor:ubuntu-${{ inputs.unityVersion }}-${{ matrix.platform }}-3" >> $GITHUB_OUTPUT
         shell: bash
 
       - uses: game-ci/unity-test-runner@08fd329f00a18efa297140b14ac28ebce742759e # node24 runtime (PR #304); revert to @v4 once game-ci moves the tag
+        if: steps.license.outputs.available == 'true'
         id: tests
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
@@ -113,7 +169,7 @@ jobs:
 
       # --------------------------------------------------------------------- #
       - uses: actions/upload-artifact@v6
-        if: always()
+        if: always() && steps.license.outputs.available == 'true'
         with:
           name: Test results for ${{ inputs.unityVersion }} ${{ inputs.testMode }} on ${{ matrix.platform }}
           path: ${{ steps.tests.outputs.artifactsPath }}

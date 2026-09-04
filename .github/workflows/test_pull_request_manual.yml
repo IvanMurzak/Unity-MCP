@@ -10,10 +10,79 @@ name: test-pull-request-manual
 
 on:
   workflow_dispatch:
+    inputs:
+      pr:
+        description: "Pull request number to test (empty = test the branch this run was dispatched on)"
+        required: false
+        type: string
+
+# Nothing on this path needs to write: this run checks out a pull request's
+# code, which may come from a fork, and the default token on this repository
+# is write-scoped. Set here as well as per job so a job added later inherits it.
+permissions:
+  contents: read
 
 jobs:
+  # Resolve what to test. A PR opened from a fork lives in THIS repository as
+  # refs/pull/<n>/merge, so dispatching this workflow on a branch here and
+  # naming the PR number runs the full licensed suite against a fork's code
+  # without granting that code access to the secrets on any other trigger.
+  resolve:
+    name: resolve ref
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      ref: ${{ steps.resolve.outputs.ref }}
+    steps:
+      - id: resolve
+        env:
+          PR: ${{ inputs.pr }}
+        run: |
+          set -euo pipefail
+          if [ -z "${PR:-}" ]; then
+            echo "ref=" >> "$GITHUB_OUTPUT"
+            echo "Testing ${{ github.ref }} (no PR number given)." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          case "$PR" in
+            ''|*[!0-9]*) echo "::error::pr must be a pull request number"; exit 1 ;;
+          esac
+          remote="${{ github.server_url }}/${{ github.repository }}"
+          # Resolve to a commit SHA, not to refs/pull/<n>/merge. That ref is
+          # mutable: a push to the PR moves it, and the fourteen jobs below
+          # resolve it independently over several minutes. Pinning here means
+          # every job tests the one commit you looked at before dispatching.
+          name="merge"
+          line=$(git ls-remote "$remote" "refs/pull/$PR/merge")
+          if [ -z "$line" ]; then
+            name="head"
+            line=$(git ls-remote "$remote" "refs/pull/$PR/head")
+            [ -n "$line" ] && echo "::warning::PR #$PR has no merge ref (conflicts, or it is closed) - testing its head instead."
+          fi
+          if [ -z "$line" ]; then
+            echo "::error::No refs/pull/<n>/* found for that number on ${{ github.repository }}."
+            exit 1
+          fi
+          ref=${line%%[!0-9a-f]*}
+          if [ ${#ref} -ne 40 ]; then
+            echo "::error::Could not read a commit SHA for PR #$PR."
+            exit 1
+          fi
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+          echo "Testing PR #$PR at \`$ref\` (its $name commit)." >> "$GITHUB_STEP_SUMMARY"
+        shell: bash
+
   test-cli:
+    needs: resolve
+    # This run checks out code from a pull request, which may come from a fork.
+    # The default token on this repository is write-scoped; nothing here needs
+    # more than read, so it does not get more than read.
+    permissions:
+      contents: read
     uses: ./.github/workflows/test_cli.yml
+    with:
+      ref: ${{ needs.resolve.outputs.ref }}
 
   # --- UNITY TESTS ---
   # -------------------
@@ -21,24 +90,36 @@ jobs:
   # --- EDIT MODE ---
 
   test-unity-2022-3-62f3-editmode:
+    needs: resolve
+    permissions:
+      contents: read
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
+      ref: ${{ needs.resolve.outputs.ref }}
       projectPath: "./Unity-Tests/2022.3.62f3"
       unityVersion: "2022.3.62f3"
       testMode: "editmode"
     secrets: inherit
 
   test-unity-2023-2-22f1-editmode:
+    needs: resolve
+    permissions:
+      contents: read
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
+      ref: ${{ needs.resolve.outputs.ref }}
       projectPath: "./Unity-Tests/2023.2.22f1"
       unityVersion: "2023.2.22f1"
       testMode: "editmode"
     secrets: inherit
 
   test-unity-6000-3-1f1-editmode:
+    needs: resolve
+    permissions:
+      contents: read
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
+      ref: ${{ needs.resolve.outputs.ref }}
       projectPath: "./Unity-Tests/6000.3.1f1"
       unityVersion: "6000.3.1f1"
       testMode: "editmode"
@@ -73,24 +154,36 @@ jobs:
   # --- STANDALONE ---
 
   test-unity-2022-3-62f3-standalone:
+    needs: resolve
+    permissions:
+      contents: read
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
+      ref: ${{ needs.resolve.outputs.ref }}
       projectPath: "./Unity-Tests/2022.3.62f3"
       unityVersion: "2022.3.62f3"
       testMode: "standalone"
     secrets: inherit
 
   test-unity-2023-2-22f1-standalone:
+    needs: resolve
+    permissions:
+      contents: read
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
+      ref: ${{ needs.resolve.outputs.ref }}
       projectPath: "./Unity-Tests/2023.2.22f1"
       unityVersion: "2023.2.22f1"
       testMode: "standalone"
     secrets: inherit
 
   test-unity-6000-3-1f1-standalone:
+    needs: resolve
+    permissions:
+      contents: read
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
+      ref: ${{ needs.resolve.outputs.ref }}
       projectPath: "./Unity-Tests/6000.3.1f1"
       unityVersion: "6000.3.1f1"
       testMode: "standalone"
