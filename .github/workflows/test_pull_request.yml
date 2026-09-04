@@ -39,6 +39,27 @@ jobs:
       - name: Check NuGet pins against the asmdef gate generation
         run: python .github/scripts/check_nuget_gate.py
 
+  # The plugin's only engine-free C# tests: a plain xUnit project that compiles a chosen set of the
+  # real plugin sources (Unity-MCP-Plugin/Tests~/EngineFree). No Unity licence, no editor, no Docker —
+  # so unlike the game-ci legs below it also runs on fork PRs, in seconds. What it may and may not
+  # compile in, and why, is documented in Unity-MCP-Plugin/Tests~/EngineFree/README.md.
+  # TreatNoTestsAsError guards the vacuous case: a run that discovers zero tests fails instead of
+  # reporting a green job.
+  engine-free-tests:
+    name: engine-free tests (.NET 8)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Test
+        run: dotnet test Unity-MCP-Plugin/Tests~/EngineFree/EngineFree.csproj -c Release --logger trx -- RunConfiguration.TreatNoTestsAsError=true
+
   test-cli:
     uses: ./.github/workflows/test_cli.yml
 

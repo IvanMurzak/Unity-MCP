@@ -1,0 +1,95 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>com.IvanMurzak.Unity.MCP.EngineFree.Tests</RootNamespace>
+    <AssemblyName>Unity-MCP.EngineFree.Tests</AssemblyName>
+    <!-- This is a plain xUnit assembly, NOT a Unity assembly. It has NO reference to UnityEngine /
+         UnityEditor and never will: the point of the project is that the pieces compiled in here are
+         provably engine-free, so they can be exercised on hosted ubuntu in seconds with no Unity
+         license, no Docker and no editor. Anything that touches a Unity type belongs in the game-ci
+         Test Runner suites under Unity-Tests/ instead.
+
+         READ THIS BEFORE ADDING A <Compile> LINE. "grep finds no UnityEngine in the file" is a
+         HYPOTHESIS about compilability, not the answer — a file drags in the engine through its
+         TRANSITIVE references just as fatally as through its own usings. The rule here is: add the
+         file, build, and keep it only if the build stays green. Never add a hand-written stand-in for
+         a product type to make something compile — a stub would turn this suite into a test of the
+         stub. See README.md in this folder for the files that were measured NOT to compile and why.
+
+         Everything below is under Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp — i.e. the
+         REAL shipped plugin sources, compiled directly rather than referenced, exactly like
+         Godot-MCP.Tests/Godot-MCP.Tests.csproj does for the Godot addon. -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.11.1" />
+    <PackageReference Include="xunit" Version="2.9.2" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The SAME two pins the resolver installs into a consumer project
+         (Editor/DependencyResolver/NuGetConfig.cs:117,124). NEVER bump them here by hand: they are a
+         SECOND pin location, and NuGetPinGateTests.PinnedPackageVersions_MatchNuGetConfig fails loudly
+         if they drift from NuGetConfig.Packages, so a missed bump cannot silently leave this suite
+         testing yesterday's DLLs. McpPlugin is what makes this project a NuGet-mode consumer of the
+         framework, which is also what lets a workspace-source override chain reach it. -->
+    <PackageReference Include="com.IvanMurzak.McpPlugin" Version="8.3.0" />
+    <PackageReference Include="com.IvanMurzak.ReflectorNet" Version="5.4.0" />
+  </ItemGroup>
+
+  <!-- Pin-parity plumbing (see NuGetPinGateTests): export the versions the BUILD actually restored as
+       assembly metadata, so the parity test reads the real PackageReference values instead of a
+       re-typed literal that could drift from them without anyone noticing. Must stay AFTER the
+       PackageReference items above — MSBuild evaluates items in document order. -->
+  <ItemGroup>
+    <AssemblyMetadata Include="Pin.com.IvanMurzak.McpPlugin"
+                      Value="@(PackageReference->WithMetadataValue('Identity','com.IvanMurzak.McpPlugin')->'%(Version)')" />
+    <AssemblyMetadata Include="Pin.com.IvanMurzak.ReflectorNet"
+                      Value="@(PackageReference->WithMetadataValue('Identity','com.IvanMurzak.ReflectorNet')->'%(Version)')" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- ── (a) NuGet resolver: pins + the asmdef generation gate (issue #957) ──────────────────────
+         Pure BCL, no Unity API, no McpPlugin dependency. NuGetConfig is the single source of truth for
+         the pinned NuGet set AND for the two gate defines, and it is the file .github/scripts/
+         check_nuget_gate.py parses. Compiling it in lets NuGetPinGateTests re-implement that gate's
+         rule over the real constants rather than over a copy of them.
+         `NuGetConfig` and `NuGetPackage` are INTERNAL to the DependencyResolver asmdef; compiling the
+         sources into this assembly is what makes them reachable from a test, with no InternalsVisibleTo
+         and no widening of the shipped surface. -->
+    <Compile Include="..\..\Packages\com.ivanmurzak.unity.mcp\Editor\DependencyResolver\NuGetConfig.cs" Link="Source\NuGetConfig.cs" />
+    <Compile Include="..\..\Packages\com.ivanmurzak.unity.mcp\Editor\DependencyResolver\NuGetPackage.cs" Link="Source\NuGetPackage.cs" />
+    <!-- Cache-path derivation only (Path.Combine over NuGetConfig.CachePath). The tests never call
+         EnsureCacheDirectory — it writes to the process working directory. -->
+    <Compile Include="..\..\Packages\com.ivanmurzak.unity.mcp\Editor\DependencyResolver\NuGetCache.cs" Link="Source\NuGetCache.cs" />
+
+    <!-- ── (b) Connection configuration: the cloud authorization-server side ───────────────────────
+         The device-authorization client is where the plugin's Cloud-mode connection is CONFIGURED:
+         the AS base URL and the two endpoints derived from it, the client id presented on the wire,
+         and the scope the login requests. Its network methods need a live AS, but the file separates
+         the pure request/response helpers out for exactly this purpose ("Pure, unit-testable
+         request/response helpers") and they are what ConnectionConfigTests drives.
+         Pure BCL + System.Text.Json + HttpClient; no Unity API, no McpPlugin dependency. -->
+    <Compile Include="..\..\Packages\com.ivanmurzak.unity.mcp\Editor\Scripts\Services\DeviceAuthService.cs" Link="Source\DeviceAuthService.cs" />
+    <!-- The plugin's own log-level enum + gate. This is the type of UnityConnectionConfig.LogLevel and
+         the comparison behind UnityMcpPlugin.IsLogEnabled, so it is the one piece of the serialized
+         connection config that is reachable engine-free (UnityMcpPlugin.Config.cs itself is not — see
+         README.md). Pure enum + extension method. -->
+    <Compile Include="..\..\Packages\com.ivanmurzak.unity.mcp\Runtime\Utils\LogLevel.cs" Link="Source\LogLevel.cs" />
+
+    <!-- ── (c) Tool attribute plumbing ─────────────────────────────────────────────────────────────
+         Tool_Ping is the ONLY [AiToolType] family in the plugin whose every partial is engine-free, so
+         it is the only one that can be compiled in WHOLE. That matters more than it looks: a partial
+         class assembled from a subset of its files would present a tool surface that does not exist in
+         production, and a reflection test over it would be quietly measuring the wrong object. Do not
+         add a tool family here unless every file declaring the class compiles (README.md lists them).
+         Uses McpPlugin's [AiTool]/[AiToolType]/[AiSkill*] attributes and McpToolType — pure-managed,
+         which is what lets ToolAttributeTests drive the REAL McpPluginBuilder registration path. -->
+    <Compile Include="..\..\Packages\com.ivanmurzak.unity.mcp\Editor\Scripts\API\SystemTool\Ping.cs" Link="Source\Tool_Ping.cs" />
+  </ItemGroup>
+
+</Project>

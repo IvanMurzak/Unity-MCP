@@ -1,0 +1,6 @@
+# Build output of this xUnit project. The plugin-root .gitignore's `/[Oo]bj/` rule is ROOTED at
+# Unity-MCP-Plugin/, so it does not reach here, and nothing ignores `bin/` or `TestResults/` at all —
+# without this file a `git add -A` after a local `dotnet test` would commit the whole restore output.
+bin/
+obj/
+TestResults/
