@@ -301,6 +301,69 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual("QUOTED_TOKEN", config.LocalToken);
         }
 
+        // --- Asset Import Worker detection (#855) ---
+
+        [Test]
+        public void IsAssetImportWorker_TrueForWorkerCommandLine()
+        {
+            // The ARGUMENT SHAPE is what a Unity 6 Asset Import Worker is launched with. The path
+            // values are generic fixtures: IsAssetImportWorker only reads the value of -name, and
+            // nothing in this fixture is resolved against a filesystem.
+            var args = new[]
+            {
+                "/home/user/unity/Editor/Unity",
+                "-adb2", "-batchMode", "-noUpm",
+                "-name", "AssetImportWorker0",
+                "-projectPath", "/home/user/my-game",
+                "-logFile", "Logs/AssetImportWorker0.log",
+                "-parentPid", "44868"
+            };
+
+            Assert.IsTrue(EnvironmentUtils.IsAssetImportWorker(args));
+        }
+
+        [Test]
+        public void IsAssetImportWorker_FalseForMainEditorCommandLine()
+        {
+            var args = new[]
+            {
+                "/home/user/unity/Editor/Unity",
+                "-projectPath", "/home/user/my-game"
+            };
+
+            Assert.IsFalse(EnvironmentUtils.IsAssetImportWorker(args));
+        }
+
+        [Test]
+        public void IsAssetImportWorker_FalseWhenOnlyThePathContainsTheWord()
+        {
+            // Detection reads the VALUE of -name, never a path. Were it a substring scan of the
+            // whole command line, -projectPath would match too and log collection would switch off
+            // in the MAIN Editor of any project whose folder happens to contain the word.
+            var args = new[]
+            {
+                "/home/user/unity/Editor/Unity",
+                "-projectPath", "/home/user/AssetImportWorkerRepro"
+            };
+
+            Assert.IsFalse(EnvironmentUtils.IsAssetImportWorker(args));
+        }
+
+        [Test]
+        public void IsAssetImportWorker_FalseForTrailingNameFlagWithNoValue()
+        {
+            var args = new[] { "Unity.exe", "-name" };
+
+            Assert.IsFalse(EnvironmentUtils.IsAssetImportWorker(args));
+        }
+
+        [Test]
+        public void IsAssetImportWorker_FalseForNullOrEmptyArgs()
+        {
+            Assert.IsFalse(EnvironmentUtils.IsAssetImportWorker(null));
+            Assert.IsFalse(EnvironmentUtils.IsAssetImportWorker(Array.Empty<string>()));
+        }
+
         // --- Helpers ---
 
         static string SerializeForDisk(UnityMcpPlugin.UnityConnectionConfig config)
