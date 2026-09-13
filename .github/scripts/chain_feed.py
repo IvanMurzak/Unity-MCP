@@ -266,6 +266,14 @@ RECIPES = {
                 "ref": "cli-core/tgz", "node": "cli-core", "artifact": "tgz",
                 "mode": "npm", "path": "cli", "pins": ["cli/package.json"],
             },
+            {
+                "ref": "reflectornet/nupkg", "node": "reflectornet", "artifact": "nupkg",
+                "mode": "nuget", "pins": ["Unity-MCP-Plugin/Tests~/EngineFree/EngineFree.csproj"],
+            },
+            {
+                "ref": "mcp-plugin-dotnet/mcpplugin", "node": "mcp-plugin-dotnet", "artifact": "mcpplugin",
+                "mode": "nuget", "pins": ["Unity-MCP-Plugin/Tests~/EngineFree/EngineFree.csproj"],
+            },
         ],
     },
     "godot-mcp": {
@@ -426,6 +434,16 @@ VENDOR_NODES = tuple(sorted(nid for nid, body in RECIPES.items() if body.get("ki
 #: Unity is the one leg whose workflow has no `concurrency:` today and needs a NEW block
 #: (`04` §2). Everything else either keeps its existing expression or needs none.
 NEEDS_NEW_CONCURRENCY = ("unity-mcp",)
+
+#: The `actions/upload-artifact` major the fragment emits: the newest one a node workflow already
+#: runs (MCP-Plugin-dotnet `test-pull-request.yml`). §C5 lets a repo keep its own major (>= v4).
+UPLOAD_ARTIFACT_MAJOR = "v7"
+
+#: `--edges` selectors that name neither a mode, a producer node nor a `<node>/<artifact>` ref.
+#: `self` = this node's OWN pack (what a root leg proves); `none` = the §C6 sha assertion and a
+#: record, nothing overridden and nothing proven (a job that consumes nothing from the chain).
+SCOPE_SELF = "self"
+SCOPE_NONE = "none"
 
 
 class Refusal(Exception):
@@ -599,9 +617,11 @@ def load_lock_text(args):
 class LegContext(object):
     """Everything a subcommand is allowed to need, resolved once."""
 
-    def __init__(self, node, job, lock, lock_hash8, source, checkout, runner_temp):
+    def __init__(self, node, job, lock, lock_hash8, source, checkout, runner_temp, scope=None):
         self.node = node
         self.job = job
+        #: `None` = no `--edges` filter (every edge in scope), else a frozenset of selectors.
+        self.scope = scope
         self.lock = lock
         self.lock_hash = str(lock.get("lock_hash") or "")
         self.lock_hash8 = lock_hash8
@@ -720,6 +740,7 @@ def build_context(args, enforce_limits=True):
         source=source,
         checkout=getattr(args, "checkout", None) or _default_checkout(),
         runner_temp=getattr(args, "runner_temp", None) or _default_runner_temp(),
+        scope=resolve_scope(node, getattr(args, "edges", None)),
     )
     if source == "PR body":
         log("chain: lock from PR body")
@@ -776,10 +797,180 @@ def overridden_edges(ctx):
     return out
 
 
-def lower_closure(ctx):
+def consumer_pins(edge):
+    """The pins of `edge` that are CONSUMER PROJECTS a job can select one by one.
+
+    Only a `nuget` pin is a project whose own `project.assets.json` is the evidence (§C9). The
+    pins of every other mode are version files (`NuGetConfig.cs`, `package.json`, a `.ts`
+    constant), never a thing a job restores, so they are not selectors.
+    """
+    return list(edge.get("pins") or ()) if edge["mode"] == "nuget" else []
+
+
+def scope_selectors(node_id):
+    """Every `--edges` value `node_id` accepts: modes, producers, refs, consumer pins, `self`, `none`."""
+    edges = [edge for edge in RECIPES[node_id]["consumes"] if edge["mode"] != "project"]
+    out = sorted({edge["mode"] for edge in edges}) + sorted({edge["node"] for edge in edges})
+    for value in [edge["ref"] for edge in edges] + sorted({p for edge in edges for p in consumer_pins(edge)}):
+        # one ref can back two modes (unity-mcp consumes McpPlugin as DLL drops AND as a NuGet
+        # package for its engine-free project) — offer each selector once
+        if value not in out:
+            out.append(value)
+    if is_root_node(node_id) and own_packable_artifacts(node_id):
+        out.append(SCOPE_SELF)
+    out.append(SCOPE_NONE)
+    return out
+
+
+def resolve_scope(node_id, raw_values):
+    """`--edges` -> `None` (no filter: every edge is in scope) or a frozenset of selectors.
+
+    An unknown selector is a refusal, never an empty scope: a typo that silently scoped a job to
+    nothing would turn every identity proof into a `skipped[]` row and the leg GREEN.
+    """
+    values = []
+    for raw in raw_values or ():
+        for part in str(raw).split(","):
+            part = part.strip()
+            if part and part not in values:
+                values.append(part)
+    if not values:
+        return None
+    valid = scope_selectors(node_id)
+    unknown = [value for value in values if value not in valid]
+    if unknown:
+        raise Refusal(
+            "--edges %s: not a selector node %s accepts (valid: %s)"
+            % (", ".join(unknown), node_id, ", ".join(valid))
+        )
+    if SCOPE_NONE in values and len(values) > 1:
+        raise Refusal("--edges none cannot be combined with other selectors (got %s)" % ", ".join(values))
+    return frozenset(values)
+
+
+def scope_label(scope):
+    return "(all)" if scope is None else ",".join(sorted(scope))
+
+
+def scope_json(scope):
+    """The scope as `leg-state.json` stores it: `null` for no filter, else a sorted list."""
+    return None if scope is None else sorted(scope)
+
+
+def _edge_selected_whole(edge, scope):
+    return scope is None or edge["mode"] in scope or edge["node"] in scope or edge["ref"] in scope
+
+
+def edge_in_scope(edge, scope):
+    """An edge is in scope when a mode / producer / ref selects it, or any of its consumer pins does."""
+    return _edge_selected_whole(edge, scope) or any(pin in scope for pin in consumer_pins(edge))
+
+
+def pins_in_scope(edge, scope):
+    """The pins of an IN-SCOPE edge this job proves.
+
+    A mode / producer / ref selector takes every pin; a pin selector takes only the consumer
+    projects it names. That is what lets a job that restores SOME of an edge's projects (Godot's
+    `dotnet-build-test` never restores `Godot-Tests.csproj`, which is not in the sln) prove the
+    ones it does restore without a missing assets file for the others turning it RED.
+    """
+    pins = list(edge.get("pins") or ())
+    return pins if _edge_selected_whole(edge, scope) else [p for p in pins if p in scope]
+
+
+def pins_out_of_scope(edge, scope):
+    """The pins of an IN-SCOPE edge this job leaves unproven (a named `skipped[]` row each)."""
+    proven = pins_in_scope(edge, scope)
+    return [p for p in (edge.get("pins") or ()) if p not in proven]
+
+
+def scoped_edges(ctx):
+    """`(in scope, out of scope)` over `overridden_edges(ctx)`, per this job's `--edges`."""
+    inside, outside = [], []
+    for edge in overridden_edges(ctx):
+        (inside if edge_in_scope(edge, ctx.scope) else outside).append(edge)
+    return inside, outside
+
+
+def own_packable_artifacts(node_id):
+    """The nupkg / tgz artifacts a node's OWN `pack:` produces, by artifact key."""
+    return [
+        (key, body) for key, body in sorted(RECIPES[node_id]["artifacts"].items())
+        if body.get("kind") in ("nupkg", "tgz") and not body.get("pending")
+    ]
+
+
+def is_root_node(node_id):
+    """A ROOT consumes nothing in RECIPES (§C4 "root nodes" — ReflectorNet, cli-core).
+
+    Decided by the RECIPE, never by the lock: a consumer whose producers all happen to be
+    `released` in one lock has no overridden edge either, yet it is not a root — its workflow
+    never packs its own artifact into the chain feed, so treating it as one would demand a proof
+    no job of it can produce.
+    """
+    return not any(edge["mode"] != "project" for edge in RECIPES[node_id]["consumes"])
+
+
+def leg_is_active(ctx):
+    """A leg is evidence for this lock when it consumes a ws producer OR is a root at a ws version.
+
+    A root builds at `CHAIN_BUILD_PROPS` and packs its own artifact at the lock's ws version for
+    its consumers, so it is a leg exactly like any other. Every other node with no overridden
+    edge is a no-op, as before.
+    """
+    return bool(overridden_edges(ctx)) or (is_root_node(ctx.node) and bool(ctx.ws_version(ctx.node)))
+
+
+def own_pack_in_scope(ctx):
+    """`(proven, skipped)` own-pack artifacts — a root at a ws version only.
+
+    With no `--edges`, or `--edges self`, the root proves its own pack; any other scope records
+    the own pack as a named skip rather than dropping it silently (A22).
+    """
+    if not (is_root_node(ctx.node) and ctx.ws_version(ctx.node)):
+        return [], []
+    artifacts = own_packable_artifacts(ctx.node)
+    if ctx.scope is None or SCOPE_SELF in ctx.scope:
+        return artifacts, []
+    return [], artifacts
+
+
+def scope_skips(ctx, inside, outside, own_outside):
+    """One `skipped[]` row per edge, consumer pin and own artifact this job's scope left unproven."""
+    reason = "out of this job's --edges scope (%s): not built, not overridden, not proven" % scope_label(ctx.scope)
+    rows = [{"step": "identity %s (%s)" % (edge["ref"], edge["mode"]), "reason": reason} for edge in outside]
+    pin_reason = "consumer out of this job's --edges scope (%s): not proven" % scope_label(ctx.scope)
+    for edge in inside:
+        for pin in pins_out_of_scope(edge, ctx.scope):
+            rows.append({"step": "identity %s @ %s (%s)" % (edge["ref"], pin, edge["mode"]), "reason": pin_reason})
+    rows += [
+        {"step": "identity %s/%s (own pack)" % (ctx.node, key), "reason": reason}
+        for key, _ in own_outside
+    ]
+    return rows
+
+
+def own_build_props(ctx):
+    """`CHAIN_BUILD_PROPS` — `-p:Version=<ws>` when this node's own build takes a version."""
+    recipe_build = RECIPES[ctx.node]["build"]
+    own_ws = ctx.ws_version(ctx.node)
+    if recipe_build and "{ws_version}" in recipe_build and own_ws:
+        return "-p:Version=%s" % own_ws
+    return None
+
+
+def feed_artifact_path(ctx, node_id, body):
+    """Where a nupkg / tgz artifact of `node_id` lands in this checkout's feed at its ws version."""
+    ws_version = ctx.ws_version(node_id)
+    if body["kind"] == "nupkg":
+        return ctx.feed_nuget / ("%s.%s.nupkg" % (body["id"], ws_version))
+    return ctx.feed_npm / tarball_filename(body["id"], ws_version)
+
+
+def lower_closure(ctx, edges):
     """Every lower node this leg must self-build, transitively, in topological order."""
     wanted = set()
-    stack = [edge["node"] for edge in overridden_edges(ctx)]
+    stack = [edge["node"] for edge in edges]
     while stack:
         node_id = stack.pop()
         if node_id in wanted or node_id == ctx.node:
@@ -822,10 +1013,10 @@ def clone_argv(node_id, sha, clone_dir, slug):
     ]
 
 
-def build_plan(ctx):
+def build_plan(ctx, edges):
     """The full clone/build/pack plan, computed with ZERO side effects (`dry-run` prints it)."""
     plan = []
-    for node_id in lower_closure(ctx):
+    for node_id in lower_closure(ctx, edges):
         recipe = RECIPES[node_id]
         clone_dir = ctx.clone_dir(node_id)
         values = placeholder_values(ctx, node_id, clone_dir)
@@ -859,10 +1050,8 @@ def expected_artifacts(ctx, node_id):
         if body.get("pending"):
             continue
         kind = body.get("kind")
-        if kind == "nupkg":
-            out.append(as_posix_abs(ctx.feed_nuget / ("%s.%s.nupkg" % (body["id"], ws_version))))
-        elif kind == "tgz":
-            out.append(as_posix_abs(ctx.feed_npm / tarball_filename(body["id"], ws_version)))
+        if kind in ("nupkg", "tgz"):
+            out.append(as_posix_abs(feed_artifact_path(ctx, node_id, body)))
         elif kind == "server-binary":
             rid = host_rid()
             out.append(as_posix_abs(server_exe_path(ctx, body["id"], ws_version, rid)))
@@ -1585,7 +1774,11 @@ def _parse_version_children(buf, off, end):
 
 def pe_version_strings(path):
     """Every `StringFileInfo` entry of the first RT_VERSION resource. `{}` when absent."""
-    buf = Path(path).read_bytes()
+    return pe_version_strings_from_bytes(Path(path).read_bytes())
+
+
+def pe_version_strings_from_bytes(buf):
+    """`pe_version_strings` over an in-memory image (a DLL read straight out of a nupkg)."""
     sections, res_rva, res_size = _pe_sections(buf)
     if not res_rva or not res_size:
         return {}
@@ -1707,6 +1900,29 @@ def _write_github_output(pairs):
             handle.write("%s=%s\n" % (key, value))
 
 
+#: `leg-state.json` carries whether `apply` got to the end. `record` goes RED for an active leg
+#: whose state is missing or not `ok`, so a failed or skipped apply can never record GREEN.
+APPLY_STATUS_KEY = "apply"
+APPLY_STARTED = "started"
+APPLY_OK = "ok"
+
+
+def apply_status_proofs(ctx, state):
+    """An ACTIVE leg is evidence only if this job's `apply` completed.
+
+    A failed `apply` exits 2 but the `if: always()` record step still runs, and every identity
+    row can read OK against a checkout the override never reached (a released restore of a
+    consumer pinned to the same version, a stale drop). This row is what keeps that RED.
+    """
+    if not leg_is_active(ctx):
+        return []
+    status = state.get(APPLY_STATUS_KEY)  # `_load_state` returns `{}` when there is no file
+    if status == APPLY_OK:
+        return []
+    what = "apply did not complete (status %r)" % status if state else "apply never ran in this job"
+    return [_proof(ctx.node, "%s: %s" % (ctx.state_path.name, what), "", status, APPLY_OK, False)]
+
+
 def _save_state(ctx, state):
     ctx.state_path.parent.mkdir(parents=True, exist_ok=True)
     ctx.state_path.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -1727,18 +1943,34 @@ def cmd_apply(args):
     if ctx is None:
         return EXIT_OK
     started = time.time()
-    edges = overridden_edges(ctx)
-    if not edges:
-        log("chain: %s consumes nothing inside this lock; nothing to override" % ctx.node)
+    if not leg_is_active(ctx):
+        log("chain: %s consumes nothing inside this lock and is not a root node at a ws version; "
+            "nothing to override" % ctx.node)
         _write_github_output([("active", "false")])
         return EXIT_OK
+    edges, outside = scoped_edges(ctx)
+    if ctx.scope is not None:
+        log("chain: --edges %s" % scope_label(ctx.scope))
+    for edge in outside:
+        log("chain: out of this job's scope: %s (%s) — not built, not overridden" % (edge["ref"], edge["mode"]))
+    if is_root_node(ctx.node):
+        log("chain: root node: no lower layers; %s packs its own artifact at %s"
+            % (ctx.node, ctx.ws_version(ctx.node)))
 
     for directory in (ctx.feed_nuget, ctx.feed_npm, ctx.feed_server, ctx.feed_unity_dll, ctx.chain_temp):
         directory.mkdir(parents=True, exist_ok=True)
+    # Written BEFORE any build: every refusal below leaves `apply: started` behind, which
+    # `record` reads as RED. A state saved only on success cannot tell "apply failed" from
+    # "apply never ran" from a stale file — and neither may record GREEN.
+    _save_state(ctx, {
+        "node": ctx.node, "job": ctx.job, "lock_hash": ctx.lock_hash, "lock_hash8": ctx.lock_hash8,
+        APPLY_STATUS_KEY: APPLY_STARTED, "scope": scope_json(ctx.scope), "warnings": [],
+    })
     ctx.lock_path.write_text(json.dumps(ctx.lock, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
-    # 1. the lower layers, in topological order, each built AND packed at its ws version (A4).
-    for entry in build_plan(ctx):
+    # 1. the lower layers IN THIS JOB'S SCOPE, in topological order, each built AND packed at
+    #    its ws version (A4).
+    for entry in build_plan(ctx, edges):
         node_id = entry["node"]
         clone_dir = ctx.clone_dir(node_id)
         if clone_dir.exists():
@@ -1802,10 +2034,9 @@ def cmd_apply(args):
     exported[NUGET_PACKAGES_ENV] = ctx.nuget_packages_dir
     exported["CHAIN_ACTIVE"] = "1"
     exported["CHAIN_LOCK_PATH"] = as_posix_abs(ctx.lock_path)
-    if RECIPES[ctx.node]["build"] and "{ws_version}" in RECIPES[ctx.node]["build"]:
-        own_ws = ctx.ws_version(ctx.node)
-        if own_ws:
-            exported["CHAIN_BUILD_PROPS"] = "-p:Version=%s" % own_ws
+    build_props = own_build_props(ctx)
+    if build_props:
+        exported["CHAIN_BUILD_PROPS"] = build_props
     _write_github_env(sorted(exported.items()))
     _write_github_output([("active", "true")])
 
@@ -1819,13 +2050,15 @@ def cmd_apply(args):
         "notes": notes,
         "env": exported,
         "feed_build_seconds": round(time.time() - started, 3),
+        "scope": scope_json(ctx.scope),
         "skipped": _default_skips(ctx),
         "warnings": [],
+        APPLY_STATUS_KEY: APPLY_OK,
     }
     _save_state(ctx, state)
     for line in notes:
         log("chain: " + line)
-    log("chain: override active for %s (modes: %s)" % (ctx.node, ", ".join(modes)))
+    log("chain: override active for %s (modes: %s)" % (ctx.node, ", ".join(modes) or "none in this job's scope"))
     return EXIT_OK
 
 
@@ -1907,7 +2140,30 @@ def cmd_dry_run(args):
     log("chain: checkout    %s" % as_posix_abs(ctx.checkout))
     log("chain: feeds       %s" % as_posix_abs(ctx.artifacts))
     log("chain: %s %s" % (NUGET_PACKAGES_ENV, ctx.nuget_packages_dir))
-    for entry in build_plan(ctx):
+    if ctx.scope is not None:
+        log("chain: --edges     %s" % scope_label(ctx.scope))
+    if not leg_is_active(ctx):
+        log("chain: INACTIVE — %s consumes nothing inside this lock and is not a root node at a ws "
+            "version; apply would write nothing and report active=false" % ctx.node)
+        return EXIT_OK
+    edges, outside = scoped_edges(ctx)
+    own, own_outside = own_pack_in_scope(ctx)
+    if is_root_node(ctx.node):
+        log("")
+        log("chain: --- %s @ %s (%s) — this node's OWN pack, run by the workflow after its tests ---"
+            % (ctx.node, ctx.ws_version(ctx.node), ctx.sha(ctx.node)))
+        values = placeholder_values(ctx, ctx.node, ctx.checkout)
+        for raw in RECIPES[ctx.node]["pack"]:
+            log("chain:   pack    %s" % substitute(raw, values))
+        for _, body in own_packable_artifacts(ctx.node):
+            # checkout-relative: the same `.artifacts/<feed>/<file>` the workflow's pack step writes
+            relative = feed_artifact_path(ctx, ctx.node, body).relative_to(ctx.checkout).as_posix()
+            log("chain: root node: no lower layers; pack → %s" % relative)
+    for _, body in own:
+        log("chain:   prove   %s (own pack)" % as_posix_abs(feed_artifact_path(ctx, ctx.node, body)))
+    for row in scope_skips(ctx, edges, outside, own_outside):
+        log("chain:   skip    %s: %s" % (row["step"], row["reason"]))
+    for entry in build_plan(ctx, edges):
         log("")
         log("chain: --- %s @ %s (%s) ---" % (entry["node"], entry["ws_version"], entry["sha"]))
         for argv in entry["clone"]:
@@ -1922,7 +2178,6 @@ def cmd_dry_run(args):
             log("chain:   expect  %s" % expected)
     log("")
     log("chain: --- override for %s at the checkout root ---" % ctx.node)
-    edges = overridden_edges(ctx)
     for mode in sorted({e["mode"] for e in edges}):
         mode_edges = [e for e in edges if e["mode"] == mode]
         if mode == "nuget":
@@ -1960,8 +2215,12 @@ def cmd_dry_run(args):
                 log("chain:   server  %s=%s" % (edge.get("env") or "CHAIN_SERVER_PATH", as_posix_abs(exe)))
     log("")
     log("chain: --- $GITHUB_ENV ---")
-    for key in ("CHAIN_ACTIVE=1", "CHAIN_LOCK_PATH=%s" % as_posix_abs(ctx.lock_path),
-                "%s=true" % NUGET_PROPERTY, "%s=%s" % (NUGET_PACKAGES_ENV, ctx.nuget_packages_dir)):
+    keys = ["CHAIN_ACTIVE=1", "CHAIN_LOCK_PATH=%s" % as_posix_abs(ctx.lock_path),
+            "%s=true" % NUGET_PROPERTY, "%s=%s" % (NUGET_PACKAGES_ENV, ctx.nuget_packages_dir)]
+    build_props = own_build_props(ctx)
+    if build_props:
+        keys.append("CHAIN_BUILD_PROPS=%s" % build_props)
+    for key in keys:
         log("chain:   %s" % key)
     return EXIT_OK
 
@@ -1972,16 +2231,33 @@ def cmd_record(args):
     if ctx is None:
         return EXIT_OK
     state = _load_state(ctx)
-    proofs = identity_proofs(ctx)
+    edges, outside = scoped_edges(ctx)
+    own, own_outside = own_pack_in_scope(ctx)
+    proofs = apply_status_proofs(ctx, state) + identity_proofs(ctx, edges, own)
     skipped = list(state.get("skipped") or [])
     # The named gaps belong in the record whether or not `apply` wrote the state file: a leg
-    # that reports NO skips is claiming coverage it does not have (A22).
-    for row in _default_skips(ctx):
+    # that reports NO skips is claiming coverage it does not have (A22). An edge this job's
+    # `--edges` scope left out is one of them — never proven, never silently absent.
+    for row in _default_skips(ctx) + scope_skips(ctx, edges, outside, own_outside):
         if row not in skipped:
             skipped.append(row)
     for raw in getattr(args, "skip", None) or ():
         step, _, reason = str(raw).partition("=")
         skipped.append({"step": step, "reason": reason or "unspecified"})
+    warnings = list(state.get("warnings") or [])
+    # `--warn TEXT` (repeatable): a named caveat the job wants in the record (a pin drift, a
+    # step it could not reach). Every non-blank value lands, in order, repeats included. A
+    # warning NEVER changes `result`.
+    for raw in getattr(args, "warn", None) or ():
+        text = str(raw).strip()
+        if text:
+            warnings.append(text)
+    if "scope" in state and state.get("scope") != scope_json(ctx.scope):
+        applied = state.get("scope")
+        warnings.append(
+            "apply ran with --edges %s but record with --edges %s: pass the SAME scope to both"
+            % (scope_label(None if applied is None else frozenset(applied)), scope_label(ctx.scope))
+        )
     failed = [p for p in proofs if not p["ok"]]
     job_status = (getattr(args, "job_status", None) or "").lower()
     record = {
@@ -2006,8 +2282,10 @@ def cmd_record(args):
         "overrides": list(state.get("overrides") or []),
         "identity": proofs,
         "skipped": skipped,
-        "warnings": list(state.get("warnings") or []),
-        "result": "red" if (failed or job_status == "failure") else "green",
+        "warnings": warnings,
+        # GitHub's job.status is success | failure | cancelled: a CANCELLED job's tests never
+        # finished, so only a successful job (or none given) may record green.
+        "result": "red" if (failed or job_status not in ("", "success")) else "green",
     }
     out = Path(getattr(args, "out", None) or "chain-leg.json")
     out.parent.mkdir(parents=True, exist_ok=True)
@@ -2117,7 +2395,7 @@ def _nuget_proofs(ctx, edges):
     for edge in edges:
         package_id = RECIPES[edge["node"]]["artifacts"][edge["artifact"]]["id"]
         expected = expected_by_id.get(package_id)
-        for pin in edge.get("pins") or ():
+        for pin in pins_in_scope(edge, ctx.scope):
             project = ctx.checkout / pin
             found = None
             for path, label in _assets_candidates(project):
@@ -2125,11 +2403,16 @@ def _nuget_proofs(ctx, edges):
                     found = (path, label)
                     break
             if found is None:
-                # Not restored in this checkout (`Godot-Tests.csproj` is not in the sln and
-                # only the engine legs build it). Recorded as a NAMED absence, never as a pass.
+                # An IN-SCOPE consumer that restored nothing is not evidence of anything: a job
+                # whose restore never ran would otherwise record a vacuous GREEN. A job that
+                # genuinely does not restore this project (`Godot-Tests.csproj` is not in the
+                # sln; only the engine legs build it) names the pins it DOES restore in --edges.
                 proofs.append(_proof(
-                    pin, "n/a - no project.assets.json for %s in this checkout" % pin,
-                    package_id, None, expected, True,
+                    pin,
+                    "no project.assets.json for %s in this checkout: nothing restored for an "
+                    "in-scope consumer (if this job does not restore it, select only the "
+                    "consumers it does with --edges <pin>)" % pin,
+                    package_id, None, expected, False,
                 ))
                 continue
             path, label = found
@@ -2292,9 +2575,97 @@ def _server_proofs(ctx, edges):
     return proofs
 
 
-def identity_proofs(ctx):
-    """§C9 — one row per consumer/source, never an exit code."""
-    edges = overridden_edges(ctx)
+def _own_dll_name(package_id):
+    """`com.IvanMurzak.McpPlugin.Common` -> `McpPlugin.Common.dll`: the assembly a nupkg ships for itself."""
+    return (package_id[len(UNITY_PACKAGE_PREFIX):] if package_id.startswith(UNITY_PACKAGE_PREFIX) else package_id) + ".dll"
+
+
+def _own_nupkg_dll(archive, package_id):
+    """The package's own assembly inside its nupkg: `<Name>.dll` under `lib/netstandard2.1/`
+    first, then under any other `lib/<tfm>/`. `None` when no `lib/` entry carries that name —
+    another assembly's `ProductVersion` is never evidence for this package."""
+    wanted = _own_dll_name(package_id)
+    by_name = sorted(
+        n for n in archive.namelist()
+        if n.startswith("lib/") and n.rsplit("/", 1)[-1].lower() == wanted.lower()
+    )
+    preferred = [n for n in by_name if n.lower() == UNITY_LIB_ENTRY.format(name=wanted).lower()]
+    for group in (preferred, by_name):
+        if group:
+            return group[0]
+    return None
+
+
+def _own_pack_proofs(ctx, artifacts):
+    """A ROOT leg's evidence: its OWN pack at the lock's ws version (§C4 root nodes).
+
+    Read from the artifact, never an exit code: a nupkg's NAME plus the `ProductVersion` its
+    DLL was actually built at (`pack --no-build -p:Version=X` after a build at Y names the file X
+    and stamps Y — A4); a tarball's own `package/package.json` `version`.
+    """
+    proofs = []
+    ws_version = ctx.ws_version(ctx.node)
+    for _, body in artifacts:
+        package_id = body["id"]
+        path = feed_artifact_path(ctx, ctx.node, body)
+        found = None
+        if path.parent.is_dir():
+            for candidate in sorted(path.parent.iterdir()):
+                if candidate.name.lower() == path.name.lower() and candidate.is_file():
+                    found = candidate
+                    break
+        if found is None:
+            proofs.append(_proof(
+                ctx.node, "no %s in %s (this leg's own pack produced nothing)"
+                % (path.name, as_posix_abs(path.parent)), package_id, None, ws_version, False,
+            ))
+            continue
+        if body["kind"] == "tgz":
+            try:
+                observed = json.loads(read_tarball_member(found, "package.json").decode("utf-8")).get("version")
+            except Exception as exc:  # a corrupt tarball is a failing proof, never a crash
+                proofs.append(_proof(ctx.node, "%s unreadable: %s" % (found.name, exc), package_id, None, ws_version, False))
+                continue
+            proofs.append(_proof(
+                ctx.node, "%s!package/package.json version" % found.name, package_id,
+                observed, ws_version, observed == ws_version,
+            ))
+            continue
+        try:
+            with zipfile.ZipFile(str(found)) as archive:
+                member = _own_nupkg_dll(archive, package_id)
+                data = archive.read(member) if member else None
+        except (OSError, zipfile.BadZipFile, KeyError) as exc:
+            proofs.append(_proof(ctx.node, "%s unreadable: %s" % (found.name, exc), package_id, None, ws_version, False))
+            continue
+        if data is None:
+            proofs.append(_proof(
+                ctx.node, "%s has no lib/<tfm>/%s" % (found.name, _own_dll_name(package_id)),
+                package_id, None, ws_version, False,
+            ))
+            continue
+        try:
+            product = pe_version_strings_from_bytes(data).get("ProductVersion")
+        except (PeFormatError, struct.error, IndexError, ValueError) as exc:
+            proofs.append(_proof(
+                ctx.node, "%s!%s ProductVersion unreadable: %s" % (found.name, member, exc),
+                package_id, None, ws_version, False,
+            ))
+            continue
+        # SourceLink appends `+<sha>`; the version half is what `-p:Version` stamped.
+        core = (product or "").split("+", 1)[0] or None
+        proofs.append(_proof(
+            ctx.node, "%s!%s ProductVersion %r" % (found.name, member, product),
+            package_id, core, ws_version, core == ws_version,
+        ))
+    return proofs
+
+
+def identity_proofs(ctx, edges, own):
+    """§C9 — one row per consumer/source, never an exit code.
+
+    `edges` / `own` are this job's in-scope halves of `scoped_edges` / `own_pack_in_scope`.
+    """
     proofs = []
     by_mode = {}
     for edge in edges:
@@ -2315,6 +2686,8 @@ def identity_proofs(ctx):
         proofs.append(_proof(
             ctx.node, "NO identity evidence for this leg", "", None, None, False
         ))
+    if own:
+        proofs.extend(_own_pack_proofs(ctx, own))
     return proofs
 
 
@@ -2354,6 +2727,7 @@ def render_fragment(node, existing_group=None, existing_cancel=None, new_concurr
     if new_concurrency is None:
         new_concurrency = node in NEEDS_NEW_CONCURRENCY
     job = "<job-id>"
+    selectors = scope_selectors(node)
     lines = [
         "# chain leg contract (p2-chain-feed-script SS C1-C5) for node: %s" % node,
         "# Vendored script: .github/scripts/chain_feed.py (CHAIN_FEED_VERSION %s)" % CHAIN_FEED_VERSION,
@@ -2398,11 +2772,60 @@ def render_fragment(node, existing_group=None, existing_cancel=None, new_concurr
         "  CHAIN_LOCK: ${{ inputs.lock }}",
         "  CHAIN_LOCK_HASH8: ${{ inputs.lock_hash8 }}",
         "",
-        "# --- in every job, AFTER checkout + toolchain setup and BEFORE the first restore/install:",
+        "# --- in every job, AFTER checkout + toolchain setup and BEFORE the first restore/install.",
+        "#     The interpreter is resolved ONCE per job and invoked through the ${{ env.CHAIN_PY }}",
+        "#     EXPRESSION, which GitHub substitutes before any shell runs — so the same step text works",
+        "#     under bash (hosted) and pwsh (Windows self-hosted, where `shell: bash` is WSL). Never a",
+        "#     bare `python`: macOS has none and a hosted Windows image has no `python3`.",
+        "#     A runner with no usable Python on PATH (the Unreal self-hosted legs run UE's bundled",
+        "#     python.exe) sets job-level `env: CHAIN_PY:` to a SPACE-FREE interpreter path instead —",
+        "#     the value is substituted unquoted — and both resolver steps below then skip.",
+        "#     Every step id below is chain-prefixed and used ONCE per job: never reuse a job's own step id",
+        "#     (e.g. a second `server` step to swap a downloaded binary for the chain one) — branch inside",
+        "#     ONE step on env.CHAIN_ACTIVE instead.",
+        "      - name: chain python (posix)",
+        "        if: runner.os != 'Windows' && env.CHAIN_PY == ''",
+        "        shell: bash",
+        "        run: |",
+        "          for c in python3 python; do",
+        "            if \"$c\" -c 'import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)' >/dev/null 2>&1; then",
+        "              echo \"CHAIN_PY=$c\" >> \"$GITHUB_ENV\"; exit 0",
+        "            fi",
+        "          done",
+        "          echo 'chain: no Python 3.9+ on PATH (tried python3, python)' >&2; exit 2",
+        "      - name: chain python (windows)",
+        "        if: runner.os == 'Windows' && env.CHAIN_PY == ''",
+        "        shell: pwsh",
+        "        run: |",
+        "          foreach ($c in 'python', 'py', 'python3') {",
+        "            if (-not (Get-Command $c -ErrorAction SilentlyContinue)) { continue }",
+        "            $global:LASTEXITCODE = $null",
+        "            & $c -c 'import sys; sys.exit(0 if sys.version_info >= (3, 9) else 1)' 2>$null",
+        "            if ($LASTEXITCODE -eq 0) { \"CHAIN_PY=$c\" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8; exit 0 }",
+        "          }",
+        "          [Console]::Error.WriteLine('chain: no Python 3.9+ on PATH (tried python, py, python3)'); exit 2",
         "      - name: chain feed",
         "        id: chain",
-        "        run: python .github/scripts/chain_feed.py apply --node %s --job %s" % (node, job),
+        "        run: ${{ env.CHAIN_PY }} .github/scripts/chain_feed.py apply --node %s --job %s" % (node, job),
+        "",
+        "# --- per-job scope: a job that consumes only PART of this node's edges passes the SAME",
+        "#     --edges selectors to `apply` AND `record` (repeatable, or comma-separated). Out-of-scope",
+        "#     edges are not built, not overridden and not proven; `record` lists each in skipped[].",
+        "#     Omit --edges in a job that consumes every edge. `none` = sha assertion + record only.",
+        "#     A consumer csproj path selects just that project: a job that restores only SOME of an",
+        "#     edge's projects names the ones it restores (an in-scope project with no",
+        "#     project.assets.json is RED, never a pass).",
+        "#     selectors for %s: %s" % (node, ", ".join(selectors)),
+        "#     e.g.  ${{ env.CHAIN_PY }} .github/scripts/chain_feed.py apply  --node %s --job %s --edges %s"
+        % (node, job, selectors[0]),
+        "#           ${{ env.CHAIN_PY }} .github/scripts/chain_feed.py record --node %s --job %s --edges %s "
+        "--job-status ${{ job.status }} --out chain-leg.json" % (node, job, selectors[0]),
     ]
+    if SCOPE_SELF in selectors:
+        lines.append(
+            "#     root node: with no --edges `record` proves this node's OWN pack, so a job that does "
+            "not pack passes --edges none"
+        )
     if any(edge["mode"] == "npm" for edge in RECIPES[node]["consumes"]):
         npm_dir = next(
             (edge.get("path") or "." for edge in RECIPES[node]["consumes"] if edge["mode"] == "npm"), "."
@@ -2412,18 +2835,26 @@ def render_fragment(node, existing_group=None, existing_cancel=None, new_concurr
             "# --- AFTER that directory's own `npm ci` (which would undo a --no-save install):",
             "      - name: chain feed (npm)",
             "        if: env.CHAIN_ACTIVE == '1'",
-            "        run: python .github/scripts/chain_feed.py apply-npm --node %s --dir %s" % (node, npm_dir),
+            "        run: ${{ env.CHAIN_PY }} .github/scripts/chain_feed.py apply-npm --node %s --dir %s" % (node, npm_dir),
         ]
+    # The upload is keyed on `artifact_name` (written by every record that ran) rather than on
+    # CHAIN_ACTIVE, which only a COMPLETED apply exports: otherwise a failed apply's red record would
+    # never reach the verdict. A refusal before `record` writes anything (a malformed lock, the §C6
+    # sha assertion) still uploads nothing — that leg is missing, not green.
     lines += [
         "",
-        "# --- after the test step:",
+        "# --- after the test step. `--job-status ${{ job.status }}` is what makes a leg whose tests failed",
+        "#     or were cancelled record `result: red`; without it a record reflects only identity.",
+        "#     `record --warn TEXT` (repeatable) adds a named caveat to warnings[]; it never turns a leg RED.",
+        "#     The upload runs whenever the record was written, so a failed apply's red record uploads too.",
         "      - name: chain leg record",
         "        id: chain_record",
         "        if: always()",
-        "        run: python .github/scripts/chain_feed.py record --node %s --job %s --out chain-leg.json" % (node, job),
+        "        run: ${{ env.CHAIN_PY }} .github/scripts/chain_feed.py record --node %s --job %s "
+        "--job-status ${{ job.status }} --out chain-leg.json" % (node, job),
         "      - name: chain leg artifact",
-        "        if: always() && env.CHAIN_ACTIVE == '1'",
-        "        uses: actions/upload-artifact@v4",
+        "        if: always() && steps.chain_record.outputs.artifact_name != ''",
+        "        uses: actions/upload-artifact@%s   # or the major this workflow already uses (>= v4, C5)" % UPLOAD_ARTIFACT_MAJOR,
         "        with:",
         "          name: ${{ steps.chain_record.outputs.artifact_name }}",
         "          path: chain-leg.json",
@@ -2463,6 +2894,13 @@ def build_parser():
         child.add_argument("--lock-file", dest="lock_file", default=None, help="read the lock from a file")
         child.add_argument("--checkout", default=None, help="repo checkout root (default: $GITHUB_WORKSPACE)")
         child.add_argument("--runner-temp", dest="runner_temp", default=None, help="default: $RUNNER_TEMP")
+        if name in ("apply", "dry-run", "record"):
+            child.add_argument(
+                "--edges", action="append", default=[], metavar="SELECTOR",
+                help="scope THIS job to part of the node's edges: a mode (nuget), a producer node id, "
+                     "a <node>/<artifact> ref, `self` (this node's own pack) or `none`; repeatable. "
+                     "Pass the SAME values to apply and record; default: every edge",
+            )
         if name == "apply-npm":
             child.add_argument("--dir", default=".", help="the CLI directory to install into")
         if name == "record":
@@ -2473,6 +2911,10 @@ def build_parser():
             child.add_argument("--tier", default="T0")
             child.add_argument("--job-status", dest="job_status", default="")
             child.add_argument("--skip", action="append", default=[], metavar="STEP=REASON")
+            child.add_argument(
+                "--warn", action="append", default=[], metavar="TEXT",
+                help="add TEXT to the record's warnings[] (repeatable); never changes the result",
+            )
         if name == "print-fragment":
             child.add_argument("--existing-group", dest="existing_group", default=None)
             child.add_argument("--existing-cancel", dest="existing_cancel", default=None)

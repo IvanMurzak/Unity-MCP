@@ -53,7 +53,7 @@ jobs:
       # for any cli test that resolves a server.
       - name: chain feed
         id: chain
-        run: python3 .github/scripts/chain_feed.py apply --node unity-mcp --job test-cli-node${{ matrix.node-version }}
+        run: python3 .github/scripts/chain_feed.py apply --node unity-mcp --job test-cli-node${{ matrix.node-version }} --edges npm --edges server-binary
 
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v6
@@ -81,10 +81,12 @@ jobs:
       - name: chain leg record
         id: chain_record
         if: always()
-        run: python3 .github/scripts/chain_feed.py record --node unity-mcp --job test-cli-node${{ matrix.node-version }} --job-status "${{ job.status }}" --out chain-leg.json
+        run: python3 .github/scripts/chain_feed.py record --node unity-mcp --job test-cli-node${{ matrix.node-version }} --edges npm --edges server-binary --job-status "${{ job.status }}" --out chain-leg.json
 
+      # Keyed on the record's own output, not CHAIN_ACTIVE (which only a COMPLETED apply exports),
+      # so a failed apply's RED record still uploads.
       - name: chain leg artifact
-        if: always() && env.CHAIN_ACTIVE == '1'
+        if: always() && steps.chain_record.outputs.artifact_name != ''
         uses: actions/upload-artifact@v6
         with:
           name: ${{ steps.chain_record.outputs.artifact_name }}

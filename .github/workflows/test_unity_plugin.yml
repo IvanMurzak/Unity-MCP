@@ -97,26 +97,12 @@ jobs:
             8.0.x
             9.0.x
 
-      - name: Setup Node.js 22 (chain feed — cli-core needs >= 22.14)
-        if: ${{ inputs.lock != '' || contains(join(github.event.pull_request.labels.*.name, ' '), 'train/') }}
-        uses: actions/setup-node@v6
-        with:
-          node-version: 22
-
+      # Scope `unity-dll`: a game-ci leg consumes only the 3 DLL drops. The CLI, the server binary and
+      # the engine-free NuGet project are not this job's, so they are not built here and each appears
+      # in the leg record's skipped[] instead of being proven.
       - name: chain feed
         id: chain
-        run: python3 .github/scripts/chain_feed.py apply --node unity-mcp --job test-unity-${{ inputs.unityVersion }}-${{ inputs.testMode }}-${{ matrix.platform }}
-
-      # The leg record proves EVERY edge the lock overrides for this node, including the cli-core
-      # tarball in cli/node_modules — so this leg installs it too, or `record` would exit 3.
-      - name: chain feed (npm ci in cli)
-        if: env.CHAIN_ACTIVE == '1'
-        working-directory: ./cli
-        run: npm ci
-
-      - name: chain feed (npm)
-        if: env.CHAIN_ACTIVE == '1'
-        run: python3 .github/scripts/chain_feed.py apply-npm --node unity-mcp --dir cli
+        run: python3 .github/scripts/chain_feed.py apply --node unity-mcp --job test-unity-${{ inputs.unityVersion }}-${{ inputs.testMode }}-${{ matrix.platform }} --edges unity-dll
 
       # --------------------------------------------------------------------- #
       # 2-c. Cache & run the Unity test-runner
@@ -173,10 +159,12 @@ jobs:
       - name: chain leg record
         id: chain_record
         if: always()
-        run: python3 .github/scripts/chain_feed.py record --node unity-mcp --job test-unity-${{ inputs.unityVersion }}-${{ inputs.testMode }}-${{ matrix.platform }} --engine unity --engine-version ${{ inputs.unityVersion }} --job-status "${{ job.status }}" --out chain-leg.json
+        run: python3 .github/scripts/chain_feed.py record --node unity-mcp --job test-unity-${{ inputs.unityVersion }}-${{ inputs.testMode }}-${{ matrix.platform }} --edges unity-dll --engine unity --engine-version ${{ inputs.unityVersion }} --job-status "${{ job.status }}" --out chain-leg.json
 
+      # Keyed on the record's own output, not CHAIN_ACTIVE (which only a COMPLETED apply exports),
+      # so a failed apply's RED record still uploads.
       - name: chain leg artifact
-        if: always() && env.CHAIN_ACTIVE == '1'
+        if: always() && steps.chain_record.outputs.artifact_name != ''
         uses: actions/upload-artifact@v6
         with:
           name: ${{ steps.chain_record.outputs.artifact_name }}

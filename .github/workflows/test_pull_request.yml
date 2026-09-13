@@ -9,10 +9,14 @@
 name: test-pull-request
 
 # Chain leg contract (software `.scripts/chain/leg/chain_feed.py`, §C1-C5) for node `unity-mcp`.
-# A `workflow_dispatch` carries ONE lock JSON + its hash8; every leg self-builds the lock's lower
-# layers (ReflectorNet, McpPlugin, McpPlugin.Common, GameDev-MCP-Server, cli-core) from their SHAs
-# and proves identity in a per-job leg record. On an ordinary pull_request the vendored script is a
-# no-op (`chain: no lock (ordinary run)`), so these runs behave exactly as before.
+# A `workflow_dispatch` carries ONE lock JSON + its hash8. Each job self-builds ONLY the lower layers
+# its own `--edges` scope consumes, from the lock's SHAs, and proves identity for exactly that scope
+# in a per-job leg record (`apply` and `record` always take the SAME `--edges`):
+#   engine-free-tests  --edges nuget                        (ReflectorNet + McpPlugin nupkgs)
+#   test-unity-*       --edges unity-dll                    (the 3 netstandard2.1 DLL drops)
+#   test-cli           --edges npm --edges server-binary    (cli-core tarball + GameDev-MCP-Server)
+# On an ordinary pull_request the vendored script is a no-op (`chain: no lock (ordinary run)`), so
+# these runs behave exactly as before.
 on:
   workflow_dispatch:
     inputs:
@@ -26,7 +30,7 @@ on:
         type: string
 
   pull_request:
-    branches: [main, dev]
+    branches: [main, dev, chain-testing]
     types: [opened, synchronize, reopened]
 
 # Guarded: `inputs` is empty on pull_request, so ordinary PR runs keep GitHub's default title.
@@ -76,8 +80,8 @@ jobs:
   engine-free-tests:
     name: engine-free tests (.NET 8)
     runs-on: ubuntu-latest
-    # 10 min covered the test alone; a chain dispatch also self-builds the lock's lower layers
-    # (ReflectorNet, McpPlugin, GameDev-MCP-Server publish, cli-core) before it.
+    # 10 min covered the test alone; a chain dispatch also clones, builds and packs ReflectorNet and
+    # McpPlugin (its `nuget` scope) before it.
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
@@ -96,26 +100,11 @@ jobs:
             8.0.x
             9.0.x
 
-      - name: Setup Node.js 22 (chain feed — cli-core needs >= 22.14)
-        if: ${{ inputs.lock != '' || contains(join(github.event.pull_request.labels.*.name, ' '), 'train/') }}
-        uses: actions/setup-node@v6
-        with:
-          node-version: 22
-
+      # Scope `nuget`: EngineFree.csproj is this node's NuGet override target, so the job builds
+      # ReflectorNet + McpPlugin into the local feed and proves what its project.assets.json resolved.
       - name: chain feed
         id: chain
-        run: python3 .github/scripts/chain_feed.py apply --node unity-mcp --job engine-free-tests
-
-      # The leg record proves EVERY edge the lock overrides for this node, including the cli-core
-      # tarball in cli/node_modules — so this leg installs it too, or `record` would exit 3.
-      - name: chain feed (npm ci in cli)
-        if: env.CHAIN_ACTIVE == '1'
-        working-directory: ./cli
-        run: npm ci
-
-      - name: chain feed (npm)
-        if: env.CHAIN_ACTIVE == '1'
-        run: python3 .github/scripts/chain_feed.py apply-npm --node unity-mcp --dir cli
+        run: python3 .github/scripts/chain_feed.py apply --node unity-mcp --job engine-free-tests --edges nuget
 
       - name: Test
         run: dotnet test Unity-MCP-Plugin/Tests~/EngineFree/EngineFree.csproj -c Release --logger trx -- RunConfiguration.TreatNoTestsAsError=true
@@ -124,10 +113,12 @@ jobs:
       - name: chain leg record
         id: chain_record
         if: always()
-        run: python3 .github/scripts/chain_feed.py record --node unity-mcp --job engine-free-tests --job-status "${{ job.status }}" --out chain-leg.json
+        run: python3 .github/scripts/chain_feed.py record --node unity-mcp --job engine-free-tests --edges nuget --job-status "${{ job.status }}" --out chain-leg.json
 
+      # Keyed on the record's own output, not CHAIN_ACTIVE (which only a COMPLETED apply exports),
+      # so a failed apply's RED record still uploads.
       - name: chain leg artifact
-        if: always() && env.CHAIN_ACTIVE == '1'
+        if: always() && steps.chain_record.outputs.artifact_name != ''
         uses: actions/upload-artifact@v6
         with:
           name: ${{ steps.chain_record.outputs.artifact_name }}
