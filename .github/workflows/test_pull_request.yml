@@ -8,12 +8,40 @@
 
 name: test-pull-request
 
+# Chain leg contract (software `.scripts/chain/leg/chain_feed.py`, §C1-C5) for node `unity-mcp`.
+# A `workflow_dispatch` carries ONE lock JSON + its hash8; every leg self-builds the lock's lower
+# layers (ReflectorNet, McpPlugin, McpPlugin.Common, GameDev-MCP-Server, cli-core) from their SHAs
+# and proves identity in a per-job leg record. On an ordinary pull_request the vendored script is a
+# no-op (`chain: no lock (ordinary run)`), so these runs behave exactly as before.
 on:
   workflow_dispatch:
+    inputs:
+      lock:
+        description: the chain lock JSON (<= 60000 characters)
+        required: true
+        type: string
+      lock_hash8:
+        description: first 8 hex characters of the lock hash
+        required: true
+        type: string
 
   pull_request:
     branches: [main, dev]
     types: [opened, synchronize, reopened]
+
+# Guarded: `inputs` is empty on pull_request, so ordinary PR runs keep GitHub's default title.
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('chain {0} unity-mcp', inputs.lock_hash8) || '' }}
+
+# NEW block (there was none). Lock-keyed for dispatch events so the same lock re-attaches and
+# different locks run independently; never cancels — a queued run is preferable to cancelling
+# 12 game-ci legs, and runaway runs are bounded by the per-job timeouts instead.
+concurrency:
+  group: ${{ github.event_name == 'workflow_dispatch' && format('chain-{0}-{1}', inputs.lock_hash8, github.workflow) || format('test-pr-{0}-{1}', github.workflow, github.event.pull_request.number || github.ref) }}
+  cancel-in-progress: false
+
+env:
+  CHAIN_LOCK: ${{ inputs.lock }}
+  CHAIN_LOCK_HASH8: ${{ inputs.lock_hash8 }}
 
 jobs:
   save-event-file:
@@ -48,7 +76,9 @@ jobs:
   engine-free-tests:
     name: engine-free tests (.NET 8)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # 10 min covered the test alone; a chain dispatch also self-builds the lock's lower layers
+    # (ReflectorNet, McpPlugin, GameDev-MCP-Server publish, cli-core) before it.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
 
@@ -57,11 +87,57 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
+      # --- chain feed (§C4): a no-op on an ordinary PR run ---------------------------------------
+      - name: Setup .NET 9 (chain feed)
+        if: ${{ inputs.lock != '' || contains(join(github.event.pull_request.labels.*.name, ' '), 'train/') }}
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+
+      - name: Setup Node.js 22 (chain feed — cli-core needs >= 22.14)
+        if: ${{ inputs.lock != '' || contains(join(github.event.pull_request.labels.*.name, ' '), 'train/') }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: chain feed
+        id: chain
+        run: python3 .github/scripts/chain_feed.py apply --node unity-mcp --job engine-free-tests
+
+      # The leg record proves EVERY edge the lock overrides for this node, including the cli-core
+      # tarball in cli/node_modules — so this leg installs it too, or `record` would exit 3.
+      - name: chain feed (npm ci in cli)
+        if: env.CHAIN_ACTIVE == '1'
+        working-directory: ./cli
+        run: npm ci
+
+      - name: chain feed (npm)
+        if: env.CHAIN_ACTIVE == '1'
+        run: python3 .github/scripts/chain_feed.py apply-npm --node unity-mcp --dir cli
+
       - name: Test
         run: dotnet test Unity-MCP-Plugin/Tests~/EngineFree/EngineFree.csproj -c Release --logger trx -- RunConfiguration.TreatNoTestsAsError=true
 
+      # --- chain leg record (§C5) ----------------------------------------------------------------
+      - name: chain leg record
+        id: chain_record
+        if: always()
+        run: python3 .github/scripts/chain_feed.py record --node unity-mcp --job engine-free-tests --job-status "${{ job.status }}" --out chain-leg.json
+
+      - name: chain leg artifact
+        if: always() && env.CHAIN_ACTIVE == '1'
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ steps.chain_record.outputs.artifact_name }}
+          path: chain-leg.json
+
   test-cli:
     uses: ./.github/workflows/test_cli.yml
+    with:
+      lock: ${{ inputs.lock }}
+      lock_hash8: ${{ inputs.lock_hash8 }}
 
   # NOTE: the MCP server is no longer built from this repo — the plugin consumes the shared
   # GameDev-MCP-Server (https://github.com/IvanMurzak/GameDev-MCP-Server) release pinned by
@@ -78,6 +154,8 @@ jobs:
       projectPath: "./Unity-Tests/2022.3.62f3"
       unityVersion: "2022.3.62f3"
       testMode: "editmode"
+      lock: ${{ inputs.lock }}
+      lock_hash8: ${{ inputs.lock_hash8 }}
     secrets: inherit
 
   test-unity-2023-2-22f1-editmode:
@@ -86,6 +164,8 @@ jobs:
       projectPath: "./Unity-Tests/2023.2.22f1"
       unityVersion: "2023.2.22f1"
       testMode: "editmode"
+      lock: ${{ inputs.lock }}
+      lock_hash8: ${{ inputs.lock_hash8 }}
     secrets: inherit
 
   test-unity-6000-3-1f1-editmode:
@@ -94,6 +174,8 @@ jobs:
       projectPath: "./Unity-Tests/6000.3.1f1"
       unityVersion: "6000.3.1f1"
       testMode: "editmode"
+      lock: ${{ inputs.lock }}
+      lock_hash8: ${{ inputs.lock_hash8 }}
     secrets: inherit
 
   # --- PLAY MODE ---
@@ -130,6 +212,8 @@ jobs:
       projectPath: "./Unity-Tests/2022.3.62f3"
       unityVersion: "2022.3.62f3"
       testMode: "standalone"
+      lock: ${{ inputs.lock }}
+      lock_hash8: ${{ inputs.lock_hash8 }}
     secrets: inherit
 
   test-unity-2023-2-22f1-standalone:
@@ -138,6 +222,8 @@ jobs:
       projectPath: "./Unity-Tests/2023.2.22f1"
       unityVersion: "2023.2.22f1"
       testMode: "standalone"
+      lock: ${{ inputs.lock }}
+      lock_hash8: ${{ inputs.lock_hash8 }}
     secrets: inherit
 
   test-unity-6000-3-1f1-standalone:
@@ -146,6 +232,8 @@ jobs:
       projectPath: "./Unity-Tests/6000.3.1f1"
       unityVersion: "6000.3.1f1"
       testMode: "standalone"
+      lock: ${{ inputs.lock }}
+      lock_hash8: ${{ inputs.lock_hash8 }}
     secrets: inherit
 
   # -------------------

@@ -10,16 +10,50 @@ name: test-cli
 
 on:
   workflow_call:
+    inputs:
+      # Chain leg contract (§C1): the caller forwards its workflow_dispatch inputs. Empty on an
+      # ordinary pull_request run, where the chain feed steps below are no-ops.
+      lock: { required: false, type: string, default: "" }
+      lock_hash8: { required: false, type: string, default: "" }
 
 jobs:
   test-cli:
     runs-on: ubuntu-latest
+    # The tests take a few minutes; a chain dispatch additionally self-builds ReflectorNet,
+    # McpPlugin, the linux-x64 GameDev-MCP-Server and cli-core from the lock before them.
+    timeout-minutes: 30
     strategy:
       matrix:
         node-version: [20, 22]
+    env:
+      CHAIN_LOCK: ${{ inputs.lock }}
+      CHAIN_LOCK_HASH8: ${{ inputs.lock_hash8 }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
+
+      # --- chain feed (§C4): a no-op on an ordinary PR run ---------------------------------------
+      - name: Setup .NET (chain feed)
+        if: ${{ inputs.lock != '' || contains(join(github.event.pull_request.labels.*.name, ' '), 'train/') }}
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+
+      # cli-core declares node >= 22.14, so the lower layers are built on 22 regardless of the
+      # matrix; the matrix Node below is what the unity-mcp-cli tests then run on.
+      - name: Setup Node.js 22 (chain feed)
+        if: ${{ inputs.lock != '' || contains(join(github.event.pull_request.labels.*.name, ' '), 'train/') }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      # Builds the lock's cli-core tarball and linux-x64 server and exports UNITY_MCP_SERVER_PATH
+      # for any cli test that resolves a server.
+      - name: chain feed
+        id: chain
+        run: python3 .github/scripts/chain_feed.py apply --node unity-mcp --job test-cli-node${{ matrix.node-version }}
 
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v6
@@ -30,6 +64,11 @@ jobs:
         working-directory: ./cli
         run: npm ci
 
+      # MUST follow `npm ci`, which would undo a --no-save install.
+      - name: chain feed (npm)
+        if: env.CHAIN_ACTIVE == '1'
+        run: python3 .github/scripts/chain_feed.py apply-npm --node unity-mcp --dir cli
+
       - name: Build TypeScript
         working-directory: ./cli
         run: npm run build
@@ -37,3 +76,16 @@ jobs:
       - name: Run tests
         working-directory: ./cli
         run: npm test
+
+      # --- chain leg record (§C5) ----------------------------------------------------------------
+      - name: chain leg record
+        id: chain_record
+        if: always()
+        run: python3 .github/scripts/chain_feed.py record --node unity-mcp --job test-cli-node${{ matrix.node-version }} --job-status "${{ job.status }}" --out chain-leg.json
+
+      - name: chain leg artifact
+        if: always() && env.CHAIN_ACTIVE == '1'
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ steps.chain_record.outputs.artifact_name }}
+          path: chain-leg.json

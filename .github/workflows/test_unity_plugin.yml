@@ -17,6 +17,10 @@ on:
       projectPath: { required: true, type: string }
       unityVersion: { required: true, type: string }
       testMode: { required: true, type: string }
+      # Chain leg contract (§C1): the caller forwards its workflow_dispatch inputs. Empty on an
+      # ordinary pull_request run, where the chain feed steps below are no-ops.
+      lock: { required: false, type: string, default: "" }
+      lock_hash8: { required: false, type: string, default: "" }
     secrets:
       # Stored Unity Personal license (.ulf XML). Generated once via the
       # generate-unity-activation-file workflow + https://license.unity3d.com/manual
@@ -47,6 +51,12 @@ jobs:
 
     name: ${{ inputs.unityVersion }} ${{ inputs.testMode }} on ${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
+    # Measured 11-15 min per leg. Without a cap a hung leg ran to GitHub's 360-min default, which is
+    # where the ~4,500-min zombie runs in this workflow's history came from.
+    timeout-minutes: 45
+    env:
+      CHAIN_LOCK: ${{ inputs.lock }}
+      CHAIN_LOCK_HASH8: ${{ inputs.lock_hash8 }}
 
     steps:
       # --------------------------------------------------------------------- #
@@ -68,6 +78,45 @@ jobs:
           haskell: true
           large-packages: true
           swap-storage: true
+
+      # --------------------------------------------------------------------- #
+      # 2-b'. Chain feed (§C4) — a no-op on an ordinary PR run.
+      #
+      # Builds ReflectorNet + McpPlugin + McpPlugin.Common (netstandard2.1) at
+      # the lock's SHAs on the HOST and copies the 3 DLLs over the 6 flat
+      # Assets/Plugins/NuGet drops (.dll.meta and .nuget-installed.json are left
+      # untouched). This MUST finish before game-ci mounts the checkout into the
+      # Unity container, which only reads it. Placed after "Free disk space",
+      # which removes the runner's preinstalled .NET.
+      # --------------------------------------------------------------------- #
+      - name: Setup .NET (chain feed)
+        if: ${{ inputs.lock != '' || contains(join(github.event.pull_request.labels.*.name, ' '), 'train/') }}
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+
+      - name: Setup Node.js 22 (chain feed — cli-core needs >= 22.14)
+        if: ${{ inputs.lock != '' || contains(join(github.event.pull_request.labels.*.name, ' '), 'train/') }}
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: chain feed
+        id: chain
+        run: python3 .github/scripts/chain_feed.py apply --node unity-mcp --job test-unity-${{ inputs.unityVersion }}-${{ inputs.testMode }}-${{ matrix.platform }}
+
+      # The leg record proves EVERY edge the lock overrides for this node, including the cli-core
+      # tarball in cli/node_modules — so this leg installs it too, or `record` would exit 3.
+      - name: chain feed (npm ci in cli)
+        if: env.CHAIN_ACTIVE == '1'
+        working-directory: ./cli
+        run: npm ci
+
+      - name: chain feed (npm)
+        if: env.CHAIN_ACTIVE == '1'
+        run: python3 .github/scripts/chain_feed.py apply-npm --node unity-mcp --dir cli
 
       # --------------------------------------------------------------------- #
       # 2-c. Cache & run the Unity test-runner
@@ -117,4 +166,19 @@ jobs:
         with:
           name: Test results for ${{ inputs.unityVersion }} ${{ inputs.testMode }} on ${{ matrix.platform }}
           path: ${{ steps.tests.outputs.artifactsPath }}
+
+      # --------------------------------------------------------------------- #
+      # 2-d. Chain leg record (§C5) — one artifact per job (12 distinct names)
+      # --------------------------------------------------------------------- #
+      - name: chain leg record
+        id: chain_record
+        if: always()
+        run: python3 .github/scripts/chain_feed.py record --node unity-mcp --job test-unity-${{ inputs.unityVersion }}-${{ inputs.testMode }}-${{ matrix.platform }} --engine unity --engine-version ${{ inputs.unityVersion }} --job-status "${{ job.status }}" --out chain-leg.json
+
+      - name: chain leg artifact
+        if: always() && env.CHAIN_ACTIVE == '1'
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ steps.chain_record.outputs.artifact_name }}
+          path: chain-leg.json
 
