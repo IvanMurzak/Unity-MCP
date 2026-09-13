@@ -17,7 +17,7 @@ on:
       projectPath: { required: true, type: string }
       unityVersion: { required: true, type: string }
       testMode: { required: true, type: string }
-      # Chain leg contract (§C1): the caller forwards its workflow_dispatch inputs. Empty on an
+      # Chain leg contract (chain_feed.py §C1): the caller forwards its workflow_dispatch inputs. Empty on an
       # ordinary pull_request run, where the chain feed steps below are no-ops.
       lock: { required: false, type: string, default: "" }
       lock_hash8: { required: false, type: string, default: "" }
@@ -51,7 +51,7 @@ jobs:
 
     name: ${{ inputs.unityVersion }} ${{ inputs.testMode }} on ${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
-    # Measured 11-15 min per leg. Without a cap a hung leg ran to GitHub's 360-min default, which is
+    # Measured ~4-22 min per leg (standalone ~4-7, editmode ~10-16). Without a cap a hung leg ran to GitHub's 360-min default, which is
     # where the ~4,500-min zombie runs in this workflow's history came from.
     timeout-minutes: 45
     env:
@@ -80,7 +80,7 @@ jobs:
           swap-storage: true
 
       # --------------------------------------------------------------------- #
-      # 2-b'. Chain feed (§C4) — a no-op on an ordinary PR run.
+      # 2-b'. Chain feed (chain_feed.py §C4) — a no-op on an ordinary PR run.
       #
       # Builds ReflectorNet + McpPlugin + McpPlugin.Common (netstandard2.1) at
       # the lock's SHAs on the HOST and copies the 3 DLLs over the 6 flat
@@ -154,7 +154,7 @@ jobs:
           path: ${{ steps.tests.outputs.artifactsPath }}
 
       # --------------------------------------------------------------------- #
-      # 2-d. Chain leg record (§C5) — one artifact per job (12 distinct names)
+      # 2-d. Chain leg record (chain_feed.py §C5) — one artifact per job (12 distinct names)
       # --------------------------------------------------------------------- #
       - name: chain leg record
         id: chain_record

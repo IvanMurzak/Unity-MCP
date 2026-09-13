@@ -11,7 +11,7 @@ name: test-cli
 on:
   workflow_call:
     inputs:
-      # Chain leg contract (§C1): the caller forwards its workflow_dispatch inputs. Empty on an
+      # Chain leg contract (chain_feed.py §C1): the caller forwards its workflow_dispatch inputs. Empty on an
       # ordinary pull_request run, where the chain feed steps below are no-ops.
       lock: { required: false, type: string, default: "" }
       lock_hash8: { required: false, type: string, default: "" }
@@ -36,7 +36,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      # --- chain feed (§C4): a no-op on an ordinary PR run ---------------------------------------
+      # --- chain feed (chain_feed.py §C4): a no-op on an ordinary PR run ---------------------------------------
       - name: Setup .NET (chain feed)
         if: ${{ inputs.lock != '' || contains(join(github.event.pull_request.labels.*.name, ' '), 'train/') }}
         uses: actions/setup-dotnet@v5
@@ -53,8 +53,9 @@ jobs:
         with:
           node-version: 22
 
-      # Builds the lock's cli-core tarball and linux-x64 server and exports UNITY_MCP_SERVER_PATH
-      # for any cli test that resolves a server.
+      # Builds the lock's cli-core tarball and linux-x64 server and exports UNITY_MCP_SERVER_PATH.
+      # No cli test reads that variable today (only the Unity Editor's McpServerManager does), so
+      # the server-binary scope is identity-proven here, not exercised.
       - name: chain feed
         id: chain
         run: python3 .github/scripts/chain_feed.py apply --node unity-mcp --job test-cli-node${{ matrix.node-version }} --edges npm --edges server-binary
@@ -73,18 +74,24 @@ jobs:
         if: env.CHAIN_ACTIVE == '1'
         run: python3 .github/scripts/chain_feed.py apply-npm --node unity-mcp --dir cli
 
-      # UNITY_MCP_SERVER_PATH bypasses the plugin/CLI server version match, so a lock whose
-      # gamedev-mcp-server base version differs from the CLI's pinned DEFAULT_SERVER_VERSION is a
-      # named caveat in the leg record (a warning — it never turns the leg RED).
+      # UNITY_MCP_SERVER_PATH makes the Unity plugin skip its server version match (docs/mcp-server.md),
+      # so a lock whose gamedev-mcp-server base version differs from the CLI's pinned
+      # DEFAULT_SERVER_VERSION is a named caveat in the leg record (a warning — it never turns the leg RED).
       - name: chain pin drift (server-binary)
         if: env.CHAIN_ACTIVE == '1'
+        # A caveat, never a gate: an unreadable lock or pin file must not skip the tests below.
+        continue-on-error: true
         shell: bash
         run: |
-          locked=$(python3 -c 'import json,os; print((json.load(open(os.environ["CHAIN_LOCK_PATH"]))["nodes"].get("gamedev-mcp-server") or {}).get("base_version", ""))')
-          pinned=$(sed -n "s/^export const DEFAULT_SERVER_VERSION = '\([^']*\)'.*/\1/p" cli/src/utils/server-version.ts)
+          # The lock is dispatch input: only a plain version string may reach $GITHUB_ENV (a newline
+          # would inject further variables), so anything else is reported as unreadable instead.
+          locked=$(python3 -c 'import json,os,re; v=(json.load(open(os.environ["CHAIN_LOCK_PATH"]))["nodes"].get("gamedev-mcp-server") or {}).get("base_version", ""); print(v if isinstance(v, str) and re.fullmatch(r"[0-9]+(\.[0-9]+){0,3}(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?", v) else ("unreadable" if v else ""))')
+          pinned=$(sed -n "s/^export const DEFAULT_SERVER_VERSION = '\([^']*\)'.*/\1/p" cli/src/utils/server-version.ts || true)
           echo "gamedev-mcp-server: lock base_version='$locked', cli DEFAULT_SERVER_VERSION='$pinned'"
-          if [ -n "$locked" ] && [ "$locked" != "$pinned" ]; then
-            echo "CHAIN_PIN_WARN=pin drift: gamedev-mcp-server lock base_version $locked != cli/src/utils/server-version.ts DEFAULT_SERVER_VERSION $pinned (UNITY_MCP_SERVER_PATH bypasses the version match)" >> "$GITHUB_ENV"
+          if [ -n "$locked" ] && [ -z "$pinned" ]; then
+            echo "CHAIN_PIN_WARN=pin drift not checked: DEFAULT_SERVER_VERSION could not be read from cli/src/utils/server-version.ts (lock base_version $locked)" >> "$GITHUB_ENV"
+          elif [ -n "$locked" ] && [ "$locked" != "$pinned" ]; then
+            echo "CHAIN_PIN_WARN=pin drift: gamedev-mcp-server lock base_version $locked != cli/src/utils/server-version.ts DEFAULT_SERVER_VERSION $pinned (UNITY_MCP_SERVER_PATH makes the Unity plugin skip its version match)" >> "$GITHUB_ENV"
           fi
 
       - name: Build TypeScript
@@ -95,11 +102,11 @@ jobs:
         working-directory: ./cli
         run: npm test
 
-      # --- chain leg record (§C5) ----------------------------------------------------------------
+      # --- chain leg record (chain_feed.py §C5) ----------------------------------------------------------------
       - name: chain leg record
         id: chain_record
         if: always()
-        run: python3 .github/scripts/chain_feed.py record --node unity-mcp --job test-cli-node${{ matrix.node-version }} --edges npm --edges server-binary --warn "${{ env.CHAIN_PIN_WARN }}" --job-status "${{ job.status }}" --out chain-leg.json
+        run: python3 .github/scripts/chain_feed.py record --node unity-mcp --job test-cli-node${{ matrix.node-version }} --edges npm --edges server-binary --warn "$CHAIN_PIN_WARN" --job-status "${{ job.status }}" --out chain-leg.json
 
       # Keyed on the record's own output, not CHAIN_ACTIVE (which only a COMPLETED apply exports),
       # so a failed apply's RED record still uploads.
