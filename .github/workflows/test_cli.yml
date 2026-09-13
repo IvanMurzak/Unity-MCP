@@ -23,6 +23,10 @@ jobs:
     # McpPlugin, the linux-x64 GameDev-MCP-Server and cli-core from the lock before them.
     timeout-minutes: 30
     strategy:
+      # Every matrix job writes its OWN chain leg record. With the default fail-fast, one leg failing
+      # (e.g. a lock whose lower-node sha does not exist) cancels its sibling before that sibling's
+      # record step runs, leaving the chain verdict one record short. Matches test_unity_plugin.yml.
+      fail-fast: false
       matrix:
         node-version: [20, 22]
     env:
