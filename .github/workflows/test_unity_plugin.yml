@@ -97,12 +97,45 @@ jobs:
             8.0.x
             9.0.x
 
+      # Chain interpreter (chain_feed.py print-fragment): resolved ONCE per job to an ABSOLUTE,
+      # space-free sys.executable and invoked through ${{ env.CHAIN_PY }}, never a bare name.
+      # Every chain step in this job runs on the ubuntu HOST, not inside the unityci/editor container:
+      # game-ci only runs the Unity editor in Docker, and the host reads the checkout before and after.
+      # So the host's python3 (/usr/bin/python3 on ubuntu-latest) is the right interpreter here.
+      - name: chain python (posix)
+        if: runner.os != 'Windows' && env.CHAIN_PY == ''
+        shell: bash
+        run: |
+          for c in python3 python; do
+            exe="$("$c" -c 'import sys, select, zlib, hashlib; sys.version_info >= (3, 9) or sys.exit(1); print(sys.executable.replace(chr(92), chr(47)))' 2>/dev/null)" || continue
+            case "$exe" in /*) ;; *) continue ;; esac
+            case "$exe" in *[[:space:]]*) continue ;; esac
+            [ -f "$exe" ] && [ -x "$exe" ] || continue
+            echo "CHAIN_PY=$exe" >> "$GITHUB_ENV"; exit 0
+          done
+          echo 'chain: no Python 3.9+ on PATH that runs and reports an absolute, space-free sys.executable (tried python3, python)' >&2; exit 2
+      - name: chain python (windows)
+        if: runner.os == 'Windows' && env.CHAIN_PY == ''
+        shell: pwsh
+        run: |
+          foreach ($c in 'python', 'python3') {
+            $cmd = Get-Command $c -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+            if (-not $cmd) { continue }
+            $global:LASTEXITCODE = $null
+            try { $out = & $cmd.Source -c 'import sys, select, zlib, hashlib; sys.version_info >= (3, 9) or sys.exit(1); print(sys.executable.replace(chr(92), chr(47)))' 2>$null } catch { continue }
+            if ($LASTEXITCODE -ne 0) { continue }
+            $exe = (@($out) -join ' ').Trim()
+            if ($exe -notmatch '^[A-Za-z]:/\S+\z' -or -not (Test-Path -LiteralPath $exe -PathType Leaf)) { continue }
+            "CHAIN_PY=$exe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8; exit 0
+          }
+          [Console]::Error.WriteLine('chain: no Python 3.9+ on PATH that runs and reports an absolute, space-free sys.executable (tried python, python3; never py)'); exit 2
+
       # Scope `unity-dll`: a game-ci leg consumes only the 3 DLL drops. The CLI, the server binary and
       # the engine-free NuGet project are not this job's, so they are not built here and each appears
       # in the leg record's skipped[] instead of being proven.
       - name: chain feed
         id: chain
-        run: python3 .github/scripts/chain_feed.py apply --node unity-mcp --job test-unity-${{ inputs.unityVersion }}-${{ inputs.testMode }}-${{ matrix.platform }} --edges unity-dll
+        run: ${{ env.CHAIN_PY }} .github/scripts/chain_feed.py apply --node unity-mcp --job test-unity-${{ inputs.unityVersion }}-${{ inputs.testMode }}-${{ matrix.platform }} --edges unity-dll
 
       # --------------------------------------------------------------------- #
       # 2-c. Cache & run the Unity test-runner
@@ -183,9 +216,9 @@ jobs:
             echo "::error title=chain fixture::raw-dump-missing: $RAW was not written - ChainRecordTests did not run or failed (see the Unity test step)"
             exit 1
           fi
-          python3 -c 'import json,sys; k=[json.loads(l).get("kind") for l in open(sys.argv[1],encoding="utf-8") if l.strip()]; print("chain-record: %d tools, %d calls -> raw.json" % (k.count("tool"), k.count("call")))' "$RAW"
+          ${{ env.CHAIN_PY }} -c 'import json,sys; k=[json.loads(l).get("kind") for l in open(sys.argv[1],encoding="utf-8") if l.strip()]; print("chain-record: %d tools, %d calls -> raw.json" % (k.count("tool"), k.count("call")))' "$RAW"
 
-          python3 .github/scripts/chain_fixture.py canonicalize "$RAW" --out "$OUT_DIR/fresh.jsonl"
+          ${{ env.CHAIN_PY }} .github/scripts/chain_fixture.py canonicalize "$RAW" --out "$OUT_DIR/fresh.jsonl"
           rc=$?
           if [ "$rc" -ne 0 ]; then
             cp "$RAW" "$OUT_DIR/raw.json"   # no fresh.jsonl to review, so the raw dump is the only evidence
@@ -198,7 +231,7 @@ jobs:
             exit 1
           fi
 
-          python3 .github/scripts/chain_fixture.py diff "$COMMITTED" "$OUT_DIR/fresh.jsonl" > "$OUT_DIR/diff.txt"
+          ${{ env.CHAIN_PY }} .github/scripts/chain_fixture.py diff "$COMMITTED" "$OUT_DIR/fresh.jsonl" > "$OUT_DIR/diff.txt"
           rc=$?
           cat "$OUT_DIR/diff.txt"
           case "$rc" in
@@ -223,7 +256,7 @@ jobs:
       - name: chain leg record
         id: chain_record
         if: always()
-        run: python3 .github/scripts/chain_feed.py record --node unity-mcp --job test-unity-${{ inputs.unityVersion }}-${{ inputs.testMode }}-${{ matrix.platform }} --edges unity-dll --engine unity --engine-version ${{ inputs.unityVersion }} --job-status "${{ job.status }}" --out chain-leg.json
+        run: ${{ env.CHAIN_PY }} .github/scripts/chain_feed.py record --node unity-mcp --job test-unity-${{ inputs.unityVersion }}-${{ inputs.testMode }}-${{ matrix.platform }} --edges unity-dll --engine unity --engine-version ${{ inputs.unityVersion }} --job-status "${{ job.status }}" --out chain-leg.json
 
       # Keyed on the record's own output, not CHAIN_ACTIVE (which only a COMPLETED apply exports),
       # so a failed apply's RED record still uploads.
