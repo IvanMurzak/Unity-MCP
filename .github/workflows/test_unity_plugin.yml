@@ -178,12 +178,12 @@ jobs:
             echo "::error title=chain fixture::raw-dump-missing: $RAW was not written - ChainRecordTests did not run or failed (see the Unity test step)"
             exit 1
           fi
-          cp "$RAW" "$OUT_DIR/raw.json"
           python3 -c 'import json,sys; k=[json.loads(l).get("kind") for l in open(sys.argv[1],encoding="utf-8") if l.strip()]; print("chain-record: %d tools, %d calls -> raw.json" % (k.count("tool"), k.count("call")))' "$RAW"
 
           python3 .github/scripts/chain_fixture.py canonicalize "$RAW" --out "$OUT_DIR/fresh.jsonl"
           rc=$?
           if [ "$rc" -ne 0 ]; then
+            cp "$RAW" "$OUT_DIR/raw.json"   # no fresh.jsonl to review, so the raw dump is the only evidence
             echo "::error title=chain fixture::canonicalize exited $rc"
             exit "$rc"
           fi
@@ -209,6 +209,8 @@ jobs:
           name: chain-fixture-unity-${{ inputs.unityVersion }}
           path: ${{ runner.temp }}/chain-fixture-unity-${{ inputs.unityVersion }}
           if-no-files-found: warn
+          # Review aid only (fresh.jsonl to commit, diff.txt): the replay side reads the COMMITTED fixture.
+          retention-days: 1
 
       # --------------------------------------------------------------------- #
       # 2-d. Chain leg record (chain_feed.py §C5) — one artifact per job (12 distinct names)
