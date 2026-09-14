@@ -195,6 +195,13 @@ RECIPES = {
             "tgz": {"kind": "tgz", "id": "@baizor/gamedev-cli-core"},
         },
         "consumes": [],
+        # A TWIN is a checkout one JOB drives beside its own, not a package it restores: the
+        # mixed-language concurrency suite runs MCP-Plugin-dotnet's C# harness from source
+        # (`concurrency-suite.yml`, the `MCP_PLUGIN_DOTNET_REF` clone). Under a lock it is cloned
+        # at the lock's sha. Mirrors the manifest leg's `twins:` (`recipes-check`).
+        "twins": [
+            {"node": "mcp-plugin-dotnet", "workflow": "concurrency-suite.yml", "job": "suite"},
+        ],
     },
     "unity-mcp": {
         "path": "engines/unity/Unity-MCP",
@@ -445,6 +452,12 @@ UPLOAD_ARTIFACT_MAJOR = "v7"
 SCOPE_SELF = "self"
 SCOPE_NONE = "none"
 
+#: `--edges twin:<node>` selects a declared twin (RECIPES `twins:`). A twin is OPT-IN: no
+#: `--edges` at all does NOT select it, because it belongs to ONE job — cloning it into every
+#: other job of the node would demand a twin proof those jobs can never produce.
+SCOPE_TWIN_PREFIX = "twin:"
+TWIN_ENV_PREFIX = "CHAIN_TWIN_"
+
 
 class Refusal(Exception):
     """Exit 2 with one line. Never a traceback."""
@@ -669,6 +682,10 @@ class LegContext(object):
     def clone_dir(self, node_id):
         return self.chain_temp / node_id
 
+    def twin_dir(self, node_id):
+        """Apart from `clone_dir`: a lower-layer build of the same node must never rmtree it."""
+        return self.chain_temp / "twin" / node_id
+
     # -- lock -----------------------------------------------------------
     def node_entry(self, node_id):
         return (self.lock.get("nodes") or {}).get(node_id) or {}
@@ -747,6 +764,14 @@ def build_context(args, enforce_limits=True):
     else:
         log("chain: lock from %s" % source)
     log("chain: lock %s node %s" % (ctx.lock_hash8, ctx.node))
+    # A twin belongs to ONE job: selected anywhere else it would clone the twin and record a
+    # `<workflow> twin` identity row in a job that never drives it.
+    for twin in scoped_twins(ctx):
+        if not twin_in_job(ctx, twin):
+            raise Refusal(
+                "--edges %s: the twin is declared for job %r of %s, not --job %r; pass the "
+                "selector only in that job" % (twin_selector(twin), twin["job"], twin["workflow"], ctx.job)
+            )
     assert_head_sha(ctx)
     return ctx
 
@@ -808,7 +833,8 @@ def consumer_pins(edge):
 
 
 def scope_selectors(node_id):
-    """Every `--edges` value `node_id` accepts: modes, producers, refs, consumer pins, `self`, `none`."""
+    """Every `--edges` value `node_id` accepts: modes, producers, refs, consumer pins, `self`,
+    `twin:<node>`, `none`."""
     edges = [edge for edge in RECIPES[node_id]["consumes"] if edge["mode"] != "project"]
     out = sorted({edge["mode"] for edge in edges}) + sorted({edge["node"] for edge in edges})
     for value in [edge["ref"] for edge in edges] + sorted({p for edge in edges for p in consumer_pins(edge)}):
@@ -818,6 +844,9 @@ def scope_selectors(node_id):
             out.append(value)
     if is_root_node(node_id) and own_packable_artifacts(node_id):
         out.append(SCOPE_SELF)
+    for twin in node_twins(node_id):
+        if twin_selector(twin) not in out:
+            out.append(twin_selector(twin))
     out.append(SCOPE_NONE)
     return out
 
@@ -912,13 +941,18 @@ def is_root_node(node_id):
 
 
 def leg_is_active(ctx):
-    """A leg is evidence for this lock when it consumes a ws producer OR is a root at a ws version.
+    """A leg is evidence for this lock when it consumes a ws producer, is a root at a ws version,
+    OR this job selected a twin the lock pins at a sha (`--edges twin:<node>`).
 
     A root builds at `CHAIN_BUILD_PROPS` and packs its own artifact at the lock's ws version for
-    its consumers, so it is a leg exactly like any other. Every other node with no overridden
-    edge is a no-op, as before.
+    its consumers, so it is a leg exactly like any other. A pinned twin is a commit the job must
+    prove it ran against. Every other node with no overridden edge is a no-op, as before.
     """
-    return bool(overridden_edges(ctx)) or (is_root_node(ctx.node) and bool(ctx.ws_version(ctx.node)))
+    return (
+        bool(overridden_edges(ctx))
+        or (is_root_node(ctx.node) and bool(ctx.ws_version(ctx.node)))
+        or bool(pinned_twins(ctx))
+    )
 
 
 def own_pack_in_scope(ctx):
@@ -947,6 +981,16 @@ def scope_skips(ctx, inside, outside, own_outside):
         {"step": "identity %s/%s (own pack)" % (ctx.node, key), "reason": reason}
         for key, _ in own_outside
     ]
+    # A twin is skipped by name only in the job it is declared for: every OTHER job of the node
+    # never had it, so a row there would claim a gap that does not exist.
+    selected = scoped_twins(ctx)
+    rows += [
+        {"step": "identity %s (%s)" % (twin_consumer(twin), twin_selector(twin)),
+         "reason": "twin not selected: this job passes no --edges %s, so it keeps its own ref and "
+                   "nothing is proven" % twin_selector(twin)}
+        for twin in node_twins(ctx.node)
+        if twin not in selected and ctx.job and ctx.job == twin["job"]
+    ]
     return rows
 
 
@@ -956,6 +1000,20 @@ def own_build_props(ctx):
     own_ws = ctx.ws_version(ctx.node)
     if recipe_build and "{ws_version}" in recipe_build and own_ws:
         return "-p:Version=%s" % own_ws
+    return None
+
+
+def own_ws_version_export(ctx):
+    """`CHAIN_WS_VERSION` — a ROOT's own ws version, for whatever ecosystem it packs in.
+
+    `CHAIN_BUILD_PROPS` exists only when the recipe's build takes `{ws_version}` (an MSBuild
+    property), so an npm root such as cli-core exported nothing its pack step could stamp —
+    yet its workflow packs with `npm pkg set version=$CHAIN_WS_VERSION && npm pack`.
+    Exported for every root at a ws version; a consumer's ws version lives in the lock.
+    """
+    own_ws = ctx.ws_version(ctx.node)
+    if is_root_node(ctx.node) and own_ws:
+        return own_ws
     return None
 
 
@@ -1071,6 +1129,152 @@ def tarball_filename(package_id, ws_version):
     """
     slug = package_id[1:] if package_id.startswith("@") else package_id
     return "%s-%s.tgz" % (slug.replace("/", "-"), ws_version)
+
+
+# ----------------------------------------------------------------------
+# twins — a checkout one job drives beside its own, pinned by the lock
+# ----------------------------------------------------------------------
+
+
+def node_twins(node_id):
+    return list(RECIPES[node_id].get("twins") or ())
+
+
+def twin_selector(twin):
+    return SCOPE_TWIN_PREFIX + twin["node"]
+
+
+def twin_env(twin):
+    """`mcp-plugin-dotnet` -> `CHAIN_TWIN_MCP_PLUGIN_DOTNET`."""
+    return TWIN_ENV_PREFIX + re.sub(r"[^A-Za-z0-9]+", "_", twin["node"]).upper()
+
+
+def twin_consumer(twin):
+    """The identity row's `consumer`: `concurrency-suite.yml` -> `concurrency-suite twin`."""
+    workflow = twin["workflow"]
+    stem = workflow.rsplit(".", 1)[0] if workflow.endswith((".yml", ".yaml")) else workflow
+    return "%s twin" % stem
+
+
+def twin_slug(twin):
+    return RECIPES[twin["node"]]["slug"]
+
+
+def twin_repo(twin):
+    """The twin's repo NAME (`MCP-Plugin-dotnet`), as the dry-run line prints it."""
+    return twin_slug(twin).split("/")[-1]
+
+
+def twin_in_job(ctx, twin):
+    return bool(ctx.job) and ctx.job == twin["job"]
+
+
+def scoped_twins(ctx):
+    """The declared twins this job selected with `--edges twin:<node>` (never implied)."""
+    if ctx.scope is None:
+        return []
+    return [twin for twin in node_twins(ctx.node) if twin_selector(twin) in ctx.scope]
+
+
+def twin_unpinned(ctx, twin):
+    """The lock RELEASES the twin: `lock.resolve` gives a `released` node a version and no sha, so
+    there is no commit to clone — the job keeps its own ref and the gap is a named skip."""
+    return ctx.node_entry(twin["node"]).get("state") == "released" and not ctx.sha(twin["node"])
+
+
+def pinned_twins(ctx):
+    """The selected twins the lock pins (or claims to): everything `apply` must clone and `record` prove."""
+    return [twin for twin in scoped_twins(ctx) if not twin_unpinned(ctx, twin)]
+
+
+def twin_sha(ctx, twin):
+    """The lock's sha for the twin, or a refusal: a twin that is not pinned is not evidence."""
+    sha = ctx.sha(twin["node"])
+    if not sha:
+        raise Refusal(
+            "--edges %s: the lock has no sha for node %r (state %r), so the twin cannot be "
+            "cloned at a pinned commit" % (twin_selector(twin), twin["node"], ctx.node_entry(twin["node"]).get("state"))
+        )
+    return sha
+
+
+def twin_plan(ctx):
+    """Every pinned twin as `{twin, sha, dir, env, clone}`, with ZERO side effects: `apply` runs
+    exactly the clone `dry-run` prints. A twin whose state claims a sha it lacks is refused here."""
+    plan = []
+    for twin in pinned_twins(ctx):
+        sha = twin_sha(ctx, twin)
+        directory = ctx.twin_dir(twin["node"])
+        plan.append({
+            "twin": twin, "sha": sha, "dir": as_posix_abs(directory), "env": twin_env(twin),
+            "clone": clone_argv(twin["node"], sha, directory, twin_slug(twin)),
+        })
+    return plan
+
+
+def twin_skips(ctx):
+    """One `skipped[]` row per selected twin the lock releases (no sha, nothing cloned or proven)."""
+    return [
+        {"step": "identity %s (%s)" % (twin_consumer(twin), twin_selector(twin)),
+         "reason": "lock.nodes.%s is released (%s) with no sha: nothing cloned, the job used its "
+                   "own ref, not proven" % (twin["node"], ctx.node_entry(twin["node"]).get("version"))}
+        for twin in scoped_twins(ctx) if twin_unpinned(ctx, twin)
+    ]
+
+
+def git_head(directory):
+    """`(sha, None)` from `git -C <directory> rev-parse HEAD`, or `(None, why)`.
+
+    The status comes from `returncode`, and the output is CAPTURED, never piped.
+    """
+    git = shutil.which("git")
+    if git is None:
+        return None, "git is not on PATH"
+    try:
+        completed = subprocess.run(
+            [git, "-C", as_posix_abs(directory), "rev-parse", "HEAD"],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=dict(os.environ, **_GIT_ENV),
+        )
+    except OSError as exc:
+        return None, str(exc)
+    if completed.returncode != 0:
+        detail = completed.stderr.decode("utf-8", "replace").strip()
+        return None, "exit %d: %s" % (completed.returncode, detail[:200])
+    sha = completed.stdout.decode("utf-8", "replace").strip()
+    return (sha, None) if sha else (None, "empty output")
+
+
+def _twin_proofs(ctx):
+    """One identity row per pinned twin: its checkout's HEAD vs the lock's sha.
+
+    A twin dir with no `.git` is `ok: false` BEFORE git runs — `git -C` on a plain directory
+    walks UP to any enclosing repo and would report that repo's HEAD instead of failing.
+    """
+    proofs = []
+    for twin in pinned_twins(ctx):
+        consumer = twin_consumer(twin)
+        package = twin_slug(twin)
+        expected = ctx.sha(twin["node"]) or None
+        directory = ctx.twin_dir(twin["node"])
+        label = "git -C %s rev-parse HEAD" % as_posix_abs(directory)
+        if not expected:
+            proofs.append(_proof(
+                consumer, "lock.nodes.%s has no sha: the twin is not pinned" % twin["node"],
+                package, None, None, False,
+            ))
+            continue
+        if not (directory / ".git").exists():
+            proofs.append(_proof(
+                consumer, "twin dir %s is missing or not a git checkout (apply never cloned it)"
+                % as_posix_abs(directory), package, None, expected, False,
+            ))
+            continue
+        resolved, why = git_head(directory)
+        if resolved is None:
+            proofs.append(_proof(consumer, "%s failed: %s" % (label, why), package, None, expected, False))
+            continue
+        proofs.append(_proof(consumer, label, package, resolved, expected, resolved == expected))
+    return proofs
 
 
 # ----------------------------------------------------------------------
@@ -2001,11 +2205,42 @@ def cmd_apply(args):
                 )
         log("chain: %s built and packed at %s" % (node_id, entry["ws_version"]))
 
+    exported = {}
+    twins = []
+    # 1b. the twins the lock pins, each cloned at the LOCK's sha — never a branch. A bogus or
+    #     unreachable sha fails the fetch, and that is a refusal (exit 2), not a fallback. A twin
+    #     the lock RELEASES has no sha: nothing is cloned or exported, and `record` names the gap.
+    for twin_entry in twin_plan(ctx):
+        twin = twin_entry["twin"]
+        twin_dir = ctx.twin_dir(twin["node"])
+        if twin_dir.exists():
+            shutil.rmtree(str(twin_dir), ignore_errors=True)
+            if twin_dir.exists():
+                raise Refusal(
+                    "twin %s: %s survived its delete (a locked or read-only file); refusing to clone "
+                    "into a stale checkout" % (twin_repo(twin), twin_entry["dir"])
+                )
+        twin_dir.parent.mkdir(parents=True, exist_ok=True)
+        require_tool("git", "the leg clones the %s twin at the lock sha" % twin_repo(twin))
+        git_env = dict(os.environ, **_GIT_ENV)
+        for argv in twin_entry["clone"]:
+            status = run(argv, env=git_env)
+            if status != 0:
+                raise Refusal(
+                    "twin %s: `%s` exited %s: clone of %s at lock.nodes.%s.sha %s failed (never "
+                    "falling back to a branch)"
+                    % (twin_repo(twin), " ".join(argv), status, twin_slug(twin), twin["node"], twin_entry["sha"])
+                )
+        exported[twin_entry["env"]] = twin_entry["dir"]
+        twins.append({"node": twin["node"], "sha": twin_entry["sha"], "dir": twin_entry["dir"], "env": twin_entry["env"]})
+        log("chain: twin %s @ %s -> %s (%s)" % (twin_repo(twin), twin_entry["sha"], twin_entry["dir"], twin_entry["env"]))
+    for row in twin_skips(ctx):
+        log("chain: skip %s: %s" % (row["step"], row["reason"]))
+
     # 2. this node's own override, at the CHECKOUT ROOT.
     written = []
     notes = []
     modes = sorted({edge["mode"] for edge in edges})
-    exported = {}
     nuget_edges = [e for e in edges if e["mode"] == "nuget"]
     if nuget_edges:
         rows = nuget_rows_for(ctx, nuget_edges)
@@ -2037,6 +2272,9 @@ def cmd_apply(args):
     build_props = own_build_props(ctx)
     if build_props:
         exported["CHAIN_BUILD_PROPS"] = build_props
+    ws_export = own_ws_version_export(ctx)
+    if ws_export:
+        exported["CHAIN_WS_VERSION"] = ws_export
     _write_github_env(sorted(exported.items()))
     _write_github_output([("active", "true")])
 
@@ -2048,6 +2286,7 @@ def cmd_apply(args):
         "modes": modes,
         "overrides": written,
         "notes": notes,
+        "twins": twins,
         "env": exported,
         "feed_build_seconds": round(time.time() - started, 3),
         "scope": scope_json(ctx.scope),
@@ -2163,6 +2402,17 @@ def cmd_dry_run(args):
         log("chain:   prove   %s (own pack)" % as_posix_abs(feed_artifact_path(ctx, ctx.node, body)))
     for row in scope_skips(ctx, edges, outside, own_outside):
         log("chain:   skip    %s: %s" % (row["step"], row["reason"]))
+    twins = twin_plan(ctx)
+    for entry in twins:
+        twin, sha = entry["twin"], entry["sha"]
+        log("")
+        log("chain: twin %s @ %s — job %s of %s" % (twin_repo(twin), sha, twin["job"], twin["workflow"]))
+        for argv in entry["clone"]:
+            log("chain:   clone   %s" % " ".join(str(a) for a in argv))
+        log("chain:   export  %s=%s" % (entry["env"], entry["dir"]))
+        log("chain:   prove   %s: git -C %s rev-parse HEAD == %s" % (twin_consumer(twin), entry["dir"], sha))
+    for row in twin_skips(ctx):
+        log("chain:   skip    %s: %s" % (row["step"], row["reason"]))
     for entry in build_plan(ctx, edges):
         log("")
         log("chain: --- %s @ %s (%s) ---" % (entry["node"], entry["ws_version"], entry["sha"]))
@@ -2220,6 +2470,11 @@ def cmd_dry_run(args):
     build_props = own_build_props(ctx)
     if build_props:
         keys.append("CHAIN_BUILD_PROPS=%s" % build_props)
+    ws_export = own_ws_version_export(ctx)
+    if ws_export:
+        keys.append("CHAIN_WS_VERSION=%s" % ws_export)
+    for entry in twins:
+        keys.append("%s=%s" % (entry["env"], entry["dir"]))
     for key in keys:
         log("chain:   %s" % key)
     return EXIT_OK
@@ -2233,12 +2488,12 @@ def cmd_record(args):
     state = _load_state(ctx)
     edges, outside = scoped_edges(ctx)
     own, own_outside = own_pack_in_scope(ctx)
-    proofs = apply_status_proofs(ctx, state) + identity_proofs(ctx, edges, own)
+    proofs = apply_status_proofs(ctx, state) + identity_proofs(ctx, edges, own) + _twin_proofs(ctx)
     skipped = list(state.get("skipped") or [])
     # The named gaps belong in the record whether or not `apply` wrote the state file: a leg
     # that reports NO skips is claiming coverage it does not have (A22). An edge this job's
     # `--edges` scope left out is one of them — never proven, never silently absent.
-    for row in _default_skips(ctx) + scope_skips(ctx, edges, outside, own_outside):
+    for row in _default_skips(ctx) + scope_skips(ctx, edges, outside, own_outside) + twin_skips(ctx):
         if row not in skipped:
             skipped.append(row)
     for raw in getattr(args, "skip", None) or ():
@@ -2826,6 +3081,22 @@ def render_fragment(node, existing_group=None, existing_cancel=None, new_concurr
             "#     root node: with no --edges `record` proves this node's OWN pack, so a job that does "
             "not pack passes --edges none"
         )
+    for twin in node_twins(node):
+        selector = twin_selector(twin)
+        lines += [
+            "#     twin: job `%s` of %s drives %s from source. It passes --edges %s (a twin is never "
+            "implied by an absent --edges):" % (twin["job"], twin["workflow"], twin_repo(twin), selector),
+            "#           ${{ env.CHAIN_PY }} .github/scripts/chain_feed.py apply  --node %s --job %s --edges %s"
+            % (node, twin["job"], selector),
+            "#           ${{ env.CHAIN_PY }} .github/scripts/chain_feed.py record --node %s --job %s --edges %s "
+            "--job-status ${{ job.status }} --out chain-leg.json" % (node, twin["job"], selector),
+            "#     `apply` clones %s at lock.nodes.%s.sha into $%s (a bogus sha fails `apply` at the fetch);"
+            % (twin_repo(twin), twin["node"], twin_env(twin)),
+            "#     the job's clone step uses that path when env.%s != '' (unset when the lock RELEASES the twin:"
+            " a named skip), else its existing ref;" % twin_env(twin),
+            "#     `record` proves identity[] {consumer: \"%s\", resolved: its rev-parse HEAD, expected: the lock sha}"
+            % twin_consumer(twin),
+        ]
     if any(edge["mode"] == "npm" for edge in RECIPES[node]["consumes"]):
         npm_dir = next(
             (edge.get("path") or "." for edge in RECIPES[node]["consumes"] if edge["mode"] == "npm"), "."
@@ -2898,7 +3169,8 @@ def build_parser():
             child.add_argument(
                 "--edges", action="append", default=[], metavar="SELECTOR",
                 help="scope THIS job to part of the node's edges: a mode (nuget), a producer node id, "
-                     "a <node>/<artifact> ref, `self` (this node's own pack) or `none`; repeatable. "
+                     "a <node>/<artifact> ref, `self` (this node's own pack), `twin:<node>` (clone a "
+                     "declared twin at the lock sha; never implied) or `none`; repeatable. "
                      "Pass the SAME values to apply and record; default: every edge",
             )
         if name == "apply-npm":

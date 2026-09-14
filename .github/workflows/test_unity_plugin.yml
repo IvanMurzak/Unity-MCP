@@ -150,11 +150,16 @@ jobs:
           customParameters: -CI true -GITHUB_ACTIONS true${{ (matrix.platform == 'base' && inputs.testMode == 'editmode') && ' -CHAIN_RECORD_OUT chain-record/raw.json -CHAIN_BATTERY ../../tests/chain-fixtures/battery.json' || '' }}
 
       # --------------------------------------------------------------------- #
+      # Test results. Read ONLY by publish_test_results.yml, which runs minutes after this workflow
+      # completes, so a 1-day retention loses nothing. Skipped in chain mode (a lock, or a `train/` PR
+      # label): the chain verdict reads the JSON leg records below, never these, and the account's
+      # artifact storage is capped, so only what a consumer reads is uploaded.
       - uses: actions/upload-artifact@v6
-        if: always()
+        if: always() && env.CHAIN_LOCK == '' && !contains(join(github.event.pull_request.labels.*.name, ' '), 'train/')
         with:
           name: Test results for ${{ inputs.unityVersion }} ${{ inputs.testMode }} on ${{ matrix.platform }}
           path: ${{ steps.tests.outputs.artifactsPath }}
+          retention-days: 1
 
       # --------------------------------------------------------------------- #
       # 2-c'. T2 chain fixture (MCP-Plugin-dotnet docs/chain-fixtures.md §F5) — base/editmode legs only.
@@ -228,4 +233,5 @@ jobs:
         with:
           name: ${{ steps.chain_record.outputs.artifact_name }}
           path: chain-leg.json
+          retention-days: 1
 
