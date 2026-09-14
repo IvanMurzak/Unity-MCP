@@ -3,3 +3,4 @@
 # (core.autocrlf=true on Windows) would break both, so pin them to LF.
 /tests/chain-fixtures/** text eol=lf
 /.github/scripts/chain_fixture.py text eol=lf
+/.github/scripts/chain_feed.py text eol=lf

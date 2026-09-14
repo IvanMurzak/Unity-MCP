@@ -51,6 +51,9 @@ env:
   CHAIN_LOCK_HASH8: ${{ inputs.lock_hash8 }}
 
 jobs:
+  # Kept in every mode: publish_test_results.yml reads `Event File/event.json` on every completed run
+  # (chain runs included), so skipping it would break that workflow. A few KB, and the consumer runs
+  # minutes after this workflow completes, so 1-day retention loses nothing.
   save-event-file:
     runs-on: ubuntu-latest
     steps:
@@ -59,6 +62,7 @@ jobs:
         with:
           name: Event File
           path: ${{ github.event_path }}
+          retention-days: 1
 
   # Guards issue #957: a NuGet pin may not change without bumping the asmdef gate generation,
   # or consumers upgrading from the previous release compile the new sources against their old
@@ -126,6 +130,7 @@ jobs:
         with:
           name: ${{ steps.chain_record.outputs.artifact_name }}
           path: chain-leg.json
+          retention-days: 1
 
   test-cli:
     uses: ./.github/workflows/test_cli.yml
