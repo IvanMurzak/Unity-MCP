@@ -144,7 +144,10 @@ jobs:
           testMode: ${{ inputs.testMode }}
           customImage: ${{ steps.custom_image.outputs.image }}
           artifactsPath: artifacts-${{ inputs.unityVersion }}-${{ inputs.testMode }}-${{ matrix.platform }}
-          customParameters: -CI true -GITHUB_ACTIONS true
+          # The base/editmode leg also runs the T2 chain recorder (Tests/Editor/Chain/ChainRecordTests.cs).
+          # Both paths are RELATIVE TO THE UNITY PROJECT ROOT (the recorder resolves them there), so they
+          # mean the same files inside the game-ci container and on the host, and contain no spaces.
+          customParameters: -CI true -GITHUB_ACTIONS true${{ (matrix.platform == 'base' && inputs.testMode == 'editmode') && ' -CHAIN_RECORD_OUT chain-record/raw.json -CHAIN_BATTERY ../../tests/chain-fixtures/battery.json' || '' }}
 
       # --------------------------------------------------------------------- #
       - uses: actions/upload-artifact@v6
@@ -152,6 +155,62 @@ jobs:
         with:
           name: Test results for ${{ inputs.unityVersion }} ${{ inputs.testMode }} on ${{ matrix.platform }}
           path: ${{ steps.tests.outputs.artifactsPath }}
+
+      # --------------------------------------------------------------------- #
+      # 2-c'. T2 chain fixture (MCP-Plugin-dotnet docs/chain-fixtures.md §F5) — base/editmode legs only.
+      #
+      # Canonicalises the recorder's raw dump and diffs it against the committed
+      # tests/chain-fixtures/<unityVersion>/tools.jsonl. Outputs go to RUNNER_TEMP, not the checkout:
+      # the Unity container created chain-record/ as root, so the host user cannot write beside it.
+      # A missing committed fixture FAILS (fixture-missing) — a leg can never go green without one.
+      # --------------------------------------------------------------------- #
+      - name: chain fixture diff
+        if: ${{ !cancelled() && matrix.platform == 'base' && inputs.testMode == 'editmode' }}
+        shell: bash
+        env:
+          RAW: ${{ inputs.projectPath }}/chain-record/raw.json
+          COMMITTED: tests/chain-fixtures/${{ inputs.unityVersion }}/tools.jsonl
+          OUT_DIR: ${{ runner.temp }}/chain-fixture-unity-${{ inputs.unityVersion }}
+        run: |
+          set +e
+          mkdir -p "$OUT_DIR"
+          if [ ! -f "$RAW" ]; then
+            echo "::error title=chain fixture::raw-dump-missing: $RAW was not written - ChainRecordTests did not run or failed (see the Unity test step)"
+            exit 1
+          fi
+          python3 -c 'import json,sys; k=[json.loads(l).get("kind") for l in open(sys.argv[1],encoding="utf-8") if l.strip()]; print("chain-record: %d tools, %d calls -> raw.json" % (k.count("tool"), k.count("call")))' "$RAW"
+
+          python3 .github/scripts/chain_fixture.py canonicalize "$RAW" --out "$OUT_DIR/fresh.jsonl"
+          rc=$?
+          if [ "$rc" -ne 0 ]; then
+            cp "$RAW" "$OUT_DIR/raw.json"   # no fresh.jsonl to review, so the raw dump is the only evidence
+            echo "::error title=chain fixture::canonicalize exited $rc"
+            exit "$rc"
+          fi
+
+          if [ ! -f "$COMMITTED" ]; then
+            echo "::error title=chain fixture::fixture-missing: $COMMITTED is not committed. Review fresh.jsonl in the chain-fixture-unity-${{ inputs.unityVersion }} artifact and commit it."
+            exit 1
+          fi
+
+          python3 .github/scripts/chain_fixture.py diff "$COMMITTED" "$OUT_DIR/fresh.jsonl" > "$OUT_DIR/diff.txt"
+          rc=$?
+          cat "$OUT_DIR/diff.txt"
+          case "$rc" in
+            0) echo "chain fixture: identical to $COMMITTED (diff exit 0)" ;;
+            3) echo "::error title=chain fixture::contract-change: the editor tool contract differs from $COMMITTED (unified diff above and in diff.txt)"; exit 3 ;;
+            *) echo "::error title=chain fixture::diff exited $rc"; exit "$rc" ;;
+          esac
+
+      - name: chain fixture artifact
+        if: ${{ always() && matrix.platform == 'base' && inputs.testMode == 'editmode' }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: chain-fixture-unity-${{ inputs.unityVersion }}
+          path: ${{ runner.temp }}/chain-fixture-unity-${{ inputs.unityVersion }}
+          if-no-files-found: warn
+          # Review aid only (fresh.jsonl to commit, diff.txt): the replay side reads the COMMITTED fixture.
+          retention-days: 1
 
       # --------------------------------------------------------------------- #
       # 2-d. Chain leg record (chain_feed.py §C5) — one artifact per job (12 distinct names)
