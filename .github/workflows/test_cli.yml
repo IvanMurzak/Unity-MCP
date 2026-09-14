@@ -53,12 +53,42 @@ jobs:
         with:
           node-version: 22
 
+      # Chain interpreter (chain_feed.py print-fragment): resolved ONCE per job to an ABSOLUTE,
+      # space-free sys.executable and invoked through ${{ env.CHAIN_PY }}, never a bare name.
+      - name: chain python (posix)
+        if: runner.os != 'Windows' && env.CHAIN_PY == ''
+        shell: bash
+        run: |
+          for c in python3 python; do
+            exe="$("$c" -c 'import sys, select, zlib, hashlib; sys.version_info >= (3, 9) or sys.exit(1); print(sys.executable.replace(chr(92), chr(47)))' 2>/dev/null)" || continue
+            case "$exe" in /*) ;; *) continue ;; esac
+            case "$exe" in *[[:space:]]*) continue ;; esac
+            [ -f "$exe" ] && [ -x "$exe" ] || continue
+            echo "CHAIN_PY=$exe" >> "$GITHUB_ENV"; exit 0
+          done
+          echo 'chain: no Python 3.9+ on PATH that runs and reports an absolute, space-free sys.executable (tried python3, python)' >&2; exit 2
+      - name: chain python (windows)
+        if: runner.os == 'Windows' && env.CHAIN_PY == ''
+        shell: pwsh
+        run: |
+          foreach ($c in 'python', 'python3') {
+            $cmd = Get-Command $c -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+            if (-not $cmd) { continue }
+            $global:LASTEXITCODE = $null
+            try { $out = & $cmd.Source -c 'import sys, select, zlib, hashlib; sys.version_info >= (3, 9) or sys.exit(1); print(sys.executable.replace(chr(92), chr(47)))' 2>$null } catch { continue }
+            if ($LASTEXITCODE -ne 0) { continue }
+            $exe = (@($out) -join ' ').Trim()
+            if ($exe -notmatch '^[A-Za-z]:/\S+\z' -or -not (Test-Path -LiteralPath $exe -PathType Leaf)) { continue }
+            "CHAIN_PY=$exe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8; exit 0
+          }
+          [Console]::Error.WriteLine('chain: no Python 3.9+ on PATH that runs and reports an absolute, space-free sys.executable (tried python, python3; never py)'); exit 2
+
       # Builds the lock's cli-core tarball and linux-x64 server and exports UNITY_MCP_SERVER_PATH.
       # No cli test reads that variable today (only the Unity Editor's McpServerManager does), so
       # the server-binary scope is identity-proven here, not exercised.
       - name: chain feed
         id: chain
-        run: python3 .github/scripts/chain_feed.py apply --node unity-mcp --job test-cli-node${{ matrix.node-version }} --edges npm --edges server-binary
+        run: ${{ env.CHAIN_PY }} .github/scripts/chain_feed.py apply --node unity-mcp --job test-cli-node${{ matrix.node-version }} --edges npm --edges server-binary
 
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v6
@@ -72,7 +102,7 @@ jobs:
       # MUST follow `npm ci`, which would undo a --no-save install.
       - name: chain feed (npm)
         if: env.CHAIN_ACTIVE == '1'
-        run: python3 .github/scripts/chain_feed.py apply-npm --node unity-mcp --dir cli
+        run: ${{ env.CHAIN_PY }} .github/scripts/chain_feed.py apply-npm --node unity-mcp --dir cli
 
       # UNITY_MCP_SERVER_PATH makes the Unity plugin skip its server version match (docs/mcp-server.md),
       # so a lock whose gamedev-mcp-server base version differs from the CLI's pinned
@@ -85,7 +115,7 @@ jobs:
         run: |
           # The lock is dispatch input: only a plain version string may reach $GITHUB_ENV (a newline
           # would inject further variables), so anything else is reported as unreadable instead.
-          locked=$(python3 -c 'import json,os,re; v=(json.load(open(os.environ["CHAIN_LOCK_PATH"]))["nodes"].get("gamedev-mcp-server") or {}).get("base_version", ""); print(v if isinstance(v, str) and re.fullmatch(r"[0-9]+(\.[0-9]+){0,3}(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?", v) else ("unreadable" if v else ""))')
+          locked=$(${{ env.CHAIN_PY }} -c 'import json,os,re; v=(json.load(open(os.environ["CHAIN_LOCK_PATH"]))["nodes"].get("gamedev-mcp-server") or {}).get("base_version", ""); print(v if isinstance(v, str) and re.fullmatch(r"[0-9]+(\.[0-9]+){0,3}(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?", v) else ("unreadable" if v else ""))')
           pinned=$(sed -n "s/^export const DEFAULT_SERVER_VERSION = '\([^']*\)'.*/\1/p" cli/src/utils/server-version.ts || true)
           echo "gamedev-mcp-server: lock base_version='$locked', cli DEFAULT_SERVER_VERSION='$pinned'"
           if [ -n "$locked" ] && [ -z "$pinned" ]; then
@@ -106,7 +136,7 @@ jobs:
       - name: chain leg record
         id: chain_record
         if: always()
-        run: python3 .github/scripts/chain_feed.py record --node unity-mcp --job test-cli-node${{ matrix.node-version }} --edges npm --edges server-binary --warn "$CHAIN_PIN_WARN" --job-status "${{ job.status }}" --out chain-leg.json
+        run: ${{ env.CHAIN_PY }} .github/scripts/chain_feed.py record --node unity-mcp --job test-cli-node${{ matrix.node-version }} --edges npm --edges server-binary --warn "$CHAIN_PIN_WARN" --job-status "${{ job.status }}" --out chain-leg.json
 
       # Keyed on the record's own output, not CHAIN_ACTIVE (which only a COMPLETED apply exports),
       # so a failed apply's RED record still uploads.
