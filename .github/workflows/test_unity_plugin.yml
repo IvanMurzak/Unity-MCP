@@ -99,9 +99,8 @@ jobs:
 
       # Chain interpreter (chain_feed.py print-fragment): resolved ONCE per job to an ABSOLUTE,
       # space-free sys.executable and invoked through ${{ env.CHAIN_PY }}, never a bare name.
-      # Every chain step in this job runs on the ubuntu HOST, not inside the unityci/editor container:
-      # game-ci only runs the Unity editor in Docker, and the host reads the checkout before and after.
-      # So the host's python3 (/usr/bin/python3 on ubuntu-latest) is the right interpreter here.
+      # Every chain step in this job runs on the ubuntu HOST, never inside the unityci/editor container
+      # (see 2-b' above), so a host interpreter is the right one to resolve here.
       - name: chain python (posix)
         if: runner.os != 'Windows' && env.CHAIN_PY == ''
         shell: bash
