@@ -8,14 +8,52 @@
 
 name: test-pull-request
 
+# Chain leg contract (software `.scripts/chain/leg/chain_feed.py`, §C1-C5) for node `unity-mcp`.
+# A `workflow_dispatch` carries ONE lock JSON + its hash8. Each job self-builds ONLY the lower layers
+# its own `--edges` scope consumes, from the lock's SHAs, and proves identity for exactly that scope
+# in a per-job leg record (`apply` and `record` always take the SAME `--edges`):
+#   engine-free-tests  --edges nuget                        (ReflectorNet + McpPlugin nupkgs)
+#   test-unity-*       --edges unity-dll                    (the 3 netstandard2.1 DLL drops)
+#   test-cli           --edges npm --edges server-binary    (cli-core tarball + GameDev-MCP-Server)
+# On an ordinary pull_request the vendored script is a no-op (`chain: no lock (ordinary run)`), so
+# the chain steps change nothing there. A pull_request carrying a `train/` label is the exception: it
+# takes its lock from the PR body (chain_feed.py §C7), which is why the toolchain setup steps test it.
 on:
   workflow_dispatch:
+    inputs:
+      lock:
+        description: the chain lock JSON (<= 60000 characters)
+        required: true
+        type: string
+      lock_hash8:
+        description: first 8 hex characters of the lock hash
+        required: true
+        type: string
 
   pull_request:
-    branches: [main, dev]
+    branches: [main, dev, chain-testing]
     types: [opened, synchronize, reopened]
 
+# Guarded: `inputs` is empty on pull_request, so ordinary PR runs keep GitHub's default title.
+run-name: ${{ github.event_name == 'workflow_dispatch' && format('chain {0} unity-mcp', inputs.lock_hash8) || '' }}
+
+# Lock-keyed for dispatch events, so a re-dispatch of the same lock queues behind the first and
+# different locks run independently. cancel-in-progress is false: a RUNNING run is never cancelled,
+# because a queued run is preferable to cancelling 12 game-ci legs, and runaway runs are bounded by
+# the per-job timeouts instead. GitHub still keeps only ONE pending run per group, so a third run
+# arriving while one runs and one waits replaces (cancels) the waiting one.
+concurrency:
+  group: ${{ github.event_name == 'workflow_dispatch' && format('chain-{0}-{1}', inputs.lock_hash8, github.workflow) || format('test-pr-{0}-{1}', github.workflow, github.event.pull_request.number || github.ref) }}
+  cancel-in-progress: false
+
+env:
+  CHAIN_LOCK: ${{ inputs.lock }}
+  CHAIN_LOCK_HASH8: ${{ inputs.lock_hash8 }}
+
 jobs:
+  # Uploaded in chain mode too: publish_test_results.yml reads `Event File/event.json` on every completed run
+  # (chain runs included), so skipping it would break that workflow. A few KB, and the consumer runs
+  # minutes after this workflow completes, so 1-day retention loses nothing.
   save-event-file:
     runs-on: ubuntu-latest
     steps:
@@ -24,6 +62,7 @@ jobs:
         with:
           name: Event File
           path: ${{ github.event_path }}
+          retention-days: 1
 
   # Guards issue #957: a NuGet pin may not change without bumping the asmdef gate generation,
   # or consumers upgrading from the previous release compile the new sources against their old
@@ -48,7 +87,9 @@ jobs:
   engine-free-tests:
     name: engine-free tests (.NET 8)
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    # 10 min covered the test alone; a chain dispatch also clones, builds and packs ReflectorNet and
+    # McpPlugin (its `nuget` scope) before it.
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
 
@@ -57,11 +98,75 @@ jobs:
         with:
           dotnet-version: "8.0.x"
 
+      # --- chain feed (chain_feed.py §C4): a no-op on an ordinary PR run ---------------------------------------
+      - name: Setup .NET 9 (chain feed)
+        if: ${{ inputs.lock != '' || contains(join(github.event.pull_request.labels.*.name, ' '), 'train/') }}
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+
+      # Chain interpreter (chain_feed.py print-fragment): resolved ONCE per job to an ABSOLUTE,
+      # space-free sys.executable and invoked through ${{ env.CHAIN_PY }}, never a bare name.
+      - name: chain python (posix)
+        if: runner.os != 'Windows' && env.CHAIN_PY == ''
+        shell: bash
+        run: |
+          for c in python3 python; do
+            exe="$("$c" -c 'import sys, select, zlib, hashlib; sys.version_info >= (3, 9) or sys.exit(1); print(sys.executable.replace(chr(92), chr(47)))' 2>/dev/null)" || continue
+            case "$exe" in /*) ;; *) continue ;; esac
+            case "$exe" in *[[:space:]]*) continue ;; esac
+            [ -f "$exe" ] && [ -x "$exe" ] || continue
+            echo "CHAIN_PY=$exe" >> "$GITHUB_ENV"; exit 0
+          done
+          echo 'chain: no Python 3.9+ on PATH that runs and reports an absolute, space-free sys.executable (tried python3, python)' >&2; exit 2
+      - name: chain python (windows)
+        if: runner.os == 'Windows' && env.CHAIN_PY == ''
+        shell: pwsh
+        run: |
+          foreach ($c in 'python', 'python3') {
+            $cmd = Get-Command $c -CommandType Application -ErrorAction SilentlyContinue | Select-Object -First 1
+            if (-not $cmd) { continue }
+            $global:LASTEXITCODE = $null
+            try { $out = & $cmd.Source -c 'import sys, select, zlib, hashlib; sys.version_info >= (3, 9) or sys.exit(1); print(sys.executable.replace(chr(92), chr(47)))' 2>$null } catch { continue }
+            if ($LASTEXITCODE -ne 0) { continue }
+            $exe = (@($out) -join ' ').Trim()
+            if ($exe -notmatch '^[A-Za-z]:/\S+\z' -or -not (Test-Path -LiteralPath $exe -PathType Leaf)) { continue }
+            "CHAIN_PY=$exe" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8; exit 0
+          }
+          [Console]::Error.WriteLine('chain: no Python 3.9+ on PATH that runs and reports an absolute, space-free sys.executable (tried python, python3; never py)'); exit 2
+
+      # Scope `nuget`: EngineFree.csproj is this node's NuGet override target, so the job builds
+      # ReflectorNet + McpPlugin into the local feed and proves what its project.assets.json resolved.
+      - name: chain feed
+        id: chain
+        run: ${{ env.CHAIN_PY }} .github/scripts/chain_feed.py apply --node unity-mcp --job engine-free-tests --edges nuget
+
       - name: Test
         run: dotnet test Unity-MCP-Plugin/Tests~/EngineFree/EngineFree.csproj -c Release --logger trx -- RunConfiguration.TreatNoTestsAsError=true
 
+      # --- chain leg record (chain_feed.py §C5) ----------------------------------------------------------------
+      - name: chain leg record
+        id: chain_record
+        if: always()
+        run: ${{ env.CHAIN_PY }} .github/scripts/chain_feed.py record --node unity-mcp --job engine-free-tests --edges nuget --job-status "${{ job.status }}" --out chain-leg.json
+
+      # Keyed on the record's own output, not CHAIN_ACTIVE (which only a COMPLETED apply exports),
+      # so a failed apply's RED record still uploads.
+      - name: chain leg artifact
+        if: always() && steps.chain_record.outputs.artifact_name != ''
+        uses: actions/upload-artifact@v6
+        with:
+          name: ${{ steps.chain_record.outputs.artifact_name }}
+          path: chain-leg.json
+          retention-days: 1
+
   test-cli:
     uses: ./.github/workflows/test_cli.yml
+    with:
+      lock: ${{ inputs.lock }}
+      lock_hash8: ${{ inputs.lock_hash8 }}
 
   # NOTE: the MCP server is no longer built from this repo — the plugin consumes the shared
   # GameDev-MCP-Server (https://github.com/IvanMurzak/GameDev-MCP-Server) release pinned by
@@ -78,6 +183,8 @@ jobs:
       projectPath: "./Unity-Tests/2022.3.62f3"
       unityVersion: "2022.3.62f3"
       testMode: "editmode"
+      lock: ${{ inputs.lock }}
+      lock_hash8: ${{ inputs.lock_hash8 }}
     secrets: inherit
 
   test-unity-2023-2-22f1-editmode:
@@ -86,6 +193,8 @@ jobs:
       projectPath: "./Unity-Tests/2023.2.22f1"
       unityVersion: "2023.2.22f1"
       testMode: "editmode"
+      lock: ${{ inputs.lock }}
+      lock_hash8: ${{ inputs.lock_hash8 }}
     secrets: inherit
 
   test-unity-6000-3-1f1-editmode:
@@ -94,6 +203,8 @@ jobs:
       projectPath: "./Unity-Tests/6000.3.1f1"
       unityVersion: "6000.3.1f1"
       testMode: "editmode"
+      lock: ${{ inputs.lock }}
+      lock_hash8: ${{ inputs.lock_hash8 }}
     secrets: inherit
 
   # --- PLAY MODE ---
@@ -130,6 +241,8 @@ jobs:
       projectPath: "./Unity-Tests/2022.3.62f3"
       unityVersion: "2022.3.62f3"
       testMode: "standalone"
+      lock: ${{ inputs.lock }}
+      lock_hash8: ${{ inputs.lock_hash8 }}
     secrets: inherit
 
   test-unity-2023-2-22f1-standalone:
@@ -138,6 +251,8 @@ jobs:
       projectPath: "./Unity-Tests/2023.2.22f1"
       unityVersion: "2023.2.22f1"
       testMode: "standalone"
+      lock: ${{ inputs.lock }}
+      lock_hash8: ${{ inputs.lock_hash8 }}
     secrets: inherit
 
   test-unity-6000-3-1f1-standalone:
@@ -146,6 +261,8 @@ jobs:
       projectPath: "./Unity-Tests/6000.3.1f1"
       unityVersion: "6000.3.1f1"
       testMode: "standalone"
+      lock: ${{ inputs.lock }}
+      lock_hash8: ${{ inputs.lock_hash8 }}
     secrets: inherit
 
   # -------------------
